@@ -7,7 +7,7 @@ rem * the XAP_SETTINGS_FILE environment variable to your custom script.         
 rem * For more information see http://docs.gigaspaces.com/xap120/common-environment-variables.html *
 rem ************************************************************************************************
 if not defined XAP_SETTINGS_FILE set XAP_SETTINGS_FILE=%~dp0\setenv-overrides.bat
-if exist %XAP_SETTINGS_FILE% call %XAP_SETTINGS_FILE%
+if exist "%XAP_SETTINGS_FILE%" call "%XAP_SETTINGS_FILE%"
 
 if defined JAVA_HOME (
 	set JAVACMD="%JAVA_HOME%\bin\java"
