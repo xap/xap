@@ -150,6 +150,14 @@
                 <include>org.noggit:noggit</include>
             </includes>
         </dependencySet>
+        <dependencySet>
+            <useProjectArtifact>false</useProjectArtifact>
+            <outputDirectory>product/lib/optional/spatial</outputDirectory>
+            <includes>
+                <include>org.gigaspaces:xap-full-text-search</include>
+            </includes>
+            <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+        </dependencySet>
 
     </dependencySets>
 

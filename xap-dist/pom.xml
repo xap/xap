@@ -125,6 +125,10 @@
         </dependency>
         <dependency>
             <groupId>org.gigaspaces</groupId>
+            <artifactId>xap-full-text-search</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.gigaspaces</groupId>
             <artifactId>xap-cassandra</artifactId>
         </dependency>
         <dependency>
