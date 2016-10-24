@@ -30,11 +30,11 @@ import java.util.logging.Logger;
  * @author yechielf
  * @since 11.0
  */
-public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtensionManager {
+public class LuceneTextSearchQueryExtensionManager extends QueryExtensionManager {
     private static final Logger _logger = Logger.getLogger(LuceneTextSearchQueryExtensionManager.class.getName());
 
     protected LuceneTextSearchQueryExtensionManager(LuceneTextSearchQueryExtensionProvider provider, QueryExtensionRuntimeInfo info) {
-        super(provider, info);
+        super(info);
     }
 
 
