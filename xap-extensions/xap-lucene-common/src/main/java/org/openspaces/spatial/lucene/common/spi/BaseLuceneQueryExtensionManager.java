@@ -74,6 +74,16 @@ public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionMana
     }
 
     @Override
+    public void close() throws IOException {
+        for (LuceneTypeIndex luceneHolder : _luceneHolderMap.values())
+            luceneHolder.close();
+
+        _luceneHolderMap.clear();
+        FileUtils.deleteFileOrDirectoryIfExists(new File(_luceneConfiguration.getLocation()));
+        super.close();
+    }
+
+    @Override
     public boolean insertEntry(SpaceServerEntry entry, boolean hasPrevious) {
         final String typeName = entry.getSpaceTypeDescriptor().getTypeName();
         final LuceneTypeIndex luceneHolder = _luceneHolderMap.get(typeName);
