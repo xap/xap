@@ -23,6 +23,8 @@ import com.gigaspaces.query.extension.metadata.DefaultQueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPropertyInfo;
 
 import org.openspaces.fts.SpaceTextIndex;
+import org.openspaces.spatial.lucene.common.spi.BaseLuceneConfiguration;
+import org.openspaces.spatial.lucene.common.spi.BaseLuceneQueryExtensionProvider;
 
 import java.lang.annotation.Annotation;
 import java.util.Properties;
@@ -31,7 +33,7 @@ import java.util.Properties;
  * @author Niv Ingberg
  * @since 11.0
  */
-public class LuceneTextSearchQueryExtensionProvider extends QueryExtensionProvider {
+public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExtensionProvider {
 
     private final Properties _customProperties;
 
@@ -50,7 +52,8 @@ public class LuceneTextSearchQueryExtensionProvider extends QueryExtensionProvid
 
     @Override
     public QueryExtensionManager createManager(QueryExtensionRuntimeInfo info) {
-        return new LuceneTextSearchQueryExtensionManager(this, info);
+        LuceneTextSearchConfiguration configuration = new LuceneTextSearchConfiguration(this, info);
+        return new LuceneTextSearchQueryExtensionManager(this, info, configuration);
     }
 
     @Override

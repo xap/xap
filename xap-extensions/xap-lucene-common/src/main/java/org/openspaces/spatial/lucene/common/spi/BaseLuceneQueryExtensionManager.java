@@ -16,9 +16,33 @@
 
 package org.openspaces.spatial.lucene.common.spi;
 
+import com.gigaspaces.SpaceRuntimeException;
+import com.gigaspaces.internal.io.FileUtils;
+import com.gigaspaces.metadata.SpaceTypeDescriptor;
+import com.gigaspaces.query.extension.QueryExtensionEntryIterator;
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
+import com.gigaspaces.server.SpaceServerEntry;
+
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.spatial.SpatialStrategy;
+import org.apache.lucene.spatial.query.SpatialArgs;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author yechielf
@@ -26,18 +50,131 @@ import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
  */
 public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionManager {
 
+    private static final Logger _logger = Logger.getLogger(BaseLuceneQueryExtensionManager.class.getName());
+
     protected static final String XAP_ID = "XAP_ID";
     protected static final String XAP_ID_VERSION = "XAP_ID_VERSION";
-    protected static final int MAX_RESULTS = Integer.MAX_VALUE;
+    //TODO make it configurable
+    private static final int MAX_RESULTS = Integer.MAX_VALUE;
 
     private final String _namespace;
+    private final Map<String, LuceneTypeIndex> _luceneHolderMap = new ConcurrentHashMap<String, LuceneTypeIndex>();
+    private final BaseLuceneConfiguration _luceneConfiguration;
 
-    public BaseLuceneQueryExtensionManager(QueryExtensionProvider provider, QueryExtensionRuntimeInfo info) {
+    public BaseLuceneQueryExtensionManager(QueryExtensionProvider provider, QueryExtensionRuntimeInfo info, BaseLuceneConfiguration configuration) {
         super(info);
         _namespace = provider.getNamespace();
+        _luceneConfiguration = configuration;
+        File location = new File(_luceneConfiguration.getLocation());
+        FileUtils.deleteFileOrDirectoryIfExists(location);
     }
 
     protected String getNamespace() {
         return _namespace;
     }
+
+    @Override
+    public boolean insertEntry(SpaceServerEntry entry, boolean hasPrevious) {
+        final String typeName = entry.getSpaceTypeDescriptor().getTypeName();
+        final LuceneTypeIndex luceneHolder = _luceneHolderMap.get(typeName);
+        try {
+            final Document doc = createDocumentIfNeeded(luceneHolder, entry);
+            // Add new
+            if (doc != null)
+                luceneHolder.getIndexWriter().addDocument(doc);
+            // Delete old
+            if (hasPrevious) {
+                TermQuery query = new TermQuery(new Term(XAP_ID_VERSION, concat(entry.getUid(), entry.getVersion() - 1)));
+                luceneHolder.getIndexWriter().deleteDocuments(query);
+            }
+            // Flush
+            if (doc != null || hasPrevious)
+                luceneHolder.commit(false);
+            return doc != null;
+        } catch (Exception e) {
+            String operation = hasPrevious ? "update" : "insert";
+            throw new SpaceRuntimeException("Failed to " + operation + " entry of type " + typeName + " with id [" + entry.getUid() + "]", e);
+        }
+    }
+
+    protected String concat(String uid, int version) {
+        return uid + "_" + version;
+    }
+
+    protected Document createDocumentIfNeeded(LuceneTypeIndex luceneHolder, SpaceServerEntry entry) {
+
+        Document doc = null;
+        for (String path : luceneHolder.getQueryExtensionInfo().getPaths()) {
+            final Object fieldValue = entry.getPathValue(path);
+            Field[] fields = convertField(path, fieldValue);
+            if (doc == null && fields.length != 0) {
+                doc = new Document();
+            }
+            for (Field field : fields) {
+                doc.add(field);
+            }
+        }
+        if (doc != null) {
+            //cater for uid & version
+            //noinspection deprecation
+            doc.add(new Field(XAP_ID, entry.getUid(), Field.Store.YES, Field.Index.NO));
+            //noinspection deprecation
+            doc.add(new Field(XAP_ID_VERSION, concat(entry.getUid(), entry.getVersion()), Field.Store.YES, Field.Index.NOT_ANALYZED));
+        }
+
+        return doc;
+    }
+
+    protected abstract Field[] convertField(String path, Object fieldValue);
+
+    @Override
+    public void registerType(SpaceTypeDescriptor typeDescriptor) {
+        super.registerType(typeDescriptor);
+        final String typeName = typeDescriptor.getTypeName();
+        if (!_luceneHolderMap.containsKey(typeName)) {
+            try {
+                _luceneHolderMap.put(typeName, new LuceneTypeIndex(_luceneConfiguration, _namespace, typeDescriptor));
+            } catch (IOException e) {
+                throw new SpaceRuntimeException("Failed to register type " + typeName, e);
+            }
+        } else {
+            _logger.log(Level.WARNING, "Type [" + typeName + "] is already registered");
+        }
+    }
+
+    @Override
+    public QueryExtensionEntryIterator queryByIndex(String typeName, String path, String operationName, Object operand) {
+        if (_logger.isLoggable(Level.FINE))
+            _logger.log(Level.FINE, "query [typeName=" + typeName + ", path=" + path + ", operation=" + operationName + ", operand=" + operand + "]");
+
+        final Query query = createQuery(path, operationName, operand);
+        final LuceneTypeIndex luceneHolder = _luceneHolderMap.get(typeName);
+        try {
+            // Flush
+            luceneHolder.commit(true); //TODO investigate why do we need to commit here
+
+            DirectoryReader dr = DirectoryReader.open(luceneHolder.getDirectory());
+            IndexSearcher is = new IndexSearcher(dr);
+            ScoreDoc[] scores = is.search(query, MAX_RESULTS).scoreDocs;
+            return new LuceneQueryExtensionEntryIterator(scores, is, dr);
+        } catch (IOException e) {
+            throw new SpaceRuntimeException("Failed to scan index", e);
+        }
+    }
+
+    protected abstract Query createQuery(String path, String operationName, Object operand);
+
+    @Override
+    public void removeEntry(SpaceTypeDescriptor typeDescriptor, String uid, int version) {
+        final String typeName = typeDescriptor.getTypeName();
+        final LuceneTypeIndex luceneHolder = _luceneHolderMap.get(typeName);
+        try {
+            luceneHolder.getIndexWriter().deleteDocuments(new TermQuery(new Term(XAP_ID_VERSION, concat(uid, version))));
+            luceneHolder.commit(false);
+        } catch (IOException e) {
+            throw new SpaceRuntimeException("Failed to remove entry of type " + typeName, e);
+        }
+    }
+
+
 }

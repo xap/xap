@@ -19,10 +19,20 @@ package org.openspaces.fts.spi;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.query.extension.QueryExtensionEntryIterator;
 import com.gigaspaces.query.extension.QueryExtensionManager;
+import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.server.SpaceServerEntry;
 
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.Query;
+import org.openspaces.spatial.lucene.common.spi.BaseLuceneConfiguration;
 import org.openspaces.spatial.lucene.common.spi.BaseLuceneQueryExtensionManager;
+import org.openspaces.spatial.lucene.common.spi.LuceneTypeIndex;
 
 import java.util.logging.Logger;
 
@@ -30,31 +40,45 @@ import java.util.logging.Logger;
  * @author yechielf
  * @since 11.0
  */
-public class LuceneTextSearchQueryExtensionManager extends QueryExtensionManager {
+public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtensionManager {
     private static final Logger _logger = Logger.getLogger(LuceneTextSearchQueryExtensionManager.class.getName());
+    public static final String SEARCH_OPERATION_NAME = "search";
 
-    protected LuceneTextSearchQueryExtensionManager(LuceneTextSearchQueryExtensionProvider provider, QueryExtensionRuntimeInfo info) {
-        super(info);
+    private QueryExtensionRuntimeInfo _info;
+
+    protected LuceneTextSearchQueryExtensionManager(LuceneTextSearchQueryExtensionProvider provider, QueryExtensionRuntimeInfo info, LuceneTextSearchConfiguration configuration) {
+        super(provider, info, configuration);
+        this._info = info;
     }
-
 
     @Override
     public boolean accept(String operation, Object leftOperand, Object rightOperand) {
-        return false;
+        return true; //TODO implement
     }
 
     @Override
-    public boolean insertEntry(SpaceServerEntry entry, boolean hasPrevious) {
-        return false;
+    protected Field[] convertField(String path, Object fieldValue) {
+        if (!(fieldValue instanceof String)) {
+            throw new IllegalArgumentException("Field '" + path + "' with value '" + fieldValue + "' is not String.");
+        }
+        Field field = new TextField(path, (String) fieldValue, Field.Store.NO);
+        return new Field[]{field};
     }
 
     @Override
-    public void removeEntry(SpaceTypeDescriptor typeDescriptor, String uid, int version) {
-
+    protected Query createQuery(String path, String operationName, Object operand) {
+        validateOperationName(operationName);
+        try {
+            return new QueryParser("content", new StandardAnalyzer()).parse("content:" + operand); //TODO StandardAnalyzer
+        } catch (ParseException e) {
+            throw new IllegalArgumentException("Couldn't create full text search query for path=" + path + " operationName=" + operationName + " operand=" + operand);
+        }
     }
 
-    @Override
-    public QueryExtensionEntryIterator queryByIndex(String typeName, String path, String operation, Object operand) {
-        return null;
+    private void validateOperationName(String operationName) {
+        if (!SEARCH_OPERATION_NAME.equals(operationName)) {
+            throw new IllegalArgumentException("Provided operationName=" + operationName + " is illegal. Correct one is '" + SEARCH_OPERATION_NAME + "'");
+        }
     }
+
 }
