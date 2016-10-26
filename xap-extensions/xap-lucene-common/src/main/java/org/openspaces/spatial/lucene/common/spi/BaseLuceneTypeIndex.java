@@ -19,6 +19,7 @@ package org.openspaces.spatial.lucene.common.spi;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -29,20 +30,22 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class LuceneTypeIndex implements Closeable {
+public abstract class BaseLuceneTypeIndex implements Closeable {
     private final Directory directory;
     private final IndexWriter indexWriter;
     private final TypeQueryExtension queryExtensionInfo;
     private final int maxUncommittedChanges;
     private final AtomicInteger uncommittedChanges = new AtomicInteger(0);
 
-    public LuceneTypeIndex(BaseLuceneConfiguration luceneConfig, String namespace, SpaceTypeDescriptor typeDescriptor) throws IOException {
+    public BaseLuceneTypeIndex(BaseLuceneConfiguration luceneConfig, String namespace, SpaceTypeDescriptor typeDescriptor) throws IOException {
         this.directory = luceneConfig.getDirectory(typeDescriptor.getTypeName() + File.separator + "entries");
-        this.indexWriter = new IndexWriter(directory, new IndexWriterConfig(new StandardAnalyzer())
+        this.indexWriter = new IndexWriter(directory, new IndexWriterConfig(createAnalyzer(luceneConfig, typeDescriptor))
                 .setOpenMode(IndexWriterConfig.OpenMode.CREATE));
         this.queryExtensionInfo = typeDescriptor.getQueryExtensions().getByNamespace(namespace);
         this.maxUncommittedChanges = luceneConfig.getMaxUncommittedChanges();
     }
+
+    protected abstract Analyzer createAnalyzer(BaseLuceneConfiguration luceneConfig, SpaceTypeDescriptor typeDescriptor);
 
     @Override
     public void close() throws IOException {

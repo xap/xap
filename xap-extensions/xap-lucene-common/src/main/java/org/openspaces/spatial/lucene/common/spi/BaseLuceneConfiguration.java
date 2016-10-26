@@ -130,4 +130,6 @@ public abstract class BaseLuceneConfiguration {
         public abstract Directory getDirectory(String relativePath) throws IOException;
     }
 
+    public abstract Class getDefaultAnalyzerClass();
+
 }

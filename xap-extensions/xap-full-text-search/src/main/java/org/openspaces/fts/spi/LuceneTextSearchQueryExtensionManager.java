@@ -17,14 +17,9 @@
 package org.openspaces.fts.spi;
 
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
-import com.gigaspaces.query.extension.QueryExtensionEntryIterator;
-import com.gigaspaces.query.extension.QueryExtensionManager;
-import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
-import com.gigaspaces.server.SpaceServerEntry;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -32,8 +27,9 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.openspaces.spatial.lucene.common.spi.BaseLuceneConfiguration;
 import org.openspaces.spatial.lucene.common.spi.BaseLuceneQueryExtensionManager;
-import org.openspaces.spatial.lucene.common.spi.LuceneTypeIndex;
+import org.openspaces.spatial.lucene.common.spi.BaseLuceneTypeIndex;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
@@ -63,6 +59,11 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
         }
         Field field = new TextField(path, (String) fieldValue, Field.Store.NO);
         return new Field[]{field};
+    }
+
+    @Override
+    protected BaseLuceneTypeIndex createTypeIndex(BaseLuceneConfiguration luceneConfig, String namespace, SpaceTypeDescriptor typeDescriptor) throws IOException {
+        return new LuceneTextSearchTypeIndex(luceneConfig, namespace, typeDescriptor);
     }
 
     @Override

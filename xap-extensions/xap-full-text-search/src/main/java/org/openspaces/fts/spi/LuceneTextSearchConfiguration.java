@@ -17,30 +17,12 @@
 package org.openspaces.fts.spi;
 
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
-import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.context.SpatialContextFactory;
-import com.spatial4j.core.context.jts.JtsSpatialContext;
-import com.spatial4j.core.context.jts.JtsSpatialContextFactory;
-import com.spatial4j.core.shape.impl.RectangleImpl;
 
-import org.apache.lucene.spatial.SpatialStrategy;
-import org.apache.lucene.spatial.bbox.BBoxStrategy;
-import org.apache.lucene.spatial.composite.CompositeSpatialStrategy;
-import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
-import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
-import org.apache.lucene.spatial.prefix.tree.QuadPrefixTree;
-import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
-import org.apache.lucene.spatial.serialized.SerializedDVStrategy;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.MMapDirectory;
-import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.openspaces.spatial.lucene.common.spi.BaseLuceneConfiguration;
 import org.openspaces.spatial.lucene.common.spi.BaseLuceneQueryExtensionProvider;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.logging.Logger;
 
 /**
  * @author Yohana Khoury
@@ -55,8 +37,21 @@ public class LuceneTextSearchConfiguration extends BaseLuceneConfiguration {
 
     public static final String STORAGE_DIRECTORYTYPE = "lucene.full.text.search.storage.directory-type";
 
+    public static final String DEFAULT_ANALYZER_PROPERTY_KEY = "lucene.full.text.search.default.analyzer";
+    private Class _defaultAnalyzer;
+
     public LuceneTextSearchConfiguration(BaseLuceneQueryExtensionProvider provider, QueryExtensionRuntimeInfo info) {
         super(provider, info);
+        this._defaultAnalyzer = initDefaultAnalyzer(provider);
+    }
+
+    private Class initDefaultAnalyzer(BaseLuceneQueryExtensionProvider provider) {
+        String analyzerClassName = provider.getCustomProperty(DEFAULT_ANALYZER_PROPERTY_KEY, StandardAnalyzer.class.getName());
+        try {
+            return this.getClass().getClassLoader().loadClass(analyzerClassName);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException("Failed to load analyzer class " + analyzerClassName + ". Check property " + DEFAULT_ANALYZER_PROPERTY_KEY);
+        }
     }
 
     @Override
@@ -77,5 +72,10 @@ public class LuceneTextSearchConfiguration extends BaseLuceneConfiguration {
     @Override
     protected String getStorageDirectoryTypePropertyKey() {
         return STORAGE_DIRECTORYTYPE;
+    }
+
+    @Override
+    public Class getDefaultAnalyzerClass() {
+        return _defaultAnalyzer;
     }
 }
