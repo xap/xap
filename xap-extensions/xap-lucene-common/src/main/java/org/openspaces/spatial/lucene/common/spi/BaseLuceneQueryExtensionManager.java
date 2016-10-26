@@ -55,7 +55,7 @@ public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionMana
     private static final int MAX_RESULTS = Integer.MAX_VALUE;
 
     private final String _namespace;
-    private final Map<String, BaseLuceneTypeIndex> _luceneHolderMap = new ConcurrentHashMap<String, BaseLuceneTypeIndex>();
+    protected final Map<String, BaseLuceneTypeIndex> _luceneHolderMap = new ConcurrentHashMap<String, BaseLuceneTypeIndex>();
     private final BaseLuceneConfiguration _luceneConfiguration;
 
     public BaseLuceneQueryExtensionManager(QueryExtensionProvider provider, QueryExtensionRuntimeInfo info, BaseLuceneConfiguration configuration) {
@@ -156,7 +156,7 @@ public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionMana
         if (_logger.isLoggable(Level.FINE))
             _logger.log(Level.FINE, "query [typeName=" + typeName + ", path=" + path + ", operation=" + operationName + ", operand=" + operand + "]");
 
-        final Query query = createQuery(path, operationName, operand);
+        final Query query = createQuery(typeName, path, operationName, operand);
         final BaseLuceneTypeIndex luceneHolder = _luceneHolderMap.get(typeName);
         try {
             // Flush
@@ -171,7 +171,7 @@ public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionMana
         }
     }
 
-    protected abstract Query createQuery(String path, String operationName, Object operand);
+    protected abstract Query createQuery(String typeName, String path, String operationName, Object operand);
 
     @Override
     public void removeEntry(SpaceTypeDescriptor typeDescriptor, String uid, int version) {

@@ -21,15 +21,27 @@ import java.util.Map;
  * @author Vitaliy_Zinchenko
  */
 public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
+
+    private Analyzer _mainAnalyzer;
+    private Map<String, Analyzer> _fieldAnalyzers;
+
     public LuceneTextSearchTypeIndex(BaseLuceneConfiguration luceneConfig, String namespace, SpaceTypeDescriptor typeDescriptor) throws IOException {
         super(luceneConfig, namespace, typeDescriptor);
     }
 
+    public Analyzer getFieldAnalyzer(String fieldName) {
+        return _fieldAnalyzers.get(fieldName);
+    }
+
+    public Analyzer getMainAnalyzer() {
+        return _mainAnalyzer;
+    }
+
     @Override
     protected Analyzer createAnalyzer(BaseLuceneConfiguration luceneConfig, SpaceTypeDescriptor typeDescriptor) {
-        Analyzer mainAnalyzer = getMainAnalyzer(luceneConfig, typeDescriptor);
-        Map<String, Analyzer> fieldAnalyzers = createFieldAnalyzers(typeDescriptor);
-        return new PerFieldAnalyzerWrapper(mainAnalyzer, fieldAnalyzers);
+        _mainAnalyzer = getMainAnalyzer(luceneConfig, typeDescriptor);
+        _fieldAnalyzers = createFieldAnalyzers(typeDescriptor);
+        return new PerFieldAnalyzerWrapper(_mainAnalyzer, _fieldAnalyzers);
     }
 
     private Analyzer getMainAnalyzer(BaseLuceneConfiguration luceneConfig, SpaceTypeDescriptor typeDescriptor) {

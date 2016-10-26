@@ -19,6 +19,7 @@ package org.openspaces.fts.spi;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
@@ -67,10 +68,16 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
     }
 
     @Override
-    protected Query createQuery(String path, String operationName, Object operand) {
+    protected Query createQuery(String typeName, String path, String operationName, Object operand) {
         validateOperationName(operationName);
         try {
-            return new QueryParser("content", new StandardAnalyzer()).parse("content:" + operand); //TODO StandardAnalyzer
+            LuceneTextSearchTypeIndex typeIndex = (LuceneTextSearchTypeIndex) _luceneHolderMap.get(typeName);
+            Analyzer analyzer = typeIndex.getMainAnalyzer();
+            Analyzer fieldAnalyzer = typeIndex.getFieldAnalyzer(path);
+            if (fieldAnalyzer != null) {
+                analyzer = fieldAnalyzer;
+            }
+            return new QueryParser("content", analyzer).parse("content:" + operand);
         } catch (ParseException e) {
             throw new IllegalArgumentException("Couldn't create full text search query for path=" + path + " operationName=" + operationName + " operand=" + operand);
         }
