@@ -23,6 +23,7 @@ import com.gigaspaces.query.extension.metadata.DefaultQueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPropertyInfo;
 
 import org.openspaces.fts.SpaceTextIndex;
+import org.openspaces.fts.SpaceTextIndexes;
 import org.openspaces.spatial.lucene.common.spi.BaseLuceneConfiguration;
 import org.openspaces.spatial.lucene.common.spi.BaseLuceneQueryExtensionProvider;
 
@@ -60,9 +61,22 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
     public QueryExtensionPropertyInfo getPropertyExtensionInfo(String property, Annotation annotation) {
         QueryExtensionPropertyInfo result = new QueryExtensionPropertyInfo();
         if (annotation instanceof SpaceTextIndex) {
-            result.addPathInfo(property, new DefaultQueryExtensionPathInfo());
+            addIndex(result, path(property, (SpaceTextIndex) annotation));
+        } else if (annotation instanceof SpaceTextIndexes) {
+            SpaceTextIndexes indexes = (SpaceTextIndexes)annotation;
+            for (SpaceTextIndex index: indexes.value()) {
+                addIndex(result, path(property, index));
+            }
         }
         return result;
+    }
+
+    private void addIndex(QueryExtensionPropertyInfo result, String path) {
+        result.addPathInfo(path, new DefaultQueryExtensionPathInfo());
+    }
+
+    private static String path(String property, SpaceTextIndex index) {
+        return index.path().length() == 0 ? property : property + "." + index.path();
     }
 
     public String getCustomProperty(String key, String defaultValue) {

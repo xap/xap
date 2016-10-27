@@ -16,8 +16,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @SpaceQueryExtension(providerClass = LuceneTextSearchQueryExtensionProvider.class)
 @Target(METHOD)
 @Retention(RUNTIME)
-public @interface SpaceTextIndex {
+public @interface SpaceTextIndexes {
 
-    String path() default "";
+    SpaceTextIndex[] value();
 
 }

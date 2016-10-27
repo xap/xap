@@ -77,7 +77,7 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
             if (fieldAnalyzer != null) {
                 analyzer = fieldAnalyzer;
             }
-            return new QueryParser("content", analyzer).parse("content:" + operand);
+            return new QueryParser(path, analyzer).parse(path + ":" + operand);
         } catch (ParseException e) {
             throw new IllegalArgumentException("Couldn't create full text search query for path=" + path + " operationName=" + operationName + " operand=" + operand);
         }
