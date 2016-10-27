@@ -16,13 +16,15 @@
 
 package org.openspaces.fts.spi;
 
+import com.gigaspaces.SpaceRuntimeException;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
@@ -31,7 +33,9 @@ import org.openspaces.spatial.lucene.common.spi.BaseLuceneQueryExtensionManager;
 import org.openspaces.spatial.lucene.common.spi.BaseLuceneTypeIndex;
 
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+
 
 /**
  * @author yechielf
@@ -49,8 +53,21 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
     }
 
     @Override
-    public boolean accept(String operation, Object leftOperand, Object rightOperand) {
-        return true; //TODO implement
+    public boolean accept(String operation, Object fromGrid, Object luceneQuery) {
+        if (_logger.isLoggable(Level.FINE))
+            _logger.log(Level.FINE, "filter [operation=" + operation + ", leftOperand(value from grid)=" + fromGrid + ", rightOperand(lucene query)=" + luceneQuery + "]");
+
+        // ignoring operation for now
+        try {
+            Analyzer analyzer = new SimpleAnalyzer(); //TODO which analyzer?
+            MemoryIndex index = new MemoryIndex();
+            index.addField("content", String.valueOf(fromGrid), analyzer);
+            Query query = new QueryParser("content", analyzer).parse(String.valueOf(luceneQuery));
+            float score = index.search(query);
+            return score > 0.0f;
+        } catch (ParseException e) {
+            throw new SpaceRuntimeException("Could not parse full text query [ " + luceneQuery + " ]", e);
+        }
     }
 
     @Override
