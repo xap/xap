@@ -113,6 +113,9 @@ public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionMana
         Document doc = null;
         for (String path : luceneHolder.getQueryExtensionInfo().getPaths()) {
             final Object fieldValue = entry.getPathValue(path);
+            if(fieldValue == null) {
+                continue;
+            }
             Field[] fields = convertField(path, fieldValue);
             if (doc == null && fields.length != 0) {
                 doc = new Document();
