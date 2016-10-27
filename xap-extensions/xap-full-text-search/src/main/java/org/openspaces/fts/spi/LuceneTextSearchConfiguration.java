@@ -25,8 +25,7 @@ import org.openspaces.spatial.lucene.common.spi.BaseLuceneQueryExtensionProvider
 import java.util.logging.Logger;
 
 /**
- * @author Yohana Khoury
- * @since 11.0
+ * @author Vitaliy_Zinchenko
  */
 public class LuceneTextSearchConfiguration extends BaseLuceneConfiguration {
 

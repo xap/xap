@@ -31,8 +31,7 @@ import java.lang.annotation.Annotation;
 import java.util.Properties;
 
 /**
- * @author Niv Ingberg
- * @since 11.0
+ * @author Vitaliy_Zinchenko
  */
 public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExtensionProvider {
 

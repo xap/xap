@@ -38,8 +38,7 @@ import java.util.logging.Logger;
 
 
 /**
- * @author yechielf
- * @since 11.0
+ * @author Vitaliy_Zinchenko
  */
 public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtensionManager {
     private static final Logger _logger = Logger.getLogger(LuceneTextSearchQueryExtensionManager.class.getName());
