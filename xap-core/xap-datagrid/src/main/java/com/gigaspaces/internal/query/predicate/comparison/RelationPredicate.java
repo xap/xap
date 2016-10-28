@@ -33,6 +33,7 @@ public class RelationPredicate extends ScalarSpacePredicate {
     private static final long serialVersionUID = 1L;
     private String namespace;
     private String typeName;
+    private String path;
     private String op;
     private transient QueryExtensionIndexManagerWrapper _handler;
     private transient CacheManager _cacheManager;
@@ -51,10 +52,11 @@ public class RelationPredicate extends ScalarSpacePredicate {
         this._cacheManager = cacheManager;
     }
 
-    public RelationPredicate(String namespace, String typeName, String op, Object value /* todo change to shape*/) {
+    public RelationPredicate(String namespace, String typeName, String path, String op, Object value /* todo change to shape*/) {
         super(value, null);
         this.namespace = namespace;
         this.typeName = typeName;
+        this.path = path;
         this.op = op;
     }
 
@@ -69,7 +71,7 @@ public class RelationPredicate extends ScalarSpacePredicate {
                 throw new IllegalStateException("Unknown namespace [" + namespace + "]");
             }
         }
-        return _handler.filter(op, actual, expected);
+        return _handler.filter(typeName, path, op, actual, expected);
     }
 
     @Override
@@ -82,6 +84,7 @@ public class RelationPredicate extends ScalarSpacePredicate {
         super.writeExternal(out);
         IOUtils.writeString(out, namespace);
         IOUtils.writeString(out, typeName);
+        IOUtils.writeString(out, path);
         IOUtils.writeString(out, op);
     }
 
@@ -90,6 +93,7 @@ public class RelationPredicate extends ScalarSpacePredicate {
         super.readExternal(in);
         namespace = IOUtils.readString(in);
         typeName = IOUtils.readString(in);
+        path = IOUtils.readString(in);
         op = IOUtils.readString(in);
     }
 }

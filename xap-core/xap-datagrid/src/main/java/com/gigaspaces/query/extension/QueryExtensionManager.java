@@ -40,7 +40,7 @@ public abstract class QueryExtensionManager implements Closeable {
     public void registerType(SpaceTypeDescriptor typeDescriptor) {
     }
 
-    public abstract boolean accept(String operation, Object leftOperand, Object rightOperand);
+    public abstract boolean accept(String typeName, String path, String operation, Object leftOperand, Object rightOperand);
 
     public abstract boolean insertEntry(SpaceServerEntry entry, boolean hasPrevious);
 

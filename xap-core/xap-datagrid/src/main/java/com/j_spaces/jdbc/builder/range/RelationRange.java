@@ -47,7 +47,7 @@ public class RelationRange extends SingleValueRange {
     }
 
     public RelationRange(String typeName, String columnPath, Object subject, String namespace, String relation) {
-        super(columnPath, null, subject, new RelationPredicate(namespace, typeName, relation, subject));
+        super(columnPath, null, subject, new RelationPredicate(namespace, typeName, columnPath, relation, subject));
         this.typeName = typeName;
         this.namespace = namespace;
         this.relation = relation;

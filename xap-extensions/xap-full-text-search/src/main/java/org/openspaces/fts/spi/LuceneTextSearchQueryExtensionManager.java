@@ -53,13 +53,14 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
     }
 
     @Override
-    public boolean accept(String operation, Object fromGrid, Object luceneQuery) {
+    public boolean accept(String typeName, String path, String operation, Object fromGrid, Object luceneQuery) {
         if (_logger.isLoggable(Level.FINE))
             _logger.log(Level.FINE, "filter [operation=" + operation + ", leftOperand(value from grid)=" + fromGrid + ", rightOperand(lucene query)=" + luceneQuery + "]");
 
         // ignoring operation for now
         try {
-            Analyzer analyzer = new SimpleAnalyzer(); //TODO which analyzer?
+            LuceneTextSearchTypeIndex typeIndex = (LuceneTextSearchTypeIndex) _luceneHolderMap.get(typeName);
+            Analyzer analyzer = typeIndex.getAnalyzerForPath(path);
             MemoryIndex index = new MemoryIndex();
             index.addField("content", String.valueOf(fromGrid), analyzer);
             Query query = new QueryParser("content", analyzer).parse(String.valueOf(luceneQuery));
@@ -89,11 +90,7 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
         validateOperationName(operationName);
         try {
             LuceneTextSearchTypeIndex typeIndex = (LuceneTextSearchTypeIndex) _luceneHolderMap.get(typeName);
-            Analyzer analyzer = typeIndex.getMainAnalyzer();
-            Analyzer fieldAnalyzer = typeIndex.getFieldAnalyzer(path);
-            if (fieldAnalyzer != null) {
-                analyzer = fieldAnalyzer;
-            }
+            Analyzer analyzer = typeIndex.getAnalyzerForPath(path);
             return new QueryParser(path, analyzer).parse(path + ":" + operand);
         } catch (ParseException e) {
             throw new IllegalArgumentException("Couldn't create full text search query for path=" + path + " operationName=" + operationName + " operand=" + operand);

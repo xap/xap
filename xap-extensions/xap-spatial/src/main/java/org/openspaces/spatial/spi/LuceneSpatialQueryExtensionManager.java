@@ -152,7 +152,7 @@ public class LuceneSpatialQueryExtensionManager extends QueryExtensionManager {
     }
 
     @Override
-    public boolean accept(String operationName, Object leftOperand, Object rightOperand) {
+    public boolean accept(String typeName, String path, String operationName, Object leftOperand, Object rightOperand) {
         if (_logger.isLoggable(Level.FINE))
             _logger.log(Level.FINE, "filter [operation=" + operationName + ", leftOperand=" + leftOperand + ", rightOperand=" + rightOperand + "]");
 

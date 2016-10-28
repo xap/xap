@@ -29,12 +29,13 @@ public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
         super(luceneConfig, namespace, typeDescriptor);
     }
 
-    public Analyzer getFieldAnalyzer(String fieldName) {
-        return _fieldAnalyzers.get(fieldName);
-    }
-
-    public Analyzer getMainAnalyzer() {
-        return _mainAnalyzer;
+    public Analyzer getAnalyzerForPath(String path) {
+        Analyzer analyzer = _mainAnalyzer;
+        Analyzer fieldAnalyzer = _fieldAnalyzers.get(path);
+        if (fieldAnalyzer != null) {
+            analyzer = fieldAnalyzer;
+        }
+        return analyzer;
     }
 
     @Override

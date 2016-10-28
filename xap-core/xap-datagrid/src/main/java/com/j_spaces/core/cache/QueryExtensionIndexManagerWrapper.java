@@ -86,8 +86,8 @@ public class QueryExtensionIndexManagerWrapper {
         }
     }
 
-    public boolean filter(String operation, Object actual, Object matchedAgainst) {
-        return manager.accept(operation, actual, matchedAgainst);
+    public boolean filter(String typeName, String path, String operation, Object actual, Object matchedAgainst) {
+        return manager.accept(typeName, path, operation, actual, matchedAgainst);
     }
 
     public QueryExtensionIndexEntryIteratorWrapper scanIndex(String typeName, String path, String operation, Object subject) {
