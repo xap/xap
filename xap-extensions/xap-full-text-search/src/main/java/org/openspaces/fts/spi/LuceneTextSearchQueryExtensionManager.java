@@ -56,12 +56,12 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
         if (_logger.isLoggable(Level.FINE))
             _logger.log(Level.FINE, "filter [operation=" + operation + ", leftOperand(value from grid)=" + fromGrid + ", rightOperand(lucene query)=" + luceneQuery + "]");
 
-        // ignoring operation for now
+        // TODO ignoring operation for now
         try {
             LuceneTextSearchTypeIndex typeIndex = (LuceneTextSearchTypeIndex) _luceneHolderMap.get(typeName);
             Analyzer analyzer = typeIndex.getAnalyzerForPath(path);
             MemoryIndex index = new MemoryIndex();
-            index.addField("content", String.valueOf(fromGrid), analyzer);
+            index.addField("content", String.valueOf(fromGrid), analyzer); //TODO if null
             Query query = new QueryParser("content", analyzer).parse(String.valueOf(luceneQuery));
             float score = index.search(query);
             return score > 0.0f;
