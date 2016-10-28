@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package org.openspaces.spatial.lucene.common.spi;
+package org.openspaces.spatial.lucene.common;
 
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;

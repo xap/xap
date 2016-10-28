@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-package org.openspaces.fts.spi;
+package org.openspaces.textsearch;
 
 import com.gigaspaces.SpaceRuntimeException;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
-import org.openspaces.spatial.lucene.common.spi.BaseLuceneConfiguration;
-import org.openspaces.spatial.lucene.common.spi.BaseLuceneQueryExtensionManager;
-import org.openspaces.spatial.lucene.common.spi.BaseLuceneTypeIndex;
+import org.openspaces.spatial.lucene.common.BaseLuceneConfiguration;
+import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionManager;
+import org.openspaces.spatial.lucene.common.BaseLuceneTypeIndex;
 
 import java.io.IOException;
 import java.util.logging.Level;

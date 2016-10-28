@@ -1,4 +1,4 @@
-package org.openspaces.spatial.lucene.common.spi;
+package org.openspaces.spatial.lucene.common;
 
 import org.apache.lucene.analysis.Analyzer;
 

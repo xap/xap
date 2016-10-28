@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package org.openspaces.fts.spi;
+package org.openspaces.textsearch;
 
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.openspaces.spatial.lucene.common.spi.BaseLuceneConfiguration;
-import org.openspaces.spatial.lucene.common.spi.BaseLuceneQueryExtensionProvider;
-
-import java.util.logging.Logger;
+import org.openspaces.spatial.lucene.common.BaseLuceneConfiguration;
+import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionProvider;
 
 /**
  * @author Vitaliy_Zinchenko

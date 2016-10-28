@@ -1,7 +1,4 @@
-package org.openspaces.fts;
-
-import com.gigaspaces.query.extension.SpaceQueryExtension;
-import org.openspaces.fts.spi.LuceneTextSearchQueryExtensionProvider;
+package org.openspaces.textsearch;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;

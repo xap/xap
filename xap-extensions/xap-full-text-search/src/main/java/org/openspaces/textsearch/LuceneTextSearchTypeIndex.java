@@ -1,13 +1,12 @@
-package org.openspaces.fts.spi;
+package org.openspaces.textsearch;
 
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
-import org.openspaces.fts.SpaceTextAnalyzer;
-import org.openspaces.spatial.lucene.common.spi.BaseLuceneConfiguration;
-import org.openspaces.spatial.lucene.common.spi.BaseLuceneTypeIndex;
-import org.openspaces.spatial.lucene.common.spi.Utils;
+import org.openspaces.spatial.lucene.common.BaseLuceneConfiguration;
+import org.openspaces.spatial.lucene.common.BaseLuceneTypeIndex;
+import org.openspaces.spatial.lucene.common.Utils;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
