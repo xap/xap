@@ -52,10 +52,10 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
 
     @Override
     public boolean accept(String typeName, String path, String operation, Object fromGrid, Object luceneQuery) {
+        validateOperationName(operation);
         if (_logger.isLoggable(Level.FINE))
             _logger.log(Level.FINE, "filter [operation=" + operation + ", leftOperand(value from grid)=" + fromGrid + ", rightOperand(lucene query)=" + luceneQuery + "]");
 
-        // TODO ignoring operation for now
         try {
             Analyzer analyzer = getAnalyzer(typeName, path);
             MemoryIndex index = new MemoryIndex();
@@ -76,7 +76,8 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
     @Override
     protected Field[] convertField(String path, Object fieldValue) {
         if (!(fieldValue instanceof String)) {
-            throw new IllegalArgumentException("Field '" + path + "' with value '" + fieldValue + "' is not String. Try to use 'path' of the @" + SpaceTextAnalyzer.class.getSimpleName() + " or @" + SpaceTextIndex.class.getSimpleName());
+            throw new IllegalArgumentException("Field '" + path + "' with value '" + fieldValue + "' is not String. " +
+                    "Try to use 'path' of the @" + SpaceTextAnalyzer.class.getSimpleName() + " or @" + SpaceTextIndex.class.getSimpleName());
         }
         Field field = new TextField(path, (String) fieldValue, Field.Store.NO);
         return new Field[]{field};
@@ -101,7 +102,7 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
 
     private void validateOperationName(String operationName) {
         if (!SEARCH_OPERATION_NAME.equals(operationName)) {
-            throw new IllegalArgumentException("Provided operationName=" + operationName + " is illegal. Correct one is '" + SEARCH_OPERATION_NAME + "'");
+            throw new IllegalArgumentException("Provided operationName=" + operationName + " is incorrect. Correct one is '" + SEARCH_OPERATION_NAME + "'");
         }
     }
 
