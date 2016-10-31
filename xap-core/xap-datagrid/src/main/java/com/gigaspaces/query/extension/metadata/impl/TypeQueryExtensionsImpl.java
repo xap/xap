@@ -51,16 +51,26 @@ public class TypeQueryExtensionsImpl implements TypeQueryExtensions, Externaliza
     }
 
     public TypeQueryExtensionsImpl(SpaceTypeInfo typeInfo) {
+        for(Annotation annotation: typeInfo.getType().getAnnotations()) {
+            if (annotation.annotationType().isAnnotationPresent(SpaceQueryExtension.class)) {
+                final QueryExtensionProvider provider = extractQueryExtensionProvider(annotation);
+                addNamespaceIfNeeded(provider.getNamespace());
+            }
+        }
         for (SpacePropertyInfo property : typeInfo.getSpaceProperties()) {
             for (Annotation annotation : property.getGetterMethod().getDeclaredAnnotations())
                 if (annotation.annotationType().isAnnotationPresent(SpaceQueryExtension.class)) {
-                    final SpaceQueryExtension spaceQueryExtension = annotation.annotationType().getAnnotation(SpaceQueryExtension.class);
-                    final QueryExtensionProvider provider = QueryExtensionProviderCache.getByClass(spaceQueryExtension.providerClass());
+                    final QueryExtensionProvider provider = extractQueryExtensionProvider(annotation);
                     final QueryExtensionPropertyInfo propertyInfo = provider.getPropertyExtensionInfo(property.getName(), annotation);
                     for (String path : propertyInfo.getPaths())
                         add(provider.getNamespace(), path, propertyInfo.getPathInfo(path));
                 }
         }
+    }
+
+    private QueryExtensionProvider extractQueryExtensionProvider(Annotation annotation) {
+        final SpaceQueryExtension spaceQueryExtension = annotation.annotationType().getAnnotation(SpaceQueryExtension.class);
+        return QueryExtensionProviderCache.getByClass(spaceQueryExtension.providerClass());
     }
 
     public void add(Class<? extends Annotation> annotationType, String path) {
@@ -89,9 +99,13 @@ public class TypeQueryExtensionsImpl implements TypeQueryExtensions, Externaliza
 
 
     private void add(String namespace, String path, QueryExtensionPathInfo queryExtensionPathInfo) {
+        addNamespaceIfNeeded(namespace);
+        info.get(namespace).add(path, queryExtensionPathInfo);
+    }
+
+    private void addNamespaceIfNeeded(String namespace) {
         if (!info.containsKey(namespace))
             info.put(namespace, new TypeQueryExtensionImpl());
-        info.get(namespace).add(path, queryExtensionPathInfo);
     }
 
     @Override
