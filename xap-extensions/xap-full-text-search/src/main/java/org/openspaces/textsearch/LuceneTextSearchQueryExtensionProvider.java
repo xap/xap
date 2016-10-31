@@ -56,11 +56,20 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
     public QueryExtensionPropertyInfo getPropertyExtensionInfo(String property, Annotation annotation) {
         QueryExtensionPropertyInfo result = new QueryExtensionPropertyInfo();
         if (annotation instanceof SpaceTextIndex) {
-            addIndex(result, path(property, (SpaceTextIndex) annotation));
+            SpaceTextIndex index = (SpaceTextIndex) annotation;
+            addIndex(result, path(property, index.path()));
         } else if (annotation instanceof SpaceTextIndexes) {
             SpaceTextIndexes indexes = (SpaceTextIndexes)annotation;
             for (SpaceTextIndex index: indexes.value()) {
-                addIndex(result, path(property, index));
+                addIndex(result, path(property, index.path()));
+            }
+        } else if (annotation instanceof SpaceTextAnalyzer) {
+            SpaceTextAnalyzer analyzer = (SpaceTextAnalyzer) annotation;
+            addIndex(result, path(property, analyzer.path()));
+        } else if(annotation instanceof SpaceTextAnalyzers) {
+            SpaceTextAnalyzers analyzers = (SpaceTextAnalyzers) annotation;
+            for(SpaceTextAnalyzer analyzer: analyzers.value()) {
+                addIndex(result, path(property, analyzer.path()));
             }
         }
         return result;
@@ -70,8 +79,8 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
         result.addPathInfo(path, new DefaultQueryExtensionPathInfo());
     }
 
-    private static String path(String property, SpaceTextIndex index) {
-        return index.path().length() == 0 ? property : property + "." + index.path();
+    private static String path(String property, String relativePath) {
+        return relativePath.length() == 0 ? property : property + "." + relativePath;
     }
 
     public String getCustomProperty(String key, String defaultValue) {

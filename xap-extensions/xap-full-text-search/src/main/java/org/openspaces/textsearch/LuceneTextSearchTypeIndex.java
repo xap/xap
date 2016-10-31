@@ -45,13 +45,12 @@ public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
     }
 
     private Analyzer getMainAnalyzer(BaseLuceneConfiguration luceneConfig, SpaceTypeDescriptor typeDescriptor) {
-        Class analyzerClass = null;
         if (typeDescriptor.getObjectClass().isAnnotationPresent(SpaceTextAnalyzer.class)) {
-            analyzerClass = typeDescriptor.getObjectClass().getAnnotation(SpaceTextAnalyzer.class).clazz();
+            Class analyzerClass = typeDescriptor.getObjectClass().getAnnotation(SpaceTextAnalyzer.class).clazz();
+            return Utils.createAnalyzer(analyzerClass);
         } else {
-            analyzerClass = luceneConfig.getDefaultAnalyzerClass();
+            return luceneConfig.getDefaultAnalyzer();
         }
-        return Utils.createAnalyzer(analyzerClass);
     }
 
     private Map<String, Analyzer> createFieldAnalyzers(SpaceTypeDescriptor typeDescriptor) {

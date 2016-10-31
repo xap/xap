@@ -18,9 +18,11 @@ package org.openspaces.textsearch;
 
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.openspaces.spatial.lucene.common.BaseLuceneConfiguration;
 import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionProvider;
+import org.openspaces.spatial.lucene.common.Utils;
 
 /**
  * @author Vitaliy_Zinchenko
@@ -35,17 +37,17 @@ public class LuceneTextSearchConfiguration extends BaseLuceneConfiguration {
     public static final String STORAGE_DIRECTORYTYPE = "lucene.full.text.search.storage.directory-type";
 
     public static final String DEFAULT_ANALYZER_PROPERTY_KEY = "lucene.full.text.search.default.analyzer";
-    private Class _defaultAnalyzer;
+    private Analyzer _defaultAnalyzer;
 
     public LuceneTextSearchConfiguration(BaseLuceneQueryExtensionProvider provider, QueryExtensionRuntimeInfo info) {
         super(provider, info);
         this._defaultAnalyzer = initDefaultAnalyzer(provider);
     }
 
-    private Class initDefaultAnalyzer(BaseLuceneQueryExtensionProvider provider) {
+    private Analyzer initDefaultAnalyzer(BaseLuceneQueryExtensionProvider provider) {
         String analyzerClassName = provider.getCustomProperty(DEFAULT_ANALYZER_PROPERTY_KEY, StandardAnalyzer.class.getName());
         try {
-            return this.getClass().getClassLoader().loadClass(analyzerClassName);
+            return Utils.createAnalyzer(this.getClass().getClassLoader().loadClass(analyzerClassName)); //TODO refactor/ try to reuse existing utils
         } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException("Failed to load analyzer class " + analyzerClassName + ". Check property " + DEFAULT_ANALYZER_PROPERTY_KEY);
         }
@@ -72,7 +74,7 @@ public class LuceneTextSearchConfiguration extends BaseLuceneConfiguration {
     }
 
     @Override
-    public Class getDefaultAnalyzerClass() {
+    public Analyzer getDefaultAnalyzer() {
         return _defaultAnalyzer;
     }
 }

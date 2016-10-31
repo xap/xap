@@ -57,8 +57,7 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
 
         // TODO ignoring operation for now
         try {
-            LuceneTextSearchTypeIndex typeIndex = (LuceneTextSearchTypeIndex) _luceneHolderMap.get(typeName);
-            Analyzer analyzer = typeIndex.getAnalyzerForPath(path);
+            Analyzer analyzer = getAnalyzer(typeName, path);
             MemoryIndex index = new MemoryIndex();
             index.addField("content", String.valueOf(fromGrid), analyzer); //TODO if null
             Query query = new QueryParser("content", analyzer).parse(String.valueOf(luceneQuery));
@@ -67,6 +66,11 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
         } catch (ParseException e) {
             throw new SpaceRuntimeException("Could not parse full text query [ " + luceneQuery + " ]", e);
         }
+    }
+
+    private Analyzer getAnalyzer(String typeName, String path) {
+        LuceneTextSearchTypeIndex typeIndex = (LuceneTextSearchTypeIndex) _luceneHolderMap.get(typeName);
+        return typeIndex != null ? typeIndex.getAnalyzerForPath(path) : _luceneConfiguration.getDefaultAnalyzer();
     }
 
     @Override

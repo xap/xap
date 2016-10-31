@@ -18,6 +18,7 @@ package org.openspaces.spatial.lucene.common;
 
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.store.RAMDirectory;
@@ -130,6 +131,6 @@ public abstract class BaseLuceneConfiguration {
         public abstract Directory getDirectory(String relativePath) throws IOException;
     }
 
-    public abstract Class getDefaultAnalyzerClass();
+    public abstract Analyzer getDefaultAnalyzer();
 
 }

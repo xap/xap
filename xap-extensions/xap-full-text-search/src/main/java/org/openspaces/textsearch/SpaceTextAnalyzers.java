@@ -15,10 +15,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @SpaceQueryExtension(providerClass = LuceneTextSearchQueryExtensionProvider.class)
 @Target({METHOD, TYPE})
 @Retention(RUNTIME)
-public @interface SpaceTextAnalyzer {
+public @interface SpaceTextAnalyzers {
 
-    Class clazz();
-
-    String path() default "";
+    SpaceTextAnalyzer[] value();
 
 }

@@ -56,7 +56,7 @@ public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionMana
 
     private final String _namespace;
     protected final Map<String, BaseLuceneTypeIndex> _luceneHolderMap = new ConcurrentHashMap<String, BaseLuceneTypeIndex>();
-    private final BaseLuceneConfiguration _luceneConfiguration;
+    protected final BaseLuceneConfiguration _luceneConfiguration;
 
     public BaseLuceneQueryExtensionManager(QueryExtensionProvider provider, QueryExtensionRuntimeInfo info, BaseLuceneConfiguration configuration) {
         super(info);
