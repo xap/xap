@@ -76,7 +76,7 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
     @Override
     protected Field[] convertField(String path, Object fieldValue) {
         if (!(fieldValue instanceof String)) {
-            throw new IllegalArgumentException("Field '" + path + "' with value '" + fieldValue + "' is not String.");
+            throw new IllegalArgumentException("Field '" + path + "' with value '" + fieldValue + "' is not String. Try to use 'path' of the @" + SpaceTextAnalyzer.class.getSimpleName() + " or @" + SpaceTextIndex.class.getSimpleName());
         }
         Field field = new TextField(path, (String) fieldValue, Field.Store.NO);
         return new Field[]{field};

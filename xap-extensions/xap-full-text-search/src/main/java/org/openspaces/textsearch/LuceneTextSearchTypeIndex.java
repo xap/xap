@@ -61,7 +61,7 @@ public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
                 Method readMethod = propertyDescriptor.getReadMethod();
                 if(readMethod.isAnnotationPresent(SpaceTextAnalyzer.class)) {
                     SpaceTextAnalyzer annotation = readMethod.getAnnotation(SpaceTextAnalyzer.class);
-                    addAnalyzer(analyzerMap, propertyDescriptor, annotation.path(), annotation.getClass());
+                    addAnalyzer(analyzerMap, propertyDescriptor, annotation.path(), annotation.clazz());
                 } else if(readMethod.isAnnotationPresent(SpaceTextAnalyzers.class)) {
                     SpaceTextAnalyzers annotation = readMethod.getAnnotation(SpaceTextAnalyzers.class);
                     for(SpaceTextAnalyzer analyzerAnnotation: annotation.value()) {
