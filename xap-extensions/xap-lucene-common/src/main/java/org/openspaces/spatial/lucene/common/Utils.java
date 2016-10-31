@@ -1,5 +1,7 @@
 package org.openspaces.spatial.lucene.common;
 
+import com.gigaspaces.SpaceRuntimeException;
+
 import org.apache.lucene.analysis.Analyzer;
 
 /**
@@ -14,7 +16,7 @@ final public class Utils {
         try {
             return (Analyzer) analyzerClass.newInstance();
         } catch (Exception e) {
-            throw new IllegalArgumentException("Failed to instantiate analyzer " + analyzerClass);
+            throw new IllegalArgumentException("Failed to instantiate analyzer " + analyzerClass, e);
         }
     }
 
