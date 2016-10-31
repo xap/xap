@@ -22,6 +22,7 @@ import com.gigaspaces.query.extension.metadata.DefaultQueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPropertyInfo;
 
 import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionProvider;
+import org.openspaces.spatial.lucene.common.Utils;
 
 import java.lang.annotation.Annotation;
 import java.util.Properties;
@@ -57,19 +58,19 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
         QueryExtensionPropertyInfo result = new QueryExtensionPropertyInfo();
         if (annotation instanceof SpaceTextIndex) {
             SpaceTextIndex index = (SpaceTextIndex) annotation;
-            addIndex(result, path(property, index.path()));
+            addIndex(result, Utils.makePath(property, index.path()));
         } else if (annotation instanceof SpaceTextIndexes) {
             SpaceTextIndexes indexes = (SpaceTextIndexes)annotation;
             for (SpaceTextIndex index: indexes.value()) {
-                addIndex(result, path(property, index.path()));
+                addIndex(result, Utils.makePath(property, index.path()));
             }
         } else if (annotation instanceof SpaceTextAnalyzer) {
             SpaceTextAnalyzer analyzer = (SpaceTextAnalyzer) annotation;
-            addIndex(result, path(property, analyzer.path()));
+            addIndex(result, Utils.makePath(property, analyzer.path()));
         } else if(annotation instanceof SpaceTextAnalyzers) {
             SpaceTextAnalyzers analyzers = (SpaceTextAnalyzers) annotation;
             for(SpaceTextAnalyzer analyzer: analyzers.value()) {
-                addIndex(result, path(property, analyzer.path()));
+                addIndex(result, Utils.makePath(property, analyzer.path()));
             }
         }
         return result;
@@ -77,10 +78,6 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
 
     private void addIndex(QueryExtensionPropertyInfo result, String path) {
         result.addPathInfo(path, new DefaultQueryExtensionPathInfo());
-    }
-
-    private static String path(String property, String relativePath) {
-        return relativePath.length() == 0 ? property : property + "." + relativePath;
     }
 
     public String getCustomProperty(String key, String defaultValue) {

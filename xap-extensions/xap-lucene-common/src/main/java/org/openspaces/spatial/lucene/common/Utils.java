@@ -18,4 +18,8 @@ final public class Utils {
         }
     }
 
+    public static String makePath(String property, String relativePath) {
+        return relativePath.length() == 0 ? property : property + "." + relativePath;
+    }
+
 }

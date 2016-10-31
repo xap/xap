@@ -60,14 +60,24 @@ public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
             for (PropertyDescriptor propertyDescriptor: propertyDescriptors) {
                 Method readMethod = propertyDescriptor.getReadMethod();
                 if(readMethod.isAnnotationPresent(SpaceTextAnalyzer.class)) {
-                    Class analyzerClass = readMethod.getAnnotation(SpaceTextAnalyzer.class).clazz();
-                    Analyzer analyzer = Utils.createAnalyzer(analyzerClass);
-                    analyzerMap.put(propertyDescriptor.getName(), analyzer);
+                    SpaceTextAnalyzer annotation = readMethod.getAnnotation(SpaceTextAnalyzer.class);
+                    addAnalyzer(analyzerMap, propertyDescriptor, annotation.path(), annotation.getClass());
+                } else if(readMethod.isAnnotationPresent(SpaceTextAnalyzers.class)) {
+                    SpaceTextAnalyzers annotation = readMethod.getAnnotation(SpaceTextAnalyzers.class);
+                    for(SpaceTextAnalyzer analyzerAnnotation: annotation.value()) {
+                        addAnalyzer(analyzerMap, propertyDescriptor, analyzerAnnotation.path(), analyzerAnnotation.getClass());
+                    }
                 }
             }
             return analyzerMap;
         } catch (IntrospectionException e) {
             throw new IllegalArgumentException("Failed to get bean info of passed type " + typeDescriptor.getTypeName());
         }
+    }
+
+    private void addAnalyzer(Map<String, Analyzer> analyzerMap, PropertyDescriptor propertyDescriptor, String relativePath, Class clazz) {
+        String path = Utils.makePath(propertyDescriptor.getName(), relativePath);
+        Analyzer analyzer = Utils.createAnalyzer(clazz);
+        analyzerMap.put(path, analyzer);
     }
 }
