@@ -17,8 +17,6 @@
         <jtsVersion>1.13</jtsVersion>
     </properties>
 
-
-    <!-- TODO clean dependencies -->
     <dependencies>
         <dependency>
             <groupId>org.gigaspaces</groupId>
@@ -29,56 +27,6 @@
             <artifactId>lucene-core</artifactId>
             <version>${luceneVersion}</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
-            <version>${luceneVersion}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-queryparser</artifactId>
-            <version>${luceneVersion}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-spatial</artifactId>
-            <version>${luceneVersion}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-queries</artifactId>
-            <version>${luceneVersion}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-sandbox</artifactId>
-            <version>${luceneVersion}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-misc</artifactId>
-            <version>${luceneVersion}</version>
-        </dependency>
-
-
-        <dependency>
-            <groupId>com.vividsolutions</groupId>
-            <artifactId>jts</artifactId>
-            <version>${jtsVersion}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.spatial4j</groupId>
-            <artifactId>spatial4j</artifactId>
-            <version>0.5</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.noggit</groupId>
-            <artifactId>noggit</artifactId>
-            <version>0.7</version>
-        </dependency>
-
 
         <dependency>
             <groupId>junit</groupId>
