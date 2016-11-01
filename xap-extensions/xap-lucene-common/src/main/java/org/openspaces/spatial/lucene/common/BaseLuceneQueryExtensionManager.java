@@ -163,7 +163,7 @@ public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionMana
         final BaseLuceneTypeIndex luceneHolder = _luceneHolderMap.get(typeName);
         try {
             // Flush
-            luceneHolder.commit(true); //TODO investigate why do we need to commit here
+            luceneHolder.commit(true);
 
             DirectoryReader dr = DirectoryReader.open(luceneHolder.getDirectory());
             IndexSearcher is = new IndexSearcher(dr);
