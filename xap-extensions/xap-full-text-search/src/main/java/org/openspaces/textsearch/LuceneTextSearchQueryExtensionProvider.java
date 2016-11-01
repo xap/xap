@@ -76,10 +76,6 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
         return result;
     }
 
-    private void addIndex(QueryExtensionPropertyInfo result, String path) {
-        result.addPathInfo(path, new DefaultQueryExtensionPathInfo());
-    }
-
     public String getCustomProperty(String key, String defaultValue) {
         return _customProperties.getProperty(key, defaultValue);
     }

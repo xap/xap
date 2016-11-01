@@ -39,7 +39,7 @@ import java.util.logging.Logger;
 /**
  * @author Vitaliy_Zinchenko
  */
-public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtensionManager {
+public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtensionManager<LuceneTextSearchConfiguration, LuceneTextSearchTypeIndex> {
     private static final Logger _logger = Logger.getLogger(LuceneTextSearchQueryExtensionManager.class.getName());
     public static final String SEARCH_OPERATION_NAME = "search";
 
@@ -84,7 +84,7 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
     }
 
     @Override
-    protected BaseLuceneTypeIndex createTypeIndex(BaseLuceneConfiguration luceneConfig, String namespace, SpaceTypeDescriptor typeDescriptor) throws IOException {
+    protected LuceneTextSearchTypeIndex createTypeIndex(LuceneTextSearchConfiguration luceneConfig, String namespace, SpaceTypeDescriptor typeDescriptor) throws IOException {
         return new LuceneTextSearchTypeIndex(luceneConfig, namespace, typeDescriptor);
     }
 
@@ -92,7 +92,7 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
     protected Query createQuery(String typeName, String path, String operationName, Object operand) {
         validateOperationName(operationName);
         try {
-            LuceneTextSearchTypeIndex typeIndex = (LuceneTextSearchTypeIndex) _luceneHolderMap.get(typeName);
+            LuceneTextSearchTypeIndex typeIndex = _luceneHolderMap.get(typeName);
             Analyzer analyzer = typeIndex.getAnalyzerForPath(path);
             return new QueryParser(path, analyzer).parse(path + ":" + operand);
         } catch (ParseException e) {

@@ -40,9 +40,12 @@ public abstract class BaseLuceneConfiguration {
 
     public static final String DEFAULT_MAX_UNCOMMITED_CHANGES = "1000";
 
+    private static final String DEFAULT_MAX_RESULTS = String.valueOf(Integer.MAX_VALUE);
+
     private final DirectoryFactory _directoryFactory;
     private final int _maxUncommittedChanges;
     private final String _location;
+    private final int _maxResults;
 
     private enum SupportedDirectory {
         MMapDirectory, RAMDirectory;
@@ -57,10 +60,10 @@ public abstract class BaseLuceneConfiguration {
     }
 
     public BaseLuceneConfiguration(BaseLuceneQueryExtensionProvider provider, QueryExtensionRuntimeInfo info) {
-
         this._directoryFactory = createDirectoryFactory(provider);
         this._location = initLocation(provider, info);
         this._maxUncommittedChanges = initMaxUncommittedChanges(provider);
+        this._maxResults = initMaxResults(provider);
     }
 
     private int initMaxUncommittedChanges(BaseLuceneQueryExtensionProvider provider) {
@@ -68,6 +71,12 @@ public abstract class BaseLuceneConfiguration {
     }
 
     protected abstract String getMaxUncommitedChangesPropertyKey();
+
+    private int initMaxResults(BaseLuceneQueryExtensionProvider provider) {
+        return Integer.parseInt(provider.getCustomProperty(getMaxResultsPropertyKey(), DEFAULT_MAX_RESULTS));
+    }
+
+    protected  abstract String getMaxResultsPropertyKey();
 
     private String initLocation(BaseLuceneQueryExtensionProvider provider, QueryExtensionRuntimeInfo info) {
         //try lucene.storage.location first, if not configured then use workingDir.
@@ -133,4 +142,7 @@ public abstract class BaseLuceneConfiguration {
 
     public abstract Analyzer getDefaultAnalyzer();
 
+    public int getMaxResults() {
+        return _maxResults;
+    }
 }

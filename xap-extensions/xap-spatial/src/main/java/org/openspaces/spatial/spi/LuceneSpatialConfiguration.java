@@ -23,6 +23,7 @@ import com.spatial4j.core.context.jts.JtsSpatialContext;
 import com.spatial4j.core.context.jts.JtsSpatialContextFactory;
 import com.spatial4j.core.shape.impl.RectangleImpl;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.spatial.SpatialStrategy;
 import org.apache.lucene.spatial.bbox.BBoxStrategy;
 import org.apache.lucene.spatial.composite.CompositeSpatialStrategy;
@@ -31,21 +32,16 @@ import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
 import org.apache.lucene.spatial.prefix.tree.QuadPrefixTree;
 import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
 import org.apache.lucene.spatial.serialized.SerializedDVStrategy;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.MMapDirectory;
-import org.apache.lucene.store.RAMDirectory;
+import org.openspaces.spatial.lucene.common.BaseLuceneConfiguration;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Arrays;
 
 /**
  * @author Yohana Khoury
  * @since 11.0
  */
-public class LuceneSpatialConfiguration {
-    public static final String FILE_SEPARATOR = File.separator;
+public class LuceneSpatialConfiguration extends BaseLuceneConfiguration {
 
     //lucene.strategy
     public static final String STRATEGY = "lucene.strategy";
@@ -63,7 +59,6 @@ public class LuceneSpatialConfiguration {
 
     //lucene.storage.directory-type
     public static final String STORAGE_DIRECTORYTYPE = "lucene.storage.directory-type";
-    public static final String STORAGE_DIRECTORYTYPE_DEFAULT = SupportedDirectory.MMapDirectory.name();
     //lucene.storage.location
     public static final String STORAGE_LOCATION = "lucene.storage.location";
 
@@ -77,12 +72,13 @@ public class LuceneSpatialConfiguration {
 
     //context.world-bounds, default is set by lucene
     public static final String SPATIAL_CONTEXT_WORLD_BOUNDS = "context.world-bounds";
+    public static final String INDEX_LOCATION_FOLDER_NAME = "spatial";
+
+    public static final String MAX_UNCOMMITED_CHANGES = "lucene.spatial.max.uncommited.changes";
+    public static final String MAX_RESULTS = "lucene.spatial.max.results";
 
     private final SpatialContext _spatialContext;
     private final StrategyFactory _strategyFactory;
-    private final DirectoryFactory _directoryFactory;
-    private final int _maxUncommittedChanges;
-    private final String _location;
 
     private enum SupportedSpatialStrategy {
         RecursivePrefixTree, BBox, Composite;
@@ -134,12 +130,9 @@ public class LuceneSpatialConfiguration {
     }
 
     public LuceneSpatialConfiguration(LuceneSpatialQueryExtensionProvider provider, QueryExtensionRuntimeInfo info) {
+        super(provider, info);
         this._spatialContext = createSpatialContext(provider);
         this._strategyFactory = createStrategyFactory(provider);
-        this._directoryFactory = createDirectoryFactory(provider);
-        this._location = initLocation(provider, info);
-        //TODO: read from config
-        this._maxUncommittedChanges = 1000;
     }
 
     private static RectangleImpl createSpatialContextWorldBounds(LuceneSpatialQueryExtensionProvider provider) {
@@ -259,65 +252,42 @@ public class LuceneSpatialConfiguration {
         }
     }
 
-    private static String initLocation(LuceneSpatialQueryExtensionProvider provider, QueryExtensionRuntimeInfo info) {
-        //try lucene.storage.location first, if not configured then use workingDir.
-        //If workingDir == null (Embedded space , Integrated PU , etc...) then use process working dir (user.dir)
-        String location = provider.getCustomProperty(STORAGE_LOCATION, null);
-        if (location == null) {
-            location = info.getSpaceInstanceWorkDirectory();
-            if (location == null)
-                location = System.getProperty("user.dir") + FILE_SEPARATOR + "xap";
-            location += FILE_SEPARATOR + "spatial";
-        }
-        String spaceInstanceName = info.getSpaceInstanceName().replace(".", "-");
-        return location + FILE_SEPARATOR + spaceInstanceName;
-    }
-
-    protected DirectoryFactory createDirectoryFactory(LuceneSpatialQueryExtensionProvider provider) {
-        String directoryType = provider.getCustomProperty(STORAGE_DIRECTORYTYPE, STORAGE_DIRECTORYTYPE_DEFAULT);
-        SupportedDirectory directory = SupportedDirectory.byName(directoryType);
-
-        switch (directory) {
-            case MMapDirectory: {
-                return new DirectoryFactory() {
-                    @Override
-                    public Directory getDirectory(String relativePath) throws IOException {
-                        return new MMapDirectory(Paths.get(_location + FILE_SEPARATOR + relativePath));
-                    }
-                };
-            }
-            case RAMDirectory: {
-                return new DirectoryFactory() {
-                    @Override
-                    public Directory getDirectory(String path) throws IOException {
-                        return new RAMDirectory();
-                    }
-                };
-            }
-            default:
-                throw new RuntimeException("Unhandled directory type " + directory);
-        }
-    }
-
-
     public SpatialStrategy getStrategy(String fieldName) {
         return this._strategyFactory.createStrategy(fieldName);
     }
 
-    public Directory getDirectory(String relativePath) throws IOException {
-        return _directoryFactory.getDirectory(relativePath);
+    @Override
+    protected String getMaxUncommitedChangesPropertyKey() {
+        return MAX_UNCOMMITED_CHANGES;
+    }
+
+    @Override
+    protected String getMaxResultsPropertyKey() {
+        return MAX_RESULTS;
+    }
+
+    @Override
+    protected String getIndexLocationFolderName() {
+        return INDEX_LOCATION_FOLDER_NAME;
+    }
+
+    @Override
+    protected String getStorageLocationPropertyKey() {
+        return STORAGE_LOCATION;
+    }
+
+    @Override
+    protected String getStorageDirectoryTypePropertyKey() {
+        return STORAGE_DIRECTORYTYPE;
     }
 
     public SpatialContext getSpatialContext() {
         return _spatialContext;
     }
 
-    public int getMaxUncommittedChanges() {
-        return _maxUncommittedChanges;
-    }
-
-    public String getLocation() {
-        return _location;
+    @Override
+    public Analyzer getDefaultAnalyzer() {
+        return null;
     }
 
     public abstract class StrategyFactory {
@@ -332,10 +302,6 @@ public class LuceneSpatialConfiguration {
         public SupportedSpatialStrategy getStrategyName() {
             return _strategyName;
         }
-    }
-
-    public abstract class DirectoryFactory {
-        public abstract Directory getDirectory(String relativePath) throws IOException;
     }
 
 }

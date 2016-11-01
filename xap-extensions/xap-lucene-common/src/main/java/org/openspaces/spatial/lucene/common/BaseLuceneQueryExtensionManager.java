@@ -45,20 +45,18 @@ import java.util.logging.Logger;
  * @author yechielf
  * @since 11.0
  */
-public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionManager {
+public abstract class BaseLuceneQueryExtensionManager<C extends BaseLuceneConfiguration, T extends BaseLuceneTypeIndex> extends QueryExtensionManager {
 
     private static final Logger _logger = Logger.getLogger(BaseLuceneQueryExtensionManager.class.getName());
 
     protected static final String XAP_ID = "XAP_ID";
     protected static final String XAP_ID_VERSION = "XAP_ID_VERSION";
-    //TODO make it configurable
-    private static final int MAX_RESULTS = Integer.MAX_VALUE;
 
-    private final String _namespace;
-    protected final Map<String, BaseLuceneTypeIndex> _luceneHolderMap = new ConcurrentHashMap<String, BaseLuceneTypeIndex>();
-    protected final BaseLuceneConfiguration _luceneConfiguration;
+    protected final String _namespace;
+    protected final Map<String, T> _luceneHolderMap = new ConcurrentHashMap<String, T>();
+    protected final C _luceneConfiguration;
 
-    public BaseLuceneQueryExtensionManager(QueryExtensionProvider provider, QueryExtensionRuntimeInfo info, BaseLuceneConfiguration configuration) {
+    public BaseLuceneQueryExtensionManager(QueryExtensionProvider provider, QueryExtensionRuntimeInfo info, C configuration) {
         super(info);
         _namespace = provider.getNamespace();
         _luceneConfiguration = configuration;
@@ -72,7 +70,7 @@ public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionMana
 
     @Override
     public void close() throws IOException {
-        for (BaseLuceneTypeIndex luceneHolder : _luceneHolderMap.values())
+        for (T luceneHolder : _luceneHolderMap.values())
             luceneHolder.close();
 
         _luceneHolderMap.clear();
@@ -83,7 +81,7 @@ public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionMana
     @Override
     public boolean insertEntry(SpaceServerEntry entry, boolean hasPrevious) {
         final String typeName = entry.getSpaceTypeDescriptor().getTypeName();
-        final BaseLuceneTypeIndex luceneHolder = _luceneHolderMap.get(typeName);
+        final T luceneHolder = _luceneHolderMap.get(typeName);
         try {
             final Document doc = createDocumentIfNeeded(luceneHolder, entry);
             // Add new
@@ -108,7 +106,7 @@ public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionMana
         return uid + "_" + version;
     }
 
-    protected Document createDocumentIfNeeded(BaseLuceneTypeIndex luceneHolder, SpaceServerEntry entry) {
+    protected Document createDocumentIfNeeded(T luceneHolder, SpaceServerEntry entry) {
 
         Document doc = null;
         for (String path : luceneHolder.getQueryExtensionInfo().getPaths()) {
@@ -152,7 +150,7 @@ public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionMana
         }
     }
 
-    protected abstract BaseLuceneTypeIndex createTypeIndex(BaseLuceneConfiguration luceneConfig, String namespace, SpaceTypeDescriptor typeDescriptor) throws IOException;
+    protected abstract T createTypeIndex(C luceneConfig, String namespace, SpaceTypeDescriptor typeDescriptor) throws IOException;
 
     @Override
     public QueryExtensionEntryIterator queryByIndex(String typeName, String path, String operationName, Object operand) {
@@ -160,14 +158,14 @@ public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionMana
             _logger.log(Level.FINE, "query [typeName=" + typeName + ", path=" + path + ", operation=" + operationName + ", operand=" + operand + "]");
 
         final Query query = createQuery(typeName, path, operationName, operand);
-        final BaseLuceneTypeIndex luceneHolder = _luceneHolderMap.get(typeName);
+        final T luceneHolder = _luceneHolderMap.get(typeName);
         try {
             // Flush
             luceneHolder.commit(true);
 
             DirectoryReader dr = DirectoryReader.open(luceneHolder.getDirectory());
             IndexSearcher is = new IndexSearcher(dr);
-            ScoreDoc[] scores = is.search(query, MAX_RESULTS).scoreDocs;
+            ScoreDoc[] scores = is.search(query, _luceneConfiguration.getMaxResults()).scoreDocs;
             return new LuceneQueryExtensionEntryIterator(scores, is, dr);
         } catch (IOException e) {
             throw new SpaceRuntimeException("Failed to scan index", e);
@@ -179,7 +177,7 @@ public abstract class BaseLuceneQueryExtensionManager extends QueryExtensionMana
     @Override
     public void removeEntry(SpaceTypeDescriptor typeDescriptor, String uid, int version) {
         final String typeName = typeDescriptor.getTypeName();
-        final BaseLuceneTypeIndex luceneHolder = _luceneHolderMap.get(typeName);
+        final T luceneHolder = _luceneHolderMap.get(typeName);
         try {
             luceneHolder.getIndexWriter().deleteDocuments(new TermQuery(new Term(XAP_ID_VERSION, concat(uid, version))));
             luceneHolder.commit(false);

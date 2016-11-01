@@ -37,6 +37,7 @@ public class LuceneTextSearchConfiguration extends BaseLuceneConfiguration {
     public static final String STORAGE_DIRECTORYTYPE = "lucene.full.text.search.storage.directory-type";
 
     public static final String DEFAULT_ANALYZER_PROPERTY_KEY = "lucene.full.text.search.default.analyzer";
+    public static final String MAX_RESULTS = "lucene.full.text.search.max.results";
     private Analyzer _defaultAnalyzer;
 
     public LuceneTextSearchConfiguration(BaseLuceneQueryExtensionProvider provider, QueryExtensionRuntimeInfo info) {
@@ -56,6 +57,11 @@ public class LuceneTextSearchConfiguration extends BaseLuceneConfiguration {
     @Override
     protected String getMaxUncommitedChangesPropertyKey() {
         return MAX_UNCOMMITED_CHANGES;
+    }
+
+    @Override
+    protected String getMaxResultsPropertyKey() {
+        return MAX_RESULTS;
     }
 
     @Override

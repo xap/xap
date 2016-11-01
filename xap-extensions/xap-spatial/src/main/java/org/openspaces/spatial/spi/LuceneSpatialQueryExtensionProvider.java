@@ -24,6 +24,8 @@ import com.gigaspaces.query.extension.metadata.QueryExtensionPropertyInfo;
 
 import org.openspaces.spatial.SpaceSpatialIndex;
 import org.openspaces.spatial.SpaceSpatialIndexes;
+import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionProvider;
+import org.openspaces.spatial.lucene.common.Utils;
 
 import java.lang.annotation.Annotation;
 import java.util.Properties;
@@ -32,7 +34,7 @@ import java.util.Properties;
  * @author Niv Ingberg
  * @since 11.0
  */
-public class LuceneSpatialQueryExtensionProvider extends QueryExtensionProvider {
+public class LuceneSpatialQueryExtensionProvider extends BaseLuceneQueryExtensionProvider {
 
     private final Properties _customProperties;
 
@@ -51,11 +53,8 @@ public class LuceneSpatialQueryExtensionProvider extends QueryExtensionProvider 
 
     @Override
     public QueryExtensionManager createManager(QueryExtensionRuntimeInfo info) {
-        return new LuceneSpatialQueryExtensionManager(this, info);
-    }
-
-    private static String path(String property, SpaceSpatialIndex index) {
-        return index.path().length() == 0 ? property : property + "." + index.path();
+        LuceneSpatialConfiguration configuration = new LuceneSpatialConfiguration(this, info);
+        return new LuceneSpatialQueryExtensionManager(this, info, configuration);
     }
 
     @Override
@@ -63,11 +62,11 @@ public class LuceneSpatialQueryExtensionProvider extends QueryExtensionProvider 
         QueryExtensionPropertyInfo result = new QueryExtensionPropertyInfo();
         if (annotation instanceof SpaceSpatialIndex) {
             SpaceSpatialIndex index = (SpaceSpatialIndex) annotation;
-            result.addPathInfo(path(property, index), new DefaultQueryExtensionPathInfo());
+            addIndex(result, Utils.makePath(property, index.path()));
         } else if (annotation instanceof SpaceSpatialIndexes) {
             SpaceSpatialIndex[] indexes = ((SpaceSpatialIndexes) annotation).value();
             for (SpaceSpatialIndex index : indexes)
-                result.addPathInfo(path(property, index), new DefaultQueryExtensionPathInfo());
+                addIndex(result, Utils.makePath(property, index.path()));
         }
         return result;
     }
