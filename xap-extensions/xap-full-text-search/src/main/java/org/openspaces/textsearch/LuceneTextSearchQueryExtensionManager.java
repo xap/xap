@@ -27,9 +27,7 @@ import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
-import org.openspaces.spatial.lucene.common.BaseLuceneConfiguration;
 import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionManager;
-import org.openspaces.spatial.lucene.common.BaseLuceneTypeIndex;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -43,11 +41,8 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
     private static final Logger _logger = Logger.getLogger(LuceneTextSearchQueryExtensionManager.class.getName());
     public static final String SEARCH_OPERATION_NAME = "search";
 
-    private QueryExtensionRuntimeInfo _info;
-
     protected LuceneTextSearchQueryExtensionManager(LuceneTextSearchQueryExtensionProvider provider, QueryExtensionRuntimeInfo info, LuceneTextSearchConfiguration configuration) {
         super(provider, info, configuration);
-        this._info = info;
     }
 
     @Override
