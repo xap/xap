@@ -46,15 +46,17 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
     }
 
     @Override
-    public boolean accept(String typeName, String path, String operation, Object fromGrid, Object luceneQuery) {
+    public boolean accept(String typeName, String path, String operation, Object gridValue, Object luceneQuery) {
         validateOperationName(operation);
+        throwExceptionIfNull(gridValue, "Provided value from grid is null"); //TODO what to do if null?
+        throwExceptionIfNull(luceneQuery, "Provided lucene query is null");
         if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "filter [operation=" + operation + ", leftOperand(value from grid)=" + fromGrid + ", rightOperand(lucene query)=" + luceneQuery + "]");
+            _logger.log(Level.FINE, "filter [operation=" + operation + ", leftOperand(value from grid)=" + gridValue + ", rightOperand(lucene query)=" + luceneQuery + "]");
 
         try {
             Analyzer analyzer = getAnalyzer(typeName, path);
             MemoryIndex index = new MemoryIndex();
-            index.addField("content", String.valueOf(fromGrid), analyzer); //TODO if null
+            index.addField("content", String.valueOf(gridValue), analyzer);
             Query query = new QueryParser("content", analyzer).parse(String.valueOf(luceneQuery));
             float score = index.search(query);
             return score > 0.0f;
@@ -98,6 +100,12 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
     private void validateOperationName(String operationName) {
         if (!SEARCH_OPERATION_NAME.equals(operationName)) {
             throw new IllegalArgumentException("Provided operationName=" + operationName + " is incorrect. Correct one is '" + SEARCH_OPERATION_NAME + "'");
+        }
+    }
+
+    private void throwExceptionIfNull(Object obj, String msg) {
+        if (obj == null) {
+            throw new IllegalArgumentException(msg);
         }
     }
 
