@@ -70,7 +70,7 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
             SpaceTextAnalyzer analyzer = (SpaceTextAnalyzer) annotation;
             String path = Utils.makePath(property, analyzer.path());
             QueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
-            pathInfo.add(analyzer.getClass(), new TextAnalyzerQueryExtensionPathActionInfo(analyzer.clazz()));
+            pathInfo.add(analyzer.annotationType(), new TextAnalyzerQueryExtensionPathActionInfo(analyzer.clazz()));
             result.addPathInfo(path, pathInfo);
         } else if(annotation instanceof SpaceTextAnalyzers) {
             SpaceTextAnalyzers analyzers = (SpaceTextAnalyzers) annotation;

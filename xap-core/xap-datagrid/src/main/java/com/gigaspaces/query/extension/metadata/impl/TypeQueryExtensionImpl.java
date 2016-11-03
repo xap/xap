@@ -17,7 +17,7 @@
 package com.gigaspaces.query.extension.metadata.impl;
 
 import com.gigaspaces.internal.io.IOUtils;
-import com.gigaspaces.query.extension.QueryExtensionProvider;
+import com.gigaspaces.query.extension.metadata.QueryExtensionActionInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
@@ -25,6 +25,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -34,6 +35,8 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 
+    private Map<Class<? extends Annotation>, QueryExtensionActionInfo> typeActionInfo = new HashMap<Class<? extends Annotation>, QueryExtensionActionInfo>();
+
     private final Map<String, QueryExtensionPathInfo> propertiesInfo = new HashMap<String, QueryExtensionPathInfo>();
 
     /**
@@ -42,12 +45,12 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     public TypeQueryExtensionImpl() {
     }
 
-    public void addPath(String path, QueryExtensionPathInfo queryExtensionPathInfo) {
-        this.propertiesInfo.put(path, queryExtensionPathInfo);
+    public void addTypeAction(Class<? extends Annotation> actionType, QueryExtensionActionInfo actionInfo) {
+        typeActionInfo.put(actionType, actionInfo);
     }
 
-    public QueryExtensionPathInfo getPathInfo(String path) {
-        return this.propertiesInfo.get(path);
+    public void addPath(String path, QueryExtensionPathInfo queryExtensionPathInfo) {
+        this.propertiesInfo.put(path, queryExtensionPathInfo);
     }
 
     @Override
@@ -58,6 +61,16 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     @Override
     public Set<String> getPaths() {
         return propertiesInfo.keySet();
+    }
+
+    @Override
+    public Set<Class<? extends Annotation>> getTypeActions() {
+        return typeActionInfo.keySet();
+    }
+
+    @Override
+    public QueryExtensionActionInfo getTypeActionInfo(Class<? extends Annotation> actionType) {
+        return typeActionInfo.get(actionType);
     }
 
     @Override

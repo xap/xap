@@ -9,6 +9,6 @@ public interface QueryExtensionInfo {
 
     Class<? extends Annotation> getQueryExtensionAnnotation();
 
-    QueryExtensionPathActionInfo getQueryExtensionPathActionInfo();
+    QueryExtensionActionInfo getQueryExtensionActionInfo();
 
 }

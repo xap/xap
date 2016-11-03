@@ -22,7 +22,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.HashMap;
@@ -36,9 +35,9 @@ public abstract class QueryExtensionPathInfo implements Externalizable {
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 
-    private Map<Class<? extends Annotation>, QueryExtensionPathActionInfo> pathActionInfo = new HashMap<Class<? extends Annotation>, QueryExtensionPathActionInfo>();
+    private Map<Class<? extends Annotation>, QueryExtensionActionInfo> pathActionInfo = new HashMap<Class<? extends Annotation>, QueryExtensionActionInfo>();
 
-    public void add(Class<? extends Annotation> action, QueryExtensionPathActionInfo actionInfo) {
+    public void add(Class<? extends Annotation> action, QueryExtensionActionInfo actionInfo) {
         pathActionInfo.put(action, actionInfo);
     }
 
@@ -46,14 +45,14 @@ public abstract class QueryExtensionPathInfo implements Externalizable {
         return pathActionInfo.keySet();
     }
 
-    public QueryExtensionPathActionInfo getActionInfo(Class<? extends Annotation> actionType) {
+    public QueryExtensionActionInfo getActionInfo(Class<? extends Annotation> actionType) {
         return pathActionInfo.get(actionType);
     }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeInt(pathActionInfo.size());
-        for (Map.Entry<Class<? extends Annotation>, QueryExtensionPathActionInfo> entry : pathActionInfo.entrySet()) {
+        for (Map.Entry<Class<? extends Annotation>, QueryExtensionActionInfo> entry : pathActionInfo.entrySet()) {
             IOUtils.writeObject(out, entry.getKey());
             IOUtils.writeObject(out, entry.getValue());
         }
@@ -64,7 +63,7 @@ public abstract class QueryExtensionPathInfo implements Externalizable {
         int size = in.readInt();
         for (int i = 0; i < size; i++) {
             Class<? extends Annotation> key = IOUtils.readObject(in);
-            QueryExtensionPathActionInfo value = IOUtils.readObject(in);
+            QueryExtensionActionInfo value = IOUtils.readObject(in);
             pathActionInfo.put(key, value);
         }
     }

@@ -8,9 +8,9 @@ import java.lang.annotation.Annotation;
 public class DefaultQueryExtensionInfo implements QueryExtensionInfo {
 
     private Class<? extends Annotation> queryExtensionAnnotation;
-    private QueryExtensionPathActionInfo queryExtensionPathActionInfo;
+    private QueryExtensionActionInfo queryExtensionPathActionInfo;
 
-    public DefaultQueryExtensionInfo(Class<? extends Annotation> queryExtensionAnnotation, QueryExtensionPathActionInfo queryExtensionPathActionInfo) {
+    public DefaultQueryExtensionInfo(Class<? extends Annotation> queryExtensionAnnotation, QueryExtensionActionInfo queryExtensionPathActionInfo) {
         this.queryExtensionAnnotation = queryExtensionAnnotation;
         this.queryExtensionPathActionInfo = queryExtensionPathActionInfo;
     }
@@ -21,7 +21,7 @@ public class DefaultQueryExtensionInfo implements QueryExtensionInfo {
     }
 
     @Override
-    public QueryExtensionPathActionInfo getQueryExtensionPathActionInfo() {
+    public QueryExtensionActionInfo getQueryExtensionActionInfo() {
         return queryExtensionPathActionInfo;
     }
 }

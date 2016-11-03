@@ -8,7 +8,7 @@ import java.io.ObjectOutput;
 /**
  * @author Vitaliy_Zinchenko
  */
-public class DefaultQueryExtensionPathActionInfo extends QueryExtensionPathActionInfo implements Externalizable {
+public class DefaultQueryExtensionPathActionInfo extends QueryExtensionActionInfo implements Externalizable {
 
     private static final long serialVersionUID = 1L;
 

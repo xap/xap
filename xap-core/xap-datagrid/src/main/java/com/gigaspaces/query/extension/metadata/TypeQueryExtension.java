@@ -16,6 +16,7 @@
 
 package com.gigaspaces.query.extension.metadata;
 
+import java.lang.annotation.Annotation;
 import java.util.Set;
 
 /**
@@ -26,4 +27,8 @@ public interface TypeQueryExtension {
     QueryExtensionPathInfo get(String path);
 
     Set<String> getPaths();
+
+    Set<Class<? extends Annotation>> getTypeActions();
+
+    QueryExtensionActionInfo getTypeActionInfo(Class<? extends Annotation> actionType);
 }

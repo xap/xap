@@ -47,17 +47,17 @@ public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
         return new PerFieldAnalyzerWrapper(_mainAnalyzer, _fieldAnalyzers);
     }
 
-    //TODO refactor/fix for document support
     private Analyzer getMainAnalyzer(BaseLuceneConfiguration luceneConfig, SpaceTypeDescriptor typeDescriptor) {
-        if (typeDescriptor.getObjectClass() != null && typeDescriptor.getObjectClass().isAnnotationPresent(SpaceTextAnalyzer.class)) {
-            Class analyzerClass = typeDescriptor.getObjectClass().getAnnotation(SpaceTextAnalyzer.class).clazz();
-            return Utils.createAnalyzer(analyzerClass);
-        } else {
-            return luceneConfig.getDefaultAnalyzer();
+        TypeQueryExtension type = typeDescriptor.getQueryExtensions().getByNamespace(LuceneTextSearchQueryExtensionProvider.NAMESPACE);
+        for (Class<? extends Annotation> action : type.getTypeActions()) {
+            if (SpaceTextAnalyzer.class.equals(action)) {
+                TextAnalyzerQueryExtensionPathActionInfo analyzerActionInfo = (TextAnalyzerQueryExtensionPathActionInfo) type.getTypeActionInfo(action);
+                return Utils.createAnalyzer(analyzerActionInfo.getAnalazerClass());
+            }
         }
+        return luceneConfig.getDefaultAnalyzer();
     }
 
-    //TODO refactor/fix for document support
     private Map<String, Analyzer> createFieldAnalyzers(SpaceTypeDescriptor typeDescriptor) {
         Map<String, Analyzer> analyzerMap = new HashMap<String, Analyzer>();
         TypeQueryExtension type = typeDescriptor.getQueryExtensions().getByNamespace(LuceneTextSearchQueryExtensionProvider.NAMESPACE);

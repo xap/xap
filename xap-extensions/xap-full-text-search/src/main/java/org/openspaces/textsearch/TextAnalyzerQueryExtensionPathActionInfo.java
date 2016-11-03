@@ -1,11 +1,11 @@
 package org.openspaces.textsearch;
 
-import com.gigaspaces.query.extension.metadata.QueryExtensionPathActionInfo;
+import com.gigaspaces.query.extension.metadata.QueryExtensionActionInfo;
 
 /**
  * @author Vitaliy_Zinchenko
  */
-public class TextAnalyzerQueryExtensionPathActionInfo extends QueryExtensionPathActionInfo {
+public class TextAnalyzerQueryExtensionPathActionInfo extends QueryExtensionActionInfo {
     private static final long serialVersionUID = 1L;
 
     private Class clazz;
