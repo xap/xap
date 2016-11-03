@@ -28,6 +28,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionManager;
+import org.springframework.util.Assert;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -47,9 +48,10 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
 
     @Override
     public boolean accept(String typeName, String path, String operation, Object gridValue, Object luceneQuery) {
+        Assert.notNull(gridValue, "Provided value from grid is null"); // TODO: what to do if null?
+        Assert.notNull(luceneQuery, "Provided lucene query is null");
         validateOperationName(operation);
-        throwExceptionIfNull(gridValue, "Provided value from grid is null"); //TODO what to do if null?
-        throwExceptionIfNull(luceneQuery, "Provided lucene query is null");
+
         if (_logger.isLoggable(Level.FINE))
             _logger.log(Level.FINE, "filter [operation=" + operation + ", leftOperand(value from grid)=" + gridValue + ", rightOperand(lucene query)=" + luceneQuery + "]");
 
@@ -100,12 +102,6 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
     private void validateOperationName(String operationName) {
         if (!SEARCH_OPERATION_NAME.equals(operationName)) {
             throw new IllegalArgumentException("Provided operationName=" + operationName + " is incorrect. Correct one is '" + SEARCH_OPERATION_NAME + "'");
-        }
-    }
-
-    private void throwExceptionIfNull(Object obj, String msg) {
-        if (obj == null) {
-            throw new IllegalArgumentException(msg);
         }
     }
 
