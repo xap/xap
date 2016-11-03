@@ -19,6 +19,7 @@ package org.openspaces.textsearch;
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.query.extension.metadata.DefaultQueryExtensionPathInfo;
+import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPropertyInfo;
 
 import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionProvider;
@@ -32,6 +33,7 @@ import java.util.Properties;
  */
 public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExtensionProvider {
 
+    public static final String NAMESPACE = "text";
     private final Properties _customProperties;
 
     public LuceneTextSearchQueryExtensionProvider() {
@@ -44,7 +46,7 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
 
     @Override
     public String getNamespace() {
-        return "text";
+        return NAMESPACE;
     }
 
     @Override
@@ -66,7 +68,10 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
             }
         } else if (annotation instanceof SpaceTextAnalyzer) {
             SpaceTextAnalyzer analyzer = (SpaceTextAnalyzer) annotation;
-            addIndex(result, Utils.makePath(property, analyzer.path()));
+            String path = Utils.makePath(property, analyzer.path());
+            QueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
+            pathInfo.add(analyzer.getClass(), new TextAnalyzerQueryExtensionPathActionInfo(analyzer.clazz()));
+            result.addPathInfo(path, pathInfo);
         } else if(annotation instanceof SpaceTextAnalyzers) {
             SpaceTextAnalyzers analyzers = (SpaceTextAnalyzers) annotation;
             for(SpaceTextAnalyzer analyzer: analyzers.value()) {

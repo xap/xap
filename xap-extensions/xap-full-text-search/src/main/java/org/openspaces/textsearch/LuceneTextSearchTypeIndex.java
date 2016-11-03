@@ -1,6 +1,8 @@
 package org.openspaces.textsearch;
 
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
+import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
+import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
@@ -12,6 +14,7 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,8 +47,9 @@ public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
         return new PerFieldAnalyzerWrapper(_mainAnalyzer, _fieldAnalyzers);
     }
 
+    //TODO refactor/fix for document support
     private Analyzer getMainAnalyzer(BaseLuceneConfiguration luceneConfig, SpaceTypeDescriptor typeDescriptor) {
-        if (typeDescriptor.getObjectClass().isAnnotationPresent(SpaceTextAnalyzer.class)) {
+        if (typeDescriptor.getObjectClass() != null && typeDescriptor.getObjectClass().isAnnotationPresent(SpaceTextAnalyzer.class)) {
             Class analyzerClass = typeDescriptor.getObjectClass().getAnnotation(SpaceTextAnalyzer.class).clazz();
             return Utils.createAnalyzer(analyzerClass);
         } else {
@@ -53,30 +57,23 @@ public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
         }
     }
 
+    //TODO refactor/fix for document support
     private Map<String, Analyzer> createFieldAnalyzers(SpaceTypeDescriptor typeDescriptor) {
-        try {
-            Map<String, Analyzer> analyzerMap = new HashMap<String, Analyzer>();
-            PropertyDescriptor[] propertyDescriptors = Introspector.getBeanInfo(typeDescriptor.getObjectClass(), Object.class).getPropertyDescriptors();
-            for (PropertyDescriptor propertyDescriptor: propertyDescriptors) {
-                Method readMethod = propertyDescriptor.getReadMethod();
-                if(readMethod.isAnnotationPresent(SpaceTextAnalyzer.class)) {
-                    SpaceTextAnalyzer annotation = readMethod.getAnnotation(SpaceTextAnalyzer.class);
-                    addAnalyzer(analyzerMap, propertyDescriptor, annotation.path(), annotation.clazz());
-                } else if(readMethod.isAnnotationPresent(SpaceTextAnalyzers.class)) {
-                    SpaceTextAnalyzers annotation = readMethod.getAnnotation(SpaceTextAnalyzers.class);
-                    for(SpaceTextAnalyzer analyzerAnnotation: annotation.value()) {
-                        addAnalyzer(analyzerMap, propertyDescriptor, analyzerAnnotation.path(), analyzerAnnotation.clazz());
-                    }
+        Map<String, Analyzer> analyzerMap = new HashMap<String, Analyzer>();
+        TypeQueryExtension type = typeDescriptor.getQueryExtensions().getByNamespace(LuceneTextSearchQueryExtensionProvider.NAMESPACE);
+        for (String path : type.getPaths()) {
+            QueryExtensionPathInfo pathInfo = type.get(path);
+            for (Class<? extends Annotation> action : pathInfo.getActions()) {
+                if (SpaceTextAnalyzer.class.equals(action)) {
+                    TextAnalyzerQueryExtensionPathActionInfo analyzerActionInfo = (TextAnalyzerQueryExtensionPathActionInfo) pathInfo.getActionInfo(action);
+                    addAnalyzer(analyzerMap, path, analyzerActionInfo.getAnalazerClass());
                 }
             }
-            return analyzerMap;
-        } catch (IntrospectionException e) {
-            throw new IllegalArgumentException("Failed to get bean info of passed type " + typeDescriptor.getTypeName());
         }
+        return analyzerMap;
     }
 
-    private void addAnalyzer(Map<String, Analyzer> analyzerMap, PropertyDescriptor propertyDescriptor, String relativePath, Class clazz) {
-        String path = Utils.makePath(propertyDescriptor.getName(), relativePath);
+    private void addAnalyzer(Map<String, Analyzer> analyzerMap, String path, Class clazz) {
         Analyzer analyzer = Utils.createAnalyzer(clazz);
         analyzerMap.put(path, analyzer);
     }

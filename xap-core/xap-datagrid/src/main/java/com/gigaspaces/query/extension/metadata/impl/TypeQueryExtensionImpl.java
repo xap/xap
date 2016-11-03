@@ -34,7 +34,6 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 
-    private QueryExtensionProvider queryExtensionProvider;
     private final Map<String, QueryExtensionPathInfo> propertiesInfo = new HashMap<String, QueryExtensionPathInfo>();
 
     /**
@@ -43,8 +42,12 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     public TypeQueryExtensionImpl() {
     }
 
-    public void add(String path, QueryExtensionPathInfo queryExtensionPathInfo) {
+    public void addPath(String path, QueryExtensionPathInfo queryExtensionPathInfo) {
         this.propertiesInfo.put(path, queryExtensionPathInfo);
+    }
+
+    public QueryExtensionPathInfo getPathInfo(String path) {
+        return this.propertiesInfo.get(path);
     }
 
     @Override

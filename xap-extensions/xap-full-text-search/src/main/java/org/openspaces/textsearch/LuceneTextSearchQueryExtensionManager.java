@@ -64,7 +64,7 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
     }
 
     private Analyzer getAnalyzer(String typeName, String path) {
-        LuceneTextSearchTypeIndex typeIndex = (LuceneTextSearchTypeIndex) _luceneHolderMap.get(typeName);
+        LuceneTextSearchTypeIndex typeIndex = _luceneHolderMap.get(typeName);
         return typeIndex != null ? typeIndex.getAnalyzerForPath(path) : _luceneConfiguration.getDefaultAnalyzer();
     }
 
