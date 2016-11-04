@@ -24,4 +24,9 @@ public class DefaultQueryExtensionPathActionInfo extends QueryExtensionActionInf
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 
     }
+
+    @Override
+    public boolean isIndexed() {
+        return true;
+    }
 }

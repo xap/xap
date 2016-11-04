@@ -21,7 +21,7 @@ public class TextQueryExtensionInfoBuilder {
         }
 
         public QueryExtensionInfo build() {
-            TextAnalyzerQueryExtensionPathActionInfo actionInfo = new TextAnalyzerQueryExtensionPathActionInfo()
+            TextAnalyzerQueryExtensionActionInfo actionInfo = new TextAnalyzerQueryExtensionActionInfo()
                     .setClazz(clazz);
             return new DefaultQueryExtensionInfo(SpaceTextAnalyzer.class, actionInfo);
         }

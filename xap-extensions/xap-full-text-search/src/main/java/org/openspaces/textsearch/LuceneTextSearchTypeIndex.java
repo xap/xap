@@ -10,12 +10,8 @@ import org.openspaces.spatial.lucene.common.BaseLuceneConfiguration;
 import org.openspaces.spatial.lucene.common.BaseLuceneTypeIndex;
 import org.openspaces.spatial.lucene.common.Utils;
 
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,7 +47,7 @@ public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
         TypeQueryExtension type = typeDescriptor.getQueryExtensions().getByNamespace(LuceneTextSearchQueryExtensionProvider.NAMESPACE);
         for (Class<? extends Annotation> action : type.getTypeActions()) {
             if (SpaceTextAnalyzer.class.equals(action)) {
-                TextAnalyzerQueryExtensionPathActionInfo analyzerActionInfo = (TextAnalyzerQueryExtensionPathActionInfo) type.getTypeActionInfo(action);
+                TextAnalyzerQueryExtensionActionInfo analyzerActionInfo = (TextAnalyzerQueryExtensionActionInfo) type.getTypeActionInfo(action);
                 return Utils.createAnalyzer(analyzerActionInfo.getAnalazerClass());
             }
         }
@@ -65,7 +61,7 @@ public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
             QueryExtensionPathInfo pathInfo = type.get(path);
             for (Class<? extends Annotation> action : pathInfo.getActions()) {
                 if (SpaceTextAnalyzer.class.equals(action)) {
-                    TextAnalyzerQueryExtensionPathActionInfo analyzerActionInfo = (TextAnalyzerQueryExtensionPathActionInfo) pathInfo.getActionInfo(action);
+                    TextAnalyzerQueryExtensionActionInfo analyzerActionInfo = (TextAnalyzerQueryExtensionActionInfo) pathInfo.getActionInfo(action);
                     addAnalyzer(analyzerMap, path, analyzerActionInfo.getAnalazerClass());
                 }
             }
