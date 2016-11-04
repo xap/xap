@@ -169,6 +169,12 @@
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
+                <artifactId>xap-full-text-search</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-cassandra</artifactId>
                 <version>${project.version}</version>
                 <scope>compile</scope>
