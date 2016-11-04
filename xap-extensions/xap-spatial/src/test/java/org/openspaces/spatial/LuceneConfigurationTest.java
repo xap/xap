@@ -131,7 +131,7 @@ public class LuceneConfigurationTest {
     public void testMMapDirectoryTypeAndLocation() throws IOException {
         LuceneSpatialQueryExtensionProvider provider = new LuceneSpatialQueryExtensionProvider()
                 .setCustomProperty("lucene.storage.directory-type", "MMapDirectory")
-                .setCustomProperty("lucene.storage.location", temporaryFolder.getRoot().getAbsolutePath() + "/tempdir");
+                .setCustomProperty("lucene.storage.location", temporaryFolder.getRoot().getCanonicalPath() + "/tempdir");
         QueryExtensionRuntimeInfo config = new MockConfig()
                 .setWorkDir(getWorkingDir());
 
@@ -139,11 +139,11 @@ public class LuceneConfigurationTest {
         Directory directory = luceneConfiguration.getDirectory("subfolder");
 
         Assert.assertEquals("Unexpected Directory type", MMapDirectory.class, directory.getClass());
-        Assert.assertEquals(temporaryFolder.getRoot().getAbsolutePath()
+        Assert.assertEquals(temporaryFolder.getRoot().getCanonicalPath()
                         + File.separator + "tempdir"
                         + File.separator + config.getSpaceInstanceName()
                         + File.separator + "subfolder",
-                ((MMapDirectory) directory).getDirectory().toFile().getAbsolutePath());
+                ((MMapDirectory) directory).getDirectory().toFile().getCanonicalPath());
     }
 
     @Test
@@ -162,7 +162,7 @@ public class LuceneConfigurationTest {
                         File.separator + "spatial" +
                         File.separator + config.getSpaceInstanceName() +
                         File.separator + "subfolder",
-                ((MMapDirectory) directory).getDirectory().toFile().getAbsolutePath());
+                ((MMapDirectory) directory).getDirectory().toFile().getCanonicalPath());
     }
 
     @Test
