@@ -61,35 +61,35 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
     public QueryExtensionPropertyInfo getPropertyExtensionInfo(String property, Annotation annotation) {
         QueryExtensionPropertyInfo result = new QueryExtensionPropertyInfo();
         if (annotation instanceof SpaceTextIndex) {
-            SpaceTextIndex index = (SpaceTextIndex) annotation;
-            String path = Utils.makePath(property, index.path());
-            QueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
-            pathInfo.add(index.annotationType(), new DefaultQueryExtensionPathActionInfo());
-            result.addPathInfo(path, pathInfo);
+            addIndexPathInfo(property, (SpaceTextIndex) annotation, result);
         } else if (annotation instanceof SpaceTextIndexes) {
             SpaceTextIndexes indexes = (SpaceTextIndexes)annotation;
             for (SpaceTextIndex index: indexes.value()) {
-                String path = Utils.makePath(property, index.path());
-                QueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
-                pathInfo.add(index.annotationType(), new DefaultQueryExtensionPathActionInfo());
-                result.addPathInfo(path, pathInfo);
+                addIndexPathInfo(property, index, result);
             }
         } else if (annotation instanceof SpaceTextAnalyzer) {
-            SpaceTextAnalyzer analyzer = (SpaceTextAnalyzer) annotation;
-            String path = Utils.makePath(property, analyzer.path());
-            QueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
-            pathInfo.add(analyzer.annotationType(), new TextAnalyzerQueryExtensionActionInfo(analyzer.clazz()));
-            result.addPathInfo(path, pathInfo);
+            addAnalyzerPathInfo(property, (SpaceTextAnalyzer) annotation, result);
         } else if(annotation instanceof SpaceTextAnalyzers) {
             SpaceTextAnalyzers analyzers = (SpaceTextAnalyzers) annotation;
             for(SpaceTextAnalyzer analyzer: analyzers.value()) {
-                String path = Utils.makePath(property, analyzer.path());
-                QueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
-                pathInfo.add(analyzer.annotationType(), new TextAnalyzerQueryExtensionActionInfo(analyzer.clazz()));
-                result.addPathInfo(path, pathInfo);
+                addAnalyzerPathInfo(property, analyzer, result);
             }
         }
         return result;
+    }
+
+    private void addAnalyzerPathInfo(String property, SpaceTextAnalyzer analyzer, QueryExtensionPropertyInfo result) {
+        String path = Utils.makePath(property, analyzer.path());
+        QueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
+        pathInfo.add(analyzer.annotationType(), new TextAnalyzerQueryExtensionActionInfo(analyzer.clazz()));
+        result.addPathInfo(path, pathInfo);
+    }
+
+    private void addIndexPathInfo(String property, SpaceTextIndex index, QueryExtensionPropertyInfo result) {
+        String path = Utils.makePath(property, index.path());
+        QueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
+        pathInfo.add(index.annotationType(), new DefaultQueryExtensionPathActionInfo());
+        result.addPathInfo(path, pathInfo);
     }
 
     @Override
