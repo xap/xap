@@ -17,7 +17,7 @@
 package com.gigaspaces.query.extension.metadata.impl;
 
 import com.gigaspaces.internal.io.IOUtils;
-import com.gigaspaces.query.extension.QueryExtensionProvider;
+import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationAttributesInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
@@ -25,6 +25,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -34,7 +35,8 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 
-    private QueryExtensionProvider queryExtensionProvider;
+    private Map<Class<? extends Annotation>, QueryExtensionAnnotationAttributesInfo> typeActionInfo = new HashMap<Class<? extends Annotation>, QueryExtensionAnnotationAttributesInfo>();
+
     private final Map<String, QueryExtensionPathInfo> propertiesInfo = new HashMap<String, QueryExtensionPathInfo>();
 
     /**
@@ -43,7 +45,11 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     public TypeQueryExtensionImpl() {
     }
 
-    public void add(String path, QueryExtensionPathInfo queryExtensionPathInfo) {
+    public void addTypeAction(Class<? extends Annotation> actionType, QueryExtensionAnnotationAttributesInfo actionInfo) {
+        typeActionInfo.put(actionType, actionInfo);
+    }
+
+    public void addPath(String path, QueryExtensionPathInfo queryExtensionPathInfo) {
         this.propertiesInfo.put(path, queryExtensionPathInfo);
     }
 
@@ -58,10 +64,25 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     }
 
     @Override
+    public Set<Class<? extends Annotation>> getTypeAnnotations() {
+        return typeActionInfo.keySet();
+    }
+
+    @Override
+    public QueryExtensionAnnotationAttributesInfo getTypeAnnotationInfo(Class<? extends Annotation> actionType) {
+        return typeActionInfo.get(actionType);
+    }
+
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeInt(propertiesInfo.size());
         for (Map.Entry<String, QueryExtensionPathInfo> entry : propertiesInfo.entrySet()) {
             IOUtils.writeString(out, entry.getKey());
+            IOUtils.writeObject(out, entry.getValue());
+        }
+        out.writeInt(typeActionInfo.size());
+        for (Map.Entry<Class<? extends Annotation>, QueryExtensionAnnotationAttributesInfo> entry : typeActionInfo.entrySet()) {
+            IOUtils.writeObject(out, entry.getKey());
             IOUtils.writeObject(out, entry.getValue());
         }
     }
@@ -73,6 +94,12 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
             String key = IOUtils.readString(in);
             QueryExtensionPathInfo value = IOUtils.readObject(in);
             propertiesInfo.put(key, value);
+        }
+        size = in.readInt();
+        for (int i = 0; i < size; i++) {
+            Class<? extends Annotation> key = IOUtils.readObject(in);
+            QueryExtensionAnnotationAttributesInfo value = IOUtils.readObject(in);
+            typeActionInfo.put(key, value);
         }
     }
 }

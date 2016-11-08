@@ -16,9 +16,12 @@
 
 package com.gigaspaces.query.extension.metadata;
 
+import java.lang.annotation.Annotation;
 import java.util.Set;
 
 /**
+ * Abstraction encapsulates type and pathes specific query extension meta information.
+ *
  * @author Niv Ingberg
  * @since 11.0
  */
@@ -26,4 +29,8 @@ public interface TypeQueryExtension {
     QueryExtensionPathInfo get(String path);
 
     Set<String> getPaths();
+
+    Set<Class<? extends Annotation>> getTypeAnnotations();
+
+    QueryExtensionAnnotationAttributesInfo getTypeAnnotationInfo(Class<? extends Annotation> annotationType);
 }

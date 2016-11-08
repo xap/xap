@@ -23,6 +23,7 @@ import com.gigaspaces.query.extension.QueryExtensionEntryIterator;
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
+import com.gigaspaces.query.extension.metadata.TypeQueryExtensions;
 import com.gigaspaces.server.SpaceServerEntry;
 
 import org.apache.lucene.document.Document;
@@ -107,9 +108,12 @@ public abstract class BaseLuceneQueryExtensionManager<C extends BaseLuceneConfig
     }
 
     protected Document createDocumentIfNeeded(T luceneHolder, SpaceServerEntry entry) {
-
+        TypeQueryExtensions queryExtensions = entry.getSpaceTypeDescriptor().getQueryExtensions();
         Document doc = null;
         for (String path : luceneHolder.getQueryExtensionInfo().getPaths()) {
+            if(!queryExtensions.isIndexed(_namespace, path)) {
+                continue;
+            }
             final Object fieldValue = entry.getPathValue(path);
             if(fieldValue == null) {
                 continue;

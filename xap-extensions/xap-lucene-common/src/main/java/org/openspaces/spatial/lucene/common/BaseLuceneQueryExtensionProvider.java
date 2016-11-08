@@ -17,9 +17,8 @@
 package org.openspaces.spatial.lucene.common;
 
 import com.gigaspaces.query.extension.QueryExtensionProvider;
-import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
-import com.gigaspaces.query.extension.metadata.DefaultQueryExtensionPathInfo;
-import com.gigaspaces.query.extension.metadata.QueryExtensionPropertyInfo;
+import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionPathInfo;
+import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
 
 import java.util.Properties;
 

@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package com.gigaspaces.query.extension.metadata;
+package com.gigaspaces.query.extension.metadata.impl;
+
+import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.lang.annotation.Annotation;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Niv Ingberg
@@ -39,9 +45,11 @@ public class DefaultQueryExtensionPathInfo extends QueryExtensionPathInfo implem
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
     }
 }
