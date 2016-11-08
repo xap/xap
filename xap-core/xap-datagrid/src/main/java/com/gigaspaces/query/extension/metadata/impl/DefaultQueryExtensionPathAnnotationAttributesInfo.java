@@ -8,11 +8,11 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 /**
- * @author Vitaliy_Zinchenko
- * @since 12.1
- *
  * Default implementation of the {@link QueryExtensionAnnotationAttributesInfo}. Default implementation is
  * indexed and doesnt have additiona attributes.
+ *
+ * @author Vitaliy_Zinchenko
+ * @since 12.1
  *
  * @see QueryExtensionAnnotationAttributesInfo
  */

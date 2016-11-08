@@ -2,6 +2,8 @@ package org.openspaces.textsearch;
 
 import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationAttributesInfo;
 
+import java.io.Serializable;
+
 /**
  * @author Vitaliy_Zinchenko
  */

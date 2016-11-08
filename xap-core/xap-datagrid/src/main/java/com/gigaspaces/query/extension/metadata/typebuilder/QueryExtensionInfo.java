@@ -5,10 +5,10 @@ import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationAttribute
 import java.lang.annotation.Annotation;
 
 /**
+ * Abstraction associates action type with {@link QueryExtensionAnnotationAttributesInfo} action info.
+ *
  * @author Vitaliy_Zinchenko
  * @since 12.1
- *
- * Abstraction associates action type with {@link QueryExtensionAnnotationAttributesInfo} action info.
  */
 public interface QueryExtensionInfo {
 

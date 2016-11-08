@@ -20,10 +20,10 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 
 /**
+ * Abstraction encapsulates type and pathes specific query extension meta information.
+ *
  * @author Niv Ingberg
  * @since 11.0
- *
- * Abstraction encapsulates type and pathes specific query extension meta information.
  */
 public interface TypeQueryExtension {
     QueryExtensionPathInfo get(String path);

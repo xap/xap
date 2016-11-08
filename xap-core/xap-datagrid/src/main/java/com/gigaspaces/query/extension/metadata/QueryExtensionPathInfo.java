@@ -28,10 +28,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Abstraction encapsulates annotation type and associated with it attributes {@link QueryExtensionAnnotationAttributesInfo}
+ *
  * @author Niv Ingberg
  * @since 11.0
- *
- * Abstraction encapsulates annotation type and associated with it attributes {@link QueryExtensionAnnotationAttributesInfo}
  */
 public abstract class QueryExtensionPathInfo implements Externalizable {
     // serialVersionUID should never be changed.

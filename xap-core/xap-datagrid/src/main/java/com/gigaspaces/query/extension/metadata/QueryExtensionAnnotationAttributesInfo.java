@@ -3,12 +3,13 @@ package com.gigaspaces.query.extension.metadata;
 import java.io.Serializable;
 
 /**
+ * Abstraction encapsulates query extension annotation's attributes.
+ *
  * @author Vitaliy_Zinchenko
  * @since 12.1
  *
- * Abstraction encapsulates query extension annotation's attributes.
  */
-public interface QueryExtensionAnnotationAttributesInfo {
+public interface QueryExtensionAnnotationAttributesInfo extends Serializable {
 
     boolean isIndexed();
 
