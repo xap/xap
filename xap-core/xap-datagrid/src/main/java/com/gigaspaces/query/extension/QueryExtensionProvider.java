@@ -16,8 +16,8 @@
 
 package com.gigaspaces.query.extension;
 
-import com.gigaspaces.query.extension.metadata.QueryExtensionPropertyInfo;
-import com.gigaspaces.query.extension.metadata.QueryExtensionTypeInfo;
+import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
+import com.gigaspaces.query.extension.metadata.provided.QueryExtensionTypeInfo;
 
 import java.lang.annotation.Annotation;
 

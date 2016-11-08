@@ -35,7 +35,7 @@ import com.gigaspaces.metadata.index.SpaceIndex;
 import com.gigaspaces.metadata.index.SpaceIndexFactory;
 import com.gigaspaces.metadata.index.SpaceIndexType;
 import com.gigaspaces.metadata.index.SpacePropertyIndex;
-import com.gigaspaces.query.extension.metadata.QueryExtensionInfo;
+import com.gigaspaces.query.extension.metadata.typebuilder.QueryExtensionInfo;
 import com.gigaspaces.query.extension.metadata.impl.TypeQueryExtensionsImpl;
 import com.j_spaces.core.client.ExternalEntry;
 

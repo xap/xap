@@ -21,12 +21,29 @@ import java.util.Collection;
 /**
  * @author Niv Ingberg
  * @since 11.0
+ *
+ * Abstraction encapsulates namespace and associated with it {@link TypeQueryExtension}
  */
 public interface TypeQueryExtensions {
 
+    /**
+     * Determines is path of namespace is indexed.
+     * @param namespace the namespace of query extension
+     * @param path the path in the document
+     * @return true if path of namespace is indexed
+     */
     boolean isIndexed(String namespace, String path);
 
+    /**
+     * Returns all namespaces which is registered for this type
+     * @return namespaces of this type
+     */
     Collection<String> getNamespaces();
 
+    /**
+     * Returns type query extension metadata {@link TypeQueryExtension} of specified namespace
+     * @param namespace the namespace of query extension
+     * @return type query extension metadata
+     */
     TypeQueryExtension getByNamespace(String namespace);
 }

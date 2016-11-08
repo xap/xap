@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package com.gigaspaces.query.extension.metadata;
+package com.gigaspaces.query.extension.metadata.provided;
+
+import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 
 import java.util.HashMap;
 import java.util.Map;

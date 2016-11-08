@@ -1,16 +1,19 @@
-package com.gigaspaces.query.extension.metadata;
+package com.gigaspaces.query.extension.metadata.typebuilder;
+
+import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationAttributesInfo;
 
 import java.lang.annotation.Annotation;
 
 /**
  * @author Vitaliy_Zinchenko
+ * @since 12.1
  */
 public class DefaultQueryExtensionInfo implements QueryExtensionInfo {
 
     private Class<? extends Annotation> queryExtensionAnnotation;
-    private QueryExtensionActionInfo queryExtensionPathActionInfo;
+    private QueryExtensionAnnotationAttributesInfo queryExtensionPathActionInfo;
 
-    public DefaultQueryExtensionInfo(Class<? extends Annotation> queryExtensionAnnotation, QueryExtensionActionInfo queryExtensionPathActionInfo) {
+    public DefaultQueryExtensionInfo(Class<? extends Annotation> queryExtensionAnnotation, QueryExtensionAnnotationAttributesInfo queryExtensionPathActionInfo) {
         this.queryExtensionAnnotation = queryExtensionAnnotation;
         this.queryExtensionPathActionInfo = queryExtensionPathActionInfo;
     }
@@ -21,7 +24,7 @@ public class DefaultQueryExtensionInfo implements QueryExtensionInfo {
     }
 
     @Override
-    public QueryExtensionActionInfo getQueryExtensionActionInfo() {
+    public QueryExtensionAnnotationAttributesInfo getQueryExtensionActionInfo() {
         return queryExtensionPathActionInfo;
     }
 }

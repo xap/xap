@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package com.gigaspaces.query.extension.metadata;
+package com.gigaspaces.query.extension.metadata.provided;
+
+import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationAttributesInfo;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -23,12 +25,13 @@ import java.util.Map;
 
 /**
  * @author Vitaliy_Zinchenko
+ * @since 12.1
  */
 @com.gigaspaces.api.InternalApi
 public class QueryExtensionTypeInfo {
-    private Map<Class<? extends Annotation>, QueryExtensionActionInfo> actionInfos = new HashMap<Class<? extends Annotation>, QueryExtensionActionInfo>();
+    private Map<Class<? extends Annotation>, QueryExtensionAnnotationAttributesInfo> actionInfos = new HashMap<Class<? extends Annotation>, QueryExtensionAnnotationAttributesInfo>();
 
-    public void add(Class<? extends Annotation> action, QueryExtensionActionInfo actionInfo) {
+    public void add(Class<? extends Annotation> action, QueryExtensionAnnotationAttributesInfo actionInfo) {
         actionInfos.put(action, actionInfo);
     }
 
@@ -36,7 +39,7 @@ public class QueryExtensionTypeInfo {
         return actionInfos.keySet();
     }
 
-    public QueryExtensionActionInfo getActionInfo(Class<? extends Annotation> actionType) {
+    public QueryExtensionAnnotationAttributesInfo getActionInfo(Class<? extends Annotation> actionType) {
         return actionInfos.get(actionType);
     }
 

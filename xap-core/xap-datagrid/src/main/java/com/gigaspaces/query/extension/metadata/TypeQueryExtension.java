@@ -22,13 +22,15 @@ import java.util.Set;
 /**
  * @author Niv Ingberg
  * @since 11.0
+ *
+ * Abstraction encapsulates type and pathes specific query extension meta information.
  */
 public interface TypeQueryExtension {
     QueryExtensionPathInfo get(String path);
 
     Set<String> getPaths();
 
-    Set<Class<? extends Annotation>> getTypeActions();
+    Set<Class<? extends Annotation>> getTypeAnnotations();
 
-    QueryExtensionActionInfo getTypeActionInfo(Class<? extends Annotation> actionType);
+    QueryExtensionAnnotationAttributesInfo getTypeAnnotationInfo(Class<? extends Annotation> annotationType);
 }

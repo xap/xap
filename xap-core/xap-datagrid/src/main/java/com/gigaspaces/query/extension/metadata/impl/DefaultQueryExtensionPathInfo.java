@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.gigaspaces.query.extension.metadata;
+package com.gigaspaces.query.extension.metadata.impl;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 
 import java.io.Externalizable;
 import java.io.IOException;
