@@ -20,25 +20,24 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Vitaliy_Zinchenko
  */
 @com.gigaspaces.api.InternalApi
 public class QueryExtensionTypeInfo {
-    private Map<Class<? extends Annotation>, QueryExtensionActionInfo> pathActionInfo = new HashMap<Class<? extends Annotation>, QueryExtensionActionInfo>();
+    private Map<Class<? extends Annotation>, QueryExtensionActionInfo> actionInfos = new HashMap<Class<? extends Annotation>, QueryExtensionActionInfo>();
 
     public void add(Class<? extends Annotation> action, QueryExtensionActionInfo actionInfo) {
-        pathActionInfo.put(action, actionInfo);
+        actionInfos.put(action, actionInfo);
     }
 
     public Collection<Class<? extends Annotation>> getActions() {
-        return pathActionInfo.keySet();
+        return actionInfos.keySet();
     }
 
     public QueryExtensionActionInfo getActionInfo(Class<? extends Annotation> actionType) {
-        return pathActionInfo.get(actionType);
+        return actionInfos.get(actionType);
     }
 
 }
