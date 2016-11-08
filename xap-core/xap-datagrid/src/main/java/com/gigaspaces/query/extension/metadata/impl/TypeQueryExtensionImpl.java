@@ -80,6 +80,11 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
             IOUtils.writeString(out, entry.getKey());
             IOUtils.writeObject(out, entry.getValue());
         }
+        out.writeInt(typeActionInfo.size());
+        for (Map.Entry<Class<? extends Annotation>, QueryExtensionActionInfo> entry : typeActionInfo.entrySet()) {
+            IOUtils.writeObject(out, entry.getKey());
+            IOUtils.writeObject(out, entry.getValue());
+        }
     }
 
     @Override
@@ -89,6 +94,12 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
             String key = IOUtils.readString(in);
             QueryExtensionPathInfo value = IOUtils.readObject(in);
             propertiesInfo.put(key, value);
+        }
+        size = in.readInt();
+        for (int i = 0; i < size; i++) {
+            Class<? extends Annotation> key = IOUtils.readObject(in);
+            QueryExtensionActionInfo value = IOUtils.readObject(in);
+            typeActionInfo.put(key, value);
         }
     }
 }
