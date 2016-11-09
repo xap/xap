@@ -18,6 +18,8 @@ package org.openspaces.spatial.spi;
 
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
+import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionPathAnnotationAttributesInfo;
+import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
 
 import org.openspaces.spatial.SpaceSpatialIndex;
@@ -60,13 +62,22 @@ public class LuceneSpatialQueryExtensionProvider extends BaseLuceneQueryExtensio
         QueryExtensionPropertyInfo result = new QueryExtensionPropertyInfo();
         if (annotation instanceof SpaceSpatialIndex) {
             SpaceSpatialIndex index = (SpaceSpatialIndex) annotation;
-            addIndex(result, Utils.makePath(property, index.path()));
+            String path = Utils.makePath(property, index.path());
+            addIndex(result, path, index);
         } else if (annotation instanceof SpaceSpatialIndexes) {
             SpaceSpatialIndex[] indexes = ((SpaceSpatialIndexes) annotation).value();
-            for (SpaceSpatialIndex index : indexes)
-                addIndex(result, Utils.makePath(property, index.path()));
+            for (SpaceSpatialIndex index : indexes) {
+                String path = Utils.makePath(property, index.path());
+                addIndex(result, path, index);
+            }
         }
         return result;
+    }
+
+    protected void addIndex(QueryExtensionPropertyInfo result, String path, SpaceSpatialIndex index) {
+        DefaultQueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
+        pathInfo.add(index.annotationType(), new DefaultQueryExtensionPathAnnotationAttributesInfo());
+        result.addPathInfo(path, pathInfo);
     }
 
     public String getCustomProperty(String key, String defaultValue) {

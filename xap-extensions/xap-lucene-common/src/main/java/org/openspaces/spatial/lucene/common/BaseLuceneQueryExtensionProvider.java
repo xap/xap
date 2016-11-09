@@ -42,8 +42,4 @@ public abstract class BaseLuceneQueryExtensionProvider extends QueryExtensionPro
         return _customProperties.getProperty(key, defaultValue);
     }
 
-    protected void addIndex(QueryExtensionPropertyInfo result, String path) {
-        result.addPathInfo(path, new DefaultQueryExtensionPathInfo());
-    }
-
 }
