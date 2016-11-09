@@ -19,6 +19,7 @@ package org.openspaces.spatial.lucene.common;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.store.RAMDirectory;
@@ -42,10 +43,13 @@ public abstract class BaseLuceneConfiguration {
 
     private static final String DEFAULT_MAX_RESULTS = String.valueOf(Integer.MAX_VALUE);
 
+    public static final Class<StandardAnalyzer> DEFAULT_ANALYZER_CLASS = StandardAnalyzer.class;
+
     private final DirectoryFactory _directoryFactory;
     private final int _maxUncommittedChanges;
     private final String _location;
     private final int _maxResults;
+    private final Analyzer _defaultAnalyzer;
 
     private enum SupportedDirectory {
         MMapDirectory, RAMDirectory;
@@ -64,6 +68,7 @@ public abstract class BaseLuceneConfiguration {
         this._location = initLocation(provider, info);
         this._maxUncommittedChanges = initMaxUncommittedChanges(provider);
         this._maxResults = initMaxResults(provider);
+        this._defaultAnalyzer = initDefaultAnalyzer(provider);
     }
 
     private int initMaxUncommittedChanges(BaseLuceneQueryExtensionProvider provider) {
@@ -75,6 +80,17 @@ public abstract class BaseLuceneConfiguration {
     private int initMaxResults(BaseLuceneQueryExtensionProvider provider) {
         return Integer.parseInt(provider.getCustomProperty(getMaxResultsPropertyKey(), DEFAULT_MAX_RESULTS));
     }
+
+    private Analyzer initDefaultAnalyzer(BaseLuceneQueryExtensionProvider provider) {
+        String analyzerClassName = provider.getCustomProperty(getDefaultAnalyzerPropertyKey(), DEFAULT_ANALYZER_CLASS.getName());
+        try {
+            return Utils.createAnalyzer(this.getClass().getClassLoader().loadClass(analyzerClassName)); //TODO refactor/ try to reuse existing utils
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException("Failed to load analyzer class " + analyzerClassName + ". Check property " + getDefaultAnalyzerPropertyKey());
+        }
+    }
+
+    protected abstract String getDefaultAnalyzerPropertyKey();
 
     protected  abstract String getMaxResultsPropertyKey();
 
@@ -140,7 +156,9 @@ public abstract class BaseLuceneConfiguration {
         public abstract Directory getDirectory(String relativePath) throws IOException;
     }
 
-    public abstract Analyzer getDefaultAnalyzer();
+    public Analyzer getDefaultAnalyzer() {
+        return _defaultAnalyzer;
+    }
 
     public int getMaxResults() {
         return _maxResults;
