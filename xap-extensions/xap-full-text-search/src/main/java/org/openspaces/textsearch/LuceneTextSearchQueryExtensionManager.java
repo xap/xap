@@ -48,7 +48,7 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
 
     @Override
     public boolean accept(String typeName, String path, String operation, Object gridValue, Object luceneQuery) {
-        Assert.notNull(gridValue, "Provided value from grid is null"); // TODO: what to do if null?
+        Assert.notNull(gridValue, "Provided value from grid is null");
         Assert.notNull(luceneQuery, "Provided lucene query is null");
         validateOperationName(operation);
 
@@ -89,13 +89,14 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
 
     @Override
     protected Query createQuery(String typeName, String path, String operationName, Object operand) {
+        Assert.notNull(operand, "Provided operand is null");
         validateOperationName(operationName);
         try {
             LuceneTextSearchTypeIndex typeIndex = _luceneHolderMap.get(typeName);
             Analyzer analyzer = typeIndex.getAnalyzerForPath(path);
             return new QueryParser(path, analyzer).parse(path + ":" + operand);
         } catch (ParseException e) {
-            throw new IllegalArgumentException("Couldn't create full text search query for path=" + path + " operationName=" + operationName + " operand=" + operand);
+            throw new IllegalArgumentException("Couldn't create full text search query for path=" + path + " operationName=" + operationName + " operand=" + operand, e);
         }
     }
 
