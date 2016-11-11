@@ -55,4 +55,28 @@ public class LuceneTextSearchQueryExtensionManagerTest {
         } catch (IllegalArgumentException e) {}
     }
 
+    @Test
+    public void testCreateQueryNullOperand() throws IllegalArgumentException {
+        try {
+            _manager.createQuery("", "", "", null);
+            Assert.fail("Should throw an exception here");
+        } catch (IllegalArgumentException e) {}
+    }
+
+    @Test
+    public void testCreateQueryWrongOperand() throws IllegalArgumentException {
+        try {
+            _manager.createQuery("", "", "wrong_operation", "");
+            Assert.fail("Should throw an exception here");
+        } catch (IllegalArgumentException e) {}
+    }
+
+    @Test
+    public void testConvertFieldNotStringFiled() throws IllegalArgumentException {
+        try {
+            _manager.convertField("", new Exception());
+            Assert.fail("Should throw an exception here");
+        } catch (IllegalArgumentException e) {}
+    }
+
 }
