@@ -32,26 +32,15 @@ public class LuceneTextSearchConfiguration extends BaseLuceneConfiguration {
     public static final String INDEX_LOCATION_FOLDER_NAME = "full_text_search";
 
     public static final String STORAGE_LOCATION = "lucene.full.text.search.storage.location";
-    public static final String MAX_UNCOMMITED_CHANGES = "lucene.full.text.search.max.uncommited.changes";
+    public static final String MAX_UNCOMMITED_CHANGES = "lucene.full.text.search.max.uncommitted.changes";
 
     public static final String STORAGE_DIRECTORYTYPE = "lucene.full.text.search.storage.directory-type";
 
     public static final String DEFAULT_ANALYZER_PROPERTY_KEY = "lucene.full.text.search.default.analyzer";
     public static final String MAX_RESULTS = "lucene.full.text.search.max.results";
-    private Analyzer _defaultAnalyzer;
 
     public LuceneTextSearchConfiguration(BaseLuceneQueryExtensionProvider provider, QueryExtensionRuntimeInfo info) {
         super(provider, info);
-        this._defaultAnalyzer = initDefaultAnalyzer(provider);
-    }
-
-    private Analyzer initDefaultAnalyzer(BaseLuceneQueryExtensionProvider provider) {
-        String analyzerClassName = provider.getCustomProperty(DEFAULT_ANALYZER_PROPERTY_KEY, StandardAnalyzer.class.getName());
-        try {
-            return Utils.createAnalyzer(this.getClass().getClassLoader().loadClass(analyzerClassName)); //TODO refactor/ try to reuse existing utils
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("Failed to load analyzer class " + analyzerClassName + ". Check property " + DEFAULT_ANALYZER_PROPERTY_KEY);
-        }
     }
 
     @Override
@@ -80,7 +69,7 @@ public class LuceneTextSearchConfiguration extends BaseLuceneConfiguration {
     }
 
     @Override
-    public Analyzer getDefaultAnalyzer() {
-        return _defaultAnalyzer;
+    protected String getDefaultAnalyzerPropertyKey() {
+        return DEFAULT_ANALYZER_PROPERTY_KEY;
     }
 }
