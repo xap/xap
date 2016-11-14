@@ -40,7 +40,7 @@ public class LuceneSpatialTypeIndex extends BaseLuceneTypeIndex {
 
     @Override
     protected Analyzer createAnalyzer(BaseLuceneConfiguration luceneConfig, SpaceTypeDescriptor typeDescriptor) {
-        return null;
+        return luceneConfig.getDefaultAnalyzer();
     }
 
 }

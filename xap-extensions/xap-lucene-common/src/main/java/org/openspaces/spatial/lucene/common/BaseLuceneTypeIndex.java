@@ -35,8 +35,10 @@ public abstract class BaseLuceneTypeIndex implements Closeable {
     private final TypeQueryExtension queryExtensionInfo;
     private final int maxUncommittedChanges;
     private final AtomicInteger uncommittedChanges = new AtomicInteger(0);
+    protected final BaseLuceneConfiguration luceneConfig;
 
     public BaseLuceneTypeIndex(BaseLuceneConfiguration luceneConfig, String namespace, SpaceTypeDescriptor typeDescriptor) throws IOException {
+        this.luceneConfig = luceneConfig;
         this.directory = luceneConfig.getDirectory(typeDescriptor.getTypeName() + File.separator + "entries");
         this.indexWriter = new IndexWriter(directory, new IndexWriterConfig(createAnalyzer(luceneConfig, typeDescriptor))
                 .setOpenMode(IndexWriterConfig.OpenMode.CREATE));

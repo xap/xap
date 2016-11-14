@@ -650,17 +650,6 @@ public class SpaceTypeDescriptorBuilder {
         return this;
     }
 
-    /**
-     * Adds a QueryExtension information for the type level
-     *
-     * @param queryExtensionInfo       Query Extension encapsulating mapping info
-     */
-    public SpaceTypeDescriptorBuilder addQueryExtensionInfo(QueryExtensionInfo queryExtensionInfo) {
-        createQueryExtensionInfoIfNeeded();
-        _queryExtensionsInfo.addTypeLevelExtension(queryExtensionInfo);
-        return this;
-    }
-
     private void createQueryExtensionInfoIfNeeded() {
         if (_queryExtensionsInfo == null)
             _queryExtensionsInfo = new TypeQueryExtensionsImpl();

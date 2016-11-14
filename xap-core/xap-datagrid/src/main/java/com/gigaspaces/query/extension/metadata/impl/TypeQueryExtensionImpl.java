@@ -35,18 +35,12 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 
-    private Map<Class<? extends Annotation>, QueryExtensionAnnotationAttributesInfo> typeActionInfo = new HashMap<Class<? extends Annotation>, QueryExtensionAnnotationAttributesInfo>();
-
     private final Map<String, QueryExtensionPathInfo> propertiesInfo = new HashMap<String, QueryExtensionPathInfo>();
 
     /**
      * Required for Externalizable
      */
     public TypeQueryExtensionImpl() {
-    }
-
-    public void addTypeAction(Class<? extends Annotation> actionType, QueryExtensionAnnotationAttributesInfo actionInfo) {
-        typeActionInfo.put(actionType, actionInfo);
     }
 
     public void addPath(String path, QueryExtensionPathInfo queryExtensionPathInfo) {
@@ -64,25 +58,10 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     }
 
     @Override
-    public Set<Class<? extends Annotation>> getTypeAnnotations() {
-        return typeActionInfo.keySet();
-    }
-
-    @Override
-    public QueryExtensionAnnotationAttributesInfo getTypeAnnotationInfo(Class<? extends Annotation> actionType) {
-        return typeActionInfo.get(actionType);
-    }
-
-    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeInt(propertiesInfo.size());
         for (Map.Entry<String, QueryExtensionPathInfo> entry : propertiesInfo.entrySet()) {
             IOUtils.writeString(out, entry.getKey());
-            IOUtils.writeObject(out, entry.getValue());
-        }
-        out.writeInt(typeActionInfo.size());
-        for (Map.Entry<Class<? extends Annotation>, QueryExtensionAnnotationAttributesInfo> entry : typeActionInfo.entrySet()) {
-            IOUtils.writeObject(out, entry.getKey());
             IOUtils.writeObject(out, entry.getValue());
         }
     }
@@ -94,12 +73,6 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
             String key = IOUtils.readString(in);
             QueryExtensionPathInfo value = IOUtils.readObject(in);
             propertiesInfo.put(key, value);
-        }
-        size = in.readInt();
-        for (int i = 0; i < size; i++) {
-            Class<? extends Annotation> key = IOUtils.readObject(in);
-            QueryExtensionAnnotationAttributesInfo value = IOUtils.readObject(in);
-            typeActionInfo.put(key, value);
         }
     }
 }

@@ -76,7 +76,6 @@ public class LuceneSpatialConfiguration extends BaseLuceneConfiguration {
 
     public static final String MAX_UNCOMMITED_CHANGES = "lucene.spatial.max.uncommited.changes";
     public static final String MAX_RESULTS = "lucene.spatial.max.results";
-    public static final String DEFAULT_ANALYZER_PROPERTY_KEY = "lucene.spatial.default.analyzer";
 
     private final SpatialContext _spatialContext;
     private final StrategyFactory _strategyFactory;
@@ -284,11 +283,6 @@ public class LuceneSpatialConfiguration extends BaseLuceneConfiguration {
 
     public SpatialContext getSpatialContext() {
         return _spatialContext;
-    }
-
-    @Override
-    protected String getDefaultAnalyzerPropertyKey() {
-        return DEFAULT_ANALYZER_PROPERTY_KEY;
     }
 
     public abstract class StrategyFactory {

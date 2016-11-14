@@ -68,7 +68,7 @@ public abstract class BaseLuceneConfiguration {
         this._location = initLocation(provider, info);
         this._maxUncommittedChanges = initMaxUncommittedChanges(provider);
         this._maxResults = initMaxResults(provider);
-        this._defaultAnalyzer = initDefaultAnalyzer(provider);
+        this._defaultAnalyzer = initDefaultAnalyzer();
     }
 
     private int initMaxUncommittedChanges(BaseLuceneQueryExtensionProvider provider) {
@@ -81,16 +81,9 @@ public abstract class BaseLuceneConfiguration {
         return Integer.parseInt(provider.getCustomProperty(getMaxResultsPropertyKey(), DEFAULT_MAX_RESULTS));
     }
 
-    private Analyzer initDefaultAnalyzer(BaseLuceneQueryExtensionProvider provider) {
-        String analyzerClassName = provider.getCustomProperty(getDefaultAnalyzerPropertyKey(), DEFAULT_ANALYZER_CLASS.getName());
-        try {
-            return Utils.createAnalyzer(this.getClass().getClassLoader().loadClass(analyzerClassName)); //TODO refactor/ try to reuse existing utils
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("Failed to load analyzer class " + analyzerClassName + ". Check property " + getDefaultAnalyzerPropertyKey());
-        }
+    private Analyzer initDefaultAnalyzer() {
+        return Utils.createAnalyzer(DEFAULT_ANALYZER_CLASS); //TODO refactor/ try to reuse existing utils
     }
-
-    protected abstract String getDefaultAnalyzerPropertyKey();
 
     protected  abstract String getMaxResultsPropertyKey();
 

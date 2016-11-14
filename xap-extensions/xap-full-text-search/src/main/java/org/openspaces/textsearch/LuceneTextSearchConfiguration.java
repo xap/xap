@@ -31,13 +31,13 @@ public class LuceneTextSearchConfiguration extends BaseLuceneConfiguration {
 
     public static final String INDEX_LOCATION_FOLDER_NAME = "full_text_search";
 
-    public static final String STORAGE_LOCATION = "lucene.full.text.search.storage.location";
-    public static final String MAX_UNCOMMITED_CHANGES = "lucene.full.text.search.max.uncommitted.changes";
+    public static final String STORAGE_LOCATION = "lucene.full-text-search.storage.location";
 
-    public static final String STORAGE_DIRECTORYTYPE = "lucene.full.text.search.storage.directory-type";
+    public static final String MAX_UNCOMMITED_CHANGES = "lucene.full-text-search.max-uncommitted-changes";
 
-    public static final String DEFAULT_ANALYZER_PROPERTY_KEY = "lucene.full.text.search.default.analyzer";
-    public static final String MAX_RESULTS = "lucene.full.text.search.max.results";
+    public static final String STORAGE_DIRECTORYTYPE = "lucene.full-text-search.storage.directory-type";
+
+    public static final String MAX_RESULTS = "lucene.full-text-search.max-results";
 
     public LuceneTextSearchConfiguration(BaseLuceneQueryExtensionProvider provider, QueryExtensionRuntimeInfo info) {
         super(provider, info);
@@ -68,8 +68,4 @@ public class LuceneTextSearchConfiguration extends BaseLuceneConfiguration {
         return STORAGE_DIRECTORYTYPE;
     }
 
-    @Override
-    protected String getDefaultAnalyzerPropertyKey() {
-        return DEFAULT_ANALYZER_PROPERTY_KEY;
-    }
 }

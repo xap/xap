@@ -29,8 +29,4 @@ public interface TypeQueryExtension {
     QueryExtensionPathInfo get(String path);
 
     Set<String> getPaths();
-
-    Set<Class<? extends Annotation>> getTypeAnnotations();
-
-    QueryExtensionAnnotationAttributesInfo getTypeAnnotationInfo(Class<? extends Annotation> annotationType);
 }

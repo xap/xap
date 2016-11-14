@@ -40,7 +40,7 @@ import java.util.logging.Logger;
  */
 public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtensionManager<LuceneTextSearchConfiguration, LuceneTextSearchTypeIndex> {
     private static final Logger _logger = Logger.getLogger(LuceneTextSearchQueryExtensionManager.class.getName());
-    public static final String SEARCH_OPERATION_NAME = "search";
+    public static final String SEARCH_OPERATION_NAME = "match";
 
     protected LuceneTextSearchQueryExtensionManager(LuceneTextSearchQueryExtensionProvider provider, QueryExtensionRuntimeInfo info, LuceneTextSearchConfiguration configuration) {
         super(provider, info, configuration);
