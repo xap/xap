@@ -82,7 +82,7 @@ public abstract class BaseLuceneConfiguration {
     }
 
     private Analyzer initDefaultAnalyzer() {
-        return Utils.createAnalyzer(DEFAULT_ANALYZER_CLASS); //TODO refactor/ try to reuse existing utils
+        return Utils.createAnalyzer(DEFAULT_ANALYZER_CLASS);
     }
 
     protected  abstract String getMaxResultsPropertyKey();
