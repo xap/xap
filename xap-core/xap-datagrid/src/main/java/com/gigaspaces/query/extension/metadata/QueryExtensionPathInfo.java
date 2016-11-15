@@ -27,8 +27,6 @@ import java.util.Collection;
  */
 public interface QueryExtensionPathInfo {
 
-    Collection<Class<? extends Annotation>> getAnnotations();
-
-    QueryExtensionAnnotationAttributesInfo getAnnotationInfo(Class<? extends Annotation> actionType);
+    Collection<QueryExtensionAnnotationInfo> getAnnotations();
 
 }

@@ -75,8 +75,7 @@ public class LuceneSpatialQueryExtensionProvider extends BaseLuceneQueryExtensio
     }
 
     protected void addIndex(QueryExtensionPropertyInfo result, String path, SpaceSpatialIndex index) {
-        QueryExtensionPathInfoImpl pathInfo = new QueryExtensionPathInfoImpl();
-        pathInfo.add(index.annotationType(), new DefaultQueryExtensionPathAnnotationAttributesInfo());
+        QueryExtensionPathInfoImpl pathInfo = new QueryExtensionPathInfoImpl(index.annotationType(), new DefaultQueryExtensionPathAnnotationAttributesInfo());
         result.addPathInfo(path, pathInfo);
     }
 

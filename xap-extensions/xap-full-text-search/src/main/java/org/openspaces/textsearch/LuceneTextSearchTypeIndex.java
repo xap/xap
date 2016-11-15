@@ -1,6 +1,7 @@
 package org.openspaces.textsearch;
 
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
+import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
@@ -45,9 +46,9 @@ public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
         TypeQueryExtension type = typeDescriptor.getQueryExtensions().getByNamespace(LuceneTextSearchQueryExtensionProvider.NAMESPACE);
         for (String path : type.getPaths()) {
             QueryExtensionPathInfo pathInfo = type.get(path);
-            for (Class<? extends Annotation> action : pathInfo.getAnnotations()) {
-                if (SpaceTextAnalyzer.class.equals(action)) {
-                    TextAnalyzerQueryExtensionAnnotationAttributesInfo analyzerActionInfo = (TextAnalyzerQueryExtensionAnnotationAttributesInfo) pathInfo.getAnnotationInfo(action);
+            for (QueryExtensionAnnotationInfo annotationInfo: pathInfo.getAnnotations()) {
+                if (SpaceTextAnalyzer.class.equals(annotationInfo.getType())) {
+                    TextAnalyzerQueryExtensionAnnotationAttributesInfo analyzerActionInfo = (TextAnalyzerQueryExtensionAnnotationAttributesInfo) annotationInfo.getAttributes();
                     addAnalyzer(analyzerMap, path, analyzerActionInfo.getAnalazerClass());
                 }
             }

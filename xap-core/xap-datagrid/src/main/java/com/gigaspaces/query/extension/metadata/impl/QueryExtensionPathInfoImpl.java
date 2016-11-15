@@ -18,6 +18,7 @@ package com.gigaspaces.query.extension.metadata.impl;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationAttributesInfo;
+import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 
 import java.io.Externalizable;
@@ -25,8 +26,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -34,9 +35,9 @@ import java.util.Map;
  * @since 11.0
  */
 @com.gigaspaces.api.InternalApi
-public class QueryExtensionPathInfoImpl implements QueryExtensionPathInfo, Externalizable{
+public class QueryExtensionPathInfoImpl implements QueryExtensionPathInfo, Externalizable {
 
-    private Map<Class<? extends Annotation>, QueryExtensionAnnotationAttributesInfo> pathAnnotationInfo = new HashMap<Class<? extends Annotation>, QueryExtensionAnnotationAttributesInfo>();
+    private Collection<QueryExtensionAnnotationInfo> pathAnnotationInfos = new ArrayList<QueryExtensionAnnotationInfo>();
 
     /**
      * Required for Externalizable
@@ -46,27 +47,22 @@ public class QueryExtensionPathInfoImpl implements QueryExtensionPathInfo, Exter
     }
 
     public QueryExtensionPathInfoImpl(Class<? extends Annotation> annotationType, QueryExtensionAnnotationAttributesInfo attributesInfo) {
-        pathAnnotationInfo.put(annotationType, attributesInfo);
+        pathAnnotationInfos.add(new QueryExtensionAnnotationInfoImpl(annotationType, attributesInfo));
     }
 
-    public void add(Class<? extends Annotation> action, QueryExtensionAnnotationAttributesInfo attributesInfo) {
-        pathAnnotationInfo.put(action, attributesInfo);
+    public void add(QueryExtensionAnnotationInfo annotationInfo) {
+        pathAnnotationInfos.add(annotationInfo);
     }
 
-    public Collection<Class<? extends Annotation>> getAnnotations() {
-        return pathAnnotationInfo.keySet();
-    }
-
-    public QueryExtensionAnnotationAttributesInfo getAnnotationInfo(Class<? extends Annotation> annotationType) {
-        return pathAnnotationInfo.get(annotationType);
+    public Collection<QueryExtensionAnnotationInfo> getAnnotations() {
+        return pathAnnotationInfos;
     }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeInt(pathAnnotationInfo.size());
-        for (Map.Entry<Class<? extends Annotation>, QueryExtensionAnnotationAttributesInfo> entry : pathAnnotationInfo.entrySet()) {
-            IOUtils.writeObject(out, entry.getKey());
-            IOUtils.writeObject(out, entry.getValue());
+        out.writeInt(pathAnnotationInfos.size());
+        for (QueryExtensionAnnotationInfo annotationInfo : pathAnnotationInfos) {
+            IOUtils.writeObject(out, annotationInfo);
         }
     }
 
@@ -74,9 +70,8 @@ public class QueryExtensionPathInfoImpl implements QueryExtensionPathInfo, Exter
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         int size = in.readInt();
         for (int i = 0; i < size; i++) {
-            Class<? extends Annotation> key = IOUtils.readObject(in);
-            QueryExtensionAnnotationAttributesInfo value = IOUtils.readObject(in);
-            pathAnnotationInfo.put(key, value);
+            QueryExtensionAnnotationInfo annotationInfo = IOUtils.readObject(in);
+            pathAnnotationInfos.add(annotationInfo);
         }
     }
 }

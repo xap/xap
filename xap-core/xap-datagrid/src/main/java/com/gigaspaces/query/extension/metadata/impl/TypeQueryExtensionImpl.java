@@ -18,6 +18,7 @@ package com.gigaspaces.query.extension.metadata.impl;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationAttributesInfo;
+import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
@@ -43,9 +44,9 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     public TypeQueryExtensionImpl() {
     }
 
-    public void addAnnotationByPath(String path, Class<? extends Annotation> annotationType, QueryExtensionAnnotationAttributesInfo annotationInfo) {
+    public void addAnnotationByPath(String path, QueryExtensionAnnotationInfo annotationInfo) {
         QueryExtensionPathInfoImpl pathInfo = getOrCreatePath(path);
-        pathInfo.add(annotationType, annotationInfo);
+        pathInfo.add(annotationInfo);
     }
 
     private QueryExtensionPathInfoImpl getOrCreatePath(String path) {
