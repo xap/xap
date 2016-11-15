@@ -20,7 +20,6 @@ import java.util.Map;
  */
 public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
 
-    private Analyzer _mainAnalyzer;
     private Map<String, Analyzer> _fieldAnalyzers;
 
     public LuceneTextSearchTypeIndex(BaseLuceneConfiguration luceneConfig, String namespace, SpaceTypeDescriptor typeDescriptor) throws IOException {
@@ -28,30 +27,17 @@ public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
     }
 
     public Analyzer getAnalyzerForPath(String path) {
-        Analyzer analyzer = _mainAnalyzer;
         Analyzer fieldAnalyzer = _fieldAnalyzers.get(path);
         if (fieldAnalyzer != null) {
-            analyzer = fieldAnalyzer;
+            return fieldAnalyzer;
         }
-        return analyzer;
+        return luceneConfig.getDefaultAnalyzer();
     }
 
     @Override
     protected Analyzer createAnalyzer(BaseLuceneConfiguration luceneConfig, SpaceTypeDescriptor typeDescriptor) {
-        _mainAnalyzer = getMainAnalyzer(luceneConfig, typeDescriptor);
         _fieldAnalyzers = createFieldAnalyzers(typeDescriptor);
-        return new PerFieldAnalyzerWrapper(_mainAnalyzer, _fieldAnalyzers);
-    }
-
-    private Analyzer getMainAnalyzer(BaseLuceneConfiguration luceneConfig, SpaceTypeDescriptor typeDescriptor) {
-        TypeQueryExtension type = typeDescriptor.getQueryExtensions().getByNamespace(LuceneTextSearchQueryExtensionProvider.NAMESPACE);
-        for (Class<? extends Annotation> action : type.getTypeAnnotations()) {
-            if (SpaceTextAnalyzer.class.equals(action)) {
-                TextAnalyzerQueryExtensionAnnotationAttributesInfo analyzerActionInfo = (TextAnalyzerQueryExtensionAnnotationAttributesInfo) type.getTypeAnnotationInfo(action);
-                return Utils.createAnalyzer(analyzerActionInfo.getAnalazerClass());
-            }
-        }
-        return luceneConfig.getDefaultAnalyzer();
+        return new PerFieldAnalyzerWrapper(luceneConfig.getDefaultAnalyzer(), _fieldAnalyzers);
     }
 
     private Map<String, Analyzer> createFieldAnalyzers(SpaceTypeDescriptor typeDescriptor) {

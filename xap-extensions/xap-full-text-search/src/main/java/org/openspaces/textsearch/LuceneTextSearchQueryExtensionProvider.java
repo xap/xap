@@ -81,7 +81,7 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
     private void addAnalyzerPathInfo(String property, SpaceTextAnalyzer analyzer, QueryExtensionPropertyInfo result) {
         String path = Utils.makePath(property, analyzer.path());
         QueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
-        pathInfo.add(analyzer.annotationType(), new TextAnalyzerQueryExtensionAnnotationAttributesInfo(analyzer.clazz()));
+        pathInfo.add(analyzer.annotationType(), new TextAnalyzerQueryExtensionAnnotationAttributesInfo(analyzer.analyzer()));
         result.addPathInfo(path, pathInfo);
     }
 
@@ -90,16 +90,6 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
         QueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
         pathInfo.add(index.annotationType(), new DefaultQueryExtensionPathAnnotationAttributesInfo());
         result.addPathInfo(path, pathInfo);
-    }
-
-    @Override
-    public QueryExtensionTypeInfo getTypeExtensionInfo(Annotation annotation) {
-        QueryExtensionTypeInfo result = new QueryExtensionTypeInfo();
-        if(annotation instanceof SpaceTextAnalyzer) {
-            SpaceTextAnalyzer analyzer = (SpaceTextAnalyzer) annotation;
-            result.add(annotation.annotationType(), new TextAnalyzerQueryExtensionAnnotationAttributesInfo(analyzer.clazz()));
-        }
-        return result;
     }
 
     public String getCustomProperty(String key, String defaultValue) {

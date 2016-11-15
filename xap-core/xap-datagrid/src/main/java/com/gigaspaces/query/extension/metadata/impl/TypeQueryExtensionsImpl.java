@@ -53,14 +53,6 @@ public class TypeQueryExtensionsImpl implements TypeQueryExtensions, Externaliza
     }
 
     public TypeQueryExtensionsImpl(SpaceTypeInfo typeInfo) {
-        for(Annotation annotation: typeInfo.getType().getAnnotations()) {
-            if (annotation.annotationType().isAnnotationPresent(SpaceQueryExtension.class)) {
-                final QueryExtensionProvider provider = extractQueryExtensionProvider(annotation);
-                QueryExtensionTypeInfo typeExtensionInfo = provider.getTypeExtensionInfo(annotation);
-                TypeQueryExtensionImpl type = getOrCreateTypeQueryExtension(provider.getNamespace());
-                addTypeInfo(typeExtensionInfo, type);
-            }
-        }
         for (SpacePropertyInfo property : typeInfo.getSpaceProperties()) {
             for (Annotation annotation : property.getGetterMethod().getDeclaredAnnotations())
                 if (annotation.annotationType().isAnnotationPresent(SpaceQueryExtension.class)) {
@@ -69,12 +61,6 @@ public class TypeQueryExtensionsImpl implements TypeQueryExtensions, Externaliza
                     for (String path : propertyInfo.getPaths())
                         add(provider.getNamespace(), path, propertyInfo.getPathInfo(path));
                 }
-        }
-    }
-
-    private void addTypeInfo(QueryExtensionTypeInfo typeExtensionInfo, TypeQueryExtensionImpl type) {
-        for(Class<? extends Annotation> action: typeExtensionInfo.getActions()) {
-            type.addTypeAction(action, typeExtensionInfo.getActionInfo(action));
         }
     }
 
@@ -96,12 +82,6 @@ public class TypeQueryExtensionsImpl implements TypeQueryExtensions, Externaliza
 
     public void add(String path, QueryExtensionInfo queryExtensionInfo) {
         add(path, queryExtensionInfo.getQueryExtensionAnnotation(), queryExtensionInfo.getQueryExtensionActionInfo());
-    }
-
-    public void addTypeLevelExtension(QueryExtensionInfo queryExtensionInfo) {
-        String namespace = getNamespace(queryExtensionInfo.getQueryExtensionAnnotation());
-        TypeQueryExtensionImpl typeQueryExtension = getOrCreateTypeQueryExtension(namespace);
-        typeQueryExtension.addTypeAction(queryExtensionInfo.getQueryExtensionAnnotation(), queryExtensionInfo.getQueryExtensionActionInfo());
     }
 
     private void add(String path, Class<? extends Annotation> annotationType, QueryExtensionAnnotationAttributesInfo queryExtensionPathActionInfo) {

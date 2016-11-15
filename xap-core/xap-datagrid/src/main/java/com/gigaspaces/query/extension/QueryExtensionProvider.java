@@ -33,7 +33,4 @@ public abstract class QueryExtensionProvider {
 
     public abstract QueryExtensionPropertyInfo getPropertyExtensionInfo(String property, Annotation annotation);
 
-    public QueryExtensionTypeInfo getTypeExtensionInfo(Annotation annotation) {
-        return new QueryExtensionTypeInfo();
-    }
 }
