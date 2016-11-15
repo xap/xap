@@ -45,9 +45,9 @@ public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
         TypeQueryExtension type = typeDescriptor.getQueryExtensions().getByNamespace(LuceneTextSearchQueryExtensionProvider.NAMESPACE);
         for (String path : type.getPaths()) {
             QueryExtensionPathInfo pathInfo = type.get(path);
-            for (Class<? extends Annotation> action : pathInfo.getActions()) {
+            for (Class<? extends Annotation> action : pathInfo.getAnnotations()) {
                 if (SpaceTextAnalyzer.class.equals(action)) {
-                    TextAnalyzerQueryExtensionAnnotationAttributesInfo analyzerActionInfo = (TextAnalyzerQueryExtensionAnnotationAttributesInfo) pathInfo.getActionInfo(action);
+                    TextAnalyzerQueryExtensionAnnotationAttributesInfo analyzerActionInfo = (TextAnalyzerQueryExtensionAnnotationAttributesInfo) pathInfo.getAnnotationInfo(action);
                     addAnalyzer(analyzerMap, path, analyzerActionInfo.getAnalazerClass());
                 }
             }

@@ -1,14 +1,17 @@
 package org.openspaces.textsearch;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationAttributesInfo;
 
-import java.io.Serializable;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * @author Vitaliy_Zinchenko
  */
-public class TextAnalyzerQueryExtensionAnnotationAttributesInfo implements QueryExtensionAnnotationAttributesInfo {
-    private static final long serialVersionUID = 1L;
+public class TextAnalyzerQueryExtensionAnnotationAttributesInfo implements QueryExtensionAnnotationAttributesInfo, Externalizable {
 
     private Class clazz;
 
@@ -31,5 +34,15 @@ public class TextAnalyzerQueryExtensionAnnotationAttributesInfo implements Query
     @Override
     public boolean isIndexed() {
         return false;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        IOUtils.writeObject(out, clazz);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        clazz = IOUtils.readObject(in);
     }
 }

@@ -19,10 +19,9 @@ package org.openspaces.textsearch;
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionPathAnnotationAttributesInfo;
-import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionPathInfo;
+import com.gigaspaces.query.extension.metadata.impl.QueryExtensionPathInfoImpl;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
-import com.gigaspaces.query.extension.metadata.provided.QueryExtensionTypeInfo;
 
 import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionProvider;
 import org.openspaces.spatial.lucene.common.Utils;
@@ -80,15 +79,13 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
 
     private void addAnalyzerPathInfo(String property, SpaceTextAnalyzer analyzer, QueryExtensionPropertyInfo result) {
         String path = Utils.makePath(property, analyzer.path());
-        QueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
-        pathInfo.add(analyzer.annotationType(), new TextAnalyzerQueryExtensionAnnotationAttributesInfo(analyzer.analyzer()));
+        QueryExtensionPathInfo pathInfo = new QueryExtensionPathInfoImpl(analyzer.annotationType(), new TextAnalyzerQueryExtensionAnnotationAttributesInfo(analyzer.analyzer()));
         result.addPathInfo(path, pathInfo);
     }
 
     private void addIndexPathInfo(String property, SpaceTextIndex index, QueryExtensionPropertyInfo result) {
         String path = Utils.makePath(property, index.path());
-        QueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
-        pathInfo.add(index.annotationType(), new DefaultQueryExtensionPathAnnotationAttributesInfo());
+        QueryExtensionPathInfo pathInfo = new QueryExtensionPathInfoImpl(index.annotationType(), new DefaultQueryExtensionPathAnnotationAttributesInfo());
         result.addPathInfo(path, pathInfo);
     }
 

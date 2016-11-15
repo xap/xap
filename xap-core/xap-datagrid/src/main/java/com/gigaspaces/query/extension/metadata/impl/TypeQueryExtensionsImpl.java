@@ -26,7 +26,6 @@ import com.gigaspaces.query.extension.metadata.typebuilder.QueryExtensionInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationAttributesInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
-import com.gigaspaces.query.extension.metadata.provided.QueryExtensionTypeInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtensions;
 
@@ -65,8 +64,8 @@ public class TypeQueryExtensionsImpl implements TypeQueryExtensions, Externaliza
     }
 
     private void add(String namespace, String path, QueryExtensionPathInfo pathInfo) {
-        for(Class<? extends Annotation> action: pathInfo.getActions()) {
-            QueryExtensionAnnotationAttributesInfo actionInfo = pathInfo.getActionInfo(action);
+        for(Class<? extends Annotation> action: pathInfo.getAnnotations()) {
+            QueryExtensionAnnotationAttributesInfo actionInfo = pathInfo.getAnnotationInfo(action);
             add(namespace, path, action, actionInfo);
         }
     }
@@ -105,8 +104,8 @@ public class TypeQueryExtensionsImpl implements TypeQueryExtensions, Externaliza
         if(pathInfo == null) {
             return false;
         }
-        for(Class<? extends Annotation> actionType: pathInfo.getActions()) {
-            if(pathInfo.getActionInfo(actionType).isIndexed()) {
+        for(Class<? extends Annotation> actionType: pathInfo.getAnnotations()) {
+            if(pathInfo.getAnnotationInfo(actionType).isIndexed()) {
                 return true;
             }
         }
@@ -119,15 +118,14 @@ public class TypeQueryExtensionsImpl implements TypeQueryExtensions, Externaliza
     }
 
     @Override
-    public TypeQueryExtensionImpl getByNamespace(String namespace) {
+    public TypeQueryExtension getByNamespace(String namespace) {
         return info.get(namespace);
     }
 
 
-    private void add(String namespace, String path, Class<? extends Annotation> annotationType, QueryExtensionAnnotationAttributesInfo actionInfo) {
+    private void add(String namespace, String path, Class<? extends Annotation> annotationType, QueryExtensionAnnotationAttributesInfo annotationInfo) {
         TypeQueryExtensionImpl typeQueryExtension = getOrCreateTypeQueryExtension(namespace);
-        QueryExtensionPathInfo pathInfo = getOrCreatePath(typeQueryExtension, path);
-        pathInfo.add(annotationType, actionInfo);
+        typeQueryExtension.addAnnotationByPath(path, annotationType, annotationInfo);
     }
 
     private TypeQueryExtensionImpl getOrCreateTypeQueryExtension(String namespace) {
@@ -137,15 +135,6 @@ public class TypeQueryExtensionsImpl implements TypeQueryExtensions, Externaliza
             info.put(namespace, typeQueryExtension);
         }
         return typeQueryExtension;
-    }
-
-    private QueryExtensionPathInfo getOrCreatePath(TypeQueryExtensionImpl typeQueryExtension, String path) {
-        QueryExtensionPathInfo pathInfo = typeQueryExtension.get(path);
-        if (pathInfo == null) {
-            pathInfo = new DefaultQueryExtensionPathInfo();
-            typeQueryExtension.addPath(path, pathInfo);
-        }
-        return pathInfo;
     }
 
     @Override

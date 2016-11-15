@@ -17,7 +17,6 @@
 package com.gigaspaces.query.extension;
 
 import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
-import com.gigaspaces.query.extension.metadata.provided.QueryExtensionTypeInfo;
 
 import java.lang.annotation.Annotation;
 
@@ -32,5 +31,4 @@ public abstract class QueryExtensionProvider {
     public abstract QueryExtensionManager createManager(QueryExtensionRuntimeInfo info);
 
     public abstract QueryExtensionPropertyInfo getPropertyExtensionInfo(String property, Annotation annotation);
-
 }

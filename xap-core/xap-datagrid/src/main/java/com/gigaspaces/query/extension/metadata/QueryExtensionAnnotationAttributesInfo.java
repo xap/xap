@@ -1,7 +1,5 @@
 package com.gigaspaces.query.extension.metadata;
 
-import java.io.Serializable;
-
 /**
  * Abstraction encapsulates query extension annotation's attributes.
  *
@@ -9,8 +7,12 @@ import java.io.Serializable;
  * @since 12.1
  *
  */
-public interface QueryExtensionAnnotationAttributesInfo extends Serializable {
+public interface QueryExtensionAnnotationAttributesInfo {
 
+    /**
+     * Determines is this annotation indexed or not
+     * @return true if annotation indexed, false otherwise
+     */
     boolean isIndexed();
 
 }

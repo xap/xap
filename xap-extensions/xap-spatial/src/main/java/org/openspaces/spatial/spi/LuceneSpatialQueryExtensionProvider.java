@@ -19,7 +19,7 @@ package org.openspaces.spatial.spi;
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionPathAnnotationAttributesInfo;
-import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionPathInfo;
+import com.gigaspaces.query.extension.metadata.impl.QueryExtensionPathInfoImpl;
 import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
 
 import org.openspaces.spatial.SpaceSpatialIndex;
@@ -75,7 +75,7 @@ public class LuceneSpatialQueryExtensionProvider extends BaseLuceneQueryExtensio
     }
 
     protected void addIndex(QueryExtensionPropertyInfo result, String path, SpaceSpatialIndex index) {
-        DefaultQueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
+        QueryExtensionPathInfoImpl pathInfo = new QueryExtensionPathInfoImpl();
         pathInfo.add(index.annotationType(), new DefaultQueryExtensionPathAnnotationAttributesInfo());
         result.addPathInfo(path, pathInfo);
     }
