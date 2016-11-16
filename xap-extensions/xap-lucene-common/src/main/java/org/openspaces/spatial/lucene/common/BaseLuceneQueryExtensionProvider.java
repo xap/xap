@@ -26,11 +26,7 @@ import java.util.Properties;
  */
 public abstract class BaseLuceneQueryExtensionProvider extends QueryExtensionProvider {
 
-    private final Properties _customProperties;
-
-    public BaseLuceneQueryExtensionProvider() {
-        this(new Properties());
-    }
+    protected final Properties _customProperties;
 
     public BaseLuceneQueryExtensionProvider(Properties customProperties) {
         this._customProperties = customProperties;

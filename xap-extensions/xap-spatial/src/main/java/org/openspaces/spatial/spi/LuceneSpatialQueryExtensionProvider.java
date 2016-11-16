@@ -36,14 +36,12 @@ import java.util.Properties;
  */
 public class LuceneSpatialQueryExtensionProvider extends BaseLuceneQueryExtensionProvider {
 
-    private final Properties _customProperties;
-
     public LuceneSpatialQueryExtensionProvider() {
         this(new Properties());
     }
 
     public LuceneSpatialQueryExtensionProvider(Properties customProperties) {
-        this._customProperties = customProperties;
+        super(customProperties);
     }
 
     @Override
@@ -77,10 +75,6 @@ public class LuceneSpatialQueryExtensionProvider extends BaseLuceneQueryExtensio
     protected void addIndex(QueryExtensionPropertyInfo result, String path, SpaceSpatialIndex index) {
         QueryExtensionPathInfoImpl pathInfo = new QueryExtensionPathInfoImpl(index.annotationType(), new DefaultQueryExtensionPathAnnotationAttributesInfo());
         result.addPathInfo(path, pathInfo);
-    }
-
-    public String getCustomProperty(String key, String defaultValue) {
-        return _customProperties.getProperty(key, defaultValue);
     }
 
     public LuceneSpatialQueryExtensionProvider setCustomProperty(String key, String value) {

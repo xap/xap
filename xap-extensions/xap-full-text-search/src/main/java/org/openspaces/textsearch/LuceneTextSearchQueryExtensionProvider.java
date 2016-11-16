@@ -35,14 +35,13 @@ import java.util.Properties;
 public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExtensionProvider {
 
     public static final String NAMESPACE = "text";
-    private final Properties _customProperties;
 
     public LuceneTextSearchQueryExtensionProvider() {
         this(new Properties());
     }
 
     public LuceneTextSearchQueryExtensionProvider(Properties customProperties) {
-        this._customProperties = customProperties;
+        super(customProperties);
     }
 
     @Override
@@ -87,10 +86,6 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
         String path = Utils.makePath(property, index.path());
         QueryExtensionPathInfo pathInfo = new QueryExtensionPathInfoImpl(index.annotationType(), new DefaultQueryExtensionPathAnnotationAttributesInfo());
         result.addPathInfo(path, pathInfo);
-    }
-
-    public String getCustomProperty(String key, String defaultValue) {
-        return _customProperties.getProperty(key, defaultValue);
     }
 
     public LuceneTextSearchQueryExtensionProvider setCustomProperty(String key, String value) {
