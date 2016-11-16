@@ -20,7 +20,7 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 
 /**
- * Abstraction encapsulates annotation type and associated with it attributes {@link QueryExtensionAnnotationAttributesInfo}
+ * Represents annotation type and associated with it attributes {@link QueryExtensionAnnotationAttributesInfo}
  *
  * @author Niv Ingberg
  * @since 11.0

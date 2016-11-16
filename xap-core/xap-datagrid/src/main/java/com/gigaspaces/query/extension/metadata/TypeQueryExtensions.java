@@ -19,7 +19,7 @@ package com.gigaspaces.query.extension.metadata;
 import java.util.Collection;
 
 /**
- * Abstraction encapsulates namespace and associated with it {@link TypeQueryExtension}
+ * Represents namespace and associated with it {@link TypeQueryExtension}
  *
  * @author Niv Ingberg
  * @since 11.0

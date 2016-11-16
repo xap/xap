@@ -1,7 +1,7 @@
 package com.gigaspaces.query.extension.metadata;
 
 /**
- * Abstraction encapsulates query extension annotation's attributes.
+ * Represents query extension annotation's attributes.
  *
  * @author Vitaliy_Zinchenko
  * @since 12.1

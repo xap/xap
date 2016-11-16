@@ -3,7 +3,7 @@ package com.gigaspaces.query.extension.metadata;
 import java.lang.annotation.Annotation;
 
 /**
- * Abstraction encapsulates query extension annotation.
+ * Represents query extension annotation.
  *
  * @author Vitaliy_Zinchenko
  * @since 12.1
