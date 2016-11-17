@@ -36,11 +36,16 @@ import java.util.Arrays;
 public abstract class BaseLuceneConfiguration {
     public static final String FILE_SEPARATOR = File.separator;
 
+    public static final String STORAGE_LOCATION = "lucene.storage.location";
+
     //lucene.storage.directory-type
+    public static final String STORAGE_DIRECTORY_TYPE = "lucene.storage.directory-type";
     public static final String STORAGE_DIRECTORYTYPE_DEFAULT = SupportedDirectory.MMapDirectory.name();
 
+    public static final String MAX_UNCOMMITED_CHANGES = "lucene.max-uncommitted-changes";
     public static final String DEFAULT_MAX_UNCOMMITED_CHANGES = "1000";
 
+    public static final String MAX_RESULTS = "lucene.max-results";
     private static final String DEFAULT_MAX_RESULTS = String.valueOf(Integer.MAX_VALUE);
 
     public static final Class<StandardAnalyzer> DEFAULT_ANALYZER_CLASS = StandardAnalyzer.class;
@@ -72,25 +77,21 @@ public abstract class BaseLuceneConfiguration {
     }
 
     private int initMaxUncommittedChanges(BaseLuceneQueryExtensionProvider provider) {
-        return Integer.parseInt(provider.getCustomProperty(getMaxUncommitedChangesPropertyKey(), DEFAULT_MAX_UNCOMMITED_CHANGES));
+        return Integer.parseInt(provider.getCustomProperty(MAX_UNCOMMITED_CHANGES, DEFAULT_MAX_UNCOMMITED_CHANGES));
     }
 
-    protected abstract String getMaxUncommitedChangesPropertyKey();
-
     private int initMaxResults(BaseLuceneQueryExtensionProvider provider) {
-        return Integer.parseInt(provider.getCustomProperty(getMaxResultsPropertyKey(), DEFAULT_MAX_RESULTS));
+        return Integer.parseInt(provider.getCustomProperty(MAX_RESULTS, DEFAULT_MAX_RESULTS));
     }
 
     private Analyzer initDefaultAnalyzer() {
         return Utils.createAnalyzer(DEFAULT_ANALYZER_CLASS);
     }
 
-    protected  abstract String getMaxResultsPropertyKey();
-
     private String initLocation(BaseLuceneQueryExtensionProvider provider, QueryExtensionRuntimeInfo info) {
         //try lucene.storage.location first, if not configured then use workingDir.
         //If workingDir == null (Embedded space , Integrated PU , etc...) then use process working dir (user.dir)
-        String location = provider.getCustomProperty(getStorageLocationPropertyKey(), null);
+        String location = provider.getCustomProperty(STORAGE_LOCATION, null);
         if (location == null) {
             location = info.getSpaceInstanceWorkDirectory();
             if (location == null)
@@ -103,10 +104,8 @@ public abstract class BaseLuceneConfiguration {
 
     protected abstract String getIndexLocationFolderName();
 
-    protected abstract String getStorageLocationPropertyKey();
-
     protected DirectoryFactory createDirectoryFactory(BaseLuceneQueryExtensionProvider provider) {
-        String directoryType = provider.getCustomProperty(getStorageDirectoryTypePropertyKey(), STORAGE_DIRECTORYTYPE_DEFAULT);
+        String directoryType = provider.getCustomProperty(STORAGE_DIRECTORY_TYPE, STORAGE_DIRECTORYTYPE_DEFAULT);
         SupportedDirectory directory = SupportedDirectory.byName(directoryType);
 
         switch (directory) {
@@ -130,8 +129,6 @@ public abstract class BaseLuceneConfiguration {
                 throw new RuntimeException("Unhandled directory type " + directory);
         }
     }
-
-    protected abstract String getStorageDirectoryTypePropertyKey();
 
     public Directory getDirectory(String relativePath) throws IOException {
         return _directoryFactory.getDirectory(relativePath);
