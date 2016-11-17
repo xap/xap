@@ -57,11 +57,6 @@ public class LuceneSpatialConfiguration extends BaseLuceneConfiguration {
     public static final String DIST_ERR_PCT = "lucene.strategy.distance-error-pct";
     public static final String DIST_ERR_PCT_DEFAULT = "0.025";
 
-    //lucene.storage.directory-type
-    public static final String STORAGE_DIRECTORYTYPE = "lucene.storage.directory-type";
-    //lucene.storage.location
-    public static final String STORAGE_LOCATION = "lucene.storage.location";
-
     //context
     public static final String SPATIAL_CONTEXT = "context";
     public static final String SPATIAL_CONTEXT_DEFAULT = SupportedSpatialContext.JTS.name();
@@ -73,9 +68,6 @@ public class LuceneSpatialConfiguration extends BaseLuceneConfiguration {
     //context.world-bounds, default is set by lucene
     public static final String SPATIAL_CONTEXT_WORLD_BOUNDS = "context.world-bounds";
     public static final String INDEX_LOCATION_FOLDER_NAME = "spatial";
-
-    public static final String MAX_UNCOMMITED_CHANGES = "lucene.spatial.max.uncommited.changes";
-    public static final String MAX_RESULTS = "lucene.spatial.max.results";
 
     private final SpatialContext _spatialContext;
     private final StrategyFactory _strategyFactory;
@@ -257,28 +249,8 @@ public class LuceneSpatialConfiguration extends BaseLuceneConfiguration {
     }
 
     @Override
-    protected String getMaxUncommitedChangesPropertyKey() {
-        return MAX_UNCOMMITED_CHANGES;
-    }
-
-    @Override
-    protected String getMaxResultsPropertyKey() {
-        return MAX_RESULTS;
-    }
-
-    @Override
     protected String getIndexLocationFolderName() {
         return INDEX_LOCATION_FOLDER_NAME;
-    }
-
-    @Override
-    protected String getStorageLocationPropertyKey() {
-        return STORAGE_LOCATION;
-    }
-
-    @Override
-    protected String getStorageDirectoryTypePropertyKey() {
-        return STORAGE_DIRECTORYTYPE;
     }
 
     public SpatialContext getSpatialContext() {
