@@ -17,7 +17,6 @@
 package com.gigaspaces.query.extension.metadata.impl;
 
 import com.gigaspaces.internal.io.IOUtils;
-import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationAttributesInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 
@@ -28,7 +27,6 @@ import java.io.ObjectOutput;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author Niv Ingberg
@@ -46,8 +44,12 @@ public class QueryExtensionPathInfoImpl implements QueryExtensionPathInfo, Exter
 
     }
 
-    public QueryExtensionPathInfoImpl(Class<? extends Annotation> annotationType, QueryExtensionAnnotationAttributesInfo attributesInfo) {
-        pathAnnotationInfos.add(new QueryExtensionAnnotationInfoImpl(annotationType, attributesInfo));
+    public QueryExtensionPathInfoImpl(Class<? extends Annotation> annotationType) {
+        pathAnnotationInfos.add(new DefaultQueryExtensionAnnotationInfo(annotationType));
+    }
+
+    public QueryExtensionPathInfoImpl(QueryExtensionAnnotationInfo annotationInfo) {
+        pathAnnotationInfos.add(annotationInfo);
     }
 
     public void add(QueryExtensionAnnotationInfo annotationInfo) {

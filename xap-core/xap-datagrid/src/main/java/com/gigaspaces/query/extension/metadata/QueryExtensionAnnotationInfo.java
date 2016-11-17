@@ -22,9 +22,4 @@ public interface QueryExtensionAnnotationInfo {
      */
     Class<? extends Annotation> getType();
 
-    /**
-     * @return annotation's attributes
-     */
-    QueryExtensionAnnotationAttributesInfo getAttributes();
-
 }

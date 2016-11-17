@@ -12,7 +12,6 @@ import org.openspaces.spatial.lucene.common.BaseLuceneTypeIndex;
 import org.openspaces.spatial.lucene.common.Utils;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,8 +47,8 @@ public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
             QueryExtensionPathInfo pathInfo = type.get(path);
             for (QueryExtensionAnnotationInfo annotationInfo: pathInfo.getAnnotations()) {
                 if (SpaceTextAnalyzer.class.equals(annotationInfo.getType())) {
-                    TextAnalyzerQueryExtensionAnnotationAttributesInfo analyzerActionInfo = (TextAnalyzerQueryExtensionAnnotationAttributesInfo) annotationInfo.getAttributes();
-                    addAnalyzer(analyzerMap, path, analyzerActionInfo.getAnalazerClass());
+                    TextAnalyzerQueryExtensionAnnotationInfo analyzerAnnotation = (TextAnalyzerQueryExtensionAnnotationInfo) annotationInfo;
+                    addAnalyzer(analyzerMap, path, analyzerAnnotation.getAnalazerClass());
                 }
             }
         }

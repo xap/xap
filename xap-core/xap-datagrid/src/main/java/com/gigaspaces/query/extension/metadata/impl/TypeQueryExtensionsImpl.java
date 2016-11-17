@@ -23,12 +23,10 @@ import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.query.extension.SpaceQueryExtension;
 import com.gigaspaces.query.extension.impl.QueryExtensionProviderCache;
 import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
-import com.gigaspaces.query.extension.metadata.typebuilder.QueryExtensionInfo;
-import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationAttributesInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
-import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtensions;
+import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -76,16 +74,12 @@ public class TypeQueryExtensionsImpl implements TypeQueryExtensions, Externaliza
     }
 
     public void add(String path, Class<? extends Annotation> annotationType) {
-        add(path, annotationType, new DefaultQueryExtensionPathAnnotationAttributesInfo());
+        add(path, new DefaultQueryExtensionAnnotationInfo(annotationType));
     }
 
-    public void add(String path, QueryExtensionInfo queryExtensionInfo) {
-        add(path, queryExtensionInfo.getQueryExtensionAnnotation(), queryExtensionInfo.getQueryExtensionActionInfo());
-    }
-
-    private void add(String path, Class<? extends Annotation> annotationType, QueryExtensionAnnotationAttributesInfo annotationAttributes) {
-        QueryExtensionAnnotationInfo annotationInfo = new QueryExtensionAnnotationInfoImpl(annotationType, annotationAttributes);
-        add(getNamespace(annotationType), path, annotationInfo);
+    public void add(String path, QueryExtensionAnnotationInfo annotation) {
+        String namespace = getNamespace(annotation.getType());
+        add(namespace, path, annotation);
     }
 
     private String getNamespace(Class<? extends Annotation> annotationType) {

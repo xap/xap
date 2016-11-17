@@ -17,7 +17,6 @@
 package com.gigaspaces.query.extension.metadata.impl;
 
 import com.gigaspaces.internal.io.IOUtils;
-import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationAttributesInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
@@ -26,7 +25,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;

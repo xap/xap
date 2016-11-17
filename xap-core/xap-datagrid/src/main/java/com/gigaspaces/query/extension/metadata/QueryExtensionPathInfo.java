@@ -20,7 +20,7 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 
 /**
- * Represents annotation type and associated with it attributes {@link QueryExtensionAnnotationAttributesInfo}
+ * Represents path's annotation
  *
  * @author Niv Ingberg
  * @since 11.0
