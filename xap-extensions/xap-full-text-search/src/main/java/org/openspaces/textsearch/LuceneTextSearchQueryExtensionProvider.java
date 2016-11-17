@@ -21,7 +21,6 @@ import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionAnnotationInfo;
 import com.gigaspaces.query.extension.metadata.impl.QueryExtensionPathInfoImpl;
-import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
 
 import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionProvider;
 import org.openspaces.spatial.lucene.common.Utils;

@@ -20,13 +20,13 @@ import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.SpacePropertyInfo;
 import com.gigaspaces.internal.metadata.SpaceTypeInfo;
 import com.gigaspaces.query.extension.QueryExtensionProvider;
+import com.gigaspaces.query.extension.QueryExtensionProvider.QueryExtensionPropertyInfo;
 import com.gigaspaces.query.extension.SpaceQueryExtension;
 import com.gigaspaces.query.extension.impl.QueryExtensionProviderCache;
 import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtensions;
-import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
 
 import java.io.Externalizable;
 import java.io.IOException;
