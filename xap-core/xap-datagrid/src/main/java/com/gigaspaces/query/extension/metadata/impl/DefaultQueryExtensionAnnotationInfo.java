@@ -15,6 +15,8 @@ import java.lang.annotation.Annotation;
  */
 public class DefaultQueryExtensionAnnotationInfo implements QueryExtensionAnnotationInfo, Externalizable {
 
+    private static final long serialVersionUID = 1L;
+
     private Class<? extends Annotation> type;
 
     public DefaultQueryExtensionAnnotationInfo() {
@@ -24,6 +26,7 @@ public class DefaultQueryExtensionAnnotationInfo implements QueryExtensionAnnota
         this.type = type;
     }
 
+    @Override
     public Class<? extends Annotation> getType() {
         return type;
     }

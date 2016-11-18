@@ -35,6 +35,8 @@ import java.util.Collection;
 @com.gigaspaces.api.InternalApi
 public class QueryExtensionPathInfoImpl implements QueryExtensionPathInfo, Externalizable {
 
+    private static final long serialVersionUID = 1L;
+
     private Collection<QueryExtensionAnnotationInfo> pathAnnotationInfos = new ArrayList<QueryExtensionAnnotationInfo>();
 
     /**
@@ -56,6 +58,7 @@ public class QueryExtensionPathInfoImpl implements QueryExtensionPathInfo, Exter
         pathAnnotationInfos.add(annotationInfo);
     }
 
+    @Override
     public Collection<QueryExtensionAnnotationInfo> getAnnotations() {
         return pathAnnotationInfos;
     }

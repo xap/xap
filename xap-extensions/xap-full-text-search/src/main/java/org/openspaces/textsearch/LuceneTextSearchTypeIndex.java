@@ -46,7 +46,7 @@ public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
         for (String path : type.getPaths()) {
             QueryExtensionPathInfo pathInfo = type.get(path);
             for (QueryExtensionAnnotationInfo annotationInfo: pathInfo.getAnnotations()) {
-                if (SpaceTextAnalyzer.class.equals(annotationInfo.getType())) {
+                if (SpaceTextAnalyzer.class.equals(annotationInfo.getType()) && annotationInfo instanceof TextAnalyzerQueryExtensionAnnotationInfo) {
                     TextAnalyzerQueryExtensionAnnotationInfo analyzerAnnotation = (TextAnalyzerQueryExtensionAnnotationInfo) annotationInfo;
                     addAnalyzer(analyzerMap, path, analyzerAnnotation.getAnalazerClass());
                 }

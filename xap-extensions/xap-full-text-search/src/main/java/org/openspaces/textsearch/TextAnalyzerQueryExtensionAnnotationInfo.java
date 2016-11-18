@@ -16,21 +16,21 @@ import java.lang.annotation.Annotation;
  */
 public class TextAnalyzerQueryExtensionAnnotationInfo extends DefaultQueryExtensionAnnotationInfo implements Externalizable {
 
-    private Class analyzer;
+    private Class<? extends Analyzer> analyzer;
 
     public TextAnalyzerQueryExtensionAnnotationInfo() {
     }
 
-    public TextAnalyzerQueryExtensionAnnotationInfo(Class<? extends Annotation> analyzerClass, Class analyzer) {
+    public TextAnalyzerQueryExtensionAnnotationInfo(Class<? extends Annotation> analyzerClass, Class<? extends Analyzer> analyzer) {
         super(analyzerClass);
         this.analyzer = analyzer;
     }
 
-    public Class getAnalazerClass() {
+    public Class<? extends Analyzer> getAnalazerClass() {
         return analyzer;
     }
 
-    public TextAnalyzerQueryExtensionAnnotationInfo setClazz(Class analyzer) {
+    public TextAnalyzerQueryExtensionAnnotationInfo setClazz(Class<? extends Analyzer> analyzer) {
         this.analyzer = analyzer;
         return this;
     }
