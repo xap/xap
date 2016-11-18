@@ -16,6 +16,8 @@ import java.lang.annotation.Annotation;
  */
 public class TextAnalyzerQueryExtensionAnnotationInfo extends DefaultQueryExtensionAnnotationInfo implements Externalizable {
 
+    private static final long serialVersionUID = 1L;
+
     private Class<? extends Analyzer> analyzer;
 
     public TextAnalyzerQueryExtensionAnnotationInfo() {
