@@ -17,7 +17,7 @@
 package com.gigaspaces.query.extension.metadata.impl;
 
 import com.gigaspaces.internal.io.IOUtils;
-import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationAttributesInfo;
+import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
@@ -25,7 +25,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +34,7 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 
-    private final Map<String, QueryExtensionPathInfo> propertiesInfo = new HashMap<String, QueryExtensionPathInfo>();
+    private final Map<String, QueryExtensionPathInfoImpl> propertiesInfo = new HashMap<String, QueryExtensionPathInfoImpl>();
 
     /**
      * Required for Externalizable
@@ -43,8 +42,18 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     public TypeQueryExtensionImpl() {
     }
 
-    public void addPath(String path, QueryExtensionPathInfo queryExtensionPathInfo) {
-        this.propertiesInfo.put(path, queryExtensionPathInfo);
+    public void addAnnotationByPath(String path, QueryExtensionAnnotationInfo annotationInfo) {
+        QueryExtensionPathInfoImpl pathInfo = getOrCreatePath(path);
+        pathInfo.add(annotationInfo);
+    }
+
+    private QueryExtensionPathInfoImpl getOrCreatePath(String path) {
+        QueryExtensionPathInfoImpl pathInfo = propertiesInfo.get(path);
+        if (pathInfo == null) {
+            pathInfo = new QueryExtensionPathInfoImpl();
+            propertiesInfo.put(path, pathInfo);
+        }
+        return pathInfo;
     }
 
     @Override
@@ -60,9 +69,9 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeInt(propertiesInfo.size());
-        for (Map.Entry<String, QueryExtensionPathInfo> entry : propertiesInfo.entrySet()) {
+        for (Map.Entry<String, QueryExtensionPathInfoImpl> entry : propertiesInfo.entrySet()) {
             IOUtils.writeString(out, entry.getKey());
-            IOUtils.writeObject(out, entry.getValue());
+            entry.getValue().writeExternal(out);
         }
     }
 
@@ -71,7 +80,8 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
         int size = in.readInt();
         for (int i = 0; i < size; i++) {
             String key = IOUtils.readString(in);
-            QueryExtensionPathInfo value = IOUtils.readObject(in);
+            QueryExtensionPathInfoImpl value = new QueryExtensionPathInfoImpl();
+            value.readExternal(in);
             propertiesInfo.put(key, value);
         }
     }

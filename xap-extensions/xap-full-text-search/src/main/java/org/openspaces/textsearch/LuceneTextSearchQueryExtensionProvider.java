@@ -18,11 +18,9 @@ package org.openspaces.textsearch;
 
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
-import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionPathAnnotationAttributesInfo;
-import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
-import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
-import com.gigaspaces.query.extension.metadata.provided.QueryExtensionTypeInfo;
+import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionAnnotationInfo;
+import com.gigaspaces.query.extension.metadata.impl.QueryExtensionPathInfoImpl;
 
 import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionProvider;
 import org.openspaces.spatial.lucene.common.Utils;
@@ -36,14 +34,13 @@ import java.util.Properties;
 public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExtensionProvider {
 
     public static final String NAMESPACE = "text";
-    private final Properties _customProperties;
 
     public LuceneTextSearchQueryExtensionProvider() {
         this(new Properties());
     }
 
     public LuceneTextSearchQueryExtensionProvider(Properties customProperties) {
-        this._customProperties = customProperties;
+        super(customProperties);
     }
 
     @Override
@@ -80,20 +77,14 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
 
     private void addAnalyzerPathInfo(String property, SpaceTextAnalyzer analyzer, QueryExtensionPropertyInfo result) {
         String path = Utils.makePath(property, analyzer.path());
-        QueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
-        pathInfo.add(analyzer.annotationType(), new TextAnalyzerQueryExtensionAnnotationAttributesInfo(analyzer.analyzer()));
+        QueryExtensionPathInfo pathInfo = new QueryExtensionPathInfoImpl(new TextAnalyzerQueryExtensionAnnotationInfo(analyzer.annotationType(), analyzer.analyzer()));
         result.addPathInfo(path, pathInfo);
     }
 
     private void addIndexPathInfo(String property, SpaceTextIndex index, QueryExtensionPropertyInfo result) {
         String path = Utils.makePath(property, index.path());
-        QueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
-        pathInfo.add(index.annotationType(), new DefaultQueryExtensionPathAnnotationAttributesInfo());
+        QueryExtensionPathInfo pathInfo = new QueryExtensionPathInfoImpl(new DefaultQueryExtensionAnnotationInfo(index.annotationType()));
         result.addPathInfo(path, pathInfo);
-    }
-
-    public String getCustomProperty(String key, String defaultValue) {
-        return _customProperties.getProperty(key, defaultValue);
     }
 
     public LuceneTextSearchQueryExtensionProvider setCustomProperty(String key, String value) {

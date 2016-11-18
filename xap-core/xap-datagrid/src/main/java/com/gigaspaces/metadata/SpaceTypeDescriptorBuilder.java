@@ -35,7 +35,7 @@ import com.gigaspaces.metadata.index.SpaceIndex;
 import com.gigaspaces.metadata.index.SpaceIndexFactory;
 import com.gigaspaces.metadata.index.SpaceIndexType;
 import com.gigaspaces.metadata.index.SpacePropertyIndex;
-import com.gigaspaces.query.extension.metadata.typebuilder.QueryExtensionInfo;
+import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
 import com.gigaspaces.query.extension.metadata.impl.TypeQueryExtensionsImpl;
 import com.j_spaces.core.client.ExternalEntry;
 
@@ -644,7 +644,7 @@ public class SpaceTypeDescriptorBuilder {
      * @param path                     Path to decorate
      * @param queryExtensionInfo       Query Extension encapsulating mapping info
      */
-    public SpaceTypeDescriptorBuilder addQueryExtensionInfo(String path, QueryExtensionInfo queryExtensionInfo) {
+    public SpaceTypeDescriptorBuilder addQueryExtensionInfo(String path, QueryExtensionAnnotationInfo queryExtensionInfo) {
         createQueryExtensionInfoIfNeeded();
         _queryExtensionsInfo.add(path, queryExtensionInfo);
         return this;

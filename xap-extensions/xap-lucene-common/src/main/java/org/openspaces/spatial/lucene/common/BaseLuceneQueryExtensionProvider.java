@@ -17,8 +17,6 @@
 package org.openspaces.spatial.lucene.common;
 
 import com.gigaspaces.query.extension.QueryExtensionProvider;
-import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionPathInfo;
-import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
 
 import java.util.Properties;
 
@@ -28,11 +26,7 @@ import java.util.Properties;
  */
 public abstract class BaseLuceneQueryExtensionProvider extends QueryExtensionProvider {
 
-    private final Properties _customProperties;
-
-    public BaseLuceneQueryExtensionProvider() {
-        this(new Properties());
-    }
+    protected final Properties _customProperties;
 
     public BaseLuceneQueryExtensionProvider(Properties customProperties) {
         this._customProperties = customProperties;

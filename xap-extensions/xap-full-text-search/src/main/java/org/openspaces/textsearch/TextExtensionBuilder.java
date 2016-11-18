@@ -1,22 +1,19 @@
 package org.openspaces.textsearch;
 
-import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionPathAnnotationAttributesInfo;
-import com.gigaspaces.query.extension.metadata.typebuilder.DefaultQueryExtensionInfo;
-import com.gigaspaces.query.extension.metadata.typebuilder.QueryExtensionInfo;
+import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
+import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionAnnotationInfo;
 
 /**
  * @author Vitaliy_Zinchenko
  */
 public class TextExtensionBuilder {
 
-    public static QueryExtensionInfo analyzer(Class clazz) {
-        TextAnalyzerQueryExtensionAnnotationAttributesInfo attributes = new TextAnalyzerQueryExtensionAnnotationAttributesInfo()
-                .setClazz(clazz);
-        return new DefaultQueryExtensionInfo(SpaceTextAnalyzer.class, attributes);
+    public static QueryExtensionAnnotationInfo analyzer(Class analyzerClass) {
+        return new TextAnalyzerQueryExtensionAnnotationInfo(SpaceTextAnalyzer.class, analyzerClass);
     }
 
-    public static QueryExtensionInfo index() {
-        return new DefaultQueryExtensionInfo(SpaceTextIndex.class, new DefaultQueryExtensionPathAnnotationAttributesInfo());
+    public static QueryExtensionAnnotationInfo index() {
+        return new DefaultQueryExtensionAnnotationInfo(SpaceTextIndex.class);
     }
 
 }

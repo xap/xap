@@ -16,10 +16,12 @@
 
 package com.gigaspaces.query.extension;
 
-import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
-import com.gigaspaces.query.extension.metadata.provided.QueryExtensionTypeInfo;
+import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 
 import java.lang.annotation.Annotation;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Niv Ingberg
@@ -32,5 +34,26 @@ public abstract class QueryExtensionProvider {
     public abstract QueryExtensionManager createManager(QueryExtensionRuntimeInfo info);
 
     public abstract QueryExtensionPropertyInfo getPropertyExtensionInfo(String property, Annotation annotation);
+
+    /**
+     * @author Niv Ingberg
+     * @since 11.0
+     */
+    @com.gigaspaces.api.InternalApi
+    public class QueryExtensionPropertyInfo {
+        private final Map<String, QueryExtensionPathInfo> pathsInfo = new HashMap<String, QueryExtensionPathInfo>();
+
+        public Set<String> getPaths() {
+            return pathsInfo.keySet();
+        }
+
+        public QueryExtensionPathInfo getPathInfo(String path) {
+            return pathsInfo.get(path);
+        }
+
+        public void addPathInfo(String path, QueryExtensionPathInfo queryExtensionPathInfo) {
+            pathsInfo.put(path, queryExtensionPathInfo);
+        }
+    }
 
 }

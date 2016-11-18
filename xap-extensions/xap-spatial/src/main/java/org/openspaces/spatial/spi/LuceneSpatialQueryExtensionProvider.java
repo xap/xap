@@ -18,9 +18,8 @@ package org.openspaces.spatial.spi;
 
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
-import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionPathAnnotationAttributesInfo;
-import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionPathInfo;
-import com.gigaspaces.query.extension.metadata.provided.QueryExtensionPropertyInfo;
+import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionAnnotationInfo;
+import com.gigaspaces.query.extension.metadata.impl.QueryExtensionPathInfoImpl;
 
 import org.openspaces.spatial.SpaceSpatialIndex;
 import org.openspaces.spatial.SpaceSpatialIndexes;
@@ -36,14 +35,12 @@ import java.util.Properties;
  */
 public class LuceneSpatialQueryExtensionProvider extends BaseLuceneQueryExtensionProvider {
 
-    private final Properties _customProperties;
-
     public LuceneSpatialQueryExtensionProvider() {
         this(new Properties());
     }
 
     public LuceneSpatialQueryExtensionProvider(Properties customProperties) {
-        this._customProperties = customProperties;
+        super(customProperties);
     }
 
     @Override
@@ -75,13 +72,8 @@ public class LuceneSpatialQueryExtensionProvider extends BaseLuceneQueryExtensio
     }
 
     protected void addIndex(QueryExtensionPropertyInfo result, String path, SpaceSpatialIndex index) {
-        DefaultQueryExtensionPathInfo pathInfo = new DefaultQueryExtensionPathInfo();
-        pathInfo.add(index.annotationType(), new DefaultQueryExtensionPathAnnotationAttributesInfo());
+        QueryExtensionPathInfoImpl pathInfo = new QueryExtensionPathInfoImpl(new DefaultQueryExtensionAnnotationInfo(index.annotationType()));
         result.addPathInfo(path, pathInfo);
-    }
-
-    public String getCustomProperty(String key, String defaultValue) {
-        return _customProperties.getProperty(key, defaultValue);
     }
 
     public LuceneSpatialQueryExtensionProvider setCustomProperty(String key, String value) {
