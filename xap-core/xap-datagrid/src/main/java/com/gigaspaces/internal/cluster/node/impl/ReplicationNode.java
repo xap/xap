@@ -39,6 +39,7 @@ import com.gigaspaces.internal.cluster.node.handlers.IReplicationInNotifyTemplat
 import com.gigaspaces.internal.cluster.node.handlers.IReplicationInTransactionHandler;
 import com.gigaspaces.internal.cluster.node.impl.backlog.IBacklogMemberState;
 import com.gigaspaces.internal.cluster.node.impl.backlog.IReplicationGroupBacklog;
+import com.gigaspaces.internal.cluster.node.impl.backlog.OperationWeightInfo;
 import com.gigaspaces.internal.cluster.node.impl.config.ReplicationNodeConfig;
 import com.gigaspaces.internal.cluster.node.impl.config.ReplicationNodeMode;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersistencyBackupSyncIteratorHandler;
@@ -867,9 +868,9 @@ public class ReplicationNode
         return RedoLogStatistics.EMPTY_STATISTICS;
     }
 
-    public void monitorState() {
+    public void monitorState(OperationWeightInfo info) {
         for (IReplicationSourceGroup sourceGroup : _groupsHolder.getSourceGroups()) {
-            sourceGroup.getGroupBacklog().monitor();
+            sourceGroup.getGroupBacklog().monitor(info);
             sourceGroup.monitorConsistencyLevel();
         }
 

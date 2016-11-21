@@ -37,8 +37,7 @@ import java.util.logging.Logger;
  * @since 7.1
  */
 @com.gigaspaces.api.InternalApi
-public class FixedSizeSwapRedoLogFile<T>
-        implements IRedoLogFile<T> {
+public class FixedSizeSwapRedoLogFile<T> implements IRedoLogFile<T> {
     private static final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_BACKLOG);
 
     private final int _memoryMaxPackets;
@@ -225,6 +224,11 @@ public class FixedSizeSwapRedoLogFile<T>
     public void close() {
         _memoryRedoLogFile.close();
         _externalStorage.close();
+    }
+
+    @Override
+    public long getWeight() {
+        return _memoryRedoLogFile.getWeight() + _externalStorage.getWeight();
     }
 
     /**

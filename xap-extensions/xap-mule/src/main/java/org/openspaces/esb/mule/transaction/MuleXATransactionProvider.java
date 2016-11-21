@@ -30,6 +30,7 @@ import org.openspaces.core.TransactionDataAccessException;
 import org.openspaces.core.transaction.TransactionProvider;
 import org.springframework.transaction.TransactionDefinition;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
 
 import javax.transaction.xa.XAException;
@@ -99,6 +100,11 @@ public class MuleXATransactionProvider implements TransactionProvider {
             if (distributedTransactionManagerProvider != null)
                 distributedTransactionManagerProvider.destroy();
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        destroy();
     }
 
     private static class CustomXaResource implements XAResource {

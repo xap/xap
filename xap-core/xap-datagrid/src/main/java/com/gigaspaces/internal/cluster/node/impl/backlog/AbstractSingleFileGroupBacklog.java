@@ -418,7 +418,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         return getBacklogFile().getOldest().getKey();
     }
 
-    public void monitor() throws RedoLogCapacityExceededException {
+    public void monitor(OperationWeightInfo info) throws RedoLogCapacityExceededException {
         // TODO this monitoring currently does not take into consideration if
         // the following operation will be inserted
         // into this group backlog or not, it assumes it does since we don't
@@ -1431,6 +1431,9 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
             }
         }
     }
+    protected void setPacketWeight(IReplicationPacketData<?> data) {
+        data.setWeight(getGroupConfigSnapshot().getBacklogConfig().getBackLogWeightPolicy().calculateWeight(data));
+    }
 
     protected boolean shouldInsertPacket() {
         if (isBacklogDroppedEntirely()) {
@@ -1493,27 +1496,32 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
     protected List<T> getSpecificPackets(long startPacketKey, long endPacketKey) {
         _rwLock.readLock().lock();
         try {
-            final long firstKeyInBacklog = getFirstKeyInBacklogInternal();
-            final long packetIndex = startPacketKey - firstKeyInBacklog;
-            final long size = calculateSizeUnsafe();
-            final List<T> packets = new LinkedList<T>();
-            if (packetIndex < size) {
-                ReadOnlyIterator<T> readOnlyIterator = _backlogFile.readOnlyIterator(packetIndex);
-                try {
-                    while (readOnlyIterator.hasNext()) {
-                        T packet = readOnlyIterator.next();
-                        if (packet.getKey() > endPacketKey)
-                            break;
-                        packets.add(packet);
-                    }
-                } finally {
-                    readOnlyIterator.close();
-                }
-            }
-            return packets;
+            return getSpecificPacketsUnsafe(startPacketKey, endPacketKey);
         } finally {
             _rwLock.readLock().unlock();
         }
+    }
+
+    //should be called at least under a read lock
+    private List<T> getSpecificPacketsUnsafe(long startPacketKey, long endPacketKey) {
+        final long firstKeyInBacklog = getFirstKeyInBacklogInternal();
+        final long packetIndex = startPacketKey - firstKeyInBacklog;
+        final long size = calculateSizeUnsafe();
+        final List<T> packets = new LinkedList<T>();
+        if (packetIndex < size) {
+            ReadOnlyIterator<T> readOnlyIterator = _backlogFile.readOnlyIterator(packetIndex);
+            try {
+                while (readOnlyIterator.hasNext()) {
+                    T packet = readOnlyIterator.next();
+                    if (packet.getKey() > endPacketKey)
+                        break;
+                    packets.add(packet);
+                }
+            } finally {
+                readOnlyIterator.close();
+            }
+        }
+        return packets;
     }
 
     protected List<IReplicationOrderedPacket> getPacketsWithFullSerializedContent(long fromKey,
@@ -1575,6 +1583,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
 
     protected void insertReplicationOrderedPacketToBacklog(T packet, ReplicationOutContext outContext) {
         getBacklogFile().add(packet);
+        updateAllMembersWeight(packet.getWeight());
         setMarkerIfNeeded(outContext);
 
         if (outContext.getDirectPesistencySyncHandler() != null && outContext.getDirectPesistencySyncHandler().getBackLog() == null)
@@ -1589,6 +1598,75 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
     @Override
     public void freeWriteLock() {
         _rwLock.writeLock().unlock();
+    }
+
+    @Override
+    public long getWeight(){
+        _rwLock.readLock().lock();
+        try {
+            return getWeightUnsafe();
+        } finally {
+            _rwLock.readLock().unlock();
+        }
+    }
+
+    private long getWeightUnsafe() {
+        return getBacklogFile().getWeight();
+    }
+
+    @Override
+    public long getWeight(String memberName){
+        _rwLock.readLock().lock();
+        try {
+            return getWeightUnsafe(memberName);
+        } finally {
+            _rwLock.readLock().unlock();
+        }
+    }
+
+    public long getWeightUnsafe(String memberName) {
+        return  _confirmationMap.get(memberName).getWeight();
+    }
+
+
+    //should be called under write lock
+    @Override
+    public void increaseWeight(String memberName, long weight) {
+            AbstractSingleFileConfirmationHolder holder = _confirmationMap.get(memberName);
+            holder.setWeight(holder.getWeight() + weight);
+    }
+
+    //should be called under write lock
+    @Override
+    public void decreaseWeight(String memberName, long lastConfirmedKey, long newlyConfirmedKey) {
+        long weight = 0 ;
+        if (newlyConfirmedKey == -1 || newlyConfirmedKey - lastConfirmedKey <= 0 || newlyConfirmedKey > getLastInsertedKeyToBacklogUnsafe()){
+            return;
+        }
+        if(lastConfirmedKey < getFirstKeyInBacklogInternal()){
+            weight = getWeightForRangeUnsafe(getFirstKeyInBacklogInternal(),newlyConfirmedKey);
+        }else {
+            weight = getWeightForRangeUnsafe(lastConfirmedKey + 1, newlyConfirmedKey);
+        }
+
+        AbstractSingleFileConfirmationHolder holder = _confirmationMap.get(memberName);
+        holder.setWeight(holder.getWeight() - weight);
+    }
+
+
+    private long getWeightForRangeUnsafe(long fromKey, long toKey){
+        List<T> packets = getSpecificPacketsUnsafe(fromKey, toKey);
+        long weight =0;
+        for (T packet : packets) {
+            weight += packet.getWeight();
+        }
+        return weight;
+    }
+
+    protected void updateAllMembersWeight(long weight){
+        for (String memberName : _confirmationMap.keySet()) {
+            increaseWeight(memberName, weight);
+        }
     }
 
 

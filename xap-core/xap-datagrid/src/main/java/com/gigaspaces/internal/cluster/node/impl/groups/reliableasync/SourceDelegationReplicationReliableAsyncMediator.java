@@ -80,6 +80,7 @@ public class SourceDelegationReplicationReliableAsyncMediator
     @Override
     public void reliableAsyncSourceAdd(String sourceLookupName,
                                        IReplicationOrderedPacket packet) {
+        packet.getData().setWeight(_groupConfigHolder.getConfig().getBacklogConfig().getBackLogWeightPolicy().calculateWeight(packet.getData()));
         _reliableAsyncGroupBacklog.reliableAsyncSourceAdd(sourceLookupName,
                 packet);
     }

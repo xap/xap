@@ -20,25 +20,22 @@ package org.openspaces.core.executor.internal;
 import com.gigaspaces.annotation.pojo.SpaceRouting;
 import com.gigaspaces.executor.SpaceTask;
 import com.gigaspaces.executor.SpaceTaskWrapper;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
-import com.gigaspaces.lrmi.classloading.TaskClassLoader;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.SpaceContext;
 import com.j_spaces.kernel.ClassLoaderHelper;
-
 import net.jini.core.transaction.Transaction;
-
+import org.jini.rio.boot.ServiceClassLoader;
+import org.jini.rio.boot.SupportCodeChangeAnnotationContainer;
 import org.openspaces.core.executor.SupportCodeChange;
 import org.openspaces.core.executor.Task;
 import org.openspaces.core.transaction.manager.ExistingJiniTransactionManager;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.Serializable;
-import java.net.URL;
+import java.io.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * An internal implemenation of {@link SpaceTask} that wraps the actual {@link
@@ -47,6 +44,7 @@ import java.net.URL;
  * @author kimchy
  */
 public class InternalSpaceTaskWrapper<T extends Serializable> implements SpaceTask<T>, SpaceTaskWrapper, Externalizable {
+    final private static Logger logger = Logger.getLogger("com.gigaspaces.lrmi.classloading.level");
 
     private static final long serialVersionUID = -7391977361461247102L;
 
@@ -54,10 +52,9 @@ public class InternalSpaceTaskWrapper<T extends Serializable> implements SpaceTa
 
     private Object routing;
 
-    private boolean oneTime;
+    private SupportCodeChangeAnnotationContainer supportCodeChangeAnnotationContainer;
 
     public InternalSpaceTaskWrapper() {
-        oneTime = false;
     }
 
     public InternalSpaceTaskWrapper(Task<T> task, Object routing) {
@@ -65,12 +62,9 @@ public class InternalSpaceTaskWrapper<T extends Serializable> implements SpaceTa
         this.task = task;
         this.routing = routing;
         if (this instanceof InternalDistributedSpaceTaskWrapper && task.getClass().isAnnotationPresent(SupportCodeChange.class)) {
-            oneTime = true;
+            SupportCodeChange supportCodeChange = task.getClass().getAnnotation(SupportCodeChange.class);
+            this.supportCodeChangeAnnotationContainer = new SupportCodeChangeAnnotationContainer(supportCodeChange.version());
         }
-    }
-
-    public boolean isOneTime() {
-        return oneTime;
     }
 
     public T execute(IJSpace space, Transaction tx) throws Exception {
@@ -103,20 +97,32 @@ public class InternalSpaceTaskWrapper<T extends Serializable> implements SpaceTa
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
-        if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v10_2_0_PATCH2)) {
-            out.writeBoolean(oneTime);
+        PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
+        if (version.greaterOrEquals(PlatformLogicalVersion.v12_1_0)) {
+            IOUtils.writeObject(out, supportCodeChangeAnnotationContainer);
+        }
+        else if (version.greaterOrEquals(PlatformLogicalVersion.v10_2_0_PATCH2)) {
+            out.writeBoolean(supportCodeChangeAnnotationContainer != null);
         }
         out.writeObject(task);
         out.writeObject(routing);
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v10_2_0_PATCH2)) {
-            oneTime = in.readBoolean();
+        PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
+        if (version.greaterOrEquals(PlatformLogicalVersion.v12_1_0)) {
+            supportCodeChangeAnnotationContainer  = IOUtils.readObject(in);
         }
-        if (oneTime) {
-            task = readTaskUsingFreshClassLoader(in);
-        } else {
+        else if (version.greaterOrEquals(PlatformLogicalVersion.v10_2_0_PATCH2)) {
+            boolean supportCodeChange = in.readBoolean();
+            if(supportCodeChange){
+                supportCodeChangeAnnotationContainer = SupportCodeChangeAnnotationContainer.ONE_TIME;
+            }
+        }
+        if (supportCodeChangeAnnotationContainer != null) {
+            task = readTaskUsingFreshClassLoader(in, supportCodeChangeAnnotationContainer);
+        }
+        else {
             //noinspection unchecked
             task = (Task<T>) in.readObject();
         }
@@ -127,23 +133,38 @@ public class InternalSpaceTaskWrapper<T extends Serializable> implements SpaceTa
      * Tasks are loaded with a fresh class loader. When the task is done this fresh class loader is
      * removed. This will make it possible to load a modified version of this class GS-12351-
      * Running Distributed Task can throw ClassNotFoundException, if this task was loaded by a
-     * client that already shutdown and the class has more dependencies to load. GS-12352 -
+     * client that already shutdown aInternalSpaceTaskWrapper.java:155nd the class has more dependencies to load. GS-12352 -
      * Distributed Task class is not unloaded after the task finish. GS-12295 - Distributed task -
      * improve class loading mechanism.
      *
      * @see com.gigaspaces.internal.server.space.SpaceImpl#executeTask(SpaceTask, Transaction,
      * SpaceContext, boolean)
      */
-    private Task<T> readTaskUsingFreshClassLoader(ObjectInput in) throws ClassNotFoundException, IOException {
-        ClassLoader old = ClassLoaderHelper.getContextClassLoader();
+    private Task<T> readTaskUsingFreshClassLoader(ObjectInput in, SupportCodeChangeAnnotationContainer supportCodeChangeAnnotationContainer) throws ClassNotFoundException, IOException {
+        ClassLoader current = ClassLoaderHelper.getContextClassLoader();
         try {
-            ClassLoaderHelper.setContextClassLoader(new TaskClassLoader(new URL[]{}, old), true);
+            if(current instanceof ServiceClassLoader){
+                ClassLoader taskClassLoader = ((ServiceClassLoader) current).getTaskClassLoader(supportCodeChangeAnnotationContainer);
+                if(logger.isLoggable(Level.FINEST)){
+                    logger.finest("contextClassLoader ["+current+"] is instanceof ServiceClassLoader, asked for cached class-loader." +
+                            "["+taskClassLoader +"] set to be ContextClassLoader of Thread ["+Thread.currentThread()+"]");
+                }
+                ClassLoaderHelper.setContextClassLoader(taskClassLoader, true);
+            }
+            else {
+                throw new UnsupportedOperationException("supportCodeChange annotation is supported if the current ContextClassLoader is ["+ServiceClassLoader.class+"], but ContextClassLoader is ["+current+"]");
+            }
             //noinspection unchecked
             return (Task<T>) in.readObject();
         } finally {
-            ClassLoaderHelper.setContextClassLoader(old, true);
+            ClassLoaderHelper.setContextClassLoader(current, true);
 
         }
+    }
+
+    @Override
+    public boolean isOneTime() {
+        return supportCodeChangeAnnotationContainer != null && supportCodeChangeAnnotationContainer.getVersion().isEmpty();
     }
 
 }

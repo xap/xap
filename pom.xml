@@ -11,9 +11,9 @@
         <spring.version>4.1.1.RELEASE</spring.version>
         <spring.security.version>4.0.0.RELEASE</spring.security.version>
         <junit.version>4.12</junit.version>
-        <xap.version>12.0.1</xap.version>
+        <xap.version>12.1.0</xap.version>
         <xap.milestone>m1</xap.milestone>
-        <xap.build.number>15100-10</xap.build.number>
+        <xap.build.number>16701-10</xap.build.number>
         <xap.git.sha>unspecified</xap.git.sha>
         <xap.git.branch>master</xap.git.branch>
         <xap.release.arguments />

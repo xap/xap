@@ -41,6 +41,7 @@ import com.gigaspaces.events.DataEventSession;
 import com.gigaspaces.events.DataEventSessionFactory;
 import com.gigaspaces.events.EventSessionConfig;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
+import com.gigaspaces.internal.client.cache.ISpaceCache;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.utils.ObjectUtils;
 import com.gigaspaces.internal.utils.StringUtils;
@@ -55,6 +56,7 @@ import com.j_spaces.core.LeaseContext;
 
 import net.jini.core.transaction.Transaction;
 
+import org.openspaces.core.exception.DefaultExceptionTranslator;
 import org.openspaces.core.exception.ExceptionTranslator;
 import org.openspaces.core.executor.DistributedTask;
 import org.openspaces.core.executor.Task;
@@ -63,13 +65,17 @@ import org.openspaces.core.executor.internal.ExecutorMetaDataProvider;
 import org.openspaces.core.executor.internal.InternalDistributedSpaceTaskWrapper;
 import org.openspaces.core.executor.internal.InternalSpaceTaskWrapper;
 import org.openspaces.core.internal.InternalGigaSpace;
+import org.openspaces.core.transaction.DefaultTransactionProvider;
 import org.openspaces.core.transaction.TransactionProvider;
 import org.openspaces.core.transaction.internal.InternalAsyncFuture;
 import org.openspaces.core.transaction.internal.InternalAsyncFutureListener;
+import org.openspaces.core.util.SpaceUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.util.Assert;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.concurrent.Future;
@@ -93,6 +99,8 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
 
     final private TransactionProvider txProvider;
 
+    final private boolean implicitTxProvider;
+
     final private ExceptionTranslator exTranslator;
 
     final private GigaSpaceTypeManager typeManager;
@@ -107,17 +115,17 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
 
     private final int defaultIsolationLevel;
 
-    private WriteModifiers defaultWriteModifiers = WriteModifiers.NONE;
+    private WriteModifiers defaultWriteModifiers;
 
-    private ReadModifiers defaultReadModifiers = ReadModifiers.NONE;
+    private ReadModifiers defaultReadModifiers;
 
-    private TakeModifiers defaultTakeModifiers = TakeModifiers.NONE;
+    private TakeModifiers defaultTakeModifiers;
 
-    private CountModifiers defaultCountModifiers = CountModifiers.NONE;
+    private CountModifiers defaultCountModifiers;
 
-    private ClearModifiers defaultClearModifiers = ClearModifiers.NONE;
+    private ClearModifiers defaultClearModifiers;
 
-    private ChangeModifiers defaultChangeModifiers = ChangeModifiers.NONE;
+    private ChangeModifiers defaultChangeModifiers;
 
     final private ExecutorMetaDataProvider executorMetaDataProvider = new ExecutorMetaDataProvider();
 
@@ -126,33 +134,40 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
     /**
      * Constructs a new DefaultGigaSpace implementation.
      *
-     * @param space                 The space implementation to delegate operations to
-     * @param txProvider            The transaction provider for declarative transaction ex.
-     * @param exTranslator          Exception translator to translate low level exceptions into
-     *                              GigaSpaces runtime exception
-     * @param defaultIsolationLevel The default isolation level for read operations without
-     *                              modifiers. Maps to {@link org.springframework.transaction.TransactionDefinition#getIsolationLevel()}
-     *                              levels values.
+     * @param configurer            The transaction provider for declarative transaction ex.
      */
-    public DefaultGigaSpace(IJSpace space, TransactionProvider txProvider, ExceptionTranslator exTranslator,
-                            int defaultIsolationLevel) {
-        this.space = (ISpaceProxy) space;
-        this.txProvider = txProvider;
-        this.exTranslator = exTranslator;
+    public DefaultGigaSpace(GigaSpaceConfigurer configurer) {
+        this.space = initSpace(configurer);
+        this.txProvider = configurer.getTxProvider() != null
+                ? configurer.getTxProvider()
+                : new DefaultTransactionProvider(configurer.getTransactionManager());
+        this.implicitTxProvider = configurer.getTxProvider() == null;
+        this.name = configurer.getName() != null ? configurer.getName() : space.getName();
+        this.exTranslator = configurer.getExTranslator() != null ? configurer.getExTranslator() : new DefaultExceptionTranslator();
         this.typeManager = new DefaultGigaSpaceTypeManager(this.space, this.exTranslator);
 
         // set the default read take modifiers according to the default isolation level
-        this.springIsolationLevel = defaultIsolationLevel;
+        this.springIsolationLevel = configurer.getDefaultIsolationLevel();
         this.defaultIsolationLevel =
-                IsolationLevelHelpers.convertSpringToSpaceIsolationLevel(defaultIsolationLevel, space.getReadModifiers());
+                IsolationLevelHelpers.convertSpringToSpaceIsolationLevel(springIsolationLevel, space.getReadModifiers());
         this.defaultCountModifiers = IsolationLevelHelpers.toCountModifiers(this.defaultIsolationLevel);
         this.defaultReadModifiers = IsolationLevelHelpers.toReadModifiers(this.defaultIsolationLevel);
 
+        setDefaultReadTimeout(configurer.getDefaultReadTimeout());
+        setDefaultTakeTimeout(configurer.getDefaultTakeTimeout());
+        setDefaultWriteLease(configurer.getDefaultWriteLease());
+        setDefaultWriteModifiers(configurer.getDefaultWriteModifiers());
+        setDefaultReadModifiers(configurer.getDefaultReadModifiers());
+        setDefaultTakeModifiers(configurer.getDefaultTakeModifiers());
+        setDefaultCountModifiers(configurer.getDefaultCountModifiers());
+        setDefaultClearModifiers(configurer.getDefaultClearModifiers());
+        setDefaultChangeModifiers(configurer.getDefaultChangeModifiers());
     }
 
     private DefaultGigaSpace(IJSpace space, DefaultGigaSpace other) {
         this.space = (ISpaceProxy) space;
         this.txProvider = other.txProvider;
+        this.implicitTxProvider = other.implicitTxProvider;
         this.exTranslator = other.exTranslator;
         this.typeManager = new DefaultGigaSpaceTypeManager(this.space, this.exTranslator);
 
@@ -168,6 +183,13 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
         this.defaultReadModifiers = other.defaultReadModifiers;
         this.defaultWriteModifiers = other.defaultWriteModifiers;
         this.defaultTakeModifiers = other.defaultTakeModifiers;
+    }
+
+    private static ISpaceProxy initSpace(GigaSpaceConfigurer configurer) {
+        ISpaceProxy space = (ISpaceProxy) configurer.getSpace();
+        Assert.notNull(space, "space property is required");
+        boolean clustered = configurer.getClustered() != null ? configurer.getClustered() : space instanceof ISpaceCache || SpaceUtils.isRemoteProtocol(space);
+        return !clustered && space.isClustered() ? (ISpaceProxy)SpaceUtils.getClusterMemberSpace(space) : space;
     }
 
     public void setName(String name) {
@@ -241,62 +263,50 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
     /**
      * Sets the default {@link WriteModifiers} when excecution {@link #write(Object)}
      */
-    public void setDefaultWriteModifiers(WriteModifiers defaultWriteModifiers) {
-        this.defaultWriteModifiers = defaultWriteModifiers;
+    public void setDefaultWriteModifiers(WriteModifiers modifiers) {
+        this.defaultWriteModifiers = modifiers != null ? modifiers : WriteModifiers.NONE;
     }
 
     /**
      * Sets the default {@link ClearModifiers} when excecution {@link #write(Object)}
      */
-    public void setDefaultClearModifiers(ClearModifiers defaultClearModifiers) {
-        this.defaultClearModifiers = defaultClearModifiers;
+    public void setDefaultClearModifiers(ClearModifiers modifiers) {
+        this.defaultClearModifiers = modifiers != null ? modifiers : ClearModifiers.NONE;
     }
 
     /**
      * Sets the default {@link CountModifiers} when excecution {@link #count(Object)}
      */
-    public void setDefaultCountModifiers(CountModifiers defaultCountModifiers) {
-        this.defaultCountModifiers = validateWithDefaultIsolationLevelAndMerge(defaultCountModifiers);
+    public void setDefaultCountModifiers(CountModifiers modifiers) {
+        this.defaultCountModifiers = modifiers == null || modifiers.getCode() == 0
+                ? IsolationLevelHelpers.toCountModifiers(defaultIsolationLevel)
+                : validateWithDefaultIsolationLevel(modifiers, "count");
     }
 
     /**
      * Sets the default {@link ReadModifiers} when excecution {@link #read(Object)}
      */
-    public void setDefaultReadModifiers(ReadModifiers defaultReadModifiers) {
-        this.defaultReadModifiers = validateWithDefaultIsolationLevelAndMerge(defaultReadModifiers);
+    public void setDefaultReadModifiers(ReadModifiers modifiers) {
+        this.defaultReadModifiers = modifiers == null || modifiers.getCode() == 0
+                ? IsolationLevelHelpers.toReadModifiers(defaultIsolationLevel)
+                : validateWithDefaultIsolationLevel(modifiers, "read");
     }
 
     /**
      * Sets the default {@link TakeModifiers} when excecution {@link #take(Object)}
      */
-    public void setDefaultTakeModifiers(TakeModifiers defaultTakeModifiers) {
-        this.defaultTakeModifiers = defaultTakeModifiers;
+    public void setDefaultTakeModifiers(TakeModifiers modifiers) {
+        this.defaultTakeModifiers = modifiers != null ? modifiers : TakeModifiers.NONE;
     }
 
     /**
      * Sets the default {@link ChangeModifiers} when excecution {@link #change(Object, ChangeSet)}
      */
-    public void setDefaultChangeModifiers(ChangeModifiers defaultChangeModifiers) {
-        this.defaultChangeModifiers = defaultChangeModifiers;
+    public void setDefaultChangeModifiers(ChangeModifiers modifiers) {
+        this.defaultChangeModifiers = modifiers != null ? modifiers : ChangeModifiers.NONE;
     }
 
-    private ReadModifiers validateWithDefaultIsolationLevelAndMerge(ReadModifiers readModifiers) {
-        if (readModifiers.getCode() == 0) {
-            return IsolationLevelHelpers.toReadModifiers(defaultIsolationLevel);
-        }
-        validateWithDefaultIsolationLevel(readModifiers, "read");
-        return readModifiers;
-    }
-
-    private CountModifiers validateWithDefaultIsolationLevelAndMerge(CountModifiers countModifiers) {
-        if (countModifiers.getCode() == 0) {
-            return IsolationLevelHelpers.toCountModifiers(defaultIsolationLevel);
-        }
-        validateWithDefaultIsolationLevel(countModifiers, "count");
-        return countModifiers;
-    }
-
-    private void validateWithDefaultIsolationLevel(IsolationLevelModifiers modifiers, String name) {
+    private <T extends IsolationLevelModifiers> T validateWithDefaultIsolationLevel(T modifiers, String name) {
         if ((springIsolationLevel == TransactionDefinition.ISOLATION_REPEATABLE_READ && !modifiers.isRepeatableRead()) ||
                 (springIsolationLevel == TransactionDefinition.ISOLATION_READ_COMMITTED && !modifiers.isReadCommitted()) ||
                 (springIsolationLevel == TransactionDefinition.ISOLATION_READ_UNCOMMITTED && !modifiers.isDirtyRead())) {
@@ -305,6 +315,7 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
                     "defaultIsolationLevel [" + defaultIsolationLevel + "]" + StringUtils.NEW_LINE +
                     "default " + name + " modifiers [" + modifiers.getCode() + "]");
         }
+        return modifiers;
     }
 
     // GigaSpace interface Methods
@@ -2009,5 +2020,10 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
     @SuppressWarnings("unchecked")
     public <T> ISpaceQuery<T> prepareTemplate(Object template) {
         return (ISpaceQuery<T>) space.getDirectProxy().prepareTemplate(template);
+    }
+
+    public void close() throws IOException {
+        if (implicitTxProvider)
+            txProvider.close();
     }
 }

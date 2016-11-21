@@ -131,7 +131,10 @@ public class GlobalOrderReliableAsyncGroupBacklog
 
             getBacklogFile().add(packet);
 
-            getConfirmationHolderUnsafe(sourceMemberName).setLastConfirmedKey(packet.getKey());
+            GlobalOrderConfirmationHolder confirmationHolder = getConfirmationHolderUnsafe(sourceMemberName);
+            decreaseWeight(sourceMemberName,confirmationHolder.getLastConfirmedKey(), packet.getKey());
+            confirmationHolder.setLastConfirmedKey(packet.getKey());
+
         } finally {
             _rwLock.writeLock().unlock();
         }
@@ -218,7 +221,11 @@ public class GlobalOrderReliableAsyncGroupBacklog
             for (AsyncTargetState asyncTargetState : sharedAsyncState.getAsyncTargetsState()) {
                 if (asyncTargetState.hadAnyHandshake()) {
                     long lastConfirmedKey = asyncTargetState.getLastConfirmedKey();
-                    getConfirmationHolderUnsafe(asyncTargetState.getTargetMemberName()).setLastConfirmedKey(lastConfirmedKey);
+                    String memberName = asyncTargetState.getTargetMemberName();
+                    GlobalOrderConfirmationHolder confirmationHolder = getConfirmationHolderUnsafe(memberName);
+                    decreaseWeight(memberName,confirmationHolder.getLastConfirmedKey(), lastConfirmedKey);
+                    confirmationHolder.setLastConfirmedKey(lastConfirmedKey);
+
                 }
             }
 
@@ -235,8 +242,11 @@ public class GlobalOrderReliableAsyncGroupBacklog
 
             GlobalOrderConfirmationHolder lastConfirmedBySource = getConfirmationHolderUnsafe(sourceMemberName);
             if (!lastConfirmedBySource.hadAnyHandshake()
-                    || lastConfirmedBySource.getLastConfirmedKey() < minConfirmed)
+                    || lastConfirmedBySource.getLastConfirmedKey() < minConfirmed) {
+                decreaseWeight(sourceMemberName, lastConfirmedBySource.getLastConfirmedKey(), minConfirmed);
                 lastConfirmedBySource.setLastConfirmedKey(minConfirmed);
+
+            }
             clearConfirmedPackets();
         } finally {
             _rwLock.writeLock().unlock();

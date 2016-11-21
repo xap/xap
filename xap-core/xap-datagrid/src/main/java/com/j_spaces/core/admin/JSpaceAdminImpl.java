@@ -49,6 +49,7 @@ import com.j_spaces.core.service.ServiceAdminImpl;
 
 import net.jini.core.transaction.Transaction;
 import net.jini.export.Exporter;
+import org.jini.rio.boot.SpaceInstanceRemoteClassLoaderInfo;
 
 import java.rmi.RemoteException;
 import java.util.List;
@@ -90,6 +91,11 @@ public class JSpaceAdminImpl extends ServiceAdminImpl
 
     public void restart() throws RemoteException {
         ((IInternalRemoteJSpaceAdmin) m_service).restart();
+    }
+
+    @Override
+    public SpaceInstanceRemoteClassLoaderInfo getSpaceInstanceRemoteClassLoaderInfo() throws RemoteException {
+        return ((IRemoteJSpaceAdmin) m_service).getSpaceInstanceRemoteClassLoaderInfo();
     }
 
     public String getName() throws RemoteException {

@@ -152,7 +152,7 @@ public class GigaSessionManager extends AbstractSessionManager {
         }
         space = null;
         if (urlSpaceConfigurer != null) {
-            urlSpaceConfigurer.destroy();
+            urlSpaceConfigurer.close();
         }
         super.doStop();
     }

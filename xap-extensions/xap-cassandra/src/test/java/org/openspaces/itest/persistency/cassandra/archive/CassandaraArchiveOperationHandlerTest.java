@@ -145,7 +145,7 @@ public class CassandaraArchiveOperationHandlerTest {
         } finally {
 
             if (urlSpaceConfigurer != null) {
-                urlSpaceConfigurer.destroy();
+                urlSpaceConfigurer.close();
             }
 
             if (archiveHandler != null) {

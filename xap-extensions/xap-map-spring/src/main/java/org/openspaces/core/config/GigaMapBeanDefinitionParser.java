@@ -18,7 +18,7 @@
 package org.openspaces.core.config;
 
 import org.openspaces.core.GigaMapFactoryBean;
-import org.openspaces.core.GigaSpaceFactoryBean;
+import org.openspaces.core.GigaSpaceConfigurer;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.AbstractSingleBeanDefinitionParser;
 import org.springframework.core.Conventions;
@@ -55,7 +55,7 @@ public class GigaMapBeanDefinitionParser extends AbstractSingleBeanDefinitionPar
             }
             String propertyName = extractPropertyName(name);
             if (DEFAULT_ISOLATION.equals(name)) {
-                builder.addPropertyValue("defaultIsolationLevelName", GigaSpaceFactoryBean.PREFIX_ISOLATION
+                builder.addPropertyValue("defaultIsolationLevelName", GigaSpaceConfigurer.PREFIX_ISOLATION
                         + attribute.getValue());
                 continue;
             }

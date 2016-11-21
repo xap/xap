@@ -17,6 +17,7 @@
 package org.openspaces.launcher;
 
 import com.gigaspaces.admin.cli.RuntimeInfo;
+import com.gigaspaces.admin.security.SecurityConstants;
 import com.gigaspaces.internal.io.FileUtils;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.logger.GSLogConfigLoader;
@@ -59,7 +60,17 @@ public class Launcher {
             else if ("bind-address".equals(paramName)) {
                 bindAddress = param.getArguments()[0];
                 config.setHostAddress(bindAddress);
-            } else if ("help".equals(paramName) || "h".equals(paramName)) {
+            }
+            else if(SecurityConstants.KEY_USER_PROVIDER.equals( paramName ) ){
+                String credentialsProvider = param.getArguments()[0];
+                System.setProperty( SecurityConstants.KEY_USER_PROVIDER, credentialsProvider );
+            }
+            else if(SecurityConstants.KEY_USER_PROPERTIES.equals( paramName ) ){
+                String credentialsProviderProperties = param.getArguments()[0];
+                System.setProperty( SecurityConstants.KEY_USER_PROPERTIES, credentialsProviderProperties );
+            }
+
+            else if ("help".equals(paramName) || "h".equals(paramName)) {
                 printHelpMessage();
                 return;
             }

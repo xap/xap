@@ -272,6 +272,8 @@ public abstract class AbstractHibernateExternalDataSource implements ManagedData
             String hibernateFile = properties.getProperty(HIBERNATE_CFG_PROPERTY);
             if (hibernateFile == null) {
                 logger.error("No session factory injected, and [" + HIBERNATE_CFG_PROPERTY + "] is not provided in the properties file, can't create session factory");
+            }else{
+                logger.debug("[" + HIBERNATE_CFG_PROPERTY + "] " + hibernateFile +" is provided in the properties file " );
             }
             try {
                 sessionFactory = SessionFactoryBuilder.getFactory(hibernateFile);

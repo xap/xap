@@ -53,6 +53,7 @@ import com.j_spaces.core.service.ServiceAdminProxy;
 
 import net.jini.core.transaction.Transaction;
 import net.jini.id.Uuid;
+import org.jini.rio.boot.SpaceInstanceRemoteClassLoaderInfo;
 
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
@@ -101,6 +102,11 @@ public class JSpaceAdminProxy
      */
     public void restart() throws RemoteException {
         ((IInternalRemoteJSpaceAdmin) adminImpl).restart();
+    }
+
+    @Override
+    public SpaceInstanceRemoteClassLoaderInfo getSpaceInstanceRemoteClassLoaderInfo() throws RemoteException {
+        return ((IRemoteJSpaceAdmin) adminImpl).getSpaceInstanceRemoteClassLoaderInfo();
     }
 
     public String getName() throws RemoteException {

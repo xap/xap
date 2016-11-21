@@ -91,6 +91,11 @@ public class AsyncRedoLogFileStorageDecorator<T>
         _storage.close();
     }
 
+    @Override
+    public long getWeight() {
+        throw new UnsupportedOperationException("getWeight not supported in class AsyncRedoLogFileStorageDecorator");
+    }
+
     public void deleteFirstBatch(long batchSize) throws StorageException {
         long storageSize;
         _lock.writeLock().lock();

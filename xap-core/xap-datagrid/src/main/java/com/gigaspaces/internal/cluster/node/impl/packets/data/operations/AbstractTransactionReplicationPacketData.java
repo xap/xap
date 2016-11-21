@@ -56,6 +56,8 @@ public abstract class AbstractTransactionReplicationPacketData
 
     private static final int FLAGS_GATEWAY = 1 << 0;
 
+    private transient int _weight;
+
     public AbstractTransactionReplicationPacketData() {
     }
 
@@ -262,4 +264,13 @@ public abstract class AbstractTransactionReplicationPacketData
         return _transaction;
     }
 
+    @Override
+    public void setWeight(int weight) {
+        _weight = weight;
+    }
+
+    @Override
+    public int getWeight() {
+        return _weight;
+    }
 }

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.openspaces.core;
 
 import com.gigaspaces.client.ChangeModifiers;
@@ -28,7 +27,9 @@ import com.j_spaces.core.IJSpace;
 import org.openspaces.core.exception.ExceptionTranslator;
 import org.openspaces.core.space.SpaceConfigurer;
 import org.openspaces.core.transaction.TransactionProvider;
+import org.springframework.core.Constants;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 
 /**
  * A simple programmatic configurer for {@link org.openspaces.core.GigaSpace} instance wrapping the
@@ -36,148 +37,326 @@ import org.springframework.transaction.PlatformTransactionManager;
  *
  * <p>Usage example:
  * <pre>
- * UrlSpaceConfigurer urlSpaceConfigurer = new UrlSpaceConfigurer("/./space").schema("persistent")
- *          .noWriteLeaseMode(true).lookupGroups(new String[] {"kimchy"});
- *
- * GigaSpace gigaSpace = new GigaSpaceConfigurer(urlSpaceConfigurer).defaultTakeTimeout(1000).gigaSpace();
+ * SpaceConfigurer spaceConfigurer = new EmbeddedSpaceConfigurer("mySpace");
+ * GigaSpace gigaSpace = new GigaSpaceConfigurer(spaceConfigurer).create();
  * ...
- * urlSpaceConfigurer.destroy(); // optional
+ * spaceConfigurer.close();
  * </pre>
  *
  * @author kimchy
  */
 public class GigaSpaceConfigurer {
+    /**
+     * Constants instance for TransactionDefinition
+     */
+    private static final Constants constants = new Constants(TransactionDefinition.class);
 
-    private final GigaSpaceFactoryBean gigaSpaceFactoryBean;
+    /**
+     * Prefix for the isolation constants defined in TransactionDefinition
+     */
+    public static final String PREFIX_ISOLATION = "ISOLATION_";
 
-    private GigaSpace gigaSpace;
+    private DefaultGigaSpace gigaSpace;
+
+    private IJSpace space;
+    private String name;
+    private Boolean clustered;
+    private ExceptionTranslator exTranslator;
+    private TransactionProvider txProvider;
+    private PlatformTransactionManager transactionManager;
+    private int defaultIsolationLevel = TransactionDefinition.ISOLATION_DEFAULT;
+    private long defaultReadTimeout = 0;
+    private long defaultTakeTimeout = 0;
+    private long defaultWriteLease = Long.MAX_VALUE;
+    private WriteModifiers defaultWriteModifiers;
+    private ReadModifiers defaultReadModifiers;
+    private TakeModifiers defaultTakeModifiers;
+    private ClearModifiers defaultClearModifiers;
+    private CountModifiers defaultCountModifiers;
+    private ChangeModifiers defaultChangeModifiers;
 
     /**
      * Constructs a new configurer based on the Space.
      */
     public GigaSpaceConfigurer(IJSpace space) {
-        gigaSpaceFactoryBean = new GigaSpaceFactoryBean();
-        gigaSpaceFactoryBean.setSpace(space);
+        space(space);
     }
 
     /**
      * Constructs a new configurer based on the Space.
      */
     public GigaSpaceConfigurer(SpaceConfigurer configurer) {
-        gigaSpaceFactoryBean = new GigaSpaceFactoryBean();
-        gigaSpaceFactoryBean.setSpace(configurer.space());
+        this(configurer.space());
     }
 
     /**
-     * @see org.openspaces.core.GigaSpaceFactoryBean#setTxProvider(org.openspaces.core.transaction.TransactionProvider)
+     * For internal usage only
+     * @see GigaSpaceFactoryBean
+     */
+    protected GigaSpaceConfigurer() {
+    }
+
+    /**
+     * For internal usage only
+     * @see GigaSpaceFactoryBean
+     */
+    protected void space(IJSpace space) {
+        this.space = space;
+    }
+
+    public IJSpace getSpace() {
+        return space;
+    }
+
+    /**
+     * Sets the name of the GigaSpace instance which will be created. If not specified, the space name will be used.
+     * @param name Name of the GigaSpace instance.
+     */
+    public GigaSpaceConfigurer name(String name) {
+        this.name = name;
+        return this;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Sets the transaction provider that will be used by the created {@link
+     * org.openspaces.core.GigaSpace}. This is an optional parameter and defaults to {@link
+     * org.openspaces.core.transaction.DefaultTransactionProvider}.
+     *
+     * @param txProvider The transaction provider to use
      */
     public GigaSpaceConfigurer txProvider(TransactionProvider txProvider) {
-        gigaSpaceFactoryBean.setTxProvider(txProvider);
+        this.txProvider = txProvider;
         return this;
     }
 
+    public TransactionProvider getTxProvider() {
+        return txProvider;
+    }
+
     /**
-     * @see org.openspaces.core.GigaSpaceFactoryBean#setExTranslator(org.openspaces.core.exception.ExceptionTranslator)
+     * Sets the exception translator that will be used by the created {@link
+     * org.openspaces.core.GigaSpace}. This is an optional parameter and defaults to {@link
+     * org.openspaces.core.exception.DefaultExceptionTranslator}.
+     *
+     * @param exTranslator The exception translator to use
      */
     public GigaSpaceConfigurer exTranslator(ExceptionTranslator exTranslator) {
-        gigaSpaceFactoryBean.setExTranslator(exTranslator);
+        this.exTranslator = exTranslator;
         return this;
     }
 
+    public ExceptionTranslator getExTranslator() {
+        return exTranslator;
+    }
+
     /**
-     * @see org.openspaces.core.GigaSpaceFactoryBean#setClustered(boolean)
+     * Sets the cluster flag controlling if this {@link org.openspaces.core.GigaSpace} will work
+     * with a clustered view of the space or directly with a cluster member. By default if this flag
+     * is not set it will be set automatically by this factory. It will be set to <code>false</code>
+     * if the space is an embedded one AND the space is not a local cache proxy. It will be set to
+     * <code>true</code> otherwise (i.e. the space is not an embedded space OR the space is a local
+     * cache proxy).
+     *
+     * @param clustered If the {@link org.openspaces.core.GigaSpace} is going to work with a
+     *                  clustered view of the space or directly with a cluster member
      */
     public GigaSpaceConfigurer clustered(boolean clustered) {
-        gigaSpaceFactoryBean.setClustered(clustered);
+        this.clustered = clustered;
         return this;
     }
 
+    public Boolean getClustered() {
+        return clustered;
+    }
+
     /**
-     * @see org.openspaces.core.GigaSpaceFactoryBean#setDefaultReadTimeout(long)
+     * Sets the default read timeout for {@link org.openspaces.core.GigaSpace#read(Object)} and
+     * {@link org.openspaces.core.GigaSpace#readIfExists(Object)} operations. Default to 0.
      */
     public GigaSpaceConfigurer defaultReadTimeout(long defaultReadTimeout) {
-        gigaSpaceFactoryBean.setDefaultReadTimeout(defaultReadTimeout);
+        this.defaultReadTimeout = defaultReadTimeout;
         return this;
     }
 
+    public long getDefaultReadTimeout() {
+        return defaultReadTimeout;
+    }
+
     /**
-     * @see org.openspaces.core.GigaSpaceFactoryBean#setDefaultTakeTimeout(long)
+     * Sets the default take timeout for {@link org.openspaces.core.GigaSpace#take(Object)} and
+     * {@link org.openspaces.core.GigaSpace#takeIfExists(Object)} operations. Default to 0.
      */
     public GigaSpaceConfigurer defaultTakeTimeout(long defaultTakeTimeout) {
-        gigaSpaceFactoryBean.setDefaultTakeTimeout(defaultTakeTimeout);
+        this.defaultTakeTimeout = defaultTakeTimeout;
         return this;
     }
 
+    public long getDefaultTakeTimeout() {
+        return defaultTakeTimeout;
+    }
+
     /**
-     * @see org.openspaces.core.GigaSpaceFactoryBean#setDefaultWriteLease(long)
+     * Sets the default write lease for {@link org.openspaces.core.GigaSpace#write(Object)}
+     * operation. Default to {@link net.jini.core.lease.Lease#FOREVER}.
      */
     public GigaSpaceConfigurer defaultWriteLease(long defaultWriteLease) {
-        gigaSpaceFactoryBean.setDefaultWriteLease(defaultWriteLease);
+        this.defaultWriteLease = defaultWriteLease;
         return this;
     }
 
+    public long getDefaultWriteLease() {
+        return defaultWriteLease;
+    }
+
     /**
-     * @see org.openspaces.core.GigaSpaceFactoryBean#setDefaultIsolationLevel(int)
+     * Set the default isolation level. Must be one of the isolation constants in the
+     * TransactionDefinition interface. Default is ISOLATION_DEFAULT.
+     *
+     * @throws IllegalArgumentException if the supplied value is not one of the <code>ISOLATION_</code>
+     *                                  constants
+     * @see org.springframework.transaction.TransactionDefinition#ISOLATION_DEFAULT
      */
     public GigaSpaceConfigurer defaultIsolationLevel(int defaultIsolationLevel) {
-        gigaSpaceFactoryBean.setDefaultIsolationLevel(defaultIsolationLevel);
+        if (!constants.getValues(PREFIX_ISOLATION).contains(Integer.valueOf(defaultIsolationLevel))) {
+            throw new IllegalArgumentException("Only values of isolation constants allowed");
+        }
+        this.defaultIsolationLevel = defaultIsolationLevel;
+        return this;
+    }
+
+    public int getDefaultIsolationLevel() {
+        return defaultIsolationLevel;
+    }
+
+    /**
+     * Set the default isolation level. Must be one of the isolation constants in the
+     * TransactionDefinition interface. Default is ISOLATION_DEFAULT.
+     *
+     * @throws IllegalArgumentException if the supplied value is not one of the <code>ISOLATION_</code>
+     *                                  constants
+     * @see org.springframework.transaction.TransactionDefinition#ISOLATION_DEFAULT
+     */
+    public GigaSpaceConfigurer defaultIsolationLevel(String name) {
+        if (name == null || !name.startsWith(PREFIX_ISOLATION)) {
+            throw new IllegalArgumentException("Only isolation constants allowed");
+        }
+        defaultIsolationLevel(constants.asNumber(name).intValue());
         return this;
     }
 
     /**
-     * @see org.openspaces.core.GigaSpaceFactoryBean#setDefaultWriteModifiers(com.gigaspaces.client.WriteModifiers[])
+     * Set the default {@link WriteModifiers} to be used for write operations on the {@link
+     * GigaSpace} instance. Defaults to {@link WriteModifiers#UPDATE_OR_WRITE}
+     *
+     * @param defaultWriteModifiers The default write modifiers.
+     * @see WriteModifiers
      */
     public GigaSpaceConfigurer defaultWriteModifiers(WriteModifiers defaultWriteModifiers) {
-        gigaSpaceFactoryBean.setDefaultWriteModifiers(new WriteModifiers[]{defaultWriteModifiers});
+        this.defaultWriteModifiers = defaultWriteModifiers;
         return this;
     }
 
+    public WriteModifiers getDefaultWriteModifiers() {
+        return defaultWriteModifiers;
+    }
+
     /**
-     * @see org.openspaces.core.GigaSpaceFactoryBean#setDefaultReadModifiers(com.gigaspaces.client.ReadModifiers[])
+     * Set the default {@link ReadModifiers} to be used for read operations on the {@link GigaSpace}
+     * instance. Defaults to {@link ReadModifiers#READ_COMMITTED}
+     *
+     * @param defaultReadModifiers The default read modifiers.
+     * @see ReadModifiers
      */
     public GigaSpaceConfigurer defaultReadModifiers(ReadModifiers defaultReadModifiers) {
-        gigaSpaceFactoryBean.setDefaultReadModifiers(new ReadModifiers[]{defaultReadModifiers});
+        this.defaultReadModifiers = defaultReadModifiers;
         return this;
     }
 
+    public ReadModifiers getDefaultReadModifiers() {
+        return defaultReadModifiers;
+    }
+
     /**
-     * @see org.openspaces.core.GigaSpaceFactoryBean#setDefaultTakeModifiers(com.gigaspaces.client.TakeModifiers[])
+     * Set the default {@link TakeModifiers} to be used for take operations on the {@link GigaSpace}
+     * instance. Defaults to {@link TakeModifiers#NONE}
+     *
+     * @param defaultTakeModifiers The default take modifiers.
+     * @see TakeModifiers
      */
     public GigaSpaceConfigurer defaultTakeModifiers(TakeModifiers defaultTakeModifiers) {
-        gigaSpaceFactoryBean.setDefaultTakeModifiers(new TakeModifiers[]{defaultTakeModifiers});
+        this.defaultTakeModifiers = defaultTakeModifiers;
         return this;
     }
 
+    public TakeModifiers getDefaultTakeModifiers() {
+        return defaultTakeModifiers;
+    }
+
     /**
-     * @see org.openspaces.core.GigaSpaceFactoryBean#setDefaultCountModifiers(com.gigaspaces.client.CountModifiers[])
+     * Set the default {@link CountModifiers} to be used for count operations on the {@link
+     * GigaSpace} instance. Defaults to {@link CountModifiers#NONE}
+     *
+     * @param defaultCountModifiers The default count modifiers.
+     * @see CountModifiers
      */
     public GigaSpaceConfigurer defaultCountModifiers(CountModifiers defaultCountModifiers) {
-        gigaSpaceFactoryBean.setDefaultCountModifiers(new CountModifiers[]{defaultCountModifiers});
+        this.defaultCountModifiers = defaultCountModifiers;
         return this;
     }
 
+    public CountModifiers getDefaultCountModifiers() {
+        return defaultCountModifiers;
+    }
+
     /**
-     * @see org.openspaces.core.GigaSpaceFactoryBean#setDefaultClearModifiers(com.gigaspaces.client.ClearModifiers[])
+     * Set the default {@link ClearModifiers} to be used for clear operations on the {@link
+     * GigaSpace} instance. Defaults to {@link ClearModifiers#NONE}
+     *
+     * @param defaultClearModifiers The default clear modifiers.
+     * @see ClearModifiers
      */
     public GigaSpaceConfigurer defaultClearModifiers(ClearModifiers defaultClearModifiers) {
-        gigaSpaceFactoryBean.setDefaultClearModifiers(new ClearModifiers[]{defaultClearModifiers});
+        this.defaultClearModifiers = defaultClearModifiers;
         return this;
     }
 
+    public ClearModifiers getDefaultClearModifiers() {
+        return defaultClearModifiers;
+    }
+
     /**
-     * @see org.openspaces.core.GigaSpaceFactoryBean#setDefaultChangeModifiers(com.gigaspaces.client.ChangeModifiers[])
+     * Set the default {@link ChangeModifiers} to be used for change operations on the {@link
+     * GigaSpace} instance. Defaults to {@link ChangeModifiers#NONE}
+     *
+     * @param defaultChangeModifiers The default change modifiers.
+     * @see ChangeModifiers
      */
     public GigaSpaceConfigurer defaultChangeModifiers(ChangeModifiers defaultChangeModifiers) {
-        gigaSpaceFactoryBean.setDefaultChangeModifiers(new ChangeModifiers[]{defaultChangeModifiers});
+        this.defaultChangeModifiers = defaultChangeModifiers;
         return this;
     }
 
+
+    public ChangeModifiers getDefaultChangeModifiers() {
+        return defaultChangeModifiers;
+    }
+
     /**
-     * @see org.openspaces.core.GigaSpaceFactoryBean#setTransactionManager(org.springframework.transaction.PlatformTransactionManager)
+     * Set the transaction manager to enable transactional operations. Can be <code>null</code>
+     * if transactional support is not required or the default space is used as a transactional
+     * context.
      */
     public GigaSpaceConfigurer transactionManager(PlatformTransactionManager transactionManager) {
-        gigaSpaceFactoryBean.setTransactionManager(transactionManager);
+        this.transactionManager = transactionManager;
         return this;
+    }
+
+    public PlatformTransactionManager getTransactionManager() {
+        return transactionManager;
     }
 
     /**
@@ -185,9 +364,18 @@ public class GigaSpaceConfigurer {
      */
     public GigaSpace create() {
         if (gigaSpace == null) {
-            gigaSpaceFactoryBean.afterPropertiesSet();
-            gigaSpace = (GigaSpace) gigaSpaceFactoryBean.getObject();
+            gigaSpace = initialize();
         }
+        return gigaSpace;
+    }
+
+    protected void close() throws Exception {
+        if (gigaSpace != null) {
+            gigaSpace.close();
+        }
+    }
+
+    protected GigaSpace getGigaSpaceIfInitialized() {
         return gigaSpace;
     }
 
@@ -198,5 +386,9 @@ public class GigaSpaceConfigurer {
      */
     public GigaSpace gigaSpace() {
         return create();
+    }
+
+    protected DefaultGigaSpace initialize() {
+        return new DefaultGigaSpace(this);
     }
 }

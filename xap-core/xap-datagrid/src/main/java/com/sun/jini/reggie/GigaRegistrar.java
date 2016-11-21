@@ -920,24 +920,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                      * definite exception, we can cancel the lease.
                      */
                     logger.log(Levels.HANDLED, "Exception sending event to [" + listener + "], ServiceID [" + event.getServiceID() + "], eventID [" + eventID + "], " + tmpl + " canceling lease [" + leaseID + "]", e);
-                    try {
-                        ILRMIProxy ilrmiProxy = (ILRMIProxy) listener;
-                        if (!ilrmiProxy.isClosed()) {
-                            logger.log(Level.WARNING, "Shutting down listener - registration-id:" + eventID + " " + listener, e);
-                            ilrmiProxy.closeProxy();
-                        }
-                        cancelEventLease(eventID, leaseID);
-                    } catch (UnknownLeaseException ee) {
-                        logger.log(
-                                Levels.HANDLED,
-                                "Exception canceling event lease",
-                                e);
-                    } catch (RemoteException ee) {
-                        logger.log(
-                                Levels.HANDLED,
-                                "The server has been shutdown",
-                                e);
+                    ILRMIProxy ilrmiProxy = (ILRMIProxy) listener;
+                    if (!ilrmiProxy.isClosed()) {
+                        logger.log(Level.WARNING, "Shutting down listener - registration-id:" + eventID + " " + listener, e);
+                        ilrmiProxy.closeProxy();
                     }
+                    newNotifies[Math.abs(this.listener.hashCode() % newNotifies.length)].add(new CancelEventLeasetTask(this));
             }
         }
 
@@ -5550,11 +5538,8 @@ reprocessing of time constraints associated with that method */
             newNotifies[Math.abs(reg.listener.hashCode() % newNotifies.length)].add(new CancelEventLeasetTask(reg));
         } else {
             reg.send();
-
         }
     }
-
-    //todo remove queueEvents
 
     /**
      * Queue all pending EventTasks for processing by the task manager.

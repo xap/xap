@@ -189,5 +189,13 @@ public abstract class AbstractSingleBucketOrderedPacket implements ISingleBucket
         return true;
     }
 
+    @Override
+    public int getWeight() {
+        if (_beforeFilterPacket != null) {
+            return _beforeFilterPacket.getWeight();
+        }
+        return 1;
+    }
+
 
 }

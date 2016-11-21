@@ -23,6 +23,7 @@ public abstract class AbstractSingleFileConfirmationHolder {
 
     private long _pendingErrorKey = -1;
     private Throwable _pendingError = null;
+    private long _weight;
 
     public AbstractSingleFileConfirmationHolder() {
     }
@@ -58,6 +59,14 @@ public abstract class AbstractSingleFileConfirmationHolder {
     @Override
     public String toString() {
         return "pendingErrorKey=" + _pendingErrorKey + ", pendingError=" + _pendingError;
+    }
+
+    public long getWeight() {
+        return _weight;
+    }
+
+    public void setWeight(long _weight) {
+        this._weight = _weight;
     }
 
 }

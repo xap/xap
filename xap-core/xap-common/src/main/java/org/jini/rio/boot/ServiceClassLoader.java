@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The ServiceClassLoader overrides getURLs(), ensuring all classes that need to be annotated with
@@ -31,6 +33,7 @@ import java.util.List;
  */
 @com.gigaspaces.api.InternalApi
 public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnnotation {
+    final private static Logger logger = Logger.getLogger("com.gigaspaces.lrmi.classloading.level");
     /**
      * URLs that this class loader will to search for and load classes
      */
@@ -43,6 +46,8 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
     private final ClassAnnotator annotator;
 
     private boolean parentFirst = Boolean.parseBoolean(System.getProperty("com.gs.pu.classloader.parentFirst", "false"));
+
+    private ManagerTaskClassLoader managerTaskClassLoader;
 
     /**
      * Constructs a new ServiceClassLoader for the specified URLs having the given parent. The
@@ -60,6 +65,11 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
         this.annotator = annotator;
         this.searchPath = Collections.unmodifiableList(
                 searchPath != null ? Arrays.asList(searchPath) : new ArrayList<URL>());
+        managerTaskClassLoader = new ManagerTaskClassLoader(this);
+    }
+
+    public ManagerTaskClassLoader getManagerTaskClassLoader() {
+        return managerTaskClassLoader;
     }
 
     /**
@@ -241,5 +251,15 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
             }
         }
         throw new ClassNotFoundException(name);
+    }
+
+    public ClassLoader getTaskClassLoader(SupportCodeChangeAnnotationContainer supportCodeChangeAnnotationContainer) {
+        ClassLoader classLoader = managerTaskClassLoader.getTaskClassLoader(supportCodeChangeAnnotationContainer);
+        if(logger.isLoggable(Level.FINEST)){
+            logger.finest("In ServiceClassLoader["+this+"], asked for class-loader with version ["+ supportCodeChangeAnnotationContainer.getVersion() + "] " +
+                    " from ManagerTaskClassLoader ["+managerTaskClassLoader+"]. " +
+                    "Got class-loader ["+classLoader+" ]");
+        }
+        return classLoader;
     }
 }

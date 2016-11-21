@@ -104,6 +104,7 @@ public abstract class AbstractMultiSourceSingleFileGroupBacklog extends Abstract
             long lastProcessedKey = typedResponse.getLastProcessedKey();
 
             MultiSourceSingleFileConfirmationHolder confirmationHolder = getConfirmationHolderUnsafe(memberName);
+            decreaseWeight(memberName, confirmationHolder.getLastConfirmedKey(), lastProcessedKey);
             confirmationHolder.setLastConfirmedKey(lastProcessedKey);
             // Upon handshake the target can be new, therefore we restore the last
             // received key to be the last processed key
@@ -131,6 +132,7 @@ public abstract class AbstractMultiSourceSingleFileGroupBacklog extends Abstract
 
     private void updateLastConfirmedKeyUnsafe(String memberName, long key) {
         MultiSourceSingleFileConfirmationHolder confirmationHolder = getConfirmationHolderUnsafe(memberName);
+        decreaseWeight(memberName, confirmationHolder.getLastConfirmedKey(), key);
         confirmationHolder.setLastConfirmedKey(key);
         confirmationHolder.setLastReceivedKey(key);
     }
@@ -197,6 +199,7 @@ public abstract class AbstractMultiSourceSingleFileGroupBacklog extends Abstract
         if (confirmationHolder.hadAnyHandshake()) {
             if (lastConfirmedKey > confirmationHolder.getLastConfirmedKey()) {
                 lastConfirmedKeyUpdated = true;
+                decreaseWeight(memberName, confirmationHolder.getLastConfirmedKey(), lastConfirmedKey);
                 confirmationHolder.setLastConfirmedKey(lastConfirmedKey);
             }
 
@@ -205,6 +208,7 @@ public abstract class AbstractMultiSourceSingleFileGroupBacklog extends Abstract
                 confirmationHolder.setLastReceivedKey(lastReceivedKey);
         } else {
             lastConfirmedKeyUpdated = true;
+            decreaseWeight(memberName, confirmationHolder.getLastConfirmedKey(), lastConfirmedKey);
             confirmationHolder.setLastConfirmedKey(lastConfirmedKey);
             if (setLastReceivedKey)
                 confirmationHolder.setLastReceivedKey(lastReceivedKey);
@@ -313,6 +317,7 @@ public abstract class AbstractMultiSourceSingleFileGroupBacklog extends Abstract
         MultiSourceSingleFileConfirmationHolder confirmationHolder = new MultiSourceSingleFileConfirmationHolder();
         long lastKeyPresentInBacklog = getNextKeyUnsafe() - 1;
         confirmationHolder.setLastConfirmedKey(lastKeyPresentInBacklog);
+        confirmationHolder.setWeight(0);
         confirmationHolder.setLastReceivedKey(lastKeyPresentInBacklog);
         return confirmationHolder;
     }
@@ -363,6 +368,9 @@ public abstract class AbstractMultiSourceSingleFileGroupBacklog extends Abstract
             IReplicationPacketData<?> data, ReplicationOutContext outContext) {
         _rwLock.writeLock().lock();
         try {
+
+            setPacketWeight(data);
+
             if (!shouldInsertPacket())
                 return null;
 

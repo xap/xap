@@ -23,6 +23,7 @@ import com.j_spaces.core.SpaceContext;
 import com.j_spaces.core.SpaceCopyStatus;
 import com.j_spaces.core.client.BasicTypeInfo;
 import com.j_spaces.core.cluster.ClusterPolicy;
+import org.jini.rio.boot.SpaceInstanceRemoteClassLoaderInfo;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -246,4 +247,12 @@ public interface IRemoteJSpaceAdmin extends Remote {
      * @see com.j_spaces.core.ISpaceState
      */
     public int getState() throws RemoteException;
+
+    /**
+     * Return the info about the space classloader
+     *
+     * @return a SpaceInstanceRemoteClassLoaderInfo that represents the space classloader's
+     * @throws RemoteException if a communication error occurs
+     */
+    SpaceInstanceRemoteClassLoaderInfo getSpaceInstanceRemoteClassLoaderInfo() throws RemoteException;
 }

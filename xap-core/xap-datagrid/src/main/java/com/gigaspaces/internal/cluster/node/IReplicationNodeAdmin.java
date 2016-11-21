@@ -18,6 +18,7 @@ package com.gigaspaces.internal.cluster.node;
 
 import com.gigaspaces.cluster.replication.ConsistencyLevelViolationException;
 import com.gigaspaces.cluster.replication.RedoLogCapacityExceededException;
+import com.gigaspaces.internal.cluster.node.impl.backlog.OperationWeightInfo;
 import com.gigaspaces.internal.cluster.node.impl.config.DynamicSourceGroupConfigHolder;
 import com.gigaspaces.internal.cluster.node.impl.router.IReplicationRouterAdmin;
 import com.j_spaces.core.filters.ReplicationStatistics;
@@ -40,7 +41,7 @@ public interface IReplicationNodeAdmin {
      */
     boolean flushPendingReplication(long timeout, TimeUnit units);
 
-    void monitorState() throws RedoLogCapacityExceededException, ConsistencyLevelViolationException;
+    void monitorState(OperationWeightInfo info) throws RedoLogCapacityExceededException, ConsistencyLevelViolationException;
 
     // TODO to be implementation specific statistics
     ReplicationStatistics getStatistics();

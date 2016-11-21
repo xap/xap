@@ -39,22 +39,22 @@ public abstract class AbstractClassRepository<T> implements IClassLoaderCacheSta
         if (type == null)
             throw new IllegalArgumentNullException("type");
 
-        return get(type, type.getName(), null, true);
+        return get(type, type.getName(), null, true, true);
     }
 
     public T getByName(String typeName) {
-        return get(null, typeName, null, true);
+        return get(null, typeName, null, true, false);
     }
 
     public T getByName(String typeName, Object context) {
-        return get(null, typeName, context, false);
+        return get(null, typeName, context, false, false);
     }
 
     public T getByNameIfExists(String typeName) {
-        return get(null, typeName, null, false);
+        return get(null, typeName, null, false, true);
     }
 
-    private T get(Class<?> type, String typeName, Object context, boolean throwIfNotExists) {
+    private T get(Class<?> type, String typeName, Object context, boolean throwIfNotExists, boolean localOnly) {
         final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
         // Get class loader key:
@@ -77,12 +77,12 @@ public abstract class AbstractClassRepository<T> implements IClassLoaderCacheSta
             return result;
 
         synchronized (classLoaderMap) {
-            return safeGet(type, typeName, context, classLoaderMap, throwIfNotExists);
+            return safeGet(type, typeName, context, classLoaderMap, throwIfNotExists, localOnly);
         }
     }
 
     private T safeGet(Class<?> type, String typeName, Object context,
-                      Map<String, T> classLoaderMap, boolean throwIfNotExists) {
+                      Map<String, T> classLoaderMap, boolean throwIfNotExists, boolean localOnly) {
         T result = classLoaderMap.get(typeName);
         if (result != null)
             return result;
@@ -90,7 +90,7 @@ public abstract class AbstractClassRepository<T> implements IClassLoaderCacheSta
         // Load type by name if not provided:
         if (type == null) {
             try {
-                type = ClassLoaderHelper.loadClass(typeName);
+                type = ClassLoaderHelper.loadClass(typeName, localOnly);
             } catch (ClassNotFoundException e) {
                 if (throwIfNotExists)
                     throw new SpaceMetadataException("Unable to load type [" + typeName + "]", e);
@@ -100,7 +100,7 @@ public abstract class AbstractClassRepository<T> implements IClassLoaderCacheSta
 
         // Get super type info recursively:
         Class<?> superType = type.getSuperclass();
-        T superTypeInfo = superType != null ? safeGet(superType, superType.getName(), context, classLoaderMap, true) : null;
+        T superTypeInfo = superType != null ? safeGet(superType, superType.getName(), context, classLoaderMap, true, localOnly) : null;
 
         // Create type info using type and super type info:
         result = create(type, superTypeInfo, context);

@@ -78,6 +78,8 @@ public class BacklogConfig {
     private int _limitedMemoryCapacity = (int) UNLIMITED;
     private SwapBacklogConfig _swapBacklogConfig = new SwapBacklogConfig();
 
+    private BacklogWeightPolicy _backlogWeightPolicy = BacklogWeightPolicyFactory.create("weight-by-packets");
+
     public void setLimit(String memberLookupName, long limit, LimitReachedPolicy limitReachedPolicy) {
         _membersLimit.put(memberLookupName, limit);
         _membersLimitReachedPolicy.put(memberLookupName, limitReachedPolicy);
@@ -246,5 +248,11 @@ public class BacklogConfig {
                 + ", _swapBacklogConfig=" + _swapBacklogConfig + "]";
     }
 
+    public BacklogWeightPolicy getBackLogWeightPolicy() {
+        return _backlogWeightPolicy;
+    }
 
+    public void setBackLogSizePolicy(String policy) {
+        _backlogWeightPolicy = BacklogWeightPolicyFactory.create(policy);
+    }
 }

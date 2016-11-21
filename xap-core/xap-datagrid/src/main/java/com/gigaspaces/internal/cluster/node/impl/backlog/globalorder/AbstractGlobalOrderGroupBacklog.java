@@ -76,6 +76,7 @@ public abstract class AbstractGlobalOrderGroupBacklog
     protected GlobalOrderConfirmationHolder createNewConfirmationHolder() {
         GlobalOrderConfirmationHolder confirmationHolder = new GlobalOrderConfirmationHolder();
         confirmationHolder.setLastConfirmedKey(getNextKeyUnsafe() - 1);
+        confirmationHolder.setWeight(0);
         return confirmationHolder;
     }
 
@@ -170,8 +171,10 @@ public abstract class AbstractGlobalOrderGroupBacklog
 
     private void confirmedKey(String memberName, long packetKeykey) {
         GlobalOrderConfirmationHolder confirmationHolder = getConfirmationHolderUnsafe(memberName);
+        long lastConfirmedKey = confirmationHolder.getLastConfirmedKey();
         if (!confirmationHolder.hadAnyHandshake()
-                || packetKeykey > confirmationHolder.getLastConfirmedKey()) {
+                || packetKeykey > lastConfirmedKey) {
+            decreaseWeight(memberName, lastConfirmedKey, packetKeykey);
             confirmationHolder.setLastConfirmedKey(packetKeykey);
             cleanPendingErrorStateIfNeeded(memberName,
                     packetKeykey,
@@ -222,7 +225,10 @@ public abstract class AbstractGlobalOrderGroupBacklog
     }
 
     private void updateLastConfirmedKeyUnsafe(String memberName, long key) {
-        getConfirmationHolderUnsafe(memberName).setLastConfirmedKey(key);
+        GlobalOrderConfirmationHolder confirmationHolder = getConfirmationHolderUnsafe(memberName);
+        decreaseWeight(memberName,confirmationHolder.getLastConfirmedKey(), key);
+        confirmationHolder.setLastConfirmedKey(key);
+
     }
 
     @Override
@@ -317,6 +323,9 @@ public abstract class AbstractGlobalOrderGroupBacklog
             IReplicationPacketData<?> data, ReplicationOutContext outContext) {
         _rwLock.writeLock().lock();
         try {
+
+            setPacketWeight(data);
+
             if (!shouldInsertPacket())
                 return null;
 

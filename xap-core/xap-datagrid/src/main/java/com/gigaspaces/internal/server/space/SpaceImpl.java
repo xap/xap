@@ -250,6 +250,9 @@ import net.jini.lookup.ServiceDiscoveryListener;
 import net.jini.lookup.entry.Name;
 import net.jini.lookup.entry.ServiceInfo;
 
+import org.jini.rio.boot.ManagerTaskClassLoader;
+import org.jini.rio.boot.ServiceClassLoader;
+import org.jini.rio.boot.SpaceInstanceRemoteClassLoaderInfo;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -3144,6 +3147,16 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         modifyLookupAttributes(
                 new Entry[]{new ClusterName(), new State()},
                 new Entry[]{new ClusterName(clusterName), new State(getState(), Boolean.TRUE, Boolean.TRUE)});
+    }
+
+    @Override
+    public SpaceInstanceRemoteClassLoaderInfo getSpaceInstanceRemoteClassLoaderInfo() {
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        if(contextClassLoader instanceof ServiceClassLoader){
+            ManagerTaskClassLoader managerTaskClassLoader = ((ServiceClassLoader) contextClassLoader).getManagerTaskClassLoader();
+            return managerTaskClassLoader.createSpaceInstanceRemoteClassLoaderInfo();
+        }
+        throw new UnsupportedOperationException("not ServiceClassLoader");
     }
 
     /**

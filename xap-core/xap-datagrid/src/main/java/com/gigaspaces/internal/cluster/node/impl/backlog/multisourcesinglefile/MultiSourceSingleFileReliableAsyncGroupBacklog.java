@@ -177,7 +177,9 @@ public class MultiSourceSingleFileReliableAsyncGroupBacklog extends AbstractMult
 
             getBacklogFile().add(packet);
 
-            getConfirmationHolderUnsafe(sourceMemberName).setLastConfirmedKey(packet.getKey());
+            MultiSourceSingleFileConfirmationHolder confirmationHolder = getConfirmationHolderUnsafe(sourceMemberName);
+            decreaseWeight(sourceMemberName, confirmationHolder.getLastConfirmedKey(), packet.getKey());
+            confirmationHolder.setLastConfirmedKey(packet.getKey());
         } finally {
             _rwLock.writeLock().unlock();
         }
@@ -210,6 +212,7 @@ public class MultiSourceSingleFileReliableAsyncGroupBacklog extends AbstractMult
                     long lastConfirmedKey = asyncTargetState.getLastConfirmedKey();
                     long lastReceivedKey = asyncTargetState.getLastReceivedKey();
                     final MultiSourceSingleFileConfirmationHolder confirmationHolder = getConfirmationHolderUnsafe(asyncTargetState.getTargetMemberName());
+                    decreaseWeight(sourceMemberName, lastReceivedKey, lastConfirmedKey);
                     confirmationHolder.setLastConfirmedKey(lastConfirmedKey);
                     confirmationHolder.setLastReceivedKey(lastReceivedKey);
                 }
@@ -226,8 +229,10 @@ public class MultiSourceSingleFileReliableAsyncGroupBacklog extends AbstractMult
 
             MultiSourceSingleFileConfirmationHolder lastConfirmedBySource = getConfirmationHolderUnsafe(sourceMemberName);
             if (!lastConfirmedBySource.hadAnyHandshake()
-                    || lastConfirmedBySource.getLastConfirmedKey() < minConfirmed)
+                    || lastConfirmedBySource.getLastConfirmedKey() < minConfirmed) {
+                decreaseWeight(sourceMemberName, lastConfirmedBySource.getLastConfirmedKey(), minConfirmed);
                 lastConfirmedBySource.setLastConfirmedKey(minConfirmed);
+            }
             clearConfirmedPackets();
         } finally {
             _rwLock.writeLock().unlock();

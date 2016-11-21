@@ -53,4 +53,6 @@ public interface IReplicationOrderedPacket extends Cloneable, Externalizable, IS
      */
     IReplicationOrderedPacket cloneWithNewData(IReplicationPacketData<?> newData);
 
+    int getWeight();
+
 }

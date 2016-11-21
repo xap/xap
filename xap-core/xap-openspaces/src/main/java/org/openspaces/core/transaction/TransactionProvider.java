@@ -21,6 +21,8 @@ import com.j_spaces.core.IJSpace;
 
 import net.jini.core.transaction.Transaction;
 
+import java.io.Closeable;
+
 /**
  * A transaction provider is used to support declarative transactions. It is usually used with a
  * {@link org.openspaces.core.GigaSpace} implementation to declaratively provide on going
@@ -33,7 +35,7 @@ import net.jini.core.transaction.Transaction;
  *
  * @author kimchy
  */
-public interface TransactionProvider {
+public interface TransactionProvider extends Closeable {
 
     /**
      * Returns the currently running transaction (usually managed externally/declarative). A

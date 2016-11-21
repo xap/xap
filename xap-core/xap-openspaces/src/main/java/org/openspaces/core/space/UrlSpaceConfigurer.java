@@ -48,10 +48,10 @@ import java.util.Properties;
  *
  * <p>An example of using it:
  * <pre>
- * UrlSpaceConfigurer urlSpaceConfigurer = new UrlSpaceConfigurer("/./space").schema("persistent")
- *          .noWriteLeaseMode(true).lookupGroups(new String[] {"kimchy"});
+ * SpaceConfigurer spaceConfigurer = new UrlSpaceConfigurer("/./mySpace")
+ *          .lookupGroups("kimchy");
  * ...
- * urlSpaceConfigurer.destroy(); // optional
+ * spaceConfigurer.close();
  * </pre>
  *
  * @author kimchy
@@ -392,16 +392,6 @@ public class UrlSpaceConfigurer implements SpaceConfigurer {
         return create();
     }
 
-    /**
-     * @deprecated Sinde 10.0 - use close instead.
-     */
-    public void destroy() throws Exception {
-        urlSpaceFactoryBean.destroy();
-    }
-
-    /**
-     * Closes the Space by calling {@link UrlSpaceFactoryBean#destroy()}.
-     */
     @Override
     public void close() {
         urlSpaceFactoryBean.close();

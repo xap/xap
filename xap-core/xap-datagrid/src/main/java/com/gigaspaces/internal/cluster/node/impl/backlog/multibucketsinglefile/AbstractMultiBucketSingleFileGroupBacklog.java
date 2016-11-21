@@ -330,6 +330,9 @@ public abstract class AbstractMultiBucketSingleFileGroupBacklog
             IReplicationPacketData<?> data, ReplicationOutContext outContext) {
         _rwLock.writeLock().lock();
         try {
+
+            setPacketWeight(data);
+
             if (!shouldInsertPacket())
                 return null;
 
@@ -372,6 +375,9 @@ public abstract class AbstractMultiBucketSingleFileGroupBacklog
 
         _rwLock.writeLock().lock();
         try {
+
+            setPacketWeight(data);
+
             if (!shouldInsertPacket())
                 return null;
 

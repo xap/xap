@@ -55,6 +55,8 @@ public class TransactionReplicationPacketData
 
     private TransactionParticipantDataImpl _metaData;
 
+    private transient int _weight;
+
     public TransactionReplicationPacketData() {
     }
 
@@ -247,6 +249,16 @@ public class TransactionReplicationPacketData
     @Override
     public boolean isFromGateway() {
         return false;
+    }
+
+    @Override
+    public void setWeight(int weight) {
+        _weight = weight;
+    }
+
+    @Override
+    public int getWeight() {
+        return _weight;
     }
 
 }

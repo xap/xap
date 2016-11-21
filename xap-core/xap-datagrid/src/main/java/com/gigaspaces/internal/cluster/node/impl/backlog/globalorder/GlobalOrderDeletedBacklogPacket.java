@@ -74,6 +74,11 @@ public class GlobalOrderDeletedBacklogPacket implements IReplicationOrderedPacke
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public int getWeight() {
+        return 1;
+    }
+
     public void readExternal(ObjectInput in) throws IOException,
             ClassNotFoundException {
         readExternalImpl(in);

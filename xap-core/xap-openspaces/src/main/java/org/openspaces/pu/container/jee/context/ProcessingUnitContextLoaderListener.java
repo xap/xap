@@ -17,8 +17,11 @@
 
 package org.openspaces.pu.container.jee.context;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.ContextLoader;
 import org.springframework.web.context.ContextLoaderListener;
+
+import javax.servlet.ServletContext;
 
 /**
  * Excatly the same as {@link org.springframework.web.context.ContextLoaderListener} excepts in
@@ -29,8 +32,21 @@ import org.springframework.web.context.ContextLoaderListener;
 public class ProcessingUnitContextLoaderListener extends ContextLoaderListener {
 
     /**
-     * Overrides Spring default ContextLoader with {@link org.openspaces.pu.container.jee.context.ProcessingUnitContextLoader}.
+     * Overrides Spring default {@link ContextLoader#loadParentContext(ServletContext)} with
+     * {@link org.openspaces.pu.container.jee.context.ProcessingUnitContextLoader}.
+     * @since Spring 4.0
      */
+    @Override
+    protected ApplicationContext loadParentContext(ServletContext servletContext) {
+        ProcessingUnitContextLoader processingUnitContextLoader = new ProcessingUnitContextLoader();
+        return processingUnitContextLoader.loadParentContext(servletContext);
+    }
+
+    /**
+     * Overrides Spring default ContextLoader with {@link org.openspaces.pu.container.jee.context.ProcessingUnitContextLoader}.
+     * @Deprecated as of Spring 4.0
+     */
+    @Deprecated
     protected ContextLoader createContextLoader() {
         return new ProcessingUnitContextLoader();
     }

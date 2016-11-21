@@ -89,4 +89,6 @@ public interface IRedoLogFileStorage<T> extends IRedoLogFileStorageStatistics {
      * Close the storage and clears its resources, the storage can no longer be used.
      */
     void close();
+
+    long getWeight();
 }

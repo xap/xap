@@ -16,6 +16,8 @@
 
 package com.gigaspaces.internal.server.space.redolog.storage;
 
+import com.gigaspaces.internal.cluster.node.impl.backlog.globalorder.GlobalOrderOperationPacket;
+import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPacket;
 import com.gigaspaces.internal.server.space.redolog.RedoLogFileCompromisedException;
 import com.gigaspaces.logger.Constants;
 
@@ -43,6 +45,7 @@ public class CacheLastRedoLogFileStorageDecorator<T> implements INonBatchRedoLog
     private final int _bufferSize;
     private final INonBatchRedoLogFileStorage<T> _storage;
     private final LinkedList<T> _buffer = new LinkedList<T>();
+    private long _bufferWeight;
 
 
     public CacheLastRedoLogFileStorageDecorator(int bufferSize, INonBatchRedoLogFileStorage<T> storage) {
@@ -53,13 +56,23 @@ public class CacheLastRedoLogFileStorageDecorator<T> implements INonBatchRedoLog
             _logger.config("CacheLastRedoLogFileStorageDecorator created:"
                     + "\n\tbufferSize = " + _bufferSize);
         }
+        _bufferWeight = 0;
     }
 
     public void append(T replicationPacket)
             throws StorageException, StorageFullException {
         _buffer.addLast(replicationPacket);
+        increaseBufferWeight(replicationPacket);
         flushOldest();
 
+    }
+
+    private void increaseBufferWeight(T replicationPacket) {
+        _bufferWeight += ((IReplicationOrderedPacket) replicationPacket).getWeight();
+    }
+
+    private void decreaseBufferWeight(T replicationPacket) {
+        _bufferWeight += ((IReplicationOrderedPacket) replicationPacket).getWeight();
     }
 
     public void appendBatch(List<T> replicationPackets)
@@ -70,8 +83,11 @@ public class CacheLastRedoLogFileStorageDecorator<T> implements INonBatchRedoLog
 
     private void flushOldest() throws StorageException, StorageFullException {
         try {
-            while (_buffer.size() > _bufferSize)
-                _storage.append(_buffer.removeFirst());
+            while (_buffer.size() > _bufferSize){
+                T packet = _buffer.removeFirst();
+                _storage.append(packet);
+                decreaseBufferWeight(packet);
+            }
         } catch (StorageFullException e) {
             LinkedList newDeniedPackets = new LinkedList<T>();
             List deniedPackets = e.getDeniedPackets();
@@ -92,12 +108,19 @@ public class CacheLastRedoLogFileStorageDecorator<T> implements INonBatchRedoLog
         _storage.close();
     }
 
+    @Override
+    public long getWeight() {
+        return _bufferWeight + _storage.getWeight();
+    }
+
     public void deleteFirstBatch(long batchSize) throws StorageException {
         long storageSize = _storage.size();
         _storage.deleteFirstBatch(batchSize);
         int bufferSize = _buffer.size();
-        for (long i = 0; i < Math.min(bufferSize, batchSize - storageSize); ++i)
-            _buffer.removeFirst();
+        for (long i = 0; i < Math.min(bufferSize, batchSize - storageSize); ++i){
+            T first = _buffer.removeFirst();
+            decreaseBufferWeight(first);
+        }
     }
 
     public boolean isEmpty() throws StorageException {
@@ -142,8 +165,11 @@ public class CacheLastRedoLogFileStorageDecorator<T> implements INonBatchRedoLog
         if (storageBatchSize < batchSize) {
             int remaining = batchSize - storageBatchSize;
             int bufferSize = _buffer.size();
-            for (int i = 0; i < Math.min(bufferSize, remaining); ++i)
-                batch.add(_buffer.removeFirst());
+            for (int i = 0; i < Math.min(bufferSize, remaining); ++i) {
+                T first = _buffer.removeFirst();
+                decreaseBufferWeight(first);
+                batch.add(first);
+            }
         }
 
         return batch;

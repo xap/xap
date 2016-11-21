@@ -27,6 +27,7 @@ import net.jini.core.transaction.TransactionException;
 
 import org.openspaces.core.TransactionDataAccessException;
 import org.openspaces.core.transaction.manager.ExistingJiniTransactionManager;
+import org.openspaces.core.transaction.manager.JiniPlatformTransactionManager;
 import org.openspaces.core.transaction.manager.JiniTransactionHolder;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -34,6 +35,7 @@ import org.springframework.transaction.jta.JtaTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
 
@@ -62,15 +64,19 @@ import javax.transaction.xa.XAResource;
  */
 public class DefaultTransactionProvider implements TransactionProvider {
 
-    private Object actualTransactionalContext;
+    private final Object actualTransactionalContext;
 
-    private PlatformTransactionManager transactionManager;
+    private final PlatformTransactionManager transactionManager;
 
-    private boolean isJta = false;
+    private final boolean isJta;
 
     private DistributedTransactionManagerProvider distributedTransactionManagerProvider;
 
     private final Object distributedTransactionManagerProviderLock = new Object();
+
+    public DefaultTransactionProvider(PlatformTransactionManager transactionManager) {
+        this(transactionManager instanceof JiniPlatformTransactionManager ? ((JiniPlatformTransactionManager) transactionManager).getTransactionalContext() : null, transactionManager);
+    }
 
     /**
      * Creates a new transaction provider. Will use the provided transactional context in order to
@@ -81,9 +87,7 @@ public class DefaultTransactionProvider implements TransactionProvider {
     public DefaultTransactionProvider(Object actualTransactionalContext, PlatformTransactionManager transactionManager) {
         this.actualTransactionalContext = actualTransactionalContext;
         this.transactionManager = transactionManager;
-        if (transactionManager != null) {
-            this.isJta = transactionManager instanceof JtaTransactionManager;
-        }
+        this.isJta = transactionManager != null && transactionManager instanceof JtaTransactionManager;
     }
 
     /**
@@ -246,6 +250,11 @@ public class DefaultTransactionProvider implements TransactionProvider {
             if (distributedTransactionManagerProvider != null)
                 distributedTransactionManagerProvider.destroy();
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        destroy();
     }
 
     /**

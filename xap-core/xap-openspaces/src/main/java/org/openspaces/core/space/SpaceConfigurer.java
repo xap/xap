@@ -18,12 +18,14 @@ package org.openspaces.core.space;
 
 import com.j_spaces.core.IJSpace;
 
+import java.io.Closeable;
+
 /**
  * A generic interface for space configurers.
  *
  * @author kimchy
  */
-public interface SpaceConfigurer {
+public interface SpaceConfigurer extends Closeable {
 
     IJSpace space();
 

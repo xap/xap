@@ -74,6 +74,7 @@ import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.UnknownTransactionException;
 import net.jini.core.transaction.server.TransactionManager;
 import net.jini.id.Uuid;
+import org.jini.rio.boot.SpaceInstanceRemoteClassLoaderInfo;
 
 import java.rmi.RemoteException;
 import java.util.List;
@@ -157,6 +158,11 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     @Override
     public void restart() throws RemoteException {
         ((IInternalRemoteJSpaceAdmin) getProxy()).restart();
+    }
+
+    @Override
+    public SpaceInstanceRemoteClassLoaderInfo getSpaceInstanceRemoteClassLoaderInfo() throws RemoteException {
+        return ((IInternalRemoteJSpaceAdmin) getProxy()).getSpaceInstanceRemoteClassLoaderInfo();
     }
 
     @Override

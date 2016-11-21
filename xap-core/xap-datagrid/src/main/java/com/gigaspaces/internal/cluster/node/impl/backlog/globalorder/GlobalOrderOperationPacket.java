@@ -87,6 +87,13 @@ public class GlobalOrderOperationPacket
         }
     }
 
+    public int getWeight() {
+        if(_data != null){
+            return _data.getWeight();
+        }
+        return 1;
+    }
+
     public void readExternal(ObjectInput in) throws IOException,
             ClassNotFoundException {
         _key = in.readLong();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.gigaspaces.lrmi.classloading;
+package org.jini.rio.boot;
 
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -35,5 +35,9 @@ public class TaskClassLoader extends URLClassLoader {
 
     public TaskClassLoader(URL[] urls, ClassLoader parent, URLStreamHandlerFactory factory) {
         super(urls, parent, factory);
+    }
+
+    public RemoteClassLoaderInfo createRemoteClassLoaderInfo(){
+        return new RemoteClassLoaderInfo(this.toString());
     }
 }

@@ -51,6 +51,6 @@ public class RefreshContextLoaderExecutor {
         RefreshableContextLoader refreshableContextLoader = (RefreshableContextLoader) remotingProxyFactoryBean.getObject();
         refreshableContextLoader.refresh();
 
-        urlSpaceConfigurer.destroy();
+        urlSpaceConfigurer.close();
     }
 }

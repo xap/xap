@@ -43,6 +43,8 @@ import com.gigaspaces.internal.cluster.node.impl.FailedSyncSpaceReplicateState;
 import com.gigaspaces.internal.cluster.node.impl.ReplicationOutContext;
 import com.gigaspaces.internal.cluster.node.impl.backlog.BacklogConfig.LimitReachedPolicy;
 import com.gigaspaces.internal.cluster.node.impl.backlog.BacklogMemberLimitationConfig;
+import com.gigaspaces.internal.cluster.node.impl.backlog.OperationWeightInfo;
+import com.gigaspaces.internal.cluster.node.impl.backlog.WeightInfoOperationType;
 import com.gigaspaces.internal.cluster.node.impl.config.DynamicSourceGroupConfigHolder;
 import com.gigaspaces.internal.cluster.node.impl.config.ReplicationNodeConfigBuilder;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersistencyBackupSyncIteratorHandler;
@@ -202,6 +204,8 @@ import com.j_spaces.core.server.processor.RemoveWaitingForInfoSABusPacket;
 import com.j_spaces.core.server.processor.RollbackBusPacket;
 import com.j_spaces.core.transaction.TransactionHandler;
 import com.j_spaces.kernel.ClassLoaderHelper;
+import com.j_spaces.kernel.IStoredList;
+import com.j_spaces.kernel.IStoredListIterator;
 import com.j_spaces.kernel.JSpaceUtilities;
 import com.j_spaces.kernel.SystemProperties;
 import com.j_spaces.kernel.WorkingGroup;
@@ -818,7 +822,7 @@ public class SpaceEngine implements ISpaceModeListener {
             throws TransactionException, UnusableEntryException,
             UnknownTypeException, RemoteException {
         monitorMemoryUsage(true);
-        monitorReplicationStateForModifyingOperation(txn);
+        monitorReplicationStateForModifyingOperation(txn, new OperationWeightInfo(1, WeightInfoOperationType.WRITE));
 
         Context context = (fromReplication && getReplicationNode().getBlobStoreReplicaConsumeHelper() != null)
                 ? getReplicationNode().getBlobStoreReplicaConsumeHelper().getContext() : null;
@@ -1010,7 +1014,7 @@ public class SpaceEngine implements ISpaceModeListener {
                                       String templateUid, SpaceContext sc, NotifyInfo info)
             throws TransactionException, UnusableEntryException, UnknownTypeException, RemoteException {
         monitorMemoryUsage(true);
-        monitorReplicationStateForModifyingOperation(null/*transaction*/);
+        monitorReplicationStateForModifyingOperation(null/*transaction*/, new OperationWeightInfo(WeightInfoOperationType.NOTIFY));
 
         // if template type is not null, handle type
         IServerTypeDesc typeDesc = _typeManager.loadServerTypeDesc(template);
@@ -1062,7 +1066,7 @@ public class SpaceEngine implements ISpaceModeListener {
             throws TransactionException, UnusableEntryException, UnknownTypeException, RemoteException, InterruptedException {
         monitorMemoryUsage(false);
         if (take)
-            monitorReplicationStateForModifyingOperation(txn);
+            monitorReplicationStateForModifyingOperation(txn, new OperationWeightInfo(template.getIds().length, WeightInfoOperationType.TAKE));
 
         // Ignore fifo-groups - irrelevant for this operation.
         if (ReadModifiers.isFifoGroupingPoll(operationModifiers))
@@ -1218,7 +1222,7 @@ public class SpaceEngine implements ISpaceModeListener {
         }
         monitorMemoryUsage(false);
         if (take)
-            monitorReplicationStateForModifyingOperation(txn);
+            monitorReplicationStateForModifyingOperation(txn, new OperationWeightInfo(1, WeightInfoOperationType.TAKE));
 
         return unsafeRead(template, txn, timeout, ifExists, take, sc,
                 returnOnlyUid, fromReplication, origin, operationModifiers, null, null /* prefetchedEntries */);
@@ -1518,7 +1522,7 @@ public class SpaceEngine implements ISpaceModeListener {
     public WriteEntriesResult write(IEntryPacket[] entryPackets, Transaction txn, long lease, long leases[], int modifiers, SpaceContext sc, long timeout, boolean newRouter)
             throws TransactionException, RemoteException, UnknownTypesException {
         monitorMemoryUsage(true);
-        monitorReplicationStateForModifyingOperation(txn);
+        monitorReplicationStateForModifyingOperation(txn, new OperationWeightInfo(entryPackets.length, WeightInfoOperationType.WRITE));
 
         if (UpdateModifiers.isPotentialUpdate(modifiers)) {
             if (newRouter) {
@@ -1967,7 +1971,7 @@ public class SpaceEngine implements ISpaceModeListener {
             SingleExplainPlan.validate(timeout, _cacheManager.isOffHeapCachePolicy(), operationModifiers, template.getCustomQuery(), getClassTypeInfo(template.getTypeName()).getIndexes());
         }
         if (take)
-            monitorReplicationStateForModifyingOperation(txn);
+            monitorReplicationStateForModifyingOperation(txn, new OperationWeightInfo(WeightInfoOperationType.TAKE));
         if (take && TakeModifiers.isEvictOnly(operationModifiers)) {
             if (_cacheManager.isResidentEntriesCachePolicy())
                 throw new IllegalArgumentException("EVICT modifier is not supported in non-evictable cache policy.");
@@ -2239,7 +2243,7 @@ public class SpaceEngine implements ISpaceModeListener {
             throws UnusableEntryException, UnknownTypeException,
             TransactionException, RemoteException, InterruptedException {
         monitorMemoryUsage(true /*writeOp*/);
-        monitorReplicationStateForModifyingOperation(txn);
+        monitorReplicationStateForModifyingOperation(txn, new OperationWeightInfo(1, WeightInfoOperationType.UPDATE));
 
         Context context = (fromReplication && getReplicationNode().getBlobStoreReplicationBulkConsumeHelper() != null)
                 ? getReplicationNode().getBlobStoreReplicationBulkConsumeHelper().getContext() : null;
@@ -2586,7 +2590,7 @@ public class SpaceEngine implements ISpaceModeListener {
         if(Modifiers.contains(operationModifiers, Modifiers.EXPLAIN_PLAN)){
             throw new UnsupportedOperationException("Sql explain plan is not supported for change operation");
         }
-        monitorReplicationStateForModifyingOperation(txn);
+        monitorReplicationStateForModifyingOperation(txn, new OperationWeightInfo(WeightInfoOperationType.CHANGE));
         IServerTypeDesc typeDesc = _typeManager.loadServerTypeDesc(template);
 
         boolean byId = (template.getUID() != null || (template.getID() != null && (template.getExtendedMatchCodes() == null && template.getCustomQuery() == null)));
@@ -2807,7 +2811,7 @@ public class SpaceEngine implements ISpaceModeListener {
             throws UnusableEntryException, UnknownTypeException,
             TransactionException, RemoteException {
         monitorMemoryUsage(true);
-        monitorReplicationStateForModifyingOperation(txn);
+        monitorReplicationStateForModifyingOperation(txn, new OperationWeightInfo(entries.length, WeightInfoOperationType.UPDATE));
 
         //verify that each entry has a UID and its type is known
         for (int i = 0; i < entries.length; i++) {
@@ -3063,7 +3067,6 @@ public class SpaceEngine implements ISpaceModeListener {
         XtnStatus status;
         try {
             monitorMemoryUsage(false);
-            monitorReplicationState();
             context = _cacheManager.getCacheContext();
             context.setOperationID(operationID);
             boolean lockedXtnTable = false;
@@ -3089,6 +3092,9 @@ public class SpaceEngine implements ISpaceModeListener {
                     getTransactionHandler().unlockXtnOnXtnEnd(xtnEntryLocked, lockedXtnTable);
                 }
             }
+
+            monitorReplicationState(createOperationWeightInfo(xtnEntry));
+
 
             try {
                 if (xtnEntry != null && !xtnEntry.addUsedIfPossible())
@@ -3230,6 +3236,27 @@ public class SpaceEngine implements ISpaceModeListener {
         } finally {
             replicateAndfreeCacheContextTxn(context, st);
         }// finnaly
+    }
+
+    private OperationWeightInfo createOperationWeightInfo(XtnEntry xtnEntry) {
+
+        XtnData xtnData = xtnEntry.getXtnData();
+        IStoredList<IEntryCacheInfo> lockedEntries = xtnData.getLockedEntries();
+        int numOfLocked = lockedEntries != null ? lockedEntries.size() : 0;
+        if (numOfLocked != 0) {
+            for (IStoredListIterator<IEntryCacheInfo> slh = lockedEntries.establishListScan(false); slh != null; slh = xtnData.getLockedEntries().next(slh)) {
+                IEntryCacheInfo pEntry = slh.getSubject();
+                if (pEntry == null)
+                    numOfLocked-- ;
+                IEntryHolder entryHolder = pEntry.getEntryHolder(getCacheManager());
+                if (entryHolder.isDeleted()
+                        || entryHolder.getWriteLockOwner() != xtnEntry
+                        || entryHolder.getWriteLockOperation() == SpaceOperations.READ
+                        || entryHolder.getWriteLockOperation() == SpaceOperations.READ_IE)
+                    numOfLocked--;
+            }
+        }
+        return new OperationWeightInfo(numOfLocked, WeightInfoOperationType.PREPARE);
     }
 
     protected void handleExceptionOnPrepare(TransactionManager mgr,
@@ -3473,17 +3500,17 @@ public class SpaceEngine implements ISpaceModeListener {
     /**
      * delegate redo log monitoring
      */
-    private void monitorReplicationStateForModifyingOperation(Transaction transaction) {
+    private void monitorReplicationStateForModifyingOperation(Transaction transaction, OperationWeightInfo info) {
         if (transaction != null)
             return;
-        monitorReplicationState();
+        monitorReplicationState(info);
     }
 
-    private void monitorReplicationState() {
+    private void monitorReplicationState(OperationWeightInfo info) {
         if (!_spaceImpl.isPrimary())
             return;
         if (isReplicated())
-            getReplicationNode().getAdmin().monitorState();
+            getReplicationNode().getAdmin().monitorState(info);
     }
 
     public IServerTypeDesc getTypeTableEntry(String className) {

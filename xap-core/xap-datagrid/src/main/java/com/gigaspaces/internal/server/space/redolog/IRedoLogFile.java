@@ -94,4 +94,6 @@ public interface IRedoLogFile<T> extends Iterable<T>, ReadOnlyIterable<T>, IRedo
      */
     void close();
 
+    long getWeight();
+
 }

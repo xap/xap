@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.openspaces.core;
 
 import com.gigaspaces.client.ChangeModifiers;
@@ -23,26 +22,15 @@ import com.gigaspaces.client.CountModifiers;
 import com.gigaspaces.client.ReadModifiers;
 import com.gigaspaces.client.TakeModifiers;
 import com.gigaspaces.client.WriteModifiers;
-import com.gigaspaces.internal.client.cache.ISpaceCache;
-import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.j_spaces.core.IJSpace;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.openspaces.core.exception.DefaultExceptionTranslator;
 import org.openspaces.core.exception.ExceptionTranslator;
-import org.openspaces.core.transaction.DefaultTransactionProvider;
 import org.openspaces.core.transaction.TransactionProvider;
-import org.openspaces.core.transaction.manager.JiniPlatformTransactionManager;
-import org.openspaces.core.util.SpaceUtils;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.core.Constants;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.util.Assert;
 
 /**
  * <p>A factory bean creating {@link org.openspaces.core.GigaSpace GigaSpace} implementation. The
@@ -101,53 +89,12 @@ import org.springframework.util.Assert;
  */
 public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, FactoryBean, BeanNameAware {
 
-    private static final Log logger = LogFactory.getLog(GigaSpaceFactoryBean.class);
-
     /**
      * Prefix for the isolation constants defined in TransactionDefinition
      */
-    public static final String PREFIX_ISOLATION = "ISOLATION_";
+    public static final String PREFIX_ISOLATION = GigaSpaceConfigurer.PREFIX_ISOLATION;
 
-    /**
-     * Constants instance for TransactionDefinition
-     */
-    private static final Constants constants = new Constants(TransactionDefinition.class);
-
-    private ISpaceProxy space;
-
-    private TransactionProvider txProvider;
-
-    private DefaultTransactionProvider defaultTxProvider;
-
-    private ExceptionTranslator exTranslator;
-
-    private PlatformTransactionManager transactionManager;
-
-    private Boolean clustered;
-
-    private long defaultReadTimeout = 0;
-
-    private long defaultTakeTimeout = 0;
-
-    private long defaultWriteLease = Long.MAX_VALUE;
-
-    private int defaultIsolationLevel = TransactionDefinition.ISOLATION_DEFAULT;
-
-    private WriteModifiers[] defaultWriteModifiers;
-
-    private ReadModifiers[] defaultReadModifiers;
-
-    private TakeModifiers[] defaultTakeModifiers;
-
-    private ClearModifiers[] defaultClearModifiers;
-
-    private CountModifiers[] defaultCountModifiers;
-
-    private ChangeModifiers[] defaultChangeModifiers;
-
-    private String beanName;
-
-    private DefaultGigaSpace gigaSpace;
+    private final GigaSpaceConfigurer configurer = new GigaSpaceConfigurer();
 
     /**
      * <p>Sets the space that will be used by the created {@link org.openspaces.core.GigaSpace}.
@@ -156,7 +103,7 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * @param space The space used
      */
     public void setSpace(IJSpace space) {
-        this.space = (ISpaceProxy) space;
+        configurer.space(space);
     }
 
     /**
@@ -167,7 +114,7 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * @param txProvider The transaction provider to use
      */
     public void setTxProvider(TransactionProvider txProvider) {
-        this.txProvider = txProvider;
+        configurer.txProvider(txProvider);
     }
 
     /**
@@ -178,7 +125,7 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * @param exTranslator The exception translator to use
      */
     public void setExTranslator(ExceptionTranslator exTranslator) {
-        this.exTranslator = exTranslator;
+        configurer.exTranslator(exTranslator);
     }
 
     /**
@@ -193,7 +140,7 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      *                  clustered view of the space or directly with a cluster member
      */
     public void setClustered(boolean clustered) {
-        this.clustered = clustered;
+        configurer.clustered(clustered);
     }
 
     /**
@@ -201,7 +148,7 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * {@link org.openspaces.core.GigaSpace#readIfExists(Object)} operations. Default to 0.
      */
     public void setDefaultReadTimeout(long defaultReadTimeout) {
-        this.defaultReadTimeout = defaultReadTimeout;
+        configurer.defaultReadTimeout(defaultReadTimeout);
     }
 
     /**
@@ -209,7 +156,7 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * {@link org.openspaces.core.GigaSpace#takeIfExists(Object)} operations. Default to 0.
      */
     public void setDefaultTakeTimeout(long defaultTakeTimeout) {
-        this.defaultTakeTimeout = defaultTakeTimeout;
+        configurer.defaultTakeTimeout(defaultTakeTimeout);
     }
 
     /**
@@ -217,7 +164,7 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * operation. Default to {@link net.jini.core.lease.Lease#FOREVER}.
      */
     public void setDefaultWriteLease(long defaultWriteLease) {
-        this.defaultWriteLease = defaultWriteLease;
+        configurer.defaultWriteLease(defaultWriteLease);
     }
 
     /**
@@ -231,10 +178,7 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * @see org.springframework.transaction.TransactionDefinition#ISOLATION_DEFAULT
      */
     public final void setDefaultIsolationLevelName(String constantName) throws IllegalArgumentException {
-        if (constantName == null || !constantName.startsWith(PREFIX_ISOLATION)) {
-            throw new IllegalArgumentException("Only isolation constants allowed");
-        }
-        setDefaultIsolationLevel(constants.asNumber(constantName).intValue());
+        configurer.defaultIsolationLevel(constantName);
     }
 
     /**
@@ -246,10 +190,7 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * @see org.springframework.transaction.TransactionDefinition#ISOLATION_DEFAULT
      */
     public void setDefaultIsolationLevel(int defaultIsolationLevel) {
-        if (!constants.getValues(PREFIX_ISOLATION).contains(Integer.valueOf(defaultIsolationLevel))) {
-            throw new IllegalArgumentException("Only values of isolation constants allowed");
-        }
-        this.defaultIsolationLevel = defaultIsolationLevel;
+        configurer.defaultIsolationLevel(defaultIsolationLevel);
     }
 
     /**
@@ -260,7 +201,12 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * @see WriteModifiers
      */
     public void setDefaultWriteModifiers(WriteModifiers[] defaultWriteModifiers) {
-        this.defaultWriteModifiers = defaultWriteModifiers;
+        if (defaultWriteModifiers != null && defaultWriteModifiers.length != 0) {
+            WriteModifiers modifiers = defaultWriteModifiers[0];
+            for (int i=1 ; i < defaultWriteModifiers.length ; i++)
+                modifiers = modifiers.add(defaultWriteModifiers[i]);
+            configurer.defaultWriteModifiers(modifiers);
+        }
     }
 
     /**
@@ -271,7 +217,12 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * @see ReadModifiers
      */
     public void setDefaultReadModifiers(ReadModifiers[] defaultReadModifiers) {
-        this.defaultReadModifiers = defaultReadModifiers;
+        if (defaultReadModifiers != null && defaultReadModifiers.length != 0) {
+            ReadModifiers modifiers = defaultReadModifiers[0];
+            for (int i=1 ; i < defaultReadModifiers.length ; i++)
+                modifiers = modifiers.add(defaultReadModifiers[i]);
+            configurer.defaultReadModifiers(modifiers);
+        }
     }
 
     /**
@@ -282,7 +233,12 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * @see TakeModifiers
      */
     public void setDefaultTakeModifiers(TakeModifiers[] defaultTakeModifiers) {
-        this.defaultTakeModifiers = defaultTakeModifiers;
+        if (defaultTakeModifiers != null && defaultTakeModifiers.length != 0) {
+            TakeModifiers modifiers = defaultTakeModifiers[0];
+            for (int i=1 ; i < defaultTakeModifiers.length ; i++)
+                modifiers = modifiers.add(defaultTakeModifiers[i]);
+            configurer.defaultTakeModifiers(modifiers);
+        }
     }
 
     /**
@@ -293,7 +249,12 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * @see CountModifiers
      */
     public void setDefaultCountModifiers(CountModifiers[] defaultCountModifiers) {
-        this.defaultCountModifiers = defaultCountModifiers;
+        if (defaultCountModifiers != null && defaultCountModifiers.length != 0) {
+            CountModifiers modifiers = defaultCountModifiers[0];
+            for (int i=1 ; i < defaultCountModifiers.length ; i++)
+                modifiers = modifiers.add(defaultCountModifiers[i]);
+            configurer.defaultCountModifiers(modifiers);
+        }
     }
 
     /**
@@ -304,7 +265,12 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * @see ClearModifiers
      */
     public void setDefaultClearModifiers(ClearModifiers[] defaultClearModifiers) {
-        this.defaultClearModifiers = defaultClearModifiers;
+        if (defaultClearModifiers != null && defaultClearModifiers.length != 0) {
+            ClearModifiers modifiers = defaultClearModifiers[0];
+            for (int i=1 ; i < defaultClearModifiers.length ; i++)
+                modifiers = modifiers.add(defaultClearModifiers[i]);
+            configurer.defaultClearModifiers(modifiers);
+        }
     }
 
     /**
@@ -315,7 +281,12 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * @see ChangeModifiers
      */
     public void setDefaultChangeModifiers(ChangeModifiers[] defaultChangeModifiers) {
-        this.defaultChangeModifiers = defaultChangeModifiers;
+        if (defaultChangeModifiers != null && defaultChangeModifiers.length != 0) {
+            ChangeModifiers modifiers = defaultChangeModifiers[0];
+            for (int i=1 ; i < defaultChangeModifiers.length ; i++)
+                modifiers = modifiers.add(defaultChangeModifiers[i]);
+            configurer.defaultChangeModifiers(modifiers);
+        }
     }
 
     /**
@@ -324,11 +295,11 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * context.
      */
     public void setTransactionManager(PlatformTransactionManager transactionManager) {
-        this.transactionManager = transactionManager;
+        configurer.transactionManager(transactionManager);
     }
 
     public void setBeanName(String beanName) {
-        this.beanName = beanName;
+        configurer.name(beanName);
     }
 
     /**
@@ -337,66 +308,7 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * cluster member directly (if set to <code>false</code>) and applies the different defaults).
      */
     public void afterPropertiesSet() {
-        Assert.notNull(this.space, "space property is required");
-        ISpaceProxy space = this.space;
-        if (clustered == null) {
-            // in case the space is a local cache space, set the clustered flag to true since we do
-            // not want to get the actual member (the cluster flag was set on the local cache already)
-            if (space instanceof ISpaceCache) {
-                clustered = true;
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Clustered flag automatically set to [" + clustered + "] since the space is a local cache space for bean [" + beanName + "]");
-                }
-            } else {
-                clustered = SpaceUtils.isRemoteProtocol(space);
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Clustered flag automatically set to [" + clustered + "] for bean [" + beanName + "]");
-                }
-            }
-        }
-        if (!clustered && space.isClustered()) {
-            space = (ISpaceProxy) SpaceUtils.getClusterMemberSpace(space);
-        }
-        if (exTranslator == null) {
-            exTranslator = new DefaultExceptionTranslator();
-        }
-        if (txProvider == null) {
-            Object transactionalContext = null;
-            if (transactionManager != null && transactionManager instanceof JiniPlatformTransactionManager) {
-                transactionalContext = ((JiniPlatformTransactionManager) transactionManager).getTransactionalContext();
-            }
-            defaultTxProvider = new DefaultTransactionProvider(transactionalContext, transactionManager);
-            txProvider = defaultTxProvider;
-        }
-        gigaSpace = new DefaultGigaSpace(space, txProvider, exTranslator, defaultIsolationLevel);
-        gigaSpace.setDefaultReadTimeout(defaultReadTimeout);
-        gigaSpace.setDefaultTakeTimeout(defaultTakeTimeout);
-        gigaSpace.setDefaultWriteLease(defaultWriteLease);
-        setDefaultModifiers();
-
-        gigaSpace.setName(beanName == null ? space.getName() : beanName);
-
-    }
-
-    private void setDefaultModifiers() {
-        if (defaultWriteModifiers != null) {
-            gigaSpace.setDefaultWriteModifiers(new WriteModifiers(defaultWriteModifiers));
-        }
-        if (defaultReadModifiers != null) {
-            gigaSpace.setDefaultReadModifiers(new ReadModifiers(defaultReadModifiers));
-        }
-        if (defaultTakeModifiers != null) {
-            gigaSpace.setDefaultTakeModifiers(new TakeModifiers(defaultTakeModifiers));
-        }
-        if (defaultCountModifiers != null) {
-            gigaSpace.setDefaultCountModifiers(new CountModifiers(defaultCountModifiers));
-        }
-        if (defaultClearModifiers != null) {
-            gigaSpace.setDefaultClearModifiers(new ClearModifiers(defaultClearModifiers));
-        }
-        if (defaultChangeModifiers != null) {
-            gigaSpace.setDefaultChangeModifiers(new ChangeModifiers(defaultChangeModifiers));
-        }
+        configurer.create();
     }
 
     /**
@@ -404,10 +316,11 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      * #afterPropertiesSet()} phase.
      */
     public Object getObject() {
-        return this.gigaSpace;
+        return configurer.getGigaSpaceIfInitialized();
     }
 
     public Class<? extends GigaSpace> getObjectType() {
+        GigaSpace gigaSpace = configurer.getGigaSpaceIfInitialized();
         return (gigaSpace == null ? GigaSpace.class : gigaSpace.getClass());
     }
 
@@ -423,8 +336,6 @@ public class GigaSpaceFactoryBean implements InitializingBean, DisposableBean, F
      */
     @Override
     public void destroy() throws Exception {
-        if (defaultTxProvider != null)
-            defaultTxProvider.destroy();
+        configurer.close();
     }
-
 }

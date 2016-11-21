@@ -135,7 +135,7 @@ public class GigaSessionManager extends AbstractSessionManager {
         }
         gigaSpace = null;
         if (urlSpaceConfigurer != null) {
-            urlSpaceConfigurer.destroy();
+            urlSpaceConfigurer.close();
         }
         super.doStop();
     }

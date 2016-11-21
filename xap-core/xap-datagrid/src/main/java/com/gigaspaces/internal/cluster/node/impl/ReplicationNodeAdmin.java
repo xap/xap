@@ -21,6 +21,7 @@ import com.gigaspaces.cluster.replication.IRedoLogStatistics;
 import com.gigaspaces.cluster.replication.RedoLogCapacityExceededException;
 import com.gigaspaces.internal.cluster.node.IReplicationNodeAdmin;
 import com.gigaspaces.internal.cluster.node.IReplicationNodeStateListener;
+import com.gigaspaces.internal.cluster.node.impl.backlog.OperationWeightInfo;
 import com.gigaspaces.internal.cluster.node.impl.config.DynamicSourceGroupConfigHolder;
 import com.gigaspaces.internal.cluster.node.impl.config.ReplicationNodeMode;
 import com.gigaspaces.internal.cluster.node.impl.groups.IReplicationSourceChannelStatistics;
@@ -137,8 +138,8 @@ public class ReplicationNodeAdmin
                 allChannelsStatusPrimitive};
     }
 
-    public void monitorState() throws RedoLogCapacityExceededException, ConsistencyLevelViolationException {
-        _replicationNode.monitorState();
+    public void monitorState(OperationWeightInfo info) throws RedoLogCapacityExceededException, ConsistencyLevelViolationException {
+        _replicationNode.monitorState(info);
     }
 
     private String nodeModeDisplayString() {
