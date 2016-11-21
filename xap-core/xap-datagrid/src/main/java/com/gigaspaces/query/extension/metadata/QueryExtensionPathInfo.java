@@ -16,7 +16,6 @@
 
 package com.gigaspaces.query.extension.metadata;
 
-import java.lang.annotation.Annotation;
 import java.util.Collection;
 
 /**
