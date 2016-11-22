@@ -19,12 +19,15 @@ package org.openspaces.textsearch;
 import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
 import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionAnnotationInfo;
 
+import org.apache.lucene.analysis.Analyzer;
+
 /**
  * @author Vitaliy_Zinchenko
+ * @since 12.1
  */
 public class TextExtensionBuilder {
 
-    public static QueryExtensionAnnotationInfo analyzer(Class analyzerClass) {
+    public static QueryExtensionAnnotationInfo analyzer(Class<? extends Analyzer> analyzerClass) {
         return new TextAnalyzerQueryExtensionAnnotationInfo(SpaceTextAnalyzer.class, analyzerClass);
     }
 

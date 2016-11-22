@@ -29,6 +29,7 @@ import java.lang.annotation.Annotation;
 
 /**
  * @author Vitaliy_Zinchenko
+ * @since 12.1
  */
 public class TextAnalyzerQueryExtensionAnnotationInfo extends DefaultQueryExtensionAnnotationInfo implements Externalizable {
 

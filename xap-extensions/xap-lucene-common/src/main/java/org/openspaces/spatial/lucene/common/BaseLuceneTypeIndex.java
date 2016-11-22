@@ -29,6 +29,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * @author yechielf
+ * @since 11.0
+ */
 public abstract class BaseLuceneTypeIndex implements Closeable {
     private final Directory directory;
     private final IndexWriter indexWriter;

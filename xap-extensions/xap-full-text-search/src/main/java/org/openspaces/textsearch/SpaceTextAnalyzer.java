@@ -18,6 +18,8 @@ package org.openspaces.textsearch;
 
 import com.gigaspaces.query.extension.SpaceQueryExtension;
 
+import org.apache.lucene.analysis.Analyzer;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -27,13 +29,14 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * @author Vitaliy_Zinchenko
+ * @since 12.1
  */
 @SpaceQueryExtension(providerClass = LuceneTextSearchQueryExtensionProvider.class)
 @Target({METHOD, TYPE})
 @Retention(RUNTIME)
 public @interface SpaceTextAnalyzer {
 
-    Class analyzer();
+    Class<? extends Analyzer> analyzer();
 
     String path() default "";
 

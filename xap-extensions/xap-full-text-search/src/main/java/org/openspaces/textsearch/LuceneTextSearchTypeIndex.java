@@ -33,6 +33,7 @@ import java.util.Map;
 
 /**
  * @author Vitaliy_Zinchenko
+ * @since 12.1
  */
 public class LuceneTextSearchTypeIndex extends BaseLuceneTypeIndex {
 

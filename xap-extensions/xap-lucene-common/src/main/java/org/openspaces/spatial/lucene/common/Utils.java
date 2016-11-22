@@ -20,6 +20,7 @@ import org.apache.lucene.analysis.Analyzer;
 
 /**
  * @author Vitaliy_Zinchenko
+ * @since 12.1
  */
 final public class Utils {
 

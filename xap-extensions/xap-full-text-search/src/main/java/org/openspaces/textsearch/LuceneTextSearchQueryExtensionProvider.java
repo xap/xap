@@ -30,6 +30,7 @@ import java.util.Properties;
 
 /**
  * @author Vitaliy_Zinchenko
+ * @since 12.1
  */
 public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExtensionProvider {
 

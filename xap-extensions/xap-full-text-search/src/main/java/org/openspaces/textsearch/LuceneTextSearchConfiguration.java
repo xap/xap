@@ -26,6 +26,7 @@ import org.openspaces.spatial.lucene.common.Utils;
 
 /**
  * @author Vitaliy_Zinchenko
+ * @since 12.1
  */
 public class LuceneTextSearchConfiguration extends BaseLuceneConfiguration {
 
