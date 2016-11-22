@@ -18,13 +18,14 @@ package org.openspaces.spatial.spi;
 
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
+import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionAnnotationInfo;
 import com.gigaspaces.query.extension.metadata.impl.QueryExtensionPathInfoImpl;
 
 import org.openspaces.spatial.SpaceSpatialIndex;
 import org.openspaces.spatial.SpaceSpatialIndexes;
-import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionProvider;
-import org.openspaces.spatial.lucene.common.Utils;
+import org.openspaces.lucene.common.BaseLuceneQueryExtensionProvider;
+import org.openspaces.lucene.common.Utils;
 
 import java.lang.annotation.Annotation;
 import java.util.Properties;
@@ -60,20 +61,19 @@ public class LuceneSpatialQueryExtensionProvider extends BaseLuceneQueryExtensio
         if (annotation instanceof SpaceSpatialIndex) {
             SpaceSpatialIndex index = (SpaceSpatialIndex) annotation;
             String path = Utils.makePath(property, index.path());
-            addIndex(result, path, index);
+            result.addPathInfo(path, createPathInfo(index));
         } else if (annotation instanceof SpaceSpatialIndexes) {
             SpaceSpatialIndex[] indexes = ((SpaceSpatialIndexes) annotation).value();
             for (SpaceSpatialIndex index : indexes) {
                 String path = Utils.makePath(property, index.path());
-                addIndex(result, path, index);
+                result.addPathInfo(path, createPathInfo(index));
             }
         }
         return result;
     }
 
-    protected void addIndex(QueryExtensionPropertyInfo result, String path, SpaceSpatialIndex index) {
-        QueryExtensionPathInfoImpl pathInfo = new QueryExtensionPathInfoImpl(new DefaultQueryExtensionAnnotationInfo(index.annotationType()));
-        result.addPathInfo(path, pathInfo);
+    protected QueryExtensionPathInfo createPathInfo(SpaceSpatialIndex index) {
+        return new QueryExtensionPathInfoImpl(new DefaultQueryExtensionAnnotationInfo(index.annotationType()));
     }
 
     public LuceneSpatialQueryExtensionProvider setCustomProperty(String key, String value) {

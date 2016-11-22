@@ -28,7 +28,7 @@ import java.lang.annotation.Annotation;
 public interface QueryExtensionAnnotationInfo {
 
     /**
-     * Determines is this annotation indexed or not
+     * Determines if this annotation indexed or not
      * @return true if annotation indexed, false otherwise
      */
     boolean isIndexed();

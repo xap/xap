@@ -17,20 +17,12 @@
 package org.openspaces.spatial.spi;
 
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
-import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.store.Directory;
-import org.openspaces.spatial.lucene.common.BaseLuceneConfiguration;
-import org.openspaces.spatial.lucene.common.BaseLuceneTypeIndex;
+import org.openspaces.lucene.common.BaseLuceneConfiguration;
+import org.openspaces.lucene.common.BaseLuceneTypeIndex;
 
-import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class LuceneSpatialTypeIndex extends BaseLuceneTypeIndex {
 

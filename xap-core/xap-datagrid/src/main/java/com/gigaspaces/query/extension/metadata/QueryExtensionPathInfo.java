@@ -16,7 +16,7 @@
 
 package com.gigaspaces.query.extension.metadata;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  * Represents path's annotation
@@ -26,6 +26,6 @@ import java.util.Collection;
  */
 public interface QueryExtensionPathInfo {
 
-    Collection<QueryExtensionAnnotationInfo> getAnnotations();
+    List<QueryExtensionAnnotationInfo> getAnnotations();
 
 }

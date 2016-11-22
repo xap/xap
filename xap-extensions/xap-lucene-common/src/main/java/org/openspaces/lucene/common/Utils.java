@@ -14,26 +14,29 @@
  * limitations under the License.
  */
 
-package org.openspaces.spatial.lucene.common;
+package org.openspaces.lucene.common;
 
-import com.gigaspaces.query.extension.QueryExtensionProvider;
-
-import java.util.Properties;
+import org.apache.lucene.analysis.Analyzer;
 
 /**
- * @author Niv Ingberg
- * @since 11.0
+ * @author Vitaliy_Zinchenko
+ * @since 12.1
  */
-public abstract class BaseLuceneQueryExtensionProvider extends QueryExtensionProvider {
+final public class Utils {
 
-    protected final Properties _customProperties;
-
-    public BaseLuceneQueryExtensionProvider(Properties customProperties) {
-        this._customProperties = customProperties;
+    public Utils() {
     }
 
-    public String getCustomProperty(String key, String defaultValue) {
-        return _customProperties.getProperty(key, defaultValue);
+    public static Analyzer createAnalyzer(Class analyzerClass) {
+        try {
+            return (Analyzer) analyzerClass.newInstance();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to instantiate analyzer " + analyzerClass, e);
+        }
+    }
+
+    public static String makePath(String property, String relativePath) {
+        return relativePath.length() == 0 ? property : property + "." + relativePath;
     }
 
 }

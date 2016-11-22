@@ -42,7 +42,7 @@
     </dependencies>
 
     <build>
-        <finalName>xap-spatial</finalName>
+        <finalName>xap-lucene-common</finalName>
         <extensions>
             <extension>
                 <groupId>org.kuali.maven.wagons</groupId>

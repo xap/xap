@@ -23,9 +23,9 @@ import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
-import org.openspaces.spatial.lucene.common.BaseLuceneConfiguration;
-import org.openspaces.spatial.lucene.common.BaseLuceneTypeIndex;
-import org.openspaces.spatial.lucene.common.Utils;
+import org.openspaces.lucene.common.BaseLuceneConfiguration;
+import org.openspaces.lucene.common.BaseLuceneTypeIndex;
+import org.openspaces.lucene.common.Utils;
 
 import java.io.IOException;
 import java.util.HashMap;
