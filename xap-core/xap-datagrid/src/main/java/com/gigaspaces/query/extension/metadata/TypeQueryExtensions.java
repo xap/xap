@@ -27,7 +27,7 @@ import java.util.Collection;
 public interface TypeQueryExtensions {
 
     /**
-     * Determines is path of namespace is indexed.
+     * Determines if path of namespace is indexed.
      * @param namespace the namespace of query extension
      * @param path the path in the document
      * @return true if path of namespace is indexed
@@ -35,7 +35,7 @@ public interface TypeQueryExtensions {
     boolean isIndexed(String namespace, String path);
 
     /**
-     * Returns all namespaces which is registered for this type
+     * Returns all namespaces which are registered for this type
      * @return namespaces of this type
      */
     Collection<String> getNamespaces();

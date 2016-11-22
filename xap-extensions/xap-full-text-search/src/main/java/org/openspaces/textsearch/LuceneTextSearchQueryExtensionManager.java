@@ -17,6 +17,7 @@
 package org.openspaces.textsearch;
 
 import com.gigaspaces.SpaceRuntimeException;
+import com.gigaspaces.internal.utils.Assert;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 
@@ -48,8 +49,8 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
 
     @Override
     public boolean accept(String typeName, String path, String operation, Object gridValue, Object luceneQuery) {
-        assertNotNull(gridValue, "Provided value from grid is null");
-        assertNotNull(luceneQuery, "Provided lucene query is null");
+        Assert.notNull(gridValue, "Provided value from grid is null");
+        Assert.notNull(luceneQuery, "Provided lucene query is null");
         validateOperationName(operation);
 
         if (_logger.isLoggable(Level.FINE))
@@ -89,7 +90,7 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
 
     @Override
     protected Query createQuery(String typeName, String path, String operationName, Object operand) {
-        assertNotNull(operand, "Provided operand is null");
+        Assert.notNull(operand, "Provided operand is null");
         validateOperationName(operationName);
         try {
             LuceneTextSearchTypeIndex typeIndex = _luceneHolderMap.get(typeName);
@@ -105,12 +106,5 @@ public class LuceneTextSearchQueryExtensionManager extends BaseLuceneQueryExtens
             throw new IllegalArgumentException("Provided operationName=" + operationName + " is incorrect. Correct one is '" + SEARCH_OPERATION_NAME + "'");
         }
     }
-
-    private void assertNotNull(Object object, String message) {
-        if(object == null) {
-            throw new IllegalArgumentException(message);
-        }
-    }
-
 
 }

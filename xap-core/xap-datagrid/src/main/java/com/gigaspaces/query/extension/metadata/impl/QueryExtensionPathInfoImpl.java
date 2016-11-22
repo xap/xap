@@ -26,7 +26,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Niv Ingberg
@@ -37,7 +37,7 @@ public class QueryExtensionPathInfoImpl implements QueryExtensionPathInfo, Exter
 
     private static final long serialVersionUID = 1L;
 
-    private Collection<QueryExtensionAnnotationInfo> pathAnnotationInfos = new ArrayList<QueryExtensionAnnotationInfo>();
+    private List<QueryExtensionAnnotationInfo> pathAnnotationInfos = new ArrayList<QueryExtensionAnnotationInfo>();
 
     /**
      * Required for Externalizable
@@ -59,7 +59,7 @@ public class QueryExtensionPathInfoImpl implements QueryExtensionPathInfo, Exter
     }
 
     @Override
-    public Collection<QueryExtensionAnnotationInfo> getAnnotations() {
+    public List<QueryExtensionAnnotationInfo> getAnnotations() {
         return pathAnnotationInfos;
     }
 
