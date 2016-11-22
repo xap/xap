@@ -22,8 +22,8 @@ import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionAnnotationInfo;
 import com.gigaspaces.query.extension.metadata.impl.QueryExtensionPathInfoImpl;
 
-import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionProvider;
-import org.openspaces.spatial.lucene.common.Utils;
+import org.openspaces.lucene.common.BaseLuceneQueryExtensionProvider;
+import org.openspaces.lucene.common.Utils;
 
 import java.lang.annotation.Annotation;
 import java.util.Properties;
@@ -59,33 +59,35 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
     public QueryExtensionPropertyInfo getPropertyExtensionInfo(String property, Annotation annotation) {
         QueryExtensionPropertyInfo result = new QueryExtensionPropertyInfo();
         if (annotation instanceof SpaceTextIndex) {
-            addIndexPathInfo(property, (SpaceTextIndex) annotation, result);
+            SpaceTextIndex index = (SpaceTextIndex) annotation;
+            String path = Utils.makePath(property, index.path());
+            result.addPathInfo(path, createIndexPathInfo(index));
         } else if (annotation instanceof SpaceTextIndexes) {
             SpaceTextIndexes indexes = (SpaceTextIndexes)annotation;
             for (SpaceTextIndex index: indexes.value()) {
-                addIndexPathInfo(property, index, result);
+                String path = Utils.makePath(property, index.path());
+                result.addPathInfo(path, createIndexPathInfo(index));
             }
         } else if (annotation instanceof SpaceTextAnalyzer) {
-            addAnalyzerPathInfo(property, (SpaceTextAnalyzer) annotation, result);
+            SpaceTextAnalyzer analyzer = (SpaceTextAnalyzer) annotation;
+            String path = Utils.makePath(property, analyzer.path());
+            result.addPathInfo(path, createAnalyzerPathInfo(analyzer));
         } else if(annotation instanceof SpaceTextAnalyzers) {
             SpaceTextAnalyzers analyzers = (SpaceTextAnalyzers) annotation;
             for(SpaceTextAnalyzer analyzer: analyzers.value()) {
-                addAnalyzerPathInfo(property, analyzer, result);
+                String path = Utils.makePath(property, analyzer.path());
+                result.addPathInfo(path, createAnalyzerPathInfo(analyzer));
             }
         }
         return result;
     }
 
-    private void addAnalyzerPathInfo(String property, SpaceTextAnalyzer analyzer, QueryExtensionPropertyInfo result) {
-        String path = Utils.makePath(property, analyzer.path());
-        QueryExtensionPathInfo pathInfo = new QueryExtensionPathInfoImpl(new TextAnalyzerQueryExtensionAnnotationInfo(analyzer.annotationType(), analyzer.analyzer()));
-        result.addPathInfo(path, pathInfo);
+    private QueryExtensionPathInfo createAnalyzerPathInfo(SpaceTextAnalyzer analyzer) {
+        return new QueryExtensionPathInfoImpl(new TextAnalyzerQueryExtensionAnnotationInfo(analyzer.annotationType(), analyzer.analyzer()));
     }
 
-    private void addIndexPathInfo(String property, SpaceTextIndex index, QueryExtensionPropertyInfo result) {
-        String path = Utils.makePath(property, index.path());
-        QueryExtensionPathInfo pathInfo = new QueryExtensionPathInfoImpl(new DefaultQueryExtensionAnnotationInfo(index.annotationType()));
-        result.addPathInfo(path, pathInfo);
+    private QueryExtensionPathInfo createIndexPathInfo(SpaceTextIndex index) {
+        return new QueryExtensionPathInfoImpl(new DefaultQueryExtensionAnnotationInfo(index.annotationType()));
     }
 
     public LuceneTextSearchQueryExtensionProvider setCustomProperty(String key, String value) {

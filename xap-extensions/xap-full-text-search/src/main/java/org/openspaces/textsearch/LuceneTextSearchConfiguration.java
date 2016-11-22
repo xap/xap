@@ -18,11 +18,8 @@ package org.openspaces.textsearch;
 
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.openspaces.spatial.lucene.common.BaseLuceneConfiguration;
-import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionProvider;
-import org.openspaces.spatial.lucene.common.Utils;
+import org.openspaces.lucene.common.BaseLuceneConfiguration;
+import org.openspaces.lucene.common.BaseLuceneQueryExtensionProvider;
 
 /**
  * @author Vitaliy_Zinchenko

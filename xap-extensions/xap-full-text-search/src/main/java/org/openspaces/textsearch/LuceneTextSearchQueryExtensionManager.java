@@ -28,7 +28,7 @@ import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
-import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionManager;
+import org.openspaces.lucene.common.BaseLuceneQueryExtensionManager;
 
 import java.io.IOException;
 import java.util.logging.Level;

@@ -23,8 +23,8 @@ import com.gigaspaces.query.extension.metadata.impl.QueryExtensionPathInfoImpl;
 
 import org.openspaces.spatial.SpaceSpatialIndex;
 import org.openspaces.spatial.SpaceSpatialIndexes;
-import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionProvider;
-import org.openspaces.spatial.lucene.common.Utils;
+import org.openspaces.lucene.common.BaseLuceneQueryExtensionProvider;
+import org.openspaces.lucene.common.Utils;
 
 import java.lang.annotation.Annotation;
 import java.util.Properties;

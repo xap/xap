@@ -23,7 +23,6 @@ import com.spatial4j.core.context.jts.JtsSpatialContext;
 import com.spatial4j.core.context.jts.JtsSpatialContextFactory;
 import com.spatial4j.core.shape.impl.RectangleImpl;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.spatial.SpatialStrategy;
 import org.apache.lucene.spatial.bbox.BBoxStrategy;
 import org.apache.lucene.spatial.composite.CompositeSpatialStrategy;
@@ -32,9 +31,8 @@ import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
 import org.apache.lucene.spatial.prefix.tree.QuadPrefixTree;
 import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
 import org.apache.lucene.spatial.serialized.SerializedDVStrategy;
-import org.openspaces.spatial.lucene.common.BaseLuceneConfiguration;
+import org.openspaces.lucene.common.BaseLuceneConfiguration;
 
-import java.io.File;
 import java.util.Arrays;
 
 /**

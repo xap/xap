@@ -16,36 +16,21 @@
 
 package org.openspaces.spatial.spi;
 
-import com.gigaspaces.SpaceRuntimeException;
-import com.gigaspaces.internal.io.FileUtils;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
-import com.gigaspaces.query.extension.QueryExtensionEntryIterator;
-import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
-import com.gigaspaces.server.SpaceServerEntry;
 
-import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.spatial.SpatialStrategy;
 import org.apache.lucene.spatial.query.SpatialArgs;
 import org.apache.lucene.spatial.query.SpatialOperation;
-import org.openspaces.spatial.lucene.common.BaseLuceneConfiguration;
-import org.openspaces.spatial.lucene.common.BaseLuceneQueryExtensionManager;
-import org.openspaces.spatial.lucene.common.BaseLuceneTypeIndex;
+import org.openspaces.lucene.common.BaseLuceneQueryExtensionManager;
 import org.openspaces.spatial.shapes.Shape;
 import org.openspaces.spatial.spatial4j.Spatial4jShapeProvider;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

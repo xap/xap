@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.openspaces.spatial.lucene.common;
+package org.openspaces.lucene.common;
 
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
