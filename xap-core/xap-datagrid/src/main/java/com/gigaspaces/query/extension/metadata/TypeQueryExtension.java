@@ -16,6 +16,7 @@
 
 package com.gigaspaces.query.extension.metadata;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -25,7 +26,9 @@ import java.util.Set;
  * @since 11.0
  */
 public interface TypeQueryExtension {
-    QueryExtensionPathInfo get(String path);
+    List<QueryExtensionPathInfo> get(String path);
 
     Set<String> getPaths();
+
+    boolean isIndexed(String path);
 }

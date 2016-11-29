@@ -16,58 +16,54 @@
 
 package org.openspaces.textsearch;
 
-import com.gigaspaces.internal.io.IOUtils;
-import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionAnnotationInfo;
+import com.gigaspaces.query.extension.metadata.DefaultQueryExtensionPathInfo;
 
 import org.apache.lucene.analysis.Analyzer;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.lang.annotation.Annotation;
 
 /**
  * @author Vitaliy_Zinchenko
  * @since 12.1
  */
-public class TextAnalyzerQueryExtensionAnnotationInfo extends DefaultQueryExtensionAnnotationInfo implements Externalizable {
-
+@com.gigaspaces.api.InternalApi
+public class TextAnalyzerQueryExtensionPathInfo extends DefaultQueryExtensionPathInfo {
+    // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 
-    private Class<? extends Analyzer> analyzer;
+    private Class<? extends Analyzer> analyzerClass;
 
-    public TextAnalyzerQueryExtensionAnnotationInfo() {
+    /**
+     * Required for Externalizable
+     */
+    public TextAnalyzerQueryExtensionPathInfo() {
+
     }
 
-    public TextAnalyzerQueryExtensionAnnotationInfo(Class<? extends Annotation> analyzerClass, Class<? extends Analyzer> analyzer) {
-        super(analyzerClass);
-        this.analyzer = analyzer;
+    public TextAnalyzerQueryExtensionPathInfo(Class<? extends Analyzer> analyzerClass) {
+        this.analyzerClass = analyzerClass;
     }
 
-    public Class<? extends Analyzer> getAnalazerClass() {
-        return analyzer;
-    }
-
-    public TextAnalyzerQueryExtensionAnnotationInfo setClazz(Class<? extends Analyzer> analyzer) {
-        this.analyzer = analyzer;
-        return this;
-    }
-
-    @Override
-    public boolean isIndexed() {
-        return false;
+    public Class<? extends Analyzer> getAnalyzerClass() {
+        return analyzerClass;
     }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
-        IOUtils.writeObject(out, analyzer);
+        out.writeObject(analyzerClass);
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
-        analyzer = IOUtils.readObject(in);
+        analyzerClass = (Class<? extends Analyzer>) in.readObject();
+    }
+
+    @Override
+    public boolean isIndexed() {
+        return false;
     }
 }

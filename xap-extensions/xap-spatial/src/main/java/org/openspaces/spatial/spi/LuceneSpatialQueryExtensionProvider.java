@@ -19,9 +19,7 @@ package org.openspaces.spatial.spi;
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
-import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
-import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionAnnotationInfo;
-import com.gigaspaces.query.extension.metadata.impl.QueryExtensionPathInfoImpl;
+import com.gigaspaces.query.extension.metadata.DefaultQueryExtensionPathInfo;
 
 import org.openspaces.spatial.SpaceSpatialIndex;
 import org.openspaces.spatial.SpaceSpatialIndexes;
@@ -64,20 +62,13 @@ public class LuceneSpatialQueryExtensionProvider extends QueryExtensionProvider 
         QueryExtensionPropertyInfo result = new QueryExtensionPropertyInfo();
         if (annotation instanceof SpaceSpatialIndex) {
             SpaceSpatialIndex index = (SpaceSpatialIndex) annotation;
-            String path = makePath(property, index.path());
-            result.addPathInfo(path, createPathInfo(index));
+            result.addPathInfo(path(property, index), new DefaultQueryExtensionPathInfo());
         } else if (annotation instanceof SpaceSpatialIndexes) {
             SpaceSpatialIndex[] indexes = ((SpaceSpatialIndexes) annotation).value();
-            for (SpaceSpatialIndex index : indexes) {
-                String path = makePath(property, index.path());
-                result.addPathInfo(path, createPathInfo(index));
-            }
+            for (SpaceSpatialIndex index : indexes)
+                result.addPathInfo(path(property, index), new DefaultQueryExtensionPathInfo());
         }
         return result;
-    }
-
-    protected QueryExtensionPathInfo createPathInfo(SpaceSpatialIndex index) {
-        return new QueryExtensionPathInfoImpl(new DefaultQueryExtensionAnnotationInfo(index.annotationType()));
     }
 
     public String getCustomProperty(String key, String defaultValue) {
@@ -87,9 +78,5 @@ public class LuceneSpatialQueryExtensionProvider extends QueryExtensionProvider 
     public LuceneSpatialQueryExtensionProvider setCustomProperty(String key, String value) {
         this._customProperties.setProperty(key, value);
         return this;
-    }
-
-    private String makePath(String property, String relativePath) {
-        return relativePath.length() == 0 ? property : property + "." + relativePath;
     }
 }

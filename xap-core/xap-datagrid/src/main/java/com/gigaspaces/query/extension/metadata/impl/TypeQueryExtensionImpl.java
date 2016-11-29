@@ -17,7 +17,7 @@
 package com.gigaspaces.query.extension.metadata.impl;
 
 import com.gigaspaces.internal.io.IOUtils;
-import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
@@ -25,7 +25,10 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,7 +37,7 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 
-    private final Map<String, QueryExtensionPathInfoImpl> propertiesInfo = new HashMap<String, QueryExtensionPathInfoImpl>();
+    private final Map<String, List<QueryExtensionPathInfo>> propertiesInfo = new HashMap<String, List<QueryExtensionPathInfo>>();
 
     /**
      * Required for Externalizable
@@ -42,22 +45,15 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     public TypeQueryExtensionImpl() {
     }
 
-    public void addAnnotationByPath(String path, QueryExtensionAnnotationInfo annotationInfo) {
-        QueryExtensionPathInfoImpl pathInfo = getOrCreatePath(path);
-        pathInfo.add(annotationInfo);
-    }
-
-    private QueryExtensionPathInfoImpl getOrCreatePath(String path) {
-        QueryExtensionPathInfoImpl pathInfo = propertiesInfo.get(path);
-        if (pathInfo == null) {
-            pathInfo = new QueryExtensionPathInfoImpl();
-            propertiesInfo.put(path, pathInfo);
+    public void add(String path, QueryExtensionPathInfo queryExtensionPathInfo) {
+        if(!propertiesInfo.containsKey(path)) {
+            propertiesInfo.put(path, new ArrayList<QueryExtensionPathInfo>());
         }
-        return pathInfo;
+        this.propertiesInfo.get(path).add(queryExtensionPathInfo);
     }
 
     @Override
-    public QueryExtensionPathInfo get(String path) {
+    public List<QueryExtensionPathInfo> get(String path) {
         return this.propertiesInfo.get(path);
     }
 
@@ -67,22 +63,72 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
     }
 
     @Override
+    public boolean isIndexed(String path) {
+        List<QueryExtensionPathInfo> pathInfos = propertiesInfo.get(path);
+        if(pathInfos == null) {
+            return false;
+        }
+        for (QueryExtensionPathInfo pathInfo: pathInfos) {
+            if(pathInfo.isIndexed()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeInt(propertiesInfo.size());
-        for (Map.Entry<String, QueryExtensionPathInfoImpl> entry : propertiesInfo.entrySet()) {
-            IOUtils.writeString(out, entry.getKey());
-            entry.getValue().writeExternal(out);
+        final PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
+        if (version.greaterOrEquals(PlatformLogicalVersion.v12_1_0)) {
+            writeExternal_v12_1(out);
+        } else {
+            writeExternal_v12_0(out);
         }
     }
 
+    private void writeExternal_v12_1(ObjectOutput out) throws IOException {
+        out.writeInt(propertiesInfo.size());
+        for (Map.Entry<String, List<QueryExtensionPathInfo>> entry : propertiesInfo.entrySet()) {
+            IOUtils.writeString(out, entry.getKey());
+            IOUtils.writeList(out, entry.getValue());
+        }
+    }
+
+    private void writeExternal_v12_0(ObjectOutput out) throws IOException {
+        out.writeInt(propertiesInfo.size());
+        for (Map.Entry<String, List<QueryExtensionPathInfo>> entry : propertiesInfo.entrySet()) {
+            IOUtils.writeString(out, entry.getKey());
+            IOUtils.writeObject(out, entry.getValue().get(0));
+        }
+    }
+
+
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        final PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
+        if (version.greaterOrEquals(PlatformLogicalVersion.v12_1_0)) {
+            readExternal_v12_1(in);
+        } else {
+            readExternal_v12_0(in);
+        }
+    }
+
+    private void readExternal_v12_1(ObjectInput in) throws IOException, ClassNotFoundException {
         int size = in.readInt();
         for (int i = 0; i < size; i++) {
             String key = IOUtils.readString(in);
-            QueryExtensionPathInfoImpl value = new QueryExtensionPathInfoImpl();
-            value.readExternal(in);
+            List<QueryExtensionPathInfo> value = IOUtils.readList(in);
             propertiesInfo.put(key, value);
+        }
+    }
+
+    private void readExternal_v12_0(ObjectInput in) throws IOException, ClassNotFoundException {
+        int size = in.readInt();
+        for (int i = 0; i < size; i++) {
+            String key = IOUtils.readString(in);
+            QueryExtensionPathInfo value = IOUtils.readObject(in);
+            propertiesInfo.put(key, Collections.singletonList(value));
         }
     }
 }

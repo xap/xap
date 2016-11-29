@@ -14,51 +14,39 @@
  * limitations under the License.
  */
 
-package com.gigaspaces.query.extension.metadata.impl;
-
-import com.gigaspaces.internal.io.IOUtils;
-import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
+package com.gigaspaces.query.extension.metadata;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.lang.annotation.Annotation;
 
 /**
- * @author Vitaliy_Zinchenko
- * @since 12.1
+ * @author Niv Ingberg
+ * @since 11.0
  */
-public class DefaultQueryExtensionAnnotationInfo implements QueryExtensionAnnotationInfo, Externalizable {
-
+@com.gigaspaces.api.InternalApi
+public class DefaultQueryExtensionPathInfo extends QueryExtensionPathInfo implements Externalizable {
+    // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 
-    private Class<? extends Annotation> type;
+    /**
+     * Required for Externalizable
+     */
+    public DefaultQueryExtensionPathInfo() {
 
-    public DefaultQueryExtensionAnnotationInfo() {
-    }
-
-    public DefaultQueryExtensionAnnotationInfo(Class<? extends Annotation> type) {
-        this.type = type;
     }
 
     @Override
-    public Class<? extends Annotation> getType() {
-        return type;
+    public void writeExternal(ObjectOutput out) throws IOException {
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     }
 
     @Override
     public boolean isIndexed() {
         return true;
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        IOUtils.writeObject(out, type);
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        type = IOUtils.readObject(in);
     }
 }

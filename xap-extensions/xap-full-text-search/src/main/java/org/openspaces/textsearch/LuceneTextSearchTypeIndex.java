@@ -17,7 +17,6 @@
 package org.openspaces.textsearch;
 
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
-import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
@@ -98,11 +97,10 @@ public class LuceneTextSearchTypeIndex implements Closeable {
         Map<String, Analyzer> analyzerMap = new HashMap<String, Analyzer>();
         TypeQueryExtension type = typeDescriptor.getQueryExtensions().getByNamespace(LuceneTextSearchQueryExtensionProvider.NAMESPACE);
         for (String path : type.getPaths()) {
-            QueryExtensionPathInfo pathInfo = type.get(path);
-            for (QueryExtensionAnnotationInfo annotationInfo: pathInfo.getAnnotations()) {
-                if (SpaceTextAnalyzer.class.equals(annotationInfo.getType()) && annotationInfo instanceof TextAnalyzerQueryExtensionAnnotationInfo) {
-                    TextAnalyzerQueryExtensionAnnotationInfo analyzerAnnotation = (TextAnalyzerQueryExtensionAnnotationInfo) annotationInfo;
-                    addAnalyzer(analyzerMap, path, analyzerAnnotation.getAnalazerClass());
+            for (QueryExtensionPathInfo pathInfo: type.get(path)) {
+                if (pathInfo instanceof TextAnalyzerQueryExtensionPathInfo) {
+                    TextAnalyzerQueryExtensionPathInfo analyzerPathInfo = (TextAnalyzerQueryExtensionPathInfo) pathInfo;
+                    addAnalyzer(analyzerMap, path, analyzerPathInfo.getAnalyzerClass());
                 }
             }
         }

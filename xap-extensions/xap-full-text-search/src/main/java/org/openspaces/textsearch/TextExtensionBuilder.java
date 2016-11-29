@@ -16,8 +16,8 @@
 
 package org.openspaces.textsearch;
 
-import com.gigaspaces.query.extension.metadata.QueryExtensionAnnotationInfo;
-import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionAnnotationInfo;
+import com.gigaspaces.query.extension.metadata.DefaultQueryExtensionPathInfo;
+import com.gigaspaces.query.extension.metadata.typebuilder.QueryExtensionInfo;
 
 import org.apache.lucene.analysis.Analyzer;
 
@@ -27,12 +27,12 @@ import org.apache.lucene.analysis.Analyzer;
  */
 public class TextExtensionBuilder {
 
-    public static QueryExtensionAnnotationInfo analyzer(Class<? extends Analyzer> analyzerClass) {
-        return new TextAnalyzerQueryExtensionAnnotationInfo(SpaceTextAnalyzer.class, analyzerClass);
+    public static QueryExtensionInfo analyzer(Class<? extends Analyzer> analyzerClass) {
+        return new QueryExtensionInfo(LuceneTextSearchQueryExtensionProvider.class, new TextAnalyzerQueryExtensionPathInfo(analyzerClass));
     }
 
-    public static QueryExtensionAnnotationInfo index() {
-        return new DefaultQueryExtensionAnnotationInfo(SpaceTextIndex.class);
+    public static QueryExtensionInfo index() {
+        return new QueryExtensionInfo(LuceneTextSearchQueryExtensionProvider.class, new DefaultQueryExtensionPathInfo());
     }
 
 }
