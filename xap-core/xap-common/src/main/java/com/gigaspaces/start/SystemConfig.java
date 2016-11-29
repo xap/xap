@@ -318,7 +318,6 @@ public class SystemConfig {
         classpathBuilder.append(gsLibOptional + "jms");// JMS support
         classpathBuilder.append(gsLibOptional + "metrics");// Metrics support
         classpathBuilder.append(gsLibOptional + "httpsession");// xap-http-session support
-        classpathBuilder.append(gsLibOptional + "lucene-common"); // Lucene common libraries for spatial and full text search extensions
         classpathBuilder.append(gsLibOptional + "spatial"); // Spatial libraries
         classpathBuilder.append(gsLibOptional + "full-text-search"); // Full text search libraries
         classpathBuilder.append(gsLibOptional + "jpa");// JPA support
