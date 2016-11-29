@@ -17,13 +17,11 @@
 package org.openspaces.textsearch;
 
 import com.gigaspaces.query.extension.QueryExtensionManager;
+import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionAnnotationInfo;
 import com.gigaspaces.query.extension.metadata.impl.QueryExtensionPathInfoImpl;
-
-import org.openspaces.lucene.common.BaseLuceneQueryExtensionProvider;
-import org.openspaces.lucene.common.Utils;
 
 import java.lang.annotation.Annotation;
 import java.util.Properties;
@@ -32,16 +30,18 @@ import java.util.Properties;
  * @author Vitaliy_Zinchenko
  * @since 12.1
  */
-public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExtensionProvider {
+public class LuceneTextSearchQueryExtensionProvider extends QueryExtensionProvider {
 
     public static final String NAMESPACE = "text";
+
+    private final Properties _customProperties;
 
     public LuceneTextSearchQueryExtensionProvider() {
         this(new Properties());
     }
 
     public LuceneTextSearchQueryExtensionProvider(Properties customProperties) {
-        super(customProperties);
+        this._customProperties = customProperties;
     }
 
     @Override
@@ -94,4 +94,9 @@ public class LuceneTextSearchQueryExtensionProvider extends BaseLuceneQueryExten
         this._customProperties.setProperty(key, value);
         return this;
     }
+
+    public String getCustomProperty(String key, String defaultValue) {
+        return _customProperties.getProperty(key, defaultValue);
+    }
+
 }

@@ -17,6 +17,7 @@
 package org.openspaces.spatial.spi;
 
 import com.gigaspaces.query.extension.QueryExtensionManager;
+import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.impl.DefaultQueryExtensionAnnotationInfo;
@@ -24,8 +25,6 @@ import com.gigaspaces.query.extension.metadata.impl.QueryExtensionPathInfoImpl;
 
 import org.openspaces.spatial.SpaceSpatialIndex;
 import org.openspaces.spatial.SpaceSpatialIndexes;
-import org.openspaces.lucene.common.BaseLuceneQueryExtensionProvider;
-import org.openspaces.lucene.common.Utils;
 
 import java.lang.annotation.Annotation;
 import java.util.Properties;
@@ -34,14 +33,16 @@ import java.util.Properties;
  * @author Niv Ingberg
  * @since 11.0
  */
-public class LuceneSpatialQueryExtensionProvider extends BaseLuceneQueryExtensionProvider {
+public class LuceneSpatialQueryExtensionProvider extends QueryExtensionProvider {
+
+    private final Properties _customProperties;
 
     public LuceneSpatialQueryExtensionProvider() {
         this(new Properties());
     }
 
     public LuceneSpatialQueryExtensionProvider(Properties customProperties) {
-        super(customProperties);
+        this._customProperties = customProperties;
     }
 
     @Override
@@ -51,8 +52,11 @@ public class LuceneSpatialQueryExtensionProvider extends BaseLuceneQueryExtensio
 
     @Override
     public QueryExtensionManager createManager(QueryExtensionRuntimeInfo info) {
-        LuceneSpatialConfiguration configuration = new LuceneSpatialConfiguration(this, info);
-        return new LuceneSpatialQueryExtensionManager(this, info, configuration);
+        return new LuceneSpatialQueryExtensionManager(this, info);
+    }
+
+    private static String path(String property, SpaceSpatialIndex index) {
+        return index.path().length() == 0 ? property : property + "." + index.path();
     }
 
     @Override
@@ -60,12 +64,12 @@ public class LuceneSpatialQueryExtensionProvider extends BaseLuceneQueryExtensio
         QueryExtensionPropertyInfo result = new QueryExtensionPropertyInfo();
         if (annotation instanceof SpaceSpatialIndex) {
             SpaceSpatialIndex index = (SpaceSpatialIndex) annotation;
-            String path = Utils.makePath(property, index.path());
+            String path = makePath(property, index.path());
             result.addPathInfo(path, createPathInfo(index));
         } else if (annotation instanceof SpaceSpatialIndexes) {
             SpaceSpatialIndex[] indexes = ((SpaceSpatialIndexes) annotation).value();
             for (SpaceSpatialIndex index : indexes) {
-                String path = Utils.makePath(property, index.path());
+                String path = makePath(property, index.path());
                 result.addPathInfo(path, createPathInfo(index));
             }
         }
@@ -76,8 +80,16 @@ public class LuceneSpatialQueryExtensionProvider extends BaseLuceneQueryExtensio
         return new QueryExtensionPathInfoImpl(new DefaultQueryExtensionAnnotationInfo(index.annotationType()));
     }
 
+    public String getCustomProperty(String key, String defaultValue) {
+        return _customProperties.getProperty(key, defaultValue);
+    }
+
     public LuceneSpatialQueryExtensionProvider setCustomProperty(String key, String value) {
         this._customProperties.setProperty(key, value);
         return this;
+    }
+
+    private String makePath(String property, String relativePath) {
+        return relativePath.length() == 0 ? property : property + "." + relativePath;
     }
 }

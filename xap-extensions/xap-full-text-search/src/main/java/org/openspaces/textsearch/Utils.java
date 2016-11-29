@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.openspaces.lucene.common;
+package org.openspaces.textsearch;
 
 import org.apache.lucene.analysis.Analyzer;
 
@@ -27,7 +27,7 @@ final public class Utils {
     public Utils() {
     }
 
-    public static Analyzer createAnalyzer(Class analyzerClass) {
+    static Analyzer createAnalyzer(Class analyzerClass) {
         try {
             return (Analyzer) analyzerClass.newInstance();
         } catch (Exception e) {
@@ -35,7 +35,7 @@ final public class Utils {
         }
     }
 
-    public static String makePath(String property, String relativePath) {
+    static String makePath(String property, String relativePath) {
         return relativePath.length() == 0 ? property : property + "." + relativePath;
     }
 

@@ -24,11 +24,6 @@
             <artifactId>xap-openspaces</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.gigaspaces</groupId>
-            <artifactId>xap-lucene-common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
             <version>${luceneVersion}</version>

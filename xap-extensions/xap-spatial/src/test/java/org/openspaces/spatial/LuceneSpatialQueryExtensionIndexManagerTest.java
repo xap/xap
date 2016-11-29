@@ -17,7 +17,6 @@
 package org.openspaces.spatial;
 
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
-import com.gigaspaces.query.extension.impl.QueryExtensionRuntimeInfoImpl;
 import com.spatial4j.core.shape.Shape;
 
 import org.junit.Assert;
@@ -26,7 +25,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.openspaces.spatial.shapes.Polygon;
-import org.openspaces.spatial.spi.LuceneSpatialConfiguration;
 import org.openspaces.spatial.spi.LuceneSpatialQueryExtensionManager;
 import org.openspaces.spatial.spi.LuceneSpatialQueryExtensionProvider;
 
@@ -47,7 +45,7 @@ public class LuceneSpatialQueryExtensionIndexManagerTest {
 
     @Before
     public void setup() throws Exception {
-        QueryExtensionRuntimeInfo info = new QueryExtensionRuntimeInfo() {
+        QueryExtensionRuntimeInfo config = new QueryExtensionRuntimeInfo() {
             @Override
             public String getSpaceInstanceName() {
                 return "dummy";
@@ -58,9 +56,7 @@ public class LuceneSpatialQueryExtensionIndexManagerTest {
                 return null;
             }
         };
-        LuceneSpatialQueryExtensionProvider provider = new LuceneSpatialQueryExtensionProvider();
-        LuceneSpatialConfiguration configuration = new LuceneSpatialConfiguration(provider, info);
-        _handler = new LuceneSpatialQueryExtensionManager(provider, info, configuration);
+        _handler = new LuceneSpatialQueryExtensionManager(new LuceneSpatialQueryExtensionProvider(), config);
     }
 
     @Test

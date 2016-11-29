@@ -57,11 +57,7 @@
             <artifactId>lucene-misc</artifactId>
             <version>${luceneVersion}</version>
         </dependency>
-        <dependency>
-            <groupId>org.gigaspaces</groupId>
-            <artifactId>xap-lucene-common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+
 
         <dependency>
             <groupId>com.vividsolutions</groupId>

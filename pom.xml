@@ -51,7 +51,6 @@
         <module>xap-extensions/xap-groovy</module>
         <module>xap-extensions/xap-jruby</module>
         <module>xap-extensions/xap-full-text-search</module>
-        <module>xap-extensions/xap-lucene-common</module>
         <module>xap-dist</module>
     </modules>
 
