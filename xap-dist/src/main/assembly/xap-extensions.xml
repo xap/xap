@@ -128,27 +128,6 @@
 
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
-            <outputDirectory>product/lib/optional/lucene-common</outputDirectory>
-            <includes>
-                <include>org.gigaspaces:xap-lucene-common</include>
-            </includes>
-            <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
-        </dependencySet>
-        <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
-            <outputDirectory>product/lib/optional/lucene-common</outputDirectory>
-            <includes>
-                <include>org.apache.lucene:lucene-core</include>
-                <include>org.apache.lucene:lucene-analyzers-common</include>
-                <include>org.apache.lucene:lucene-queryparser</include>
-                <include>org.apache.lucene:lucene-queries</include>
-                <include>org.apache.lucene:lucene-sandbox</include>
-                <include>org.apache.lucene:lucene-misc</include>
-            </includes>
-        </dependencySet>
-
-        <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>product/lib/optional/spatial</outputDirectory>
             <includes>
                 <include>org.gigaspaces:xap-spatial</include>
@@ -159,6 +138,12 @@
             <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>product/lib/optional/spatial</outputDirectory>
             <includes>
+                <include>org.apache.lucene:lucene-core</include>
+                <include>org.apache.lucene:lucene-analyzers-common</include>
+                <include>org.apache.lucene:lucene-queryparser</include>
+                <include>org.apache.lucene:lucene-queries</include>
+                <include>org.apache.lucene:lucene-sandbox</include>
+                <include>org.apache.lucene:lucene-misc</include>
                 <include>org.apache.lucene:lucene-spatial</include>
                 <include>com.vividsolutions:jts</include>
                 <include>com.spatial4j:spatial4j</include>
@@ -178,6 +163,12 @@
             <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>product/lib/optional/full-text-search</outputDirectory>
             <includes>
+                <include>org.apache.lucene:lucene-core</include>
+                <include>org.apache.lucene:lucene-analyzers-common</include>
+                <include>org.apache.lucene:lucene-queryparser</include>
+                <include>org.apache.lucene:lucene-queries</include>
+                <include>org.apache.lucene:lucene-sandbox</include>
+                <include>org.apache.lucene:lucene-misc</include>
                 <include>org.apache.lucene:lucene-memory</include>
             </includes>
         </dependencySet>
