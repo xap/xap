@@ -16,6 +16,9 @@
 
 package com.gigaspaces.query.extension.metadata;
 
+import com.gigaspaces.query.extension.QueryExtensionProvider;
+import com.gigaspaces.query.extension.SpaceQueryExtension;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -30,11 +33,17 @@ public class DefaultQueryExtensionPathInfo extends QueryExtensionPathInfo implem
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 
+    private transient Class<? extends QueryExtensionProvider> providerClass;
+
     /**
      * Required for Externalizable
      */
     public DefaultQueryExtensionPathInfo() {
 
+    }
+
+    public DefaultQueryExtensionPathInfo(Class<? extends QueryExtensionProvider> providerClass) {
+        this.providerClass = providerClass;
     }
 
     @Override
@@ -43,6 +52,11 @@ public class DefaultQueryExtensionPathInfo extends QueryExtensionPathInfo implem
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    }
+
+    @Override
+    public Class<? extends QueryExtensionProvider> getQueryExtensionProviderClass() {
+        return providerClass;
     }
 
     @Override

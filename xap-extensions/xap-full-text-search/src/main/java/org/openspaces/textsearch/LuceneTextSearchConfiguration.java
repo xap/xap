@@ -88,7 +88,7 @@ public class LuceneTextSearchConfiguration {
     }
 
     private Analyzer initDefaultAnalyzer() {
-        return Utils.createAnalyzer(DEFAULT_ANALYZER_CLASS);
+        return createAnalyzer(DEFAULT_ANALYZER_CLASS);
     }
 
     private String initLocation(LuceneTextSearchQueryExtensionProvider provider, QueryExtensionRuntimeInfo info) {
@@ -153,6 +153,14 @@ public class LuceneTextSearchConfiguration {
 
     public int getMaxResults() {
         return _maxResults;
+    }
+
+    public static Analyzer createAnalyzer(Class analyzerClass) {
+        try {
+            return (Analyzer) analyzerClass.newInstance();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to instantiate analyzer " + analyzerClass, e);
+        }
     }
 
 }

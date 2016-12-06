@@ -17,6 +17,8 @@
 package com.gigaspaces.internal.query.predicate.comparison;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.QueryExtensionIndexManagerWrapper;
 
@@ -84,7 +86,9 @@ public class RelationPredicate extends ScalarSpacePredicate {
         super.writeExternal(out);
         IOUtils.writeString(out, namespace);
         IOUtils.writeString(out, typeName);
-        IOUtils.writeString(out, path);
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v12_1_0)) {
+            IOUtils.writeString(out, path);
+        }
         IOUtils.writeString(out, op);
     }
 
@@ -93,7 +97,9 @@ public class RelationPredicate extends ScalarSpacePredicate {
         super.readExternal(in);
         namespace = IOUtils.readString(in);
         typeName = IOUtils.readString(in);
-        path = IOUtils.readString(in);
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v12_1_0)) {
+            path = IOUtils.readString(in);
+        }
         op = IOUtils.readString(in);
     }
 }

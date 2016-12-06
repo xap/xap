@@ -16,6 +16,7 @@
 
 package org.openspaces.textsearch;
 
+import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.query.extension.metadata.DefaultQueryExtensionPathInfo;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -43,6 +44,11 @@ public class TextAnalyzerQueryExtensionPathInfo extends DefaultQueryExtensionPat
     }
 
     public TextAnalyzerQueryExtensionPathInfo(Class<? extends Analyzer> analyzerClass) {
+        this.analyzerClass = analyzerClass;
+    }
+
+    public TextAnalyzerQueryExtensionPathInfo(Class<? extends Analyzer> analyzerClass, Class<? extends QueryExtensionProvider> providerClass) {
+        super(providerClass);
         this.analyzerClass = analyzerClass;
     }
 
