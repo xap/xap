@@ -108,7 +108,7 @@ public class LuceneTextSearchTypeIndex implements Closeable {
     }
 
     private void addAnalyzer(Map<String, Analyzer> analyzerMap, String path, Class clazz) {
-        Analyzer analyzer = Utils.createAnalyzer(clazz);
+        Analyzer analyzer = LuceneTextSearchConfiguration.createAnalyzer(clazz);
         analyzerMap.put(path, analyzer);
     }
 

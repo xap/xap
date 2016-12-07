@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 
-package org.openspaces.textsearch;
+package com.gigaspaces.query.extension.metadata;
 
-import org.apache.lucene.analysis.Analyzer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * @author Vitaliy_Zinchenko
- * @since 12.1
+ * @author Niv Ingberg
+ * @since 11.0
  */
-final public class Utils {
+@com.gigaspaces.api.InternalApi
+public class QueryExtensionPropertyInfo {
+    private final Map<String, QueryExtensionPathInfo> pathsInfo = new HashMap<String, QueryExtensionPathInfo>();
 
-    public Utils() {
+    public Set<String> getPaths() {
+        return pathsInfo.keySet();
     }
 
-    static Analyzer createAnalyzer(Class analyzerClass) {
-        try {
-            return (Analyzer) analyzerClass.newInstance();
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Failed to instantiate analyzer " + analyzerClass, e);
-        }
+    public QueryExtensionPathInfo getPathInfo(String path) {
+        return pathsInfo.get(path);
     }
 
-    static String makePath(String property, String relativePath) {
-        return relativePath.length() == 0 ? property : property + "." + relativePath;
+    public void addPathInfo(String path, QueryExtensionPathInfo queryExtensionPathInfo) {
+        pathsInfo.put(path, queryExtensionPathInfo);
     }
-
 }

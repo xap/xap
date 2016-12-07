@@ -20,14 +20,13 @@ import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.SpacePropertyInfo;
 import com.gigaspaces.internal.metadata.SpaceTypeInfo;
 import com.gigaspaces.query.extension.QueryExtensionProvider;
-import com.gigaspaces.query.extension.QueryExtensionProvider.QueryExtensionPropertyInfo;
 import com.gigaspaces.query.extension.SpaceQueryExtension;
 import com.gigaspaces.query.extension.impl.QueryExtensionProviderCache;
 import com.gigaspaces.query.extension.metadata.DefaultQueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
+import com.gigaspaces.query.extension.metadata.QueryExtensionPropertyInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtensions;
-import com.gigaspaces.query.extension.metadata.typebuilder.QueryExtensionInfo;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -73,9 +72,14 @@ public class TypeQueryExtensionsImpl implements TypeQueryExtensions, Externaliza
         add(namespace, path, new DefaultQueryExtensionPathInfo());
     }
 
-    public void add(String path, QueryExtensionInfo queryExtensionInfo) {
-        String namespace = QueryExtensionProviderCache.getByClass(queryExtensionInfo.getProviderClass()).getNamespace();
-        add(namespace, path, queryExtensionInfo.getPathInfo());
+    public void add(String path, QueryExtensionPathInfo queryExtensionPathInfo) {
+        String namespace = QueryExtensionProviderCache.getByClass(queryExtensionPathInfo.getQueryExtensionProviderClass()).getNamespace();
+        add(namespace, path, queryExtensionPathInfo);
+    }
+
+    private void add(String namespace, String path, QueryExtensionPathInfo queryExtensionPathInfo) {
+        TypeQueryExtensionImpl typeQueryExtension = getOrCreateTypeQueryExtension(namespace);
+        typeQueryExtension.add(path, queryExtensionPathInfo);
     }
 
     private String getNamespace(Class<? extends Annotation> annotationType) {
@@ -99,12 +103,6 @@ public class TypeQueryExtensionsImpl implements TypeQueryExtensions, Externaliza
     @Override
     public TypeQueryExtension getByNamespace(String namespace) {
         return info.get(namespace);
-    }
-
-
-    private void add(String namespace, String path, QueryExtensionPathInfo queryExtensionPathInfo) {
-        TypeQueryExtensionImpl typeQueryExtension = getOrCreateTypeQueryExtension(namespace);
-        typeQueryExtension.add(path, queryExtensionPathInfo);
     }
 
     private TypeQueryExtensionImpl getOrCreateTypeQueryExtension(String namespace) {

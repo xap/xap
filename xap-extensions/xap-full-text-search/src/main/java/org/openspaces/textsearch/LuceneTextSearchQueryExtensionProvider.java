@@ -20,7 +20,7 @@ import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.query.extension.metadata.DefaultQueryExtensionPathInfo;
-import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
+import com.gigaspaces.query.extension.metadata.QueryExtensionPropertyInfo;
 
 import java.lang.annotation.Annotation;
 import java.util.Properties;
@@ -59,22 +59,22 @@ public class LuceneTextSearchQueryExtensionProvider extends QueryExtensionProvid
         QueryExtensionPropertyInfo result = new QueryExtensionPropertyInfo();
         if (annotation instanceof SpaceTextIndex) {
             SpaceTextIndex index = (SpaceTextIndex) annotation;
-            String path = Utils.makePath(property, index.path());
+            String path = makePath(property, index.path());
             result.addPathInfo(path, new DefaultQueryExtensionPathInfo());
         } else if (annotation instanceof SpaceTextIndexes) {
             SpaceTextIndexes indexes = (SpaceTextIndexes)annotation;
             for (SpaceTextIndex index: indexes.value()) {
-                String path = Utils.makePath(property, index.path());
+                String path = makePath(property, index.path());
                 result.addPathInfo(path, new DefaultQueryExtensionPathInfo());
             }
         } else if (annotation instanceof SpaceTextAnalyzer) {
             SpaceTextAnalyzer analyzer = (SpaceTextAnalyzer) annotation;
-            String path = Utils.makePath(property, analyzer.path());
+            String path = makePath(property, analyzer.path());
             result.addPathInfo(path, new TextAnalyzerQueryExtensionPathInfo(analyzer.analyzer()));
         } else if(annotation instanceof SpaceTextAnalyzers) {
             SpaceTextAnalyzers analyzers = (SpaceTextAnalyzers) annotation;
             for(SpaceTextAnalyzer analyzer: analyzers.value()) {
-                String path = Utils.makePath(property, analyzer.path());
+                String path = makePath(property, analyzer.path());
                 result.addPathInfo(path, new TextAnalyzerQueryExtensionPathInfo(analyzer.analyzer()));
             }
         }
@@ -88,6 +88,10 @@ public class LuceneTextSearchQueryExtensionProvider extends QueryExtensionProvid
 
     public String getCustomProperty(String key, String defaultValue) {
         return _customProperties.getProperty(key, defaultValue);
+    }
+
+    private static String makePath(String property, String relativePath) {
+        return relativePath.length() == 0 ? property : property + "." + relativePath;
     }
 
 }

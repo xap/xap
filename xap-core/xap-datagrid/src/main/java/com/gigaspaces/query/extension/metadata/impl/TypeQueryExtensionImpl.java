@@ -18,6 +18,7 @@ package com.gigaspaces.query.extension.metadata.impl;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
@@ -79,8 +80,7 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        final PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
-        if (version.greaterOrEquals(PlatformLogicalVersion.v12_1_0)) {
+        if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v12_1_0)) {
             writeExternal_v12_1(out);
         } else {
             writeExternal_v12_0(out);
@@ -106,8 +106,7 @@ public class TypeQueryExtensionImpl implements TypeQueryExtension, Externalizabl
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        final PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
-        if (version.greaterOrEquals(PlatformLogicalVersion.v12_1_0)) {
+        if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v12_1_0)) {
             readExternal_v12_1(in);
         } else {
             readExternal_v12_0(in);
