@@ -20,7 +20,10 @@ import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.query.extension.metadata.DefaultQueryExtensionPathInfo;
+import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPropertyInfo;
+
+import org.apache.lucene.analysis.Analyzer;
 
 import java.lang.annotation.Annotation;
 import java.util.Properties;
@@ -79,6 +82,14 @@ public class LuceneTextSearchQueryExtensionProvider extends QueryExtensionProvid
             }
         }
         return result;
+    }
+
+    public static QueryExtensionPathInfo analyzer(Class<? extends Analyzer> analyzerClass) {
+        return new TextAnalyzerQueryExtensionPathInfo(analyzerClass, LuceneTextSearchQueryExtensionProvider.class);
+    }
+
+    public static QueryExtensionPathInfo index() {
+        return new DefaultQueryExtensionPathInfo(LuceneTextSearchQueryExtensionProvider.class);
     }
 
     public LuceneTextSearchQueryExtensionProvider setCustomProperty(String key, String value) {
