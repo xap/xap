@@ -4089,7 +4089,7 @@ public class SpaceEngine implements ISpaceModeListener {
                 template.setOptimizedForBlobStoreClearOp(ITemplateHolder.OptimizedForBlobStoreClearOp.TRUE);
         }
         IEntryHolder entry = (considerOptimizedClearForBlobstore && template.getOptimizedForBlobStoreClearOp() == ITemplateHolder.OptimizedForBlobStoreClearOp.TRUE) ?
-                ((OffHeapRefEntryCacheInfo) pEntry).getLatestEntryVersion(_cacheManager, false/*attach*/, null /*lastKnownEntry*/, context, true/* onlyIndexesPart*/) : pEntry.getEntryHolder(_cacheManager, context);
+                ((OffHeapRefEntryCacheInfo) pEntry).getLatestEntryVersion(_cacheManager, false/*attach*/, null /*lastKnownEntry*/, context, false/* onlyIndexesPart*/) : pEntry.getEntryHolder(_cacheManager, context);
 
         if ((template.getExpirationTime() == 0 || !template.isInCache()) && template.getBatchOperationContext().isInProcessedUids(entry.getUID()))
             return; //when template is inserted we check under lock
