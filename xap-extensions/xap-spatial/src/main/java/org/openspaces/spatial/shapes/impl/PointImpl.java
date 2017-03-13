@@ -16,8 +16,8 @@
 
 package org.openspaces.spatial.shapes.impl;
 
-import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.shape.Shape;
+import org.locationtech.spatial4j.context.SpatialContext;
+import org.locationtech.spatial4j.shape.Shape;
 
 import org.openspaces.spatial.ShapeFormat;
 import org.openspaces.spatial.shapes.Point;
@@ -37,7 +37,7 @@ public class PointImpl implements Point, Spatial4jShapeProvider, Externalizable 
 
     private double x;
     private double y;
-    private volatile transient com.spatial4j.core.shape.Shape spatial4jShape;
+    private volatile transient org.locationtech.spatial4j.shape.Shape spatial4jShape;
 
     public PointImpl() {
     }
@@ -94,7 +94,7 @@ public class PointImpl implements Point, Spatial4jShapeProvider, Externalizable 
 
     @Override
     public Shape getSpatial4jShape(SpatialContext spatialContext) {
-        com.spatial4j.core.shape.Shape result = this.spatial4jShape;
+        org.locationtech.spatial4j.shape.Shape result = this.spatial4jShape;
         if (result == null) {
             result = spatialContext.makePoint(x, y);
             this.spatial4jShape = result;

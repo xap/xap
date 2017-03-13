@@ -17,11 +17,11 @@
 package org.openspaces.spatial.spi;
 
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
-import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.context.SpatialContextFactory;
-import com.spatial4j.core.context.jts.JtsSpatialContext;
-import com.spatial4j.core.context.jts.JtsSpatialContextFactory;
-import com.spatial4j.core.shape.impl.RectangleImpl;
+import org.locationtech.spatial4j.context.SpatialContext;
+import org.locationtech.spatial4j.context.SpatialContextFactory;
+import org.locationtech.spatial4j.context.jts.JtsSpatialContext;
+import org.locationtech.spatial4j.context.jts.JtsSpatialContextFactory;
+import org.locationtech.spatial4j.shape.impl.RectangleImpl;
 
 import org.apache.lucene.spatial.SpatialStrategy;
 import org.apache.lucene.spatial.bbox.BBoxStrategy;
@@ -218,7 +218,7 @@ public class LuceneSpatialConfiguration {
                 return new StrategyFactory(spatialStrategy) {
                     @Override
                     public SpatialStrategy createStrategy(String fieldName) {
-                        return new BBoxStrategy(_spatialContext, fieldName);
+                        return BBoxStrategy.newInstance(_spatialContext, fieldName);
                     }
                 };
             }

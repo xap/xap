@@ -16,8 +16,8 @@
 
 package org.openspaces.spatial.spatial4j;
 
-import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.shape.Shape;
+import org.locationtech.spatial4j.context.SpatialContext;
+import org.locationtech.spatial4j.shape.Shape;
 
 /**
  * A helper interface for converting XAP shapes to Spatial4j shapes.

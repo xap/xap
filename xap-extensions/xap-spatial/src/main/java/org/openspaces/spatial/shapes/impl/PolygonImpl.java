@@ -16,9 +16,9 @@
 
 package org.openspaces.spatial.shapes.impl;
 
-import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.shape.Rectangle;
-import com.spatial4j.core.shape.Shape;
+import org.locationtech.spatial4j.context.SpatialContext;
+import org.locationtech.spatial4j.shape.Rectangle;
+import org.locationtech.spatial4j.shape.Shape;
 
 import org.openspaces.spatial.ShapeFormat;
 import org.openspaces.spatial.shapes.Point;
@@ -42,7 +42,7 @@ public class PolygonImpl implements Polygon, Spatial4jShapeProvider, Externaliza
 
     private Point[] points;
     private transient int hashcode;
-    private volatile transient com.spatial4j.core.shape.Shape spatial4jShape;
+    private volatile transient org.locationtech.spatial4j.shape.Shape spatial4jShape;
 
     public PolygonImpl() {
     }
@@ -176,7 +176,7 @@ public class PolygonImpl implements Polygon, Spatial4jShapeProvider, Externaliza
 
     @Override
     public Shape getSpatial4jShape(SpatialContext spatialContext) {
-        com.spatial4j.core.shape.Shape result = this.spatial4jShape;
+        org.locationtech.spatial4j.shape.Shape result = this.spatial4jShape;
         if (result == null) {
             try {
                 result = spatialContext.getFormats().getWktReader().read(toString(ShapeFormat.WKT));
@@ -192,12 +192,12 @@ public class PolygonImpl implements Polygon, Spatial4jShapeProvider, Externaliza
         return result;
     }
 
-    private static boolean isRectangle(com.spatial4j.core.shape.Shape shape) {
-        return shape instanceof com.spatial4j.core.shape.Rectangle;
+    private static boolean isRectangle(org.locationtech.spatial4j.shape.Shape shape) {
+        return shape instanceof org.locationtech.spatial4j.shape.Rectangle;
     }
 
-    private static double getRectangleCoordinate(com.spatial4j.core.shape.Shape shape, int index, int ordinate) {
-        com.spatial4j.core.shape.Rectangle rectangle = (Rectangle) shape;
+    private static double getRectangleCoordinate(org.locationtech.spatial4j.shape.Shape shape, int index, int ordinate) {
+        org.locationtech.spatial4j.shape.Rectangle rectangle = (Rectangle) shape;
         switch (index) {
             case 0:
                 return ordinate == 0 ? rectangle.getMinX() : rectangle.getMinY();
@@ -214,8 +214,8 @@ public class PolygonImpl implements Polygon, Spatial4jShapeProvider, Externaliza
         }
     }
 
-    private static com.vividsolutions.jts.geom.Coordinate[] getCoordinates(com.spatial4j.core.shape.Shape shape) {
-        return ((com.spatial4j.core.shape.jts.JtsGeometry) shape).getGeom().getCoordinates();
+    private static com.vividsolutions.jts.geom.Coordinate[] getCoordinates(org.locationtech.spatial4j.shape.Shape shape) {
+        return ((org.locationtech.spatial4j.shape.jts.JtsGeometry) shape).getGeom().getCoordinates();
     }
 
     @Override

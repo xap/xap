@@ -17,7 +17,7 @@
 package org.openspaces.spatial;
 
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
-import com.spatial4j.core.shape.Shape;
+import org.locationtech.spatial4j.shape.Shape;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -103,7 +103,7 @@ public class LuceneSpatialQueryExtensionIndexManagerTest {
         Assert.assertNotNull(spatial4jPolygon);
     }
 
-    @Test(expected = com.spatial4j.core.exception.InvalidShapeException.class)
+    @Test(expected = org.locationtech.spatial4j.exception.InvalidShapeException.class)
     public void testSelfIntersectionPolygon() throws Exception {
 
         Polygon concavePolygon = polygon(point(5, 5), point(5, 0), point(2.5, 7.5), point(0, 0), point(0, 5));

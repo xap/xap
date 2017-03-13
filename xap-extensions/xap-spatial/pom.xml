@@ -13,7 +13,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <luceneVersion>5.3.0</luceneVersion>
+        <luceneVersion>6.4.2</luceneVersion>
         <jtsVersion>1.13</jtsVersion>
     </properties>
 
@@ -39,7 +39,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-spatial</artifactId>
+            <artifactId>lucene-spatial-extras</artifactId>
             <version>${luceneVersion}</version>
         </dependency>
         <dependency>
@@ -66,9 +66,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.spatial4j</groupId>
+            <groupId>org.locationtech.spatial4j</groupId>
             <artifactId>spatial4j</artifactId>
-            <version>0.5</version>
+            <version>0.6</version>
         </dependency>
 
         <dependency>

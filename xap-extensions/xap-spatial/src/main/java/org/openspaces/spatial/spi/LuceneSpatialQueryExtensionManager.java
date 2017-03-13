@@ -186,7 +186,7 @@ public class LuceneSpatialQueryExtensionManager extends QueryExtensionManager {
         return doc;
     }
 
-    public com.spatial4j.core.shape.Shape toShape(Object obj) {
+    public org.locationtech.spatial4j.shape.Shape toShape(Object obj) {
         if (obj instanceof Spatial4jShapeProvider)
             return ((Spatial4jShapeProvider) obj).getSpatial4jShape(_luceneConfiguration.getSpatialContext());
         throw new IllegalArgumentException("Unsupported shape [" + obj.getClass().getName() + "]");

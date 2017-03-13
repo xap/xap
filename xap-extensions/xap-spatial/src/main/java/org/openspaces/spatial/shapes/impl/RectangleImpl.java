@@ -16,8 +16,8 @@
 
 package org.openspaces.spatial.shapes.impl;
 
-import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.shape.Shape;
+import org.locationtech.spatial4j.context.SpatialContext;
+import org.locationtech.spatial4j.shape.Shape;
 
 import org.openspaces.spatial.ShapeFormat;
 import org.openspaces.spatial.shapes.Rectangle;
@@ -40,7 +40,7 @@ public class RectangleImpl implements Rectangle, Spatial4jShapeProvider, Externa
     private double maxX;
     private double minY;
     private double maxY;
-    private volatile transient com.spatial4j.core.shape.Shape spatial4jShape;
+    private volatile transient org.locationtech.spatial4j.shape.Shape spatial4jShape;
 
     public RectangleImpl() {
     }
@@ -132,7 +132,7 @@ public class RectangleImpl implements Rectangle, Spatial4jShapeProvider, Externa
 
     @Override
     public Shape getSpatial4jShape(SpatialContext spatialContext) {
-        com.spatial4j.core.shape.Shape result = this.spatial4jShape;
+        org.locationtech.spatial4j.shape.Shape result = this.spatial4jShape;
         if (result == null) {
             result = spatialContext.makeRectangle(minX, maxX, minY, maxY);
             this.spatial4jShape = result;

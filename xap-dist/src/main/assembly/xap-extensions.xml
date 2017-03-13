@@ -144,9 +144,9 @@
                 <include>org.apache.lucene:lucene-queries</include>
                 <include>org.apache.lucene:lucene-sandbox</include>
                 <include>org.apache.lucene:lucene-misc</include>
-                <include>org.apache.lucene:lucene-spatial</include>
+                <include>org.apache.lucene:lucene-spatial-extras</include>
                 <include>com.vividsolutions:jts</include>
-                <include>com.spatial4j:spatial4j</include>
+                <include>org.locationtech.spatial4j:spatial4j</include>
                 <include>org.noggit:noggit</include>
             </includes>
         </dependencySet>

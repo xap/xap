@@ -17,9 +17,9 @@
 package org.openspaces.spatial;
 
 import com.gigaspaces.internal.utils.Assert;
-import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.context.jts.JtsSpatialContext;
-import com.spatial4j.core.shape.jts.JtsGeometry;
+import org.locationtech.spatial4j.context.SpatialContext;
+import org.locationtech.spatial4j.context.jts.JtsSpatialContext;
+import org.locationtech.spatial4j.shape.jts.JtsGeometry;
 
 import org.openspaces.spatial.shapes.Circle;
 import org.openspaces.spatial.shapes.LineString;
@@ -168,8 +168,8 @@ public class ShapeFactory {
         }
     }
 
-    private static com.spatial4j.core.io.ShapeReader getReader(ShapeFormat shapeFormat) {
-        com.spatial4j.core.io.ShapeReader result;
+    private static org.locationtech.spatial4j.io.ShapeReader getReader(ShapeFormat shapeFormat) {
+        org.locationtech.spatial4j.io.ShapeReader result;
         switch (shapeFormat) {
             case WKT:
                 result = getDefaultSpatialContext().getFormats().getWktReader();
@@ -189,33 +189,33 @@ public class ShapeFactory {
         return JtsSpatialContext.GEO;
     }
 
-    private static Shape fromSpatial4JShape(com.spatial4j.core.shape.Shape shape) {
-        if (shape instanceof com.spatial4j.core.shape.Point) {
-            com.spatial4j.core.shape.Point point = (com.spatial4j.core.shape.Point) shape;
+    private static Shape fromSpatial4JShape(org.locationtech.spatial4j.shape.Shape shape) {
+        if (shape instanceof org.locationtech.spatial4j.shape.Point) {
+            org.locationtech.spatial4j.shape.Point point = (org.locationtech.spatial4j.shape.Point) shape;
             return point(point.getX(), point.getY());
         }
-        if (shape instanceof com.spatial4j.core.shape.Circle) {
-            com.spatial4j.core.shape.Circle circle = (com.spatial4j.core.shape.Circle) shape;
+        if (shape instanceof org.locationtech.spatial4j.shape.Circle) {
+            org.locationtech.spatial4j.shape.Circle circle = (org.locationtech.spatial4j.shape.Circle) shape;
             return circle(point(circle.getCenter().getX(), circle.getCenter().getY()), circle.getRadius());
         }
-        if (shape instanceof com.spatial4j.core.shape.Rectangle) {
-            com.spatial4j.core.shape.Rectangle rectangle = (com.spatial4j.core.shape.Rectangle) shape;
+        if (shape instanceof org.locationtech.spatial4j.shape.Rectangle) {
+            org.locationtech.spatial4j.shape.Rectangle rectangle = (org.locationtech.spatial4j.shape.Rectangle) shape;
             return rectangle(rectangle.getMinX(), rectangle.getMaxX(), rectangle.getMinY(), rectangle.getMaxY());
         }
-        if (shape instanceof com.spatial4j.core.shape.impl.BufferedLineString) {
-            com.spatial4j.core.shape.impl.BufferedLineString spatialLineString = (com.spatial4j.core.shape.impl.BufferedLineString) shape;
-            List<com.spatial4j.core.shape.Point> spatialPoints = spatialLineString.getPoints();
+        if (shape instanceof org.locationtech.spatial4j.shape.impl.BufferedLineString) {
+            org.locationtech.spatial4j.shape.impl.BufferedLineString spatialLineString = (org.locationtech.spatial4j.shape.impl.BufferedLineString) shape;
+            List<org.locationtech.spatial4j.shape.Point> spatialPoints = spatialLineString.getPoints();
             Point[] points = new Point[spatialPoints.size()];
             for (int i = 0; i < points.length; i++)
                 points[i] = point(spatialPoints.get(i).getX(), spatialPoints.get(i).getY());
             return lineString(points);
         }
-        if (shape instanceof com.spatial4j.core.shape.jts.JtsGeometry)
+        if (shape instanceof org.locationtech.spatial4j.shape.jts.JtsGeometry)
             return fromJtsGeometry((JtsGeometry) shape);
         throw new IllegalArgumentException("Unsupported shape type: " + shape.getClass().getName());
     }
 
-    private static Shape fromJtsGeometry(com.spatial4j.core.shape.jts.JtsGeometry shape) {
+    private static Shape fromJtsGeometry(org.locationtech.spatial4j.shape.jts.JtsGeometry shape) {
         com.vividsolutions.jts.geom.Coordinate[] coordinates = shape.getGeom().getCoordinates();
         Point[] points = new Point[coordinates.length];
         for (int i = 0; i < coordinates.length; i++)

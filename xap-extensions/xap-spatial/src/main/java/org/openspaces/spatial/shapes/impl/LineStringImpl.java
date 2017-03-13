@@ -16,9 +16,9 @@
 
 package org.openspaces.spatial.shapes.impl;
 
-import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.shape.Shape;
-import com.spatial4j.core.shape.impl.BufferedLineString;
+import org.locationtech.spatial4j.context.SpatialContext;
+import org.locationtech.spatial4j.shape.Shape;
+import org.locationtech.spatial4j.shape.impl.BufferedLineString;
 
 import org.openspaces.spatial.ShapeFormat;
 import org.openspaces.spatial.shapes.LineString;
@@ -43,7 +43,7 @@ public class LineStringImpl implements LineString, Spatial4jShapeProvider, Exter
 
     private Point[] points;
     private transient int hashcode;
-    private volatile transient com.spatial4j.core.shape.Shape spatial4jShape;
+    private volatile transient org.locationtech.spatial4j.shape.Shape spatial4jShape;
 
     public LineStringImpl() {
     }
@@ -166,9 +166,9 @@ public class LineStringImpl implements LineString, Spatial4jShapeProvider, Exter
 
     @Override
     public Shape getSpatial4jShape(SpatialContext spatialContext) {
-        com.spatial4j.core.shape.Shape result = this.spatial4jShape;
+        org.locationtech.spatial4j.shape.Shape result = this.spatial4jShape;
         if (result == null) {
-            ArrayList<com.spatial4j.core.shape.Point> spatialPoints = new ArrayList<com.spatial4j.core.shape.Point>(points.length);
+            ArrayList<org.locationtech.spatial4j.shape.Point> spatialPoints = new ArrayList<org.locationtech.spatial4j.shape.Point>(points.length);
             for (Point p : points)
                 spatialPoints.add(spatialContext.makePoint(p.getX(), p.getY()));
             result = spatialContext.makeLineString(spatialPoints);
@@ -179,14 +179,14 @@ public class LineStringImpl implements LineString, Spatial4jShapeProvider, Exter
     }
 
     private boolean isJts() {
-        return spatial4jShape instanceof com.spatial4j.core.shape.jts.JtsGeometry;
+        return spatial4jShape instanceof org.locationtech.spatial4j.shape.jts.JtsGeometry;
     }
 
     private com.vividsolutions.jts.geom.Coordinate[] getJtsCoordinates() {
-        return ((com.spatial4j.core.shape.jts.JtsGeometry) spatial4jShape).getGeom().getCoordinates();
+        return ((org.locationtech.spatial4j.shape.jts.JtsGeometry) spatial4jShape).getGeom().getCoordinates();
     }
 
-    private List<com.spatial4j.core.shape.Point> getSpatialPoints() {
+    private List<org.locationtech.spatial4j.shape.Point> getSpatialPoints() {
         return ((BufferedLineString) spatial4jShape).getPoints();
     }
 

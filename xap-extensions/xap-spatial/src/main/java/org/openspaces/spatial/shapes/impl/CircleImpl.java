@@ -16,8 +16,8 @@
 
 package org.openspaces.spatial.shapes.impl;
 
-import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.shape.Shape;
+import org.locationtech.spatial4j.context.SpatialContext;
+import org.locationtech.spatial4j.shape.Shape;
 
 import org.openspaces.spatial.ShapeFormat;
 import org.openspaces.spatial.shapes.Circle;
@@ -39,7 +39,7 @@ public class CircleImpl implements Circle, Spatial4jShapeProvider, Externalizabl
     private double centerX;
     private double centerY;
     private double radius;
-    private volatile transient com.spatial4j.core.shape.Shape spatial4jShape;
+    private volatile transient org.locationtech.spatial4j.shape.Shape spatial4jShape;
 
     public CircleImpl() {
     }
@@ -111,7 +111,7 @@ public class CircleImpl implements Circle, Spatial4jShapeProvider, Externalizabl
 
     @Override
     public Shape getSpatial4jShape(SpatialContext spatialContext) {
-        com.spatial4j.core.shape.Shape result = this.spatial4jShape;
+        org.locationtech.spatial4j.shape.Shape result = this.spatial4jShape;
         if (result == null) {
             result = spatialContext.makeCircle(centerX, centerY, radius);
             this.spatial4jShape = result;
