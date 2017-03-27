@@ -72,24 +72,31 @@ public class QuiesceHandler {
         }
     }
 
-    public synchronized void setQuiesceMode(QuiesceStateChangedEvent newQuiesceInfo) {
+    public void setQuiesceMode(QuiesceStateChangedEvent newQuiesceInfo) {
+        Guard newQuard = null;
+        if (newQuiesceInfo.getQuiesceState() == QuiesceState.QUIESCED) {
+            String errorMessage = "Operation cannot be executed on a quiesced space [" + _spaceImpl.getServiceName() + "]";
+            if (StringUtils.hasLength(newQuiesceInfo.getDescription()))
+                errorMessage += ", description: " + newQuiesceInfo.getDescription();
+            newQuard = new Guard(newQuiesceInfo.getToken(), null, errorMessage);
+        }
+        updateGuard(newQuard);
+    }
+
+    private synchronized void updateGuard(Guard newGuard) {
         if (_supported) {
             QuiesceState currState = _guard != null ? QuiesceState.QUIESCED : QuiesceState.UNQUIESCED;
-            if (currState != newQuiesceInfo.getQuiesceState()) {
+            QuiesceState newState = newGuard != null ? QuiesceState.QUIESCED : QuiesceState.UNQUIESCED;
+            if (currState != newState) {
                 Guard prevGuard = _guard;
-                if (newQuiesceInfo.getQuiesceState() == QuiesceState.QUIESCED) {
-                    String errorMessage = "Operation cannot be executed on a quiesced space [" + _spaceImpl.getServiceName() + "]";
-                    if (StringUtils.hasLength(newQuiesceInfo.getDescription()))
-                            errorMessage += ", description: " + newQuiesceInfo.getDescription();
-                    _guard = new Guard(newQuiesceInfo.getToken(), null, errorMessage);
+                _guard = newGuard;
+                if (newGuard != null) {
                     //throw exception on all pending op templates
                     if (_spaceImpl.getEngine() != null)
                         _spaceImpl.getEngine().getCacheManager().getTemplateExpirationManager().returnWithExceptionFromAllPendingTemplates(_guard.exception);
-                } else {
-                    _guard = null;
                 }
                 if (_logger.isLoggable(Level.INFO))
-                    _logger.log(Level.INFO, "Quiesce state changed to " + newQuiesceInfo.getQuiesceState());
+                    _logger.log(Level.INFO, "Quiesce state changed to " + newState);
                 if (prevGuard != null)
                     prevGuard.close();
             }
