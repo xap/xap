@@ -41,33 +41,32 @@ public class QuiesceHandler {
     private final Logger _logger;
     private final SpaceImpl _spaceImpl;
     private final boolean _supported;
-    private volatile QuiesceState _state;
-    private QuiesceToken _quiesceToken;
-    private String _errorMessage;
+    private volatile QuiesceGuard _guard;
 
     public QuiesceHandler(SpaceImpl spaceImpl, QuiesceStateChangedEvent quiesceStateChangedEvent) {
         _spaceImpl = spaceImpl;
         _logger = Logger.getLogger(Constants.LOGGER_QUIESCE + '.' + spaceImpl.getNodeName());
         _supported = !QUIESCE_DISABLED && !_spaceImpl.isLocalCache();
-        _state = QuiesceState.UNQUIESCED;
+        _guard = null;
         if (quiesceStateChangedEvent != null && quiesceStateChangedEvent.getQuiesceState() == QuiesceState.QUIESCED)
             setQuiesceMode(quiesceStateChangedEvent);
     }
 
     public boolean isQuiesced() {
-        return _state == QuiesceState.QUIESCED;
+        // Concurrency: snapshot volatile _guard into local variable
+        final QuiesceGuard currGuard = _guard;
+        return currGuard != null;
     }
 
     public synchronized void setQuiesceMode(QuiesceStateChangedEvent quiesceStateChangedEvent) {
         if (_supported) {
-            if (_state != quiesceStateChangedEvent.getQuiesceState()) {
-                _state = quiesceStateChangedEvent.getQuiesceState();
-                if (_state == QuiesceState.QUIESCED)
-                    quiesce(quiesceStateChangedEvent);
-                else
-                    unquiesce();
+            QuiesceState currState = _guard != null ? QuiesceState.QUIESCED : QuiesceState.UNQUIESCED;
+            if (currState != quiesceStateChangedEvent.getQuiesceState()) {
+                _guard = quiesceStateChangedEvent.getQuiesceState() == QuiesceState.QUIESCED
+                        ? new QuiesceGuard(quiesceStateChangedEvent, _spaceImpl)
+                        : null;
                 if (_logger.isLoggable(Level.INFO))
-                    _logger.log(Level.INFO, "Quiesce state changed to " + _state);
+                    _logger.log(Level.INFO, "Quiesce state changed to " + quiesceStateChangedEvent.getQuiesceState());
             }
         } else {
             if (QUIESCE_DISABLED)
@@ -77,26 +76,14 @@ public class QuiesceHandler {
         }
     }
 
-    private void quiesce(QuiesceStateChangedEvent quiesceStateChangedEvent) {
-        _quiesceToken = quiesceStateChangedEvent.getToken() != null ? quiesceStateChangedEvent.getToken() : EmptyToken.INSTANCE;
-        _errorMessage = "Operation cannot be executed on a quiesced space [" + _spaceImpl.getServiceName() + "]";
-        if (StringUtils.hasLength(quiesceStateChangedEvent.getDescription()))
-            _errorMessage += ", description: " + quiesceStateChangedEvent.getDescription();
-        //throw exception on all pending op templates
-        if (_spaceImpl.getEngine() != null)
-            _spaceImpl.getEngine().getCacheManager().getTemplateExpirationManager().returnWithExceptionFromAllPendingTemplates(new QuiesceException(_errorMessage));
-    }
-
-    private void unquiesce() {
-        _quiesceToken = null;
-        _errorMessage = null;
-    }
-
     //disable any non-admin op if q mode on
-    public void checkAllowedOp(QuiesceToken token) {
+    public void checkAllowedOp(QuiesceToken operationToken) {
         if (_supported) {
-            if (_state == QuiesceState.QUIESCED && !_quiesceToken.equals(token))
-                throw new QuiesceException(_errorMessage);
+            // Concurrency: snapshot volatile _guard into local variable
+            final QuiesceGuard currGuard = _guard;
+            if (currGuard != null) {
+                currGuard.checkAllowedOp(operationToken);
+            }
         }
     }
 
@@ -115,5 +102,27 @@ public class QuiesceHandler {
 
     public QuiesceToken createSpaceNameToken() {
         return QuiesceTokenFactory.createStringToken(_spaceImpl.getName());
+    }
+
+    private static class QuiesceGuard {
+        private final QuiesceToken token;
+        private final QuiesceException quiesceException;
+
+        public QuiesceGuard(QuiesceStateChangedEvent quiesceStateChangedEvent, SpaceImpl space) {
+            token = quiesceStateChangedEvent.getToken() != null ? quiesceStateChangedEvent.getToken() : EmptyToken.INSTANCE;
+            String errorMessage = "Operation cannot be executed on a quiesced space [" + space.getServiceName() + "]";
+            if (StringUtils.hasLength(quiesceStateChangedEvent.getDescription()))
+                errorMessage += ", description: " + quiesceStateChangedEvent.getDescription();
+            quiesceException = new QuiesceException(errorMessage);
+            //throw exception on all pending op templates
+            if (space.getEngine() != null)
+                space.getEngine().getCacheManager().getTemplateExpirationManager().returnWithExceptionFromAllPendingTemplates(quiesceException);
+        }
+
+        public void checkAllowedOp(QuiesceToken operationToken) {
+            if (token.equals(operationToken))
+                return;
+            throw quiesceException;
+        }
     }
 }
