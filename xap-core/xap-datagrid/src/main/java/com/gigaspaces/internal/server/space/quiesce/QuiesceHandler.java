@@ -62,6 +62,12 @@ public class QuiesceHandler {
         return currGuard != null;
     }
 
+    public boolean isSuspended() {
+        // Concurrency: snapshot volatile _guard into local variable
+        final Guard currGuard = _guard;
+        return currGuard != null && currGuard.suspendLatch != null;
+    }
+
     //disable any non-admin op if q mode on
     public void checkAllowedOp(QuiesceToken operationToken) {
         if (_supported) {
@@ -73,14 +79,18 @@ public class QuiesceHandler {
     }
 
     public void setQuiesceMode(QuiesceStateChangedEvent newQuiesceInfo) {
-        Guard newQuard = null;
-        if (newQuiesceInfo.getQuiesceState() == QuiesceState.QUIESCED) {
-            String errorMessage = "Operation cannot be executed on a quiesced space [" + _spaceImpl.getServiceName() + "]";
-            if (StringUtils.hasLength(newQuiesceInfo.getDescription()))
-                errorMessage += ", description: " + newQuiesceInfo.getDescription();
-            newQuard = new Guard(newQuiesceInfo.getToken(), null, errorMessage);
-        }
+        Guard newQuard = newQuiesceInfo.getQuiesceState() == QuiesceState.QUIESCED
+                ? new Guard(newQuiesceInfo.getDescription(), newQuiesceInfo.getToken(), false)
+                : null;
         updateGuard(newQuard);
+    }
+
+    public void suspend(String description) {
+        updateGuard(new Guard(description, createSpaceNameToken(), true));
+    }
+
+    public void unsuspend() {
+        updateGuard(null);
     }
 
     private synchronized void updateGuard(Guard newGuard) {
@@ -125,14 +135,17 @@ public class QuiesceHandler {
         return QuiesceTokenFactory.createStringToken(_spaceImpl.getName());
     }
 
-    private static class Guard implements Closeable {
+    private class Guard implements Closeable {
         private final QuiesceToken token;
         private final CountDownLatch suspendLatch;
         private final QuiesceException exception;
 
-        public Guard(QuiesceToken token, CountDownLatch latch, String errorMessage) {
+        public Guard(String description, QuiesceToken token, boolean suspend) {
             this.token = token != null ? token : EmptyToken.INSTANCE;
-            this.suspendLatch = latch;
+            this.suspendLatch = suspend ? new CountDownLatch(1) : null;
+            String errorMessage = "Operation cannot be executed - space [" + _spaceImpl.getServiceName() + "] is " +
+                    (suspend ? "suspended" : "quiesced") +
+                    (StringUtils.hasLength(description) ? " (" + description + ")" : "");
             this.exception = new QuiesceException(errorMessage);
         }
 
