@@ -26,6 +26,10 @@ import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.kernel.SystemProperties;
 
+import java.io.Closeable;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -58,12 +62,26 @@ public class QuiesceHandler {
         return currGuard != null;
     }
 
+    //disable any non-admin op if q mode on
+    public void checkAllowedOp(QuiesceToken operationToken) {
+        if (_supported) {
+            // Concurrency: snapshot volatile _guard into local variable
+            final Guard currGuard = _guard;
+            if (currGuard != null)
+                currGuard.guard(operationToken);
+        }
+    }
+
     public synchronized void setQuiesceMode(QuiesceStateChangedEvent newQuiesceInfo) {
         if (_supported) {
             QuiesceState currState = _guard != null ? QuiesceState.QUIESCED : QuiesceState.UNQUIESCED;
             if (currState != newQuiesceInfo.getQuiesceState()) {
+                Guard prevGuard = _guard;
                 if (newQuiesceInfo.getQuiesceState() == QuiesceState.QUIESCED) {
-                    _guard = new Guard(newQuiesceInfo.getToken(), newQuiesceInfo.getDescription(), _spaceImpl.getServiceName());
+                    String errorMessage = "Operation cannot be executed on a quiesced space [" + _spaceImpl.getServiceName() + "]";
+                    if (StringUtils.hasLength(newQuiesceInfo.getDescription()))
+                            errorMessage += ", description: " + newQuiesceInfo.getDescription();
+                    _guard = new Guard(newQuiesceInfo.getToken(), null, errorMessage);
                     //throw exception on all pending op templates
                     if (_spaceImpl.getEngine() != null)
                         _spaceImpl.getEngine().getCacheManager().getTemplateExpirationManager().returnWithExceptionFromAllPendingTemplates(_guard.exception);
@@ -72,24 +90,14 @@ public class QuiesceHandler {
                 }
                 if (_logger.isLoggable(Level.INFO))
                     _logger.log(Level.INFO, "Quiesce state changed to " + newQuiesceInfo.getQuiesceState());
+                if (prevGuard != null)
+                    prevGuard.close();
             }
         } else {
             if (QUIESCE_DISABLED)
                 _logger.log(Level.SEVERE, "Quiesce is not supported because the '" + SystemProperties.DISABLE_QUIESCE_MODE + "' was set");
             if (_spaceImpl.isLocalCache())
                 _logger.log(Level.SEVERE, "Quiesce is not supported for local-cache/local-view");
-        }
-    }
-
-    //disable any non-admin op if q mode on
-    public void checkAllowedOp(QuiesceToken operationToken) {
-        if (_supported) {
-            // Concurrency: snapshot volatile _guard into local variable
-            final Guard currGuard = _guard;
-            if (currGuard != null) {
-                if (!currGuard.token.equals(operationToken))
-                    throw currGuard.exception;
-            }
         }
     }
 
@@ -110,14 +118,52 @@ public class QuiesceHandler {
         return QuiesceTokenFactory.createStringToken(_spaceImpl.getName());
     }
 
-    private static class Guard {
+    private static class Guard implements Closeable {
         private final QuiesceToken token;
+        private final CountDownLatch suspendLatch;
         private final QuiesceException exception;
 
-        public Guard(QuiesceToken token, String description, String memberName) {
+        public Guard(QuiesceToken token, CountDownLatch latch, String errorMessage) {
             this.token = token != null ? token : EmptyToken.INSTANCE;
-            this.exception = new QuiesceException("Operation cannot be executed on a quiesced space [" + memberName + "]" +
-                    (StringUtils.hasLength(description) ? ", description: " + description : ""));
+            this.suspendLatch = latch;
+            this.exception = new QuiesceException(errorMessage);
+        }
+
+        @Override
+        public void close() {
+            if (suspendLatch != null)
+                suspendLatch.countDown();
+        }
+
+        public void guard(QuiesceToken operationToken) {
+            if (!token.equals(operationToken)) {
+                if (suspendLatch != null) {
+                    if (safeAwait()) {
+                        // Wait a random bit before returning to avoid storming the space.
+                        safeSleep(new Random().nextInt(1000));
+                        return;
+                    }
+                }
+                throw exception;
+            }
+        }
+
+        private boolean safeAwait() {
+            try {
+                // TODO: Timeout should be configurable.
+                return suspendLatch.await(20, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return suspendLatch.getCount() == 0;
+            }
+        }
+
+        private void safeSleep(long millis) {
+            try {
+                Thread.sleep(millis);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 }
