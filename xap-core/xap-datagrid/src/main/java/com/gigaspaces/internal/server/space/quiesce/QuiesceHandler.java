@@ -30,7 +30,6 @@ import java.io.Closeable;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -79,43 +78,87 @@ public class QuiesceHandler {
     }
 
     public void setQuiesceMode(QuiesceStateChangedEvent newQuiesceInfo) {
-        Guard newQuard = newQuiesceInfo.getQuiesceState() == QuiesceState.QUIESCED
-                ? new Guard(newQuiesceInfo.getDescription(), newQuiesceInfo.getToken(), false)
-                : null;
-        updateGuard(newQuard);
+        if (newQuiesceInfo.getQuiesceState() == QuiesceState.QUIESCED)
+            quiesce(newQuiesceInfo.getDescription(), newQuiesceInfo.getToken());
+        else
+            unquiesce();
+    }
+
+    public void quiesce(String description, QuiesceToken token) {
+        if (addGuard(new Guard(description, token, false))) {
+            // Cancel (throw exception) on all pending op templates
+            if (_spaceImpl.getEngine() != null)
+                _spaceImpl.getEngine().getCacheManager().getTemplateExpirationManager().returnWithExceptionFromAllPendingTemplates(_guard.exception);
+        }
+    }
+
+    public void unquiesce() {
+        removeGuard(false);
     }
 
     public void suspend(String description) {
-        updateGuard(new Guard(description, createSpaceNameToken(), true));
+        addGuard(new Guard(description, createSpaceNameToken(), true));
     }
 
     public void unsuspend() {
-        updateGuard(null);
+        removeGuard(true);
     }
 
-    private synchronized void updateGuard(Guard newGuard) {
-        if (_supported) {
-            QuiesceState currState = _guard != null ? QuiesceState.QUIESCED : QuiesceState.UNQUIESCED;
-            QuiesceState newState = newGuard != null ? QuiesceState.QUIESCED : QuiesceState.UNQUIESCED;
-            if (currState != newState) {
-                Guard prevGuard = _guard;
-                _guard = newGuard;
-                if (newGuard != null) {
-                    //throw exception on all pending op templates
-                    if (_spaceImpl.getEngine() != null)
-                        _spaceImpl.getEngine().getCacheManager().getTemplateExpirationManager().returnWithExceptionFromAllPendingTemplates(_guard.exception);
-                }
-                if (_logger.isLoggable(Level.INFO))
-                    _logger.log(Level.INFO, "Quiesce state changed to " + newState);
-                if (prevGuard != null)
-                    prevGuard.close();
+    private synchronized boolean addGuard(Guard newGuard) {
+        if (!_supported) {
+            if (QUIESCE_DISABLED)
+                _logger.severe("Quiesce is not supported because the '" + SystemProperties.DISABLE_QUIESCE_MODE + "' was set");
+            if (_spaceImpl.isLocalCache())
+                _logger.severe("Quiesce is not supported for local-cache/local-view");
+            return false;
+        }
+
+        if (_guard == null || newGuard.supersedes(_guard)) {
+            newGuard.innerGuard = _guard;
+            _guard = newGuard;
+            _logger.info("Quiesce state set to " + desc(newGuard));
+            return true;
+        }
+        if (_guard.supersedes(newGuard) && _guard.innerGuard == null) {
+            _guard.innerGuard = newGuard;
+            _logger.info("Quiesce guard was added, but is currently masked because state is " + desc(_guard));
+            return true;
+        }
+        _logger.warning("Quiesce guard was discarded due to ambiguity - current state is " + desc(_guard));
+        return false;
+    }
+
+    private synchronized Guard removeGuard(boolean suspendableGuard) {
+        Guard prevGuard;
+        if (_guard == null) {
+            prevGuard = null;
+            _logger.warning("No guard to remove");
+        } else if (suspendableGuard) {
+            if (_guard.suspendLatch != null) {
+                prevGuard = _guard;
+                _guard = _guard.innerGuard;
+                _logger.info("Removed " + desc(prevGuard) + ", new state is " + desc(_guard));
+            } else {
+                prevGuard = null;
+                _logger.warning("No suspend guard to remove");
             }
         } else {
-            if (QUIESCE_DISABLED)
-                _logger.log(Level.SEVERE, "Quiesce is not supported because the '" + SystemProperties.DISABLE_QUIESCE_MODE + "' was set");
-            if (_spaceImpl.isLocalCache())
-                _logger.log(Level.SEVERE, "Quiesce is not supported for local-cache/local-view");
+            if (_guard.suspendLatch == null) {
+                prevGuard = _guard;
+                _guard = null;
+                _logger.info("Removed " + desc(prevGuard) + ", new state is " + desc(_guard));
+            } else if (_guard.innerGuard != null) {
+                prevGuard = _guard.innerGuard;
+                _guard.innerGuard = null;
+                _logger.info("Removed inner " + desc(prevGuard) + ", state remains " + desc(_guard));
+            } else {
+                prevGuard = null;
+                _logger.warning("No quiesce guard to remove");
+            }
         }
+        if (prevGuard != null)
+            prevGuard.close();
+        return prevGuard;
     }
 
     public boolean isSupported() {
@@ -135,12 +178,19 @@ public class QuiesceHandler {
         return QuiesceTokenFactory.createStringToken(_spaceImpl.getName());
     }
 
+    private static String desc(Guard guard) {
+        if (guard == null)
+            return "UNQUIESCED";
+        return guard.suspendLatch == null ? "QUIESCED" : "SUSPENDED";
+    }
+
     private class Guard implements Closeable {
         private final QuiesceToken token;
         private final CountDownLatch suspendLatch;
         private final QuiesceException exception;
+        Guard innerGuard;
 
-        public Guard(String description, QuiesceToken token, boolean suspend) {
+        Guard(String description, QuiesceToken token, boolean suspend) {
             this.token = token != null ? token : EmptyToken.INSTANCE;
             this.suspendLatch = suspend ? new CountDownLatch(1) : null;
             String errorMessage = "Operation cannot be executed - space [" + _spaceImpl.getServiceName() + "] is " +
@@ -155,7 +205,7 @@ public class QuiesceHandler {
                 suspendLatch.countDown();
         }
 
-        public void guard(QuiesceToken operationToken) {
+        void guard(QuiesceToken operationToken) {
             if (!token.equals(operationToken)) {
                 if (suspendLatch != null) {
                     if (safeAwait()) {
@@ -166,6 +216,10 @@ public class QuiesceHandler {
                 }
                 throw exception;
             }
+        }
+
+        boolean supersedes(Guard otherGuard) {
+            return this.suspendLatch != null && otherGuard.suspendLatch == null;
         }
 
         private boolean safeAwait() {
