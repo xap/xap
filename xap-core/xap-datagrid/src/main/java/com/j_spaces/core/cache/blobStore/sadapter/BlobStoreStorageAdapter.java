@@ -30,20 +30,20 @@ import com.gigaspaces.server.blobstore.BlobStoreBulkOperationResult;
 import com.gigaspaces.server.blobstore.BlobStoreObjectType;
 import com.gigaspaces.server.blobstore.BlobStoreRemoveBulkOperationRequest;
 import com.gigaspaces.server.blobstore.BlobStoreReplaceBulkOperationRequest;
-import com.gigaspaces.server.blobstore.BoloStoreAddBulkOperationRequest;
+import com.gigaspaces.server.blobstore.BlobStoreAddBulkOperationRequest;
 import com.gigaspaces.sync.SpaceSynchronizationEndpoint;
 import com.j_spaces.core.SpaceOperations;
 import com.j_spaces.core.cache.TypeData;
-import com.j_spaces.core.cache.context.Context;
+import com.j_spaces.core.cache.blobStore.BlobStoreRefEntryCacheInfo;
 import com.j_spaces.core.cache.blobStore.IBlobStoreEntryHolder;
 import com.j_spaces.core.cache.blobStore.storage.bulks.delayedReplication.DelayedReplicationBasicInfo;
 import com.j_spaces.core.cache.blobStore.storage.bulks.delayedReplication.DelayedReplicationInsertInfo;
 import com.j_spaces.core.cache.blobStore.storage.bulks.delayedReplication.DelayedReplicationRemoveInfo;
 import com.j_spaces.core.cache.blobStore.storage.bulks.delayedReplication.DelayedReplicationUpdateInfo;
+import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.IStorageAdapter;
 import com.j_spaces.core.sadapter.SAException;
-
 import net.jini.core.transaction.server.ServerTransaction;
 
 import java.util.ArrayList;
@@ -331,22 +331,24 @@ public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStora
                 if (!ohEntries.containsKey(inputeh.getUID()))
                     continue;
                 IEntryHolder entryHolder = inputeh.getOriginalEntryHolder();
+                 BlobStoreRefEntryCacheInfo entryCacheInfo = ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart();
                 switch (entryHolder.getWriteLockOperation()) {
                     case SpaceOperations.WRITE:
-                        operations.add(new BoloStoreAddBulkOperationRequest(((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().getStorageKey(), ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().getEntryLayout(_engine.getCacheManager())));
+                        operations.add(new BlobStoreAddBulkOperationRequest(entryCacheInfo.getStorageKey(), entryCacheInfo.getEntryLayout(_engine.getCacheManager())));
                         break;
                     case SpaceOperations.UPDATE:
-                        operations.add(new BlobStoreReplaceBulkOperationRequest(((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().getStorageKey(),
-                                ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().getEntryLayout(_engine.getCacheManager()), ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().getBlobStoreStoragePos()));
+                        operations.add(new BlobStoreReplaceBulkOperationRequest(entryCacheInfo.getStorageKey(),
+                                entryCacheInfo.getEntryLayout(_engine.getCacheManager()), entryCacheInfo.getBlobStoreStoragePos()));
                         break;
                     case SpaceOperations.TAKE:
                     case SpaceOperations.TAKE_IE:
                         boolean phantom = ((IBlobStoreEntryHolder) entryHolder).isPhantom();
-                        if (!phantom) //actual remove
-                            operations.add(new BlobStoreRemoveBulkOperationRequest(((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().getStorageKey(), ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().getBlobStoreStoragePos()));
+                        if (!phantom) { //actual remove
+                            operations.add(new BlobStoreRemoveBulkOperationRequest(entryCacheInfo.getStorageKey(), entryCacheInfo.getBlobStoreStoragePos()));
+                        }
                         else //update
-                            operations.add(new BlobStoreReplaceBulkOperationRequest(((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().getStorageKey(),
-                                    ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().getEntryLayout(_engine.getCacheManager()), ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().getBlobStoreStoragePos()));
+                            operations.add(new BlobStoreReplaceBulkOperationRequest(entryCacheInfo.getStorageKey(),
+                                    entryCacheInfo.getEntryLayout(_engine.getCacheManager()), entryCacheInfo.getBlobStoreStoragePos()));
                         break;
                     default:
                         throw new UnsupportedOperationException("uid=" + entryHolder.getUID() + " operation=" + entryHolder.getWriteLockOperation());

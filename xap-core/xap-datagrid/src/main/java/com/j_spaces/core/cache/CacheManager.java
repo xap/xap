@@ -19,6 +19,7 @@ package com.j_spaces.core.cache;
 import com.gigaspaces.client.mutators.SpaceEntryMutator;
 import com.gigaspaces.client.protective.ProtectiveMode;
 import com.gigaspaces.client.protective.ProtectiveModeException;
+import com.gigaspaces.config.ConfigurationException;
 import com.gigaspaces.internal.client.cache.CustomInfo;
 import com.gigaspaces.internal.cluster.node.IReplicationNode;
 import com.gigaspaces.internal.cluster.node.IReplicationOutContext;
@@ -136,6 +137,7 @@ import java.util.logging.Logger;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_CLASS_PROP;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_EVICTION_STRATEGY_CLASS_PROP;
+import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_OFFHEAP_OPTIMIZATION_PROP;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_EVICTION_STRATEGY_PROP;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_INITIAL_LOAD_CLASS_PROP;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_INITIAL_LOAD_DEFAULT;
@@ -264,6 +266,7 @@ public class CacheManager extends AbstractCacheManager
     private final boolean _enableSyncListForBlobStore;
     private final boolean _useBlobStorePrefetch;
     private final boolean _useBlobStoreReplicationBackupBulk;
+    private final boolean _offHeapOptimizationEnabled;
 
     private final Map<String, QueryExtensionIndexManagerWrapper> queryExtensionManagers;
 
@@ -360,6 +363,13 @@ public class CacheManager extends AbstractCacheManager
             throw new RuntimeException("blob-store cache policy not supported with direct EDS");
 
         _persistentBlobStore = persistentBlobStore;
+
+        if (isBlobStoreCachePolicy()){
+            _offHeapOptimizationEnabled = configReader.getBooleanSpaceProperty(CACHE_MANAGER_BLOBSTORE_OFFHEAP_OPTIMIZATION_PROP,"true");
+        } else {
+            _offHeapOptimizationEnabled = configReader.getBooleanSpaceProperty(CACHE_MANAGER_BLOBSTORE_OFFHEAP_OPTIMIZATION_PROP,"false");
+        }
+        _logger.info("space-config.engine.blobstore_offheap_optimization_enabled="+_offHeapOptimizationEnabled);
 
         if (isBlobStoreCachePolicy()) {
             IStorageAdapter curSa;
@@ -502,6 +512,10 @@ public class CacheManager extends AbstractCacheManager
         _partialUpdateReplication = configReader.getBooleanSpaceProperty(
                 CACHE_MANAGER_PARTIAL_UPDATE_REPLICATION_PROP,
                 CACHE_MANAGER_PARTIAL_UPDATE_REPLICATION_DEFAULT);
+
+        if ( !isBlobStoreCachePolicy() && _offHeapOptimizationEnabled) {
+            throw new RuntimeException("Can not enable Off Heap optimization when cache policy is not Blob Store");
+        }
 
     }
 
@@ -765,6 +779,10 @@ public class CacheManager extends AbstractCacheManager
 
     public boolean isDirectPersistencyEmbeddedtHandlerUsed() {
         return _directPersistencyEmbeddedtHandlerUsed;
+    }
+
+    public boolean isOffHeapOptimizationEnabled() {
+        return _offHeapOptimizationEnabled;
     }
 
     /**

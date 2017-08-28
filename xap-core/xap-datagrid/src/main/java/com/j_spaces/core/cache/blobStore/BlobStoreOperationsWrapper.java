@@ -22,16 +22,13 @@ import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.metrics.MetricConstants;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.gigaspaces.metrics.ThroughputMetric;
-import com.gigaspaces.server.blobstore.BlobStoreBulkOperationRequest;
-import com.gigaspaces.server.blobstore.BlobStoreBulkOperationResult;
-import com.gigaspaces.server.blobstore.BlobStoreConfig;
-import com.gigaspaces.server.blobstore.BlobStoreGetBulkOperationResult;
-import com.gigaspaces.server.blobstore.BlobStoreObjectType;
-import com.gigaspaces.server.blobstore.BlobStoreStorageHandler;
+import com.gigaspaces.server.blobstore.*;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.cache.CacheManager;
+import com.j_spaces.core.cache.blobStore.optimizations.OffHeapIndexesValuesHandler;
 import com.j_spaces.kernel.threadpool.DynamicExecutors;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -193,15 +190,16 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
         return results;
     }
 
-    private void initCacheSize(){
+
+    private void initCacheSize() {
         int size = _cacheManager.getBlobStoreInternalCache().size();
-        if( _logger.isLoggable( Level.FINER ) ) {
+        if (_logger.isLoggable(Level.FINER)) {
             _logger.log(Level.FINER, "--initCacheSize, cur size:" + cache_size.getCount() + ", before incr. to " + size);
         }
         cache_size.reset();
         cache_size.inc(size);
-        if( _logger.isLoggable( Level.FINER ) ) {
-            _logger.info( "After incr. size:" + cache_size.getCount() );
+        if (_logger.isLoggable(Level.FINER)) {
+            _logger.info("After incr. size:" + cache_size.getCount());
         }
     }
 

@@ -18,10 +18,11 @@
 package com.j_spaces.core.cache.blobStore;
 
 import com.gigaspaces.datasource.DataIterator;
-import com.gigaspaces.server.blobstore.BlobStoreGetBulkOperationResult;
-import com.gigaspaces.server.blobstore.BlobStoreObjectType;
-import com.gigaspaces.server.blobstore.BlobStoreStorageHandler;
+import com.gigaspaces.server.blobstore.*;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -30,12 +31,11 @@ import java.util.concurrent.ExecutorService;
  * @author yechiel
  * @since 10.1
  */
-public abstract class BlobStoreExtendedStorageHandler extends BlobStoreStorageHandler {
+public abstract class BlobStoreExtendedStorageHandler extends BlobStoreStorageHandler{
     /**
      * get the   preFetchThread pool
      */
     public abstract ExecutorService getPreFetchPool();
-
 
     /**
      * Returns the data to which the specified id is mapped,

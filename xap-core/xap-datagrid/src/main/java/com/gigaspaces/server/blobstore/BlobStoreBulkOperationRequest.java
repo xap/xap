@@ -31,6 +31,7 @@ public abstract class BlobStoreBulkOperationRequest {
     private final Object _position;
 
 
+
     BlobStoreBulkOperationRequest(BlobStoreBulkOperationType opType, java.io.Serializable id,
                                   java.io.Serializable data, Object position) {
         _opType = opType;
@@ -55,7 +56,6 @@ public abstract class BlobStoreBulkOperationRequest {
         _data = data;
     }
 
-
     public Object getPosition() {
         return _position;
     }
@@ -65,13 +65,12 @@ public abstract class BlobStoreBulkOperationRequest {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        BlobStoreBulkOperationRequest request = (BlobStoreBulkOperationRequest) o;
+        BlobStoreBulkOperationRequest that = (BlobStoreBulkOperationRequest) o;
 
-        if (_opType != request._opType) return false;
-        if (_id != null ? !_id.equals(request._id) : request._id != null) return false;
-        if (_data != null ? !_data.equals(request._data) : request._data != null) return false;
-        return !(_position != null ? !_position.equals(request._position) : request._position != null);
-
+        if (_opType != that._opType) return false;
+        if (_id != null ? !_id.equals(that._id) : that._id != null) return false;
+        if (_data != null ? !_data.equals(that._data) : that._data != null) return false;
+        return _position != null ? _position.equals(that._position) : that._position == null;
     }
 
     @Override

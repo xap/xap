@@ -25,10 +25,12 @@ import com.gigaspaces.server.blobstore.BlobStoreException;
 import com.gigaspaces.server.blobstore.BlobStoreObjectType;
 import com.gigaspaces.server.blobstore.BlobStoreRemoveBulkOperationRequest;
 import com.gigaspaces.server.blobstore.BlobStoreReplaceBulkOperationRequest;
-import com.gigaspaces.server.blobstore.BoloStoreAddBulkOperationRequest;
+import com.gigaspaces.server.blobstore.BlobStoreAddBulkOperationRequest;
 import com.j_spaces.core.SpaceOperations;
 import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.IEntryCacheInfo;
+import com.j_spaces.core.cache.blobStore.BlobStoreEntryLayout;
+import com.j_spaces.core.cache.blobStore.optimizations.OffHeapIndexesValuesHandler;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.blobStore.BlobStoreRefEntryCacheInfo;
 import com.j_spaces.core.cache.blobStore.errors.BlobStoreErrorBulkEntryInfo;
@@ -200,7 +202,7 @@ public class BlobStoreBulkInfo {
                 }
                 switch (boh.getOperation()) {
                     case SpaceOperations.WRITE:
-                        operations.add(new BoloStoreAddBulkOperationRequest(boh.getBlobStoreRefEntryCacheInfo().getStorageKey(), boh.getBlobStoreRefEntryCacheInfo().getEntryLayout(_cacheManager)));
+                        operations.add(new BlobStoreAddBulkOperationRequest(boh.getBlobStoreRefEntryCacheInfo().getStorageKey(), boh.getBlobStoreRefEntryCacheInfo().getEntryLayout(_cacheManager)));
                         break;
                     case SpaceOperations.UPDATE:
                         operations.add(new BlobStoreReplaceBulkOperationRequest(boh.getBlobStoreRefEntryCacheInfo().getStorageKey(),

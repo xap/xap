@@ -26,6 +26,7 @@ import com.gigaspaces.internal.io.MarshObject;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
+import com.gigaspaces.internal.server.space.metadata.ServerTypeDesc;
 import com.gigaspaces.internal.server.storage.EntryDataType;
 import com.gigaspaces.internal.server.storage.FlatEntryData;
 import com.gigaspaces.internal.server.storage.ITransactionalEntryData;
@@ -36,10 +37,7 @@ import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.blobStore.sadapter.BlobStoreStorageAdapterClassInfo;
 import com.j_spaces.core.cache.blobStore.sadapter.IBlobStoreStorageAdapter;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -132,7 +130,7 @@ public class BlobStoreEntryLayout implements Externalizable {
                 entryTypeDesc, _versionID, _expirationTime, false /*createXtnEntryInfo*/);
 
 
-        BlobStoreEntryHolder entry = new BlobStoreEntryHolder(typeDesc, eci.getUID(), _scn, _transient, entryData,_onlyIndexesPart);
+        BlobStoreEntryHolder entry = new BlobStoreEntryHolder(typeDesc, eci.getUID(), _scn, _transient, entryData, _onlyIndexesPart);
         if (_order > 0)
             entry.setOrder(_order);
 
@@ -155,7 +153,7 @@ public class BlobStoreEntryLayout implements Externalizable {
                 entryTypeDesc, _versionID, _expirationTime, false /*createXtnEntryInfo*/);
 
 
-        BlobStoreEntryHolder entry = new BlobStoreEntryHolder(typeDesc, _m_Uid, _scn, _transient, entryData,_onlyIndexesPart);
+        BlobStoreEntryHolder entry = new BlobStoreEntryHolder(typeDesc, _m_Uid, _scn, _transient, entryData, _onlyIndexesPart);
         if (_order > 0)
             entry.setOrder(_order);
 
@@ -245,7 +243,6 @@ public class BlobStoreEntryLayout implements Externalizable {
         }
     }
 
-
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         throw new UnsupportedOperationException();
@@ -323,13 +320,13 @@ public class BlobStoreEntryLayout implements Externalizable {
         _blobStoreVersion = in.readShort();
         _typeName = in.readUTF();
 
-        if(onlyIndexedPart &&
-                cacheManager.getBlobStoreInternalCache().getBlobStoreInternalCacheInitialLoadFilter() != null){
+        if (onlyIndexedPart &&
+                cacheManager.getBlobStoreInternalCache().getBlobStoreInternalCacheInitialLoadFilter() != null) {
             onlyIndexedPart = !cacheManager.getBlobStoreInternalCache()
                     .getBlobStoreInternalCacheInitialLoadFilter().isRelevantType(_m_Uid, _typeName);
         }
 
-        if(onlyIndexedPart && fromInitialLoad) {
+        if (onlyIndexedPart && fromInitialLoad) {
             final TypeData typeData = cacheManager.getTypeData(cacheManager.getEngine().getTypeManager().getServerTypeDesc(_typeName));
             onlyIndexedPart &= !typeData.isUsingQueryExtensionIndexManager();
         }
@@ -376,8 +373,8 @@ public class BlobStoreEntryLayout implements Externalizable {
             _dynamicProperties = readMapStringObject(in, _dynamicProperties);
 
         if (!onlyIndexedPart) {
-            if (CacheManager.getLogger().isLoggable(Level.FINE)) {
-                CacheManager.getLogger().fine("container ["+cacheManager.getEngine().getFullSpaceName()+"] Blobstore- full entry loaded, uid=" + _m_Uid);
+            if (CacheManager.getLogger().isLoggable(Level.FINER)) {
+                CacheManager.getLogger().finer("container [" + cacheManager.getEngine().getFullSpaceName() + "] Blobstore- full entry loaded, uid=" + _m_Uid);
             }
             _fieldsValues = readObjectArray(in, typeDesc, _fieldsValues);
             if ((flags & FLAG_DYNAMIC_PROPERTIES) == FLAG_DYNAMIC_PROPERTIES)
@@ -389,6 +386,114 @@ public class BlobStoreEntryLayout implements Externalizable {
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         throw new UnsupportedOperationException();
+    }
+
+    public byte[] getIndexValuesBytes(CacheManager cacheManager) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream out = new ObjectOutputStream(byteArrayOutputStream);
+
+        byte flags = buildFlags();
+        out.writeByte(flags);
+
+        byte embeddedSyncInfoFlags = buildEmbeddedSyncInfoFlags();
+        out.writeByte(embeddedSyncInfoFlags);
+        if ((embeddedSyncInfoFlags & FLAG_CONTAINS_EMBEDDED_SYNC_INFO) == FLAG_CONTAINS_EMBEDDED_SYNC_INFO) {
+            out.writeLong(_generationId);
+            out.writeLong(_sequenceId);
+        }
+//        out.writeShort(_blobStoreVersion);
+        out.writeByte(_entryTypeCode);
+        out.writeLong(_scn);
+        if ((flags & FLAG_ORDER) == FLAG_ORDER) {
+            out.writeInt(_order);
+        }
+
+        if ((flags & FLAG_VERSIONID) == FLAG_VERSIONID) {
+            out.writeInt(_versionID);
+        }
+
+        if ((flags & FLAG_EXPIRATION) == FLAG_EXPIRATION) {
+            out.writeLong(_expirationTime);
+        }
+
+        boolean[] fixed_indices = null;
+        HashSet<String> dynamic_indices = null;
+        short indexesStoredVersion = (short) 0;
+
+
+        IServerTypeDesc typeDesc = cacheManager.getEngine().getTypeManager().getServerTypeDesc(_typeName);
+        BlobStoreStorageAdapterClassInfo ci = ((IBlobStoreStorageAdapter) cacheManager.getStorageAdapter()).getBlobStoreStorageAdapterClassInfo(_typeName);
+        if (ci != null) {
+            fixed_indices = ci.getIndexesRelatedFixedProperties();
+            dynamic_indices = ci.getIndexesRelatedDynamicProperties();
+            indexesStoredVersion = ci.getStoredVersion();
+        } else {//can happen when a typw was added and the SA intoroduceType call didnt occur yet
+            TypeData typeData = cacheManager.getTypeData(typeDesc);
+            fixed_indices = typeData.getIndexesRelatedFixedProperties();
+            dynamic_indices = typeData.getIndexesRelatedDynamicProperties();
+            //note- version is set to 0 which is first one
+        }
+        out.writeShort(indexesStoredVersion);
+
+        //indexes-related
+        writeObjectArray(out, _fieldsValues, typeDesc, true /*indexes*/, fixed_indices);
+
+        if ((flags & FLAG_DYNAMIC_PROPERTIES) == FLAG_DYNAMIC_PROPERTIES) {
+            writeMapStringObject(out, _dynamicProperties, true /*indexes*/, dynamic_indices);
+        }
+
+        out.close();
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    public void readIndexValuesBytes(CacheManager cacheManager, short serverTypeDescCode, byte[] bytes) throws IOException, ClassNotFoundException {
+        ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes));
+
+        byte flags = in.readByte();
+
+        byte embeddedSyncInfoFlags = in.readByte();
+        if ((embeddedSyncInfoFlags & FLAG_CONTAINS_EMBEDDED_SYNC_INFO) == FLAG_CONTAINS_EMBEDDED_SYNC_INFO) {
+            _generationId = in.readLong();
+            _sequenceId = in.readLong();
+        }
+
+//        _blobStoreVersion = in.readShort();
+        _entryTypeCode = in.readByte();
+        _scn = in.readLong();
+        _transient = (flags & FLAG_TRANSIENT) == FLAG_TRANSIENT;
+        if ((flags & FLAG_ORDER) == FLAG_ORDER)
+            _order = in.readInt();
+
+        if ((flags & FLAG_VERSIONID) == FLAG_VERSIONID)
+            _versionID = in.readInt();
+        else
+            _versionID = 1;
+
+        if ((flags & FLAG_EXPIRATION) == FLAG_EXPIRATION)
+            _expirationTime = in.readLong();
+        else
+            _expirationTime = Long.MAX_VALUE;
+
+        short indexesStoredVersion = in.readShort();
+        _typeName = ServerTypeDesc.getByServerTypeDescCode(serverTypeDescCode).getTypeName();
+        IServerTypeDesc typeDesc = cacheManager.getEngine().getTypeManager().getServerTypeDesc(_typeName);
+
+        _fieldsValues = readObjectArray(in, typeDesc, _fieldsValues);
+        if ((flags & FLAG_DYNAMIC_PROPERTIES) == FLAG_DYNAMIC_PROPERTIES)
+            _dynamicProperties = readMapStringObject(in, _dynamicProperties);
+        in.close();
+    }
+
+    public void setUid(String _m_Uid) {
+        this._m_Uid = _m_Uid;
+    }
+
+    public void setOnlyIndexesPart(boolean _onlyIndexesPart) {
+        this._onlyIndexesPart = _onlyIndexesPart;
+    }
+
+    public void setBlobStoreVersion(short version){
+        _blobStoreVersion = version;
     }
 
     private Object[] readObjectArray(ObjectInput in, IServerTypeDesc typeDesc, Object[] current)

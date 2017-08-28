@@ -21,11 +21,15 @@ import com.gigaspaces.datasource.DataIterator;
 import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.server.blobstore.BlobStoreGetBulkOperationResult;
+import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.EntryCacheInfoFactory;
 import com.j_spaces.core.cache.blobStore.BlobStoreEntryLayout;
 import com.j_spaces.core.cache.blobStore.IBlobStoreEntryHolder;
+import com.j_spaces.core.cache.blobStore.optimizations.OffHeapIndexesValuesHandler;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
+
+import java.io.IOException;
 
 /**
  * off-heap storage adapter data iterator to be used in recovery
@@ -55,10 +59,20 @@ public class BlobStoreInitialLoadDataIterator implements ISAdapterIterator<IEntr
             res = _iter.next();
         if (res == null)
             return null;
-        IEntryHolder eh = ((BlobStoreEntryLayout) res.getData()).buildBlobStoreEntryHolder(_engine.getCacheManager());
+        BlobStoreEntryLayout entryLayout = (BlobStoreEntryLayout) res.getData();
+        IEntryHolder eh = entryLayout.buildBlobStoreEntryHolder(_engine.getCacheManager());
         EntryCacheInfoFactory.createBlobStoreEntryCacheInfo(eh);
         IBlobStoreEntryHolder oeh = (IBlobStoreEntryHolder) eh;
         oeh.getBlobStoreResidentPart().setBlobStorePosition(res.getPosition());
+        if (_engine.getCacheManager().isOffHeapOptimizationEnabled()) {
+            try {
+                long offHeapAddress = OffHeapIndexesValuesHandler.allocate(entryLayout.getIndexValuesBytes(_engine.getCacheManager()), oeh.getBlobStoreResidentPart().getOffHeapAddress());
+                oeh.getBlobStoreResidentPart().setOffHeapAddress(offHeapAddress);
+            } catch (IOException e) {
+                CacheManager.getLogger().severe("Blobstore- BLRECI:BlobStoreInitialLoadDataIterator.next got execption" + e.toString() + e.getStackTrace());
+                throw new RuntimeException("Blobstore- BLRECI:BlobStoreInitialLoadDataIterator.next got execption" + e.toString() + e.getStackTrace());
+            }
+        }
         return eh;
     }
 

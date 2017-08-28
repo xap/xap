@@ -18,9 +18,9 @@ package com.gigaspaces.server.blobstore;
 
 
 @com.gigaspaces.api.InternalApi
-public class BoloStoreAddBulkOperationRequest extends BlobStoreBulkOperationRequest {
+public class BlobStoreAddBulkOperationRequest extends BlobStoreBulkOperationRequest {
 
-    public BoloStoreAddBulkOperationRequest(java.io.Serializable id, java.io.Serializable data) {
+    public BlobStoreAddBulkOperationRequest(java.io.Serializable id, java.io.Serializable data) {
         super(BlobStoreBulkOperationType.ADD, id, data, null);
     }
 }

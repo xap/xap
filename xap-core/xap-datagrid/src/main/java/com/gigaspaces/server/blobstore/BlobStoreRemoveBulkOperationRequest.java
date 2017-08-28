@@ -19,8 +19,8 @@ package com.gigaspaces.server.blobstore;
 
 @com.gigaspaces.api.InternalApi
 public class BlobStoreRemoveBulkOperationRequest extends BlobStoreBulkOperationRequest {
+
     public BlobStoreRemoveBulkOperationRequest(java.io.Serializable id, Object position) {
         super(BlobStoreBulkOperationType.REMOVE, id, null, position);
     }
-
 }
