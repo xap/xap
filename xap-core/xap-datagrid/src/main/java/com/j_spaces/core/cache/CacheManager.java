@@ -77,6 +77,7 @@ import com.j_spaces.core.cache.TerminatingFifoXtnsInfo.FifoXtnEntryInfo;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.fifoGroup.FifoGroupCacheImpl;
 import com.j_spaces.core.cache.offHeap.*;
+import com.j_spaces.core.cache.offHeap.optimizations.OffHeapIndexesValuesHandler;
 import com.j_spaces.core.cache.offHeap.optimizations.OffHeapOperationOptimizations;
 import com.j_spaces.core.cache.offHeap.recovery.BlobStoreRecoveryHelper;
 import com.j_spaces.core.cache.offHeap.recovery.BlobStoreRecoveryHelperWrapper;
@@ -1865,7 +1866,7 @@ public class CacheManager extends AbstractCacheManager
     public int removeEntry(Context context, IEntryHolder entryHolder, IEntryCacheInfo pEntry, boolean shouldReplicate,
                            boolean origin, EntryRemoveReasonCodes removeReason, boolean disableSAcall)
             throws SAException {
-        boolean is_writing_xtn = entryHolder.getXidOriginatedTransaction() != null;
+         boolean is_writing_xtn = entryHolder.getXidOriginatedTransaction() != null;
         XtnEntry xtnEntry = null;
         boolean updated_recent_deletes = false;
 

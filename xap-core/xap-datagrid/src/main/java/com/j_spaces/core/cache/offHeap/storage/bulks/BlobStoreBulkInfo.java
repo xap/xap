@@ -104,7 +104,7 @@ public class BlobStoreBulkInfo {
             if (_exceptionOccured != null)
                 throw new BlobStoreException("bulk operation failed- a previous exception have been thrown " + _exceptionOccured);
 
-            if (_uids.containsKey(eci.getUID()))
+             if (_uids.containsKey(eci.getUID()))
                 throw new RuntimeException("Duplicate uid in bulk-info, uid=" + eci.getUID());
 
             generateBulkIdIfNeeded(registerDirectPersistency);
@@ -208,8 +208,9 @@ public class BlobStoreBulkInfo {
                         break;
                     case SpaceOperations.TAKE:
                         boolean phantom = _cacheManager.isDirectPersistencyEmbeddedtHandlerUsed() && boh.getOffHeapRefEntryCacheInfo().isPhantom();
-                        if (!phantom) //actual remove
+                        if (!phantom) { //actual remove
                             operations.add(new BlobStoreRemoveBulkOperationRequest(boh.getOffHeapRefEntryCacheInfo().getStorageKey(), boh.getOffHeapRefEntryCacheInfo().getOffHeapStoragePos()));
+                        }
                         else //update
                             operations.add(new BlobStoreReplaceBulkOperationRequest(boh.getOffHeapRefEntryCacheInfo().getStorageKey(),
                                     boh.getOffHeapRefEntryCacheInfo().getEntryLayout(_cacheManager), boh.getOffHeapRefEntryCacheInfo().getOffHeapStoragePos()));

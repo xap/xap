@@ -34,6 +34,7 @@ import com.j_spaces.core.cache.TypeDataIndex;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.offHeap.errors.BlobStoreErrorBulkEntryInfo;
 import com.j_spaces.core.cache.offHeap.errors.BlobStoreErrorsHandler;
+import com.j_spaces.core.cache.offHeap.optimizations.OffHeapIndexesValuesHandler;
 import com.j_spaces.core.cache.offHeap.storage.InternalCacheControl;
 import com.j_spaces.core.cache.offHeap.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.offHeap.storage.bulks.BlobStoreBusyInBulkException;
@@ -63,6 +64,9 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class OffHeapRefEntryCacheInfo
         implements IEntryCacheInfo, IOffHeapRefCacheInfo, ILockObject {
+
+    public static final long UNALLOCATED_OFFHEAP_MEMORY = -1;
+
     private static final Object DummyOffHeapPos = new Object();
     private static final BlobStoreBusyInBulkException BusyInBulkIndicator = new BlobStoreBusyInBulkException();
 
@@ -73,6 +77,7 @@ public class OffHeapRefEntryCacheInfo
     //indicator (bit for index) , bit 1 in pos i means the index ins single value- used in construction
     //of backrefs
     private long _singleValueIndexIndicators;
+    private long _offHeapIndexValuesAddress = UNALLOCATED_OFFHEAP_MEMORY;
 
     private static final byte STATUS_PINNED = ((byte) 1) << 0;
     private static final byte STATUS_UNPINNED = ~STATUS_PINNED;
@@ -121,6 +126,7 @@ public class OffHeapRefEntryCacheInfo
             //happens in recovery from OH
             _offHeapVersion = ((OffHeapEntryHolder) eh).getOffHeapVersion();
             recoveredFromOffHeap = true;
+            setOffHeapIndexValuesAddress(OffHeapIndexesValuesHandler.allocate());
         }
 
         if (indexesBackRefsKept()) {
@@ -170,6 +176,14 @@ public class OffHeapRefEntryCacheInfo
 
     }
 
+    public void setOffHeapIndexValuesAddress(long _offHeapIndexValuesAddress) {
+        this._offHeapIndexValuesAddress = _offHeapIndexValuesAddress;
+    }
+
+    public long getOffHeapIndexValuesAddress() {
+        return _offHeapIndexValuesAddress;
+    }
+
     //note- this method must be called when the entry  is locked
     @Override
     public void setDirty(boolean value, CacheManager cacheManager) {
@@ -184,11 +198,15 @@ public class OffHeapRefEntryCacheInfo
             setDirty_impl(false, false /*set_indexses*/, cacheManager);
             if (removed || isDeleted()) {
                 removeFromInternalCache(cacheManager, _loadedOffHeapEntry);
+                OffHeapIndexesValuesHandler.delete(this);
                 _offHeapPosition = null;
             } else {
-                if (!isWrittenToOffHeap())
+                if (!isWrittenToOffHeap()) {
                     insertOrTouchInternalCache(cacheManager, _loadedOffHeapEntry); //new entry- insert to cache
-
+                    setOffHeapIndexValuesAddress(OffHeapIndexesValuesHandler.allocate());
+                } else {
+                    OffHeapIndexesValuesHandler.update(getOffHeapIndexValuesAddress());
+                }
                 if (offHeapPos == null)
                     _offHeapPosition = DummyOffHeapPos;
                 else
@@ -316,7 +334,7 @@ public class OffHeapRefEntryCacheInfo
         }
         while (true) {
             try {
-                return getLatestEntryVersion_impl(cacheManager, attach, lastKnownEntry, attachingContext, onlyIndexesPart);
+                 return getLatestEntryVersion_impl(cacheManager, attach, lastKnownEntry, attachingContext, onlyIndexesPart);
             } catch (BlobStoreBusyInBulkException ex) {//the current entry is within a bulk
                 //1. if this thread is the owner of a different bulk terminate it in order to prevent intersection between 2 bulks
                 //      which can cause deadlocks && delays
@@ -378,8 +396,10 @@ public class OffHeapRefEntryCacheInfo
                 else
                     return res;
             }
-            if (!attach && context != null && (res = getPreFetchedEntry(cacheManager, context)) != null)
+            if (!attach && context != null && (res = getPreFetchedEntry(cacheManager, context)) != null) {
+                OffHeapIndexesValuesHandler.get(getOffHeapIndexValuesAddress());
                 return res;
+            }
             if (res != null) {
                 if (res.getBulkInfo() != null && res.getBulkInfo().isActive() && res.getBulkInfo().getOwnerThread() != Thread.currentThread()) {
                     throw BusyInBulkIndicator;
@@ -402,7 +422,8 @@ public class OffHeapRefEntryCacheInfo
                     return res;
             }
 
-            if (lastKnownEntry != null && lastKnownEntry.getOffHeapVersion() == _offHeapVersion) {//the latest known entry wasnt changed- use it, no need to access off-heap storage
+            if (lastKnownEntry != null && lastKnownEntry.getOffHeapVersion() == _offHeapVersion)
+            {//the latest known entry wasnt changed- use it, no need to access off-heap storage
                 res = (OffHeapEntryHolder) lastKnownEntry;
                 if (attach) {
                     _loadedOffHeapEntry = res;
@@ -416,8 +437,9 @@ public class OffHeapRefEntryCacheInfo
             res = getFullEntry(cacheManager, onlyIndexesPart);
             if (attach) {
                 _loadedOffHeapEntry = res;
-                if (indexesBackRefsKept() && !is_full_indexes_backrefs_forced())
+                if (indexesBackRefsKept() && !is_full_indexes_backrefs_forced()) {
                     _backRefs = buildBackrefsArrayListFromOffHeap(cacheManager.getTypeData(res.getServerTypeDesc()), res);
+                }
                 pin();
             }
             return res;
@@ -474,6 +496,7 @@ public class OffHeapRefEntryCacheInfo
             dbe = null;  //not the recent one= ignore
         if (dbe == null) {
             if (isWrittenToOffHeap()) {
+                OffHeapIndexesValuesHandler.get(getOffHeapIndexValuesAddress());
                 OffHeapEntryLayout ole = (OffHeapEntryLayout) cacheManager.getBlobStoreStorageHandler().get(getStorageKey_impl(), _offHeapPosition, BlobStoreObjectType.DATA, onlyIndexesPart);
                 dbe = ole != null ? ole.buildOffHeapEntryHolder(cacheManager, this) : null;
                 if (dbe == null)
@@ -557,6 +580,7 @@ public class OffHeapRefEntryCacheInfo
 
             if (isDeleted() && !entry.isPhantom()) {
                 removeEntryFromOffHeapStorage_impl(cacheManager);
+                OffHeapIndexesValuesHandler.delete(this);
             } else {
                 if (isPhantom())
                     removeFromInternalCache(cacheManager, _loadedOffHeapEntry);
@@ -568,8 +592,10 @@ public class OffHeapRefEntryCacheInfo
                     if (internalCacheControl == InternalCacheControl.INSERT_IF_NEEDED_BY_OP)
                         insertOrTouchInternalCache(cacheManager, entry); //new entry- insert to cache
                     _offHeapPosition = cacheManager.getBlobStoreStorageHandler().add(getStorageKey_impl(), getEntryLayout_impl(cacheManager, entry), BlobStoreObjectType.DATA);
+                    setOffHeapIndexValuesAddress(OffHeapIndexesValuesHandler.allocate());
                 } else {
                     _offHeapPosition = cacheManager.getBlobStoreStorageHandler().replace(getStorageKey_impl(), getEntryLayout_impl(cacheManager, entry), getOffHeapPos(), BlobStoreObjectType.DATA);
+                    OffHeapIndexesValuesHandler.update(getOffHeapIndexValuesAddress());
                 }
 
                 if (_offHeapPosition == null)

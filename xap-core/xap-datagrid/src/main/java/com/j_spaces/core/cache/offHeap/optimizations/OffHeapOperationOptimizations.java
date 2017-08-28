@@ -26,7 +26,7 @@ import com.j_spaces.core.cache.context.Context;
 
 /**
  * @author Yael Nahon
- * @since 12.1 .
+ * @since 12.2
  */
 public class OffHeapOperationOptimizations {
     public static boolean isConsiderOptimizedForBlobstore(SpaceEngine spaceEngine, Context context, ITemplateHolder template, IEntryCacheInfo pEntry) {

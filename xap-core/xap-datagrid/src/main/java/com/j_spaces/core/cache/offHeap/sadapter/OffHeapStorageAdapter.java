@@ -36,6 +36,7 @@ import com.j_spaces.core.SpaceOperations;
 import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.offHeap.IOffHeapEntryHolder;
+import com.j_spaces.core.cache.offHeap.OffHeapRefEntryCacheInfo;
 import com.j_spaces.core.cache.offHeap.storage.bulks.delayedReplication.DelayedReplicationBasicInfo;
 import com.j_spaces.core.cache.offHeap.storage.bulks.delayedReplication.DelayedReplicationInsertInfo;
 import com.j_spaces.core.cache.offHeap.storage.bulks.delayedReplication.DelayedReplicationRemoveInfo;
@@ -43,7 +44,6 @@ import com.j_spaces.core.cache.offHeap.storage.bulks.delayedReplication.DelayedR
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.IStorageAdapter;
 import com.j_spaces.core.sadapter.SAException;
-
 import net.jini.core.transaction.server.ServerTransaction;
 
 import java.util.ArrayList;
@@ -342,8 +342,11 @@ public class OffHeapStorageAdapter implements IStorageAdapter, IBlobStoreStorage
                     case SpaceOperations.TAKE:
                     case SpaceOperations.TAKE_IE:
                         boolean phantom = ((IOffHeapEntryHolder) entryHolder).isPhantom();
-                        if (!phantom) //actual remove
+                        if (!phantom) { //actual remove
+                            OffHeapRefEntryCacheInfo residentPart = ((IOffHeapEntryHolder) entryHolder).getOffHeapResidentPart();
                             operations.add(new BlobStoreRemoveBulkOperationRequest(((IOffHeapEntryHolder) entryHolder).getOffHeapResidentPart().getStorageKey(), ((IOffHeapEntryHolder) entryHolder).getOffHeapResidentPart().getOffHeapStoragePos()));
+                            residentPart.setOffHeapIndexValuesAddress(-1);
+                        }
                         else //update
                             operations.add(new BlobStoreReplaceBulkOperationRequest(((IOffHeapEntryHolder) entryHolder).getOffHeapResidentPart().getStorageKey(),
                                     ((IOffHeapEntryHolder) entryHolder).getOffHeapResidentPart().getEntryLayout(_engine.getCacheManager()), ((IOffHeapEntryHolder) entryHolder).getOffHeapResidentPart().getOffHeapStoragePos()));
