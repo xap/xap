@@ -68,7 +68,9 @@ public class OutputJVMOptions {
 
     private static int getVmVersion() {
         final String vmVersion = System.getProperty("java.version");
-        final String version = vmVersion.substring(vmVersion.indexOf('.') + 1, vmVersion.lastIndexOf('.'));
+        final String version = vmVersion.contains(".")
+                ? vmVersion.substring(vmVersion.indexOf('.') + 1, vmVersion.lastIndexOf('.'))
+                : vmVersion;
         return Integer.parseInt(version);
     }
 }
