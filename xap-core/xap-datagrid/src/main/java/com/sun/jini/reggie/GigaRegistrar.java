@@ -16,8 +16,6 @@
 package com.sun.jini.reggie;
 
 import com.gigaspaces.admin.cli.RuntimeInfo;
-import com.gigaspaces.async.AsyncFutureListener;
-import com.gigaspaces.async.AsyncResult;
 import com.gigaspaces.internal.backport.java.util.concurrent.FastConcurrentSkipListMap;
 import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
 import com.gigaspaces.internal.jmx.JMXUtilities;
@@ -35,11 +33,7 @@ import com.gigaspaces.log.LogEntries;
 import com.gigaspaces.log.LogEntryMatcher;
 import com.gigaspaces.log.LogProcessType;
 import com.gigaspaces.logger.LogHelper;
-import com.gigaspaces.lrmi.ILRMIProxy;
-import com.gigaspaces.lrmi.LRMIMethodMetadata;
 import com.gigaspaces.lrmi.LRMIMonitoringDetails;
-import com.gigaspaces.lrmi.nio.async.FutureContext;
-import com.gigaspaces.lrmi.nio.async.IFuture;
 import com.gigaspaces.lrmi.nio.info.NIODetails;
 import com.gigaspaces.lrmi.nio.info.NIOInfoHelper;
 import com.gigaspaces.lrmi.nio.info.NIOInfoProvider;
@@ -70,7 +64,6 @@ import com.sun.jini.discovery.UnicastResponse;
 import com.sun.jini.logging.Levels;
 import com.sun.jini.lookup.entry.BasicServiceType;
 import com.sun.jini.proxy.MarshalledWrapper;
-import com.sun.jini.reggie.sender.EventsCompressor;
 import com.sun.jini.start.LifeCycle;
 import com.sun.jini.thread.InterruptedStatusThread;
 import com.sun.jini.thread.ReadersWriter;
@@ -125,6 +118,8 @@ import org.jini.rio.boot.BootUtil;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.net.DatagramPacket;
@@ -213,9 +208,6 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     private static final Logger loggerEventExpire = Logger.getLogger(COMPONENT + ".expire.event");
     private static final Object _lock = new Object();
     private static boolean isActive;
-
-    // XAP-13017 notify events using thread pool - by default disabled
-    private static final boolean queueEventsTask = Boolean.getBoolean("com.gs.queue-event-tasks.enabled");
 
     /**
      * Base set of initial attributes for self
@@ -382,7 +374,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     /**
      * ArrayList of pending EventTasks (per listener)
      */
-    private ArrayList<TaskManager.Task>[] newNotifies;  //todo
+    private ArrayList<EventTask>[] newNotifies;
 
     /**
      * Current maximum service lease duration granted, in milliseconds.
@@ -404,7 +396,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     /**
      * Task manager for sending events and discovery responses
      */
-    private TaskManager[] taskerEvent; //todo
+    private TaskManager[] taskerEvent;
 
     private ExecutorService taskerComm;
 
@@ -551,13 +543,11 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
      */
     private final ReadyState ready = new ReadyState();
 
-    private final LongCounter processedEvents = new LongCounter();
+    private final LongCounter pendingEvents = new LongCounter();
     private final LongCounter items = new LongCounter();
     private final LongCounter listeners = new LongCounter();
     private MetricManager metricManager;
     private MetricRegistrator metricRegistrator;
-
-    private final Map<String, LRMIMethodMetadata> notifyAsyncMetadata = new HashMap<String, LRMIMethodMetadata>();
 
     private final InetAddress host;
 
@@ -591,7 +581,6 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     public GigaRegistrar(String[] configArgs, final LifeCycle lifeCycle) throws Exception {
         try {
             //
-            notifyAsyncMetadata.put("notify(Lnet/jini/core/event/RemoteEvent;)V", new LRMIMethodMetadata(null, true));
             activate();
             this.metricManager = MetricManager.acquire();
             this.metricRegistrator = metricManager.createRegistrator("lus");
@@ -631,7 +620,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     private void registerMetrics(MetricRegistrator registrator) {
         registrator.register("listeners", listeners);
         registrator.register("items", items);
-        registrator.register("processed-events", processedEvents);
+        registrator.register("pendingEvents", pendingEvents);
         registrator.register("serviceById", serviceByIdGauge);
         registrator.register("serviceByTime", serviceByTimeGauge);
         registrator.register("serviceByTypeName", serviceByTypeNameGauge);
@@ -789,9 +778,9 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     /**
      * An event registration record.
      */
-    private final class EventReg implements Comparable<EventReg> {
+    private final static class EventReg implements Comparable<EventReg>, Serializable {
 
-        private static final long serialVersionUID = 3L;
+        private static final long serialVersionUID = 4L;
 
         /**
          * The event id.
@@ -840,9 +829,6 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          */
         public volatile long leaseExpiration;
 
-        private List<RegistrarEvent> events;
-        private transient IFuture<Void> future;
-
         /**
          * Simple constructor
          */
@@ -857,86 +843,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             this.listener = listener;
             this.handback = handback;
             this.leaseExpiration = leaseExpiration;
-            this.events = new ArrayList<RegistrarEvent>();
-            ((ILRMIProxy) listener).overrideMethodsMetadata(notifyAsyncMetadata); // make notify async
         }
-
-
-        /**
-         * @param event add the event to the queue and compress the queue.
-         * @return true iff the events size exceeded.
-         */
-        public synchronized boolean addEvent(RegistrarEvent event) {
-//            events.add(event);
-            EventsCompressor.compress(events, event);
-            if (500 < events.size()) {
-                logger.warning("there are " + events.size() + " waiting for listener " + listener);
-                return true;
-            }
-            return false;
-        }
-
-        public synchronized void send() {
-            if (!events.isEmpty() && future == null) {
-                ILRMIProxy ilrmiProxy = (ILRMIProxy) listener;
-                if (ilrmiProxy.isClosed()) {
-                    return;
-                }
-                final RegistrarEvent event = events.remove(0);
-                try {
-                    listener.notify(event); // this is async call the catch is just formality.
-                } catch (Throwable e) {
-                    handleThrowable(e, event);
-                }
-                //noinspection unchecked
-                future = (IFuture<Void>) FutureContext.getFutureResult();
-                FutureContext.clear();
-                if (future != null) {
-                    future.setListener(
-                            new AsyncFutureListener<Void>() {
-                                @Override
-                                public void onResult(AsyncResult result) {
-                                    future = null;
-                                    //noinspection ThrowableResultOfMethodCallIgnored
-                                    if (result.getException() != null) {
-                                        handleThrowable(result.getException(), event);
-                                    } else {
-                                        send();
-                                    }
-                                }
-                            });
-                }
-            }
-        }
-
-        private void handleThrowable(Throwable e, RegistrarEvent event) {
-            switch (ThrowableConstants.retryable(e)) {
-                case ThrowableConstants.BAD_OBJECT:
-                    if (e instanceof Error) {
-                        logger.log(
-                                Levels.HANDLED, "Exception sending event to [" + listener + "], serviceID [" + event.getServiceID() + "], eventID [" + eventID + "], " + tmpl, e);
-                        throw (Error) e;
-                    }
-                case ThrowableConstants.BAD_INVOCATION:
-                case ThrowableConstants.UNCATEGORIZED:
-                    /* If the listener throws UnknownEvent or some other
-                     * definite exception, we can cancel the lease.
-                     */
-                    logger.log(Levels.HANDLED, "Exception sending event to [" + listener + "], ServiceID [" + event.getServiceID() + "], eventID [" + eventID + "], " + tmpl + " canceling lease [" + leaseID + "]", e);
-                    ILRMIProxy ilrmiProxy = (ILRMIProxy) listener;
-                    if (!ilrmiProxy.isClosed()) {
-                        logger.log(Level.WARNING, "Shutting down listener - registration-id:" + eventID + " " + listener, e);
-                        ilrmiProxy.closeProxy();
-                    }
-                    concurrentObj.writeLock();
-                    try {
-                        newNotifies[Math.abs(this.listener.hashCode() % newNotifies.length)].add(new CancelEventLeasetTask(this));
-                    } finally {
-                        concurrentObj.writeUnlock();
-                    }
-            }
-        }
-
 
         /**
          * Primary sort by leaseExpiration, secondary by eventID.  The secondary sort is immaterial,
@@ -951,6 +858,38 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 return -1;
             return 1;
         }
+
+
+
+        /**
+         * @serialData RemoteEventListener as a MarshalledInstance
+         */
+        private void writeObject(ObjectOutputStream stream)
+                throws IOException {
+            stream.defaultWriteObject();
+            stream.writeObject(new MarshalledInstance(listener));
+        }
+
+        /**
+         * Unmarshals the event listener.
+         */
+        private void readObject(ObjectInputStream stream)
+                throws IOException, ClassNotFoundException {
+            stream.defaultReadObject();
+            MarshalledInstance mi = (MarshalledInstance) stream.readObject();
+            try {
+                listener = (RemoteEventListener) mi.get(false);
+            } catch (Throwable e) {
+                if (e instanceof Error &&
+                        ThrowableConstants.retryable(e) ==
+                                ThrowableConstants.BAD_OBJECT) {
+                    throw (Error) e;
+                }
+                logger.log(Level.WARNING,
+                        "failed to recover event listener", e);
+            }
+        }
+
     }
 
     /**
@@ -1297,77 +1236,96 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     }
 
     /**
-     * Sends pending events to listener until queue is empty
-     */
-    private final class SendEventsTask implements TaskManager.Task {
-
-        /**
-         * The event registration
-         */
-        public final EventReg reg;
-
-        SendEventsTask(EventReg reg) {
-            this.reg = reg;
-        }
-
-        /**
-         * Send the event
-         */
-        public void run() {
-            reg.send();
-        }
-
-        /**
-         * Keep events going to the same listener ordered.
-         */
-        public boolean runAfter(List tasks, int size) {
-            for (int i = size; --i >= 0; ) {
-                Object obj = tasks.get(i);
-                if (obj instanceof SendEventsTask &&
-                        reg.listener.equals(((SendEventsTask) obj).reg.listener))
-                    return true;
-            }
-            return false;
-        }
-    }
-
-
-
-    /**
      * An event to be sent, and the listener to send it to.
      */
-    private final class CancelEventLeasetTask implements TaskManager.Task {
+    private final class EventTask implements TaskManager.Task {
 
         /**
          * The event registration
          */
         public final EventReg reg;
+        /**
+         * The sequence number of this event
+         */
+        public final long seqNo;
+        /**
+         * The service id
+         */
+        public final ServiceID sid;
+        /**
+         * The new state of the item, or null if deleted
+         */
+        public final Item item;
+        /**
+         * The transition that fired
+         */
+        public final int transition;
 
         /**
          * Simple constructor, except increments reg.seqNo.
          */
-        public CancelEventLeasetTask(EventReg reg) {
+        public EventTask(EventReg reg,
+                         ServiceID sid,
+                         Item item,
+                         int transition) {
             this.reg = reg;
+            seqNo = ++reg.seqNo;
+            this.sid = sid;
+            this.item = item;
+            this.transition = transition;
         }
 
         /**
          * Send the event
          */
         public void run() {
-            try {
-                cancelEventLease(reg.eventID, reg.leaseID);
-            } catch (UnknownLeaseException e) {
+            if (logger.isLoggable(Level.FINE)) {
                 logger.log(
-                        Levels.HANDLED,
-                        "Exception canceling event lease",
-                        e);
-            } catch (RemoteException e) {
-                logger.log(
-                        Levels.HANDLED,
-                        "The server has been shutdown",
-                        e);
+                        Level.FINE,
+                        "Notifying listener {0} of event {1}",
+                        new Object[]{reg.listener, reg.eventID});
             }
-
+            try {
+                pendingEvents.dec();
+                // check here if we really need to send the event
+                if (isEventDeleted()) {
+                    return;
+                }
+                reg.listener.notify(new RegistrarEvent(proxy, reg.eventID,
+                        seqNo, reg.handback,
+                        sid, transition, item));
+            } catch (Throwable e) {
+                if (isEventDeleted()) {
+                    return;
+                }
+                switch (ThrowableConstants.retryable(e)) {
+                    case ThrowableConstants.BAD_OBJECT:
+                        if (e instanceof Error) {
+                            logger.log(
+                                    Levels.HANDLED, "Exception sending event to [" + reg.listener + "], serviceID [" + sid + "], eventID [" + reg.eventID + "], " + reg.tmpl, e);
+                            throw (Error) e;
+                        }
+                    case ThrowableConstants.BAD_INVOCATION:
+                    case ThrowableConstants.UNCATEGORIZED:
+                    /* If the listener throws UnknownEvent or some other
+                     * definite exception, we can cancel the lease.
+                     */
+                        logger.log(Levels.HANDLED, "Exception sending event to [" + reg.listener + "], ServiceID [" + sid + "], eventID [" + reg.eventID + "], " + reg.tmpl + " canceling lease [" + reg.leaseID + "]", e);
+                        try {
+                            cancelEventLease(reg.eventID, reg.leaseID);
+                        } catch (UnknownLeaseException ee) {
+                            logger.log(
+                                    Levels.HANDLED,
+                                    "Exception canceling event lease",
+                                    e);
+                        } catch (RemoteException ee) {
+                            logger.log(
+                                    Levels.HANDLED,
+                                    "The server has been shutdown",
+                                    e);
+                        }
+                }
+            }
         }
 
         private boolean isEventDeleted() {
@@ -1382,10 +1340,10 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          * Keep events going to the same listener ordered.
          */
         public boolean runAfter(List tasks, int size) {
-            for (int i = size; --i >= 0; ) {
+            for (int i = size; --i >= 0;) {
                 Object obj = tasks.get(i);
-                if ((obj instanceof CancelEventLeasetTask) &&
-                        reg.listener == (((CancelEventLeasetTask) obj).reg.listener))
+                if (/*obj instanceof EventTask &&*/ // No need to check for instnaceof since only EventTask
+                        reg.listener == (((EventTask) obj).reg.listener))
                     return true;
             }
             return false;
@@ -4772,7 +4730,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         taskerEvent = new TaskManager[eventTaskPool];
         newNotifies = new ArrayList[eventTaskPool];
         for (int i = 0; i < eventTaskPool; i++) {
-            newNotifies[i] = new ArrayList<TaskManager.Task>();
+            newNotifies[i] = new ArrayList<EventTask>();
         }
         for (int i = 0; i < taskerEvent.length; i++) {
             taskerEvent[i] = (TaskManager) Config.getNonNullEntry(
@@ -5536,23 +5494,23 @@ reprocessing of time constraints associated with that method */
                 ServiceRegistrar.TRANSITION_NOMATCH_MATCH) != 0 &&
                 (pre == null || !matchItem(reg.tmpl, pre)) &&
                 (post != null && matchItem(reg.tmpl, post)))
-            addPendingEvent(reg, sid, post,
+            pendingEvent(reg, sid, post,
                     ServiceRegistrar.TRANSITION_NOMATCH_MATCH);
         else if ((reg.transitions &
                 ServiceRegistrar.TRANSITION_MATCH_NOMATCH) != 0 &&
                 (pre != null && matchItem(reg.tmpl, pre)) &&
                 (post == null || !matchItem(reg.tmpl, post)))
-            addPendingEvent(reg, sid, post,
+            pendingEvent(reg, sid, post,
                     ServiceRegistrar.TRANSITION_MATCH_NOMATCH);
         else if ((reg.transitions &
                 ServiceRegistrar.TRANSITION_MATCH_MATCH) != 0 &&
                 (pre != null && matchItem(reg.tmpl, pre)) &&
                 (post != null && matchItem(reg.tmpl, post)))
-            addPendingEvent(reg, sid, post,
+            pendingEvent(reg, sid, post,
                     ServiceRegistrar.TRANSITION_MATCH_MATCH);
     }
 
-    private void addPendingEvent
+    private void pendingEvent
             (EventReg
                      reg,
              ServiceID
@@ -5560,36 +5518,22 @@ reprocessing of time constraints associated with that method */
              Item
                      item,
              int transition) {
-        addPendingEvent(reg, sid, item, transition, true);
+        pendingEvent(reg, sid, item, transition, true);
     }
 
     /**
      * Add a pending EventTask for this event registration.
      */
-    private void addPendingEvent(EventReg reg, ServiceID sid,
+    private void pendingEvent(EventReg reg, ServiceID sid,
                                  Item item, int transition, boolean copyItem) {
         if (item != null && copyItem) {
             item = copyItem(item);
         }
-        processedEvents.inc();
-        if (reg.addEvent(new RegistrarEvent(proxy, reg.eventID, ++reg.seqNo, reg.handback, sid, transition, item))) {
-            logger.info("close and unregister listener " + reg.listener + " its events queue size exceeded the maximum.");
-            ILRMIProxy ilrmiProxy = (ILRMIProxy) reg.listener;
-            if (!ilrmiProxy.isClosed()) {
-                logger.log(Level.WARNING, "Shutting down listener - registration-id:" + eventID + " " + reg.listener + " its events queue size exceeded the maximum.");
-                ilrmiProxy.closeProxy();
-            }
-            newNotifies[Math.abs(reg.listener.hashCode() % newNotifies.length)].add(new CancelEventLeasetTask(reg));
-        } else {
-            if (queueEventsTask) {
-                newNotifies[Math.abs(reg.listener.hashCode() % newNotifies.length)].add(new SendEventsTask(reg));
-            } else {
-                reg.send();
-            }
-        }
+        pendingEvents.inc();
+        newNotifies[Math.abs(reg.listener.hashCode() % newNotifies.length)].add(new EventTask(reg, sid, item, transition));
     }
 
-    /**`
+    /**
      * Queue all pending EventTasks for processing by the task manager.
      */
     private void queueEvents
