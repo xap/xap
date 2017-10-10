@@ -114,7 +114,7 @@ public class OffHeapRefEntryCacheInfo
     //creation number of latest index addition to the entry
     private byte _latestIndexCreationNumber;
 
-    private long _offHeapIndexValuesAddress;
+    private String _offHeapIndexValuesAddress;
 
     public OffHeapRefEntryCacheInfo(IEntryHolder eh, int backRefsSize) {
         boolean recoveredFromOffHeap = false;
@@ -173,11 +173,11 @@ public class OffHeapRefEntryCacheInfo
 
     }
 
-    public void setOffHeapIndexValuesAddress(long _offHeapIndexValuesAddress) {
+    public void setOffHeapIndexValuesAddress(String _offHeapIndexValuesAddress) {
         this._offHeapIndexValuesAddress = _offHeapIndexValuesAddress;
     }
 
-    private long getOffHeapIndexValuesAddress() {
+    private String getOffHeapIndexValuesAddress() {
         return _offHeapIndexValuesAddress;
     }
 
