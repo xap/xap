@@ -350,6 +350,28 @@ public class TaskManager {
         return maxThreads;
     }
 
+    /**
+     * @return the number of threads currently allocated (less or equal to getMaxThreads())
+     * @since 12.3
+     */
+    public synchronized int getThreadCount() {
+        return threads.size();
+    }
+
+    /**
+     * @return the number of threads actively running a task
+     * @since 12.3
+     */
+    public synchronized int getRunningThreadCount() {
+        int count = 0;
+        for (int i=0; i<threads.size(); i++) {
+            if (threads.get(i).task != null) {
+                ++count;
+            }
+        }
+        return count;
+    }
+
     private class TaskThread extends Thread {
 
         /**

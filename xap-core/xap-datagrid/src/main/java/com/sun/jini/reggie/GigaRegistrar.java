@@ -33,6 +33,7 @@ import com.gigaspaces.log.LogEntries;
 import com.gigaspaces.log.LogEntryMatcher;
 import com.gigaspaces.log.LogProcessType;
 import com.gigaspaces.logger.LogHelper;
+import com.gigaspaces.lrmi.ILRMIProxy;
 import com.gigaspaces.lrmi.LRMIMonitoringDetails;
 import com.gigaspaces.lrmi.nio.info.NIODetails;
 import com.gigaspaces.lrmi.nio.info.NIOInfoHelper;
@@ -120,6 +121,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.net.DatagramPacket;
@@ -155,6 +157,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -228,9 +231,6 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
      */
     private RegistrarProxy proxy;
 
-    // cached marshalled instance of the proxy
-    private MarshalledInstance proxyMarshalledInstance;
-
     // cached marshalled object of the proxy
     private MarshalledObject proxyMarshalledObject;
 
@@ -279,7 +279,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
      * Map from String to HashMap mapping ServiceID to SvcReg.  Every service is in this map under
      * its types.
      */
-    private final HashMap serviceByTypeName = new HashMap(80);
+    private final HashMap<String, Map> serviceByTypeName = new HashMap<String, Map>(80);
     @SuppressWarnings("unchecked")
     private final Gauge<Integer> serviceByTypeNameGauge = MetricUtils.sizeGauge(serviceByTypeName);
     /**
@@ -372,9 +372,20 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     private ProxyPreparer locatorPreparer = listenerPreparer;
 
     /**
-     * ArrayList of pending EventTasks (per listener)
+     * Maximum queued events per EventReg record.
+     * When reached, the registration is canceled and all events for that target are discarded.
+     * @since 12.3
      */
-    private ArrayList<EventTask>[] newNotifies;
+    private int maxEventsPerEventReg;
+
+    /**
+     * Holds events before they are moved to the eventsQ for processing by the TaskManager
+     */
+    private Map<EventReg, List<RegistrarEvent>> pendingQ;
+    /**
+     * Holds events to be processed by the TaskManager
+     */
+    private Map<EventReg, List<RegistrarEvent>> eventsQ;
 
     /**
      * Current maximum service lease duration granted, in milliseconds.
@@ -395,8 +406,9 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     private JoinManager joiner;
     /**
      * Task manager for sending events and discovery responses
+     * note: since 12.3 this is a single reference, not an array
      */
-    private TaskManager[] taskerEvent;
+    private TaskManager taskerEvent;
 
     private ExecutorService taskerComm;
 
@@ -423,6 +435,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
 
     /**
      * Concurrent object to control read and write access
+     * NOTE - This is not a Reentrant Read/Write Lock.
+     * This means you can't hold the get the lock twice from the same thread!
      */
     private final ReadersWriter concurrentObj = new ReadersWriter();
 
@@ -543,7 +557,6 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
      */
     private final ReadyState ready = new ReadyState();
 
-    private final LongCounter pendingEvents = new LongCounter();
     private final LongCounter items = new LongCounter();
     private final LongCounter listeners = new LongCounter();
     private MetricManager metricManager;
@@ -608,6 +621,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 init.run();
             }
             registerMetrics(metricRegistrator);
+
         } catch (Throwable t) {
             logger.log(Level.SEVERE, "Reggie initialization failed", t);
             if (t instanceof Exception) {
@@ -620,7 +634,6 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     private void registerMetrics(MetricRegistrator registrator) {
         registrator.register("listeners", listeners);
         registrator.register("items", items);
-        registrator.register("pendingEvents", pendingEvents);
         registrator.register("serviceById", serviceByIdGauge);
         registrator.register("serviceByTime", serviceByTimeGauge);
         registrator.register("serviceByTypeName", serviceByTypeNameGauge);
@@ -633,6 +646,56 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         registrator.register("subEventByID", subEventByIDGauge);
         registrator.register("lookupServiceCache", lookupServiceCacheGauge);
         MetricManager.registerThreadPoolMetrics(registrator, (DynamicThreadPoolExecutor) taskerComm);
+    }
+
+    /**
+     * Used to write the internal state to a file.
+     * @see com.gigaspaces.internal.dump.InternalDumpProvider
+     * @see com.gigaspaces.internal.dump.InternalDumpProcessor
+     */
+    public void dumpEventQueueState(PrintWriter writer) {
+        try {
+            concurrentObj.readLock();
+        } catch (ConcurrentLockException e) {
+            return;
+        }
+        try {
+            boolean hasElements = false;
+            writer.append("\nEvents Queue:");
+            writer.append("\n- registered listeners: " + eventsQ.size());
+            writer.append("\n- listeners with pending events:");
+
+            for (Map.Entry<EventReg, List<RegistrarEvent>> entry : eventsQ.entrySet()) {
+                int size = entry.getValue().size();
+                if (size == 0) continue;
+                writer.append("\n--- " + entry.getKey() + "\t has (" + size + ") pending events");
+                hasElements = true;
+            }
+            if (!hasElements) {
+                writer.append(" 0");
+            }
+
+            writer.println();
+
+            writer.append("\nTask Manager:");
+            writer.append("\n- threads: " + taskerEvent.getThreadCount()
+                    + ", max: "+taskerEvent.getMaxThreads()
+                    + ", running: " + taskerEvent.getRunningThreadCount());
+            writer.append("\n- total tasks: " + taskerEvent.getTotalTasks());
+            List<TaskManager.Task> pending = taskerEvent.getPending();
+            if (!pending.isEmpty()) {
+                writer.append("\n- tasks pending execution:");
+                for (TaskManager.Task task : pending) {
+                    EventReg reg = ((EventTask) task).reg;
+                    writer.append("\n--- " + reg);
+                }
+            }
+
+            writer.println();
+
+        } finally {
+            concurrentObj.readUnlock();
+        }
     }
 
     private final static class SvcRegExpirationKey implements Comparable {
@@ -829,12 +892,14 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          */
         public volatile long leaseExpiration;
 
+        private transient AtomicBoolean locked = new AtomicBoolean(false);
+
         /**
          * Simple constructor
          */
-        public EventReg(long eventID, Uuid leaseID, Template tmpl,
-                        int transitions, RemoteEventListener listener,
-                        MarshalledObject handback, long leaseExpiration) {
+        EventReg(long eventID, Uuid leaseID, Template tmpl,
+                 int transitions, RemoteEventListener listener,
+                 MarshalledObject handback, long leaseExpiration) {
             this.eventID = eventID;
             this.leaseID = leaseID;
             this.tmpl = tmpl;
@@ -859,7 +924,47 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             return 1;
         }
 
+        @Override
+        public int hashCode() {
+            return leaseID.hashCode() + (int) (eventID ^ (eventID >>> 32)); //hashcode of long eventID
+        }
 
+        /**
+         * @return true if EventTask has already been added for this EventReg.
+         */
+        public boolean isLocked() {
+            return locked.get();
+        }
+
+        /**
+         * @return true if succeeded to get a lock for this EventReg, indicating an EventTask can be added for processing.
+         */
+        public boolean acquireLock() {
+            return locked.compareAndSet(false, true);
+        }
+
+        /**
+         * Release the lock, allowing another EventTask to be added for this EventReg.
+         */
+        public void releaseLock() {
+            locked.set(false);
+        }
+
+        @Override
+        public String toString() {
+            return listenerToString(listener)+" - reg.#"+eventID;
+        }
+
+        private String listenerToString(RemoteEventListener r) {
+            //ip:port/pid[87581]/
+            String ref = r.toString();
+            int start = ref.indexOf("//");
+            if (start != -1) {
+                int end = ref.indexOf("]/", start);
+                return ref.substring(start+2, end+2);
+            }
+            return ref;
+        }
 
         /**
          * @serialData RemoteEventListener as a MarshalledInstance
@@ -889,7 +994,6 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                         "failed to recover event listener", e);
             }
         }
-
     }
 
     /**
@@ -971,7 +1075,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         /**
          * Assumes the empty template
          */
-        public AllItemIter() {
+        AllItemIter() {
             super(null);
             iter = serviceByID.values().iterator();
             step();
@@ -1008,9 +1112,9 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         /**
          * tmpl.serviceID == null and tmpl.serviceTypes is not empty
          */
-        public SvcIterator(Template tmpl) {
+        SvcIterator(Template tmpl) {
             super(tmpl);
-            Map map = (Map) serviceByTypeName.get(
+            Map map = serviceByTypeName.get(
                     tmpl.serviceTypes[0].getName());
             services = map != null ? map.values().iterator() :
                     Collections.EMPTY_LIST.iterator();
@@ -1059,7 +1163,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          * tmpl.serviceID == null and tmpl.serviceTypes is empty and tmpl.attributeSetTemplates[setidx].fields[fldidx]
          * != null
          */
-        public AttrItemIter(Template tmpl, int setidx, int fldidx) {
+        AttrItemIter(Template tmpl, int setidx, int fldidx) {
             super(tmpl);
             EntryRep set = tmpl.attributeSetTemplates[setidx];
             HashMap[] attrMaps =
@@ -1077,7 +1181,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         /**
          * Simple constructor
          */
-        protected AttrItemIter(Template tmpl) {
+        AttrItemIter(Template tmpl) {
             super(tmpl);
         }
 
@@ -1104,7 +1208,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         /**
          * tmpl.serviceID == null and tmpl.serviceTypes is empty and eclass has no fields
          */
-        public EmptyAttrItemIter(Template tmpl, EntryClass eclass) {
+        EmptyAttrItemIter(Template tmpl, EntryClass eclass) {
             super(tmpl);
             svcs = serviceByEmptyAttr.get(eclass);
             if (svcs != null) {
@@ -1143,7 +1247,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          * tmpl.serviceID == null and tmpl.serviceTypes is empty and tmpl.attributeSetTemplates is
          * non-empty
          */
-        public ClassItemIter(Template tmpl) {
+        ClassItemIter(Template tmpl) {
             super(tmpl);
             dupsPossible = true;
             eclass = tmpl.attributeSetTemplates[0].eclass;
@@ -1218,7 +1322,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         /**
          * tmpl.serviceID != null
          */
-        public IDItemIter(Template tmpl) {
+        IDItemIter(Template tmpl) {
             super(tmpl);
             reg = serviceByID.get(tmpl.serviceID);
             if (reg != null &&
@@ -1235,6 +1339,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         }
     }
 
+    private static final float LOAD_FACTOR = 1.75f;
+
     /**
      * An event to be sent, and the listener to send it to.
      */
@@ -1244,65 +1350,130 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          * The event registration
          */
         public final EventReg reg;
-        /**
-         * The sequence number of this event
-         */
-        public final long seqNo;
-        /**
-         * The service id
-         */
-        public final ServiceID sid;
-        /**
-         * The new state of the item, or null if deleted
-         */
-        public final Item item;
-        /**
-         * The transition that fired
-         */
-        public final int transition;
 
         /**
          * Simple constructor, except increments reg.seqNo.
          */
-        public EventTask(EventReg reg,
-                         ServiceID sid,
-                         Item item,
-                         int transition) {
+        EventTask(EventReg reg) {
             this.reg = reg;
-            seqNo = ++reg.seqNo;
-            this.sid = sid;
-            this.item = item;
-            this.transition = transition;
         }
 
         /**
          * Send the event
          */
         public void run() {
+
             if (logger.isLoggable(Level.FINE)) {
                 logger.log(
                         Level.FINE,
                         "Notifying listener {0} of event {1}",
                         new Object[]{reg.listener, reg.eventID});
             }
+
+            boolean requeue = false;
             try {
-                pendingEvents.dec();
-                // check here if we really need to send the event
-                if (isEventDeleted()) {
+                List<RegistrarEvent> registrarEvents = eventsQ.get(reg);
+                if (registrarEvents == null) {
                     return;
                 }
-                reg.listener.notify(new RegistrarEvent(proxy, reg.eventID,
-                        seqNo, reg.handback,
-                        sid, transition, item));
+
+                final int limit = calcSizeWithLoadFactor(registrarEvents); //use load-factor as to not cause over re-queueing
+
+                for (int i = 0; i < limit; ++i) {
+                    // check here if we really need to send the event
+                    if (isEventDeleted() || isProxyClosed()) {
+                        return;
+                    }
+
+                    if (registrarEvents.isEmpty()) {
+                        return;
+                    }
+
+                    // check if we EventReg hasn't been deleted while we are processing
+                    if (!eventsQ.containsKey(reg)) return;
+
+
+                    if (exceededMaximumEventsAllowedPerRegistration(registrarEvents)) {
+                        return;
+                    }
+
+                    final RegistrarEvent theEvent = registrarEvents.remove(0);
+                    if (theEvent == null) {
+                        return; //due to concurrency
+                    }
+
+                    if (!sendEvent(theEvent)) return;
+
+                }
+
+                if (registrarEvents.size() != 0) {
+                    requeue = true; //there are remaining events, indicate 'requeue' for next time
+                }
+
+            } finally {
+                if (requeue) {
+                    taskerEvent.add(new EventTask(reg)); //re-queue for remaining, but don't release lock
+                } else {
+                    reg.releaseLock(); //lock is acquired when the EventTask is created. release it.
+                }
+            }
+        }
+
+        /**
+         * Takes the current registrar size and calculates a load factor on it.
+         * This is done to avoid over requeue and context-switches.
+         * @param registrarEvents the events list
+         * @return a size + load factor
+         */
+        private int calcSizeWithLoadFactor(List<RegistrarEvent> registrarEvents) {
+            return (int)((registrarEvents.size()+1)*LOAD_FACTOR);
+        }
+
+        /**
+         * Check if exceeds the maximum allowed events saved per-target registration.
+         * If exceeded, we cancel the event registration and remove all queued events.
+         *
+         * @param events The list of events pending for this registered target.
+         * @return true if exceeded, false otherwise.
+         */
+        private boolean exceededMaximumEventsAllowedPerRegistration(List<RegistrarEvent> events) {
+            final int size = events.size();
+            final boolean exceededBounds = size > maxEventsPerEventReg;
+            if (exceededBounds) {
+                try {
+                    logger.log(Level.WARNING, "Cancelling registered listener: " + reg
+                            + " - its events queue size ("+size+") exceeded the maximum of "+ maxEventsPerEventReg +".");
+
+                    cancelEventLease(reg.eventID, reg.leaseID);
+
+                }catch(Exception e) {
+                    logger.log(Level.WARNING, "Failed to cancel registered listener: " + reg, e);
+                }
+            }
+            return exceededBounds;
+        }
+
+        /**
+         * @param theEvent to send
+         * @return true if successful, false otherwise
+         */
+        private boolean sendEvent(RegistrarEvent theEvent) {
+
+            try {
+                reg.listener.notify(theEvent);
+                return true;
+
             } catch (Throwable e) {
-                if (isEventDeleted()) {
-                    return;
+
+                if (isEventDeleted() || isProxyClosed()) {
+                    return false;
                 }
+
                 switch (ThrowableConstants.retryable(e)) {
                     case ThrowableConstants.BAD_OBJECT:
                         if (e instanceof Error) {
                             logger.log(
-                                    Levels.HANDLED, "Exception sending event to [" + reg.listener + "], serviceID [" + sid + "], eventID [" + reg.eventID + "], " + reg.tmpl, e);
+                                    Levels.HANDLED, "Exception sending event to [" + reg.listener + "], serviceID [" + theEvent.getServiceID() + "], eventID [" + reg.eventID + "], " + reg.tmpl, e);
                             throw (Error) e;
                         }
                     case ThrowableConstants.BAD_INVOCATION:
@@ -1310,7 +1481,9 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     /* If the listener throws UnknownEvent or some other
                      * definite exception, we can cancel the lease.
                      */
-                        logger.log(Levels.HANDLED, "Exception sending event to [" + reg.listener + "], ServiceID [" + sid + "], eventID [" + reg.eventID + "], " + reg.tmpl + " canceling lease [" + reg.leaseID + "]", e);
+                        if (logger.isLoggable(Levels.HANDLED)) {
+                            logger.log(Levels.HANDLED, "Exception sending event to [" + reg.listener + "], ServiceID [" + theEvent.getServiceID() + "], eventID [" + reg.eventID + "], " + reg.tmpl + " canceling lease [" + reg.leaseID + "]", e);
+                        }
                         try {
                             cancelEventLease(reg.eventID, reg.leaseID);
                         } catch (UnknownLeaseException ee) {
@@ -1326,6 +1499,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                         }
                 }
             }
+            return false;
         }
 
         private boolean isEventDeleted() {
@@ -1336,16 +1510,15 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             }
         }
 
+        private boolean isProxyClosed() {
+            ILRMIProxy ilrmiProxy = (ILRMIProxy) reg.listener;
+            return (ilrmiProxy.isClosed());
+        }
+
         /**
-         * Keep events going to the same listener ordered.
+         * @return always return false; no need to prioritize.
          */
         public boolean runAfter(List tasks, int size) {
-            for (int i = size; --i >= 0;) {
-                Object obj = tasks.get(i);
-                if (/*obj instanceof EventTask &&*/ // No need to check for instnaceof since only EventTask
-                        reg.listener == (((EventTask) obj).reg.listener))
-                    return true;
-            }
             return false;
         }
     }
@@ -1364,7 +1537,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          */
         private final Discovery decoder;
 
-        public DecodeRequestTask(DatagramPacket datagram, Discovery decoder) {
+        DecodeRequestTask(DatagramPacket datagram, Discovery decoder) {
             this.datagram = datagram;
             this.decoder = decoder;
         }
@@ -1446,7 +1619,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         /**
          * Simple constructor
          */
-        public AddressTask(String host, int port) {
+        AddressTask(String host, int port) {
             this.host = host;
             this.port = port;
         }
@@ -1474,9 +1647,10 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             InetAddress[] addr = new InetAddress[]{};
             try {
                 try {
-                    addr = InetAddress.getAllByName(host);
-                    if (addr == null)
-                        addr = new InetAddress[]{};
+                    InetAddress[] addrByName = InetAddress.getAllByName(host);
+                    if (addrByName != null) {
+                        addr = addrByName;
+                    }
                 } catch (UnknownHostException e) {
                     if (logger.isLoggable(Level.INFO)) {
                         logThrow(
@@ -1577,7 +1751,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         /**
          * Simple constructor
          */
-        public SocketTask(Socket socket) {
+        SocketTask(Socket socket) {
             this.socket = socket;
         }
 
@@ -1627,7 +1801,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         /**
          * Create a daemon thread
          */
-        public ServiceExpireThread() {
+        ServiceExpireThread() {
             super("service expire");
             setDaemon(true);
         }
@@ -1726,7 +1900,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         /**
          * Create a daemon thread
          */
-        public EventExpireThread() {
+        EventExpireThread() {
             super("event expire");
             setDaemon(true);
         }
@@ -1736,7 +1910,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             while (!hasBeenInterrupted()) {
                 while (true) {
                     long now = SystemTime.timeMillis();
-                    EventRegKeyExpiration regExpirationKey = null;
+                    EventRegKeyExpiration regExpirationKey;
                     try {
                         regExpirationKey = (EventRegKeyExpiration) eventByTime.firstKey();
                     } catch (NoSuchElementException e) {
@@ -1850,9 +2024,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             announcer.interrupt();
         }
         List<Runnable> pending = taskerComm.shutdownNow();
-        for (TaskManager eventTaskManager : taskerEvent) {
-            eventTaskManager.terminate();
-        }
+        taskerEvent.terminate();
 
         joiner.terminate();
         discoer.terminate();
@@ -1906,7 +2078,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          * Create a high priority daemon thread.  Set up the socket now rather than in run, so that
          * we get any exception up front.
          */
-        public MulticastThread() throws IOException {
+        MulticastThread() throws IOException {
             super("multicast request");
             setDaemon(true);
             if (multicastInterfaces != null && multicastInterfaces.length == 0) {
@@ -2073,7 +2245,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          * Create a daemon thread.  Set up the socket now rather than in run, so that we get any
          * exception up front.
          */
-        public UnicastThread(InetAddress host, int port) throws IOException {
+        UnicastThread(InetAddress host, int port) throws IOException {
             super("unicast request");
             setDaemon(true);
             int backlog = Integer.getInteger(SystemProperties.LRMI_ACCEPT_BACKLOG,
@@ -2180,7 +2352,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          * Create a daemon thread.  Set up the socket now rather than in run, so that we get any
          * exception up front.
          */
-        public AnnounceThread() throws IOException {
+        AnnounceThread() throws IOException {
             super("discovery announcement");
             setDaemon(true);
             if (multicastInterfaces == null || multicastInterfaces.length > 0) {
@@ -2337,7 +2509,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
 
     // This method's javadoc is inherited from an interface of this class
     public Object getProxy() {
-        /** locally-called method - no need to check initialization state */
+        // locally-called method - no need to check initialization state
         return myRef;
     }
 
@@ -2465,7 +2637,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             return null;
         }
 
-        Item item = null;
+        Item item;
         concurrentObj.readLock();
         try {
             // just in case we a lot were waiting on this lock
@@ -2692,7 +2864,11 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         if (loggerStats.isLoggable(Level.FINEST)) {
             startTime = SystemTime.timeMillis();
         }
-        concurrentObj.writeLock();
+        try {
+            concurrentObj.writeLock();
+        } catch (ConcurrentLockException e) {
+            return;
+        }
         try {
             ready.check();
             if (serviceID.equals(myServiceID))
@@ -2720,7 +2896,11 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         if (loggerStats.isLoggable(Level.FINEST)) {
             startTime = SystemTime.timeMillis();
         }
-        concurrentObj.writeLock();
+        try {
+            concurrentObj.writeLock();
+        } catch (ConcurrentLockException e) {
+            return;
+        }
         try {
             ready.check();
             if (serviceID.equals(myServiceID))
@@ -2748,7 +2928,11 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         if (loggerStats.isLoggable(Level.FINEST)) {
             startTime = SystemTime.timeMillis();
         }
-        concurrentObj.writeLock();
+        try {
+            concurrentObj.writeLock();
+        } catch (ConcurrentLockException e) {
+            return;
+        }
         try {
             ready.check();
             if (serviceID.equals(myServiceID))
@@ -2775,7 +2959,11 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         if (loggerStats.isLoggable(Level.FINEST)) {
             startTime = SystemTime.timeMillis();
         }
-        concurrentObj.writeLock();
+        try {
+            concurrentObj.writeLock();
+        } catch (ConcurrentLockException e) {
+            return;
+        }
         try {
             ready.check();
             cancelServiceLeaseDo(serviceID, leaseID);
@@ -2830,7 +3018,11 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         if (loggerStats.isLoggable(Level.FINEST)) {
             startTime = SystemTime.timeMillis();
         }
-        concurrentObj.writeLock();
+        try {
+            concurrentObj.writeLock();
+        } catch (ConcurrentLockException e) {
+            return;
+        }
         try {
             ready.check();
             cancelEventLeaseDo(eventID, leaseID);
@@ -2980,7 +3172,11 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         if (loggerStats.isLoggable(Level.FINEST)) {
             startTime = SystemTime.timeMillis();
         }
-        concurrentObj.writeLock();
+        try {
+            concurrentObj.writeLock();
+        } catch (ConcurrentLockException e) {
+            return;
+        }
         try {
             ready.check();
             EntryRep[] attrs = EntryRep.toEntryRep(attrSets, true);
@@ -3012,7 +3208,11 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         if (loggerStats.isLoggable(Level.FINEST)) {
             startTime = SystemTime.timeMillis();
         }
-        concurrentObj.writeLock();
+        try {
+            concurrentObj.writeLock();
+        } catch (ConcurrentLockException e) {
+            return;
+        }
         try {
             ready.check();
             EntryRep[] tmpls = EntryRep.toEntryRep(attrSetTemplates, false);
@@ -3523,16 +3723,20 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     public void destroy() throws RemoteException {
         metricRegistrator.clear();
         metricManager.close();
-        concurrentObj.priorityWriteLock();
+        try {
+            concurrentObj.priorityWriteLock();
+        } catch (ConcurrentLockException e) {
+            return;
+        }
         try {
             ready.check();
             logger.info("starting Reggie shutdown");
             ready.shutdown();
 
-            /**
-             * Termination thread code.  We do this in a separate thread to
-             * avoid deadlock, because ActivationGroup.inactive will block until
-             * in-progress RMI calls are finished.
+            /*
+              Termination thread code.  We do this in a separate thread to
+              avoid deadlock, because ActivationGroup.inactive will block until
+              in-progress RMI calls are finished.
              */
             Thread destroyThread = new Thread(new Runnable() {
                 @Override
@@ -3674,7 +3878,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
      * Adds a service registration to types in its hierarchy
      */
     private void addServiceByTypes(ServiceType type, SvcReg reg) {
-        Map map = (Map) serviceByTypeName.get(type.getName());
+        Map map = serviceByTypeName.get(type.getName());
         if (map == null) {
             map = new HashMap();
             serviceByTypeName.put(type.getName(), map);
@@ -3693,7 +3897,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
      * Deletes a service registration from types in its hierarchy
      */
     private void deleteServiceFromTypes(ServiceType type, SvcReg reg) {
-        Map map = (Map) serviceByTypeName.get(type.getName());
+        Map map = serviceByTypeName.get(type.getName());
         if (map != null) {
             map.remove(reg.item.serviceID);
             if ((map.isEmpty()) && !type.equals(objectServiceType))
@@ -4206,6 +4410,13 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             }
             Long id = reg.eventID;
             eventByID.remove(id);
+            eventsQ.remove(reg);
+            pendingQ.remove(reg);
+
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("Removed event registration for: " + reg);
+            }
+
             if (regExpiration != null) {
                 eventByTime.remove(regExpiration);
             } else {
@@ -4439,10 +4650,10 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     private ArrayList matchingServices(ServiceType[] types) {
         ArrayList matches = new ArrayList();
         if (isEmpty(types)) {
-            Map map = (Map) serviceByTypeName.get(objectServiceType.getName());
+            Map map = serviceByTypeName.get(objectServiceType.getName());
             matches.addAll(map.values());
         } else {
-            Map map = (Map) serviceByTypeName.get(types[0].getName());
+            Map map = serviceByTypeName.get(types[0].getName());
             if (map != null)
                 matches.addAll(map.values());
             if (types.length > 1) {
@@ -4717,27 +4928,29 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
 
         useCacheForSpaceMiss = (Boolean) Config.getNonNullEntry(config, COMPONENT, "useCacheForSpaceMiss", Boolean.class, Boolean.TRUE);
 
-        taskerComm = DynamicExecutors.newBlockingThreadPool(Integer.getInteger(COMPONENT + ".commTaskManager.minThreads", 10),
+        taskerComm = DynamicExecutors.newBlockingThreadPool(
+                Integer.getInteger(COMPONENT + ".commTaskManager.minThreads", 10),
                 Integer.getInteger(COMPONENT + ".commTaskManager.maxThreads", 80),
                 Long.getLong(COMPONENT + ".commTaskManager.keepAlive", 10 * 1000),
                 Integer.getInteger(COMPONENT + ".commTaskManager.capacity", 200),
                 Long.getLong(COMPONENT + ".commTaskManager.waitTime", 3 * 60 * 1000),
                 Thread.NORM_PRIORITY + 2, "Reggie Comm Task", true);
 
-        int eventTaskPool = Config.getIntEntry(
-                config, COMPONENT, "eventTaskManagerPool", 5,
-                1, Integer.MAX_VALUE);
-        taskerEvent = new TaskManager[eventTaskPool];
-        newNotifies = new ArrayList[eventTaskPool];
-        for (int i = 0; i < eventTaskPool; i++) {
-            newNotifies[i] = new ArrayList<EventTask>();
-        }
-        for (int i = 0; i < taskerEvent.length; i++) {
-            taskerEvent[i] = (TaskManager) Config.getNonNullEntry(
-                    config, COMPONENT, "eventTaskManager", TaskManager.class,
-                    new TaskManager(8, 15000, 2.0F, "Reggie Event Task", 10));
-            taskerEvent[i].setThreadName(taskerEvent[i].getThreadName() + "[" + i + "]");
-        }
+        // TaskManager is configurable using system properties. e.g. -Dcom.sun.jini.reggie.eventTaskManager.maxThreads=4
+        taskerEvent = (TaskManager) Config.getNonNullEntry(config, COMPONENT, "eventTaskManager", TaskManager.class,
+                new TaskManager(Integer.getInteger(COMPONENT + ".eventTaskManager.maxThreads", 40),
+                        Long.getLong(COMPONENT + ".eventTaskManager.timeout",15000),
+                        2.0F, "Reggie Event Task",
+                        Integer.getInteger(COMPONENT + ".eventTaskManager.retriesOnIdle",10)));
+
+        // maxEventsPerEventReg is configurable by setting the system property: -Dcom.sun.jini.reggie.maxEventsPerEventReg=1500
+        // This default value represents an approximation of 52.5 MB = (70 bytes per RegistrarEvent) x 500 listeners x maxEventsPerEventReg
+        maxEventsPerEventReg = Config.getIntEntry(
+                config, COMPONENT, "maxEventsPerEventReg", 1500,10, Integer.MAX_VALUE);
+
+
+        pendingQ = new HashMap<EventReg, List<RegistrarEvent>>();
+        eventsQ = new ConcurrentHashMap<EventReg, List<RegistrarEvent>>();
 
         unexportTimeout = Config.getLongEntry(
                 config, COMPONENT, "unexportTimeout", unexportTimeout,
@@ -4768,7 +4981,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         computeMaxLeases();
         protocol2 = Discovery.getProtocol2(null);
         /* cache unprocessed unicastDiscovery constraints to handle
-reprocessing of time constraints associated with that method */
+        reprocessing of time constraints associated with that method */
         rawUnicastDiscoveryConstraints = discoveryConstraints.getConstraints(
                 DiscoveryConstraints.unicastDiscoveryMethod);
         multicastRequestConstraints = DiscoveryConstraints.process(
@@ -4788,7 +5001,7 @@ reprocessing of time constraints associated with that method */
         }
         myRef = (Registrar) serverExporter.export(this);
         proxy = RegistrarProxy.getInstance(myRef, myServiceID);
-        proxyMarshalledInstance = new MarshalledInstance(proxy);
+        MarshalledInstance proxyMarshalledInstance = new MarshalledInstance(proxy);
         proxyMarshalledObject = proxyMarshalledInstance.convertToMarshalledObject();
 
         OptimizedByteArrayOutputStream os = new OptimizedByteArrayOutputStream();
@@ -4894,7 +5107,7 @@ reprocessing of time constraints associated with that method */
         long now = SystemTime.timeMillis();
         if (nitem.serviceID == null) {
             /* new service, match on service object */
-            Map svcs = (Map) serviceByTypeName.get(nitem.serviceType.getName());
+            Map svcs = serviceByTypeName.get(nitem.serviceType.getName());
             if (svcs != null) {
                 for (Object o : svcs.values()) {
                     SvcReg reg = (SvcReg) o;
@@ -5529,21 +5742,51 @@ reprocessing of time constraints associated with that method */
         if (item != null && copyItem) {
             item = copyItem(item);
         }
-        pendingEvents.inc();
-        newNotifies[Math.abs(reg.listener.hashCode() % newNotifies.length)].add(new EventTask(reg, sid, item, transition));
+
+        if (!eventByID.containsKey(reg.eventID)) return; //no longer in map
+
+        List<RegistrarEvent> registrarEvents = pendingQ.get(reg);
+        if (registrarEvents == null) {
+            registrarEvents = Collections.synchronizedList(new ArrayList<RegistrarEvent>());
+            pendingQ.put(reg, registrarEvents);
+        }
+
+        registrarEvents.add(new RegistrarEvent(proxy, reg.eventID, ++reg.seqNo, reg.handback, sid, transition, item));
     }
 
     /**
      * Queue all pending EventTasks for processing by the task manager.
+     * Always called under write-lock
      */
-    private void queueEvents
-    () {
-        for (int i = 0; i < newNotifies.length; i++) {
-            if (!newNotifies[i].isEmpty()) {
-                // newNotifies and taskerEvent have the same size
-                taskerEvent[i].addAll(newNotifies[i]);
-                newNotifies[i].clear();
+    private void queueEvents() {
+
+        //first go over all pending events recently added
+        for (Map.Entry<EventReg, List<RegistrarEvent>> pending : pendingQ.entrySet()) {
+            if (pending.getValue().isEmpty()) continue;
+
+            List<RegistrarEvent> registrarEvents = eventsQ.get(pending.getKey());
+
+            if (registrarEvents == null) {
+                registrarEvents = Collections.synchronizedList(new ArrayList<RegistrarEvent>());
+                registrarEvents.addAll(pending.getValue());
+                eventsQ.put(pending.getKey(), registrarEvents);
+            } else {
+                registrarEvents.addAll(pending.getValue());
             }
+
+            pending.getValue().clear();
+        }
+
+        //add an EventTask to the TaskManager only if not already added (un-acquired 'lock')
+        //an EventTask will handle all events for its target and then release the 'lock'
+        for (Map.Entry<EventReg, List<RegistrarEvent>> next : eventsQ.entrySet()) {
+            if (next.getValue().isEmpty()) continue;
+            if (next.getKey().isLocked()) {continue;}
+
+            EventReg reg = next.getKey();
+            if (!reg.acquireLock()) {continue;}
+
+            taskerEvent.add(new EventTask(reg));
         }
     }
 
