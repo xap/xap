@@ -42,6 +42,7 @@ import com.gigaspaces.internal.utils.parsers.StringParser;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 /**
  * @author Niv Ingberg
@@ -49,6 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class ObjectConverter {
     private static final Map<String, AbstractParser> _typeParserMap = createTypeConverterMap();
+    private static final Map<String, AbstractParser> _runtimeGeneratedParserMap = createTypeConverterMap();
 
     public static Object convert(Object obj, Class<?> type)
             throws SQLException {
@@ -77,26 +79,29 @@ public abstract class ObjectConverter {
 
     private static AbstractParser getParserFromType(Class<?> type) {
         AbstractParser parser = _typeParserMap.get(type.getName());
+        if(parser == null ){
+            parser = _runtimeGeneratedParserMap.get(type.getName());
+        }
         // If no parser found, check if type is an enum
         if (parser == null) {
             if (type.isEnum()) {
                 parser = new EnumParser(type);
-                _typeParserMap.put(type.getName(), parser);
+                _runtimeGeneratedParserMap.put(type.getName(), parser);
                 return parser;
             }
             // Enum with abstract methods is an inner class of the original Enum
             // and its isEnum() method returns false. Therefore we check its enclosing class.
             if (type.getEnclosingClass() != null && type.getEnclosingClass().isEnum()) {
-                parser = _typeParserMap.get(type.getEnclosingClass().getName());
+                parser = _runtimeGeneratedParserMap.get(type.getEnclosingClass().getName());
                 if (parser == null) {
                     parser = new EnumParser(type.getEnclosingClass());
-                    _typeParserMap.put(type.getEnclosingClass().getName(), parser);
+                    _runtimeGeneratedParserMap.put(type.getEnclosingClass().getName(), parser);
                 }
                 return parser;
             }
             parser = ConventionObjectParser.getConventionParserIfAvailable(type);
             if (parser != null) {
-                _typeParserMap.put(type.getName(), parser);
+                _runtimeGeneratedParserMap.put(type.getName(), parser);
                 return parser;
             }
         }
@@ -146,5 +151,12 @@ public abstract class ObjectConverter {
 
 
         return map;
+    }
+
+    public static void clearRuntimeGeneratedCache(){
+        if(!_runtimeGeneratedParserMap.isEmpty()) {
+            Logger.getLogger("ObjectConverter").info("clearing runtime generated parser cache");
+            _runtimeGeneratedParserMap.clear();
+        }
     }
 }
