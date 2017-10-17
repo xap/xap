@@ -345,7 +345,7 @@ public class OffHeapStorageAdapter implements IStorageAdapter, IBlobStoreStorage
                         if (!phantom) { //actual remove
                             OffHeapRefEntryCacheInfo residentPart = ((IOffHeapEntryHolder) entryHolder).getOffHeapResidentPart();
                             operations.add(new BlobStoreRemoveBulkOperationRequest(((IOffHeapEntryHolder) entryHolder).getOffHeapResidentPart().getStorageKey(), ((IOffHeapEntryHolder) entryHolder).getOffHeapResidentPart().getOffHeapStoragePos()));
-                            residentPart.setOffHeapIndexValuesAddress(-1);
+                            residentPart.setOffHeapIndexValuesAddress(null);
                         }
                         else //update
                             operations.add(new BlobStoreReplaceBulkOperationRequest(((IOffHeapEntryHolder) entryHolder).getOffHeapResidentPart().getStorageKey(),

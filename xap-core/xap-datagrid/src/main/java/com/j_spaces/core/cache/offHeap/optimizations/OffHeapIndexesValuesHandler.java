@@ -19,7 +19,9 @@
 package com.j_spaces.core.cache.offHeap.optimizations;
 
 import com.j_spaces.core.cache.offHeap.OffHeapRefEntryCacheInfo;
-import sun.misc.Unsafe;
+import org.mapdb.DBMaker;
+import org.mapdb.HTreeMap;
+import org.mapdb.Serializer;
 
 import java.lang.reflect.Constructor;
 import java.util.logging.Level;
@@ -31,75 +33,67 @@ import java.util.logging.Logger;
  */
 public class OffHeapIndexesValuesHandler {
 
-    private volatile static Unsafe _unsafe;
-    private static int numOfBytes = 40;
+    private volatile static HTreeMap<String, byte[]> _mapDB;
+    //private static final int numOfSegments=8;
     private static Logger logger = Logger.getLogger("MyLogger");
 
-    private static Unsafe getUnsafe() {
-        if (_unsafe == null) {
-            logger.log(Level.INFO,"***** created unsafe instance *****");
-            Constructor<Unsafe> unsafeConstructor = null;
+    private static HTreeMap<String, byte[]> getMapDB() {
+        if (_mapDB == null) {
+            Logger.getLogger("MyLogger").log(Level.INFO,"***** created mapDB instance *****");
             try {
-                unsafeConstructor = Unsafe.class.getDeclaredConstructor();
-                unsafeConstructor.setAccessible(true);
-                _unsafe = unsafeConstructor.newInstance();
-            } catch (Exception e) {
-                throw new RuntimeException("could not get unsafe instance");
+                _mapDB = DBMaker
+                        .memoryDirectDB() //off-heap
+                        .make()
+                        .hashMap("mapDB")
+                        //.memoryShardedHashMap(numOfSegments)
+                        .keySerializer(Serializer.STRING)
+                        .valueSerializer(Serializer.BYTE_ARRAY)
+                        .create();
+            } catch (Exception e){
+                throw new RuntimeException("getMapDB failed!");
             }
         }
-        return _unsafe;
-    }
-
-    public static long allocate(){
-        long address;
-        try {
-            address = getUnsafe().allocateMemory(numOfBytes);
-//            logger.log(Level.INFO,"***** allocated off heap space at address "+address+"*****");
-        }catch (Error e){
-            logger.log(Level.SEVERE, "failed to allocate offheap space", e);
-            throw e;
-        }
-        if(address == 0){
-            logger.log(Level.SEVERE, "failed to allocate offheap space");
-            throw new RuntimeException("failed to allocate offheap space");
-        }
-        getUnsafe().setMemory(address, numOfBytes, (byte) 0);
-        return address;
-    }
-
-    public static byte[] get(long address){
-        if(address==OffHeapRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) return null;
-//        logger.log(Level.INFO,"***** reading off heap space from address "+address+"*****");
-        byte[] res = new byte[numOfBytes];
-        for (int i = 0; i < numOfBytes; i++) {
-            res[i] = getUnsafe().getByte(address);
-            address++;
-        }
-        return res;
+        return _mapDB;
     }
 
 
-    public static void delete(OffHeapRefEntryCacheInfo entryCacheInfo){
-        long valuesAddress = entryCacheInfo.getOffHeapIndexValuesAddress();
-        if(valuesAddress != OffHeapRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY ){
-            unsafeDelete(valuesAddress);
-            entryCacheInfo.setOffHeapIndexValuesAddress(OffHeapRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY);
-        }else {
-            logger.log(Level.INFO,"***** free off heap space at address "+valuesAddress+" could not be performed*****");
+    public static String allocate(String key){
+        if(key != null) {
+            try {
+                getMapDB().put(key, "allocate".getBytes());
+            } catch (Exception e) {
+                throw new RuntimeException("allocate mapDB failed!");
+            }
+            Logger.getLogger("MyLogger").log(Level.INFO, "***** allocating off heap memory , key = " + key + " *****");
+            return key;
+        }else{
+            throw new RuntimeException("allocate:: key is null!");
         }
     }
 
-    public static void unsafeDelete(long address){
-//        logger.log(Level.INFO,"***** freeing off heap space at address "+address+"*****");
-        getUnsafe().freeMemory(address);
+    public static byte[] get(String key){
+        if(key != null) {
+            byte[] bytes = getMapDB().get(key);
+            Logger.getLogger("MyLogger").log(Level.INFO, "***** getting off heap memory , key = " + key + " *****");
+            return bytes;
+        }else{
+            throw new RuntimeException("get:: key is null!");
+        }
     }
 
-    public static void update(long address){
-        if(address == OffHeapRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY){
-            throw new IllegalStateException("trying to update when no off heap memory is allocated");
+
+    public static void delete(String key){
+        if(key != null) {
+            getMapDB().remove(key);
+            Logger.getLogger("MyLogger").log(Level.INFO, "***** deleting off heap memory , key = " + key + " *****");
         }
-//        logger.log(Level.INFO,"***** updated off heap space at address "+address+"*****");
-        getUnsafe().setMemory(address, numOfBytes, (byte) 1);
+    }
+
+    public static void update(String key){
+        if(key != null) {
+            getMapDB().replace(key, "update".getBytes());
+            Logger.getLogger("MyLogger").log(Level.INFO, "***** updating off heap memory , key = " + key + " *****");
+        }
     }
 
 }

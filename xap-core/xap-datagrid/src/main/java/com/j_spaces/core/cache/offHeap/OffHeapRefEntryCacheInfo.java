@@ -65,8 +65,6 @@ import java.util.logging.Logger;
 public class OffHeapRefEntryCacheInfo
         implements IEntryCacheInfo, IOffHeapRefCacheInfo, ILockObject {
 
-    public static final long UNALLOCATED_OFFHEAP_MEMORY = -1;
-
     private static final Object DummyOffHeapPos = new Object();
     private static final BlobStoreBusyInBulkException BusyInBulkIndicator = new BlobStoreBusyInBulkException();
 
@@ -77,7 +75,7 @@ public class OffHeapRefEntryCacheInfo
     //indicator (bit for index) , bit 1 in pos i means the index ins single value- used in construction
     //of backrefs
     private long _singleValueIndexIndicators;
-    private long _offHeapIndexValuesAddress = UNALLOCATED_OFFHEAP_MEMORY;
+    private String _offHeapIndexValuesAddress = null;
 
     private static final byte STATUS_PINNED = ((byte) 1) << 0;
     private static final byte STATUS_UNPINNED = ~STATUS_PINNED;
@@ -126,7 +124,7 @@ public class OffHeapRefEntryCacheInfo
             //happens in recovery from OH
             _offHeapVersion = ((OffHeapEntryHolder) eh).getOffHeapVersion();
             recoveredFromOffHeap = true;
-            setOffHeapIndexValuesAddress(OffHeapIndexesValuesHandler.allocate());
+            setOffHeapIndexValuesAddress(OffHeapIndexesValuesHandler.allocate(getUID()));
         }
 
         if (indexesBackRefsKept()) {
@@ -176,11 +174,11 @@ public class OffHeapRefEntryCacheInfo
 
     }
 
-    public void setOffHeapIndexValuesAddress(long _offHeapIndexValuesAddress) {
+    public void setOffHeapIndexValuesAddress(String _offHeapIndexValuesAddress) {
         this._offHeapIndexValuesAddress = _offHeapIndexValuesAddress;
     }
 
-    public long getOffHeapIndexValuesAddress() {
+    public String getOffHeapIndexValuesAddress() {
         return _offHeapIndexValuesAddress;
     }
 
@@ -198,12 +196,12 @@ public class OffHeapRefEntryCacheInfo
             setDirty_impl(false, false /*set_indexses*/, cacheManager);
             if (removed || isDeleted()) {
                 removeFromInternalCache(cacheManager, _loadedOffHeapEntry);
-                OffHeapIndexesValuesHandler.delete(this);
+                OffHeapIndexesValuesHandler.delete(getUID());
                 _offHeapPosition = null;
             } else {
                 if (!isWrittenToOffHeap()) {
                     insertOrTouchInternalCache(cacheManager, _loadedOffHeapEntry); //new entry- insert to cache
-                    setOffHeapIndexValuesAddress(OffHeapIndexesValuesHandler.allocate());
+                    setOffHeapIndexValuesAddress(OffHeapIndexesValuesHandler.allocate(getUID()));
                 } else {
                     OffHeapIndexesValuesHandler.update(getOffHeapIndexValuesAddress());
                 }
@@ -580,7 +578,7 @@ public class OffHeapRefEntryCacheInfo
 
             if (isDeleted() && !entry.isPhantom()) {
                 removeEntryFromOffHeapStorage_impl(cacheManager);
-                OffHeapIndexesValuesHandler.delete(this);
+                OffHeapIndexesValuesHandler.delete(getUID());
             } else {
                 if (isPhantom())
                     removeFromInternalCache(cacheManager, _loadedOffHeapEntry);
@@ -592,7 +590,7 @@ public class OffHeapRefEntryCacheInfo
                     if (internalCacheControl == InternalCacheControl.INSERT_IF_NEEDED_BY_OP)
                         insertOrTouchInternalCache(cacheManager, entry); //new entry- insert to cache
                     _offHeapPosition = cacheManager.getBlobStoreStorageHandler().add(getStorageKey_impl(), getEntryLayout_impl(cacheManager, entry), BlobStoreObjectType.DATA);
-                    setOffHeapIndexValuesAddress(OffHeapIndexesValuesHandler.allocate());
+                    setOffHeapIndexValuesAddress(OffHeapIndexesValuesHandler.allocate(getUID()));
                 } else {
                     _offHeapPosition = cacheManager.getBlobStoreStorageHandler().replace(getStorageKey_impl(), getEntryLayout_impl(cacheManager, entry), getOffHeapPos(), BlobStoreObjectType.DATA);
                     OffHeapIndexesValuesHandler.update(getOffHeapIndexValuesAddress());
