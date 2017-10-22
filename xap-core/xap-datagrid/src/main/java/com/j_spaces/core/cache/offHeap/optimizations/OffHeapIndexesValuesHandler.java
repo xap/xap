@@ -42,8 +42,11 @@ public class OffHeapIndexesValuesHandler {
             Logger.getLogger("MyLogger").log(Level.INFO,"***** created mapDB instance *****");
             try {
                 _mapDB = DBMaker
+                        //TODO  * You should increase amount of direct memory with
+                        //TODO  * {@code -XX:MaxDirectMemorySize=10G} JVM param
                         .memoryDirectDB() //off-heap
                         .make()
+
                         .hashMap("mapDB")
                         //.memoryShardedHashMap(numOfSegments)
                         .keySerializer(Serializer.STRING)
@@ -57,7 +60,7 @@ public class OffHeapIndexesValuesHandler {
     }
 
 
-    public static String allocate(String key){
+    public static boolean allocate(String key){
         if(key != null) {
             try {
                 getMapDB().put(key, "allocate".getBytes());
@@ -65,16 +68,16 @@ public class OffHeapIndexesValuesHandler {
                 throw new RuntimeException("allocate mapDB failed!");
             }
             Logger.getLogger("MyLogger").log(Level.INFO, "***** allocating off heap memory , key = " + key + " *****");
-            return key;
+            return true;
         }else{
-            throw new RuntimeException("allocate:: key is null!");
+            return false;
         }
     }
 
     public static byte[] get(String key){
         if(key != null) {
             byte[] bytes = getMapDB().get(key);
-            Logger.getLogger("MyLogger").log(Level.INFO, "***** getting off heap memory , key = " + key + " *****");
+            Logger.getLogger("MyLogger").log(Level.INFO, "***** reading off heap memory , key = " + key + " *****");
             return bytes;
         }else{
             throw new RuntimeException("get:: key is null!");
@@ -85,7 +88,7 @@ public class OffHeapIndexesValuesHandler {
     public static void delete(String key){
         if(key != null) {
             getMapDB().remove(key);
-            Logger.getLogger("MyLogger").log(Level.INFO, "***** deleting off heap memory , key = " + key + " *****");
+            Logger.getLogger("MyLogger").log(Level.INFO, "***** freeing off heap memory , key = " + key + " *****");
         }
     }
 
