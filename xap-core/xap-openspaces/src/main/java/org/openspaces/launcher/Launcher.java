@@ -21,6 +21,7 @@ import com.gigaspaces.admin.security.SecurityConstants;
 import com.gigaspaces.internal.io.FileUtils;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.logger.GSLogConfigLoader;
+import com.gigaspaces.security.service.SecurityResolver;
 import com.j_spaces.kernel.ClassLoaderHelper;
 
 import org.openspaces.pu.container.support.CommandLineParser;
@@ -108,7 +109,8 @@ public class Launcher {
         }
 
         final Logger logger = Logger.getLogger(loggerName);
-        RuntimeInfo.logRuntimeInfo(logger, "Starting the " + name + " server, bind address: " + config.getHostAddress() + ", port: " + config.getPort());
+        RuntimeInfo.logRuntimeInfo(logger, "Starting the " + name + " server, security enabled:" + SecurityResolver
+            .isSecurityEnabled() + ", bind address: " + config.getHostAddress() + ", port: " + config.getPort());
         WebLauncher webLauncher = ClassLoaderHelper.newInstance(webLauncherClass);
         webLauncher.launch(config);
         launchBrowser(logger, config);
