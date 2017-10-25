@@ -21,6 +21,7 @@ import com.gigaspaces.internal.backport.java.util.concurrent.atomic.LongAdder;
 import com.gigaspaces.internal.lrmi.ConnectionUrlDescriptor;
 import com.gigaspaces.internal.lrmi.LRMIProxyMonitoringDetailsImpl;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.j_spaces.kernel.SystemProperties;
 import com.j_spaces.kernel.pool.BlockingResourcePool;
 import com.j_spaces.kernel.pool.IResourcePool;
 import com.j_spaces.kernel.pool.IResourceProcedure;
@@ -41,7 +42,7 @@ import java.rmi.RemoteException;
 @com.gigaspaces.api.InternalApi
 public class ConnectionPool {
     private static final LongAdder activeConnections = new LongAdder();
-
+    final static public boolean WAIT_INDEFINITELY_FOR_CONNECTION = !Boolean.valueOf(System.getProperty(SystemProperties.LRMI_ASYNC_THROW_RESOURCE_NOT_AVAILABLE, String.valueOf(SystemProperties.LRMI_ASYNC_THROW_RESOURCE_NOT_AVAILABLE_DEFAULT)));
     private final IResourcePool<ConnectionResource> _peersPool;
     private final String _connectionURL;
     private final String _serviceDetails;
@@ -83,7 +84,7 @@ public class ConnectionPool {
      * full, the caller will be blocked until a free connection is available.
      */
     public ConnectionResource getConnection(LRMIMethod lrmiMethod) throws RemoteException, MalformedURLException {
-        ConnectionResource conn = _peersPool.getResource();
+        ConnectionResource conn = _peersPool.getResource(WAIT_INDEFINITELY_FOR_CONNECTION);
 
         try {
             if (_closed) {

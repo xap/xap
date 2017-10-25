@@ -17,21 +17,16 @@
 package com.j_spaces.kernel.pool;
 
 /**
- * base interface for resource pools.
+ * Created by Barak Bar Orion
+ * on 10/25/17.
  *
- * @author asy ronen
- * @version 1.0
- * @since 6.6
+ * @since 12.3
  */
-public interface IResourcePool<R extends IResource> {
-    R getResource();
-    R getResource(boolean waitIfNeeded);
+@com.gigaspaces.api.InternalApi
+class ResourceNotAvailableException extends RuntimeException{
 
-    void freeResource(R resource);
+    ResourceNotAvailableException() {
+        super();
+    }
 
-    int availableResources();
-
-    int size();
-
-    void forAllResources(IResourceProcedure<R> procedure);
 }

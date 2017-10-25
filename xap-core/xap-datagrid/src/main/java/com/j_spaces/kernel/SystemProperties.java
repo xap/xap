@@ -318,6 +318,13 @@ public class SystemProperties extends CommonSystemProperties {
 
     public final static String LRMI_RESOURCE_WARN_THRESHOLD_FACTOR = "com.gs.lrmi.resources.warn-threshold-factor";
 
+
+    /**
+     * https://insightedge.atlassian.net/browse/GS-12365
+     */
+    public final static String LRMI_ASYNC_THROW_RESOURCE_NOT_AVAILABLE = "com.gs.transport_protocol.lrmi.throw-resource-not-available";
+    public final static boolean LRMI_ASYNC_THROW_RESOURCE_NOT_AVAILABLE_DEFAULT = false;
+
     /**
      * XAP-13299 -- allow adjustment of the tmp selector pool size.
      */

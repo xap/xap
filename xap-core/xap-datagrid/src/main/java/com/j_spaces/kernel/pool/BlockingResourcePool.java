@@ -69,7 +69,7 @@ public class BlockingResourcePool<R extends IResource> extends ResourcePool<R> {
     }
 
     @Override
-    protected R handleFullPool() {
+    protected R handleFullPool(boolean waitIfNeeded) {
         final Thread thread = Thread.currentThread();
         while (true) {
             waitingQueue.add(thread);
@@ -89,7 +89,10 @@ public class BlockingResourcePool<R extends IResource> extends ResourcePool<R> {
                 return resource;
             }
 
-
+            if (!waitIfNeeded){
+                waitingQueue.remove(thread);
+                throw new ResourceNotAvailableException();
+            }
             LockSupport.park();
             resource = findFreeResource();
             if (resource != null) {

@@ -42,7 +42,7 @@ public class ResourcePool<R extends IResource> implements IResourcePool<R> {
     /**
      * pool of resources
      */
-    protected final R[] _resourcesPool;
+    private final R[] _resourcesPool;
     /**
      * max number of resources to keep in pool
      */
@@ -87,6 +87,7 @@ public class ResourcePool<R extends IResource> implements IResourcePool<R> {
         if (initialResources != null && initialResources.length > maxResources)
             throw new IllegalArgumentException("initialResources length cannot exceed maxResources");
         // allocate a fixed pool of peers
+        //noinspection unchecked
         _resourcesPool = (R[]) new IResource[maxResources];
 
         int i = 0;
@@ -106,13 +107,19 @@ public class ResourcePool<R extends IResource> implements IResourcePool<R> {
         _nextFreeIndex = new AtomicInteger(i);
     }
 
+    @Override
+    public R getResource() {
+        return getResource(true);
+    }
+
     /**
      * Returns a Resource from the pool. If there is an un-used Resource in the pool, it is
      * returned; otherwise, a new Resource is created and added to the pool.
      *
      * @return free Resource allocated to this request
      */
-    public R getResource() {
+    @Override
+    public R getResource(boolean waitIfNeeded) {
         R resource = findFreeResource();
 
         /* retry on unsuccessful set - race condition on free resource. */
@@ -124,7 +131,7 @@ public class ResourcePool<R extends IResource> implements IResourcePool<R> {
                 // creates new peer
                 resource = tryAllocateNewPooledResource();
                 if (resource == null)
-                    return handleFullPool();
+                    return handleFullPool(waitIfNeeded);
                 else {
                     resource.setAcquired(true); // to avoid stealing need to set before adding to pool
 
@@ -138,7 +145,7 @@ public class ResourcePool<R extends IResource> implements IResourcePool<R> {
                 }
             } else {
                 // creates new peer
-                return handleFullPool();
+                return handleFullPool(waitIfNeeded);
             }
         }
 
@@ -149,7 +156,7 @@ public class ResourcePool<R extends IResource> implements IResourcePool<R> {
         return _resourceFactory.allocate();
     }
 
-    protected R findFreeResource() {
+    R findFreeResource() {
         R resource;
         int i = 0;
 
@@ -165,7 +172,7 @@ public class ResourcePool<R extends IResource> implements IResourcePool<R> {
         return resource;
     }
 
-    protected R handleFullPool() {
+    protected R handleFullPool(boolean waitIfNeeded) {
         R resource = _resourceFactory.allocate();
         resource.setAcquired(true); // to avoid stealing need to set before adding to pool
         return resource;
@@ -174,10 +181,12 @@ public class ResourcePool<R extends IResource> implements IResourcePool<R> {
     /**
      * Free the specified resource. Same as calling {@link IResource#release()}
      */
+    @Override
     public void freeResource(R resourceToFree) {
         resourceToFree.release();
     }
 
+    @Override
     public int availableResources() {
         int counter = 0;
         for (int i = 0; i < _maxResources; i++) {
@@ -190,13 +199,14 @@ public class ResourcePool<R extends IResource> implements IResourcePool<R> {
         return counter;
     }
 
+    @Override
     public int size() {
         return _nextFreeIndex.get();
     }
 
+    @Override
     public void forAllResources(IResourceProcedure<R> procedure) {
-        for (int i = 0; i < _resourcesPool.length; ++i) {
-            R resource = _resourcesPool[i];
+        for (R resource : _resourcesPool) {
             if (resource == null)
                 return;
 
