@@ -42,7 +42,7 @@ public class SpaceEngineReplicaConsumerFacade
 
     public void addTypeDesc(ITypeDesc typeDescriptor) throws Exception {
         _spaceEngine.getTypeManager().addTypeDesc(typeDescriptor);
-        if (_spaceEngine.getCacheManager().isOffHeapCachePolicy()) //need to be stored in case offheap recovery will be used
+        if (_spaceEngine.getCacheManager().isBlobStoreCachePolicy()) //need to be stored in case blobStore recovery will be used
             _spaceEngine.getCacheManager().getStorageAdapter().introduceDataType(typeDescriptor);
 
     }

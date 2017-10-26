@@ -1124,7 +1124,7 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
     }
 
     @Override
-    public boolean isOffHeapEntry() {
+    public boolean isBlobStoreEntry() {
         return false;
     }
 

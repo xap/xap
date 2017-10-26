@@ -80,7 +80,7 @@ public class TemplateCacheInfo
     }
 
     @Override
-    public boolean isOffHeapEntry() {
+    public boolean isBlobStoreEntry() {
         return false;
     }
 

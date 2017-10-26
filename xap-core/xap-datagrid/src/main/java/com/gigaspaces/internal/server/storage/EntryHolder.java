@@ -404,7 +404,7 @@ public class EntryHolder extends AbstractSpaceItem implements IEntryHolder {
     }
 
     @Override
-    public boolean isOffHeapEntry() {
+    public boolean isBlobStoreEntry() {
         return false;
     }
 

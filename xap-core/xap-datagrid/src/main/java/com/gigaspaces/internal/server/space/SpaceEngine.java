@@ -107,12 +107,12 @@ import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.TerminatingFifoXtnsInfo;
 import com.j_spaces.core.cache.XtnData;
 import com.j_spaces.core.cache.context.Context;
-import com.j_spaces.core.cache.offHeap.IOffHeapEntryHolder;
-import com.j_spaces.core.cache.offHeap.OffHeapEntryHolder;
-import com.j_spaces.core.cache.offHeap.OffHeapRefEntryCacheInfo;
-import com.j_spaces.core.cache.offHeap.optimizations.OffHeapOperationOptimizations;
-import com.j_spaces.core.cache.offHeap.storage.bulks.BlobStoreBulkInfo;
-import com.j_spaces.core.cache.offHeap.storage.preFetch.BlobStorePreFetchIteratorBasedHandler;
+import com.j_spaces.core.cache.blobStore.IBlobStoreEntryHolder;
+import com.j_spaces.core.cache.blobStore.BlobStoreEntryHolder;
+import com.j_spaces.core.cache.blobStore.BlobStoreRefEntryCacheInfo;
+import com.j_spaces.core.cache.blobStore.optimizations.BlobStoreOperationOptimizations;
+import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
+import com.j_spaces.core.cache.blobStore.storage.preFetch.BlobStorePreFetchIteratorBasedHandler;
 import com.j_spaces.core.client.*;
 import com.j_spaces.core.cluster.*;
 import com.j_spaces.core.exception.internal.EngineInternalSpaceException;
@@ -315,12 +315,12 @@ public class SpaceEngine implements ISpaceModeListener {
         final IStorageAdapter storageAdapter = initStorageAdapter(spaceImpl, this);
         verifySystemTime(storageAdapter);
 
-        if (isOffHeapPersistent() && getClusterInfo().getNumberOfBackups() > 1) {
+        if (isBlobStorePersistent() && getClusterInfo().getNumberOfBackups() > 1) {
             throw new CreateException("BlobStore persistency is not allowed with more then a single backup");
         }
 
-        if (isOffHeapPersistent()) {
-            offheapOverrideConfig(spaceImpl);
+        if (isBlobStorePersistent()) {
+            blobStoreOverrideConfig(spaceImpl);
         }
 
         // Initialize replication components
@@ -363,7 +363,7 @@ public class SpaceEngine implements ISpaceModeListener {
 
     }
 
-    private void offheapOverrideConfig(SpaceImpl spaceImpl) {
+    private void blobStoreOverrideConfig(SpaceImpl spaceImpl) {
         String replicationPolicyPath = ClusterXML.CLUSTER_CONFIG_TAG + "." + ClusterXML.GROUPS_TAG + "." + ClusterXML.GROUP_TAG + "." + ClusterXML.REPL_POLICY_TAG + ".";
 
         String redoLogCapacityFromCustomProperties = spaceImpl.getCustomProperties().getProperty(replicationPolicyPath + ClusterXML.REPL_REDO_LOG_CAPACITY_TAG);
@@ -806,7 +806,7 @@ public class SpaceEngine implements ISpaceModeListener {
         final long current = SystemTime.timeMillis();
         final String entryUid = getOrCreateUid(entryPacket);
         IEntryHolder eHolder = EntryHolderFactory.createEntryHolder(serverTypeDesc, entryPacket, _entryDataType,
-                entryUid, LeaseManager.toAbsoluteTime(lease, current), txnEntry, current, (_cacheManager.isOffHeapDataSpace() && serverTypeDesc.getTypeDesc().isBlobstoreEnabled() && !UpdateModifiers.isUpdateOnly(modifiers)));
+                entryUid, LeaseManager.toAbsoluteTime(lease, current), txnEntry, current, (_cacheManager.isblobStoreDataSpace() && serverTypeDesc.getTypeDesc().isBlobstoreEnabled() && !UpdateModifiers.isUpdateOnly(modifiers)));
 
         /** set write lease mode */
         if (!reInsertedEntry && _filterManager._isFilter[FilterOperationCodes.BEFORE_WRITE])
@@ -1001,7 +1001,7 @@ public class SpaceEngine implements ISpaceModeListener {
         Context context = null;
         try {
             context = _cacheManager.getCacheContext();
-            if (take && txn == null && _cacheManager.isOffHeapCachePolicy() && _cacheManager.useBlobStoreBulks()) {//can we exploit blob-store bulking ?
+            if (take && txn == null && _cacheManager.isBlobStoreCachePolicy() && _cacheManager.useBlobStoreBulks()) {//can we exploit blob-store bulking ?
                 context.setBlobStoreBulkInfo(new BlobStoreBulkInfo(_cacheManager, true /*takeMultipleBulk*/));
             }
             for (int i = 0; i < ids.length; i++) {
@@ -1110,7 +1110,7 @@ public class SpaceEngine implements ISpaceModeListener {
                              int operationModifiers)
             throws TransactionException, UnusableEntryException, UnknownTypeException, RemoteException, InterruptedException {
         if (Modifiers.contains(operationModifiers, Modifiers.EXPLAIN_PLAN)) {
-            SingleExplainPlan.validate(timeout, _cacheManager.isOffHeapCachePolicy(), operationModifiers, template.getCustomQuery(), getClassTypeInfo(template.getTypeName()).getIndexes());
+            SingleExplainPlan.validate(timeout, _cacheManager.isBlobStoreCachePolicy(), operationModifiers, template.getCustomQuery(), getClassTypeInfo(template.getTypeName()).getIndexes());
         }
         monitorMemoryUsage(false);
         if (take)
@@ -1389,11 +1389,11 @@ public class SpaceEngine implements ISpaceModeListener {
     public void snapshot(ITemplatePacket entryPacket)
             throws UnusableEntryException {
         ITypeDesc prev = null;
-        if (getCacheManager().isOffHeapCachePolicy())
+        if (getCacheManager().isBlobStoreCachePolicy())
             prev = _typeManager.getTypeDesc(entryPacket.getTypeName()); //do we need to save in blob-store ?
         try {
             IServerTypeDesc cur = _typeManager.loadServerTypeDesc(entryPacket);
-            if (getCacheManager().isOffHeapCachePolicy() && cur.getTypeDesc() != prev) //need to be stored in case offheap recovery will be used
+            if (getCacheManager().isBlobStoreCachePolicy() && cur.getTypeDesc() != prev) //need to be stored in case blobStore recovery will be used
                 getCacheManager().getStorageAdapter().introduceDataType(cur.getTypeDesc());
         } catch (UnknownTypeException ute) {
             throw new ProxyInternalSpaceException(ute.toString(), ute);
@@ -1501,7 +1501,7 @@ public class SpaceEngine implements ISpaceModeListener {
                     txnEntry.unlock();
                 }
             } else {
-                if (_cacheManager.isOffHeapCachePolicy() && _cacheManager.useBlobStoreBulks()) {//can we exploit blob-store bulking ?
+                if (_cacheManager.isBlobStoreCachePolicy() && _cacheManager.useBlobStoreBulks()) {//can we exploit blob-store bulking ?
                     if (!anyFifoClass || !_cacheManager.isDirectPersistencyEmbeddedtHandlerUsed())
                         context.setBlobStoreBulkInfo(new BlobStoreBulkInfo(_cacheManager, false /*takeMultipleBulk*/));
                 }
@@ -1738,7 +1738,7 @@ public class SpaceEngine implements ISpaceModeListener {
 
             context.setMultipleOperation();
             setFromGatewayIfNeeded(sc, context);
-            if (txn == null && _cacheManager.isOffHeapCachePolicy() && timeout == JavaSpace.NO_WAIT && _cacheManager.useBlobStoreBulks()) {//can we exploit blob-store bulking ?
+            if (txn == null && _cacheManager.isBlobStoreCachePolicy() && timeout == JavaSpace.NO_WAIT && _cacheManager.useBlobStoreBulks()) {//can we exploit blob-store bulking ?
                 //SUPPORT FOR TIMEOUT WILL BE ADDED LATTER
                 if (!anyFifoClass || !_cacheManager.isDirectPersistencyEmbeddedtHandlerUsed())
                     context.setBlobStoreBulkInfo(new BlobStoreBulkInfo(_cacheManager, false /*takeMultipleBulk*/));
@@ -1859,7 +1859,7 @@ public class SpaceEngine implements ISpaceModeListener {
             throws TransactionException, UnusableEntryException, UnknownTypeException, RemoteException, InterruptedException {
         monitorMemoryUsage(false);
         if (Modifiers.contains(operationModifiers, Modifiers.EXPLAIN_PLAN)) {
-            SingleExplainPlan.validate(timeout, _cacheManager.isOffHeapCachePolicy(), operationModifiers, template.getCustomQuery(), getClassTypeInfo(template.getTypeName()).getIndexes());
+            SingleExplainPlan.validate(timeout, _cacheManager.isBlobStoreCachePolicy(), operationModifiers, template.getCustomQuery(), getClassTypeInfo(template.getTypeName()).getIndexes());
         }
         if (take)
             monitorReplicationStateForModifyingOperation(txn, OperationWeightInfoFactory.create(WeightInfoOperationType.TAKE));
@@ -1943,7 +1943,7 @@ public class SpaceEngine implements ISpaceModeListener {
             context.setMainThread(true);
             context.setOperationID(template.getOperationID());
             setFromGatewayIfNeeded(sc, context);
-            if (take && txn == null && _cacheManager.isOffHeapCachePolicy() && _cacheManager.useBlobStoreBulks()) {//can we exploit blob-store bulking ?
+            if (take && txn == null && _cacheManager.isBlobStoreCachePolicy() && _cacheManager.useBlobStoreBulks()) {//can we exploit blob-store bulking ?
                 context.setBlobStoreBulkInfo(new BlobStoreBulkInfo(_cacheManager, true /*takeMultipleBulk*/));
             }
 
@@ -1993,7 +1993,7 @@ public class SpaceEngine implements ISpaceModeListener {
             throws UnusableEntryException, UnknownTypeException, TransactionException, RemoteException {
         monitorMemoryUsage(false);
         if (Modifiers.contains(operationModifiers, Modifiers.EXPLAIN_PLAN)) {
-            SingleExplainPlan.validate(0, _cacheManager.isOffHeapCachePolicy(), operationModifiers, template.getCustomQuery(), getClassTypeInfo(template.getTypeName()).getIndexes());
+            SingleExplainPlan.validate(0, _cacheManager.isBlobStoreCachePolicy(), operationModifiers, template.getCustomQuery(), getClassTypeInfo(template.getTypeName()).getIndexes());
         }
         IServerTypeDesc typeDesc = _typeManager.loadServerTypeDesc(template);
 
@@ -2376,7 +2376,7 @@ public class SpaceEngine implements ISpaceModeListener {
             versionID = Math.max(tHolder.getEntryData().getVersion() + 1, 2);
 
         IEntryHolder updated_eh = EntryHolderFactory.createEntryHolder(serverTypeDesc, updated_entry, _entryDataType,
-                entryId, expiration_time, (XtnEntry) null, SystemTime.timeMillis(), versionID, true /*keepExpiration*/, _cacheManager.isOffHeapDataSpace() && serverTypeDesc.getTypeDesc().isBlobstoreEnabled() && !UpdateModifiers.isUpdateOnly(modifiers));
+                entryId, expiration_time, (XtnEntry) null, SystemTime.timeMillis(), versionID, true /*keepExpiration*/, _cacheManager.isblobStoreDataSpace() && serverTypeDesc.getTypeDesc().isBlobstoreEnabled() && !UpdateModifiers.isUpdateOnly(modifiers));
         tHolder.setUpdatedEntry(updated_eh);
 
         // invoke before_update filter
@@ -2639,7 +2639,7 @@ public class SpaceEngine implements ISpaceModeListener {
             context.setOperationID(template.getOperationID());
             tHolder.setReRegisterLeaseOnUpdate(lease != UPDATE_NO_LEASE);
             setFromGatewayIfNeeded(sc, context);
-            if (txn == null && _cacheManager.isOffHeapCachePolicy() && _cacheManager.useBlobStoreBulks()) {//can we exploit blob-store bulking ?
+            if (txn == null && _cacheManager.isBlobStoreCachePolicy() && _cacheManager.useBlobStoreBulks()) {//can we exploit blob-store bulking ?
                 context.setBlobStoreBulkInfo(new BlobStoreBulkInfo(_cacheManager, false /*takeMultipleBulk*/));
             }
 
@@ -2834,7 +2834,7 @@ public class SpaceEngine implements ISpaceModeListener {
                 setFromGatewayIfNeeded(sc, context);
 
                 if (txnEntry == null) {
-                    if (_cacheManager.isOffHeapCachePolicy() && _cacheManager.useBlobStoreBulks() && timeout == JavaSpace.NO_WAIT) {//can we exploit blob-store bulking ?
+                    if (_cacheManager.isBlobStoreCachePolicy() && _cacheManager.useBlobStoreBulks() && timeout == JavaSpace.NO_WAIT) {//can we exploit blob-store bulking ?
                         context.setBlobStoreBulkInfo(new BlobStoreBulkInfo(_cacheManager, false /*takeMultipleBulk*/));
                     }
                     newUpdateMultipleLoop(context, tHolder, entries, leases, null, sc, operationModifiers, timeout);
@@ -3665,15 +3665,15 @@ public class SpaceEngine implements ISpaceModeListener {
                                                    boolean useSCN, IEntryCacheInfo pEntry)
             throws TransactionException, TemplateDeletedException,
             SAException {
-        if (pEntry.isOffHeapEntry() && !pEntry.preMatch(context, template))
+        if (pEntry.isBlobStoreEntry() && !pEntry.preMatch(context, template))
             return null; //try to save getting the entry to memory
 
         long scnFilter = useSCN ? template.getSCN() : 0;
 
         IEntryHolder entry;
-        if (pEntry.isOffHeapEntry()) {
-            boolean onlyIndexesPart = OffHeapOperationOptimizations.isConsiderOptimizedForBlobstore(this, context, template, pEntry);
-            entry = ((OffHeapRefEntryCacheInfo) pEntry).getLatestEntryVersion(_cacheManager, false/*attach*/,
+        if (pEntry.isBlobStoreEntry()) {
+            boolean onlyIndexesPart = BlobStoreOperationOptimizations.isConsiderOptimizedForBlobstore(this, context, template, pEntry);
+            entry = ((BlobStoreRefEntryCacheInfo) pEntry).getLatestEntryVersion(_cacheManager, false/*attach*/,
                     null /*lastKnownEntry*/, context, onlyIndexesPart/* onlyIndexesPart*/);
         } else {
             entry = pEntry.getEntryHolder(_cacheManager, context);
@@ -3979,12 +3979,12 @@ public class SpaceEngine implements ISpaceModeListener {
                                              IServerTypeDesc entryTypeDesc /*can be null in LRU (non blobstore cache policy)*/)
             throws TransactionException, TemplateDeletedException,
             SAException {
-        if (pEntry.isOffHeapEntry() && !pEntry.preMatch(context, template))
+        if (pEntry.isBlobStoreEntry() && !pEntry.preMatch(context, template))
             return; //try to save getting the entry to memory
 
         IEntryHolder entry;
-        if(OffHeapOperationOptimizations.isConsiderOptimizedForBlobstore(this, context, template, pEntry)){
-            entry = ((OffHeapRefEntryCacheInfo) pEntry).getLatestEntryVersion(_cacheManager, false/*attach*/, null /*lastKnownEntry*/, context, true/* onlyIndexesPart*/);
+        if(BlobStoreOperationOptimizations.isConsiderOptimizedForBlobstore(this, context, template, pEntry)){
+            entry = ((BlobStoreRefEntryCacheInfo) pEntry).getLatestEntryVersion(_cacheManager, false/*attach*/, null /*lastKnownEntry*/, context, true/* onlyIndexesPart*/);
         }else{
             entry = pEntry.getEntryHolder(_cacheManager, context);
         }
@@ -4086,8 +4086,8 @@ public class SpaceEngine implements ISpaceModeListener {
             TemplateDeletedException, TransactionNotActiveException,
             SAException, NoMatchException, FifoException {
         //if op is update/change and its blob store verify memory shortage
-        if (entry.isOffHeapEntry() && template.getTemplateOperation() == SpaceOperations.UPDATE)
-            _cacheManager.getBlobStoreMemoryMonitor().onMemoryAllocation(((IOffHeapEntryHolder) entry).getOffHeapResidentPart().getStorageKey());
+        if (entry.isBlobStoreEntry() && template.getTemplateOperation() == SpaceOperations.UPDATE)
+            _cacheManager.getBlobStoreMemoryMonitor().onMemoryAllocation(((IBlobStoreEntryHolder) entry).getBlobStoreResidentPart().getStorageKey());
 
         /** disable sync-replication within this code */
         context.setDisableSyncReplication(true);
@@ -4225,9 +4225,9 @@ public class SpaceEngine implements ISpaceModeListener {
             throws TransactionConflictException, EntryDeletedException,
             TemplateDeletedException, TransactionNotActiveException,
             SAException, NoMatchException, FifoException {
-        if(ent.isOffHeapEntry() ){
-            OffHeapRefEntryCacheInfo offHeapRefEntryCacheInfo = ((OffHeapEntryHolder) ent).getOffHeapResidentPart();
-            OffHeapOperationOptimizations.isConsiderOptimizedForBlobstore(this, context, tmpl, offHeapRefEntryCacheInfo);
+        if(ent.isBlobStoreEntry() ){
+            BlobStoreRefEntryCacheInfo blobStoreRefEntryCacheInfo = ((BlobStoreEntryHolder) ent).getBlobStoreResidentPart();
+            BlobStoreOperationOptimizations.isConsiderOptimizedForBlobstore(this, context, tmpl, blobStoreRefEntryCacheInfo);
         }
         boolean needRematch = false;
         if (needXtnLocked) {
@@ -4251,7 +4251,7 @@ public class SpaceEngine implements ISpaceModeListener {
                     throw ENTRY_DELETED_EXCEPTION/*new EntryDeletedException(ent.m_UID)*/;
                 if (entry.isDeleted())
                     throw ENTRY_DELETED_EXCEPTION/*new EntryDeletedException(ent.m_UID)*/;
-                if (entry.isOffHeapEntry() && !entry.isSameEntryInstance(ent))
+                if (entry.isBlobStoreEntry() && !entry.isSameEntryInstance(ent))
                     throw ENTRY_DELETED_EXCEPTION/*new EntryDeletedException(ent.m_UID)*/; //not the same entry  lock is not relevant
                 if (ent != entry)
                     //renewed lru memory entry- mark to rematch
@@ -4337,7 +4337,7 @@ public class SpaceEngine implements ISpaceModeListener {
                     throw ENTRY_DELETED_EXCEPTION/*new EntryDeletedException(ent.m_UID)*/;
                 if (!context.isNonBlockingReadOp() && entry.isDeleted())
                     throw ENTRY_DELETED_EXCEPTION/*new EntryDeletedException(ent.m_UID)*/;
-                if (entry.isOffHeapEntry() && !context.isNonBlockingReadOp() && !entry.isSameEntryInstance(ent))
+                if (entry.isBlobStoreEntry() && !context.isNonBlockingReadOp() && !entry.isSameEntryInstance(ent))
                     throw ENTRY_DELETED_EXCEPTION/*new EntryDeletedException(ent.m_UID)*/; //not the same entry  lock is not relevant
                 if (ent != entry)
                     needRematch = true;
@@ -4677,7 +4677,7 @@ public class SpaceEngine implements ISpaceModeListener {
         }
 
 
-        if (getCacheManager().isEvictableCachePolicy() || entry.isOffHeapEntry())
+        if (getCacheManager().isEvictableCachePolicy() || entry.isBlobStoreEntry())
             _cacheManager.touchByEntry(entry, false /*modifyOp*/);
 
     }
@@ -4796,7 +4796,7 @@ public class SpaceEngine implements ISpaceModeListener {
                 _processorWG.enqueueBlocked(etp);
             }
         }
-        if ((getCacheManager().isEvictableCachePolicy() || entry.isOffHeapEntry()) && template.getXidOriginatedTransaction() != null)
+        if ((getCacheManager().isEvictableCachePolicy() || entry.isBlobStoreEntry()) && template.getXidOriginatedTransaction() != null)
             _cacheManager.touchByEntry(entry, true /*modifyOp*/);
     }
 
@@ -5056,7 +5056,7 @@ public class SpaceEngine implements ISpaceModeListener {
         if (needVerifyWF)
             checkWFValidityAfterUpdate(context, entry);
 
-        if (getCacheManager().isEvictableCachePolicy() || entry.isOffHeapEntry())
+        if (getCacheManager().isEvictableCachePolicy() || entry.isBlobStoreEntry())
             _cacheManager.touchByEntry(entry, true /*modifyOp*/);
     }
 
@@ -6378,7 +6378,7 @@ public class SpaceEngine implements ISpaceModeListener {
                 groupName,
                 chunkSize,
                 concurrentConsumers,
-                getCacheManager().isOffHeapCachePolicy(),
+                getCacheManager().isBlobStoreCachePolicy(),
                 directPersistencySyncListRecovery ? directPersistencySyncListFetcher : null);
 
         ISpaceSynchronizeReplicaState spaceSynchronizeReplicaRequest = getReplicationNode().spaceSynchronizeReplicaRequest(context);
@@ -7129,12 +7129,12 @@ public class SpaceEngine implements ISpaceModeListener {
         _localViewRegistrations.remove(viewStubHolderName);
     }
 
-    private boolean isOffHeapCachePolicy() {
+    private boolean isBlobStoreCachePolicy() {
         return _configReader.getIntSpaceProperty(CACHE_POLICY_PROP, "-1") == CACHE_POLICY_BLOB_STORE;
     }
 
-    public boolean isOffHeapPersistent() {
-        return isOffHeapCachePolicy()
+    public boolean isBlobStorePersistent() {
+        return isBlobStoreCachePolicy()
                 && Boolean.parseBoolean(_spaceImpl.getCustomProperties().getProperty(FULL_CACHE_MANAGER_BLOBSTORE_PERSISTENT_PROP));
     }
 

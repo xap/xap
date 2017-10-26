@@ -56,10 +56,10 @@ abstract public class AbstractCacheManager {
     }
 
     public boolean isResidentEntriesCachePolicy() {
-        return isAllInCachePolicy() || isOffHeapCachePolicy();
+        return isAllInCachePolicy() || isBlobStoreCachePolicy();
     }
 
-    public boolean isOffHeapCachePolicy() {
+    public boolean isBlobStoreCachePolicy() {
         return getCachePolicy() == CACHE_POLICY_BLOB_STORE;
     }
 

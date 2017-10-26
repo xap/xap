@@ -57,9 +57,9 @@ import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.TerminatingFifoXtnsInfo;
 import com.j_spaces.core.cache.XtnData;
+import com.j_spaces.core.cache.blobStore.IBlobStoreRefCacheInfo;
 import com.j_spaces.core.cache.context.Context;
-import com.j_spaces.core.cache.offHeap.IOffHeapEntryHolder;
-import com.j_spaces.core.cache.offHeap.IOffHeapRefCacheInfo;
+import com.j_spaces.core.cache.blobStore.IBlobStoreEntryHolder;
 import com.j_spaces.core.client.EntryAlreadyInSpaceException;
 import com.j_spaces.core.client.EntryNotInSpaceException;
 import com.j_spaces.core.client.ReadModifiers;
@@ -155,8 +155,8 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
             entryLock = getEntryLockObject(entry);
 
             //if its blob store verify memory shortage
-            if (entry.isOffHeapEntry())
-                _cacheManager.getBlobStoreMemoryMonitor().onMemoryAllocation(((IOffHeapEntryHolder) entry).getOffHeapResidentPart().getStorageKey());
+            if (entry.isBlobStoreEntry())
+                _cacheManager.getBlobStoreMemoryMonitor().onMemoryAllocation(((IBlobStoreEntryHolder) entry).getBlobStoreResidentPart().getStorageKey());
 
             // sync volatile variable
             _engine.setLastEntryTimestamp(entry.getSCN());
@@ -364,7 +364,7 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
         ILockObject entryLock = null;
 
         if (curEh == null && (_cacheManager.getLockManager().isPerLogicalSubjectLockObject(_cacheManager.isEvictableCachePolicy()) || alreadyLocked)) {
-            if (_cacheManager.isOffHeapDataSpace())
+            if (_cacheManager.isblobStoreDataSpace())
                 curEh = _cacheManager.getEntryByUidFromPureCache(entry.getUID());
             else
                 curEh = _cacheManager.getEntry(context, entry, true /*tryInsertToCache*/, alreadyLocked);
@@ -384,7 +384,7 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
                     curEh = _cacheManager.getEntry(context, curEh != null ? curEh : entry, true /*tryInsertToCache*/, true /*lockeEntry*/);
                     if (curEh == null)
                         return true;  //entry no longer exist
-                    if (curEh.isOffHeapEntry() && !curEh.isSameEntryInstance(original))
+                    if (curEh.isBlobStoreEntry() && !curEh.isSameEntryInstance(original))
                         return false;
                 }
                 return removeEntryOnLeaseExpiration(context, typeDesc, curEh);
@@ -1296,7 +1296,7 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
                             synchronized (entryLock) {
                                 IEntryHolder eh = null;
                                 //NOTE: taken entries are handled in handleCommittedTakenEntries
-                                if (!entry.isOffHeapEntry())
+                                if (!entry.isBlobStoreEntry())
                                     eh = _cacheManager.getEntry(context, entry.getUID(), null, null, true /*tryInsertToCache*/,
                                             true /*lockedEntry*/, true /*useOnlyCache*/);
                                 else
@@ -1314,7 +1314,7 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
 
                                 if (entry.isExpired(xtnEntry.m_CommitRollbackTimeStamp) && !entry.isEntryUnderWriteLockXtn() && !_engine.isExpiredEntryStayInSpace(entry)) {//recheck expired- space volatile touch
                                     if (entry.isExpired(_engine.getLeaseManager().getEffectiveEntryLeaseTime(xtnEntry.m_CommitRollbackTimeStamp))) {
-                                        if (entry.isOffHeapEntry())
+                                        if (entry.isBlobStoreEntry())
                                             _cacheManager.getEntry(context, entry, true /*tryInsertToCache*/, true /*lockedEntry*/, true /*useOnlyCache*/);
 
                                         IServerTypeDesc typeDesc = _engine.getTypeManager().getServerTypeDesc(entry.getClassName());
@@ -1918,7 +1918,7 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
                                 _cacheManager.disconnectEntryFromXtn(context, entry, xtnEntry, true /*xtnEnd*/);
                                 if (entry.isExpired(xtnEntry.m_CommitRollbackTimeStamp) && !entry.isEntryUnderWriteLockXtn()) {//recheck- spare touching a volatile
                                     if (!_engine.isExpiredEntryStayInSpace(entry) && entry.isExpired(_engine.getLeaseManager().getEffectiveEntryLeaseTime(xtnEntry.m_CommitRollbackTimeStamp))) {
-                                        if (entry.isOffHeapEntry())
+                                        if (entry.isBlobStoreEntry())
                                             _cacheManager.getEntry(context, entry, true /*tryInsertToCache*/, true /*lockedEntry*/, true /*useOnlyCache*/);
 
                                         IServerTypeDesc typeDesc = _engine.getTypeManager().getServerTypeDesc(entry.getClassName());
@@ -2083,9 +2083,9 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
             entryLock = getEntryLockObject(entry);
             synchronized (entryLock) {
                 try {
-                    if (entry.isOffHeapEntry()) {
+                    if (entry.isBlobStoreEntry()) {
                         need_unpin = true;
-                        entry = ((IOffHeapEntryHolder) entry).getLatestEntryVersion(_cacheManager, true/*attach*/, context);
+                        entry = ((IBlobStoreEntryHolder) entry).getLatestEntryVersion(_cacheManager, true/*attach*/, context);
                     }
 
                     if (template != null) {//specific template, handle it and return
@@ -2140,9 +2140,9 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
                 entryLock = getEntryLockObject(entry);
                 synchronized (entryLock) {
                     try {
-                        if (entry.isOffHeapEntry()) {
+                        if (entry.isBlobStoreEntry()) {
                             need_unpin = true;
-                            entry = ((IOffHeapEntryHolder) entry).getLatestEntryVersion(_cacheManager, true/*attach*/, context);
+                            entry = ((IBlobStoreEntryHolder) entry).getLatestEntryVersion(_cacheManager, true/*attach*/, context);
                         }
                         handleRemoveWaitingForInfoSA_Template(context, entry, template);
                     } finally {
@@ -2627,7 +2627,7 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
             context = _cacheManager.getCacheContext();
 
             for (IEntryCacheInfo e : candidates) {
-                IOffHeapRefCacheInfo oh = (IOffHeapRefCacheInfo) e;
+                IBlobStoreRefCacheInfo oh = (IBlobStoreRefCacheInfo) e;
                 if (e.isDeleted())
                     continue;
                 IEntryHolder entry = oh.getEntryHolderIfInMemory();

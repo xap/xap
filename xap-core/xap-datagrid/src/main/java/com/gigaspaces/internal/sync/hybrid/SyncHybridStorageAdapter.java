@@ -16,12 +16,12 @@ import com.gigaspaces.metadata.index.SpaceIndex;
 import com.gigaspaces.sync.SpaceSynchronizationEndpoint;
 import com.j_spaces.core.SpaceOperations;
 import com.j_spaces.core.cache.CacheManager;
+import com.j_spaces.core.cache.blobStore.sadapter.BlobStoreStorageAdapter;
 import com.j_spaces.core.cache.context.Context;
-import com.j_spaces.core.cache.offHeap.IOffHeapEntryHolder;
-import com.j_spaces.core.cache.offHeap.errors.BlobStoreErrorsHandler;
-import com.j_spaces.core.cache.offHeap.sadapter.BlobStoreStorageAdapterClassInfo;
-import com.j_spaces.core.cache.offHeap.sadapter.IBlobStoreStorageAdapter;
-import com.j_spaces.core.cache.offHeap.sadapter.OffHeapStorageAdapter;
+import com.j_spaces.core.cache.blobStore.IBlobStoreEntryHolder;
+import com.j_spaces.core.cache.blobStore.errors.BlobStoreErrorsHandler;
+import com.j_spaces.core.cache.blobStore.sadapter.BlobStoreStorageAdapterClassInfo;
+import com.j_spaces.core.cache.blobStore.sadapter.IBlobStoreStorageAdapter;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.IStorageAdapter;
 import com.j_spaces.core.sadapter.MemorySA;
@@ -41,16 +41,16 @@ public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStor
     private final static Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT);
     private final CacheManager cacheManager;
     private final SynchronizationStorageAdapter synchronizationStorageAdapter;
-    private final OffHeapStorageAdapter offHeapStorageAdapter;
+    private final BlobStoreStorageAdapter blobStoreStorageAdapter;
 
-    public SyncHybridStorageAdapter(CacheManager cacheManager, IStorageAdapter syncSA, IStorageAdapter offHeapSA){
+    public SyncHybridStorageAdapter(CacheManager cacheManager, IStorageAdapter syncSA, IStorageAdapter blobStoreSA){
         this.cacheManager = cacheManager;
-        if (syncSA instanceof SynchronizationStorageAdapter && offHeapSA instanceof OffHeapStorageAdapter) {
+        if (syncSA instanceof SynchronizationStorageAdapter && blobStoreSA instanceof BlobStoreStorageAdapter) {
             this.synchronizationStorageAdapter = (SynchronizationStorageAdapter) syncSA;
-            this.offHeapStorageAdapter = (OffHeapStorageAdapter) offHeapSA;
+            this.blobStoreStorageAdapter = (BlobStoreStorageAdapter) blobStoreSA;
         }
         else {
-            throw new IllegalStateException("SyncHybrid is supported only with a combination of SynchronizationStorageAdapter and OffHeapStorageAdapter");
+            throw new IllegalStateException("SyncHybrid is supported only with a combination of SynchronizationStorageAdapter and BlobStoreStorageAdapter");
         }
         validateConfiguration(syncSA);
     }
@@ -59,7 +59,7 @@ public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStor
         if((syncSA instanceof MemorySA))
             throw new IllegalStateException("SyncHybrid without SpaceSynchronizationEndpoint is not supported");
 
-        if(!cacheManager.isOffHeapCachePolicy())
+        if(!cacheManager.isBlobStoreCachePolicy())
             throw new IllegalStateException("SyncHybrid without blobstore is not supported");
 
         if(cacheManager.isPersistentBlobStore())
@@ -77,7 +77,7 @@ public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStor
 
     @Override
     public BlobStoreStorageAdapterClassInfo getBlobStoreStorageAdapterClassInfo(String typeName){
-        return offHeapStorageAdapter.getBlobStoreStorageAdapterClassInfo(typeName);
+        return blobStoreStorageAdapter.getBlobStoreStorageAdapterClassInfo(typeName);
     }
 
     @Override
@@ -91,7 +91,7 @@ public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStor
             logger.info("["+cacheManager.getEngine().getFullSpaceName()+"] Initializing sync hybrid storage adapter");
         }
         synchronizationStorageAdapter.initialize();
-        offHeapStorageAdapter.initialize();
+        blobStoreStorageAdapter.initialize();
     }
 
     @Override
@@ -109,7 +109,7 @@ public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStor
             }
         }
         try {
-            offHeapStorageAdapter.insertEntry(context, entryHolder, origin, shouldReplicate);
+            blobStoreStorageAdapter.insertEntry(context, entryHolder, origin, shouldReplicate);
         } catch (Exception ex) {
             handleFailure(context, entryHolder, false/*on blobstore*/, SpaceOperations.WRITE, ex);
         }
@@ -125,7 +125,7 @@ public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStor
             }
         }
         try {
-            offHeapStorageAdapter.updateEntry(context, updatedEntry, updateRedoLog, origin, partialUpdateValuesIndicators);
+            blobStoreStorageAdapter.updateEntry(context, updatedEntry, updateRedoLog, origin, partialUpdateValuesIndicators);
         }catch (Exception ex){
             handleFailure(context, updatedEntry, false/*on blobstore*/, SpaceOperations.UPDATE, ex);
         }
@@ -141,7 +141,7 @@ public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStor
             }
         }
         try {
-            offHeapStorageAdapter.removeEntry(context, entryHolder, origin, fromLeaseExpiration, shouldReplicate);
+            blobStoreStorageAdapter.removeEntry(context, entryHolder, origin, fromLeaseExpiration, shouldReplicate);
         }catch (Exception ex){
             handleFailure(context, entryHolder, false/*on blobstore*/, SpaceOperations.TAKE, ex);
         }
@@ -156,7 +156,7 @@ public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStor
             throw new SyncHybridSAException(ex, context.getSyncHybridOperationDetails(), SyncHybridExceptionOrigin.SYNCHRONIZATION);
         }
         try {
-            offHeapStorageAdapter.prepare(context, xtn, pLocked, singleParticipant, partialUpdatesAndInPlaceUpdatesInfo, shouldReplicate);
+            blobStoreStorageAdapter.prepare(context, xtn, pLocked, singleParticipant, partialUpdatesAndInPlaceUpdatesInfo, shouldReplicate);
         }
         catch (Exception ex){
             throw new SyncHybridSAException(ex, context.getSyncHybridOperationDetails(), SyncHybridExceptionOrigin.BLOBSTORE);
@@ -166,65 +166,65 @@ public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStor
     @Override
     public void rollback(ServerTransaction xtn, boolean anyUpdates) throws SAException {
         synchronizationStorageAdapter.rollback(xtn, anyUpdates);
-        offHeapStorageAdapter.rollback(xtn, anyUpdates);
+        blobStoreStorageAdapter.rollback(xtn, anyUpdates);
     }
 
     @Override
     public IEntryHolder getEntry(Context context, Object uid, String classname, IEntryHolder template) throws SAException {
-        return offHeapStorageAdapter.getEntry(context, uid, classname, template);
+        return blobStoreStorageAdapter.getEntry(context, uid, classname, template);
     }
 
     @Override
     public Map<String, IEntryHolder> getEntries(Context context, Object[] ids, String typeName, IEntryHolder[] templates) throws SAException {
-        return offHeapStorageAdapter.getEntries(context, ids, typeName, templates);
+        return blobStoreStorageAdapter.getEntries(context, ids, typeName, templates);
     }
 
     @Override
     public ISAdapterIterator<IEntryHolder> makeEntriesIter(ITemplateHolder template, long SCNFilter, long leaseFilter, IServerTypeDesc[] subClasses) throws SAException {
-        return offHeapStorageAdapter.makeEntriesIter(template, SCNFilter, leaseFilter, subClasses);
+        return blobStoreStorageAdapter.makeEntriesIter(template, SCNFilter, leaseFilter, subClasses);
     }
 
     @Override
     public void commit(ServerTransaction xtn, boolean anyUpdates) throws SAException {
         synchronizationStorageAdapter.commit(xtn, anyUpdates);
-        offHeapStorageAdapter.commit(xtn, anyUpdates);
+        blobStoreStorageAdapter.commit(xtn, anyUpdates);
     }
 
     @Override
     public int count(ITemplateHolder template, String[] subClasses) throws SAException {
-        return offHeapStorageAdapter.count(template, subClasses);
+        return blobStoreStorageAdapter.count(template, subClasses);
     }
 
     @Override
     public void shutDown() throws SAException {
         synchronizationStorageAdapter.shutDown();
-        offHeapStorageAdapter.shutDown();
+        blobStoreStorageAdapter.shutDown();
     }
 
     @Override
     public boolean isReadOnly() {
-        return offHeapStorageAdapter.isReadOnly();
+        return blobStoreStorageAdapter.isReadOnly();
     }
 
     @Override
     public boolean supportsExternalDB() {
-        return offHeapStorageAdapter.supportsExternalDB();
+        return blobStoreStorageAdapter.supportsExternalDB();
     }
 
     @Override
     public boolean supportsPartialUpdate() {
-        return offHeapStorageAdapter.supportsPartialUpdate();
+        return blobStoreStorageAdapter.supportsPartialUpdate();
     }
 
     @Override
     public boolean supportsGetEntries() {
-        return offHeapStorageAdapter.supportsGetEntries();
+        return blobStoreStorageAdapter.supportsGetEntries();
     }
 
     @Override
     public void introduceDataType(ITypeDesc typeDesc) {
         synchronizationStorageAdapter.introduceDataType(typeDesc);
-        offHeapStorageAdapter.introduceDataType(typeDesc);
+        blobStoreStorageAdapter.introduceDataType(typeDesc);
     }
 
     @Override
@@ -240,7 +240,7 @@ public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStor
     @Override
     public void addIndexes(String typeName, SpaceIndex[] indexes) {
         synchronizationStorageAdapter.addIndexes(typeName, indexes);
-        offHeapStorageAdapter.addIndexes(typeName, indexes);
+        blobStoreStorageAdapter.addIndexes(typeName, indexes);
     }
 
     @Override
@@ -259,19 +259,19 @@ public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStor
         {
             case SpaceOperations.WRITE:
                 if (db) {
-                    BlobStoreErrorsHandler.onFailedWrite(cacheManager, context, ((IOffHeapEntryHolder) entryHolder).getOffHeapResidentPart(), entryHolder);
+                    BlobStoreErrorsHandler.onFailedWrite(cacheManager, context, ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart(), entryHolder);
                 }
                 operationType = "write";
                 break;
             case SpaceOperations.UPDATE:
                 if (db) {
-                    BlobStoreErrorsHandler.onFailedUpdate(cacheManager, context, ((IOffHeapEntryHolder) entryHolder).getOffHeapResidentPart(), entryHolder);
+                    BlobStoreErrorsHandler.onFailedUpdate(cacheManager, context, ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart(), entryHolder);
                 }
                 operationType = "update";
                 break;
             case SpaceOperations.TAKE:
                 if (db) {
-                    BlobStoreErrorsHandler.onFailedRemove(cacheManager, context, ((IOffHeapEntryHolder) entryHolder).getOffHeapResidentPart(), entryHolder);
+                    BlobStoreErrorsHandler.onFailedRemove(cacheManager, context, ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart(), entryHolder);
                 }
                 operationType = "remove";
                 break;

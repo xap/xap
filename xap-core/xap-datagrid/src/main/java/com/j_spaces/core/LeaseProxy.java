@@ -97,7 +97,7 @@ public class LeaseProxy implements LeaseContext, Externalizable {
          * null.
          **/
         if (spaceImpl != null && spaceImpl.getEngine() != null
-                && (spaceImpl.getEngine().getCacheManager().isMemorySpace() || spaceImpl.getEngine().getCacheManager().isOffHeapCachePolicy())
+                && (spaceImpl.getEngine().getCacheManager().isMemorySpace() || spaceImpl.getEngine().getCacheManager().isBlobStoreCachePolicy())
                 && objectType == ObjectTypes.ENTRY)
             _partialSerialization = true;
     }

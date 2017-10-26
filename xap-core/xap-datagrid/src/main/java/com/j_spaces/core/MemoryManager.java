@@ -332,7 +332,7 @@ public class MemoryManager implements Closeable {
 
     private MemoryEvictionDecision monitorMemoryUsageWithNoEviction_Impl(boolean isWriteTypeOperation) {
         // perform memory monitor only for write-type operations
-        if (_monitorOnlyWriteOps && !isWriteTypeOperation && !_cacheManager.isOffHeapCachePolicy())
+        if (_monitorOnlyWriteOps && !isWriteTypeOperation && !_cacheManager.isBlobStoreCachePolicy())
             return MemoryEvictionDecision.NO_EVICTION;
 
         double rate = getMemoryUsageRate(false, !_cacheManager.isEvictableCachePolicy());

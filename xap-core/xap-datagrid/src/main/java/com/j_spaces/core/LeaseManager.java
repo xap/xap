@@ -48,7 +48,7 @@ import com.j_spaces.core.cache.TerminatingFifoXtnsInfo.FifoXtnEntryInfo;
 import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.TypeDataIndex;
 import com.j_spaces.core.cache.context.Context;
-import com.j_spaces.core.cache.offHeap.IOffHeapEntryHolder;
+import com.j_spaces.core.cache.blobStore.IBlobStoreEntryHolder;
 import com.j_spaces.core.cluster.ReplicationOperationType;
 import com.j_spaces.core.cluster.ReplicationPolicy;
 import com.j_spaces.core.sadapter.SAException;
@@ -174,12 +174,12 @@ public class LeaseManager {
 
         _expirationTimeInterval = getLongValue(configReader, LM_EXPIRATION_TIME_INTERVAL_PROP, LM_EXPIRATION_TIME_INTERVAL_DEFAULT);
         _backupSpaceLeasesDelay = getLongValue(configReader, LM_BACKUP_EXPIRATION_DELAY_PROP, LM_BACKUP_EXPIRATION_DELAY_DEFAULT);
-        _segmentsPerExpirationCell = _cacheManager.isOffHeapDataSpace() ? 1 : getIntValue(configReader, LM_SEGMEENTS_PER_EXPIRATION_CELL_PROP, LM_SEGMEENTS_PER_EXPIRATION_CELL_DEFAULT);
+        _segmentsPerExpirationCell = _cacheManager.isblobStoreDataSpace() ? 1 : getIntValue(configReader, LM_SEGMEENTS_PER_EXPIRATION_CELL_PROP, LM_SEGMEENTS_PER_EXPIRATION_CELL_DEFAULT);
         _expirationTimeRecentDeletes = getLongValue(configReader, LM_EXPIRATION_TIME_RECENT_DELETES_PROP, LM_EXPIRATION_TIME_RECENT_DELETES_DEFAULT);
         _expirationTimeRecentUpdates = getLongValue(configReader, LM_EXPIRATION_TIME_RECENT_UPDATES_PROP, LM_EXPIRATION_TIME_RECENT_UPDATES_DEFAULT);
         _staleReplicaExpirationTime = getLongValue(configReader, LM_EXPIRATION_TIME_STALE_REPLICAS_PROP, LM_EXPIRATION_TIME_STALE_REPLICAS_DEFAULT);
 
-        _supportsRecentExtendedUpdates = _engine.getCacheManager().isOffHeapCachePolicy();
+        _supportsRecentExtendedUpdates = _engine.getCacheManager().isBlobStoreCachePolicy();
         logConfiguration();
 
     }
@@ -614,13 +614,13 @@ public class LeaseManager {
      */
     public void unregister(ILeasedEntryCacheInfo leaseCacheInfo, long expiration) {
         boolean unregister;
-        if (leaseCacheInfo.isOffHeapEntry())
+        if (leaseCacheInfo.isBlobStoreEntry())
             unregister = expiration != Long.MAX_VALUE && !_alwaysDisableEntriesLeases;
         else
             unregister = leaseCacheInfo.isConnectedToLeaseManager();
 
         if (unregister) {
-            if (!leaseCacheInfo.isOffHeapEntry()) {
+            if (!leaseCacheInfo.isBlobStoreEntry()) {
                 leaseCacheInfo.getLeaseManagerListRef().remove(leaseCacheInfo.getLeaseManagerPosition());
             } else {//need to remove from cell
                 Long expirationTime = ((expiration / _expirationTimeInterval + 1) * _expirationTimeInterval);
@@ -735,7 +735,7 @@ public class LeaseManager {
                                         _cacheManager
                                                 .isCacheExternalDB() /* useOnlyCache */);
                     } else {
-                        if (entry.isOffHeapEntry()) {//bring the full version
+                        if (entry.isBlobStoreEntry()) {//bring the full version
                             entry = _cacheManager
                                     .getEntry(context,
                                             entry,
@@ -818,8 +818,8 @@ public class LeaseManager {
                     entry.setExpirationTime(toAbsoluteTime(duration));
 
                     //in case of off-heap, signal as dirty
-                    if (entry.isOffHeapEntry())
-                        ((IOffHeapEntryHolder) entry).setDirty(_cacheManager);
+                    if (entry.isBlobStoreEntry())
+                        ((IBlobStoreEntryHolder) entry).setDirty(_cacheManager);
 
 
                     _cacheManager
@@ -1121,12 +1121,12 @@ public class LeaseManager {
                         boolean isEntry = currentIter == entriesUids;
                         IEntryHolder iter_entry = currentIter.next();
                         if (iter_entry == null) {
-                            if (isEntry && _cacheManager.isOffHeapDataSpace())
+                            if (isEntry && _cacheManager.isblobStoreDataSpace())
                                 detached++; //in off heap we can't get a "deleted" entry in case of detached
                             continue;
                         }
 
-                        IEntryHolder entry = (isEntry && !iter_entry.isOffHeapEntry()) ? _cacheManager.getEntryByUidFromPureCache(iter_entry.getUID()) :
+                        IEntryHolder entry = (isEntry && !iter_entry.isBlobStoreEntry()) ? _cacheManager.getEntryByUidFromPureCache(iter_entry.getUID()) :
                                 iter_entry;
 
                         if (entry == null) {
@@ -1191,7 +1191,7 @@ public class LeaseManager {
                                                 else
                                                     continue; // entry not valid any more
                                             } else {
-                                                if (entry.isOffHeapEntry()) {//bring the full version
+                                                if (entry.isBlobStoreEntry()) {//bring the full version
                                                     entry = _cacheManager
                                                             .getEntry(context,
                                                                     entry,
@@ -2042,7 +2042,7 @@ public class LeaseManager {
 
         private void register(ILeasedEntryCacheInfo leaseCacheInfo, IEntryHolder entry, int objectType) {
             if (objectType == ObjectTypes.ENTRY) {
-                IObjectInfo<Object> pos = entry.isOffHeapEntry() ? _entriesExpired.add(((IOffHeapEntryHolder) entry).getOffHeapResidentPart().getUID()) : _entriesExpired.add(entry);
+                IObjectInfo<Object> pos = entry.isBlobStoreEntry() ? _entriesExpired.add(((IBlobStoreEntryHolder) entry).getBlobStoreResidentPart().getUID()) : _entriesExpired.add(entry);
                 leaseCacheInfo.setLeaseManagerListRefAndPosition(_entriesExpired, pos);
             } else {
                 IStoredList<Object> notifyTemplatesExpired = _notifyTemplatesExpired;
@@ -2085,7 +2085,7 @@ public class LeaseManager {
             public IEntryHolder next() {
                 IEntryHolder sl_res = null;
                 Object val = _pos.getSubject();
-                if (_engine.getCacheManager().isOffHeapDataSpace() && val != null && (val instanceof String)) {
+                if (_engine.getCacheManager().isblobStoreDataSpace() && val != null && (val instanceof String)) {
                     sl_res = _engine.getCacheManager().getEntryByUidFromPureCache((String) val);
                 } else
                     sl_res = (IEntryHolder) val;

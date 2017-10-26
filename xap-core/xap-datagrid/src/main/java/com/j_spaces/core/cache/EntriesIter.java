@@ -28,7 +28,7 @@ import com.j_spaces.core.SpaceOperations;
 import com.j_spaces.core.XtnEntry;
 import com.j_spaces.core.XtnStatus;
 import com.j_spaces.core.cache.context.Context;
-import com.j_spaces.core.cache.offHeap.IOffHeapRefCacheInfo;
+import com.j_spaces.core.cache.blobStore.IBlobStoreRefCacheInfo;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.IStoredList;
@@ -87,7 +87,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
         _transientOnly = transientOnly;
         _templateHolder = template;
         _SCNFilter = SCNFilter;
-        _leaseFilter = _cacheManager.isOffHeapCachePolicy() ? 0 : leaseFilter;
+        _leaseFilter = _cacheManager.isBlobStoreCachePolicy() ? 0 : leaseFilter;
 
         if (!template.isEmptyTemplate()) {
             _typeDesc = _cacheManager.getTypeManager().getTypeDesc(template.getClassName());
@@ -427,22 +427,22 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
 
     private void getEntries(IServerTypeDesc entryTypeDesc) {
         Object res = _cacheManager.getMatchingMemoryEntriesForScanning(_context, entryTypeDesc, _templateHolder, _templateServerTypeDesc);
-        if (_context.isBlobStoreTryNonPersistentOp()) //can we skip access to ssd/offheap ?
+        if (_context.isBlobStoreTryNonPersistentOp()) //can we skip access to ssd/blobStore ?
         {
             if (_context.isBlobStoreUsePureIndexesAccess() && _context.isUsingIntersectedListForScanning()) {
                 setBringCacheInfoOnly(true);
                 _tryToUsePureIndexesBlobStore = true;
             } else {//is it all nulls template ?
-                boolean allNullsOffHeap = !_templateHolder.isSqlQuery() && _templateHolder.getXidOriginated() == null && _templateHolder.getUidToOperateBy() == null;
-                if (allNullsOffHeap && _templateHolder.getEntryData().getFixedPropertiesValues() != null && _templateHolder.getEntryData().getFixedPropertiesValues().length > 0) {
+                boolean allNullsBlobStore = !_templateHolder.isSqlQuery() && _templateHolder.getXidOriginated() == null && _templateHolder.getUidToOperateBy() == null;
+                if (allNullsBlobStore && _templateHolder.getEntryData().getFixedPropertiesValues() != null && _templateHolder.getEntryData().getFixedPropertiesValues().length > 0) {
                     for (Object property : _templateHolder.getEntryData().getFixedPropertiesValues()) {
                         if (property != null) {
-                            allNullsOffHeap = false;
+                            allNullsBlobStore = false;
                             break;
                         }
                     }
                 }
-                setBringCacheInfoOnly(allNullsOffHeap);
+                setBringCacheInfoOnly(allNullsBlobStore);
             }
         }
 
@@ -529,12 +529,12 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
                         continue;
                     if (_tryToUsePureIndexesBlobStore && !_context.isBlobStoreUsePureIndexesAccess() && isBringCacheInfoOnly())
                         setBringCacheInfoOnly(false);  //no intersection possible due to long vectors
-                    if (_returnEntryCacheInfoOnly && pEntry.isOffHeapEntry() && _SCNFilter == 0 && _leaseFilter == 0) {
+                    if (_returnEntryCacheInfoOnly && pEntry.isBlobStoreEntry() && _SCNFilter == 0 && _leaseFilter == 0) {
                         _currentEntryHolder = null;
                         _currentEntryCacheInfo = null;
                         if (!invalidEntryCacheInfo(pEntry)) {
                             _currentEntryCacheInfo = pEntry;
-                            _currentEntryHolder = ((IOffHeapRefCacheInfo) pEntry).getEntryHolderIfInMemory();
+                            _currentEntryHolder = ((IBlobStoreRefCacheInfo) pEntry).getEntryHolderIfInMemory();
                             if (_currentEntryHolder != null && !match(_currentEntryHolder)) {
                                 _currentEntryHolder = null;
                                 _currentEntryCacheInfo = null;
@@ -544,7 +544,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
                         } else
                             continue;
                     }
-                    if (pEntry.isOffHeapEntry()) {
+                    if (pEntry.isBlobStoreEntry()) {
                         if (pEntry.isDeleted() || !pEntry.preMatch(_context, _templateHolder))
                             continue;
                     }

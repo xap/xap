@@ -18,7 +18,7 @@ package com.gigaspaces.internal.cluster.node.impl.directPersistency.embeddedSync
 
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.AbstractDirectPersistencyOpInfo;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
-import com.j_spaces.core.cache.offHeap.OffHeapEntryHolder;
+import com.j_spaces.core.cache.blobStore.BlobStoreEntryHolder;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -53,10 +53,10 @@ public class InitialLoadHandler {
     //called for every entry during initial load, return true if entry can be loaded
     //NOTE- this class is used befoe DirectPersistencySyncHandler::initialize() called
     public boolean onLoadingEntry(IEntryHolder eh) {
-        if (!eh.isOffHeapEntry())
+        if (!eh.isBlobStoreEntry())
             return true;
 
-        OffHeapEntryHolder oheh = (OffHeapEntryHolder) eh;
+        BlobStoreEntryHolder oheh = (BlobStoreEntryHolder) eh;
         if (oheh.getEmbeddedSyncOpInfo() == null || oheh.getEmbeddedSyncOpInfo().getGenerationId() == 0) {
             return true;
         }

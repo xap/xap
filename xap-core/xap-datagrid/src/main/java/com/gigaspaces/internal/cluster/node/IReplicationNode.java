@@ -42,8 +42,8 @@ import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.NotifyTemplateHolder;
 import com.gigaspaces.internal.space.requests.AddTypeIndexesRequestInfo;
 import com.j_spaces.core.OperationID;
-import com.j_spaces.core.cache.offHeap.BlobStoreReplicaConsumeHelper;
-import com.j_spaces.core.cache.offHeap.BlobStoreReplicationBulkConsumeHelper;
+import com.j_spaces.core.cache.blobStore.BlobStoreReplicaConsumeHelper;
+import com.j_spaces.core.cache.blobStore.BlobStoreReplicationBulkConsumeHelper;
 
 import net.jini.core.transaction.server.ServerTransaction;
 

@@ -66,9 +66,9 @@ public class TypeDataIndex<K> {
     //a dummy ref for failed index used under xtn
     public static IEntryCacheInfo _DummyOI = EntryCacheInfoFactory.createEntryCacheInfo(null);
 
-    private static final boolean _indexesBackrefsForOffHeapData = true;
+    private static final boolean _indexesBackrefsForBlobStoreData = true;
 
-    private static final boolean _disableIndexingOffHeapIdProperty = true;
+    private static final boolean _disableIndexingBlobStoreIdProperty = true;
 
 
     //the percentage of unique values- above it we try "put" of raw value first
@@ -169,7 +169,7 @@ public class TypeDataIndex<K> {
         this._indexType = index.getIndexType();
         _thinExtendedIndex = _indexType == SpaceIndexType.EXTENDED &&
                 (cacheManager.getEngine().getConfigReader().getBooleanSpaceProperty(
-                        Constants.CacheManager.CACHE_MANAGER_THIN_EXTENDED_INDEX_PROP, cacheManager.isOffHeapCachePolicy() ? Constants.CacheManager.CACHE_MANAGER_THIN_EXTENDED_INDEX_BLOBSTORE_DEFAULT :
+                        Constants.CacheManager.CACHE_MANAGER_THIN_EXTENDED_INDEX_PROP, cacheManager.isBlobStoreCachePolicy() ? Constants.CacheManager.CACHE_MANAGER_THIN_EXTENDED_INDEX_BLOBSTORE_DEFAULT :
                                 Constants.CacheManager.CACHE_MANAGER_THIN_EXTENDED_INDEX_DEFAULT));
         _indexDefinition = index;
         _unique = index.isUnique();
@@ -312,16 +312,16 @@ public class TypeDataIndex<K> {
         return _fifoGroupsIndexType;
     }
 
-    public static boolean isIndexesBackRefsForOffHeapData() {
-        return _indexesBackrefsForOffHeapData;
+    public static boolean isIndexesBackRefsForBlobStoreData() {
+        return _indexesBackrefsForBlobStoreData;
     }
 
     public boolean disableIndexUsageForOperation(TypeData typeData, int inputIndexCreationNumber) {
-        return (inputIndexCreationNumber < getIndexCreationNumber() || typeData.disableIdIndexForOffHeapEntries(this));
+        return (inputIndexCreationNumber < getIndexCreationNumber() || typeData.disableIdIndexForBlobStoreEntries(this));
     }
 
-    public static boolean disableIndexingOffHeapIdProperty() {
-        return _disableIndexingOffHeapIdProperty;
+    public static boolean disableIndexingBlobStoreIdProperty() {
+        return _disableIndexingBlobStoreIdProperty;
     }
 
     /* (non-Javadoc)
@@ -777,7 +777,7 @@ public class TypeDataIndex<K> {
         final TypeDataIndex[] indexes = typeData.getIndexes();
         for (TypeDataIndex index : indexes) {
             newIndexCreationNumber = Math.max(newIndexCreationNumber, index.getIndexCreationNumber());
-            if (typeData.disableIdIndexForOffHeapEntries(index))
+            if (typeData.disableIdIndexForBlobStoreEntries(index))
                 continue;
             if (index.getIndexCreationNumber() <= entryCacheInfo.getLatestIndexCreationNumber()) {
                 if (entryCacheInfo.indexesBackRefsKept()) {
@@ -815,7 +815,7 @@ public class TypeDataIndex<K> {
         final TypeDataIndex[] indexes = typeData.getIndexes();
         for (TypeDataIndex index : indexes) {
             newIndexCreationNumber = Math.max(newIndexCreationNumber, index.getIndexCreationNumber());
-            if (typeData.disableIdIndexForOffHeapEntries(index))
+            if (typeData.disableIdIndexForBlobStoreEntries(index))
                 continue;
             if (index.getIndexCreationNumber() <= entryCacheInfo.getLatestIndexCreationNumber()) {
                 if (entryCacheInfo.indexesBackRefsKept()) {

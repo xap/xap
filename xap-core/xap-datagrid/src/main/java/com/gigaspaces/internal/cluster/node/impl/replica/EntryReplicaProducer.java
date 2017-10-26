@@ -335,7 +335,7 @@ public class EntryReplicaProducer
         }
 
         // grab the xtn entry from table
-        if (entry == null || entry.isDeleted() || (entry.isOffHeapEntry() && !entry.isSameEntryInstance(original)))
+        if (entry == null || entry.isDeleted() || (entry.isBlobStoreEntry() && !entry.isSameEntryInstance(original)))
             return null;
 
         // Rematch after we acquire the lock since the entry could have changed

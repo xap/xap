@@ -29,7 +29,7 @@ import com.gigaspaces.server.blobstore.BlobStoreGetBulkOperationResult;
 import com.gigaspaces.server.blobstore.BlobStoreObjectType;
 import com.gigaspaces.server.blobstore.BlobStoreRemoveBulkOperationRequest;
 import com.j_spaces.core.cache.CacheManager;
-import com.j_spaces.core.cache.offHeap.OffHeapEntryLayout;
+import com.j_spaces.core.cache.blobStore.BlobStoreEntryLayout;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -225,7 +225,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     public void removePhantom(String uid, boolean checkExistance, long generationId, long seq) {
         try {
             if (checkExistance) {
-                OffHeapEntryLayout el = (OffHeapEntryLayout) _cacheManager.getBlobStoreStorageHandler().get(EmbeddedSyncHandler.getStorageKeyForPhantom(uid), null, BlobStoreObjectType.DATA);
+                BlobStoreEntryLayout el = (BlobStoreEntryLayout) _cacheManager.getBlobStoreStorageHandler().get(EmbeddedSyncHandler.getStorageKeyForPhantom(uid), null, BlobStoreObjectType.DATA);
                 if (el == null)
                     return; //nothing in space
 //TBD check if phantom & if seq && gen match

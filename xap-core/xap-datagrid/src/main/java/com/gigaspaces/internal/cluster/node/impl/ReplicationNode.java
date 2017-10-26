@@ -101,8 +101,8 @@ import com.gigaspaces.metrics.MetricConstants;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.OperationID;
-import com.j_spaces.core.cache.offHeap.BlobStoreReplicaConsumeHelper;
-import com.j_spaces.core.cache.offHeap.BlobStoreReplicationBulkConsumeHelper;
+import com.j_spaces.core.cache.blobStore.BlobStoreReplicaConsumeHelper;
+import com.j_spaces.core.cache.blobStore.BlobStoreReplicationBulkConsumeHelper;
 import com.j_spaces.core.exception.ClosedResourceException;
 
 import net.jini.core.event.EventRegistration;

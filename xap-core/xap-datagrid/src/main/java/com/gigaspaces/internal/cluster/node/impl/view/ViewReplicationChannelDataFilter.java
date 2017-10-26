@@ -74,7 +74,7 @@ public class ViewReplicationChannelDataFilter extends ReliableAsyncChannelDataFi
         _typeManager = typeManager;
         _templates = initTemplates(_templatePackets);
         //in case of blobstore- can we use optimized clear?
-        if (_cacheManager.isOffHeapCachePolicy())
+        if (_cacheManager.isBlobStoreCachePolicy())
         {
             for (int i=0; i < _templatePackets.length; i++)
             {

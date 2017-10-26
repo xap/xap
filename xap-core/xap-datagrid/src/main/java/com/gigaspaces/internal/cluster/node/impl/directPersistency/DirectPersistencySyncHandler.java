@@ -24,7 +24,7 @@ import com.gigaspaces.internal.cluster.node.impl.directPersistency.ioImpl.IDirec
 import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.utils.concurrent.GSThread;
-import com.j_spaces.core.cache.offHeap.OffHeapEntryHolder;
+import com.j_spaces.core.cache.blobStore.BlobStoreEntryHolder;
 import com.j_spaces.core.cluster.ClusterPolicy;
 import com.j_spaces.kernel.SystemProperties;
 
@@ -145,7 +145,7 @@ public class DirectPersistencySyncHandler implements IDirectPersistencySyncHandl
         // call embedded api to create the embedded part
         if (isEmbeddedListUsed()) {
             _embeddedSyncHandler.beforeEmbeddedSyncOp(e, phantom);
-            ((OffHeapEntryHolder) entryHolder).setEmbeddedSyncOpInfo(e.getGenerationId(), e.getSequenceNumber(), phantom, false);
+            ((BlobStoreEntryHolder) entryHolder).setEmbeddedSyncOpInfo(e.getGenerationId(), e.getSequenceNumber(), phantom, false);
         }
 
         replContext.setDirectPersistencyPendingEntry(e);
@@ -160,7 +160,7 @@ public class DirectPersistencySyncHandler implements IDirectPersistencySyncHandl
         if (isEmbeddedListUsed()) {
             _embeddedSyncHandler.beforeEmbeddedSyncOp(e, phantoms);
             for (IEntryHolder iEntryHolder : entryHolderMap.values()) {
-                ((OffHeapEntryHolder) iEntryHolder).setEmbeddedSyncOpInfo(e.getGenerationId(), e.getSequenceNumber(), (phantoms != null && phantoms.contains(iEntryHolder.getUID())), true);
+                ((BlobStoreEntryHolder) iEntryHolder).setEmbeddedSyncOpInfo(e.getGenerationId(), e.getSequenceNumber(), (phantoms != null && phantoms.contains(iEntryHolder.getUID())), true);
             }
         }
 

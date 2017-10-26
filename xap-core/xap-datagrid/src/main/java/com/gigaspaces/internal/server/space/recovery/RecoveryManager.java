@@ -62,7 +62,7 @@ public class RecoveryManager {
         int cachePolicy = Integer.parseInt((_space.getEngine().getConfigReader().getSpaceProperty(
                 CACHE_POLICY_PROP,
                 _space.getJspaceAttr().isPersistent() ? String.valueOf(CACHE_POLICY_LRU) : String.valueOf(CACHE_POLICY_ALL_IN_CACHE))));
-        if (isCentralDB || _space.getEngine().getCacheManager().isOffHeapCachePolicy()) {
+        if (isCentralDB || _space.getEngine().getCacheManager().isBlobStoreCachePolicy()) {
             if (cachePolicy == com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_ALL_IN_CACHE ||
                     cachePolicy == com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_BLOB_STORE)
                 return new AllInCacheCentralDBBackupSpaceRecovery(_space);

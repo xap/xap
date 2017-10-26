@@ -31,7 +31,7 @@ import com.j_spaces.core.XtnEntry;
 public class ReplicationEntryHolder extends EntryHolder {
 
     private final ShadowEntryHolder _previousEntry;
-    //original entry is used by OffHeapStorageAdapter
+    //original entry is used by BlobStoreStorageAdapter
     private final IEntryHolder _originalEntry;
 
     public ReplicationEntryHolder(IEntryHolder entryHolder, XtnEntry xtnEntry) {

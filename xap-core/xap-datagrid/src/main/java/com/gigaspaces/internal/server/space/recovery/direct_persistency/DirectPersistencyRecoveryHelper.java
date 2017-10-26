@@ -64,12 +64,12 @@ public class DirectPersistencyRecoveryHelper implements IStorageConsistency, ISp
         Boolean isLastPrimaryStateKeeperEnabled = Boolean.parseBoolean((String) _spaceImpl.getCustomProperties().get(Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_PERSISTENT_PROP));
         useZooKeeper = spaceImpl.getZookeeperLastPrimaryHandler() != null;
         final SpaceEngine spaceEngine = spaceImpl.getEngine();
-        _storageConsistencyHelper = spaceEngine.getCacheManager().isOffHeapCachePolicy() && isLastPrimaryStateKeeperEnabled
+        _storageConsistencyHelper = spaceEngine.getCacheManager().isBlobStoreCachePolicy() && isLastPrimaryStateKeeperEnabled
                 ? spaceEngine.getCacheManager().getBlobStoreRecoveryHelper()
                 : new DefaultStorageConsistency();
         _fullSpaceName = spaceEngine.getFullSpaceName();
         _attributeStoreKey = spaceEngine.getSpaceName() + "." + spaceEngine.getPartitionIdOneBased() + ".primary";
-        boolean isPersistent = spaceEngine.getCacheManager().isOffHeapCachePolicy() && _storageConsistencyHelper.isPerInstancePersistency();
+        boolean isPersistent = spaceEngine.getCacheManager().isBlobStoreCachePolicy() && _storageConsistencyHelper.isPerInstancePersistency();
         if (isPersistent) {
             AttributeStore attributeStoreImpl = (AttributeStore) _spaceImpl.getCustomProperties().get(Constants.DirectPersistency.DIRECT_PERSISTENCY_ATTRIBURE_STORE_PROP);
             if (attributeStoreImpl == null) {

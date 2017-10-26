@@ -25,7 +25,7 @@ import com.j_spaces.core.LeaseManager;
 import com.j_spaces.core.XtnEntry;
 import com.j_spaces.core.cache.EntryCacheInfoFactory;
 import com.j_spaces.core.cache.IEntryCacheInfo;
-import com.j_spaces.core.cache.offHeap.OffHeapEntryHolder;
+import com.j_spaces.core.cache.blobStore.BlobStoreEntryHolder;
 import com.j_spaces.core.client.ClientUIDHandler;
 import com.j_spaces.kernel.IObjectInfo;
 import com.j_spaces.kernel.IStoredList;
@@ -44,19 +44,19 @@ public class EntryHolderFactory {
     }
 
     public static IEntryHolder createEntryHolder(IServerTypeDesc typeDesc, IEntryPacket entryPacket,
-                                                 EntryDataType entryDataType, String uid, long expirationTime, XtnEntry xidOriginated, long scn, boolean offHeapEntryHolder) {
+                                                 EntryDataType entryDataType, String uid, long expirationTime, XtnEntry xidOriginated, long scn, boolean blobStoreEntryHolder) {
         return createEntryHolder(typeDesc, entryPacket,
                 entryDataType, uid, expirationTime, xidOriginated, scn,
-                -1 /*versionID*/, false /*keepExpiration*/, offHeapEntryHolder);
+                -1 /*versionID*/, false /*keepExpiration*/, blobStoreEntryHolder);
     }
 
 
     public static IEntryHolder createEntryHolder(IServerTypeDesc typeDesc, IEntryPacket entryPacket,
                                                  EntryDataType entryDataType, String uid, long expirationTime,
-                                                 XtnEntry xidOriginated, long scn, int versionID, boolean keepExpiration, boolean offHeapEntryHolder) {
-        if (offHeapEntryHolder)
+                                                 XtnEntry xidOriginated, long scn, int versionID, boolean keepExpiration, boolean blobStoreEntryHolder) {
+        if (blobStoreEntryHolder)
             return
-                    createOffHeapEntryHolder(typeDesc, entryPacket,
+                    createBlobStoreEntryHolder(typeDesc, entryPacket,
                             entryDataType, uid, expirationTime,
                             xidOriginated, scn, versionID, keepExpiration);
 
@@ -103,9 +103,9 @@ public class EntryHolderFactory {
     }
 
 
-    private static IEntryHolder createOffHeapEntryHolder(IServerTypeDesc typeDesc, IEntryPacket entryPacket,
-                                                         EntryDataType entryDataType, String uid, long expirationTime,
-                                                         XtnEntry xidOriginated, long scn, int versionID, boolean keepExpiration) {
+    private static IEntryHolder createBlobStoreEntryHolder(IServerTypeDesc typeDesc, IEntryPacket entryPacket,
+                                                           EntryDataType entryDataType, String uid, long expirationTime,
+                                                           XtnEntry xidOriginated, long scn, int versionID, boolean keepExpiration) {
         ITransactionalEntryData entryData =
                 createEntryData(entryPacket, entryDataType, versionID,
                         expirationTime, xidOriginated != null, keepExpiration);
@@ -113,8 +113,8 @@ public class EntryHolderFactory {
         if (xidOriginated != null)
             entryData.setXidOriginated(xidOriginated);
 
-        IEntryHolder entryHolder = new OffHeapEntryHolder(typeDesc, uid, scn, entryPacket.isTransient(), entryData,false/*optimizedEntry*/);
-        EntryCacheInfoFactory.createOffHeapEntryCacheInfo(entryHolder);//create the cache info as a resident part for locking etc
+        IEntryHolder entryHolder = new BlobStoreEntryHolder(typeDesc, uid, scn, entryPacket.isTransient(), entryData,false/*optimizedEntry*/);
+        EntryCacheInfoFactory.createBlobStoreEntryCacheInfo(entryHolder);//create the cache info as a resident part for locking etc
         return entryHolder;
     }
 

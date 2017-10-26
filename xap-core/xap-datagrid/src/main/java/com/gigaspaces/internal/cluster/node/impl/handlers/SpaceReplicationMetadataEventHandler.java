@@ -51,7 +51,7 @@ public class SpaceReplicationMetadataEventHandler implements
             throws Exception {
         try {
             _typeManager.addTypeDesc(typeDesc);
-            if (_spaceEngine.getCacheManager().isOffHeapCachePolicy()) //need to be stored in case offheap recovery will be used
+            if (_spaceEngine.getCacheManager().isBlobStoreCachePolicy()) //need to be stored in case blobStore recovery will be used
                 _spaceEngine.getCacheManager().getStorageAdapter().introduceDataType(typeDesc);
 
         } catch (Exception e) {
@@ -65,7 +65,7 @@ public class SpaceReplicationMetadataEventHandler implements
             throws Exception {
         try {
             _typeManager.addIndexes(requestInfo.getTypeName(), requestInfo.getIndexes());
-            if (_spaceEngine.getCacheManager().isOffHeapCachePolicy()) //need to be stored in case offheap recovery will be used
+            if (_spaceEngine.getCacheManager().isBlobStoreCachePolicy()) //need to be stored in case blobStore recovery will be used
                 _spaceEngine.getCacheManager().getStorageAdapter().addIndexes(requestInfo.getTypeName(), requestInfo.getIndexes());
         } catch (Exception e) {
             if (_logger.isLoggable(Level.SEVERE))

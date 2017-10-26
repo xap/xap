@@ -1273,7 +1273,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                     }
                 }
             } catch (TimeoutException e) {
-                if (getEngine().getCacheManager().isOffHeapCachePolicy()) {
+                if (getEngine().getCacheManager().isBlobStoreCachePolicy()) {
                     if (_logger.isLoggable(Level.SEVERE))
                         _logger.severe("Timeout occurred [" + replicationSynchronizationTimeout + " seconds] while waiting for replication to synchronize. Will shut down space since blobstore inconsistent space can't be started.");
                     throw e;
@@ -1334,7 +1334,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         }
 
         if (retries == RecoveryManager.RECOVERY_RETRIES
-                || getEngine().getCacheManager().isOffHeapCachePolicy()
+                || getEngine().getCacheManager().isBlobStoreCachePolicy()
                     || _spaceState.getState() == ISpaceState.STOPPED)
             throw e;
 
@@ -2957,8 +2957,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     private DirectPersistencyRecoveryHelper initDirectPersistencyRecoveryHelper(ClusterPolicy clusterPolicy) {
         DirectPersistencyRecoveryHelper result = null;
-        boolean isOffHeap = _configReader.getIntSpaceProperty(CACHE_POLICY_PROP, "-1") == CACHE_POLICY_BLOB_STORE;
-        if (clusterPolicy != null && clusterPolicy.isPrimaryElectionAvailable() && isOffHeap && _engine.getCacheManager().isPersistentBlobStore()) {
+        boolean isBlobStore = _configReader.getIntSpaceProperty(CACHE_POLICY_PROP, "-1") == CACHE_POLICY_BLOB_STORE;
+        if (clusterPolicy != null && clusterPolicy.isPrimaryElectionAvailable() && isBlobStore && _engine.getCacheManager().isPersistentBlobStore()) {
             //set state to starting to allow cleaning in case beforePrimaryElectionProcess throws exception
             _spaceState.setState(JSpaceState.STARTING);
             result = new DirectPersistencyRecoveryHelper(this, _logger);

@@ -16,7 +16,7 @@
 
 package com.gigaspaces.internal.cluster.node;
 
-import com.j_spaces.core.cache.offHeap.BlobStoreReplicationBulkConsumeHelper;
+import com.j_spaces.core.cache.blobStore.BlobStoreReplicationBulkConsumeHelper;
 
 /**
  * @author Boris

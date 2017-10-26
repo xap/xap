@@ -75,7 +75,7 @@ public class SynchronizeReplicaDataProducer
         //replication events which will not be filtered if the backlog would mark the current key as the copy stage completion
         try {
             if (!_engine.getLeaseManager().isCurrentLeaseReaperThread()) {
-                if (_engine.getCacheManager().isOffHeapCachePolicy()) {
+                if (_engine.getCacheManager().isBlobStoreCachePolicy()) {
                     long forceLeaseReaperCycleTimeToWait = Long.getLong(SystemProperties.LEASE_MANAGER_FORCE_REAPER_CYCLE_TIME_TO_WAIT, SystemProperties.LEASE_MANAGER_FORCE_REAPER_CYCLE_TIME_TO_WAIT_DEFAULT);
                     _engine.getLeaseManager().forceLeaseReaperCycle(true, forceLeaseReaperCycleTimeToWait);
                 } else {

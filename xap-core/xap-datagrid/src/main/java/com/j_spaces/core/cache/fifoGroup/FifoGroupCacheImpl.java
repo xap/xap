@@ -237,7 +237,7 @@ public class FifoGroupCacheImpl {
                     if (templateValue == null)
                         continue;//TBD
 
-                    if (entryType.disableIdIndexForOffHeapEntries(index))
+                    if (entryType.disableIdIndexForBlobStoreEntries(index))
                         entriesVector = _cacheManager.getPEntryByUid(ClientUIDHandler.createUIDFromName(templateValue, entryType.getClassName()));
                     else
                         entriesVector = index.getIndexEntries(templateValue);

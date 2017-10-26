@@ -247,11 +247,11 @@ public class SingleExplainPlan implements Externalizable {
         return map;
     }
 
-    public static void validate(long timeout, boolean offHeapCachePolicy, int operationModifiers, ICustomQuery customQuery, Map<String, SpaceIndex> indexes) {
+    public static void validate(long timeout, boolean blobStoreCachePolicy, int operationModifiers, ICustomQuery customQuery, Map<String, SpaceIndex> indexes) {
         if(timeout != 0){
             throw new UnsupportedOperationException("Sql explain plan does not support timeout operations");
         }
-        if(offHeapCachePolicy){
+        if(blobStoreCachePolicy){
             throw new UnsupportedOperationException("Sql explain plan does not support off-heap cache policy");
         }
         if(Modifiers.contains(operationModifiers, Modifiers.FIFO_GROUPING_POLL)){

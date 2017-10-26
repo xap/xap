@@ -27,7 +27,7 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 /**
- * A cache policy that stores data offheap and indexes onheap.
+ * A cache policy that stores data blobStore and indexes onheap.
  *
  * @author yechielf, Kobi
  */

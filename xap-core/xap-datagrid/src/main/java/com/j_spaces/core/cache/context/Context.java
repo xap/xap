@@ -48,8 +48,8 @@ import com.j_spaces.core.OperationID;
 import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.InitialLoadInfo;
 import com.j_spaces.core.cache.TypeDataIndex;
-import com.j_spaces.core.cache.offHeap.storage.bulks.BlobStoreBulkInfo;
-import com.j_spaces.core.cache.offHeap.storage.preFetch.BlobStorePreFetchBatchResult;
+import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
+import com.j_spaces.core.cache.blobStore.storage.preFetch.BlobStorePreFetchBatchResult;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.OperationTimeoutException;
 import com.j_spaces.core.fifo.FifoBackgroundRequest;
@@ -59,7 +59,6 @@ import com.j_spaces.kernel.list.MultiIntersectedStoredList;
 import net.jini.core.lease.Lease;
 import net.jini.core.transaction.server.ServerTransaction;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -206,10 +205,10 @@ public class Context {
     private MultiIntersectedStoredList<IEntryCacheInfo> _chosenIntersectedList;   //if index intersection desired
     private boolean _usingIntersectedListForScanning;  //it was selected
 
-    //the following are used in offHeap<->SA  
-    private IEntryCacheInfo _offHeapEntryCacheInfo;
-    private IEntryHolder _offHeapOpEntryHolder;
-    private boolean _offHeapOpPin;
+    //the following are used in blobStore<->SA
+    private IEntryCacheInfo _blobStoreEntryCacheInfo;
+    private IEntryHolder _blobStoreOpEntryHolder;
+    private boolean _blobStoreOpPin;
 
     //used in general search as indicator of index usage
     private boolean _indexUsed;
@@ -227,7 +226,7 @@ public class Context {
     private BlobStorePreFetchBatchResult _blobStorePreFetchBatchResult;
     private boolean _disableBlobStorePreFetching;
     //the following fields is blob-store info used in reverting non transactional update
-    private short _originalOffHeapVersion;
+    private short _originalBlobStoreVersion;
 
     //the following are used in blob-store bulk delayed replication for embedded list
     private boolean _delayedReplicationForbulkOpUsed;
@@ -454,9 +453,9 @@ public class Context {
         _indicesIntersectionEnabled = false;
         _chosenIntersectedList = null;
         _usingIntersectedListForScanning = false;
-        _offHeapEntryCacheInfo = null;
-        _offHeapOpEntryHolder = null;
-        _offHeapOpPin = false;
+        _blobStoreEntryCacheInfo = null;
+        _blobStoreOpEntryHolder = null;
+        _blobStoreOpPin = false;
         _indexUsed = false;
         _initialLoadInfo = null;
         _blobStoreBulkInfo = null;
@@ -465,7 +464,7 @@ public class Context {
         _blobStorePreFetchBatchResult = null;
         _disableBlobStorePreFetching = false;
         _blobStoreEntry = null;
-        _originalOffHeapVersion = 0;
+        _originalBlobStoreVersion = 0;
         _originalData = null; //for update
         _mutators = null; //for change
         _removeReason = null; //remove
@@ -823,26 +822,26 @@ public class Context {
     //-----------------------------------------------------------------------------------------------------
 
 
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++offheap related ++++++++++++++++++
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++blobStore related ++++++++++++++++++
 
-    public IEntryCacheInfo getOffHeapOpEntryCacheInfo() {
-        return _offHeapEntryCacheInfo;
+    public IEntryCacheInfo getBlobStoreOpEntryCacheInfo() {
+        return _blobStoreEntryCacheInfo;
     }
 
-    public IEntryHolder getOffHeapOpEntryHolder() {
-        return _offHeapOpEntryHolder;
+    public IEntryHolder getBlobStoreOpEntryHolder() {
+        return _blobStoreOpEntryHolder;
     }
 
-    public boolean getOffHeapOpPin() {
-        return _offHeapOpPin;
+    public boolean getBlobStoreOpPin() {
+        return _blobStoreOpPin;
     }
 
-    public void setOffHeapOpParams(IEntryCacheInfo offHeapEntryCacheInfo, IEntryHolder offHeapOpEntryHolder, boolean offHeapOpPin) {
-        _offHeapEntryCacheInfo = offHeapEntryCacheInfo;
-        _offHeapOpEntryHolder = offHeapOpEntryHolder;
-        _offHeapOpPin = offHeapOpPin;
+    public void setBlobStoreOpParams(IEntryCacheInfo blobStoreEntryCacheInfo, IEntryHolder blobStoreOpEntryHolder, boolean blobStoreOpPin) {
+        _blobStoreEntryCacheInfo = blobStoreEntryCacheInfo;
+        _blobStoreOpEntryHolder = blobStoreOpEntryHolder;
+        _blobStoreOpPin = blobStoreOpPin;
     }
-    //---------------------------------------------------------------------------------------offheap related ------------------
+    //---------------------------------------------------------------------------------------blobStore related ------------------
 
     public boolean isIndexUsed() {
         return _indexUsed;
@@ -946,13 +945,13 @@ public class Context {
         _removeReason = removeReason;
     }
 
-    public void setOffHeapOriginalEntryInfo(IEntryData originalData, short originalOffHeapVersion) {
+    public void setBlobStoreOriginalEntryInfo(IEntryData originalData, short originalBlobStoreVersion) {
         _originalData = originalData;
-        _originalOffHeapVersion = originalOffHeapVersion;
+        _originalBlobStoreVersion = originalBlobStoreVersion;
     }
 
-    public short getOriginalOffHeapVersion() {
-        return _originalOffHeapVersion;
+    public short getOriginalBlobStoreVersion() {
+        return _originalBlobStoreVersion;
     }
 
     /**

@@ -19,7 +19,7 @@ package com.gigaspaces.internal.server.storage;
 
 import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.ILeasedEntryCacheInfo;
-import com.j_spaces.core.cache.offHeap.IOffHeapEntryHolder;
+import com.j_spaces.core.cache.blobStore.IBlobStoreEntryHolder;
 import com.j_spaces.kernel.IObjectInfo;
 import com.j_spaces.kernel.IStoredList;
 
@@ -128,14 +128,14 @@ public class ShadowEntryHolder extends EntryHolder
 
     @Override
     public boolean isConnectedToLeaseManager() {
-        if (isOffHeapEntry())
+        if (isBlobStoreEntry())
             return getExpirationTime() != Long.MAX_VALUE;
         return (getLeaseManagerListRef() != null);
     }
 
     @Override
     public boolean isSameLeaseManagerRef(ILeasedEntryCacheInfo other) {
-        if (isOffHeapEntry())
+        if (isBlobStoreEntry())
             return other.getLeaseManagerPosition() == getLeaseManagerPosition();
         else
             return other.getLeaseManagerListRef() == getLeaseManagerListRef() &&
@@ -144,12 +144,12 @@ public class ShadowEntryHolder extends EntryHolder
 
 
     @Override
-    public boolean isOffHeapEntry() {
-        return getOtherUpdateUnderXtnEntry().isOffHeapEntry();
+    public boolean isBlobStoreEntry() {
+        return getOtherUpdateUnderXtnEntry().isBlobStoreEntry();
     }
 
     public Object getObjectStoredInLeaseManager() {
-        return isOffHeapEntry() ? ((IOffHeapEntryHolder) getOtherUpdateUnderXtnEntry()).getOffHeapResidentPart().getObjectStoredInLeaseManager() : getOtherUpdateUnderXtnEntry();
+        return isBlobStoreEntry() ? ((IBlobStoreEntryHolder) getOtherUpdateUnderXtnEntry()).getBlobStoreResidentPart().getObjectStoredInLeaseManager() : getOtherUpdateUnderXtnEntry();
     }
 
     public void incrementNumOfLeaseUpdates() {

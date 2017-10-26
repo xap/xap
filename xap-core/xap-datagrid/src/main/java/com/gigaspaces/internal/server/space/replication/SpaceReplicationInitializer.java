@@ -266,10 +266,10 @@ public class SpaceReplicationInitializer {
 
         final boolean allInCache = _spaceEngine.getConfigReader().getIntSpaceProperty(CACHE_POLICY_PROP, !_storageAdapter.supportsExternalDB() ?
                 String.valueOf(CACHE_POLICY_ALL_IN_CACHE) : String.valueOf(CACHE_POLICY_LRU)) == CACHE_POLICY_ALL_IN_CACHE;
-        final boolean offHeap = !allInCache && _spaceEngine.getConfigReader().getIntSpaceProperty(CACHE_POLICY_PROP, !_storageAdapter.supportsExternalDB() ?
+        final boolean blobStore = !allInCache && _spaceEngine.getConfigReader().getIntSpaceProperty(CACHE_POLICY_PROP, !_storageAdapter.supportsExternalDB() ?
                 String.valueOf(CACHE_POLICY_ALL_IN_CACHE) : String.valueOf(CACHE_POLICY_LRU)) == CACHE_POLICY_BLOB_STORE;
         final boolean requiresEvictionReplicationProtection = _spaceEngine.hasMirror() && _storageAdapter.supportsExternalDB() &&
-                !allInCache && !offHeap;
+                !allInCache && !blobStore;
 
         if (_clusterPolicy.isPrimaryElectionAvailable()) {
             if (requiresEvictionReplicationProtection) {

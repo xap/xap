@@ -41,7 +41,7 @@ public interface ILeasedEntryCacheInfo {
 
     public boolean isSameLeaseManagerRef(ILeasedEntryCacheInfo other);
 
-    public boolean isOffHeapEntry();
+    public boolean isBlobStoreEntry();
 
     public Object getObjectStoredInLeaseManager();
 }

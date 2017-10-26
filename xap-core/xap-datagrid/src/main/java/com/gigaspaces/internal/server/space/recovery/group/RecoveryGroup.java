@@ -107,7 +107,7 @@ public abstract class RecoveryGroup {
         ISpaceCopyResult copyResult = spaceSynchronizeReplica.getCopyResult();
         if (copyResult.isFailed() && !copyResult.isEmpty()) {
             // Do not try to clean and start a new engine in blobstore case GS-11844
-            if (_space.getEngine().getCacheManager().isOffHeapCachePolicy()) {
+            if (_space.getEngine().getCacheManager().isBlobStoreCachePolicy()) {
                 Exception failureReason = copyResult.getFailureReason();
 
                 String err = ("Space [" + _space.getServiceName()

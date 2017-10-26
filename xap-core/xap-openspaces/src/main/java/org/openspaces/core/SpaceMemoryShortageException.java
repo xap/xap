@@ -18,7 +18,7 @@
 package org.openspaces.core;
 
 import com.j_spaces.core.MemoryShortageException;
-import com.j_spaces.core.cache.offHeap.SpaceInternalBlobStoreMemoryShortageException;
+import com.j_spaces.core.cache.blobStore.SpaceInternalBlobStoreMemoryShortageException;
 
 /**
  * This Exception indicates that the space server process reached the predefined percentage usage

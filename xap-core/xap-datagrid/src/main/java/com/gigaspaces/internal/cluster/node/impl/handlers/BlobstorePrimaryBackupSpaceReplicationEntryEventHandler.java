@@ -25,7 +25,7 @@ import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.j_spaces.core.OperationID;
 import com.j_spaces.core.UnknownTypeException;
-import com.j_spaces.core.cache.offHeap.BlobStoreReplicationBulkConsumeHelper;
+import com.j_spaces.core.cache.blobStore.BlobStoreReplicationBulkConsumeHelper;
 
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.Transaction;

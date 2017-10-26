@@ -51,7 +51,7 @@ public class ExactValueIndexScanner extends AbstractQueryIndex {
 
     @Override
     protected IObjectsList getEntriesByIndex(Context context, TypeData typeData, TypeDataIndex<Object> index, boolean fifoGroupsScan) {
-        if (!typeData.disableIdIndexForOffHeapEntries(index) || _indexValue == null) {
+        if (!typeData.disableIdIndexForBlobStoreEntries(index) || _indexValue == null) {
             // If converted value wrapper is not initialized, try to convert:
             if (_convertedValueWrapper == null)
                 _convertedValueWrapper = ConvertedObjectWrapper.create(_indexValue, index.getValueType());
@@ -60,7 +60,7 @@ public class ExactValueIndexScanner extends AbstractQueryIndex {
                 return null;
         }
         IObjectsList res = null;
-        if (typeData.disableIdIndexForOffHeapEntries(index) && _indexValue != null)
+        if (typeData.disableIdIndexForBlobStoreEntries(index) && _indexValue != null)
             res = typeData.getCacheManager().getPEntryByUid(ClientUIDHandler.createUIDFromName(_indexValue, typeData.getClassName()));
         else
             res = index.getIndexEntries(_convertedValueWrapper.getValue());

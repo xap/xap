@@ -19,7 +19,7 @@ package com.j_spaces.core.cache;
 
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.time.SystemTime;
-import com.j_spaces.core.cache.offHeap.sadapter.OffHeapFifoInitialLoader;
+import com.j_spaces.core.cache.blobStore.sadapter.BlobStoreFifoInitialLoader;
 
 import java.util.LinkedList;
 import java.util.logging.Logger;
@@ -44,7 +44,7 @@ public class InitialLoadInfo {
 
     private final LinkedList<String> _initialLoadErrors;
 
-    private volatile OffHeapFifoInitialLoader _offHeapFifoInitialLoader;  //used in off heap
+    private volatile BlobStoreFifoInitialLoader _blobStoreFifoInitialLoader;  //used in off heap
     private IServerTypeDesc _curDesc; //used in off heap
     private TypeData _curTypeData;  //used  in off heap
 
@@ -98,12 +98,12 @@ public class InitialLoadInfo {
         this._lastLoggedTime = _lastLoggedTime;
     }
 
-    public OffHeapFifoInitialLoader getOffHeapFifoInitialLoader() {
-        return _offHeapFifoInitialLoader;
+    public BlobStoreFifoInitialLoader getBlobStoreFifoInitialLoader() {
+        return _blobStoreFifoInitialLoader;
     }
 
-    public void setOffHeapFifoInitialLoader(OffHeapFifoInitialLoader il) {
-        _offHeapFifoInitialLoader = il;
+    public void setBlobStoreFifoInitialLoader(BlobStoreFifoInitialLoader il) {
+        _blobStoreFifoInitialLoader = il;
     }
 
     public IServerTypeDesc getCurDesc() {

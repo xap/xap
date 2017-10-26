@@ -18,8 +18,8 @@ package com.j_spaces.core.cache;
 
 import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
-import com.j_spaces.core.cache.offHeap.IOffHeapEntryHolder;
-import com.j_spaces.core.cache.offHeap.OffHeapRefEntryCacheInfo;
+import com.j_spaces.core.cache.blobStore.IBlobStoreEntryHolder;
+import com.j_spaces.core.cache.blobStore.BlobStoreRefEntryCacheInfo;
 
 /*******************************************************************************
  * Copyright (c) 2010 GigaSpaces Technologies Ltd. All rights reserved
@@ -42,9 +42,9 @@ public class EntryCacheInfoFactory {
         return ci;
     }
 
-    public static IEntryCacheInfo createOffHeapEntryCacheInfo(IEntryHolder entryHolder) {
-        OffHeapRefEntryCacheInfo eci = new OffHeapRefEntryCacheInfo(entryHolder);
-        ((IOffHeapEntryHolder) entryHolder).setOffHeapResidentPart(eci);
+    public static IEntryCacheInfo createBlobStoreEntryCacheInfo(IEntryHolder entryHolder) {
+        BlobStoreRefEntryCacheInfo eci = new BlobStoreRefEntryCacheInfo(entryHolder);
+        ((IBlobStoreEntryHolder) entryHolder).setBlobStoreResidentPart(eci);
         return eci;
     }
 

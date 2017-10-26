@@ -119,7 +119,7 @@ public interface IEntryHolder extends ISpaceItem {
 
     boolean isSameEntryInstance(IEntryHolder other);
 
-    boolean isOffHeapEntry();
+    boolean isBlobStoreEntry();
 
     IEntryHolder getOriginalEntryHolder();
 
