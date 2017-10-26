@@ -42,7 +42,7 @@ import java.rmi.RemoteException;
 @com.gigaspaces.api.InternalApi
 public class ConnectionPool {
     private static final LongAdder activeConnections = new LongAdder();
-    final static public boolean WAIT_INDEFINITELY_FOR_CONNECTION = !Boolean.valueOf(System.getProperty(SystemProperties.LRMI_ASYNC_THROW_RESOURCE_NOT_AVAILABLE, String.valueOf(SystemProperties.LRMI_ASYNC_THROW_RESOURCE_NOT_AVAILABLE_DEFAULT)));
+    private final static boolean WAIT_INDEFINITELY_FOR_CONNECTION = !Boolean.valueOf(System.getProperty(SystemProperties.LRMI_ASYNC_THROW_RESOURCE_NOT_AVAILABLE, String.valueOf(SystemProperties.LRMI_ASYNC_THROW_RESOURCE_NOT_AVAILABLE_DEFAULT)));
     private final IResourcePool<ConnectionResource> _peersPool;
     private final String _connectionURL;
     private final String _serviceDetails;

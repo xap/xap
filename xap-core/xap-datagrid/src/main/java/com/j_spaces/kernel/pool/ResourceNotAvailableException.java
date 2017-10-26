@@ -22,7 +22,6 @@ package com.j_spaces.kernel.pool;
  *
  * @since 12.3
  */
-@com.gigaspaces.api.InternalApi
 class ResourceNotAvailableException extends RuntimeException{
 
     ResourceNotAvailableException() {
