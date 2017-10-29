@@ -39,7 +39,7 @@ public class OffHeapIndexesValuesHandler {
 
     private static HTreeMap<String, byte[]> getMapDB() {
         if (_mapDB == null) {
-            Logger.getLogger("MyLogger").log(Level.INFO,"***** created mapDB instance *****");
+            logger.log(Level.INFO,"***** created mapDB instance *****");
             try {
                 _mapDB = DBMaker
                         //TODO  * You should increase amount of direct memory with
@@ -67,7 +67,7 @@ public class OffHeapIndexesValuesHandler {
             } catch (Exception e) {
                 throw new RuntimeException("allocate mapDB failed!");
             }
-            Logger.getLogger("MyLogger").log(Level.INFO, "***** allocating off heap memory , key = " + key + " *****");
+//            logger.log(Level.INFO, "***** allocating off heap memory , key = " + key + " *****");
             return true;
         }else{
             return false;
@@ -77,7 +77,7 @@ public class OffHeapIndexesValuesHandler {
     public static byte[] get(String key){
         if(key != null) {
             byte[] bytes = getMapDB().get(key);
-            Logger.getLogger("MyLogger").log(Level.INFO, "***** reading off heap memory , key = " + key + " *****");
+//            logger.log(Level.INFO, "***** reading off heap memory , key = " + key + " *****");
             return bytes;
         }else{
             throw new RuntimeException("get:: key is null!");
@@ -88,14 +88,14 @@ public class OffHeapIndexesValuesHandler {
     public static void delete(String key){
         if(key != null) {
             getMapDB().remove(key);
-            Logger.getLogger("MyLogger").log(Level.INFO, "***** freeing off heap memory , key = " + key + " *****");
+//            logger.log(Level.INFO, "***** freeing off heap memory , key = " + key + " *****");
         }
     }
 
     public static void update(String key){
         if(key != null) {
             getMapDB().replace(key, "update".getBytes());
-            Logger.getLogger("MyLogger").log(Level.INFO, "***** updating off heap memory , key = " + key + " *****");
+//            logger.log(Level.INFO, "***** updating off heap memory , key = " + key + " *****");
         }
     }
 
