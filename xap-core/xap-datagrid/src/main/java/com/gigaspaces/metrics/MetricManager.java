@@ -35,6 +35,7 @@ import com.gigaspaces.metrics.factories.SigarSwapMetricFactory;
 import com.gigaspaces.start.SystemBoot;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.kernel.threadpool.DynamicThreadPoolExecutor;
+import com.sun.jini.thread.TaskManager;
 
 import java.io.Closeable;
 import java.io.File;
@@ -349,6 +350,21 @@ public class MetricManager implements Closeable {
             @Override
             public Integer getValue() throws Exception {
                 return q.size();
+            }
+        });
+    }
+
+    public static void registerTaskManagerMetrics(MetricRegistrator registrator, final TaskManager taskManager) {
+        registrator.register("threads-count", new Gauge<Integer>() {
+            @Override
+            public Integer getValue() throws Exception {
+                return taskManager.getThreadCount();
+            }
+        });
+        registrator.register("total-tasks", new Gauge<Integer>() {
+            @Override
+            public Integer getValue() throws Exception {
+                return taskManager.getTotalTasks();
             }
         });
     }

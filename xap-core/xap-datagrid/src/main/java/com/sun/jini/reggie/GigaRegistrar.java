@@ -559,6 +559,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
 
     private final LongCounter items = new LongCounter();
     private final LongCounter listeners = new LongCounter();
+    private final LongCounter pendingEvents = new LongCounter();
     private MetricManager metricManager;
     private MetricRegistrator metricRegistrator;
 
@@ -633,6 +634,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
 
     private void registerMetrics(MetricRegistrator registrator) {
         registrator.register("listeners", listeners);
+        registrator.register("pendingEvents", pendingEvents);
         registrator.register("items", items);
         registrator.register("serviceById", serviceByIdGauge);
         registrator.register("serviceByTime", serviceByTimeGauge);
@@ -645,7 +647,9 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         registrator.register("subEventByService", subEventByServiceGauge);
         registrator.register("subEventByID", subEventByIDGauge);
         registrator.register("lookupServiceCache", lookupServiceCacheGauge);
-        MetricManager.registerThreadPoolMetrics(registrator, (DynamicThreadPoolExecutor) taskerComm);
+
+        MetricManager.registerThreadPoolMetrics(registrator.extend("comm-task-pool"), (DynamicThreadPoolExecutor) taskerComm);
+        MetricManager.registerTaskManagerMetrics(registrator.extend("event-task-pool"), taskerEvent);
     }
 
     /**
@@ -662,16 +666,23 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         try {
             boolean hasElements = false;
             writer.append("\nEvents Queue:");
-            writer.append("\n- registered listeners: " + eventsQ.size());
+            writer.append("\n- registered listeners: " + listeners.getCount());
+            writer.append("\n- event listeners: " + eventsQ.size());
             writer.append("\n- listeners with pending events:");
 
+            int max = 0;
+            double avg = 0.0;
             for (Map.Entry<EventReg, List<RegistrarEvent>> entry : eventsQ.entrySet()) {
                 int size = entry.getValue().size();
                 if (size == 0) continue;
                 writer.append("\n--- " + entry.getKey() + "\t has (" + size + ") pending events");
                 hasElements = true;
+                max = Math.max(max, size);
+                avg += size;
             }
-            if (!hasElements) {
+            if (hasElements) {
+                writer.append("\n--- max=("+max + "), avg=("+String.format( "%.2f", (avg/eventsQ.size()))+") pending events");
+            } else {
                 writer.append(" 0");
             }
 
@@ -1460,6 +1471,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         private boolean sendEvent(RegistrarEvent theEvent) {
 
             try {
+                pendingEvents.dec();
                 reg.listener.notify(theEvent);
                 return true;
 
@@ -4371,6 +4383,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 }
             }
             Long id = reg.eventID;
+            listeners.inc();
             eventByID.put(id, reg);
             EventRegKeyExpiration regExpirationKey = new EventRegKeyExpiration(reg, reg.leaseExpiration);
             if (loggerEventExpire.isLoggable(Level.FINE)) {
@@ -4399,7 +4412,6 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
      * the subEventByService or subEventByID map.
      */
     private void deleteEvent(EventRegKeyExpiration regExpiration, EventReg reg) {
-        listeners.dec();
         synchronized (reg) {
             EntryRep[] tmpls = reg.tmpl.attributeSetTemplates;
             if (tmpls != null) {
@@ -4408,10 +4420,20 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     eclass.setNumTemplates(eclass.getNumTemplates() - 1);
                 }
             }
+            listeners.dec();
             Long id = reg.eventID;
             eventByID.remove(id);
-            eventsQ.remove(reg);
-            pendingQ.remove(reg);
+
+            List<RegistrarEvent> removedEvents = eventsQ.remove(reg);
+            List<RegistrarEvent> removedPending = pendingQ.remove(reg);
+
+            if (removedEvents != null) {
+                pendingEvents.dec(removedEvents.size());
+                removedEvents.clear();
+            }
+            if (removedPending != null) {
+                removedPending.clear();
+            }
 
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("Removed event registration for: " + reg);
@@ -5233,7 +5255,6 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         long now = SystemTime.timeMillis();
         EventReg reg = new EventReg(eventID, newLeaseID(), tmpl, transitions,
                 listener, handback, now + leaseDuration);
-        listeners.inc();
         eventID++;
         addEvent(reg);
         RegistrarEventRegistration retVal = new RegistrarEventRegistration(
@@ -5774,6 +5795,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 registrarEvents.addAll(pending.getValue());
             }
 
+            pendingEvents.inc(pending.getValue().size());
             pending.getValue().clear();
         }
 
