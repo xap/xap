@@ -84,8 +84,11 @@ public class ConnectionPool {
      * full, the caller will be blocked until a free connection is available.
      */
     public ConnectionResource getConnection(LRMIMethod lrmiMethod) throws RemoteException, MalformedURLException {
-        ConnectionResource conn = _peersPool.getResource(WAIT_INDEFINITELY_FOR_CONNECTION);
-
+        boolean waitForConnection = true;
+        if (lrmiMethod.isAsync){
+            waitForConnection = WAIT_INDEFINITELY_FOR_CONNECTION;
+        }
+        ConnectionResource conn = _peersPool.getResource(waitForConnection);
         try {
             if (_closed) {
                 //Concurrent close, maybe we created a new resource from getResource here and the close process did not find it,
