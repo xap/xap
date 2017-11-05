@@ -18,6 +18,8 @@
 package com.j_spaces.core.cache.blobStore;
 
 import com.gigaspaces.metrics.LongCounter;
+import com.j_spaces.core.cache.CacheOperationReason;
+import com.j_spaces.core.cache.context.Context;
 
 /**
  * Off heap interface for internal cache
@@ -26,12 +28,12 @@ import com.gigaspaces.metrics.LongCounter;
  * @since 10.0
  */
 
-public interface IBlobStoreInternalCache {
+public interface IBlobStoreCacheImpl {
     /*  get an entry if exists in cache*/
     BlobStoreEntryHolder get(BlobStoreRefEntryCacheInfo entryCacheInfo);
 
     /* store an entry in cache- "touch" it if already in*/
-    void store(BlobStoreEntryHolder entry);
+    void storeOrTouch(BlobStoreEntryHolder entry);
 
     /* remove entry from cache*/
     void remove(BlobStoreEntryHolder entry);
@@ -40,11 +42,7 @@ public interface IBlobStoreInternalCache {
 
     int size();
 
-    void setBlobStoreInternalCacheInitialLoadFilter(BlobStoreInternalCacheInitialLoadFilter blobStoreInternalCacheInitialLoadFilter);
+    LongCounter getHitCount();
 
-    BlobStoreInternalCacheInitialLoadFilter getBlobStoreInternalCacheInitialLoadFilter();
-
-    public LongCounter getHitCount();
-
-    public LongCounter getMissCount();
+    LongCounter getMissCount();
 }

@@ -1,3 +1,5 @@
+package com.j_spaces.core.cache.blobStore;
+
 /*
  * Copyright (c) 2008-2016, GigaSpaces Technologies, Inc. All Rights Reserved.
  *
@@ -15,8 +17,8 @@
  */
 
 //
-package com.j_spaces.core.cache.blobStore;
 
+import com.gigaspaces.internal.utils.collections.ConcurrentHashSet;
 import com.gigaspaces.internal.utils.concurrent.UncheckedAtomicIntegerFieldUpdater;
 import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.metrics.MetricRegistrator;
@@ -29,6 +31,7 @@ import com.j_spaces.kernel.list.IScanListIterator;
 import com.j_spaces.kernel.list.ScanSingleListIterator;
 
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,6 +42,7 @@ import java.util.logging.Logger;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_DELAULT;
 import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP;
 
+
 /**
  * Off heap interface for internal cache
  *
@@ -46,7 +50,7 @@ import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BLOBST
  * @since 10.0
  */
 @com.gigaspaces.api.InternalApi
-public class BlobStoreInternalCache implements IBlobStoreInternalCache {
+public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
     private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
 
     private final int OFF_HEAP_INTERNAL_CACHE_CAPACITY;
@@ -60,33 +64,20 @@ public class BlobStoreInternalCache implements IBlobStoreInternalCache {
     //segmented- each has LRU
     private final IStoredList<CacheInfoHolder> _quasiLru;
 
-    private final MetricRegistrator _blobstoreMetricRegistrar;
 
     private final LongCounter _hit = new LongCounter();
     private final LongCounter _miss = new LongCounter();
 
 
-    private BlobStoreInternalCacheInitialLoadFilter _blobStoreInternalCacheInitialLoadFilter;
-
-    public BlobStoreInternalCache(Properties properties) {
-        OFF_HEAP_INTERNAL_CACHE_CAPACITY = Integer.parseInt(properties.getProperty(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP, CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_DELAULT));
+    public BlobStoreCacheImpl(int capacity) {
+        OFF_HEAP_INTERNAL_CACHE_CAPACITY = capacity;
         int numOfCHMSegents = Integer.getInteger(SystemProperties.CACHE_MANAGER_HASHMAP_SEGMENTS, SystemProperties.CACHE_MANAGER_HASHMAP_SEGMENTS_DEFAULT);
         _entries = new ConcurrentHashMap<BlobStoreRefEntryCacheInfo, CacheInfoHolder>(OFF_HEAP_INTERNAL_CACHE_CAPACITY, 0.75f, numOfCHMSegents);
         _cacheSize = new AtomicInteger();
         _quasiLru = StoredListFactory.createConcurrentList(true /*segmented*/, true /*supportFifoPerSegment*/);
-        if (_logger.isLoggable(Level.INFO)) {
-            _logger.info("BlobStore space data internal cache size=" + OFF_HEAP_INTERNAL_CACHE_CAPACITY);
-        }
-
-        _blobstoreMetricRegistrar = (MetricRegistrator) properties.get("blobstoreMetricRegistrar");
-        registerOperations();
     }
 
-    public void setBlobStoreInternalCacheInitialLoadFilter(BlobStoreInternalCacheInitialLoadFilter blobStoreInternalCacheInitialLoadFilter) {
-        _blobStoreInternalCacheInitialLoadFilter = blobStoreInternalCacheInitialLoadFilter;
-    }
 
-    @Override
     public BlobStoreEntryHolder get(BlobStoreRefEntryCacheInfo entryCacheInfo) {
         // TODO Auto-generated method stub
         if (isDisabledCache())
@@ -101,17 +92,12 @@ public class BlobStoreInternalCache implements IBlobStoreInternalCache {
             return null;
         }
     }
-
     @Override
-    public void store(BlobStoreEntryHolder entry) {
+    public void storeOrTouch(BlobStoreEntryHolder entry) {
         // TODO Auto-generated method stub
         //store or touch if alread stored
         if (isDisabledCache())
             return;
-        if (entry.isDeleted())
-            return;  //entry deleted
-        if(entry.isOptimizedEntry())
-            return; // dont insert optimized entry we may need full one and optimized will be memory based
 
         CacheInfoHolder cih = _entries.get(entry.getBlobStoreResidentPart());
         if (cih == null)
@@ -170,7 +156,6 @@ public class BlobStoreInternalCache implements IBlobStoreInternalCache {
         if (cih.isDeleted())
             remove(cih, false /*dont decrement size*/);
     }
-
     @Override
     public void remove(BlobStoreEntryHolder entry) {
         // TODO Auto-generated method stub
@@ -209,30 +194,19 @@ public class BlobStoreInternalCache implements IBlobStoreInternalCache {
         return OFF_HEAP_INTERNAL_CACHE_CAPACITY == 0;
     }
 
-    private void registerOperations() {
-        _blobstoreMetricRegistrar.register("cache-miss", _miss);
-        _blobstoreMetricRegistrar.register("cache-hit", _hit);
-    }
-
+    @Override
     public boolean isFull(){
         return _cacheSize.get() >= OFF_HEAP_INTERNAL_CACHE_CAPACITY;
     }
-
     @Override
     public int size() {
         return _cacheSize.get();
     }
 
     @Override
-    public BlobStoreInternalCacheInitialLoadFilter getBlobStoreInternalCacheInitialLoadFilter() {
-        return _blobStoreInternalCacheInitialLoadFilter;
-    }
-
-    @Override
     public LongCounter getHitCount() {
         return _hit;
     }
-
     @Override
     public LongCounter getMissCount() {
         return _miss;
@@ -240,14 +214,14 @@ public class BlobStoreInternalCache implements IBlobStoreInternalCache {
 
 
     private static class CacheInfoHolder {
+
         private volatile BlobStoreEntryHolder _entry;
         private volatile IObjectInfo<CacheInfoHolder> _pos;
-
         static final int _STATUS_PENDING = 1 << 0;  //ongoing insert or touch
+
         static final int _STATUS_UNPENDING = ~_STATUS_PENDING;  //
         static final int _STATUS_DELETED = 1 << 1;  //logical deletion
         static final int _STATUS_REMOVED = 1 << 2;  //physical remove
-
         private volatile int _status;
 
         private static final AtomicIntegerFieldUpdater<CacheInfoHolder> cacheStatusUpdater = UncheckedAtomicIntegerFieldUpdater.newUpdater(CacheInfoHolder.class, "_status");

@@ -1,0 +1,194 @@
+/*
+ * Copyright (c) 2008-2016, GigaSpaces Technologies, Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+//
+package com.j_spaces.core.cache.blobStore;
+
+import com.gigaspaces.metrics.Gauge;
+import com.gigaspaces.metrics.MetricRegistrator;
+import com.j_spaces.core.cache.CacheOperationReason;
+import com.j_spaces.core.cache.context.Context;
+
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_DELAULT;
+import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP;
+
+/**
+ * Off heap interface for internal cache
+ *
+ * @author yechiel
+ * @since 10.0
+ */
+@com.gigaspaces.api.InternalApi
+public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
+    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+
+    private final int BLOB_STORE_INTERNAL_CACHE_CAPACITY;
+
+    private final MetricRegistrator _blobstoreMetricRegistrar;
+
+    private final IBlobStoreCacheImpl _blobStoreCacheImpl;
+    private final BlobStoreInternalCacheFilter _blobStoreInternalCacheFilter;
+
+
+    public BlobStoreCacheHandler(Properties properties, BlobStoreInternalCacheFilter blobStoreInternalCacheFilter) {
+        BLOB_STORE_INTERNAL_CACHE_CAPACITY = Integer.parseInt(properties.getProperty(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP, CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_DELAULT));
+        if (_logger.isLoggable(Level.INFO)) {
+            _logger.info("BlobStore space data internal cache size=" + BLOB_STORE_INTERNAL_CACHE_CAPACITY);
+        }
+        _blobStoreCacheImpl = new BlobStoreCacheImpl(BLOB_STORE_INTERNAL_CACHE_CAPACITY);
+        _blobStoreInternalCacheFilter = blobStoreInternalCacheFilter;
+
+        _blobstoreMetricRegistrar = (MetricRegistrator) properties.get("blobstoreMetricRegistrar");
+        registerOperations();
+    }
+
+    private boolean evaluateAndReturnIfEntryMatchesFilter(Context context, BlobStoreEntryHolder entry){
+        boolean val = _blobStoreInternalCacheFilter==null ? true : _blobStoreInternalCacheFilter.isEntryHotData(entry,context);
+        entry.getBlobStoreResidentPart().setMatchCacheFilter(this,val);
+        return val;
+    }
+
+    private boolean isEntryHotData(BlobStoreEntryHolder entry){
+        return entry.getBlobStoreResidentPart().isMatchCacheFilter(this);
+    }
+
+    @Override
+    public BlobStoreEntryHolder get(BlobStoreRefEntryCacheInfo entryCacheInfo) {
+        // TODO Auto-generated method stub
+        if (isDisabledCache())
+            return null;
+        return
+                _blobStoreCacheImpl.get(entryCacheInfo);
+    }
+
+    @Override
+    public void handleOnSpaceOperation(Context context, BlobStoreEntryHolder entry, CacheOperationReason cacheOperationReason) {
+        if (isDisabledCache())
+            return;
+        if (cacheOperationReason != CacheOperationReason.ON_TAKE)
+        {
+            if (entry.isDeleted() || entry.isPhantom() || entry.isOptimizedEntry())
+                return;  //entry deleted
+        }
+
+        switch(cacheOperationReason) {
+            case ON_READ:
+                if (isEntryHotData(entry)) {
+                    _blobStoreCacheImpl.storeOrTouch(entry);
+                }
+                else{
+                    _blobStoreInternalCacheFilter.incrementColdDataMisses();//reading a cold entry
+                }
+                break;
+
+            case ON_WRITE:
+                if (evaluateAndReturnIfEntryMatchesFilter(context, entry))
+                    _blobStoreCacheImpl.storeOrTouch(entry);
+                break;
+
+            case ON_UPDATE:
+                boolean curMatch = isEntryHotData(entry);
+                if(!curMatch){
+                    _blobStoreInternalCacheFilter.incrementColdDataMisses();//updating a cold entry
+                }
+                if (evaluateAndReturnIfEntryMatchesFilter(context, entry)) {
+                    _blobStoreCacheImpl.storeOrTouch(entry);
+                }
+                else
+                {
+                    if (curMatch) {
+                        _blobStoreCacheImpl.remove(entry);
+                    }
+                }
+
+                break;
+
+
+            case ON_INITIAL_LOAD:
+                if (evaluateAndReturnIfEntryMatchesFilter(context, entry)) {
+                    if (!isFull()) {
+                        _blobStoreInternalCacheFilter.incrementInsertedToBlobStoreInternalCacheOnInitialLoad();
+                        _blobStoreCacheImpl.storeOrTouch(entry);
+                    }
+                }
+                break;
+
+            case ON_TAKE:
+                if(isEntryHotData(entry)) {
+                    _blobStoreCacheImpl.remove(entry);
+                }
+                else {
+                    _blobStoreInternalCacheFilter.incrementColdDataMisses();//taking a cold entry
+                }
+                break;
+
+            default:
+                throw new UnsupportedOperationException("invalid space operation in BlobStore cache");
+        }
+    }
+
+    private boolean isDisabledCache() {
+        return BLOB_STORE_INTERNAL_CACHE_CAPACITY == 0;
+    }
+
+    private void registerOperations() {
+        _blobstoreMetricRegistrar.register("full-cache-miss", _blobStoreCacheImpl.getMissCount());
+
+        if(_blobStoreInternalCacheFilter!=null) {
+            _blobstoreMetricRegistrar.register("blobstore-filter-miss", _blobStoreInternalCacheFilter.getColdDataMissCount());
+        }
+
+        _blobstoreMetricRegistrar.register("cache-miss", new Gauge<Long>() {
+            @Override
+            public Long getValue() throws Exception {
+                return getMissCount();
+            }
+        });
+
+        _blobstoreMetricRegistrar.register("cache-hit", _blobStoreCacheImpl.getHitCount());
+    }
+
+    public boolean isFull(){
+        return _blobStoreCacheImpl.isFull();
+    }
+
+    @Override
+    public int size() {
+        return _blobStoreCacheImpl.size();
+    }
+
+    @Override
+    public BlobStoreInternalCacheFilter getBlobStoreInternalCacheFilter() {
+        return _blobStoreInternalCacheFilter;
+    }
+
+    @Override
+    public long getMissCount(){
+        long coldDataMisses = _blobStoreInternalCacheFilter==null ? 0 : _blobStoreInternalCacheFilter.getColdDataMissCount().getCount();
+
+        return _blobStoreCacheImpl.getMissCount().getCount()+coldDataMisses;
+    }
+
+    @Override
+    public long getHitCount(){
+        return _blobStoreCacheImpl.getHitCount().getCount();
+    }
+
+}

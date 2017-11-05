@@ -370,11 +370,11 @@ public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStora
                 switch (entryHolder.getWriteLockOperation()) {
                     case SpaceOperations.WRITE:
                     case SpaceOperations.UPDATE:
-                        ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().flushedFromBulk(_engine.getCacheManager(), res.getPosition(), false/*removed*/);
+                        ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().flushedFromBulk(context,_engine.getCacheManager(), res.getPosition(), false/*removed*/,true /*onXtnEnd*/);
                         break;
                     case SpaceOperations.TAKE:
                     case SpaceOperations.TAKE_IE:
-                        ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().flushedFromBulk(_engine.getCacheManager(), null, true/*removed*/);
+                        ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().flushedFromBulk(context,_engine.getCacheManager(), null, true/*removed*/,true /*onXtnEnd*/);
                         break;
                 }
             }

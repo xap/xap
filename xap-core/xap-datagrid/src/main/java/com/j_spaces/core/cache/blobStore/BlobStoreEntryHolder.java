@@ -30,6 +30,7 @@ import com.gigaspaces.internal.server.storage.EntryHolder;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITransactionalEntryData;
 import com.j_spaces.core.cache.CacheManager;
+import com.j_spaces.core.cache.CacheOperationReason;
 import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.kernel.locks.ILockObject;
@@ -159,9 +160,8 @@ public class BlobStoreEntryHolder extends EntryHolder implements IBlobStoreEntry
 
 
     @Override
-
-    public void insertOrTouchInternalCache(CacheManager cacheManager) {
-        _blobStoreResidentPart.insertOrTouchInternalCache(cacheManager, this);
+    public void insertOrTouchInternalCache(Context context, CacheManager cacheManager, CacheOperationReason cacheOperationReason) {
+        _blobStoreResidentPart.insertOrTouchInternalCache(context, cacheManager, this, cacheOperationReason);
     }
 
     @Override

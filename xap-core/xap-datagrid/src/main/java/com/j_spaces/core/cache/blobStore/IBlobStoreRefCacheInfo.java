@@ -21,7 +21,7 @@ import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.context.Context;
-import com.j_spaces.core.cache.blobStore.storage.InternalCacheControl;
+import com.j_spaces.core.cache.CacheOperationReason;
 
 /**
  * The resident part of entry that resides off-heap (SSD)
@@ -32,15 +32,13 @@ import com.j_spaces.core.cache.blobStore.storage.InternalCacheControl;
 public interface IBlobStoreRefCacheInfo {
     void setDirty(boolean value, CacheManager cacheManager);
 
-    void removeEntryFromBlobStoreStorage(CacheManager cacheManager);
+    void removeEntryFromBlobStoreStorage(Context context,CacheManager cacheManager);
 
     IEntryHolder getLatestEntryVersion(CacheManager cacheManager, boolean attach, IBlobStoreEntryHolder lastKnownEntry, Context attachingContext);
 
     IEntryHolder getLatestEntryVersion(CacheManager cacheManager, boolean attach, IBlobStoreEntryHolder lastKnownEntry, Context attachingContext, boolean onlyIndexesPart);
 
     void unLoadFullEntryIfPossible(CacheManager cacheManager, Context context);
-
-    void unLoadFullEntryIfPossible(CacheManager cacheManager, Context context, InternalCacheControl internalCacheControl);
 
     void setDeleted(boolean deleted);
 
@@ -56,7 +54,7 @@ public interface IBlobStoreRefCacheInfo {
 
     java.io.Serializable getEntryLayout(CacheManager cacheManager);
 
-    void flushedFromBulk(CacheManager cacheManager, Object BlobStorePos, boolean removed);
+    void flushedFromBulk(Context context,CacheManager cacheManager, Object BlobStorePos, boolean removed, boolean onTxnEnd);
 
     void setBlobStorePosition(Object pos);
 
@@ -72,7 +70,7 @@ public interface IBlobStoreRefCacheInfo {
 
     BlobStoreEntryHolder getFromInternalCache(CacheManager cacheManager);
 
-    void resetNonTransactionalFailedBlobstoreOpStatus(CacheManager cm);
+    void resetNonTransactionalFailedBlobstoreOpStatus(Context context,CacheManager cm);
 
     void buildCrcForFields();
 
@@ -81,5 +79,9 @@ public interface IBlobStoreRefCacheInfo {
 
     //embedded sync list related------------------------------
     boolean isPhantom();
+
+    boolean isMatchCacheFilter(IBlobStoreCacheHandler blobStoreCacheHandler);
+
+    void setMatchCacheFilter(IBlobStoreCacheHandler blobStoreCacheHandler, boolean val);
 
 }

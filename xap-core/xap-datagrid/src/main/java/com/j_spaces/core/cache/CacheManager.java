@@ -85,7 +85,6 @@ import com.j_spaces.core.cache.blobStore.sadapter.IBlobStoreStorageAdapter;
 import com.j_spaces.core.cache.blobStore.sadapter.BlobStoreFifoInitialLoader;
 import com.j_spaces.core.cache.blobStore.sadapter.BlobStoreStorageAdapter;
 import com.j_spaces.core.cache.blobStore.storage.BlobStoreHashMock;
-import com.j_spaces.core.cache.blobStore.storage.InternalCacheControl;
 import com.j_spaces.core.client.*;
 import com.j_spaces.core.cluster.ClusterPolicy;
 import com.j_spaces.core.exception.internal.EngineInternalSpaceException;
@@ -156,7 +155,7 @@ import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_BLOB_STORE;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_LRU;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_PROP;
 import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP;
-import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_INITIL_LOAD_QUERIES_PROP;
+import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_CACHE_FILTER_QUERIES_PROP;
 import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_PERSISTENT_PROP;
 import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BOLBSTORE_USE_PREFETCH_PROP;
 import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_USE_BLOBSTORE_BULKS_PROP;
@@ -258,7 +257,7 @@ public class CacheManager extends AbstractCacheManager
 
     private BlobStoreExtendedStorageHandler _blobStoreStorageHandler;
     private BlobStoreMemoryMonitor _blobStoreMemoryMonitor;
-    private IBlobStoreInternalCache _blobStoreInternalCache;
+    private IBlobStoreCacheHandler _blobStoreInternalCache;
     private final boolean _persistentBlobStore;
     private final boolean _useBlobStoreBulks;
     private final boolean _optimizedBlobStoreClear;
@@ -543,7 +542,7 @@ public class CacheManager extends AbstractCacheManager
      */
     public void initCache(boolean loadDataFromDB, Properties properties)
             throws SAException {
-        BlobStoreInternalCacheInitialLoadFilter blobStoreInternalCacheInitialLoadFilter = null;
+        BlobStoreInternalCacheFilter blobStoreInternalCacheFilter = null;
 
         //for direct-per-instance primary verify that the state is consistent-dont allow destruction of data
         if (getEngine().getSpaceImpl().getDirectPersistencyRecoveryHelper() != null && getEngine().getSpaceImpl().getDirectPersistencyRecoveryHelper().isPerInstancePersistency()) {
@@ -583,7 +582,7 @@ public class CacheManager extends AbstractCacheManager
             final MetricRegistrator blobstoreMetricRegistrar = _engine.getMetricRegistrator().extend(MetricConstants.BLOBSTORE_METRIC_NAME);
 
             properties.put("blobstoreMetricRegistrar", blobstoreMetricRegistrar);
-            createBlobStoreInternalCache(properties);
+
 
             BlobStoreConfig blobStoreConfig = new BlobStoreConfig(_engine.getFullSpaceName(),
                     _engine.getNumberOfPartitions(),
@@ -592,15 +591,15 @@ public class CacheManager extends AbstractCacheManager
                     blobstoreMetricRegistrar);
             _blobStoreStorageHandler.initialize(blobStoreConfig);
 
-            List<SQLQuery> blobStoreInitialLoadqueries = (List<SQLQuery>) properties.get(FULL_CACHE_MANAGER_BLOBSTORE_INITIL_LOAD_QUERIES_PROP);
-            if(warmStart && blobStoreInitialLoadqueries != null){
+            List<SQLQuery> blobStoreCacheFilterQueries = (List<SQLQuery>) properties.get(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_FILTER_QUERIES_PROP);
+            if(blobStoreCacheFilterQueries != null){
                 try {
-                    blobStoreInternalCacheInitialLoadFilter = new BlobStoreInternalCacheInitialLoadFilter(_engine, blobStoreInitialLoadqueries);
+                    blobStoreInternalCacheFilter = new BlobStoreInternalCacheFilter(_engine, blobStoreCacheFilterQueries);
                 } catch (Exception e) {
                     throw new RuntimeException("Failed to create blobstore cache filter", e);
                 }
             }
-            _blobStoreInternalCache.setBlobStoreInternalCacheInitialLoadFilter(blobStoreInternalCacheInitialLoadFilter);
+            _blobStoreInternalCache = new BlobStoreCacheHandler(properties, blobStoreInternalCacheFilter);
 
             Properties blobstoreProperties = new Properties();
             blobstoreProperties.setProperty(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP, properties.getProperty(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP));
@@ -814,9 +813,11 @@ public class CacheManager extends AbstractCacheManager
         }
     }
 
-    public void touchByEntry(IEntryHolder entry, boolean modifyOp) {
+    public void touchByEntry(Context context,IEntryHolder entry, boolean modifyOp,ITemplateHolder template, CacheOperationReason cacheOperationReason) {
         if (entry.isBlobStoreEntry()) {
-            ((IBlobStoreEntryHolder) entry).insertOrTouchInternalCache(this);
+            if (template.getXidOriginatedTransaction() != null && cacheOperationReason != CacheOperationReason.ON_READ)
+                return;   //NOTE- for read under xtn we touch, commit is meanningless
+            ((IBlobStoreEntryHolder) entry).insertOrTouchInternalCache(context,this,cacheOperationReason);
         } else {
             IEntryCacheInfo pe = getPEntryByUid(entry.getUID());
             if (pe != null && pe.getEntryHolder(this) == entry)
@@ -902,11 +903,7 @@ public class CacheManager extends AbstractCacheManager
         }
     }
 
-    private void createBlobStoreInternalCache(Properties properties) {
-        _blobStoreInternalCache = new BlobStoreInternalCache(properties);
-    }
-
-    public IBlobStoreInternalCache getBlobStoreInternalCache() {
+    public IBlobStoreCacheHandler getBlobStoreInternalCache() {
         return _blobStoreInternalCache;
     }
 
@@ -971,11 +968,11 @@ public class CacheManager extends AbstractCacheManager
                     "\tTotal Time: " + JSpaceUtilities.formatMillis(SystemTime.timeMillis() - initialLoadInfo.getRecoveryStartTime()) + ".");
         }
         if(getBlobStoreInternalCache() != null){
-            if (getBlobStoreInternalCache().getBlobStoreInternalCacheInitialLoadFilter() != null) {
+            if (getBlobStoreInternalCache().getBlobStoreInternalCacheFilter() != null) {
                 if (_logger.isLoggable(Level.INFO)) {
                     _logger.info("BlobStore internal cache recovery:\n " +
-                            "\tblob-store-queries: " + getBlobStoreInternalCache().getBlobStoreInternalCacheInitialLoadFilter().getSqlQueries() + ".\n" +
-                            "\tEntries inserted to blobstore cache: " + getBlobStoreInternalCache().getBlobStoreInternalCacheInitialLoadFilter().getInsertedToBlobStoreInternalCache() + ".\n");
+                            "\tblob-store-queries: " + getBlobStoreInternalCache().getBlobStoreInternalCacheFilter().getSqlQueries() + ".\n" +
+                            "\tEntries inserted to blobstore cache: " + getBlobStoreInternalCache().getBlobStoreInternalCacheFilter().getInsertedToBlobStoreInternalCacheOnInitialLoad() + ".\n");
                 }
             }
         }
@@ -1053,17 +1050,11 @@ public class CacheManager extends AbstractCacheManager
                     } else {
                         continue;
                     }
-                    boolean avoidInsertToBlobStoreInternalCache = true;
                     if (isBlobStoreCachePolicy()) {//kick out the entry main info after writing to blobStore if needed
                         if (!entryFromBlobStore)//no need to rewrite-it
                             ((IBlobStoreEntryHolder) eh).setDirty(this);
 
-                        if(_blobStoreInternalCache.getBlobStoreInternalCacheInitialLoadFilter() != null)
-                            avoidInsertToBlobStoreInternalCache = !shouldInsertToBlobStoreInternalCache(context, eh);
-
-                        ((IBlobStoreEntryHolder) eh).getBlobStoreResidentPart().unLoadFullEntryIfPossible(this, context
-                                , avoidInsertToBlobStoreInternalCache ? InternalCacheControl.DONT_INSERT_TO_INTERNAL_CACHE_FROM_INITIAL_LOAD :
-                                        InternalCacheControl.INSERT_TO_INTERNAL_CACHE_FROM_INITIAL_LOAD);
+                        ((IBlobStoreEntryHolder) eh).getBlobStoreResidentPart().unLoadFullEntryIfPossible(this, context);
                         if (!entryFromBlobStore && typesIn != null)
                             insertMetadataTypeToBlobstoreIfNeeded(eh, typesIn);
                     }
@@ -1080,12 +1071,7 @@ public class CacheManager extends AbstractCacheManager
                     IEntryHolder eh = blobStoreFifoInitialLoader.next();
                     safeInsertEntryToCache(context, eh, false /* newEntry */, null /*pType*/, false /*pin*/,InitialLoadOrigin.FROM_BLOBSTORE /*fromInitialLoad*/);
 
-                    if(_blobStoreInternalCache.getBlobStoreInternalCacheInitialLoadFilter() != null)
-                        avoidInsertToBlobStoreInternalCache = !shouldInsertToBlobStoreInternalCache(context, eh);
-
-                    ((IBlobStoreEntryHolder) eh).getBlobStoreResidentPart().unLoadFullEntryIfPossible(this, context
-                            , avoidInsertToBlobStoreInternalCache ? InternalCacheControl.DONT_INSERT_TO_INTERNAL_CACHE_FROM_INITIAL_LOAD :
-                            InternalCacheControl.INSERT_TO_INTERNAL_CACHE_FROM_INITIAL_LOAD);
+                    ((IBlobStoreEntryHolder) eh).getBlobStoreResidentPart().unLoadFullEntryIfPossible(this, context);
                     initialLoadInfo.incrementInsertedToCache();
                     initialLoadInfo.setLastLoggedTime(logInsertionIfNeeded(initialLoadInfo.getRecoveryStartTime(), initialLoadInfo.getLastLoggedTime(), initialLoadInfo.getInsertedToCache()));
                 }
@@ -1096,10 +1082,6 @@ public class CacheManager extends AbstractCacheManager
                 entriesIterSA.close();
             }
         }
-    }
-
-    private boolean shouldInsertToBlobStoreInternalCache(Context context, IEntryHolder eh){
-        return _blobStoreInternalCache.getBlobStoreInternalCacheInitialLoadFilter().isMatch(eh, context);
     }
 
     //in case types loaded from mirror verify they reside in ssd

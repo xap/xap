@@ -1234,7 +1234,7 @@ public class TypeDataIndex<K> {
     }
 
     protected void insertBasicIndexTemplate(TemplateCacheInfo pTemplate, boolean isNullIndex) {
-        // check if field's value is null - if so store it in null templates						
+        // check if field's value is null - if so store it in null templates
         if (isNullIndex) {
             if (pTemplate.m_TemplateHolder.isNotifyTemplate())
                 addNullNotifyTemplate(pTemplate);

@@ -118,7 +118,7 @@ public class BlobStoreDataCachePolicy implements CachePolicy {
         }
 
         if (sqlQueryList.size() > 0)
-            props.put(Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_INITIL_LOAD_QUERIES_PROP, sqlQueryList);
+            props.put(Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_CACHE_FILTER_QUERIES_PROP, sqlQueryList);
 
         return props;
     }

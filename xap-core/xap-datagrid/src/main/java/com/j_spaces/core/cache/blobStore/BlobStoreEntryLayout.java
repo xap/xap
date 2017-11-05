@@ -320,10 +320,10 @@ public class BlobStoreEntryLayout implements Externalizable {
         _blobStoreVersion = in.readShort();
         _typeName = in.readUTF();
 
-        if (onlyIndexedPart &&
-                cacheManager.getBlobStoreInternalCache().getBlobStoreInternalCacheInitialLoadFilter() != null) {
+        if (fromInitialLoad && onlyIndexedPart &&
+                cacheManager.getBlobStoreInternalCache().getBlobStoreInternalCacheFilter() != null) {
             onlyIndexedPart = !cacheManager.getBlobStoreInternalCache()
-                    .getBlobStoreInternalCacheInitialLoadFilter().isRelevantType(_m_Uid, _typeName);
+                    .getBlobStoreInternalCacheFilter().isRelevantType(_m_Uid, _typeName);
         }
 
         if (onlyIndexedPart && fromInitialLoad) {

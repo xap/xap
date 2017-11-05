@@ -102,10 +102,7 @@ import com.j_spaces.core.*;
 import com.j_spaces.core.Constants.SpaceProxy;
 import com.j_spaces.core.admin.SpaceRuntimeInfo;
 import com.j_spaces.core.admin.TemplateInfo;
-import com.j_spaces.core.cache.CacheManager;
-import com.j_spaces.core.cache.IEntryCacheInfo;
-import com.j_spaces.core.cache.TerminatingFifoXtnsInfo;
-import com.j_spaces.core.cache.XtnData;
+import com.j_spaces.core.cache.*;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.blobStore.IBlobStoreEntryHolder;
 import com.j_spaces.core.cache.blobStore.BlobStoreEntryHolder;
@@ -645,9 +642,9 @@ public class SpaceEngine implements ISpaceModeListener {
         if (blobStorePersistent != null)
             properties.put(FULL_CACHE_MANAGER_BLOBSTORE_PERSISTENT_PROP, blobStorePersistent);
 
-        final Object blobStoreInitialLoadQueries = spaceAttr.getCustomProperties().get(FULL_CACHE_MANAGER_BLOBSTORE_INITIL_LOAD_QUERIES_PROP);
-        if (blobStoreInitialLoadQueries != null)
-            properties.put(FULL_CACHE_MANAGER_BLOBSTORE_INITIL_LOAD_QUERIES_PROP, blobStoreInitialLoadQueries);
+        final Object blobStoreCacheFilterQueries = spaceAttr.getCustomProperties().get(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_FILTER_QUERIES_PROP);
+        if (blobStoreCacheFilterQueries != null)
+            properties.put(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_FILTER_QUERIES_PROP, blobStoreCacheFilterQueries);
         return properties;
     }
 
@@ -4678,7 +4675,7 @@ public class SpaceEngine implements ISpaceModeListener {
 
 
         if (getCacheManager().isEvictableCachePolicy() || entry.isBlobStoreEntry())
-            _cacheManager.touchByEntry(entry, false /*modifyOp*/);
+            _cacheManager.touchByEntry(context, entry, false /*modifyOp*/, template, CacheOperationReason.ON_READ);
 
     }
 
@@ -4797,7 +4794,7 @@ public class SpaceEngine implements ISpaceModeListener {
             }
         }
         if ((getCacheManager().isEvictableCachePolicy() || entry.isBlobStoreEntry()) && template.getXidOriginatedTransaction() != null)
-            _cacheManager.touchByEntry(entry, true /*modifyOp*/);
+            _cacheManager.touchByEntry(context,entry, true /*modifyOp*/, template, CacheOperationReason.ON_TAKE);
     }
 
     private void performUpdateTemplateOnEntryCoreSA(Context context, ITemplateHolder template,
@@ -5057,7 +5054,7 @@ public class SpaceEngine implements ISpaceModeListener {
             checkWFValidityAfterUpdate(context, entry);
 
         if (getCacheManager().isEvictableCachePolicy() || entry.isBlobStoreEntry())
-            _cacheManager.touchByEntry(entry, true /*modifyOp*/);
+            _cacheManager.touchByEntry(context,entry, true /*modifyOp*/,template,CacheOperationReason.ON_UPDATE);
     }
 
 

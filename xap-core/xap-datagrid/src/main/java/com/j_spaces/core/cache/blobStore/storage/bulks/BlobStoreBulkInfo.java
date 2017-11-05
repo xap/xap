@@ -243,10 +243,10 @@ public class BlobStoreBulkInfo {
                 switch (boh.getOperation()) {
                     case SpaceOperations.WRITE:
                     case SpaceOperations.UPDATE:
-                        boh.getBlobStoreRefEntryCacheInfo().flushedFromBulk(_cacheManager, res.getPosition(), false/*removed*/);
+                        boh.getBlobStoreRefEntryCacheInfo().flushedFromBulk(context,_cacheManager, res.getPosition(), false/*removed*/,false /*onXtnEnd*/);
                         break;
                     case SpaceOperations.TAKE:
-                        boh.getBlobStoreRefEntryCacheInfo().flushedFromBulk(_cacheManager, null, true/*removed*/);
+                        boh.getBlobStoreRefEntryCacheInfo().flushedFromBulk(context,_cacheManager, null, true/*removed*/,false /*onXtnEnd*/);
                         //removeEntryFromCache only after removed from blob-store
                         _cacheManager.removeEntryFromCache(boh.getBlobStoreRefEntryCacheInfo().getEntryHolder(), false /*initiatedByEvictionStrategy*/, true/*locked*/, boh.getBlobStoreRefEntryCacheInfo()/* pEntry*/, CacheManager.RecentDeleteCodes.NONE);
                         if (_removedEntries == null)

@@ -20,6 +20,7 @@ package com.j_spaces.core.cache.blobStore;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.embeddedSyncList.EntryHolderEmbeddedSyncOpInfo;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.j_spaces.core.cache.CacheManager;
+import com.j_spaces.core.cache.CacheOperationReason;
 import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.context.Context;
 
@@ -46,7 +47,7 @@ public interface IBlobStoreEntryHolder {
 
     byte getEntryTypeCode();
 
-    void insertOrTouchInternalCache(CacheManager cacheManager);
+    void insertOrTouchInternalCache(Context context, CacheManager cacheManager, CacheOperationReason cacheOperationReason);
 
     BlobStoreBulkInfo getBulkInfo();
 

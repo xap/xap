@@ -33,12 +33,12 @@ import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.TypeDataIndex;
 import com.j_spaces.core.cache.blobStore.errors.BlobStoreErrorsHandler;
 import com.j_spaces.core.cache.blobStore.optimizations.OffHeapIndexesValuesHandler;
-import com.j_spaces.core.cache.blobStore.storage.InternalCacheControl;
 import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBusyInBulkException;
 import com.j_spaces.core.cache.blobStore.storage.bulks.delayedReplication.DelayedReplicationInsertInfo;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.blobStore.errors.BlobStoreErrorBulkEntryInfo;
+import com.j_spaces.core.cache.CacheOperationReason;
 import com.j_spaces.core.cache.blobStore.storage.bulks.delayedReplication.DelayedReplicationBasicInfo;
 import com.j_spaces.core.cache.blobStore.storage.bulks.delayedReplication.DelayedReplicationRemoveInfo;
 import com.j_spaces.core.cache.blobStore.storage.bulks.delayedReplication.DelayedReplicationUpdateInfo;
@@ -95,6 +95,9 @@ public class BlobStoreRefEntryCacheInfo
     private static final byte STATUS_BULK_FLUSHING = ((byte) 1) << 4;
     private static final byte STATUS_UNBULK_FLUSHING = ~STATUS_BULK_FLUSHING;
 
+    private static final byte STATUS_MATCH_FILTER = ((byte) 1) << 5;
+    private static final byte STATUS_UNMATCH_FILTER = ~STATUS_MATCH_FILTER;
+
 
     //is not null when entry is loaded. if null entry is not deleted. Its not null as long as the entry
     // is pinned- locked or under xtn including waiting-for != null
@@ -118,7 +121,6 @@ public class BlobStoreRefEntryCacheInfo
     private volatile byte _status;
     //creation number of latest index addition to the entry
     private byte _latestIndexCreationNumber;
-
 
     public BlobStoreRefEntryCacheInfo(IEntryHolder eh, int backRefsSize) {
         boolean recoveredFromblobStore = false;
@@ -185,18 +187,18 @@ public class BlobStoreRefEntryCacheInfo
     }
 
     @Override
-    public void flushedFromBulk(CacheManager cacheManager, Object blobStorePos, boolean removed) {
+    public void flushedFromBulk(Context context,CacheManager cacheManager, Object blobStorePos, boolean removed, boolean onTxnEnd) {
         synchronized (getStateLockObject()) {
             setDirty_impl(false, false /*set_indexses*/, cacheManager);
             if (removed || isDeleted()) {
-                removeFromInternalCache(cacheManager, _loadedBlobStoreEntry);
+                removeFromInternalCache(context,cacheManager, _loadedBlobStoreEntry);
                 if (cacheManager.isOffHeapOptimizationEnabled()) {
                     OffHeapIndexesValuesHandler.delete(this);
                 }
                 _blobStorePosition = null;
             } else {
                 if (!isWrittenToBlobStore()) {
-                    insertOrTouchInternalCache(cacheManager, _loadedBlobStoreEntry); //new entry- insert to cache
+                    insertOrTouchInternalCache(context, cacheManager, _loadedBlobStoreEntry, CacheOperationReason.ON_WRITE); //new entry- insert to cache if applicable
                     if (cacheManager.isOffHeapOptimizationEnabled() && !isPhantom()) {
                         try {
                             setOffHeapAddress(OffHeapIndexesValuesHandler.allocate(((BlobStoreEntryLayout) getEntryLayout(cacheManager)).getIndexValuesBytes(cacheManager), getOffHeapAddress()));
@@ -206,6 +208,10 @@ public class BlobStoreRefEntryCacheInfo
                         }
                     }
                 } else {
+                    if (onTxnEnd) //from update + commit
+                    {
+                        insertOrTouchInternalCache(context, cacheManager, _loadedBlobStoreEntry, CacheOperationReason.ON_UPDATE); //updated entry- insert to cache if applicable
+                    }
                     if (cacheManager.isOffHeapOptimizationEnabled() && !isPhantom()) {
                         try {
                             OffHeapIndexesValuesHandler.update(this, ((BlobStoreEntryLayout) getEntryLayout(cacheManager)).getIndexValuesBytes(cacheManager));
@@ -235,6 +241,24 @@ public class BlobStoreRefEntryCacheInfo
         } else
             _status &= STATUS_UNDIRTY;
     }
+    @Override
+    public boolean isMatchCacheFilter(IBlobStoreCacheHandler blobStoreCacheHandler)
+    {
+        return (blobStoreCacheHandler.getBlobStoreInternalCacheFilter() == null || (_status & STATUS_MATCH_FILTER) == STATUS_MATCH_FILTER);
+    }
+
+    //NOTE- entry should be locked when issuing this call
+    @Override
+    public void setMatchCacheFilter(IBlobStoreCacheHandler blobStoreCacheHandler, boolean val)
+    {
+        if (blobStoreCacheHandler.getBlobStoreInternalCacheFilter() != null) {
+            if (val)
+                _status |= STATUS_MATCH_FILTER;
+            else
+                _status &= STATUS_UNMATCH_FILTER;
+        }
+    }
+
 
     @Override
     public void buildCrcForFields() {
@@ -300,14 +324,14 @@ public class BlobStoreRefEntryCacheInfo
     }
 
     @Override
-    public void removeEntryFromBlobStoreStorage(CacheManager cacheManager) {
+    public void removeEntryFromBlobStoreStorage(Context context,CacheManager cacheManager) {
         synchronized (getStateLockObject()) {
-            removeEntryFromBlobStoreStorage_impl(cacheManager);
+            removeEntryFromBlobStoreStorage_impl(context,cacheManager);
         }
     }
 
-    private void removeEntryFromBlobStoreStorage_impl(CacheManager cacheManager) {
-        removeFromInternalCache(cacheManager, _loadedBlobStoreEntry);
+    private void removeEntryFromBlobStoreStorage_impl(Context context,CacheManager cacheManager) {
+        removeFromInternalCache(context,cacheManager, _loadedBlobStoreEntry);
         if (isWrittenToBlobStore()) {
             cacheManager.getBlobStoreStorageHandler().removeIfExists(getStorageKey_impl(), getBlobStorePos(), BlobStoreObjectType.DATA);
         }
@@ -321,9 +345,9 @@ public class BlobStoreRefEntryCacheInfo
     }
 
     @Override
-    public void resetNonTransactionalFailedBlobstoreOpStatus(CacheManager cm) {//reset status of failed op- the entry must be logically locked
+    public void resetNonTransactionalFailedBlobstoreOpStatus(Context context,CacheManager cm) {//reset status of failed op- the entry must be logically locked
         synchronized (getStateLockObject()) {
-            removeFromInternalCache(cm, _loadedBlobStoreEntry);
+            removeFromInternalCache(context,cm, _loadedBlobStoreEntry);
             setDirty(false, cm);
         }
     }
@@ -358,8 +382,7 @@ public class BlobStoreRefEntryCacheInfo
                     if (res != null && bulkInfo != null && !isBulkFlushing()) {
                         try {
                             BlobStoreErrorBulkEntryInfo.setOnContext(attachingContext, bulkInfo.getPerviousStateForEntry(_m_Uid));
-                            flush_impl(cacheManager, attachingContext, false /*unloadingEntry*/
-                                    , InternalCacheControl.DONT_INSERT_TO_INTERNAL_CACHE_FROM_INITIAL_LOAD);
+                            flush_impl(cacheManager, attachingContext, false /*unloadingEntry*/);
                             if (bulkInfo.getDirectPersistencyCoordinationObject(getUID()) != null) {
                                 //report to direct persistency
                                 cacheManager.getEngine().getReplicationNode().getDirectPesistencySyncHandler().afterOperationPersisted(bulkInfo.getDirectPersistencyCoordinationObject(getUID()));
@@ -422,7 +445,7 @@ public class BlobStoreRefEntryCacheInfo
                 {
                     if (isDirty())
                         throw new RuntimeException("invalid entry state- entry attach and dirty" + _m_Uid);
-                    unLoadFullEntryIfPossible_impl(cacheManager,context, InternalCacheControl.DONT_INSERT_TO_INTERNAL_CACHE);
+                    unLoadFullEntryIfPossible_impl(cacheManager,context);
                     res = null;
                 }
                 else
@@ -533,45 +556,42 @@ public class BlobStoreRefEntryCacheInfo
 
     @Override
     public BlobStoreEntryHolder getFromInternalCache(CacheManager cacheManager) {
+        if(!isMatchCacheFilter(cacheManager.getBlobStoreInternalCache()))
+            return null;
         BlobStoreEntryHolder res = cacheManager.getBlobStoreInternalCache().get(this);
         return (res != null && res.getBlobStoreVersion() == _blobStoreVersion) ? res : null;
     }
 
-    private void removeFromInternalCache(CacheManager cacheManager, BlobStoreEntryHolder entry) {
-        cacheManager.getBlobStoreInternalCache().remove(entry);
+    private void removeFromInternalCache(Context context,CacheManager cacheManager, BlobStoreEntryHolder entry) {
+        cacheManager.getBlobStoreInternalCache().handleOnSpaceOperation(context,entry,CacheOperationReason.ON_TAKE);
 
     }
 
-    public void insertOrTouchInternalCache(CacheManager cacheManager, BlobStoreEntryHolder entry) {
-        cacheManager.getBlobStoreInternalCache().store(entry);
+    public void insertOrTouchInternalCache(Context context,CacheManager cacheManager, BlobStoreEntryHolder entry,CacheOperationReason cacheOperationReason) {
+        if (cacheOperationReason == CacheOperationReason.ON_TAKE)
+            return; //take is called from another path
+        cacheManager.getBlobStoreInternalCache().handleOnSpaceOperation(context,entry,cacheOperationReason);
     }
 
     @Override
     public void unLoadFullEntryIfPossible(CacheManager cacheManager, Context context) {
         synchronized (getStateLockObject()) {
-            unLoadFullEntryIfPossible_impl(cacheManager, context, InternalCacheControl.INSERT_IF_NEEDED_BY_OP );
+            unLoadFullEntryIfPossible_impl(cacheManager, context );
         }
     }
 
-    @Override
-    public void unLoadFullEntryIfPossible(CacheManager cacheManager, Context context, InternalCacheControl internalCacheControl) {
-        synchronized (getStateLockObject()) {
-            unLoadFullEntryIfPossible_impl(cacheManager, context, internalCacheControl);
-        }
-    }
-
-    private void unLoadFullEntryIfPossible_impl(CacheManager cacheManager, Context context, InternalCacheControl internalCacheControl) {
+    private void unLoadFullEntryIfPossible_impl(CacheManager cacheManager, Context context) {
         BlobStoreEntryHolder entry = _loadedBlobStoreEntry;
         if (entry == null)
             return;
         if (isDirty())
-            flush_impl(cacheManager, context, true /*unloadingEntry*/, internalCacheControl);
+            flush_impl(cacheManager, context, true /*unloadingEntry*/);
         else {
             if (indexesBackRefsKept() && !isDeleted()) {
                 economizeBackRefs((ArrayList<IObjectInfo<IEntryCacheInfo>>) _backRefs, entry, cacheManager.getTypeData(entry.getServerTypeDesc()), true /*unloading*/, false/*flushingEntryHolder*/);
             }
-            if (internalCacheControl == InternalCacheControl.INSERT_TO_INTERNAL_CACHE_FROM_INITIAL_LOAD)
-                insertOrTouchInternalCache(cacheManager, entry);
+            if (context.isInInitialLoad())
+                insertOrTouchInternalCache(context,cacheManager, entry,CacheOperationReason.ON_INITIAL_LOAD);
         }
         if (!isDeleted()) {
             _loadedBlobStoreEntry = null;
@@ -583,14 +603,13 @@ public class BlobStoreRefEntryCacheInfo
     @Override
     public void flush(CacheManager cacheManager, Context context) {
         synchronized (getStateLockObject()) {
-            flush_impl(cacheManager, context, false /* unloadingEntry*/, InternalCacheControl.INSERT_IF_NEEDED_BY_OP);
+            flush_impl(cacheManager, context, false /* unloadingEntry*/);
         }
     }
 
 
-    private void flush_impl(CacheManager cacheManager, Context context, boolean unloadingEntry, InternalCacheControl internalCacheControl){
-        boolean isFromInitialLoad = internalCacheControl == InternalCacheControl.DONT_INSERT_TO_INTERNAL_CACHE_FROM_INITIAL_LOAD
-                || internalCacheControl == InternalCacheControl.INSERT_TO_INTERNAL_CACHE_FROM_INITIAL_LOAD;
+    private void flush_impl(CacheManager cacheManager, Context context, boolean unloadingEntry){
+        boolean isFromInitialLoad = context.isInInitialLoad();
         try {
             if (!isDirty())
                 return;
@@ -602,13 +621,13 @@ public class BlobStoreRefEntryCacheInfo
                 throw new BlobStoreException("inconsistent state - phantom but entry not signaled as deleted!!! uid=" + _m_Uid);
 
             if (isDeleted() && !entry.isPhantom()) {
-                removeEntryFromBlobStoreStorage_impl(cacheManager);
+                removeEntryFromBlobStoreStorage_impl(context,cacheManager);
                 if (cacheManager.isOffHeapOptimizationEnabled()) {
                     OffHeapIndexesValuesHandler.delete(this);
                 }
             } else {
                 if (isPhantom()) {
-                    removeFromInternalCache(cacheManager, _loadedBlobStoreEntry);
+                    removeFromInternalCache(context,cacheManager, _loadedBlobStoreEntry);
                     if (cacheManager.isOffHeapOptimizationEnabled()) {
                         OffHeapIndexesValuesHandler.delete(this);
                     }
@@ -620,8 +639,8 @@ public class BlobStoreRefEntryCacheInfo
                 BlobStoreEntryLayout entryLayout = (BlobStoreEntryLayout) getEntryLayout_impl(cacheManager, entry);
 
                 if (!isWrittenToBlobStore()) {
-                    if (internalCacheControl == InternalCacheControl.INSERT_IF_NEEDED_BY_OP)
-                        insertOrTouchInternalCache(cacheManager, entry); //new entry- insert to cache
+                    if (!isFromInitialLoad)
+                        insertOrTouchInternalCache(context,cacheManager, entry,CacheOperationReason.ON_WRITE); //new entry- insert to cache
                     if (cacheManager.isOffHeapOptimizationEnabled() && !isPhantom()) {
                         setOffHeapAddress(OffHeapIndexesValuesHandler.allocate(entryLayout.getIndexValuesBytes(cacheManager), getOffHeapAddress()));
                     }

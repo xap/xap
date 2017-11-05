@@ -44,7 +44,7 @@ public class BlobStoreErrorsHandler {
                 return;  //currently we handle only ops in backup
             //call the entry in order to revert write op, reset dirty & pinned, remove from internal cache
             eh.setDeleted(true);
-            eci.resetNonTransactionalFailedBlobstoreOpStatus(cm);
+            eci.resetNonTransactionalFailedBlobstoreOpStatus(context,cm);
             cm.removeEntryFromCache(eh, false /*initiatedByEvictionStrategy*/, true /*locked*/, eci,
                     CacheManager.RecentDeleteCodes.NONE);
 
@@ -58,7 +58,7 @@ public class BlobStoreErrorsHandler {
             if (!revertOpOnBlobStoreError(cm))
                 return;  //currently we handle only ops in backup
             //call the entry in order to revert remove op, reset dirty & pinned, remove from internal cache
-            eci.resetNonTransactionalFailedBlobstoreOpStatus(cm);
+            eci.resetNonTransactionalFailedBlobstoreOpStatus(context,cm);
             eh.setDeleted(false);
         } catch (Throwable ex) {
             cm.getLogger().severe("error while reverting failed blob store op in backup,space " + cm.getEngine().getFullSpaceName() + " uid=" + eci.getUID() + " error=" + ex);
@@ -77,7 +77,7 @@ public class BlobStoreErrorsHandler {
             if (!revertOpOnBlobStoreError(cm))
                 return;  //currently we handle only ops in backup
             //call the entry in order to reset dirty
-            eci.resetNonTransactionalFailedBlobstoreOpStatus(cm);
+            eci.resetNonTransactionalFailedBlobstoreOpStatus(context,cm);
 
             //remove index references
             TypeData typeData = cm.getTypeData(eh.getServerTypeDesc());

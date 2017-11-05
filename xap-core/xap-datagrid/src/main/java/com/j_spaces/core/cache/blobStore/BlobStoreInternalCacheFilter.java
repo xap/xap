@@ -25,6 +25,7 @@ import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.server.storage.TemplateEntryData;
 import com.gigaspaces.internal.server.storage.TemplateHolderFactory;
 import com.gigaspaces.internal.transport.ITemplatePacket;
+import com.gigaspaces.metrics.LongCounter;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.client.EntrySnapshot;
 import com.j_spaces.core.client.SQLQuery;
@@ -37,19 +38,20 @@ import java.util.logging.Logger;
  * @author kobi on 20/12/16.
  * @since 12.1
  */
-public class BlobStoreInternalCacheInitialLoadFilter {
+public class BlobStoreInternalCacheFilter {
     private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
 
     final private SpaceEngine _spaceEngine;
     final private List<SQLQuery> _sqlQueries;
     final private List<ITemplateHolder> _templateHolders;
     private boolean _isBlobStoreInternalCacheFull = false;
-    private long _insertedToBlobStoreInternalCache;
+    private final LongCounter _insertedToBlobStoreInternalCache = new LongCounter();
     private boolean printLog = true;
     private final ThreadLocal<String> _relevantUid;
+    private final LongCounter _coldDataMiss = new LongCounter();
 
 
-    public BlobStoreInternalCacheInitialLoadFilter(SpaceEngine spaceEngine, List<SQLQuery> sqlQueries) throws Exception {
+    public BlobStoreInternalCacheFilter(SpaceEngine spaceEngine, List<SQLQuery> sqlQueries) throws Exception {
         this._spaceEngine = spaceEngine;
         this._sqlQueries = sqlQueries;
         _templateHolders = new ArrayList<ITemplateHolder>(_sqlQueries.size());
@@ -95,10 +97,17 @@ public class BlobStoreInternalCacheInitialLoadFilter {
         if(!eh.getUID().equals(_relevantUid.get()))
             return false;
 
+        if(isEntryHotData(eh,context)){
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean isEntryHotData(IEntryHolder eh, Context context){
         for(ITemplateHolder templateHolder : _templateHolders){
             if(((TemplateEntryData)templateHolder.getEntryData()).isAssignableFrom(eh.getServerTypeDesc()))
                 if(_spaceEngine.getTemplateScanner().match(context, eh, templateHolder)) {
-                    _insertedToBlobStoreInternalCache++;
                     return true;
                 }
         }
@@ -109,8 +118,12 @@ public class BlobStoreInternalCacheInitialLoadFilter {
         return _sqlQueries;
     }
 
-    public long getInsertedToBlobStoreInternalCache() {
-        return _insertedToBlobStoreInternalCache;
+    public long getInsertedToBlobStoreInternalCacheOnInitialLoad() {
+        return _insertedToBlobStoreInternalCache.getCount();
+    }
+
+    public void incrementInsertedToBlobStoreInternalCacheOnInitialLoad() {
+        _insertedToBlobStoreInternalCache.inc();
     }
 
     public boolean isRelevantType(String uid, String entryTypeName){
@@ -128,5 +141,11 @@ public class BlobStoreInternalCacheInitialLoadFilter {
         return false;
     }
 
+    public LongCounter getColdDataMissCount(){
+        return _coldDataMiss;
+    }
 
+    public void incrementColdDataMisses(){
+        _coldDataMiss.inc();
+    }
 }
