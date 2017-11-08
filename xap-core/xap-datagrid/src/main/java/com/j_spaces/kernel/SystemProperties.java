@@ -322,7 +322,7 @@ public class SystemProperties extends CommonSystemProperties {
     /**
      * https://insightedge.atlassian.net/browse/GS-12365
      */
-    public final static String LRMI_ASYNC_THROW_RESOURCE_NOT_AVAILABLE = "com.gs.transport_protocol.lrmi.throw-resource-not-available";
+    public final static String LRMI_ASYNC_THROW_RESOURCE_NOT_AVAILABLE = "com.gs.transport_protocol.lrmi.fail-async-on-max-connection-exceeded";
     public final static boolean LRMI_ASYNC_THROW_RESOURCE_NOT_AVAILABLE_DEFAULT = false;
 
     /**
