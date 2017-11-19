@@ -369,7 +369,6 @@ public class CacheManager extends AbstractCacheManager
         } else {
             _offHeapOptimizationEnabled = configReader.getBooleanSpaceProperty(CACHE_MANAGER_BLOBSTORE_OFFHEAP_OPTIMIZATION_PROP,"false");
         }
-        _logger.info("space-config.engine.blobstore_offheap_optimization_enabled="+_offHeapOptimizationEnabled);
 
         if (isBlobStoreCachePolicy()) {
             IStorageAdapter curSa;
