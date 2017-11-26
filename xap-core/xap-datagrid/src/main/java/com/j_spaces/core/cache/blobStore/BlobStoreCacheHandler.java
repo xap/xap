@@ -45,6 +45,7 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
 
     private final IBlobStoreCacheImpl _blobStoreCacheImpl;
     private final BlobStoreInternalCacheFilter _blobStoreInternalCacheFilter;
+    private final boolean _isBlobStoreInternalCacheFilterEnabled;
 
 
     public BlobStoreCacheHandler(Properties properties, BlobStoreInternalCacheFilter blobStoreInternalCacheFilter) {
@@ -54,13 +55,14 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
         }
         _blobStoreCacheImpl = new BlobStoreCacheImpl(BLOB_STORE_INTERNAL_CACHE_CAPACITY);
         _blobStoreInternalCacheFilter = blobStoreInternalCacheFilter;
+        _isBlobStoreInternalCacheFilterEnabled = _blobStoreInternalCacheFilter != null;
 
         _blobstoreMetricRegistrar = (MetricRegistrator) properties.get("blobstoreMetricRegistrar");
         registerOperations();
     }
 
     private boolean evaluateAndReturnIfEntryMatchesFilter(Context context, BlobStoreEntryHolder entry){
-        boolean val = _blobStoreInternalCacheFilter==null ? true : _blobStoreInternalCacheFilter.isEntryHotData(entry,context);
+        boolean val = _isBlobStoreInternalCacheFilterEnabled ? _blobStoreInternalCacheFilter.isEntryHotData(entry,context) : true;
         entry.getBlobStoreResidentPart().setMatchCacheFilter(this,val);
         return val;
     }
@@ -94,7 +96,7 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
                     _blobStoreCacheImpl.storeOrTouch(entry);
                 }
                 else{
-                    _blobStoreInternalCacheFilter.incrementColdDataMisses();//reading a cold entry
+                    if(_isBlobStoreInternalCacheFilterEnabled) _blobStoreInternalCacheFilter.incrementColdDataMisses();//reading a cold entry
                 }
                 break;
 
@@ -106,7 +108,7 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
             case ON_UPDATE:
                 boolean curMatch = isEntryHotData(entry);
                 if(!curMatch){
-                    _blobStoreInternalCacheFilter.incrementColdDataMisses();//updating a cold entry
+                    if(_isBlobStoreInternalCacheFilterEnabled) _blobStoreInternalCacheFilter.incrementColdDataMisses();//updating a cold entry
                 }
                 if (evaluateAndReturnIfEntryMatchesFilter(context, entry)) {
                     _blobStoreCacheImpl.storeOrTouch(entry);
@@ -124,7 +126,7 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
             case ON_INITIAL_LOAD:
                 if (evaluateAndReturnIfEntryMatchesFilter(context, entry)) {
                     if (!isFull()) {
-                        _blobStoreInternalCacheFilter.incrementInsertedToBlobStoreInternalCacheOnInitialLoad();
+                        if(_isBlobStoreInternalCacheFilterEnabled) _blobStoreInternalCacheFilter.incrementInsertedToBlobStoreInternalCacheOnInitialLoad();
                         _blobStoreCacheImpl.storeOrTouch(entry);
                     }
                 }
@@ -135,7 +137,7 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
                     _blobStoreCacheImpl.remove(entry);
                 }
                 else {
-                    _blobStoreInternalCacheFilter.incrementColdDataMisses();//taking a cold entry
+                    if(_isBlobStoreInternalCacheFilterEnabled) _blobStoreInternalCacheFilter.incrementColdDataMisses();//taking a cold entry
                 }
                 break;
 
@@ -151,7 +153,7 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
     private void registerOperations() {
         _blobstoreMetricRegistrar.register("full-cache-miss", _blobStoreCacheImpl.getMissCount());
 
-        if(_blobStoreInternalCacheFilter!=null) {
+        if(_isBlobStoreInternalCacheFilterEnabled) {
             _blobstoreMetricRegistrar.register("blobstore-filter-miss", _blobStoreInternalCacheFilter.getColdDataMissCount());
         }
 
