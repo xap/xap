@@ -190,16 +190,17 @@ public class BlobStoreRefEntryCacheInfo
     public void flushedFromBulk(Context context,CacheManager cacheManager, Object blobStorePos, boolean removed, boolean onTxnEnd) {
         synchronized (getStateLockObject()) {
             setDirty_impl(false, false /*set_indexses*/, cacheManager);
-            if (removed || isDeleted()) {
+            if (removed || isDeleted() || isPhantom()) {
                 removeFromInternalCache(context,cacheManager, _loadedBlobStoreEntry);
                 if (cacheManager.isOffHeapOptimizationEnabled()) {
                     OffHeapIndexesValuesHandler.delete(this);
                 }
-                _blobStorePosition = null;
+                if (!isPhantom()) //when entry is phantom its deleted physicyally by a confirmation background thread
+                    _blobStorePosition = null;
             } else {
                 if (!isWrittenToBlobStore()) {
                     insertOrTouchInternalCache(context, cacheManager, _loadedBlobStoreEntry, CacheOperationReason.ON_WRITE); //new entry- insert to cache if applicable
-                    if (cacheManager.isOffHeapOptimizationEnabled() && !isPhantom()) {
+                    if (cacheManager.isOffHeapOptimizationEnabled()) {
                         try {
                             setOffHeapAddress(OffHeapIndexesValuesHandler.allocate(((BlobStoreEntryLayout) getEntryLayout(cacheManager)).getIndexValuesBytes(cacheManager), getOffHeapAddress()));
                         } catch (IOException e) {
@@ -212,7 +213,7 @@ public class BlobStoreRefEntryCacheInfo
                     {
                         insertOrTouchInternalCache(context, cacheManager, _loadedBlobStoreEntry, CacheOperationReason.ON_UPDATE); //updated entry- insert to cache if applicable
                     }
-                    if (cacheManager.isOffHeapOptimizationEnabled() && !isPhantom()) {
+                    if (cacheManager.isOffHeapOptimizationEnabled()) {
                         try {
                             OffHeapIndexesValuesHandler.update(this, ((BlobStoreEntryLayout) getEntryLayout(cacheManager)).getIndexValuesBytes(cacheManager));
                         } catch (IOException e) {
