@@ -20,6 +20,8 @@ public interface IBlobStoreCacheHandler {
 
     BlobStoreInternalCacheFilter getBlobStoreInternalCacheFilter();
 
+    void setBlobStoreInternalCacheFilter(BlobStoreInternalCacheFilter blobStoreInternalCacheFilter);
+
     long getMissCount();
 
     long getHitCount();

@@ -583,6 +583,7 @@ public class CacheManager extends AbstractCacheManager
 
             properties.put("blobstoreMetricRegistrar", blobstoreMetricRegistrar);
 
+            _blobStoreInternalCache = new BlobStoreCacheHandler(properties);
 
             BlobStoreConfig blobStoreConfig = new BlobStoreConfig(_engine.getFullSpaceName(),
                     _engine.getNumberOfPartitions(),
@@ -599,7 +600,8 @@ public class CacheManager extends AbstractCacheManager
                     throw new RuntimeException("Failed to create blobstore cache filter", e);
                 }
             }
-            _blobStoreInternalCache = new BlobStoreCacheHandler(properties, blobStoreInternalCacheFilter);
+
+            _blobStoreInternalCache.setBlobStoreInternalCacheFilter(blobStoreInternalCacheFilter);
 
             Properties blobstoreProperties = new Properties();
             blobstoreProperties.setProperty(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP, properties.getProperty(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP));

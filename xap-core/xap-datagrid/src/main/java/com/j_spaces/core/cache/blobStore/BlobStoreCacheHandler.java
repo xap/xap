@@ -44,18 +44,16 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
     private final MetricRegistrator _blobstoreMetricRegistrar;
 
     private final IBlobStoreCacheImpl _blobStoreCacheImpl;
-    private final BlobStoreInternalCacheFilter _blobStoreInternalCacheFilter;
-    private final boolean _isBlobStoreInternalCacheFilterEnabled;
+    private BlobStoreInternalCacheFilter _blobStoreInternalCacheFilter;
+    private volatile boolean _isBlobStoreInternalCacheFilterEnabled = false;
 
 
-    public BlobStoreCacheHandler(Properties properties, BlobStoreInternalCacheFilter blobStoreInternalCacheFilter) {
+    public BlobStoreCacheHandler(Properties properties) {
         BLOB_STORE_INTERNAL_CACHE_CAPACITY = Integer.parseInt(properties.getProperty(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP, CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_DELAULT));
         if (_logger.isLoggable(Level.INFO)) {
             _logger.info("BlobStore space data internal cache size=" + BLOB_STORE_INTERNAL_CACHE_CAPACITY);
         }
         _blobStoreCacheImpl = new BlobStoreCacheImpl(BLOB_STORE_INTERNAL_CACHE_CAPACITY);
-        _blobStoreInternalCacheFilter = blobStoreInternalCacheFilter;
-        _isBlobStoreInternalCacheFilterEnabled = _blobStoreInternalCacheFilter != null;
 
         _blobstoreMetricRegistrar = (MetricRegistrator) properties.get("blobstoreMetricRegistrar");
         registerOperations();
@@ -179,6 +177,12 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
     @Override
     public BlobStoreInternalCacheFilter getBlobStoreInternalCacheFilter() {
         return _blobStoreInternalCacheFilter;
+    }
+
+    @Override
+    public void setBlobStoreInternalCacheFilter(BlobStoreInternalCacheFilter blobStoreInternalCacheFilter) {
+        _blobStoreInternalCacheFilter = blobStoreInternalCacheFilter;
+        _isBlobStoreInternalCacheFilterEnabled = blobStoreInternalCacheFilter != null;
     }
 
     @Override
