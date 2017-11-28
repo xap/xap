@@ -129,6 +129,10 @@
         </dependency>
         <dependency>
             <groupId>org.gigaspaces</groupId>
+            <artifactId>xap-cli</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.gigaspaces</groupId>
             <artifactId>xap-cassandra</artifactId>
         </dependency>
         <dependency>
@@ -241,6 +245,7 @@
                                 <descriptor>src/main/assembly/xap-core.xml</descriptor>
                                 <descriptor>src/main/assembly/xap-examples.xml</descriptor>
                                 <descriptor>src/main/assembly/xap-extensions.xml</descriptor>
+                                <descriptor>src/main/assembly/xap-tools.xml</descriptor>
                                 <descriptor>src/main/assembly/xap-openspaces.xml</descriptor>
                                 <descriptor>src/main/assembly/resources.xml</descriptor>
                             </descriptors>
