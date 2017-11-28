@@ -25,11 +25,13 @@ import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.dump.InternalDump;
 import com.gigaspaces.internal.dump.InternalDumpProcessor;
 import com.gigaspaces.internal.dump.InternalDumpProcessorFailedException;
+import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.metrics.BeanMetricManager;
 import com.gigaspaces.metrics.LongCounter;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.admin.IInternalRemoteJSpaceAdmin;
 
+import com.j_spaces.core.client.EntrySnapshot;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openspaces.admin.quiesce.QuiesceStateChangedListener;
@@ -115,6 +117,8 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
     private PlatformTransactionManager transactionManager;
     private DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
     protected boolean disableTransactionValidation = false;
+
+    protected  ThreadLocal<EntrySnapshot> snapshotTemplateThreadLocal = new ThreadLocal<EntrySnapshot>();
 
     /**
      * Sets the GigaSpace instance to be used for space event listening operations.
@@ -775,7 +779,20 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         if (dynamicTemplate != null) {
             return dynamicTemplate.getDynamicTemplate();
         }
+        // add thread
+if(isPerformSnapshot()){
+    EntrySnapshot entrySnapshotTemplate  =  snapshotTemplateThreadLocal.get();
+    if(entrySnapshotTemplate == null && isPerformSnapshot()){
+        entrySnapshotTemplate = ((EntrySnapshot)receiveTemplate);
 
+        snapshotTemplateThreadLocal.set(entrySnapshotTemplate);
+        receiveTemplate = entrySnapshotTemplate;
+    }
+    else if(entrySnapshotTemplate != null && isPerformSnapshot()){
+        receiveTemplate = snapshotTemplateThreadLocal.get();
+    }
+
+}
         return receiveTemplate;
     }
 
