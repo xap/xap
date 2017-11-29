@@ -297,8 +297,9 @@ public class Reader {
         if (0 < sizeLimit && sizeLimit < dataLength) {
             throw new IOException("Handshake failed expecting message of up to " + sizeLimit + " bytes, actual size is: " + dataLength + " bytes.");
         }
-        if (dataLength > SUSPICIOUS_THRESHOLD)
-            _logger.warning("About to allocate " + dataLength + " bytes ...");
+        if (dataLength > SUSPICIOUS_THRESHOLD) {
+            _logger.warning("About to allocate " + dataLength + " bytes - from socket channel: " + _socketChannel);
+        }
 
         /* allocate the buffer on demand, otherwise reuse the buffer */
         ByteBuffer buffer;
