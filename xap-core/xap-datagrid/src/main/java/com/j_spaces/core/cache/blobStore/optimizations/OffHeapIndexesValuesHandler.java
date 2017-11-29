@@ -35,6 +35,7 @@ public class OffHeapIndexesValuesHandler {
 
     private volatile static Unsafe _unsafe;
     private static Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private static int CONSTANT_PREFIX_SIZE = 4;
 
     private static Unsafe getUnsafe() {
         if (_unsafe == null) {
@@ -57,7 +58,7 @@ public class OffHeapIndexesValuesHandler {
             throw new IllegalStateException("trying to allocate when already allocated in off heap");
         }
         try {
-            newAddress = getUnsafe().allocateMemory(4 + buf.length);
+            newAddress = getUnsafe().allocateMemory(CONSTANT_PREFIX_SIZE + buf.length);
         } catch (Error e) {
             logger.log(Level.SEVERE, "failed to allocate offheap space", e);
             throw e;
@@ -70,7 +71,7 @@ public class OffHeapIndexesValuesHandler {
             throw new RuntimeException("failed to allocate offheap space");
         }
         getUnsafe().putInt(newAddress, buf.length);
-        writeBytes(newAddress + 4, buf);
+        writeBytes(newAddress + CONSTANT_PREFIX_SIZE, buf);
         return newAddress;
 
     }
@@ -80,7 +81,7 @@ public class OffHeapIndexesValuesHandler {
             throw new IllegalStateException("trying to read from off heap but no address found");
         }
         int numOfBytes = getUnsafe().getInt(address);
-        byte[] bytes = readBytes(address + 4, numOfBytes);
+        byte[] bytes = readBytes(address + CONSTANT_PREFIX_SIZE, numOfBytes);
         return bytes;
     }
 
@@ -95,7 +96,7 @@ public class OffHeapIndexesValuesHandler {
         }
         else {
             getUnsafe().putInt(info.getOffHeapAddress(), buf.length);
-            writeBytes(info.getOffHeapAddress() + 4, buf);
+            writeBytes(info.getOffHeapAddress() + CONSTANT_PREFIX_SIZE, buf);
         }
     }
 
