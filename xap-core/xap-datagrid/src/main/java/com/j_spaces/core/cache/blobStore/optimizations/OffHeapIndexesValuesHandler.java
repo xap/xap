@@ -57,7 +57,7 @@ public class OffHeapIndexesValuesHandler {
             throw new IllegalStateException("trying to allocate when already allocated in off heap");
         }
         try {
-            newAddress = getUnsafe().allocateMemory(2 + buf.length);
+            newAddress = getUnsafe().allocateMemory(4 + buf.length);
         } catch (Error e) {
             logger.log(Level.SEVERE, "failed to allocate offheap space", e);
             throw e;
@@ -69,8 +69,8 @@ public class OffHeapIndexesValuesHandler {
             logger.log(Level.SEVERE, "failed to allocate offheap space");
             throw new RuntimeException("failed to allocate offheap space");
         }
-        getUnsafe().putShort(newAddress, (short) buf.length);
-        writeBytes(newAddress + 2, buf);
+        getUnsafe().putInt(newAddress, buf.length);
+        writeBytes(newAddress + 4, buf);
         return newAddress;
 
     }
@@ -79,8 +79,8 @@ public class OffHeapIndexesValuesHandler {
         if (address == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             throw new IllegalStateException("trying to read from off heap but no address found");
         }
-        short numOfBytes = getUnsafe().getShort(address);
-        byte[] bytes = readBytes(address + 2, numOfBytes);
+        int numOfBytes = getUnsafe().getInt(address);
+        byte[] bytes = readBytes(address + 4, numOfBytes);
         return bytes;
     }
 
@@ -88,14 +88,14 @@ public class OffHeapIndexesValuesHandler {
         if (info.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             throw new IllegalStateException("trying to update when no off heap memory is allocated");
         }
-        short oldEntryLength = getUnsafe().getShort(info.getOffHeapAddress());
+        int oldEntryLength = getUnsafe().getInt(info.getOffHeapAddress());
         if (oldEntryLength < buf.length) {
             delete(info);
             info.setOffHeapAddress(allocate(buf, info.getOffHeapAddress()));
         }
         else {
-            getUnsafe().putShort(info.getOffHeapAddress(), (short) buf.length);
-            writeBytes(info.getOffHeapAddress() + 2, buf);
+            getUnsafe().putInt(info.getOffHeapAddress(), buf.length);
+            writeBytes(info.getOffHeapAddress() + 4, buf);
         }
     }
 
@@ -118,7 +118,7 @@ public class OffHeapIndexesValuesHandler {
         }
     }
 
-    private static byte[] readBytes(long address, short numOfBytes) {
+    private static byte[] readBytes(long address, int numOfBytes) {
         byte[] res = new byte[numOfBytes];
         for (int i = 0; i < numOfBytes; i++) {
             res[i] = getUnsafe().getByte(address);
