@@ -2676,7 +2676,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 }
                 items = lookupServiceCache.get(tmpl);
                 if (items == null) {
-                    items = new ConcurrentHashMap<ServiceID, Item>();
+                    items = new SizeConcurrentHashMap<ServiceID, Item>(1);
                     lookupServiceCache.put(tmpl, items);
                 }
                 items.put(item.serviceID, item);
@@ -4343,16 +4343,19 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         if (delete) {
             if (items != null) {
                 items.remove(item.serviceID);
+                if (items.isEmpty()) {
+                    lookupServiceCache.remove(tmpl);
+                }
                 if (loggerCache.isLoggable(Level.FINEST)) {
                     loggerCache.finest("Removing cache template (explicitly): " + tmpl
-                            + "\n   ---- > " + item.serviceID + " " + item.serviceType);
+                            + "\n   ---- > id: " + item.serviceID + " , type: " + item.serviceType + " , items left: " + items.size());
                 }
             }
         } else {
             // here, we are under a writeLock, so no need to worry about concurrency in the
             // creation of the concurrent hash map
             if (items == null) {
-                items = new SizeConcurrentHashMap<ServiceID, Item>();
+                items = new SizeConcurrentHashMap<ServiceID, Item>(1);
                 lookupServiceCache.put(tmpl, items);
             }
             items.put(item.serviceID, item);
