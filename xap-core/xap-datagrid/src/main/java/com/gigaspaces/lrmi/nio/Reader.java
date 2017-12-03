@@ -62,7 +62,7 @@ public class Reader {
     private static final Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
     private static final Logger offendingMessageLogger = Logger.getLogger(Constants.LOGGER_LRMI + ".offending");
     private static final Logger _slowerConsumerLogger = Logger.getLogger(Constants.LOGGER_LRMI_SLOW_COMSUMER);
-    public static final long SUSPICIOUS_THRESHOLD = Long.valueOf(System.getProperty("com.gs.lrmi.suspicious-threshold", "10000000"));
+    public static final long SUSPICIOUS_THRESHOLD = Long.valueOf(System.getProperty("com.gs.lrmi.suspicious-threshold", "20000000"));
     private static final LongAdder receivedTraffic = new LongAdder();
 
     private static final byte[] DUMMY_BUFFER = new byte[0];
