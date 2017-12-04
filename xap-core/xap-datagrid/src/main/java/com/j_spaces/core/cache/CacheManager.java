@@ -592,6 +592,10 @@ public class CacheManager extends AbstractCacheManager
                     blobstoreMetricRegistrar);
             _blobStoreStorageHandler.initialize(blobStoreConfig);
 
+            if(_offHeapOptimizationEnabled){
+                blobstoreMetricRegistrar.register("offheap_used-bytes", _blobStoreInternalCache.getOffHeapByteCounter());
+            }
+
             List<SQLQuery> blobStoreCacheFilterQueries = (List<SQLQuery>) properties.get(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_FILTER_QUERIES_PROP);
             if(blobStoreCacheFilterQueries != null){
                 try {
