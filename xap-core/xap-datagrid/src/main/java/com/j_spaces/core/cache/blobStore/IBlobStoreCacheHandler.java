@@ -16,7 +16,7 @@ public interface IBlobStoreCacheHandler {
 
     boolean isFull();
 
-    int size();
+    long getCacheSize();
 
     BlobStoreInternalCacheFilter getBlobStoreInternalCacheFilter();
 

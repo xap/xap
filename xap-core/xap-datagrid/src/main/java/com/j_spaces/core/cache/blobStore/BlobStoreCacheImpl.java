@@ -18,10 +18,8 @@ package com.j_spaces.core.cache.blobStore;
 
 //
 
-import com.gigaspaces.internal.utils.collections.ConcurrentHashSet;
 import com.gigaspaces.internal.utils.concurrent.UncheckedAtomicIntegerFieldUpdater;
 import com.gigaspaces.metrics.LongCounter;
-import com.gigaspaces.metrics.MetricRegistrator;
 import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.IObjectInfo;
 import com.j_spaces.kernel.IStoredList;
@@ -30,17 +28,10 @@ import com.j_spaces.kernel.SystemProperties;
 import com.j_spaces.kernel.list.IScanListIterator;
 import com.j_spaces.kernel.list.ScanSingleListIterator;
 
-import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_DELAULT;
-import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP;
 
 
 /**
@@ -53,9 +44,8 @@ import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BLOBST
 public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
     private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
 
-    private final int OFF_HEAP_INTERNAL_CACHE_CAPACITY;
+    private final int BLOB_STORE_INTERNAL_CACHE_CAPACITY;
 
-    private final AtomicInteger _cacheSize;
 
     /**
      * <K:UID, V:PEntry>
@@ -65,21 +55,20 @@ public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
     private final IStoredList<CacheInfoHolder> _quasiLru;
 
 
+    private final LongCounter _cacheSize = new LongCounter();
     private final LongCounter _hit = new LongCounter();
     private final LongCounter _miss = new LongCounter();
 
 
     public BlobStoreCacheImpl(int capacity) {
-        OFF_HEAP_INTERNAL_CACHE_CAPACITY = capacity;
+        BLOB_STORE_INTERNAL_CACHE_CAPACITY = capacity;
         int numOfCHMSegents = Integer.getInteger(SystemProperties.CACHE_MANAGER_HASHMAP_SEGMENTS, SystemProperties.CACHE_MANAGER_HASHMAP_SEGMENTS_DEFAULT);
-        _entries = new ConcurrentHashMap<BlobStoreRefEntryCacheInfo, CacheInfoHolder>(OFF_HEAP_INTERNAL_CACHE_CAPACITY, 0.75f, numOfCHMSegents);
-        _cacheSize = new AtomicInteger();
+        _entries = new ConcurrentHashMap<BlobStoreRefEntryCacheInfo, CacheInfoHolder>(BLOB_STORE_INTERNAL_CACHE_CAPACITY, 0.75f, numOfCHMSegents);
         _quasiLru = StoredListFactory.createConcurrentList(true /*segmented*/, true /*supportFifoPerSegment*/);
     }
 
 
     public BlobStoreEntryHolder get(BlobStoreRefEntryCacheInfo entryCacheInfo) {
-        // TODO Auto-generated method stub
         if (isDisabledCache())
             return null;
         CacheInfoHolder cih = _entries.get(entryCacheInfo);
@@ -94,45 +83,57 @@ public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
     }
     @Override
     public void storeOrTouch(BlobStoreEntryHolder entry) {
-        // TODO Auto-generated method stub
         //store or touch if alread stored
-        if (isDisabledCache())
+        if (isDisabledCache()) {
             return;
+        }
 
         CacheInfoHolder cih = _entries.get(entry.getBlobStoreResidentPart());
-        if (cih == null)
+        if (cih == null) {
             insert(entry);
-        else
+        }
+        else {
             touch(cih, entry);
+        }
     }
 
     private void insert(BlobStoreEntryHolder entry) {
         CacheInfoHolder cih = new CacheInfoHolder(entry);
-        if (_entries.putIfAbsent(entry.getBlobStoreResidentPart(), cih) != null)
+        if (_entries.putIfAbsent(entry.getBlobStoreResidentPart(), cih) != null) {
             return;  //already came in
+        }
 
         cih.setPos(_quasiLru.add(cih));
         cih.resetPending();
-        if (cih.isDeleted() && remove(cih, false /*decrement size*/))
+        if (cih.isDeleted() && remove(cih, false /*decrement size*/)) {
             return;
+        }
 
         //increment size
-        if (_cacheSize.incrementAndGet() > OFF_HEAP_INTERNAL_CACHE_CAPACITY)
-            evict(cih);
+        _cacheSize.inc();
 
-        if (entry.isDeleted() && !cih.isDeleted()) //can happen in NBR
+        if (_cacheSize.getCount() > BLOB_STORE_INTERNAL_CACHE_CAPACITY) {
+            evict(cih);
+        }
+
+
+        if (entry.isDeleted() && !cih.isDeleted()) {  //can happen in NBR
             remove(entry);
+        }
+
         return;
     }
 
 
     private boolean remove(CacheInfoHolder cih, boolean decrementSize) {
 
-        if (!cih.setRemoved())
+        if (!cih.setRemoved()) {
             return false;
+        }
 
-        if (decrementSize)
-            _cacheSize.decrementAndGet();
+        if (decrementSize) {
+            _cacheSize.dec();
+        }
 
         _quasiLru.remove(cih.getPos());
         _entries.remove(cih.getEntry().getBlobStoreResidentPart(), cih);
@@ -144,11 +145,13 @@ public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
     private void touch(CacheInfoHolder cih, BlobStoreEntryHolder entry) {//touch this entry
         if (cih.getEntry().getBlobStoreVersion() < entry.getBlobStoreVersion())
             cih.setEntry(entry);
-        if (_cacheSize.get() <= OFF_HEAP_INTERNAL_CACHE_CAPACITY / 10)
+        if (_cacheSize.getCount() <= BLOB_STORE_INTERNAL_CACHE_CAPACITY / 10) {
             return; //no use, empty practically
+        }
 
-        if (!cih.setPending())
+        if (!cih.setPending()) {
             return;   //busy deleting or touching
+        }
 
         _quasiLru.remove(cih.getPos());
         cih.setPos(_quasiLru.add(cih));
@@ -158,9 +161,9 @@ public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
     }
     @Override
     public void remove(BlobStoreEntryHolder entry) {
-        // TODO Auto-generated method stub
-        if (isDisabledCache())
+        if (isDisabledCache()) {
             return;
+        }
 
         CacheInfoHolder cih = _entries.get(entry.getBlobStoreResidentPart());
 
@@ -183,24 +186,25 @@ public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
                     }
                 }
             } finally {
-                if (toScan != null)
+                if (toScan != null) {
                     toScan.releaseScan();
+                }
             }
         } catch (SAException ex) {
         } //cant happen- its only cache
     }
 
     private boolean isDisabledCache() {
-        return OFF_HEAP_INTERNAL_CACHE_CAPACITY == 0;
+        return BLOB_STORE_INTERNAL_CACHE_CAPACITY == 0;
     }
 
     @Override
     public boolean isFull(){
-        return _cacheSize.get() >= OFF_HEAP_INTERNAL_CACHE_CAPACITY;
+        return _cacheSize.getCount() >= BLOB_STORE_INTERNAL_CACHE_CAPACITY;
     }
     @Override
-    public int size() {
-        return _cacheSize.get();
+    public LongCounter getCacheSize() {
+        return _cacheSize;
     }
 
     @Override
@@ -244,8 +248,9 @@ public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
             while (true) {
                 int stat = _status;
                 int newStat = stat & _STATUS_UNPENDING;
-                if (cacheStatusUpdater.compareAndSet(this, stat, newStat))
+                if (cacheStatusUpdater.compareAndSet(this, stat, newStat)) {
                     return;
+                }
             }
         }
 
@@ -257,8 +262,9 @@ public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
             while (true) {
                 int stat = _status;
                 int newStat = stat | _STATUS_DELETED;
-                if (cacheStatusUpdater.compareAndSet(this, stat, newStat))
+                if (cacheStatusUpdater.compareAndSet(this, stat, newStat)) {
                     return;
+                }
             }
         }
 

@@ -18,8 +18,6 @@
 package com.j_spaces.core.cache.blobStore;
 
 import com.gigaspaces.metrics.LongCounter;
-import com.j_spaces.core.cache.CacheOperationReason;
-import com.j_spaces.core.cache.context.Context;
 
 /**
  * Off heap interface for internal cache
@@ -40,7 +38,7 @@ public interface IBlobStoreCacheImpl {
 
     boolean isFull();
 
-    int size();
+    LongCounter getCacheSize();
 
     LongCounter getHitCount();
 

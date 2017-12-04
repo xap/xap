@@ -44,10 +44,9 @@ public class BlobStoreInternalCacheFilter {
     final private SpaceEngine _spaceEngine;
     final private List<SQLQuery> _sqlQueries;
     final private List<ITemplateHolder> _templateHolders;
-    private boolean _isBlobStoreInternalCacheFull = false;
+
     private final LongCounter _insertedToBlobStoreInternalCache = new LongCounter();
-    private boolean printLog = true;
-    private final ThreadLocal<String> _relevantUid;
+
     private final LongCounter _coldDataMiss = new LongCounter();
 
 
@@ -58,7 +57,6 @@ public class BlobStoreInternalCacheFilter {
         for(SQLQuery sqlQuery : _sqlQueries){
             _templateHolders.add(convertSQLQueryToTemplateHolder(sqlQuery));
         }
-        _relevantUid = new ThreadLocal<String>();
     }
 
     private ITemplateHolder convertSQLQueryToTemplateHolder(SQLQuery sqlQuery) throws Exception {
@@ -84,26 +82,6 @@ public class BlobStoreInternalCacheFilter {
         }
     }
 
-    public boolean isMatch(IEntryHolder eh, Context context) {
-        if(_isBlobStoreInternalCacheFull || _spaceEngine.getCacheManager().getBlobStoreInternalCache().isFull()){
-            if(printLog) {
-                _logger.info("Blobstore cache is full with size [ " + _spaceEngine.getCacheManager().getBlobStoreInternalCache().size() +" ]");
-                printLog = false;
-            }
-            _isBlobStoreInternalCacheFull = true;
-            return false;
-        }
-
-        if(!eh.getUID().equals(_relevantUid.get()))
-            return false;
-
-        if(isEntryHotData(eh,context)){
-            return true;
-        }
-
-        return false;
-    }
-
     public boolean isEntryHotData(IEntryHolder eh, Context context){
         for(ITemplateHolder templateHolder : _templateHolders){
             if(((TemplateEntryData)templateHolder.getEntryData()).isAssignableFrom(eh.getServerTypeDesc()))
@@ -126,15 +104,13 @@ public class BlobStoreInternalCacheFilter {
         _insertedToBlobStoreInternalCache.inc();
     }
 
-    public boolean isRelevantType(String uid, String entryTypeName){
+    public boolean isRelevantType(String entryTypeName){
         final IServerTypeDesc serverTypeDesc = _spaceEngine.getTypeManager().getServerTypeDesc(entryTypeName);
         if(serverTypeDesc == null) {
-            _relevantUid.set(uid);
             return true;
         }
         for(ITemplateHolder templateHolder : _templateHolders){
             if(((TemplateEntryData)templateHolder.getEntryData()).isAssignableFrom(serverTypeDesc)){
-                _relevantUid.set(uid);
                 return true;
             }
         }

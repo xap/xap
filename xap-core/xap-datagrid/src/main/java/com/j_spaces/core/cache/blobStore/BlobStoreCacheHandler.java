@@ -18,6 +18,7 @@
 package com.j_spaces.core.cache.blobStore;
 
 import com.gigaspaces.metrics.Gauge;
+import com.gigaspaces.metrics.MetricConstants;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.j_spaces.core.cache.CacheOperationReason;
 import com.j_spaces.core.cache.context.Context;
@@ -46,6 +47,7 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
     private final IBlobStoreCacheImpl _blobStoreCacheImpl;
     private BlobStoreInternalCacheFilter _blobStoreInternalCacheFilter;
     private volatile boolean _isBlobStoreInternalCacheFilterEnabled = false;
+    private boolean printLog = true;
 
 
     public BlobStoreCacheHandler(Properties properties) {
@@ -124,7 +126,9 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
             case ON_INITIAL_LOAD:
                 if (evaluateAndReturnIfEntryMatchesFilter(context, entry)) {
                     if (!isFull()) {
-                        if(_isBlobStoreInternalCacheFilterEnabled) _blobStoreInternalCacheFilter.incrementInsertedToBlobStoreInternalCacheOnInitialLoad();
+                        if(_isBlobStoreInternalCacheFilterEnabled){
+                            _blobStoreInternalCacheFilter.incrementInsertedToBlobStoreInternalCacheOnInitialLoad();
+                        }
                         _blobStoreCacheImpl.storeOrTouch(entry);
                     }
                 }
@@ -149,11 +153,7 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
     }
 
     private void registerOperations() {
-        _blobstoreMetricRegistrar.register("full-cache-miss", _blobStoreCacheImpl.getMissCount());
-
-        if(_isBlobStoreInternalCacheFilterEnabled) {
-            _blobstoreMetricRegistrar.register("blobstore-filter-miss", _blobStoreInternalCacheFilter.getColdDataMissCount());
-        }
+        _blobstoreMetricRegistrar.register(MetricConstants.CACHE_SIZE, _blobStoreCacheImpl.getCacheSize());
 
         _blobstoreMetricRegistrar.register("cache-miss", new Gauge<Long>() {
             @Override
@@ -165,13 +165,21 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
         _blobstoreMetricRegistrar.register("cache-hit", _blobStoreCacheImpl.getHitCount());
     }
 
+    @Override
     public boolean isFull(){
-        return _blobStoreCacheImpl.isFull();
+        boolean isFull = _blobStoreCacheImpl.isFull();
+        if(isFull){
+            if(printLog) {
+                _logger.info("Blobstore cache is full with size [ " + getCacheSize() +" ]");
+                printLog = false;
+            }
+        }
+        return isFull;
     }
 
     @Override
-    public int size() {
-        return _blobStoreCacheImpl.size();
+    public long getCacheSize() {
+        return _blobStoreCacheImpl.getCacheSize().getCount();
     }
 
     @Override
@@ -183,11 +191,18 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
     public void setBlobStoreInternalCacheFilter(BlobStoreInternalCacheFilter blobStoreInternalCacheFilter) {
         _blobStoreInternalCacheFilter = blobStoreInternalCacheFilter;
         _isBlobStoreInternalCacheFilterEnabled = blobStoreInternalCacheFilter != null;
+        if(_isBlobStoreInternalCacheFilterEnabled){
+            registerHotDataMetric();
+        }
+    }
+
+    private void registerHotDataMetric() {
+        _blobstoreMetricRegistrar.register("hot-data-cache-miss", _blobStoreCacheImpl.getMissCount());
     }
 
     @Override
     public long getMissCount(){
-        long coldDataMisses = _blobStoreInternalCacheFilter==null ? 0 : _blobStoreInternalCacheFilter.getColdDataMissCount().getCount();
+        long coldDataMisses = _isBlobStoreInternalCacheFilterEnabled ? _blobStoreInternalCacheFilter.getColdDataMissCount().getCount() : 0;
 
         return _blobStoreCacheImpl.getMissCount().getCount()+coldDataMisses;
     }

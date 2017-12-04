@@ -25,14 +25,11 @@ import com.gigaspaces.metrics.ThroughputMetric;
 import com.gigaspaces.server.blobstore.*;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.cache.CacheManager;
-import com.j_spaces.core.cache.blobStore.optimizations.OffHeapIndexesValuesHandler;
 import com.j_spaces.kernel.threadpool.DynamicExecutors;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -61,7 +58,6 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     private final LongCounter get = new LongCounter();
     private final LongCounter replace = new LongCounter();
     private final LongCounter remove = new LongCounter();
-    private final LongCounter cache_size = new LongCounter();
 
     private final ThroughputMetric add_tp = new ThroughputMetric();
     private final ThroughputMetric get_tp = new ThroughputMetric();
@@ -111,7 +107,6 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
             get.inc();
             get_tp.increment();
         }
-        initCacheSize();
         return (data != null && _needSerialization) ? _serialization.deserialize(data, objectType, false, false) : data;
     }
 
@@ -123,7 +118,6 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
             get.inc();
             get_tp.increment();
         }
-        initCacheSize();
         return (data != null && _needSerialization) ? _serialization.deserialize(data, objectType, false, indexesPartOnly) : data;
 
     }
@@ -134,8 +128,6 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
             replace.inc();
             replace_tp.increment();
         }
-
-        initCacheSize();
 
         if (_needSerialization) {
             byte[] sdata = _serialization.serialize(data, objectType);
@@ -153,8 +145,6 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
             remove_tp.increment();
         }
 
-        initCacheSize();
-
         return (data != null && _needSerialization) ? _serialization.deserialize(data, objectType, false, false) : data;
     }
 
@@ -166,7 +156,6 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
             remove.inc();
             remove_tp.increment();
         }
-        initCacheSize();
     }
 
 
@@ -185,22 +174,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
                 result.setData(_serialization.deserialize(result.getData(), objectType, false, false));
         }
 
-        initCacheSize();
-
         return results;
-    }
-
-
-    private void initCacheSize() {
-        int size = _cacheManager.getBlobStoreInternalCache().size();
-        if (_logger.isLoggable(Level.FINER)) {
-            _logger.log(Level.FINER, "--initCacheSize, cur size:" + cache_size.getCount() + ", before incr. to " + size);
-        }
-        cache_size.reset();
-        cache_size.inc(size);
-        if (_logger.isLoggable(Level.FINER)) {
-            _logger.info("After incr. size:" + cache_size.getCount());
-        }
     }
 
     @Override
@@ -296,7 +270,6 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
         _registrator.register("get", get);
         _registrator.register("remove", remove);
         _registrator.register("replace", replace);
-        _registrator.register(MetricConstants.CACHE_SIZE, cache_size);
 
         _registrator.register("add-tp", add_tp);
         _registrator.register("get-tp", get_tp);

@@ -323,7 +323,7 @@ public class BlobStoreEntryLayout implements Externalizable {
         if (fromInitialLoad && onlyIndexedPart &&
                 cacheManager.getBlobStoreInternalCache().getBlobStoreInternalCacheFilter() != null) {
             onlyIndexedPart = !cacheManager.getBlobStoreInternalCache()
-                    .getBlobStoreInternalCacheFilter().isRelevantType(_m_Uid, _typeName);
+                    .getBlobStoreInternalCacheFilter().isRelevantType(_typeName);
         }
 
         if (onlyIndexedPart && fromInitialLoad) {
