@@ -106,9 +106,9 @@ public class OffHeapIndexesValuesHandler {
     public static void delete(IBlobStoreOffHeapInfo info, LongCounter offHeapByteCounter) {
         long valuesAddress = info.getOffHeapAddress();
         if (valuesAddress != BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
+            int numOfBytes = getUnsafe().getInt(valuesAddress);
             getUnsafe().freeMemory(valuesAddress);
             info.setOffHeapAddress(BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY);
-            int numOfBytes = getUnsafe().getInt(valuesAddress);
             offHeapByteCounter.dec(CONSTANT_PREFIX_SIZE + numOfBytes);
         }
     }
