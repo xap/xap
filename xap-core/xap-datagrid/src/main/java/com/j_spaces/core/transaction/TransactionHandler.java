@@ -491,6 +491,14 @@ public class TransactionHandler {
     throws TransactionException
     {
         XtnEntry xtnEntry = m_XtnTable.get(txn);
+
+        Logger logger = CacheManager.getCacheLogger();
+
+        if(logger.isLoggable(Level.INFO)){
+            logger.finer("DebugForTest TxnID=["+ txn.id +"], operationID={"   + opid.toString()+"}");
+        }
+
+
         if (xtnEntry == null || !xtnEntry.createdOnNonBackup() || opid == null ||! xtnEntry.getXtnData().isOperationID(opid))
             return ;
 
