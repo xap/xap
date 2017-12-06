@@ -58,7 +58,6 @@ import com.gigaspaces.metadata.SpaceMetadataException;
 import com.gigaspaces.metadata.index.CompoundIndex;
 import com.gigaspaces.metadata.index.ISpaceCompoundIndexSegment;
 import com.gigaspaces.metrics.Gauge;
-import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.metrics.MetricConstants;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.gigaspaces.query.extension.QueryExtensionProvider;
@@ -267,8 +266,6 @@ public class CacheManager extends AbstractCacheManager
     private final boolean _useBlobStorePrefetch;
     private final boolean _useBlobStoreReplicationBackupBulk;
     private final boolean _offHeapOptimizationEnabled;
-
-    private final LongCounter _offHeapByteCounter = new LongCounter();
 
     private final Map<String, QueryExtensionIndexManagerWrapper> queryExtensionManagers;
 
@@ -596,7 +593,7 @@ public class CacheManager extends AbstractCacheManager
             _blobStoreStorageHandler.initialize(blobStoreConfig);
 
             if(_offHeapOptimizationEnabled){
-                blobstoreMetricRegistrar.register("offheap_used-bytes", getOffHeapByteCounter());
+                blobstoreMetricRegistrar.register("offheap_used-bytes", _blobStoreInternalCache.getOffHeapByteCounter());
             }
 
             List<SQLQuery> blobStoreCacheFilterQueries = (List<SQLQuery>) properties.get(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_FILTER_QUERIES_PROP);
@@ -5562,10 +5559,6 @@ public class CacheManager extends AbstractCacheManager
             result += typeData == null ? 0 : typeData.getTotalNotifyTemplates();
         }
         return result;
-    }
-
-    public LongCounter getOffHeapByteCounter() {
-        return _offHeapByteCounter;
     }
 
     public SpaceRuntimeInfo getRuntimeInfo(String typeName) {
