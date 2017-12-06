@@ -31,8 +31,20 @@ import org.springframework.beans.factory.InitializingBean;
 public class StatelessHibernateSpaceDataSourceFactoryBean implements FactoryBean<StatelessHibernateSpaceDataSource>,
         InitializingBean, ClusterInfoAware {
 
-    private final StatelessHibernateSpaceDataSourceConfigurer dataSourceConfigurer = getConfigurer();
+    protected final StatelessHibernateSpaceDataSourceConfigurer dataSourceConfigurer;
 
+    public StatelessHibernateSpaceDataSourceFactoryBean() {
+        this.dataSourceConfigurer = getConfigurer();
+    }
+
+    protected StatelessHibernateSpaceDataSourceFactoryBean(StatelessHibernateSpaceDataSourceConfigurer configurer) {
+        this.dataSourceConfigurer = configurer;
+    }
+
+    /**
+     * @deprecated Since 12.3 - Use {@link #StatelessHibernateSpaceDataSourceFactoryBean(StatelessHibernateSpaceDataSourceConfigurer)} instead.
+     */
+    @Deprecated
     protected StatelessHibernateSpaceDataSourceConfigurer getConfigurer() {
         return new StatelessHibernateSpaceDataSourceConfigurer();
     }

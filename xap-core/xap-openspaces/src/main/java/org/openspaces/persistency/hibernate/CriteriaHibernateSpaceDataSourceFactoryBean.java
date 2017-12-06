@@ -31,8 +31,20 @@ import org.springframework.beans.factory.InitializingBean;
 public class CriteriaHibernateSpaceDataSourceFactoryBean implements FactoryBean<CriteriaHibernateSpaceDataSource>, InitializingBean, ClusterInfoAware {
 
 
-    private final CriteriaHibernateSpaceDataSourceConfigurer dataSourceConfigurer = getConfigurer();
+    protected final CriteriaHibernateSpaceDataSourceConfigurer dataSourceConfigurer;
 
+    public CriteriaHibernateSpaceDataSourceFactoryBean() {
+        this.dataSourceConfigurer = getConfigurer();
+    }
+
+    protected CriteriaHibernateSpaceDataSourceFactoryBean(CriteriaHibernateSpaceDataSourceConfigurer configurer) {
+        this.dataSourceConfigurer = configurer;
+    }
+
+    /**
+     * @deprecated Since 12.3 - Use {@link #CriteriaHibernateSpaceDataSourceFactoryBean(CriteriaHibernateSpaceDataSourceConfigurer)} instead.
+     */
+    @Deprecated
     protected CriteriaHibernateSpaceDataSourceConfigurer getConfigurer() {
         return new CriteriaHibernateSpaceDataSourceConfigurer();
     }

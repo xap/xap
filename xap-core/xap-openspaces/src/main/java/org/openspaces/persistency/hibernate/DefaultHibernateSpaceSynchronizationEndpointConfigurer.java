@@ -30,13 +30,13 @@ import java.util.Set;
  */
 public class DefaultHibernateSpaceSynchronizationEndpointConfigurer {
 
-    private SessionFactory sessionFactory;
+    protected SessionFactory sessionFactory;
 
-    private Set<String> managedEntries;
+    protected Set<String> managedEntries;
 
-    private boolean useMerge = false;
+    protected boolean useMerge = false;
 
-    private boolean deleteById = true;
+    protected boolean deleteById = true;
 
 
     /**

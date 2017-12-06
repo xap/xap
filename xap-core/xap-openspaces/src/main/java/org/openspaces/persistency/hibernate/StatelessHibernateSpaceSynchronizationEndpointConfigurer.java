@@ -30,9 +30,9 @@ import java.util.Set;
  */
 public class StatelessHibernateSpaceSynchronizationEndpointConfigurer {
 
-    private SessionFactory sessionFactory;
+    protected SessionFactory sessionFactory;
 
-    private Set<String> managedEntries;
+    protected Set<String> managedEntries;
 
     /**
      * Injects the Hibernate SessionFactory to be used with this synchronization endpoint

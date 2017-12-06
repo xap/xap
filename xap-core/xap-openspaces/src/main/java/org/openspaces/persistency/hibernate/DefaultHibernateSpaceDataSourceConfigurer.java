@@ -34,27 +34,27 @@ import java.util.Set;
 public class DefaultHibernateSpaceDataSourceConfigurer {
     protected final Log logger = LogFactory.getLog(getClass());
 
-    private SessionFactory sessionFactory;
+    protected SessionFactory sessionFactory;
 
-    private Set<String> managedEntries;
+    protected Set<String> managedEntries;
 
-    private String[] initialLoadEntries;
+    protected String[] initialLoadEntries;
 
-    private int fetchSize = 100;
+    protected int fetchSize = 100;
 
-    private int initialLoadThreadPoolSize = 10;
+    protected int initialLoadThreadPoolSize = 10;
 
-    private int initialLoadChunkSize = 100000;
+    protected int initialLoadChunkSize = 100000;
 
-    private boolean performOrderById = true;
+    protected boolean performOrderById = true;
 
-    private boolean useScrollableResultSet = true;
+    protected boolean useScrollableResultSet = true;
 
-    private boolean augmentInitialLoadEntries = true;
+    protected boolean augmentInitialLoadEntries = true;
 
-    private String[] initialLoadQueryScanningBasePackages;
+    protected String[] initialLoadQueryScanningBasePackages;
 
-    private ClusterInfo clusterInfo = null;
+    protected ClusterInfo clusterInfo = null;
 
     /**
      * Injects the Hibernate SessionFactory to be used with this data source.

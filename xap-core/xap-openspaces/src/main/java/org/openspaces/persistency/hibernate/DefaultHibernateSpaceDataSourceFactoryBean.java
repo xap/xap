@@ -31,8 +31,20 @@ import org.springframework.beans.factory.InitializingBean;
 public class DefaultHibernateSpaceDataSourceFactoryBean implements FactoryBean<DefaultHibernateSpaceDataSource>, InitializingBean, ClusterInfoAware {
 
 
-    private final DefaultHibernateSpaceDataSourceConfigurer dataSourceConfigurer = getConfigurer();
+    protected final DefaultHibernateSpaceDataSourceConfigurer dataSourceConfigurer;
 
+    public DefaultHibernateSpaceDataSourceFactoryBean() {
+        this.dataSourceConfigurer = getConfigurer();
+    }
+
+    protected DefaultHibernateSpaceDataSourceFactoryBean(DefaultHibernateSpaceDataSourceConfigurer configurer) {
+        this.dataSourceConfigurer = configurer;
+    }
+
+    /**
+     * @deprecated Since 12.3 - Use {@link #DefaultHibernateSpaceDataSourceFactoryBean(DefaultHibernateSpaceDataSourceConfigurer)} instead.
+     */
+    @Deprecated
     protected DefaultHibernateSpaceDataSourceConfigurer getConfigurer() {
         return new DefaultHibernateSpaceDataSourceConfigurer();
     }
