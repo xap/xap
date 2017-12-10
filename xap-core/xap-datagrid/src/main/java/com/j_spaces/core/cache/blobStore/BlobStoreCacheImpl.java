@@ -30,6 +30,7 @@ import com.j_spaces.kernel.list.ScanSingleListIterator;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.logging.Logger;
 
@@ -55,7 +56,8 @@ public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
     private final IStoredList<CacheInfoHolder> _quasiLru;
 
 
-    private final LongCounter _cacheSize = new LongCounter();
+    private final LongCounter _cacheCounter = new LongCounter();
+    private final AtomicInteger _cacheSize = new AtomicInteger();
     private final LongCounter _hit = new LongCounter();
     private final LongCounter _miss = new LongCounter();
 
@@ -110,13 +112,10 @@ public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
         }
 
         //increment size
-        _cacheSize.inc();
-
-        if (_cacheSize.getCount() > BLOB_STORE_INTERNAL_CACHE_CAPACITY) {
+        _cacheCounter.inc();
+        if (_cacheSize.incrementAndGet() > BLOB_STORE_INTERNAL_CACHE_CAPACITY) {
             evict(cih);
         }
-
-
         if (entry.isDeleted() && !cih.isDeleted()) {  //can happen in NBR
             remove(entry);
         }
@@ -132,7 +131,8 @@ public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
         }
 
         if (decrementSize) {
-            _cacheSize.dec();
+            _cacheCounter.dec();
+            _cacheSize.decrementAndGet();
         }
 
         _quasiLru.remove(cih.getPos());
@@ -145,7 +145,7 @@ public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
     private void touch(CacheInfoHolder cih, BlobStoreEntryHolder entry) {//touch this entry
         if (cih.getEntry().getBlobStoreVersion() < entry.getBlobStoreVersion())
             cih.setEntry(entry);
-        if (_cacheSize.getCount() <= BLOB_STORE_INTERNAL_CACHE_CAPACITY / 10) {
+        if (_cacheSize.get() <= BLOB_STORE_INTERNAL_CACHE_CAPACITY / 10) {
             return; //no use, empty practically
         }
 
@@ -200,11 +200,11 @@ public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
 
     @Override
     public boolean isFull(){
-        return _cacheSize.getCount() >= BLOB_STORE_INTERNAL_CACHE_CAPACITY;
+        return _cacheSize.get() >= BLOB_STORE_INTERNAL_CACHE_CAPACITY;
     }
     @Override
     public LongCounter getCacheSize() {
-        return _cacheSize;
+        return _cacheCounter;
     }
 
     @Override
