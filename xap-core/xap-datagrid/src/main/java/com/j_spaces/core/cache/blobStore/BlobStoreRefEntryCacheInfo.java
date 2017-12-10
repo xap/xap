@@ -640,8 +640,12 @@ public class BlobStoreRefEntryCacheInfo
                 BlobStoreEntryLayout entryLayout = (BlobStoreEntryLayout) getEntryLayout_impl(cacheManager, entry);
 
                 if (!isWrittenToBlobStore()) {
-                    if (!isFromInitialLoad)
-                        insertOrTouchInternalCache(context,cacheManager, entry,CacheOperationReason.ON_WRITE); //new entry- insert to cache
+                    //new entry or mirror initial load- insert to cache
+                    if (isFromInitialLoad)
+                        insertOrTouchInternalCache(context,cacheManager, entry,CacheOperationReason.ON_INITIAL_LOAD);
+                    else
+                        insertOrTouchInternalCache(context,cacheManager, entry,CacheOperationReason.ON_WRITE);
+
                     if (cacheManager.isOffHeapOptimizationEnabled() && !isPhantom()) {
                         setOffHeapAddress(OffHeapIndexesValuesHandler.allocate(entryLayout.getIndexValuesBytes(cacheManager), getOffHeapAddress()));
                     }
