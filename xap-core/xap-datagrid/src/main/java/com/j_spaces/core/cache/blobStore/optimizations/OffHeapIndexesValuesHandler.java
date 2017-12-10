@@ -35,7 +35,10 @@ public class OffHeapIndexesValuesHandler {
 
     private volatile static Unsafe _unsafe;
     private static Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
-    private static int CONSTANT_PREFIX_SIZE = 4;
+    private static final int SHORT_HEADER_SIZE = (Short.SIZE / 8);
+    private static final int EXTENDED_HEADER_SIZE = SHORT_HEADER_SIZE + (Integer.SIZE / 8);
+    private static final short EXTENDED_LENGTH_MARKER = (short)-1;
+    private static final int MINIMAL_BUFFER_DIFF_TO_ALLOCATE = 50;
 
     private static Unsafe getUnsafe() {
         if (_unsafe == null) {
@@ -57,8 +60,9 @@ public class OffHeapIndexesValuesHandler {
         if (address != BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             throw new IllegalStateException("trying to allocate when already allocated in off heap");
         }
+        int headerSize = getHeaderSize(buf.length);
         try {
-            newAddress = getUnsafe().allocateMemory(CONSTANT_PREFIX_SIZE + buf.length);
+            newAddress = getUnsafe().allocateMemory(headerSize + buf.length);
         } catch (Error e) {
             logger.log(Level.SEVERE, "failed to allocate offheap space", e);
             throw e;
@@ -70,18 +74,46 @@ public class OffHeapIndexesValuesHandler {
             logger.log(Level.SEVERE, "failed to allocate offheap space");
             throw new RuntimeException("failed to allocate offheap space");
         }
-        getUnsafe().putInt(newAddress, buf.length);
-        writeBytes(newAddress + CONSTANT_PREFIX_SIZE, buf);
+        putHeaderToUnsafe(newAddress, buf.length);
+        writeBytes(newAddress + headerSize, buf);
         return newAddress;
 
+    }
+
+    private static int getHeaderFromUnsafe(long address)
+    {
+        short header = getUnsafe().getShort(address);
+        if (header != EXTENDED_LENGTH_MARKER)
+            return header;
+        return  getUnsafe().getInt(address + SHORT_HEADER_SIZE);
+    }
+
+    private static int putHeaderToUnsafe(long address, int bufferLenght)
+    {
+        int headerSize = getHeaderSize(bufferLenght);
+        if (headerSize == SHORT_HEADER_SIZE)
+        {
+            getUnsafe().putShort(address,(short)bufferLenght);
+        }
+        else
+        {
+            getUnsafe().putShort(address,EXTENDED_LENGTH_MARKER);
+            getUnsafe().putInt(address,bufferLenght);
+        }
+        return headerSize;
+    }
+
+    private static int getHeaderSize(int bufferLenght)
+    {
+        return bufferLenght <= (int)Short.MAX_VALUE ? SHORT_HEADER_SIZE : EXTENDED_HEADER_SIZE;
     }
 
     public static byte[] get(long address) {
         if (address == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             throw new IllegalStateException("trying to read from off heap but no address found");
         }
-        int numOfBytes = getUnsafe().getInt(address);
-        byte[] bytes = readBytes(address + CONSTANT_PREFIX_SIZE, numOfBytes);
+        int numOfBytes = getHeaderFromUnsafe(address);
+        byte[] bytes = readBytes(address + getHeaderSize(numOfBytes), numOfBytes);
         return bytes;
     }
 
@@ -89,14 +121,13 @@ public class OffHeapIndexesValuesHandler {
         if (info.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             throw new IllegalStateException("trying to update when no off heap memory is allocated");
         }
-        int oldEntryLength = getUnsafe().getInt(info.getOffHeapAddress());
-        if (oldEntryLength < buf.length) {
+        int oldEntryLength = getHeaderFromUnsafe(info.getOffHeapAddress());
+        if (oldEntryLength < buf.length || (oldEntryLength - buf.length >= MINIMAL_BUFFER_DIFF_TO_ALLOCATE)) {
             delete(info);
             info.setOffHeapAddress(allocate(buf, info.getOffHeapAddress()));
         }
         else {
-            getUnsafe().putInt(info.getOffHeapAddress(), buf.length);
-            writeBytes(info.getOffHeapAddress() + CONSTANT_PREFIX_SIZE, buf);
+            writeBytes(info.getOffHeapAddress() + getHeaderSize(oldEntryLength), buf);
         }
     }
 
