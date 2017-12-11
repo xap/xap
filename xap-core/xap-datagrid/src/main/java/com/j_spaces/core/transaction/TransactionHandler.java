@@ -491,20 +491,18 @@ public class TransactionHandler {
     throws TransactionException
     {
         XtnEntry xtnEntry = m_XtnTable.get(txn);
-
         Logger logger = CacheManager.getCacheLogger();
-
-        if(logger.isLoggable(Level.INFO)){
-            logger.finer("DebugForTest TxnID=["+ txn.id +"], operationID={"   + opid.toString()+"}");
+        //Do no remove/change logger, using in unitTest see @PollingContainerTest
+        if(logger.isLoggable(Level.FINER)){
+            if(!(xtnEntry == null || !xtnEntry.createdOnNonBackup() || opid == null )){
+                logger.finer("DebugForTest:ThreadID:"+ Thread.currentThread().getName()+"  operationID={"   + opid.toString()+"}") ;
+            }
         }
-
-
-        if (xtnEntry == null || !xtnEntry.createdOnNonBackup() || opid == null ||! xtnEntry.getXtnData().isOperationID(opid))
+        if (xtnEntry == null || !xtnEntry.createdOnNonBackup() || opid == null ||! xtnEntry.getXtnData().isOperationID(opid)) {
             return ;
-
+        }
         TransactionException exception =  new TransactionException("Transaction was disconnected due to communication fault: " +
                 txn.toString());
-
         _engine.getLogger().log(Level.WARNING, "Transaction disconnection should be rolled back", exception);
 
         throw  exception;
