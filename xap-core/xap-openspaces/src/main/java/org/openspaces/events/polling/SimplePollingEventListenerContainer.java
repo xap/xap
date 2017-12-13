@@ -994,6 +994,7 @@ public class SimplePollingEventListenerContainer extends AbstractEventListenerCo
                                 logger.trace(message("Rolling back transaction because of listener exception thrown: " + ex));
                             }
                             status.setRollbackOnly();
+                            rollbackOnException(status,ex);
                             handleListenerException(ex);
                             return true;
                         }

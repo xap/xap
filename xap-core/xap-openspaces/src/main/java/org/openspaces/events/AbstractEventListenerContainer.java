@@ -25,11 +25,14 @@ import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.dump.InternalDump;
 import com.gigaspaces.internal.dump.InternalDumpProcessor;
 import com.gigaspaces.internal.dump.InternalDumpProcessorFailedException;
+import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.metrics.BeanMetricManager;
 import com.gigaspaces.metrics.LongCounter;
 import com.j_spaces.core.IJSpace;
+import com.j_spaces.core.OperationID;
 import com.j_spaces.core.admin.IInternalRemoteJSpaceAdmin;
 
+import com.j_spaces.core.client.EntrySnapshot;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openspaces.admin.quiesce.QuiesceStateChangedListener;
@@ -115,6 +118,8 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
     private PlatformTransactionManager transactionManager;
     private DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
     protected boolean disableTransactionValidation = false;
+
+    protected  ThreadLocal<EntrySnapshot> snapshotTemplateThreadLocal = new ThreadLocal<EntrySnapshot>();
 
     /**
      * Sets the GigaSpace instance to be used for space event listening operations.
@@ -378,7 +383,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             throw new IllegalArgumentException("dynamicTemplate and template are mutually exclusive.");
         }
 
-        if (performSnapshot && template != null) {
+       if (performSnapshot && template != null) {
             if (logger.isTraceEnabled()) {
                 logger.trace(message("Performing snapshot on template [" + template + "]"));
             }
@@ -771,11 +776,26 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
      * snapshot of the provided template.
      */
     protected Object getReceiveTemplate() {
-
         if (dynamicTemplate != null) {
             return dynamicTemplate.getDynamicTemplate();
         }
 
+        if (isPerformSnapshot() && getTransactionManager() != null) {
+            EntrySnapshot entrySnapshotTemplate = snapshotTemplateThreadLocal.get();
+            //this is the first time, there is no template in thread local
+            if (entrySnapshotTemplate == null ) {
+                ITemplatePacket cloned = ((EntrySnapshot) receiveTemplate).getTemplatePacket().clone();
+                //cloned.setOperationID(new OperationID());
+                cloned.setOperationID(null);
+                entrySnapshotTemplate = new EntrySnapshot (cloned);
+                snapshotTemplateThreadLocal.set(entrySnapshotTemplate);
+                return entrySnapshotTemplate;
+            } else if (entrySnapshotTemplate != null ) {
+                 EntrySnapshot tmp = snapshotTemplateThreadLocal.get();
+               //  System.out.println("got snapshot from ThreadLocal:"+tmp.getTemplatePacket().getOperationID().superToString());
+                return tmp;
+            }
+        }
         return receiveTemplate;
     }
 
