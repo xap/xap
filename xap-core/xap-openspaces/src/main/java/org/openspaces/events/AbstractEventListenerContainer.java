@@ -785,15 +785,12 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             //this is the first time, there is no template in thread local
             if (entrySnapshotTemplate == null ) {
                 ITemplatePacket cloned = ((EntrySnapshot) receiveTemplate).getTemplatePacket().clone();
-                //cloned.setOperationID(new OperationID());
                 cloned.setOperationID(null);
                 entrySnapshotTemplate = new EntrySnapshot (cloned);
                 snapshotTemplateThreadLocal.set(entrySnapshotTemplate);
                 return entrySnapshotTemplate;
-            } else if (entrySnapshotTemplate != null ) {
-                 EntrySnapshot tmp = snapshotTemplateThreadLocal.get();
-               //  System.out.println("got snapshot from ThreadLocal:"+tmp.getTemplatePacket().getOperationID().superToString());
-                return tmp;
+            } else {
+                return entrySnapshotTemplate;
             }
         }
         return receiveTemplate;
