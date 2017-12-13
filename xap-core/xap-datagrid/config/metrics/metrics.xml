@@ -5,6 +5,9 @@
 
     <!-- Configure which reporter(s) will be used to collect data from the system -->
     <reporters>
+        <reporter name="myReporter" factory-class="com.gigaspaces.metrics.reporters.FileReporterFactory">
+            <property name="path" value="tmp/gigaspaces/metrics-output.txt"/>
+        </reporter>
         <!-- Create an InfluxDB reporter (packaged with the product) -->
         <!-- These settings match InfluxDB's default settings - port and database -->
         <!--
