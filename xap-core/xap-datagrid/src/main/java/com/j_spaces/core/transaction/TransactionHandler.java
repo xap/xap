@@ -494,8 +494,9 @@ public class TransactionHandler {
         Logger logger = CacheManager.getCacheLogger();
         //Do no remove/change logger, using in unitTest see @PollingContainerTest
         if(logger.isLoggable(Level.FINER)){
-            if(!(xtnEntry == null || !xtnEntry.createdOnNonBackup() || opid == null )){
-                logger.finer("DebugForTest:ThreadID:"+ Thread.currentThread().getName()+"  operationID={"   + opid.toString()+"}") ;
+            if(!(_engine.getSpaceImpl().isBackup()|| opid == null )){
+
+                logger.finer("DebugForTest:ThreadID:"+ Thread.currentThread().getName()+"TransactionID= " + txn.id +  "   operationID={"   + opid.toString()+"}") ;
             }
         }
         if (xtnEntry == null || !xtnEntry.createdOnNonBackup() || opid == null ||! xtnEntry.getXtnData().isOperationID(opid)) {
