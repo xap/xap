@@ -1,21 +1,21 @@
 package org.gigaspaces.cli;
 
-import picocli.CommandLine;
+import picocli.CommandLine.*;
 
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(
+@Command(
         sortOptions = false,
         //headerHeading = "",
-        header = "<header goes here>",
-        synopsisHeading = "%nUsage: ",
+        //header = "<header goes here>",
+        synopsisHeading = "Usage: ",
         descriptionHeading = "%nDescription: ",
         //description = "<description goes here>",
         parameterListHeading = "%nParameters:%n",
         optionListHeading = "%nOptions:%n")
 public abstract class CliCommand implements Callable<Object> {
 
-    @CommandLine.Option(names = {"--help"}, usageHelp = true, description = "display this help message")
+    @Option(names = {"--help"}, usageHelp = true, description = "display this help message")
     boolean usageHelpRequested;
 
     @Override
@@ -29,4 +29,9 @@ public abstract class CliCommand implements Callable<Object> {
     }
 
     protected abstract void execute() throws Exception;
+
+    protected void underConstruction() {
+        Command command = this.getClass().getAnnotation(Command.class);
+        System.out.println("Command " + command.name() + " is under construction");
+    }
 }

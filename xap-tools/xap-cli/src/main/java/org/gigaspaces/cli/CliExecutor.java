@@ -1,56 +1,71 @@
 package org.gigaspaces.cli;
 
 import picocli.CommandLine;
-import picocli.CommandLine.Command;
+import picocli.CommandLine.*;
 
+import java.io.PrintStream;
 import java.util.Collection;
+import java.util.List;
 
 public class CliExecutor {
 
-    private static CliExecutor instance;
-    private final CommandLine cmd;
+    public static void execute(Object mainCommand, String[] args) {
+        final PrintStream out = System.out;
 
-    public static CliExecutor getInstance() {
-        return instance;
-    }
-
-    public static void main(String[] args, Object mainCommand, Collection<?> subcommands) {
-        instance = new CliExecutor(mainCommand, subcommands);
-        int exitCode = instance.execute(args);
-        System.exit(exitCode);
-    }
-
-    private CliExecutor(Object mainCommand, Collection<?> subcommands) {
-        this.cmd = new CommandLine(mainCommand);
-        for (Object subcommand : subcommands) {
-            Command commandAnnotation = (Command) subcommand.getClass().getAnnotation(Command.class);
-            cmd.addSubcommand(commandAnnotation.name(), subcommand);
-        }
-    }
-
-    private int execute(String[] args) {
         int exitCode;
         try {
-            // TODO: This too naive - what if args is no empty but no commands to run?
-            if (args.length == 0)
-                cmd.usage(System.out);
-            else
-                cmd.parseWithHandler(new CommandLine.RunAll(), System.out, args);
+            final CommandLine cmd = toCommandLine(mainCommand);
+            cmd.parseWithHandler(new CustomResultHandler(), out, args);
             exitCode = 0;
         } catch (Exception e) {
             if (e instanceof CommandLine.ExecutionException && e.getCause() instanceof CliCommandException) {
                 CliCommandException cause = (CliCommandException) e.getCause();
-                System.out.println(cause.getMessage());
+                out.println(cause.getMessage());
                 exitCode = cause.getExitCode();
             } else {
-                e.printStackTrace();
+                e.printStackTrace(out);
                 exitCode = 1;
             }
         }
-        return exitCode;
+        System.exit(exitCode);
     }
 
-    public CommandLine getCmd() {
+    public static CommandLine toCommandLine(Object command) {
+        CommandLine cmd = new CommandLine(command);
+        if (command instanceof SubCommandContainer) {
+            Collection<Object> subcommands = ((SubCommandContainer) command).getSubCommands();
+            for (Object subcommand : subcommands) {
+                Command commandAnnotation = subcommand.getClass().getAnnotation(Command.class);
+                if (subcommand instanceof SubCommandContainer)
+                    subcommand = toCommandLine(subcommand);
+                cmd.addSubcommand(commandAnnotation.name(), subcommand);
+            }
+        }
         return cmd;
+    }
+
+    private static class CustomResultHandler extends CommandLine.RunAll {
+
+        @Override
+        public List<Object> handleParseResult(List<CommandLine> commands, PrintStream out, Help.Ansi ansi) throws ExecutionException {
+            List<Object> result = super.handleParseResult(commands, out, ansi);
+            if (!isHelpRequested(commands)) {
+                CommandLine lastCommand = commands.get(commands.size()-1);
+                if (lastCommand.getCommand() instanceof SubCommandContainer) {
+                    //out.println("Command " + lastCommand.getCommandName() + " requires a sub-command");
+                    lastCommand.usage(out, ansi);
+                }
+            }
+
+            return result;
+        }
+
+        private boolean isHelpRequested(List<CommandLine> commands) {
+            for (CommandLine command : commands)
+                if (command.isUsageHelpRequested() || command.isVersionHelpRequested())
+                    return true;
+
+            return false;
+        }
     }
 }
