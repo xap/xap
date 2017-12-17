@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedList;
 
 /**
  * @author Niv Ingberg
@@ -36,12 +37,13 @@ import java.util.Map;
 public class SpaceIteratorResult {
 
     private final List<IEntryPacket> entries = new ArrayList<IEntryPacket>();
-    private final Map<Integer, List<String>> partitionedUids = new HashMap<Integer, List<String>>();
+    private final Map<Integer, LinkedList<String>> partitionedUids = new HashMap<Integer, LinkedList<String>>();
 
     public void addPartition(SpaceIteratorAggregatorPartitionResult partitionResult) {
         entries.addAll(partitionResult.getEntries());
-        if (partitionResult.getUids() != null)
-            partitionedUids.put(partitionResult.getPartitionId(), partitionResult.getUids());
+        if (partitionResult.getUids() != null) {
+            partitionedUids.put(partitionResult.getPartitionId(), new LinkedList<String>(partitionResult.getUids()));
+        }
     }
 
     public List<IEntryPacket> getEntries() {
@@ -58,7 +60,7 @@ public class SpaceIteratorResult {
         if (partitionId == null)
             return null;
 
-        final List<String> uids = partitionedUids.get(partitionId);
+        final LinkedList<String> uids = partitionedUids.get(partitionId);
         final String[] batch = new String[Math.min(batchSize, uids.size())];
         final Iterator<String> iterator = uids.iterator();
         int index = 0;
@@ -76,7 +78,7 @@ public class SpaceIteratorResult {
 
     public int size() {
         int size = entries.size();
-        for (List<String> uids : partitionedUids.values())
+        for (LinkedList<String> uids : partitionedUids.values())
             size += uids.size();
         return size;
     }
