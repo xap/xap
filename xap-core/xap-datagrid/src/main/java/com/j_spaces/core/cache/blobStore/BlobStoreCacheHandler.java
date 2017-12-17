@@ -172,8 +172,8 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
     }
 
     @Override
-    public int size() {
-        return _blobStoreCacheImpl.size();
+    public long getCacheSize() {
+        return _blobStoreCacheImpl.getCacheSize().getCount();
     }
 
     @Override
