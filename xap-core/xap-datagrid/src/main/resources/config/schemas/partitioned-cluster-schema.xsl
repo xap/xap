@@ -217,6 +217,7 @@
 							<redo-log-capacity>150000</redo-log-capacity>
 							<redo-log-recovery-capacity>5000000</redo-log-recovery-capacity>
 							<redo-log-memory-capacity>150000</redo-log-memory-capacity>
+							<redo-log-compaction>none</redo-log-compaction>
 							<backlog-weight-policy>accumulated</backlog-weight-policy>
 							<redo-log-local-view-capacity>150000</redo-log-local-view-capacity>
 							<redo-log-local-view-recovery-capacity>1000000</redo-log-local-view-recovery-capacity>

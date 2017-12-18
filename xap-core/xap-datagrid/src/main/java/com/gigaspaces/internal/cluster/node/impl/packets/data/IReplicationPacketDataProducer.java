@@ -124,4 +124,6 @@ public interface IReplicationPacketDataProducer<T extends IReplicationPacketData
     T createEmptyMultipleEntryData(T data);
 
     void completePacketDataContent(T data);
+
+    boolean isPrimary();
 }

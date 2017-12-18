@@ -115,6 +115,8 @@ public class ReplicationPolicy implements Serializable, Externalizable {
 
     public static final int DEFAULT_CONNECTION_MONITOR_THREAD_POOL_SIZE = 4;
     public static final String DEFAULT_BACKLOG_WEIGHT_POLICY = "accumulated";
+    public static final RedoLogCompaction DEFAULT_REDO_LOG_COMPACTION = RedoLogCompaction.MIRROR;
+    public static final float DEFAULT_DISCARDED_PACKET_WEIGHT_LOAD_FACTOR = Float.valueOf(System.getProperty("com.j_spaces.repl.default.discard.load.factor", "0.01"));
 
     public String m_OwnMemberName;
     public String m_ReplicationGroupName;
@@ -246,6 +248,15 @@ public class ReplicationPolicy implements Serializable, Externalizable {
 
     final public static String DEFAULT_MIRROR_SERVICE_NAME = "MIRROR_SERVICE";
     final public static String DEFAULT_MIRROR_SERVICE_CONNECTOR_NAME = "Mirror Service Connector";
+    private transient RedoLogCompaction redoLogCompaction;
+
+    public void setRedoLogCompaction(RedoLogCompaction redoLogCompaction) {
+        this.redoLogCompaction = redoLogCompaction;
+    }
+
+    public RedoLogCompaction getRedoLogCompaction() {
+        return redoLogCompaction;
+    }
 
 
     private interface BitMap {

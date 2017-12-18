@@ -1,6 +1,8 @@
 package com.gigaspaces.internal.server.space.redolog.storage.bytebuffer;
 
+import com.gigaspaces.internal.cluster.node.impl.backlog.globalorder.GlobalOrderDiscardedReplicationPacket;
 import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPacket;
+import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,21 +13,15 @@ import java.util.List;
  */
 public class WeightedBatch<T> {
 
-    private  List<T> batch;
+    private List<T> batch;
     private long weight;
     private boolean limitReached = false;
+    private long discardedPacketCount = 0;
+    private final long lastCompactionRangeKey;
 
-    public WeightedBatch() {
+    public WeightedBatch(long lastCompactionRangeEndKey) {
         batch = new ArrayList<T>();
-    }
-
-    public WeightedBatch(List<T> batch) {
-        this.batch = batch;
-    }
-
-    public WeightedBatch(List<T> batch, long weight) {
-        this.batch = batch;
-        this.weight = weight;
+        this.lastCompactionRangeKey = lastCompactionRangeEndKey;
     }
 
     public List<T> getBatch() {
@@ -37,7 +33,7 @@ public class WeightedBatch<T> {
     }
 
     public long getWeight() {
-        return weight;
+        return RedoLogCompactionUtil.calculateWeight(weight,discardedPacketCount);
     }
 
     public void setWeight(long weight) {
@@ -52,10 +48,21 @@ public class WeightedBatch<T> {
         this.limitReached = limitReached;
     }
 
-    public void addToBatch(T packet){
-       batch.add(packet);
-        int packetWeight = ((IReplicationOrderedPacket) packet).getWeight();
-        this.weight += packetWeight;
+    public long getDiscardedPacketCount() {
+        return discardedPacketCount;
+    }
+
+    public void addToBatch(T packet) {
+        long packetWeight = ((IReplicationOrderedPacket) packet).getWeight();
+        if(((IReplicationOrderedPacket) packet).getKey() <= lastCompactionRangeKey && RedoLogCompactionUtil.isTransient((IReplicationOrderedPacket) packet)){
+            T discarded = (T) new GlobalOrderDiscardedReplicationPacket(((IReplicationOrderedPacket) packet).getKey());
+            batch.add(discarded);
+            discardedPacketCount++;
+            this.weight -= packetWeight;
+        }else{
+            batch.add(packet);
+            this.weight += packetWeight;
+        }
     }
 
     public int size() {

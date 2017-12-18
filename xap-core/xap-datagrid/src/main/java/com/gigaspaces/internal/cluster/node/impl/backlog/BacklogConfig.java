@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.cluster.node.impl.backlog;
 
+import com.j_spaces.core.cluster.RedoLogCompaction;
 import com.j_spaces.core.cluster.ReplicationPolicy;
 import com.j_spaces.core.cluster.SwapBacklogConfig;
 
@@ -71,6 +72,7 @@ public class BacklogConfig {
     public static final long UNLIMITED = -1;
     protected static final LimitReachedPolicy DEFAULT_BACKLOG_REACHED_POLICY = LimitReachedPolicy.BLOCK_NEW;
     private String DEFAULT_BACKLOG_WEIGHT_POLICY = ReplicationPolicy.DEFAULT_BACKLOG_WEIGHT_POLICY;
+    private RedoLogCompaction DEFAULT_REDO_LOG_COMPACTION = ReplicationPolicy.DEFAULT_REDO_LOG_COMPACTION;
 
     private final Map<String, Long> _memberLimitDuringSynchronization = new HashMap<String, Long>();
     private final Map<String, Long> _membersLimit = new HashMap<String, Long>();
@@ -80,8 +82,10 @@ public class BacklogConfig {
     private int _limitedMemoryCapacity = (int) UNLIMITED;
     private SwapBacklogConfig _swapBacklogConfig = new SwapBacklogConfig();
 
-    private String policy;
+    private String _policy;
+    private String _mirrorMemberName = null;
     private BacklogWeightPolicy _backlogWeightPolicy;
+    private RedoLogCompaction _redoLogCompaction =  DEFAULT_REDO_LOG_COMPACTION;
 
     public BacklogConfig() {
         setBackLogWeightPolicy(DEFAULT_BACKLOG_WEIGHT_POLICY);
@@ -195,6 +199,7 @@ public class BacklogConfig {
         return config;
     }
 
+
     public boolean isLimitedMemoryCapacity() {
         return _limitedMemoryCapacity != UNLIMITED;
     }
@@ -213,6 +218,22 @@ public class BacklogConfig {
 
     public void setSwapBacklogConfig(SwapBacklogConfig swapBacklogConfig) {
         _swapBacklogConfig = swapBacklogConfig;
+    }
+
+    public String getMirrorMemberName() {
+        return _mirrorMemberName;
+    }
+
+    public void setMirrorMemberName(String _mirrorMemberName) {
+        this._mirrorMemberName = _mirrorMemberName;
+    }
+
+    public RedoLogCompaction getRedoLogCompaction() {
+        return _redoLogCompaction;
+    }
+
+    public void setRedoLogCompaction(RedoLogCompaction _redoLogCompaction) {
+        this._redoLogCompaction = _redoLogCompaction;
     }
 
     public SwapBacklogConfig getSwapBacklogConfig() {
@@ -241,7 +262,7 @@ public class BacklogConfig {
 
         setLimitedMemoryCapacity(other.getLimitedMemoryCapacity());
         setSwapBacklogConfig(other.getSwapBacklogConfig());
-        setBackLogWeightPolicy(other.policy);
+        setBackLogWeightPolicy(other._policy);
     }
 
     @Override
@@ -261,8 +282,8 @@ public class BacklogConfig {
     }
 
     public void setBackLogWeightPolicy(String policy) {
-        if(this.policy == null || !this.policy.equals(policy)){
-            this.policy = policy;
+        if(this._policy == null || !this._policy.equals(policy)){
+            this._policy = policy;
             this._backlogWeightPolicy = BacklogWeightPolicyFactory.create(policy);
         }
     }

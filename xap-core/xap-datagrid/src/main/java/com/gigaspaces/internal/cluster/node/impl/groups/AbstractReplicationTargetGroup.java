@@ -415,10 +415,11 @@ public abstract class AbstractReplicationTargetGroup
             AbstractReplicationTargetChannel channel = _channels.get(sourceMemberLookupName);
 
             if (channel == null) {
-                if (_loggerReplica.isLoggable(Level.WARNING))
+                if (_loggerReplica.isLoggable(Level.WARNING)) {
                     _loggerReplica.warning(_replicationRouter.getMyLookupName()
                             + " received synchronization done signal from source with no open channel ["
                             + sourceMemberLookupName + "]");
+                }
             } else if (!channel.getSourceUniqueId().equals(sourceUniqueId)) {
                 if (_loggerReplica.isLoggable(Level.WARNING))
                     _loggerReplica.warning(_replicationRouter.getMyLookupName()

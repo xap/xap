@@ -598,6 +598,12 @@ public class ReplicationNodeConfigBuilder {
         // Set swap backlog settings
         config.setSwapBacklogConfig(replicationPolicy.getSwapBacklogSettings());
 
+        if(mirrorPolicy != null) {
+            config.setMirrorMemberName(mirrorPolicy.getMirrorMemberName());
+        }
+
+        config.setRedoLogCompaction(replicationPolicy.getRedoLogCompaction());
+
         return config;
     }
 

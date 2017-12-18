@@ -26,11 +26,7 @@ import com.gigaspaces.internal.cluster.node.impl.filters.ISpaceCopyReplicaInFilt
 import com.gigaspaces.internal.cluster.node.impl.filters.ISpaceCopyReplicaOutFilter;
 import com.gigaspaces.internal.cluster.node.impl.filters.ReplicationInFilterAdapter;
 import com.gigaspaces.internal.cluster.node.impl.filters.ReplicationOutFilterAdapter;
-import com.j_spaces.core.cluster.MissingPacketsPolicy;
-import com.j_spaces.core.cluster.RedoLogCapacityExceededPolicy;
-import com.j_spaces.core.cluster.ReplicationPolicy;
-import com.j_spaces.core.cluster.ReplicationProcessingType;
-import com.j_spaces.core.cluster.SwapBacklogConfig;
+import com.j_spaces.core.cluster.*;
 
 import java.util.List;
 
@@ -88,6 +84,11 @@ public class ReplicationSettingsAdapter
 
     public long getMaxRedoLogMemoryCapacity() {
         return _policy.getMaxRedoLogMemoryCapacity();
+    }
+
+    @Override
+    public RedoLogCompaction getRedoLogCompaction() {
+        return _policy.getRedoLogCompaction();
     }
 
     @Override

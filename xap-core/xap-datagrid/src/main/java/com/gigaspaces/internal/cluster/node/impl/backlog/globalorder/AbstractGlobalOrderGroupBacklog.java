@@ -236,7 +236,7 @@ public abstract class AbstractGlobalOrderGroupBacklog
 
     public IReplicationOrderedPacket replaceWithDiscarded(
             IReplicationOrderedPacket packet, boolean forceDiscard) {
-        return new GlobalOrderDiscardedReplicationPacket(packet.getKey(), packet.getWeight());
+        return new GlobalOrderDiscardedReplicationPacket(packet.getKey());
     }
 
     @Override

@@ -49,19 +49,11 @@ import com.gigaspaces.internal.cluster.node.impl.packets.data.IReplicationPacket
 import com.gigaspaces.internal.cluster.node.impl.packets.data.ReplicationPacketEntryDataConversionException;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.MapProcedure;
-import com.gigaspaces.internal.server.space.redolog.FixedSizeSwapRedoLogFile;
-import com.gigaspaces.internal.server.space.redolog.FixedSizeSwapRedoLogFileConfig;
-import com.gigaspaces.internal.server.space.redolog.IRedoLogFile;
-import com.gigaspaces.internal.server.space.redolog.MemoryRedoLogFile;
-import com.gigaspaces.internal.server.space.redolog.RedoLogFileCompromisedException;
+import com.gigaspaces.internal.server.space.redolog.*;
 import com.gigaspaces.internal.server.space.redolog.storage.BufferedRedoLogFileStorageDecorator;
 import com.gigaspaces.internal.server.space.redolog.storage.CacheLastRedoLogFileStorageDecorator;
 import com.gigaspaces.internal.server.space.redolog.storage.IRedoLogFileStorage;
-import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ByteBufferRedoLogFileConfig;
-import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ByteBufferRedoLogFileStorage;
-import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.IByteBufferStorageFactory;
-import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.IPacketStreamSerializer;
-import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.SwapPacketStreamSerializer;
+import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.*;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.raf.RAFByteBufferStorageFactory;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.utils.collections.CopyOnUpdateMap;
@@ -72,24 +64,17 @@ import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.metrics.Gauge;
 import com.gigaspaces.metrics.MetricRegistrator;
+import com.j_spaces.core.cluster.RedoLogCompaction;
 import com.j_spaces.core.cluster.SwapBacklogConfig;
+import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
 import com.j_spaces.core.exception.internal.ReplicationInternalSpaceException;
 import com.j_spaces.kernel.JSpaceUtilities;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -122,6 +107,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
     private long _minDeletionLimitation;
     private long _minBlockLimitation;
     private boolean _hasBlockOnLimitMember;
+    private String _mirrorMemberName;
 
     private final CopyOnUpdateMap<String, SynchronizingData> _activeSynchronizingTarget;
     private final CopyOnUpdateSet<String> _backlogCapacityAllowedBreachingTargets;
@@ -138,7 +124,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
     protected final ReadWriteLock _rwLock = new ReentrantReadWriteLock();
     private long _nextKey = 0;
 
-    private final CaluclateMinUnconfirmedKeyProcedure _getMinUnconfirmedKeyProcedure = new CaluclateMinUnconfirmedKeyProcedure();
+    private final CaluclateMinUnconfirmedKeyProcedure _getMinUnconfirmedKeyProcedure;
     private boolean _closed;
 
     public AbstractSingleFileGroupBacklog(DynamicSourceGroupConfigHolder groupConfigHolder,
@@ -159,6 +145,8 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         updateBacklogLimitations(groupConfig);
         _confirmationMap = new CopyOnUpdateMap<String, CType>(new THashMapFactory<String, CType>());
         _confirmationMap.putAll(createConfirmationMap(groupConfig));
+        _mirrorMemberName = groupConfig.getBacklogConfig().getMirrorMemberName();
+        _getMinUnconfirmedKeyProcedure = new CaluclateMinUnconfirmedKeyProcedure(_mirrorMemberName != null);
     }
 
     protected void updateBacklogLimitations(SourceGroupConfig groupConfig) {
@@ -361,7 +349,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         if (groupConfig.getBacklogConfig().isLimitedMemoryCapacity())
             return createSwapBacklog(groupConfig);
 
-        return new MemoryRedoLogFile<T>(_name);
+        return new MemoryRedoLogFile<T>(_name, this);
     }
 
     private IRedoLogFile<T> createSwapBacklog(SourceGroupConfig groupConfig) {
@@ -406,12 +394,12 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         int cachedDecoratorSize = (backlogConfig.getLimitedMemoryCapacity() - memoryRedoLogFileSize);
 
         CacheLastRedoLogFileStorageDecorator<T> cacheLastRedoLogFileStorage = new CacheLastRedoLogFileStorageDecorator<T>(cachedDecoratorSize,
-                bufferedRedoLogFileStorage);
+                bufferedRedoLogFileStorage, this);
         FixedSizeSwapRedoLogFileConfig<T> config = new FixedSizeSwapRedoLogFileConfig<T>(memoryRedoLogFileSize,
                 Math.min(swapBacklogConfig.getFetchBufferPacketsCount(), memoryRedoLogFileSize),
                 backlogConfig.getLimitedMemoryCapacity(),
                 cacheLastRedoLogFileStorage);
-        IRedoLogFile<T> swappedRedoLogFile = new FixedSizeSwapRedoLogFile<T>(config, _name);
+        IRedoLogFile<T> swappedRedoLogFile = new FixedSizeSwapRedoLogFile<T>(config, _name, this);
         return swappedRedoLogFile;
     }
 
@@ -440,11 +428,11 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
 
         // Size is not near the capacity, we may continue safely
         int operationWeight = backlogConfig.getBackLogWeightPolicy().predictWeightBeforeOperation(info);
-        if (operationWeight > _minBlockLimitation && (getWeight() == 0 || dataTypeIntroduceOnly())){
+        if (operationWeight > _minBlockLimitation && (getWeight() == 0 || dataTypeIntroduceOnly())) {
             _logger.log(Level.WARNING,
                     getLogPrefix()
                             + "Allowing to do an operation which is larger than the backlog's capacity.\n"
-                            + "backlog capacity = "  + _minBlockLimitation + ". operation weight = "+
+                            + "backlog capacity = " + _minBlockLimitation + ". operation weight = " +
                             operationWeight);
             return;
         }
@@ -494,7 +482,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
     }
 
     private boolean dataTypeIntroduceOnly() {
-        return getWeight() == 1 && _backlogFile.readOnlyIterator(0).next().getData() instanceof DataTypeIntroducePacketData ;
+        return getWeight() == 1 && _backlogFile.readOnlyIterator(0).next().getData() instanceof DataTypeIntroducePacketData;
     }
 
     // Should be called under write lock
@@ -502,7 +490,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         return _backlogDroppedEntirely;
     }
 
-//     Should be called under write lock
+    //     Should be called under write lock
     protected void ensureLimit(IReplicationPacketData<?> data) {
         // Is there a potential limitation
         if (!_isLimited || _allBlockingMembers)
@@ -560,19 +548,19 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
                     if (problematicMembers == null) {
                         problematicMembers = new ArrayList<String>(3);
                     }
-                    if (limitReachedPolicy == LimitReachedPolicy.DROP_UNTIL_RESYNC || limitReachedPolicy == LimitReachedPolicy.DROP_MEMBER){
+                    if (limitReachedPolicy == LimitReachedPolicy.DROP_UNTIL_RESYNC || limitReachedPolicy == LimitReachedPolicy.DROP_MEMBER) {
                         problematicMembers.add(memberLookupName);
                         continue;
                     }
 
-                    if (maximalCapacityMemberName == null || currentAllowedLimit > capacityForMaxMember){
+                    if (maximalCapacityMemberName == null || currentAllowedLimit > capacityForMaxMember) {
                         maximalCapacityMemberName = memberLookupName;
                         capacityForMaxMember = currentAllowedLimit;
                     }
                 }
             }
         }
-        if (maximalCapacityMemberName != null){
+        if (maximalCapacityMemberName != null) {
             problematicMembers.add(maximalCapacityMemberName);
         }
         if (problematicMembers == null) {
@@ -596,7 +584,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
                         getLogPrefix()
                                 + "inserting to the backlog an operation which is larger than the backlog's capacity.\n"
                                 + "target name = " + member + ", target defined capacity = " + currentAllowedLimit + ", operation type = " +
-                                  ", operation weight = " + weight);
+                                ", operation weight = " + weight);
                 if (initiallyEmpty)
                     continue;
             }
@@ -604,7 +592,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
             final boolean dropBacklogPolicy = limitReachedPolicy == LimitReachedPolicy.DROP_UNTIL_RESYNC || limitReachedPolicy == LimitReachedPolicy.DROP_MEMBER;
             try {
                 while (!getBacklogFile().isEmpty()) {
-                    if (currentAllowedLimit >= getWeightUnsafe(member) + weight && !dropBacklogPolicy ){
+                    if (currentAllowedLimit >= getWeightUnsafe(member) + weight && !dropBacklogPolicy) {
                         break;
                     }
                     if (maxAllowedDeleteUpTo > getFirstKeyInBacklogInternal()) {
@@ -625,23 +613,23 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
 //                    continue;
                     if (!initiallyEmpty) {
                         makeMemberOutOfSyncDueToDeletion(member, config, limitReachedPolicy);
-                    } else{
+                    } else {
                         continue;
                     }
                 }
                 if (firstKeyDropped != -1 && lastKeyDropped > lastConfirmedKeyForMember) {
-                        _logger.log(Level.WARNING, getLogPrefix()
-                                + "backlog capacity reached, packets from key "
-                                + firstKeyDropped + " to key " + lastKeyDropped + " was deleted.");
+                    _logger.log(Level.WARNING, getLogPrefix()
+                            + "backlog capacity reached, packets from key "
+                            + firstKeyDropped + " to key " + lastKeyDropped + " was deleted.");
 
                 }
                 if (getWeightUnsafe(member) + weight - currentAllowedLimit > WEIGHT_WARNING_THRESHOLD) {
-                        _logger.log(Level.WARNING,
-                                getLogPrefix()
-                                        + "current backlog weight is more than the target limit, weight exceeds by more than the threshold.\n"
-                                        + "target name = " + member + ", target defined capacity = " + currentAllowedLimit + /*", operation type = " +
+                    _logger.log(Level.WARNING,
+                            getLogPrefix()
+                                    + "current backlog weight is more than the target limit, weight exceeds by more than the threshold.\n"
+                                    + "target name = " + member + ", target defined capacity = " + currentAllowedLimit + /*", operation type = " +
                                         data.getMultipleOperationType() +*/ ", operation weight = " + weight + " threshold = " + WEIGHT_WARNING_THRESHOLD);
-                 }
+                }
             }
         }
     }
@@ -877,16 +865,15 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
                 if (packet.getKey() > upToKey)
                     break;
 
-                if(packet.getWeight() > maxWeight && weightSum == 0){ // packet is bigger than maxWeight and it's the first iteration
+                if (packet.getWeight() > maxWeight && weightSum == 0) { // packet is bigger than maxWeight and it's the first iteration
                     if (_logger.isLoggable(Level.WARNING))
-                    _logger.log(Level.WARNING,
-                            getLogPrefix() + "replicating a packet which is bigger than the batch size, "
-                                    + "[packet key=" + packet.getKey()
-                                    + ", packet weight=" + packet.getWeight() + ", backlog batch size = "+ maxWeight + "]\n"
-                                    + getStatistics()
-                                    + "]");
-                }
-                else if (weightSum + packet.getWeight() > maxWeight){ // stop condition
+                        _logger.log(Level.WARNING,
+                                getLogPrefix() + "replicating a packet which is bigger than the batch size, "
+                                        + "[packet key=" + packet.getKey()
+                                        + ", packet weight=" + packet.getWeight() + ", backlog batch size = " + maxWeight + "]\n"
+                                        + getStatistics()
+                                        + "]");
+                } else if (weightSum + packet.getWeight() > maxWeight) { // stop condition
                     break;
                 }
                 weightSum += packet.getWeight();
@@ -1055,7 +1042,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
             }
             if (packet.getData().isEmpty())
                 packet = (T) replaceWithDiscarded(packet, false);
-        }
+            }
         if (originalPacket != packet)
             return (T) filteredHandler.packetFiltered(originalPacket,
                     packet,
@@ -1083,6 +1070,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
 
         long minUnconfirmedKey = getMinimumUnconfirmedKeyUnsafe();
 
+
         // Nothing to delete, we have a channel that was never connected
         if (minUnconfirmedKey != -1) {
             long deletionBatchSize = minUnconfirmedKey - firstKeyInBacklog;
@@ -1094,13 +1082,46 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
             }
         }
 
+        if (getDataProducer().isPrimary() && _mirrorMemberName != null && getGroupConfigSnapshot().getBacklogConfig().getRedoLogCompaction() == RedoLogCompaction.MIRROR) {
+            //try compact redo log in primary
+            long minUnconfirmedMirrorKey = _getMinUnconfirmedKeyProcedure.getMinUnconfirmedMirrorKey();
+            long lastConfirmedNonMirrorKey = _getMinUnconfirmedKeyProcedure.getMinUnconfirmedNonMirrorKey() - 1;
+            if (minUnconfirmedMirrorKey < lastConfirmedNonMirrorKey) {
+                long discardedPacketCount = this._backlogFile.performCompaction(minUnconfirmedMirrorKey, lastConfirmedNonMirrorKey);
+                if(discardedPacketCount > 0){
+                    updateMirrorWeightAfterCompaction(discardedPacketCount);
+                }
+            }
+        }
+    }
+
+    // Should be called under write lock
+    public void updateMirrorWeightAfterCompaction(long discardedPacketCount) {
+        AbstractSingleFileConfirmationHolder confirmation = _confirmationMap.get(_mirrorMemberName);
+        confirmation.setWeight(confirmation.getWeight()-discardedPacketCount);
+        increaseMirrorDiscardedCount(discardedPacketCount);
+    }
+
+    // Should be called under write lock
+    public void decreaseMirrorDiscardedCount(long count) {
+        AbstractSingleFileConfirmationHolder confirmation = _confirmationMap.get(_mirrorMemberName);
+        confirmation.setDiscardedPacketsCount(confirmation.getDiscardedPacketsCount()-count);
+    }
+
+    // Should be called under write lock
+    public void increaseMirrorDiscardedCount(long count) {
+        AbstractSingleFileConfirmationHolder confirmation = _confirmationMap.get(_mirrorMemberName);
+        confirmation.setDiscardedPacketsCount(confirmation.getDiscardedPacketsCount()+count);
+    }
+
+    public boolean hasMirror() {
+        return _mirrorMemberName != null;
     }
 
     protected long getMinimumUnconfirmedKeyUnsafe() {
         _getMinUnconfirmedKeyProcedure.reset();
         CollectionsFactory.getInstance().forEachEntry(_confirmationMap.getUnsafeMapReference(), _getMinUnconfirmedKeyProcedure);
-        long minUnconfirmedKey = _getMinUnconfirmedKeyProcedure.getCalculatedMinimumUnconfirmedKey();
-        return minUnconfirmedKey;
+        return _getMinUnconfirmedKeyProcedure.getCalculatedMinimumUnconfirmedKey();
     }
 
     protected abstract long getMemberUnconfirmedKey(CType value);
@@ -1289,7 +1310,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
     private Map<String, ReplicationTargetInfo> generateInfotForMemberMap() {
         Map<String, ReplicationTargetInfo> result = new HashMap<String, ReplicationTargetInfo>();
         for (Entry<String, CType> entry : _confirmationMap.entrySet()) {
-            ReplicationTargetInfo targetInfo = new ReplicationTargetInfo(entry.getValue().getWeight());
+            ReplicationTargetInfo targetInfo = new ReplicationTargetInfo(entry.getValue().getCalculatedWeight());
             result.put(entry.getKey(), targetInfo);
         }
         return result;
@@ -1499,6 +1520,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
             }
         }
     }
+
     protected void setPacketWeight(IReplicationPacketData<?> data) {
         data.setWeight(getGroupConfigSnapshot().getBacklogConfig().getBackLogWeightPolicy().calculateWeight(data));
     }
@@ -1609,16 +1631,15 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
                     if (packet.getKey() > upToKey)
                         break;
 
-                    if(packet.getWeight() > maxWeight && weightSum == 0){ // packet is bigger than maxWeight and it's the first iteration
+                    if (packet.getWeight() > maxWeight && weightSum == 0) { // packet is bigger than maxWeight and it's the first iteration
                         if (_logger.isLoggable(Level.WARNING))
                             _logger.log(Level.WARNING,
                                     getLogPrefix() + "replicating a packet which is bigger than the batch size, "
                                             + "[packet key=" + packet.getKey()
-                                            + ", packet weight=" + packet.getWeight() + ", backlog batch size = "+ maxWeight + "]\n"
+                                            + ", packet weight=" + packet.getWeight() + ", backlog batch size = " + maxWeight + "]\n"
                                             + getStatistics()
                                             + "]");
-                    }
-                    else if (weightSum + packet.getWeight() > maxWeight){ // stop condition
+                    } else if (weightSum + packet.getWeight() > maxWeight) { // stop condition
                         break;
                     }
 
@@ -1681,7 +1702,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
     }
 
     @Override
-    public long getWeight(){
+    public long getWeight() {
         _rwLock.readLock().lock();
         try {
             return getWeightUnsafe();
@@ -1695,7 +1716,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
     }
 
     @Override
-    public long getWeight(String memberName){
+    public long getWeight(String memberName) {
         _rwLock.readLock().lock();
         try {
             return getWeightUnsafe(memberName);
@@ -1705,30 +1726,29 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
     }
 
     public long getWeightUnsafe(String memberName) {
-        return  _confirmationMap.get(memberName).getWeight();
+        return _confirmationMap.get(memberName).getCalculatedWeight();
     }
 
 
     //should be called under write lock
     @Override
     public void increaseWeight(String memberName, long weight, AbstractSingleFileConfirmationHolder confirmationHolder) {
-            confirmationHolder.setWeight(confirmationHolder.getWeight() + weight);
+        confirmationHolder.setWeight(confirmationHolder.getWeight() + weight);
     }
-
     //should be called under write lock
     @Override
     public void decreaseWeight(String memberName, long lastConfirmedKey, long newlyConfirmedKey, AbstractSingleFileConfirmationHolder confirmationHolder) {
-        long weight = 0 ;
-        if (newlyConfirmedKey == -1 || newlyConfirmedKey - lastConfirmedKey <= 0 || newlyConfirmedKey > getLastInsertedKeyToBacklogUnsafe()){
+        long weight = 0;
+        if (newlyConfirmedKey == -1 || newlyConfirmedKey - lastConfirmedKey <= 0 || newlyConfirmedKey > getLastInsertedKeyToBacklogUnsafe()) {
             return;
         }
-        if( newlyConfirmedKey == getLastInsertedKeyToBacklogUnsafe()){
+        if (newlyConfirmedKey == getLastInsertedKeyToBacklogUnsafe()) {
             confirmationHolder.setWeight(0);
             return;
         }
-        if(lastConfirmedKey < getFirstKeyInBacklogInternal()){
-            weight = getWeightForRangeUnsafe(getFirstKeyInBacklogInternal(),newlyConfirmedKey);
-        }else {
+        if (lastConfirmedKey < getFirstKeyInBacklogInternal()) {
+            weight = getWeightForRangeUnsafe(getFirstKeyInBacklogInternal(), newlyConfirmedKey);
+        } else {
             weight = getWeightForRangeUnsafe(lastConfirmedKey + 1, newlyConfirmedKey);
         }
 
@@ -1739,12 +1759,12 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         for (Entry<String, CType> entry : _confirmationMap.entrySet()) {
             String memberName = entry.getKey();
             CType holder = entry.getValue();
-            decreaseWeight(memberName,getLastConfirmedKeyUnsafe(memberName), toKey, holder);
+            decreaseWeight(memberName, getLastConfirmedKeyUnsafe(memberName), toKey, holder);
         }
     }
 
-    private long getWeightForRangeUnsafe(long fromKey, long toKey){
-        if(_groupConfigHolder.getConfig().getBacklogConfig().getBackLogWeightPolicy() instanceof FixedBacklogWeightPolicy){
+    private long getWeightForRangeUnsafe(long fromKey, long toKey) {
+        if (_groupConfigHolder.getConfig().getBacklogConfig().getBackLogWeightPolicy() instanceof FixedBacklogWeightPolicy) {
             return toKey - fromKey + 1;
         }
         List<T> packets = getSpecificPacketsUnsafe(fromKey, toKey);
@@ -1755,54 +1775,79 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         return weight;
     }
 
-    protected void increaseAllMembersWeight(long weight, long key){
+    protected void increaseAllMembersWeight(long weight, long key) {
         for (Entry<String, CType> entry : _confirmationMap.entrySet()) {
             CType confirmationHolder = entry.getValue();
-            if(confirmationHolder.getLastConfirmedKey() >= key){
+            if (confirmationHolder.getLastConfirmedKey() >= key) {
                 continue;
             }
             increaseWeight(entry.getKey(), weight, confirmationHolder);
         }
     }
 
-    public void printRedoLog(String _name, String from){
-        if(!_name.contains("1_1"))
+    public void printRedoLog(String _name, String from) {
+        if (_name.contains("1_1"))
             return;
-        System.out.println("----------------------------------------------");
-        System.out.println(from);
-        System.out.println("");
+        _logger.info("----------------------------------------------");
+        _logger.info(from);
+        _logger.info("");
         ReadOnlyIterator<T> iterator = _backlogFile.readOnlyIterator(0);
-        while (iterator.hasNext()){
+        while (iterator.hasNext()) {
             T t = iterator.next();
-            System.out.println(t + ", weight = " + t.getWeight());
+            System.out.println(t);
         }
-        System.out.println("");
+        _logger.info("");
 
-        System.out.println("confirmation map :");
-        System.out.println("");
+        _logger.info("confirmation map :");
+        _logger.info("");
         printConfirmationMap();
-        System.out.println("----------------------------------------------");
+        _logger.info("----------------------------------------------");
     }
 
     private void printConfirmationMap() {
         for (Entry<String, CType> stringCTypeEntry : _confirmationMap.entrySet()) {
-            _logger.severe("target: "+ stringCTypeEntry.getKey() + ", member limit = "+ getGroupConfigSnapshot().getBacklogConfig().getLimit(stringCTypeEntry.getKey()) +
-                    " weight = " + stringCTypeEntry.getValue().getWeight()+ ", lastConfirmed = "+stringCTypeEntry.getValue().getLastConfirmedKey());
+            String mirror = String.valueOf(stringCTypeEntry.getKey().equalsIgnoreCase(_mirrorMemberName) ? ", discarded count = " + stringCTypeEntry.getValue().getDiscardedPacketsCount() : "");
+            _logger.info("target: " + stringCTypeEntry.getKey() + ", member limit = " + getGroupConfigSnapshot().getBacklogConfig().getLimit(stringCTypeEntry.getKey()) +
+                    " weight = " + stringCTypeEntry.getValue().getCalculatedWeight() + ", lastConfirmed = " + stringCTypeEntry.getValue().getLastConfirmedKey() + mirror);
         }
     }
-
 
     public class CaluclateMinUnconfirmedKeyProcedure
             implements MapProcedure<String, CType> {
 
-        private long minUnconfirmedKey;
+        private long minUnconfirmedNonMirrorKey;
+        private long minUnconfirmedMirrorKey;
+        private boolean hasMirror;
+
+        public CaluclateMinUnconfirmedKeyProcedure(boolean hasMirror) {
+            this.hasMirror = hasMirror;
+        }
 
         public void reset() {
-            minUnconfirmedKey = Long.MAX_VALUE;
+            minUnconfirmedNonMirrorKey = Long.MAX_VALUE;
+            minUnconfirmedMirrorKey = -1;
         }
 
         public long getCalculatedMinimumUnconfirmedKey() {
-            return minUnconfirmedKey;
+            if (!hasMirror) {
+                return minUnconfirmedNonMirrorKey;
+            }
+            if (minUnconfirmedNonMirrorKey < minUnconfirmedMirrorKey) {
+//                printRedoLog(_name, "******** nonMirror = "+minUnconfirmedNonMirrorKey+" mirror = "+minUnconfirmedMirrorKey+" , chosen = " + minUnconfirmedNonMirrorKey + "********");
+                return minUnconfirmedNonMirrorKey;
+            } else {
+//                printRedoLog(_name, "******** nonMirror = "+minUnconfirmedNonMirrorKey+" mirror = "+minUnconfirmedMirrorKey+" , chosen = " + minUnconfirmedMirrorKey + "********");
+                return minUnconfirmedMirrorKey;
+            }
+        }
+
+
+        public long getMinUnconfirmedNonMirrorKey() {
+            return minUnconfirmedNonMirrorKey;
+        }
+
+        public long getMinUnconfirmedMirrorKey() {
+            return minUnconfirmedMirrorKey;
         }
 
         public boolean execute(String memberLookupName, CType confirmation) {
@@ -1810,17 +1855,28 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
             if (_outOfSyncDueToDeletionTargets.contains(memberLookupName))
                 return true;
 
-            // Never has any confirmation, minimum is null
             final long memberConfirmedKey = getMemberUnconfirmedKey(confirmation);
+
+            if (memberLookupName.equals(_mirrorMemberName)) {
+                if (memberConfirmedKey == -1) {
+                    minUnconfirmedMirrorKey = -1;
+                    return false;
+                } else {
+                    minUnconfirmedMirrorKey = memberConfirmedKey + 1;
+                    return true;
+                }
+            }
+
+            // Never has any confirmation, minimum is null
             if (memberConfirmedKey == -1) {
-                minUnconfirmedKey = -1;
+                minUnconfirmedNonMirrorKey = -1;
                 return false;
             }
 
             long memberUnconfirmed = memberConfirmedKey + 1;
-            if (memberUnconfirmed < minUnconfirmedKey)
-                minUnconfirmedKey = memberUnconfirmed;
-
+            if (memberUnconfirmed < minUnconfirmedNonMirrorKey) {
+                minUnconfirmedNonMirrorKey = memberUnconfirmed;
+            }
             return true;
         }
 

@@ -262,6 +262,7 @@ public class ClusterXML {
     final static public String REPL_ORIGINAL_STATE_TAG = "repl-original-state";
     final static public String REPL_REDO_LOG_CAPACITY_TAG = MIRROR_SERVICE_REDO_LOG_CAPACITY_TAG;
     final static public String REPL_REDO_LOG_MEMORY_CAPACITY_TAG = "redo-log-memory-capacity";
+    final static public String REPL_REDO_LOG_COMPACTION_TAG = "redo-log-compaction";
     final static public String REPL_REDO_LOG_BACKLOG_WEIGHT_POLICY = "backlog-weight-policy";
     final static public String REPL_REDO_LOG_RECOVERY_CAPACITY_TAG = "redo-log-recovery-capacity";
     final static public String REPL_REDO_LOG_LOCALVIEW_CAPACITY_TAG = "redo-log-local-view-capacity";
@@ -1562,6 +1563,11 @@ public class ClusterXML {
         value = getNodeValueIfExists(replPolicyNode, REPL_REDO_LOG_MEMORY_CAPACITY_TAG);
         if (value != null)
             replPolicy.setMaxRedoLogMemoryCapacity(Long.parseLong(value));
+
+        // REPL_REDO_LOG_COMPACTION_TAG - max redoLog memory capacity
+        value = getNodeValueIfExists(replPolicyNode, REPL_REDO_LOG_COMPACTION_TAG);
+        if (value != null)
+            replPolicy.setRedoLogCompaction(RedoLogCompaction.parse(value));
 
         // REPL_REDO_LOG_BACKLOG_WEIGHT_POLICY - policy of backlog wight
         value = getNodeValueIfExists(replPolicyNode, REPL_REDO_LOG_BACKLOG_WEIGHT_POLICY);

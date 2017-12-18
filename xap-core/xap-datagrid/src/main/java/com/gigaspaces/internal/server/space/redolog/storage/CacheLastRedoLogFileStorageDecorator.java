@@ -16,15 +16,14 @@
 
 package com.gigaspaces.internal.server.space.redolog.storage;
 
+import com.gigaspaces.internal.cluster.node.impl.backlog.AbstractSingleFileGroupBacklog;
 import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPacket;
 import com.gigaspaces.internal.server.space.redolog.RedoLogFileCompromisedException;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.WeightedBatch;
 import com.gigaspaces.logger.Constants;
+import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,10 +44,12 @@ public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedP
     private final int _bufferCapacity;
     private final INonBatchRedoLogFileStorage<T> _storage;
     private final LinkedList<T> _buffer = new LinkedList<T>();
+    private final AbstractSingleFileGroupBacklog _groupBacklog;
     private long _bufferWeight;
+    private long _discardedPacketCount;
 
 
-    public CacheLastRedoLogFileStorageDecorator(int bufferSize, INonBatchRedoLogFileStorage<T> storage) {
+    public CacheLastRedoLogFileStorageDecorator(int bufferSize, INonBatchRedoLogFileStorage<T> storage, AbstractSingleFileGroupBacklog groupBacklog) {
         this._bufferCapacity = bufferSize;
         this._storage = storage;
 
@@ -57,22 +58,40 @@ public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedP
                     + "\n\tbufferSize = " + _bufferCapacity);
         }
         _bufferWeight = 0;
+        _groupBacklog = groupBacklog;
     }
 
     public void append(T replicationPacket)
             throws StorageException, StorageFullException {
         _buffer.addLast(replicationPacket);
-        increaseBufferWeight(replicationPacket);
+        if (replicationPacket.isDiscardedPacket()) {
+            _discardedPacketCount++;
+        } else {
+            increaseBufferWeight(replicationPacket);
+        }
         flushOldest();
-
     }
 
     private void increaseBufferWeight(T replicationPacket) {
-        _bufferWeight += replicationPacket.getWeight();
+        if (replicationPacket.isDiscardedPacket()) {
+            _discardedPacketCount++;
+            if(_groupBacklog.hasMirror()){
+                _groupBacklog.increaseMirrorDiscardedCount(1);
+            }
+        } else {
+            _bufferWeight += replicationPacket.getWeight();
+        }
     }
 
     private void decreaseBufferWeight(T replicationPacket) {
-        _bufferWeight -= replicationPacket.getWeight();
+        if (replicationPacket.isDiscardedPacket()) {
+            _discardedPacketCount--;
+            if(_groupBacklog.hasMirror()) {
+                _groupBacklog.decreaseMirrorDiscardedCount(1);
+            }
+        } else {
+            _bufferWeight -= replicationPacket.getWeight();
+        }
     }
 
     public void appendBatch(List<T> replicationPackets)
@@ -86,7 +105,7 @@ public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedP
 
     private void flushOldest() throws StorageException, StorageFullException {
         try {
-            while (_bufferWeight > _bufferCapacity && _buffer.size() > 1){
+            while (_bufferWeight > _bufferCapacity && _buffer.size() > 1) {
                 T packet = _buffer.removeFirst();
                 _storage.append(packet);
                 decreaseBufferWeight(packet);
@@ -120,11 +139,25 @@ public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedP
         return _bufferWeight + _storage.getWeight();
     }
 
+    @Override
+    public long getDiscardedPacketsCount() {
+        return _discardedPacketCount;
+    }
+
+    @Override
+    public long performCompaction(long from, long to) {
+        ListIterator<T> iterator = _buffer.listIterator();
+        long discardedCount = RedoLogCompactionUtil.compact(from, to, iterator);
+        this._bufferWeight -= discardedCount;
+        this._discardedPacketCount += discardedCount;
+        return discardedCount;
+    }
+
     public void deleteOldestPackets(long packetsCount) throws StorageException {
         long storageSize = _storage.size();
         _storage.deleteOldestPackets(packetsCount);
         int bufferSize = _buffer.size();
-        for (long i = 0; i < Math.min(bufferSize, packetsCount - storageSize); ++i){
+        for (long i = 0; i < Math.min(bufferSize, packetsCount - storageSize); ++i) {
             T first = _buffer.removeFirst();
             decreaseBufferWeight(first);
         }
@@ -162,13 +195,13 @@ public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedP
         return new CacheReadOnlyIterator((int) (fromIndex - storageSize));
     }
 
-    public WeightedBatch<T> removeFirstBatch(int batchCapacity) throws StorageException {
-        WeightedBatch<T> batch = _storage.removeFirstBatch(batchCapacity);
+    public WeightedBatch<T> removeFirstBatch(int batchCapacity, long lastCompactionRangeEndKey) throws StorageException {
+        WeightedBatch<T> batch = _storage.removeFirstBatch(batchCapacity, lastCompactionRangeEndKey);
 
-        while (!_buffer.isEmpty() &&batch.getWeight() < batchCapacity && !batch.isLimitReached()){
+        while (!_buffer.isEmpty() && batch.getWeight() < batchCapacity && !batch.isLimitReached()) {
             T first = _buffer.getFirst();
 
-            if(batch.size() > 0 && batch.getWeight() + first.getWeight() > batchCapacity){
+            if (batch.size() > 0 && batch.getWeight() + first.getWeight() > batchCapacity) {
                 batch.setLimitReached(true);
                 break;
             }
@@ -177,7 +210,7 @@ public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedP
             decreaseBufferWeight(first);
             batch.addToBatch(first);
         }
-        if(batch.size() >= batchCapacity){
+        if (batch.size() >= batchCapacity) {
             batch.setLimitReached(true);
         }
         return batch;
@@ -189,7 +222,7 @@ public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedP
 
     @Override
     public long getCacheWeight() {
-        return _bufferWeight;
+        return RedoLogCompactionUtil.calculateWeight(_bufferWeight, _discardedPacketCount);
     }
 
     /**

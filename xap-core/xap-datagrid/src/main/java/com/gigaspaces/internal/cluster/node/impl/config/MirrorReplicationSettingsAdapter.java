@@ -23,6 +23,7 @@ import com.gigaspaces.internal.cluster.node.impl.filters.IReplicationOutFilter;
 import com.gigaspaces.internal.cluster.node.impl.filters.ISpaceCopyReplicaInFilter;
 import com.gigaspaces.internal.cluster.node.impl.filters.ISpaceCopyReplicaOutFilter;
 import com.j_spaces.core.cluster.RedoLogCapacityExceededPolicy;
+import com.j_spaces.core.cluster.RedoLogCompaction;
 import com.j_spaces.core.cluster.ReplicationProcessingType;
 import com.j_spaces.core.cluster.SwapBacklogConfig;
 
@@ -132,6 +133,11 @@ public class MirrorReplicationSettingsAdapter
 
     @Override
     public String getBacklogWeightPolicy() {
+        return null;
+    }
+
+    @Override
+    public RedoLogCompaction getRedoLogCompaction() {
         return null;
     }
 

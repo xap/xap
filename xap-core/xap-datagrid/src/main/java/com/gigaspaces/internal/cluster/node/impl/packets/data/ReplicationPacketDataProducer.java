@@ -657,4 +657,9 @@ public class ReplicationPacketDataProducer
             }
         }
     }
+
+    @Override
+    public boolean isPrimary() {
+        return _spaceEngine.getSpaceImpl().isPrimary();
+    }
 }

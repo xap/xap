@@ -112,8 +112,8 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
         return new BufferedReadOnlyIterator((int) (fromIndex - storageSize));
     }
 
-    public WeightedBatch<T> removeFirstBatch(int batchCapacity) throws StorageException {
-        WeightedBatch<T> batch = _storage.removeFirstBatch(batchCapacity);
+    public WeightedBatch<T> removeFirstBatch(int batchCapacity, long lastCompactionRangeEndKey) throws StorageException {
+        WeightedBatch<T> batch = _storage.removeFirstBatch(batchCapacity, lastCompactionRangeEndKey);
 
         if (_logger.isLoggable(Level.FINEST))
             _logger.finest("removed a batch of weight " + batch.getWeight() + " from storage");
@@ -168,6 +168,16 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
     @Override
     public long getWeight() {
         return _bufferWeight + _storage.getWeight();
+    }
+
+    @Override
+    public long getDiscardedPacketsCount() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long performCompaction(long from, long to){
+        throw new UnsupportedOperationException();
     }
 
     @Override

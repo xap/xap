@@ -23,6 +23,7 @@ import com.gigaspaces.internal.cluster.node.impl.filters.IReplicationInFilter;
 import com.gigaspaces.internal.cluster.node.impl.filters.IReplicationOutFilter;
 import com.gigaspaces.internal.cluster.node.impl.filters.ISpaceCopyReplicaInFilter;
 import com.gigaspaces.internal.cluster.node.impl.filters.ISpaceCopyReplicaOutFilter;
+import com.j_spaces.core.cluster.RedoLogCompaction;
 import com.j_spaces.core.cluster.ReplicationPolicy;
 import com.j_spaces.core.cluster.ReplicationProcessingType;
 import com.j_spaces.core.cluster.SwapBacklogConfig;
@@ -55,7 +56,7 @@ public class ReplicationSettings
     private SwapBacklogConfig swapBacklogSettings = new SwapBacklogConfig();
     private ConsistencyLevel consistencyLevel = SyncReplPolicy.DEFAULT_CONSISTENCY_LEVEL;
     private String backlogWeightPolicy = ReplicationPolicy.DEFAULT_BACKLOG_WEIGHT_POLICY;
-    ;
+    private RedoLogCompaction redoLogCompaction = ReplicationPolicy.DEFAULT_REDO_LOG_COMPACTION;
 
     public int getOperationsReplicationThreshold() {
         return operationsReplicationThreshold;
@@ -216,6 +217,11 @@ public class ReplicationSettings
     @Override
     public String getBacklogWeightPolicy() {
         return backlogWeightPolicy;
+    }
+
+    @Override
+    public RedoLogCompaction getRedoLogCompaction() {
+        return redoLogCompaction;
     }
 
     public void setBacklogWeightPolicy(String backlogWeightPolicy) {

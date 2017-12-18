@@ -16,8 +16,9 @@
 
 package com.gigaspaces.internal.server.space.redolog;
 
+import com.gigaspaces.internal.cluster.node.impl.backlog.AbstractSingleFileGroupBacklog;
 import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPacket;
-import com.gigaspaces.internal.server.space.redolog.storage.CacheLastRedoLogFileStorageDecorator;
+import com.gigaspaces.internal.cluster.node.impl.packets.data.IReplicationPacketData;
 import com.gigaspaces.internal.server.space.redolog.storage.INonBatchRedoLogFileStorage;
 import com.gigaspaces.internal.server.space.redolog.storage.StorageException;
 import com.gigaspaces.internal.server.space.redolog.storage.StorageReadOnlyIterator;
@@ -48,14 +49,17 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
     private final INonBatchRedoLogFileStorage<T> _externalStorage;
     private final String _name;
     private final int _combinedMemoryMaxCapacity;
+    private final AbstractSingleFileGroupBacklog _groupBacklog;
     //Not volatile because this is not a thread safe structure, assume flushing of thread cache
     //changes because lock is held at upper layer
     private boolean _insertToExternal = false;
+    private long _lastCompactionRangeEndKey = -1;
+    private long _lastSeenTransientPacketKey = -1;
 
     /**
      * Constructs a fixed size swap redo log file
      */
-    public FixedSizeSwapRedoLogFile(FixedSizeSwapRedoLogFileConfig config, String name) {
+    public FixedSizeSwapRedoLogFile(FixedSizeSwapRedoLogFileConfig config, String name, AbstractSingleFileGroupBacklog groupBacklog) {
         this._memoryMaxCapacity = config.getMemoryMaxPackets();
         this._externalStorage = config.getRedoLogFileStorage();
         this._fetchBatchCapacity = config.getFetchBatchSize();
@@ -66,8 +70,9 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
                     + "\n\tmemoryMaxPackets = " + _memoryMaxCapacity
                     + "\n\tfetchBatchSize = " + _fetchBatchCapacity);
         }
-        _memoryRedoLogFile = new MemoryRedoLogFile<T>(name);
+        _memoryRedoLogFile = new MemoryRedoLogFile<T>(name, groupBacklog);
         _name = name;
+        _groupBacklog = groupBacklog;
     }
 
     public void add(T replicationPacket) {
@@ -75,8 +80,8 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
         if (!_insertToExternal) {
             if (_memoryRedoLogFile.isEmpty() && packetWeight > _combinedMemoryMaxCapacity) {
                 _memoryRedoLogFile.add(replicationPacket);
-                _logger.warning( "inserting to " + _name + " memory an operation which weight is larger than the max memory capacity:" +
-                        " packet[key=" + replicationPacket.getKey() + ",Type=" + replicationPacket.getClass()+ ", weight="+replicationPacket.getWeight()+"]\n");
+                _logger.warning("inserting to " + _name + " memory an operation which weight is larger than the max memory capacity:" +
+                        " packet[key=" + replicationPacket.getKey() + ",Type=" + replicationPacket.getClass() + ", weight=" + replicationPacket.getWeight() + "]\n");
                 return;
             }
             if (_memoryRedoLogFile.getWeight() + packetWeight <= _memoryMaxCapacity) {
@@ -87,6 +92,11 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
         }
         if (_insertToExternal)
             addToStorage(replicationPacket);
+
+        IReplicationPacketData<?> packetData = replicationPacket.getData();
+        if(packetData != null && packetData.isSingleEntryData() && packetData.getSingleEntryData() !=null && packetData.getSingleEntryData().isTransient()){
+            _lastSeenTransientPacketKey = replicationPacket.getKey();
+        }
     }
 
 
@@ -185,20 +195,24 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
 
     private void moveOldestBatchFromStorage() {
         try {
-            WeightedBatch<T> batch = _externalStorage.removeFirstBatch(_fetchBatchCapacity);
+            WeightedBatch<T> batch = _externalStorage.removeFirstBatch(_fetchBatchCapacity, _lastCompactionRangeEndKey);
             if (_logger.isLoggable(Level.FINEST))
                 _logger.finest("Moved a batch of packets from storage into memory, batch weight is " + batch.getWeight());
 
             if (batch.getWeight() + getCacheSize() > _combinedMemoryMaxCapacity) {
-                _logger.warning( "Moved a batch of packets from storage into memory which weight causes a breach of memory max capacity," +
-                        " batch weight: "+batch.getWeight()+", current memory weight: "+getCacheSize()+"\n");
+                _logger.warning("Moved a batch of packets from storage into memory which weight causes a breach of memory max capacity," +
+                        " batch weight: " + batch.getWeight() + ", current memory weight: " + getCacheSize() + "\n");
             }
 
             for (T packet : batch.getBatch())
                 _memoryRedoLogFile.add(packet);
-
             if (_externalStorage.isEmpty() && batch.getWeight() < _memoryMaxCapacity)
                 _insertToExternal = false;
+
+            if(batch.getDiscardedPacketCount() > 0){
+                _groupBacklog.updateMirrorWeightAfterCompaction(batch.getDiscardedPacketCount());
+            }
+
         } catch (StorageException e) {
             throw new SwapStorageException(e);
         }
@@ -253,6 +267,36 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
     @Override
     public long getWeight() {
         return _memoryRedoLogFile.getWeight() + _externalStorage.getWeight();
+    }
+
+    @Override
+    public long getDiscardedPacketsCount() {
+        return _memoryRedoLogFile.getDiscardedPacketsCount() + _externalStorage.getDiscardedPacketsCount();
+    }
+
+    @Override
+    public long performCompaction(long from, long to){
+        try {
+            if(_externalStorage.isEmpty()){
+                return 0;
+            }
+        } catch (StorageException e) {
+            _logger.log(Level.WARNING,"could not establish external storage state", e);
+        }
+
+        if(_lastCompactionRangeEndKey != -1){
+            from = _lastCompactionRangeEndKey +1;
+        }
+
+        if(from > _lastSeenTransientPacketKey){
+            return 0;
+        }
+        long discardedInMemory = _memoryRedoLogFile.performCompaction(from, to);
+        long discardedInExternalStorage = _externalStorage.performCompaction(from, to);
+
+        _lastCompactionRangeEndKey = to;
+
+        return  discardedInExternalStorage + discardedInMemory;
     }
 
     /**

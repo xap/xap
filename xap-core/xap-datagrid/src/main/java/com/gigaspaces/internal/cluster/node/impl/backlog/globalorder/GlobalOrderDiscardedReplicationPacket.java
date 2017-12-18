@@ -32,15 +32,13 @@ public class GlobalOrderDiscardedReplicationPacket
 
     private long _key;
     private long _endKey;
-    private int _weight;
 
     public GlobalOrderDiscardedReplicationPacket() {
     }
 
-    public GlobalOrderDiscardedReplicationPacket(long key, int weight) {
+    public GlobalOrderDiscardedReplicationPacket(long key) {
         _key = key;
         _endKey = key;
-        _weight = weight;
     }
 
     public IReplicationPacketData<?> getData() {
@@ -59,9 +57,6 @@ public class GlobalOrderDiscardedReplicationPacket
         _endKey = endKey;
     }
 
-    public void set_weight(int _weight) {
-        this._weight = _weight;
-    }
 
     public boolean isDataPacket() {
         return false;
@@ -86,25 +81,31 @@ public class GlobalOrderDiscardedReplicationPacket
 
     @Override
     public int getWeight() {
-        return 1;
+        return 0;
     }
 
-    public void readExternal(ObjectInput in) throws IOException,
-            ClassNotFoundException {
+    public void readExternal(ObjectInput in) throws IOException,ClassNotFoundException {
         _key = in.readLong();
         final boolean hasRange = in.readBoolean();
         _endKey = hasRange ? in.readLong() : _key;
-        if(PlatformLogicalVersion.getLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v12_1_0)){
-            _weight = in.readInt();
+        PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
+        if(version.greaterOrEquals(PlatformLogicalVersion.v12_3_0)){
+            return;
+        }
+        if(version.greaterOrEquals(PlatformLogicalVersion.v12_1_0)){
+            int weight = in.readInt();
         }
     }
 
-    public void readFromSwap(ObjectInput in) throws IOException,
-            ClassNotFoundException {
+    public void readFromSwap(ObjectInput in) throws IOException,ClassNotFoundException {
         _key = in.readLong();
         _endKey = in.readLong();
-        if(PlatformLogicalVersion.getLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v12_1_0)){
-            _weight = in.readInt();
+        PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
+        if(version.greaterOrEquals(PlatformLogicalVersion.v12_3_0)){
+            return;
+        }
+        if(version.greaterOrEquals(PlatformLogicalVersion.v12_1_0)){
+            int weight = in.readInt();
         }
     }
 
@@ -113,8 +114,11 @@ public class GlobalOrderDiscardedReplicationPacket
         out.writeBoolean(hasKeyRange());
         if (hasKeyRange())
             out.writeLong(_endKey);
-        if(PlatformLogicalVersion.getLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v12_1_0)){
-            out.writeInt(_weight);
+        PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
+        if(version.greaterOrEquals(PlatformLogicalVersion.v12_3_0)){
+            return;
+        }else if(version.greaterOrEquals(PlatformLogicalVersion.v12_1_0)){
+            out.writeInt(0);
         }
     }
 
@@ -125,8 +129,11 @@ public class GlobalOrderDiscardedReplicationPacket
     public void writeToSwap(ObjectOutput out) throws IOException {
         out.writeLong(_key);
         out.writeLong(_endKey);
-        if(PlatformLogicalVersion.getLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v12_1_0)){
-            out.writeInt(_weight);
+        PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
+        if(version.greaterOrEquals(PlatformLogicalVersion.v12_3_0)){
+            return;
+        }else if(version.greaterOrEquals(PlatformLogicalVersion.v12_1_0)){
+            out.writeInt(0);
         }
     }
 

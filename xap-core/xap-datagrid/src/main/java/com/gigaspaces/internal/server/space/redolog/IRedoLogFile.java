@@ -18,6 +18,7 @@ package com.gigaspaces.internal.server.space.redolog;
 
 import com.gigaspaces.cluster.replication.IRedoLogFileStatistics;
 import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPacket;
+import com.gigaspaces.internal.server.space.redolog.storage.StorageException;
 import com.gigaspaces.internal.utils.collections.ReadOnlyIterable;
 import com.gigaspaces.internal.utils.collections.ReadOnlyIterator;
 
@@ -72,11 +73,11 @@ public interface IRedoLogFile<T extends IReplicationOrderedPacket> extends Itera
     boolean isEmpty();
 
     /**
-     * @param fromIndex index to start from
+     * @param fromKey index to start from
      * @return read only iterator over the packets in the file that will start from the given index,
      * where 0 specified the oldest packet
      */
-    ReadOnlyIterator<T> readOnlyIterator(long fromIndex);
+    ReadOnlyIterator<T> readOnlyIterator(long fromKey);
 
     /**
      * Deletes the oldest packets, starting from the oldest up until the specified batch size
@@ -97,4 +98,13 @@ public interface IRedoLogFile<T extends IReplicationOrderedPacket> extends Itera
 
     long getWeight();
 
+    long getDiscardedPacketsCount();
+
+    /**
+     *
+     * @param from key to start searching transient packet from
+     * @param to key to end searching transient packet from
+     * @return number of discarded packets
+     */
+    long performCompaction(long from, long to);
 }

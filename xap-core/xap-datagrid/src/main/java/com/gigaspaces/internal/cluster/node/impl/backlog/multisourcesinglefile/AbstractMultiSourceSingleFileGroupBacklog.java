@@ -258,7 +258,7 @@ public abstract class AbstractMultiSourceSingleFileGroupBacklog extends Abstract
     public IReplicationOrderedPacket replaceWithDiscarded(
             IReplicationOrderedPacket packet, boolean forceDiscard) {
         if (forceDiscard || !packet.getData().isMultiParticipantData())
-            return new GlobalOrderDiscardedReplicationPacket(packet.getKey(), packet.getWeight());
+            return new GlobalOrderDiscardedReplicationPacket(packet.getKey());
         return packet;
     }
 

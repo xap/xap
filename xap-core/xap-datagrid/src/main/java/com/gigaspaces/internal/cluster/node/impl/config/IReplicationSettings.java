@@ -21,6 +21,7 @@ import com.gigaspaces.internal.cluster.node.impl.filters.IReplicationInFilter;
 import com.gigaspaces.internal.cluster.node.impl.filters.IReplicationOutFilter;
 import com.gigaspaces.internal.cluster.node.impl.filters.ISpaceCopyReplicaInFilter;
 import com.gigaspaces.internal.cluster.node.impl.filters.ISpaceCopyReplicaOutFilter;
+import com.j_spaces.core.cluster.RedoLogCompaction;
 import com.j_spaces.core.cluster.ReplicationProcessingType;
 import com.j_spaces.core.cluster.SwapBacklogConfig;
 
@@ -60,4 +61,6 @@ public interface IReplicationSettings {
     SwapBacklogConfig getSwapBacklogSettings();
 
     String getBacklogWeightPolicy();
+
+    RedoLogCompaction getRedoLogCompaction();
 }

@@ -43,6 +43,7 @@
 						<communication-mode>unicast</communication-mode>	                    
 						<redo-log-capacity>-1</redo-log-capacity>
 						<redo-log-memory-capacity>-1</redo-log-memory-capacity>
+						<redo-log-compaction>none</redo-log-compaction>
 						<backlog-weight-policy>accumulated</backlog-weight-policy>
 						<redo-log-recovery-capacity>-1</redo-log-recovery-capacity>
 						<swap-redo-log>

@@ -16,6 +16,8 @@
 
 package com.gigaspaces.internal.cluster.node.impl.backlog.globalorder;
 
+import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
+
 /**
  * @since 8.0.1
  */
@@ -24,6 +26,7 @@ public abstract class AbstractSingleFileConfirmationHolder {
     private long _pendingErrorKey = -1;
     private Throwable _pendingError = null;
     private long _weight;
+    private long _discardedPacketsCount;
 
     public AbstractSingleFileConfirmationHolder() {
     }
@@ -61,6 +64,10 @@ public abstract class AbstractSingleFileConfirmationHolder {
         return "pendingErrorKey=" + _pendingErrorKey + ", pendingError=" + _pendingError;
     }
 
+    public long getCalculatedWeight() {
+        return RedoLogCompactionUtil.calculateWeight(_weight,_discardedPacketsCount);
+    }
+
     public long getWeight() {
         return _weight;
     }
@@ -69,4 +76,11 @@ public abstract class AbstractSingleFileConfirmationHolder {
         this._weight = _weight;
     }
 
+    public long getDiscardedPacketsCount() {
+        return _discardedPacketsCount;
+    }
+
+    public void setDiscardedPacketsCount(long _discardedPacketsCount) {
+        this._discardedPacketsCount = _discardedPacketsCount;
+    }
 }

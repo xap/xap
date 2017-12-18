@@ -55,9 +55,10 @@ public interface IRedoLogFileStorage<T extends IReplicationOrderedPacket> extend
      * Removes a batch from the start of the list
      *
      * @param batchCapacity WeightToRemove to remove
+     * @param lastCompactionRangeEndKey packets with keys larger then this cannot be discarded
      * @return removed batch
      */
-    WeightedBatch<T> removeFirstBatch(int batchCapacity) throws StorageException;
+    WeightedBatch<T> removeFirstBatch(int batchCapacity, long lastCompactionRangeEndKey) throws StorageException;
 
     /**
      * Delete a batch from the start of the list
@@ -93,6 +94,10 @@ public interface IRedoLogFileStorage<T extends IReplicationOrderedPacket> extend
     void close();
 
     long getWeight();
+
+    long getDiscardedPacketsCount();
+
+    long performCompaction(long from, long to);
 
     long getCacheWeight();
 }

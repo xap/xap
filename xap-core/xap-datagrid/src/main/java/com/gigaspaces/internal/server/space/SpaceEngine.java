@@ -365,6 +365,7 @@ public class SpaceEngine implements ISpaceModeListener {
 
         String redoLogCapacityFromCustomProperties = spaceImpl.getCustomProperties().getProperty(replicationPolicyPath + ClusterXML.REPL_REDO_LOG_CAPACITY_TAG);
         String redoLogMemoryCapacityFromCustomProperties = spaceImpl.getCustomProperties().getProperty(replicationPolicyPath + ClusterXML.REPL_REDO_LOG_MEMORY_CAPACITY_TAG);
+        String redoLogCompactionFromCustomProperties = spaceImpl.getCustomProperties().getProperty(replicationPolicyPath + ClusterXML.REPL_REDO_LOG_COMPACTION_TAG);
         String onRedoLogCapacityExceededFromCustomProperties = spaceImpl.getCustomProperties().getProperty(replicationPolicyPath + ClusterXML.REPL_REDO_LOG_CAPACITY_EXCEEDED_TAG);
 
         if (redoLogCapacityFromCustomProperties == null && spaceImpl.getClusterPolicy() != null && spaceImpl.getClusterPolicy().getReplicationPolicy() != null) {

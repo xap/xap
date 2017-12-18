@@ -16,13 +16,19 @@
 
 package com.gigaspaces.internal.server.space.redolog;
 
-import com.gigaspaces.internal.cluster.node.impl.backlog.globalorder.GlobalOrderOperationPacket;
+import com.gigaspaces.internal.cluster.node.impl.DataTypeIntroducePacketData;
+import com.gigaspaces.internal.cluster.node.impl.backlog.AbstractSingleFileGroupBacklog;
 import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPacket;
 import com.gigaspaces.internal.utils.collections.ReadOnlyIterator;
 import com.gigaspaces.internal.utils.collections.ReadOnlyIteratorAdapter;
+import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
 
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.ListIterator;
+import java.util.logging.Logger;
+
+import static com.gigaspaces.logger.Constants.LOGGER_REPLICATION_BACKLOG;
 
 /**
  * A memory only based implementation of the {@link IRedoLogFile} interface. Packets are stored only
@@ -35,10 +41,15 @@ import java.util.LinkedList;
 public class MemoryRedoLogFile<T extends IReplicationOrderedPacket> implements IRedoLogFile<T> {
     final private LinkedList<T> _redoFile = new LinkedList<T>();
     private final String _name;
+    private final AbstractSingleFileGroupBacklog _groupBacklog;
     private long _weight;
+    private long _discardedPacketCount;
+    private final Logger _logger;
 
-    public MemoryRedoLogFile(String name) {
+    public MemoryRedoLogFile(String name, AbstractSingleFileGroupBacklog groupBacklog) {
         _name = name;
+        _logger = Logger.getLogger(LOGGER_REPLICATION_BACKLOG + "." + _name);
+        _groupBacklog = groupBacklog;
     }
 
     public void add(T replicationPacket) {
@@ -97,9 +108,9 @@ public class MemoryRedoLogFile<T extends IReplicationOrderedPacket> implements I
         if (packetsCount > _redoFile.size()) {
             _redoFile.clear();
             _weight = 0;
-        }
-        else {
-            for (long i = 0; i < packetsCount; ++i){
+            _discardedPacketCount = 0;
+        } else {
+            for (long i = 0; i < packetsCount; ++i) {
                 T first = _redoFile.removeFirst();
                 decreaseWeight(first);
             }
@@ -107,16 +118,21 @@ public class MemoryRedoLogFile<T extends IReplicationOrderedPacket> implements I
     }
 
     private void printRedoFile(String s) {
-        if(!_name.contains("1_1")){
+        if (_name.contains("1_1")) {
             return;
         }
-        System.out.println("");
-        System.out.println(s);
+        _logger.info("");
+        _logger.info(s);
         for (T t : _redoFile) {
-            System.out.println(t);
+            String dataString = t.getData().toString();
+            if (t.getData() instanceof DataTypeIntroducePacketData) {
+                dataString = "DataTypeIntroduce";
+            }
+            _logger.info("key=" + t.getKey() + ", data=" + dataString);
         }
-        Thread.dumpStack();
-        System.out.println("");
+//        Thread.dumpStack();
+        _logger.info("Total weight = " + this.getWeight());
+        _logger.info("");
     }
 
     public void validateIntegrity() throws RedoLogFileCompromisedException {
@@ -126,18 +142,48 @@ public class MemoryRedoLogFile<T extends IReplicationOrderedPacket> implements I
 
     public void close() {
         _redoFile.clear();
+        _weight = 0;
+        _discardedPacketCount = 0;
     }
 
     @Override
     public long getWeight() {
-        return _weight;
+        return RedoLogCompactionUtil.calculateWeight(_weight, _discardedPacketCount);
     }
 
-    private void increaseWeight(T packet){
-        _weight += packet.getWeight();
+    @Override
+    public long getDiscardedPacketsCount() {
+        return _discardedPacketCount;
     }
 
-    private void decreaseWeight(T packet){
-        _weight -= packet.getWeight();
+    @Override
+    public long performCompaction(long from, long to) {
+        ListIterator<T> iterator = _redoFile.listIterator();
+        long discardedCount = RedoLogCompactionUtil.compact(from, to, iterator);
+        this._weight -= discardedCount;
+        this._discardedPacketCount += discardedCount;
+        return discardedCount;
+    }
+
+    private void increaseWeight(T packet) {
+        if (packet.isDiscardedPacket()) {
+            _discardedPacketCount++;
+            if (_groupBacklog.hasMirror()) {
+                _groupBacklog.increaseMirrorDiscardedCount(1);
+            }
+        } else {
+            _weight += packet.getWeight();
+        }
+    }
+
+    private void decreaseWeight(T packet) {
+        if (packet.isDiscardedPacket()) {
+            _discardedPacketCount--;
+            if (_groupBacklog.hasMirror()) {
+                _groupBacklog.decreaseMirrorDiscardedCount(1);
+            }
+        } else {
+            _weight -= packet.getWeight();
+        }
     }
 }

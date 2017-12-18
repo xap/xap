@@ -372,8 +372,8 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
         return remaining;
     }
 
-    public WeightedBatch<T> removeFirstBatch(int batchCapacity) throws StorageException {
-        WeightedBatch<T> batch = new WeightedBatch<T>();
+    public WeightedBatch<T> removeFirstBatch(int batchCapacity, long lastCompactionRangeEndKey) throws StorageException {
+        WeightedBatch<T> batch = new WeightedBatch<T>(lastCompactionRangeEndKey);
         if (_initialized) {
             SegmentCursor reader = null;
             try {
@@ -511,6 +511,16 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
     @Override
     public long getWeight() {
             return _weight;
+    }
+
+    @Override
+    public long getDiscardedPacketsCount() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long performCompaction(long from, long to){
+        throw new UnsupportedOperationException();
     }
 
     @Override
