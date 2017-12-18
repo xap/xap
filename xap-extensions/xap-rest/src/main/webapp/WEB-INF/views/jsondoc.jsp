@@ -13,7 +13,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="">
 <meta name="author" content="">
-<script src="resources/js/jquery-1.11.3.min.js"></script>
+<script src="resources/js/jquery-1.12.4.min.js"></script>
 <script src="resources/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="resources/js/handlebars-1.0.0.beta.6.js"></script>
 <script type="text/javascript" src="resources/js/jlinq.js"></script>
