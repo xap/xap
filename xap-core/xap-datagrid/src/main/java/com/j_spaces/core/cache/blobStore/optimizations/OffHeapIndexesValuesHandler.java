@@ -98,6 +98,7 @@ public class OffHeapIndexesValuesHandler {
             info.setOffHeapAddress(allocate(buf, info.getOffHeapAddress(), offHeapByteCounter));
         }
         else {
+            getUnsafe().putInt(info.getOffHeapAddress(), buf.length);
             writeBytes(info.getOffHeapAddress() + CONSTANT_PREFIX_SIZE, buf);
         }
     }

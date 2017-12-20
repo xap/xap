@@ -25,6 +25,4 @@ public interface IBlobStoreCacheHandler {
     long getMissCount();
 
     long getHitCount();
-
-    LongCounter getOffHeapByteCounter();
 }
