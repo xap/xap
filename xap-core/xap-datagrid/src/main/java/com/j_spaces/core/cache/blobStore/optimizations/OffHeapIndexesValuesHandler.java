@@ -18,8 +18,6 @@
 
 package com.j_spaces.core.cache.blobStore.optimizations;
 
-import com.gigaspaces.metrics.LongCounter;
-import com.gigaspaces.metrics.MetricRegistrator;
 import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.blobStore.BlobStoreRefEntryCacheInfo;
 import com.j_spaces.core.cache.blobStore.IBlobStoreOffHeapInfo;
@@ -53,7 +51,7 @@ public class OffHeapIndexesValuesHandler {
         return _unsafe;
     }
 
-    public static long allocate(byte[] buf, long address, LongCounter offHeapByteCounter) {
+    public static long allocate(byte[] buf, long address) {
         long newAddress;
 
         if (address != BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
@@ -74,7 +72,6 @@ public class OffHeapIndexesValuesHandler {
         }
         getUnsafe().putInt(newAddress, buf.length);
         writeBytes(newAddress + CONSTANT_PREFIX_SIZE, buf);
-        offHeapByteCounter.inc(CONSTANT_PREFIX_SIZE + buf.length);
         return newAddress;
 
     }
@@ -88,14 +85,14 @@ public class OffHeapIndexesValuesHandler {
         return bytes;
     }
 
-    public static void update(IBlobStoreOffHeapInfo info, byte[] buf, LongCounter offHeapByteCounter) {
+    public static void update(IBlobStoreOffHeapInfo info, byte[] buf) {
         if (info.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             throw new IllegalStateException("trying to update when no off heap memory is allocated");
         }
         int oldEntryLength = getUnsafe().getInt(info.getOffHeapAddress());
         if (oldEntryLength < buf.length) {
-            delete(info, offHeapByteCounter);
-            info.setOffHeapAddress(allocate(buf, info.getOffHeapAddress(), offHeapByteCounter));
+            delete(info);
+            info.setOffHeapAddress(allocate(buf, info.getOffHeapAddress()));
         }
         else {
             getUnsafe().putInt(info.getOffHeapAddress(), buf.length);
@@ -103,14 +100,16 @@ public class OffHeapIndexesValuesHandler {
         }
     }
 
-    public static void delete(IBlobStoreOffHeapInfo info, LongCounter offHeapByteCounter) {
+    public static void delete(IBlobStoreOffHeapInfo info) {
         long valuesAddress = info.getOffHeapAddress();
         if (valuesAddress != BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
-            getUnsafe().freeMemory(valuesAddress);
+            unsafeDelete(valuesAddress);
             info.setOffHeapAddress(BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY);
-            int numOfBytes = getUnsafe().getInt(valuesAddress);
-            offHeapByteCounter.dec(CONSTANT_PREFIX_SIZE + numOfBytes);
         }
+    }
+
+    private static void unsafeDelete(long address) {
+        getUnsafe().freeMemory(address);
     }
 
     private static void writeBytes(long address, byte[] bytes) {
