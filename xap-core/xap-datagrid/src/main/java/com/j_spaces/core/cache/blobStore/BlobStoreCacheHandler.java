@@ -19,6 +19,7 @@ package com.j_spaces.core.cache.blobStore;
 
 import com.gigaspaces.metrics.Gauge;
 import com.gigaspaces.metrics.LongCounter;
+import com.gigaspaces.metrics.MetricConstants;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.j_spaces.core.cache.CacheOperationReason;
 import com.j_spaces.core.cache.context.Context;
