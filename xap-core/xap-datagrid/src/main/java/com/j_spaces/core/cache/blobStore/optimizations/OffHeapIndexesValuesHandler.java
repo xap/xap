@@ -53,7 +53,7 @@ public class OffHeapIndexesValuesHandler {
         return _unsafe;
     }
 
-    public static long allocate(byte[] buf, long address, LongCounter offHeapByteCounter) {
+    public static long allocate(byte[] buf, long address, LongCounter offHeapByteCounter, LongCounter offHeapTypeCounter) {
         long newAddress;
 
         if (address != BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
@@ -75,6 +75,7 @@ public class OffHeapIndexesValuesHandler {
         getUnsafe().putInt(newAddress, buf.length);
         writeBytes(newAddress + CONSTANT_PREFIX_SIZE, buf);
         offHeapByteCounter.inc(CONSTANT_PREFIX_SIZE + buf.length);
+        offHeapTypeCounter.inc(CONSTANT_PREFIX_SIZE + buf.length);
         return newAddress;
 
     }
@@ -88,27 +89,28 @@ public class OffHeapIndexesValuesHandler {
         return bytes;
     }
 
-    public static void update(IBlobStoreOffHeapInfo info, byte[] buf, LongCounter offHeapByteCounter) {
+    public static void update(IBlobStoreOffHeapInfo info, byte[] buf, LongCounter offHeapByteCounter, LongCounter offHeapTypeCounter) {
         if (info.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             throw new IllegalStateException("trying to update when no off heap memory is allocated");
         }
         int oldEntryLength = getUnsafe().getInt(info.getOffHeapAddress());
         if (oldEntryLength < buf.length) {
-            delete(info, offHeapByteCounter);
-            info.setOffHeapAddress(allocate(buf, info.getOffHeapAddress(), offHeapByteCounter));
+            delete(info, offHeapByteCounter, offHeapTypeCounter);
+            info.setOffHeapAddress(allocate(buf, info.getOffHeapAddress(), offHeapByteCounter, offHeapTypeCounter));
         }
         else {
             writeBytes(info.getOffHeapAddress() + CONSTANT_PREFIX_SIZE, buf);
         }
     }
 
-    public static void delete(IBlobStoreOffHeapInfo info, LongCounter offHeapByteCounter) {
+    public static void delete(IBlobStoreOffHeapInfo info, LongCounter offHeapByteCounter, LongCounter offHeapTypeCounter) {
         long valuesAddress = info.getOffHeapAddress();
         if (valuesAddress != BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             int numOfBytes = getUnsafe().getInt(valuesAddress);
             getUnsafe().freeMemory(valuesAddress);
             info.setOffHeapAddress(BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY);
             offHeapByteCounter.dec(CONSTANT_PREFIX_SIZE + numOfBytes);
+            offHeapTypeCounter.dec(CONSTANT_PREFIX_SIZE + numOfBytes);
         }
     }
 

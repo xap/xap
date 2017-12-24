@@ -5399,6 +5399,9 @@ public class CacheManager extends AbstractCacheManager
                     return getNumberOfNotifyTemplates(typeName, true);
                 }
             });
+            if(_offHeapOptimizationEnabled){
+                registrator.register("blobstore_offheap_"+typeName, _typeManager.getServerTypeDesc(typeName).getOffHeapTypeCounter());
+            }
         }
 
         private void unregisterTypeMetrics(final String typeName) {
@@ -5704,6 +5707,5 @@ public class CacheManager extends AbstractCacheManager
         }
         queryExtensionManagers.clear();
     }
-
 
 }

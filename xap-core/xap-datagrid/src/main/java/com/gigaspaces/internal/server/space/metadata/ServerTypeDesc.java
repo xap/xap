@@ -20,6 +20,7 @@ import com.gigaspaces.internal.metadata.EntryIntrospector;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.metadata.InactiveTypeDesc;
+import com.gigaspaces.metrics.LongCounter;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -29,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ServerTypeDesc implements IServerTypeDesc {
     private static final AtomicInteger  _codesGen = new AtomicInteger();
     private static final ConcurrentMap<Short,IServerTypeDesc> _codesRepo = new ConcurrentHashMap<Short, IServerTypeDesc>();
+    private final LongCounter _offHeapTypeCounter = new LongCounter();
 
 
     private final int _typeId;
@@ -141,7 +143,7 @@ public class ServerTypeDesc implements IServerTypeDesc {
     }
 
 
-    public IServerTypeDesc createCopy(IServerTypeDesc superType) {
+    public IServerTypeDesc createCopy(IServerTypeDesc superType) { //TODO: copy longcounter?
         // Create a copy of this type with the new super type:
         ServerTypeDesc copy = new ServerTypeDesc(this._typeId, this._typeName, this._typeDesc, superType, this._serverTypeDescCode);
         copy._inactive = this._inactive;
@@ -213,5 +215,10 @@ public class ServerTypeDesc implements IServerTypeDesc {
     @Override
     public void setMaybeOutdated() {
         this._maybeOutdated = true;
+    }
+
+    @Override
+    public LongCounter getOffHeapTypeCounter() {
+        return _offHeapTypeCounter;
     }
 }
