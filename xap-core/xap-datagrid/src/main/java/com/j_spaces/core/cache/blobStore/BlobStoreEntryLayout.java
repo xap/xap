@@ -496,6 +496,10 @@ public class BlobStoreEntryLayout implements Externalizable {
         _blobStoreVersion = version;
     }
 
+    public String getTypeName() {
+        return _typeName;
+    }
+
     private Object[] readObjectArray(ObjectInput in, IServerTypeDesc typeDesc, Object[] current)
             throws IOException, ClassNotFoundException {
         final int length = in.readInt();

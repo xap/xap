@@ -20,6 +20,7 @@ import com.gigaspaces.internal.metadata.EntryIntrospector;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.metadata.InactiveTypeDesc;
+import com.gigaspaces.metrics.LongCounter;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -29,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ServerTypeDesc implements IServerTypeDesc {
     private static final AtomicInteger  _codesGen = new AtomicInteger();
     private static final ConcurrentMap<Short,IServerTypeDesc> _codesRepo = new ConcurrentHashMap<Short, IServerTypeDesc>();
+    private final LongCounter _offHeapTypeCounter;
 
 
     private final int _typeId;
@@ -51,9 +53,10 @@ public class ServerTypeDesc implements IServerTypeDesc {
     }
 
     public ServerTypeDesc(int typeId, String typeName, ITypeDesc typeDesc, IServerTypeDesc superType) {
-        this(typeId, typeName, typeDesc,  superType,null);
+        this(typeId, typeName, typeDesc,  superType, null, new LongCounter());
     }
-    private ServerTypeDesc(int typeId, String typeName, ITypeDesc typeDesc, IServerTypeDesc superType,Short code) {
+
+    private ServerTypeDesc(int typeId, String typeName, ITypeDesc typeDesc, IServerTypeDesc superType,Short code, LongCounter offHeapTypeCounter) {
         this._typeId = typeId;
         this._typeName = typeName;
         this._isRootType = typeName.equals(ROOT_TYPE_NAME);
@@ -68,13 +71,15 @@ public class ServerTypeDesc implements IServerTypeDesc {
 
         if (superType != null)
             superType.addSubType(this);
-        if (code ==null)
+        if (code == null)
         {
             Integer c = _codesGen.incrementAndGet();
             code = c.shortValue();
             _codesRepo.put(code,this);
         }
         _serverTypeDescCode = code;
+        this._offHeapTypeCounter = offHeapTypeCounter;
+
     }
 
     public static IServerTypeDesc getByServerTypeDescCode(short code)
@@ -143,7 +148,7 @@ public class ServerTypeDesc implements IServerTypeDesc {
 
     public IServerTypeDesc createCopy(IServerTypeDesc superType) {
         // Create a copy of this type with the new super type:
-        ServerTypeDesc copy = new ServerTypeDesc(this._typeId, this._typeName, this._typeDesc, superType, this._serverTypeDescCode);
+        ServerTypeDesc copy = new ServerTypeDesc(this._typeId, this._typeName, this._typeDesc, superType, this._serverTypeDescCode, this._offHeapTypeCounter);
         copy._inactive = this._inactive;
         IServerTypeDesc oldServerTypeDesc = _codesRepo.put(this._serverTypeDescCode, copy);
         if(oldServerTypeDesc != null){
@@ -213,5 +218,10 @@ public class ServerTypeDesc implements IServerTypeDesc {
     @Override
     public void setMaybeOutdated() {
         this._maybeOutdated = true;
+    }
+
+    @Override
+    public LongCounter getOffHeapTypeCounter() {
+        return _offHeapTypeCounter;
     }
 }
