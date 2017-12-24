@@ -57,7 +57,7 @@ import java.util.logging.Logger;
 
 
 /**
- * The resident part of entry that resides off-heap
+ * The resident part of entry that resides blob-store
  *
  * @author yechiel
  * @since 10.0
@@ -640,12 +640,13 @@ public class BlobStoreRefEntryCacheInfo
                 BlobStoreEntryLayout entryLayout = (BlobStoreEntryLayout) getEntryLayout_impl(cacheManager, entry);
 
                 if (!isWrittenToBlobStore()) {
-                    //new entry or mirror initial load- insert to cache
-                    if (isFromInitialLoad)
-                        insertOrTouchInternalCache(context,cacheManager, entry,CacheOperationReason.ON_INITIAL_LOAD);
-                    else
-                        insertOrTouchInternalCache(context,cacheManager, entry,CacheOperationReason.ON_WRITE);
-
+                    if (isFromInitialLoad) {
+                        if (cacheManager.getBlobStoreInternalCache().getBlobStoreInternalCacheFilter() != null)
+                            //mirror initial load- insert to cache if filters exist
+                            insertOrTouchInternalCache(context, cacheManager, entry, CacheOperationReason.ON_INITIAL_LOAD);
+                    }else {
+                        insertOrTouchInternalCache(context, cacheManager, entry, CacheOperationReason.ON_WRITE);
+                    }
                     if (cacheManager.isOffHeapOptimizationEnabled() && !isPhantom()) {
                         setOffHeapAddress(OffHeapIndexesValuesHandler.allocate(entryLayout.getIndexValuesBytes(cacheManager), getOffHeapAddress(), cacheManager.getBlobStoreInternalCache().getOffHeapByteCounter()));
                     }
