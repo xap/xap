@@ -58,6 +58,7 @@ import com.gigaspaces.metadata.SpaceMetadataException;
 import com.gigaspaces.metadata.index.CompoundIndex;
 import com.gigaspaces.metadata.index.ISpaceCompoundIndexSegment;
 import com.gigaspaces.metrics.Gauge;
+import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.metrics.MetricConstants;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.gigaspaces.query.extension.QueryExtensionProvider;
@@ -5377,14 +5378,15 @@ public class CacheManager extends AbstractCacheManager
                 _typeDataMap.put(serverTypeDesc, typeData);
 
                 if (!_engine.isLocalCache())
-                    registerTypeMetrics(serverTypeDesc.getTypeName());
+                    registerTypeMetrics(serverTypeDesc);
                 if (_logger.isLoggable(Level.FINE))
                     _logger.log(Level.FINE, "Created new TypeData for type " + serverTypeDesc.getTypeName() +
                             " [typeId=" + serverTypeDesc.getTypeId() + "]");
             }
         }
 
-        private void registerTypeMetrics(final String typeName) {
+        private void registerTypeMetrics(final IServerTypeDesc serverTypeDesc) {
+            final String typeName = serverTypeDesc.getTypeName();
             final String metricTypeName = typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) ? "total" : typeName;
             final MetricRegistrator registrator = _engine.getMetricRegistrator();
             registrator.register(registrator.toPath("data", "entries", metricTypeName), new Gauge<Integer>() {
@@ -5399,8 +5401,8 @@ public class CacheManager extends AbstractCacheManager
                     return getNumberOfNotifyTemplates(typeName, true);
                 }
             });
-            if(_offHeapOptimizationEnabled){
-                registrator.register("blobstore_offheap_"+typeName, _typeManager.getServerTypeDesc(typeName).getOffHeapTypeCounter());
+            if(_offHeapOptimizationEnabled && !typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME)){
+                registrator.register("blobstore_offheap_"+typeName, serverTypeDesc.getOffHeapTypeCounter());
             }
         }
 
