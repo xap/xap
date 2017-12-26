@@ -17,6 +17,7 @@
 
 package org.openspaces.persistency.hibernate.iterator;
 
+import com.gigaspaces.SpaceRuntimeException;
 import com.gigaspaces.datasource.DataIterator;
 import com.gigaspaces.datasource.DataSourceSQLQuery;
 import com.j_spaces.core.client.SQLQuery;
@@ -24,6 +25,7 @@ import com.j_spaces.core.client.SQLQuery;
 import org.hibernate.CacheMode;
 import org.hibernate.Criteria;
 import org.hibernate.FlushMode;
+import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -135,6 +137,18 @@ public class DefaultListQueryDataIterator implements DataIterator {
         session = sessionFactory.openSession();
         transaction = session.beginTransaction();
         if (entityName != null) {
+            return createIteratorFromCriteria();
+        } else  if (sqlQuery != null) {
+            return createIteratorFromSqlQuery();
+        } else if (dataSourceSQLQuery != null) {
+            return createIteratorFromDataSourceQuery();
+        } else {
+            throw new IllegalStateException("Either SQLQuery or entity must be provided");
+        }
+    }
+
+    private Iterator createIteratorFromCriteria() {
+        try {
             Criteria criteria = session.createCriteria(entityName);
             criteria.setCacheMode(CacheMode.IGNORE);
             criteria.setCacheable(false);
@@ -144,22 +158,34 @@ public class DefaultListQueryDataIterator implements DataIterator {
                 criteria.setMaxResults(size);
             }
             return criteria.list().iterator();
-        } else if (sqlQuery != null) {
+        } catch (HibernateException e) {
+            throw new SpaceRuntimeException("Failed to create iterator for [" + entityName + "]", e);
+        }
+    }
+
+    private Iterator createIteratorFromSqlQuery() {
+        try {
             Query query = HibernateIteratorUtils.createQueryFromSQLQuery(sqlQuery, session);
             if (from >= 0) {
                 query.setFirstResult(from);
                 query.setMaxResults(size);
             }
             return query.list().iterator();
-        } else if (dataSourceSQLQuery != null) {
+        } catch (HibernateException e) {
+            throw new SpaceRuntimeException("Failed to create iterator for [" + sqlQuery + "]", e);
+        }
+    }
+
+    private Iterator createIteratorFromDataSourceQuery() {
+        try {
             Query query = HibernateIteratorUtils.createQueryFromDataSourceSQLQuery(dataSourceSQLQuery, session);
             if (from >= 0) {
                 query.setFirstResult(from);
                 query.setMaxResults(size);
             }
             return query.list().iterator();
-        } else {
-            throw new IllegalStateException("Either SQLQuery or entity must be provided");
+        } catch (HibernateException e) {
+            throw new SpaceRuntimeException("Failed to create iterator for [" + dataSourceSQLQuery + "]", e);
         }
     }
 
