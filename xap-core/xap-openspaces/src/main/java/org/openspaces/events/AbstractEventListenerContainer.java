@@ -131,7 +131,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
     /**
      * Returns the GigaSpace instance to be used for Space operations.
      */
-    protected final GigaSpace getGigaSpace() {
+    public final GigaSpace getGigaSpace() {
         return this.gigaSpace;
     }
 
@@ -143,7 +143,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
      * Return the bean name that this listener container has been assigned in its containing bean
      * factory, if any.
      */
-    protected final String getBeanName() {
+    public final String getBeanName() {
         return this.beanName;
     }
 
@@ -197,7 +197,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         return "stopped";
     }
 
-    protected EventExceptionHandler getExceptionHandler() {
+    public EventExceptionHandler getExceptionHandler() {
         return exceptionHandler;
     }
 
@@ -258,7 +258,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             registerMetrics();
     }
 
-    protected ApplicationContext getApplicationContext() {
+    public ApplicationContext getApplicationContext() {
         return applicationContext;
     }
 
@@ -734,7 +734,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
      * Returns the template that will be used. Note, in order to perform receive operations, the
      * {@link #getReceiveTemplate()} should be used.
      */
-    protected Object getTemplate() {
+    public Object getTemplate() {
         return this.template;
     }
 
@@ -752,7 +752,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
     /**
      * Returns whether dynamic template is configured
      */
-    protected boolean isDynamicTemplate() {
+    public boolean isDynamicTemplate() {
         return dynamicTemplate != null;
     }
 
@@ -775,7 +775,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
      * #setPerformSnapshot(boolean)} is set to <code>true</code> (the default) will return the
      * snapshot of the provided template.
      */
-    protected Object getReceiveTemplate() {
+    public Object getReceiveTemplate() {
         if (dynamicTemplate != null) {
             return dynamicTemplate.getDynamicTemplate();
         }
@@ -810,7 +810,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
      * Return the Spring PlatformTransactionManager to use for transactional wrapping of message
      * reception plus listener execution.
      */
-    protected final PlatformTransactionManager getTransactionManager() {
+    public final PlatformTransactionManager getTransactionManager() {
         return this.transactionManager;
     }
 
@@ -874,7 +874,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         return null;
     }
 
-    protected boolean isTransactional() {
+    public boolean isTransactional() {
         return transactionManager != null;
     }
 
