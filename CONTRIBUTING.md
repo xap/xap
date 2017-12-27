@@ -2,7 +2,7 @@
 
 ## Issue Reports
 
-Issues are reported and tracked via JIRA - https://xap-issues.atlassian.net
+Issues are reported and tracked via JIRA - https://insightedge.atlassian.net/projects/GS/summary
 
 ## Pull Requests
 
