@@ -8,7 +8,7 @@
     <parent>
         <artifactId>xap</artifactId>
         <groupId>org.gigaspaces</groupId>
-        <version>12.3.0-SNAPSHOT</version>
+        <version>12.3.0-m13-18912-33</version>
         <relativePath>../../</relativePath>
     </parent>
     <artifactId>xap-common</artifactId>
