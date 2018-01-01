@@ -5402,7 +5402,7 @@ public class CacheManager extends AbstractCacheManager
                 }
             });
             if(_offHeapOptimizationEnabled && !typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME)){
-                registrator.register("blobstore_offheap_"+typeName, serverTypeDesc.getOffHeapTypeCounter());
+                registrator.register("blobstore_offheap_" + typeName, serverTypeDesc.getOffHeapTypeCounter());
             }
         }
 
@@ -5411,7 +5411,9 @@ public class CacheManager extends AbstractCacheManager
             final MetricRegistrator registrator = _engine.getMetricRegistrator();
             registrator.unregisterByPrefix(registrator.toPath("data", "entries", metricTypeName));
             registrator.unregisterByPrefix(registrator.toPath("data", "notify-templates", metricTypeName));
-            registrator.unregisterByPrefix("blobstore_offheap_"+typeName);
+            if(_offHeapOptimizationEnabled && !typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME)){
+                registrator.unregisterByPrefix("blobstore_offheap_" + typeName);
+            }
         }
 
         private TypeData replaceTypeData(IServerTypeDesc serverTypeDesc, TypeData.TypeDataRecreationReasons reason) {
