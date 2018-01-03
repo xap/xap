@@ -37,7 +37,7 @@ public class OffHeapIndexesValuesHandler {
 
     private volatile static Unsafe _unsafe;
     private static Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
-    private static int CONSTANT_PREFIX_SIZE = 4;
+    private static final int MINIMAL_BUFFER_DIFF_TO_ALLOCATE = 50;
 
     private static Unsafe getUnsafe() {
         if (_unsafe == null) {
@@ -59,8 +59,9 @@ public class OffHeapIndexesValuesHandler {
         if (address != BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             throw new IllegalStateException("trying to allocate when already allocated in off heap");
         }
+        int headerSize = calculateHeaderSize(buf.length);
         try {
-            newAddress = getUnsafe().allocateMemory(CONSTANT_PREFIX_SIZE + buf.length);
+            newAddress = getUnsafe().allocateMemory(headerSize + buf.length);
         } catch (Error e) {
             logger.log(Level.SEVERE, "failed to allocate offheap space", e);
             throw e;
@@ -72,10 +73,11 @@ public class OffHeapIndexesValuesHandler {
             logger.log(Level.SEVERE, "failed to allocate offheap space");
             throw new RuntimeException("failed to allocate offheap space");
         }
-        getUnsafe().putInt(newAddress, buf.length);
-        writeBytes(newAddress + CONSTANT_PREFIX_SIZE, buf);
-        offHeapByteCounter.inc(CONSTANT_PREFIX_SIZE + buf.length);
-        offHeapTypeCounter.inc(CONSTANT_PREFIX_SIZE + buf.length);
+
+        putHeaderToUnsafe(newAddress, buf.length);
+        writeBytes(newAddress + headerSize, buf);
+        offHeapByteCounter.inc(headerSize + buf.length);
+        offHeapTypeCounter.inc(headerSize + buf.length);
         return newAddress;
 
     }
@@ -84,8 +86,9 @@ public class OffHeapIndexesValuesHandler {
         if (address == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             throw new IllegalStateException("trying to read from off heap but no address found");
         }
-        int numOfBytes = getUnsafe().getInt(address);
-        byte[] bytes = readBytes(address + CONSTANT_PREFIX_SIZE, numOfBytes);
+        int headerSize = getHeaderSizeFromUnsafe(address);
+        int numOfBytes = getHeaderFromUnsafe(address,headerSize);
+        byte[] bytes = readBytes(address + (long)(headerSize), numOfBytes);
         return bytes;
     }
 
@@ -93,24 +96,26 @@ public class OffHeapIndexesValuesHandler {
         if (info.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             throw new IllegalStateException("trying to update when no off heap memory is allocated");
         }
-        int oldEntryLength = getUnsafe().getInt(info.getOffHeapAddress());
-        if (oldEntryLength < buf.length) {
+        int oldHeaderSize = getHeaderSizeFromUnsafe(info.getOffHeapAddress());
+        int oldEntryLength = getHeaderFromUnsafe(info.getOffHeapAddress(),oldHeaderSize);
+        if (oldEntryLength < buf.length || (oldEntryLength - buf.length >= MINIMAL_BUFFER_DIFF_TO_ALLOCATE)) {
             delete(info, offHeapByteCounter, offHeapTypeCounter);
             info.setOffHeapAddress(allocate(buf, info.getOffHeapAddress(), offHeapByteCounter, offHeapTypeCounter));
         }
         else {
-            writeBytes(info.getOffHeapAddress() + CONSTANT_PREFIX_SIZE, buf);
+            writeBytes(info.getOffHeapAddress() + (long)(oldHeaderSize), buf);
         }
     }
 
     public static void delete(IBlobStoreOffHeapInfo info, LongCounter offHeapByteCounter, LongCounter offHeapTypeCounter) {
         long valuesAddress = info.getOffHeapAddress();
         if (valuesAddress != BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
-            int numOfBytes = getUnsafe().getInt(valuesAddress);
+            int headerSize = getHeaderSizeFromUnsafe(info.getOffHeapAddress());
+            int numOfBytes = getHeaderFromUnsafe(valuesAddress,headerSize);
             getUnsafe().freeMemory(valuesAddress);
             info.setOffHeapAddress(BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY);
-            offHeapByteCounter.dec(CONSTANT_PREFIX_SIZE + numOfBytes);
-            offHeapTypeCounter.dec(CONSTANT_PREFIX_SIZE + numOfBytes);
+            offHeapByteCounter.dec(headerSize + numOfBytes);
+            offHeapTypeCounter.dec(headerSize + numOfBytes);
         }
     }
 
@@ -129,5 +134,67 @@ public class OffHeapIndexesValuesHandler {
         }
         return res;
     }
+
+    private static int calculateHeaderSize(int bufferLen) {
+        if (bufferLen > Integer.MAX_VALUE /2 )
+            throw new RuntimeException("illigal buffer length =" + bufferLen);
+        for (int left =3; left >= 0; left-- )
+        {
+            int next = (bufferLen >>> (left*8)) & 0xFF;
+            if (next != 0)
+            {
+                if ((next & 0x0C0) !=0)
+                    return (left + 2);
+                else
+                    return left +1;
+            }
+        }
+        throw new RuntimeException("illigal buffer length =" + bufferLen);
+    }
+
+    private static int putHeaderToUnsafe(long address, int bufferLen) {
+        int headerSize = 0;
+        boolean started = false;
+        for (int left =3; left >= 0; left-- ) {
+            int next = (bufferLen >>> (left * 8)) & 0xFF;
+            if (!started) {
+                if (next == 0)
+                    continue;
+                if ((next & 0x0C0) != 0) {
+                    headerSize = left + 1;
+                    getUnsafe().putByte(address, (byte) (headerSize << 6));
+                    address++;
+                } else {
+                    headerSize = left;
+                    next |= ((headerSize << 6));
+                }
+                headerSize++;
+                started = true;
+            }
+            getUnsafe().putByte(address, (byte) (next));
+            address++;
+        }
+        return headerSize;
+    }
+
+    private static int getHeaderSizeFromUnsafe(long address) {
+        return (((getUnsafe().getByte(address)) & 0xC0) >>6) + 1;
+    }
+
+    private static int getHeaderFromUnsafe(long address, int headerSize) {
+        int len =0;
+        for (int i=0; i<headerSize; i++)
+        {
+            int intByte = getUnsafe().getByte(address);
+            if (i==0)
+                intByte &= 0x3F;
+            else
+                intByte &= 0xFF;
+            len |= (intByte << ((headerSize -1 -i) * 8));
+            address++;
+        }
+        return len;
+    }
+
 
 }
