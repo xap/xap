@@ -176,9 +176,6 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
     }
 
     public void deleteOldestPackets(long packetsCount) {
-        if(_logger.isLoggable(Level.FINEST)){
-            _logger.finest("deleting oldest packets, trace- "+ JSpaceUtilities.getCallStackTraces(6));
-        }
         long memorySize = _memoryRedoLogFile.size();
         _memoryRedoLogFile.deleteOldestPackets(packetsCount);
 
