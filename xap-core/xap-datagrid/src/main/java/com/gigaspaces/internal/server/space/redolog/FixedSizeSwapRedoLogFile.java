@@ -25,6 +25,7 @@ import com.gigaspaces.internal.server.space.redolog.storage.StorageReadOnlyItera
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.WeightedBatch;
 import com.gigaspaces.internal.utils.collections.ReadOnlyIterator;
 import com.gigaspaces.logger.Constants;
+import com.j_spaces.kernel.JSpaceUtilities;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -175,6 +176,9 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
     }
 
     public void deleteOldestPackets(long packetsCount) {
+        if(_logger.isLoggable(Level.FINEST)){
+            _logger.finest("deleting oldest packets, trace- "+ JSpaceUtilities.getCallStackTraces(6));
+        }
         long memorySize = _memoryRedoLogFile.size();
         _memoryRedoLogFile.deleteOldestPackets(packetsCount);
 
