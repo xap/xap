@@ -8,8 +8,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sigar.version>1.6.5</sigar.version>
-        <spring.version>4.1.9.RELEASE</spring.version>
-        <spring.security.version>4.0.0.RELEASE</spring.security.version>
+        <spring.version>4.3.13.RELEASE</spring.version>
+        <spring.security.version>4.2.3.RELEASE</spring.security.version>
         <junit.version>4.12</junit.version>
         <xap.version>12.3.0</xap.version>
         <xap.milestone>m1</xap.milestone>

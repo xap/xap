@@ -29,7 +29,7 @@
     </dependencyManagement>
 
     <properties>
-        <spring-version>4.1.9.RELEASE</spring-version>
+        <spring-version>4.3.13.RELEASE</spring-version>
         <exclude.tests>nothing-to-exclude</exclude.tests>
         <jsondoc-version>1.1.1</jsondoc-version>
     </properties>
@@ -47,7 +47,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.8.1</version>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>
         <dependency>

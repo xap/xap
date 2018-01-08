@@ -4,7 +4,7 @@
 
     <properties>
         <jettyVersion>9.2.21.v20170120</jettyVersion>
-        <junitVersion>4.11</junitVersion>
+        <junitVersion>4.12</junitVersion>
         <skipTests>true</skipTests>
     </properties>
     <parent>

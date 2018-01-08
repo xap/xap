@@ -26,6 +26,7 @@ import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.spi.PersistenceProvider;
+import javax.persistence.spi.PersistenceUnitInfo;
 
 /**
  * A spring OpenSpaces JPA vendor adapter.
@@ -62,6 +63,10 @@ public class OpenSpacesJpaVendorAdapter implements JpaVendorAdapter {
     }
 
     public Map<String, ?> getJpaPropertyMap() {
+        return null;
+    }
+
+    public Map<String, ?> getJpaPropertyMap(PersistenceUnitInfo persistenceUnitInfo) {
         return null;
     }
 
