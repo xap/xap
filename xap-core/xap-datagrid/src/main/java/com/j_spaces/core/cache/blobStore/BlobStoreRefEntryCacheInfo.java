@@ -192,7 +192,7 @@ public class BlobStoreRefEntryCacheInfo
             setDirty_impl(false, false /*set_indexses*/, cacheManager);
             if (removed || isDeleted() || isPhantom()) {
                 removeFromInternalCache(context,cacheManager, _loadedBlobStoreEntry);
-                if (cacheManager.isOffHeapOptimizationEnabled()) {
+                if (cacheManager.getEngine().getMemoryManager().getOffHeapMemoryManager().isEnabled()) {
                     OffHeapIndexesValuesHandler.delete(this, cacheManager.getBlobStoreInternalCache().getOffHeapByteCounter(), getServerTypeDesc().getOffHeapTypeCounter());
                 }
                 if (!isPhantom()) //when entry is phantom its deleted physicyally by a confirmation background thread
@@ -200,7 +200,7 @@ public class BlobStoreRefEntryCacheInfo
             } else {
                 if (!isWrittenToBlobStore()) {
                     insertOrTouchInternalCache(context, cacheManager, _loadedBlobStoreEntry, CacheOperationReason.ON_WRITE); //new entry- insert to cache if applicable
-                    if (cacheManager.isOffHeapOptimizationEnabled()) {
+                    if (cacheManager.getEngine().getMemoryManager().getOffHeapMemoryManager().isEnabled()) {
                         try {
                             setOffHeapAddress(OffHeapIndexesValuesHandler.allocate(((BlobStoreEntryLayout) getEntryLayout(cacheManager)).getIndexValuesBytes(cacheManager), getOffHeapAddress(), cacheManager.getBlobStoreInternalCache().getOffHeapByteCounter(), getServerTypeDesc().getOffHeapTypeCounter()));
                         } catch (IOException e) {
@@ -213,7 +213,7 @@ public class BlobStoreRefEntryCacheInfo
                     {
                         insertOrTouchInternalCache(context, cacheManager, _loadedBlobStoreEntry, CacheOperationReason.ON_UPDATE); //updated entry- insert to cache if applicable
                     }
-                    if (cacheManager.isOffHeapOptimizationEnabled()) {
+                    if (cacheManager.getEngine().getMemoryManager().getOffHeapMemoryManager().isEnabled()) {
                         try {
                             OffHeapIndexesValuesHandler.update(this, ((BlobStoreEntryLayout) getEntryLayout(cacheManager)).getIndexValuesBytes(cacheManager), cacheManager.getBlobStoreInternalCache().getOffHeapByteCounter(), getServerTypeDesc().getOffHeapTypeCounter());
                         } catch (IOException e) {
@@ -526,7 +526,7 @@ public class BlobStoreRefEntryCacheInfo
         if (dbe == null) {
             if (isWrittenToBlobStore()) {
                 BlobStoreEntryLayout ole = new BlobStoreEntryLayout();
-                if (onlyIndexesPart && cacheManager.isOffHeapOptimizationEnabled()) {
+                if (onlyIndexesPart && cacheManager.getEngine().getMemoryManager().getOffHeapMemoryManager().isEnabled()) {
                     try {
                         ole.readIndexValuesBytes(cacheManager, _serverTypeDescCode, OffHeapIndexesValuesHandler.get(getOffHeapAddress()));
                         ole.setBlobStoreVersion(_blobStoreVersion);
@@ -571,7 +571,7 @@ public class BlobStoreRefEntryCacheInfo
     public void insertOrTouchInternalCache(Context context,CacheManager cacheManager, BlobStoreEntryHolder entry,CacheOperationReason cacheOperationReason) {
         if (cacheOperationReason == CacheOperationReason.ON_TAKE)
             return; //take is called from another path
-        cacheManager.getBlobStoreInternalCache().handleOnSpaceOperation(context,entry,cacheOperationReason);
+        cacheManager.getBlobStoreInternalCache().handleOnSpaceOperation(context, entry, cacheOperationReason);
     }
 
     @Override
@@ -623,13 +623,13 @@ public class BlobStoreRefEntryCacheInfo
 
             if (isDeleted() && !entry.isPhantom()) {
                 removeEntryFromBlobStoreStorage_impl(context,cacheManager);
-                if (cacheManager.isOffHeapOptimizationEnabled()) {
+                if (cacheManager.getEngine().getMemoryManager().getOffHeapMemoryManager().isEnabled()) {
                     OffHeapIndexesValuesHandler.delete(this, cacheManager.getBlobStoreInternalCache().getOffHeapByteCounter(), getServerTypeDesc().getOffHeapTypeCounter());
                 }
             } else {
                 if (isPhantom()) {
                     removeFromInternalCache(context,cacheManager, _loadedBlobStoreEntry);
-                    if (cacheManager.isOffHeapOptimizationEnabled()) {
+                    if (cacheManager.getEngine().getMemoryManager().getOffHeapMemoryManager().isEnabled()) {
                         OffHeapIndexesValuesHandler.delete(this, cacheManager.getBlobStoreInternalCache().getOffHeapByteCounter(), getServerTypeDesc().getOffHeapTypeCounter());
                     }
                 }
@@ -647,12 +647,12 @@ public class BlobStoreRefEntryCacheInfo
                     }else {
                         insertOrTouchInternalCache(context, cacheManager, entry, CacheOperationReason.ON_WRITE);
                     }
-                    if (cacheManager.isOffHeapOptimizationEnabled() && !isPhantom()) {
+                    if (cacheManager.getEngine().getMemoryManager().getOffHeapMemoryManager().isEnabled() && !isPhantom()) {
                         setOffHeapAddress(OffHeapIndexesValuesHandler.allocate(entryLayout.getIndexValuesBytes(cacheManager), getOffHeapAddress(), cacheManager.getBlobStoreInternalCache().getOffHeapByteCounter(), getServerTypeDesc().getOffHeapTypeCounter()));
                     }
                     _blobStorePosition = cacheManager.getBlobStoreStorageHandler().add(getStorageKey_impl(), entryLayout, BlobStoreObjectType.DATA);
                 } else {
-                    if (cacheManager.isOffHeapOptimizationEnabled() && !isPhantom()) {
+                    if (cacheManager.getEngine().getMemoryManager().getOffHeapMemoryManager().isEnabled() && !isPhantom()) {
                         OffHeapIndexesValuesHandler.update(this, entryLayout.getIndexValuesBytes(cacheManager), cacheManager.getBlobStoreInternalCache().getOffHeapByteCounter(), getServerTypeDesc().getOffHeapTypeCounter());
                     }
                     _blobStorePosition = cacheManager.getBlobStoreStorageHandler().replace(getStorageKey_impl(), entryLayout, getBlobStorePos(), BlobStoreObjectType.DATA);

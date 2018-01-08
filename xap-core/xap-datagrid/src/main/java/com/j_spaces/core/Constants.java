@@ -757,7 +757,8 @@ public interface Constants {
         String CACHE_MANAGER_THIN_EXTENDED_INDEX_DEFAULT = "false";
         String CACHE_MANAGER_THIN_EXTENDED_INDEX_BLOBSTORE_DEFAULT = "true";
 
-        String CACHE_MANAGER_BLOBSTORE_OFFHEAP_OPTIMIZATION_PROP = "engine.blobstore_offheap_optimization_enabled";
+        String CACHE_MANAGER_BLOBSTORE_OFFHEAP_ENABLED_PROP = "engine.blobstore.offheap.enabled";
+        String CACHE_MANAGER_BLOBSTORE_OFFHEAP_MAXSIZE_PROP = "engine.blobstore.offheap.max_memory_size";
 
     }
 

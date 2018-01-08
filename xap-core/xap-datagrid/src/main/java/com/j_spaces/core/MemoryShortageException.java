@@ -57,6 +57,15 @@ public class MemoryShortageException
         this._maxMemory = maxMemory;
     }
 
+    public MemoryShortageException(String msg,String spaceName, String containerName, String hostName, long memoryUsage, long maxMemory) {
+        super(msg);
+        this._spaceName = spaceName;
+        this._containerName = containerName;
+        this._hostName = hostName;
+        this._memoryUsage = memoryUsage;
+        this._maxMemory = maxMemory;
+    }
+
     /**
      * @return the name of the space that caused this exception
      */

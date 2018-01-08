@@ -18,9 +18,11 @@ package com.j_spaces.core;
 
 import com.gigaspaces.internal.server.space.SpaceConfigReader;
 import com.gigaspaces.internal.server.space.SpaceImpl;
+import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.utils.concurrent.GSThread;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.core.cache.AbstractCacheManager;
+import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.kernel.JSpaceUtilities;
 import com.j_spaces.kernel.SystemProperties;
 
@@ -32,6 +34,8 @@ import java.util.logging.Logger;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_OFFHEAP_ENABLED_PROP;
+import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_OFFHEAP_MAXSIZE_PROP;
 import static com.j_spaces.core.Constants.Engine.ENGINE_MEMORY_EXPLICIT_GC_DEFAULT;
 import static com.j_spaces.core.Constants.Engine.ENGINE_MEMORY_EXPLICIT_GC_PROP;
 import static com.j_spaces.core.Constants.Engine.ENGINE_MEMORY_EXPLICIT_LEASE_REAPER_DEFAULT;
@@ -92,6 +96,7 @@ public class MemoryManager implements Closeable {
     final private boolean _forceLeaseReaper;
 
     private final IProcessMemoryManager _processMemoryManager;
+    private final OffHeapMemoryManager _offHeapMemoryManager;
 
     private final Logger _logger;
 
@@ -113,6 +118,8 @@ public class MemoryManager implements Closeable {
         _restartOnFailover = monitorMemoryUsage.equalsIgnoreCase(ENGINE_MEMORY_USAGE_ENABLED_PRIMARY_ONLY);
         _layoffTimeout = configReader.getLongSpaceProperty(
                 ENGINE_MEMORY_USAGE_RETRY_YIELD_PROP, ENGINE_MEMORY_USAGE_RETRY_YIELD_DEFAULT);
+
+        _offHeapMemoryManager = new OffHeapMemoryManager(spaceName, containerName, _cacheManager, configReader);
 
         if (_enabled) {
             _evictor = new Evictor();
@@ -301,10 +308,14 @@ public class MemoryManager implements Closeable {
     public void monitorMemoryUsage(boolean isWriteTypeOperation) throws MemoryShortageException {
         MemoryEvictionDecision res;
 
+        if (isWriteTypeOperation){
+            _offHeapMemoryManager.canAllocate();
+        }
         if (_enabled && ((res = monitorMemoryUsageWithNoEviction_Impl(isWriteTypeOperation)) != MemoryEvictionDecision.NO_EVICTION)) {
             // starts the eviction thread
             _evictor.evict(isWriteTypeOperation, res == MemoryEvictionDecision.SYNC_EVICTION);
         }
+
     }
 
     /**
@@ -669,6 +680,10 @@ public class MemoryManager implements Closeable {
                 }
             }
         }
+    }
+
+    public OffHeapMemoryManager getOffHeapMemoryManager(){
+        return _offHeapMemoryManager;
     }
 
 }

@@ -19,7 +19,6 @@ package com.j_spaces.core.cache;
 import com.gigaspaces.client.mutators.SpaceEntryMutator;
 import com.gigaspaces.client.protective.ProtectiveMode;
 import com.gigaspaces.client.protective.ProtectiveModeException;
-import com.gigaspaces.config.ConfigurationException;
 import com.gigaspaces.internal.client.cache.CustomInfo;
 import com.gigaspaces.internal.cluster.node.IReplicationNode;
 import com.gigaspaces.internal.cluster.node.IReplicationOutContext;
@@ -58,7 +57,6 @@ import com.gigaspaces.metadata.SpaceMetadataException;
 import com.gigaspaces.metadata.index.CompoundIndex;
 import com.gigaspaces.metadata.index.ISpaceCompoundIndexSegment;
 import com.gigaspaces.metrics.Gauge;
-import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.metrics.MetricConstants;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.gigaspaces.query.extension.QueryExtensionProvider;
@@ -77,15 +75,15 @@ import com.j_spaces.core.admin.SpaceRuntimeInfo;
 import com.j_spaces.core.admin.TemplateInfo;
 import com.j_spaces.core.cache.TerminatingFifoXtnsInfo.FifoXtnEntryInfo;
 import com.j_spaces.core.cache.blobStore.*;
-import com.j_spaces.core.cache.context.Context;
-import com.j_spaces.core.cache.fifoGroup.FifoGroupCacheImpl;
 import com.j_spaces.core.cache.blobStore.optimizations.BlobStoreOperationOptimizations;
 import com.j_spaces.core.cache.blobStore.recovery.BlobStoreRecoveryHelper;
 import com.j_spaces.core.cache.blobStore.recovery.BlobStoreRecoveryHelperWrapper;
-import com.j_spaces.core.cache.blobStore.sadapter.IBlobStoreStorageAdapter;
 import com.j_spaces.core.cache.blobStore.sadapter.BlobStoreFifoInitialLoader;
 import com.j_spaces.core.cache.blobStore.sadapter.BlobStoreStorageAdapter;
+import com.j_spaces.core.cache.blobStore.sadapter.IBlobStoreStorageAdapter;
 import com.j_spaces.core.cache.blobStore.storage.BlobStoreHashMock;
+import com.j_spaces.core.cache.context.Context;
+import com.j_spaces.core.cache.fifoGroup.FifoGroupCacheImpl;
 import com.j_spaces.core.client.*;
 import com.j_spaces.core.cluster.ClusterPolicy;
 import com.j_spaces.core.exception.internal.EngineInternalSpaceException;
@@ -99,68 +97,20 @@ import com.j_spaces.core.sadapter.SelectType;
 import com.j_spaces.core.server.processor.RemoveWaitingForInfoSABusPacket;
 import com.j_spaces.jdbc.SQLFunctions;
 import com.j_spaces.kernel.ClassLoaderHelper;
-import com.j_spaces.kernel.ICollection;
-import com.j_spaces.kernel.IObjectInfo;
-import com.j_spaces.kernel.IStoredList;
-import com.j_spaces.kernel.IStoredListIterator;
-import com.j_spaces.kernel.JSpaceUtilities;
-import com.j_spaces.kernel.StoredListFactory;
-import com.j_spaces.kernel.SystemProperties;
-import com.j_spaces.kernel.list.ConcurrentSegmentedStoredList;
-import com.j_spaces.kernel.list.IObjectsList;
-import com.j_spaces.kernel.list.IScanListIterator;
-import com.j_spaces.kernel.list.MultiIntersectedStoredList;
-import com.j_spaces.kernel.list.ScanSingleListIterator;
+import com.j_spaces.kernel.*;
+import com.j_spaces.kernel.list.*;
 import com.j_spaces.kernel.locks.*;
-import com.j_spaces.kernel.locks.BlobStoreLockManager;
-
 import net.jini.core.transaction.server.ServerTransaction;
 import net.jini.space.InternalSpaceException;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_CLASS_PROP;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_EVICTION_STRATEGY_CLASS_PROP;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_OFFHEAP_OPTIMIZATION_PROP;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_EVICTION_STRATEGY_PROP;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_INITIAL_LOAD_CLASS_PROP;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_INITIAL_LOAD_DEFAULT;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_INITIAL_LOAD_PROP;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_LRU_TOUCH_THRESHOLD_DEFAULT;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_LRU_TOUCH_THRESHOLD_PROP;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_MIN_EXTENDED_INDEX_ACTIVATION_DEFAULT;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_MIN_EXTENDED_INDEX_ACTIVATION_PROP;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_PARTIAL_UPDATE_REPLICATION_DEFAULT;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_PARTIAL_UPDATE_REPLICATION_PROP;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_SIZE_DEFAULT;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_SIZE_PROP;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_USE_BLOBSTORE_CLEAR_OPTIMIZATION_PROP;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_ALL_IN_CACHE;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_BLOB_STORE;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_LRU;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_PROP;
-import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP;
-import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_CACHE_FILTER_QUERIES_PROP;
-import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_PERSISTENT_PROP;
-import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BOLBSTORE_USE_PREFETCH_PROP;
-import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_USE_BLOBSTORE_BULKS_PROP;
-import static com.j_spaces.core.Constants.CacheManager.MAX_CACHE_POLICY_VALUE;
+import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.Engine.UPDATE_NO_LEASE;
 
 /**
@@ -266,7 +216,6 @@ public class CacheManager extends AbstractCacheManager
     private final boolean _enableSyncListForBlobStore;
     private final boolean _useBlobStorePrefetch;
     private final boolean _useBlobStoreReplicationBackupBulk;
-    private final boolean _offHeapOptimizationEnabled;
 
     private final Map<String, QueryExtensionIndexManagerWrapper> queryExtensionManagers;
 
@@ -363,12 +312,6 @@ public class CacheManager extends AbstractCacheManager
             throw new RuntimeException("blob-store cache policy not supported with direct EDS");
 
         _persistentBlobStore = persistentBlobStore;
-
-        if (isBlobStoreCachePolicy()){
-            _offHeapOptimizationEnabled = configReader.getBooleanSpaceProperty(CACHE_MANAGER_BLOBSTORE_OFFHEAP_OPTIMIZATION_PROP,"true");
-        } else {
-            _offHeapOptimizationEnabled = configReader.getBooleanSpaceProperty(CACHE_MANAGER_BLOBSTORE_OFFHEAP_OPTIMIZATION_PROP,"false");
-        }
 
         if (isBlobStoreCachePolicy()) {
             IStorageAdapter curSa;
@@ -512,10 +455,6 @@ public class CacheManager extends AbstractCacheManager
                 CACHE_MANAGER_PARTIAL_UPDATE_REPLICATION_PROP,
                 CACHE_MANAGER_PARTIAL_UPDATE_REPLICATION_DEFAULT);
 
-        if ( !isBlobStoreCachePolicy() && _offHeapOptimizationEnabled) {
-            throw new RuntimeException("Can not enable Off Heap optimization when cache policy is not Blob Store");
-        }
-
     }
 
     public boolean isTimeBasedEvictionStrategy() {
@@ -593,7 +532,7 @@ public class CacheManager extends AbstractCacheManager
                     blobstoreMetricRegistrar);
             _blobStoreStorageHandler.initialize(blobStoreConfig);
 
-            if(_offHeapOptimizationEnabled){
+            if(_engine.getMemoryManager().getOffHeapMemoryManager().isEnabled()){
                 blobstoreMetricRegistrar.register("offheap_used-bytes", _blobStoreInternalCache.getOffHeapByteCounter());
             }
 
@@ -784,10 +723,6 @@ public class CacheManager extends AbstractCacheManager
 
     public boolean isDirectPersistencyEmbeddedtHandlerUsed() {
         return _directPersistencyEmbeddedtHandlerUsed;
-    }
-
-    public boolean isOffHeapOptimizationEnabled() {
-        return _offHeapOptimizationEnabled;
     }
 
     /**
@@ -5401,7 +5336,7 @@ public class CacheManager extends AbstractCacheManager
                     return getNumberOfNotifyTemplates(typeName, true);
                 }
             });
-            if(_offHeapOptimizationEnabled && !typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME)){
+            if(!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && _engine.getMemoryManager().getOffHeapMemoryManager().isEnabled()){
                 registrator.register("blobstore_offheap_" + typeName, serverTypeDesc.getOffHeapTypeCounter());
             }
         }
@@ -5411,7 +5346,7 @@ public class CacheManager extends AbstractCacheManager
             final MetricRegistrator registrator = _engine.getMetricRegistrator();
             registrator.unregisterByPrefix(registrator.toPath("data", "entries", metricTypeName));
             registrator.unregisterByPrefix(registrator.toPath("data", "notify-templates", metricTypeName));
-            if(_offHeapOptimizationEnabled && !typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME)){
+            if(!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && _engine.getMemoryManager().getOffHeapMemoryManager().isEnabled()){
                 registrator.unregisterByPrefix("blobstore_offheap_" + typeName);
             }
         }

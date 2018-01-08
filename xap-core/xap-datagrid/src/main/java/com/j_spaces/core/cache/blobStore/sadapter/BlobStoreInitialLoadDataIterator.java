@@ -64,7 +64,7 @@ public class BlobStoreInitialLoadDataIterator implements ISAdapterIterator<IEntr
         EntryCacheInfoFactory.createBlobStoreEntryCacheInfo(eh);
         IBlobStoreEntryHolder oeh = (IBlobStoreEntryHolder) eh;
         oeh.getBlobStoreResidentPart().setBlobStorePosition(res.getPosition());
-        if (_engine.getCacheManager().isOffHeapOptimizationEnabled()) {
+        if (_engine.getMemoryManager().getOffHeapMemoryManager().isEnabled()) {
             try {
                 long offHeapAddress = OffHeapIndexesValuesHandler.allocate(entryLayout.getIndexValuesBytes(_engine.getCacheManager()), oeh.getBlobStoreResidentPart().getOffHeapAddress(),_engine.getCacheManager().getBlobStoreInternalCache().getOffHeapByteCounter(), eh.getServerTypeDesc().getOffHeapTypeCounter());
                 oeh.getBlobStoreResidentPart().setOffHeapAddress(offHeapAddress);

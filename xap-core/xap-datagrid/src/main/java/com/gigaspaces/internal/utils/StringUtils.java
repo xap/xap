@@ -601,4 +601,34 @@ public abstract class StringUtils {
 
         return buf.toString();
     }
+
+
+
+    public static Long parseStringAsBytes(String property) {
+        if (StringUtils.isEmpty(property))
+            return null;
+
+        // Find first non-digit char:
+        int pos = 0;
+        while (pos < property.length() && Character.isDigit(property.charAt(pos)))
+            pos++;
+
+        String prefix = property.substring(0, pos);
+        long number = Long.parseLong(prefix);
+        String suffix = pos < property.length() ? property.substring(pos) : null;
+        int memoryUn = parseMemoryUnit(suffix);
+        return number*memoryUn;
+    }
+
+    private static int parseMemoryUnit(String s) {
+        if (s == null) return 1;
+        if (s.equalsIgnoreCase("b")) return 1;
+        if (s.equalsIgnoreCase("kb")) return 1024;
+        if (s.equalsIgnoreCase("k")) return 1024;
+        if (s.equalsIgnoreCase("mb")) return 1024*1024;
+        if (s.equalsIgnoreCase("m")) return 1024*1024;
+        if (s.equalsIgnoreCase("gb")) return 1024*1024*1024;
+        if (s.equalsIgnoreCase("g")) return 1024*1024*1024;
+        throw new IllegalArgumentException("Invalid memory unit: '" + s + "'. Acceptable values: nb, nkb, nk, nmb, nm, ngb, ng where n is a positive number.");
+    }
 }
