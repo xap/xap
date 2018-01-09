@@ -191,4 +191,6 @@ public interface IReplicationGroupBacklog extends IDynamicSourceGroupStateListen
     void increaseWeight(String memberName, long weight, AbstractSingleFileConfirmationHolder holder);
 
     void decreaseWeight(String memberName, long fromKey, long toKey, AbstractSingleFileConfirmationHolder holder);
+
+    void performCompaction();
 }

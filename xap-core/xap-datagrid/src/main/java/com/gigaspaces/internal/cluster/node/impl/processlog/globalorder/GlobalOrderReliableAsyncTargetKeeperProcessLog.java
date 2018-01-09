@@ -133,6 +133,7 @@ public class GlobalOrderReliableAsyncTargetKeeperProcessLog
             packet = ((GlobalOrderReliableAsyncKeptDiscardedOrderedPacket) packet).getBeforeFilterPacket();
 
         _mediator.reliableAsyncSourceAdd(sourceLookupName, packet);
+        _mediator.performCompaction();
     }
 
     @Override

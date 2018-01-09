@@ -25,7 +25,7 @@ import com.gigaspaces.internal.server.space.redolog.storage.StorageReadOnlyItera
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.WeightedBatch;
 import com.gigaspaces.internal.utils.collections.ReadOnlyIterator;
 import com.gigaspaces.logger.Constants;
-import com.j_spaces.kernel.JSpaceUtilities;
+import com.j_spaces.core.cluster.ReplicationPolicy;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -95,7 +95,7 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
             addToStorage(replicationPacket);
 
         IReplicationPacketData<?> packetData = replicationPacket.getData();
-        if(packetData != null && packetData.isSingleEntryData() && packetData.getSingleEntryData() !=null && packetData.getSingleEntryData().isTransient()){
+        if (packetData != null && packetData.isSingleEntryData() && packetData.getSingleEntryData() != null && packetData.getSingleEntryData().isTransient()) {
             _lastSeenTransientPacketKey = replicationPacket.getKey();
         }
     }
@@ -210,7 +210,7 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
             if (_externalStorage.isEmpty() && batch.getWeight() < _memoryMaxCapacity)
                 _insertToExternal = false;
 
-            if(batch.getDiscardedPacketCount() > 0){
+            if (batch.getDiscardedPacketCount() > 0) {
                 _groupBacklog.updateMirrorWeightAfterCompaction(batch.getDiscardedPacketCount());
             }
 
@@ -276,28 +276,39 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
     }
 
     @Override
-    public long performCompaction(long from, long to){
-        try {
-            if(_externalStorage.isEmpty()){
-                return 0;
-            }
-        } catch (StorageException e) {
-            _logger.log(Level.WARNING,"could not establish external storage state", e);
+    public long performCompaction(long from, long to) {
+
+        if (_lastCompactionRangeEndKey != -1) {
+
+            from = _lastCompactionRangeEndKey + 1;
         }
 
-        if(_lastCompactionRangeEndKey != -1){
-            from = _lastCompactionRangeEndKey +1;
-        }
 
-        if(from > _lastSeenTransientPacketKey){
+        if (to - from < ReplicationPolicy.DEFAULT_REDO_LOG_COMPACTION_BATCH_SIZE) {
             return 0;
         }
+
+        if (from > _lastSeenTransientPacketKey) {
+            if (_logger.isLoggable(Level.FINEST)) {
+                _logger.fine("[" + _name + "]: No transient packets in range " + from + "-" + to + ", lastSeenTransientPacketKey = " + _lastSeenTransientPacketKey);
+            }
+            return 0;
+        }
+
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.fine("[" + _name + "]: Performing Compaction " + from + "-" + to);
+        }
+
         long discardedInMemory = _memoryRedoLogFile.performCompaction(from, to);
         long discardedInExternalStorage = _externalStorage.performCompaction(from, to);
 
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.fine("[" + _name + "]: Discarded of " + (discardedInMemory + discardedInExternalStorage) + " packets during compaction ");
+        }
+
         _lastCompactionRangeEndKey = to;
 
-        return  discardedInExternalStorage + discardedInMemory;
+        return discardedInExternalStorage + discardedInMemory;
     }
 
     /**

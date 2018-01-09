@@ -66,7 +66,6 @@ import com.gigaspaces.metrics.Gauge;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.j_spaces.core.cluster.RedoLogCompaction;
 import com.j_spaces.core.cluster.SwapBacklogConfig;
-import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
 import com.j_spaces.core.exception.internal.ReplicationInternalSpaceException;
 import com.j_spaces.kernel.JSpaceUtilities;
 
@@ -124,8 +123,9 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
     protected final ReadWriteLock _rwLock = new ReentrantReadWriteLock();
     private long _nextKey = 0;
 
-    private final CaluclateMinUnconfirmedKeyProcedure _getMinUnconfirmedKeyProcedure;
+    private final ICaluclateMinUnconfirmedKey _getMinUnconfirmedKeyProcedure;
     private boolean _closed;
+    private RedoLogCompaction _redoLogCompaction;
 
     public AbstractSingleFileGroupBacklog(DynamicSourceGroupConfigHolder groupConfigHolder,
                                           String name, IReplicationPacketDataProducer<?> dataProducer) {
@@ -146,7 +146,8 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         _confirmationMap = new CopyOnUpdateMap<String, CType>(new THashMapFactory<String, CType>());
         _confirmationMap.putAll(createConfirmationMap(groupConfig));
         _mirrorMemberName = groupConfig.getBacklogConfig().getMirrorMemberName();
-        _getMinUnconfirmedKeyProcedure = new CaluclateMinUnconfirmedKeyProcedure(_mirrorMemberName != null);
+        _redoLogCompaction = groupConfig.getBacklogConfig().getRedoLogCompaction();
+        _getMinUnconfirmedKeyProcedure = isRedoLogCompactionEnabled() ? new CompactionEnabledCaluclateMinUnconfirmedKeyProcedure() : new CaluclateMinUnconfirmedKeyProcedure();
     }
 
     protected void updateBacklogLimitations(SourceGroupConfig groupConfig) {
@@ -1042,7 +1043,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
             }
             if (packet.getData().isEmpty())
                 packet = (T) replaceWithDiscarded(packet, false);
-            }
+        }
         if (originalPacket != packet)
             return (T) filteredHandler.packetFiltered(originalPacket,
                     packet,
@@ -1082,13 +1083,37 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
             }
         }
 
-        if (getDataProducer().isPrimary() && _mirrorMemberName != null && getGroupConfigSnapshot().getBacklogConfig().getRedoLogCompaction() == RedoLogCompaction.MIRROR) {
-            //try compact redo log in primary
+        //try compact redo log
+        performCompactionUnsafe();
+
+    }
+
+    @Override
+    public void performCompaction() {
+        if (!isRedoLogCompactionEnabled()) {
+            return;
+        }
+        _rwLock.writeLock().lock();
+        _getMinUnconfirmedKeyProcedure.reset();
+        CollectionsFactory.getInstance().forEachEntry(_confirmationMap.getUnsafeMapReference(), _getMinUnconfirmedKeyProcedure);
+        performCompactionUnsafe();
+        _rwLock.writeLock().unlock();
+    }
+
+    private boolean isRedoLogCompactionEnabled() {
+        return _mirrorMemberName != null && _redoLogCompaction.equals(RedoLogCompaction.MIRROR);
+    }
+
+    /*
+     * should be called under write lock
+     */
+    public void performCompactionUnsafe() {
+        if (isRedoLogCompactionEnabled()) {
             long minUnconfirmedMirrorKey = _getMinUnconfirmedKeyProcedure.getMinUnconfirmedMirrorKey();
             long lastConfirmedNonMirrorKey = _getMinUnconfirmedKeyProcedure.getMinUnconfirmedNonMirrorKey() - 1;
             if (minUnconfirmedMirrorKey < lastConfirmedNonMirrorKey) {
                 long discardedPacketCount = this._backlogFile.performCompaction(minUnconfirmedMirrorKey, lastConfirmedNonMirrorKey);
-                if(discardedPacketCount > 0){
+                if (discardedPacketCount > 0) {
                     updateMirrorWeightAfterCompaction(discardedPacketCount);
                 }
             }
@@ -1098,20 +1123,20 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
     // Should be called under write lock
     public void updateMirrorWeightAfterCompaction(long discardedPacketCount) {
         AbstractSingleFileConfirmationHolder confirmation = _confirmationMap.get(_mirrorMemberName);
-        confirmation.setWeight(confirmation.getWeight()-discardedPacketCount);
+        confirmation.setWeight(confirmation.getWeight() - discardedPacketCount);
         increaseMirrorDiscardedCount(discardedPacketCount);
     }
 
     // Should be called under write lock
     public void decreaseMirrorDiscardedCount(long count) {
         AbstractSingleFileConfirmationHolder confirmation = _confirmationMap.get(_mirrorMemberName);
-        confirmation.setDiscardedPacketsCount(confirmation.getDiscardedPacketsCount()-count);
+        confirmation.setDiscardedPacketsCount(confirmation.getDiscardedPacketsCount() - count);
     }
 
     // Should be called under write lock
     public void increaseMirrorDiscardedCount(long count) {
         AbstractSingleFileConfirmationHolder confirmation = _confirmationMap.get(_mirrorMemberName);
-        confirmation.setDiscardedPacketsCount(confirmation.getDiscardedPacketsCount()+count);
+        confirmation.setDiscardedPacketsCount(confirmation.getDiscardedPacketsCount() + count);
     }
 
     public boolean hasMirror() {
@@ -1735,6 +1760,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
     public void increaseWeight(String memberName, long weight, AbstractSingleFileConfirmationHolder confirmationHolder) {
         confirmationHolder.setWeight(confirmationHolder.getWeight() + weight);
     }
+
     //should be called under write lock
     @Override
     public void decreaseWeight(String memberName, long lastConfirmedKey, long newlyConfirmedKey, AbstractSingleFileConfirmationHolder confirmationHolder) {
@@ -1786,8 +1812,6 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
     }
 
     public void printRedoLog(String _name, String from) {
-        if (_name.contains("1_1"))
-            return;
         _logger.info("----------------------------------------------");
         _logger.info(from);
         _logger.info("");
@@ -1812,16 +1836,24 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         }
     }
 
-    public class CaluclateMinUnconfirmedKeyProcedure
-            implements MapProcedure<String, CType> {
+    public abstract class ICaluclateMinUnconfirmedKey implements MapProcedure<String, CType>{
+
+        public abstract void reset();
+
+        public abstract long getCalculatedMinimumUnconfirmedKey();
+
+        public abstract long getMinUnconfirmedNonMirrorKey();
+
+        public abstract long getMinUnconfirmedMirrorKey();
+
+        public abstract boolean execute(String memberLookupName, CType confirmation);
+    }
+
+    public class CompactionEnabledCaluclateMinUnconfirmedKeyProcedure
+            extends ICaluclateMinUnconfirmedKey {
 
         private long minUnconfirmedNonMirrorKey;
         private long minUnconfirmedMirrorKey;
-        private boolean hasMirror;
-
-        public CaluclateMinUnconfirmedKeyProcedure(boolean hasMirror) {
-            this.hasMirror = hasMirror;
-        }
 
         public void reset() {
             minUnconfirmedNonMirrorKey = Long.MAX_VALUE;
@@ -1829,18 +1861,12 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         }
 
         public long getCalculatedMinimumUnconfirmedKey() {
-            if (!hasMirror) {
-                return minUnconfirmedNonMirrorKey;
-            }
             if (minUnconfirmedNonMirrorKey < minUnconfirmedMirrorKey) {
-//                printRedoLog(_name, "******** nonMirror = "+minUnconfirmedNonMirrorKey+" mirror = "+minUnconfirmedMirrorKey+" , chosen = " + minUnconfirmedNonMirrorKey + "********");
                 return minUnconfirmedNonMirrorKey;
             } else {
-//                printRedoLog(_name, "******** nonMirror = "+minUnconfirmedNonMirrorKey+" mirror = "+minUnconfirmedMirrorKey+" , chosen = " + minUnconfirmedMirrorKey + "********");
                 return minUnconfirmedMirrorKey;
             }
         }
-
 
         public long getMinUnconfirmedNonMirrorKey() {
             return minUnconfirmedNonMirrorKey;
@@ -1860,23 +1886,63 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
             if (memberLookupName.equals(_mirrorMemberName)) {
                 if (memberConfirmedKey == -1) {
                     minUnconfirmedMirrorKey = -1;
-                    return false;
                 } else {
                     minUnconfirmedMirrorKey = memberConfirmedKey + 1;
-                    return true;
                 }
+                return true;
             }
 
-            // Never has any confirmation, minimum is null
             if (memberConfirmedKey == -1) {
                 minUnconfirmedNonMirrorKey = -1;
-                return false;
+                return true;
             }
 
             long memberUnconfirmed = memberConfirmedKey + 1;
             if (memberUnconfirmed < minUnconfirmedNonMirrorKey) {
                 minUnconfirmedNonMirrorKey = memberUnconfirmed;
             }
+            return true;
+        }
+
+    }
+
+    public class CaluclateMinUnconfirmedKeyProcedure
+            extends ICaluclateMinUnconfirmedKey {
+
+        private long minUnconfirmedKey;
+
+        public void reset() {
+            minUnconfirmedKey = Long.MAX_VALUE;
+        }
+
+        public long getMinUnconfirmedNonMirrorKey() {
+            return -1;
+        }
+
+        public long getMinUnconfirmedMirrorKey() {
+            return -1;
+        }
+
+        public long getCalculatedMinimumUnconfirmedKey() {
+            return minUnconfirmedKey;
+        }
+
+        public boolean execute(String memberLookupName, CType confirmation) {
+            // If target out of sync, we do not hold data for it in the backlog
+            if (_outOfSyncDueToDeletionTargets.contains(memberLookupName))
+                return true;
+
+            // Never has any confirmation, minimum is null
+            final long memberConfirmedKey = getMemberUnconfirmedKey(confirmation);
+            if (memberConfirmedKey == -1) {
+                minUnconfirmedKey = -1;
+                return false;
+            }
+
+            long memberUnconfirmed = memberConfirmedKey + 1;
+            if (memberUnconfirmed < minUnconfirmedKey)
+                minUnconfirmedKey = memberUnconfirmed;
+
             return true;
         }
 

@@ -170,4 +170,9 @@ public class SourceDelegationReplicationReliableAsyncMediator
         return _reliableAsyncGroupBacklog.getMarker(packet, membersGroupName);
     }
 
+    @Override
+    public void performCompaction() {
+        _reliableAsyncGroupBacklog.performCompaction();
+    }
+
 }

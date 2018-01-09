@@ -39,5 +39,7 @@ public interface IReplicationReliableAsyncMediator {
 
     IMarker getMarker(IReplicationOrderedPacket packet, String membersGroupName);
 
+    void performCompaction();
+
 
 }
