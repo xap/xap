@@ -20,6 +20,7 @@ import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPack
 import com.gigaspaces.internal.cluster.node.impl.packets.data.DiscardReplicationPacketData;
 import com.gigaspaces.internal.cluster.node.impl.packets.data.IReplicationPacketData;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -84,28 +85,22 @@ public class GlobalOrderDiscardedReplicationPacket
         return 0;
     }
 
-    public void readExternal(ObjectInput in) throws IOException,ClassNotFoundException {
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         _key = in.readLong();
         final boolean hasRange = in.readBoolean();
         _endKey = hasRange ? in.readLong() : _key;
-        PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
-        if(version.greaterOrEquals(PlatformLogicalVersion.v12_3_0)){
-            return;
-        }
-        if(version.greaterOrEquals(PlatformLogicalVersion.v12_1_0)){
-            int weight = in.readInt();
+        PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
+        if (version.greaterOrEquals(PlatformLogicalVersion.v12_1_0) && version.lessThan(PlatformLogicalVersion.v12_3_0)) {
+            in.readInt();
         }
     }
 
-    public void readFromSwap(ObjectInput in) throws IOException,ClassNotFoundException {
+    public void readFromSwap(ObjectInput in) throws IOException, ClassNotFoundException {
         _key = in.readLong();
         _endKey = in.readLong();
         PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
-        if(version.greaterOrEquals(PlatformLogicalVersion.v12_3_0)){
-            return;
-        }
-        if(version.greaterOrEquals(PlatformLogicalVersion.v12_1_0)){
-            int weight = in.readInt();
+        if (version.greaterOrEquals(PlatformLogicalVersion.v12_1_0) && version.lessThan(PlatformLogicalVersion.v12_3_0)) {
+            in.readInt();
         }
     }
 
@@ -114,27 +109,23 @@ public class GlobalOrderDiscardedReplicationPacket
         out.writeBoolean(hasKeyRange());
         if (hasKeyRange())
             out.writeLong(_endKey);
-        PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
-        if(version.greaterOrEquals(PlatformLogicalVersion.v12_3_0)){
-            return;
-        }else if(version.greaterOrEquals(PlatformLogicalVersion.v12_1_0)){
+        PlatformLogicalVersion endpointLogicalVersion = LRMIInvocationContext.getEndpointLogicalVersion();
+        if (endpointLogicalVersion.greaterOrEquals(PlatformLogicalVersion.v12_1_0) && endpointLogicalVersion.lessThan(PlatformLogicalVersion.v12_3_0)){
             out.writeInt(0);
         }
-    }
-
-    private boolean hasKeyRange() {
-        return _key != _endKey;
     }
 
     public void writeToSwap(ObjectOutput out) throws IOException {
         out.writeLong(_key);
         out.writeLong(_endKey);
         PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
-        if(version.greaterOrEquals(PlatformLogicalVersion.v12_3_0)){
-            return;
-        }else if(version.greaterOrEquals(PlatformLogicalVersion.v12_1_0)){
+        if (version.greaterOrEquals(PlatformLogicalVersion.v12_1_0) && version.lessThan(PlatformLogicalVersion.v12_3_0)) {
             out.writeInt(0);
         }
+    }
+
+    private boolean hasKeyRange() {
+        return _key != _endKey;
     }
 
     @Override
