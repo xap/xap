@@ -27,11 +27,12 @@ import com.gigaspaces.internal.server.storage.EntryDataType;
 import com.gigaspaces.internal.server.storage.ICustomTypeDescLoader;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.internal.utils.ExceptionUtils;
+import com.gigaspaces.logger.Constants;
 import com.gigaspaces.metadata.SpaceMetadataException;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.j_spaces.core.LeaseManager;
 import com.j_spaces.core.UnknownTypeException;
-
 import net.jini.core.entry.UnusableEntryException;
 
 import java.io.Externalizable;
@@ -39,6 +40,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Niv Ingberg
@@ -48,13 +51,23 @@ import java.util.Map;
 public class EntryPacketServerEntryAdapter implements IEntryData, ICustomTypeDescLoader, Externalizable, ISwapExternalizable {
     private static final long serialVersionUID = -4521887144678238254L;
 
+    private final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_ENTRYPACKET_VERBOSE);
+
     private IEntryPacket _entryPacket;
 
     public EntryPacketServerEntryAdapter() {
     }
 
     public EntryPacketServerEntryAdapter(IEntryPacket entryPacket) {
+
         this._entryPacket = entryPacket;
+
+        //debug patch
+        if (_entryPacket == null) {
+            if (_logger.isLoggable(Level.FINEST)) {
+                _logger.finest("entry packet is null when constructing EntryPacketServerEntryAdapter: " + ExceptionUtils.getCurrentStackTrace());
+            }
+        }
     }
 
     @Override
@@ -115,12 +128,24 @@ public class EntryPacketServerEntryAdapter implements IEntryData, ICustomTypeDes
     public void readExternal(ObjectInput in) throws IOException,
             ClassNotFoundException {
         _entryPacket = IOUtils.readObject(in);
+
+        // debug patch
+        if (_entryPacket == null) {
+            if (_logger.isLoggable(Level.FINEST)) {
+                _logger.finest("entry packet is null when calling readExternal of EntryPacketServerEntryAdapter: " + ExceptionUtils.getCurrentStackTrace());
+            }
+        }
     }
 
     @Override
     public void readFromSwap(ObjectInput in) throws IOException,
             ClassNotFoundException {
         _entryPacket = IOUtils.readNullableSwapExternalizableObject(in);
+        if (_entryPacket == null) {
+            if (_logger.isLoggable(Level.FINEST)) {
+                _logger.finest("entry packet is null when calling readFromSwap of EntryPacketServerEntryAdapter: " + ExceptionUtils.getCurrentStackTrace());
+            }
+        }
     }
 
     @Override
