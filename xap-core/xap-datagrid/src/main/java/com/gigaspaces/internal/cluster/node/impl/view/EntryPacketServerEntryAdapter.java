@@ -56,6 +56,7 @@ public class EntryPacketServerEntryAdapter implements IEntryData, ICustomTypeDes
     private IEntryPacket _entryPacket;
 
     public EntryPacketServerEntryAdapter() {
+
     }
 
     public EntryPacketServerEntryAdapter(IEntryPacket entryPacket) {
