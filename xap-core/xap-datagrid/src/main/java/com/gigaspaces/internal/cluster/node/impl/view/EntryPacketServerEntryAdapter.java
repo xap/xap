@@ -53,7 +53,8 @@ public class EntryPacketServerEntryAdapter implements IEntryData, ICustomTypeDes
 
     private final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_ENTRYPACKET_VERBOSE);
 
-    private IEntryPacket _entryPacket;
+    //change to volatile
+    private volatile IEntryPacket _entryPacket;
 
     public EntryPacketServerEntryAdapter() {
 

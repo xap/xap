@@ -44,7 +44,8 @@ public abstract class SingleReplicationPacketData extends AbstractReplicationPac
     //debug patch
     private final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_ENTRYPACKET_VERBOSE);
 
-    private IEntryPacket _entryPacket;
+    //change to volatile
+    private volatile IEntryPacket _entryPacket;
     private transient IEntryData _entryData;
 
     public SingleReplicationPacketData() {
