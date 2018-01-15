@@ -166,6 +166,10 @@ public class SystemProperties extends CommonSystemProperties {
      */
     public final static int LRMI_READ_SELECTOR_THREADS_DEFAULT = 4;
 
+    /* XAP-13299 -- allow adjustment of the tmp selector pool size.*/
+    public final static String LRMI_TMP_SELECTOR_POOL_SIZE = "com.gs.lrmi.tmp.selector.pool.size";
+    public final static String LRMI_TMP_SELECTOR_POOL_WAIT_TIMEOUT = "com.gs.lrmi.tmp.selector.pool.wait.timeout";
+
     public static final int LRMI_SYSTEM_PRIORITY_QUEUE_CAPACITY_DEFAULT = Integer.MAX_VALUE;
 
     public static final int LRMI_SYSTEM_PRIORITY_THREAD_IDLE_TIMEOUT = 60000;

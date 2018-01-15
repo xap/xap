@@ -16,6 +16,8 @@
 
 package com.gigaspaces.lrmi.nio;
 
+import com.j_spaces.kernel.SystemProperties;
+
 import java.io.IOException;
 import java.nio.channels.Selector;
 import java.util.EmptyStackException;
@@ -27,16 +29,12 @@ import java.util.Stack;
  */
 @com.gigaspaces.api.InternalApi
 public class TemporarySelectorFactory {
-    /**
-     * The timeout before we exit.
-     */
-    final public static long timeout = 5000;
-
 
     /**
      * The number of <code>Selector</code> to create.
      */
-    final public static int maxSelectors = 20;
+    private final static int maxSelectors = Integer.getInteger(SystemProperties.LRMI_TMP_SELECTOR_POOL_SIZE,20);
+    private final static long timeout = Long.getLong(SystemProperties.LRMI_TMP_SELECTOR_POOL_WAIT_TIMEOUT,5000);
 
 
     /**
