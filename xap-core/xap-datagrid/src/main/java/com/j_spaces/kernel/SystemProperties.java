@@ -314,6 +314,9 @@ public class SystemProperties extends CommonSystemProperties {
 
     public final static String LRMI_NETWORK_FILTER_FACTORY_ADDRESS_MATCHERS_FILE = "com.gs.lrmi.filter.address-matchers-file";
 
+    public final static String LRMI_NETWORK_FILTER_UNWRAP_BUFFER_ALLOCATION_STRATEGY = "com.gs.lrmi.filter.unrap.buffer.allocation.strategy";
+
+
     /**
      * Retry to connect, this is a property is use for workaround for a bug in the JVM see (IBM JVM
      * bugid:IZ19325)

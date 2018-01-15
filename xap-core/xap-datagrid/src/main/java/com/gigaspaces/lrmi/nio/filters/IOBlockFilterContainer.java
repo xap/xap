@@ -35,6 +35,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static com.j_spaces.kernel.SystemProperties.LRMI_NETWORK_FILTER_UNWRAP_BUFFER_ALLOCATION_STRATEGY;
+
 
 @com.gigaspaces.api.InternalApi
 public class IOBlockFilterContainer {
@@ -45,11 +47,16 @@ public class IOBlockFilterContainer {
 
     public static final byte MESSAGE_SUFFIX = 0;
     public static final byte PREFIX_PART = 1;
+    private static final int HUNDRED_M = 100 * 1024 * 1024;
+
     private final IChannelWriter writer;
     private final Reader reader;
 
     private boolean newContent;
     private final static ByteBuffer empty = ByteBuffer.wrap(new byte[]{});
+
+    private static final UnwrapAllocationStrategy UNWRAP_ALLOCATION_STRATEGY
+            = UnwrapAllocationStrategy.fromString(System.getProperty(LRMI_NETWORK_FILTER_UNWRAP_BUFFER_ALLOCATION_STRATEGY, "CONSTANT"));
 
     public IOBlockFilterContainer(Reader reader, IChannelWriter writer) {
         this.reader = reader;
@@ -72,8 +79,7 @@ public class IOBlockFilterContainer {
 
     public void unwrap(IOFilterContext context) throws IOFilterException {
         if (context.getSrc().remaining() < context.applicationBufferSize)
-            context.setSrc(enlargeBuffer(context.getSrc(),
-                    context.applicationBufferSize - context.getSrc().remaining()));
+            enlargeSourceBuffer(context);
         boolean isLastMessage = (context.getDst().get() == MESSAGE_SUFFIX);
         context.filter.unwrap(context.getDst(), context.getSrc());
         if (context.result.getStatus() == IOFilterResult.Status.CLOSED) {
@@ -81,8 +87,7 @@ public class IOBlockFilterContainer {
         }
         while (context.getDst().hasRemaining()) {
             if (context.getSrc().remaining() < context.applicationBufferSize)
-                context.setSrc(enlargeBuffer(context.getSrc(),
-                        context.applicationBufferSize - context.getSrc().remaining()));
+                enlargeSourceBuffer(context);
             context.filter.unwrap(context.getDst(), context.getSrc());
             if (context.result.getStatus() == IOFilterResult.Status.CLOSED) {
                 throw new InternalSpaceException("IOFilter closed");
@@ -96,6 +101,28 @@ public class IOBlockFilterContainer {
             context.result.setStatus(IOFilterResult.Status.BUFFER_UNDERFLOW);
         }
     }
+
+    /**
+     * +     * This method called from unrap where the context src buffer is actually the target buffer.
+     * +     * Allocate and return a new src (target buffer) according to the remaining space
+     * +     * in the src buffer the application buffer size and the allocation policy.
+     * +     * @param context the unwrap context.
+     * +
+     */
+    private void enlargeSourceBuffer(IOFilterContext context) {
+        switch (UNWRAP_ALLOCATION_STRATEGY) {
+            case CONSTANT:
+                context.setSrc(enlargeBuffer(context.getSrc(),
+                        +context.applicationBufferSize - context.getSrc().remaining()));
+                break;
+            case EXPONENTIAL:
+                int additionalSize = Math.min(context.getSrc().capacity(), HUNDRED_M);
+                context.setSrc(enlargeBuffer(context.getSrc(), additionalSize));
+                break;
+        }
+    }
+
+
 
     private ByteBuffer enlargeBuffer(ByteBuffer src, int additionalSize) {
         ByteBuffer res = ByteBuffer.allocate(src.limit() + additionalSize);
@@ -436,3 +463,15 @@ class WriteBuffer {
     }
 
 }
+
+enum UnwrapAllocationStrategy{
+    CONSTANT,
+    EXPONENTIAL;
+
+         public static UnwrapAllocationStrategy fromString(String text) {
+                if("EXPONENTIAL".equalsIgnoreCase(text)){
+                        return EXPONENTIAL;
+                    }
+             return CONSTANT;
+            }
+ }
