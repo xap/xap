@@ -24,6 +24,8 @@ import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.internal.utils.ExceptionUtils;
+import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.OperationID;
 import com.j_spaces.core.cluster.IReplicationFilterEntry;
 import com.j_spaces.core.cluster.ReplicationFilterException;
@@ -32,13 +34,17 @@ import com.j_spaces.core.cluster.ReplicationOperationType;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public abstract class SingleReplicationPacketData extends AbstractReplicationPacketSingleEntryData {
     private static final long serialVersionUID = 1L;
 
-    private IEntryPacket _entryPacket;
+    private volatile IEntryPacket _entryPacket;
     private transient IEntryData _entryData;
+
+    private final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_ENTRYPACKET_VERBOSE);
 
     public SingleReplicationPacketData() {
     }
@@ -46,6 +52,13 @@ public abstract class SingleReplicationPacketData extends AbstractReplicationPac
     public SingleReplicationPacketData(IEntryPacket entry, boolean fromGateway) {
         super(fromGateway);
         this._entryPacket = entry;
+
+        //debug patch
+        if (_entryPacket == null) {
+            if (_logger.isLoggable(Level.FINEST)) {
+                _logger.finest("entry packet is null when constructing SingleReplicationPacketData: " + ExceptionUtils.getCurrentStackTrace());
+                }
+            }
     }
 
     @Override
@@ -56,6 +69,11 @@ public abstract class SingleReplicationPacketData extends AbstractReplicationPac
     public SingleReplicationPacketData cloneWithEntryPacket(IEntryPacket entryPacket) {
         SingleReplicationPacketData clone = (SingleReplicationPacketData) super.clone();
         clone._entryPacket = entryPacket;
+        if (entryPacket == null) {
+            if (_logger.isLoggable(Level.FINEST)) {
+                 _logger.finest("entry packet is null when cloning SingleReplicationPacketData: " + ExceptionUtils.getCurrentStackTrace());
+            }
+        }
         return clone;
     }
 
@@ -63,6 +81,11 @@ public abstract class SingleReplicationPacketData extends AbstractReplicationPac
             ClassNotFoundException {
         super.readExternal(in);
         _entryPacket = (IEntryPacket) in.readObject();
+        if (_entryPacket == null) {
+            if (_logger.isLoggable(Level.FINEST)) {
+                _logger.finest("entry packet is null in readExternal SingleReplicationPacketData: " + ExceptionUtils.getCurrentStackTrace());
+            }
+        }
     }
 
     @Override
@@ -70,6 +93,11 @@ public abstract class SingleReplicationPacketData extends AbstractReplicationPac
             ClassNotFoundException {
         super.readFromSwap(in);
         _entryPacket = IOUtils.readNullableSwapExternalizableObject(in);
+        if (_entryPacket == null) {
+            if (_logger.isLoggable(Level.FINEST)) {
+                 _logger.finest("entry packet is null in readFromSwap SingleReplicationPacketData: " + ExceptionUtils.getCurrentStackTrace());
+            }
+        }
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
