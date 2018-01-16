@@ -182,6 +182,10 @@ public class SystemProperties extends CommonSystemProperties {
 
     public static final int LRMI_CUSTOM_MAX_THREADS_DEFAULT = 128;
 
+    /* XAP-13299 -- allow adjustment of the tmp selector pool size.*/
+    public final static String LRMI_TMP_SELECTOR_POOL_SIZE = "com.gs.lrmi.tmp.selector.pool.size";
+    public final static String LRMI_TMP_SELECTOR_POOL_WAIT_TIMEOUT = "com.gs.lrmi.tmp.selector.pool.wait.timeout";
+
 
     public final static String LRMI_USE_SECURE_RADNDOM = "com.gs.transport_protocol.lrme.use_secure_random";
     public final static String LRMI_USE_ASYNC_CONNECT = "com.gs.transport_protocol.lrmi.use_async_connect";
