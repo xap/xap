@@ -16,9 +16,6 @@
 
 package com.j_spaces.core.admin;
 
-import com.j_spaces.core.filters.GenericPrincipal;
-import com.j_spaces.core.filters.UserDefinedRole;
-
 import java.io.Serializable;
 import java.util.Map;
 
@@ -81,23 +78,12 @@ public class ContainerConfig
     //value is SpaceConfig instance
     private Map<String, SpaceConfig> _spaceSchemasMap;
 
-
     // TODO OLD SECURITY - NEED TO REMOVE IN NEXT MAJOR VERSION AFTER 7.0
-    // Administrator account
-    @Deprecated
-    public String adminName;
-    @Deprecated
-    public String adminPassword;
-    @Deprecated
-    public String securityMode = SECURITY_FULL_CONTROL;
-    @Deprecated
-    public GenericPrincipal[] usersInfo;
-    @Deprecated
-    public UserDefinedRole[] userDefinedRoles;
-    @Deprecated
-    final public static String SECURITY_READ_ONLY = "READ_ONLY";
-    @Deprecated
-    final public static String SECURITY_FULL_CONTROL = "FULL_CONTROL";
+    @Deprecated public String adminName;        // Unused, maintained for backwards because class is Serializable
+    @Deprecated public String adminPassword;    // Unused, maintained for backwards because class is Serializable
+    @Deprecated public String securityMode;     // Unused, maintained for backwards because class is Serializable
+    @Deprecated public Object[] usersInfo;      // Unused, maintained for backwards because class is Serializable
+    @Deprecated public Object[] userDefinedRoles;// Unused, maintained for backwards because class is Serializable
 
     @Override
     public Object clone() {
