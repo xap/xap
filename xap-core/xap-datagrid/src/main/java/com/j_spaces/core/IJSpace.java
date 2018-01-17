@@ -102,7 +102,6 @@ public interface IJSpace extends IPojoSpace {
      * space will be secured.
      *
      * @return boolean true if this space secured, otherwise false.
-     * @see com.j_spaces.core.filters.DefaultSecurityFilter
      **/
     public boolean isSecured();
 

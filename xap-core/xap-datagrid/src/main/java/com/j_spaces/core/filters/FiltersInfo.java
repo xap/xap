@@ -59,18 +59,9 @@ public class FiltersInfo
     public boolean beforeAuthentication;
 
     // TODO OLD SECURITY - NEED TO REMOVE IN NEXT MAJOR VERSION AFTER 7.0
-    @Deprecated
-    public boolean secured = false;
-    @Deprecated
-    public GenericPrincipal[] usersInfo;
-    @Deprecated
-    public UserDefinedRole[] userDefinedRoles;
-    @Deprecated
-    final static public Vector<String> tableColNames = new Vector<String>();
-
-    static {
-        tableColNames.add("User Name");
-    }
+    @Deprecated public boolean secured;             // Unused, maintained for backwards because class is Serializable
+    @Deprecated public Object[] usersInfo;          // Unused, maintained for backwards because class is Serializable
+    @Deprecated public Object[] userDefinedRoles;   // Unused, maintained for backwards because class is Serializable
 
     @Override
     public String toString() {
