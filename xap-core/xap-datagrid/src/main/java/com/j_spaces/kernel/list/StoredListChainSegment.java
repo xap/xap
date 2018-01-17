@@ -39,16 +39,17 @@ public class StoredListChainSegment<T> {
      * concurrent ordered operations are not supported since there is only one insertion point
      */
 
-    private final short _segment;
 
     private final ConcurrentSLObjectInfo<T> _tail;  //insert point
     private final ConcurrentSLObjectInfo<T> _head;  //start scan from
 
     private int _iterCount;
+    private final short _segment;
 
-    private final boolean _supportFifo;
-    private final boolean _unidirectionalList;
+    private static final byte SUPPORT_FIFO = ((byte) 1) << 0;
+    private static final byte UNIDIRECTIONAL_LIST = ((byte) 1) << 1;
 
+    private final byte _flags;
     private final byte _healthCheck;
 
     static class ConcurrentSLObjectInfo<T> implements Serializable, IObjectInfo<T> {
@@ -69,6 +70,7 @@ public class StoredListChainSegment<T> {
 
         volatile byte _infoStatus = inserting;
         private final byte _healthCheck;
+
 
         public ConcurrentSLObjectInfo(T subject, short segment, ConcurrentSLObjectInfo backward, ConcurrentSLObjectInfo forward, byte healthCheck) {
             setSubject(subject);
@@ -179,13 +181,28 @@ public class StoredListChainSegment<T> {
         _tail.setFwd(_head);
         _tail.nodeInsertionEnded();
         _head.nodeInsertionEnded();
-        _supportFifo = supportFifo;
-        _unidirectionalList = unidirectionalList;
+        byte flags = 0;
+        if (supportFifo)
+            flags |= SUPPORT_FIFO;
+        if (unidirectionalList)
+            flags |= UNIDIRECTIONAL_LIST;
+
+        _flags = flags;
         if (unidirectionalList && supportFifo)
             throw new RuntimeException(" unidirectional-SL cannot support fifo");
         _healthCheck = (byte) (System.identityHashCode(this));
     }
 
+    private boolean isSupportFifo()
+    {
+        return (_flags & SUPPORT_FIFO) == SUPPORT_FIFO;
+
+    }
+    private boolean isUniDirectional()
+    {
+        return (_flags & UNIDIRECTIONAL_LIST) == UNIDIRECTIONAL_LIST;
+
+    }
 
     private ConcurrentSLObjectInfo insert(T entry) {
         ConcurrentSLObjectInfo newnode = new ConcurrentSLObjectInfo(entry, _segment, _tail, null, _healthCheck);
@@ -198,10 +215,10 @@ public class StoredListChainSegment<T> {
             ConcurrentSLObjectInfo cur_first = _tail.getFwd();
             newnode.setFwd(cur_first);
             if (_tail.CAS_forward(cur_first, newnode)) {
-                if (_unidirectionalList)
+                if (isUniDirectional())
                     break;//no more work to do
                 //if fifo supported help out in "older" nodes ptr redirection
-                if (_supportFifo) {
+                if (isSupportFifo()) {
                     if (cur_first != _head && cur_first.getFwd().getBwd() == _tail) {
                         adjustInsertsPtrs(cur_first);
                     }
@@ -344,7 +361,7 @@ public class StoredListChainSegment<T> {
      * @param oi an existing element between Head and Tail
      */
     public void remove(IObjectInfo<T> oi) {
-        if (_unidirectionalList)
+        if (isUniDirectional())
             throw new RuntimeException(" unidirectional-SL cannot support remove");
         removeNode((ConcurrentSLObjectInfo) oi, false /*unlocked*/);
         oi.setSubject(null); //nullify subject
@@ -474,8 +491,8 @@ public class StoredListChainSegment<T> {
 
     /* get first element in scan for iterator established by the main list*/
     public boolean establishIterScanPos(SegmentedListIterator<T> iter) {
-        boolean scanDown = _supportFifo;//we always scan up from tail to head
-        if (_supportFifo && iter._randomScan)
+        boolean scanDown = isSupportFifo();//we always scan up from tail to head
+        if (isSupportFifo() && iter._randomScan)
             scanDown = (++_iterCount) % 2 != 0;
         try {
             iter._cur = null;
@@ -549,7 +566,7 @@ public class StoredListChainSegment<T> {
             if (iter._cur == _head)
                 return;
             iter._currSegmentScanCount--;
-            if (_unidirectionalList || iter._cur.isNodeInserted()) {
+            if (isUniDirectional() || iter._cur.isNodeInserted()) {
                 iter._curElement = iter._cur;
                 return;
             }
@@ -561,4 +578,4 @@ public class StoredListChainSegment<T> {
 
 }
 
-	
+
