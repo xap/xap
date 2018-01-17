@@ -214,17 +214,7 @@ public class RestBean implements InitializingBean, ClusterInfoAware, DisposableB
 
     @Override
     public ServiceDetails[] getServicesDetails() {
-        String host = null;
-        try {
-            host = BootUtil.getHostAddress();
-        } catch (UnknownHostException e) {
-            logger.error("Unable to get host address for rest service", e);
-        }
-
-        if (host == null) {
-            logger.error("Unable to get host address for rest service, using NaN as host address.");
-            host = "NaN";
-        }
+        final String host = SystemInfo.singleton().network().getHostId();
         JeeServiceDetails details = new JeeServiceDetails(host, jettyPort, 0, "/", false, "jetty", JeeType.CUSTOM, 0);
         return new ServiceDetails[]{details};
     }
