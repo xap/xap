@@ -160,7 +160,7 @@ public class MetricManager implements Closeable {
 
     private MetricTags initDefaultTags() {
         Map<String, Object> tags = new HashMap<String, Object>();
-        tags.put("host", SystemInfo.singleton().network().getLocalHostName());
+        tags.put("host", SystemInfo.singleton().network().getHost().getHostName());
         tags.put("ip", SystemInfo.singleton().network().getHost().getHostAddress());
         tags.put("pid", String.valueOf(SystemInfo.singleton().os().processId()));
         return new MetricTags(tags);

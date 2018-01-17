@@ -45,7 +45,7 @@ public class ReplicationEndpointDetails implements Externalizable, Textualizable
     private ConnectionEndpointDetails _connectionDetails;
 
     public static ReplicationEndpointDetails createMyEndpointDetails(String lookupName, Object uniqueId) {
-        final String hostname = SystemInfo.singleton().network().getLocalHostName();
+        final String hostname = SystemInfo.singleton().network().getHost().getHostName();
         return new ReplicationEndpointDetails(lookupName, uniqueId, hostname, ConnectionEndpointDetails.create());
     }
 
