@@ -52,8 +52,7 @@ public class StoredListChainSegment<T> {
     private final byte _flags;
     private final byte _healthCheck;
 
-    static class ConcurrentSLObjectInfo<T> implements Serializable, IObjectInfo<T> {
-        private static final long serialVersionUID = 3783720465123023651L;
+    static class ConcurrentSLObjectInfo<T> implements IObjectInfo<T> {
         private T _data;   // the stored object
         private volatile ConcurrentSLObjectInfo backwardRef;  //to tail
         private volatile ConcurrentSLObjectInfo forwardRef;  //to head
