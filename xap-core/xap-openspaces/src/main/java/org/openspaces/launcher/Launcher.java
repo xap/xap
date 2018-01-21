@@ -23,14 +23,12 @@ import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.logger.GSLogConfigLoader;
 import com.gigaspaces.security.service.SecurityResolver;
 import com.j_spaces.kernel.ClassLoaderHelper;
-
 import org.openspaces.pu.container.support.CommandLineParser;
 
 import java.awt.Desktop;
 import java.io.File;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -40,77 +38,32 @@ import java.util.logging.Logger;
 public class Launcher {
 
     public static void main(String[] args) throws Exception {
-
-        WebLauncherConfig config = new WebLauncherConfig();
-        String name = System.getProperty("org.openspaces.launcher.name", "launcher");
-        String loggerName = System.getProperty("org.openspaces.launcher.logger", "org.openspaces.launcher");
-        String webLauncherClass = System.getProperty("org.openspaces.launcher.class", "org.openspaces.launcher.JettyLauncher");
-        String bindAddress = null;
-
-        String helpArg1 = "help";
-        String helpArg2 = "h";
-
-        CommandLineParser.Parameter[] params = CommandLineParser.parse(args, new HashSet<String>(Arrays.asList("-" +helpArg1, "-" + helpArg2)));
-        for (CommandLineParser.Parameter param : params) {
-            String paramName = param.getName();
-            if ("port".equals(paramName))
-                config.setPort(Integer.parseInt(param.getArguments()[0]));
-            else if ("path".equals(paramName))
-                config.setWarFilePath(param.getArguments()[0]);
-            else if ("work".equals(paramName))
-                config.setTempDirPath(param.getArguments()[0]);
-            else if ("name".equals(paramName))
-                name = param.getArguments()[0];
-            else if ("logger".equals(paramName))
-                loggerName = param.getArguments()[0];
-            else if ("bind-address".equals(paramName)) {
-                bindAddress = param.getArguments()[0];
-                config.setHostAddress(bindAddress);
-            }
-            else if(SecurityConstants.KEY_USER_PROVIDER.equals( paramName ) ){
-                String credentialsProvider = param.getArguments()[0];
-                System.setProperty(SecurityConstants.KEY_USER_PROVIDER, credentialsProvider);
-            }
-            else if(SecurityConstants.KEY_USER_PROPERTIES.equals( paramName ) ){
-                String credentialsProviderProperties = param.getArguments()[0];
-                System.setProperty(SecurityConstants.KEY_USER_PROPERTIES, credentialsProviderProperties);
-            }
-            else if(SecurityConstants.KEY_SSL_KEY_MANAGER_PASSWORD.equals(paramName) ){
-                config.setSslKeyManagerPassword(param.getArguments()[0]);
-                config.setSslEnabled(true);
-            }
-            else if(SecurityConstants.KEY_SSL_KEY_STORE_PASSWORD.equals(paramName) ){
-                config.setSslKeyStorePassword(param.getArguments()[0]);
-                config.setSslEnabled(true);
-            }
-            else if(SecurityConstants.KEY_SSL_KEY_STORE_PATH.equals(paramName) ){
-                config.setSslKeyStorePath(param.getArguments()[0]);
-                config.setSslEnabled(true);
-            }
-            else if(SecurityConstants.KEY_SSL_TRUST_STORE_PATH.equals(paramName) ){
-                config.setSslTrustStorePath(param.getArguments()[0]);
-                config.setSslEnabled(true);
-            }
-            else if(SecurityConstants.KEY_SSL_TRUST_STORE_PASSWORD.equals(paramName) ){
-                config.setSslTrustStorePassword(param.getArguments()[0]);
-                config.setSslEnabled(true);
-            }
-            else if (helpArg1.equals(paramName) || helpArg2.equals(paramName)) {
+        Collection<String> helpArgs = Arrays.asList("help", "h");
+        Properties props = parseCommandLineArgs(args, helpArgs);
+        for (String helpArg : helpArgs) {
+            if (props.containsKey(helpArg)) {
                 printHelpMessage();
                 return;
             }
         }
 
-        GSLogConfigLoader.getLoader(name);
-        GSLogConfigLoader.getLoader();
+        WebLauncherConfig config = new WebLauncherConfig(props);
         if (!validateWar(config) || !validateSslParameters(config)) {
             printHelpMessage();
             return;
         }
 
-        final Logger logger = Logger.getLogger(loggerName);
-        RuntimeInfo.logRuntimeInfo(logger, "Starting the " + name + " server, security enabled:" + SecurityResolver
-            .isSecurityEnabled() + ", bind address: " + config.getHostAddress() + ", port: " + config.getPort());
+        initIfNotDefined("org.openspaces.launcher.jetty.session.manager",null, "org.openspaces.pu.container.jee.jetty.GSSessionManager");
+        initIfNotDefined("com.gigaspaces.logger.RollingFileHandler.time-rolling-policy", null, "monthly");
+        initIfNotDefined("com.gigaspaces.webui.username.mandatory", "USER_NAME_MANDATORY", "false");
+
+        GSLogConfigLoader.getLoader(config.getName());
+        GSLogConfigLoader.getLoader();
+
+        final Logger logger = Logger.getLogger(config.getLoggerName());
+        RuntimeInfo.logRuntimeInfo(logger, "Starting the " + config.getName() + " server, security enabled:" +
+                SecurityResolver.isSecurityEnabled() + ", bind address: " + config.getHostAddress() + ", port: " + config.getPort());
+        String webLauncherClass = System.getProperty("org.openspaces.launcher.class", "org.openspaces.launcher.JettyLauncher");
         WebLauncher webLauncher = ClassLoaderHelper.newInstance(webLauncherClass);
         webLauncher.launch(config);
         launchBrowser(logger, config);
@@ -124,6 +77,26 @@ public class Launcher {
             Desktop.getDesktop().browse(URI.create(url));
         } catch (Exception e) {
             logger.warning("Failed to browse to XAP web-ui: " + e.getMessage());
+        }
+    }
+
+    private static Properties parseCommandLineArgs(String[] args, Collection<String> helpArgs) {
+        Set<String> parametersWithoutValues = new HashSet<String>();
+        for (String helpArg : helpArgs)
+            parametersWithoutValues.add("-" + helpArg);
+
+        CommandLineParser.Parameter[] params = CommandLineParser.parse(args, parametersWithoutValues);
+
+        Properties result = new Properties();
+        for (CommandLineParser.Parameter param : params)
+            result.setProperty(param.getName(), param.getArguments()[0]);
+        return result;
+    }
+
+    private static void initIfNotDefined(String sysProp, String envVar, String defaultValue) {
+        if (!System.getProperties().containsKey(sysProp)) {
+            String value = envVar != null && System.getenv().containsKey(envVar) ? System.getenv(envVar) : defaultValue;
+            System.setProperty(sysProp, value);
         }
     }
 

@@ -16,66 +16,81 @@
 
 package org.openspaces.launcher;
 
+import com.gigaspaces.admin.security.SecurityConstants;
+import com.gigaspaces.start.SystemInfo;
+
+import java.util.Properties;
+
 /**
  * @author Niv Ingberg
  * @since 10.0.0
  */
 public class WebLauncherConfig {
 
-    private int port;
-    private String warFilePath;
-    private String tempDirPath;
+    private final String webuiHome;
+    private final String name;
+    private final String loggerName;
+    private final int port;
     /**
      * @since 10.1 GS-12102
      */
-    private String hostAddress;
+    private final String hostAddress;
+    private String warFilePath;
+    private final String tempDirPath;
 
     /**
     * @since 12.1
     */
-    private String sslKeyStorePath;
+    private final String sslKeyStorePath;
+    /**
+     * @since 12.1
+     */
+    private final String sslKeyStorePassword;
+    /**
+     * @since 12.1
+     */
+    private final String sslKeyManagerPassword;
+    /**
+     * @since 12.1
+     */
+    private final String sslTrustStorePassword;
+    /**
+     * @since 12.1
+     */
+    private final String sslTrustStorePath;
 
-    /**
-     * @since 12.1
-     */
-    private String sslKeyStorePassword;
-    /**
-     * @since 12.1
-     */
-    private String sslKeyManagerPassword;
-    /**
-     * @since 12.1
-     */
-    private String sslTrustStorePassword;
-    /**
-     * @since 12.1
-     */
-    private String sslTrustStorePath;
+    private final boolean sslEnabled;
 
-    private boolean sslEnabled=false;
-
-    public WebLauncherConfig() {
-        this.port = Integer.getInteger("org.openspaces.launcher.port", 8099);
-        this.warFilePath = System.getProperty("org.openspaces.launcher.path", null);
-        //this.warFilePath = System.getProperty("org.openspaces.launcher.path", "D:\\GigaSpaces\\gigaspaces-xap-premium-10.0.0-m2\\tools\\gs-webui");
-        this.tempDirPath = System.getProperty("org.openspaces.launcher.work", "./work");
-        this.hostAddress = System.getProperty("org.openspaces.launcher.bind-address", "0.0.0.0");
+    public WebLauncherConfig(Properties props) {
+        this.webuiHome = System.getProperty("com.gigaspaces.webui.path", SystemInfo.singleton().getXapHome() + "/tools/gs-webui");
+        this.name = props.getProperty("name", System.getProperty("org.openspaces.launcher.name", "GS Web UI"));
+        this.loggerName = props.getProperty("logger", System.getProperty("org.openspaces.launcher.logger", "org.openspaces.launcher"));
+        this.port = Integer.parseInt(props.getProperty("port", loadDefault("org.openspaces.launcher.port", "WEBUI_PORT", "8099")));
+        this.hostAddress = props.getProperty("bind-address", loadDefault("org.openspaces.launcher.bind-address", "BIND_ADDRESS", "0.0.0.0"));
+        this.warFilePath = props.getProperty("path", System.getProperty("org.openspaces.launcher.path", webuiHome));
+        this.tempDirPath = props.getProperty("work", System.getProperty("org.openspaces.launcher.work", webuiHome + "/work"));
+        this.sslKeyManagerPassword = props.getProperty(SecurityConstants.KEY_SSL_KEY_MANAGER_PASSWORD);
+        this.sslKeyStorePassword = props.getProperty(SecurityConstants.KEY_SSL_KEY_STORE_PASSWORD);
+        this.sslKeyStorePath = props.getProperty(SecurityConstants.KEY_SSL_KEY_STORE_PATH);
+        this.sslTrustStorePath = props.getProperty(SecurityConstants.KEY_SSL_TRUST_STORE_PATH);
+        this.sslTrustStorePassword = props.getProperty(SecurityConstants.KEY_SSL_TRUST_STORE_PASSWORD);
+        this.sslEnabled = sslKeyManagerPassword != null ||
+                sslKeyStorePassword != null ||
+                sslKeyStorePath != null ||
+                sslTrustStorePath != null ||
+                sslTrustStorePassword != null;
+        if (props.containsKey(SecurityConstants.KEY_USER_PROVIDER))
+            System.setProperty(SecurityConstants.KEY_USER_PROVIDER, props.getProperty(SecurityConstants.KEY_USER_PROVIDER));
+        if (props.containsKey(SecurityConstants.KEY_USER_PROPERTIES))
+            System.setProperty(SecurityConstants.KEY_USER_PROPERTIES, props.getProperty(SecurityConstants.KEY_USER_PROPERTIES));
     }
 
     public int getPort() {
         return port;
     }
 
-    public void setPort(int port) {
-        this.port = port;
-    }
-
     public String getTempDirPath() {
         return tempDirPath;
-    }
-
-    public void setTempDirPath(String tempDirPath) {
-        this.tempDirPath = tempDirPath;
     }
 
     public String getWarFilePath() {
@@ -96,25 +111,10 @@ public class WebLauncherConfig {
     }
 
     /**
-     * @author evgenyf
-     * @since 10.1
-     */
-    public void setHostAddress(String hostAddress) {
-        this.hostAddress = hostAddress;
-    }
-
-    /**
      * @since 12.1
      */
      public String getSslKeyStorePath() {
         return sslKeyStorePath;
-    }
-
-    /**
-     * @since 12.1
-     */
-    public void setSslKeyStorePath(String sslKeyStorePath) {
-        this.sslKeyStorePath = sslKeyStorePath;
     }
 
     /**
@@ -127,22 +127,8 @@ public class WebLauncherConfig {
     /**
      * @since 12.1
      */
-    public void setSslKeyStorePassword(String sslKeyStorePassword) {
-        this.sslKeyStorePassword = sslKeyStorePassword;
-    }
-
-    /**
-     * @since 12.1
-     */
     public String getSslKeyManagerPassword() {
         return sslKeyManagerPassword;
-    }
-
-    /**
-     * @since 12.1
-     */
-    public void setSslKeyManagerPassword(String sslKeyManagerPassword) {
-        this.sslKeyManagerPassword = sslKeyManagerPassword;
     }
 
     /**
@@ -155,22 +141,8 @@ public class WebLauncherConfig {
     /**
      * @since 12.1
      */
-    public void setSslTrustStorePassword(String sslTrustStorePassword) {
-        this.sslTrustStorePassword = sslTrustStorePassword;
-    }
-
-    /**
-     * @since 12.1
-     */
     public String getSslTrustStorePath() {
         return sslTrustStorePath;
-    }
-
-    /**
-     * @since 12.1
-     */
-    public void setSslTrustStorePath(String sslTrustStorePath) {
-        this.sslTrustStorePath = sslTrustStorePath;
     }
 
     /**
@@ -180,10 +152,20 @@ public class WebLauncherConfig {
         return sslEnabled;
     }
 
-    /**
-     * @since 12.1
-     */
-    public void setSslEnabled(boolean sslEnabled) {
-        this.sslEnabled = sslEnabled;
+    public String getName() {
+        return name;
+    }
+
+    public String getLoggerName() {
+        return loggerName;
+    }
+
+    private static String loadDefault(String sysPropName, String envVarName, String defaultValue) {
+        String result = System.getProperty(sysPropName);
+        if (result == null)
+            result = System.getenv(envVarName);
+        if (result == null)
+            result = defaultValue;
+        return result;
     }
 }
