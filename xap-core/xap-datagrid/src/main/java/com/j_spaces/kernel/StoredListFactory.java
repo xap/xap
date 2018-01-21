@@ -78,32 +78,40 @@ public final class StoredListFactory {
     }
 
     /**
-     * Creates a segmented stored list - used for highly concurrent lists.
+     * Creates a concurrent stored list - used for highly concurrent lists.
      *
-     * @return createConcurrentList
+     * @return IStoredList
      */
     public static <T> IStoredList<T> createConcurrentList(boolean segmented) {
         return createConcurrentList(segmented, false /*supportFifoPerSegment*/);
     }
 
     /**
-     * Creates a segmented stored list - used for highly concurrent lists.
+     * Creates a concurrent stored list - used for highly concurrent lists.
      *
-     * @return ConcurrentSegmentedStoredLis
+     * @return IStoredList
      */
     public static <T> IStoredList<T> createConcurrentList(int numOfSegments) {
         return new ConcurrentSegmentedStoredList<T>(numOfSegments);
     }
 
     /**
-     * Creates a segmented stored list - used for highly concurrent lists.
+     * Creates a concurrent stored list - used for highly concurrent lists.
      *
-     * @return ConcurrentSegmentedStoredList
+     * @return IStoredList
      */
     public static <T> IStoredList<T> createConcurrentList(boolean segmented, boolean supportFifoPerSegment) {
         return new ConcurrentSegmentedStoredList<T>(segmented, supportFifoPerSegment);
     }
 
+    /**
+     * Creates a concurrent padded stored list - used for highly concurrent lists.
+     *
+     * @return IStoredList
+     */
+    public static <T> IStoredList<T> createConcurrentPaddedList(boolean segmented, boolean supportFifoPerSegment) {
+        return new ConcurrentSegmentedStoredList<T>(segmented, supportFifoPerSegment);
+    }
     /**
      * Creates a segmented stored list - used for highly concurrent lists. this SL supports serving
      * as a EconomyConcurrentHashMap HashEntry for storing an index value

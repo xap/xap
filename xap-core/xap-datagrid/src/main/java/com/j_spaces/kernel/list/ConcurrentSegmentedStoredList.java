@@ -81,6 +81,9 @@ public class ConcurrentSegmentedStoredList<T>
     public ConcurrentSegmentedStoredList(boolean segmented, boolean supportFifoPerSegment) {
         this(segmented, supportFifoPerSegment, 0, false /*padded*/);
     }
+    public ConcurrentSegmentedStoredList(boolean segmented, boolean supportFifoPerSegment, boolean padded) {
+        this(segmented, supportFifoPerSegment, 0, padded );
+    }
 
     public ConcurrentSegmentedStoredList(boolean segmented) {
         this(segmented, false /*supportFifoPerSegment*/, 0, false /*padded*/);
