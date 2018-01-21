@@ -58,7 +58,7 @@ public class ConcurrentSegmentedStoredList<T>
     private static final AtomicIntegerFieldUpdater<ConcurrentSegmentedStoredList> sizeUpdater = UncheckedAtomicIntegerFieldUpdater.newUpdater(ConcurrentSegmentedStoredList.class, "_size");
 
 
-    public ConcurrentSegmentedStoredList(boolean segmented, boolean supportFifoPerSegment, int inputNumOfSegments) {
+    public ConcurrentSegmentedStoredList(boolean segmented, boolean supportFifoPerSegment, int inputNumOfSegments,boolean padded) {
         int numOfSegments = Integer.getInteger(SystemProperties.ENGINE_STORED_LIST_SEGMENTS, SystemProperties.ENGINE_STORED_LIST_SEGMENTS_DEFAULT);
         if (!segmented) {
             numOfSegments = 1;
@@ -74,20 +74,20 @@ public class ConcurrentSegmentedStoredList<T>
 
         //create segments & locks
         for (int seg = 0; seg < numOfSegments; seg++) {
-            _segments[seg] = new StoredListChainSegment<T>((short) seg, supportFifoPerSegment);
+            _segments[seg] = new StoredListChainSegment<T>((short) seg, supportFifoPerSegment,padded);
         }
     }
 
     public ConcurrentSegmentedStoredList(boolean segmented, boolean supportFifoPerSegment) {
-        this(segmented, supportFifoPerSegment, 0);
+        this(segmented, supportFifoPerSegment, 0, false /*padded*/);
     }
 
     public ConcurrentSegmentedStoredList(boolean segmented) {
-        this(segmented, false /*supportFifoPerSegment*/, 0);
+        this(segmented, false /*supportFifoPerSegment*/, 0, false /*padded*/);
     }
 
     public ConcurrentSegmentedStoredList(int inputNumOfSegments) {
-        this(inputNumOfSegments > 1, false /*supportFifoPerSegment*/, inputNumOfSegments);
+        this(inputNumOfSegments > 1, false /*supportFifoPerSegment*/, inputNumOfSegments, false /*padded*/);
     }
 
 

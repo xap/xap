@@ -47,6 +47,7 @@ public class StoredListChainSegment<T> {
     private final short _segment;
 
     private static final byte SUPPORT_FIFO = ((byte) 1) << 0;
+    private static final byte PADDED = ((byte) 1) << 1;
 
     private final byte _flags;
     private final byte _healthCheck;
@@ -172,16 +173,25 @@ public class StoredListChainSegment<T> {
     }
 
 
-    StoredListChainSegment(short segment, boolean supportFifo) {
+    StoredListChainSegment(short segment, boolean supportFifo,boolean padded) {
         _segment = segment;
-        _tail = new ConcurrentSLObjectInfo(null, _segment, null, null, (byte) 0);
-        _head = new ConcurrentSLObjectInfo(null, _segment, _tail, null, (byte) 0);
+        if (padded)
+        {//padded means padding of head & tail
+            _tail = new ConcurrentSLObjectInfoPadded(null, _segment, null, null, (byte) 0);
+            _head = new ConcurrentSLObjectInfoPadded(null, _segment, _tail, null, (byte) 0);
+        }
+        else {
+            _tail = new ConcurrentSLObjectInfo(null, _segment, null, null, (byte) 0);
+            _head = new ConcurrentSLObjectInfo(null, _segment, _tail, null, (byte) 0);
+        }
         _tail.setFwd(_head);
         _tail.nodeInsertionEnded();
         _head.nodeInsertionEnded();
         byte flags = 0;
         if (supportFifo)
             flags |= SUPPORT_FIFO;
+        if (padded)
+            flags |= PADDED;
 
         _flags = flags;
         _healthCheck = (byte) (System.identityHashCode(this));
