@@ -16,11 +16,13 @@
 
 package org.openspaces.launcher;
 
+import java.io.Closeable;
+
 /**
  * @author Niv Ingberg
  * @since 10.0.0
  */
-public abstract class WebLauncher {
+public abstract class WebLauncher implements Closeable {
 
     public abstract void launch(WebLauncherConfig config) throws Exception;
 }

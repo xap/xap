@@ -8,7 +8,7 @@ import com.gigaspaces.start.ClasspathBuilder;
  */
 public class ZooKeeperServiceFactory extends ServiceFactory {
     @Override
-    protected String getServiceName() {
+    public String getServiceName() {
         return "ZK";
     }
 

@@ -46,9 +46,10 @@ public class JettyLauncher extends WebLauncher {
 
     private static final Log logger = LogFactory.getLog(JettyLauncher.class);
 
+    private Server server;
     @Override
     public void launch(WebLauncherConfig config) throws Exception {
-        Server server = new Server();
+        this.server = new Server();
 
         //Set JSP to use Standard JavaC always
         System.setProperty("org.apache.jasper.compiler.disablejsr199","false");
@@ -111,6 +112,17 @@ public class JettyLauncher extends WebLauncher {
         server.setHandler(webAppContext);
 
         server.start();
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (server != null) {
+            try {
+                server.stop();
+            } catch (Exception e) {
+                throw new IOException("Failed to stop jetty server", e);
+            }
+        }
     }
 
     /**

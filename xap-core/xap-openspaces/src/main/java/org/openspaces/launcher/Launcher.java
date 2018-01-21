@@ -26,16 +26,23 @@ import com.j_spaces.kernel.ClassLoaderHelper;
 import org.openspaces.pu.container.support.CommandLineParser;
 
 import java.awt.Desktop;
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * @author Guy Korland
  * @since 8.0.4
  */
-public class Launcher {
+public class Launcher implements Closeable {
+
+    private final WebLauncherConfig config;
+    private final WebLauncher webLauncher;
+    private final Logger logger;
 
     public static void main(String[] args) throws Exception {
         Collection<String> helpArgs = Arrays.asList("help", "h");
@@ -43,33 +50,63 @@ public class Launcher {
         for (String helpArg : helpArgs) {
             if (props.containsKey(helpArg)) {
                 printHelpMessage();
-                return;
+                System.exit(0);
             }
         }
 
         WebLauncherConfig config = new WebLauncherConfig(props);
+        new Launcher(config);
+    }
+
+    public Launcher() {
+        this(new WebLauncherConfig(new Properties()));
+    }
+
+    public Launcher(WebLauncherConfig config) {
+        this.config = config;
         if (!validateWar(config) || !validateSslParameters(config)) {
             printHelpMessage();
-            return;
+            System.exit(1);
         }
 
         initIfNotDefined("org.openspaces.launcher.jetty.session.manager",null, "org.openspaces.pu.container.jee.jetty.GSSessionManager");
         initIfNotDefined("com.gigaspaces.logger.RollingFileHandler.time-rolling-policy", null, "monthly");
         initIfNotDefined("com.gigaspaces.webui.username.mandatory", "USER_NAME_MANDATORY", "false");
 
-        GSLogConfigLoader.getLoader(config.getName());
-        GSLogConfigLoader.getLoader();
+        if (!GSLogConfigLoader.isInitialized()) {
+            GSLogConfigLoader.getLoader(config.getName());
+            GSLogConfigLoader.getLoader();
+        }
 
-        final Logger logger = Logger.getLogger(config.getLoggerName());
-        RuntimeInfo.logRuntimeInfo(logger, "Starting the " + config.getName() + " server, security enabled:" +
-                SecurityResolver.isSecurityEnabled() + ", bind address: " + config.getHostAddress() + ", port: " + config.getPort());
-        String webLauncherClass = System.getProperty("org.openspaces.launcher.class", "org.openspaces.launcher.JettyLauncher");
-        WebLauncher webLauncher = ClassLoaderHelper.newInstance(webLauncherClass);
-        webLauncher.launch(config);
-        launchBrowser(logger, config);
+        this.logger = Logger.getLogger(config.getLoggerName());
+        RuntimeInfo.logRuntimeInfo(logger, "Starting " + config.getName() + ", security enabled:" +
+                SecurityResolver.isSecurityEnabled() + ", host: " + config.getHostAddress() + ", port: " + config.getPort());
+        this.webLauncher = initWebLauncher();
+        if (webLauncher == null)
+            System.exit(1);
+        launchBrowser();
     }
 
-    private static void launchBrowser(Logger logger, WebLauncherConfig config) {
+    @Override
+    public void close() throws IOException {
+        logger.info("Closing " + config.getName());
+        if (webLauncher != null)
+            webLauncher.close();
+    }
+
+    private WebLauncher initWebLauncher() {
+        String webLauncherClass = System.getProperty("org.openspaces.launcher.class", "org.openspaces.launcher.JettyLauncher");
+        try {
+            WebLauncher webLauncher = ClassLoaderHelper.newInstance(webLauncherClass);
+            webLauncher.launch(config);
+            return webLauncher;
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed to start " + webLauncherClass, e);
+            return null;
+        }
+    }
+
+    private void launchBrowser() {
         String protocol = config.isSslEnabled() ? "https" : "http";
         final String url = protocol + "://localhost:" + config.getPort();
         logger.info("Browsing to " + url);

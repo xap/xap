@@ -21,6 +21,7 @@ import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.jmx.JMXUtilities;
 import com.gigaspaces.internal.services.RestServiceFactory;
 import com.gigaspaces.internal.services.ServiceFactory;
+import com.gigaspaces.internal.services.WebuiServiceFactory;
 import com.gigaspaces.internal.services.ZooKeeperServiceFactory;
 import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.start.manager.XapManagerConfig;
@@ -92,9 +93,14 @@ public class SystemConfig {
     private final Map<String, ServiceFactory> serviceFactoryMap = initServiceFactories();
 
     private static Map<String, ServiceFactory> initServiceFactories() {
+        ServiceFactory[] serviceFactories = new ServiceFactory[] {
+                new RestServiceFactory(),
+                new ZooKeeperServiceFactory(),
+                new WebuiServiceFactory()
+        };
         Map<String, ServiceFactory> result = new HashMap<String, ServiceFactory>();
-        result.put(SystemBoot.REST, new RestServiceFactory());
-        result.put(SystemBoot.ZK, new ZooKeeperServiceFactory());
+        for (ServiceFactory serviceFactory : serviceFactories)
+            result.put(serviceFactory.getServiceName(), serviceFactory);
         return result;
     }
 

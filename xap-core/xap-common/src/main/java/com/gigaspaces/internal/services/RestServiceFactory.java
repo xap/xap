@@ -23,7 +23,7 @@ import com.gigaspaces.start.ClasspathBuilder;
  */
 public class RestServiceFactory extends ServiceFactory {
     @Override
-    protected String getServiceName() {
+    public String getServiceName() {
         return "REST";
     }
 

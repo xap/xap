@@ -75,6 +75,10 @@ public class GSLogConfigLoader {
         }
     }
 
+    public static synchronized boolean isInitialized() {
+        return _loader != null;
+    }
+
     public static synchronized void reset() {
         _loader = null;
     }

@@ -45,7 +45,7 @@ public abstract class ServiceFactory {
         }
     }
 
-    protected abstract String getServiceName();
+    public abstract String getServiceName();
 
     protected abstract String getServiceClassName();
 

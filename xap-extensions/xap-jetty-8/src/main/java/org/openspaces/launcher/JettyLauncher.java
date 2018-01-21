@@ -38,9 +38,11 @@ public class JettyLauncher extends WebLauncher {
 
     private static final Log logger = LogFactory.getLog(JettyLauncher.class);
 
+    private Server server;
+
     @Override
     public void launch(WebLauncherConfig config) throws Exception {
-        Server server = new Server();
+        this.server = new Server();
 
         SelectChannelConnector connector;
 
@@ -102,7 +104,18 @@ public class JettyLauncher extends WebLauncher {
         webAppContext.start();
     }
 
-    private SelectChannelConnector createSslConnector( Server server, WebLauncherConfig config ) throws IOException {
+    @Override
+    public void close() throws IOException {
+        if (server != null) {
+            try {
+                server.stop();
+            } catch (Exception e) {
+                throw new IOException("Failed to stop jetty server", e);
+            }
+        }
+    }
+
+    private SelectChannelConnector createSslConnector(Server server, WebLauncherConfig config ) throws IOException {
 
         SslSelectChannelConnector ssl_connector = new SslSelectChannelConnector();
 
