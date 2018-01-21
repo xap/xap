@@ -55,11 +55,10 @@ public class ConcurrentSegmentedStoredList<T>
     // counts the number of scans - used to spread the start between segments
     private int scanCounter = 0;
 
-    private final boolean _supportFifoPerSegment;
     private static final AtomicIntegerFieldUpdater<ConcurrentSegmentedStoredList> sizeUpdater = UncheckedAtomicIntegerFieldUpdater.newUpdater(ConcurrentSegmentedStoredList.class, "_size");
 
 
-    public ConcurrentSegmentedStoredList(boolean segmented, boolean supportFifoPerSegment, boolean unidirectionalList, int inputNumOfSegments) {
+    public ConcurrentSegmentedStoredList(boolean segmented, boolean supportFifoPerSegment, int inputNumOfSegments) {
         int numOfSegments = Integer.getInteger(SystemProperties.ENGINE_STORED_LIST_SEGMENTS, SystemProperties.ENGINE_STORED_LIST_SEGMENTS_DEFAULT);
         if (!segmented) {
             numOfSegments = 1;
@@ -71,25 +70,24 @@ public class ConcurrentSegmentedStoredList<T>
         if (numOfSegments == 0)
             numOfSegments = SystemProperties.ENGINE_STORED_LIST_SEGMENTS_DEFAULT;
 
-        _supportFifoPerSegment = supportFifoPerSegment;
         _segments = new StoredListChainSegment[numOfSegments];
 
         //create segments & locks
         for (int seg = 0; seg < numOfSegments; seg++) {
-            _segments[seg] = new StoredListChainSegment<T>((short) seg, supportFifoPerSegment, unidirectionalList);
+            _segments[seg] = new StoredListChainSegment<T>((short) seg, supportFifoPerSegment);
         }
     }
 
     public ConcurrentSegmentedStoredList(boolean segmented, boolean supportFifoPerSegment) {
-        this(segmented, supportFifoPerSegment, false /*unidirectionalList*/, 0);
+        this(segmented, supportFifoPerSegment, 0);
     }
 
     public ConcurrentSegmentedStoredList(boolean segmented) {
-        this(segmented, false /*supportFifoPerSegment*/, false /*unidirectionalList*/, 0);
+        this(segmented, false /*supportFifoPerSegment*/, 0);
     }
 
     public ConcurrentSegmentedStoredList(int inputNumOfSegments) {
-        this(inputNumOfSegments > 1, false /*supportFifoPerSegment*/, false /*unidirectionalList*/, inputNumOfSegments);
+        this(inputNumOfSegments > 1, false /*supportFifoPerSegment*/, inputNumOfSegments);
     }
 
 
@@ -116,6 +114,11 @@ public class ConcurrentSegmentedStoredList<T>
     public IObjectInfo<T> addUnlocked(T subject) {
         return addImpl(subject);
 
+    }
+
+    private boolean isSupportsFifoPerSegment()
+    {
+        return _segments[0].isSupportFifo();
     }
 
     private IObjectInfo<T> addImpl(T subject) {
@@ -219,7 +222,7 @@ public class ConcurrentSegmentedStoredList<T>
      * @return true if we can optimize
      */
     public boolean optimizeScanForSingleObject() {
-        return _supportFifoPerSegment && getNumSegments() == 1 && size() <= 1;
+        return getNumSegments() == 1 && isSupportsFifoPerSegment() && size() <= 1;
     }
 
 
@@ -238,7 +241,7 @@ public class ConcurrentSegmentedStoredList<T>
      * establish a scan position. we select a random segment to start from
      */
     public IStoredListIterator<T> establishListScan(boolean randomScan) {
-        if (!randomScan && !_supportFifoPerSegment && getNumSegments() > 1)
+        if (!randomScan &&  getNumSegments() > 1 && ! isSupportsFifoPerSegment() )
             throw new RuntimeException("establishListScan non-random scans not supported");
 
         SegmentedListIterator<T> slh = _SLHolderPool.get();

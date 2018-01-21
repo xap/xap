@@ -47,7 +47,6 @@ public class StoredListChainSegment<T> {
     private final short _segment;
 
     private static final byte SUPPORT_FIFO = ((byte) 1) << 0;
-    private static final byte UNIDIRECTIONAL_LIST = ((byte) 1) << 1;
 
     private final byte _flags;
     private final byte _healthCheck;
@@ -164,16 +163,16 @@ public class StoredListChainSegment<T> {
 
 
     }
-
-    StoredListChainSegment(short segment) {
-        this(segment, false);
+    //padded object info no 2 of them in same cache line
+    static class ConcurrentSLObjectInfoPadded<T> extends ConcurrentSLObjectInfo<T> {
+        long p1,p2,p3,p4,p5,p6,p7,p8;  //padding
+        public ConcurrentSLObjectInfoPadded(T subject, short segment, ConcurrentSLObjectInfo backward, ConcurrentSLObjectInfo forward, byte healthCheck) {
+            super(subject, segment, backward, forward,  healthCheck);
+        }
     }
+
 
     StoredListChainSegment(short segment, boolean supportFifo) {
-        this(segment, supportFifo, false /* unidirectionalList*/);
-    }
-
-    StoredListChainSegment(short segment, boolean supportFifo, boolean unidirectionalList) {
         _segment = segment;
         _tail = new ConcurrentSLObjectInfo(null, _segment, null, null, (byte) 0);
         _head = new ConcurrentSLObjectInfo(null, _segment, _tail, null, (byte) 0);
@@ -183,23 +182,14 @@ public class StoredListChainSegment<T> {
         byte flags = 0;
         if (supportFifo)
             flags |= SUPPORT_FIFO;
-        if (unidirectionalList)
-            flags |= UNIDIRECTIONAL_LIST;
 
         _flags = flags;
-        if (unidirectionalList && supportFifo)
-            throw new RuntimeException(" unidirectional-SL cannot support fifo");
         _healthCheck = (byte) (System.identityHashCode(this));
     }
 
-    private boolean isSupportFifo()
+    public boolean isSupportFifo()
     {
         return (_flags & SUPPORT_FIFO) == SUPPORT_FIFO;
-
-    }
-    private boolean isUniDirectional()
-    {
-        return (_flags & UNIDIRECTIONAL_LIST) == UNIDIRECTIONAL_LIST;
 
     }
 
@@ -214,8 +204,6 @@ public class StoredListChainSegment<T> {
             ConcurrentSLObjectInfo cur_first = _tail.getFwd();
             newnode.setFwd(cur_first);
             if (_tail.CAS_forward(cur_first, newnode)) {
-                if (isUniDirectional())
-                    break;//no more work to do
                 //if fifo supported help out in "older" nodes ptr redirection
                 if (isSupportFifo()) {
                     if (cur_first != _head && cur_first.getFwd().getBwd() == _tail) {
@@ -360,8 +348,6 @@ public class StoredListChainSegment<T> {
      * @param oi an existing element between Head and Tail
      */
     public void remove(IObjectInfo<T> oi) {
-        if (isUniDirectional())
-            throw new RuntimeException(" unidirectional-SL cannot support remove");
         removeNode((ConcurrentSLObjectInfo) oi, false /*unlocked*/);
         oi.setSubject(null); //nullify subject
     }
@@ -565,7 +551,7 @@ public class StoredListChainSegment<T> {
             if (iter._cur == _head)
                 return;
             iter._currSegmentScanCount--;
-            if (isUniDirectional() || iter._cur.isNodeInserted()) {
+            if (iter._cur.isNodeInserted()) {
                 iter._curElement = iter._cur;
                 return;
             }

@@ -114,16 +114,6 @@ public final class StoredListFactory {
         return new ConcurrentSegmentedStoredListHashmapEntry<T>(segmented, supportFifoPerSegment, StoredIndexValueInHashmap);
     }
 
-    /**
-     * create a unidirectional list- removal of elements in not supported, adding is just one CAS
-     * Creates a segmented stored list - used for highly concurrent lists. this SL supports serving
-     * as a EconomyConcurrentHashMap HashEntry for storing an index value
-     *
-     * @return ConcurrentSegmentedStoredList
-     */
-    public static <T> IStoredList<T> createUniDirectionalConcurrentList(boolean segmented) {
-        return new ConcurrentSegmentedStoredList<T>(segmented, false /*supportFifoPerSegment*/, true /* unidirectional list*/, 0 /*segments*/);
-    }
 
     /**
      * @return StoredList instance according to the given parameters and JVM Version.
