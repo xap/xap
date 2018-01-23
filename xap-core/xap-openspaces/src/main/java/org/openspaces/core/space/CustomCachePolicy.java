@@ -46,8 +46,9 @@ public class CustomCachePolicy extends LruCachePolicy {
      * Sets the custom eviction strategy to be used by the space, When using a Custom Cache Policy
      * this property must be set.
      */
-    public void setEvictionStrategy(SpaceEvictionStrategy evictionStrategy) {
+    public CustomCachePolicy setEvictionStrategy(SpaceEvictionStrategy evictionStrategy) {
         this.evictionStrategy = evictionStrategy;
+        return this;
     }
 
     @Override

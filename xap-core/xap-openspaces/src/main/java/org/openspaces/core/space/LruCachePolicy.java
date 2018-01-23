@@ -59,8 +59,9 @@ public class LruCachePolicy implements CachePolicy {
      * The number of entries to keep in the space. In all bulit in schemas of GigaSpaces, if this is
      * not set, the value is 100000.
      */
-    public void setSize(Integer size) {
+    public LruCachePolicy setSize(Integer size) {
         this.size = size;
+        return this;
     }
 
     /**
@@ -69,8 +70,9 @@ public class LruCachePolicy implements CachePolicy {
      * 50%) maximum size. To disable this initial load phase, you should configure the initial_load
      * value to be 0.
      */
-    public void setInitialLoadPercentage(int initialLoadPercentage) {
+    public LruCachePolicy setInitialLoadPercentage(int initialLoadPercentage) {
         this.initialLoadPercentage = initialLoadPercentage;
+        return this;
     }
 
     public Properties toProps() {

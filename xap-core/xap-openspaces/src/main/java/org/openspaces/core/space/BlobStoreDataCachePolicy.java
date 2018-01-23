@@ -48,28 +48,34 @@ public class BlobStoreDataCachePolicy implements CachePolicy {
         sqlQueryList = new ArrayList<SQLQuery>();
     }
 
-    public void setBlobStoreHandler(BlobStoreStorageHandler blobStoreHandler) {
+    public BlobStoreDataCachePolicy setBlobStoreHandler(BlobStoreStorageHandler blobStoreHandler) {
         this.blobStoreHandler = blobStoreHandler;
+        return this;
     }
 
-    public void setAvgObjectSizeKB(Integer avgObjectSizeKB) {
+    public BlobStoreDataCachePolicy setAvgObjectSizeKB(Integer avgObjectSizeKB) {
         this.avgObjectSizeBytes = avgObjectSizeKB * 1024;
+        return this;
     }
 
-    public void setAvgObjectSizeBytes(Integer avgObjectSizeBytes) {
+    public BlobStoreDataCachePolicy setAvgObjectSizeBytes(Integer avgObjectSizeBytes) {
         this.avgObjectSizeBytes = avgObjectSizeBytes;
+        return this;
     }
 
-    public void setCacheEntriesPercentage(Integer cacheEntriesPercentage) {
+    public BlobStoreDataCachePolicy setCacheEntriesPercentage(Integer cacheEntriesPercentage) {
         this.cacheEntriesPercentage = cacheEntriesPercentage;
+        return this;
     }
 
-    public void setPersistent(Boolean persistent) {
+    public BlobStoreDataCachePolicy setPersistent(Boolean persistent) {
         this.persistent = persistent;
+        return this;
     }
 
-    public void addCacheQuery(SQLQuery sqlQuery){
+    public BlobStoreDataCachePolicy addCacheQuery(SQLQuery sqlQuery){
         sqlQueryList.add(sqlQuery);
+        return this;
     }
 
     public Properties toProps() {
