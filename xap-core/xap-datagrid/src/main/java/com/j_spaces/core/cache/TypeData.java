@@ -906,7 +906,7 @@ public class TypeData {
     private static IStoredList<IEntryCacheInfo> createEntriesStoredList(boolean fifoSupport, boolean useConcurrentStoreList) {
         if (fifoSupport) {
             if (useConcurrentStoreList)
-                return StoredListFactory.createConcurrentList(false /*segmented*/, true /*supportFifo*/);
+                return StoredListFactory.createConcurrentPaddedList(false /*segmented*/, true /*supportFifo*/);
             else
                 return StoredListFactory.createRandomScanList(false);
         }

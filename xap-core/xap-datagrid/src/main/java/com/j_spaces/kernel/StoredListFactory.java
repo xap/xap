@@ -28,7 +28,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 /**
  * StoredListFactory returns a {@link IStoredList} implementation, according to the Java version the
  * sources were compiled. This is due to performance profiling conducted on both JDK1.4 and JDK1.5 -
- * Thus, using 1.4 will return {@link SyncStoredList}, and using 1.5 will return {@link
+ * Thus, using 1.4 will return {@link IStoredList}, and using 1.5 will return {@link
  * SimpleLockStoredList}.
  *
  * @author moran
@@ -110,7 +110,7 @@ public final class StoredListFactory {
      * @return IStoredList
      */
     public static <T> IStoredList<T> createConcurrentPaddedList(boolean segmented, boolean supportFifoPerSegment) {
-        return new ConcurrentSegmentedStoredList<T>(segmented, supportFifoPerSegment);
+        return new ConcurrentSegmentedStoredList<T>(segmented, supportFifoPerSegment,true);
     }
     /**
      * Creates a segmented stored list - used for highly concurrent lists. this SL supports serving

@@ -79,18 +79,18 @@ public class ConcurrentSegmentedStoredList<T>
     }
 
     public ConcurrentSegmentedStoredList(boolean segmented, boolean supportFifoPerSegment) {
-        this(segmented, supportFifoPerSegment, 0, false /*padded*/);
+        this(segmented, supportFifoPerSegment, 0, segmented /*multisegment ==> padded*/);
     }
     public ConcurrentSegmentedStoredList(boolean segmented, boolean supportFifoPerSegment, boolean padded) {
         this(segmented, supportFifoPerSegment, 0, padded );
     }
 
     public ConcurrentSegmentedStoredList(boolean segmented) {
-        this(segmented, false /*supportFifoPerSegment*/, 0, false /*padded*/);
+        this(segmented, false /*supportFifoPerSegment*/, 0, segmented /*multisegment ==> padded*/);
     }
 
     public ConcurrentSegmentedStoredList(int inputNumOfSegments) {
-        this(inputNumOfSegments > 1, false /*supportFifoPerSegment*/, inputNumOfSegments, false /*padded*/);
+        this(inputNumOfSegments > 1, false /*supportFifoPerSegment*/, inputNumOfSegments, inputNumOfSegments > 1 /*multisegment ==> padded*/);
     }
 
 
