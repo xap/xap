@@ -38,15 +38,7 @@
             <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>product/lib/optional/jetty/xap-jetty</outputDirectory>
             <includes>
-                <include>org.gigaspaces:xap-jetty-8</include>
-            </includes>
-            <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
-        </dependencySet>
-        <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
-            <outputDirectory>product/lib/optional/jetty-9/xap-jetty</outputDirectory>
-            <includes>
-                <include>org.gigaspaces:xap-jetty-9</include>
+                <include>org.gigaspaces:xap-jetty</include>
             </includes>
             <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
         </dependencySet>
@@ -179,7 +171,7 @@
 
         <!--jetty8-->
         <fileSet>
-            <directory>${project.basedir}/../xap-extensions/xap-jetty-8</directory>
+            <directory>${project.basedir}/../xap-extensions/xap-jetty</directory>
             <outputDirectory>product</outputDirectory>
             <includes>
                 <include>bin/pu*</include>
@@ -194,40 +186,26 @@
                 <exclude>tools/gshell/**</exclude>
             </excludes>
         </fileSet>
-        <!--jetty8 jars-->
+        <!--jetty jars-->
         <fileSet>
-            <directory>${project.basedir}/../xap-extensions/xap-jetty-8/target/dependency</directory>
+            <directory>${project.basedir}/../xap-extensions/xap-jetty/target/dependency</directory>
             <outputDirectory>product/lib/optional/jetty</outputDirectory>
             <includes>
                 <include>jetty-*</include>
-                <include>javax.servlet.jsp.jstl-*</include>
-                <include>javax.servlet.jsp-*</include>
-                <include>javax.el-*</include>
+                <include>javax*</include>
+                <include>geronimo-*</include>
+                <include>apache-*</include>
+                <include>asm*</include>
                 <include>com.sun.el-*</include>
-                <include>org.apache.jasper.glassfish-*</include>
                 <include>org.apache.taglibs.standard.glassfish-*</include>
+                <include>org.apache.jasper.glassfish-*</include>
                 <include>ecj-*</include>
-                <include>javax.servlet-api-*</include>
+                <include>cdi-*</include>
+                <include>org.eclipse.jdt.core-*</include>
+                <include>websocket-*</include>
             </includes>
             <excludes>
                 <exclude>jetty-all-*</exclude>
-            </excludes>
-        </fileSet>
-        <!--jetty9-->
-        <fileSet>
-            <directory>${project.basedir}/../xap-extensions/xap-jetty-9</directory>
-            <outputDirectory>product</outputDirectory>
-            <includes>
-                <include>bin/pu*</include>
-                <include>bin/gs-m*</include>
-                <include>deploy/**</include>
-                <include>tools/**</include>
-            </includes>
-            <excludes>
-                <exclude>tools/maven/maven-openspaces-plugin/target/**</exclude>
-                <exclude>tools/maven/apache-maven-3.0.2/**</exclude>
-                <exclude>tools/**/*.iml</exclude>
-                <exclude>tools/gshell/**</exclude>
             </excludes>
         </fileSet>
 
