@@ -16,7 +16,6 @@ import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_O
  * @author Rotem Herzberg
  * @since 12.3
  */
-//@com.gigaspaces.api.InternalApi
 public class OffHeapMemoryManager {
 
     private final CacheManager _cacheManager;
