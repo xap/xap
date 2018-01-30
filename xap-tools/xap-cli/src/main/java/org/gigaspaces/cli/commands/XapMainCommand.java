@@ -9,7 +9,7 @@ import picocli.CommandLine.*;
 import java.util.Arrays;
 import java.util.Collection;
 
-@Command(name="gs", headerHeading = XapMainCommand.HEADER, customSynopsis = "gs [global-options] command [options] [parameters]")
+@Command(name="xap", headerHeading = XapMainCommand.HEADER, customSynopsis = "xap [global-options] command [options] [parameters]")
 public class XapMainCommand extends CliCommand implements SubCommandContainer {
     public static final String HEADER =
                     "@|green   __   __          _____                                   |@%n" +
