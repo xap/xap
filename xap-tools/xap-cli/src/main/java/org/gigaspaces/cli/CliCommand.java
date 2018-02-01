@@ -1,10 +1,12 @@
 package org.gigaspaces.cli;
 
+import org.gigaspaces.cli.commands.XapVersionProvider;
 import picocli.CommandLine.*;
 
 import java.util.concurrent.Callable;
 
 @Command(
+        versionProvider = XapVersionProvider.class,
         sortOptions = false,
         //headerHeading = "",
         //header = "<header goes here>",
@@ -17,6 +19,9 @@ public abstract class CliCommand implements Callable<Object> {
 
     @Option(names = {"--help"}, usageHelp = true, description = "display this help message")
     boolean usageHelpRequested;
+
+    @Option(names = {"--version"}, versionHelp = true, description = "display version information")
+    boolean versionRequested;
 
     @Override
     public Object call() throws Exception {
