@@ -27,7 +27,7 @@
     <fileSets>
         <fileSet>
             <directory>${project.basedir}/../xap-tools/xap-cli/scripts</directory>
-            <outputDirectory>product/tools/cli</outputDirectory>
+            <outputDirectory>product/bin</outputDirectory>
             <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
     </fileSets>
