@@ -102,6 +102,7 @@ public class SystemInfo {
         private final String lib;
         private final String libRequired;
         private final String libOptional;
+        private final String libOptionalSecurity;
         private final String libPlatform;
         private final String work;
         private final String deploy;
@@ -115,6 +116,7 @@ public class SystemInfo {
             this.lib = path(xapHome, "lib");
             this.libRequired= path(lib, "required");
             this.libOptional= path(lib, "optional");
+            this.libOptionalSecurity = initFromSystemProperty(Locator.GS_LIB_OPTIONAL_SECURITY, path(this.libOptional, "security"));
             this.libPlatform= path(lib, "platform");
             this.work = initFromSystemProperty("com.gs.work", path(xapHome, "work"));
             this.deploy = initFromSystemProperty("com.gs.deploy", path(xapHome, "deploy"));
@@ -168,6 +170,10 @@ public class SystemInfo {
 
         public String getLibPlatform() {
             return libPlatform;
+        }
+
+        public String getLibOptionalSecurity() {
+            return libOptionalSecurity;
         }
     }
 
