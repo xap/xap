@@ -13,7 +13,7 @@
             <outputDirectory>product/lib/platform/commons</outputDirectory>
             <includes>
                 <include>commons-lang:commons-lang</include>
-                <include>commons-collections:commons-collections</include>
+                <!--<include>commons-collections:commons-collections</include>-->
             </includes>
         </dependencySet>
 
@@ -24,6 +24,15 @@
                 <include>io.netty:netty</include>
             </includes>
         </dependencySet>
+
+        <dependencySet>
+            <useProjectArtifact>false</useProjectArtifact>
+            <outputDirectory>product/lib/optional/jpa</outputDirectory>
+            <includes>
+                <include>commons-collections:commons-collections</include>
+            </includes>
+        </dependencySet>
+
     </dependencySets>
     <fileSets>
         <!--  non lib directories -->
