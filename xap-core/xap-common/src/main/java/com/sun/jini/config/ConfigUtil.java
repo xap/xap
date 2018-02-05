@@ -17,12 +17,6 @@
  */
 package com.sun.jini.config;
 
-import net.jini.core.lookup.ServiceID;
-import net.jini.id.Uuid;
-import net.jini.id.UuidFactory;
-
-import java.net.UnknownHostException;
-
 /**
  * A set of static convenience methods for use in configuration files. This class cannot be
  * instantiated.
@@ -61,87 +55,4 @@ public class ConfigUtil {
 
         return buf.toString();
     }
-
-    /**
-     * Return the local hostname.
-     *
-     * @return the local hostname.
-     * @throws UnknownHostException if no IP address for the local host could be found.
-     */
-    public static String getHostName() throws UnknownHostException {
-        return java.net.InetAddress.getLocalHost().getCanonicalHostName();
-    }
-
-    /**
-     * Returns the textual presentation of the local host IP address.
-     *
-     * @return the textual presentation of the local host IP address.
-     * @throws UnknownHostException if no IP address for the local host could be found.
-     */
-    public static String getHostAddress() throws UnknownHostException {
-        return java.net.InetAddress.getLocalHost().getHostAddress();
-    }
-
-
-    /**
-     * Returns a <code>String</code> whose characters, if parsed by a {@link
-     * net.jini.config.ConfigurationFile}, would yield a <code>String</code> equivalent to the
-     * passed argument.  This is done by replacing CR and LF with their escape codes, quoting '\'
-     * and '"' with '\', and enclosing the entire sequence in double quotes. Additionally the tab,
-     * form feed, and backspace characters will be converted to their escape codes and other control
-     * characters (besides CR and LF) to octal escapes for better readability if the string is
-     * printed for debugging purposes.
-     *
-     * @param string the string to turn into a string literal
-     * @return a <code>String</code> that if parsed as sequence of of characters by
-     * <code>ConfigurationFile</code> would yield a <code>String</code> equivalent to
-     * <code>string</code>
-     * @throws NullPointerException if <code>string</code> is <code>null</code>
-     */
-    public static String stringLiteral(String string) {
-        final StringBuffer sb = new StringBuffer(string.length() + 2);
-        sb.append('"');
-
-        final char[] ca = string.toCharArray();
-        for (int i = 0; i < ca.length; i++) {
-            final char c = ca[i];
-            if (c == '\\' || c == '"')
-                sb.append("\\").append(c);
-            else if (c == '\n')
-                sb.append("\\n");
-            else if (c == '\r')
-                sb.append("\\r");
-            else if (c == '\t')
-                sb.append("\\t");
-            else if (c == '\f')
-                sb.append("\\f");
-            else if (c == '\b')
-                sb.append("\\b");
-            else if (c < 0x20)
-                sb.append("\\").append(Integer.toOctalString(c));
-            else
-                sb.append(c);
-        }
-
-        return sb.append('"').toString();
-    }
-
-    /**
-     * Returns a <code>ServiceID</code> constructed from a 128-bit value represented by a string.
-     * The supplied string representation must be in the format defined by {@link
-     * net.jini.core.lookup.ServiceID#toString ServiceID.toString}, except that uppercase
-     * hexadecimal digits are allowed.
-     *
-     * @param s the string representation to create the <code>ServiceID</code> with
-     * @return a <code>ServiceID</code> with the value represented by the given string
-     * @throws IllegalArgumentException if the supplied string representation does not conform to
-     *                                  the specified format
-     * @throws NullPointerException     if <code>s</code> is <code>null</code>
-     **/
-    public static ServiceID createServiceID(String s) {
-        Uuid uuid = UuidFactory.create(s);
-        return new ServiceID(uuid.getMostSignificantBits(),
-                uuid.getLeastSignificantBits());
-    }
-
 }

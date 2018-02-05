@@ -377,13 +377,7 @@ public class Webster implements Runnable {
 
     private void logAndThrowBindExceptionException(String bindAddress,
                                                    BindException be) throws BindException {
-        String hostAddress = null;
-        try {
-            InetAddress localHost = InetAddress.getLocalHost();
-            hostAddress = localHost.getHostAddress();
-        } catch (UnknownHostException e) {
-            hostAddress = "localhost";
-        }
+        String hostAddress = SystemInfo.singleton().network().getHostId();
 
         if (bindAddress == null) {
             logger.log(Level.WARNING, "Failed to bind socket on [" + hostAddress + "], port [" + port + "], please check your network configuration", be);

@@ -169,13 +169,7 @@ public class JSpaceServiceImpl extends AbstractService implements ProxyAccessor 
      * Initialize configuration entries.
      */
     private void init(Configuration config) {
-        String localhostName = "localhost";
-        try {
-            localhostName = InetAddress.getLocalHost().getHostAddress();
-        } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, ex.toString(), ex);
-        }
+        String localhostName = SystemInfo.singleton().network().getHost().getHostAddress();
 
         try {
             _containerName = getConfigString(config, "containerName", localhostName);

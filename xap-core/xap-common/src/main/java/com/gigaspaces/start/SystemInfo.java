@@ -27,7 +27,9 @@ import com.gigaspaces.time.ITimeProvider;
 import net.jini.core.discovery.LookupLocator;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;

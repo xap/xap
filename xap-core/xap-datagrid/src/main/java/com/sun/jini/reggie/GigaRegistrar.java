@@ -4983,14 +4983,14 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         unexportWait = Config.getLongEntry(
                 config, COMPONENT, "unexportWait", unexportWait,
                 0, Long.MAX_VALUE);
+        String defaultValue = SystemInfo.singleton().network().getHostId();
         String unicastDiscoveryHost;
         try {
             unicastDiscoveryHost = (String) Config.getNonNullEntry(
-                    config, COMPONENT, "unicastDiscoveryHost", String.class, SystemInfo.singleton().network().getHostId());
+                    config, COMPONENT, "unicastDiscoveryHost", String.class, defaultValue);
         } catch (NoSuchEntryException e) {
             // fix for 4906732: only invoke getCanonicalHostName if needed
-            unicastDiscoveryHost =
-                    InetAddress.getLocalHost().getCanonicalHostName();
+            unicastDiscoveryHost = defaultValue;
         }
         try {
             unicastDiscoverySubjectChecker =
