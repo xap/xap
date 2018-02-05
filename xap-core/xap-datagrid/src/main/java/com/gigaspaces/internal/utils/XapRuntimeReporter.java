@@ -121,7 +121,7 @@ public class XapRuntimeReporter {
     protected void appendNetworkInfo() {
         append("Network:");
         try {
-            append("    Host Name: [" + InetAddress.getLocalHost().getHostName() + "] ");
+            append("    Host Name: [" + SystemInfo.singleton().network().getHost().getHostName() + "] ");
             NetworkInterface[] networkInterfaces = BootUtil.getNetworkInterfaces();
             for (NetworkInterface networkInterface : networkInterfaces) {
                 String desc = toString(networkInterface);

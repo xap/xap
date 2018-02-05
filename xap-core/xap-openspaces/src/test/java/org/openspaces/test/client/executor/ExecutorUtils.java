@@ -21,6 +21,7 @@
  */
 package org.openspaces.test.client.executor;
 
+import com.gigaspaces.start.SystemInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -470,14 +471,7 @@ public class ExecutorUtils {
      * @return The host name of this machine, or "unknown host"
      */
     public static String getHostName() {
-        String hostName = null;
-        try {
-            hostName = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e) {
-            hostName = "unknown host";
-        }
-
-        return hostName;
+        return SystemInfo.singleton().network().getHost().getHostName();
     }
 
     /**

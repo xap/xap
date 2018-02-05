@@ -21,6 +21,7 @@ import com.gigaspaces.client.transaction.DistributedTransactionManagerProvider;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.security.directory.DefaultCredentialsProvider;
+import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.SpaceSecurityException;
 import com.j_spaces.core.client.FinderException;
@@ -96,12 +97,7 @@ public class GSConnectionFactoryImpl implements ConnectionFactory,
     private Hashtable<String, GSConnectionImpl> connectionsHash;
 
     private static String generateIdSuffix() {
-        String hostIPStr;
-        try {
-            hostIPStr = java.net.InetAddress.getLocalHost().getHostAddress();
-        } catch (java.net.UnknownHostException ex) {
-            hostIPStr = "127.0.0.1";
-        }
+        String hostIPStr = SystemInfo.singleton().network().getHost().getHostAddress();
 
         //gets the host ip adress for later usage in the
         //clientID, and masking it from last to first, removing the .
