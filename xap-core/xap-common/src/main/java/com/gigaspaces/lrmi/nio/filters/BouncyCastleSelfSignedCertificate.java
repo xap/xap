@@ -16,6 +16,7 @@
 
 package com.gigaspaces.lrmi.nio.filters;
 
+import com.gigaspaces.start.SystemInfo;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
@@ -26,7 +27,6 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 import java.math.BigInteger;
-import java.net.InetAddress;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -73,7 +73,7 @@ public class BouncyCastleSelfSignedCertificate {
     }
 
     private BouncyCastleSelfSignedCertificate() throws Exception {
-        this(InetAddress.getLocalHost().getCanonicalHostName(), random, 1024);
+        this(SystemInfo.singleton().network().getHost().getCanonicalHostName(), random, 1024);
     }
 
 
