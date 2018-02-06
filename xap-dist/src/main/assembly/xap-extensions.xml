@@ -198,7 +198,6 @@
                 <include>asm*</include>
                 <include>com.sun.el-*</include>
                 <include>org.apache.taglibs.standard.glassfish-*</include>
-                <include>org.apache.jasper.glassfish-*</include>
                 <include>ecj-*</include>
                 <include>cdi-*</include>
                 <include>org.eclipse.jdt.core-*</include>
