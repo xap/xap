@@ -16,6 +16,7 @@
 
 package com.gigaspaces.lrmi.nio.filters;
 
+import com.gigaspaces.start.SystemInfo;
 import sun.security.x509.AlgorithmId;
 import sun.security.x509.CertificateAlgorithmId;
 import sun.security.x509.CertificateIssuerName;
@@ -29,7 +30,6 @@ import sun.security.x509.X509CertImpl;
 import sun.security.x509.X509CertInfo;
 
 import java.math.BigInteger;
-import java.net.InetAddress;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -74,7 +74,7 @@ public class SelfSignedCertificate {
     }
 
     private SelfSignedCertificate() throws Exception {
-        this(InetAddress.getLocalHost().getCanonicalHostName(), random, 1024);
+        this(SystemInfo.singleton().network().getHost().getCanonicalHostName(), random, 1024);
     }
 
     private SelfSignedCertificate(String fqdn, SecureRandom random, int bits) throws Exception {
