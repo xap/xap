@@ -92,8 +92,8 @@ public class JettyManagerRestLauncher implements Closeable {
         final int port = Integer.parseInt(config.getAdminRest());
         SslContextFactory sslContextFactory = createSslContextFactoryIfNeeded();
         JettyUtils.createConnector(server, host, port, sslContextFactory);
-        if (host != null && !host.equals("localhost") && !host.equals("0.0.0.0"))
-            JettyUtils.createConnector(server, "localhost", port, sslContextFactory);
+//        if (host != null && !host.equals("localhost") && !host.equals("0.0.0.0"))
+//            JettyUtils.createConnector(server, "localhost", port, sslContextFactory);
     }
 
     private void initWebApps(Server server) {
