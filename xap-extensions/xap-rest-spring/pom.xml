@@ -11,10 +11,6 @@
         <relativePath>../../</relativePath>
     </parent>
 
-    <properties>
-        <jetty.version>8.1.8.v20121106</jetty.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.gigaspaces</groupId>

@@ -402,13 +402,6 @@ public class BootUtil {
         }
     }
 
-    public static String translateHostName(String value) throws UnknownHostException {
-        NetworkTuple tuple = getNetworkSnapshot().parse(value);
-        if (tuple.address == null)
-            throw new RuntimeException("Failed to find network interface for [" + value + "]");
-        return tuple.host;
-    }
-
     public static class NetworkInterfaceWrapper {
 
         private final NetworkInterface networkInterface;

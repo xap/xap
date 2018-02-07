@@ -16,6 +16,7 @@
 package com.gigaspaces.internal.services;
 
 import com.gigaspaces.start.ClasspathBuilder;
+import com.gigaspaces.start.SystemInfo;
 
 /**
  * @author Niv Ingberg
@@ -37,7 +38,7 @@ public class RestServiceFactory extends ServiceFactory {
         classpath.appendPlatform("service-grid/xap-admin.jar")
                 .appendPlatform("service-grid/xap-service-grid.jar")
                 .appendPlatform("logger")
-                .appendOptional("security")
+                .append(SystemInfo.singleton().locations().getLibOptionalSecurity())
                 .appendPlatform("scala")
                 // Required jars: spring-context-*, spring-beans-*, spring-core-*, commons-logging-*, xap-datagrid, xap-asm, xap-trove
                 .appendRequired(ClasspathBuilder.startsWithFilter("spring-", "commons-", "xap-datagrid", "xap-openspaces", "xap-asm", "xap-trove"))

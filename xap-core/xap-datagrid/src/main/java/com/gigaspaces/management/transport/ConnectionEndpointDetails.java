@@ -45,8 +45,8 @@ public class ConnectionEndpointDetails implements Externalizable, Textualizable 
     private PlatformLogicalVersion _version;
 
     public static ConnectionEndpointDetails create() {
-        final String hostname = SystemInfo.singleton().network().getLocalHostCanonicalName();
-        final String hostAddress = SystemInfo.singleton().network().getHostId();
+        final String hostname = SystemInfo.singleton().network().getHost().getHostName();
+        final String hostAddress = SystemInfo.singleton().network().getHost().getHostAddress();
         final long pid = SystemInfo.singleton().os().processId();
         final PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
         return new ConnectionEndpointDetails(hostname, hostAddress, pid, version);

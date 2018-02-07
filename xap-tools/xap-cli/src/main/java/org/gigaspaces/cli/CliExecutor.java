@@ -9,13 +9,19 @@ import java.util.List;
 
 public class CliExecutor {
 
+    private static CommandLine mainCommandLine;
+
+    public static CommandLine getMainCommand() {
+        return mainCommandLine;
+    }
+
     public static void execute(Object mainCommand, String[] args) {
         final PrintStream out = System.out;
 
         int exitCode;
         try {
-            final CommandLine cmd = toCommandLine(mainCommand);
-            cmd.parseWithHandler(new CustomResultHandler(), out, args);
+            mainCommandLine = toCommandLine(mainCommand);
+            mainCommandLine.parseWithHandler(new CustomResultHandler(), out, args);
             exitCode = 0;
         } catch (Exception e) {
             if (e instanceof CommandLine.ExecutionException && e.getCause() instanceof CliCommandException) {
@@ -30,7 +36,7 @@ public class CliExecutor {
         System.exit(exitCode);
     }
 
-    public static CommandLine toCommandLine(Object command) {
+    private static CommandLine toCommandLine(Object command) {
         CommandLine cmd = new CommandLine(command);
         if (command instanceof SubCommandContainer) {
             Collection<Object> subcommands = ((SubCommandContainer) command).getSubCommands();

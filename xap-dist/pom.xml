@@ -103,13 +103,13 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
         </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.gigaspaces</groupId>-->
+            <!--<artifactId>xap-jetty-8</artifactId>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>org.gigaspaces</groupId>
-            <artifactId>xap-jetty-8</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.gigaspaces</groupId>
-            <artifactId>xap-jetty-9</artifactId>
+            <artifactId>xap-jetty</artifactId>
         </dependency>
         <dependency>
             <groupId>org.gigaspaces</groupId>

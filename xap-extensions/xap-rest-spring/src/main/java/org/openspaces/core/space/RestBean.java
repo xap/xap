@@ -26,7 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jini.rio.boot.BootUtil;
@@ -135,9 +135,9 @@ public class RestBean implements InitializingBean, ClusterInfoAware, DisposableB
         jettyPort += runningNumber;
         server = new Server();
         server.setStopAtShutdown(true);
-        server.setGracefulShutdown(1000);
+        server.setStopTimeout(1000);
 
-        SelectChannelConnector connector = new SelectChannelConnector();
+        ServerConnector connector = new ServerConnector(server);
         connector.setPort(jettyPort);
         server.setConnectors(new Connector[]{connector});
 
@@ -214,17 +214,7 @@ public class RestBean implements InitializingBean, ClusterInfoAware, DisposableB
 
     @Override
     public ServiceDetails[] getServicesDetails() {
-        String host = null;
-        try {
-            host = BootUtil.getHostAddress();
-        } catch (UnknownHostException e) {
-            logger.error("Unable to get host address for rest service", e);
-        }
-
-        if (host == null) {
-            logger.error("Unable to get host address for rest service, using NaN as host address.");
-            host = "NaN";
-        }
+        final String host = SystemInfo.singleton().network().getHostId();
         JeeServiceDetails details = new JeeServiceDetails(host, jettyPort, 0, "/", false, "jetty", JeeType.CUSTOM, 0);
         return new ServiceDetails[]{details};
     }

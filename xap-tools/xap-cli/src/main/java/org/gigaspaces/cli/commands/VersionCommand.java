@@ -1,6 +1,5 @@
 package org.gigaspaces.cli.commands;
 
-import com.gigaspaces.internal.version.PlatformVersion;
 import org.gigaspaces.cli.CliCommand;
 import picocli.CommandLine.*;
 
@@ -8,6 +7,8 @@ import picocli.CommandLine.*;
 public class VersionCommand extends CliCommand {
     @Override
     protected void execute() throws Exception {
-        System.out.println(PlatformVersion.getOfficialVersion());
+        for (String s : new XapVersionProvider().getVersion()) {
+            System.out.println(s);
+        }
     }
 }

@@ -17,6 +17,7 @@
  */
 package com.sun.jini.reggie;
 
+import com.gigaspaces.start.SystemInfo;
 import com.sun.jini.config.Config;
 import com.sun.jini.constants.ThrowableConstants;
 import com.sun.jini.constants.VersionConstants;
@@ -2763,7 +2764,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
         @Override
         public synchronized void interrupt() {
             try {
-                (new Socket(InetAddress.getLocalHost(), port)).close();
+                (new Socket(SystemInfo.singleton().network().getHost(), port)).close();
             } catch (IOException e) {
             }
             super.interrupt();
@@ -4821,8 +4822,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                     config, COMPONENT, "unicastDiscoveryHost", String.class);
         } catch (NoSuchEntryException e) {
             // fix for 4906732: only invoke getCanonicalHostName if needed
-            unicastDiscoveryHost =
-                    InetAddress.getLocalHost().getCanonicalHostName();
+            unicastDiscoveryHost = SystemInfo.singleton().network().getHostId();
         }
         try {
             unicastDiscoverySubjectChecker =

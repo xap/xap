@@ -212,13 +212,8 @@ public class ReplicationNotificationClientEndpoint {
     private ReplicationNode createReplicationNode() {
 
         Uuid uuid = UuidFactory.generate();
-        final String hostname = SystemInfo.singleton().network().getLocalHostName();
-        String processId = "";
-        try {
-            long pid = SystemInfo.singleton().os().processId();
-            processId = "[" + pid + "]";
-        } catch (Exception e) {
-        }
+        final String hostname = SystemInfo.singleton().network().getHost().getHostName();
+        final String processId = "[" + SystemInfo.singleton().os().processId() + "]";
 
         String lookupName = LOOKUP_NAME_PREFIX + hostname + processId + "_" + uuid;
 

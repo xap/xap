@@ -8,6 +8,6 @@ import picocli.CommandLine.*;
 public class HelpCommand extends CliCommand {
     @Override
     protected void execute() throws Exception {
-        CliExecutor.toCommandLine(new XapMainCommand()).usage(System.out);
+        CliExecutor.getMainCommand().usage(System.out);
     }
 }

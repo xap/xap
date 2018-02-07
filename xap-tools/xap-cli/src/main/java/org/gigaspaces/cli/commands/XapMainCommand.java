@@ -1,7 +1,6 @@
 package org.gigaspaces.cli.commands;
 
 import org.gigaspaces.cli.CliCommand;
-import org.gigaspaces.cli.CliCommandsSingleton;
 import org.gigaspaces.cli.CliExecutor;
 import org.gigaspaces.cli.SubCommandContainer;
 import picocli.CommandLine.*;
@@ -20,14 +19,7 @@ public class XapMainCommand extends CliCommand implements SubCommandContainer {
                     "@|green   /_/ \\_\\/_/    \\_\\_|                                   |@%n" +
                     "%n";
 
-    @Option(names = {"--username" }, description = "Username for secured environments")
-    protected String username;
-    @Option(names = {"--password" }, description = "Password for secured environments")
-    protected String password;
-
     protected void execute() throws Exception {
-        CliCommandsSingleton.getInstance().setUsername( username );
-        CliCommandsSingleton.getInstance().setPassword( password );
     }
 
     public static void main(String[] args) {

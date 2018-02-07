@@ -58,7 +58,7 @@ public class Locator {
     /* Property key indicating the GigaSpaces library ext location */
     public static final String GS_LIB_PLATFORM_EXT = "com.gigaspaces.lib.platform.ext";
     /* Property key indicating the GigaSpaces library security location */
-    private static final String GS_LIB_OPTIONAL_SECURITY = "com.gigaspaces.lib.opt.security";
+    public static final String GS_LIB_OPTIONAL_SECURITY = "com.gigaspaces.lib.opt.security";
 
     public static String getLib(Properties properties) {
         return getLocation(properties, GS_LIB);

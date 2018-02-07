@@ -13,7 +13,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <picocli.version>2.1.0</picocli.version>
+        <picocli.version>2.2.1</picocli.version>
     </properties>
 
     <dependencies>
