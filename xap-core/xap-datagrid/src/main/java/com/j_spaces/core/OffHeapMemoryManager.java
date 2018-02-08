@@ -44,13 +44,17 @@ public class OffHeapMemoryManager {
         if (!cacheManager.isBlobStoreCachePolicy() && _offHeapOptimizationEnabled) {
             throw new RuntimeException("Can not enable Off Heap optimization when cache policy is not Blob Store");
         }
-        _logger.config("space-config.engine.blobstore.offheap.enabled="+_offHeapOptimizationEnabled);
+        if(_logger.isLoggable(Level.CONFIG)) {
+            _logger.config("space-config.engine.blobstore.offheap.enabled=" + _offHeapOptimizationEnabled);
+        }
 
         String offHeapThreshold = configReader.getSpaceProperty(CACHE_MANAGER_BLOBSTORE_OFFHEAP_MAXSIZE_PROP,"");
         Long _offHeapThreshold = (offHeapThreshold.isEmpty()) ? null : StringUtils.parseStringAsBytes(offHeapThreshold);
 
-        if(!offHeapThreshold.isEmpty()) {
-            _logger.config("space-config.engine.blobstore.offheap.max_memory_size=" + _offHeapThreshold);
+        if(_logger.isLoggable(Level.CONFIG)) {
+            if (!offHeapThreshold.isEmpty()) {
+                _logger.config("space-config.engine.blobstore.offheap.max_memory_size=" + _offHeapThreshold);
+            }
         }
         if(offHeapThreshold.isEmpty() && _offHeapOptimizationEnabled) {
             throw new RuntimeException("Configuration exception: in order to enable off heap optimization you must define a threshold for the max off-heap size");
