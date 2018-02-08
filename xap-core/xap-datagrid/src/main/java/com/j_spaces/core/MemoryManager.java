@@ -390,6 +390,10 @@ public class MemoryManager implements Closeable {
 
     @Override
     public void close() {
+
+        if(_offHeapMemoryManager != null)
+            _offHeapMemoryManager.close();
+
         if (_evictor != null)
             _evictor.stop();
     }

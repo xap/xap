@@ -3465,11 +3465,11 @@ public class SpaceEngine implements ISpaceModeListener {
         if (_filterManager != null)
             _filterManager.close();
 
-        if (_cacheManager != null)
-            _cacheManager.shutDown();
-
         if (_memoryManager != null)
             _memoryManager.close();
+
+        if (_cacheManager != null)
+            _cacheManager.shutDown();
 
         if (_dataEventManager != null)
             _dataEventManager.close();

@@ -1,10 +1,21 @@
 package com.j_spaces.core;
 
+import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceConfigReader;
+import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.gigaspaces.internal.server.storage.TemplateHolderFactory;
+import com.gigaspaces.internal.transport.TemplatePacket;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.cache.AbstractCacheManager;
 import com.j_spaces.core.cache.CacheManager;
+import com.j_spaces.core.cache.EntriesIter;
+import com.j_spaces.core.cache.IEntryCacheInfo;
+import com.j_spaces.core.cache.blobStore.IBlobStoreRefCacheInfo;
+import com.j_spaces.core.cache.context.Context;
+import com.j_spaces.core.sadapter.SAException;
+import net.jini.space.InternalSpaceException;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -76,4 +87,47 @@ public class OffHeapMemoryManager {
         }
     }
 
+    public void close() {
+        if(!_enabled || _cacheManager.getBlobStoreInternalCache().getOffHeapByteCounter().getCount() == 0)
+            return;
+
+        Context context = null;
+        EntriesIter entriesIter = null;
+        try {
+            context = _cacheManager.getCacheContext();
+            for (IServerTypeDesc serverTypeDesc : _cacheManager.getTypeManager().getSafeTypeTable().values()) {
+                try {
+                    if (!serverTypeDesc.isRootType() && !serverTypeDesc.getTypeDesc().isInactive() && serverTypeDesc.getTypeDesc().isBlobstoreEnabled()) {
+                        ITemplateHolder templateHolder = TemplateHolderFactory.createTemplateHolder(serverTypeDesc, new TemplatePacket(serverTypeDesc.getTypeDesc()), _cacheManager.getEngine().generateUid(), Long.MAX_VALUE);
+                        entriesIter = (EntriesIter) _cacheManager.makeEntriesIter(context, templateHolder, serverTypeDesc, 0, SystemTime.timeMillis(), false);
+                        entriesIter.setBringCacheInfoOnly(true);
+                        while (true) {
+                            IEntryCacheInfo entryCacheInfo = entriesIter.nextEntryCacheInfo();
+                            if (entryCacheInfo == null) {
+                                break;
+                            }
+                            if (entryCacheInfo.isBlobStoreEntry()) {
+                                IBlobStoreRefCacheInfo entry = (IBlobStoreRefCacheInfo) entryCacheInfo;
+                                entry.freeOffHeap(_cacheManager.getBlobStoreInternalCache().getOffHeapByteCounter());
+                            }
+                        }
+                    }
+                    if (entriesIter != null) {
+                        entriesIter.close();
+                        entriesIter = null;
+                    }
+                } catch (SAException ex) {
+                    _logger.log(Level.WARNING,"caught exception while cleaning offheap entries during shutdown", ex);
+                }
+            }
+            if(_cacheManager.getBlobStoreInternalCache().getOffHeapByteCounter().getCount() != 0){
+             _logger.log(Level.WARNING,"offheap used bytes still consumes "+_cacheManager.getBlobStoreInternalCache().getOffHeapByteCounter().getCount()+" bytes");
+            }
+        }
+        finally {
+            if (context != null) {
+                _cacheManager.freeCacheContext(context);
+            }
+        }
+    }
 }

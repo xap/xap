@@ -24,6 +24,7 @@ import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
+import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.server.blobstore.BlobStoreException;
 import com.gigaspaces.server.blobstore.BlobStoreObjectType;
 import com.j_spaces.core.cache.CacheManager;
@@ -1473,6 +1474,12 @@ public class BlobStoreRefEntryCacheInfo
         if (checksum == 0)
             checksum = (byte) 1;
         return checksum;
+    }
+
+    public void freeOffHeap(LongCounter byteCounter){
+        synchronized (getStateLockObject()) {
+            OffHeapIndexesValuesHandler.delete(this, byteCounter, getServerTypeDesc().getOffHeapTypeCounter());
+        }
     }
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
