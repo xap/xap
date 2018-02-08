@@ -346,10 +346,7 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
         private int cnt = 0;
         private static final long MIN_RETRY = 15000;
         private long[] sleepTime = {1000, 5 * 1000, 10 * 1000, 15 * 1000,
-                20 * 1000, 30 * 1000, 60 * 1000,
-                2 * 60 * 1000, 4 * 60 * 1000,
-                8 * 60 * 1000, 15 * 60 * 1000,
-                30 * 60 * 1000, 45 * 60 * 1000, 60 * 60 * 1000};
+                20 * 1000, 30 * 1000, 60 * 1000};
 
         private int tryIndx = 0;
         private long nextTryTime;
