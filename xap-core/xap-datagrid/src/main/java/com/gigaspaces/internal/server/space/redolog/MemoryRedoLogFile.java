@@ -21,6 +21,7 @@ import com.gigaspaces.internal.cluster.node.impl.backlog.AbstractSingleFileGroup
 import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPacket;
 import com.gigaspaces.internal.utils.collections.ReadOnlyIterator;
 import com.gigaspaces.internal.utils.collections.ReadOnlyIteratorAdapter;
+import com.j_spaces.core.cluster.startup.CompactionResult;
 import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
 
 import java.util.Iterator;
@@ -157,12 +158,12 @@ public class MemoryRedoLogFile<T extends IReplicationOrderedPacket> implements I
     }
 
     @Override
-    public long performCompaction(long from, long to) {
+    public CompactionResult performCompaction(long from, long to) {
         ListIterator<T> iterator = _redoFile.listIterator();
-        long discardedCount = RedoLogCompactionUtil.compact(from, to, iterator);
-        this._weight -= discardedCount;
-        this._discardedPacketCount += discardedCount;
-        return discardedCount;
+        final CompactionResult compactionResult =RedoLogCompactionUtil.compact(from, to, iterator);
+        this._weight -= compactionResult.getDiscardedCount() + compactionResult.getDeletedFromTxn();
+        this._discardedPacketCount += compactionResult.getDiscardedCount();
+        return compactionResult;
     }
 
     private void increaseWeight(T packet) {

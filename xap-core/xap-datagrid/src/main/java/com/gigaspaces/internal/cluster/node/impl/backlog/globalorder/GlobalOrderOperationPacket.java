@@ -121,4 +121,14 @@ public class GlobalOrderOperationPacket
         return "key=" + _key + " data=" + _data;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        GlobalOrderOperationPacket that = (GlobalOrderOperationPacket) o;
+
+        if (_key != that._key) return false;
+        return _data != null ? _data.equals(that._data) : that._data == null;
+    }
 }

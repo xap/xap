@@ -66,6 +66,7 @@ import com.gigaspaces.metrics.Gauge;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.j_spaces.core.cluster.RedoLogCompaction;
 import com.j_spaces.core.cluster.SwapBacklogConfig;
+import com.j_spaces.core.cluster.startup.CompactionResult;
 import com.j_spaces.core.exception.internal.ReplicationInternalSpaceException;
 import com.j_spaces.kernel.JSpaceUtilities;
 
@@ -1112,19 +1113,19 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
             long minUnconfirmedMirrorKey = _getMinUnconfirmedKeyProcedure.getMinUnconfirmedMirrorKey();
             long lastConfirmedNonMirrorKey = _getMinUnconfirmedKeyProcedure.getMinUnconfirmedNonMirrorKey() - 1;
             if (minUnconfirmedMirrorKey < lastConfirmedNonMirrorKey) {
-                long discardedPacketCount = this._backlogFile.performCompaction(minUnconfirmedMirrorKey, lastConfirmedNonMirrorKey);
-                if (discardedPacketCount > 0) {
-                    updateMirrorWeightAfterCompaction(discardedPacketCount);
+                final CompactionResult compactionResult = this._backlogFile.performCompaction(minUnconfirmedMirrorKey, lastConfirmedNonMirrorKey);
+                if (!compactionResult.isEmpty()) {
+                    updateMirrorWeightAfterCompaction(compactionResult);
                 }
             }
         }
     }
 
     // Should be called under write lock
-    public void updateMirrorWeightAfterCompaction(long discardedPacketCount) {
+    public void updateMirrorWeightAfterCompaction(final CompactionResult compactionResult) {
         AbstractSingleFileConfirmationHolder confirmation = _confirmationMap.get(_mirrorMemberName);
-        confirmation.setWeight(confirmation.getWeight() - discardedPacketCount);
-        increaseMirrorDiscardedCount(discardedPacketCount);
+        confirmation.setWeight(confirmation.getWeight() - compactionResult.getDiscardedCount() - compactionResult.getDeletedFromTxn());
+        increaseMirrorDiscardedCount(compactionResult.getDiscardedCount());
     }
 
     // Should be called under write lock

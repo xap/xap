@@ -18,7 +18,6 @@ package com.gigaspaces.internal.server.space.redolog;
 
 import com.gigaspaces.internal.cluster.node.impl.backlog.AbstractSingleFileGroupBacklog;
 import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPacket;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.IReplicationPacketData;
 import com.gigaspaces.internal.server.space.redolog.storage.INonBatchRedoLogFileStorage;
 import com.gigaspaces.internal.server.space.redolog.storage.StorageException;
 import com.gigaspaces.internal.server.space.redolog.storage.StorageReadOnlyIterator;
@@ -26,6 +25,8 @@ import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.WeightedB
 import com.gigaspaces.internal.utils.collections.ReadOnlyIterator;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.cluster.ReplicationPolicy;
+import com.j_spaces.core.cluster.startup.CompactionResult;
+import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -94,8 +95,7 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
         if (_insertToExternal)
             addToStorage(replicationPacket);
 
-        IReplicationPacketData<?> packetData = replicationPacket.getData();
-        if (packetData != null && packetData.isSingleEntryData() && packetData.getSingleEntryData() != null && packetData.getSingleEntryData().isTransient()) {
+        if (RedoLogCompactionUtil.isCompactable(replicationPacket)) {
             _lastSeenTransientPacketKey = replicationPacket.getKey();
         }
     }
@@ -210,8 +210,8 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
             if (_externalStorage.isEmpty() && batch.getWeight() < _memoryMaxCapacity)
                 _insertToExternal = false;
 
-            if (batch.getDiscardedPacketCount() > 0) {
-                _groupBacklog.updateMirrorWeightAfterCompaction(batch.getDiscardedPacketCount());
+            if (!batch.getCompactionResult().isEmpty()) {
+                _groupBacklog.updateMirrorWeightAfterCompaction(batch.getCompactionResult());
             }
 
         } catch (StorageException e) {
@@ -276,8 +276,8 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
     }
 
     @Override
-    public long performCompaction(long from, long to) {
-
+    public CompactionResult performCompaction(long from, long to) {
+        final CompactionResult result = new CompactionResult();
         if (_lastCompactionRangeEndKey != -1) {
 
             from = _lastCompactionRangeEndKey + 1;
@@ -285,30 +285,30 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
 
 
         if (to - from < ReplicationPolicy.DEFAULT_REDO_LOG_COMPACTION_BATCH_SIZE) {
-            return 0;
+            return result;
         }
 
         if (from > _lastSeenTransientPacketKey) {
             if (_logger.isLoggable(Level.FINEST)) {
                 _logger.fine("[" + _name + "]: No transient packets in range " + from + "-" + to + ", lastSeenTransientPacketKey = " + _lastSeenTransientPacketKey);
             }
-            return 0;
+            return result;
         }
 
         if (_logger.isLoggable(Level.FINE)) {
             _logger.fine("[" + _name + "]: Performing Compaction " + from + "-" + to);
         }
 
-        long discardedInMemory = _memoryRedoLogFile.performCompaction(from, to);
-        long discardedInExternalStorage = _externalStorage.performCompaction(from, to);
+        result.appendResult(_memoryRedoLogFile.performCompaction(from, to));
+        result.appendResult(_externalStorage.performCompaction(from, to));
 
         if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("[" + _name + "]: Discarded of " + (discardedInMemory + discardedInExternalStorage) + " packets during compaction ");
+            _logger.fine("[" + _name + "]: Discarded of " + result.getDiscardedCount() + " packets and deleted "+result.getDeletedFromTxn()+" transient packets from transactions during compaction process");
         }
 
         _lastCompactionRangeEndKey = to;
 
-        return discardedInExternalStorage + discardedInMemory;
+        return result;
     }
 
     /**

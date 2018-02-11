@@ -18,9 +18,9 @@ package com.gigaspaces.internal.server.space.redolog;
 
 import com.gigaspaces.cluster.replication.IRedoLogFileStatistics;
 import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPacket;
-import com.gigaspaces.internal.server.space.redolog.storage.StorageException;
 import com.gigaspaces.internal.utils.collections.ReadOnlyIterable;
 import com.gigaspaces.internal.utils.collections.ReadOnlyIterator;
+import com.j_spaces.core.cluster.startup.CompactionResult;
 
 /**
  * Acts as the redo log packets storage {@link MemoryRedoLogFile} Implementor should support concurrent
@@ -106,5 +106,5 @@ public interface IRedoLogFile<T extends IReplicationOrderedPacket> extends Itera
      * @param to key to end searching transient packet from
      * @return number of discarded packets
      */
-    long performCompaction(long from, long to);
+    CompactionResult performCompaction(long from, long to);
 }

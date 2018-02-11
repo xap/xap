@@ -19,6 +19,7 @@ package com.gigaspaces.internal.server.space.redolog.storage;
 import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPacket;
 import com.gigaspaces.internal.server.space.redolog.RedoLogFileCompromisedException;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.WeightedBatch;
+import com.j_spaces.core.cluster.startup.CompactionResult;
 
 import java.util.List;
 
@@ -97,7 +98,7 @@ public interface IRedoLogFileStorage<T extends IReplicationOrderedPacket> extend
 
     long getDiscardedPacketsCount();
 
-    long performCompaction(long from, long to);
+    CompactionResult performCompaction(long from, long to);
 
     long getCacheWeight();
 }

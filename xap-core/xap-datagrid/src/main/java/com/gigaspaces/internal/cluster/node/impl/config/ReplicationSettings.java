@@ -224,6 +224,10 @@ public class ReplicationSettings
         return redoLogCompaction;
     }
 
+    public void setRedoLogCompaction(RedoLogCompaction redoLogCompaction) {
+        this.redoLogCompaction = redoLogCompaction;
+    }
+
     public void setBacklogWeightPolicy(String backlogWeightPolicy) {
         this.backlogWeightPolicy = backlogWeightPolicy;
     }

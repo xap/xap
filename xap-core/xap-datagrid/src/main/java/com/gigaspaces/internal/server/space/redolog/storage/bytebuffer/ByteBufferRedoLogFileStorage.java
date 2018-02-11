@@ -28,6 +28,7 @@ import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.StorageSe
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.logger.TraceableLogger;
+import com.j_spaces.core.cluster.startup.CompactionResult;
 import com.j_spaces.kernel.pool.IResourceFactory;
 import com.j_spaces.kernel.pool.IResourcePool;
 import com.j_spaces.kernel.pool.Resource;
@@ -519,7 +520,7 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
     }
 
     @Override
-    public long performCompaction(long from, long to){
+    public CompactionResult performCompaction(long from, long to){
         throw new UnsupportedOperationException();
     }
 

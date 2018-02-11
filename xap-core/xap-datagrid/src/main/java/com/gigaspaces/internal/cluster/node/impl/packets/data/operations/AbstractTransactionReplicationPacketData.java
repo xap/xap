@@ -57,6 +57,7 @@ public abstract class AbstractTransactionReplicationPacketData
     private static final int FLAGS_GATEWAY = 1 << 0;
 
     private transient int _weight;
+    private transient boolean _hasTransientMembers;
 
     public AbstractTransactionReplicationPacketData() {
     }
@@ -208,6 +209,14 @@ public abstract class AbstractTransactionReplicationPacketData
         return "";
     }
 
+    public void setHasTransientMembers(boolean hasTransientMembers) {
+        _hasTransientMembers = hasTransientMembers;
+    }
+
+    public boolean hasTransientMembers() {
+        return _hasTransientMembers;
+    }
+
     public static class FilterIterable
             implements Iterable<IReplicationFilterEntry>,
             Iterator<IReplicationFilterEntry> {
@@ -272,5 +281,19 @@ public abstract class AbstractTransactionReplicationPacketData
     @Override
     public int getWeight() {
         return _weight;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AbstractTransactionReplicationPacketData that = (AbstractTransactionReplicationPacketData) o;
+
+        if (_fromGateway != that._fromGateway) return false;
+        if (_weight != that._weight) return false;
+        if (_hasTransientMembers != that._hasTransientMembers) return false;
+        if (_metaData != null ? !_metaData.equals(that._metaData) : that._metaData != null) return false;
+        return _transaction != null ? _transaction.equals(that._transaction) : that._transaction == null;
     }
 }

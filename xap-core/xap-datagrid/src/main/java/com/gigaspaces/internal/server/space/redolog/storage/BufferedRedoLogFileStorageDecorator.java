@@ -20,6 +20,7 @@ import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPack
 import com.gigaspaces.internal.server.space.redolog.RedoLogFileCompromisedException;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.WeightedBatch;
 import com.gigaspaces.logger.Constants;
+import com.j_spaces.core.cluster.startup.CompactionResult;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -176,7 +177,7 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
     }
 
     @Override
-    public long performCompaction(long from, long to){
+    public CompactionResult performCompaction(long from, long to){
         throw new UnsupportedOperationException();
     }
 

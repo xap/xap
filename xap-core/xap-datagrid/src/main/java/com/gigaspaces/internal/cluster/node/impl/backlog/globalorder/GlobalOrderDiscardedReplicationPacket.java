@@ -133,4 +133,14 @@ public class GlobalOrderDiscardedReplicationPacket
         return (hasKeyRange() ? "keys=" + _key + "-" + _endKey : "key=" + _key) + " data=" + getData();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        GlobalOrderDiscardedReplicationPacket that = (GlobalOrderDiscardedReplicationPacket) o;
+
+        if (_key != that._key) return false;
+        return _endKey == that._endKey;
+    }
 }

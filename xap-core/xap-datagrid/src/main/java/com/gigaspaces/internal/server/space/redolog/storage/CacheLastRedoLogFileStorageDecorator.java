@@ -21,6 +21,7 @@ import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPack
 import com.gigaspaces.internal.server.space.redolog.RedoLogFileCompromisedException;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.WeightedBatch;
 import com.gigaspaces.logger.Constants;
+import com.j_spaces.core.cluster.startup.CompactionResult;
 import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
 
 import java.util.*;
@@ -145,12 +146,12 @@ public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedP
     }
 
     @Override
-    public long performCompaction(long from, long to) {
+    public CompactionResult performCompaction(long from, long to) {
         ListIterator<T> iterator = _buffer.listIterator();
-        long discardedCount = RedoLogCompactionUtil.compact(from, to, iterator);
-        this._bufferWeight -= discardedCount;
-        this._discardedPacketCount += discardedCount;
-        return discardedCount;
+        final CompactionResult compactionResult = RedoLogCompactionUtil.compact(from, to, iterator);
+        this._bufferWeight -= compactionResult.getDiscardedCount() + compactionResult.getDeletedFromTxn();
+        this._discardedPacketCount += compactionResult.getDiscardedCount();
+        return compactionResult;
     }
 
     public void deleteOldestPackets(long packetsCount) throws StorageException {
