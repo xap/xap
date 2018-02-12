@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -96,6 +98,15 @@ public class JettyManagerRestLauncher implements Closeable {
 //            JettyUtils.createConnector(server, "localhost", port, sslContextFactory);
     }
 
+    private void sortDesc(File[] files) {
+        Arrays.sort(files, new Comparator<File>() {
+            @Override
+            public int compare(File o1, File o2) {
+                return -1 * o1.getName().compareTo(o2.getName());
+            }
+        });
+    }
+
     private void initWebApps(Server server) {
         ContextHandlerCollection handler = new ContextHandlerCollection();
         File webApps = new File(SystemInfo.singleton().locations().getLibPlatform() + "/manager/webapps");
@@ -107,7 +118,9 @@ public class JettyManagerRestLauncher implements Closeable {
         };
 
         WebAppContext defaultWebApp = null;
-        for (File file : webApps.listFiles(warFilesFilter)) {
+        File[] warFiles = webApps.listFiles(warFilesFilter);
+        sortDesc(warFiles);
+        for (File file : warFiles) {
             WebAppContext webApp = new WebAppContext();
             webApp.setContextPath("/" + file.getName().replace(".war", ""));
             webApp.setWar(file.getAbsolutePath());
