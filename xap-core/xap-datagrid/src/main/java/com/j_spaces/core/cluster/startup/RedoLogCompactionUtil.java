@@ -22,39 +22,51 @@ public class RedoLogCompactionUtil {
     public static CompactionResult compact(long from, long to, ListIterator iterator) {
         long discardedCount = 0;
         int deletedFromTxns = 0;
+        boolean rangeDiscarded = false;
 
         while (iterator.hasNext()) {
             IReplicationOrderedPacket current = (IReplicationOrderedPacket) iterator.next();
+
             if (current.getKey() < from) {
                 continue;
             }
             if (current.getKey() > to) {
                 break;
             }
-            IReplicationOrderedPacket discardedPacket;
-
             if (isCompactable(current)) {
-                if (current.getData().isSingleEntryData()) {
-                    discardedPacket = new GlobalOrderDiscardedReplicationPacket(current.getKey());
-                    iterator.set(discardedPacket);
-                    discardedCount++;
-                } else /*is txn packet*/ {
+                if (!current.getData().isSingleEntryData()) {   //txn packet
                     AbstractTransactionReplicationPacketData txnPacketData = (AbstractTransactionReplicationPacketData) current.getData();
-                    int txnListSizeBeforeCompaction = txnPacketData.size();
                     int deleted = compactTxn(txnPacketData.listIterator());
-                    if (txnListSizeBeforeCompaction == deleted) {
-                        discardedPacket = new GlobalOrderDiscardedReplicationPacket(current.getKey());
-                        iterator.set(discardedPacket);
-                        discardedCount++;
-                    } else {
+                    if (!txnPacketData.isEmpty()) {
                         txnPacketData.setWeight(txnPacketData.getWeight() - deleted);
                         deletedFromTxns += deleted;
+                        continue;
                     }
                 }
-            }
+                if (discardPacket(iterator, current, rangeDiscarded)) {
+                    discardedCount++;
+                    rangeDiscarded = true;
+                }
 
+            } else {
+                rangeDiscarded = false;
+            }
         }
         return new CompactionResult(discardedCount, deletedFromTxns);
+    }
+
+    private static boolean discardPacket(ListIterator iterator, IReplicationOrderedPacket current, boolean rangeDiscarded) {
+        IReplicationOrderedPacket discardedPacket = new GlobalOrderDiscardedReplicationPacket(current.getKey());
+        if (!rangeDiscarded) {
+            iterator.set(discardedPacket);
+            return true;
+        } else {
+            iterator.remove();
+            discardedPacket = (IReplicationOrderedPacket) iterator.previous();
+            ((GlobalOrderDiscardedReplicationPacket) discardedPacket).setEndKey(current.getKey());
+            iterator.next();
+            return false;
+        }
     }
 
     public static int compactTxn(ListIterator<IReplicationTransactionalPacketEntryData> iterator) {
