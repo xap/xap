@@ -64,6 +64,7 @@ import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.OperationID;
 import com.j_spaces.core.SpaceOperations;
 import com.j_spaces.core.cluster.IReplicationFilterEntry;
+import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
 import com.j_spaces.core.exception.internal.ReplicationInternalSpaceException;
 
 import net.jini.core.transaction.server.ServerTransaction;
@@ -181,6 +182,8 @@ public class ReplicationPacketDataProducer
             for (IReplicationTransactionalPacketEntryData entryData : pendingTransactionData)
                 transactionPacket.add(entryData);
         } else {
+            boolean hasTransientMembers = false;
+            boolean hasPersistentMembers = false;
             for (int i = 0; i < entries.size(); i++) {
                 IEntryHolder entryHolder = entries.get(i);
 
@@ -239,17 +242,18 @@ public class ReplicationPacketDataProducer
                                 + entryHolder.getWriteLockOperation());
 
                 }
+                if(singlePacket.isTransient()){
+                    hasTransientMembers = true;
+                } else {
+                    hasPersistentMembers = true;
+                }
                 transactionPacket.add(singlePacket);
             }
 
+            transactionPacket.setMembersPersistentStateFlag(RedoLogCompactionUtil.getPersistentStateFlag(hasTransientMembers, hasPersistentMembers));
+
             if (operationType == ReplicationMultipleOperationType.TRANSACTION_TWO_PHASE_PREPARE)
                 _packetDataMediator.setPendingTransactionData(transaction, transactionPacket);
-        }
-        for (IReplicationTransactionalPacketEntryData entryData : transactionPacket) {
-            if(entryData.isTransient()){
-                transactionPacket.setHasTransientMembers(true);
-                break;
-            }
         }
 
         return transactionPacket;

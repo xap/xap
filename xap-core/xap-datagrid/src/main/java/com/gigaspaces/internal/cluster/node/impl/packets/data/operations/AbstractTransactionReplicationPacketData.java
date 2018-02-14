@@ -57,7 +57,7 @@ public abstract class AbstractTransactionReplicationPacketData
     private static final int FLAGS_GATEWAY = 1 << 0;
 
     private transient int _weight;
-    private transient boolean _hasTransientMembers;
+    private transient byte _membersPersistentStateFlag = 0;
 
     public AbstractTransactionReplicationPacketData() {
     }
@@ -209,12 +209,12 @@ public abstract class AbstractTransactionReplicationPacketData
         return "";
     }
 
-    public void setHasTransientMembers(boolean hasTransientMembers) {
-        _hasTransientMembers = hasTransientMembers;
+    public void setMembersPersistentStateFlag(byte flag) {
+        _membersPersistentStateFlag = flag;
     }
 
-    public boolean hasTransientMembers() {
-        return _hasTransientMembers;
+    public byte getMembersPersistentStateFlag() {
+        return _membersPersistentStateFlag;
     }
 
     public static class FilterIterable
@@ -292,7 +292,7 @@ public abstract class AbstractTransactionReplicationPacketData
 
         if (_fromGateway != that._fromGateway) return false;
         if (_weight != that._weight) return false;
-        if (_hasTransientMembers != that._hasTransientMembers) return false;
+        if (_membersPersistentStateFlag != that._membersPersistentStateFlag) return false;
         if (_metaData != null ? !_metaData.equals(that._metaData) : that._metaData != null) return false;
         return _transaction != null ? _transaction.equals(that._transaction) : that._transaction == null;
     }

@@ -15,6 +15,10 @@ import java.util.ListIterator;
  */
 public class RedoLogCompactionUtil {
 
+    public static final byte HAS_TRANSIENT_MEMBERS = 1 << 0;
+
+    public static final byte HAS_PERSISTENT_MEMBERS = 1 << 1;
+
     public static long calculateWeight(long weight, long discardedCount) {
         return (long) (weight + discardedCount * ReplicationPolicy.DEFAULT_DISCARDED_PACKET_WEIGHT_LOAD_FACTOR);
     }
@@ -33,13 +37,16 @@ public class RedoLogCompactionUtil {
             if (current.getKey() > to) {
                 break;
             }
+            IReplicationOrderedPacket discardedPacket;
+
             if (isCompactable(current)) {
                 if (!current.getData().isSingleEntryData()) {   //txn packet
                     AbstractTransactionReplicationPacketData txnPacketData = (AbstractTransactionReplicationPacketData) current.getData();
-                    int deleted = compactTxn(txnPacketData.listIterator());
-                    if (!txnPacketData.isEmpty()) {
+                    if ((txnPacketData.getMembersPersistentStateFlag() & HAS_PERSISTENT_MEMBERS) != 0) {
+                        int deleted = compactTxn(txnPacketData.listIterator());
                         txnPacketData.setWeight(txnPacketData.getWeight() - deleted);
                         deletedFromTxns += deleted;
+                        txnPacketData.setMembersPersistentStateFlag(RedoLogCompactionUtil.HAS_PERSISTENT_MEMBERS);
                         continue;
                     }
                 }
@@ -87,8 +94,21 @@ public class RedoLogCompactionUtil {
             return false;
         }
         if (!data.isSingleEntryData() /*is txn packet*/) {
-            return ((AbstractTransactionReplicationPacketData) data).hasTransientMembers();
+            byte persistentStateFlag = ((AbstractTransactionReplicationPacketData) data).getMembersPersistentStateFlag();
+            return (persistentStateFlag & HAS_TRANSIENT_MEMBERS) != 0;
         }
         return data.getSingleEntryData() != null && data.getSingleEntryData().isTransient();
+    }
+
+    public static byte getPersistentStateFlag(boolean hasTransientMembers, boolean hasPersistentMembers) {
+        byte stateFlag = 0;
+        if(hasTransientMembers && hasPersistentMembers){
+            stateFlag = (byte) (RedoLogCompactionUtil.HAS_TRANSIENT_MEMBERS + RedoLogCompactionUtil.HAS_PERSISTENT_MEMBERS);
+        } else if (hasTransientMembers){
+            stateFlag = RedoLogCompactionUtil.HAS_TRANSIENT_MEMBERS;
+        } else if (hasPersistentMembers){
+            stateFlag = RedoLogCompactionUtil.HAS_PERSISTENT_MEMBERS;
+        }
+        return stateFlag;
     }
 }
