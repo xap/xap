@@ -193,11 +193,8 @@
             <includes>
                 <include>jetty-*</include>
                 <include>javax*</include>
-                <include>geronimo-*</include>
                 <include>apache-*</include>
                 <include>asm*</include>
-                <include>com.sun.el-*</include>
-                <include>org.apache.taglibs.standard.glassfish-*</include>
                 <include>ecj-*</include>
                 <include>cdi-*</include>
                 <include>org.eclipse.jdt.core-*</include>
