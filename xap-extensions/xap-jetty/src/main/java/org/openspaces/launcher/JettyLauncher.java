@@ -83,7 +83,7 @@ public class JettyLauncher extends WebLauncher {
 
         webAppContext.setAttribute("javax.servlet.context.tempdir",getScratchDir());
         webAppContext.setAttribute("org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern",
-                ".*/[^/]*servlet-api-[^/]*\\.jar$|.*/javax.servlet.jsp.jstl-.*\\.jar$|.*/.*taglibs.*\\.jar$");
+                ".*/[^/]*servlet-api-[^/]*\\.jar$|.*/javax.servlet.jsp.jstl-.*\\.jar$|.*/.*taglibs*\\.jar$");
 
         webAppContext.setAttribute("org.eclipse.jetty.containerInitializers", jspInitializers());
 

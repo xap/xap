@@ -19,17 +19,21 @@ package org.openspaces.core.space;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.core.IJSpace;
-
 import net.jini.core.discovery.LookupLocator;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.tomcat.InstanceManager;
+import org.apache.tomcat.SimpleInstanceManager;
+import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;
+import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.jsp.JettyJspServlet;
+import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.FilterHolder;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
-import org.jini.rio.boot.BootUtil;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.cluster.ClusterInfo;
 import org.openspaces.core.cluster.ClusterInfoAware;
@@ -44,11 +48,13 @@ import org.openspaces.pu.service.ServiceMonitorsProvider;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
-import java.net.UnknownHostException;
-import java.util.EnumSet;
-import java.util.Properties;
-
 import javax.servlet.DispatcherType;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * @author yohana
@@ -201,6 +207,21 @@ public class RestBean implements InitializingBean, ClusterInfoAware, DisposableB
             webAppContext.setInitParameter("datetime_format", properties.getProperty("datetime_format"));
         }
 
+        webAppContext.setCopyWebDir(false);
+        webAppContext.setParentLoaderPriority(true);
+
+        webAppContext.setAttribute("org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern",
+                ".*/[^/]*servlet-api-[^/]*\\.jar$|.*/javax.servlet.jsp.jstl-.*\\.jar$|.*/.*taglibs*\\.jar$");
+
+        webAppContext.setAttribute("org.eclipse.jetty.containerInitializers", jspInitializers());
+
+        webAppContext.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
+
+        webAppContext.addBean(new ServletContainerInitializersStarter(webAppContext), true);
+
+        webAppContext.addServlet(jspServletHolder(), "*.jsp");
+
+
         server.setHandler(webAppContext);
         try {
             server.start();
@@ -239,4 +260,31 @@ public class RestBean implements InitializingBean, ClusterInfoAware, DisposableB
         this.clusterInfo = clusterInfo;
     }
 
+    /**
+     * Create JSP Servlet (must be named "jsp")
+     */
+    private ServletHolder jspServletHolder()
+    {
+        ServletHolder holderJsp = new ServletHolder("jsp", JettyJspServlet.class);
+        holderJsp.setInitOrder(0);
+        holderJsp.setInitParameter("logVerbosityLevel", "DEBUG");
+        holderJsp.setInitParameter("fork", "false");
+        holderJsp.setInitParameter("xpoweredBy", "false");
+        holderJsp.setInitParameter("compilerTargetVM", "1.7");
+        holderJsp.setInitParameter("compilerSourceVM", "1.7");
+        holderJsp.setInitParameter("keepgenerated", "true");
+        return holderJsp;
+    }
+
+    /**
+     * Ensure the jsp engine is initialized correctly
+     */
+    private List<ContainerInitializer> jspInitializers()
+    {
+        JettyJasperInitializer sci = new JettyJasperInitializer();
+        ContainerInitializer initializer = new ContainerInitializer(sci, null);
+        List<ContainerInitializer> initializers = new ArrayList<ContainerInitializer>();
+        initializers.add(initializer);
+        return initializers;
+    }
 }

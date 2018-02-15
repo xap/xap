@@ -194,6 +194,7 @@
                 <include>jetty-*</include>
                 <include>javax*</include>
                 <include>apache-*</include>
+                <include>taglibs*</include>
                 <include>asm*</include>
                 <include>ecj-*</include>
                 <include>cdi-*</include>
