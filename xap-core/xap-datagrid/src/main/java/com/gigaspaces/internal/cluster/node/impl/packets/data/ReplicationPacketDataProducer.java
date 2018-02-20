@@ -239,17 +239,16 @@ public class ReplicationPacketDataProducer
                                 + entryHolder.getWriteLockOperation());
 
                 }
+                if(singlePacket.isTransient()){
+                    transactionPacket.setHasTransientMembersFlag();
+                } else {
+                    transactionPacket.setHasPersistentMembersFlag();
+                }
                 transactionPacket.add(singlePacket);
             }
 
             if (operationType == ReplicationMultipleOperationType.TRANSACTION_TWO_PHASE_PREPARE)
                 _packetDataMediator.setPendingTransactionData(transaction, transactionPacket);
-        }
-        for (IReplicationTransactionalPacketEntryData entryData : transactionPacket) {
-            if(entryData.isTransient()){
-                transactionPacket.setHasTransientMembers(true);
-                break;
-            }
         }
 
         return transactionPacket;

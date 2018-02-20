@@ -40,13 +40,13 @@ public class RedoLogCompactionUtil {
                     discardedCount++;
                 } else /*is txn packet*/ {
                     AbstractTransactionReplicationPacketData txnPacketData = (AbstractTransactionReplicationPacketData) current.getData();
-                    int txnListSizeBeforeCompaction = txnPacketData.size();
-                    int deleted = compactTxn(txnPacketData.listIterator());
-                    if (txnListSizeBeforeCompaction == deleted) {
+                    if (!txnPacketData.hasPersistentMembers()) {
                         discardedPacket = new GlobalOrderDiscardedReplicationPacket(current.getKey());
                         iterator.set(discardedPacket);
                         discardedCount++;
                     } else {
+                        int deleted = compactTxn(txnPacketData.listIterator());
+                        txnPacketData.unsetHasTransientMembersFlag();
                         txnPacketData.setWeight(txnPacketData.getWeight() - deleted);
                         deletedFromTxns += deleted;
                     }

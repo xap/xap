@@ -25,7 +25,6 @@ import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.transaction.TransactionUniqueId;
 import com.j_spaces.core.OperationID;
 import com.j_spaces.core.cluster.IReplicationFilterEntry;
-
 import net.jini.core.transaction.server.ServerTransaction;
 import net.jini.core.transaction.server.TransactionParticipantDataImpl;
 
@@ -52,12 +51,12 @@ public abstract class AbstractTransactionReplicationPacketData
     private TransactionParticipantDataImpl _metaData;
     private ServerTransaction _transaction;
 
-    private boolean _fromGateway;
-
-    private static final int FLAGS_GATEWAY = 1 << 0;
+    private static final byte FLAGS_GATEWAY = 1 << 0;
+    private static final byte HAS_TRANSIENT_MEMBERS = 1 << 1;
+    private static final byte HAS_PERSISTENT_MEMBERS = 1 << 2;
 
     private transient int _weight;
-    private transient boolean _hasTransientMembers;
+    private transient short _flags;
 
     public AbstractTransactionReplicationPacketData() {
     }
@@ -69,7 +68,9 @@ public abstract class AbstractTransactionReplicationPacketData
     }
 
     public AbstractTransactionReplicationPacketData(boolean fromGateway) {
-        this._fromGateway = fromGateway;
+        if (fromGateway) {
+            _flags |= FLAGS_GATEWAY;
+        }
     }
 
     @Override
@@ -79,22 +80,15 @@ public abstract class AbstractTransactionReplicationPacketData
 
     public void readExternal(ObjectInput in) throws IOException,
             ClassNotFoundException {
-        short flags = in.readShort();
-        _fromGateway = (flags & FLAGS_GATEWAY) != 0;
+        _flags = in.readShort();
         _metaData = IOUtils.readObject(in);
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeShort(buildFlags());
+        out.writeShort(_flags);
         IOUtils.writeObject(out, _metaData);
     }
 
-    private short buildFlags() {
-        short flags = 0;
-        if (_fromGateway)
-            flags |= FLAGS_GATEWAY;
-        return flags;
-    }
 
     protected void writeTransaction(ObjectOutput out) throws IOException {
         IOUtils.writeWithCachedStubs(out, _transaction);
@@ -120,8 +114,7 @@ public abstract class AbstractTransactionReplicationPacketData
 
     public void readFromSwap(ObjectInput in) throws IOException,
             ClassNotFoundException {
-        short flags = in.readShort();
-        _fromGateway = (flags & FLAGS_GATEWAY) != 0;
+        _flags =  in.readShort();
         _metaData = IOUtils.readNullableSwapExternalizableObject(in);
         _transaction = IOUtils.readNullableSwapExternalizableObject(in);
         int size = in.readInt();
@@ -132,7 +125,7 @@ public abstract class AbstractTransactionReplicationPacketData
     }
 
     public void writeToSwap(ObjectOutput out) throws IOException {
-        out.writeShort(buildFlags());
+        out.writeShort(_flags);
         IOUtils.writeNullableSwapExternalizableObject(out, _metaData);
         IOUtils.writeNullableSwapExternalizableObject(out, _transaction);
         out.writeInt(size());
@@ -155,7 +148,7 @@ public abstract class AbstractTransactionReplicationPacketData
 
     @Override
     public boolean isFromGateway() {
-        return _fromGateway;
+        return (_flags & FLAGS_GATEWAY) != 0;
     }
 
     public IReplicationPacketEntryData getSingleEntryData() {
@@ -209,12 +202,24 @@ public abstract class AbstractTransactionReplicationPacketData
         return "";
     }
 
-    public void setHasTransientMembers(boolean hasTransientMembers) {
-        _hasTransientMembers = hasTransientMembers;
+    public void setHasTransientMembersFlag() {
+        _flags |= HAS_TRANSIENT_MEMBERS;
+    }
+
+    public void unsetHasTransientMembersFlag() {
+        _flags &= ~HAS_TRANSIENT_MEMBERS;
+    }
+
+    public void setHasPersistentMembersFlag() {
+        _flags |= HAS_PERSISTENT_MEMBERS;
     }
 
     public boolean hasTransientMembers() {
-        return _hasTransientMembers;
+        return (_flags & HAS_TRANSIENT_MEMBERS) != 0;
+    }
+
+    public boolean hasPersistentMembers() {
+        return (_flags & HAS_PERSISTENT_MEMBERS) != 0;
     }
 
     public static class FilterIterable
@@ -290,9 +295,8 @@ public abstract class AbstractTransactionReplicationPacketData
 
         AbstractTransactionReplicationPacketData that = (AbstractTransactionReplicationPacketData) o;
 
-        if (_fromGateway != that._fromGateway) return false;
         if (_weight != that._weight) return false;
-        if (_hasTransientMembers != that._hasTransientMembers) return false;
+        if (_flags != that._flags) return false;
         if (_metaData != null ? !_metaData.equals(that._metaData) : that._metaData != null) return false;
         return _transaction != null ? _transaction.equals(that._transaction) : that._transaction == null;
     }
