@@ -918,33 +918,7 @@ public class SystemBoot {
             File file = new File(workLocation, "/gsa/gsa-" + AgentHelper.getGSAServiceID());
             boolean gsaIsOut = false;
             if (file.exists()) {
-                RandomAccessFile raf = null;
-                try {
-                    raf = new RandomAccessFile(file, "rw");
-                } catch (Exception e) {
-                    // gsa is still holding the file
-                    gsaIsOut = false;
-                }
-                if (raf != null) {
-                    FileChannel channel = raf.getChannel();
-                    try {
-                        FileLock lock = channel.tryLock();
-                        if (lock != null) {
-                            // if we can get a lock on the file, the GSA was force killed, even *without releasing the lock*
-                            // which in theory, should not happen
-                            lock.release();
-                            gsaIsOut = true;
-                        }
-                    } catch (Exception e) {
-                        gsaIsOut = false;
-                    } finally {
-                        try {
-                            channel.close();
-                        } catch (IOException e) {
-                            // ignore
-                        }
-                    }
-                }
+                gsaIsOut = isGsaOut( file );
             } else {
                 gsaIsOut = true;
             }
@@ -968,5 +942,38 @@ public class SystemBoot {
                 System.exit(1);
             }
         }
+    }
+
+    public static boolean isGsaOut( File file ) {
+        boolean gsaIsOut = false;
+        RandomAccessFile raf = null;
+        try {
+            raf = new RandomAccessFile(file, "rw");
+        } catch (Exception e) {
+            // gsa is still holding the file
+            gsaIsOut = false;
+        }
+        if (raf != null) {
+            FileChannel channel = raf.getChannel();
+            try {
+                FileLock lock = channel.tryLock();
+                if (lock != null) {
+                    // if we can get a lock on the file, the GSA was force killed, even *without releasing the lock*
+                    // which in theory, should not happen
+                    lock.release();
+                    gsaIsOut = true;
+                }
+            } catch (Exception e) {
+                gsaIsOut = false;
+            } finally {
+                try {
+                    channel.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
+        }
+
+        return gsaIsOut;
     }
 }

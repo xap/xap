@@ -742,8 +742,6 @@ public class SystemProperties extends CommonSystemProperties {
     public static final int EXTRA_BACKUP_SPACE_RESOLUTION_RETRIES_DEFAULT = 15;
     public static final String EXTRA_BACKUP_SPACE_RESOLUTION_RETRIES = "com.gs.cluster.extra_backup_space_resolution_retries";
 
-    public static final String SERVICE_GRID_KILL_TIMEOUT = "com.gs.service-grid.process-kill-timeout";
-
     // provide workaround for GS-12201
     public final static long CACHE_CONTEXT_CLOSE_MAX_WAIT_DEFAULT = -1;
     public final static String CACHE_CONTEXT_CLOSE_MAX_WAIT = "com.gs.cache_context_close_max_wait";
