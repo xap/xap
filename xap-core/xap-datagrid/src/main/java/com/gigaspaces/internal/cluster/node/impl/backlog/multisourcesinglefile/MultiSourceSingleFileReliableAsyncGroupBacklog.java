@@ -161,7 +161,7 @@ public class MultiSourceSingleFileReliableAsyncGroupBacklog extends AbstractMult
 //                                                                + getLastInsertedKeyToBacklogUnsafe() + "]");
 
                 if (!getBacklogFile().isEmpty()) {
-                    IReplicationOrderedPacket lastPacketInBacklog = getBacklogFile().readOnlyIterator(getBacklogFile().size() - 1).next();
+                    IReplicationOrderedPacket lastPacketInBacklog = getBacklogFile().readOnlyIterator(getLastInsertedKeyToBacklogUnsafe()).next();
                     if (lastPacketInBacklog.getEndKey() != packet.getKey() - 1)
                         throw new ReplicationInternalSpaceException("replication is out of sync, attempt to keep a reliable async packet in a keeper backlog with non strict ascending order, new packet key is ["
                                 + packet.getEndKey()
@@ -427,12 +427,12 @@ public class MultiSourceSingleFileReliableAsyncGroupBacklog extends AbstractMult
         ReliableAsyncSourceGroupConfig sourceGroupConfig = getGroupConfigSnapshot();
         long fromKey = handshakeContext.getMinimumUnsentKey();
         long upToKey = handshakeContext.getLastProcessedKey();
-        int maxSize = sourceGroupConfig.getBacklogCompletionBatchSize();
+        int maxWeight = sourceGroupConfig.getBacklogCompletionBatchSize();
         List<IReplicationOrderedPacket> packets = getPacketsWithFullSerializedContent(fromKey,
                 upToKey,
-                maxSize);
+                maxWeight);
 
-        final long minimumUnsentKey = packets.isEmpty() ? upToKey + 1 : packets.get(packets.size() - 1).getKey() + 1;
+        final long minimumUnsentKey = packets.isEmpty() ? upToKey + 1 : packets.get(packets.size() - 1).getEndKey() + 1;
 
         handshakeContext.setMinimumUnsentKey(minimumUnsentKey);
 

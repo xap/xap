@@ -62,11 +62,11 @@ public interface IRedoLogFileStorage<T extends IReplicationOrderedPacket> extend
     WeightedBatch<T> removeFirstBatch(int batchCapacity, long lastCompactionRangeEndKey) throws StorageException;
 
     /**
-     * Delete a batch from the start of the list
+     * Deletes the oldest packets, starting from the oldest up to the given key
      *
-     * @param packetsCount to delete
+     * @param deleteUpToKey the key of the oldest packet to delete
      */
-    void deleteOldestPackets(long packetsCount) throws StorageException;
+    void deleteOldestPackets(long deleteUpToKey) throws StorageException;
 
     /**
      * @return read only iterator that starts from the begining of the list
@@ -74,10 +74,16 @@ public interface IRedoLogFileStorage<T extends IReplicationOrderedPacket> extend
     StorageReadOnlyIterator<T> readOnlyIterator() throws StorageException;
 
     /**
-     * @param fromIndex index to start iterating from
-     * @return read only iterator that starts from the specified index
+     * @param fromKey Key to start iterating from
+     * @return read only iterator that starts from the specified Key
      */
-    StorageReadOnlyIterator<T> readOnlyIterator(long fromIndex) throws StorageException;
+    StorageReadOnlyIterator<T> readOnlyIterator(long fromKey) throws StorageException;
+
+    /**
+     *
+     * @return the key of the latest packet saved to storage
+     */
+    long getLastKeyInStorage();
 
     /**
      * @return true if the storage has no packets

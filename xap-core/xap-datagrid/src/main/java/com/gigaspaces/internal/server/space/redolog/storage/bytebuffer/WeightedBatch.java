@@ -9,17 +9,21 @@ import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.j_spaces.core.cluster.startup.RedoLogCompactionUtil.HAS_PERSISTENT_MEMBERS;
+import static com.j_spaces.core.cluster.startup.RedoLogCompactionUtil.compactTxn;
+
 /**
  * @author yael nahon
  * @since 12.1
  */
-public class WeightedBatch<T> {
+public class WeightedBatch<T extends IReplicationOrderedPacket> {
 
     private List<T> batch;
     private long weight;
     private boolean limitReached = false;
     private CompactionResult compactionResult = new CompactionResult();
     private final long lastCompactionRangeKey;
+    private T rangeDiscarded = null;
 
     public WeightedBatch(long lastCompactionRangeEndKey) {
         batch = new ArrayList<T>();
@@ -55,24 +59,39 @@ public class WeightedBatch<T> {
     }
 
     public void addToBatch(T packet) {
-        long packetWeight = ((IReplicationOrderedPacket) packet).getWeight();
-        if (((IReplicationOrderedPacket) packet).getKey() <= lastCompactionRangeKey && RedoLogCompactionUtil.isCompactable((IReplicationOrderedPacket) packet)) {
-            if (((IReplicationOrderedPacket) packet).getData().isSingleEntryData()) {
-                T discarded = (T) new GlobalOrderDiscardedReplicationPacket(((IReplicationOrderedPacket) packet).getKey());
-                batch.add(discarded);
-                compactionResult.increaseDiscardedCount(1);
-                this.weight -= packetWeight;
+        if (packet.getKey() <= lastCompactionRangeKey && RedoLogCompactionUtil.isCompactable(packet)) {
+            if (!packet.getData().isSingleEntryData()) {   //txn packet
+                AbstractTransactionReplicationPacketData txnPacketData = (AbstractTransactionReplicationPacketData) packet.getData();
+                if ((txnPacketData.getMembersPersistentStateFlag() & HAS_PERSISTENT_MEMBERS) != 0) {
+                    int deleted = compactTxn(txnPacketData.listIterator());
+                    txnPacketData.setWeight(txnPacketData.getWeight() - deleted);
+                    txnPacketData.setMembersPersistentStateFlag(HAS_PERSISTENT_MEMBERS);
+                    compactionResult.increaseWeightRemoved(deleted);
+                    batch.add(packet);
+                    weight += packet.getWeight();
+                    return;
+                }
             } else {
-                AbstractTransactionReplicationPacketData txnPacketData = (AbstractTransactionReplicationPacketData) ((IReplicationOrderedPacket) packet).getData();
-                int deletedFromTxn = RedoLogCompactionUtil.compactTxn(txnPacketData.listIterator());
-                compactionResult.increaseDeletedFromTxnCount(deletedFromTxn);
-                txnPacketData.setWeight(txnPacketData.getWeight() - compactionResult.getDeletedFromTxn());
-                batch.add(packet);
-                this.weight += packetWeight;
+                compactionResult.increaseWeightRemoved(1);
+            }
+            if (discardPacket(packet)) {
+                compactionResult.increaseDiscardedCount(1);
             }
         } else {
             batch.add(packet);
-            this.weight += packetWeight;
+            weight += packet.getWeight();
+            rangeDiscarded = null;
+        }
+    }
+
+    private boolean discardPacket(IReplicationOrderedPacket current) {
+        IReplicationOrderedPacket discardedPacket = new GlobalOrderDiscardedReplicationPacket(current.getKey());
+        if (rangeDiscarded == null) {
+            rangeDiscarded = (T) discardedPacket;
+            return true;
+        } else {
+            ((GlobalOrderDiscardedReplicationPacket) rangeDiscarded).setEndKey(current.getKey());
+            return false;
         }
     }
 

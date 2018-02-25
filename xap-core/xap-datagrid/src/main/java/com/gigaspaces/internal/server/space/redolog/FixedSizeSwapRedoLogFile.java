@@ -128,12 +128,12 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
         }
     }
 
-    public ReadOnlyIterator<T> readOnlyIterator(long fromIndex) {
-        long memRedoFileSize = _memoryRedoLogFile.size();
-        if (fromIndex < memRedoFileSize)
-            return new SwapReadOnlyIterator(_memoryRedoLogFile.readOnlyIterator(fromIndex));
-        //Skip entire memory redo log, can safely cast to int because here memRedoFileSize cannot be more than int
-        return new SwapReadOnlyIterator(fromIndex - memRedoFileSize);
+    public ReadOnlyIterator<T> readOnlyIterator(long fromKey) {
+        long memRedoFileLastKey = _memoryRedoLogFile.getLatest().getEndKey();
+        if (fromKey <= memRedoFileLastKey)
+            return new SwapReadOnlyIterator(_memoryRedoLogFile.readOnlyIterator(fromKey));
+        //Skip entire memory redo log, can safely cast to int because here memRedoFileLastKey cannot be more than int
+        return new SwapReadOnlyIterator(fromKey);
     }
 
     public T removeOldest() {
@@ -175,12 +175,12 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
         return new SwapReadOnlyIterator(memoryIterator);
     }
 
-    public void deleteOldestPackets(long packetsCount) {
-        long memorySize = _memoryRedoLogFile.size();
-        _memoryRedoLogFile.deleteOldestPackets(packetsCount);
+    public void deleteOldestPackets(long deleteUpToKey) {
+        long memoryLastKey = _memoryRedoLogFile.getLatest().getEndKey();
+        _memoryRedoLogFile.deleteOldestPackets(deleteUpToKey);
 
-        if (memorySize < packetsCount)
-            deleteOldestPacketsFromStorage(packetsCount - memorySize);
+        if (memoryLastKey < deleteUpToKey)
+            deleteOldestPacketsFromStorage(deleteUpToKey);
 
         if (_memoryRedoLogFile.isEmpty() && _insertToExternal)
             moveOldestBatchFromStorage();
@@ -297,13 +297,14 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
 
         if (_logger.isLoggable(Level.FINE)) {
             _logger.fine("[" + _name + "]: Performing Compaction " + from + "-" + to);
+            _groupBacklog.printRedoLog(_name, "");
         }
 
         result.appendResult(_memoryRedoLogFile.performCompaction(from, to));
         result.appendResult(_externalStorage.performCompaction(from, to));
 
         if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("[" + _name + "]: Discarded of " + result.getDiscardedCount() + " packets and deleted "+result.getDeletedFromTxn()+" transient packets from transactions during compaction process");
+            _logger.fine("[" + _name + "]: Discarded of " + result.getWeightRemoved() + " packets weight");
         }
 
         _lastCompactionRangeEndKey = to;
@@ -339,13 +340,13 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
          * Create an iterator which starts directly iterating over the storage, thus skipping the
          * memory redo log file
          *
-         * @param inSwapStartIndex offset index to start inside the storage
+         * @param fromKey offset index to start inside the storage
          */
-        public SwapReadOnlyIterator(long inSwapStartIndex) {
+        public SwapReadOnlyIterator(long fromKey) {
             _memoryIteratorExhausted = true;
             _memoryIterator = null;
             try {
-                _externalIterator = _externalStorage.readOnlyIterator(inSwapStartIndex);
+                _externalIterator = _externalStorage.readOnlyIterator(fromKey);
             } catch (StorageException e) {
                 throw new SwapStorageException(e);
             }

@@ -149,16 +149,17 @@ public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedP
     public CompactionResult performCompaction(long from, long to) {
         ListIterator<T> iterator = _buffer.listIterator();
         final CompactionResult compactionResult = RedoLogCompactionUtil.compact(from, to, iterator);
-        this._bufferWeight -= compactionResult.getDiscardedCount() + compactionResult.getDeletedFromTxn();
+        this._bufferWeight -= compactionResult.getWeightRemoved();
         this._discardedPacketCount += compactionResult.getDiscardedCount();
         return compactionResult;
     }
 
-    public void deleteOldestPackets(long packetsCount) throws StorageException {
-        long storageSize = _storage.size();
-        _storage.deleteOldestPackets(packetsCount);
-        int bufferSize = _buffer.size();
-        for (long i = 0; i < Math.min(bufferSize, packetsCount - storageSize); ++i) {
+    public void deleteOldestPackets(long deleteUpToKey) throws StorageException {
+        _storage.deleteOldestPackets(deleteUpToKey);
+        if(_buffer.isEmpty()){
+            return;
+        }
+        while (_buffer.getFirst().getEndKey() < deleteUpToKey) {
             T first = _buffer.removeFirst();
             decreaseBufferWeight(first);
         }
@@ -185,15 +186,19 @@ public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedP
         return new CacheReadOnlyIterator(_storage.readOnlyIterator());
     }
 
-    public StorageReadOnlyIterator<T> readOnlyIterator(
-            long fromIndex) throws StorageException {
-        long storageSize = _storage.size();
+    public StorageReadOnlyIterator<T> readOnlyIterator(long fromKey) throws StorageException {
+        long lastKeyInStorage = _storage.getLastKeyInStorage();
 
-        if (fromIndex < storageSize)
-            return new CacheReadOnlyIterator(_storage.readOnlyIterator(fromIndex));
+        if (fromKey <= lastKeyInStorage)
+            return new CacheReadOnlyIterator(_storage.readOnlyIterator(fromKey));
 
         //Can safely cast to int because if reached here the buffer size cannot be more than int
-        return new CacheReadOnlyIterator((int) (fromIndex - storageSize));
+        return new CacheReadOnlyIterator((int) fromKey);
+    }
+
+    @Override
+    public long getLastKeyInStorage() {
+        return _buffer.getLast().getKey();
     }
 
     public WeightedBatch<T> removeFirstBatch(int batchCapacity, long lastCompactionRangeEndKey) throws StorageException {
@@ -251,12 +256,14 @@ public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedP
          * Create an iterator which starts directly iterating over the buffer, thus skipping the
          * external storage.
          *
-         * @param fromIndex offset index to start inside the buffer
+         * @param fromKey offset index to start inside the buffer
          */
-        public CacheReadOnlyIterator(int fromIndex) {
+        public CacheReadOnlyIterator(int fromKey) {
             _externalIteratorExhausted = true;
             _externalIterator = null;
-            _bufferIterator = _buffer.listIterator(fromIndex);
+            ListIterator<T> bufferIterator = _buffer.listIterator();
+            RedoLogCompactionUtil.skipToKey(bufferIterator, fromKey);
+            _bufferIterator = bufferIterator;
         }
 
         public boolean hasNext() throws StorageException {

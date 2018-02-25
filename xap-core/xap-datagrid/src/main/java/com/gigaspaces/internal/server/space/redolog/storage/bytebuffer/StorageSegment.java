@@ -36,6 +36,7 @@ public class StorageSegment {
     private long _numberOfPackets;
     private int _deletedPacketsCount;
     private long _weight;
+    private long _lastKeyInSegment;
 
     private final ArrayList<Index> _indexes = new ArrayList<Index>();
 
@@ -186,6 +187,14 @@ public class StorageSegment {
 
     public void decreaseWeight(long weight){
         _weight -= weight;
+    }
+
+    public long getLastKeyInSegment() {
+        return _lastKeyInSegment;
+    }
+
+    public void setLastKeyInSegment(long _lastKeyInSegment) {
+        this._lastKeyInSegment = _lastKeyInSegment;
     }
 
     public long getWeight() {

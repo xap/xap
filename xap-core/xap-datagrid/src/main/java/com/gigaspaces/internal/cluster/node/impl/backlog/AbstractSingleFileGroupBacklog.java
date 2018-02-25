@@ -847,8 +847,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
 
         SynchronizingData synchronizingData = isSynchronizing(memberName);
 
-        long startIndex = backlogOverflown ? 0 : memberLastConfirmedKey + 1
-                - firstKeyInBacklog;
+        long startIndex = backlogOverflown ? firstKeyInBacklog : memberLastConfirmedKey + 1;
 
         if (startIndex >= calculateSizeUnsafe()) {
             if (result.isEmpty() && synchronizingData != null)
@@ -1075,12 +1074,12 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
 
         // Nothing to delete, we have a channel that was never connected
         if (minUnconfirmedKey != -1) {
-            long deletionBatchSize = minUnconfirmedKey - firstKeyInBacklog;
-            if (deletionBatchSize > 0) {
-                getBacklogFile().deleteOldestPackets(deletionBatchSize);
+            long deletionUpToKey = minUnconfirmedKey - firstKeyInBacklog;
+            if (deletionUpToKey > 0) {
+                getBacklogFile().deleteOldestPackets(deletionUpToKey);
                 IReplicationBacklogStateListener stateListener = _stateListener;
                 if (stateListener != null)
-                    stateListener.onPacketsClearedAfterConfirmation(deletionBatchSize);
+                    stateListener.onPacketsClearedAfterConfirmation(deletionUpToKey);
             }
         }
 
@@ -1124,7 +1123,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
     // Should be called under write lock
     public void updateMirrorWeightAfterCompaction(final CompactionResult compactionResult) {
         AbstractSingleFileConfirmationHolder confirmation = _confirmationMap.get(_mirrorMemberName);
-        confirmation.setWeight(confirmation.getWeight() - compactionResult.getDiscardedCount() - compactionResult.getDeletedFromTxn());
+        confirmation.setWeight(confirmation.getWeight() - compactionResult.getWeightRemoved());
         increaseMirrorDiscardedCount(compactionResult.getDiscardedCount());
     }
 
@@ -1645,16 +1644,13 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         List<IReplicationOrderedPacket> packets = new LinkedList<IReplicationOrderedPacket>();
         _rwLock.readLock().lock();
         try {
-            long firstKeyInBacklogInternal = getFirstKeyInBacklogInternal();
-            // Start index can be less than 0 in case of a deleted backlog.
-            long startIndex = Math.max(0, fromKey - firstKeyInBacklogInternal);
 
-            ReadOnlyIterator<T> iterator = getBacklogFile().readOnlyIterator(startIndex);
+            ReadOnlyIterator<T> iterator = getBacklogFile().readOnlyIterator(fromKey);
             int weightSum = 0;
             try {
                 while (iterator.hasNext() && weightSum < maxWeight) {
                     IReplicationOrderedPacket packet = iterator.next();
-                    if (packet.getKey() > upToKey)
+                    if (packet.getEndKey() > upToKey)
                         break;
 
                     if (packet.getWeight() > maxWeight && weightSum == 0) { // packet is bigger than maxWeight and it's the first iteration
@@ -1684,7 +1680,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
                 if (_logger.isLoggable(Level.SEVERE))
                     _logger.log(Level.SEVERE,
                             "exception while iterating over the backlog file (getPacketsWithFullSerializedContent), "
-                                    + "[startIndex=" + startIndex
+                                    + "[startKey=" + fromKey
                                     + " iteration=" + weightSum + " "
                                     + getStatistics() + "]",
                             e);

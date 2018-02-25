@@ -62,6 +62,11 @@ public class MemoryRedoLogFile<T extends IReplicationOrderedPacket> implements I
         return _redoFile.getFirst();
     }
 
+
+    public T getLatest() {
+        return _redoFile.getLast();
+    }
+
     public boolean isEmpty() {
         return _redoFile.isEmpty();
     }
@@ -78,8 +83,10 @@ public class MemoryRedoLogFile<T extends IReplicationOrderedPacket> implements I
         return size();
     }
 
-    public ReadOnlyIterator<T> readOnlyIterator(long fromIndex) {
-        return new ReadOnlyIteratorAdapter<T>(_redoFile.listIterator((int) fromIndex));
+    public ReadOnlyIterator<T> readOnlyIterator(long fromKey) {
+        ListIterator<T> iterator = _redoFile.listIterator();
+        RedoLogCompactionUtil.skipToKey(iterator, fromKey);
+        return new ReadOnlyIteratorAdapter<T>(iterator);
     }
 
     public Iterator<T> iterator() {
@@ -105,13 +112,13 @@ public class MemoryRedoLogFile<T extends IReplicationOrderedPacket> implements I
         return _redoFile.size();
     }
 
-    public void deleteOldestPackets(long packetsCount) {
-        if (packetsCount > _redoFile.size()) {
+    public void deleteOldestPackets(long deleteUpToKey) {
+        if (deleteUpToKey > _redoFile.getLast().getEndKey()) {
             _redoFile.clear();
             _weight = 0;
             _discardedPacketCount = 0;
         } else {
-            for (long i = 0; i < packetsCount; ++i) {
+            while (_redoFile.getFirst().getEndKey() < deleteUpToKey) {
                 T first = _redoFile.removeFirst();
                 decreaseWeight(first);
             }
@@ -160,8 +167,8 @@ public class MemoryRedoLogFile<T extends IReplicationOrderedPacket> implements I
     @Override
     public CompactionResult performCompaction(long from, long to) {
         ListIterator<T> iterator = _redoFile.listIterator();
-        final CompactionResult compactionResult =RedoLogCompactionUtil.compact(from, to, iterator);
-        this._weight -= compactionResult.getDiscardedCount() + compactionResult.getDeletedFromTxn();
+        final CompactionResult compactionResult = RedoLogCompactionUtil.compact(from, to, iterator);
+        this._weight -= compactionResult.getWeightRemoved();
         this._discardedPacketCount += compactionResult.getDiscardedCount();
         return compactionResult;
     }

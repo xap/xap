@@ -37,11 +37,7 @@ import com.j_spaces.kernel.pool.ResourcePool;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -90,6 +86,7 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
 
     private long _weight;
     private BacklogWeightPolicy backlogWeightPolicy;
+    private long _lastKeyInStorage =-1;
 
 
     public ByteBufferRedoLogFileStorage(IByteBufferStorageFactory byteBufferStorageProvider) {
@@ -128,6 +125,7 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
         SegmentCursor writer = null;
         boolean firstPacket = true;
         int segmentAddedPackets = 0;
+        long lastKeyInSegment = -1;
         int writtenPackets = 0;
         long addedPacketsWeight = 0;
         int unindexedLength = initLastSegment.getUnindexedLength();
@@ -136,7 +134,6 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
         try {
             for (T packet : replicationPackets) {
                 ByteBuffer bufferedPacket = _packetSerializer.serializePacket(packet);
-
                 int packetSerializeLength = bufferedPacket.remaining() + PACKET_PROTOCOL_OVERHEAD /*over head per packet*/;
                 segmentSizeAfterPacket += packetSerializeLength;
                 boolean hasRemaining = segmentSizeAfterPacket <= _maxSizePerSegment;
@@ -155,6 +152,7 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                     currentLastSegment.increaseNumOfPackets(segmentAddedPackets);
                     //Increase the weight of the packet store in segment
                     currentLastSegment.increaseWeight(addedPacketsWeight);
+                    currentLastSegment.setLastKeyInSegment(lastKeyInSegment);
                     //add to total weight
                     _weight += addedPacketsWeight;
                     //Create new segment
@@ -162,6 +160,7 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                     StorageSegment lastSegment = getLastSegment();
                     segmentSizeAfterPacket = packetSerializeLength;
                     segmentAddedPackets = 0;
+                    lastKeyInSegment = -1;
                     addedPacketsWeight = 0;
                     unindexedLength = 0;
                     unindexedPacketsCount = 0;
@@ -193,6 +192,7 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                 }
                 //Increase number of packets added to the current segment
                 segmentAddedPackets++;
+                lastKeyInSegment = packet.getEndKey();
                 addedPacketsWeight += packet.getWeight();
                 writtenPackets++;
                 //Keep track of unindexed length
@@ -211,6 +211,7 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
 
             //Increase number of packets in last segment
             getLastSegment().increaseNumOfPackets(segmentAddedPackets);
+            getLastSegment().setLastKeyInSegment(lastKeyInSegment);
             //Increase the weight of the packet store in segment
             getLastSegment().increaseWeight(addedPacketsWeight);
             //add to total weight
@@ -240,6 +241,7 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
             if (writer != null)
                 writer.release();
             _size += writtenPackets;
+            _lastKeyInStorage = replicationPackets.get(replicationPackets.size() - 1).getEndKey();
         }
 
     }
@@ -297,29 +299,32 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
         _writerBuffer.limit(_writerBuffer.capacity());
     }
 
-    public void deleteOldestPackets(long packetsCount) throws StorageException {
+    public void deleteOldestPackets(long deleteUpToKey) throws StorageException {
         if (!_initialized)
             return;
         //First delete entire possible segments
-        long remainingBatch = deleteEntireSegments(packetsCount);
-        if (remainingBatch <= 0)
-            return;
+        deleteEntireSegments(deleteUpToKey);
         SegmentCursor reader = null;
         try {
             //Init arguments, start from first segment            
             StorageSegment currentSegment = getFirstSegment();
             reader = currentSegment.getCursorForReading();
             reader.setPosition(_dataStartPos);
-
-            for (int i = 0; i < remainingBatch; ++i) {
-
+            boolean limitReached = false;
+            long numOfDeleted = 0;
+            while(!limitReached){
                 T packet = readSinglePacketFromStorage(reader);
-                _weight -= packet.getWeight();
+                if(packet.getEndKey() < deleteUpToKey){
+                    _weight -= packet.getWeight();
+                    //Move start position after deleted elements
+                    _dataStartPos = reader.getPosition();
+                    numOfDeleted++;
+                } else {
+                    limitReached = true;
+                }
             }
-            _size -= Math.min(remainingBatch, _size);
-            //Move start position after deleted elements
-            _dataStartPos = reader.getPosition();
-            currentSegment.decreaseNumOfPackets(remainingBatch);
+            _size -= numOfDeleted;
+            currentSegment.decreaseNumOfPackets(numOfDeleted);
         } catch (ByteBufferStorageException e) {
             throw new StorageException("error when deleting first batch from storage", e);
         } catch (ClassNotFoundException e) {
@@ -336,25 +341,26 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
         return _segments.getFirst();
     }
 
-    private long deleteEntireSegments(long packetsCount) throws StorageException {
+    private long deleteEntireSegments(long deleteUpToKey) throws StorageException {
         int numberOfSegments = _segments.size();
         int currentSegmentCounter = 0;
         int deletedSegments = 0;
-        long remaining = packetsCount;
+        long lastDeletedKey = 0;
         for (StorageSegment segment : _segments) {
+            long lastKeyInSegment = segment.getLastKeyInSegment();
             currentSegmentCounter++;
-            long numOfPackets = segment.getNumOfPackets();
             //Delete this segment because it has less packets than needed to delete
-            if (remaining >= numOfPackets) {
+            if (deleteUpToKey >= lastKeyInSegment) {
                 _weight -= segment.getWeight();
                 //If not the last segment
                 if (currentSegmentCounter < numberOfSegments) {
                     if (_logger.isLoggable(Level.FINEST))
                         _logger.finest("deleted segment " + currentSegmentCounter);
+                    long segmentNumOfPackets = segment.getNumOfPackets();
+                    lastDeletedKey = lastKeyInSegment;
                     segment.delete();
-                    remaining -= numOfPackets;
                     deletedSegments++;
-                    _size -= numOfPackets;
+                    _size -= segmentNumOfPackets;
                     _dataStartPos = 0;
                 } else {
                     //last segment we only clear and not delete
@@ -364,13 +370,12 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                         throw new StorageException("error clearing storage", e);
                     }
                     _size = 0;
-                    remaining = 0;
                 }
             } else
                 break;
         }
         removeDeletedSegments(deletedSegments);
-        return remaining;
+        return lastDeletedKey;
     }
 
     public WeightedBatch<T> removeFirstBatch(int batchCapacity, long lastCompactionRangeEndKey) throws StorageException {
@@ -386,12 +391,12 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                 int removedFromCurrentSegment = 0;
                 int numberOfDeletedSegments = 0;
                 long weightDeletedFromCurrentSegment = 0;
-                while (batch.getWeight() < batchCapacity){
+                while (batch.getWeight() < batchCapacity) {
                     //Read packet
                     T packet = readSinglePacketFromStorage(reader);
 
-                     if(packet != null && batch.size() > 0 && batch.getWeight() + packet.getWeight() > batchCapacity){
-                         batch.setLimitReached(true);
+                    if (packet != null && batch.size() > 0 && batch.getWeight() + packet.getWeight() > batchCapacity) {
+                        batch.setLimitReached(true);
                         break;
                     }
 
@@ -460,7 +465,7 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                     reader.release();
             }
         }
-        if(batch.size() >= batchCapacity){
+        if (batch.size() >= batchCapacity) {
             batch.setLimitReached(true);
         }
         return batch;
@@ -470,8 +475,13 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
         return createReadOnlyIterator(0);
     }
 
-    public StorageReadOnlyIterator<T> readOnlyIterator(long fromIndex) throws StorageException {
-        return createReadOnlyIterator(fromIndex);
+    public StorageReadOnlyIterator<T> readOnlyIterator(long fromKey) throws StorageException {
+        return createReadOnlyIterator(fromKey);
+    }
+
+    @Override
+    public long getLastKeyInStorage() {
+        return _lastKeyInStorage;
     }
 
     public long size() throws StorageException {
@@ -511,7 +521,7 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
 
     @Override
     public long getWeight() {
-            return _weight;
+        return _weight;
     }
 
     @Override
@@ -520,7 +530,7 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
     }
 
     @Override
-    public CompactionResult performCompaction(long from, long to){
+    public CompactionResult performCompaction(long from, long to) {
         throw new UnsupportedOperationException();
     }
 
@@ -608,15 +618,15 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
     }
 
     private StorageReadOnlyIterator<T> createReadOnlyIterator(
-            long fromIndex) throws StorageException {
+            long fromKey) throws StorageException {
         if (!_initialized)
             return EMPTY_ITERATOR;
 
-        if (fromIndex >= _size)
+        if (fromKey >= _lastKeyInStorage)
             return EMPTY_ITERATOR;
 
         try {
-            return new ByteBufferReadOnlyIterator(fromIndex);
+            return new ByteBufferReadOnlyIterator(fromKey);
         } catch (ByteBufferStorageException e) {
             throw new StorageException("error creating a readonly iterator over the storage", e);
         }
@@ -631,7 +641,7 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
 
             T packet = _packetSerializer.deserializePacket(serializedPacket.array());
             IReplicationPacketData<?> packetData = packet.getData();
-            if(packetData != null){
+            if (packetData != null) {
                 packetData.setWeight(backlogWeightPolicy.calculateWeight(packetData));
             }
             return packet;
@@ -911,19 +921,19 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
         private int _segmentIndex = 0;
         private volatile boolean _released = false;
 
-        public ByteBufferReadOnlyIterator(long fromIndex) throws ByteBufferStorageException {
-            advanceToPacket(fromIndex);
+        public ByteBufferReadOnlyIterator(long fromKey) throws ByteBufferStorageException {
+            advanceToPacket(fromKey);
         }
 
-        private void advanceToPacket(long fromIndex) throws ByteBufferStorageException {
+        private void advanceToPacket(long fromKey) throws ByteBufferStorageException {
             long firstPacketInSegment = 0;
             long firstPacketInNextSegment = 0;
             StorageSegment startSegment = null;
             //Locate for segment containing requested packet
             for (StorageSegment segment : _segments) {
-                firstPacketInNextSegment += segment.getNumOfPackets();
+                firstPacketInNextSegment = segment.getLastKeyInSegment() +1;
                 //Located
-                if (fromIndex < firstPacketInNextSegment) {
+                if (fromKey < firstPacketInNextSegment) {
                     //If first segment start from dataStartPos, otherwise the data start from 0
                     startSegment = segment;
                     break;
@@ -946,10 +956,10 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
 
                 _reader = startSegment.getCursorForReading();
                 //If start from 0, we start at _dataStartPos
-                if (fromIndex == 0)
+                if (fromKey == -1)
                     _reader.setPosition(_dataStartPos);
                 else {
-                    long positionInBlock = startSegment.adjustReader(_reader, fromIndex - firstPacketInSegment);
+                    long positionInBlock = startSegment.adjustReader(_reader, fromKey - firstPacketInSegment);
 
                     for (long i = 0; i < positionInBlock; ++i) {
                         //advance in storage

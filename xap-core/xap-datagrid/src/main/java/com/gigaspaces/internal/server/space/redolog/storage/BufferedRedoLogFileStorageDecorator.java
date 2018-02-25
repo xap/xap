@@ -21,11 +21,9 @@ import com.gigaspaces.internal.server.space.redolog.RedoLogFileCompromisedExcept
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.WeightedBatch;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.cluster.startup.CompactionResult;
+import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -61,7 +59,7 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
     }
 
     public void append(T replicationPacket) throws StorageException {
-        if(_bufferWeight + replicationPacket.getWeight() > _bufferCapacity && !_buffer.isEmpty()){
+        if (_bufferWeight + replicationPacket.getWeight() > _bufferCapacity && !_buffer.isEmpty()) {
             flushBuffer();
         }
         _buffer.add(replicationPacket);
@@ -87,13 +85,12 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
             flushBuffer();
     }
 
-    public void deleteOldestPackets(long packetsCount) throws StorageException {
-        long storageSize = _storage.size();
-        _storage.deleteOldestPackets(packetsCount);
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("delete a batch of size " + Math.min(packetsCount, storageSize) + " from storage");
-        int bufferSize = _buffer.size();
-        for (long i = 0; i < Math.min(bufferSize, packetsCount - storageSize); ++i) {
+    public void deleteOldestPackets(long deleteUpToKey) throws StorageException {
+        _storage.deleteOldestPackets(deleteUpToKey);
+        if(_buffer.isEmpty()){
+            return;
+        }
+        while (_buffer.getFirst().getEndKey() < deleteUpToKey){
             T firstPacket = _buffer.removeFirst();
             decreaseWeight(firstPacket);
         }
@@ -103,14 +100,19 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
         return new BufferedReadOnlyIterator(_storage.readOnlyIterator());
     }
 
-    public StorageReadOnlyIterator<T> readOnlyIterator(long fromIndex) throws StorageException {
-        long storageSize = _storage.size();
+    public StorageReadOnlyIterator<T> readOnlyIterator(long fromKey) throws StorageException {
+        long lastKeyInStorage = _storage.getLastKeyInStorage();
 
-        if (fromIndex < storageSize)
-            return new BufferedReadOnlyIterator(_storage.readOnlyIterator(fromIndex));
+        if (fromKey <= lastKeyInStorage)
+            return new BufferedReadOnlyIterator(_storage.readOnlyIterator(fromKey));
 
         //Can safely cast to int because if reached here the buffer size cannot be more than int
-        return new BufferedReadOnlyIterator((int) (fromIndex - storageSize));
+        return new BufferedReadOnlyIterator((int) fromKey);
+    }
+
+    @Override
+    public long getLastKeyInStorage() {
+        return _buffer.isEmpty() ? _storage.getLastKeyInStorage() : _buffer.getLast().getEndKey();
     }
 
     public WeightedBatch<T> removeFirstBatch(int batchCapacity, long lastCompactionRangeEndKey) throws StorageException {
@@ -120,10 +122,10 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
             _logger.finest("removed a batch of weight " + batch.getWeight() + " from storage");
 
 
-        while (!_buffer.isEmpty() && batch.getWeight() < batchCapacity && !batch.isLimitReached()){
+        while (!_buffer.isEmpty() && batch.getWeight() < batchCapacity && !batch.isLimitReached()) {
             T firstPacket = _buffer.getFirst();
 
-            if(batch.size() > 0 && batch.getWeight() + firstPacket.getWeight() > batchCapacity){
+            if (batch.size() > 0 && batch.getWeight() + firstPacket.getWeight() > batchCapacity) {
                 batch.setLimitReached(true);
                 break;
             }
@@ -132,7 +134,7 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
             decreaseWeight(firstPacket);
         }
 
-        if(batch.size() >= batchCapacity){
+        if (batch.size() >= batchCapacity) {
             batch.setLimitReached(true);
         }
         return batch;
@@ -177,7 +179,7 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
     }
 
     @Override
-    public CompactionResult performCompaction(long from, long to){
+    public CompactionResult performCompaction(long from, long to) {
         throw new UnsupportedOperationException();
     }
 
@@ -226,12 +228,14 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
          * Create an iterator which starts directly iterating over the buffer, thus skipping the
          * external storage.
          *
-         * @param fromIndex offset index to start inside the buffer
+         * @param fromKey offset index to start inside the buffer
          */
-        public BufferedReadOnlyIterator(int fromIndex) {
+        public BufferedReadOnlyIterator(int fromKey) {
             _externalIteratorExhausted = true;
             _externalIterator = null;
-            _bufferIterator = _buffer.listIterator(fromIndex);
+            ListIterator<T> bufferIterator = _buffer.listIterator();
+            RedoLogCompactionUtil.skipToKey(bufferIterator, fromKey);
+            _bufferIterator = bufferIterator;
         }
 
         public boolean hasNext() throws StorageException {

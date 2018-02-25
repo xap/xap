@@ -80,11 +80,11 @@ public interface IRedoLogFile<T extends IReplicationOrderedPacket> extends Itera
     ReadOnlyIterator<T> readOnlyIterator(long fromKey);
 
     /**
-     * Deletes the oldest packets, starting from the oldest up until the specified batch size
+     * Deletes the oldest packets, starting from the oldest up to the given key
      *
-     * @param packetsCount number of oldest packets to delete
+     * @param deleteUpToKey the key of the oldest packet to delete
      */
-    void deleteOldestPackets(long packetsCount);
+    void deleteOldestPackets(long deleteUpToKey);
 
     /**
      * Validates the integrity of the redo log file

@@ -25,7 +25,7 @@ public class RedoLogCompactionUtil {
 
     public static CompactionResult compact(long from, long to, ListIterator iterator) {
         long discardedCount = 0;
-        int deletedFromTxns = 0;
+        long weightRemoved = 0;
         boolean rangeDiscarded = false;
 
         while (iterator.hasNext()) {
@@ -45,10 +45,14 @@ public class RedoLogCompactionUtil {
                     if ((txnPacketData.getMembersPersistentStateFlag() & HAS_PERSISTENT_MEMBERS) != 0) {
                         int deleted = compactTxn(txnPacketData.listIterator());
                         txnPacketData.setWeight(txnPacketData.getWeight() - deleted);
-                        deletedFromTxns += deleted;
+                        weightRemoved += deleted;
                         txnPacketData.setMembersPersistentStateFlag(RedoLogCompactionUtil.HAS_PERSISTENT_MEMBERS);
                         continue;
+                    } else {
+                        weightRemoved += txnPacketData.getWeight();
                     }
+                } else {
+                    weightRemoved++;
                 }
                 if (discardPacket(iterator, current, rangeDiscarded)) {
                     discardedCount++;
@@ -59,7 +63,7 @@ public class RedoLogCompactionUtil {
                 rangeDiscarded = false;
             }
         }
-        return new CompactionResult(discardedCount, deletedFromTxns);
+        return new CompactionResult(discardedCount, weightRemoved);
     }
 
     private static boolean discardPacket(ListIterator iterator, IReplicationOrderedPacket current, boolean rangeDiscarded) {
@@ -110,5 +114,20 @@ public class RedoLogCompactionUtil {
             stateFlag = RedoLogCompactionUtil.HAS_PERSISTENT_MEMBERS;
         }
         return stateFlag;
+    }
+
+    public static <T extends IReplicationOrderedPacket> void skipToKey(ListIterator<T> iterator, long fromKey) {
+        while (iterator.hasNext()) {
+            T next = iterator.next();
+            if (next.isDiscardedPacket()) {
+                if (fromKey > next.getKey() && fromKey < next.getEndKey()) {
+                    iterator.previous();
+                    break;
+                }
+            } else if (next.getKey() == fromKey) {
+                iterator.previous();
+                break;
+            }
+        }
     }
 }
