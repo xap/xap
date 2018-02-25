@@ -334,21 +334,21 @@ public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStora
                  BlobStoreRefEntryCacheInfo entryCacheInfo = ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart();
                 switch (entryHolder.getWriteLockOperation()) {
                     case SpaceOperations.WRITE:
-                        operations.add(new BlobStoreAddBulkOperationRequest(entryCacheInfo.getStorageKey(), entryCacheInfo.getEntryLayout(_engine.getCacheManager())));
+                        operations.add(new BlobStoreAddBulkOperationRequest(entryCacheInfo.getStorageKey(), entryCacheInfo.getEntryLayout(_engine.getCacheManager()), entryCacheInfo));
                         break;
                     case SpaceOperations.UPDATE:
                         operations.add(new BlobStoreReplaceBulkOperationRequest(entryCacheInfo.getStorageKey(),
-                                entryCacheInfo.getEntryLayout(_engine.getCacheManager()), entryCacheInfo.getBlobStoreStoragePos()));
+                                entryCacheInfo.getEntryLayout(_engine.getCacheManager()), entryCacheInfo.getBlobStoreStoragePos(), entryCacheInfo));
                         break;
                     case SpaceOperations.TAKE:
                     case SpaceOperations.TAKE_IE:
                         boolean phantom = ((IBlobStoreEntryHolder) entryHolder).isPhantom();
                         if (!phantom) { //actual remove
-                            operations.add(new BlobStoreRemoveBulkOperationRequest(entryCacheInfo.getStorageKey(), entryCacheInfo.getBlobStoreStoragePos()));
+                            operations.add(new BlobStoreRemoveBulkOperationRequest(entryCacheInfo.getStorageKey(), entryCacheInfo.getBlobStoreStoragePos(), entryCacheInfo));
                         }
                         else //update
                             operations.add(new BlobStoreReplaceBulkOperationRequest(entryCacheInfo.getStorageKey(),
-                                    entryCacheInfo.getEntryLayout(_engine.getCacheManager()), entryCacheInfo.getBlobStoreStoragePos()));
+                                    entryCacheInfo.getEntryLayout(_engine.getCacheManager()), entryCacheInfo.getBlobStoreStoragePos(), entryCacheInfo));
                         break;
                     default:
                         throw new UnsupportedOperationException("uid=" + entryHolder.getUID() + " operation=" + entryHolder.getWriteLockOperation());
@@ -516,10 +516,10 @@ public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStora
 
         BlobStoreTypeDescSerializable stored = new BlobStoreTypeDescSerializable((TypeDesc) typeDesc, renew ? updated : cur);
         //NOTE- currently we ignore the blobStorePosition in metadata- should be added later as a field in typeDesc
-        if (_engine.getCacheManager().getBlobStoreStorageHandler().get(typeName, null, BlobStoreObjectType.METADATA) != null)
-            _engine.getCacheManager().getBlobStoreStorageHandler().replace(typeName, stored, null, BlobStoreObjectType.METADATA);
+        if (_engine.getCacheManager().getBlobStoreStorageHandler().get(null, typeName, null, BlobStoreObjectType.METADATA) != null)
+            _engine.getCacheManager().getBlobStoreStorageHandler().replace(null, typeName, stored, null, BlobStoreObjectType.METADATA);
         else
-            _engine.getCacheManager().getBlobStoreStorageHandler().add(typeName, stored, BlobStoreObjectType.METADATA);
+            _engine.getCacheManager().getBlobStoreStorageHandler().add(null, typeName, stored, BlobStoreObjectType.METADATA);
 
         if (renew)
             _classes.put(typeName, updated);

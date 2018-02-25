@@ -335,7 +335,7 @@ public class BlobStoreRefEntryCacheInfo
     private void removeEntryFromBlobStoreStorage_impl(Context context,CacheManager cacheManager) {
         removeFromInternalCache(context,cacheManager, _loadedBlobStoreEntry);
         if (isWrittenToBlobStore()) {
-            cacheManager.getBlobStoreStorageHandler().removeIfExists(getStorageKey_impl(), getBlobStorePos(), BlobStoreObjectType.DATA);
+            cacheManager.getBlobStoreStorageHandler().removeIfExists(this, getStorageKey_impl(), getBlobStorePos(), BlobStoreObjectType.DATA);
         }
         _blobStorePosition = null;
     }
@@ -541,7 +541,7 @@ public class BlobStoreRefEntryCacheInfo
                         throw new RuntimeException("Blobstore- BLRECI:getFullEntry got execption" + e.toString() + e.getStackTrace());
                     }
                 } else {
-                    ole = (BlobStoreEntryLayout) cacheManager.getBlobStoreStorageHandler().get(getStorageKey_impl(), _blobStorePosition, BlobStoreObjectType.DATA, onlyIndexesPart);
+                    ole = (BlobStoreEntryLayout) cacheManager.getBlobStoreStorageHandler().get(this, getStorageKey_impl(), _blobStorePosition, BlobStoreObjectType.DATA, onlyIndexesPart);
                     if(CacheManager.getLogger().isLoggable(Level.FINER)){
                         CacheManager.getLogger().finer("container [" + cacheManager.getEngine().getFullSpaceName() + "] Blobstore- entry loaded from disk, uid=" + _m_Uid);
                     }
@@ -651,12 +651,12 @@ public class BlobStoreRefEntryCacheInfo
                     if (cacheManager.getEngine().getMemoryManager().getOffHeapMemoryManager().isEnabled() && !isPhantom()) {
                         setOffHeapAddress(OffHeapIndexesValuesHandler.allocate(entryLayout.getIndexValuesBytes(cacheManager), getOffHeapAddress(), cacheManager.getBlobStoreInternalCache().getOffHeapByteCounter(), getServerTypeDesc().getOffHeapTypeCounter()));
                     }
-                    _blobStorePosition = cacheManager.getBlobStoreStorageHandler().add(getStorageKey_impl(), entryLayout, BlobStoreObjectType.DATA);
+                    _blobStorePosition = cacheManager.getBlobStoreStorageHandler().add(this, getStorageKey_impl(), entryLayout, BlobStoreObjectType.DATA);
                 } else {
                     if (cacheManager.getEngine().getMemoryManager().getOffHeapMemoryManager().isEnabled() && !isPhantom()) {
                         OffHeapIndexesValuesHandler.update(this, entryLayout.getIndexValuesBytes(cacheManager), cacheManager.getBlobStoreInternalCache().getOffHeapByteCounter(), getServerTypeDesc().getOffHeapTypeCounter());
                     }
-                    _blobStorePosition = cacheManager.getBlobStoreStorageHandler().replace(getStorageKey_impl(), entryLayout, getBlobStorePos(), BlobStoreObjectType.DATA);
+                    _blobStorePosition = cacheManager.getBlobStoreStorageHandler().replace(this, getStorageKey_impl(), entryLayout, getBlobStorePos(), BlobStoreObjectType.DATA);
                 }
 
                 if (_blobStorePosition == null)

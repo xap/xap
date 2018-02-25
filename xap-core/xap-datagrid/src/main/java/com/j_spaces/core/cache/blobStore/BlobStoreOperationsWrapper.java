@@ -65,6 +65,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     private final ThroughputMetric remove_tp = new ThroughputMetric();
 
     private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private boolean _isOffHeap;
 
     public BlobStoreOperationsWrapper(CacheManager cacheManager, BlobStoreStorageHandler blobStore) {
         _cacheManager = cacheManager;
@@ -79,6 +80,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     public void initialize(BlobStoreConfig blobStoreConfig) {
         _registrator = blobStoreConfig.getMetricRegistrator();
         _blobStore.initialize(blobStoreConfig);
+        _isOffHeap = getProperties().getProperty("blobStoreHandler").equals("com.gigaspaces.blobstore.offheap.OffHeapBlobStoreHandler");
         registerOperations();
     }
 
@@ -88,21 +90,30 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     }
 
     @Override
-    public Object add(java.io.Serializable id, java.io.Serializable data, BlobStoreObjectType objectType) {
+    public Object add(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, java.io.Serializable data, BlobStoreObjectType objectType) {
+        if (_isOffHeap && objectType != BlobStoreObjectType.DATA) {
+            return null;
+        }
+
         if (objectType.equals(BlobStoreObjectType.DATA)) {
             add.inc();
             add_tp.increment();
         }
         if (_needSerialization) {
             byte[] sdata = _serialization.serialize(data, objectType);
-            return _blobStore.add(id, sdata, objectType);
+            return _isOffHeap ? _blobStore.add(offHeapInfo, sdata, objectType) : _blobStore.add(id, data, objectType);
         } else
-            return _blobStore.add(id, data, objectType);
+            return _isOffHeap ? _blobStore.add(offHeapInfo, data, objectType) : _blobStore.add(id, data, objectType);
     }
 
     @Override
-    public java.io.Serializable get(java.io.Serializable id, Object position, BlobStoreObjectType objectType) {
-        java.io.Serializable data = _blobStore.get(id, position, objectType);
+    public java.io.Serializable get(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object position, BlobStoreObjectType objectType) {
+        if (_isOffHeap && objectType != BlobStoreObjectType.DATA) {
+            return null;
+        }
+
+        java.io.Serializable data = _isOffHeap ? _blobStore.get(offHeapInfo, position, objectType) : _blobStore.get(id, position, objectType);
+
         if (objectType.equals(BlobStoreObjectType.DATA)) {
             get.inc();
             get_tp.increment();
@@ -112,8 +123,13 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
 
 
     @Override
-    public java.io.Serializable get(java.io.Serializable id, Object position, BlobStoreObjectType objectType, boolean indexesPartOnly) {
-        java.io.Serializable data = _blobStore.get(id, position, objectType);
+    public java.io.Serializable get(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object
+            position, BlobStoreObjectType objectType, boolean indexesPartOnly) {
+        if (_isOffHeap && objectType != BlobStoreObjectType.DATA) {
+            return null;
+        }
+        java.io.Serializable data = _isOffHeap ? _blobStore.get(offHeapInfo, position, objectType) : _blobStore.get(id, position, objectType);
+
         if (objectType.equals(BlobStoreObjectType.DATA)) {
             get.inc();
             get_tp.increment();
@@ -123,7 +139,13 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     }
 
     @Override
-    public Object replace(java.io.Serializable id, java.io.Serializable data, Object position, BlobStoreObjectType objectType) {
+    public Object replace(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, java.io.Serializable
+            data, Object position, BlobStoreObjectType objectType) {
+
+        if (_isOffHeap && objectType != BlobStoreObjectType.DATA) {
+            return null;
+        }
+
         if (objectType.equals(BlobStoreObjectType.DATA)) {
             replace.inc();
             replace_tp.increment();
@@ -131,15 +153,19 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
 
         if (_needSerialization) {
             byte[] sdata = _serialization.serialize(data, objectType);
-            return _blobStore.replace(id, sdata, position, objectType);
+            return _isOffHeap ? _blobStore.replace(offHeapInfo, sdata, position, objectType) : _blobStore.replace(id, sdata, position, objectType);
         } else
-            return _blobStore.replace(id, data, position, objectType);
+            return _isOffHeap ? _blobStore.replace(offHeapInfo, data, position, objectType) : _blobStore.replace(id, data, position, objectType);
     }
 
     @Override
-    public java.io.Serializable remove(java.io.Serializable id, Object position, BlobStoreObjectType objectType) {
+    public java.io.Serializable remove(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object
+            position, BlobStoreObjectType objectType) {
+        if (_isOffHeap && objectType != BlobStoreObjectType.DATA) {
+            return null;
+        }
         //NOTE exception is thrown from underlying driver if remove fails
-        java.io.Serializable data = _blobStore.remove(id, position, objectType);
+        java.io.Serializable data = _isOffHeap ? _blobStore.remove(offHeapInfo, position, objectType) : _blobStore.remove(id, position, objectType);
         if (objectType.equals(BlobStoreObjectType.DATA)) {
             remove.inc();
             remove_tp.increment();
@@ -149,9 +175,12 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     }
 
     @Override
-    public void removeIfExists(java.io.Serializable id, Object position, BlobStoreObjectType objectType) {
+    public void removeIfExists(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object position, BlobStoreObjectType objectType) {
+        if (_isOffHeap && objectType != BlobStoreObjectType.DATA) {
+            return;
+        }
         //NOTE execption is thrown from underlying driver if remove fails
-        java.io.Serializable data = _blobStore.remove(id, position, objectType);
+        java.io.Serializable data = _isOffHeap ? _blobStore.remove(offHeapInfo, position, objectType) : _blobStore.remove(id, position, objectType);
         if (objectType.equals(BlobStoreObjectType.DATA)) {
             remove.inc();
             remove_tp.increment();
@@ -160,7 +189,8 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
 
 
     @Override
-    public List<BlobStoreBulkOperationResult> executeBulk(List<BlobStoreBulkOperationRequest> operations, BlobStoreObjectType objectType, boolean transactional) {
+    public List<BlobStoreBulkOperationResult> executeBulk
+            (List<BlobStoreBulkOperationRequest> operations, BlobStoreObjectType objectType, boolean transactional) {
         boolean isDataType = (objectType.equals(BlobStoreObjectType.DATA)) ? true : false;
         for (BlobStoreBulkOperationRequest request : operations) {
             if (isDataType)

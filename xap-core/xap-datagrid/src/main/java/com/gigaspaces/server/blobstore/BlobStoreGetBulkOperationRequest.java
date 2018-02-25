@@ -17,10 +17,12 @@
 package com.gigaspaces.server.blobstore;
 
 
+import com.j_spaces.core.cache.blobStore.IBlobStoreOffHeapInfo;
+
 @com.gigaspaces.api.InternalApi
 public class BlobStoreGetBulkOperationRequest extends BlobStoreBulkOperationRequest {
-    public BlobStoreGetBulkOperationRequest(java.io.Serializable id, Object position) {
-        super(BlobStoreBulkOperationType.GET, id, null, position);
+    public BlobStoreGetBulkOperationRequest(java.io.Serializable id, Object position, IBlobStoreOffHeapInfo offHeapInfo) {
+        super(BlobStoreBulkOperationType.GET, id, null, position, offHeapInfo);
     }
 
 }

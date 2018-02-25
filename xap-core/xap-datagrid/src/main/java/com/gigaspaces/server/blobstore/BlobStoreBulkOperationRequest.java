@@ -18,6 +18,8 @@
 package com.gigaspaces.server.blobstore;
 
 
+import com.j_spaces.core.cache.blobStore.IBlobStoreOffHeapInfo;
+
 /**
  * base for an operation to execute as part of a bulk on off heap storage (SSD, off-heap buffers)
  *
@@ -29,15 +31,17 @@ public abstract class BlobStoreBulkOperationRequest {
     private final java.io.Serializable _id;
     private java.io.Serializable _data;
     private final Object _position;
+    private final IBlobStoreOffHeapInfo _offHeapInfo;
 
 
 
     BlobStoreBulkOperationRequest(BlobStoreBulkOperationType opType, java.io.Serializable id,
-                                  java.io.Serializable data, Object position) {
+                                  java.io.Serializable data, Object position, IBlobStoreOffHeapInfo offHeapInfo) {
         _opType = opType;
         _id = id;
         _data = data;
         _position = position;
+        _offHeapInfo = offHeapInfo;
     }
 
     public BlobStoreBulkOperationType getOpType() {
@@ -58,6 +62,10 @@ public abstract class BlobStoreBulkOperationRequest {
 
     public Object getPosition() {
         return _position;
+    }
+
+    public IBlobStoreOffHeapInfo getOffHeapInfo() {
+        return _offHeapInfo;
     }
 
     @Override

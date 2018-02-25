@@ -70,7 +70,7 @@ public class BlobStoreReadBulkHandler {
                     continue;
                 }
                 if ((uids.put(e.getUID(), e)) == null) ;
-                operations.add(new BlobStoreGetBulkOperationRequest(e.getStorageKey(), e.getBlobStoreStoragePos()));
+                operations.add(new BlobStoreGetBulkOperationRequest(e.getStorageKey(), e.getBlobStoreStoragePos(), e));
             }
 
             if (operations.isEmpty())

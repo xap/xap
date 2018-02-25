@@ -17,10 +17,12 @@
 package com.gigaspaces.server.blobstore;
 
 
+import com.j_spaces.core.cache.blobStore.IBlobStoreOffHeapInfo;
+
 @com.gigaspaces.api.InternalApi
 public class BlobStoreReplaceBulkOperationRequest extends BlobStoreBulkOperationRequest {
-    public BlobStoreReplaceBulkOperationRequest(java.io.Serializable id, java.io.Serializable data, Object position) {
-        super(BlobStoreBulkOperationType.REPLACE, id, data, position);
+    public BlobStoreReplaceBulkOperationRequest(java.io.Serializable id, java.io.Serializable data, Object position, IBlobStoreOffHeapInfo offHeapInfo) {
+        super(BlobStoreBulkOperationType.REPLACE, id, data, position, offHeapInfo);
     }
 
 

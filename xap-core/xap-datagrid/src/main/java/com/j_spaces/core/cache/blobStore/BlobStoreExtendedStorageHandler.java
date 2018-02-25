@@ -31,11 +31,57 @@ import java.util.concurrent.ExecutorService;
  * @author yechiel
  * @since 10.1
  */
-public abstract class BlobStoreExtendedStorageHandler extends BlobStoreStorageHandler{
+public abstract class BlobStoreExtendedStorageHandler{
+
     /**
-     * get the   preFetchThread pool
+     * initialize a blob-store implementation.
+     *
+     * @param blobStoreConfig - Configuration for blobstore implementation.
      */
-    public abstract ExecutorService getPreFetchPool();
+    public void initialize(BlobStoreConfig blobStoreConfig) {
+    }
+
+    /**
+     * Add the specified id with the specified data . Neither the id nor the data can be null.
+     *
+     * @param id         id with which the specified value is to be associated
+     * @param data       data to be associated with the specified id
+     * @param objectType the object type - one of  BlobStoreObjectType values
+     * @return an optional position object which will be used as a pointer of locating the id, if
+     * the operation succeeded, or null if irrelevant
+     * @throws com.gigaspaces.server.blobstore.BlobStoreException if the specified id already exist
+     *                                                            or container does not exist or
+     *                                                            other failure.
+     */
+    public abstract Object add(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, java.io.Serializable data, BlobStoreObjectType objectType);
+
+    /**
+     * Replace the data to which the specified id is mapped with new data,
+     *
+     * @param id         id with which the specified data is to be associated
+     * @param data       the new data to replace the existing one.
+     * @param position   optional position object which will be used as a pointer of locating the
+     *                   id, or null if irrelevant
+     * @param objectType the object type - one of  BlobStoreObjectType values
+     * @return the new postion - an optional position object which will be used as a pointer of
+     * locating the id, or null if irrelevant
+     * @throws com.gigaspaces.server.blobstore.BlobStoreException if the specified id does not
+     *                                                            exist.
+     */
+    public abstract Object replace(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, java.io.Serializable data, Object position, BlobStoreObjectType objectType);
+
+    /**
+     * Returns the data to which the specified id is mapped,
+     *
+     * @param id         id with which the specified data is to be associated
+     * @param position   optional position object which will be used as a pointer of locating the
+     *                   id, or null if irrelevant
+     * @param objectType the object type - one of  BlobStoreObjectType values
+     * @return the data to which the specified id is mapped,
+     * @throws com.gigaspaces.server.blobstore.BlobStoreException if the specified id does not
+     *                                                            exist.
+     */
+    public abstract java.io.Serializable get(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object position, BlobStoreObjectType objectType);
 
     /**
      * Returns the data to which the specified id is mapped,
@@ -49,7 +95,19 @@ public abstract class BlobStoreExtendedStorageHandler extends BlobStoreStorageHa
      * @throws com.gigaspaces.server.blobstore.BlobStoreException if the specified id does not
      *                                                            exist.
      */
-    public abstract java.io.Serializable get(java.io.Serializable id, Object position, BlobStoreObjectType objectType, boolean indexesPartOnly);
+    public abstract java.io.Serializable get(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object position, BlobStoreObjectType objectType, boolean indexesPartOnly);
+
+    /**
+     * Removes the id (and its corresponding data) from this FDF.
+     *
+     * @param id         the key that needs to be removed
+     * @param position   optional position object which will be used as a pointer of locating the
+     *                   id, or null if irrelevant
+     * @param objectType the object type - one of  BlobStoreObjectType values
+     * @return the data to which the specified id is mapped,
+     * @throws com.gigaspaces.server.blobstore.BlobStoreException if the id does not exist.
+     */
+    public abstract java.io.Serializable remove(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object position, BlobStoreObjectType objectType);
 
     /**
      * Removes the id (and its corresponding data) from this FDF. return false if no such object
@@ -61,7 +119,87 @@ public abstract class BlobStoreExtendedStorageHandler extends BlobStoreStorageHa
      * @param objectType the object type - one of  BlobStoreObjectType values
      * @throws com.gigaspaces.server.blobstore.BlobStoreException if the id does not exist.
      */
-    public abstract void removeIfExists(java.io.Serializable id, Object position, BlobStoreObjectType objectType);
+    public abstract void removeIfExists(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object position, BlobStoreObjectType objectType);
+
+    /**
+     * . execute a bulk of operations on the blobstore. return a corresoping list of results note- a
+     * non-abstract method, if not implemented the individual operations will be executed one by
+     * one
+     *
+     * @param operations    - a list of operations to perform
+     * @param objectType    the object type - one of  BlobStoreObjectType values
+     * @param transactional - true if the bulk is to be performed in the blobstore as one logical
+     *                      transaction if the blobstore supports transactions,  false otherwise
+     * @return a list of results which corresponds to the input list of operations. if one or more
+     * operations fail the returned result element will contain exception . if transactional
+     * parameter is true a general exception should be thrown instead of a returned result element
+     * with exception data
+     */
+    public List<BlobStoreBulkOperationResult> executeBulk(List<BlobStoreBulkOperationRequest> operations, BlobStoreObjectType objectType, boolean transactional) {
+        List<BlobStoreBulkOperationResult> result = new ArrayList<BlobStoreBulkOperationResult>(operations.size());
+        for (BlobStoreBulkOperationRequest request : operations) {
+            if (request.getOpType() == BlobStoreBulkOperationType.ADD) {
+                try {
+                    result.add(new BlobStoreAddBulkOperationResult(request.getId(), add(request.getOffHeapInfo(), request.getId(), request.getData(), objectType)));
+                } catch (Exception ex) {
+                    result.add(new BlobStoreAddBulkOperationResult(request.getId(), ex));
+                }
+            } else if (request.getOpType() == BlobStoreBulkOperationType.REMOVE) {
+                try {
+                    remove(request.getOffHeapInfo(), request.getId(), request.getPosition(), objectType);
+                    result.add(new BlobStoreRemoveBulkOperationResult(request.getId()));
+                } catch (Exception ex) {
+                    result.add(new BlobStoreRemoveBulkOperationResult(request.getId(), ex));
+                }
+            } else if (request.getOpType() == BlobStoreBulkOperationType.REPLACE) {
+                try {
+                    result.add(new BlobStoreReplaceBulkOperationResult(request.getId(), replace(request.getOffHeapInfo(), request.getId(), request.getData(), request.getPosition(), objectType)));
+                } catch (Exception ex) {
+                    result.add(new BlobStoreReplaceBulkOperationResult(request.getId(), ex));
+                }
+            } else if (request.getOpType() == BlobStoreBulkOperationType.GET) {
+                try {
+                    result.add(new BlobStoreGetBulkOperationResult(request.getId(), get(request.getOffHeapInfo(), request.getId(), request.getPosition(), objectType), request.getPosition()));
+                } catch (Exception ex) {
+                    result.add(new BlobStoreGetBulkOperationResult(request.getId(), ex));
+                }
+            }
+        }
+        return result;
+    }
+
+
+    /**
+     * . creates an iterator over the blobstore objeccts. note- a non-abstract method, if not
+     * implemented null will be returned
+     *
+     * @param objectType the object type - one of  BlobStoreObjectType values
+     * @return an iterator over the blobstore objects which belong to the requested objectType.
+     * @throws com.gigaspaces.server.blobstore.BlobStoreException in case of a problenm.
+     */
+    public DataIterator<BlobStoreGetBulkOperationResult> iterator(BlobStoreObjectType objectType) {
+        return null;
+    }
+
+    /**
+     * . returns the properties passed (and also optionally set) by the blobstore handler.
+     *
+     * @return properties.
+     */
+    public Properties getProperties() {
+        return null;
+    }
+
+    /**
+     * . close the blobstore handler. note- a non-abstract method
+     */
+    public void close() {
+    }
+
+    /**
+     * get the   preFetchThread pool
+     */
+    public abstract ExecutorService getPreFetchPool();
 
     /**
      * Creates an iterator over the blobstore objects in space initial load stage only.

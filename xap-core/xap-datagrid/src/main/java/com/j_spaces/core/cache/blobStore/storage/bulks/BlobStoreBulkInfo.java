@@ -202,19 +202,19 @@ public class BlobStoreBulkInfo {
                 }
                 switch (boh.getOperation()) {
                     case SpaceOperations.WRITE:
-                        operations.add(new BlobStoreAddBulkOperationRequest(boh.getBlobStoreRefEntryCacheInfo().getStorageKey(), boh.getBlobStoreRefEntryCacheInfo().getEntryLayout(_cacheManager)));
+                        operations.add(new BlobStoreAddBulkOperationRequest(boh.getBlobStoreRefEntryCacheInfo().getStorageKey(), boh.getBlobStoreRefEntryCacheInfo().getEntryLayout(_cacheManager), boh.getBlobStoreRefEntryCacheInfo()));
                         break;
                     case SpaceOperations.UPDATE:
                         operations.add(new BlobStoreReplaceBulkOperationRequest(boh.getBlobStoreRefEntryCacheInfo().getStorageKey(),
-                                boh.getBlobStoreRefEntryCacheInfo().getEntryLayout(_cacheManager), boh.getBlobStoreRefEntryCacheInfo().getBlobStoreStoragePos()));
+                                boh.getBlobStoreRefEntryCacheInfo().getEntryLayout(_cacheManager), boh.getBlobStoreRefEntryCacheInfo().getBlobStoreStoragePos(), boh.getBlobStoreRefEntryCacheInfo()));
                         break;
                     case SpaceOperations.TAKE:
                         boolean phantom = _cacheManager.isDirectPersistencyEmbeddedtHandlerUsed() && boh.getBlobStoreRefEntryCacheInfo().isPhantom();
                         if (!phantom) //actual remove
-                            operations.add(new BlobStoreRemoveBulkOperationRequest(boh.getBlobStoreRefEntryCacheInfo().getStorageKey(), boh.getBlobStoreRefEntryCacheInfo().getBlobStoreStoragePos()));
+                            operations.add(new BlobStoreRemoveBulkOperationRequest(boh.getBlobStoreRefEntryCacheInfo().getStorageKey(), boh.getBlobStoreRefEntryCacheInfo().getBlobStoreStoragePos(), boh.getBlobStoreRefEntryCacheInfo()));
                         else //update
                             operations.add(new BlobStoreReplaceBulkOperationRequest(boh.getBlobStoreRefEntryCacheInfo().getStorageKey(),
-                                    boh.getBlobStoreRefEntryCacheInfo().getEntryLayout(_cacheManager), boh.getBlobStoreRefEntryCacheInfo().getBlobStoreStoragePos()));
+                                    boh.getBlobStoreRefEntryCacheInfo().getEntryLayout(_cacheManager), boh.getBlobStoreRefEntryCacheInfo().getBlobStoreStoragePos(), boh.getBlobStoreRefEntryCacheInfo()));
                         break;
                     default:
                         throw new UnsupportedOperationException("uid=" + boh.getBlobStoreRefEntryCacheInfo().getUID() + " operation=" + boh.getOperation());
