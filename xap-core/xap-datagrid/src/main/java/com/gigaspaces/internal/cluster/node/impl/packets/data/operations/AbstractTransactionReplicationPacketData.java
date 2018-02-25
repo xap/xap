@@ -51,9 +51,9 @@ public abstract class AbstractTransactionReplicationPacketData
     private TransactionParticipantDataImpl _metaData;
     private ServerTransaction _transaction;
 
-    private static final byte FLAGS_GATEWAY = 1 << 0;
-    private static final byte HAS_TRANSIENT_MEMBERS = 1 << 1;
-    private static final byte HAS_PERSISTENT_MEMBERS = 1 << 2;
+    private static final short FLAGS_GATEWAY = 1 << 0;
+    private static final short HAS_TRANSIENT_MEMBERS = 1 << 1;
+    private static final short HAS_PERSISTENT_MEMBERS = 1 << 2;
 
     private transient int _weight;
     private transient short _flags;
