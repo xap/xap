@@ -149,6 +149,7 @@ import net.jini.discovery.DiscoveryEvent;
 import net.jini.discovery.DiscoveryListener;
 import net.jini.discovery.LookupDiscoveryManager;
 import net.jini.id.Uuid;
+import net.jini.lookup.LookupCache;
 import net.jini.lookup.ServiceDiscoveryEvent;
 import net.jini.lookup.ServiceDiscoveryListener;
 import net.jini.lookup.entry.Name;
@@ -1433,8 +1434,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 }
 
                 LookupNamingService namingService = new LookupNamingService((LookupDiscoveryManager) getJoinManager().getDiscoveryManager(), getJoinManager().getLeaseRenewalManager());
-                namingService.notify(participantSrvTemplate, null, new LeaderSelectorServiceDiscoveryListener(latch));
+                LookupCache lookupCache = namingService.notify(participantSrvTemplate, null, new LeaderSelectorServiceDiscoveryListener(latch));
                 latch.await();
+                lookupCache.terminate();
             } catch (Exception e) {
                 throw new ActiveElectionException("Failed to initialize Leader Selector handler", e);
             }
