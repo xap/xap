@@ -39,21 +39,21 @@ public class FifoGroupingBasicInheritPojo extends FifoGroupingBasicPojo {
     }
 
     @Override
-    @SpaceIndex(type = SpaceIndexType.EXTENDED)
+    @SpaceIndex(type = SpaceIndexType.EQUAL_AND_ORDERED)
     public String getSymbol() {
         // TODO Auto-generated method stub
         return super.getSymbol();
     }
 
     @Override
-    @SpaceIndex(type = SpaceIndexType.EXTENDED)
+    @SpaceIndex(type = SpaceIndexType.EQUAL_AND_ORDERED)
     public String getReporter() {
         // TODO Auto-generated method stub
         return super.getReporter();
     }
 
     @Override
-    @SpaceIndex(type = SpaceIndexType.BASIC)
+    @SpaceIndex(type = SpaceIndexType.EQUAL)
     public boolean isProcessed() {
         // TODO Auto-generated method stub
         return super.isProcessed();
@@ -68,15 +68,15 @@ public class FifoGroupingBasicInheritPojo extends FifoGroupingBasicPojo {
 
     public static Map<String, SpaceIndexType> getIndexes() {
         Map<String, SpaceIndexType> indexes = new HashMap<String, SpaceIndexType>();
-        indexes.put("id", SpaceIndexType.BASIC);
-        indexes.put("symbol", SpaceIndexType.EXTENDED);
-        indexes.put("reporter", SpaceIndexType.EXTENDED);
-        indexes.put("processed", SpaceIndexType.BASIC);
-        indexes.put("info", SpaceIndexType.BASIC);
-        indexes.put("info.timeStamp", SpaceIndexType.EXTENDED);
-        indexes.put("info.scans", SpaceIndexType.BASIC);
-        indexes.put("formerReporters", SpaceIndexType.BASIC);
-        indexes.put("time.nanos", SpaceIndexType.BASIC);
+        indexes.put("id", SpaceIndexType.EQUAL);
+        indexes.put("symbol", SpaceIndexType.EQUAL_AND_ORDERED);
+        indexes.put("reporter", SpaceIndexType.EQUAL_AND_ORDERED);
+        indexes.put("processed", SpaceIndexType.EQUAL);
+        indexes.put("info", SpaceIndexType.EQUAL);
+        indexes.put("info.timeStamp", SpaceIndexType.EQUAL_AND_ORDERED);
+        indexes.put("info.scans", SpaceIndexType.EQUAL);
+        indexes.put("formerReporters", SpaceIndexType.EQUAL);
+        indexes.put("time.nanos", SpaceIndexType.EQUAL);
 
         return indexes;
     }

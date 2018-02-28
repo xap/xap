@@ -612,12 +612,12 @@ public class SpaceTypeInfo implements Externalizable {
             String nodeName = propertyNode.getNodeName();
             if (nodeName.equals("property")) {
                 SpacePropertyInfo property = getProperty(propertyNode);
-                IndexType indexType = XmlUtils.getAttributeEnum(propertyNode, "index", IndexType.class);
+                SpaceIndexType indexType = XmlUtils.getAttributeEnum(propertyNode, "index", SpaceIndexType.class);
                 //unique?
                 boolean unique = XmlUtils.getAttributeBoolean(propertyNode, "unique", false);
 
-                if (indexType != null && indexType != IndexType.NOT_SET)
-                    initContext.addIndex(property.getName(), indexType.toSpaceIndexType(), unique);
+                if (indexType != null && indexType != SpaceIndexType.NONE)
+                    initContext.addIndex(property.getName(), indexType, unique);
 
                 property.setNullValue(XmlUtils.getAttribute(propertyNode, "null-value"));
 

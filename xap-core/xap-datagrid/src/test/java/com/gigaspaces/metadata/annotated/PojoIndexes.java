@@ -16,8 +16,10 @@
 
 package com.gigaspaces.metadata.annotated;
 
+import com.gigaspaces.annotation.pojo.SpaceIndex;
 import com.gigaspaces.annotation.pojo.SpaceProperty;
 import com.gigaspaces.annotation.pojo.SpaceProperty.IndexType;
+import com.gigaspaces.metadata.index.SpaceIndexType;
 
 @com.gigaspaces.api.InternalApi
 public class PojoIndexes {
@@ -43,7 +45,7 @@ public class PojoIndexes {
         _valueNone = value;
     }
 
-    @SpaceProperty(index = IndexType.BASIC)
+    @SpaceIndex(type = SpaceIndexType.EQUAL)
     public String getValueBasic() {
         return _valueBasic;
     }
@@ -52,7 +54,7 @@ public class PojoIndexes {
         _valueBasic = value;
     }
 
-    @SpaceProperty(index = IndexType.EXTENDED)
+    @SpaceIndex(type = SpaceIndexType.EQUAL_AND_ORDERED)
     public String getValueExtended() {
         return _valueExtended;
     }

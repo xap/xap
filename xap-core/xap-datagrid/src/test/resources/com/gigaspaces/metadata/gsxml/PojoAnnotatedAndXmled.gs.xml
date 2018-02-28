@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gigaspaces-mapping>
 	<class name="com.gigaspaces.metadata.gsxml.PojoAnnotatedAndXmled">
-		<property name="someProperty3" index="basic"/>
+		<property name="someProperty3" index="equal"/>
 		<id name="someProperty2" auto-generate="true" />
 	</class>
 </gigaspaces-mapping>

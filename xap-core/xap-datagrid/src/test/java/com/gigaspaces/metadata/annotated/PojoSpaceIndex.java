@@ -50,7 +50,7 @@ public class PojoSpaceIndex {
         this.id = id;
     }
 
-    @SpaceIndex(path = "name", type = SpaceIndexType.BASIC)
+    @SpaceIndex(path = "name", type = SpaceIndexType.EQUAL)
     public Info getPersonalInfo() {
         return personalInfo;
     }
@@ -59,7 +59,7 @@ public class PojoSpaceIndex {
         this.personalInfo = personalInfo;
     }
 
-    @SpaceIndex(type = SpaceIndexType.EXTENDED)
+    @SpaceIndex(type = SpaceIndexType.EQUAL_AND_ORDERED)
     public String getDescription() {
         return description;
     }

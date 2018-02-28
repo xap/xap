@@ -132,6 +132,7 @@ import java.util.Set;
 
 @com.gigaspaces.api.InternalApi
 public class SpaceTypeDescriptorTestCase extends TestCase {
+    
     public void testNull() {
         // Arrange:
         final Class<?> type = null;
@@ -242,7 +243,7 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 6, "fieldD6", String.class);
 
         assertNumOfIndexes(typeInfo, 1);
-        assertIndex(typeInfo, "fieldD6", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "fieldD6", SpaceIndexType.EQUAL);
     }
 
     /*
@@ -272,7 +273,7 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 12, "fieldE", String.class);
 
         assertNumOfIndexes(typeInfo, 1);
-        assertIndex(typeInfo, "fieldD4", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "fieldD4", SpaceIndexType.EQUAL);
     }        
     */
     public void testPojoImplicit() {
@@ -346,8 +347,8 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 2, "pojoIndexedField", Integer.class);
 
         assertNumOfIndexes(typeInfo, 2);
-        assertIndex(typeInfo, "pojoId", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "pojoIndexedField", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "pojoId", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "pojoIndexedField", SpaceIndexType.EQUAL);
     }
 
     public void testPojoExplicitExDefault() {
@@ -364,8 +365,8 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 1, "pojoId", Integer.class);
         assertPropertyInfo(typeInfo, 2, "pojoIndexedField", Integer.class);
         assertNumOfIndexes(typeInfo, 2);
-        assertIndex(typeInfo, "pojoId", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "pojoIndexedField", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "pojoId", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "pojoIndexedField", SpaceIndexType.EQUAL);
     }
 
     public void testPojoExplicitExExplicit() {
@@ -382,8 +383,8 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 1, "pojoId", Integer.class);
         assertPropertyInfo(typeInfo, 2, "pojoIndexedField", Integer.class);
         assertNumOfIndexes(typeInfo, 2);
-        assertIndex(typeInfo, "pojoId", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "pojoIndexedField", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "pojoId", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "pojoIndexedField", SpaceIndexType.EQUAL);
     }
 
     public void testPojoExplicitExImplicit() {
@@ -400,8 +401,8 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 1, "pojoId", Integer.class);
         assertPropertyInfo(typeInfo, 2, "pojoIndexedField", Integer.class);
         assertNumOfIndexes(typeInfo, 2);
-        assertIndex(typeInfo, "pojoId", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "pojoIndexedField", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "pojoId", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "pojoIndexedField", SpaceIndexType.EQUAL);
     }
 
     public void testPojoAttributes() {
@@ -417,8 +418,8 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 0, "id", String.class);
         assertPropertyInfo(typeInfo, 1, "routing", String.class);
         assertNumOfIndexes(typeInfo, 2);
-        assertIndex(typeInfo, "id", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "routing", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "id", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "routing", SpaceIndexType.EQUAL);
         assertIdProperty(typeInfo, "id", false);
         //Assert.assertEquals("leaseExpiration", typeInfo.getProperty("leaseExpiration"), typeInfo.getLeaseExpirationProperty());
         //Assert.assertEquals("persist", typeInfo.getProperty("persist"), typeInfo.getPersistProperty());
@@ -439,8 +440,8 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 0, "id", String.class);
         assertPropertyInfo(typeInfo, 1, "routing", String.class);
         assertNumOfIndexes(typeInfo, 2);
-        assertIndex(typeInfo, "id", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "routing", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "id", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "routing", SpaceIndexType.EQUAL);
 
         assertIdProperty(typeInfo, "id", false);
         //Assert.assertEquals("leaseExpiration", typeInfo.getProperty("leaseExpiration"), typeInfo.getLeaseExpirationProperty());
@@ -464,10 +465,10 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 2, "id2", String.class);
         assertPropertyInfo(typeInfo, 3, "routing2", String.class);
         assertNumOfIndexes(typeInfo, 4);
-        assertIndex(typeInfo, "id", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "routing", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "id2", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "routing2", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "id", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "routing", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "id2", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "routing2", SpaceIndexType.EQUAL);
 
         assertIdProperty(typeInfo, "id2", false);
         //Assert.assertEquals("leaseExpiration", typeInfo.getProperty("leaseExpiration2"), typeInfo.getLeaseExpirationProperty());
@@ -488,7 +489,7 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         Assert.assertEquals("numOfSpaceProperties", 1, typeInfo.getNumOfFixedProperties());
         assertPropertyInfo(typeInfo, 0, "routing", String.class);
         assertNumOfIndexes(typeInfo, 1);
-        assertIndex(typeInfo, "routing", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "routing", SpaceIndexType.EQUAL);
     }
 
     public void testPojoRoutingIndexExplicit() {
@@ -517,7 +518,7 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         Assert.assertEquals("numOfSpaceProperties", 1, typeInfo.getNumOfFixedProperties());
         assertPropertyInfo(typeInfo, 0, "id", String.class);
         assertNumOfIndexes(typeInfo, 1);
-        assertIndex(typeInfo, "id", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "id", SpaceIndexType.EQUAL);
         assertIdProperty(typeInfo, "id", false);
     }
 
@@ -562,7 +563,7 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         Assert.assertEquals("numOfSpaceProperties", 1, typeInfo.getNumOfFixedProperties());
         assertPropertyInfo(typeInfo, 0, "id", String.class);
         assertNumOfIndexes(typeInfo, 1);
-        assertIndex(typeInfo, "id", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "id", SpaceIndexType.EQUAL);
         assertIdProperty(typeInfo, "id", true);
     }
 
@@ -596,8 +597,8 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 2, "valueExtended", String.class);
         assertPropertyInfo(typeInfo, 3, "valueNone", String.class);
         assertNumOfIndexes(typeInfo, 2);
-        assertIndex(typeInfo, "valueBasic", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "valueExtended", SpaceIndexType.EXTENDED);
+        assertIndex(typeInfo, "valueBasic", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "valueExtended", SpaceIndexType.EQUAL_AND_ORDERED);
     }
 
     public void testPojoIndexesInheritTrue() {
@@ -619,10 +620,10 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 6, "valueExtended2", String.class);
         assertPropertyInfo(typeInfo, 7, "valueNone2", String.class);
         assertNumOfIndexes(typeInfo, 4);
-        assertIndex(typeInfo, "valueBasic", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "valueExtended", SpaceIndexType.EXTENDED);
-        assertIndex(typeInfo, "valueBasic2", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "valueExtended2", SpaceIndexType.EXTENDED);
+        assertIndex(typeInfo, "valueBasic", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "valueExtended", SpaceIndexType.EQUAL_AND_ORDERED);
+        assertIndex(typeInfo, "valueBasic2", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "valueExtended2", SpaceIndexType.EQUAL_AND_ORDERED);
     }
 
     /*
@@ -646,8 +647,8 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
             assertPropertyInfo(typeInfo, 6, "valueExtended2", String.class);
             assertPropertyInfo(typeInfo, 7, "valueNone2", String.class);
             assertNumOfIndexes(typeInfo, 2);
-            assertIndex(typeInfo, "valueBasic2", SpaceIndexType.BASIC);
-            assertIndex(typeInfo, "valueExtended2", SpaceIndexType.EXTENDED);
+            assertIndex(typeInfo, "valueBasic2", SpaceIndexType.EQUAL);
+            assertIndex(typeInfo, "valueExtended2", SpaceIndexType.EQUAL_AND_ORDERED);
         }
     */
     public void testPojoPojoAnnotatedAndXmled() {
@@ -665,7 +666,7 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 2, "someProperty3", String.class);
         assertIdProperty(typeInfo, "someProperty2", true);
         assertNumOfIndexes(typeInfo, 1);
-        assertIndex(typeInfo, "someProperty3", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "someProperty3", SpaceIndexType.EQUAL);
     }
 
     public void testInvalidPojos() {
@@ -736,7 +737,7 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         Assert.assertEquals("numOfSpaceProperties", 2, typeInfo.getNumOfFixedProperties());
         assertPropertyInfo(typeInfo, 0, "value", int.class, 0);
         assertNumOfIndexes(typeInfo, 1);
-        assertIndex(typeInfo, "value", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "value", SpaceIndexType.EQUAL);
     }
 
     public void testInheritOverrideNullValue() {
@@ -751,7 +752,7 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         Assert.assertEquals("numOfSpaceProperties", 2, typeInfo.getNumOfFixedProperties());
         assertPropertyInfo(typeInfo, 1, "value2", int.class, -1);
         assertNumOfIndexes(typeInfo, 1);
-        assertIndex(typeInfo, "value", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "value", SpaceIndexType.EQUAL);
     }
 
     private void assertSpaceTypeInfo(SpaceTypeDescriptor typeInfo, Class<?> type) {
@@ -854,7 +855,7 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 0, "str1", String.class);
         assertPropertyInfo(typeInfo, 1, "str2", String.class);
         assertNumOfIndexes(typeInfo, 1);
-        assertIndex(typeInfo, "compoundIndex", SpaceIndexType.BASIC, PojoCustomIndex.MyValueGetter.class);
+        assertIndex(typeInfo, "compoundIndex", SpaceIndexType.EQUAL, PojoCustomIndex.MyValueGetter.class);
     }
 
     public void testPojoCustomIndexes() {
@@ -870,8 +871,8 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 0, "str1", String.class);
         assertPropertyInfo(typeInfo, 1, "str2", String.class);
         assertNumOfIndexes(typeInfo, 2);
-        assertIndex(typeInfo, "compoundIndex", SpaceIndexType.BASIC, PojoCustomIndexes.MyValueGetter.class);
-        assertIndex(typeInfo, "compoundIndex2", SpaceIndexType.BASIC, PojoCustomIndexes.MyValueGetter.class);
+        assertIndex(typeInfo, "compoundIndex", SpaceIndexType.EQUAL, PojoCustomIndexes.MyValueGetter.class);
+        assertIndex(typeInfo, "compoundIndex2", SpaceIndexType.EQUAL, PojoCustomIndexes.MyValueGetter.class);
     }
 
     public void testIllegalPojoCustomIndexDuplicate() {
@@ -901,9 +902,9 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 1, "id", int.class);
         assertPropertyInfo(typeInfo, 2, "personalInfo", PojoSpaceIndex.Info.class);
         assertNumOfIndexes(typeInfo, 3);
-        assertIndex(typeInfo, "description", SpaceIndexType.EXTENDED);
-        assertIndex(typeInfo, "id", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "personalInfo.name", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "description", SpaceIndexType.EQUAL_AND_ORDERED);
+        assertIndex(typeInfo, "id", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "personalInfo.name", SpaceIndexType.EQUAL);
     }
 
     public void testPojoMultipleSpaceIndex() {
@@ -920,10 +921,10 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 1, "id", int.class);
         assertPropertyInfo(typeInfo, 2, "personalInfo", PojoMultipleSpaceIndexes.Info.class);
         assertNumOfIndexes(typeInfo, 4);
-        assertIndex(typeInfo, "id", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "personalInfo", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "personalInfo.name", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "personalInfo.address.zipCode", SpaceIndexType.EXTENDED);
+        assertIndex(typeInfo, "id", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "personalInfo", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "personalInfo.name", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "personalInfo.address.zipCode", SpaceIndexType.EQUAL_AND_ORDERED);
     }
 
     public void testIllegalPojoSpaceIndexDuplicate() {
@@ -980,11 +981,11 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         assertPropertyInfo(typeInfo, 1, "id", int.class);
         assertPropertyInfo(typeInfo, 2, "personalInfo", PojoSpaceIndexXml.Info.class);
         assertNumOfIndexes(typeInfo, 5);
-        assertIndex(typeInfo, "id", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "personalInfo", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "personalInfo.id", SpaceIndexType.EXTENDED);
-        assertIndex(typeInfo, "personalInfo.address.zipCode", SpaceIndexType.BASIC);
-        assertIndex(typeInfo, "personalInfo.gender", SpaceIndexType.BASIC);
+        assertIndex(typeInfo, "id", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "personalInfo", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "personalInfo.id", SpaceIndexType.EQUAL_AND_ORDERED);
+        assertIndex(typeInfo, "personalInfo.address.zipCode", SpaceIndexType.EQUAL);
+        assertIndex(typeInfo, "personalInfo.gender", SpaceIndexType.EQUAL);
     }
 
     public void testIllegalPojoSpaceIndexDuplicateXml() {
@@ -1712,10 +1713,10 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
                         .addFifoGroupingIndex("processed")
                         .addFifoGroupingIndex("info")
                         .addFifoGroupingIndex("time.nanos")
-                        .addPathIndex("processed", SpaceIndexType.EXTENDED)
-                        .addPathIndex("info.timeStamp", SpaceIndexType.EXTENDED)
-                        .addPathIndex("formerReporters", SpaceIndexType.BASIC)
-                        .addPathIndex("time.nanos", SpaceIndexType.BASIC);
+                        .addPathIndex("processed", SpaceIndexType.EQUAL_AND_ORDERED)
+                        .addPathIndex("info.timeStamp", SpaceIndexType.EQUAL_AND_ORDERED)
+                        .addPathIndex("formerReporters", SpaceIndexType.EQUAL)
+                        .addPathIndex("time.nanos", SpaceIndexType.EQUAL);
         ITypeDesc typeDesc = (ITypeDesc) docBuilder.create();
 
         assertFifoGroupingProperty(typeDesc, "symbol");
@@ -1732,7 +1733,7 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
 
         assertFifoGroupingProperty(inheritTypeDesc, "symbol");
         assertFifoGroupingIndexes(inheritTypeDesc, FifoGroupingBasicInheritPojo.getFifoGroupingIndexes());
-        indexes.put("info.scans", SpaceIndexType.BASIC);
+        indexes.put("info.scans", SpaceIndexType.EQUAL);
         assertIndexes(inheritTypeDesc, indexes);
     }
 

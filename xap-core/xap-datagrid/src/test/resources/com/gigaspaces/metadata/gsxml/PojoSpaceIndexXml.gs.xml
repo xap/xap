@@ -2,10 +2,10 @@
 <gigaspaces-mapping>
 	<class name="com.gigaspaces.metadata.gsxml.PojoSpaceIndexXml">
 		<id name="id" auto-generate="false" />
-		<property name="personalInfo" index="basic">
-			<index path="id" type = "extended"/>			
-			<index path="address.zipCode" type = "basic"/>			
-			<index path="gender" type = "basic"/>	
+		<property name="personalInfo" index="equal">
+			<index path="id" type = "equal_and_ordered"/>
+			<index path="address.zipCode" type = "equal"/>
+			<index path="gender" type = "equal"/>
 		</property>
 	</class>
 </gigaspaces-mapping>

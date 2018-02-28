@@ -126,14 +126,14 @@ public class PojoBasicFifoGroupingXml {
 
     public static Map<String, SpaceIndexType> getIndexes() {
         Map<String, SpaceIndexType> indexes = new HashMap<String, SpaceIndexType>();
-        indexes.put("id", SpaceIndexType.BASIC);
-        indexes.put("symbol", SpaceIndexType.BASIC);
-        indexes.put("reporter", SpaceIndexType.BASIC);
-        indexes.put("processed", SpaceIndexType.EXTENDED);
-        indexes.put("info", SpaceIndexType.BASIC);
-        indexes.put("info.timeStamp", SpaceIndexType.EXTENDED);
-        indexes.put("formerReporters", SpaceIndexType.BASIC);
-        indexes.put("time.nanos", SpaceIndexType.BASIC);
+        indexes.put("id", SpaceIndexType.EQUAL);
+        indexes.put("symbol", SpaceIndexType.EQUAL);
+        indexes.put("reporter", SpaceIndexType.EQUAL);
+        indexes.put("processed", SpaceIndexType.EQUAL_AND_ORDERED);
+        indexes.put("info", SpaceIndexType.EQUAL);
+        indexes.put("info.timeStamp", SpaceIndexType.EQUAL_AND_ORDERED);
+        indexes.put("formerReporters", SpaceIndexType.EQUAL);
+        indexes.put("time.nanos", SpaceIndexType.EQUAL);
         return indexes;
     }
 

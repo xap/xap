@@ -2,11 +2,11 @@
 <gigaspaces-mapping>
 	<class name="com.gigaspaces.metadata.gsxml.fifoGrouping.PojoFifoGroupingInheritXml">
 				
-		<property name="symbol" index="extended" />
+		<property name="symbol" index="equal_and_ordered" />
 		
-		<property name="reporter" index="extended" />
+		<property name="reporter" index="equal_and_ordered" />
 		
-		<property name="processed" index="basic" />
+		<property name="processed" index="equal" />
 		
 		<property name="info">
 			<fifo-grouping-index path="scans" />

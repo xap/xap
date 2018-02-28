@@ -18,12 +18,12 @@
 			<fifo-grouping-index path="nanos"/>
 		</property>
 				
-		<property name="processed" index="extended" />
+		<property name="processed" index="equal_and_ordered" />
 		
-		<property name="formerReporters" index="basic" />
+		<property name="formerReporters" index="equal" />
 		
-		<property name="info" index="basic">
-			<index path="timeStamp" type="extended"/>	
+		<property name="info" index="equal">
+			<index path="timeStamp" type="equal_and_ordered"/>
 			<fifo-grouping-index />		
 		</property>
 		

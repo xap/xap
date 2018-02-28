@@ -48,7 +48,7 @@ public class PojoExplicit {
         _pojoId = pojoId;
     }
 
-    @SpaceIndex(type = SpaceIndexType.BASIC)
+    @SpaceIndex(type = SpaceIndexType.EQUAL)
     public Integer getPojoIndexedField() {
         return _pojoIndexedField;
     }
