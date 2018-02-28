@@ -51,7 +51,7 @@ public abstract class JdkVersion {
     /**
      * Constant identifying the 1.9 JVM (Java 9).
      */
-    public static final int JAVA_19 = 6;
+    public static final int JAVA_9 = 6;
 
 
     private static final String javaVersion;
@@ -61,8 +61,8 @@ public abstract class JdkVersion {
     static {
         javaVersion = System.getProperty("java.version");
         // version String should look like "1.4.2_10"
-        if (javaVersion.indexOf("1.9.") != -1) {
-            majorJavaVersion = JAVA_19;
+        if (javaVersion.indexOf("9.") != -1) {
+            majorJavaVersion = JAVA_9;
         } else if (javaVersion.indexOf("1.8.") != -1) {
             majorJavaVersion = JAVA_18;
         } else if (javaVersion.indexOf("1.7.") != -1) {
@@ -99,7 +99,7 @@ public abstract class JdkVersion {
      * @see #JAVA_16
      * @see #JAVA_17
      * @see #JAVA_18
-     * @see #JAVA_19
+     * @see #JAVA_9
      */
     public static int getMajorJavaVersion() {
         return majorJavaVersion;
@@ -115,7 +115,7 @@ public abstract class JdkVersion {
      * @see #JAVA_16
      * @see #JAVA_17
      * @see #JAVA_18
-     * @see #JAVA_19
+     * @see #JAVA_9
      */
     public static boolean isAtLeastJava14() {
         return true;
@@ -130,7 +130,7 @@ public abstract class JdkVersion {
      * @see #JAVA_16
      * @see #JAVA_17
      * @see #JAVA_18
-     * @see #JAVA_19
+     * @see #JAVA_9
      */
     public static boolean isAtLeastJava15() {
         return getMajorJavaVersion() >= JAVA_15;
@@ -144,7 +144,7 @@ public abstract class JdkVersion {
      * @see #JAVA_16
      * @see #JAVA_17
      * @see #JAVA_18
-     * @see #JAVA_19
+     * @see #JAVA_9
      */
     public static boolean isAtLeastJava16() {
         return getMajorJavaVersion() >= JAVA_16;
@@ -157,7 +157,7 @@ public abstract class JdkVersion {
      * @see #getMajorJavaVersion()
      * @see #JAVA_17
      * @see #JAVA_18
-     * @see #JAVA_19
+     * @see #JAVA_9
      */
     public static boolean isAtLeastJava17() {
         return getMajorJavaVersion() >= JAVA_17;
@@ -169,7 +169,7 @@ public abstract class JdkVersion {
      * @return <code>true</code> if the current JVM is at least Java 1.8
      * @see #getMajorJavaVersion()
      * @see #JAVA_18
-     * @see #JAVA_19
+     * @see #JAVA_9
      */
     public static boolean isAtLeastJava18() {
         return getMajorJavaVersion() >= JAVA_18;
@@ -180,10 +180,10 @@ public abstract class JdkVersion {
      *
      * @return <code>true</code> if the current JVM is at least Java 1.9
      * @see #getMajorJavaVersion()
-     * @see #JAVA_19
+     * @see #JAVA_9
      */
-    public static boolean isAtLeastJava19() {
-        return getMajorJavaVersion() >= JAVA_19;
+    public static boolean isAtLeastJava9() {
+        return getMajorJavaVersion() >= JAVA_9;
     }
 
 }

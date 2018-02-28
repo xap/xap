@@ -56,7 +56,7 @@ public class SigarJVMDetailsProbe implements JVMDetailsProbe {
                 runtimeMXBean.getStartTime(),
                 memoryMXBean.getHeapMemoryUsage().getInit(), memoryMXBean.getHeapMemoryUsage().getMax(),
                 memoryMXBean.getNonHeapMemoryUsage().getInit(), memoryMXBean.getNonHeapMemoryUsage().getMax(),
-                runtimeMXBean.getInputArguments().toArray(new String[0]), runtimeMXBean.getBootClassPath(), runtimeMXBean.getClassPath(), runtimeMXBean.getSystemProperties(),
+                runtimeMXBean.getInputArguments().toArray(new String[0]),runtimeMXBean.isBootClassPathSupported() ? runtimeMXBean.getBootClassPath() : "", runtimeMXBean.getClassPath(), runtimeMXBean.getSystemProperties(),
                 System.getenv(),
                 sigar.getPid());
     }
