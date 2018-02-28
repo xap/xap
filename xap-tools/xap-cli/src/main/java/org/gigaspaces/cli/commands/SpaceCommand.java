@@ -2,7 +2,6 @@ package org.gigaspaces.cli.commands;
 
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.SubCommandContainer;
-import org.gigaspaces.cli.commands.spaces.SpaceRunCommand;
 import picocli.CommandLine.*;
 
 import java.util.Arrays;
