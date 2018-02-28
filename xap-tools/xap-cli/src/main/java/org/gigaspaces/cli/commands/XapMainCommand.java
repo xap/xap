@@ -32,6 +32,7 @@ public class XapMainCommand extends CliCommand implements SubCommandContainer {
                 (Object)new HelpCommand(),
                 new VersionCommand(),
                 new PUCommand(),
-                new SpaceCommand());
+                new SpaceCommand(),
+                new DemoRunCommand());
     }
 }

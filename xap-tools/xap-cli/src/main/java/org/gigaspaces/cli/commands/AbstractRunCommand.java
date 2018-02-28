@@ -40,7 +40,7 @@ public abstract class AbstractRunCommand extends CliCommand {
         return pb;
     }
 
-    protected ProcessBuilder createJavaProcessBuilder() {
+    public static ProcessBuilder createJavaProcessBuilder() {
         final String scriptHome = SystemInfo.singleton().locations().bin();
         ProcessBuilder processBuilder = new ProcessBuilder(System.getenv("JAVACMD"));
         processBuilder.directory(new File(scriptHome));
@@ -48,7 +48,7 @@ public abstract class AbstractRunCommand extends CliCommand {
         return processBuilder;
     }
 
-    protected void addOptions(Collection<String> command, String[] options) {
+    public static void addOptions(Collection<String> command, String[] options) {
         for (String option : options) {
             if (System.getenv(option) != null) {
                 Collections.addAll(command, System.getenv(option).split(" "));
@@ -56,7 +56,7 @@ public abstract class AbstractRunCommand extends CliCommand {
         }
     }
 
-    protected void showCommand(String message, List<String> command) {
+    public static void showCommand(String message, List<String> command) {
         String commandline = command.toString().replace(",", "");
         if (commandline.length()>2) {
             commandline = commandline.substring(1, commandline.length() - 1);
@@ -110,5 +110,4 @@ public abstract class AbstractRunCommand extends CliCommand {
         }
         return false;
     }
-
 }

@@ -1,6 +1,5 @@
 package org.gigaspaces.cli.commands;
 
-import org.gigaspaces.cli.commands.AbstractRunCommand;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -11,6 +10,10 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+/**
+ * @since 12.3
+ * @author Rotem Herzberg
+ */
 @Command(name = "run", header = "Runs a standalone Space")
 public class SpaceRunCommand extends AbstractRunCommand {
 
@@ -39,16 +42,16 @@ public class SpaceRunCommand extends AbstractRunCommand {
         } else {
             for (int id = 1; id < partitions+1; id++) {
                 if (instances == null) {
-                    processBuilders.add(buildPartitionedSpaceCommand(id));
+                    processBuilders.add(buildPartitionedSpaceCommand(id, name, ha, partitions));
                     if (ha) {
-                        processBuilders.add(buildPartitionedBackupSpaceCommand(id));
+                        processBuilders.add(buildPartitionedBackupSpaceCommand(id, name, ha, partitions));
                     }
                 } else {
                     if (containsInstance(instances,id + "_" + 1)) {
-                        processBuilders.add(buildPartitionedSpaceCommand(id));
+                        processBuilders.add(buildPartitionedSpaceCommand(id, name, ha, partitions));
                     }
                     if (containsInstance(instances, id + "_" + 2)) {
-                        processBuilders.add(buildPartitionedBackupSpaceCommand(id));
+                        processBuilders.add(buildPartitionedBackupSpaceCommand(id, name, ha, partitions));
                     }
                 }
             }
@@ -91,15 +94,15 @@ public class SpaceRunCommand extends AbstractRunCommand {
         return pb;
     }
 
-    private ProcessBuilder buildPartitionedSpaceCommand(int id) {
-        return buildPartitionedSpaceCommand(id, false);
+    public static ProcessBuilder buildPartitionedSpaceCommand(int id, String name, boolean ha, int partitions) {
+        return buildPartitionedSpaceCommand(id, false, name, ha, partitions);
     }
 
-    private ProcessBuilder buildPartitionedBackupSpaceCommand(int id) {
-        return buildPartitionedSpaceCommand(id, true);
+    public static ProcessBuilder buildPartitionedBackupSpaceCommand(int id, String name, boolean ha, int partitions) {
+        return buildPartitionedSpaceCommand(id, true, name, ha, partitions);
     }
 
-    private ProcessBuilder buildPartitionedSpaceCommand(int id, boolean backup) {
+    public static ProcessBuilder buildPartitionedSpaceCommand(int id, boolean backup, String name, boolean ha, int partitions) {
 
         final ProcessBuilder pb = createJavaProcessBuilder();
         final Collection<String> commands = new LinkedHashSet<String>();
@@ -143,5 +146,4 @@ public class SpaceRunCommand extends AbstractRunCommand {
         showCommand("Starting Partitioned Space with line:", pb.command());
         return pb;
     }
-
 }
