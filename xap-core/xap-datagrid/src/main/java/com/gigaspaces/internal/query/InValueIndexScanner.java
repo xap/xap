@@ -89,7 +89,7 @@ public class InValueIndexScanner extends AbstractQueryIndex {
     protected IObjectsList getEntriesByIndex(Context context, TypeData typeData, TypeDataIndex<Object> index, boolean fifoGroupsScan) {
         MultiStoredList<IEntryCacheInfo> inMatchResult = new MultiStoredList<IEntryCacheInfo>();
         for (Object indexValue : _indexInValueSet) {
-            if (!typeData.disableIdIndexForBlobStoreEntries(index) || indexValue == null) {
+            if (!typeData.disableIdIndexForEntries(index) || indexValue == null) {
                 _convertedValueWrapper = ConvertedObjectWrapper.create(indexValue,
                         index.getValueType());
                 // If conversion could not be performed, return null
@@ -97,7 +97,7 @@ public class InValueIndexScanner extends AbstractQueryIndex {
                     return null;
             }
             IStoredList<IEntryCacheInfo> matchingEntries = null;
-            if (typeData.disableIdIndexForBlobStoreEntries(index) && indexValue != null)
+            if (typeData.disableIdIndexForEntries(index) && indexValue != null)
                 matchingEntries = typeData.getCacheManager().getPEntryByUid(ClientUIDHandler.createUIDFromName(indexValue, typeData.getClassName()));
             else
                 matchingEntries = index.getIndexEntries(_convertedValueWrapper.getValue());

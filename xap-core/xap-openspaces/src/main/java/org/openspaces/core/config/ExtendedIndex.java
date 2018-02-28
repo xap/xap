@@ -16,6 +16,11 @@
 
 package org.openspaces.core.config;
 
+/**
+ *
+ * @deprecated since 12.3 use OrderedIndex or EqualOrdered instead
+ */
+@Deprecated
 public class ExtendedIndex extends SpaceIndex {
 
     public ExtendedIndex() {

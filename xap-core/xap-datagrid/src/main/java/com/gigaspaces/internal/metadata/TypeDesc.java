@@ -1096,10 +1096,10 @@ public class TypeDesc implements ITypeDesc {
         if (fifoGroupingName == null)
             return;
         if (indexes.get(fifoGroupingName) == null)
-            indexes.put(fifoGroupingName, SpaceIndexFactory.createPropertyIndex(fifoGroupingName, SpaceIndexType.BASIC));
+            indexes.put(fifoGroupingName, SpaceIndexFactory.createPropertyIndex(fifoGroupingName, SpaceIndexType.EQUAL));
         for (String fifoGroupingIndexName : fifoGroupingIndexNames)
             if (indexes.get(fifoGroupingIndexName) == null)
-                indexes.put(fifoGroupingIndexName, SpaceIndexFactory.createPropertyIndex(fifoGroupingIndexName, SpaceIndexType.BASIC));
+                indexes.put(fifoGroupingIndexName, SpaceIndexFactory.createPropertyIndex(fifoGroupingIndexName, SpaceIndexType.EQUAL));
     }
 
     @Override

@@ -237,7 +237,7 @@ public class FifoGroupCacheImpl {
                     if (templateValue == null)
                         continue;//TBD
 
-                    if (entryType.disableIdIndexForBlobStoreEntries(index))
+                    if (entryType.disableIdIndexForEntries(index))
                         entriesVector = _cacheManager.getPEntryByUid(ClientUIDHandler.createUIDFromName(templateValue, entryType.getClassName()));
                     else
                         entriesVector = index.getIndexEntries(templateValue);
@@ -431,7 +431,7 @@ public class FifoGroupCacheImpl {
                     if (!((ISpaceIndex) index).isMultiValuePerEntryIndex() && indexFifoGroupingType == FifoGroupsIndexTypes.AUXILIARY) {
                         boolean create = true;
                         String compound_index_name = property.getName() + Compound_Fifo_Groups_Index_Name_Suffix;
-                        CompoundIndex def = (CompoundIndex) SpaceIndexFactory.createCompoundIndex(new String[]{property.getName(), _fifoGroupIndex.getIndexDefinition().getName()}, SpaceIndexType.BASIC, compound_index_name, false /*unique*/);
+                        CompoundIndex def = (CompoundIndex) SpaceIndexFactory.createCompoundIndex(new String[]{property.getName(), _fifoGroupIndex.getIndexDefinition().getName()}, SpaceIndexType.EQUAL, compound_index_name, false /*unique*/);
 
                         //do we already have an equivalent one ?
                         for (CompoundIndex c : compoundIndexDefinitions) {
@@ -462,7 +462,7 @@ public class FifoGroupCacheImpl {
                     if (!((ISpaceIndex) spaceIndex).isMultiValuePerEntryIndex() && indexFifoGroupingType == FifoGroupsIndexTypes.AUXILIARY) {
                         boolean create = true;
                         String compound_index_name = spaceIndex.getName() + Compound_Fifo_Groups_Index_Name_Suffix;
-                        CompoundIndex def = (CompoundIndex) SpaceIndexFactory.createCompoundIndex(new String[]{spaceIndex.getName(), _fifoGroupIndex.getIndexDefinition().getName()}, SpaceIndexType.BASIC, compound_index_name, false /*unique*/);
+                        CompoundIndex def = (CompoundIndex) SpaceIndexFactory.createCompoundIndex(new String[]{spaceIndex.getName(), _fifoGroupIndex.getIndexDefinition().getName()}, SpaceIndexType.EQUAL, compound_index_name, false /*unique*/);
 
                         //do we already have an equivalent one ?
                         for (CompoundIndex c : compoundIndexDefinitions) {

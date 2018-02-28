@@ -329,10 +329,10 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
         if (possibleSegments.get(0).isEqualValueRange())
             return ExacValueCompoundIndexScanner.build(index.getName(), possibleSegments);
         if (possibleSegments.get(0).isSegmentRange()) {
-            if (index.getIndexType() != SpaceIndexType.EXTENDED)
+            if (!index.getIndexType().isOrdered())
                 return null;
             Range first = possibleSegments.get(0);
-            return RangeCompoundIndexScanner.build(index.getName(), possibleSegments, first.isIndexed(_typeDesc) && _typeDesc.getIndexes().get(first.getPath()).getIndexType() == SpaceIndexType.EXTENDED);
+            return RangeCompoundIndexScanner.build(index.getName(), possibleSegments, first.isIndexed(_typeDesc) && _typeDesc.getIndexes().get(first.getPath()).getIndexType().isOrdered());
         }
         return null;
     }

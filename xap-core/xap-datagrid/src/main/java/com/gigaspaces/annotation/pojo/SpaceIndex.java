@@ -67,9 +67,9 @@ public @interface SpaceIndex {
     String path() default EMPTY;
 
     /**
-     * The type of the index - default is BASIC index
+     * The type of the index - default is EQUAL index
      */
-    SpaceIndexType type() default SpaceIndexType.BASIC;
+    SpaceIndexType type() default SpaceIndexType.EQUAL;
 
     /**
      * Indicates if unique constraint is applied for this index. The constraint is per partition.

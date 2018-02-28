@@ -44,7 +44,7 @@ public class CompoundIndex extends CustomIndex {
     }
 
     public CompoundIndex(String[] paths) {
-        super(SpaceIndexFactory.createCompoundIndexName(paths), new SpaceEntryCompoundIndexGetter((SpaceIndexFactory.createCompoundSegmentsDefinition(paths))), false /*isUnique*/, SpaceIndexType.BASIC);
+        super(SpaceIndexFactory.createCompoundIndexName(paths), new SpaceEntryCompoundIndexGetter((SpaceIndexFactory.createCompoundSegmentsDefinition(paths))), false /*isUnique*/, SpaceIndexType.EQUAL);
         _segments = ((SpaceEntryCompoundIndexGetter) _indexValueGetter).getSegments();
     }
 

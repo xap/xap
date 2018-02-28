@@ -115,6 +115,42 @@ public class GigaSpaceDocumentTypeBeanDefinitionParser extends AbstractSingleBea
             }
 
         }
+
+        indexedElements = DomUtils.getChildElementsByTagName(element, "equal-index");
+
+        for (int i = 0; i < indexedElements.size(); i++) {
+            String indexPropertyPath = indexedElements.get(i).getAttribute("path");
+            String uniques = indexedElements.get(i).getAttribute("unique");
+            if (StringUtils.hasText(indexPropertyPath)) {
+                boolean unique = StringUtils.hasText(uniques) && uniques.equalsIgnoreCase("true");
+                indexes.put(indexPropertyPath, new EqualIndex(indexPropertyPath, unique));
+            }
+
+        }
+
+        indexedElements = DomUtils.getChildElementsByTagName(element, "ordered-index");
+
+        for (int i = 0; i < indexedElements.size(); i++) {
+            String indexPropertyPath = indexedElements.get(i).getAttribute("path");
+            String uniques = indexedElements.get(i).getAttribute("unique");
+            if (StringUtils.hasText(indexPropertyPath)) {
+                boolean unique = StringUtils.hasText(uniques) && uniques.equalsIgnoreCase("true");
+                indexes.put(indexPropertyPath, new OrderedIndex(indexPropertyPath, unique));
+            }
+
+        }
+
+        indexedElements = DomUtils.getChildElementsByTagName(element, "equal-ordered-index");
+
+        for (int i = 0; i < indexedElements.size(); i++) {
+            String indexPropertyPath = indexedElements.get(i).getAttribute("path");
+            String uniques = indexedElements.get(i).getAttribute("unique");
+            if (StringUtils.hasText(indexPropertyPath)) {
+                boolean unique = StringUtils.hasText(uniques) && uniques.equalsIgnoreCase("true");
+                indexes.put(indexPropertyPath, new EqualOrderedIndex(indexPropertyPath, unique));
+            }
+
+        }
         //cater for compound indices after all non-compounds were added
         indexedElements = DomUtils.getChildElementsByTagName(element, "compound-index");
 

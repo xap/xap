@@ -722,7 +722,7 @@ public class SpaceTypeInfo implements Externalizable {
             return;
 
         String path = XmlUtils.getAttribute(xmlNode, "path");
-        SpaceIndexType indexType = XmlUtils.getAttributeEnum(xmlNode, "type", SpaceIndexType.class, SpaceIndexType.BASIC);
+        SpaceIndexType indexType = XmlUtils.getAttributeEnum(xmlNode, "type", SpaceIndexType.class, SpaceIndexType.EQUAL);
         //unique?
         boolean unique = XmlUtils.getAttributeBoolean(xmlNode, "unique", false);
         addPropertyIndex(name, path, indexType, "<index>", unique, initContext);
@@ -1008,7 +1008,7 @@ public class SpaceTypeInfo implements Externalizable {
     }
 
     private void addCompoundIndex(CompoundSpaceIndex csi) {
-        addCompoundIndex(csi.paths(), SpaceIndexType.BASIC /*csi.type()*/, csi.unique());
+        addCompoundIndex(csi.paths(), SpaceIndexType.EQUAL /*csi.type()*/, csi.unique());
 
     }
 
@@ -1321,13 +1321,13 @@ public class SpaceTypeInfo implements Externalizable {
 
         // Set default index for id property, if not set:
         if (_idProperty != null && !_idAutoGenerate && !_indexes.containsKey(_idProperty.getName())) {
-            SpaceIndex index = new SpacePropertyIndex(_idProperty.getName(), SpaceIndexType.BASIC, true, indexOf(_idProperty));
+            SpaceIndex index = new SpacePropertyIndex(_idProperty.getName(), SpaceIndexType.EQUAL, true, indexOf(_idProperty));
             _indexes.put(index.getName(), index);
         }
 
         // Set default index for routing property, if not set:
         if (_routingProperty != null && !_indexes.containsKey(_routingProperty.getName())) {
-            SpaceIndex index = new SpacePropertyIndex(_routingProperty.getName(), SpaceIndexType.BASIC, false, indexOf(_routingProperty));
+            SpaceIndex index = new SpacePropertyIndex(_routingProperty.getName(), SpaceIndexType.EQUAL, false, indexOf(_routingProperty));
             _indexes.put(index.getName(), index);
         }
     }

@@ -79,7 +79,7 @@ public abstract class IndexTypeHelper {
 
         SpaceIndexType[] indexTypes = new SpaceIndexType[indexIndicators.length];
         for (int i = 0; i < indexTypes.length; i++)
-            indexTypes[i] = indexIndicators[i] ? SpaceIndexType.BASIC : SpaceIndexType.NONE;
+            indexTypes[i] = indexIndicators[i] ? SpaceIndexType.EQUAL : SpaceIndexType.NONE;
 
         return indexTypes;
     }

@@ -3399,7 +3399,7 @@ public class CacheManager extends AbstractCacheManager
             int indexBuildNumber = 0;
             final TypeDataIndex[] indexes = pType.getIndexes();
             for (TypeDataIndex index : indexes) {
-                if (pType.disableIdIndexForBlobStoreEntries(index))
+                if (pType.disableIdIndexForEntries(index))
                     continue;
                 if (applySequenceNumber && index == pType.getSequenceNumberIndex()) {//delay this index until all other inserted and than apply a value
                     if (pEntry.getBackRefs() != null) {
@@ -3908,7 +3908,7 @@ public class CacheManager extends AbstractCacheManager
         // If type contains a primary key definition, check it first:
         TypeDataIndex<IStoredList<IEntryCacheInfo>> primaryKey = typeData.getIdField();
         if (primaryKey != null && latestIndexToConsider >= primaryKey.getIndexCreationNumber()) {
-            if (typeData.disableIdIndexForBlobStoreEntries(primaryKey))
+            if (typeData.disableIdIndexForEntries(primaryKey))
                 return getPEntryByUid(ClientUIDHandler.createUIDFromName(templateValue, typeData.getClassName()));
 
             IStoredList<IEntryCacheInfo> res = primaryKey.getUniqueEntriesStore().get(templateValue);
@@ -3955,7 +3955,7 @@ public class CacheManager extends AbstractCacheManager
         if (primaryKey != null && primaryKey.getPos() < numOfFields && latestIndexToConsider >= primaryKey.getIndexCreationNumber()) {
             Object templateValue = primaryKey.getIndexValueForTemplate(template.getEntryData());
             if (templateValue != null) {
-                if (typeData.disableIdIndexForBlobStoreEntries(primaryKey))
+                if (typeData.disableIdIndexForEntries(primaryKey))
                     return getPEntryByUid(ClientUIDHandler.createUIDFromName(templateValue, typeData.getClassName()));
                 else
                     return primaryKey.getUniqueEntriesStore().get(templateValue);
@@ -4259,7 +4259,7 @@ public class CacheManager extends AbstractCacheManager
             if (templateValue != null) {
                 context.setBlobStoreUsePureIndexesAccess(false);  //no index
                 IEntryCacheInfo pEntryByUid;
-                if (entryType.disableIdIndexForBlobStoreEntries(primaryKey)) {
+                if (entryType.disableIdIndexForEntries(primaryKey)) {
                     pEntryByUid = getPEntryByUid(ClientUIDHandler.createUIDFromName(templateValue, entryType.getClassName()));
                 }
                 else {
@@ -4571,7 +4571,7 @@ public class CacheManager extends AbstractCacheManager
         if (idPropertyIndex == null || typeData.getLastIndexCreationNumber() < idPropertyIndex.getIndexCreationNumber())
             throw new EngineInternalSpaceException("No index defined for entry.");
 
-        if (typeData.disableIdIndexForBlobStoreEntries(idPropertyIndex))
+        if (typeData.disableIdIndexForEntries(idPropertyIndex))
             return getEntryByUidFromPureCache(ClientUIDHandler.createUIDFromName(id, typeData.getClassName()));
 
 

@@ -16,26 +16,21 @@
 
 package org.openspaces.core.config;
 
-/**
- *
- * @deprecated since 12.3 use EqualIndex instead
- */
-@Deprecated
-public class BasicIndex extends SpaceIndex {
+public class EqualOrderedIndex extends SpaceIndex {
 
-    public BasicIndex() {
+    public EqualOrderedIndex() {
         super();
     }
 
-    public BasicIndex(String indexPropertyPath) {
+    public EqualOrderedIndex(String indexPropertyPath) {
         super(indexPropertyPath);
     }
 
-    public BasicIndex(boolean unique) {
+    public EqualOrderedIndex(boolean unique) {
         super(unique);
     }
 
-    public BasicIndex(String indexPropertyPath, boolean unique) {
+    public EqualOrderedIndex(String indexPropertyPath, boolean unique) {
         super(indexPropertyPath, unique);
     }
 

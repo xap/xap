@@ -342,7 +342,7 @@ public class TypeDescFactory {
                 String indexName = indicators[i];
                 int pos = getPosition(fieldsNames, indexName);
                 if (pos != -1) {
-                    indexTypes[pos] = SpaceIndexType.BASIC;
+                    indexTypes[pos] = SpaceIndexType.EQUAL;
                     if (firstIndexName == null)
                         firstIndexName = indexName;
                 } else
@@ -376,7 +376,7 @@ public class TypeDescFactory {
         if (field != null) {
             for (int i = 0; i < fieldsNames.length; i++) {
                 if (fieldsNames[i].equals(field)) {
-                    indexTypes[i] = SpaceIndexType.BASIC;
+                    indexTypes[i] = SpaceIndexType.EQUAL;
                     break;
                 }
             }

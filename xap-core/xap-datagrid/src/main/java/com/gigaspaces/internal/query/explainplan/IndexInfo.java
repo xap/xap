@@ -47,7 +47,7 @@ public class IndexInfo implements Externalizable {
         this.type = type;
         this.value = value;
         this.operator= operator;
-        if(type == SpaceIndexType.EXTENDED){
+        if(type.isOrdered()){
             this.size = -1;
         }
         this.usable =true;

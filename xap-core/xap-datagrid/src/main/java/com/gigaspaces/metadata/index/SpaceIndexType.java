@@ -30,17 +30,42 @@ public enum SpaceIndexType {
     NONE,
     /**
      * Basic index - supports equality.
+     *
+     * @deprecated since 12.3 - use {@link #EQUAL} instead.
      */
+    @Deprecated
     BASIC,
     /**
      * Extended(ordered) index - supports comparison.
+     *
+     * @deprecated since 12.3 - use {@link #ORDERED} or {@link #EQUAL_AND_ORDERED} instead.
      */
-    EXTENDED;
+    @Deprecated
+    EXTENDED,
+    /**
+     * Index that supports equality.
+     * @since 12.3
+     */
+    EQUAL,
+    /**
+     * Index that supports comparison.
+     * @since 12.3
+     */
+    ORDERED,
+    /**
+     * Index that supports both equality and comparison.
+     * @since 12.3
+     */
+    EQUAL_AND_ORDERED;
 
     /**
      * @return true if this index type indicates an indexed state, false otherwise.
      */
     public boolean isIndexed() {
         return this != NONE;
+    }
+
+    public boolean isOrdered(){
+        return this == ORDERED || this == EQUAL_AND_ORDERED || this == EXTENDED;
     }
 }

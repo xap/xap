@@ -48,12 +48,7 @@ import com.j_spaces.kernel.StoredListFactory;
 import com.j_spaces.kernel.SystemProperties;
 import com.j_spaces.kernel.list.IScanListIterator;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
@@ -68,7 +63,7 @@ public class TypeDataIndex<K> {
 
     private static final boolean _indexesBackrefsForBlobStoreData = true;
 
-    private static final boolean _disableIndexingBlobStoreIdProperty = true;
+    private final boolean _disableIndexingIdProperty;
 
 
     //the percentage of unique values- above it we try "put" of raw value first
@@ -167,10 +162,9 @@ public class TypeDataIndex<K> {
 
         this._position = pos;
         this._indexType = index.getIndexType();
-        _thinExtendedIndex = _indexType == SpaceIndexType.EXTENDED &&
-                (cacheManager.getEngine().getConfigReader().getBooleanSpaceProperty(
-                        Constants.CacheManager.CACHE_MANAGER_THIN_EXTENDED_INDEX_PROP, cacheManager.isBlobStoreCachePolicy() ? Constants.CacheManager.CACHE_MANAGER_THIN_EXTENDED_INDEX_BLOBSTORE_DEFAULT :
-                                Constants.CacheManager.CACHE_MANAGER_THIN_EXTENDED_INDEX_DEFAULT));
+        _thinExtendedIndex = _indexType == SpaceIndexType.ORDERED ;
+        _disableIndexingIdProperty = cacheManager.getEngine().getConfigReader().getBooleanSpaceProperty(
+                Constants.CacheManager.CACHE_MANAGER_EXPLICIT_ID_INDEX_PROP, "false");
         _indexDefinition = index;
         _unique = index.isUnique();
         int numOfCHMSegents = Integer.getInteger(SystemProperties.CACHE_MANAGER_HASHMAP_SEGMENTS, SystemProperties.CACHE_MANAGER_HASHMAP_SEGMENTS_DEFAULT);
@@ -204,7 +198,7 @@ public class TypeDataIndex<K> {
             _NNullTemplates = StoredListFactory.createList(true);
         }
 
-        if (_indexType == SpaceIndexType.EXTENDED) {
+        if (_indexType.isOrdered()) {
             _concurrentExtendedIndex = new ExtendedIndexHandler<K>(this);
 
             m_Notify_GT_Index = new TemplatesExtendedIndexHandler<K>(this);
@@ -317,11 +311,11 @@ public class TypeDataIndex<K> {
     }
 
     public boolean disableIndexUsageForOperation(TypeData typeData, int inputIndexCreationNumber) {
-        return (inputIndexCreationNumber < getIndexCreationNumber() || typeData.disableIdIndexForBlobStoreEntries(this));
+        return (inputIndexCreationNumber < getIndexCreationNumber() || typeData.disableIdIndexForEntries(this));
     }
 
-    public static boolean disableIndexingBlobStoreIdProperty() {
-        return _disableIndexingBlobStoreIdProperty;
+    public boolean disableIndexingIdProperty() {
+        return _disableIndexingIdProperty;
     }
 
     /* (non-Javadoc)
@@ -777,7 +771,7 @@ public class TypeDataIndex<K> {
         final TypeDataIndex[] indexes = typeData.getIndexes();
         for (TypeDataIndex index : indexes) {
             newIndexCreationNumber = Math.max(newIndexCreationNumber, index.getIndexCreationNumber());
-            if (typeData.disableIdIndexForBlobStoreEntries(index))
+            if (typeData.disableIdIndexForEntries(index))
                 continue;
             if (index.getIndexCreationNumber() <= entryCacheInfo.getLatestIndexCreationNumber()) {
                 if (entryCacheInfo.indexesBackRefsKept()) {
@@ -815,7 +809,7 @@ public class TypeDataIndex<K> {
         final TypeDataIndex[] indexes = typeData.getIndexes();
         for (TypeDataIndex index : indexes) {
             newIndexCreationNumber = Math.max(newIndexCreationNumber, index.getIndexCreationNumber());
-            if (typeData.disableIdIndexForBlobStoreEntries(index))
+            if (typeData.disableIdIndexForEntries(index))
                 continue;
             if (index.getIndexCreationNumber() <= entryCacheInfo.getLatestIndexCreationNumber()) {
                 if (entryCacheInfo.indexesBackRefsKept()) {
@@ -1350,7 +1344,7 @@ public class TypeDataIndex<K> {
             for (TypeDataIndex<?> index : typeData.getIndexes()) {
                 if (index.getIndexCreationNumber() > 0)
                     continue;
-                if (index.getIndexType() != SpaceIndexType.EXTENDED)
+                if (!index.getIndexType().isOrdered())
                     continue;
                 if (index.isCompound())
                     continue; //waiting templates currently not matched by compound
@@ -1442,7 +1436,7 @@ public class TypeDataIndex<K> {
             for (TypeDataIndex<?> index : typeData.getIndexes()) {
                 if (index.getIndexCreationNumber() > 0)
                     continue;
-                if (index.getIndexType() != SpaceIndexType.EXTENDED)
+                if (!index.getIndexType().isOrdered())
                     continue;
                 if (index.isCompound())
                     continue; //waiting templates currently not matched by compound
@@ -1576,7 +1570,7 @@ public class TypeDataIndex<K> {
             for (TypeDataIndex<?> index : indexes) {
                 if (index.getIndexCreationNumber() > 0)
                     continue;   //irrelevant for templates index
-                if (index.getIndexType() != SpaceIndexType.EXTENDED)
+                if (!index.getIndexType().isOrdered())
                     continue;
                 if (index.isCompound())
                     continue;  //currently waiting templates selection is not supported

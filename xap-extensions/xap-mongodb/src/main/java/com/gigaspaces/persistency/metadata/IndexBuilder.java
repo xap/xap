@@ -54,7 +54,7 @@ public class IndexBuilder {
 
         if (id != null && !id.equals(routing)) {
             createIndex(spaceTypeDescriptor.getTypeName(), routing,
-                    SpaceIndexType.BASIC, BasicDBObjectBuilder.start());
+                    SpaceIndexType.EQUAL, BasicDBObjectBuilder.start());
         }
     }
 
@@ -79,7 +79,7 @@ public class IndexBuilder {
 
         DBObject key;
 
-        if (type == SpaceIndexType.BASIC) {
+        if (type == SpaceIndexType.BASIC || type == SpaceIndexType.EQUAL) {
             key = BasicDBObjectBuilder.start(routing, "hashed").get();
         } else {
             key = BasicDBObjectBuilder.start(routing, 1).get();

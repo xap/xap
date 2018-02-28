@@ -83,9 +83,9 @@ public @interface SpaceProperty {
                 case NONE:
                     return SpaceIndexType.NONE;
                 case BASIC:
-                    return SpaceIndexType.BASIC;
+                    return SpaceIndexType.EQUAL;
                 case EXTENDED:
-                    return SpaceIndexType.EXTENDED;
+                    return SpaceIndexType.EQUAL_AND_ORDERED;
                 default:
                     return null;
             }

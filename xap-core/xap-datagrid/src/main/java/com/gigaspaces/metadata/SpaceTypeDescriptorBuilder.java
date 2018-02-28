@@ -388,7 +388,7 @@ public class SpaceTypeDescriptorBuilder {
      *                       automatically generated.
      */
     public SpaceTypeDescriptorBuilder idProperty(String idPropertyName, boolean autoGenerateId) {
-        final SpaceIndexType indexType = autoGenerateId ? SpaceIndexType.NONE : SpaceIndexType.BASIC;
+        final SpaceIndexType indexType = autoGenerateId ? SpaceIndexType.NONE : SpaceIndexType.EQUAL;
         return idProperty(idPropertyName, autoGenerateId, indexType);
     }
 
@@ -422,7 +422,7 @@ public class SpaceTypeDescriptorBuilder {
      * @param routingPropertyName Name of routing property.
      */
     public SpaceTypeDescriptorBuilder routingProperty(String routingPropertyName) {
-        return routingProperty(routingPropertyName, SpaceIndexType.BASIC);
+        return routingProperty(routingPropertyName, SpaceIndexType.EQUAL);
     }
 
     /**
@@ -556,8 +556,8 @@ public class SpaceTypeDescriptorBuilder {
      */
     @Deprecated
     public SpaceTypeDescriptorBuilder addCompoundIndex(String[] paths, SpaceIndexType indexType) {
-        if (indexType != SpaceIndexType.BASIC)
-            throw new UnsupportedOperationException("only BASIC index type is supported for compoundindex");
+        if (indexType != SpaceIndexType.BASIC && indexType != SpaceIndexType.EQUAL)
+            throw new UnsupportedOperationException("only EQUAL index type is supported for compoundindex");
         return addCompoundIndex(paths, indexType, false);
     }
 
@@ -568,7 +568,7 @@ public class SpaceTypeDescriptorBuilder {
      * @param indexType Type of index.
      */
     public SpaceTypeDescriptorBuilder addCompoundIndex(String[] paths) {
-        return addCompoundIndex(paths, SpaceIndexType.BASIC, false);
+        return addCompoundIndex(paths, SpaceIndexType.EQUAL, false);
     }
 
     /**
@@ -580,7 +580,7 @@ public class SpaceTypeDescriptorBuilder {
      */
     @Deprecated
     public SpaceTypeDescriptorBuilder addCompoundIndex(String[] paths, SpaceIndexType indexType, boolean unique) {
-        if (indexType != SpaceIndexType.BASIC)
+        if (indexType != SpaceIndexType.BASIC && indexType != SpaceIndexType.EQUAL)
             throw new UnsupportedOperationException("only BASIC index type is supported for compoundindex");
         return addIndex(SpaceIndexFactory.createCompoundIndex(paths, indexType, null, unique));
     }
@@ -593,7 +593,7 @@ public class SpaceTypeDescriptorBuilder {
      * @param unique    is it a unique index
      */
     public SpaceTypeDescriptorBuilder addCompoundIndex(String[] paths, boolean unique) {
-        return addIndex(SpaceIndexFactory.createCompoundIndex(paths, SpaceIndexType.BASIC, null, unique));
+        return addIndex(SpaceIndexFactory.createCompoundIndex(paths, SpaceIndexType.EQUAL, null, unique));
     }
 
     /**

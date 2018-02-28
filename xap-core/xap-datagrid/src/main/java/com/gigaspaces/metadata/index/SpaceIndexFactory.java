@@ -81,7 +81,7 @@ public class SpaceIndexFactory {
     }
 
     public static SpaceIndex createCompoundIndex(String[] paths) {
-        return createCompoundIndex(paths, SpaceIndexType.BASIC, null, false);
+        return createCompoundIndex(paths, SpaceIndexType.EQUAL, null, false);
     }
 
     /**

@@ -70,5 +70,5 @@ public @interface CustomSpaceIndex {
     /**
      * Defines the index type.
      */
-    SpaceIndexType type() default SpaceIndexType.BASIC;
+    SpaceIndexType type() default SpaceIndexType.EQUAL;
 }
