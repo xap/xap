@@ -51,22 +51,25 @@ public abstract class AbstractTransactionReplicationPacketData
     private TransactionParticipantDataImpl _metaData;
     private ServerTransaction _transaction;
 
-    private static final short FLAGS_GATEWAY = 1 << 0;
+    private static final short FLAGS_GATEWAY = 1;
     private static final short HAS_TRANSIENT_MEMBERS = 1 << 1;
     private static final short HAS_PERSISTENT_MEMBERS = 1 << 2;
 
     private transient int _weight;
     private transient short _flags;
 
+    @SuppressWarnings("WeakerAccess")
     public AbstractTransactionReplicationPacketData() {
     }
 
+    @SuppressWarnings("WeakerAccess")
     public AbstractTransactionReplicationPacketData(ServerTransaction transaction, boolean fromGateway) {
         this(fromGateway);
         _transaction = transaction;
         _metaData = _transaction.getMetaData();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public AbstractTransactionReplicationPacketData(boolean fromGateway) {
         if (fromGateway) {
             _flags |= FLAGS_GATEWAY;
@@ -94,17 +97,17 @@ public abstract class AbstractTransactionReplicationPacketData
         IOUtils.writeWithCachedStubs(out, _transaction);
     }
 
-    protected void readTransaction(ObjectInput in) throws IOException, ClassNotFoundException {
+    void readTransaction(ObjectInput in) throws IOException, ClassNotFoundException {
         _transaction = IOUtils.readWithCachedStubs(in);
     }
 
-    protected void writeTransactionData(ObjectOutput out) throws IOException {
+    void writeTransactionData(ObjectOutput out) throws IOException {
         out.writeInt(size());
         for (IReplicationTransactionalPacketEntryData entryData : this)
             IOUtils.writeObject(out, entryData);
     }
 
-    protected void readTransactionData(ObjectInput in) throws IOException, ClassNotFoundException {
+    void readTransactionData(ObjectInput in) throws IOException, ClassNotFoundException {
         int size = in.readInt();
         for (int i = 0; i < size; i++) {
             IReplicationTransactionalPacketEntryData entryData = IOUtils.readObject(in);
@@ -133,6 +136,7 @@ public abstract class AbstractTransactionReplicationPacketData
             IOUtils.writeSwapExternalizableObject(out, entryData);
     }
 
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
     public IExecutableReplicationPacketData<IReplicationTransactionalPacketEntryData> clone() {
         IExecutableReplicationPacketData<IReplicationTransactionalPacketEntryData> clone = createEmptyMultipleEntryData();
@@ -230,13 +234,14 @@ public abstract class AbstractTransactionReplicationPacketData
         private final SpaceTypeManager _spaceTypeManager;
         private IReplicationFilterEntry _lastFilterEntry;
 
-        public FilterIterable(
+        FilterIterable(
                 Iterator<IReplicationTransactionalPacketEntryData> iterator,
                 SpaceTypeManager spaceTypeManager) {
             _iterator = iterator;
             _spaceTypeManager = spaceTypeManager;
         }
 
+        @SuppressWarnings("NullableProblems")
         public Iterator<IReplicationFilterEntry> iterator() {
             return this;
         }
@@ -288,6 +293,7 @@ public abstract class AbstractTransactionReplicationPacketData
         return _weight;
     }
 
+    @SuppressWarnings("SimplifiableIfStatement")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
