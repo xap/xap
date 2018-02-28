@@ -1,9 +1,13 @@
 package org.gigaspaces.cli;
 
+import com.gigaspaces.logger.Constants;
+import com.gigaspaces.logger.GSLogConfigLoader;
 import org.gigaspaces.cli.commands.XapVersionProvider;
-import picocli.CommandLine.*;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 import java.util.concurrent.Callable;
+import java.util.logging.Logger;
 
 @Command(
         versionProvider = XapVersionProvider.class,
@@ -17,6 +21,8 @@ import java.util.concurrent.Callable;
         optionListHeading = "%nOptions:%n")
 public abstract class CliCommand implements Callable<Object> {
 
+    protected static Logger LOGGER;
+
     @Option(names = {"--help"}, usageHelp = true, description = "display this help message")
     boolean usageHelpRequested;
 
@@ -28,6 +34,11 @@ public abstract class CliCommand implements Callable<Object> {
         beforeExecute();
         execute();
         return null;
+    }
+
+    public CliCommand(){
+        GSLogConfigLoader.getLoader("cli");
+        LOGGER = Logger.getLogger(Constants.LOGGER_CLI);
     }
 
     protected void beforeExecute() {
