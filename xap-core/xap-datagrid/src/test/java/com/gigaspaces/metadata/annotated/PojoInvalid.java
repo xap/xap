@@ -591,7 +591,7 @@ public class PojoInvalid {
      */
     public static class InvalidExcludePropertyWithIndex {
 
-        @SpaceIndex(type = SpaceIndexType.BASIC)
+        @SpaceIndex(type = SpaceIndexType.EQUAL)
         @SpaceExclude
         public Integer getIndexedField() {
             return 0;

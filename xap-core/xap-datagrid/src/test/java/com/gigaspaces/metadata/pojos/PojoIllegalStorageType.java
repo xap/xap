@@ -216,7 +216,7 @@ public class PojoIllegalStorageType {
                 public class BasicIndex {
                     private Object indexedObject;
 
-                    @SpaceIndex(type = SpaceIndexType.BASIC)
+                    @SpaceIndex(type = SpaceIndexType.EQUAL)
                     @SpaceStorageType(storageType = StorageType.BINARY)
                     public Object getIndexedObject() {
                         return indexedObject;
@@ -230,7 +230,7 @@ public class PojoIllegalStorageType {
                 public class ExtendedIndexType {
                     private Object indexedObject;
 
-                    @SpaceIndex(type = SpaceIndexType.EXTENDED)
+                    @SpaceIndex(type = SpaceIndexType.EQUAL_AND_ORDERED)
                     @SpaceStorageType(storageType = StorageType.BINARY)
                     public Object getIndexedObject() {
                         return indexedObject;
@@ -244,7 +244,7 @@ public class PojoIllegalStorageType {
                 public class PathIndex {
                     private Object pathIndexedObject;
 
-                    @SpaceIndex(type = SpaceIndexType.BASIC, path = "path")
+                    @SpaceIndex(type = SpaceIndexType.EQUAL, path = "path")
                     @SpaceStorageType(storageType = StorageType.BINARY)
                     public Object getPathIndexedObject() {
                         return pathIndexedObject;
@@ -258,7 +258,7 @@ public class PojoIllegalStorageType {
                 public class PathIndexWithCollection {
                     private Object pathIndexedObject;
 
-                    @SpaceIndex(type = SpaceIndexType.BASIC, path = "[*].path")
+                    @SpaceIndex(type = SpaceIndexType.EQUAL, path = "[*].path")
                     @SpaceStorageType(storageType = StorageType.BINARY)
                     public Object getPathIndexedObject() {
                         return pathIndexedObject;
@@ -272,7 +272,7 @@ public class PojoIllegalStorageType {
                 public class PathIndexWithInnerCollection {
                     private Object pathIndexedObject;
 
-                    @SpaceIndex(type = SpaceIndexType.BASIC, path = "path[*].path")
+                    @SpaceIndex(type = SpaceIndexType.EQUAL, path = "path[*].path")
                     @SpaceStorageType(storageType = StorageType.BINARY)
                     public Object getPathIndexedObject() {
                         return pathIndexedObject;
@@ -442,7 +442,7 @@ public class PojoIllegalStorageType {
                 public class BasicIndex {
                     private Object indexedObject;
 
-                    @SpaceIndex(type = SpaceIndexType.BASIC)
+                    @SpaceIndex(type = SpaceIndexType.EQUAL)
                     @SpaceStorageType(storageType = StorageType.COMPRESSED)
                     public Object getIndexedObject() {
                         return indexedObject;
@@ -456,7 +456,7 @@ public class PojoIllegalStorageType {
                 public class ExtendedIndexType {
                     private Object indexedObject;
 
-                    @SpaceIndex(type = SpaceIndexType.EXTENDED)
+                    @SpaceIndex(type = SpaceIndexType.EQUAL_AND_ORDERED)
                     @SpaceStorageType(storageType = StorageType.COMPRESSED)
                     public Object getIndexedObject() {
                         return indexedObject;
@@ -470,7 +470,7 @@ public class PojoIllegalStorageType {
                 public class PathIndex {
                     private Object pathIndexedObject;
 
-                    @SpaceIndex(type = SpaceIndexType.BASIC, path = "path")
+                    @SpaceIndex(type = SpaceIndexType.EQUAL, path = "path")
                     @SpaceStorageType(storageType = StorageType.COMPRESSED)
                     public Object getPathIndexedObject() {
                         return pathIndexedObject;
@@ -658,7 +658,7 @@ public class PojoIllegalStorageType {
 
             public class DeclareSpaceIndexAnnotation {
                 public class BasicIndexType extends PojoOnlyStorageTypeAnnotations {
-                    @SpaceIndex(type = SpaceIndexType.BASIC)
+                    @SpaceIndex(type = SpaceIndexType.EQUAL)
                     @Override
                     public List<String> get_binaryStorageTypeList() {
                         // TODO Auto-generated method stub
@@ -667,7 +667,7 @@ public class PojoIllegalStorageType {
                 }
 
                 public class ExtendedIndexType extends PojoOnlyStorageTypeAnnotations {
-                    @SpaceIndex(type = SpaceIndexType.EXTENDED)
+                    @SpaceIndex(type = SpaceIndexType.EQUAL_AND_ORDERED)
                     @Override
                     public List<String> get_binaryStorageTypeList() {
                         // TODO Auto-generated method stub
@@ -676,7 +676,7 @@ public class PojoIllegalStorageType {
                 }
 
                 public class PathIndex extends PojoOnlyStorageTypeAnnotations {
-                    @SpaceIndex(type = SpaceIndexType.BASIC, path = "path")
+                    @SpaceIndex(type = SpaceIndexType.EQUAL, path = "path")
                     @Override
                     public List<String> get_binaryStorageTypeList() {
                         // TODO Auto-generated method stub
@@ -746,7 +746,7 @@ public class PojoIllegalStorageType {
 
             public class DeclareSpaceIndexAnnotation {
                 public class BasicIndexType extends PojoOnlyStorageTypeAnnotations {
-                    @SpaceIndex(type = SpaceIndexType.BASIC)
+                    @SpaceIndex(type = SpaceIndexType.EQUAL)
                     @Override
                     public Map<String, Object> get_compressedStorageTypeMap() {
                         // TODO Auto-generated method stub
@@ -755,7 +755,7 @@ public class PojoIllegalStorageType {
                 }
 
                 public class ExtendedIndexType extends PojoOnlyStorageTypeAnnotations {
-                    @SpaceIndex(type = SpaceIndexType.EXTENDED)
+                    @SpaceIndex(type = SpaceIndexType.EQUAL_AND_ORDERED)
                     @Override
                     public Map<String, Object> get_compressedStorageTypeMap() {
                         // TODO Auto-generated method stub
@@ -764,7 +764,7 @@ public class PojoIllegalStorageType {
                 }
 
                 public class PathIndex extends PojoOnlyStorageTypeAnnotations {
-                    @SpaceIndex(type = SpaceIndexType.BASIC, path = "path")
+                    @SpaceIndex(type = SpaceIndexType.EQUAL, path = "path")
                     @Override
                     public Map<String, Object> get_compressedStorageTypeMap() {
                         // TODO Auto-generated method stub

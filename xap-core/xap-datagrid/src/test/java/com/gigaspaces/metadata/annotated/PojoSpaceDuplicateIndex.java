@@ -51,7 +51,7 @@ public class PojoSpaceDuplicateIndex {
         this.id = id;
     }
 
-    @SpaceIndex(path = "name", type = SpaceIndexType.BASIC)
+    @SpaceIndex(path = "name", type = SpaceIndexType.EQUAL)
     public Info getPersonalInfo() {
         return personalInfo;
     }
@@ -60,7 +60,7 @@ public class PojoSpaceDuplicateIndex {
         this.personalInfo = personalInfo;
     }
 
-    @SpaceIndex(type = SpaceIndexType.EXTENDED)
+    @SpaceIndex(type = SpaceIndexType.EQUAL_AND_ORDERED)
     @SpaceProperty(index = com.gigaspaces.annotation.pojo.SpaceProperty.IndexType.NONE)
     public String getDescription() {
         return description;

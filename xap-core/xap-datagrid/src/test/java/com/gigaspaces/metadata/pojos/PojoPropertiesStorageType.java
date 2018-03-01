@@ -185,7 +185,7 @@ public class PojoPropertiesStorageType {
         this.leasExpiration = leasExpiration;
     }
 
-    @SpaceIndex(type = SpaceIndexType.BASIC)
+    @SpaceIndex(type = SpaceIndexType.EQUAL)
     public Object getBasicIndexObject() {
         return basicIndexObject;
     }
@@ -194,7 +194,7 @@ public class PojoPropertiesStorageType {
         this.basicIndexObject = basicIndexObject;
     }
 
-    @SpaceIndex(type = SpaceIndexType.EXTENDED)
+    @SpaceIndex(type = SpaceIndexType.EQUAL_AND_ORDERED)
     public Object getExtendedIndexObject() {
         return ExtendedIndexObject;
     }
@@ -212,7 +212,7 @@ public class PojoPropertiesStorageType {
         this.noneIndexObject = noneIndexObject;
     }
 
-    @SpaceIndex(type = SpaceIndexType.BASIC, path = "path")
+    @SpaceIndex(type = SpaceIndexType.EQUAL, path = "path")
     public Object getPathIndexObject() {
         return pathIndexObject;
     }

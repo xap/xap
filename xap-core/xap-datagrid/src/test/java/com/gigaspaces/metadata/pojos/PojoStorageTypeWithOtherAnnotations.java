@@ -60,7 +60,7 @@ public class PojoStorageTypeWithOtherAnnotations {
         this.routing = routing;
     }
 
-    @SpaceIndex(type = SpaceIndexType.EXTENDED)
+    @SpaceIndex(type = SpaceIndexType.EQUAL_AND_ORDERED)
     @SpaceStorageType(storageType = StorageType.OBJECT)
     public Object getObject1() {
         return object1;
@@ -70,7 +70,7 @@ public class PojoStorageTypeWithOtherAnnotations {
         this.object1 = object1;
     }
 
-    @SpaceIndex(type = SpaceIndexType.BASIC)
+    @SpaceIndex(type = SpaceIndexType.EQUAL)
     @SpaceStorageType(storageType = StorageType.OBJECT)
     public Object getObject2() {
         return object2;

@@ -186,7 +186,7 @@ public class BasicCassandraTest extends AbstractCassandraTest {
                 .addFixedProperty(STRING_COL, String.class)
                 .addFixedProperty(BIGINT_COL, BigInteger.class)
                 .addFixedProperty(BIGDECIMAL_COL, BigDecimal.class)
-                .addPropertyIndex(STRING_COL, SpaceIndexType.BASIC)
+                .addPropertyIndex(STRING_COL, SpaceIndexType.EQUAL)
                 .create();
     }
 
@@ -199,7 +199,7 @@ public class BasicCassandraTest extends AbstractCassandraTest {
     private AddIndexData createMockAddIndexData() {
         SpaceIndex[] indexes =
                 {
-                        new MockSpaceIndex(LONG_COL, SpaceIndexType.BASIC)
+                        new MockSpaceIndex(LONG_COL, SpaceIndexType.EQUAL)
                 };
         return new MockAddIndexData(TEST_CF, indexes);
     }

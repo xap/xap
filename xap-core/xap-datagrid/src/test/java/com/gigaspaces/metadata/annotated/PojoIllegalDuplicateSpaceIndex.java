@@ -52,9 +52,9 @@ public class PojoIllegalDuplicateSpaceIndex {
     }
 
     @SpaceIndexes({
-            @SpaceIndex(type = SpaceIndexType.BASIC),
-            @SpaceIndex(path = "name", type = SpaceIndexType.BASIC),
-            @SpaceIndex(path = "", type = SpaceIndexType.EXTENDED)})
+            @SpaceIndex(type = SpaceIndexType.EQUAL),
+            @SpaceIndex(path = "name", type = SpaceIndexType.EQUAL),
+            @SpaceIndex(path = "", type = SpaceIndexType.EQUAL_AND_ORDERED)})
     public Info getPersonalInfo() {
         return personalInfo;
     }

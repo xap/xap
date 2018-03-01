@@ -169,7 +169,7 @@ public class MultiTypeNestedPropertiesCassandraTest extends AbstractCassandraTes
     private void addDynamicIndex(String name) {
         _syncInterceptor.onAddIndex(new MockAddIndexData(_topLevelSpaceDocument.getTypeName(),
                 new SpaceIndex[]{new MockSpaceIndex(name,
-                        SpaceIndexType.BASIC)}));
+                        SpaceIndexType.EQUAL)}));
     }
 
     private SpaceDocument createTopLevelDocument() {

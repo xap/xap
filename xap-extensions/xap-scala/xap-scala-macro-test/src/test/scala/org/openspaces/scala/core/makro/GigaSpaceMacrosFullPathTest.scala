@@ -21,7 +21,7 @@ case class MacroTestDataClass @SpaceClassConstructor() (
   
   @BeanProperty
   @SpaceProperty(nullValue = "-1")
-  @SpaceIndex(`type` = SpaceIndexType.EXTENDED)
+  @SpaceIndex(`type` = SpaceIndexType.EQUAL_AND_ORDERED)
   someNumber: Int = -1,
   
   @BeanProperty

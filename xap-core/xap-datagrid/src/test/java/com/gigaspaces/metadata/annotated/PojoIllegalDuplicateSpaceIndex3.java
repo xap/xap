@@ -50,10 +50,10 @@ public class PojoIllegalDuplicateSpaceIndex3 {
     }
 
     @SpaceIndexes({
-            @SpaceIndex(type = SpaceIndexType.BASIC),
-            @SpaceIndex(path = "name", type = SpaceIndexType.BASIC),
-            @SpaceIndex(path = "address.zipCode", type = SpaceIndexType.EXTENDED),
-            @SpaceIndex(path = "address.zipCode", type = SpaceIndexType.EXTENDED)})
+            @SpaceIndex(type = SpaceIndexType.EQUAL),
+            @SpaceIndex(path = "name", type = SpaceIndexType.EQUAL),
+            @SpaceIndex(path = "address.zipCode", type = SpaceIndexType.EQUAL_AND_ORDERED),
+            @SpaceIndex(path = "address.zipCode", type = SpaceIndexType.EQUAL_AND_ORDERED)})
     public Info getPersonalInfo() {
         return personalInfo;
     }

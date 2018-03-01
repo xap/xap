@@ -51,7 +51,7 @@ public class PojoIllegalDuplicateSpaceIndex2 {
         this.id = id;
     }
 
-    @SpaceIndex(type = SpaceIndexType.BASIC)
+    @SpaceIndex(type = SpaceIndexType.EQUAL)
     @SpaceProperty(index = com.gigaspaces.annotation.pojo.SpaceProperty.IndexType.EXTENDED)
     public Info getPersonalInfo() {
         return personalInfo;

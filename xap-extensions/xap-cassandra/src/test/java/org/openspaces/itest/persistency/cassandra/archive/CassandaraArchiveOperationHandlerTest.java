@@ -218,8 +218,8 @@ public class CassandaraArchiveOperationHandlerTest {
                         .addFixedProperty("CatalogNumber", String.class)
                         .idProperty("CatalogNumber")
                         .routingProperty("Category")
-                        .addPropertyIndex(SPACE_DOCUMENT_NAME_KEY, SpaceIndexType.BASIC)
-                        .addPropertyIndex("Price", SpaceIndexType.EXTENDED)
+                        .addPropertyIndex(SPACE_DOCUMENT_NAME_KEY, SpaceIndexType.EQUAL)
+                        .addPropertyIndex("Price", SpaceIndexType.EQUAL_AND_ORDERED)
                         .create();
         gigaSpace.getTypeManager().registerTypeDescriptor(typeDescriptor);
     }
@@ -230,8 +230,8 @@ public class CassandaraArchiveOperationHandlerTest {
                         .addFixedProperty("CatalogNumber", Long.class)
                         .idProperty("CatalogNumber")
                         .routingProperty("Category")
-                        .addPropertyIndex(SPACE_DOCUMENT_NAME_KEY, SpaceIndexType.BASIC)
-                        .addPropertyIndex("Price", SpaceIndexType.EXTENDED)
+                        .addPropertyIndex(SPACE_DOCUMENT_NAME_KEY, SpaceIndexType.EQUAL)
+                        .addPropertyIndex("Price", SpaceIndexType.EQUAL_AND_ORDERED)
                         .create();
         gigaSpace.getTypeManager().registerTypeDescriptor(typeDescriptor);
     }

@@ -49,13 +49,13 @@ public class SpaceTypeDescriptorDataHolderTest {
     private void testIndexes() {
         testHandler(new TestTypeDescriptorHandler() {
             public void doWithSuper(SpaceTypeDescriptorBuilder builder) {
-                builder.addPathIndex("a.b.c", SpaceIndexType.BASIC);
-                builder.addPathIndex("a.b.d", SpaceIndexType.EXTENDED);
+                builder.addPathIndex("a.b.c", SpaceIndexType.EQUAL);
+                builder.addPathIndex("a.b.d", SpaceIndexType.EQUAL_AND_ORDERED);
             }
 
             public void doWithSub(SpaceTypeDescriptorBuilder builder) {
-                builder.addPathIndex("a.b.e", SpaceIndexType.BASIC);
-                builder.addPathIndex("a.b.f", SpaceIndexType.EXTENDED);
+                builder.addPathIndex("a.b.e", SpaceIndexType.EQUAL);
+                builder.addPathIndex("a.b.f", SpaceIndexType.EQUAL_AND_ORDERED);
             }
         });
     }
@@ -75,11 +75,11 @@ public class SpaceTypeDescriptorDataHolderTest {
     private void testRoutingProperty() {
         testHandler(new TestTypeDescriptorHandler() {
             public void doWithSuper(SpaceTypeDescriptorBuilder builder) {
-                builder.routingProperty("prop1", SpaceIndexType.BASIC);
+                builder.routingProperty("prop1", SpaceIndexType.EQUAL);
             }
 
             public void doWithSub(SpaceTypeDescriptorBuilder builder) {
-                builder.routingProperty("prop2", SpaceIndexType.EXTENDED);
+                builder.routingProperty("prop2", SpaceIndexType.EQUAL_AND_ORDERED);
             }
         });
     }
@@ -87,11 +87,11 @@ public class SpaceTypeDescriptorDataHolderTest {
     private void testIdProperty() {
         testHandler(new TestTypeDescriptorHandler() {
             public void doWithSuper(SpaceTypeDescriptorBuilder builder) {
-                builder.idProperty("prop1", false, SpaceIndexType.BASIC);
+                builder.idProperty("prop1", false, SpaceIndexType.EQUAL);
             }
 
             public void doWithSub(SpaceTypeDescriptorBuilder builder) {
-                builder.idProperty("prop2", true, SpaceIndexType.EXTENDED);
+                builder.idProperty("prop2", true, SpaceIndexType.EQUAL_AND_ORDERED);
             }
         });
     }

@@ -142,7 +142,7 @@ abstract public class AbstractCassandraTest {
         for (Entry<String, Object> entry : document.getProperties().entrySet())
             builder.addFixedProperty(entry.getKey(), entry.getValue().getClass());
         for (String index : indexes)
-            builder.addPathIndex(index, SpaceIndexType.BASIC);
+            builder.addPathIndex(index, SpaceIndexType.EQUAL);
         builder.idProperty(key);
         return new MockIntroduceTypeData(builder.create());
     }
