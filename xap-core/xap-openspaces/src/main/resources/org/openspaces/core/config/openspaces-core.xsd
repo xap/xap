@@ -2857,7 +2857,31 @@
                         <xsd:element name="basic-index" minOccurs="0" maxOccurs="unbounded">
                             <xsd:annotation>
                                 <xsd:documentation>
-                                    Basic equality index definition.
+                                    Equality only index definition.
+                                </xsd:documentation>
+                            </xsd:annotation>
+                            <xsd:complexType>
+                                <xsd:attribute name="path" type="xsd:string" use="required">
+                                    <xsd:annotation>
+                                        <xsd:documentation>
+                                            The index path.
+                                        </xsd:documentation>
+                                    </xsd:annotation>
+                                </xsd:attribute>
+                                <xsd:attribute name="unique" type="xsd:boolean" use="optional">
+                                    <xsd:annotation>
+                                        <xsd:documentation>
+                                            The index unique indicator.
+                                        </xsd:documentation>
+                                    </xsd:annotation>
+                                </xsd:attribute>
+                            </xsd:complexType>
+                        </xsd:element>
+
+                        <xsd:element name="equal-index" minOccurs="0" maxOccurs="unbounded">
+                            <xsd:annotation>
+                                <xsd:documentation>
+                                    Equality only index definition.
                                 </xsd:documentation>
                             </xsd:annotation>
                             <xsd:complexType>
@@ -2881,7 +2905,55 @@
                         <xsd:element name="extended-index" minOccurs="0" maxOccurs="unbounded">
                             <xsd:annotation>
                                 <xsd:documentation>
-                                    Basic equality index definition.
+                                    Equal and ordered index definition.
+                                </xsd:documentation>
+                            </xsd:annotation>
+                            <xsd:complexType>
+                                <xsd:attribute name="path" type="xsd:string" use="required">
+                                    <xsd:annotation>
+                                        <xsd:documentation>
+                                            The index path.
+                                        </xsd:documentation>
+                                    </xsd:annotation>
+                                </xsd:attribute>
+                                <xsd:attribute name="unique" type="xsd:boolean" use="optional">
+                                    <xsd:annotation>
+                                        <xsd:documentation>
+                                            The index unique indicator.
+                                        </xsd:documentation>
+                                    </xsd:annotation>
+                                </xsd:attribute>
+                            </xsd:complexType>
+                        </xsd:element>
+
+                        <xsd:element name="equal-ordered-index" minOccurs="0" maxOccurs="unbounded">
+                            <xsd:annotation>
+                                <xsd:documentation>
+                                    Equal and ordered index definition.
+                                </xsd:documentation>
+                            </xsd:annotation>
+                            <xsd:complexType>
+                                <xsd:attribute name="path" type="xsd:string" use="required">
+                                    <xsd:annotation>
+                                        <xsd:documentation>
+                                            The index path.
+                                        </xsd:documentation>
+                                    </xsd:annotation>
+                                </xsd:attribute>
+                                <xsd:attribute name="unique" type="xsd:boolean" use="optional">
+                                    <xsd:annotation>
+                                        <xsd:documentation>
+                                            The index unique indicator.
+                                        </xsd:documentation>
+                                    </xsd:annotation>
+                                </xsd:attribute>
+                            </xsd:complexType>
+                        </xsd:element>
+
+                        <xsd:element name="ordered-index" minOccurs="0" maxOccurs="unbounded">
+                            <xsd:annotation>
+                                <xsd:documentation>
+                                    Ordered index definition.
                                 </xsd:documentation>
                             </xsd:annotation>
                             <xsd:complexType>

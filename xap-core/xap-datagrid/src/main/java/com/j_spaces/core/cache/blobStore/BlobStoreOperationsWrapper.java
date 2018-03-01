@@ -80,7 +80,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     public void initialize(BlobStoreConfig blobStoreConfig) {
         _registrator = blobStoreConfig.getMetricRegistrator();
         _blobStore.initialize(blobStoreConfig);
-        _isOffHeap = getProperties().getProperty("blobStoreHandler") != null && getProperties().getProperty("blobStoreHandler").equals("com.gigaspaces.blobstore.offheap.OffHeapBlobStoreHandler");
+        _isOffHeap = getProperties() != null && getProperties().getProperty("blobStoreHandler") != null && getProperties().getProperty("blobStoreHandler").equals("com.gigaspaces.blobstore.offheap.OffHeapBlobStoreHandler");
         registerOperations();
     }
 
