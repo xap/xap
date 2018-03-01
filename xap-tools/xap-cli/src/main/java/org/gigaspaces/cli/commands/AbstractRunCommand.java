@@ -64,45 +64,6 @@ public abstract class AbstractRunCommand extends CliCommand {
         System.out.println(message + "\n" + commandline + "\n");
     }
 
-    protected void executeProcesses(List<ProcessBuilder> processBuilders) throws InterruptedException {
-        final ExecutorService executorService = Executors.newCachedThreadPool();
-        final List<Future<Integer>> futures = new ArrayList<Future<Integer>>(processBuilders.size());
-
-        for (final ProcessBuilder processBuilder : processBuilders) {
-            futures.add(executorService.submit(new Callable<Integer>() {
-                @Override
-                public Integer call() throws Exception {
-                    Process process = processBuilder.start();
-                    try {
-                        process.waitFor();
-                        System.exit(process.exitValue());
-                    } catch (InterruptedException e) {
-                        process.destroy();
-                    }
-                    return process.exitValue();
-                }
-            }));
-        }
-
-        addShutdownHookToKillSubProcessesOnExit(futures);
-        executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-    }
-
-    private void addShutdownHookToKillSubProcessesOnExit(final List<Future<Integer>> futures) {
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                for (Future<Integer> future : futures) {
-                    future.cancel(true);
-                    try {
-                        future.get();
-                    } catch (Exception e) {
-                    } //ignore
-                }
-            }
-        });
-    }
-
     protected boolean containsInstance(String[] instances, String instance) {
         for (String s : instances) {
             if (s.equals(instance))

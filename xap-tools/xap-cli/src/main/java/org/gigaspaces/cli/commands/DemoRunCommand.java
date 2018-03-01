@@ -1,5 +1,7 @@
 package org.gigaspaces.cli.commands;
 
+import org.gigaspaces.cli.commands.utils.XapCliUtils;
+
 import picocli.CommandLine.Command;
 
 import java.util.ArrayList;
@@ -23,7 +25,7 @@ public class DemoRunCommand extends AbstractRunCommand {
         processBuilders.add(SpaceRunCommand.buildPartitionedBackupSpaceCommand(1, "demo-space", true, 2));
         processBuilders.add(SpaceRunCommand.buildPartitionedSpaceCommand(2, "demo-space", true, 2));
         processBuilders.add(SpaceRunCommand.buildPartitionedBackupSpaceCommand(2, "demo-space", true, 2));
-        executeProcesses(processBuilders);
+        XapCliUtils.executeProcesses(processBuilders);
 
     }
 }

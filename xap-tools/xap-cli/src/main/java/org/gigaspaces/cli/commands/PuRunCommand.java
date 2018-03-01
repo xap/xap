@@ -1,5 +1,7 @@
 package org.gigaspaces.cli.commands;
 
+import org.gigaspaces.cli.commands.utils.XapCliUtils;
+
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -56,7 +58,7 @@ public class PuRunCommand extends AbstractRunCommand {
                 }
             }
         }
-        executeProcesses(processBuilders);
+        XapCliUtils.executeProcesses(processBuilders);
     }
 
     private ProcessBuilder buildSinglePuCommand(){
