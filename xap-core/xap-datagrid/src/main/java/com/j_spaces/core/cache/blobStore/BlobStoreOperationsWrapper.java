@@ -101,7 +101,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
         }
         if (_needSerialization) {
             byte[] sdata = _serialization.serialize(data, objectType);
-            return _isOffHeap ? _blobStore.add(offHeapInfo, sdata, objectType) : _blobStore.add(id, data, objectType);
+            return _isOffHeap ? _blobStore.add(offHeapInfo, sdata, objectType) : _blobStore.add(id, sdata, objectType);
         } else
             return _isOffHeap ? _blobStore.add(offHeapInfo, data, objectType) : _blobStore.add(id, data, objectType);
     }
