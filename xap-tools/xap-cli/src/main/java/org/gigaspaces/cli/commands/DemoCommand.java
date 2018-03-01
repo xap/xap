@@ -1,5 +1,6 @@
 package org.gigaspaces.cli.commands;
 
+import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.commands.utils.XapCliUtils;
 
 import picocli.CommandLine.Command;
@@ -12,7 +13,7 @@ import java.util.List;
  * @author Rotem Herzberg
  */
 @Command(name = "demo", headerHeading = XapMainCommand.HEADER, header = "Runs a demo Partitioned Space with two partitions and backups")
-public class DemoCommand {
+public class DemoCommand extends CliCommand {
 
     private final String SPACE_NAME = "demo-space";
     private final boolean HA = true;
@@ -20,6 +21,7 @@ public class DemoCommand {
 
     //xap space run --partitions=2 --lus --ha demo-space
     // xap demo ^
+    @Override
     protected void execute() throws Exception {
 
         final List<ProcessBuilder> processBuilders = new ArrayList<ProcessBuilder>();
