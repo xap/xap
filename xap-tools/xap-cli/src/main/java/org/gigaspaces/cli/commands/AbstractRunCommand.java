@@ -24,7 +24,7 @@ public abstract class AbstractRunCommand extends CliCommand {
         }
     }
 
-    protected ProcessBuilder buildStartLookupServiceCommand() {
+    public static ProcessBuilder buildStartLookupServiceCommand() {
         final ProcessBuilder pb = createJavaProcessBuilder();
 
         Collection<String> commands = new LinkedHashSet<String>();
