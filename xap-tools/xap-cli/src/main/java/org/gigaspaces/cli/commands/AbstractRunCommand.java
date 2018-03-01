@@ -61,7 +61,7 @@ public abstract class AbstractRunCommand extends CliCommand {
         if (commandline.length()>2) {
             commandline = commandline.substring(1, commandline.length() - 1);
         }
-        System.out.println(message + "\n" + commandline + "\n");
+        LOGGER.fine(message + "\n" + commandline + "\n");
     }
 
     protected boolean containsInstance(String[] instances, String instance) {
