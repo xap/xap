@@ -20,11 +20,11 @@ Created embedded data-grid: myDataGrid
 write - &#39;Hello&#39;
 write - &#39;World!&#39;
 read - [&#39;Hello&#39;, &#39;World!&#39;]
-</code></p><p><img src="images/embedded.png" alt="helloworld-1" /></p><h2>Running the Example - Remote</h2><p>To connect to a <em>remote</em> data-grid, first use the <code>space-instance.{sh,bat}</code> script to launch a data-grid.</p><p>From the ${XAP_HOME}/bin directory, run:</p>
+</code></p><p><img src="images/embedded.png" alt="helloworld-1" /></p><h2>Running the Example - Remote</h2><p>To connect to a <em>remote</em> data-grid, first use the <code>xap space run</code> script to launch a data-grid.</p><p>From the ${XAP_HOME}/bin directory, run:</p>
 <ul>
-  <li>./space-instance.sh <code>-name</code> myDataGrid</li>
+  <li>./xap space run <code>--lus</code> myDataGrid</li>
 </ul><p>Import Maven <code>examples/hello-world/pom.xml</code> into your IDE of choice as a maven project. Launch the <code>HelloWorld</code> main (arguments: <code>-name</code> myDataGrid <code>-mode</code> remote)</p>
-<blockquote><p>use <code>myDataGrid</code> same as the <code>-name</code> argument passed to <code>space-instance.{sh.bat}</code></p>
+<blockquote><p>use <code>myDataGrid</code> same as the <code>-name</code> argument passed to <code>xap space run</code></p>
 </blockquote><h3>output</h3><p><code>
 Connected to remote data-grid: myDataGrid
 write - &#39;Hello&#39;
@@ -32,12 +32,12 @@ write - &#39;World!&#39;
 read - [&#39;Hello&#39;, &#39;World!&#39;]
 </code></p><p><img src="images/remote.png" alt="helloworld-1r" /></p><h2>Running the Example - Remote (with 2 partitions)</h2><p>Each partition instance is loaded separately, as follows:</p>
 <ol>
-  <li>Specify <code>total_members=2</code> for two partitions</li>
-  <li>Specify <code>id=1</code> or <code>id=2</code> for each partition instance</li>
+  <li>Specify <code>--partitions=2</code> for two partitions</li>
+  <li>Specify <code>--instances=1_1</code> or <code>--instances=2_1</code> for each partition instance</li>
 </ol><p>From the ${XAP_HOME}/bin directory, run:</p>
 <ul>
-  <li>./space-instance.sh <code>-name</code> myDataGrid <code>-cluster</code> schema=partitioned total_members=2 <strong>id=1</strong></li>
-  <li>./space-instance.sh <code>-name</code> myDataGrid <code>-cluster</code> schema=partitioned total_members=2 <strong>id=2</strong></li>
+  <li>./xap space run <code>--lus --partitions=2</code><strong>--instances=1_1</strong> myDataGrid</li>
+  <li>./xap space run <code>--lus --partitions=2</code><strong>--instances=2_1</strong> myDataGrid</li>
 </ul><p>This will simulate a data-grid of 2 partitioned instances (without backups).</p><p>Import Maven <code>examples/hello-world/pom.xml</code> into your IDE of choice as a maven project. Launch the <code>HelloWorld</code> main (arguments: <code>-name</code> myDataGrid <code>-mode</code> remote)</p><h3>output</h3><p><code>
 Connected to remote data-grid: myDataGrid
 write - &#39;Hello&#39;
@@ -45,16 +45,16 @@ write - &#39;World!&#39;
 read - [&#39;Hello&#39;, &#39;World!&#39;]
 </code></p><p><img src="images/partitioned.png" alt="helloworld-2" /></p><h2>Running the Example - Remote (with backups for each partition)</h2><p>Each partition instance can be assigned a backup, as follows:</p>
 <ol>
-  <li>Specify <code>total_members=2,1</code> for two partitions, each with a single backup.</li>
-  <li>Specify <code>backup_id=1</code> to load the backup instance of partition id=1 or id=2</li>
+  <li>Specify <code>--partitions=2</code> for two partitions, <code>--ha</code> for high availability meaning a single backup for each partition.</li>
+  <li>Specify <code>--instances=1_1</code> to load primary of partition id=1, <code>--instances=1_2</code> to load the backup instance of partition id=1
 </ol><p><strong>First partition:</strong></p>
 <ul>
-  <li>./space-instance.sh <code>-name</code> myDataGrid <code>-cluster</code> schema=partitioned total_members=2,1 id=1</li>
-  <li>./space-instance.sh <code>-name</code> myDataGrid <code>-cluster</code> schema=partitioned total_members=2,1 id=1 <strong>backup_id=1</strong></li>
+  <li>./xap space run <code>--lus --partitions=2 --ha</code><strong>--instances=1_1</strong> myDataGrid</li>
+  <li>./xap space run <code>--lus --partitions=2 --ha</code><strong>--instances=1_2</strong> myDataGrid</li>
 </ul><p><strong>Second partition:</strong></p>
 <ul>
-  <li>./space-instance.sh <code>-name</code> myDataGrid <code>-cluster</code> schema=partitioned total_members=2,1 id=2</li>
-  <li>./space-instance.sh <code>-name</code> myDataGrid <code>-cluster</code> schema=partitioned total_members=2,1 id=2 <strong>backup_id=1</strong></li>
+    <li>./xap space run <code>--lus --partitions=2 --ha</code><strong>--instances=2_1</strong> myDataGrid</li>
+    <li>./xap space run <code>--lus --partitions=2 --ha</code><strong>--instances=2_2</strong> myDataGrid</li>
 </ul><p>The Example should be run in the same manner as before - Launch the <code>HelloWorld</code> (arguments: <code>-name</code> myDataGrid <code>-mode</code> remote).</p><h3>output</h3><p><code>
 Connected to remote data-grid: myDataGrid
 write - &#39;Hello&#39;

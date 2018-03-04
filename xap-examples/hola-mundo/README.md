@@ -146,15 +146,15 @@ Each partition instance can configured as follows:
 
 Use Maven to compile and package the example (e.g. `mvn clean package`).
 
-This will create the processing unit jars that can be referenced by `pu-instance.{sh,bat}`
+This will create the processing unit jars that can be referenced by `xap pu run`
 
 From the ${XAP_HOME}/bin directory, run:
 
-- ./pu-instance.sh -path ../examples/hola-mundo/translator/target/hola-mundo-translator.jar
-- ./pu-instance.sh -path ../examples/hola-mundo/feeder/target/hola-mundo-feeder.jar
+- ./xap pu run --lus ../examples/hola-mundo/translator/target/hola-mundo-translator.jar
+- ./xap pu run --lus ../examples/hola-mundo/feeder/target/hola-mundo-feeder.jar
 
 This will run the translator (as a single data-grid) and the feeder.
 
 To start a partitioned translator (data-grid of 2 partitions), add the -cluster arguments: 
 
-- ./pu-instance.sh -path ../examples/hola-mundo/translator/target/hola-mundo-translator.jar -cluster schema=partitioned total_members=2,0
+- ./xap pu run --lus --partitions=2 ../examples/hola-mundo/translator/target/hola-mundo-translator.jar
