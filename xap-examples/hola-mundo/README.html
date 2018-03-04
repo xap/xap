@@ -50,11 +50,11 @@ translated - World! to Mundo!
  first partition backup:  -cluster schema=partitioned total_members=2,1 id=1 backup_id=1
  second partition:        -cluster schema=partitioned total_members=2,1 id=2
  second partition backup: -cluster schema=partitioned total_members=2,1 id=2 backup_id=1
-</code></pre><h2>Running the example from the command line</h2><p>Use Maven to compile and package the example (e.g. <code>mvn clean package</code>).</p><p>This will create the processing unit jars that can be referenced by <code>pu-instance.{sh,bat}</code></p><p>From the ${XAP_HOME}/bin directory, run:</p>
+</code></pre><h2>Running the example from the command line</h2><p>Use Maven to compile and package the example (e.g. <code>mvn clean package</code>).</p><p>This will create the processing unit jars that can be referenced by <code>xap pu run</code></p><p>From the ${XAP_HOME}/bin directory, run:</p>
 <ul>
-  <li>./pu-instance.sh -path ../examples/hola-mundo/translator/target/hola-mundo-translator.jar</li>
-  <li>./pu-instance.sh -path ../examples/hola-mundo/feeder/target/hola-mundo-feeder.jar</li>
+  <li>./xap pu run --lus ../examples/hola-mundo/translator/target/hola-mundo-translator.jar</li>
+  <li>./xap pu run --lus ../examples/hola-mundo/feeder/target/hola-mundo-feeder.jar</li>
 </ul><p>This will run the translator (as a single data-grid) and the feeder.</p><p>To start a partitioned translator (data-grid of 2 partitions), add the -cluster arguments: </p>
 <ul>
-  <li>./pu-instance.sh -path ../examples/hola-mundo/translator/target/hola-mundo-translator.jar -cluster schema=partitioned total_members=2,0</li>
+  <li>./xap pu run --lus --partitions=2 ../examples/hola-mundo/translator/target/hola-mundo-translator.jar -cluster schema=partitioned total_members=2,0</li>
 </ul></div></body></html>
