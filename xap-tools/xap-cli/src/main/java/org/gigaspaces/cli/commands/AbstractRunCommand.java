@@ -41,9 +41,7 @@ public abstract class AbstractRunCommand extends CliCommand {
     }
 
     public static ProcessBuilder createJavaProcessBuilder() {
-        final String scriptHome = SystemInfo.singleton().locations().bin();
         ProcessBuilder processBuilder = new ProcessBuilder(System.getenv("JAVACMD"));
-        processBuilder.directory(new File(scriptHome));
         processBuilder.inheritIO();
         return processBuilder;
     }
