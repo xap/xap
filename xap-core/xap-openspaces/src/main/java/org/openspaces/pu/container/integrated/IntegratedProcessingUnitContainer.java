@@ -115,7 +115,7 @@ public class IntegratedProcessingUnitContainer extends ApplicationContextProcess
     public static void main(String[] args) throws Exception {
         GSLogConfigLoader.getLoader();
 
-        //when calling with space-instance script, and no arguments were passed, we concatenate --help
+        //when calling with xap space run, and no arguments were passed, we concatenate --help
         //IntegratedProcessingUnitContainer can also run without arguments and load pu.xml
         showUsageOptionsOnHelpCommand(args);
 
