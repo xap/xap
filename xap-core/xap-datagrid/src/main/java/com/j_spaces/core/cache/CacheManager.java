@@ -222,6 +222,8 @@ public class CacheManager extends AbstractCacheManager
     //TEMP FOR QA
     private boolean _blobStoreForQa;
 
+    private final boolean _forceSpaceIdIndexIfEqual;
+
 
     public static final int MIN_SIZE_TO_PERFORM_EXPLICIT_PROPERTIES_INDEX_SCAN_ = 5;
 
@@ -247,6 +249,9 @@ public class CacheManager extends AbstractCacheManager
         numNonNotifyFifoThreads = numNonNotifyFifoThreads != 0 ? numNonNotifyFifoThreads : Runtime.getRuntime().availableProcessors();
 
         _fifoBackgroundDispatcher = new DefaultFifoBackgroundDispatcher(numNotifyFifoThreads, numNonNotifyFifoThreads, this, _engine);
+
+        _forceSpaceIdIndexIfEqual = engine.getConfigReader().getBooleanSpaceProperty(
+                Constants.CacheManager.CACHE_MANAGER_FORCE_ID_INDEX_PROP, "false");
 
         // indicators which return the type of StorageAdapter this instance represents.
         boolean isCacheExternalDB = sa.supportsExternalDB();
@@ -3225,6 +3230,10 @@ public class CacheManager extends AbstractCacheManager
             if (newEntry)
                 entryHolder.setunStable(false);
         }
+    }
+
+    public boolean forceSpaceIdIndexIfEqual() {
+        return _forceSpaceIdIndexIfEqual;
     }
 
     /**

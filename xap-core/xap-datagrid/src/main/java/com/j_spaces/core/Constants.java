@@ -751,8 +751,7 @@ public interface Constants {
         String CACHE_MANAGER_SYNC_LIST_MAX_SIZE_IN_MEMORY_PROP = "engine.sync_list_max_size_in_memory";
         String FULL_CACHE_MANAGER_SYNC_LIST_MAX_SIZE_IN_MEMORY_PROP = SPACE_CONFIG_PREFIX + CACHE_MANAGER_SYNC_LIST_MAX_SIZE_IN_MEMORY_PROP;
 
-        String CACHE_MANAGER_EXPLICIT_ID_INDEX_PROP = "engine.cache.explicit-equal-id-index";
-        String FULL_CACHE_MANAGER_MANAGER_EXPLICIT_ID_INDEX_PROP = SPACE_CONFIG_PREFIX + CACHE_MANAGER_EXPLICIT_ID_INDEX_PROP;
+        String CACHE_MANAGER_FORCE_ID_INDEX_PROP = "engine.cache.force-space-id-index-if-equal";
 
         String CACHE_MANAGER_BLOBSTORE_OFFHEAP_ENABLED_PROP = "engine.blobstore.offheap.enabled";
         String CACHE_MANAGER_BLOBSTORE_OFFHEAP_MAXSIZE_PROP = "engine.blobstore.offheap.max_memory_size";

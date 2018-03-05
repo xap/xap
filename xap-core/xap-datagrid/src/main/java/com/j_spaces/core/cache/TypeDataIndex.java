@@ -56,15 +56,12 @@ import java.util.logging.Logger;
 
 @com.gigaspaces.api.InternalApi
 public class TypeDataIndex<K> {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private final Logger _logger;
 
     //a dummy ref for failed index used under xtn
     public static IEntryCacheInfo _DummyOI = EntryCacheInfoFactory.createEntryCacheInfo(null);
 
     private static final boolean _indexesBackrefsForBlobStoreData = true;
-
-    private final boolean _disableIndexingIdProperty;
-
 
     //the percentage of unique values- above it we try "put" of raw value first
     private static final int UNIQUE_VALUE_TRY_THRESHOLD = 40;
@@ -156,6 +153,7 @@ public class TypeDataIndex<K> {
     }
 
     public TypeDataIndex(CacheManager cacheManager, ISpaceIndex index, int pos, boolean useEconomyHashmap, int indexCreationNumber, Class<?> valueClass, ISpaceIndex.FifoGroupsIndexTypes fifoGroupsIndexType) {
+        this._logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE + "." + cacheManager.getEngine().getSpaceImpl().getNodeName());
         _cacheManager = cacheManager;
         _useEconomyHashMap = useEconomyHashmap;
         _indexCreationNumber = indexCreationNumber;
@@ -163,8 +161,6 @@ public class TypeDataIndex<K> {
         this._position = pos;
         this._indexType = index.getIndexType();
         _thinExtendedIndex = _indexType == SpaceIndexType.ORDERED ;
-        _disableIndexingIdProperty = cacheManager.getEngine().getConfigReader().getBooleanSpaceProperty(
-                Constants.CacheManager.CACHE_MANAGER_EXPLICIT_ID_INDEX_PROP, "false");
         _indexDefinition = index;
         _unique = index.isUnique();
         int numOfCHMSegents = Integer.getInteger(SystemProperties.CACHE_MANAGER_HASHMAP_SEGMENTS, SystemProperties.CACHE_MANAGER_HASHMAP_SEGMENTS_DEFAULT);
@@ -312,10 +308,6 @@ public class TypeDataIndex<K> {
 
     public boolean disableIndexUsageForOperation(TypeData typeData, int inputIndexCreationNumber) {
         return (inputIndexCreationNumber < getIndexCreationNumber() || typeData.disableIdIndexForEntries(this));
-    }
-
-    public boolean disableIndexingIdProperty() {
-        return _disableIndexingIdProperty;
     }
 
     /* (non-Javadoc)
