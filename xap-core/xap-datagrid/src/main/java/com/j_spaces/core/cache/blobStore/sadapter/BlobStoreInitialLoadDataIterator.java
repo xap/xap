@@ -25,7 +25,6 @@ import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.EntryCacheInfoFactory;
 import com.j_spaces.core.cache.blobStore.BlobStoreEntryLayout;
 import com.j_spaces.core.cache.blobStore.IBlobStoreEntryHolder;
-import com.j_spaces.core.cache.blobStore.optimizations.OffHeapIndexesValuesHandler;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 
@@ -64,10 +63,9 @@ public class BlobStoreInitialLoadDataIterator implements ISAdapterIterator<IEntr
         EntryCacheInfoFactory.createBlobStoreEntryCacheInfo(eh);
         IBlobStoreEntryHolder oeh = (IBlobStoreEntryHolder) eh;
         oeh.getBlobStoreResidentPart().setBlobStorePosition(res.getPosition());
-        if (_engine.getMemoryManager().getOffHeapMemoryManager().isEnabled()) {
+        if (_engine.getCacheManager().hasBlobStoreOffHeapCache()) {
             try {
-                long offHeapAddress = OffHeapIndexesValuesHandler.allocate(entryLayout.getIndexValuesBytes(_engine.getCacheManager()), oeh.getBlobStoreResidentPart().getOffHeapAddress(),_engine.getCacheManager().getBlobStoreInternalCache().getOffHeapByteCounter(), eh.getServerTypeDesc().getOffHeapTypeCounter());
-                oeh.getBlobStoreResidentPart().setOffHeapAddress(offHeapAddress);
+                _engine.getCacheManager().getBlobStoreStorageHandler().getOffHeapCache().allocateAndWrite(oeh.getBlobStoreResidentPart(), entryLayout.getIndexValuesBytes(_engine.getCacheManager()), false);
             } catch (IOException e) {
                 CacheManager.getLogger().severe("Blobstore- BLRECI:BlobStoreInitialLoadDataIterator.next got execption" + e.toString() + e.getStackTrace());
                 throw new RuntimeException("Blobstore- BLRECI:BlobStoreInitialLoadDataIterator.next got execption" + e.toString() + e.getStackTrace());

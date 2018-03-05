@@ -18,15 +18,25 @@
 package com.gigaspaces.server.blobstore;
 
 
+import com.j_spaces.core.cache.blobStore.IBlobStoreOffHeapInfo;
+
 @com.gigaspaces.api.InternalApi
 public class BlobStoreReplaceBulkOperationResult extends BlobStoreBulkOperationResult {
 
-    public BlobStoreReplaceBulkOperationResult(java.io.Serializable id, Object position) {
+    private IBlobStoreOffHeapInfo offHeapInfo;
+
+    public BlobStoreReplaceBulkOperationResult(java.io.Serializable id, Object position, IBlobStoreOffHeapInfo offHeapInfo) {
         super(BlobStoreBulkOperationType.REPLACE, id, null, position);
+        this.offHeapInfo = offHeapInfo;
     }
 
     public BlobStoreReplaceBulkOperationResult(java.io.Serializable id, Throwable exception) {
         super(BlobStoreBulkOperationType.REPLACE, id, exception);
+    }
+
+    @Override
+    public IBlobStoreOffHeapInfo getOffHeapInfo() {
+        return offHeapInfo;
     }
 }
 

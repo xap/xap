@@ -29,8 +29,6 @@ import com.gigaspaces.server.blobstore.BlobStoreAddBulkOperationRequest;
 import com.j_spaces.core.SpaceOperations;
 import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.IEntryCacheInfo;
-import com.j_spaces.core.cache.blobStore.BlobStoreEntryLayout;
-import com.j_spaces.core.cache.blobStore.optimizations.OffHeapIndexesValuesHandler;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.blobStore.BlobStoreRefEntryCacheInfo;
 import com.j_spaces.core.cache.blobStore.errors.BlobStoreErrorBulkEntryInfo;

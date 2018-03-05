@@ -17,6 +17,8 @@
 package com.gigaspaces.server.blobstore;
 
 
+import com.j_spaces.core.cache.blobStore.IBlobStoreOffHeapInfo;
+
 /*******************************************************************************
  * Copyright (c) 2010 GigaSpaces Technologies Ltd. All rights reserved
  *
@@ -29,12 +31,20 @@ package com.gigaspaces.server.blobstore;
 @com.gigaspaces.api.InternalApi
 public class BlobStoreGetBulkOperationResult extends BlobStoreBulkOperationResult {
 
-    public BlobStoreGetBulkOperationResult(java.io.Serializable id, java.io.Serializable data, Object position) {
+    private IBlobStoreOffHeapInfo offHeapInfo;
+
+    public BlobStoreGetBulkOperationResult(java.io.Serializable id, java.io.Serializable data, Object position, IBlobStoreOffHeapInfo offHeapInfo) {
         super(BlobStoreBulkOperationType.GET, id, data, position);
+        this.offHeapInfo = offHeapInfo;
     }
 
     public BlobStoreGetBulkOperationResult(java.io.Serializable id, Throwable exception) {
         super(BlobStoreBulkOperationType.GET, id, exception);
+    }
+
+    @Override
+    public IBlobStoreOffHeapInfo getOffHeapInfo() {
+        return offHeapInfo;
     }
 }
 

@@ -32,6 +32,8 @@ public class UnsafeHolder {
 
     private static final Unsafe _unsafe = initUnsafe();
 
+    public static final long BYTE_ARR_OFF = _unsafe != null ? _unsafe.arrayBaseOffset(byte[].class) : 0;
+
     private static Unsafe initUnsafe() {
         try {
             Field field = Unsafe.class.getDeclaredField("theUnsafe");
@@ -77,5 +79,33 @@ public class UnsafeHolder {
 
     public static boolean compareAndSwapLong(Object instance, long offset, long expected, long newValue) {
         return _unsafe.compareAndSwapLong(instance, offset, expected, newValue);
+    }
+
+    public static long allocateMemory(long size) {
+        return _unsafe.allocateMemory(size);
+    }
+
+    public static long reallocateMemory(long oldAddress, long size) {
+        return _unsafe.reallocateMemory(oldAddress, size);
+    }
+
+    public static void copyByteArrayToMemory(byte[] data, long address, int length) {
+        _unsafe.copyMemory(data, BYTE_ARR_OFF, null, address, length);
+    }
+
+    public static void copyByteArrayFromMemory(byte[] destination, long address, int length) {
+        _unsafe.copyMemory(null, address, destination, BYTE_ARR_OFF, length);
+    }
+
+    public static void freeFromMemory(long address) {
+        _unsafe.freeMemory(address);
+    }
+
+    public static void putByte(long address, byte b) {
+        _unsafe.putByte(address, b);
+    }
+
+    public static int getByte(long address) {
+        return _unsafe.getByte(address);
     }
 }

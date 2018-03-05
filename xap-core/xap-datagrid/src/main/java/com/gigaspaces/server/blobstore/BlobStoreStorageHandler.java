@@ -127,13 +127,13 @@ public abstract class BlobStoreStorageHandler {
                 }
             } else if (request.getOpType() == BlobStoreBulkOperationType.REPLACE) {
                 try {
-                    result.add(new BlobStoreReplaceBulkOperationResult(request.getId(), replace(request.getId(), request.getData(), request.getPosition(), objectType)));
+                    result.add(new BlobStoreReplaceBulkOperationResult(request.getId(), replace(request.getId(), request.getData(), request.getPosition(), objectType), request.getOffHeapInfo()));
                 } catch (Exception ex) {
                     result.add(new BlobStoreReplaceBulkOperationResult(request.getId(), ex));
                 }
             } else if (request.getOpType() == BlobStoreBulkOperationType.GET) {
                 try {
-                    result.add(new BlobStoreGetBulkOperationResult(request.getId(), get(request.getId(), request.getPosition(), objectType), request.getPosition()));
+                    result.add(new BlobStoreGetBulkOperationResult(request.getId(), get(request.getId(), request.getPosition(), objectType), request.getPosition(), request.getOffHeapInfo()));
                 } catch (Exception ex) {
                     result.add(new BlobStoreGetBulkOperationResult(request.getId(), ex));
                 }

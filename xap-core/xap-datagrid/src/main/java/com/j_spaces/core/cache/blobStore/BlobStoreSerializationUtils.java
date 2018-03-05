@@ -91,15 +91,15 @@ public class BlobStoreSerializationUtils {
         }
     }
 
-    public Serializable deserialize(Serializable input, BlobStoreObjectType objectType, boolean initialLoad,  boolean onlyIndexedPart) {
+    public Serializable deserialize(Serializable input, BlobStoreObjectType objectType, boolean initialLoad,  boolean onlyIndexedPart, IBlobStoreOffHeapInfo offHeapInfo) {
         if (input == null) {
             throw new IllegalArgumentException("input must not be null");
         }
-        return deserialize((byte[]) input, objectType, initialLoad, onlyIndexedPart);
+        return deserialize((byte[]) input, objectType, initialLoad, onlyIndexedPart, offHeapInfo);
     }
 
 
-    private Serializable deserialize(InputStream inputStream, BlobStoreObjectType objectType, boolean initialLoad, boolean onlyIndexedPart) {
+    private Serializable deserialize(InputStream inputStream, BlobStoreObjectType objectType, boolean initialLoad, boolean onlyIndexedPart, IBlobStoreOffHeapInfo offHeapInfo) {
         if (inputStream == null) {
             throw new IllegalArgumentException("The InputStream must not be null");
         }
@@ -112,7 +112,7 @@ public class BlobStoreSerializationUtils {
             }
             {//BlobStoreObjectType.DATA
                 BlobStoreEntryLayout el = new BlobStoreEntryLayout();
-                el.readExternal(in, _cacheManager, initialLoad, onlyIndexedPart);
+                el.readExternal(in, _cacheManager, initialLoad, onlyIndexedPart, offHeapInfo);
                 return el;
             }
 
@@ -133,9 +133,9 @@ public class BlobStoreSerializationUtils {
         }
     }
 
-    private Serializable deserialize(byte[] objectData, BlobStoreObjectType objectType, boolean initialLoad, boolean onlyIndexedPart) {
+    private Serializable deserialize(byte[] objectData, BlobStoreObjectType objectType, boolean initialLoad, boolean onlyIndexedPart, IBlobStoreOffHeapInfo offHeapInfo) {
         ByteArrayInputStream bais = new ByteArrayInputStream(objectData);
-        return deserialize(bais, objectType, initialLoad, onlyIndexedPart);
+        return deserialize(bais, objectType, initialLoad, onlyIndexedPart, offHeapInfo);
     }
 
 

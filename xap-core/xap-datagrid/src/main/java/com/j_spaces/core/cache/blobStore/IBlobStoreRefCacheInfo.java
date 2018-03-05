@@ -18,11 +18,10 @@
 package com.j_spaces.core.cache.blobStore;
 
 import com.gigaspaces.internal.server.storage.IEntryHolder;
-import com.gigaspaces.metrics.LongCounter;
 import com.j_spaces.core.cache.CacheManager;
+import com.j_spaces.core.cache.blobStore.offheap.OffHeapMemoryPool;
 import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.context.Context;
-import com.j_spaces.core.cache.CacheOperationReason;
 
 /**
  * The resident part of entry that resides off-heap (SSD)
@@ -85,5 +84,5 @@ public interface IBlobStoreRefCacheInfo {
 
     void setMatchCacheFilter(IBlobStoreCacheHandler blobStoreCacheHandler, boolean val);
 
-    void freeOffHeap(LongCounter byteCounter);
+    void freeOffHeap(CacheManager cacheManager, OffHeapMemoryPool offHeapMemoryPool);
 }

@@ -11,5 +11,7 @@ public interface IBlobStoreOffHeapInfo extends Serializable{
     void setOffHeapAddress(long address);
 
     long getOffHeapAddress();
+
+    String getTypeName();
 }
 

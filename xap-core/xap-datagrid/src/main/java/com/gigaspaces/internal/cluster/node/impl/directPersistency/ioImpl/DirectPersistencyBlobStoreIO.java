@@ -73,7 +73,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public void insert(IDirectPersistencyOpInfo entry) {
         try {
-            _cacheManager.getBlobStoreStorageHandler().add(null, getOpInfoStorageKey(entry.getGenerationId(), entry.getSequenceNumber()), entry, BlobStoreObjectType.SYNC);
+            _cacheManager.getBlobStoreStorageHandler().add(getOpInfoStorageKey(entry.getGenerationId(), entry.getSequenceNumber()), entry, BlobStoreObjectType.SYNC, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add got exception: " + ex);
             throw ex;
@@ -84,7 +84,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public void remove(IDirectPersistencyOpInfo entry) {
         try {
-            _cacheManager.getBlobStoreStorageHandler().remove(null, getOpInfoStorageKey(entry.getGenerationId(), entry.getSequenceNumber()), null, BlobStoreObjectType.SYNC);
+            _cacheManager.getBlobStoreStorageHandler().remove(getOpInfoStorageKey(entry.getGenerationId(), entry.getSequenceNumber()), null, BlobStoreObjectType.SYNC, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::remove got exception: " + ex);
             throw ex;
@@ -95,7 +95,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public void update(IDirectPersistencyOpInfo entry) {
         try {
-            _cacheManager.getBlobStoreStorageHandler().replace(null, getOpInfoStorageKey(entry.getGenerationId(), entry.getSequenceNumber()), entry, null, BlobStoreObjectType.SYNC);
+            _cacheManager.getBlobStoreStorageHandler().replace(getOpInfoStorageKey(entry.getGenerationId(), entry.getSequenceNumber()), entry, null, BlobStoreObjectType.SYNC, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace got exception: " + ex);
             throw ex;
@@ -105,7 +105,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public IDirectPersistencyOpInfo get(long getGenerationId, long sequenceNumber) {
         try {
-            return (IDirectPersistencyOpInfo) _cacheManager.getBlobStoreStorageHandler().get(null, getOpInfoStorageKey(getGenerationId, sequenceNumber), null, BlobStoreObjectType.SYNC);
+            return (IDirectPersistencyOpInfo) _cacheManager.getBlobStoreStorageHandler().get( getOpInfoStorageKey(getGenerationId, sequenceNumber), null, BlobStoreObjectType.SYNC, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::get exception: " + ex);
             throw ex;
@@ -132,7 +132,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public void insert(DirectPersistencyOverflowListSegment segment) {
         try {
-            _cacheManager.getBlobStoreStorageHandler().add(null, getOverflowSegmentStorageKey(segment.getGenerationId(), segment.getSequenceNumber()), segment, BlobStoreObjectType.SYNC_OVERFLOW);
+            _cacheManager.getBlobStoreStorageHandler().add(getOverflowSegmentStorageKey(segment.getGenerationId(), segment.getSequenceNumber()), segment, BlobStoreObjectType.SYNC_OVERFLOW, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add-OVF got exception: " + ex);
             throw ex;
@@ -142,7 +142,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public void remove(DirectPersistencyOverflowListSegment segment) {
         try {
-            _cacheManager.getBlobStoreStorageHandler().remove(null, getOverflowSegmentStorageKey(segment.getGenerationId(), segment.getSequenceNumber()), null, BlobStoreObjectType.SYNC_OVERFLOW);
+            _cacheManager.getBlobStoreStorageHandler().remove(getOverflowSegmentStorageKey(segment.getGenerationId(), segment.getSequenceNumber()), null, BlobStoreObjectType.SYNC_OVERFLOW, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::remove-OVF got exception: " + ex);
             throw ex;
@@ -152,7 +152,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public void update(DirectPersistencyOverflowListSegment segment) {
         try {
-            _cacheManager.getBlobStoreStorageHandler().replace(null, getOverflowSegmentStorageKey(segment.getGenerationId(), segment.getSequenceNumber()), segment, null, BlobStoreObjectType.SYNC_OVERFLOW);
+            _cacheManager.getBlobStoreStorageHandler().replace(getOverflowSegmentStorageKey(segment.getGenerationId(), segment.getSequenceNumber()), segment, null, BlobStoreObjectType.SYNC_OVERFLOW, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace_OVF got exception: " + ex);
             throw ex;
@@ -162,7 +162,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public DirectPersistencyOverflowListSegment getOverflowSegment(long generationId, long seq) {
         try {
-            return (DirectPersistencyOverflowListSegment) _cacheManager.getBlobStoreStorageHandler().get(null, getOverflowSegmentStorageKey(generationId, seq), null, BlobStoreObjectType.SYNC_OVERFLOW);
+            return (DirectPersistencyOverflowListSegment) _cacheManager.getBlobStoreStorageHandler().get(getOverflowSegmentStorageKey(generationId, seq), null, BlobStoreObjectType.SYNC_OVERFLOW, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::getOverflowSegment exception: " + ex);
             throw ex;
@@ -189,7 +189,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public void insert(DirectPersistencySyncAdminInfo ai) {
         try {
-            _cacheManager.getBlobStoreStorageHandler().add(null, DirectPersistencySyncAdminInfo.getStorageKey(), ai, BlobStoreObjectType.ADMIN);
+            _cacheManager.getBlobStoreStorageHandler().add(DirectPersistencySyncAdminInfo.getStorageKey(), ai, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add-syncadmin got exception: " + ex);
             throw ex;
@@ -200,7 +200,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public void update(DirectPersistencySyncAdminInfo ai) {
         try {
-            _cacheManager.getBlobStoreStorageHandler().replace(null, DirectPersistencySyncAdminInfo.getStorageKey(), ai, null, BlobStoreObjectType.ADMIN);
+            _cacheManager.getBlobStoreStorageHandler().replace(DirectPersistencySyncAdminInfo.getStorageKey(), ai, null, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace_syncadmin got exception: " + ex);
             throw ex;
@@ -211,7 +211,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public DirectPersistencySyncAdminInfo getSyncAdminIfExists() {
         try {
-            return (DirectPersistencySyncAdminInfo) _cacheManager.getBlobStoreStorageHandler().get(null, DirectPersistencySyncAdminInfo.getStorageKey(), null, BlobStoreObjectType.ADMIN);
+            return (DirectPersistencySyncAdminInfo) _cacheManager.getBlobStoreStorageHandler().get(DirectPersistencySyncAdminInfo.getStorageKey(), null, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::getsyncadmin exception: " + ex);
             throw ex;
@@ -225,13 +225,13 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     public void removePhantom(String uid, boolean checkExistance, long generationId, long seq) {
         try {
             if (checkExistance) {
-                BlobStoreEntryLayout el = (BlobStoreEntryLayout) _cacheManager.getBlobStoreStorageHandler().get(null, EmbeddedSyncHandler.getStorageKeyForPhantom(uid), null, BlobStoreObjectType.DATA);
+                BlobStoreEntryLayout el = (BlobStoreEntryLayout) _cacheManager.getBlobStoreStorageHandler().get(EmbeddedSyncHandler.getStorageKeyForPhantom(uid), null, BlobStoreObjectType.DATA, null);
                 if (el == null)
                     return; //nothing in space
 //TBD check if phantom & if seq && gen match
 
             }
-            _cacheManager.getBlobStoreStorageHandler().remove(null, EmbeddedSyncHandler.getStorageKeyForPhantom(uid), null, BlobStoreObjectType.DATA);
+            _cacheManager.getBlobStoreStorageHandler().remove(EmbeddedSyncHandler.getStorageKeyForPhantom(uid), null, BlobStoreObjectType.DATA, null);
 
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::removePhantom exception: " + ex);
@@ -242,7 +242,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
 
     private EmbeddedSyncTransferredInfo getEmbeddedTransferredInfo(long generationId, int segment) {
         try {
-            return (EmbeddedSyncTransferredInfo) _cacheManager.getBlobStoreStorageHandler().get(null, EmbeddedSyncTransferredInfo.getStorageKey(generationId, segment), null, BlobStoreObjectType.ADMIN);
+            return (EmbeddedSyncTransferredInfo) _cacheManager.getBlobStoreStorageHandler().get(EmbeddedSyncTransferredInfo.getStorageKey(generationId, segment), null, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::EmbeddedSyncTransferredInfo exception: " + ex);
             throw ex;
@@ -252,7 +252,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public void insert(EmbeddedSyncTransferredInfo ai) {
         try {
-            _cacheManager.getBlobStoreStorageHandler().add(null, EmbeddedSyncTransferredInfo.getStorageKey(ai.getGenerationId(), ai.getSegmentNum()), ai, BlobStoreObjectType.ADMIN);
+            _cacheManager.getBlobStoreStorageHandler().add(EmbeddedSyncTransferredInfo.getStorageKey(ai.getGenerationId(), ai.getSegmentNum()), ai, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add-EmbeddedSyncTransferredInfo got exception: " + ex);
             throw ex;
@@ -263,7 +263,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public void update(EmbeddedSyncTransferredInfo ai) {
         try {
-            _cacheManager.getBlobStoreStorageHandler().replace(null, EmbeddedSyncTransferredInfo.getStorageKey(ai.getGenerationId(), ai.getSegmentNum()), ai, null, BlobStoreObjectType.ADMIN);
+            _cacheManager.getBlobStoreStorageHandler().replace(EmbeddedSyncTransferredInfo.getStorageKey(ai.getGenerationId(), ai.getSegmentNum()), ai, null, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace_EmbeddedSyncTransferredInfo got exception: " + ex);
             throw ex;
@@ -275,7 +275,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public void remove(EmbeddedSyncTransferredInfo ai) {
         try {
-            _cacheManager.getBlobStoreStorageHandler().remove(null, EmbeddedSyncTransferredInfo.getStorageKey(ai.getGenerationId(), ai.getSegmentNum()), null, BlobStoreObjectType.ADMIN);
+            _cacheManager.getBlobStoreStorageHandler().remove(EmbeddedSyncTransferredInfo.getStorageKey(ai.getGenerationId(), ai.getSegmentNum()), null, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::remove_EmbeddedSyncTransferredInfo got exception: " + ex);
             throw ex;
@@ -287,7 +287,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public EmbeddedRelevantGenerationIdsInfo getEmbeddedRelevantGenerationIdsInfo() {
         try {
-            return (EmbeddedRelevantGenerationIdsInfo) _cacheManager.getBlobStoreStorageHandler().get(null, EmbeddedRelevantGenerationIdsInfo.getStorageKey(), null, BlobStoreObjectType.ADMIN);
+            return (EmbeddedRelevantGenerationIdsInfo) _cacheManager.getBlobStoreStorageHandler().get( EmbeddedRelevantGenerationIdsInfo.getStorageKey(), null, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::getEmbeddedRelevantGenerationIdsInfo exception: " + ex);
             throw ex;
@@ -298,7 +298,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public void update(EmbeddedRelevantGenerationIdsInfo ai) {
         try {
-            _cacheManager.getBlobStoreStorageHandler().replace(null, EmbeddedRelevantGenerationIdsInfo.getStorageKey(), ai, null, BlobStoreObjectType.ADMIN);
+            _cacheManager.getBlobStoreStorageHandler().replace(EmbeddedRelevantGenerationIdsInfo.getStorageKey(), ai, null, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace EmbeddedRelevantGenerationIdsInfo got exception: " + ex);
             throw ex;
@@ -309,7 +309,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
     @Override
     public void insert(EmbeddedRelevantGenerationIdsInfo ai) {
         try {
-            _cacheManager.getBlobStoreStorageHandler().add(null, EmbeddedRelevantGenerationIdsInfo.getStorageKey(), ai, BlobStoreObjectType.ADMIN);
+            _cacheManager.getBlobStoreStorageHandler().add(EmbeddedRelevantGenerationIdsInfo.getStorageKey(), ai, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
             _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add-EmbeddedRelevantGenerationIdsInfo got exception: " + ex);
             throw ex;

@@ -194,7 +194,7 @@ public class BlobStoreNoSerializationHashMock extends BlobStoreStorageHandler {
 
         public BlobStoreGetBulkOperationResult next() {
             Entry<Serializable, Serializable> e = _iter.next();
-            return new BlobStoreGetBulkOperationResult(e.getKey(), unmarsh(e.getValue()), null);
+            return new BlobStoreGetBulkOperationResult(e.getKey(), unmarsh(e.getValue()), null, null);
         }
 
         public void close() {

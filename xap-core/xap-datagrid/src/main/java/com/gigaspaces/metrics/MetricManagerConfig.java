@@ -140,6 +140,10 @@ public class MetricManagerConfig {
         patterns.add(prefix, sampler);
     }
 
+    public String getSeparator() {
+        return separator;
+    }
+
     public Map<String, MetricReporterFactory> getReportersFactories() {
         return reportersFactories;
     }

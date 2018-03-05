@@ -18,6 +18,8 @@
 package com.gigaspaces.server.blobstore;
 
 
+import com.j_spaces.core.cache.blobStore.IBlobStoreOffHeapInfo;
+
 /**
  * result an operation executed as part of a bulk on blob-store storage (SSD, off-heap buffers)
  *
@@ -74,5 +76,9 @@ public abstract class BlobStoreBulkOperationResult {
 
     public Throwable getException() {
         return _exception;
+    }
+
+    public IBlobStoreOffHeapInfo getOffHeapInfo() {
+        return null;
     }
 }

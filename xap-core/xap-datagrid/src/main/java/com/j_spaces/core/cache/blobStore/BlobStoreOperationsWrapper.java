@@ -18,19 +18,20 @@
 package com.j_spaces.core.cache.blobStore;
 
 import com.gigaspaces.datasource.DataIterator;
+import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.metrics.LongCounter;
-import com.gigaspaces.metrics.MetricConstants;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.gigaspaces.metrics.ThroughputMetric;
 import com.gigaspaces.server.blobstore.*;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.cache.CacheManager;
+import com.j_spaces.core.cache.blobStore.offheap.OffHeapStorageContainer;
+import com.j_spaces.core.cache.blobStore.offheap.OffHeapMemoryPool;
 import com.j_spaces.kernel.threadpool.DynamicExecutors;
 
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
-import java.util.logging.Logger;
 
 /**
  * provide a wrapper over blobstore methods, used for serialization to byte-array, trapping stats
@@ -46,11 +47,14 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     private static final int _blobStorePreFetchMinThreads = Integer.getInteger(Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_PREFETCH_MIN_THREADS_PROP, Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_PREFETCH_MIN_THREADS_DEFAULT);
     private static final int _blobStorePreFetchMaxThreads = Integer.getInteger(Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_PREFETCH_MAX_THREADS_PROP, Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_PREFETCH_MAX_THREADS_DEFAULT);
 
-
     private final CacheManager _cacheManager;
     private final BlobStoreStorageHandler _blobStore;
     private final BlobStoreSerializationUtils _serialization;
     private final boolean _needSerialization;
+    private OffHeapMemoryPool _offHeapCache;
+    private final boolean _isOffHeap;
+    private final OffHeapMemoryPool _offHeapStore;
+
     private MetricRegistrator _registrator;
     private ExecutorService _preFetchThreadPool;
 
@@ -64,23 +68,43 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     private final ThroughputMetric replace_tp = new ThroughputMetric();
     private final ThroughputMetric remove_tp = new ThroughputMetric();
 
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
-    private boolean _isOffHeap;
-
     public BlobStoreOperationsWrapper(CacheManager cacheManager, BlobStoreStorageHandler blobStore) {
         _cacheManager = cacheManager;
         _blobStore = blobStore;
         _serialization = new BlobStoreSerializationUtils(cacheManager);
 //		_needSerialization = !(blobStore instanceof BlobStoreNoSerializationHashMock);
         _needSerialization = true;
+        _isOffHeap = blobStore instanceof OffHeapStorageContainer;
+        _offHeapStore = _isOffHeap ? ((OffHeapStorageContainer)blobStore).getOffHeapStorage() : null;
 
+        if(_offHeapStore != null && _cacheManager.isPersistentBlobStore()){
+            throw new RuntimeException("Configuration exception: can not set "+ Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_PERSISTENT_PROP+" to true when running with off-heap-blob-store configuration");
+        }
+    }
+
+    @Override
+    public OffHeapMemoryPool getOffHeapCache() {
+        return _offHeapCache;
+    }
+
+    @Override
+    public OffHeapMemoryPool getOffHeapStore() {
+        return _offHeapStore;
     }
 
     @Override
     public void initialize(BlobStoreConfig blobStoreConfig) {
         _registrator = blobStoreConfig.getMetricRegistrator();
         _blobStore.initialize(blobStoreConfig);
-        _isOffHeap = getProperties() != null && getProperties().getProperty("blobStoreHandler") != null && getProperties().getProperty("blobStoreHandler").equals("com.gigaspaces.blobstore.offheap.OffHeapBlobStoreHandler");
+
+        Properties p = _blobStore.getProperties();
+        String offHeapThreshold = p != null ? p.getProperty("off-heap-cache-memory-threshold") : null;
+        _offHeapCache = offHeapThreshold == null ? null :new OffHeapMemoryPool(StringUtils.parseStringAsBytes(offHeapThreshold));
+        //Validate _offHeapStore and _offHeapCache are mutually exclusive
+        if(_offHeapCache != null && _offHeapStore != null){
+            throw new RuntimeException("Configuration exception: can not enable off heap optimization when running with off-heap-blob-store configuration");
+        }
+
         registerOperations();
     }
 
@@ -90,7 +114,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     }
 
     @Override
-    public Object add(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, java.io.Serializable data, BlobStoreObjectType objectType) {
+    public Object add(java.io.Serializable id, java.io.Serializable data, BlobStoreObjectType objectType, IBlobStoreOffHeapInfo offHeapInfo) {
         if (_isOffHeap && objectType != BlobStoreObjectType.DATA) {
             return null;
         }
@@ -107,7 +131,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     }
 
     @Override
-    public java.io.Serializable get(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object position, BlobStoreObjectType objectType) {
+    public java.io.Serializable get(java.io.Serializable id, Object position, BlobStoreObjectType objectType, IBlobStoreOffHeapInfo offHeapInfo) {
         if (_isOffHeap && objectType != BlobStoreObjectType.DATA) {
             return null;
         }
@@ -118,13 +142,13 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
             get.inc();
             get_tp.increment();
         }
-        return (data != null && _needSerialization) ? _serialization.deserialize(data, objectType, false, false) : data;
+        return (data != null && _needSerialization) ? _serialization.deserialize(data, objectType, false, false, offHeapInfo) : data;
     }
 
 
     @Override
-    public java.io.Serializable get(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object
-            position, BlobStoreObjectType objectType, boolean indexesPartOnly) {
+    public java.io.Serializable get(java.io.Serializable id, Object
+            position, BlobStoreObjectType objectType, boolean indexesPartOnly, IBlobStoreOffHeapInfo offHeapInfo) {
         if (_isOffHeap && objectType != BlobStoreObjectType.DATA) {
             return null;
         }
@@ -134,13 +158,13 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
             get.inc();
             get_tp.increment();
         }
-        return (data != null && _needSerialization) ? _serialization.deserialize(data, objectType, false, indexesPartOnly) : data;
+        return (data != null && _needSerialization) ? _serialization.deserialize(data, objectType, false, indexesPartOnly, offHeapInfo) : data;
 
     }
 
     @Override
-    public Object replace(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, java.io.Serializable
-            data, Object position, BlobStoreObjectType objectType) {
+    public Object replace(java.io.Serializable id, java.io.Serializable
+            data, Object position, BlobStoreObjectType objectType, IBlobStoreOffHeapInfo offHeapInfo) {
 
         if (_isOffHeap && objectType != BlobStoreObjectType.DATA) {
             return null;
@@ -159,8 +183,8 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     }
 
     @Override
-    public java.io.Serializable remove(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object
-            position, BlobStoreObjectType objectType) {
+    public java.io.Serializable remove(java.io.Serializable id, Object
+            position, BlobStoreObjectType objectType, IBlobStoreOffHeapInfo offHeapInfo) {
         if (_isOffHeap && objectType != BlobStoreObjectType.DATA) {
             return null;
         }
@@ -171,11 +195,11 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
             remove_tp.increment();
         }
 
-        return (data != null && _needSerialization) ? _serialization.deserialize(data, objectType, false, false) : data;
+        return (data != null && _needSerialization) ? _serialization.deserialize(data, objectType, false, false, offHeapInfo) : data;
     }
 
     @Override
-    public void removeIfExists(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object position, BlobStoreObjectType objectType) {
+    public void removeIfExists(java.io.Serializable id, Object position, BlobStoreObjectType objectType, IBlobStoreOffHeapInfo offHeapInfo) {
         if (_isOffHeap && objectType != BlobStoreObjectType.DATA) {
             return;
         }
@@ -201,7 +225,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
         List<BlobStoreBulkOperationResult> results = _blobStore.executeBulk(operations, objectType, transactional);
         for (BlobStoreBulkOperationResult result : results) {
             if (result.getData() != null && _needSerialization)
-                result.setData(_serialization.deserialize(result.getData(), objectType, false, false));
+                result.setData(_serialization.deserialize(result.getData(), objectType, false, false, result.getOffHeapInfo()));
         }
 
         return results;
@@ -220,7 +244,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     @Override
     public void close() {
         _blobStore.close();
-        _registrator.unregisterByPrefix(MetricConstants.BLOBSTORE_METRIC_NAME);
+        _registrator.clear();
         if (_preFetchThreadPool != null)
             _preFetchThreadPool.shutdown();
     }
@@ -284,7 +308,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
             }
 
             if (res.getData() != null && _needSerialization) {
-                res.setData(_serialization.deserialize(res.getData(), _objectType, _fromInitialLoad, _fromInitialLoad));
+                res.setData(_serialization.deserialize(res.getData(), _objectType, _fromInitialLoad, _fromInitialLoad, res.getOffHeapInfo()));
             }
             return res;
         }
@@ -305,6 +329,10 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
         _registrator.register("get-tp", get_tp);
         _registrator.register("remove-tp", remove_tp);
         _registrator.register("replace-tp", replace_tp);
+        if (_offHeapCache != null)
+            _offHeapCache.initMetrics(_registrator);
+        if (_offHeapStore != null)
+            _offHeapStore.initMetrics(_registrator);
     }
 
     private void metricsByOpType(BlobStoreBulkOperationRequest request) {

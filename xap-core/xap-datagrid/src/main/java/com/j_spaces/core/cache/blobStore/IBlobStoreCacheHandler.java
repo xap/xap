@@ -1,6 +1,5 @@
 package com.j_spaces.core.cache.blobStore;
 
-import com.gigaspaces.metrics.LongCounter;
 import com.j_spaces.core.cache.CacheOperationReason;
 import com.j_spaces.core.cache.context.Context;
 
@@ -25,6 +24,4 @@ public interface IBlobStoreCacheHandler {
     long getMissCount();
 
     long getHitCount();
-
-    LongCounter getOffHeapByteCounter();
 }

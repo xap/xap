@@ -18,7 +18,6 @@
 package com.j_spaces.core.cache.blobStore;
 
 import com.gigaspaces.metrics.Gauge;
-import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.metrics.MetricConstants;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.j_spaces.core.cache.CacheOperationReason;
@@ -49,8 +48,6 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
     private BlobStoreInternalCacheFilter _blobStoreInternalCacheFilter;
     private volatile boolean _isBlobStoreInternalCacheFilterEnabled = false;
     private boolean printLog = true;
-    private final LongCounter _offHeapByteCounter = new LongCounter();
-
 
     public BlobStoreCacheHandler(Properties properties) {
         BLOB_STORE_INTERNAL_CACHE_CAPACITY = Integer.parseInt(properties.getProperty(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP, CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_DELAULT));
@@ -212,10 +209,5 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
     @Override
     public long getHitCount(){
         return _blobStoreCacheImpl.getHitCount().getCount();
-    }
-
-    @Override
-    public LongCounter getOffHeapByteCounter() {
-        return _offHeapByteCounter;
     }
 }

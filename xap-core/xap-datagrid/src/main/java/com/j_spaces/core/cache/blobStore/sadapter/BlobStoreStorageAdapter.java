@@ -516,11 +516,10 @@ public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStora
 
         BlobStoreTypeDescSerializable stored = new BlobStoreTypeDescSerializable((TypeDesc) typeDesc, renew ? updated : cur);
         //NOTE- currently we ignore the blobStorePosition in metadata- should be added later as a field in typeDesc
-        if (_engine.getCacheManager().getBlobStoreStorageHandler().get(null, typeName, null, BlobStoreObjectType.METADATA) != null)
-            _engine.getCacheManager().getBlobStoreStorageHandler().replace(null, typeName, stored, null, BlobStoreObjectType.METADATA);
+        if (_engine.getCacheManager().getBlobStoreStorageHandler().get(typeName, null, BlobStoreObjectType.METADATA, null) != null)
+            _engine.getCacheManager().getBlobStoreStorageHandler().replace(typeName, stored, null, BlobStoreObjectType.METADATA, null);
         else
-            _engine.getCacheManager().getBlobStoreStorageHandler().add(null, typeName, stored, BlobStoreObjectType.METADATA);
-
+            _engine.getCacheManager().getBlobStoreStorageHandler().add(typeName, stored, BlobStoreObjectType.METADATA, null);
         if (renew)
             _classes.put(typeName, updated);
     }

@@ -60,6 +60,4 @@ public interface IServerTypeDesc {
     boolean isMaybeOutdated();
 
     void setMaybeOutdated();
-
-    LongCounter getOffHeapTypeCounter();
 }

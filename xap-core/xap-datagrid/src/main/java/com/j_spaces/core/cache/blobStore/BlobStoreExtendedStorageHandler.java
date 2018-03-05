@@ -19,6 +19,7 @@ package com.j_spaces.core.cache.blobStore;
 
 import com.gigaspaces.datasource.DataIterator;
 import com.gigaspaces.server.blobstore.*;
+import com.j_spaces.core.cache.blobStore.offheap.OffHeapMemoryPool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,7 @@ import java.util.concurrent.ExecutorService;
  * @author yechiel
  * @since 10.1
  */
-public abstract class BlobStoreExtendedStorageHandler{
+public abstract class BlobStoreExtendedStorageHandler {
 
     /**
      * initialize a blob-store implementation.
@@ -53,7 +54,7 @@ public abstract class BlobStoreExtendedStorageHandler{
      *                                                            or container does not exist or
      *                                                            other failure.
      */
-    public abstract Object add(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, java.io.Serializable data, BlobStoreObjectType objectType);
+    public abstract Object add(java.io.Serializable id, java.io.Serializable data, BlobStoreObjectType objectType, IBlobStoreOffHeapInfo offHeapInfo);
 
     /**
      * Replace the data to which the specified id is mapped with new data,
@@ -68,7 +69,7 @@ public abstract class BlobStoreExtendedStorageHandler{
      * @throws com.gigaspaces.server.blobstore.BlobStoreException if the specified id does not
      *                                                            exist.
      */
-    public abstract Object replace(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, java.io.Serializable data, Object position, BlobStoreObjectType objectType);
+    public abstract Object replace(java.io.Serializable id, java.io.Serializable data, Object position, BlobStoreObjectType objectType, IBlobStoreOffHeapInfo offHeapInfo);
 
     /**
      * Returns the data to which the specified id is mapped,
@@ -81,7 +82,7 @@ public abstract class BlobStoreExtendedStorageHandler{
      * @throws com.gigaspaces.server.blobstore.BlobStoreException if the specified id does not
      *                                                            exist.
      */
-    public abstract java.io.Serializable get(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object position, BlobStoreObjectType objectType);
+    public abstract java.io.Serializable get(java.io.Serializable id, Object position, BlobStoreObjectType objectType, IBlobStoreOffHeapInfo offHeapInfo);
 
     /**
      * Returns the data to which the specified id is mapped,
@@ -95,7 +96,7 @@ public abstract class BlobStoreExtendedStorageHandler{
      * @throws com.gigaspaces.server.blobstore.BlobStoreException if the specified id does not
      *                                                            exist.
      */
-    public abstract java.io.Serializable get(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object position, BlobStoreObjectType objectType, boolean indexesPartOnly);
+    public abstract java.io.Serializable get(java.io.Serializable id, Object position, BlobStoreObjectType objectType, boolean indexesPartOnly, IBlobStoreOffHeapInfo offHeapInfo);
 
     /**
      * Removes the id (and its corresponding data) from this FDF.
@@ -107,7 +108,7 @@ public abstract class BlobStoreExtendedStorageHandler{
      * @return the data to which the specified id is mapped,
      * @throws com.gigaspaces.server.blobstore.BlobStoreException if the id does not exist.
      */
-    public abstract java.io.Serializable remove(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object position, BlobStoreObjectType objectType);
+    public abstract java.io.Serializable remove(java.io.Serializable id, Object position, BlobStoreObjectType objectType, IBlobStoreOffHeapInfo offHeapInfo);
 
     /**
      * Removes the id (and its corresponding data) from this FDF. return false if no such object
@@ -119,7 +120,7 @@ public abstract class BlobStoreExtendedStorageHandler{
      * @param objectType the object type - one of  BlobStoreObjectType values
      * @throws com.gigaspaces.server.blobstore.BlobStoreException if the id does not exist.
      */
-    public abstract void removeIfExists(IBlobStoreOffHeapInfo offHeapInfo, java.io.Serializable id, Object position, BlobStoreObjectType objectType);
+    public abstract void removeIfExists(java.io.Serializable id, Object position, BlobStoreObjectType objectType, IBlobStoreOffHeapInfo offHeapInfo);
 
     /**
      * . execute a bulk of operations on the blobstore. return a corresoping list of results note- a
@@ -140,26 +141,26 @@ public abstract class BlobStoreExtendedStorageHandler{
         for (BlobStoreBulkOperationRequest request : operations) {
             if (request.getOpType() == BlobStoreBulkOperationType.ADD) {
                 try {
-                    result.add(new BlobStoreAddBulkOperationResult(request.getId(), add(request.getOffHeapInfo(), request.getId(), request.getData(), objectType)));
+                    result.add(new BlobStoreAddBulkOperationResult(request.getId(), add(request.getId(), request.getData(), objectType, request.getOffHeapInfo())));
                 } catch (Exception ex) {
                     result.add(new BlobStoreAddBulkOperationResult(request.getId(), ex));
                 }
             } else if (request.getOpType() == BlobStoreBulkOperationType.REMOVE) {
                 try {
-                    remove(request.getOffHeapInfo(), request.getId(), request.getPosition(), objectType);
+                    remove(request.getId(), request.getPosition(), objectType, request.getOffHeapInfo());
                     result.add(new BlobStoreRemoveBulkOperationResult(request.getId()));
                 } catch (Exception ex) {
                     result.add(new BlobStoreRemoveBulkOperationResult(request.getId(), ex));
                 }
             } else if (request.getOpType() == BlobStoreBulkOperationType.REPLACE) {
                 try {
-                    result.add(new BlobStoreReplaceBulkOperationResult(request.getId(), replace(request.getOffHeapInfo(), request.getId(), request.getData(), request.getPosition(), objectType)));
+                    result.add(new BlobStoreReplaceBulkOperationResult(request.getId(), replace(request.getId(), request.getData(), request.getPosition(), objectType, request.getOffHeapInfo()), request.getOffHeapInfo()));
                 } catch (Exception ex) {
                     result.add(new BlobStoreReplaceBulkOperationResult(request.getId(), ex));
                 }
             } else if (request.getOpType() == BlobStoreBulkOperationType.GET) {
                 try {
-                    result.add(new BlobStoreGetBulkOperationResult(request.getId(), get(request.getOffHeapInfo(), request.getId(), request.getPosition(), objectType), request.getPosition()));
+                    result.add(new BlobStoreGetBulkOperationResult(request.getId(), get(request.getId(), request.getPosition(), objectType, request.getOffHeapInfo()), objectType, request.getOffHeapInfo()));
                 } catch (Exception ex) {
                     result.add(new BlobStoreGetBulkOperationResult(request.getId(), ex));
                 }
@@ -206,4 +207,7 @@ public abstract class BlobStoreExtendedStorageHandler{
      */
     public abstract DataIterator<BlobStoreGetBulkOperationResult> initialLoadIterator();
 
+    public abstract OffHeapMemoryPool getOffHeapCache();
+
+    public abstract OffHeapMemoryPool getOffHeapStore();
 }

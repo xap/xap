@@ -30,8 +30,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ServerTypeDesc implements IServerTypeDesc {
     private static final AtomicInteger  _codesGen = new AtomicInteger();
     private static final ConcurrentMap<Short,IServerTypeDesc> _codesRepo = new ConcurrentHashMap<Short, IServerTypeDesc>();
-    private final LongCounter _offHeapTypeCounter;
-
 
     private final int _typeId;
     private final String _typeName;
@@ -78,7 +76,6 @@ public class ServerTypeDesc implements IServerTypeDesc {
             _codesRepo.put(code,this);
         }
         _serverTypeDescCode = code;
-        this._offHeapTypeCounter = offHeapTypeCounter;
 
     }
 
@@ -148,7 +145,7 @@ public class ServerTypeDesc implements IServerTypeDesc {
 
     public IServerTypeDesc createCopy(IServerTypeDesc superType) {
         // Create a copy of this type with the new super type:
-        ServerTypeDesc copy = new ServerTypeDesc(this._typeId, this._typeName, this._typeDesc, superType, this._serverTypeDescCode, this._offHeapTypeCounter);
+        ServerTypeDesc copy = new ServerTypeDesc(this._typeId, this._typeName, this._typeDesc, superType);
         copy._inactive = this._inactive;
         IServerTypeDesc oldServerTypeDesc = _codesRepo.put(this._serverTypeDescCode, copy);
         if(oldServerTypeDesc != null){
@@ -218,10 +215,5 @@ public class ServerTypeDesc implements IServerTypeDesc {
     @Override
     public void setMaybeOutdated() {
         this._maybeOutdated = true;
-    }
-
-    @Override
-    public LongCounter getOffHeapTypeCounter() {
-        return _offHeapTypeCounter;
     }
 }
