@@ -23,10 +23,10 @@ public abstract class CliCommand implements Callable<Object> {
 
     protected static Logger LOGGER;
 
-    @Option(names = {"--help"}, usageHelp = true, description = "display this help message")
+    @Option(names = {"--help"}, usageHelp = true, description = "Show the help information for this command")
     boolean usageHelpRequested;
 
-    @Option(names = {"--version"}, versionHelp = true, description = "display version information")
+    @Option(names = {"--version"}, versionHelp = true, description = "Show the platform version")
     boolean versionRequested;
 
     @Override

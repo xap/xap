@@ -3,7 +3,7 @@ package org.gigaspaces.cli.commands;
 import org.gigaspaces.cli.CliCommand;
 import picocli.CommandLine.*;
 
-@Command(name="version", header = "Prints version information")
+@Command(name="version", header = "Platform version")
 public class VersionCommand extends CliCommand {
     @Override
     protected void execute() throws Exception {

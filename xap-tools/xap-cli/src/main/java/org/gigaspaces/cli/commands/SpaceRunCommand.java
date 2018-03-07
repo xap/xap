@@ -16,7 +16,7 @@ import java.util.List;
  * @since 12.3
  * @author Rotem Herzberg
  */
-@Command(name = "run", header = "Runs a standalone Space")
+@Command(name = "run", header = "Run a standalone Space")
 public class SpaceRunCommand extends AbstractRunCommand {
 
     @Parameters(index = "0", description = "Name of Space to run")

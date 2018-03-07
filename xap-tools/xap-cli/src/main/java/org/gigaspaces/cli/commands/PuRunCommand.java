@@ -16,7 +16,7 @@ import java.util.List;
  * @since 12.3
  * @author Rotem Herzberg
  */
-@Command(name="run", header = "Runs a standalone processing unit")
+@Command(name="run", header = "Run a standalone Processing Unit")
 public class PuRunCommand extends AbstractRunCommand {
 
     @Parameters(index = "0", description = "The relative/absolute path of a processing unit directory or jar")

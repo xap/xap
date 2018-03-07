@@ -7,7 +7,7 @@ import picocli.CommandLine.*;
 import java.util.Arrays;
 import java.util.Collection;
 
-@Command(name="pu", headerHeading = XapMainCommand.HEADER, header = "interaction with Processing Units")
+@Command(name="pu", headerHeading = XapMainCommand.HEADER, header = "List of available commands for Processing Unit operations")
 public class PUCommand extends CliCommand implements SubCommandContainer {
 
     @Override
