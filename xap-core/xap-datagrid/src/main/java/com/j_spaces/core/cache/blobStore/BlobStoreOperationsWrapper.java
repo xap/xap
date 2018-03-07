@@ -261,6 +261,10 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
 
     }
 
+    @Override
+    public boolean isOffHeap() {
+        return _isOffHeap;
+    }
 
     private static class IteratorWrapper implements DataIterator<BlobStoreGetBulkOperationResult> {
         private final DataIterator<BlobStoreGetBulkOperationResult> _iter;

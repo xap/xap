@@ -210,4 +210,6 @@ public abstract class BlobStoreExtendedStorageHandler {
     public abstract OffHeapMemoryPool getOffHeapCache();
 
     public abstract OffHeapMemoryPool getOffHeapStore();
+
+    public abstract boolean isOffHeap();
 }

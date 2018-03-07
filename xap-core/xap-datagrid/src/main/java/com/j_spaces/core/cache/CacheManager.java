@@ -1185,7 +1185,9 @@ public class CacheManager extends AbstractCacheManager
      * shut down cache manager. does not throw any exception- unusable.
      */
     public void shutDown() {
-        freeOffHeapCache();
+        if(_blobStoreStorageHandler.isOffHeap()){
+            freeOffHeapCache();
+        }
 
         if (_fifoBackgroundDispatcher != null)
             _fifoBackgroundDispatcher.close();
