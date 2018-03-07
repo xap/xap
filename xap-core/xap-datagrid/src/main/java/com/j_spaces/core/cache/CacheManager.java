@@ -116,16 +116,16 @@ import static com.j_spaces.core.Constants.Engine.UPDATE_NO_LEASE;
 
 /**
  * The Cache Manager acts as a fast intermediate storage for objects in Virtual Memory.
- *
+ * <p>
  * The maximum number of objects cached in memory is determined by a space property (cache-size).
- *
+ * <p>
  * However, according to this implementation, the following objects are always in the cache:
- *
+ * <p>
  * <ul> <li> Templates of any kind </li> <li> Active Transactions </li> <li> Entries locked under
  * Active Transactions </li> <li> Entries waiting for templates </li> </ul>
- *
+ * <p>
  * The objects in the cache are indexed.
- *
+ * <p>
  * Templates are cached in memory and are not written to the underlying SA.
  **/
 @com.gigaspaces.api.InternalApi
@@ -321,10 +321,9 @@ public class CacheManager extends AbstractCacheManager
 
         if (isBlobStoreCachePolicy()) {
             IStorageAdapter curSa;
-            if(isSyncHybrid()){
-                curSa =new SyncHybridStorageAdapter(this, sa, new BlobStoreStorageAdapter(_engine, _persistentBlobStore));
-            }
-            else {
+            if (isSyncHybrid()) {
+                curSa = new SyncHybridStorageAdapter(this, sa, new BlobStoreStorageAdapter(_engine, _persistentBlobStore));
+            } else {
                 curSa = (isMemorySA) ? new BlobStoreStorageAdapter(_engine, _persistentBlobStore)
                         : new BlobStoreStorageAdapter(_engine, _persistentBlobStore, sa /*recoverysa*/);
             }
@@ -368,7 +367,7 @@ public class CacheManager extends AbstractCacheManager
                 : new ConcurrentHashMap<String, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents);
 
         _cacheContextFactory = new CacheContextFactory(this, engine.getFullSpaceName());
-        _templatesManager = new TemplatesManager(this,numNotifyFifoThreads, numNonNotifyFifoThreads);
+        _templatesManager = new TemplatesManager(this, numNotifyFifoThreads, numNonNotifyFifoThreads);
         _templateExpirationManager = new TemplateExpirationManager(this);
         _fifoGroupCacheImpl = new FifoGroupCacheImpl(this, _logger);
 
@@ -477,13 +476,13 @@ public class CacheManager extends AbstractCacheManager
 
     /**
      * Init. the cache.
-     *
+     * <p>
      * This method is called after init(), and after the engine Xtn table and Directory are
      * completely built, but before any other SA method is called.
-     *
+     * <p>
      * This implementation preloads all active transactions and entries locked under these
      * transactions into cache.
-     *
+     * <p>
      * In addition, all class info is preloaded into cache.
      */
     public void initCache(boolean loadDataFromDB, Properties properties)
@@ -539,7 +538,7 @@ public class CacheManager extends AbstractCacheManager
             _blobStoreStorageHandler.initialize(blobStoreConfig);
 
             List<SQLQuery> blobStoreCacheFilterQueries = (List<SQLQuery>) properties.get(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_FILTER_QUERIES_PROP);
-            if(blobStoreCacheFilterQueries != null){
+            if (blobStoreCacheFilterQueries != null) {
                 try {
                     blobStoreInternalCacheFilter = new BlobStoreInternalCacheFilter(_engine, blobStoreCacheFilterQueries);
                 } catch (Exception e) {
@@ -757,11 +756,11 @@ public class CacheManager extends AbstractCacheManager
         }
     }
 
-    public void touchByEntry(Context context,IEntryHolder entry, boolean modifyOp,ITemplateHolder template, CacheOperationReason cacheOperationReason) {
+    public void touchByEntry(Context context, IEntryHolder entry, boolean modifyOp, ITemplateHolder template, CacheOperationReason cacheOperationReason) {
         if (entry.isBlobStoreEntry()) {
             if (template.getXidOriginatedTransaction() != null && cacheOperationReason != CacheOperationReason.ON_READ)
                 return;   //NOTE- for read under xtn we touch, commit is meanningless
-            ((IBlobStoreEntryHolder) entry).insertOrTouchInternalCache(context,this,cacheOperationReason);
+            ((IBlobStoreEntryHolder) entry).insertOrTouchInternalCache(context, this, cacheOperationReason);
         } else {
             IEntryCacheInfo pe = getPEntryByUid(entry.getUID());
             if (pe != null && pe.getEntryHolder(this) == entry)
@@ -855,6 +854,10 @@ public class CacheManager extends AbstractCacheManager
         return _blobStoreStorageHandler.getOffHeapCache() != null;
     }
 
+    public boolean hasBlobStoreOffHeapStore() {
+        return _blobStoreStorageHandler.getOffHeapStore() != null;
+    }
+
     public String getConfigInfo() {
         return "policy=" + getPolicy() + ", persistency-mode=" + getPersistencyMode();
     }
@@ -914,7 +917,7 @@ public class CacheManager extends AbstractCacheManager
                     formattedErrors +
                     "\tTotal Time: " + JSpaceUtilities.formatMillis(SystemTime.timeMillis() - initialLoadInfo.getRecoveryStartTime()) + ".");
         }
-        if(getBlobStoreInternalCache() != null){
+        if (getBlobStoreInternalCache() != null) {
             if (getBlobStoreInternalCache().getBlobStoreInternalCacheFilter() != null) {
                 if (_logger.isLoggable(Level.INFO)) {
                     _logger.info("BlobStore internal cache recovery:\n " +
@@ -993,7 +996,7 @@ public class CacheManager extends AbstractCacheManager
                         insertBlobStoreEntryToCache = _replicationNode.getDirectPesistencySyncHandler().getEmbeddedSyncHandler().getInitialLoadHandler().onLoadingEntry(eh);
                     }
                     if (insertBlobStoreEntryToCache) {
-                        safeInsertEntryToCache(context, eh, false /* newEntry */, null /*pType*/, false /*pin*/,entryFromBlobStore ? InitialLoadOrigin.FROM_BLOBSTORE : InitialLoadOrigin.FROM_NON_BLOBSTORE /*fromInitialLoad*/);
+                        safeInsertEntryToCache(context, eh, false /* newEntry */, null /*pType*/, false /*pin*/, entryFromBlobStore ? InitialLoadOrigin.FROM_BLOBSTORE : InitialLoadOrigin.FROM_NON_BLOBSTORE /*fromInitialLoad*/);
                     } else {
                         continue;
                     }
@@ -1016,7 +1019,7 @@ public class CacheManager extends AbstractCacheManager
                 boolean avoidInsertToBlobStoreInternalCache = true;
                 while (blobStoreFifoInitialLoader.hasNext()) {
                     IEntryHolder eh = blobStoreFifoInitialLoader.next();
-                    safeInsertEntryToCache(context, eh, false /* newEntry */, null /*pType*/, false /*pin*/,InitialLoadOrigin.FROM_BLOBSTORE /*fromInitialLoad*/);
+                    safeInsertEntryToCache(context, eh, false /* newEntry */, null /*pType*/, false /*pin*/, InitialLoadOrigin.FROM_BLOBSTORE /*fromInitialLoad*/);
 
                     ((IBlobStoreEntryHolder) eh).getBlobStoreResidentPart().unLoadFullEntryIfPossible(this, context);
                     initialLoadInfo.incrementInsertedToCache();
@@ -1138,7 +1141,7 @@ public class CacheManager extends AbstractCacheManager
                             break;
                         }
                         safeInsertEntryToCache(context, eh, false /* newEntry */,
-                                null /*pType*/, false/*pin*/,InitialLoadOrigin.FROM_NON_BLOBSTORE /*fromInitialLoad*/);
+                                null /*pType*/, false/*pin*/, InitialLoadOrigin.FROM_NON_BLOBSTORE /*fromInitialLoad*/);
                         initialLoadInfo.incrementInsertedToCache();
                         initialLoadInfo.setLastLoggedTime(logInsertionIfNeeded(initialLoadInfo.getRecoveryStartTime(), initialLoadInfo.getLastLoggedTime(), initialLoadInfo.getInsertedToCache()));
                         if (--need_load <= 0)
@@ -1185,7 +1188,8 @@ public class CacheManager extends AbstractCacheManager
      * shut down cache manager. does not throw any exception- unusable.
      */
     public void shutDown() {
-        if(_blobStoreStorageHandler.isOffHeap()){
+
+        if (isBlobStoreCachePolicy() && getBlobStoreStorageHandler() != null && (hasBlobStoreOffHeapCache() || hasBlobStoreOffHeapStore())) {
             freeOffHeapCache();
         }
 
@@ -1332,7 +1336,7 @@ public class CacheManager extends AbstractCacheManager
         IEntryCacheInfo pE = null;
 
         pE = insertEntryToCache(context, entryHolder, true /* newEntry */,
-                typeData, true /*pin*/,InitialLoadOrigin.NON /*fromInitialLoad*/);
+                typeData, true /*pin*/, InitialLoadOrigin.NON /*fromInitialLoad*/);
 
         if (pE == _entryAlreadyInSpaceIndication) {
             throw new EntryAlreadyInSpaceException(entryHolder.getUID(), entryHolder.getClassName());
@@ -1346,8 +1350,7 @@ public class CacheManager extends AbstractCacheManager
                 //If should be sent to cluster
                 if (shouldReplicate && !context.isDelayedReplicationForbulkOpUsed())
                     handleInsertEntryReplication(context, entryHolder);
-            }
-            catch (SAException ex) {
+            } catch (SAException ex) {
                 if (!entryHolder.isDeleted()) {
                     removeEntryFromCache(entryHolder);
                 }
@@ -1656,7 +1659,7 @@ public class CacheManager extends AbstractCacheManager
 
         if (tryInsertToCache) {
             pEntry = safeInsertEntryToCache(context, entry, false /* newEntry */
-                    , null /*pType*/, lockedEntry /*pin*/,InitialLoadOrigin.NON /*fromInitialLoad*/);
+                    , null /*pType*/, lockedEntry /*pin*/, InitialLoadOrigin.NON /*fromInitialLoad*/);
             if (pEntry == null)
                 return null;         //entry deleted
         }
@@ -1704,13 +1707,13 @@ public class CacheManager extends AbstractCacheManager
                     }
                 }
             }
-            if (pEntry != null){
-                if(pEntry.isBlobStoreEntry()) {
+            if (pEntry != null) {
+                if (pEntry.isBlobStoreEntry()) {
                     boolean indexesPartOnly = (template instanceof ITemplateHolder) && BlobStoreOperationOptimizations.isConsiderOptimizedForBlobstore(_engine, context, (ITemplateHolder) template, pEntry);
                     IEntryHolder latestEntryVersion = ((IBlobStoreRefCacheInfo) pEntry).getLatestEntryVersion(this, false, null, null, indexesPartOnly);
                     return latestEntryVersion;
-                }else{
-                   return pEntry.getEntryHolder(this);
+                } else {
+                    return pEntry.getEntryHolder(this);
                 }
             }
 
@@ -1740,7 +1743,7 @@ public class CacheManager extends AbstractCacheManager
 
         if (tryInsertToCache) {
             pEntry = safeInsertEntryToCache(context, entry, false /* newEntry */
-                    , null /*pType*/, lockedEntry /*pin*/,InitialLoadOrigin.NON /*fromInitialLoad*/);
+                    , null /*pType*/, lockedEntry /*pin*/, InitialLoadOrigin.NON /*fromInitialLoad*/);
             if (pEntry == null)
                 return null;         //entry deleted
         }
@@ -2730,8 +2733,8 @@ public class CacheManager extends AbstractCacheManager
         //TODO- when SA count fixed iterateOnlyMemory should always be true
         // iterator for entries
         if (isblobStoreDataSpace()) {
-           context.setBlobStoreTryNonPersistentOp(true);
-           context.setOptimizedBlobStoreReadEnabled(template.isOptimizedForBlobStoreOp(this));
+            context.setBlobStoreTryNonPersistentOp(true);
+            context.setOptimizedBlobStoreReadEnabled(template.isOptimizedForBlobStoreOp(this));
         }
         EntriesIter iter = (EntriesIter) makeEntriesIter(context, template, serverTypeDesc, 0, SystemTime.timeMillis(), memoryOnly);
         if (iter == null)
@@ -3169,10 +3172,10 @@ public class CacheManager extends AbstractCacheManager
     /**
      * Inserts the specified entry to cache, perform memory manager check.
      */
-    public IEntryCacheInfo safeInsertEntryToCache(Context context, IEntryHolder entryHolder, boolean newEntry, TypeData pType, boolean pin,InitialLoadOrigin fromInitialLoad) {
+    public IEntryCacheInfo safeInsertEntryToCache(Context context, IEntryHolder entryHolder, boolean newEntry, TypeData pType, boolean pin, InitialLoadOrigin fromInitialLoad) {
         // check memory water-mark
         _engine.getMemoryManager().monitorMemoryUsage(true);
-        return insertEntryToCache(context, entryHolder, newEntry, pType, pin,fromInitialLoad);
+        return insertEntryToCache(context, entryHolder, newEntry, pType, pin, fromInitialLoad);
     }
 
 
@@ -3180,7 +3183,7 @@ public class CacheManager extends AbstractCacheManager
      * Inserts the specified entry to cache- if feasable. pin == rentry is locked and should be
      * pinned in cache
      */
-    IEntryCacheInfo insertEntryToCache(Context context, IEntryHolder entryHolder, boolean newEntry, TypeData typeData, boolean pin,InitialLoadOrigin fromInitialLoad) {
+    IEntryCacheInfo insertEntryToCache(Context context, IEntryHolder entryHolder, boolean newEntry, TypeData typeData, boolean pin, InitialLoadOrigin fromInitialLoad) {
         if (typeData == null)
             typeData = _typeDataMap.get(entryHolder.getServerTypeDesc());
 
@@ -3242,11 +3245,7 @@ public class CacheManager extends AbstractCacheManager
 
     private void freeOffHeapCache() {
 
-        if(!isBlobStoreCachePolicy() || getBlobStoreStorageHandler() == null){
-            return;
-        }
-
-        OffHeapMemoryPool offHeapMemoryPool = hasBlobStoreOffHeapCache() ? getBlobStoreStorageHandler().getOffHeapCache() :  getBlobStoreStorageHandler().getOffHeapStore();
+        OffHeapMemoryPool offHeapMemoryPool = hasBlobStoreOffHeapCache() ? getBlobStoreStorageHandler().getOffHeapCache() : getBlobStoreStorageHandler().getOffHeapStore();
 
         if (offHeapMemoryPool != null && offHeapMemoryPool.getUsedBytes() == 0) {
             return;
@@ -3278,17 +3277,16 @@ public class CacheManager extends AbstractCacheManager
                         entriesIter = null;
                     }
                 } catch (SAException ex) {
-                    _logger.log(Level.WARNING,"caught exception while cleaning offheap entries during shutdown", ex);
+                    _logger.log(Level.WARNING, "caught exception while cleaning offheap entries during shutdown", ex);
                 }
             }
             if (_logger.isLoggable(Level.WARNING) && offHeapMemoryPool != null) {
                 final long count = offHeapMemoryPool.getUsedBytes();
-                if(count != 0){
-                    _logger.log(Level.WARNING,"offheap used bytes still consumes " + count + " bytes");
+                if (count != 0) {
+                    _logger.log(Level.WARNING, "offheap used bytes still consumes " + count + " bytes");
                 }
             }
-        }
-        finally {
+        } finally {
             if (context != null) {
                 freeCacheContext(context);
             }
@@ -3998,9 +3996,9 @@ public class CacheManager extends AbstractCacheManager
 
     /**
      * Computes the best way to reach a list of potential match of entries of the specified type.
-     *
+     * <p>
      * Handles also unindexed entries.
-     *
+     * <p>
      * Assumes the specified template is a superclass (in the wide sense) of the specified entry.
      *
      * @param typeData the type of entries to search for
@@ -4287,11 +4285,11 @@ public class CacheManager extends AbstractCacheManager
 
     /**
      * Using extended match-
-     *
+     * <p>
      * Computes the best way to reach a list of potential match of entries of the specified type.
-     *
+     * <p>
      * Handles also un-indexed entries.
-     *
+     * <p>
      * Assumes the specified template is a superclass (in the wide sense) of the specified entry.
      *
      * @param entryType the type of entries to search for
@@ -4301,7 +4299,7 @@ public class CacheManager extends AbstractCacheManager
      */
     public Object getEntriesMinIndexExtended(Context context, TypeData entryType, int numOfFields, ITemplateHolder template) {
 //        boolean isExplainPlan = template instanceof TemplateHolder && (((TemplateHolder) template).getSingleExplainPlan() != null);
-        if(template instanceof TemplateHolder && (((TemplateHolder) template).getExplainPlan() != null)){
+        if (template instanceof TemplateHolder && (((TemplateHolder) template).getExplainPlan() != null)) {
             SingleExplainPlan singleExplainPlan = ((TemplateHolder) template).getExplainPlan();
             singleExplainPlan.setPartitionId(Integer.toString(getEngine().getPartitionIdOneBased()));
             ExplainPlanContext explainPlanContext = new ExplainPlanContext();
@@ -4329,8 +4327,7 @@ public class CacheManager extends AbstractCacheManager
                 IEntryCacheInfo pEntryByUid;
                 if (entryType.disableIdIndexForEntries(primaryKey)) {
                     pEntryByUid = getPEntryByUid(ClientUIDHandler.createUIDFromName(templateValue, entryType.getClassName()));
-                }
-                else {
+                } else {
                     pEntryByUid = primaryKey.getUniqueEntriesStore().get(templateValue);
                 }
                 if (context.getExplainPlanContext() != null) {
@@ -4448,9 +4445,9 @@ public class CacheManager extends AbstractCacheManager
                         entriesVector = index.getNullEntries();
                         if (context.isIndicesIntersectionEnabled())
                             intersectedList = addToIntersectedList(context, intersectedList, entriesVector, template.isFifoTemplate(), false/*shortest*/, entryType);
-                        if (resultSL == null || resultSL.size() > entriesVector.size()){
+                        if (resultSL == null || resultSL.size() > entriesVector.size()) {
                             if (context.getExplainPlanContext() != null) {
-                                if(context.getExplainPlanContext().getMatch() == null){
+                                if (context.getExplainPlanContext().getMatch() == null) {
                                     context.getExplainPlanContext().setMatch(new IndexChoiceNode("MATCH"));
                                     context.getExplainPlanContext().getSingleExplainPlan().addScanIndexChoiceNode(entryType.getClassName(), context.getExplainPlanContext().getMatch());
                                 }
@@ -4484,10 +4481,10 @@ public class CacheManager extends AbstractCacheManager
                             return null; //no values
                         if (context.isIndicesIntersectionEnabled())
                             intersectedList = addToIntersectedList(context, intersectedList, entriesVector, template.isFifoTemplate(), false/*shortest*/, entryType);
-                        if (resultSL == null || resultSL.size() > entriesVector.size()){
+                        if (resultSL == null || resultSL.size() > entriesVector.size()) {
                             handleExplainPlanMatchCodes(true, context, entryType, index, pos, templateValue, entriesVector);
                             resultSL = entriesVector;
-                        }else{
+                        } else {
                             handleExplainPlanMatchCodes(false, context, entryType, index, pos, templateValue, entriesVector);
                         }
 
@@ -4521,7 +4518,7 @@ public class CacheManager extends AbstractCacheManager
                                 return null;  //no values
 
                             if (context.getExplainPlanContext() != null) {
-                                if(context.getExplainPlanContext().getMatch() == null){
+                                if (context.getExplainPlanContext().getMatch() == null) {
                                     context.getExplainPlanContext().setMatch(new IndexChoiceNode("MATCH"));
                                     context.getExplainPlanContext().getSingleExplainPlan().addScanIndexChoiceNode(entryType.getClassName(), context.getExplainPlanContext().getMatch());
                                 }
@@ -4580,14 +4577,14 @@ public class CacheManager extends AbstractCacheManager
 
     private void handleExplainPlanMatchCodes(boolean chosen, Context context, TypeData entryType, TypeDataIndex<Object> index, int pos, Object templateValue, IStoredList<IEntryCacheInfo> entriesVector) {
         if (context.getExplainPlanContext() != null) {
-            if(context.getExplainPlanContext().getMatch() == null){
+            if (context.getExplainPlanContext().getMatch() == null) {
                 context.getExplainPlanContext().setMatch(new IndexChoiceNode("MATCH"));
                 context.getExplainPlanContext().getSingleExplainPlan().addScanIndexChoiceNode(entryType.getClassName(), context.getExplainPlanContext().getMatch());
             }
             int indexSize = entriesVector == null ? 0 : entriesVector.size();
             IndexInfo indexInfo = new IndexInfo(entryType.getProperty(pos).getName(), indexSize, index.getIndexType(), templateValue, QueryOperator.EQ);
             context.getExplainPlanContext().getMatch().addOption(indexInfo);
-            if(chosen){
+            if (chosen) {
                 context.getExplainPlanContext().getMatch().setChosen(indexInfo);
             }
         }
@@ -4653,9 +4650,9 @@ public class CacheManager extends AbstractCacheManager
 
     /**
      * Computes the best way to reach a list of potential match of templates of the specified type.
-     *
+     * <p>
      * Handles also un-indexed templates.
-     *
+     * <p>
      * Assumes the specified template is a superclass (in the wide sense) of the specified entry.
      *
      * @param templateType the type of templates to search for
@@ -5179,9 +5176,9 @@ public class CacheManager extends AbstractCacheManager
     }
 
     //to be used only internaly for testing.
-    public int getEnriesSize(){
+    public int getEnriesSize() {
         if (_entries == null) return 0;
-    return  _entries.size();
+        return _entries.size();
     }
 
 	/*++++++++++++++++++++  FIFO RACE ++++++++++++++++++++++++++++++++++*/
@@ -5404,7 +5401,7 @@ public class CacheManager extends AbstractCacheManager
                     return getNumberOfNotifyTemplates(typeName, true);
                 }
             });
-            if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && isBlobStoreCachePolicy()){
+            if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && isBlobStoreCachePolicy()) {
                 if (getBlobStoreStorageHandler().getOffHeapCache() != null)
                     getBlobStoreStorageHandler().getOffHeapCache().register(typeName);
                 if (getBlobStoreStorageHandler().getOffHeapStore() != null)
@@ -5454,8 +5451,7 @@ public class CacheManager extends AbstractCacheManager
         return null;
     }
 
-    public Context viewCacheContext()
-    {
+    public Context viewCacheContext() {
         return _cacheContextFactory.viewCacheContext();
     }
 
