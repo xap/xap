@@ -51,7 +51,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     private final BlobStoreStorageHandler _blobStore;
     private final BlobStoreSerializationUtils _serialization;
     private final boolean _needSerialization;
-    private OffHeapMemoryPool _offHeapCache;
+    private final OffHeapMemoryPool _offHeapCache;
     private final boolean _isOffHeap;
     private final OffHeapMemoryPool _offHeapStore;
 
@@ -77,6 +77,14 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
         _isOffHeap = blobStore instanceof OffHeapStorageContainer;
         _offHeapStore = _isOffHeap ? ((OffHeapStorageContainer)blobStore).getOffHeapStorage() : null;
 
+        //TODO: some properties are only set after initialize , here we ONLY use 'off-heap-cache-memory-threshold' property
+        Properties p = _blobStore.getProperties();
+        String offHeapThreshold = p != null ? p.getProperty("off-heap-cache-memory-threshold") : null;
+        _offHeapCache = offHeapThreshold == null ? null :new OffHeapMemoryPool(StringUtils.parseStringAsBytes(offHeapThreshold));
+        //Validate _offHeapStore and _offHeapCache are mutually exclusive
+        if(_offHeapCache != null && _offHeapStore != null){
+            throw new RuntimeException("Configuration exception: can not enable off heap optimization when running with off-heap-blob-store configuration");
+        }
         if(_offHeapStore != null && _cacheManager.isPersistentBlobStore()){
             throw new RuntimeException("Configuration exception: can not set "+ Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_PERSISTENT_PROP+" to true when running with off-heap-blob-store configuration");
         }
@@ -96,15 +104,6 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     public void initialize(BlobStoreConfig blobStoreConfig) {
         _registrator = blobStoreConfig.getMetricRegistrator();
         _blobStore.initialize(blobStoreConfig);
-
-        Properties p = _blobStore.getProperties();
-        String offHeapThreshold = p != null ? p.getProperty("off-heap-cache-memory-threshold") : null;
-        _offHeapCache = offHeapThreshold == null ? null :new OffHeapMemoryPool(StringUtils.parseStringAsBytes(offHeapThreshold));
-        //Validate _offHeapStore and _offHeapCache are mutually exclusive
-        if(_offHeapCache != null && _offHeapStore != null){
-            throw new RuntimeException("Configuration exception: can not enable off heap optimization when running with off-heap-blob-store configuration");
-        }
-
         registerOperations();
     }
 
