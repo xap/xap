@@ -12,15 +12,13 @@ import java.util.List;
  * @since 12.3
  * @author Rotem Herzberg
  */
-@Command(name = "demo", headerHeading = XapMainCommand.HEADER, header = "Runs a demo Partitioned Space with two partitions and backups")
+@Command(name = "demo", headerHeading = XapMainCommand.HEADER, header = "Run a partitioned Space with two highly available partitions")
 public class DemoCommand extends CliCommand {
 
     private final String SPACE_NAME = "demo-space";
     private final boolean HA = true;
     private final int PARTITIONS_COUNT = 2;
 
-    //xap space run --partitions=2 --lus --ha demo-space
-    // xap demo ^
     @Override
     protected void execute() throws Exception {
 

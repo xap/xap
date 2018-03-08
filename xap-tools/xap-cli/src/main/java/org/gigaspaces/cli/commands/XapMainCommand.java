@@ -29,7 +29,7 @@ public class XapMainCommand extends CliCommand implements SubCommandContainer {
     @Override
     public Collection<Object> getSubCommands() {
         return Arrays.asList(
-                (Object)new HelpCommand(),
+                (Object)
                 new VersionCommand(),
                 new PUCommand(),
                 new SpaceCommand(),

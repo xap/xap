@@ -26,9 +26,6 @@ public abstract class CliCommand implements Callable<Object> {
     @Option(names = {"--help"}, usageHelp = true, description = "Show the help information for this command")
     boolean usageHelpRequested;
 
-    @Option(names = {"--version"}, versionHelp = true, description = "Show the platform version")
-    boolean versionRequested;
-
     @Override
     public Object call() throws Exception {
         beforeExecute();
