@@ -164,6 +164,10 @@ public abstract class BlobStoreStorageHandler {
         return null;
     }
 
+    public BlobStoreStorageStatistics getStatistics() {
+        return null;
+    }
+
     /**
      * . close the blobstore handler. note- a non-abstract method
      */

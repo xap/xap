@@ -101,6 +101,11 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     }
 
     @Override
+    public BlobStoreStorageStatistics getStorageStatistics() {
+        return _blobStore.getStatistics();
+    }
+
+    @Override
     public void initialize(BlobStoreConfig blobStoreConfig) {
         _registrator = blobStoreConfig.getMetricRegistrator();
         _blobStore.initialize(blobStoreConfig);

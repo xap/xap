@@ -63,8 +63,7 @@ import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.query.extension.impl.QueryExtensionRuntimeInfoImpl;
 import com.gigaspaces.query.sql.functions.SqlFunction;
-import com.gigaspaces.server.blobstore.BlobStoreConfig;
-import com.gigaspaces.server.blobstore.BlobStoreStorageHandler;
+import com.gigaspaces.server.blobstore.*;
 import com.gigaspaces.server.eviction.EvictableServerEntry;
 import com.gigaspaces.server.eviction.SpaceEvictionManager;
 import com.gigaspaces.server.eviction.SpaceEvictionStrategy;
@@ -3291,6 +3290,24 @@ public class CacheManager extends AbstractCacheManager
                 freeCacheContext(context);
             }
         }
+    }
+
+    public BlobStoreStatistics getBlobStoreStatistics() {
+        if (!isBlobStoreCachePolicy())
+            return null;
+        BlobStoreStatisticsImpl result = new BlobStoreStatisticsImpl();
+        result.setCacheSize(_blobStoreInternalCache.getCacheSize());
+        result.setCacheHitCount(_blobStoreInternalCache.getHitCount());
+        result.setCacheMissCount(_blobStoreInternalCache.getMissCount());
+        result.setHotDataCacheMissCount(_blobStoreInternalCache.getHotDataCacheMiss());
+        if (_blobStoreStorageHandler.getOffHeapCache() != null)
+            result.setOffHeapCacheUsedBytes(_blobStoreStorageHandler.getOffHeapCache().getUsedBytes());
+        BlobStoreStorageStatistics snapshot = _blobStoreStorageHandler.getStorageStatistics();
+        if (snapshot != null) {
+            result.setStorageStatistics(new ArrayList<BlobStoreStorageStatistics>(1));
+            result.getStorageStatistics().add(snapshot);
+        }
+        return result;
     }
 
     /**

@@ -202,12 +202,16 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
     @Override
     public long getMissCount(){
         long coldDataMisses = _isBlobStoreInternalCacheFilterEnabled ? _blobStoreInternalCacheFilter.getColdDataMissCount().getCount() : 0;
-
         return _blobStoreCacheImpl.getMissCount().getCount()+coldDataMisses;
     }
 
     @Override
     public long getHitCount(){
         return _blobStoreCacheImpl.getHitCount().getCount();
+    }
+
+    @Override
+    public long getHotDataCacheMiss() {
+        return _blobStoreCacheImpl.getMissCount().getCount();
     }
 }

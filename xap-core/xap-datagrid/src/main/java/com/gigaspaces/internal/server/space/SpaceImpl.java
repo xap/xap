@@ -2628,6 +2628,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             throw new RuntimeException(e);
         }
 
+        stat.setBlobStoreStatistics(engine.getCacheManager().getBlobStoreStatistics());
+
         return stat;
     }
 

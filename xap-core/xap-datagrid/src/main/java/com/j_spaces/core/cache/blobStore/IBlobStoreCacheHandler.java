@@ -24,4 +24,6 @@ public interface IBlobStoreCacheHandler {
     long getMissCount();
 
     long getHitCount();
+
+    long getHotDataCacheMiss();
 }

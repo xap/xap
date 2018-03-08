@@ -19,6 +19,7 @@ package com.j_spaces.core.filters;
 import com.gigaspaces.cluster.replication.async.mirror.MirrorStatistics;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.server.blobstore.BlobStoreStatistics;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -57,6 +58,8 @@ public class StatisticsHolder implements Externalizable {
     private ReplicationStatistics replicationStatistics;
 
     private MirrorStatistics mirrorStatistics;
+
+    private BlobStoreStatistics blobStoreStatistics;
 
     private int processorQueueSize = -1;
 
@@ -228,6 +231,14 @@ public class StatisticsHolder implements Externalizable {
 
     public void setMirrorStatistics(MirrorStatistics mirrorStatistics) {
         this.mirrorStatistics = mirrorStatistics;
+    }
+
+    public BlobStoreStatistics getBlobStoreStatistics() {
+        return blobStoreStatistics;
+    }
+
+    public void setBlobStoreStatistics(BlobStoreStatistics blobStoreStatistics) {
+        this.blobStoreStatistics = blobStoreStatistics;
     }
 
     public void setProcessorQueueSize(int processorQueueSize) {
