@@ -58,7 +58,7 @@ public class OffHeapMemoryPool {
 
     public void initMetrics(MetricRegistrator metricRegistrator) {
         this.metricRegistrator = metricRegistrator.extend("off-heap");
-        metricRegistrator.register(metricsPath("total"), totalCounter);
+        this.metricRegistrator.register(metricsPath("total"), totalCounter);
     }
 
     private String metricsPath(String typeName) {
