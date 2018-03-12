@@ -3251,32 +3251,24 @@ public class CacheManager extends AbstractCacheManager
         }
 
         Context context = null;
-        EntriesIter entriesIter = null;
         try {
             context = getCacheContext();
             for (IServerTypeDesc serverTypeDesc : getTypeManager().getSafeTypeTable().values()) {
-                try {
-                    if (!serverTypeDesc.isRootType() && !serverTypeDesc.getTypeDesc().isInactive() && serverTypeDesc.getTypeDesc().isBlobstoreEnabled()) {
-                        ITemplateHolder templateHolder = TemplateHolderFactory.createTemplateHolder(serverTypeDesc, new TemplatePacket(serverTypeDesc.getTypeDesc()), _engine.generateUid(), Long.MAX_VALUE);
-                        entriesIter = (EntriesIter) makeEntriesIter(context, templateHolder, serverTypeDesc, 0, SystemTime.timeMillis(), false);
-                        entriesIter.setBringCacheInfoOnly(true);
-                        while (true) {
-                            IEntryCacheInfo entryCacheInfo = entriesIter.nextEntryCacheInfo();
-                            if (entryCacheInfo == null) {
-                                break;
-                            }
-                            if (entryCacheInfo.isBlobStoreEntry()) {
-                                IBlobStoreRefCacheInfo entry = (IBlobStoreRefCacheInfo) entryCacheInfo;
-                                entry.freeOffHeap(this, offHeapMemoryPool);
+                if (serverTypeDesc.isRootType() || serverTypeDesc.getTypeDesc().isInactive() || !serverTypeDesc.getTypeDesc().isBlobstoreEnabled())
+                    continue;
+                final IScanListIterator<IEntryCacheInfo> entriesIter = getTypeData(serverTypeDesc).scanTypeEntries();
+                if (entriesIter != null) {
+                    try {
+                        while (entriesIter.hasNext()) {
+                            IEntryCacheInfo entry = entriesIter.next();
+                            if (entry != null && entry.isBlobStoreEntry()) {
+                                ((IBlobStoreRefCacheInfo) entry).freeOffHeap(this, offHeapMemoryPool);
                             }
                         }
+                        entriesIter.releaseScan();
+                    } catch (SAException ex) {
+                        _logger.log(Level.WARNING, "caught exception while cleaning offheap entries during shutdown", ex);
                     }
-                    if (entriesIter != null) {
-                        entriesIter.close();
-                        entriesIter = null;
-                    }
-                } catch (SAException ex) {
-                    _logger.log(Level.WARNING, "caught exception while cleaning offheap entries during shutdown", ex);
                 }
             }
             if (_logger.isLoggable(Level.WARNING) && offHeapMemoryPool != null) {

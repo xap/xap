@@ -45,6 +45,8 @@ import com.j_spaces.kernel.IStoredList;
 import com.j_spaces.kernel.IStoredListIterator;
 import com.j_spaces.kernel.StoredListFactory;
 import com.j_spaces.kernel.SystemProperties;
+import com.j_spaces.kernel.list.IScanListIterator;
+import com.j_spaces.kernel.list.ScanSingleListIterator;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -769,6 +771,12 @@ public class TypeData {
         return _entries;
     }
 
+    public IScanListIterator<IEntryCacheInfo> scanTypeEntries()
+    {
+        if (getEntries() == null)
+            return null;
+        return new ScanSingleListIterator<IEntryCacheInfo>(getEntries(),false/*fifo*/);
+    }
 
     public PropertyInfo getProperty(int propertyID) {
         return _properties[propertyID];
