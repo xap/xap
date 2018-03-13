@@ -19,15 +19,16 @@ import java.util.List;
 @Command(name="run", header = "Run a standalone Processing Unit")
 public class PuRunCommand extends AbstractRunCommand {
 
-    @Parameters(index = "0", description = "The relative/absolute path of a processing unit directory or jar")
+    @Parameters(index = "0", description = "Relative/absolute path of a Processing Unit directory or archive file")
     File path;
-    @Option(names = {"--partitions" }, description = "Number of partitions in processing unit")
+    @Option(names = {"--partitions" }, description = "Specify the number of partitions for the Processing Unit")
     int partitions;
-    @Option(names = {"--ha" }, description = "Should the processing unit include backups for high availability")
+    @Option(names = {"--ha" }, description = "High availability (add one backup per partition)")
     boolean ha;
-    @Option(names = {"--instances" }, split = ",", description = "Which instances should be run (default is all instances)")
+    @Option(names = {"--instances" }, split = ",", description = "Specify one or more instances to run (for example: --instances=1_1,1_2). "
+                                                                    + "If no instances are specified, runs all instances.")
     String[] instances;
-    @Option(names = {"--lus"}, description = "Should the lookup service be started")
+    @Option(names = {"--lus"}, description = "Start a lookup service")
     boolean lus;
 
     @Override

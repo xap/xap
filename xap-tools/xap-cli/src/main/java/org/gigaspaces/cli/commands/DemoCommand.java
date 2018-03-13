@@ -12,7 +12,7 @@ import java.util.List;
  * @since 12.3
  * @author Rotem Herzberg
  */
-@Command(name = "demo", header = "Run a partitioned Space with two highly available partitions")
+@Command(name = "demo", header = "Run a Space in high availability mode (2 primaries with 1 backup each)")
 public class DemoCommand extends CliCommand {
 
     private final String SPACE_NAME = "demo-space";
