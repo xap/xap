@@ -251,7 +251,7 @@ public class CacheManager extends AbstractCacheManager
         _fifoBackgroundDispatcher = new DefaultFifoBackgroundDispatcher(numNotifyFifoThreads, numNonNotifyFifoThreads, this, _engine);
 
         _forceSpaceIdIndexIfEqual = engine.getConfigReader().getBooleanSpaceProperty(
-                Constants.CacheManager.CACHE_MANAGER_FORCE_ID_INDEX_PROP, "false");
+                Constants.CacheManager.CACHE_MANAGER_FORCE_ID_INDEX_PROP, "true");
 
         // indicators which return the type of StorageAdapter this instance represents.
         boolean isCacheExternalDB = sa.supportsExternalDB();
