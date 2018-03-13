@@ -914,10 +914,9 @@ public class SystemBoot {
     public static void exitIfHasAgentAndAgentIsNotRunning() {
         // check for ping if we are in agent
         if (AgentHelper.hasAgentId()) {
-            File workLocation = new File(SystemInfo.singleton().locations().work());
-            File file = new File(workLocation, "/gsa/gsa-" + AgentHelper.getGSAServiceID());
+            File file = findAgentFile(AgentHelper.getGSAServiceID());
             boolean gsaIsOut = false;
-            if (file.exists()) {
+            if (file != null && file.exists()) {
                 gsaIsOut = isGsaOut( file );
             } else {
                 gsaIsOut = true;
@@ -942,6 +941,19 @@ public class SystemBoot {
                 System.exit(1);
             }
         }
+    }
+
+    private static File findAgentFile(String gsaServiceID) {
+        File gsaLocation = new File(SystemInfo.singleton().locations().work(), "gsa");
+        File[] files = gsaLocation.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                String name = file.getName();
+                if (name.startsWith("gsa-") && name.endsWith("~" + gsaServiceID))
+                    return file;
+            }
+        }
+        return null;
     }
 
     public static boolean isGsaOut( File file ) {
