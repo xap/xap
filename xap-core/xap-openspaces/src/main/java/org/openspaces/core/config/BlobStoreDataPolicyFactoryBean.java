@@ -33,81 +33,49 @@ import java.util.List;
  */
 public class BlobStoreDataPolicyFactoryBean {
 
-    private Integer avgObjectSizeKB;
-    private Integer avgObjectSizeBytes;
-    private Integer cacheEntriesPercentage;
-    private Boolean persistent;
-    private List<SQLQuery> blobstoreCacheQueries;
-
-    private BlobStoreStorageHandler blobStoreHandler;
+    private final BlobStoreDataPolicyConfigurer configurer = new BlobStoreDataPolicyConfigurer();
 
     public void setAvgObjectSizeKB(Integer avgObjectSizeKB) {
-        this.avgObjectSizeKB = avgObjectSizeKB;
+        configurer.setAvgObjectSizeKB(avgObjectSizeKB);
     }
 
     public void setAvgObjectSizeBytes(Integer avgObjectSizeBytes) {
-        this.avgObjectSizeBytes = avgObjectSizeBytes;
+        configurer.setAvgObjectSizeBytes(avgObjectSizeBytes);
     }
 
     public Integer getCacheEntriesPercentage() {
-        return cacheEntriesPercentage;
+        return configurer.getCacheEntriesPercentage();
     }
 
     public void setCacheEntriesPercentage(Integer cacheEntriesPercentage) {
-        this.cacheEntriesPercentage = cacheEntriesPercentage;
+        configurer.setCacheEntriesPercentage(cacheEntriesPercentage);
     }
 
     public Boolean getPersistent() {
-        return persistent;
+        return configurer.getPersistent();
     }
 
     public void setPersistent(Boolean persistent) {
-        this.persistent = persistent;
+        configurer.setPersistent(persistent);
     }
 
     public BlobStoreStorageHandler getBlobStoreHandler() {
-        return blobStoreHandler;
+        return configurer.getBlobStoreHandler();
     }
 
     public void setBlobStoreHandler(BlobStoreStorageHandler blobStoreHandler) {
-        this.blobStoreHandler = blobStoreHandler;
+        configurer.setBlobStoreHandler(blobStoreHandler);
     }
 
     public List<SQLQuery> getBlobstoreCacheQueries() {
-        return blobstoreCacheQueries;
+        return configurer.getCacheQueries();
     }
 
     public void setBlobstoreCacheQueries(List<SQLQuery> blobstoreCacheQueries) {
-        this.blobstoreCacheQueries = blobstoreCacheQueries;
+        configurer.setCacheQueries(blobstoreCacheQueries);
     }
 
     public CachePolicy asCachePolicy() {
-        final BlobStoreDataCachePolicy policy = new BlobStoreDataCachePolicy();
-        if (avgObjectSizeKB != null && avgObjectSizeBytes != null) {
-            throw new BlobStoreException("avgObjectSizeKB and avgObjectSizeBytes cannot be used together");
-        }
-        if (avgObjectSizeKB != null)
-            policy.setAvgObjectSizeKB(avgObjectSizeKB);
-        if (avgObjectSizeBytes != null)
-            policy.setAvgObjectSizeBytes(avgObjectSizeBytes);
-        if (cacheEntriesPercentage != null)
-            policy.setCacheEntriesPercentage(cacheEntriesPercentage);
-        if (persistent != null) {
-            policy.setPersistent(persistent);
-        } else {
-            throw new BlobStoreException("persistent attribute in Blobstore space must be configured");
-        }
-        if (blobStoreHandler != null) {
-            policy.setBlobStoreHandler(blobStoreHandler);
-        } else {
-            throw new BlobStoreException("blobStoreHandler attribute in Blobstore space must be configured");
-        }
-        if(blobstoreCacheQueries != null)
-            for(SQLQuery sqlQuery : blobstoreCacheQueries){
-                policy.addCacheQuery(sqlQuery);
-            }
-        return policy;
+        return configurer.asCachePolicy();
     }
-
-
 }

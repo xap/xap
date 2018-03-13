@@ -29,6 +29,7 @@ import com.gigaspaces.sync.SpaceSynchronizationEndpoint;
 import com.j_spaces.core.IJSpace;
 
 import org.openspaces.core.cluster.ClusterInfo;
+import org.openspaces.core.config.BlobStoreDataPolicyConfigurer;
 import org.openspaces.core.config.BlobStoreDataPolicyFactoryBean;
 import org.openspaces.core.config.CustomCachePolicyFactoryBean;
 import org.openspaces.core.extension.SpaceCustomComponentFactoryBean;
@@ -233,6 +234,12 @@ public class EmbeddedSpaceConfigurer extends AbstractSpaceConfigurer {
     }
 
     public EmbeddedSpaceConfigurer blobStoreDataPolicy(BlobStoreDataPolicyFactoryBean blobStoreDataPolicy) {
+        validate();
+        factoryBean.setBlobStoreDataPolicy(blobStoreDataPolicy);
+        return this;
+    }
+
+    public EmbeddedSpaceConfigurer blobStoreDataPolicy(BlobStoreDataPolicyConfigurer blobStoreDataPolicy) {
         validate();
         factoryBean.setBlobStoreDataPolicy(blobStoreDataPolicy);
         return this;

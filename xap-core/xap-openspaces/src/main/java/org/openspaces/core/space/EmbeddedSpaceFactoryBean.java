@@ -27,10 +27,7 @@ import com.j_spaces.core.IJSpace;
 
 import org.openspaces.core.cluster.ClusterInfo;
 import org.openspaces.core.cluster.ClusterInfoAware;
-import org.openspaces.core.config.AttributeStoreFactoryBean;
-import org.openspaces.core.config.BlobStoreDataPolicyFactoryBean;
-import org.openspaces.core.config.CustomCachePolicyFactoryBean;
-import org.openspaces.core.config.SpaceSqlFunctionBean;
+import org.openspaces.core.config.*;
 import org.openspaces.core.extension.SpaceCustomComponentFactoryBean;
 import org.openspaces.core.properties.BeanLevelMergedPropertiesAware;
 import org.openspaces.core.space.filter.FilterProviderFactory;
@@ -176,6 +173,11 @@ public class EmbeddedSpaceFactoryBean extends AbstractSpaceFactoryBean implement
     }
 
     public void setBlobStoreDataPolicy(BlobStoreDataPolicyFactoryBean blobStoreDataPolicy) {
+        if (blobStoreDataPolicy != null)
+            setCachePolicy(blobStoreDataPolicy.asCachePolicy());
+    }
+
+    public void setBlobStoreDataPolicy(BlobStoreDataPolicyConfigurer blobStoreDataPolicy) {
         if (blobStoreDataPolicy != null)
             setCachePolicy(blobStoreDataPolicy.asCachePolicy());
     }
