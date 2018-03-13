@@ -57,7 +57,7 @@ public class OffHeapMemoryPool {
     }
 
     public void initMetrics(MetricRegistrator metricRegistrator) {
-        this.metricRegistrator = metricRegistrator.extend("off-heap");
+        this.metricRegistrator = metricRegistrator;
         this.metricRegistrator.register(metricsPath("total"), totalCounter);
     }
 

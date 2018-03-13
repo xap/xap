@@ -334,9 +334,9 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
         _registrator.register("remove-tp", remove_tp);
         _registrator.register("replace-tp", replace_tp);
         if (_offHeapCache != null)
-            _offHeapCache.initMetrics(_registrator);
+            _offHeapCache.initMetrics(_registrator.extend("off-heap-cache"));
         if (_offHeapStore != null)
-            _offHeapStore.initMetrics(_registrator);
+            _offHeapStore.initMetrics(_registrator.extend("off-heap"));
     }
 
     private void metricsByOpType(BlobStoreBulkOperationRequest request) {
