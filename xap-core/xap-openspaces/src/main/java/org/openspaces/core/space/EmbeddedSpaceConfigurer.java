@@ -241,7 +241,8 @@ public class EmbeddedSpaceConfigurer extends AbstractSpaceConfigurer {
 
     public EmbeddedSpaceConfigurer blobStoreDataPolicy(BlobStoreDataPolicyConfigurer blobStoreDataPolicy) {
         validate();
-        factoryBean.setBlobStoreDataPolicy(blobStoreDataPolicy);
+        if (blobStoreDataPolicy != null)
+            factoryBean.setCachePolicy(blobStoreDataPolicy.asCachePolicy());
         return this;
     }
 

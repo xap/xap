@@ -177,11 +177,6 @@ public class EmbeddedSpaceFactoryBean extends AbstractSpaceFactoryBean implement
             setCachePolicy(blobStoreDataPolicy.asCachePolicy());
     }
 
-    public void setBlobStoreDataPolicy(BlobStoreDataPolicyConfigurer blobStoreDataPolicy) {
-        if (blobStoreDataPolicy != null)
-            setCachePolicy(blobStoreDataPolicy.asCachePolicy());
-    }
-
     public void attributeStore(AttributeStore attributeStore) {
         factory.setAttributeStore(attributeStore);
     }
