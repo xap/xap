@@ -40,7 +40,7 @@ public class OutputJVMOptions {
     private static String getJvmOptions() {
         final String vmName = getJvmName();
         if (vmName.equals("HOTSPOT")) {
-            String result = "-showversion -server -XX:+AggressiveOpts -XX:+HeapDumpOnOutOfMemoryError";
+            String result = "-server -XX:+AggressiveOpts -XX:+HeapDumpOnOutOfMemoryError";
             final int vmVersion = getVmVersion();
             if (vmVersion < 8)
                 result += " -XX:MaxPermSize=256m";
@@ -48,9 +48,9 @@ public class OutputJVMOptions {
         }
 
         if (vmName.equals("J9"))
-            return "-showversion -XX:MaxPermSize=256m";
+            return "-XX:MaxPermSize=256m";
 
-        return "-showversion";
+        return "";
     }
 
     private static String getJvmName() {
