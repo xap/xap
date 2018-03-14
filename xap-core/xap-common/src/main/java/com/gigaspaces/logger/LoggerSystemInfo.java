@@ -7,17 +7,14 @@ import com.gigaspaces.start.XapNetworkInfo;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 
-
 public class LoggerSystemInfo {
 
-    public static final String XAP_HOME = CommonSystemProperties.GS_HOME;
-    public static final String XAP_HOME_FWD_SLASH = CommonSystemProperties.GS_HOME + ".fwd-slash";
     public static final String xapHome = findXapHome();
     public static final long processId = findProcessId();
     public static final XapNetworkInfo networkInfo = new XapNetworkInfo();
 
     private static String findXapHome() {
-        String result = System.getProperty(XAP_HOME);
+        String result = System.getProperty(CommonSystemProperties.GS_HOME);
         if (result == null)
             result = System.getenv("XAP_HOME");
         if (result == null)
@@ -28,8 +25,7 @@ public class LoggerSystemInfo {
             result = result + File.separator;
 
         result = trimSuffix(result, File.separator);
-        System.setProperty(XAP_HOME, result);
-        System.setProperty(XAP_HOME_FWD_SLASH, new File(result).toString().replace("\\", "/"));
+        System.setProperty(CommonSystemProperties.GS_HOME, result);
         return result;
     }
 

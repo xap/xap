@@ -16,6 +16,7 @@
 
 package com.gigaspaces.start;
 
+import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.logger.LoggerSystemInfo;
@@ -49,6 +50,7 @@ public class SystemInfo {
     private static final SystemInfo instance = new SystemInfo();
 
     private final String xapHome;
+    private final String xapHomeFwdSlash;
     private final XapLocations locations;
     private final ProductType productType;
     private final XapLookup lookup;
@@ -63,6 +65,8 @@ public class SystemInfo {
 
     private SystemInfo() {
         this.xapHome = LoggerSystemInfo.xapHome;
+        this.xapHomeFwdSlash = new File(xapHome).toString().replace("\\", "/");
+        System.setProperty(CommonSystemProperties.GS_HOME + ".fwd-slash", xapHomeFwdSlash);
         this.os = new XapOperatingSystem(LoggerSystemInfo.processId);
         this.network = LoggerSystemInfo.networkInfo;
         this.locations = new XapLocations(xapHome);
@@ -75,6 +79,10 @@ public class SystemInfo {
 
     public String getXapHome() {
         return xapHome;
+    }
+
+    public String getXapHomeFwdSlash() {
+        return xapHomeFwdSlash;
     }
 
     public ProductType getProductType() {
