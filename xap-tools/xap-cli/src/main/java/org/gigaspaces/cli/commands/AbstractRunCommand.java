@@ -14,13 +14,13 @@ public abstract class AbstractRunCommand extends CliCommand {
         //if partitions is not defined
         if (partitions == 0) {
             if (ha) {
-                throw new CliCommandException("Wrong usage: --partitions was not specified with option --ha");
+                throw new CliCommandException("Missing argument: '--partitions' when used in conjunction with '--ha' option");
             }
             if (instances != null) {
-                throw new CliCommandException("Wrong usage: --instances was not specified with option --partitions");
+                throw new CliCommandException("Missing argument: '--partitions' when used in conjunction with '--instances' option");
             }
         } else if (partitions < 0) {
-            throw new CliCommandException("Wrong usage: --partitions must not be negative");
+            throw new CliCommandException("Illegal argument: '--partitions="+partitions+"' must be positive");
         }
     }
 
