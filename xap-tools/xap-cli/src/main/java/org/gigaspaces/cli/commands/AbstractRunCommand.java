@@ -14,13 +14,13 @@ public abstract class AbstractRunCommand extends CliCommand {
         //if partitions is not defined
         if (partitions == 0) {
             if (ha) {
-                throw new CliCommandException("Partitions must be defined when using high availability option");
+                throw new CliCommandException("Wrong usage: --partitions was not specified with option --ha");
             }
             if (instances != null) {
-                throw new CliCommandException("Partitions must be defined when using instances option");
+                throw new CliCommandException("Wrong usage: --instances was not specified with option --partitions");
             }
         } else if (partitions < 0) {
-            throw new CliCommandException("Partitions option must have a value above zero");
+            throw new CliCommandException("Wrong usage: --partitions must not be negative");
         }
     }
 
