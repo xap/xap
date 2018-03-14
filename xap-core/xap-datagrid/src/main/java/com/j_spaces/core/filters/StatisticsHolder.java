@@ -17,6 +17,7 @@
 package com.j_spaces.core.filters;
 
 import com.gigaspaces.cluster.replication.async.mirror.MirrorStatistics;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.server.blobstore.BlobStoreStatistics;
@@ -143,7 +144,10 @@ public class StatisticsHolder implements Externalizable {
 
         final PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
 
-        if (version.greaterOrEquals(PlatformLogicalVersion.v9_1_0))
+        if (version.greaterOrEquals(PlatformLogicalVersion.v12_3_0)){
+            writeExternalV5(out);
+        }
+        else if (version.greaterOrEquals(PlatformLogicalVersion.v9_1_0))
             writeExternalV4(out);
         else
             writeExternalV3(out);
@@ -180,10 +184,18 @@ public class StatisticsHolder implements Externalizable {
         runtimeStatisticsHolder.writeExternal(out);
     }
 
+    private void writeExternalV5(ObjectOutput out) throws IOException {
+        writeExternalV4(out);
+        IOUtils.writeObject(out, blobStoreStatistics);
+    }
+
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         final PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
 
-        if (version.greaterOrEquals(PlatformLogicalVersion.v9_1_0))
+        if (version.greaterOrEquals(PlatformLogicalVersion.v12_3_0)){
+            readExternalV5(in);
+        }
+        else if (version.greaterOrEquals(PlatformLogicalVersion.v9_1_0))
             readExternalV4(in);
         else
             readExternalV3(in);
@@ -215,6 +227,11 @@ public class StatisticsHolder implements Externalizable {
         readExternalV3(in);
         runtimeStatisticsHolder = new RuntimeStatisticsHolder();
         runtimeStatisticsHolder.readExternal(in);
+    }
+
+    private void readExternalV5(ObjectInput in) throws IOException, ClassNotFoundException {
+        readExternalV4(in);
+        blobStoreStatistics = IOUtils.readObject( in );
     }
 
     public ReplicationStatistics getReplicationStatistics() {
