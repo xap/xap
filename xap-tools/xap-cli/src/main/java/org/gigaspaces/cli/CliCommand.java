@@ -7,6 +7,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Command(
@@ -29,7 +30,14 @@ public abstract class CliCommand implements Callable<Object> {
     @Override
     public Object call() throws Exception {
         beforeExecute();
-        execute();
+        try {
+            execute();
+        } catch (Exception e) {
+            if( LOGGER.isLoggable(Level.FINE ) ){
+                LOGGER.log( Level.FINE, "Execution of [" + this.getClass()+"] threw an exception.", e);
+            }
+            throw e;
+        }
         return null;
     }
 

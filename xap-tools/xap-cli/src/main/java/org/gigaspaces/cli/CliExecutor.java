@@ -1,11 +1,16 @@
 package org.gigaspaces.cli;
 
+import com.gigaspaces.logger.Constants;
+
 import picocli.CommandLine;
 import picocli.CommandLine.*;
 
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
+
+import static java.lang.System.out;
 
 public class CliExecutor {
 
@@ -16,24 +21,38 @@ public class CliExecutor {
     }
 
     public static void execute(Object mainCommand, String[] args) {
-        final PrintStream out = System.out;
-
         int exitCode;
         try {
             mainCommandLine = toCommandLine(mainCommand);
             mainCommandLine.parseWithHandler(new CustomResultHandler(), out, args);
             exitCode = 0;
         } catch (Exception e) {
-            if (e instanceof CommandLine.ExecutionException && e.getCause() instanceof CliCommandException) {
+            exitCode = handleException(e);
+        }
+        System.out.println();
+        System.exit(exitCode);
+    }
+
+    private static int handleException(Exception e) {
+        if (e instanceof ExecutionException) {
+            if (e.getCause() instanceof CliCommandException) {
                 CliCommandException cause = (CliCommandException) e.getCause();
-                out.println(cause.getMessage());
-                exitCode = cause.getExitCode();
-            } else {
-                e.printStackTrace(out);
-                exitCode = 1;
+                printErr(cause);
+                return cause.getExitCode();
             }
         }
-        System.exit(exitCode);
+        printErr(e);
+        return 1;
+    }
+
+    private static void printErr(Throwable t) {
+        String message = t.getLocalizedMessage();
+        if (message == null) message = t.toString();
+        System.err.println("\n[ERROR] " + message);
+
+        if (!CliCommand.LOGGER.isLoggable(Level.FINE)) {
+            System.err.println("- Configure " + Constants.LOGGER_CLI + " log level for verbosity");
+        }
     }
 
     private static CommandLine toCommandLine(Object command) {
