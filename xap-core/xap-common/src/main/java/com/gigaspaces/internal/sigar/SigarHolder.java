@@ -28,6 +28,7 @@ import org.hyperic.sigar.SigarException;
 public class SigarHolder {
 
     private static Sigar sigar;
+    private static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("win");
 
     public static synchronized Sigar getSigar() {
         if (sigar == null) {
@@ -37,7 +38,7 @@ public class SigarHolder {
         return sigar;
     }
 
-    public static void kill(long pid, long timeout) throws SigarException {
+    public static boolean kill(long pid, long timeout) throws SigarException {
         Sigar sigar = getSigar();
 
         // Ask nicely, let process a chance to shutdown gracefully:
@@ -51,8 +52,11 @@ public class SigarHolder {
             isTerminated = !isAlive(sigar, pid);
         }
         // If process is still alive, kill it:
-        if (!isTerminated)
+        if (!isTerminated && !isWindows) {
             kill(sigar, pid, "SIGKILL");
+            isTerminated = !isAlive(sigar, pid);
+        }
+        return isTerminated;
     }
 
     private static boolean waitForExit(Sigar sigar, long pid, long timeout, long pollInterval) throws InterruptedException {

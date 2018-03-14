@@ -36,8 +36,7 @@ public class SigarChecker {
             return false;
 
         try {
-            SigarHolder.kill(pid, timeout);
-            return true;
+            return SigarHolder.kill(pid, timeout);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to kill process " + pid + ": " + e.getMessage(), e);
         }
