@@ -3,6 +3,8 @@ package org.gigaspaces.cli;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.logger.GSLogConfigLoader;
 import org.gigaspaces.cli.commands.XapVersionProvider;
+import org.jini.rio.boot.BootUtil;
+
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -33,7 +35,10 @@ public abstract class CliCommand implements Callable<Object> {
         try {
             execute();
         } catch (Exception e) {
-            if( LOGGER.isLoggable(Level.FINE ) ){
+            if (LOGGER.isLoggable(Level.FINEST)) {
+                final String stackTrace = BootUtil.getStackTrace(e);
+                LOGGER.log( Level.FINEST, "Execution of [" + this.getClass()+"] threw an exception.\nStack trace: "+stackTrace, e);
+            } else if(LOGGER.isLoggable(Level.FINE )) {
                 LOGGER.log( Level.FINE, "Execution of [" + this.getClass()+"] threw an exception.", e);
             }
             throw e;
