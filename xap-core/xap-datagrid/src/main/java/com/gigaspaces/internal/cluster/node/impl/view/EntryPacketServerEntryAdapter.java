@@ -48,7 +48,7 @@ import java.util.Map;
 public class EntryPacketServerEntryAdapter implements IEntryData, ICustomTypeDescLoader, Externalizable, ISwapExternalizable {
     private static final long serialVersionUID = -4521887144678238254L;
 
-    private IEntryPacket _entryPacket;
+    private volatile IEntryPacket _entryPacket;
 
     public EntryPacketServerEntryAdapter() {
     }
