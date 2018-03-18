@@ -37,7 +37,7 @@ import java.io.ObjectOutput;
 public abstract class SingleReplicationPacketData extends AbstractReplicationPacketSingleEntryData {
     private static final long serialVersionUID = 1L;
 
-    private IEntryPacket _entryPacket;
+    private volatile IEntryPacket _entryPacket;
     private transient IEntryData _entryData;
 
     public SingleReplicationPacketData() {
