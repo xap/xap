@@ -114,7 +114,14 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
 
     @Override
     public Properties getProperties() {
-        return _blobStore.getProperties();
+        Properties props = _blobStore.getProperties();
+        if ( _offHeapCache != null ) {
+            if( props == null ){
+                props = new Properties();
+            }
+            props.setProperty("off-heap-cache-memory-threshold", String.valueOf(_offHeapCache.getThreshold()));
+        }
+        return props;
     }
 
     @Override
