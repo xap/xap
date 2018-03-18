@@ -114,6 +114,7 @@ public class SystemInfo {
     }
 
     public static class XapLocations {
+        private final String xapNetHome;
         private final String bin;
         private final String config;
         private final String lib;
@@ -134,7 +135,8 @@ public class SystemInfo {
             // Trim trailing separator if any:
             if (xapHome.endsWith("/") || xapHome.endsWith("\\"))
                 xapHome = xapHome.substring(0, xapHome.length()-1);
-            this.bin = path(xapHome, "bin");
+            this.xapNetHome = System.getProperty("com.gs.xapnet.home");
+            this.bin = path((xapNetHome != null ? xapNetHome : xapHome), "bin");
             this.config = path(xapHome, "config");
             this.lib = path(xapHome, "lib");
             this.libRequired= path(lib, "required");
@@ -180,6 +182,10 @@ public class SystemInfo {
 
         public String deploy(){
             return deploy;
+        }
+
+        public String xapNetHome() {
+            return xapNetHome;
         }
 
         private static String path(String base, String subdir) {
@@ -324,6 +330,7 @@ public class SystemInfo {
 
     public static class XapOperatingSystem {
         private final long processId;
+        private final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("win");
 
         public XapOperatingSystem(long pid) {
             this.processId = pid;
@@ -331,6 +338,10 @@ public class SystemInfo {
 
         public long processId() {
             return processId;
+        }
+
+        public boolean isWindows() {
+            return isWindows;
         }
     }
 
