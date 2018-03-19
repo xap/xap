@@ -5,12 +5,11 @@ import com.gigaspaces.logger.GSLogConfigLoader;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,7 +21,7 @@ import java.util.logging.Logger;
 public class XapCliUtils {
 
   private static Logger LOGGER;
-  private static int processTimeoutInSeconds = 30;
+  private static int processTimeoutInSeconds = 120;
 
   static {
     GSLogConfigLoader.getLoader("cli");
@@ -88,11 +87,11 @@ public class XapCliUtils {
   }
 
   public static void executeProcess(ProcessBuilder processBuilder) throws InterruptedException {
-      executeProcesses(Arrays.asList(processBuilder));
+      executeProcesses(Collections.singletonList(processBuilder));
   }
 
     private static List<ProcessBuilderWrapper> wrapList(List<ProcessBuilder> lst){
-        List<ProcessBuilderWrapper> wrappedList = new ArrayList<ProcessBuilderWrapper>();
+        List<ProcessBuilderWrapper> wrappedList = new ArrayList<ProcessBuilderWrapper>(lst.size());
         for(ProcessBuilder cur : lst){
             wrappedList.add(new ProcessBuilderWrapper(cur));
         }
