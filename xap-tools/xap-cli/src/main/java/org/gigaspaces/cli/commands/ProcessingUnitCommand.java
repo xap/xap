@@ -1,14 +1,15 @@
 package org.gigaspaces.cli.commands;
 
+import com.gigaspaces.start.SystemInfo;
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.SubCommandContainer;
 import picocli.CommandLine.*;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 
 @Command(name="pu", header = "List of available commands for Processing Unit operations")
-public class PUCommand extends CliCommand implements SubCommandContainer {
+public class ProcessingUnitCommand extends CliCommand implements SubCommandContainer {
 
     @Override
     protected void execute() throws Exception {
@@ -16,6 +17,10 @@ public class PUCommand extends CliCommand implements SubCommandContainer {
 
     @Override
     public Collection<Object> getSubCommands() {
-        return Arrays.asList((Object) new PuRunCommand());
+        Collection<Object> result = new ArrayList<Object>();
+        // This command is not supported in XAP.NET
+        if (SystemInfo.singleton().locations().xapNetHome() == null)
+            result.add(new PuRunCommand());
+        return result;
     }
 }

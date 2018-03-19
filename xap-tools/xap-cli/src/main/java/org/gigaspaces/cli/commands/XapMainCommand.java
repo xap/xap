@@ -31,8 +31,8 @@ public class XapMainCommand extends CliCommand implements SubCommandContainer {
         return Arrays.asList(
                 (Object)
                 new VersionCommand(),
-                new PUCommand(),
-                new SpaceCommand(),
-                new DemoCommand());
+                new DemoCommand(),
+                new ProcessingUnitCommand(),
+                new SpaceCommand());
     }
 }
