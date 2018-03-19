@@ -1,5 +1,6 @@
 package org.gigaspaces.cli.commands;
 
+import com.gigaspaces.start.SystemInfo;
 import org.gigaspaces.cli.commands.utils.XapCliUtils;
 
 import picocli.CommandLine.Command;
@@ -7,10 +8,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @since 12.3
@@ -73,21 +71,7 @@ public class SpaceRunCommand extends AbstractRunCommand {
         addOptions(commands, options);
 
         commands.add("-classpath");
-        StringBuilder classpath = new StringBuilder();
-
-        if (pb.environment().get("PRE_CLASSPATH") != null) {
-            classpath.append(pb.environment().get("PRE_CLASSPATH")).append(File.pathSeparator);
-        }
-        classpath.append(pb.environment().get("XAP_HOME"))
-                .append("/deploy/templates/datagrid")
-                .append(File.pathSeparator)
-                .append(pb.environment().get("GS_JARS"));
-
-        if (pb.environment().get("POST_CLASSPATH") != null) {
-            classpath.append(File.pathSeparator).append(pb.environment().get("POST_CLASSPATH"));
-        }
-
-        commands.add(classpath.toString());
+        commands.add(getSpaceClassPath(pb.environment()));
         commands.add("org.openspaces.pu.container.integrated.IntegratedProcessingUnitContainer");
         commands.add("-name");
         commands.add(name);
@@ -95,6 +79,16 @@ public class SpaceRunCommand extends AbstractRunCommand {
         pb.command().addAll(commands);
         showCommand("Starting Space with line:", pb.command());
         return pb;
+    }
+
+    private static String getSpaceClassPath(Map<String, String> env) {
+        return toClassPath(env.get("PRE_CLASSPATH"), getDataGridTemplate(), getGsJars(env), env.get("POST_CLASSPATH"));
+    }
+
+    private static String getDataGridTemplate() {
+        return SystemInfo.singleton().locations().deploy() +
+                File.separatorChar + "templates" +
+                File.separatorChar + "datagrid";
     }
 
     public static ProcessBuilder buildPartitionedSpaceCommand(int id, String name, boolean ha, int partitions) {
@@ -115,19 +109,7 @@ public class SpaceRunCommand extends AbstractRunCommand {
         addOptions(commands, options);
 
         commands.add("-classpath");
-        StringBuilder classpath = new StringBuilder();
-        if (pb.environment().get("PRE_CLASSPATH") != null) {
-            classpath.append(pb.environment().get("PRE_CLASSPATH")).append(File.pathSeparator);
-        }
-        classpath.append(pb.environment().get("XAP_HOME"))
-                .append("/deploy/templates/datagrid")
-                .append(File.pathSeparator)
-                .append(pb.environment().get("GS_JARS"));
-
-        if (pb.environment().get("POST_CLASSPATH") != null) {
-            classpath.append(File.pathSeparator).append(pb.environment().get("POST_CLASSPATH"));
-        }
-        commands.add(classpath.toString());
+        commands.add(getSpaceClassPath(pb.environment()));
 
         commands.add("org.openspaces.pu.container.integrated.IntegratedProcessingUnitContainer");
         commands.add("-name");

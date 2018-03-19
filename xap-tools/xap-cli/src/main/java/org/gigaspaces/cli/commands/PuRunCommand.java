@@ -7,10 +7,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @since 12.3
@@ -72,16 +69,7 @@ public class PuRunCommand extends AbstractRunCommand {
         addOptions(commands, options);
 
         commands.add("-classpath");
-        StringBuilder classpath = new StringBuilder();
-        if (pb.environment().get("PRE_CLASSPATH") != null) {
-            classpath.append(pb.environment().get("PRE_CLASSPATH")).append(File.pathSeparator);
-        }
-        classpath.append(pb.environment().get("GS_JARS")).append(File.pathSeparator).append(pb.environment().get("SPRING_JARS"));
-        if (pb.environment().get("POST_CLASSPATH") != null) {
-            classpath.append(File.pathSeparator).append(pb.environment().get("POST_CLASSPATH"));
-        }
-
-        commands.add(classpath.toString());
+        commands.add(getProcessingUnitClassPath(pb.environment()));
         commands.add("org.openspaces.pu.container.standalone.StandaloneProcessingUnitContainer");
         commands.add("-path");
         commands.add(path.getPath());
@@ -99,6 +87,10 @@ public class PuRunCommand extends AbstractRunCommand {
         return buildPartitionedPuCommand(id, true);
     }
 
+    private static String getProcessingUnitClassPath(Map<String, String> env) {
+        return toClassPath(env.get("PRE_CLASSPATH"), getGsJars(env), getSpringJars(env), env.get("POST_CLASSPATH"));
+    }
+
     private ProcessBuilder buildPartitionedPuCommand(int id, boolean backup) {
 
         final ProcessBuilder pb = createJavaProcessBuilder();
@@ -109,16 +101,7 @@ public class PuRunCommand extends AbstractRunCommand {
         addOptions(commands, options);
 
         commands.add("-classpath");
-        StringBuilder classpath = new StringBuilder();
-        if (pb.environment().get("PRE_CLASSPATH") != null) {
-            classpath.append(pb.environment().get("PRE_CLASSPATH")).append(File.pathSeparator);
-        }
-        classpath.append(pb.environment().get("GS_JARS")).append(File.pathSeparator).append(pb.environment().get("SPRING_JARS"));
-        if (pb.environment().get("POST_CLASSPATH") != null) {
-            classpath.append(File.pathSeparator).append(pb.environment().get("POST_CLASSPATH"));
-        }
-
-        commands.add(classpath.toString());
+        commands.add(getProcessingUnitClassPath(pb.environment()));
         commands.add("org.openspaces.pu.container.standalone.StandaloneProcessingUnitContainer");
         commands.add("-path");
         commands.add(path.getPath());

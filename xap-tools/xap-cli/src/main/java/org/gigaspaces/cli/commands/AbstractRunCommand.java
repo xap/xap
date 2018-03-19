@@ -32,7 +32,7 @@ public abstract class AbstractRunCommand extends CliCommand {
         addOptions(commands, options);
 
         commands.add("-classpath");
-        commands.add(pb.environment().get("XAP_HOME") + File.pathSeparator + pb.environment().get("GS_JARS"));
+        commands.add(toClassPath(SystemInfo.singleton().getXapHome(), getGsJars(pb.environment())));
         commands.add("com.gigaspaces.internal.lookup.LookupServiceFactory");
 
         pb.command().addAll(commands);
@@ -60,6 +60,42 @@ public abstract class AbstractRunCommand extends CliCommand {
         return command;
     }
 
+    protected static String toClassPath(String ... paths) {
+        StringBuilder sb = new StringBuilder();
+        for (String path : paths) {
+            if (path == null || path.isEmpty())
+                continue;
+            if (sb.length() != 0)
+                sb.append(File.pathSeparatorChar);
+            sb.append(path);
+        }
+
+        return sb.toString();
+    }
+
+    protected static String getGsJars(Map<String, String> env) {
+        String result = env.get("GS_JARS");
+        if (result == null) {
+            //set GS_JARS="%XAP_HOME%\lib\platform\ext\*";"%XAP_HOME%";"%XAP_HOME%\lib\required\*";"%XAP_HOME%\lib\optional\pu-common\*";"%XAP_CLASSPATH_EXT%"
+            result = toClassPath(SystemInfo.singleton().locations().getLibPlatform() + File.separator + "ext" + File.separator + "*",
+                    SystemInfo.singleton().locations().getLibRequired() + File.separator + "*",
+                    SystemInfo.singleton().locations().getLibOptional() + File.separator + "pu-common" + File.separator + "*",
+                    env.get("XAP_CLASSPATH_EXT"));
+
+        }
+        return result;
+    }
+
+    protected static String getSpringJars(Map<String, String> env) {
+        String result = env.get("SPRING_JARS");
+        if (result == null) {
+            //set SPRING_JARS="%XAP_HOME%\lib\optional\spring\*;%XAP_HOME%\lib\optional\security\*;"
+            result = toClassPath(SystemInfo.singleton().locations().getLibOptional() + File.separator + "spring" + File.separator + "*",
+                    SystemInfo.singleton().locations().getLibOptional() + File.separator + "security" + File.separator + "*");
+        }
+        return result;
+    }
+
     public static void addOptions(Collection<String> command, String[] options) {
         for (String option : options) {
             if (System.getenv(option) != null) {
@@ -73,7 +109,8 @@ public abstract class AbstractRunCommand extends CliCommand {
         if (commandline.length()>2) {
             commandline = commandline.substring(1, commandline.length() - 1);
         }
-        LOGGER.fine(message + "\n" + commandline + "\n");
+        LOGGER.fine(message + System.lineSeparator() + commandline + System.lineSeparator());
+        //System.out.println(message + System.lineSeparator() + commandline + System.lineSeparator());
     }
 
     protected boolean containsInstance(String[] instances, String instance) {
