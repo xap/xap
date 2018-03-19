@@ -16,23 +16,22 @@ import java.util.logging.Logger;
 
 /**
  * @since 12.3
- *
  */
 public class XapCliUtils {
 
-  private static Logger LOGGER;
-  private static int processTimeoutInSeconds = 120;
+    private static Logger LOGGER;
+    private static int processTimeoutInSeconds = 120;
 
-  static {
-    GSLogConfigLoader.getLoader("cli");
-    LOGGER = Logger.getLogger(Constants.LOGGER_CLI);
-  }
+    static {
+        GSLogConfigLoader.getLoader("cli");
+        LOGGER = Logger.getLogger(Constants.LOGGER_CLI);
+    }
 
     public static void executeProcessesWrapper(List<ProcessBuilderWrapper> processBuilderWrappers) throws InterruptedException {
         final ExecutorService executorService = Executors.newCachedThreadPool();
         final int TIMEOUT = 60 * 1 * 1000;
 
-        for ( final ProcessBuilderWrapper processBuilderWrapper : processBuilderWrappers) {
+        for (final ProcessBuilderWrapper processBuilderWrapper : processBuilderWrappers) {
 
             executorService.submit(new Callable<Integer>() {
                 @Override
@@ -52,7 +51,7 @@ public class XapCliUtils {
 
                         process = processBuilder.start();
                         process.waitFor();
-                        if( processBuilderWrapper.isSyncCommand() ) {
+                        if (processBuilderWrapper.isSyncCommand()) {
                             System.exit(process.exitValue());
                         }
                     } catch (IOException e) {
@@ -62,7 +61,7 @@ public class XapCliUtils {
                     } catch (InterruptedException e) {
                         if (process != null) {
                             if (!process.waitFor(processTimeoutInSeconds, TimeUnit.SECONDS)) {
-                                LOGGER.fine("Termination timeout ("+ processTimeoutInSeconds +" seconds) elapsed, one or more sub-processes might still be running");
+                                LOGGER.fine("Termination timeout (" + processTimeoutInSeconds + " seconds) elapsed, one or more sub-processes might still be running");
                                 process.destroyForcibly();
                             }
                         }
@@ -81,18 +80,17 @@ public class XapCliUtils {
     }
 
 
+    public static void executeProcesses(List<ProcessBuilder> processBuilders) throws InterruptedException {
+        executeProcessesWrapper(wrapList(processBuilders));
+    }
 
-  public static void executeProcesses(List<ProcessBuilder> processBuilders) throws InterruptedException {
-      executeProcessesWrapper(wrapList(processBuilders));
-  }
+    public static void executeProcess(ProcessBuilder processBuilder) throws InterruptedException {
+        executeProcesses(Collections.singletonList(processBuilder));
+    }
 
-  public static void executeProcess(ProcessBuilder processBuilder) throws InterruptedException {
-      executeProcesses(Collections.singletonList(processBuilder));
-  }
-
-    private static List<ProcessBuilderWrapper> wrapList(List<ProcessBuilder> lst){
+    private static List<ProcessBuilderWrapper> wrapList(List<ProcessBuilder> lst) {
         List<ProcessBuilderWrapper> wrappedList = new ArrayList<ProcessBuilderWrapper>(lst.size());
-        for(ProcessBuilder cur : lst){
+        for (ProcessBuilder cur : lst) {
             wrappedList.add(new ProcessBuilderWrapper(cur));
         }
         return wrappedList;
@@ -108,9 +106,9 @@ public class XapCliUtils {
                 try {
                     if (executorService.awaitTermination(processTimeoutInSeconds + 1, TimeUnit.SECONDS)) {
                         long took = (System.currentTimeMillis() - start);
-                        LOGGER.info("Termination completed successfully (duration: "+TimeUnit.MILLISECONDS.toSeconds(took)+"s)");
+                        LOGGER.info("Termination completed successfully (duration: " + TimeUnit.MILLISECONDS.toSeconds(took) + "s)");
                     } else {
-                        LOGGER.warning("Termination timeout ("+ processTimeoutInSeconds +" seconds) elapsed, one or more sub-processes might still be running");
+                        LOGGER.warning("Termination timeout (" + processTimeoutInSeconds + " seconds) elapsed, one or more sub-processes might still be running");
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
