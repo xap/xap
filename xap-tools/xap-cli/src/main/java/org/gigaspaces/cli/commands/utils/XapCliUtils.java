@@ -21,21 +21,20 @@ import java.util.logging.Logger;
 public class XapCliUtils {
 
   private static Logger LOGGER;
+  private static int processTimeoutInSeconds = 30;
 
   static {
     GSLogConfigLoader.getLoader("cli");
     LOGGER = Logger.getLogger(Constants.LOGGER_CLI);
   }
 
-
     public static void executeProcessesWrapper(List<ProcessBuilderWrapper> processBuilderWrappers) throws InterruptedException {
         final ExecutorService executorService = Executors.newCachedThreadPool();
-        final List<Future<Integer>> futures = new ArrayList<Future<Integer>>(processBuilderWrappers.size());
         final int TIMEOUT = 60 * 1 * 1000;
 
         for ( final ProcessBuilderWrapper processBuilderWrapper : processBuilderWrappers) {
 
-            Future<Integer> future = executorService.submit(new Callable<Integer>() {
+            executorService.submit(new Callable<Integer>() {
                 @Override
                 public Integer call() throws Exception {
                     Process process = null;
@@ -62,7 +61,10 @@ public class XapCliUtils {
                         }
                     } catch (InterruptedException e) {
                         if (process != null) {
-                            process.destroy();
+                            if (!process.waitFor(processTimeoutInSeconds, TimeUnit.SECONDS)) {
+                                LOGGER.fine("Termination timeout ("+ processTimeoutInSeconds +" seconds) elapsed, one or more sub-processes might still be running");
+                                process.destroyForcibly();
+                            }
                         }
                         if (LOGGER.isLoggable(Level.SEVERE)) {
                             LOGGER.log(Level.SEVERE, e.toString(), e);
@@ -72,11 +74,9 @@ public class XapCliUtils {
                     return process.exitValue();
                 }
             });
-
-            futures.add(future);
         }
 
-        addShutdownHookToKillSubProcessesOnExit(futures);
+        addShutdownHookToKillSubProcessesOnExit(executorService);
         executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
     }
 
@@ -95,18 +95,23 @@ public class XapCliUtils {
     }
 
 
-    public static void addShutdownHookToKillSubProcessesOnExit(final List<Future<Integer>> futures) {
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        for (Future<Integer> future : futures) {
-          future.cancel(true);
-          try {
-            future.get();
-          } catch (Exception e) {
-          } //ignore
-        }
-      }
-    });
-  }
+    public static void addShutdownHookToKillSubProcessesOnExit(final ExecutorService executorService) {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                long start = System.currentTimeMillis();
+                executorService.shutdownNow();
+                try {
+                    if (executorService.awaitTermination(processTimeoutInSeconds + 1, TimeUnit.SECONDS)) {
+                        long took = (System.currentTimeMillis() - start);
+                        LOGGER.info("Termination completed successfully (duration: "+TimeUnit.MILLISECONDS.toSeconds(took)+"s)");
+                    } else {
+                        LOGGER.warning("Termination timeout ("+ processTimeoutInSeconds +" seconds) elapsed, one or more sub-processes might still be running");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+    }
 }
