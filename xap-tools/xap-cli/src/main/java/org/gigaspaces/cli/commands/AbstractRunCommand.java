@@ -41,9 +41,23 @@ public abstract class AbstractRunCommand extends CliCommand {
     }
 
     public static ProcessBuilder createJavaProcessBuilder() {
-        ProcessBuilder processBuilder = new ProcessBuilder(System.getenv("JAVACMD"));
+        ProcessBuilder processBuilder = new ProcessBuilder(getJavaCommand());
         processBuilder.inheritIO();
         return processBuilder;
+    }
+
+    private static String getJavaCommand() {
+        String command = System.getenv("JAVACMD");
+        if (command == null) {
+            String javaHome = System.getenv("JAVA_HOME");
+            if (javaHome == null)
+                javaHome = System.getenv("XapNet.Runtime.JavaHome");
+            if (javaHome != null)
+                command = javaHome + File.separator + "bin" + File.separator + "java";
+        }
+        if (command == null)
+            command = "java";
+        return command;
     }
 
     public static void addOptions(Collection<String> command, String[] options) {
