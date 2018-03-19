@@ -3987,7 +3987,7 @@ public class CacheManager extends AbstractCacheManager
         TypeDataIndex<IStoredList<IEntryCacheInfo>> primaryKey = typeData.getIdField();
         if (primaryKey != null && latestIndexToConsider >= primaryKey.getIndexCreationNumber()) {
             if (typeData.disableIdIndexForEntries(primaryKey))
-                return getPEntryByUid(ClientUIDHandler.createUIDFromName(templateValue, typeData.getClassName()));
+                return getPEntryByUid(typeData.generateUid(templateValue));
 
             IStoredList<IEntryCacheInfo> res = primaryKey.getUniqueEntriesStore().get(templateValue);
             if (res != null && !res.isMultiObjectCollection())
@@ -4034,7 +4034,7 @@ public class CacheManager extends AbstractCacheManager
             Object templateValue = primaryKey.getIndexValueForTemplate(template.getEntryData());
             if (templateValue != null) {
                 if (typeData.disableIdIndexForEntries(primaryKey))
-                    return getPEntryByUid(ClientUIDHandler.createUIDFromName(templateValue, typeData.getClassName()));
+                    return getPEntryByUid(typeData.generateUid(templateValue));
                 else
                     return primaryKey.getUniqueEntriesStore().get(templateValue);
             }
@@ -4338,7 +4338,7 @@ public class CacheManager extends AbstractCacheManager
                 context.setBlobStoreUsePureIndexesAccess(false);  //no index
                 IEntryCacheInfo pEntryByUid;
                 if (entryType.disableIdIndexForEntries(primaryKey)) {
-                    pEntryByUid = getPEntryByUid(ClientUIDHandler.createUIDFromName(templateValue, entryType.getClassName()));
+                    pEntryByUid = getPEntryByUid(entryType.generateUid(templateValue));
                 } else {
                     pEntryByUid = primaryKey.getUniqueEntriesStore().get(templateValue);
                 }
@@ -4649,7 +4649,7 @@ public class CacheManager extends AbstractCacheManager
             throw new EngineInternalSpaceException("No index defined for entry.");
 
         if (typeData.disableIdIndexForEntries(idPropertyIndex))
-            return getEntryByUidFromPureCache(ClientUIDHandler.createUIDFromName(id, typeData.getClassName()));
+            return getEntryByUidFromPureCache(typeData.generateUid(id));
 
 
         IEntryCacheInfo pe = idPropertyIndex.getUniqueEntriesStore().get(id);

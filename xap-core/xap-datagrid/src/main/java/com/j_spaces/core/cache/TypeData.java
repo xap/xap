@@ -21,6 +21,7 @@ import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.metadata.TypeDesc;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.MatchTarget;
+import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.server.space.metadata.TypeDataFactory;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
@@ -69,6 +70,7 @@ public class TypeData {
 
     private final CacheManager _cacheManager;
     private final String _className;
+    private final String _classUidPrefix;
     private final PropertyInfo[] _properties;
 
     private final ConcurrentHashMap<String, TypeDataIndex<?>> _indexTable;
@@ -195,6 +197,7 @@ public class TypeData {
         _useConcurrentSl = Runtime.getRuntime().availableProcessors() >= numOfCoresToUseSL;
 
         _className = serverTypeDesc.getTypeName();
+        _classUidPrefix = SpaceUidFactory.generateTypePrefix(_className);
         _properties = serverTypeDesc.getTypeDesc().getProperties();
         _indexTable = new ConcurrentHashMap<String, TypeDataIndex<?>>();
 
@@ -457,6 +460,7 @@ public class TypeData {
         _useConcurrentSl = originalTypeData._useConcurrentSl;
 
         _className = originalTypeData._className;
+        _classUidPrefix = originalTypeData._classUidPrefix;
         _properties = serverTypeDesc.getTypeDesc().getProperties();
 
         _fifoSupport = originalTypeData._fifoSupport;
@@ -800,6 +804,10 @@ public class TypeData {
 
     public String getClassName() {
         return _className;
+    }
+
+    public String generateUid(Object id) {
+        return SpaceUidFactory.generateUid(_classUidPrefix, id.toString());
     }
 
     public CacheManager getCacheManager() {

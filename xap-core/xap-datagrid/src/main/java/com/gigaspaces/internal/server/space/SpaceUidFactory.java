@@ -23,7 +23,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @com.gigaspaces.api.InternalApi
 public class SpaceUidFactory {
-    public static final String SUFFIX = "^0^0";
+    private static final boolean DISABLE_UID_SUFFIX = Boolean.getBoolean("com.gs.disable-uid-suffix");
+    public static final String SUFFIX = DISABLE_UID_SUFFIX ? "" : "^0^0";
     private static final int MAX_NUM_CLASSES_CACHED = 500;
     public static final char SEPARATOR = '^';
     public static final String PREFIX_AUTO = "A";
@@ -87,19 +88,13 @@ public class SpaceUidFactory {
 
         String prefix = _typeUidFactoryCache.get(typeName);
         if (prefix == null) {
-            StringBuilder prefixBuilder = new StringBuilder();
-            prefixBuilder.append(typeName.hashCode());
-            prefixBuilder.append(SEPARATOR);
-            prefixBuilder.append(typeName.length());
-            prefixBuilder.append(SEPARATOR);
-            prefix = prefixBuilder.toString();
+            prefix = generateTypePrefix(typeName);
             if (_typeUidFactoryCache.size() > MAX_NUM_CLASSES_CACHED)
                 _typeUidFactoryCache.clear();
             _typeUidFactoryCache.put(typeName, prefix);
         }
 
-        // NOTE: This is currently the most efficient way known to concatenate two strings. 
-        return prefix.concat(id).concat(SUFFIX);
+        return generateUid(prefix, id);
     }
 
     public static Integer extractPartitionId(String uid) {
@@ -114,4 +109,12 @@ public class SpaceUidFactory {
         return result == 0 ? null : result - 1;
     }
 
+    public static String generateUid(String typePrefix, String id) {
+        // NOTE: This is currently the most efficient way known to concatenate two strings.
+        return typePrefix.concat(id).concat(SUFFIX);
+    }
+
+    public static String generateTypePrefix(String typeName) {
+        return "" + typeName.hashCode() + SEPARATOR + typeName.length() + SEPARATOR;
+    }
 }

@@ -238,7 +238,7 @@ public class FifoGroupCacheImpl {
                         continue;//TBD
 
                     if (entryType.disableIdIndexForEntries(index))
-                        entriesVector = _cacheManager.getPEntryByUid(ClientUIDHandler.createUIDFromName(templateValue, entryType.getClassName()));
+                        entriesVector = _cacheManager.getPEntryByUid(entryType.generateUid(templateValue));
                     else
                         entriesVector = index.getIndexEntries(templateValue);
                     if (entriesVector == null)

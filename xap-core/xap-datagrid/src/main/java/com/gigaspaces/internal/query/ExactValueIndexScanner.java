@@ -61,7 +61,7 @@ public class ExactValueIndexScanner extends AbstractQueryIndex {
         }
         IObjectsList res = null;
         if (typeData.disableIdIndexForEntries(index) && _indexValue != null)
-            res = typeData.getCacheManager().getPEntryByUid(ClientUIDHandler.createUIDFromName(_indexValue, typeData.getClassName()));
+            res = typeData.getCacheManager().getPEntryByUid(typeData.generateUid(_indexValue));
         else
             res = index.getIndexEntries(_convertedValueWrapper.getValue());
         if (fifoGroupsScan && res != null)

@@ -98,7 +98,7 @@ public class InValueIndexScanner extends AbstractQueryIndex {
             }
             IStoredList<IEntryCacheInfo> matchingEntries = null;
             if (typeData.disableIdIndexForEntries(index) && indexValue != null)
-                matchingEntries = typeData.getCacheManager().getPEntryByUid(ClientUIDHandler.createUIDFromName(indexValue, typeData.getClassName()));
+                matchingEntries = typeData.getCacheManager().getPEntryByUid(typeData.generateUid(indexValue));
             else
                 matchingEntries = index.getIndexEntries(_convertedValueWrapper.getValue());
 
