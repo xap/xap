@@ -27,45 +27,75 @@ public class XapCliUtils {
     LOGGER = Logger.getLogger(Constants.LOGGER_CLI);
   }
 
-  public static void executeProcesses(List<ProcessBuilder> processBuilders) throws InterruptedException {
-    final ExecutorService executorService = Executors.newCachedThreadPool();
-    final List<Future<Integer>> futures = new ArrayList<Future<Integer>>(processBuilders.size());
 
-    for (final ProcessBuilder processBuilder : processBuilders) {
-      futures.add(executorService.submit(new Callable<Integer>() {
-        @Override
-        public Integer call() throws Exception {
-          Process process = null;
-          try {
-            process = processBuilder.start();
+    public static void executeProcessesWrapper(List<ProcessBuilderWrapper> processBuilderWrappers) throws InterruptedException {
+        final ExecutorService executorService = Executors.newCachedThreadPool();
+        final List<Future<Integer>> futures = new ArrayList<Future<Integer>>(processBuilderWrappers.size());
+        final int TIMEOUT = 60 * 1 * 1000;
 
-            process.waitFor();
-            System.exit(process.exitValue());
-          }
-          catch (IOException e) {
-            if( LOGGER.isLoggable(Level.SEVERE ) ){
-              LOGGER.log( Level.SEVERE, e.toString(), e );
-            }
-          }
-          catch (InterruptedException e) {
-            if( process != null ) {
-              process.destroy();
-            }
-            if( LOGGER.isLoggable(Level.SEVERE ) ){
-              LOGGER.log( Level.SEVERE, e.toString(), e );
-            }
+        for ( final ProcessBuilderWrapper processBuilderWrapper : processBuilderWrappers) {
 
-          }
-          return process.exitValue();
+            Future<Integer> future = executorService.submit(new Callable<Integer>() {
+                @Override
+                public Integer call() throws Exception {
+                    Process process = null;
+                    try {
+                        long startTime = System.currentTimeMillis();
+                        while (!processBuilderWrapper.allowToStart()) {
+                            Thread.sleep(500);
+                            //if timeout reached
+                            if (System.currentTimeMillis() - startTime > TIMEOUT) {
+                                break;
+                            }
+                        }
+
+                        final ProcessBuilder processBuilder = processBuilderWrapper.getProcessBuilder();
+
+                        process = processBuilder.start();
+                        process.waitFor();
+                        if( processBuilderWrapper.isSyncCommand() ) {
+                            System.exit(process.exitValue());
+                        }
+                    } catch (IOException e) {
+                        if (LOGGER.isLoggable(Level.SEVERE)) {
+                            LOGGER.log(Level.SEVERE, e.toString(), e);
+                        }
+                    } catch (InterruptedException e) {
+                        if (process != null) {
+                            process.destroy();
+                        }
+                        if (LOGGER.isLoggable(Level.SEVERE)) {
+                            LOGGER.log(Level.SEVERE, e.toString(), e);
+                        }
+
+                    }
+                    return process.exitValue();
+                }
+            });
+
+            futures.add(future);
         }
-      }));
+
+        addShutdownHookToKillSubProcessesOnExit(futures);
+        executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
     }
 
-    addShutdownHookToKillSubProcessesOnExit(futures);
-    executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+
+
+  public static void executeProcesses(List<ProcessBuilder> processBuilders) throws InterruptedException {
+      executeProcessesWrapper(wrapList(processBuilders));
   }
 
-  public static void addShutdownHookToKillSubProcessesOnExit(final List<Future<Integer>> futures) {
+    private static List<ProcessBuilderWrapper> wrapList(List<ProcessBuilder> lst){
+        List<ProcessBuilderWrapper> wrappedList = new ArrayList<ProcessBuilderWrapper>();
+        for(ProcessBuilder cur : lst){
+            wrappedList.add(new ProcessBuilderWrapper(cur));
+        }
+        return wrappedList;
+    }
+
+
+    public static void addShutdownHookToKillSubProcessesOnExit(final List<Future<Integer>> futures) {
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
