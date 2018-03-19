@@ -5,6 +5,7 @@ import com.gigaspaces.logger.GSLogConfigLoader;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -84,6 +85,10 @@ public class XapCliUtils {
 
   public static void executeProcesses(List<ProcessBuilder> processBuilders) throws InterruptedException {
       executeProcessesWrapper(wrapList(processBuilders));
+  }
+
+  public static void executeProcess(ProcessBuilder processBuilder) throws InterruptedException {
+      executeProcesses(Arrays.asList(processBuilder));
   }
 
     private static List<ProcessBuilderWrapper> wrapList(List<ProcessBuilder> lst){
