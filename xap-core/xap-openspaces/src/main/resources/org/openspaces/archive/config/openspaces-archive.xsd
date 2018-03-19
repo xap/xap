@@ -13,8 +13,8 @@
 
     <xsd:import namespace="http://www.springframework.org/schema/beans"/>
     <xsd:import namespace="http://www.springframework.org/schema/tool"/>
-    <xsd:import namespace="http://www.openspaces.org/schema/core" schemaLocation="http://www.openspaces.org/schema/12.2/core/openspaces-core.xsd"/>
-    <xsd:import namespace="http://www.openspaces.org/schema/events" schemaLocation="http://www.openspaces.org/schema/12.2/events/openspaces-events.xsd"/>
+    <xsd:import namespace="http://www.openspaces.org/schema/core" schemaLocation="http://www.openspaces.org/schema/12.3/core/openspaces-core.xsd"/>
+    <xsd:import namespace="http://www.openspaces.org/schema/events" schemaLocation="http://www.openspaces.org/schema/12.3/events/openspaces-events.xsd"/>
 
     <xsd:element name="annotation-support">
         <xsd:annotation>
