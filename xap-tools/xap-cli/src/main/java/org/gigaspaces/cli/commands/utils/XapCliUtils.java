@@ -11,6 +11,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,13 +21,14 @@ import java.util.logging.Logger;
 public class XapCliUtils {
 
     private static Logger LOGGER;
-    private static final int processTimeoutInSeconds;
+    private static final long processTimeoutInSeconds;
     private static final String PROCESS_TERMINATION_TIMEOUT = "com.gs.cli.process-termination-timeout";
+    private static final AtomicInteger timedOutProcesses = new AtomicInteger(0);
 
     static {
         GSLogConfigLoader.getLoader("cli");
         LOGGER = Logger.getLogger(Constants.LOGGER_CLI);
-        processTimeoutInSeconds = Integer.getInteger(PROCESS_TERMINATION_TIMEOUT, 60);
+        processTimeoutInSeconds = Long.getLong(PROCESS_TERMINATION_TIMEOUT, 60);
     }
 
     public static void executeProcessesWrapper(List<ProcessBuilderWrapper> processBuilderWrappers) throws InterruptedException {
@@ -63,6 +65,7 @@ public class XapCliUtils {
                     } catch (InterruptedException e) {
                         if (process != null) {
                             if (!process.waitFor(processTimeoutInSeconds, TimeUnit.SECONDS)) {
+                                timedOutProcesses.incrementAndGet();
                                 LOGGER.fine("Shutdown did not complete before the timeout (" + processTimeoutInSeconds + " seconds) elapsed, some sub-processes might still be running");
                                 process.destroyForcibly();
                             }
@@ -107,7 +110,8 @@ public class XapCliUtils {
                 long start = System.currentTimeMillis();
                 executorService.shutdownNow();
                 try {
-                    if (executorService.awaitTermination(processTimeoutInSeconds + 1, TimeUnit.SECONDS)) {
+                    boolean threadsFinishedOnTime = executorService.awaitTermination(processTimeoutInSeconds + 1, TimeUnit.SECONDS);
+                    if (threadsFinishedOnTime && timedOutProcesses.get() == 0) {
                         long took = (System.currentTimeMillis() - start);
                         System.out.println("Shutdown completed successfully (duration: " + TimeUnit.MILLISECONDS.toSeconds(took) + "s)");
                     } else {
