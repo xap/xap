@@ -250,12 +250,6 @@ public class CacheManager extends AbstractCacheManager
 
         _fifoBackgroundDispatcher = new DefaultFifoBackgroundDispatcher(numNotifyFifoThreads, numNonNotifyFifoThreads, this, _engine);
 
-        Boolean forceSpaceIdIndexIfEqualDefault = Boolean.TRUE;
-        _forceSpaceIdIndexIfEqual = engine.getConfigReader().getBooleanSpaceProperty(
-                Constants.CacheManager.CACHE_MANAGER_FORCE_ID_INDEX_PROP, forceSpaceIdIndexIfEqualDefault.toString());
-        if (_forceSpaceIdIndexIfEqual != forceSpaceIdIndexIfEqualDefault.booleanValue())
-            _logger.info(Constants.CacheManager.CACHE_MANAGER_FORCE_ID_INDEX_PROP + " was set to " + _forceSpaceIdIndexIfEqual);
-
         // indicators which return the type of StorageAdapter this instance represents.
         boolean isCacheExternalDB = sa.supportsExternalDB();
         boolean isMemorySA = !isCacheExternalDB;
@@ -289,6 +283,12 @@ public class CacheManager extends AbstractCacheManager
             setCachePolicy(CACHE_POLICY_ALL_IN_CACHE);
         }
 //------------------ TEMP FOR QA
+
+        Boolean forceSpaceIdIndexIfEqualDefault = !isBlobStoreCachePolicy();
+        _forceSpaceIdIndexIfEqual = engine.getConfigReader().getBooleanSpaceProperty(
+                Constants.CacheManager.CACHE_MANAGER_FORCE_ID_INDEX_PROP, forceSpaceIdIndexIfEqualDefault.toString());
+        if (_forceSpaceIdIndexIfEqual != forceSpaceIdIndexIfEqualDefault.booleanValue())
+            _logger.info(Constants.CacheManager.CACHE_MANAGER_FORCE_ID_INDEX_PROP + " was set to " + _forceSpaceIdIndexIfEqual);
 
         if (isBlobStoreCachePolicy()) {
             _useBlobStoreBulks = Boolean.parseBoolean(System.getProperty(FULL_CACHE_MANAGER_USE_BLOBSTORE_BULKS_PROP, isSyncHybrid() ? "false" : "true"));
