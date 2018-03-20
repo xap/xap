@@ -20,11 +20,13 @@ import java.util.logging.Logger;
 public class XapCliUtils {
 
     private static Logger LOGGER;
-    private static int processTimeoutInSeconds = 120;
+    private static final int processTimeoutInSeconds;
+    private static final String PROCESS_TERMINATION_TIMEOUT = "com.gs.cli.process-termination-timeout";
 
     static {
         GSLogConfigLoader.getLoader("cli");
         LOGGER = Logger.getLogger(Constants.LOGGER_CLI);
+        processTimeoutInSeconds = Integer.getInteger(PROCESS_TERMINATION_TIMEOUT, 60);
     }
 
     public static void executeProcessesWrapper(List<ProcessBuilderWrapper> processBuilderWrappers) throws InterruptedException {
@@ -61,7 +63,7 @@ public class XapCliUtils {
                     } catch (InterruptedException e) {
                         if (process != null) {
                             if (!process.waitFor(processTimeoutInSeconds, TimeUnit.SECONDS)) {
-                                LOGGER.fine("Termination timeout (" + processTimeoutInSeconds + " seconds) elapsed, one or more sub-processes might still be running");
+                                LOGGER.fine("Shutdown did not complete before the timeout (" + processTimeoutInSeconds + " seconds) elapsed, some sub-processes might still be running");
                                 process.destroyForcibly();
                             }
                         }
@@ -101,14 +103,15 @@ public class XapCliUtils {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
+                System.out.println("Started shutdown, waiting " + processTimeoutInSeconds + " seconds for sub-processes to stop (configure timeout duration via the " + PROCESS_TERMINATION_TIMEOUT + " system property)");
                 long start = System.currentTimeMillis();
                 executorService.shutdownNow();
                 try {
                     if (executorService.awaitTermination(processTimeoutInSeconds + 1, TimeUnit.SECONDS)) {
                         long took = (System.currentTimeMillis() - start);
-                        LOGGER.info("Termination completed successfully (duration: " + TimeUnit.MILLISECONDS.toSeconds(took) + "s)");
+                        System.out.println("Shutdown completed successfully (duration: " + TimeUnit.MILLISECONDS.toSeconds(took) + "s)");
                     } else {
-                        LOGGER.warning("Termination timeout (" + processTimeoutInSeconds + " seconds) elapsed, one or more sub-processes might still be running");
+                        System.err.println("Shutdown did not complete before the timeout (" + processTimeoutInSeconds + " seconds) elapsed, some sub-processes might still be running");
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
