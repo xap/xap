@@ -7,7 +7,7 @@
     <parent>
         <artifactId>xap</artifactId>
         <groupId>org.gigaspaces</groupId>
-        <version>12.3.1-SNAPSHOT</version>
+        <version>12.3.1-m1-19200-24</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>xap-dist</artifactId>
