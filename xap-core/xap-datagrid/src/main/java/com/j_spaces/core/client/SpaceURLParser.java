@@ -151,7 +151,7 @@ public class SpaceURLParser {
             protocol = st.nextToken();
 
             // throws <code>MalformedURLException</code> if unknown protocol
-            if (!SpaceURL.AVAILABLE_PROTOCOLS.contains(protocol))
+            if (!SpaceURL.isValidProtocol(protocol))
                 throw new SpaceURLValidationException("Invalid space url - Unknown protocol found in space url: " + spaceURLStr);
 
             // get unicast host

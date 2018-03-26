@@ -21,6 +21,7 @@ import com.gigaspaces.annotation.pojo.FifoSupport;
 import com.gigaspaces.cluster.activeelection.core.ActiveElectionState;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.lookup.SpaceUrlUtils;
+import com.gigaspaces.internal.utils.CollectionUtils;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.IJSpace;
@@ -41,13 +42,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -108,13 +103,9 @@ public class SpaceURL extends Properties implements Externalizable {
     /**
      * Contains a set of actual space protocols.
      */
-    public final static HashSet<String> AVAILABLE_PROTOCOLS = new HashSet<String>();
+    private final static Set<String> AVAILABLE_PROTOCOLS = CollectionUtils.toSet(
+            JINI_PROTOCOL, RMI_PROTOCOL, EMBEDDED_SPACE_PROTOCOL);
 
-    static {
-        AVAILABLE_PROTOCOLS.add(JINI_PROTOCOL);
-        AVAILABLE_PROTOCOLS.add(RMI_PROTOCOL);
-        AVAILABLE_PROTOCOLS.add(EMBEDDED_SPACE_PROTOCOL);
-    }
 
     /**
      * <pre>
@@ -1125,6 +1116,10 @@ public class SpaceURL extends Properties implements Externalizable {
      ***/
     public static String concatAttrIfNotExist(String url, String name, String value) {
         return SpaceUrlUtils.setPropertyInUrl(url, name, value, false);
+    }
+
+    public static boolean isValidProtocol(String protocol) {
+        return AVAILABLE_PROTOCOLS.contains(protocol);
     }
 
     public long getLookupIntervalTimeout() {

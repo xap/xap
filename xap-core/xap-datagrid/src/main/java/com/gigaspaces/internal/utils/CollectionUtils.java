@@ -19,17 +19,7 @@ package com.gigaspaces.internal.utils;
 import com.gigaspaces.internal.metadata.SpaceTypeInfo;
 import com.gigaspaces.internal.metadata.SpaceTypeInfoRepository;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Miscellaneous collection utility methods. Mainly for internal use within the framework.
@@ -179,6 +169,23 @@ public abstract class CollectionUtils {
             list.add(item);
 
         return list;
+    }
+
+    /**
+     * Converts the supplied array into a Set.
+     *
+     * @param source the original array
+     * @return the converted List result
+     */
+    public static <T> Set<T> toSet(T... items) {
+        if (items == null)
+            return null;
+
+        Set<T> set = new HashSet<T>(items.length);
+        for (T item : items)
+            set.add(item);
+
+        return set;
     }
 
     /**
