@@ -47,7 +47,7 @@ public class MemcachedBinaryResponseEncoder extends SimpleChannelUpstreamHandler
 
     protected final static Log logger = LogFactory.getLog(MemcachedBinaryResponseEncoder.class);
 
-    public static enum ResponseCode {
+    public enum ResponseCode {
         OK(0x0000),
         KEYNF(0x0001),
         KEYEXISTS(0x0002),
@@ -57,10 +57,14 @@ public class MemcachedBinaryResponseEncoder extends SimpleChannelUpstreamHandler
         UNKNOWN(0x0081),
         OOM(0x00082);
 
-        public short code;
+        private final short code;
 
-        ResponseCode(int code) {
+        private ResponseCode(int code) {
             this.code = (short) code;
+        }
+
+        public short getCode() {
+            return code;
         }
     }
 
@@ -212,7 +216,7 @@ public class MemcachedBinaryResponseEncoder extends SimpleChannelUpstreamHandler
                     keyBuffer = ChannelBuffers.wrappedBuffer(ByteOrder.BIG_ENDIAN, statsEntries.getKey().getBytes("US-ASCII"));
                     valueBuffer = ChannelBuffers.wrappedBuffer(ByteOrder.BIG_ENDIAN, stat.getBytes("US-ASCII"));
 
-                    ChannelBuffer headerBuffer = constructHeader(bcmd, extrasBuffer, keyBuffer, valueBuffer, getStatusCode(command).code, command.cmd.opaque, casUnique);
+                    ChannelBuffer headerBuffer = constructHeader(bcmd, extrasBuffer, keyBuffer, valueBuffer, getStatusCode(command).getCode(), command.cmd.opaque, casUnique);
 
                     writePayload(messageEvent, extrasBuffer, keyBuffer, valueBuffer, headerBuffer);
                 }
@@ -221,12 +225,12 @@ public class MemcachedBinaryResponseEncoder extends SimpleChannelUpstreamHandler
             keyBuffer = null;
             valueBuffer = null;
 
-            ChannelBuffer headerBuffer = constructHeader(bcmd, extrasBuffer, keyBuffer, valueBuffer, getStatusCode(command).code, command.cmd.opaque, casUnique);
+            ChannelBuffer headerBuffer = constructHeader(bcmd, extrasBuffer, keyBuffer, valueBuffer, getStatusCode(command).getCode(), command.cmd.opaque, casUnique);
 
             writePayload(messageEvent, extrasBuffer, keyBuffer, valueBuffer, headerBuffer);
 
         } else {
-            ChannelBuffer headerBuffer = constructHeader(bcmd, extrasBuffer, keyBuffer, valueBuffer, getStatusCode(command).code, command.cmd.opaque, casUnique);
+            ChannelBuffer headerBuffer = constructHeader(bcmd, extrasBuffer, keyBuffer, valueBuffer, getStatusCode(command).getCode(), command.cmd.opaque, casUnique);
 
             // write everything
             // is the command 'quiet?' if so, then we append to our 'corked' buffer until a non-corked command comes along
