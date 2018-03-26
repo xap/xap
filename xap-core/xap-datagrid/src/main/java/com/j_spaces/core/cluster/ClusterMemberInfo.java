@@ -43,15 +43,6 @@ public class ClusterMemberInfo
     private ServiceID _spaceID;
     private boolean _isMirror;
 
-
-    // name of JTable columns
-    final static public Vector paramColNames = new Vector();
-
-    static {
-        paramColNames.add("Param Name");
-        paramColNames.add("Param Value");
-    }
-
     public ClusterMemberInfo(String memberName, SpaceURL memberUrl,
                              String clusterName, String groupName, ServiceID spaceID, boolean isMirror) {
         this(memberName, memberUrl, clusterName,
