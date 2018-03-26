@@ -86,7 +86,7 @@ public class DeletedMultiBucketOrderedPacket
     }
 
     public IReplicationPacketData<?> getData() {
-        return DiscardReplicationPacketData.PACKET;
+        return DiscardReplicationPacketData.instance();
     }
 
     public long getEndKey() {

@@ -52,7 +52,7 @@ public class ResurrectEntryFix
         try {
             fixFacade.write(_entryPacket);
 
-            return DiscardReplicationPacketData.PACKET;
+            return DiscardReplicationPacketData.instance();
         } catch (EntryAlreadyInSpaceException e) {
             //If reached here than this must be active active topology and this object have
             //inserted to this space during the extend lease error processing (which was originally
@@ -68,7 +68,7 @@ public class ResurrectEntryFix
                         + "  Ignoring the conflicting operation since it has already been applied to space.\n"
                         + "  Please make sure that the entry was not simultaneously changed in two different space instances.");
             }
-            return DiscardReplicationPacketData.PACKET;
+            return DiscardReplicationPacketData.instance();
         }
     }
 

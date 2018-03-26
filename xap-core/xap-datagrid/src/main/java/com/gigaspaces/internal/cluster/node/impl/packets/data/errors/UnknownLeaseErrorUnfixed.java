@@ -63,7 +63,7 @@ public class UnknownLeaseErrorUnfixed
                     + _className + " UID: " + _uid + "."
                     + "\nThis entry might be already expired or canceled.");
         }
-        return DiscardReplicationPacketData.PACKET;
+        return DiscardReplicationPacketData.instance();
     }
 
     public void readExternal(ObjectInput in) throws IOException,

@@ -41,7 +41,7 @@ public class GlobalOrderDeletedBacklogPacket implements IReplicationOrderedPacke
     }
 
     public IReplicationPacketData getData() {
-        return DiscardReplicationPacketData.PACKET;
+        return DiscardReplicationPacketData.instance();
     }
 
     public long getKey() {

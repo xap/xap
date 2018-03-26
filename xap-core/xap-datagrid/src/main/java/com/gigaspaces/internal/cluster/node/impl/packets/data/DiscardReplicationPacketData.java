@@ -38,7 +38,11 @@ public class DiscardReplicationPacketData extends AbstractReplicationPacketSingl
         super(false);
     }
 
-    public static final DiscardReplicationPacketData PACKET = new DiscardReplicationPacketData();
+    private static final DiscardReplicationPacketData PACKET = new DiscardReplicationPacketData();
+
+    public static final DiscardReplicationPacketData instance() {
+        return PACKET;
+    }
 
     public void execute(IReplicationInContext context,
                         IReplicationInFacade inReplicationHandler, ReplicationPacketDataMediator dataMediator) throws Exception {

@@ -38,7 +38,7 @@ public class DiscardedSingleBucketOrderedPacket
     }
 
     public IReplicationPacketData<?> getData() {
-        return DiscardReplicationPacketData.PACKET;
+        return DiscardReplicationPacketData.instance();
     }
 
     public boolean isDataPacket() {

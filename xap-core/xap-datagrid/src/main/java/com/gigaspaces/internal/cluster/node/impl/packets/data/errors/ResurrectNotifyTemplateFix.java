@@ -62,7 +62,7 @@ public class ResurrectNotifyTemplateFix
                                                    IDataConsumeFixFacade fixFacade,
                                                    ReplicationPacketDataConsumer consumer, IExecutableReplicationPacketData<?> data) throws Exception {
         fixFacade.insertNotifyTemplate(_notifyTemplate, _uid, _notifyInfo);
-        return DiscardReplicationPacketData.PACKET;
+        return DiscardReplicationPacketData.instance();
     }
 
     public void readExternal(ObjectInput in) throws IOException,
