@@ -755,7 +755,7 @@ public class SystemProperties extends CommonSystemProperties {
     public final static long CACHE_STUCK_2PC_EXTENTION_TIME_DEFAULT = 1 * 60 * 1000;
 
     public final static String HANDLE_EXTRA_STATELESS_INSTANCES_RETRIES = "com.gs.handle-extra-stateless-instances.retries";
-    public final static int HANDLE_EXTRA_STATELESS_INSTANCES_RETRIES_DEFAULT = 15;
+    public final static int HANDLE_EXTRA_STATELESS_INSTANCES_RETRIES_DEFAULT = 60;
 
     public static final String MANAGER_REST_JETTY_CONFIG = "com.gs.manager.rest.jetty.config";
     public static final String MANAGER_REST_SSL_KEYSTORE_PATH = "com.gs.manager.rest.ssl.keystore-path";
