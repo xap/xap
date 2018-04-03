@@ -30,6 +30,13 @@
             <outputDirectory>product/bin</outputDirectory>
             <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/../xap-tools/xap-cli/target</directory>
+            <outputDirectory>product/tools/cli</outputDirectory>
+            <includes>
+                <include>*autocomplete</include>
+            </includes>
+        </fileSet>
     </fileSets>
 
 </assembly>

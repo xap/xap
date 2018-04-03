@@ -55,7 +55,7 @@ public class CliExecutor {
         }
     }
 
-    private static CommandLine toCommandLine(Object command) {
+    public static CommandLine toCommandLine(Object command) {
         CommandLine cmd = new CommandLine(command);
         if (command instanceof SubCommandContainer) {
             Collection<Object> subcommands = ((SubCommandContainer) command).getSubCommands();
