@@ -57,6 +57,7 @@ import net.jini.core.lookup.ServiceID;
 import net.jini.core.lookup.ServiceItem;
 import net.jini.core.transaction.server.TransactionConstants;
 import net.jini.discovery.LookupDiscovery;
+import net.jini.discovery.LookupGroups;
 import net.jini.id.ReferentUuid;
 import net.jini.id.Uuid;
 import net.jini.lookup.entry.Name;
@@ -1082,9 +1083,9 @@ public class JSpaceUtilities {
 
             // if groups = none LookupDiscovery = NO_GROUPS
             if (lookupGroups.equalsIgnoreCase(NONE_GROUP))
-                groups = LookupDiscovery.NO_GROUPS;
+                groups = LookupGroups.none();
             else if (lookupGroups.equalsIgnoreCase(ALL_GROUP))
-                groups = LookupDiscovery.ALL_GROUPS;
+                groups = LookupGroups.all();
             else {
                 StringTokenizer st = new StringTokenizer(lookupGroups, ",");
                 groups = new String[st.countTokens()];
@@ -1094,7 +1095,7 @@ public class JSpaceUtilities {
 
                     // if groups = "all" and "none" the default is "all"
                     if (grl.equalsIgnoreCase(ALL_GROUP)) {
-                        groups = LookupDiscovery.ALL_GROUPS;
+                        groups = LookupGroups.all();
                         break;
                     }
 

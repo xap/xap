@@ -91,12 +91,7 @@ import net.jini.core.lookup.ServiceID;
 import net.jini.core.lookup.ServiceItem;
 import net.jini.core.lookup.ServiceRegistrar;
 import net.jini.core.lookup.ServiceRegistration;
-import net.jini.discovery.Constants;
-import net.jini.discovery.ConstrainableLookupLocator;
-import net.jini.discovery.DiscoveryGroupManagement;
-import net.jini.discovery.DiscoveryLocatorManagement;
-import net.jini.discovery.DiscoveryManagement;
-import net.jini.discovery.LookupDiscoveryManager;
+import net.jini.discovery.*;
 import net.jini.discovery.dynamic.DynamicLookupLocatorDiscovery;
 import net.jini.export.Exporter;
 import net.jini.export.ProxyAccessor;
@@ -479,7 +474,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     /**
      * The groups we should join
      */
-    private String[] lookupGroups = DiscoveryGroupManagement.NO_GROUPS;
+    private String[] lookupGroups = LookupGroups.none();
 
     private final ReadWriteLock lookupGroupsRWL = new ReentrantReadWriteLock();
 
@@ -4887,7 +4882,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             discoer = (DiscoveryManagement) config.getEntry(
                     COMPONENT, "discoveryManager", DiscoveryManagement.class);
         } catch (NoSuchEntryException e) {
-            discoer = new LookupDiscoveryManager(DiscoveryGroupManagement.NO_GROUPS,
+            discoer = new LookupDiscoveryManager(LookupGroups.none(),
                     null,
                     null,
                     config,

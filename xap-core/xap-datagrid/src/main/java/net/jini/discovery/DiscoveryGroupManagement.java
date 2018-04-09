@@ -31,17 +31,6 @@ import java.io.IOException;
 public interface DiscoveryGroupManagement {
 
     /**
-     * Convenience constant used to request that attempts be made to discover all lookup services
-     * that are within range, and which belong to any group.
-     */
-    public static final String[] ALL_GROUPS = null;
-    /**
-     * Convenience constant used to request that discovery by group membership be halted (or not
-     * started, if the group discovery mechanism is simply being instantiated).
-     */
-    public static final String[] NO_GROUPS = new String[0];
-
-    /**
      * Returns an array consisting of the elements of the managed set of groups; that is, the names
      * of the groups whose members are the lookup services to discover. If the managed set of groups
      * is empty, this method will return the empty array. If there is no managed set of groups, then

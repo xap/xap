@@ -430,21 +430,6 @@ public class LookupDiscovery implements DiscoveryManagement,
     /* Logger used by this utility. */
     private static final Logger logger = Logger.getLogger(COMPONENT_NAME);
     /**
-     * Convenience constant used to request that attempts be made to discover all lookup services
-     * that are within range, and which belong to any group. Must define this constant here as well
-     * as in <code>DiscoveryGroupManagement</code> for compatibility with earlier releases.
-     */
-    public static final String[] ALL_GROUPS
-            = DiscoveryGroupManagement.ALL_GROUPS;
-    /**
-     * Convenience constant used to request that discovery by group membership be halted (or not
-     * started, if the group discovery mechanism is simply being instantiated). Must define this
-     * constant here as well as in <code>DiscoveryGroupManagement</code> for compatibility with
-     * earlier releases.
-     */
-    public static final String[] NO_GROUPS
-            = DiscoveryGroupManagement.NO_GROUPS;
-    /**
      * Maximum number of concurrent tasks that can be run in any task manager created by this
      * class.
      */
@@ -1628,8 +1613,8 @@ public class LookupDiscovery implements DiscoveryManagement,
      * @param groups the set of group names to discover (null for no set, empty for no discovery)
      * @throws java.lang.NullPointerException input array contains at least one null element
      * @throws java.io.IOException            an exception occurred in starting discovery
-     * @see #NO_GROUPS
-     * @see #ALL_GROUPS
+     * @see #LookupGroups.none()
+     * @see #LookupGroups.all()
      * @see #setGroups
      * @see DiscoveryPermission
      */
@@ -1659,8 +1644,8 @@ public class LookupDiscovery implements DiscoveryManagement,
      * @throws net.jini.config.ConfigurationException indicates an exception occurred while
      *                                                retrieving an item from the given
      *                                                <code>Configuration</code>
-     * @see #NO_GROUPS
-     * @see #ALL_GROUPS
+     * @see #LookupGroups.none()
+     * @see #LookupGroups.all()
      * @see #setGroups
      * @see DiscoveryPermission
      * @see net.jini.config.Configuration
@@ -1799,8 +1784,8 @@ public class LookupDiscovery implements DiscoveryManagement,
      * @throws java.lang.IllegalStateException this exception occurs when this method is called
      *                                         after the <code>terminate</code> method has been
      *                                         called.
-     * @see #NO_GROUPS
-     * @see #ALL_GROUPS
+     * @see #LookupGroups.none()
+     * @see #LookupGroups.all()
      * @see #setGroups
      */
     public String[] getGroups() {
@@ -1809,9 +1794,9 @@ public class LookupDiscovery implements DiscoveryManagement,
                 throw new IllegalStateException("discovery terminated");
             }
             if (groups == null)
-                return ALL_GROUPS;
+                return LookupGroups.all();
             if (groups.isEmpty())
-                return NO_GROUPS;
+                return LookupGroups.none();
             return collectionToStrings(groups);
         }
     }//end getGroups
@@ -1864,8 +1849,8 @@ public class LookupDiscovery implements DiscoveryManagement,
      *                                         after the <code>terminate</code> method has been
      *                                         called.
      * @see #LookupDiscovery
-     * @see #ALL_GROUPS
-     * @see #NO_GROUPS
+     * @see #LookupGroups.all()
+     * @see #LookupGroups.none()
      * @see DiscoveryPermission
      * @see #getGroups
      */

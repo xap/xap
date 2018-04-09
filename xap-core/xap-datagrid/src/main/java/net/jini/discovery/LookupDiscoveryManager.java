@@ -1271,7 +1271,7 @@ public class LookupDiscoveryManager implements DiscoveryManagement,
      * <code>false</code> otherwise
      */
     private boolean stillInterested(String[] regGroups, String[] desiredGroups) {
-        if (desiredGroups == DiscoveryGroupManagement.ALL_GROUPS) return true;
+        if (desiredGroups == LookupGroups.all()) return true;
         if (desiredGroups.length == 0) return false;
         for (int i = 0; i < regGroups.length; i++) {
             for (int j = 0; j < desiredGroups.length; j++) {

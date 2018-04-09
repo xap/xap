@@ -29,10 +29,7 @@ import net.jini.config.ConfigurationException;
 import net.jini.core.discovery.LookupLocator;
 import net.jini.core.entry.Entry;
 import net.jini.core.lookup.ServiceID;
-import net.jini.discovery.DiscoveryGroupManagement;
-import net.jini.discovery.DiscoveryLocatorManagement;
-import net.jini.discovery.DiscoveryManagement;
-import net.jini.discovery.LookupDiscoveryManager;
+import net.jini.discovery.*;
 import net.jini.id.Uuid;
 import net.jini.lookup.JoinManager;
 import net.jini.security.ProxyPreparer;
@@ -231,7 +228,7 @@ class JoinStateManager extends LogHandler {
                 Config.getNonNullEntry(config, TxnManager.MAHALO,
                         "discoveryManager", DiscoveryManagement.class,
                         new LookupDiscoveryManager(
-                                DiscoveryGroupManagement.NO_GROUPS, null, null, config));
+                                LookupGroups.none(), null, null, config));
         if (initlogger.isLoggable(Level.CONFIG)) {
             initlogger.log(Level.CONFIG, "discoveryManager: {0}", dm);
         }
@@ -240,7 +237,7 @@ class JoinStateManager extends LogHandler {
             // Verify proper initial state ---> NO_GROUPS
             String[] groups =
                     ((DiscoveryGroupManagement) dm).getGroups();
-            if ((groups == DiscoveryGroupManagement.ALL_GROUPS) ||
+            if ((groups == LookupGroups.all()) ||
                     (groups.length != 0)) {
                 throw new ConfigurationException(
                         "discoveryManager entry must be configured " +

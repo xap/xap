@@ -24,6 +24,7 @@ import net.jini.core.entry.Entry;
 import net.jini.core.lookup.ServiceItem;
 import net.jini.core.lookup.ServiceTemplate;
 import net.jini.discovery.LookupDiscovery;
+import net.jini.discovery.LookupGroups;
 import net.jini.lookup.ServiceDiscoveryManager;
 import net.jini.lookup.entry.Name;
 
@@ -62,7 +63,7 @@ public class JiniServiceFactoryBean extends AbstractFactoryBean implements Metho
     private Class<?> serviceClass;
     private String serviceName;
 
-    private String[] groups = LookupDiscovery.ALL_GROUPS;
+    private String[] groups = LookupGroups.all();
 
     private String[] locators = null;
 
