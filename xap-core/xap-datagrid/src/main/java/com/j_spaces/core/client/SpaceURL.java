@@ -103,7 +103,7 @@ public class SpaceURL extends Properties implements Externalizable {
     /**
      * Contains a set of actual space protocols.
      */
-    private final static Set<String> AVAILABLE_PROTOCOLS = CollectionUtils.toSet(
+    private final static Set<String> AVAILABLE_PROTOCOLS = CollectionUtils.toUnmodifiableSet(
             JINI_PROTOCOL, RMI_PROTOCOL, EMBEDDED_SPACE_PROTOCOL);
 
 

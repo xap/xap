@@ -215,7 +215,7 @@ public class SpaceAPIController {
             Iterator<String> iterator = actualObj.fieldNames();
             while (iterator.hasNext()) {
                 String fieldName = iterator.next();
-                if (!ControllerUtils.allowedFields.contains(fieldName)) {
+                if (!ControllerUtils.isAllowedField(fieldName)) {
                     throw new RestException("Unknown field: " + fieldName);
                 }
             }
@@ -469,7 +469,7 @@ public class SpaceAPIController {
                     if (fixedPropertiesNames.add(propertyName) == false) {
                         throw new KeyAlreadyExistException(propertyName);
                     }
-                    Class propertyValueClass = ControllerUtils.javaPrimitives.get(propertyType);
+                    Class propertyValueClass = ControllerUtils.getPrimitiveType(propertyType);
 
                     if (documentSupport == null && propertyStorageType == null) {
                         if (propertyValueClass != null) {

@@ -341,7 +341,7 @@ public class FailOverPolicy implements Serializable, Externalizable {
         public String toString() {
             StringBuffer strBuffer = new StringBuffer();
             strBuffer.append("\n------------FailOverPolicyDescription------\n");
-            strBuffer.append("Policy type -\t" + ClusterXML.FAIL_OVER_POLICIES[m_PolicyType] + "\n");
+            strBuffer.append("Policy type -\t" + ClusterXML.getFailOverPolicies().get(m_PolicyType) + "\n");
             strBuffer.append("Backup only members -\t" + m_BackupOnly + "\n");
             strBuffer.append("Backup members names -\t" + m_BackupMemberNames + "\n");
 

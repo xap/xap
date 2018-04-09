@@ -35,7 +35,7 @@ public class StatisticsHolder implements Externalizable {
 
     private static final long serialVersionUID = 1505093042251118792L;
 
-    final public static int[] OPERATION_CODES =
+    final private static int[] OPERATION_CODES =
             {
                     FilterOperationCodes.BEFORE_WRITE,
                     FilterOperationCodes.BEFORE_READ,
@@ -51,6 +51,10 @@ public class StatisticsHolder implements Externalizable {
                     FilterOperationCodes.BEFORE_REMOVE,
                     FilterOperationCodes.AFTER_CHANGE
             };
+
+    public static int[] getOperationCodes() {
+        return OPERATION_CODES;
+    }
 
     private long timestamp;
 

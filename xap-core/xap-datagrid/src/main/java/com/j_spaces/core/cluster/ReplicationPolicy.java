@@ -781,8 +781,8 @@ public class ReplicationPolicy implements Serializable, Externalizable {
     }
 
     public void setPermittedOperations(List<ReplicationOperationType> permittedOperations) {
-        if (permittedOperations.size() == ReplicationOperationType.FULL_PERMISSIONS.size()) {
-            this.permittedOperations = ReplicationOperationType.FULL_PERMISSIONS;
+        if (permittedOperations.size() == ReplicationOperationType.getFullPermissions().size()) {
+            this.permittedOperations = ReplicationOperationType.getFullPermissions();
         } else {
             this.permittedOperations.addAll(permittedOperations);
         }

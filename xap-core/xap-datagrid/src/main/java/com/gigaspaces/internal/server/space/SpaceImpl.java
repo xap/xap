@@ -2605,9 +2605,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         if (!isStatisticsAvailable())
             return new StatisticsHolder(new long[]{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1});
 
-        long[] totalCounts = new long[StatisticsHolder.OPERATION_CODES.length];
-        for (int i = 0; i < StatisticsHolder.OPERATION_CODES.length; i++)
-            totalCounts[i] = _statistics.getStatistics(StatisticsHolder.OPERATION_CODES[i]).getCurrentCount();
+        long[] totalCounts = new long[StatisticsHolder.getOperationCodes().length];
+        for (int i = 0; i < totalCounts.length; i++)
+            totalCounts[i] = _statistics.getStatistics(StatisticsHolder.getOperationCodes()[i]).getCurrentCount();
 
         StatisticsHolder stat = new StatisticsHolder(totalCounts);
 

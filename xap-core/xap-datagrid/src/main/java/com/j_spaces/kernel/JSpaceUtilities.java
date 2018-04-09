@@ -22,10 +22,12 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.io.XmlUtils;
 import com.gigaspaces.internal.jvm.JVMDetails;
 import com.gigaspaces.internal.jvm.JVMInfoProvider;
+import com.gigaspaces.internal.utils.CollectionUtils;
 import com.gigaspaces.internal.utils.xslt.XSLTConverter;
 import com.gigaspaces.lrmi.nio.info.NIODetails;
 import com.gigaspaces.lrmi.nio.info.NIOInfoProvider;
 import com.gigaspaces.management.entry.JMXConnection;
+import com.j_spaces.core.Constants;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.SpaceOperations;
 import com.j_spaces.core.admin.IRemoteJSpaceAdmin;
@@ -1536,5 +1538,16 @@ public class JSpaceUtilities {
         }
 
         return exportCodebase;
+    }
+
+
+    // All schemas except mirror
+    private static final Set<String> ALL_SPACE_SCHEMAS = CollectionUtils.toUnmodifiableSet(
+            Constants.Schemas.DEFAULT_SCHEMA,
+            Constants.Schemas.JAVASPACE_SCHEMA,
+            Constants.Schemas.CACHE_SCHEMA, Constants.Schemas.PERSISTENT_SCHEMA);
+
+    public static Set<String> getSpaceSchemas() {
+        return ALL_SPACE_SCHEMAS;
     }
 }

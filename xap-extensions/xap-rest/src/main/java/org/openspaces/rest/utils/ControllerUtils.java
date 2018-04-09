@@ -19,6 +19,7 @@ package org.openspaces.rest.utils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gigaspaces.document.SpaceDocument;
+import com.gigaspaces.internal.utils.CollectionUtils;
 import com.gigaspaces.metadata.SpacePropertyDescriptor;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.j_spaces.core.UnknownTypeException;
@@ -33,11 +34,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -58,32 +55,40 @@ public class ControllerUtils {
 
     public static String lookupLocators;
     public static String lookupGroups;
-    public static Map<String, Class> javaPrimitives = new HashMap<String, Class>();
+    private static final Map<String, Class> javaPrimitives = initJavaPrimitives();
 
-    public static ArrayList<String> allowedFields;
+    private static Map<String, Class> initJavaPrimitives() {
+        Map<String, Class> result = new HashMap<String, Class>();
+        //Java objects
+        result.put("int32", Integer.class);
+        result.put("int64", Long.class);
+        result.put("double", Double.class);
+        result.put("number", Double.class);
+        result.put("float", Float.class);
+        result.put("boolean", Boolean.class);
+        result.put("string", String.class);
+        result.put("datetime", java.util.Date.class);
+        result.put("array", java.util.List.class);
+        result.put("set", java.util.Set.class);
+        result.put("sortedset", java.util.SortedSet.class);
+        result.put("object", SpaceDocument.class);
+        return result;
+    }
+
+    private static final Set<String> allowedFields = CollectionUtils.toUnmodifiableSet(
+            "idProperty", "routingProperty", "fixedProperties", "compoundIndex", "fifoSupport", "blobStoreEnabled", "storageType", "supportsOptimisticLocking", "supportsDynamicProperties");
 
 
     public static String date_format;
     public static SimpleDateFormat simpleDateFormat;
     public static ObjectMapper mapper;
 
-    static {
-        //Java objects
-        javaPrimitives.put("int32", Integer.class);
-        javaPrimitives.put("int64", Long.class);
-        javaPrimitives.put("double", Double.class);
-        javaPrimitives.put("number", Double.class);
-        javaPrimitives.put("float", Float.class);
-        javaPrimitives.put("boolean", Boolean.class);
-        javaPrimitives.put("string", String.class);
-        javaPrimitives.put("datetime", java.util.Date.class);
-        javaPrimitives.put("array", java.util.List.class);
-        javaPrimitives.put("set", java.util.Set.class);
-        javaPrimitives.put("sortedset", java.util.SortedSet.class);
-        javaPrimitives.put("object", SpaceDocument.class);
+    public static boolean isAllowedField(String fieldName) {
+        return allowedFields.contains(fieldName);
+    }
 
-        allowedFields = new ArrayList<String>(Arrays.asList("idProperty", "routingProperty", "fixedProperties", "compoundIndex", "fifoSupport", "blobStoreEnabled", "storageType", "supportsOptimisticLocking", "supportsDynamicProperties"));
-
+    public static Class getPrimitiveType(String typeName) {
+        return javaPrimitives.get(typeName);
     }
 
     public static SpaceDocument[] createSpaceDocuments(String type, String body, GigaSpace gigaSpace)

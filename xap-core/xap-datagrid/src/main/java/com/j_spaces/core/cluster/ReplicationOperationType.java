@@ -17,7 +17,8 @@
 
 package com.j_spaces.core.cluster;
 
-import java.util.HashSet;
+import com.gigaspaces.internal.utils.CollectionUtils;
+
 import java.util.Set;
 
 /**
@@ -31,41 +32,21 @@ public enum ReplicationOperationType {
     WRITE(false), TAKE(true), EXTEND_LEASE(false), UPDATE(false), DISCARD(false),
     LEASE_EXPIRATION(false), NOTIFY(true), TRANSACTION(false), EVICT(true), CHANGE(false);
 
-    static final private ReplicationOperationType[] _values;
+    private static final Set<ReplicationOperationType> FULL_PERMISSIONS = CollectionUtils.toUnmodifiableSet(
+            WRITE, TAKE, EXTEND_LEASE, UPDATE, LEASE_EXPIRATION, NOTIFY, TRANSACTION, EVICT, CHANGE
+    );
 
-    private boolean template;
-
-    final public static Set<ReplicationOperationType> FULL_PERMISSIONS = new HashSet<ReplicationOperationType>();
+    private final boolean template;
 
     ReplicationOperationType(boolean template) {
         this.template = template;
-    }
-
-    static {
-        ReplicationOperationType[] orig = values();
-        _values = new ReplicationOperationType[orig.length];
-        System.arraycopy(orig, 0, _values, 0, orig.length);
-
-        FULL_PERMISSIONS.add(WRITE);
-        FULL_PERMISSIONS.add(TAKE);
-        FULL_PERMISSIONS.add(EXTEND_LEASE);
-        FULL_PERMISSIONS.add(UPDATE);
-        FULL_PERMISSIONS.add(LEASE_EXPIRATION);
-        FULL_PERMISSIONS.add(NOTIFY);
-        FULL_PERMISSIONS.add(TRANSACTION);
-        FULL_PERMISSIONS.add(EVICT);
-        FULL_PERMISSIONS.add(CHANGE);
-    }
-
-    public byte getOpCode() {
-        return (byte) ordinal();
     }
 
     public boolean isTemplate() {
         return template;
     }
 
-    public static ReplicationOperationType fromByte(byte opCode) {
-        return _values[opCode];
+    public static final Set<ReplicationOperationType> getFullPermissions() {
+        return FULL_PERMISSIONS;
     }
 }

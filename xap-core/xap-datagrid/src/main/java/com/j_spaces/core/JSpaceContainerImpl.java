@@ -163,7 +163,6 @@ import static com.j_spaces.core.Constants.LookupManager.START_EMBEDDED_LOOKUP_PR
 import static com.j_spaces.core.Constants.Mirror.MIRROR_SERVICE_ENABLED_DEFAULT;
 import static com.j_spaces.core.Constants.Mirror.MIRROR_SERVICE_ENABLED_PROP;
 import static com.j_spaces.core.Constants.RemoteCode.*;
-import static com.j_spaces.core.Constants.Schemas.ALL_SCHEMAS_ARRAY;
 import static com.j_spaces.core.Constants.Schemas.CONTAINER_SCHEMA_FILE_SUFFIX;
 import static com.j_spaces.core.Constants.Schemas.DEFAULT_SCHEMA;
 import static com.j_spaces.core.Constants.Schemas.SCHEMAS_FOLDER;
@@ -1906,8 +1905,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
             try {
 
                 // get all predefined schemas from resource bundle
-                for (int i = 0; i < ALL_SCHEMAS_ARRAY.length; i++) {
-                    SchemaProperties schemaProperties = ResourceLoader.findSpaceSchema(ALL_SCHEMAS_ARRAY[i]);
+                for (String schema : getAllSchemas()) {
+                    SchemaProperties schemaProperties = ResourceLoader.findSpaceSchema(schema);
                     InputStream predefinedSchemaIs = schemaProperties.getInputStream();
                     Properties props = JProperties.convertXML(predefinedSchemaIs);
                     SpaceConfig spaceConfig = null;
@@ -1992,6 +1991,15 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
             _allSpaceSchemasMap = allSpaceSchemasMap;
         }
         return _allSpaceSchemasMap;
+    }
+
+
+    private static String[] getAllSchemas() {
+        return new String[] {
+                Constants.Schemas.DEFAULT_SCHEMA, Constants.Schemas.JAVASPACE_SCHEMA,
+                Constants.Schemas.CACHE_SCHEMA,
+                Constants.Schemas.PERSISTENT_SCHEMA,
+                Constants.Schemas.MIRROR_SCHEMA};
     }
 
     // set new container configuration and make update of XML file

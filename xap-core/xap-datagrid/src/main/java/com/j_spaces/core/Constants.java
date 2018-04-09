@@ -51,7 +51,7 @@ public interface Constants {
 
         String SPACE_SCHEMA_FILE_SUFFIX = "-space-schema.xml";
         String CONTAINER_SCHEMA_FILE_SUFFIX = "-container-schema.xml";
-        String[] ALL_SCHEMAS_ARRAY = {DEFAULT_SCHEMA, JAVASPACE_SCHEMA, CACHE_SCHEMA, PERSISTENT_SCHEMA, MIRROR_SCHEMA};
+
         String SCHEMA_FILE_PATH = "schemaFilePath";
     }
 

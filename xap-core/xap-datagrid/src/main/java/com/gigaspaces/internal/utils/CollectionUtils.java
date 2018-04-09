@@ -171,6 +171,11 @@ public abstract class CollectionUtils {
         return list;
     }
 
+    public static <T> List<T> toUnmodifiableList(T... items) {
+        List<T> result = toList(items);
+        return  result == null ? null : Collections.unmodifiableList(result);
+    }
+
     /**
      * Converts the supplied array into a Set.
      *
@@ -188,14 +193,19 @@ public abstract class CollectionUtils {
         return set;
     }
 
-    /**
-     * Merge the given Properties instance into the given Map, copying all properties (key-value
-     * pairs) over. <p>Uses <code>Properties.propertyNames()</code> to even catch default properties
-     * linked into the original Properties instance.
-     *
-     * @param props the Properties instance to merge (may be <code>null</code>)
-     * @param map   the target Map to merge the properties into
-     */
+    public static <T> Set<T> toUnmodifiableSet(T... items) {
+        Set<T> result = toSet(items);
+        return  result == null ? null : Collections.unmodifiableSet(result);
+    }
+
+        /**
+         * Merge the given Properties instance into the given Map, copying all properties (key-value
+         * pairs) over. <p>Uses <code>Properties.propertyNames()</code> to even catch default properties
+         * linked into the original Properties instance.
+         *
+         * @param props the Properties instance to merge (may be <code>null</code>)
+         * @param map   the target Map to merge the properties into
+         */
     public static void mergePropertiesIntoMap(Properties props, Map<String, String> map) {
         if (map == null) {
             throw new IllegalArgumentException("Map must not be null");

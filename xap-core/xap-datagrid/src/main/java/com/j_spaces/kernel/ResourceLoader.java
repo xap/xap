@@ -37,9 +37,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Arrays;
-import java.util.Properties;
-import java.util.Vector;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -681,7 +679,7 @@ public class ResourceLoader {
             }
             return schemaInputStream;
         } else if (createIfNotExists || !createIfNotExists &&
-                getAllSpaceSchemas().contains(schemaName)) {
+                JSpaceUtilities.getSpaceSchemas().contains(schemaName)) {
             /**
              * if the requested schema file does not exist in the disk config/schemas dir..
              * In this case we load the default schema file which always exist in the resource
@@ -720,19 +718,6 @@ public class ResourceLoader {
             }
         }
         return schemaInputStream;
-    }
-
-    private static Vector<String> getAllSpaceSchemas() {
-        //remove mirror schema from the list
-        String[] schemaOptions = Constants.Schemas.ALL_SCHEMAS_ARRAY;
-        Vector<String> schemaOptionsVector = new Vector<String>(schemaOptions.length);
-        for (int i = 0; i < schemaOptions.length; i++) {
-            if (!schemaOptions[i].equals(Constants.Schemas.MIRROR_SCHEMA)) {
-                schemaOptionsVector.add(schemaOptions[i]);
-            }
-        }
-
-        return schemaOptionsVector;
     }
 
     public static InputStream findConfigDCache(String fileName) {

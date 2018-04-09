@@ -82,7 +82,7 @@ public class ASMPropertiesFactory {
 
     private static void createGetter(ClassWriter cw, String ownerTypeName, SpacePropertyInfo[] properties) {
 
-        MethodGenerator mv = MethodGenerator.newMethod(cw, IProperties.GETTER_NAME, IProperties.GETTER_DESC, IProperties.EXCEPTIONS);
+        MethodGenerator mv = MethodGenerator.newMethod(cw, IProperties.Helper.getterName(), IProperties.Helper.getterDesc(), IProperties.Helper.exceptions());
 
         final int VAR_OBJ = 1;      // Object obj;
         final int VAR_POJO = 2;     // MyPojo pojo;
@@ -127,7 +127,7 @@ public class ASMPropertiesFactory {
 
     private static void createSetter(ClassWriter cw, String ownerTypeName, SpacePropertyInfo[] properties) {
 
-        MethodGenerator mv = MethodGenerator.newMethod(cw, IProperties.SETTER_NAME, IProperties.SETTER_DESC);
+        MethodGenerator mv = MethodGenerator.newMethod(cw, IProperties.Helper.setterName(), IProperties.Helper.setterDesc());
 
         final int VAR_OBJ = 1;      // Object obj;
         final int VAR_VALUES = 2;   // Object[] values;

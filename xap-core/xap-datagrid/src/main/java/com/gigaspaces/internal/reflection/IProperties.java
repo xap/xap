@@ -26,20 +26,38 @@ import java.lang.reflect.InvocationTargetException;
  * @since 7.0
  */
 public interface IProperties<T> {
-    public static final String INTERNAL_NAME = ReflectionUtil.getInternalName(IProperties.class);
-
-    public static final String GETTER_NAME = "getValues";
-    public static final String GETTER_DESC = "(Ljava/lang/Object;)[Ljava/lang/Object;";
-    public static final String SETTER_NAME = "setValues";
-    public static final String SETTER_DESC = "(Ljava/lang/Object;[Ljava/lang/Object;)V";
-    public static final String[] EXCEPTIONS = new String[]{
-            ReflectionUtil.getInternalName(IllegalAccessException.class),
-            ReflectionUtil.getInternalName(IllegalArgumentException.class),
-            ReflectionUtil.getInternalName(InvocationTargetException.class)};
-
     Object[] getValues(T obj)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException;
 
     void setValues(T obj, Object[] values)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException;
+
+    class Helper {
+        public static final String INTERNAL_NAME = ReflectionUtil.getInternalName(IProperties.class);
+
+        private static final String[] EXCEPTIONS = new String[]{
+                ReflectionUtil.getInternalName(IllegalAccessException.class),
+                ReflectionUtil.getInternalName(IllegalArgumentException.class),
+                ReflectionUtil.getInternalName(InvocationTargetException.class)};
+
+        public static String getterName() {
+            return "getValues";
+        }
+
+        public static String getterDesc() {
+            return "(Ljava/lang/Object;)[Ljava/lang/Object;";
+        }
+
+        public static String setterName() {
+            return "setValues";
+        }
+
+        public static String setterDesc() {
+            return "(Ljava/lang/Object;[Ljava/lang/Object;)V";
+        }
+
+        public static String[] exceptions() {
+            return EXCEPTIONS;
+        }
+    }
 }

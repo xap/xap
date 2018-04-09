@@ -30,6 +30,7 @@ import com.gigaspaces.cluster.replication.sync.SyncReplPolicy;
 import com.gigaspaces.internal.cluster.node.impl.config.MultiBucketReplicationPolicy;
 import com.gigaspaces.internal.io.XmlUtils;
 import com.gigaspaces.internal.lookup.SpaceUrlUtils;
+import com.gigaspaces.internal.utils.CollectionUtils;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.j_spaces.core.Constants.Mirror;
 import com.j_spaces.core.CreateException;
@@ -62,16 +63,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.StringTokenizer;
-import java.util.Vector;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -293,13 +285,6 @@ public class ClusterXML {
     final static public String REPL_PESRISTENT_BLOBSTORE_REDO_LOG_CAPACITY_DEFAULT_VALUE = "1000000";
     final static public String REPL_PESRISTENT_BLOBSTORE_MEMORY_REDO_LOG_CAPACITY_DEFAULT_VALUE = "400000";
 
-    // replication transmission policies tags
-    final static public String REPL_TRANSMISSION_TAG = "repl-transmission-policy";
-    final static public String REPL_DISABLE_TRANSMISSION_TAG = "disable-transmission";
-    final static public String REPL_TARGET_MEMBER_TAG = "target-member";
-    final static public String REPL_TRANSMISSION_OPERATIONS_TAG = "transmission-operations";
-    final static public String[] REPL_TRANSMISSION_OPERATIONS = {"notify", "take", "write"};
-
     // replication filters tags
     final static public String REPL_FILTERS_TAG = "repl-filters";
     final static public String REPL_INPUT_FILTER_CLASSNAME_TAG = "input-filter-className";
@@ -390,7 +375,7 @@ public class ClusterXML {
     final static public String FAIL_TO_ALTERNATE = "fail-to-alternate";
     final static public String FULL_REPLICATION = "full-replication";
     final static public String PARTIAL_REPLICATION = "partial-replication";
-    final static public String[] FAIL_OVER_POLICIES = {FAIL_IN_GROUP, FAIL_TO_BACKUP, FAIL_TO_ALTERNATE};
+    final static private List<String> FAIL_OVER_POLICIES = CollectionUtils.toUnmodifiableList(FAIL_IN_GROUP, FAIL_TO_BACKUP, FAIL_TO_ALTERNATE);
 
     // dCache configuration
     final static public String DCACHE_TAG = "dist-cache";
@@ -450,9 +435,6 @@ public class ClusterXML {
     final static public String BC_BROADCAST_IF_ROUTING_INDEX_IS_NULL = "routing-index-is-null";
     final static public String BC_BROADCAST_ALWAYS = "always";
     final static public String BC_BROADCAST_NEVER = "never";
-
-    public static final String[] BROADCAST_CONDITIONS_ARRAY =
-            {BC_BROADCAST_IF_ROUTING_INDEX_IS_NULL, BC_BROADCAST_ALWAYS, BC_BROADCAST_NEVER};
 
     private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
 
@@ -2124,8 +2106,8 @@ public class ClusterXML {
                         operationName + "] operation under " + FAIL_OVER_POLICY_TAG + " tag.");
 
             // check if policy correct
-            for (int i = 0; i < FAIL_OVER_POLICIES.length; i++) {
-                if (policyType.equalsIgnoreCase(FAIL_OVER_POLICIES[i]))
+            for (int i = 0; i < FAIL_OVER_POLICIES.size(); i++) {
+                if (policyType.equalsIgnoreCase(FAIL_OVER_POLICIES.get(i)))
                     polDesc.m_PolicyType = i;
             }
 
@@ -2890,5 +2872,9 @@ public class ClusterXML {
         return clusterSchema.equalsIgnoreCase(CLUSTER_SCHEMA_NAME_PARTITIONED) ||
                 clusterSchema.equalsIgnoreCase(CLUSTER_SCHEMA_NAME_PARTITIONED_SYNC2BACKUP) ||
                 clusterSchema.equalsIgnoreCase(CLUSTER_SCHEMA_NAME_PRIMARY_BACKUP);
+    }
+
+    public static List<String> getFailOverPolicies() {
+        return FAIL_OVER_POLICIES;
     }
 } // end of class

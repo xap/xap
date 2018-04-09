@@ -48,7 +48,7 @@ public class ASMFieldPropertiesFactory {
             ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 
             cw.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC,
-                    classInternalName, null, "java/lang/Object", new String[]{IProperties.INTERNAL_NAME});
+                    classInternalName, null, "java/lang/Object", new String[]{IProperties.Helper.INTERNAL_NAME});
 
             createCtor(cw);
 
@@ -84,7 +84,7 @@ public class ASMFieldPropertiesFactory {
     //TODO handle private methods
     private static void createGetter(ClassWriter cw, String internalClassName, Field[] fields) {
 
-        MethodGenerator mv = MethodGenerator.newMethod(cw, IProperties.GETTER_NAME, IProperties.GETTER_DESC, IProperties.EXCEPTIONS);
+        MethodGenerator mv = MethodGenerator.newMethod(cw, IProperties.Helper.getterName(), IProperties.Helper.getterDesc(), IProperties.Helper.exceptions());
 
 		/* MyPojo pojo = (MyPojo)obj; */
         mv.castVariableIntoVariable(1, internalClassName, 2);
@@ -111,7 +111,7 @@ public class ASMFieldPropertiesFactory {
 
     private static void createSetter(ClassWriter cw, String internalClassName, Field[] fields) {
 
-        MethodGenerator mv = MethodGenerator.newMethod(cw, IProperties.SETTER_NAME, IProperties.SETTER_DESC);
+        MethodGenerator mv = MethodGenerator.newMethod(cw, IProperties.Helper.setterName(), IProperties.Helper.setterDesc());
 
 		/* MyPojo pojo = (MyPojo)obj; */
         mv.castVariableIntoVariable(1, internalClassName, 3);
