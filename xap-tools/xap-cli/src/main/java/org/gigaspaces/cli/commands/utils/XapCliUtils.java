@@ -33,7 +33,8 @@ public class XapCliUtils {
 
     public static void executeProcessesWrapper(List<ProcessBuilderWrapper> processBuilderWrappers) throws InterruptedException {
         final ExecutorService executorService = Executors.newCachedThreadPool();
-        final int TIMEOUT = 60 * 1 * 1000;
+        //wait forever
+        final int TIMEOUT = Integer.MAX_VALUE;
 
         for (final ProcessBuilderWrapper processBuilderWrapper : processBuilderWrappers) {
 
