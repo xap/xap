@@ -18,13 +18,14 @@ package org.openspaces.core.config;
 
 import com.gigaspaces.attribute_store.AttributeStore;
 
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
  * @author Kobi
  * @since 10.2.0
  */
-public class AttributeStoreFactoryBean implements InitializingBean {
+public class AttributeStoreFactoryBean implements InitializingBean, DisposableBean {
 
     private AttributeStore storeHandler;
 
@@ -38,5 +39,12 @@ public class AttributeStoreFactoryBean implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        if (storeHandler != null) {
+            storeHandler.close();
+        }
     }
 }

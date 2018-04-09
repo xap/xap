@@ -48,6 +48,14 @@ public class ZookeeperLastPrimaryHandler {
         }
     }
 
+    public void closeZooKeeperAttributeStore() {
+        try {
+            _attributeStore.close();
+        } catch (Exception e) {
+            _logger.log(Level.WARNING, "Failed to close ZooKeeperAttributeStore", e);
+        }
+    }
+
     public void removeLastPrimaryRecord() throws IOException {
         _logger.info("Removing key ["+_attributeStoreKey+"] from ZK");
         _attributeStore.remove(_attributeStoreKey);
