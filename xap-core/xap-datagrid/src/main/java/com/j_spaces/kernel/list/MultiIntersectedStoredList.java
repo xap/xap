@@ -78,27 +78,29 @@ public class MultiIntersectedStoredList<T>
     public void add(IObjectsList list, boolean shortest) {
         if (list == null || list == _allElementslist || (list == _shortest))
             return;
-        if (isDuplicate(list))
+        boolean duplicate = isDuplicate(list);
+        if (duplicate && !shortest)
             return;  //already in
         boolean added = true;
         try {
             if (shortest) {
-                if (_shortest != null)
+                if (_shortest != null) {
                     added = addToOtherLists(_shortest);
+                    if(duplicate){
+                        _otherLists.remove(list);
+                    }
+                }
                 _shortest = list;
             } else
                 added = addToOtherLists(list);
-        }
-        finally
-        {
-            if (added)
+        } finally {
+            if (added && !duplicate)
                 _uniqueLists.add(list);
         }
     }
 
-    private boolean isDuplicate(IObjectsList list)
-    {
-        if (_uniqueLists ==null) {
+    private boolean isDuplicate(IObjectsList list) {
+        if (_uniqueLists == null) {
             _uniqueLists = new HashSet();
             if (_shortest != null)
                 _uniqueLists.add(_shortest);
@@ -245,18 +247,18 @@ public class MultiIntersectedStoredList<T>
             res = _current.next();
             if (_falsePositiveFilterOnly) {
                 if (res != null && _intersectedSoFarFilter != null && !_intersectedSoFarFilter.contains(System.identityHashCode(res))) {
-                    res = null;
-                    continue;
-                }
+                        res = null;
+                        continue;
+                    }
             } else {
                 if (res != null && _intersectedSoFarSet != null && !_intersectedSoFarSet.contains(res)) {
-                    res = null;
-                    continue;
+                        res = null;
+                        continue;
+                    }
                 }
-            }
             if (res != null)
                 break;
-        }
+            }
         while (_current.hasNext());
 
         if (res == null)
