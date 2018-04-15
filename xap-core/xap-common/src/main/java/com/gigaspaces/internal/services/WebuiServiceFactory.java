@@ -22,6 +22,8 @@ public class WebuiServiceFactory extends ServiceFactory {
                 .appendOptional("spring").appendOptional("security")        // $SPRING_JARS
                 .appendOptional("jetty").appendOptional("jetty/xap-jetty")  // $JETTY_JARS
                 .appendOptional("interop")                                  // $INTEROP_JARS
+                .appendOptional("memoryxtend/off-heap")                     // $MEMORYXTEND_JARS
+                .appendOptional("memoryxtend/rocksdb")                      // $MEMORYXTEND_JARS
                 .appendPlatform("commons")                                  // $COMMONS_JARS
                 .appendPlatform("service-grid");
     }
