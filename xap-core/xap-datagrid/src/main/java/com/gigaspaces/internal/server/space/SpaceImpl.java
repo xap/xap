@@ -575,16 +575,17 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         if (_leaderSelector != null) {
             _leaderSelector.removeListener(_engine);
         }
-
-        if (zookeeperLastPrimaryHandler != null) {
-            zookeeperLastPrimaryHandler.closeZooKeeperAttributeStore();
-        }
     }
 
     private void destroy() {
         try {
-            if (_leaderSelector != null)
+            if (_leaderSelector != null) {
                 _leaderSelector.terminate();
+            }
+
+            if (zookeeperLastPrimaryHandler != null) {
+                zookeeperLastPrimaryHandler.closeZooKeeperAttributeStore();
+            }
 
             if (_qp != null)
                 _qp.close();
