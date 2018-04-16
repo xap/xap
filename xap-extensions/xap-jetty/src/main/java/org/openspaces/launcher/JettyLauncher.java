@@ -52,7 +52,7 @@ public class JettyLauncher extends WebLauncher {
         this.server = new Server();
 
         //Set JSP to use Standard JavaC always
-        System.setProperty("org.apache.jasper.compiler.disablejsr199","false");
+        System.setProperty("org.apache.jasper.compiler.disablejsr199","true");
 
         ServerConnector connector = JettyUtils.createConnector(server, config.getHostAddress(), config.getPort(),
                 toSslContextFactory(config));
