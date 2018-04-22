@@ -360,13 +360,13 @@ public class SelectQuery extends AbstractDMLQuery {
      * Handles select for update queries Creates a local transaction if none is specified
      */
     private Transaction startTransaction(IJSpace space, Transaction txn)
-            throws LeaseDeniedException, RemoteException, TransactionException {
+        throws LeaseDeniedException, RemoteException, TransactionException {
         if (forUpdate && txn == null) {
             ITransactionManagerProvider managerProvider = getSession().getQueryHandler().getTransactionManagerProvider();
             //if this is a select for update, we must use a transaction,
             //so in case there wasn't any, we create one
             txn = (TransactionFactory.create(managerProvider.getTransactionManager(),
-                    QueryProcessor.getDefaultConfig().getTransactionTimeout() * 100)).transaction;
+                                             QueryProcessor.getDefaultConfig().getTransactionTimeout() * 100)).transaction;
             this.getSession().setTransaction(txn);
         }
         return txn;
@@ -391,10 +391,10 @@ public class SelectQuery extends AbstractDMLQuery {
         }
 
         ResultEntry result = new ResultEntry(
-                fieldNames,
-                new String[]{getQueryColumns().get(0).getAlias()},
-                new String[]{SYSTABLES},
-                fieldValues);
+            fieldNames,
+            new String[]{getQueryColumns().get(0).getAlias()},
+            new String[]{SYSTABLES},
+            fieldValues);
 
         packet.setResultEntry(result);
         return packet;
@@ -419,10 +419,10 @@ public class SelectQuery extends AbstractDMLQuery {
 
             // COUNT's column tablename is an empty String
             ResultEntry result = new ResultEntry(
-                    new String[]{getCountColumnName()},
-                    new String[]{getCountColumnLabel()},
-                    new String[]{""},
-                    values);
+                new String[]{getCountColumnName()},
+                new String[]{getCountColumnLabel()},
+                new String[]{""},
+                values);
 
             response.setResultEntry(result);
 
@@ -485,10 +485,10 @@ public class SelectQuery extends AbstractDMLQuery {
         }
 
         ResultEntry result = new ResultEntry(
-                fieldNames,
-                columnLabels,
-                tableNames,
-                fieldValues);
+            fieldNames,
+            columnLabels,
+            tableNames,
+            fieldValues);
 
         return result;
     }
@@ -534,10 +534,10 @@ public class SelectQuery extends AbstractDMLQuery {
         }
 
         ResultEntry result = new ResultEntry(
-                fieldNames,
-                columnLabels,
-                tableNames,
-                fieldValues);
+            fieldNames,
+            columnLabels,
+            tableNames,
+            fieldValues);
 
         ResponsePacket packet = new ResponsePacket();
         packet.setResultEntry(result);
@@ -551,7 +551,7 @@ public class SelectQuery extends AbstractDMLQuery {
      * Execute special simplified count for queries without where clause.
      */
     private ResponsePacket executeCountAll(IJSpace space, Transaction txn) throws RemoteException, TransactionException,
-            UnusableEntryException {
+                                                                                  UnusableEntryException {
         ResponsePacket packet = new ResponsePacket();
 
         // GS-7406: In embedded QP, a security check needs to be done since interception was skipped.
@@ -582,10 +582,10 @@ public class SelectQuery extends AbstractDMLQuery {
 
         // COUNT's column tablename is always an empty String
         ResultEntry result = new ResultEntry(
-                new String[]{getCountColumnName()},
-                new String[]{getCountColumnLabel()},
-                new String[]{""},
-                new Object[][]{{count}});
+            new String[]{getCountColumnName()},
+            new String[]{getCountColumnLabel()},
+            new String[]{""},
+            new Object[][]{{count}});
 
         packet.setResultEntry(result);
 
@@ -598,31 +598,31 @@ public class SelectQuery extends AbstractDMLQuery {
      */
     @Override
     public SelectQuery clone() {
-      SelectQuery query = new SelectQuery();
-      query.tables = this.tables;
-      query._tablesData = _tablesData;
-      query.rownum = (RowNumNode) (this.rownum == null ? null : rownum.clone());
-      query.orderColumns = this.orderColumns;
-      query.groupColumn = this.groupColumn;
-      query.isPrepared = this.isPrepared;
-      query.forUpdate = this.forUpdate;
-      query.isAggFunction = this.isAggFunction;
-      query.isDistinct = isDistinct;
-      query.setRouting(this.getRouting());
-      query.setProjectionTemplate(this.getProjectionTemplate());
-      query.setContainsSubQueries(this.containsSubQueries());
-      query.isSelectAll = this.isSelectAll;
+        SelectQuery query = new SelectQuery();
+        query.tables = this.tables;
+        query._tablesData = _tablesData;
+        query.rownum = (RowNumNode) (this.rownum == null ? null : rownum.clone());
+        query.orderColumns = this.orderColumns;
+        query.groupColumn = this.groupColumn;
+        query.isPrepared = this.isPrepared;
+        query.forUpdate = this.forUpdate;
+        query.isAggFunction = this.isAggFunction;
+        query.isDistinct = isDistinct;
+        query.setRouting(this.getRouting());
+        query.setProjectionTemplate(this.getProjectionTemplate());
+        query.setContainsSubQueries(this.containsSubQueries());
+        query.isSelectAll = this.isSelectAll;
 
-      query.queryColumns = new ArrayList();
+        query.queryColumns = new ArrayList();
 
-      for (SelectColumn col : this.getQueryColumns()) {
-        if (!col.isDynamic())
-          query.queryColumns.add(col);
-      }
+        for (SelectColumn col : this.getQueryColumns()) {
+            if (!col.isDynamic())
+                query.queryColumns.add(col);
+        }
 
-      if (this.getExpTree() != null)
-        query.setExpTree((ExpNode) this.getExpTree().clone()); //clone all the tree.
-      return query;
+        if (this.getExpTree() != null)
+            query.setExpTree((ExpNode) this.getExpTree().clone()); //clone all the tree.
+        return query;
     }
 
     /**
@@ -906,7 +906,7 @@ public class SelectQuery extends AbstractDMLQuery {
      * Executes a select query without a where clause but from several tables
      */
     private IQueryResultSet<IEntryPacket> executeJoinedQuery(ISpaceProxy space, Transaction txn) throws RemoteException, TransactionException,
-            UnusableEntryException, SQLException {
+                                                                                                        UnusableEntryException, SQLException {
         return _executor.execute(space, txn, getReadModifier(), getEntriesLimit());
     }
 
@@ -988,7 +988,7 @@ public class SelectQuery extends AbstractDMLQuery {
     @Override
     public BatchResponsePacket executePreparedValuesBatch(ISpaceProxy space,
                                                           Transaction transaction, PreparedValuesCollection preparedValuesCollection)
-            throws SQLException {
+        throws SQLException {
         throw new SQLException("Batching is not supported for SELECT queries.");
     }
 
@@ -997,7 +997,7 @@ public class SelectQuery extends AbstractDMLQuery {
      * result set
      */
     private void addDynamicSelectColumns(IQueryResultSet<IEntryPacket> entries)
-            throws SQLException {
+        throws SQLException {
         HashMap<String, QueryTableData> dynamicPropertiesTables = new HashMap<String, QueryTableData>();
         HashMap<QueryTableData, HashMap<String, SelectColumn>> dynamicColumnsMap = new HashMap<QueryTableData, HashMap<String, SelectColumn>>();
 
@@ -1005,11 +1005,11 @@ public class SelectQuery extends AbstractDMLQuery {
         for (QueryTableData tableData : getTablesData()) {
 
             if (tableData.hasAsterixSelectColumns()
-                    && tableData.getTypeDesc().supportsDynamicProperties()) {
+                && tableData.getTypeDesc().supportsDynamicProperties()) {
                 dynamicPropertiesTables
-                        .put(tableData.getTableName(), tableData);
+                    .put(tableData.getTableName(), tableData);
                 dynamicColumnsMap.put(tableData,
-                        new HashMap<String, SelectColumn>());
+                                      new HashMap<String, SelectColumn>());
             }
         }
 
@@ -1032,7 +1032,7 @@ public class SelectQuery extends AbstractDMLQuery {
             }
 
             for (HashMap<String, SelectColumn> dynamicColumns : dynamicColumnsMap
-                    .values()) {
+                .values()) {
                 for (SelectColumn dynamicColumn : dynamicColumns.values()) {
                     getQueryColumns().add(dynamicColumn);
                 }
@@ -1041,9 +1041,9 @@ public class SelectQuery extends AbstractDMLQuery {
     }
 
     private void addDynamicColumns(
-            QueryTableData table,
-            HashMap<QueryTableData, HashMap<String, SelectColumn>> dynamicColumnsMap,
-            IEntryPacket entryPacket) throws SQLException {
+        QueryTableData table,
+        HashMap<QueryTableData, HashMap<String, SelectColumn>> dynamicColumnsMap,
+        IEntryPacket entryPacket) throws SQLException {
         Map<String, Object> dynamicProperties = entryPacket.getDynamicProperties();
         if (dynamicProperties == null || dynamicProperties.size() == 0)
             return;
