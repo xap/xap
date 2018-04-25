@@ -45,11 +45,12 @@ translated - World! to Mundo!
 translated - Hello to Hola
 </code></p><h4>output (of second translator)</h4><p><code>
 translated - World! to Mundo!
-</code></p><h3>Running with a partitioned data-grid (with backups for each partition)</h3><p>Each partition instance can be assigned a backup, as follows:</p>
-<ol>
-  <li>Specify <code>total_members=2,1</code> for two partitions, each with a single backup.</li>
-  <li>Specify <code>backup_id=1</code> to load the backup instance of partition id=1 or id=2</li>
-</ol><h2>Running the example from the command line</h2><p>Use Maven to compile and package the example (e.g. <code>mvn clean package</code>).</p><p>This will create the processing unit jars that can be referenced by <code>pu-instance.{sh,bat}</code></p><p>From the ${XAP_HOME}/bin directory, run:</p>
+</code></p><h3>Running with a partitioned data-grid (with backups for each partition)</h3><p>You can specify <code>total_members=2,1</code> for two partitions, each with a single backup and specify <code>backup_id=1</code> to load the backup instance.</p><p>Each partition instance can configured as follows:</p>
+<pre><code> first partition:         -cluster schema=partitioned total_members=2,1 id=1
+ first partition backup:  -cluster schema=partitioned total_members=2,1 id=1 backup_id=1
+ second partition:        -cluster schema=partitioned total_members=2,1 id=2
+ second partition backup: -cluster schema=partitioned total_members=2,1 id=2 backup_id=1
+</code></pre><h2>Running the example from the command line</h2><p>Use Maven to compile and package the example (e.g. <code>mvn clean package</code>).</p><p>This will create the processing unit jars that can be referenced by <code>pu-instance.{sh,bat}</code></p><p>From the ${XAP_HOME}/bin directory, run:</p>
 <ul>
   <li>./pu-instance.sh -path ../examples/hola-mundo/translator/target/hola-mundo-translator.jar</li>
   <li>./pu-instance.sh -path ../examples/hola-mundo/feeder/target/hola-mundo-feeder.jar</li>
