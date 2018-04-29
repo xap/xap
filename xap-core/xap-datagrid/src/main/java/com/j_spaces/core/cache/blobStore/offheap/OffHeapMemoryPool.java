@@ -113,13 +113,13 @@ public class OffHeapMemoryPool {
         incrementMetrics(headerSize + buf.length, info.getTypeName());
     }
 
-    public byte[] get(long address) {
-        if (address == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
+    public byte[] get(IBlobStoreOffHeapInfo info) {
+        if (info.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             throw new IllegalStateException("trying to read from off heap but no address found");
         }
-        int headerSize = getHeaderSizeFromUnsafe(address);
-        int numOfBytes = getHeaderFromUnsafe(address, headerSize);
-        byte[] bytes = readBytes(address + (long) (headerSize), numOfBytes);
+        int headerSize = getHeaderSizeFromUnsafe(info.getOffHeapAddress());
+        int numOfBytes = getHeaderFromUnsafe(info.getOffHeapAddress(), headerSize);
+        byte[] bytes = readBytes(info.getOffHeapAddress() + (long) (headerSize), numOfBytes);
         return bytes;
     }
 

@@ -546,7 +546,7 @@ public class BlobStoreRefEntryCacheInfo
                 BlobStoreEntryLayout ole = new BlobStoreEntryLayout();
                 if (onlyIndexesPart && cacheManager.hasBlobStoreOffHeapCache()) {
                     try {
-                        ole.readIndexValuesBytes(cacheManager, _serverTypeDescCode, cacheManager.getBlobStoreStorageHandler().getOffHeapCache().get(getOffHeapAddress()));
+                        ole.readIndexValuesBytes(cacheManager, _serverTypeDescCode, cacheManager.getBlobStoreStorageHandler().getOffHeapCache().get(this));
                         ole.setBlobStoreVersion(_blobStoreVersion);
                         ole.setOnlyIndexesPart(true);
                         ole.setUid(_m_Uid);
