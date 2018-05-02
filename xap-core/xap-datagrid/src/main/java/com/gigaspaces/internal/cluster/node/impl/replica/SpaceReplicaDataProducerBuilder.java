@@ -46,5 +46,9 @@ public class SpaceReplicaDataProducerBuilder
                         + copyParameters.getReplicaType());
         }
     }
+    public SpaceEngine getSpaceEngine()
+    {
+        return _engine;
+    }
 
 }

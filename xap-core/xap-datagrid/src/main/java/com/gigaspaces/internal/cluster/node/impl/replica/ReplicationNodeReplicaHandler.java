@@ -26,12 +26,15 @@ import com.gigaspaces.internal.cluster.node.impl.groups.IReplicationSourceGroup;
 import com.gigaspaces.internal.cluster.node.impl.packets.ReplicaRequestPacket;
 import com.gigaspaces.internal.cluster.node.replica.SpaceCopyReplicaParameters;
 import com.gigaspaces.internal.extension.XapExtensions;
+import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.utils.collections.CopyOnUpdateMap;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.time.SystemTime;
+import com.j_spaces.core.LeaseManager;
 import com.j_spaces.core.cluster.IReplicationFilterEntry;
 import com.j_spaces.kernel.SystemProperties;
+import com.gigaspaces.internal.cluster.node.impl.replica.SpaceReplicaDataProducerBuilder;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -42,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,6 +68,9 @@ public class ReplicationNodeReplicaHandler {
     private final boolean _isFiltered;
     private int _lastContextId;
     private volatile DirectPersistencyBackupSyncIteratorHandler _directPersistencyBackupSyncIteratorHandler;
+    private final ReentrantLock _lock;
+    private final SpaceEngine _spaceEngine;
+
 
     public ReplicationNodeReplicaHandler(
             ReplicationNode replicationNode,
@@ -73,72 +80,93 @@ public class ReplicationNodeReplicaHandler {
         _replicaDataProducerBuilder = replicaDataProducerBuilder;
         _outFilter = outFilter;
         _isFiltered = (_outFilter != null);
+        _lock = new ReentrantLock();
+        if (_replicaDataProducerBuilder != null && (_replicaDataProducerBuilder instanceof SpaceReplicaDataProducerBuilder))
+            _spaceEngine = ((SpaceReplicaDataProducerBuilder)(_replicaDataProducerBuilder)).getSpaceEngine();
+        else
+            _spaceEngine = null;
+
     }
 
-    public synchronized int newReplicaRequest(String requesterLookupName,
+    public int newReplicaRequest(String requesterLookupName,
                                               ReplicaRequestPacket replicaRequestPacket) {
-        String channelName = XapExtensions.getInstance().getReplicationUtils().toChannelName(requesterLookupName);
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine(_replicationNode.getLogPrefix()
-                    + "new incoming replica request from "
-                    + channelName + ", request details "
-                    + replicaRequestPacket);
+        _lock.lock();
+        try {
+            String channelName = XapExtensions.getInstance().getReplicationUtils().toChannelName(requesterLookupName);
 
-        String groupName = replicaRequestPacket.getGroupName();
+            if (_logger.isLoggable(Level.FINE))
+                _logger.fine(_replicationNode.getLogPrefix()
+                        + "new incoming replica request from "
+                        + channelName + ", request details "
+                        + replicaRequestPacket);
 
-        _replicationNode.onNewReplicaRequest(groupName, channelName, replicaRequestPacket.isSynchronizeRequest());
+            String groupName = replicaRequestPacket.getGroupName();
 
-        // Handle synchronize request (recovery)
-        if (replicaRequestPacket.isSynchronizeRequest()) {
-            IReplicationSourceGroup sourceGroup = _replicationNode.getReplicationSourceGroup(groupName);
-            // Check for already existing replica request from this source name,
-            // if so remove it.
-            for (Iterator<Entry<Object, ReplicaRequestData>> iterator = _activeReplicaProcesses.entrySet()
-                    .iterator(); iterator.hasNext(); ) {
-                Entry<Object, ReplicaRequestData> next = iterator.next();
-                ReplicaRequestData requestData = next.getValue();
-                if (requestData.isSynchronizeReplica()
-                        && requestData.getGroupName().equals(groupName)
-                        && requestData.getOriginLookupName()
-                        .equals(channelName)) {
-                    sourceGroup.stopSynchronization(channelName);
-                    iterator.remove();
+            _replicationNode.onNewReplicaRequest(groupName, channelName, replicaRequestPacket.isSynchronizeRequest());
+
+            // Handle synchronize request (recovery)
+            if (replicaRequestPacket.isSynchronizeRequest()) {
+                IReplicationSourceGroup sourceGroup = _replicationNode.getReplicationSourceGroup(groupName);
+                // Check for already existing replica request from this source name,
+                // if so remove it.
+                for (Iterator<Entry<Object, ReplicaRequestData>> iterator = _activeReplicaProcesses.entrySet()
+                        .iterator(); iterator.hasNext(); ) {
+                    Entry<Object, ReplicaRequestData> next = iterator.next();
+                    ReplicaRequestData requestData = next.getValue();
+                    if (requestData.isSynchronizeReplica()
+                            && requestData.getGroupName().equals(groupName)
+                            && requestData.getOriginLookupName()
+                            .equals(channelName)) {
+                        sourceGroup.stopSynchronization(channelName);
+                        iterator.remove();
+                    }
                 }
+
+                boolean syncListRecovery = isDirectPersistencySyncReplicaRequest(replicaRequestPacket);
+
+                sourceGroup.beginSynchronizing(channelName,
+                        replicaRequestPacket.getSourceUniqueId(),
+                        syncListRecovery);
+
+                // handle receiving sync list from backup by chunks
+                if (syncListRecovery)
+                    handleSyncList(replicaRequestPacket);
             }
 
-            boolean syncListRecovery = isDirectPersistencySyncReplicaRequest(replicaRequestPacket);
 
-            sourceGroup.beginSynchronizing(channelName,
-                    replicaRequestPacket.getSourceUniqueId(),
-                    syncListRecovery);
-
-            // handle receiving sync list from backup by chunks
-            if (syncListRecovery)
-                handleSyncList(replicaRequestPacket);
+            int contextId = _lastContextId++;
+            _activeReplicaProcesses.put(contextId,
+                    new ReplicaRequestData(groupName,
+                            channelName,
+                            _replicaDataProducerBuilder.createProducer(replicaRequestPacket.getParameters(),
+                                    contextId),
+                            replicaRequestPacket.isSynchronizeRequest()));
+            // We use integer as ID, all external components are ambivalent to that
+            // and use object
+            if (_logger.isLoggable(Level.FINER))
+                _logger.finer(_replicationNode.getLogPrefix()
+                        + "new replica request from " + channelName
+                        + ", received context id " + contextId);
+            return contextId;
         }
-
-
-        int contextId = _lastContextId++;
-        _activeReplicaProcesses.put(contextId,
-                new ReplicaRequestData(groupName,
-                        channelName,
-                        _replicaDataProducerBuilder.createProducer(replicaRequestPacket.getParameters(),
-                                contextId),
-                        replicaRequestPacket.isSynchronizeRequest()));
-        // We use integer as ID, all external components are ambivalent to that
-        // and use object
-        if (_logger.isLoggable(Level.FINER))
-            _logger.finer(_replicationNode.getLogPrefix()
-                    + "new replica request from " + channelName
-                    + ", received context id " + contextId);
-        return contextId;
+        finally
+        {
+            _lock.unlock();
+        }
     }
 
-    public synchronized IReplicationGroupBacklog getGroupBacklogByRequestContext(Object requestContext) {
-        ReplicaRequestData replicaRequestData = _activeReplicaProcesses.get(requestContext);
-        IReplicationSourceGroup replicationSourceGroup = _replicationNode.getReplicationSourceGroup(replicaRequestData.getGroupName());
-        return replicationSourceGroup.getGroupBacklog();
+    public IReplicationGroupBacklog getGroupBacklogByRequestContext(Object requestContext) {
+        _lock.lock();
+        try {
+            ReplicaRequestData replicaRequestData = _activeReplicaProcesses.get(requestContext);
+            IReplicationSourceGroup replicationSourceGroup = _replicationNode.getReplicationSourceGroup(replicaRequestData.getGroupName());
+            return replicationSourceGroup.getGroupBacklog();
+        }
+        finally
+        {
+            _lock.unlock();
+        }
 
     }
 
@@ -176,65 +204,72 @@ public class ReplicationNodeReplicaHandler {
         return syncList;
     }
 
-    public synchronized Collection<ISpaceReplicaData> getNextReplicaBatch(
+    public Collection<ISpaceReplicaData> getNextReplicaBatch(
             final Object context, int batchSize) {
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest(_replicationNode.getLogPrefix() + "context ["
-                    + context + "] get next replica batch request");
-        final ReplicaRequestData replicaData = getReplicaContext(context);
-        final ISynchronizationCallback syncCallback = new ISynchronizationCallback() {
-            public boolean synchronizationDataGenerated(ISpaceReplicaData data) {
-                // If this is a synchronize replica, we need to notify the
-                // corresponding
-                // replication source group of the creation of this replica data
-                if (replicaData.isSynchronizeReplica()) {
-                    IReplicationSourceGroup sourceGroup = _replicationNode.getReplicationSourceGroup(replicaData.getGroupName());
-                    boolean duplicateUid = sourceGroup.synchronizationDataGenerated(replicaData.getOriginLookupName(),
-                            data.getUid());
+        _lock.lock();
+        try {
+            if (_logger.isLoggable(Level.FINEST))
+                _logger.finest(_replicationNode.getLogPrefix() + "context ["
+                        + context + "] get next replica batch request");
+            final ReplicaRequestData replicaData = getReplicaContext(context);
+            final ISynchronizationCallback syncCallback = new ISynchronizationCallback() {
+                public boolean synchronizationDataGenerated(ISpaceReplicaData data) {
+                    // If this is a synchronize replica, we need to notify the
+                    // corresponding
+                    // replication source group of the creation of this replica data
+                    if (replicaData.isSynchronizeReplica()) {
+                        IReplicationSourceGroup sourceGroup = _replicationNode.getReplicationSourceGroup(replicaData.getGroupName());
+                        boolean duplicateUid = sourceGroup.synchronizationDataGenerated(replicaData.getOriginLookupName(),
+                                data.getUid());
 
-                    // handles objects that were already recovered
-                    // this can happen because the data set is not fully locked
-                    // while recovering
-                    if (duplicateUid) {
-                        if (_logger.isLoggable(Level.FINEST))
-                            _logger.finest(_replicationNode.getLogPrefix()
-                                    + "context [" + context
-                                    + "] filtered replica data [" + data
-                                    + "] due to duplicate uid ["
-                                    + data.getUid() + "]");
+                        // handles objects that were already recovered
+                        // this can happen because the data set is not fully locked
+                        // while recovering
+                        if (duplicateUid) {
+                            if (_logger.isLoggable(Level.FINEST))
+                                _logger.finest(_replicationNode.getLogPrefix()
+                                        + "context [" + context
+                                        + "] filtered replica data [" + data
+                                        + "] due to duplicate uid ["
+                                        + data.getUid() + "]");
+                        }
+                        return duplicateUid;
+
                     }
-                    return duplicateUid;
 
+                    return false;
                 }
+            };
 
-                return false;
+            ArrayList<ISpaceReplicaData> result = new ArrayList<ISpaceReplicaData>(batchSize);
+            while (result.size() < batchSize) {
+                ISpaceReplicaData data = replicaData.getProducer().produceNextData(syncCallback);
+                if (data == null)
+                    break;
+                if (_isFiltered && data.supportsReplicationFilter()) {
+                    IReplicationFilterEntry filterEntry = replicaData.getProducer()
+                            .toFilterEntry(data);
+                    _outFilter.filterOut(filterEntry,
+                            replicaData.getOriginLookupName());
+                    // If filtered, we continue without adding this data
+                    if (filterEntry.isDiscarded())
+                        continue;
+                }
+                // We add a packet to the batch
+                result.add(data);
             }
-        };
 
-        ArrayList<ISpaceReplicaData> result = new ArrayList<ISpaceReplicaData>(batchSize);
-        while (result.size() < batchSize) {
-            ISpaceReplicaData data = replicaData.getProducer().produceNextData(syncCallback);
-            if (data == null)
-                break;
-            if (_isFiltered && data.supportsReplicationFilter()) {
-                IReplicationFilterEntry filterEntry = replicaData.getProducer()
-                        .toFilterEntry(data);
-                _outFilter.filterOut(filterEntry,
-                        replicaData.getOriginLookupName());
-                // If filtered, we continue without adding this data
-                if (filterEntry.isDiscarded())
-                    continue;
-            }
-            // We add a packet to the batch
-            result.add(data);
+
+            if (!result.isEmpty() && _logger.isLoggable(Level.FINEST))
+                _logger.finest(_replicationNode.getLogPrefix()
+                        + "context [" + context
+                        + "] returning batch " + result);
+            return result;
         }
-
-
-        if (!result.isEmpty() && _logger.isLoggable(Level.FINEST))
-            _logger.finest(_replicationNode.getLogPrefix()
-                    + "context [" + context
-                    + "] returning batch " + result);
-        return result;
+        finally
+        {
+            _lock.unlock();
+        }
     }
 
     private ReplicaRequestData getReplicaContext(Object context) {
@@ -274,51 +309,77 @@ public class ReplicationNodeReplicaHandler {
     }
 
 
-    public synchronized void clearStaleReplicas(long expirationTime) {
-        if (_logger.isLoggable(Level.FINER))
-            _logger.finer("clearing stale replicas, last touched before "
-                    + expirationTime);
+    public void clearStaleReplicas(long expirationTime) {
 
-        clearReplicas(expirationTime);
+        if (_spaceEngine != null && _spaceEngine.getLeaseManager().isCurrentLeaseReaperThread())
+        {
+            if (!_lock.tryLock()) {
+                if (_logger.isLoggable(Level.FINER))
+                    _logger.finer("LeaseManager thread-->clearStaleReplicas: No need in  clearing stale replicas done by shutdowm thread");
+                return;
+            }
+        }
+        else
+        {
+            _lock.lock();
+        }
+        try {
+            if (_logger.isLoggable(Level.FINER))
+                _logger.finer("clearing stale replicas, last touched before "
+                        + expirationTime);
+
+            clearReplicas(expirationTime);
+        }
+        finally
+        {
+            _lock.unlock();
+        }
     }
 
 
-    private synchronized void clearReplicas(long forcedExpirationTime) {
-        for (Iterator<Entry<Object, ReplicaRequestData>> iterator = _activeReplicaProcesses.entrySet()
-                .iterator(); iterator.hasNext(); ) {
-            Entry<Object, ReplicaRequestData> entry = iterator.next();
-            ReplicaRequestData replicaRequestData = entry.getValue();
-            if (forcedExpirationTime == 0L || replicaRequestData.getLastTouched() <= forcedExpirationTime) {
-                if (forcedExpirationTime != 0L && _logger.isLoggable(Level.FINER))
-                    _logger.finer("clearing stale replica [" + entry.getKey()
-                            + "]" + replicaRequestData);
-                if (forcedExpirationTime == 0L)
-                    _logger.warning("forced clearing of replica [" + entry.getKey()
-                            + "]" + replicaRequestData);
+    private void clearReplicas(long forcedExpirationTime) {
+        _lock.lock();
+        try {
+            for (Iterator<Entry<Object, ReplicaRequestData>> iterator = _activeReplicaProcesses.entrySet()
+                    .iterator(); iterator.hasNext(); ) {
+                Entry<Object, ReplicaRequestData> entry = iterator.next();
+                ReplicaRequestData replicaRequestData = entry.getValue();
+                if (forcedExpirationTime == 0L || replicaRequestData.getLastTouched() <= forcedExpirationTime) {
+                    if (forcedExpirationTime != 0L && _logger.isLoggable(Level.FINER))
+                        _logger.finer("clearing stale replica [" + entry.getKey()
+                                + "]" + replicaRequestData);
+                    if (forcedExpirationTime == 0L)
+                        _logger.warning("forced clearing of replica [" + entry.getKey()
+                                + "]" + replicaRequestData);
 
-                try {
-                    ISingleStageReplicaDataProducer.CloseStatus closeStatus = replicaRequestData.getProducer().close(forcedExpirationTime == 0L);
-                    // if closeStatus is CLOSING, another thread is trying to close the producer, skipping to prevent deadlock @GS-11850
-                    if (closeStatus == ISingleStageReplicaDataProducer.CloseStatus.CLOSING) {
-                        continue;
+                    try {
+                        ISingleStageReplicaDataProducer.CloseStatus closeStatus = replicaRequestData.getProducer().close(forcedExpirationTime == 0L);
+                        // if closeStatus is CLOSING, another thread is trying to close the producer, skipping to prevent deadlock @GS-11850
+                        if (closeStatus == ISingleStageReplicaDataProducer.CloseStatus.CLOSING) {
+                            continue;
+                        }
+                        iterator.remove();
+                        // If this is a synchronize replica, we signal the source
+                        // group that it should no longer
+                        // keep synchronization state for this member
+                        if (replicaRequestData.isSynchronizeReplica()) {
+                            IReplicationSourceGroup sourceGroup = _replicationNode.getReplicationSourceGroup(replicaRequestData.getGroupName());
+                            sourceGroup.stopSynchronization(replicaRequestData.getOriginLookupName());
+                        }
+                    } catch (Exception e) {
+                        if (_logger.isLoggable(Level.WARNING))
+                            _logger.log(Level.WARNING,
+                                    "error while clearing stale/forced replica ["
+                                            + entry.getKey() + "]"
+                                            + replicaRequestData,
+                                    e);
                     }
-                    iterator.remove();
-                    // If this is a synchronize replica, we signal the source
-                    // group that it should no longer
-                    // keep synchronization state for this member
-                    if (replicaRequestData.isSynchronizeReplica()) {
-                        IReplicationSourceGroup sourceGroup = _replicationNode.getReplicationSourceGroup(replicaRequestData.getGroupName());
-                        sourceGroup.stopSynchronization(replicaRequestData.getOriginLookupName());
-                    }
-                } catch (Exception e) {
-                    if (_logger.isLoggable(Level.WARNING))
-                        _logger.log(Level.WARNING,
-                                "error while clearing stale/forced replica ["
-                                        + entry.getKey() + "]"
-                                        + replicaRequestData,
-                                e);
                 }
             }
+        }
+        finally
+        {
+            _lock.unlock();
         }
     }
 
