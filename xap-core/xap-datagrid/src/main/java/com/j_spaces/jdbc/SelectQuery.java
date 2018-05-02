@@ -105,14 +105,14 @@ public class SelectQuery extends AbstractDMLQuery {
      * @return list of aggregated functions in query
      */
     private ArrayList<SelectColumn> getAggregateFunc() {
-        ArrayList<SelectColumn> aFuncList = new ArrayList<SelectColumn>();
+
         List<SelectColumn> aList = getQueryColumns();
-
         if (aList == null || aList.isEmpty())
-            return aFuncList;
+            return new ArrayList<SelectColumn>(0);
 
+        ArrayList<SelectColumn> aFuncList = new ArrayList<SelectColumn>(aList.size());
         for (int i = 0; i < aList.size(); i++) {
-            SelectColumn col = (SelectColumn) aList.get(i);
+            SelectColumn col = aList.get(i);
 
             if (col.isAggregatedFunction())
                 aFuncList.add(col);
@@ -515,9 +515,10 @@ public class SelectQuery extends AbstractDMLQuery {
             fieldValues = new Object[][]{{Integer.valueOf(0)}};
         } else {
 
-            ArrayList<String> columnNamesList = new ArrayList<String>();
-            ArrayList<String> columnLabelsList = new ArrayList<String>();
-            ArrayList<String> tableNamesList = new ArrayList<String>();
+            int numOfColumns = getQueryColumns().size();
+            ArrayList<String> columnNamesList = new ArrayList<String>(numOfColumns);
+            ArrayList<String> columnLabelsList = new ArrayList<String>(numOfColumns);
+            ArrayList<String> tableNamesList = new ArrayList<String>(numOfColumns);
 
             // Gather metadata for visible columns
             for (SelectColumn resultColumn : getQueryColumns()) {
@@ -615,11 +616,21 @@ public class SelectQuery extends AbstractDMLQuery {
       query.setContainsSubQueries(this.containsSubQueries());
       query.isSelectAll = this.isSelectAll;
 
-      query.queryColumns = new ArrayList();
 
-      for (SelectColumn col : this.getQueryColumns()) {
-        if (!col.isDynamic())
-          query.queryColumns.add(col);
+      int numOfColumns = 0;
+        for (SelectColumn col : this.getQueryColumns()) {
+            if (!col.isDynamic()) {
+                numOfColumns++;
+            }
+        }
+
+      query.queryColumns = new ArrayList(numOfColumns);
+      if(numOfColumns != 0) {
+          for (SelectColumn col : this.getQueryColumns()) {
+              if (!col.isDynamic()) {
+                  query.queryColumns.add(col);
+              }
+          }
       }
 
       if (this.getExpTree() != null)
@@ -838,10 +849,9 @@ public class SelectQuery extends AbstractDMLQuery {
      */
     private List<SelectColumn> getWildcardColumns(QueryTableData queryTableData) throws SQLException {
         ITypeDesc info = queryTableData.getTypeDesc();
-        List<SelectColumn> toAdd = new ArrayList<SelectColumn>();
+        List<SelectColumn> toAdd = new ArrayList<SelectColumn>(info.getNumOfFixedProperties());
         for (int i = 0; i < info.getNumOfFixedProperties(); i++) {
             SelectColumn newColumn = new SelectColumn(queryTableData, info.getFixedProperty(i).getName());
-
             toAdd.add(newColumn);
 
         }
@@ -1018,7 +1028,7 @@ public class SelectQuery extends AbstractDMLQuery {
         if (_projectionTemplate != null || !isConvertResultToArray() || isSelectAll)
             return;
 
-        ArrayList<String> projectedProperties = new ArrayList<String>();
+        ArrayList<String> projectedProperties = new ArrayList<String>(getQueryColumns().size());
         for (SelectColumn col : getQueryColumns()) {
             if (col.isVisible() && !col.isAllColumns()) {
                 projectedProperties.add(col.getName());

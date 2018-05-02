@@ -54,12 +54,6 @@ public class CompoundAndCustomQuery extends AbstractCompundCustomQuery {
         this._subQueries = subQueries;
     }
 
-    public CompoundAndCustomQuery(ICustomQuery... customQueries) {
-        this._subQueries = new ArrayList<ICustomQuery>(customQueries.length);
-        for (int i = 0; i < customQueries.length; i++)
-            this._subQueries.add(customQueries[i]);
-    }
-
     @Override
     public boolean matches(CacheManager cacheManager, ServerEntry entry, String skipAlreadyMatchedIndexPath) {
         final int length = _subQueries.size();
