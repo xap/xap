@@ -68,10 +68,13 @@ public class CompoundOrIndexScanner extends AbstractCompoundIndexScanner
 
     public IObjectsList getIndexedEntriesByType(Context context, TypeData typeData,
                                                 ITemplateHolder template, int latestIndexToConsider) {
-        // ignore indexes that don't support fifo order scanning - otherwise the
-        // results won't preserve the fifo order
-        if (template.isFifoTemplate() && !supportsFifoOrder())
-            return IQueryIndexScanner.RESULT_IGNORE_INDEX;
+
+        if(Boolean.getBoolean("com.gigaspaces.disable-GS-13536")){
+            // ignore indexes that don't support fifo order scanning - otherwise the
+            // results won't preserve the fifo order
+            if (template.isFifoTemplate() && !supportsFifoOrder())
+                return IQueryIndexScanner.RESULT_IGNORE_INDEX;
+        }
 
         MultiStoredList<IEntryCacheInfo> unionList = new MultiStoredList<IEntryCacheInfo>();
         if (template.isFifoGroupPoll())
