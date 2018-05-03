@@ -10,9 +10,11 @@ import net.jini.core.transaction.TransactionException;
 import net.jini.core.transaction.TransactionFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.openspaces.core.space.SpaceProxyConfigurer;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.transaction.CannotCreateTransactionException;
 
+import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -25,189 +27,150 @@ public class GigaLockProvider {
     private final static long DEFAULT_LOCK_TIME_TO_LIVE = 60000;
     private final static long DEFAULT_WAITING_TIME_FOR_LOCK = 10000;
 
-    private IJSpace space;
-    private final ConcurrentHashMap<String, TxWithTimeStamp> lockedUIDHashMap = new ConcurrentHashMap<String, TxWithTimeStamp>();
-    private long lockTimeToLive;
-    private long waitingForLockTime;
+    private final IJSpace space;
+    private final ConcurrentHashMap<Serializable, LockInfo> locksCache = new ConcurrentHashMap<Serializable, LockInfo>();
+    private final long lockTimeToLive;
+    private final long waitingForLockTime;
     private final DistributedTransactionManagerProvider transactionManagerProvider;
 
     /**
      *
-     * @param space     space proxy
+     * @param spaceProxyConfigurer
      * @param lockTimeToLive default lock life time in milliseconds
      * @param waitingForLockTime default timeout for acquiring a lock
      */
-    public GigaLockProvider(IJSpace space, long lockTimeToLive, long waitingForLockTime) {
-        this.space = space;
+    public GigaLockProvider(SpaceProxyConfigurer spaceProxyConfigurer, long lockTimeToLive, long waitingForLockTime) {
+        this.space = spaceProxyConfigurer.create();
         this.lockTimeToLive = lockTimeToLive;
         this.waitingForLockTime = waitingForLockTime;
         try {
             transactionManagerProvider = new DistributedTransactionManagerProvider();
         } catch (TransactionException e) {
-            throw new CannotCreateTransactionException("Failed to obtain transaction lock manager", e);
+            throw new GigaLockException("Failed to obtain transaction lock manager", e);
         }
     }
     /**
      * Lock lifetime and lock acquistion timeout are default values
      *
-     * @param space     space proxy
+     * @param spaceProxyConfigurer
      */
-    public GigaLockProvider(IJSpace space) {
-        this.space = space;
-        this.lockTimeToLive = DEFAULT_LOCK_TIME_TO_LIVE;
-        this.waitingForLockTime = DEFAULT_WAITING_TIME_FOR_LOCK;
-
-        try {
-            transactionManagerProvider = new DistributedTransactionManagerProvider();
-        } catch (TransactionException e) {
-            throw new CannotCreateTransactionException("Failed to obtain transaction lock manager", e);
-        }
+    public GigaLockProvider(SpaceProxyConfigurer spaceProxyConfigurer) {
+        this(spaceProxyConfigurer, DEFAULT_LOCK_TIME_TO_LIVE, DEFAULT_WAITING_TIME_FOR_LOCK);
     }
 
     /**
      * Instantly locks an object with default lock lifetime.
      *
-     * @param object    object to lock
+     * @param key    object to lock
      * @return true if lock success, false otherwise
      */
-    public boolean tryLock(Object object) {
-        return lock(object, lockTimeToLive, 0);
+    public boolean tryLock(Serializable key) {
+        return lock(key, lockTimeToLive, 0);
     }
 
     /**
      * Instantly locks an object with provided lock lifetime.
      *
-     * @param object        object to lock
+     * @param key        object to lock
      * @param lockTimeToLive
      * @return true if lock success, false otherwise
      */
-    public boolean tryLock(Object object, long lockTimeToLive) {
-        return lock(object, lockTimeToLive, 0);
+    public boolean tryLock(Serializable key, long lockTimeToLive) {
+        return lock(key, lockTimeToLive, 0);
     }
 
     /**
      * Locks an object with default lock lifetime and default timeout waiting for lock
      *
-     * @param   object
+     * @param   key
      * @return  true if lock success, false otherwise
      */
-    public boolean acquireLock(Object object) {
-        return lock(object, lockTimeToLive, waitingForLockTime);
+    public boolean acquireLock(Serializable key) {
+        return lock(key, lockTimeToLive, waitingForLockTime);
     }
     /**
      * Locks an object with provided lock lifetime and timeout waiting for lock
      *
-     * @param   object
+     * @param   key
      * @return  true if lock success, false otherwise
      */
-    public boolean acquireLock(Object object, long lockTimeToLive, long waitingForLockTime) {
-        return lock(object, lockTimeToLive, waitingForLockTime);
+    public boolean acquireLock(Serializable key, long lockTimeToLive, long waitingForLockTime) {
+        return lock(key, lockTimeToLive, waitingForLockTime);
     }
 
     /**
      Locking of object under tx. Locking is done using space write operation
      */
-    private boolean lock(Object object, long lockTimeToLive, long waitingForLockTime) {
-        String uid = String.valueOf(object);
-        Transaction tr = null;
-        try {
-            tr = getTransaction(lockTimeToLive);
-        } finally {
-            if (tr == null) {
-                lockedUIDHashMap.remove(uid);
-                return false;
-            }
-        }
+    private boolean lock(Serializable key, long lockTimeToLive, long waitingForLockTime) {
+        final Transaction tr = getTransaction(lockTimeToLive);
 
         try {
-            space.write(new ObjectEnvelope(object), tr, Lease.FOREVER, waitingForLockTime, Modifiers.UPDATE_OR_WRITE);
+            space.write(new LockEntry(key), tr, Lease.FOREVER, waitingForLockTime, Modifiers.UPDATE_OR_WRITE);
+            locksCache.put(key, new LockInfo(tr,lockTimeToLive));
+            return true;
         } catch (SpaceTimeoutException e) {
             try {
                 tr.abort();
             } catch (Exception re) {
-                logger.warn("Failed to abort transaction", e);
+                logger.warn("Failed to abort transaction", re);
             }
-            // rethrow
-            throw e;
+            return false;
         } catch (Throwable t) {
             try {
                 tr.abort();
             } catch (Exception re) {
-                logger.warn("Failed to abort transaction", t);
+                logger.warn("Failed to abort transaction", re);
             }
-            lockedUIDHashMap.remove(uid);
-            throw new DataAccessResourceFailureException("Failed to obtain lock for object [" + object + "]", t);
+            throw new GigaLockException("Failed to obtain lock for key [" + key + "]", t);
         }
-
-        //otherwise, map uid->txn
-        lockedUIDHashMap.put(uid, new TxWithTimeStamp(tr,lockTimeToLive));
-
-        return true;
-
     }
 
     /**
      * Release a locked object
-     * @param object
+     * @param key
      * @throws Exception if lock release fails
      */
-    public void releaseLock(Object object) throws Exception {
-        String uid = String.valueOf(object);
-        if (lockedUIDHashMap.containsKey(uid)) {
-            Transaction tr = lockedUIDHashMap.get(uid).tx;
+    public void releaseLock(Serializable key){
+        LockInfo lockInfo = locksCache.get(key);
+
+        if (lockInfo != null) {
             try {
-                tr.abort();
+                lockInfo.tx.abort();
+                locksCache.remove(key);
             } catch (Exception e) {
-                logger.warn("Failed to abort the lock transaction, object is still locked", e);
-                throw e;
+                throw new GigaLockException("Failed to release lock for entry " + key, e);
+            }
+        }
+        else{
+            if(isEntryLockedRemotely(key)){
+                throw new GigaLockException("Cannot release entry which is locked by another client");
             }
         }
     }
-    /**
-     * Forced release of a locked object
-     * @param object
-     * @throws Exception if lock release fails
-     */
-    public void deleteLock(Object object) {
-        try{
-            releaseLock(object);
-        }catch(Exception e){
-            logger.warn("Failed to unlock the object, ignoring", e);
-        }finally {
-            lockedUIDHashMap.remove(String.valueOf(object));
-        }
-    }
 
-    public boolean isLocked(Object object) {
-        String uid = String.valueOf(object);
+    public boolean isLocked(Serializable key) {
         //Looks locally for the locked object
-        if (isObjectLockedLocally(object))
+        if (isObjectLockedLocally(key))
             return true;
         //Looks remotely for the locked object
-        if (isEntryLockedRemotely(object))
+        if (isEntryLockedRemotely(key))
             return true;
 
         return false;
     }
 
-    private boolean isEntryLockedRemotely(Object object) {
+    private boolean isEntryLockedRemotely(Serializable key){
         try {
-            return space.read(new ObjectEnvelope(object), null, 0, Modifiers.DIRTY_READ)!=null;
+            return space.read(new LockEntry(key), null, 0, Modifiers.DIRTY_READ)!=null;
         } catch (Exception e) {
-
+           throw new GigaLockException("failed to determine if entry "+ key + " is locked by another client", e);
         }
-
-        return false;
     }
 
-    private boolean isObjectLockedLocally(Object object) {
-        String uid = String.valueOf(object);
+    private boolean isObjectLockedLocally(Serializable key) {
+        LockInfo lockInfo = locksCache.get(key);
 
-        if(lockedUIDHashMap.containsKey(uid)){
-            return lockedUIDHashMap.get(uid).isTxAlive();
-        }
-
-        return false;
+        return lockInfo != null ? lockInfo.isTxAlive() : false;
     }
 
     private Transaction getTransaction(long lockTimeToLive){
@@ -215,53 +178,49 @@ public class GigaLockProvider {
         try {
             tCreated = TransactionFactory.create(transactionManagerProvider.getTransactionManager(), lockTimeToLive);
         } catch (Exception e) {
-            throw new CannotCreateTransactionException("Failed to create lock transaction", e);
+            throw new GigaLockException("Failed to create lock transaction", e);
         }
         return tCreated.transaction;
     }
     /*
     Helper class that holds the transaction with timestamp and timeout. Object is locked only during timeout period
      */
-    private class TxWithTimeStamp{
-        Transaction tx;
-        long startTime;
-        long timeout;
+    private class LockInfo {
+        final Transaction tx;
+        private final long expirationTime;
 
 
-        public TxWithTimeStamp(Transaction tx, long timeout) {
+        public LockInfo(Transaction tx, long timeout) {
             this.tx = tx;
-            this.startTime = System.currentTimeMillis();
-            this.timeout = timeout;
+            this.expirationTime = System.currentTimeMillis() + timeout;
         }
 
         public boolean isTxAlive(){
-            return System.currentTimeMillis() > (startTime + timeout);
+            return System.currentTimeMillis() < expirationTime;
         }
     }
     /*
     Creates a pojo out of the object to lock
      */
-    private static class ObjectEnvelope {
+    private static class LockEntry {
 
-        private Object object;
+        private Serializable key;
 
-        public ObjectEnvelope(){
-            this.object = null;
+        public LockEntry(){
+
         }
 
-        public ObjectEnvelope(Object object){
-            this.object = object;
+        public LockEntry(Serializable key){
+            this.key = key;
         }
 
         @SpaceId
-        public Object getObject() {
-            return object;
+        public Serializable getKey() {
+            return key;
         }
 
-        public void setObject(Object object) {
-            this.object = object;
+        public void setKey(Serializable key) {
+            this.key = key;
         }
     }
-
-
 }
