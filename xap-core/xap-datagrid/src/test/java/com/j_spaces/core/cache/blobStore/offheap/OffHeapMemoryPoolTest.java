@@ -61,12 +61,12 @@ public class OffHeapMemoryPoolTest {
 
     private void assertWriteAndReadBuffer(BlobStoreOffHeapInfoMock infoMock, byte[] buffer) {
         offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
-        assertBufferWritedToOffheap(infoMock, buffer);
+        assertBufferWrittenToOffheap(infoMock, buffer);
     }
 
-    private void assertBufferWritedToOffheap(BlobStoreOffHeapInfoMock infoMock, byte[] buffer) {
+    private void assertBufferWrittenToOffheap(BlobStoreOffHeapInfoMock infoMock, byte[] buffer) {
         byte[] readedFromHeap = offHeapMemoryPool.get(infoMock);
-        Assert.assertTrue("object readed from offheap different then the writed one", Arrays.equals(readedFromHeap, buffer));
+        Assert.assertTrue("object readed from offheap different then the written one", Arrays.equals(readedFromHeap, buffer));
     }
 
     //Update
@@ -81,10 +81,10 @@ public class OffHeapMemoryPoolTest {
         BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
         byte[] buffer = "Test Buffer".getBytes();
         offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
-        assertBufferWritedToOffheap(infoMock, buffer);
+        assertBufferWrittenToOffheap(infoMock, buffer);
         buffer = "another text".getBytes();
         offHeapMemoryPool.update(infoMock, buffer);
-        assertBufferWritedToOffheap(infoMock, buffer);
+        assertBufferWrittenToOffheap(infoMock, buffer);
     }
 
     private void assertExceptionOnUpdateOnUnAllocated() {
@@ -107,10 +107,10 @@ public class OffHeapMemoryPoolTest {
         byte[] buffer = "Test Buffer".getBytes();
 
         offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
-        assertBufferWritedToOffheap(infoMock, buffer);
+        assertBufferWrittenToOffheap(infoMock, buffer);
         buffer = "short".getBytes();
         offHeapMemoryPool.update(infoMock, buffer);
-        assertBufferWritedToOffheap(infoMock, buffer);
+        assertBufferWrittenToOffheap(infoMock, buffer);
     }
 
     //Delete
@@ -138,7 +138,7 @@ public class OffHeapMemoryPoolTest {
         BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
         byte[] buffer = "Test Buffer".getBytes();
         offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
-        assertBufferWritedToOffheap(infoMock, buffer);
+        assertBufferWrittenToOffheap(infoMock, buffer);
         boolean exceptionThrown = false;
 
         offHeapMemoryPool.delete(infoMock, false);
