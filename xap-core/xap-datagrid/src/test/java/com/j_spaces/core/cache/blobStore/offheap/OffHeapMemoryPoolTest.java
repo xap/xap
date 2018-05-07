@@ -18,68 +18,69 @@ public class OffHeapMemoryPoolTest {
     @Test
     public void writeAndReadFromOffHeapTest() {
         System.out.println("Asserting writing and reading buffers from off-heap");
-        assertWriteAndReadShortSentance();
-        assertWriteAndReadEmptyString();
-        assertWriteAndReadToAllocatedAddress();
-    }
-
-    private void assertWriteAndReadShortSentance() {
-        BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
-        byte[] buffer = "Test Buffer".getBytes();
-
-        assertWriteAndReadBuffer(infoMock, buffer);
-    }
-
-    private void assertWriteAndReadEmptyString() {
-        BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
-        byte[] buffer = "".getBytes();
-        boolean exceptionThrowned = false;
-
-        try {
-            offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
-        } catch (RuntimeException e) {
-            exceptionThrowned = e.getMessage().contains("Illegal buffer length");
-        }
-
-        Assert.assertTrue(exceptionThrowned);
-    }
-
-    private void assertWriteAndReadToAllocatedAddress() {
-        BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
-        infoMock.setOffHeapAddress(123456); // arbitrary address
-        byte[] buffer = "Test Buffer".getBytes();
-        boolean exceptionThrowned = false;
-
-        try {
-            offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
-        } catch (IllegalStateException e) {
-            exceptionThrowned = true;
-        }
-
-        Assert.assertTrue(exceptionThrowned);
-    }
-
-    private void assertWriteAndReadBuffer(BlobStoreOffHeapInfoMock infoMock, byte[] buffer) {
-        offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
-        assertBufferWrittenToOffheap(infoMock, buffer);
-    }
-
-    private void assertBufferWrittenToOffheap(BlobStoreOffHeapInfoMock infoMock, byte[] buffer) {
-        byte[] readedFromHeap = offHeapMemoryPool.get(infoMock);
-        Assert.assertTrue("object readed from offheap different then the written one", Arrays.equals(readedFromHeap, buffer));
+        testWriteAndReadShortSentance();
+        testWriteEmptyStringThrowsException();
+        testWriteToAlreadyAllocatedAddressThrowsException();
     }
 
     //Update
     @Test
     public void updateTest() {
-        assertUpdate();
-        assertExceptionOnUpdateOnUnAllocated();
-        assertUpdateOnShorterBuffer();
+        testBasicUpdate();
+        testExceptionOnUpdateOnUnAllocated();
+        testUpdateOnShorterBuffer();
     }
 
-    private void assertUpdate() {
+    //Delete
+    @Test
+    public void deleteTest() {
+        testBasicDelete();
+    }
+
+    private void testWriteAndReadShortSentance() {
         BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
         byte[] buffer = "Test Buffer".getBytes();
+
+        offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
+        assertBufferWrittenToOffheap(infoMock, buffer);
+    }
+
+    private void testWriteEmptyStringThrowsException() {
+        BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
+        byte[] buffer = "".getBytes();
+
+        try {
+            offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
+            Assert.fail("allocateAndWrite should have thrown exception but didn't");
+        } catch (RuntimeException e) {
+            Assert.assertTrue("allocateAndWrite should have thrown exception with another msg\n",
+                    e.getMessage().contains("Illegal buffer length"));
+        }
+    }
+
+    private void testWriteToAlreadyAllocatedAddressThrowsException() {
+        BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
+        infoMock.setOffHeapAddress(123456); // arbitrary address
+        byte[] buffer = "Test Buffer".getBytes();
+
+        try {
+            offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
+            Assert.fail("allocateAndWrite should have thrown exception but didn't");
+        } catch (IllegalStateException e) {
+            Assert.assertTrue("allocateAndWrite should have throun exception with another msg\n",
+                    e.getMessage().equals("trying to allocateAndWrite when already allocated in off heap"));
+        }
+    }
+
+    private void assertBufferWrittenToOffheap(BlobStoreOffHeapInfoMock infoMock, byte[] buffer) {
+        byte[] readedFromHeap = offHeapMemoryPool.get(infoMock);
+        Assert.assertTrue("object read from offheap different then the written one\n", Arrays.equals(readedFromHeap, buffer));
+    }
+
+    private void testBasicUpdate() {
+        BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
+        byte[] buffer = "Test Buffer".getBytes();
+
         offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
         assertBufferWrittenToOffheap(infoMock, buffer);
         buffer = "another text".getBytes();
@@ -87,22 +88,21 @@ public class OffHeapMemoryPoolTest {
         assertBufferWrittenToOffheap(infoMock, buffer);
     }
 
-    private void assertExceptionOnUpdateOnUnAllocated() {
+    private void testExceptionOnUpdateOnUnAllocated() {
         BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
-        byte[] buffer = "Test Buffer".getBytes();
-        buffer = "another text".getBytes();
-        boolean exceptionThrown = false;
+        byte[] buffer = "another text".getBytes();
 
         try {
             offHeapMemoryPool.update(infoMock, buffer);
+            Assert.fail("update should have thrown exception but didn't");
         } catch (IllegalStateException e) {
-            exceptionThrown = true;
+            Assert.assertEquals("allocateAndWrite should have thrown exception with another msg\n", e.getMessage(),
+                    "trying to update when no off heap memory is allocated");
         }
 
-        Assert.assertTrue(exceptionThrown);
     }
 
-    private void assertUpdateOnShorterBuffer() {
+    private void testUpdateOnShorterBuffer() {
         BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
         byte[] buffer = "Test Buffer".getBytes();
 
@@ -113,41 +113,15 @@ public class OffHeapMemoryPoolTest {
         assertBufferWrittenToOffheap(infoMock, buffer);
     }
 
-    //Delete
-    @Test
-    public void deleteTest() {
-        assertDelete();
-        assertDeleteUnAllocated();
-    }
-
-    private void assertDeleteUnAllocated() {
-        BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
-        boolean unAllocated, exceptionThrown = false;
-
-        try {
-            offHeapMemoryPool.delete(infoMock, false);
-        } catch (Exception e) {
-            exceptionThrown = true;
-        }
-
-        unAllocated = infoMock.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY;
-        Assert.assertTrue(!exceptionThrown && unAllocated);
-    }
-
-    private void assertDelete() {
+    private void testBasicDelete() {
         BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
         byte[] buffer = "Test Buffer".getBytes();
+
         offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
         assertBufferWrittenToOffheap(infoMock, buffer);
-        boolean exceptionThrown = false;
 
         offHeapMemoryPool.delete(infoMock, false);
-        try {
-            offHeapMemoryPool.get(infoMock);
-        } catch (IllegalStateException e) {
-            exceptionThrown = true;
-        }
-
-        Assert.assertTrue(exceptionThrown);
+        Assert.assertEquals("Infomock address not changed to UNALLOCATED_OFFHEAP_MEMORY after delete\n", infoMock.getOffHeapAddress(), BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY);
     }
+
 }
