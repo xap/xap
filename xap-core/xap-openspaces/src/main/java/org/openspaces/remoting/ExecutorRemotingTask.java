@@ -65,7 +65,7 @@ public class ExecutorRemotingTask<T extends Serializable> implements Distributed
 
     private Object[] metaArguments;
 
-    private Integer routing;
+    private Object routing;
 
     private transient ApplicationContext applicationContext;
 
@@ -127,12 +127,14 @@ public class ExecutorRemotingTask<T extends Serializable> implements Distributed
         return results;
     }
 
-    public Integer getRouting() {
+    public Object getRouting() {
         return routing;
     }
 
     void setRouting(Object routing) {
-        this.routing = routing.hashCode();
+        //this.routing = routing.hashCode();
+        this.routing = routing;
+
     }
 
     public String getLookupName() {
