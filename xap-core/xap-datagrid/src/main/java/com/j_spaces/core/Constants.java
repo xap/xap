@@ -691,6 +691,9 @@ public interface Constants {
 
         String BLOBSTORE_MEMORY_USAGE_WRITE_ONLY_BLOCK_PRECENTAGE_DEFAULT = "80";
 
+        String BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP = "blobstore.off-heap.update_threshold";
+        String BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_DEFAULT_VALUE = "50B";
+
         /* initial % from LRU-cache to load */
         String CACHE_MANAGER_INITIAL_LOAD_DEFAULT = "50";
 

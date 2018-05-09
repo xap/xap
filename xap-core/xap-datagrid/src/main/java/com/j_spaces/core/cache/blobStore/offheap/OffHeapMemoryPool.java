@@ -38,12 +38,12 @@ public class OffHeapMemoryPool {
 
     private volatile static Unsafe _unsafe;
     private static Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
-    private static final int MINIMAL_BUFFER_DIFF_TO_ALLOCATE = 50;
 
     private final long threshold;
     private final LongCounter totalCounter = new LongCounter();
     private final Map<String, LongCounter> typesCounters = new ConcurrentHashMap<String, LongCounter>();
     private MetricRegistrator metricRegistrator;
+    private int minimalDiffToAllocate;
 
     public OffHeapMemoryPool(long threshold) {
         this.threshold = threshold;
@@ -52,17 +52,17 @@ public class OffHeapMemoryPool {
         }
     }
 
-    public long getThreshold() {
-        return threshold;
-    }
-
     public void initMetrics(MetricRegistrator metricRegistrator) {
         this.metricRegistrator = metricRegistrator;
         this.metricRegistrator.register(metricsPath("total"), totalCounter);
     }
 
-    private String metricsPath(String typeName) {
-        return metricRegistrator.toPath("used-bytes", typeName);
+    public long getThreshold() {
+        return threshold;
+    }
+
+    public void setMinimalDiffToAllocate(int minimalDiffToAllocate) {
+        this.minimalDiffToAllocate = minimalDiffToAllocate;
     }
 
     public void register(String typeName) {
@@ -129,7 +129,7 @@ public class OffHeapMemoryPool {
         }
         int oldHeaderSize = getHeaderSizeFromUnsafe(info.getOffHeapAddress());
         int oldEntryLength = getHeaderFromUnsafe(info.getOffHeapAddress(), oldHeaderSize);
-        if (oldEntryLength < buf.length || (oldEntryLength - buf.length >= MINIMAL_BUFFER_DIFF_TO_ALLOCATE)) {
+        if (oldEntryLength < buf.length || (oldEntryLength - buf.length >= minimalDiffToAllocate)) {
             delete(info, true);
             allocateAndWrite(info, buf, true);
         } else {
@@ -154,6 +154,10 @@ public class OffHeapMemoryPool {
 
     public long getUsedBytes() {
         return totalCounter.getCount();
+    }
+
+    private String metricsPath(String typeName) {
+        return metricRegistrator.toPath("used-bytes", typeName);
     }
 
     private void incrementMetrics(long n, String typeName) {

@@ -379,6 +379,7 @@ public class CacheManager extends AbstractCacheManager
             BlobStoreStorageHandler driver = createBlobStoreHandlerNewInterface(configReader, customProperties);
             _blobStoreStorageHandler = new BlobStoreOperationsWrapper(this, driver);
             _blobStoreRecoveryHelper = new BlobStoreRecoveryHelperWrapper(_logger, _engine.getFullSpaceName(), driver, _engine.getNumberOfPartitions(), _engine.getClusterInfo().getNumberOfBackups());
+            setOffHeapProperties(customProperties);
         } else {
             _blobStoreStorageHandler = null;
             _blobStoreRecoveryHelper = null;
@@ -390,6 +391,20 @@ public class CacheManager extends AbstractCacheManager
         Object userFunctions = customProperties.get(Constants.SqlFunction.USER_SQL_FUNCTION);
         sqlFunctions = new SQLFunctions((Map<String, SqlFunction>) userFunctions);
         queryExtensionManagers = initQueryExtensionManagers(customProperties);
+    }
+
+    private void setOffHeapProperties(Properties customProperties) {
+        if(customProperties.getProperty(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP)!= null && !hasBlobStoreOffHeapCache() && !hasBlobStoreOffHeapStore()){
+            _logger.warning(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP+" is set but no off heap memory is used");
+        } else{
+            long minimalDiffToAllocate = StringUtils.parseStringAsBytes(customProperties.getProperty(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP, BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_DEFAULT_VALUE));
+            if(_blobStoreStorageHandler.getOffHeapStore() != null){
+                _blobStoreStorageHandler.getOffHeapStore().setMinimalDiffToAllocate((int) minimalDiffToAllocate);
+            }
+            if(_blobStoreStorageHandler.getOffHeapCache() != null){
+                _blobStoreStorageHandler.getOffHeapCache().setMinimalDiffToAllocate((int) minimalDiffToAllocate);
+            }
+        }
     }
 
     public boolean isSyncHybrid() {
