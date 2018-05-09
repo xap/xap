@@ -50,6 +50,7 @@ import com.gigaspaces.internal.utils.concurrent.AsyncCallable;
 import com.gigaspaces.internal.utils.concurrent.IAsyncHandler;
 import com.gigaspaces.internal.utils.concurrent.IAsyncHandlerProvider;
 import com.gigaspaces.internal.utils.concurrent.IAsyncHandlerProvider.CycleResult;
+import com.gigaspaces.metrics.MetricRegistrator;
 import com.j_spaces.core.filters.ReplicationStatistics.ReplicationMode;
 import com.j_spaces.kernel.JSpaceUtilities;
 
@@ -442,9 +443,9 @@ public class ReliableAsyncReplicationSourceGroup
     }
 
     @Override
-    public void setActive() {
+    public void setActive(MetricRegistrator metricRegistrator) {
         synchronized (_channelCreationLock) {
-            super.setActive();
+            super.setActive(metricRegistrator);
 
             if (_passive)
                 logGroupEvent("Becoming active - Backlog dump: " + getGroupBacklog().dumpState());
@@ -456,6 +457,7 @@ public class ReliableAsyncReplicationSourceGroup
                 createReplicationChannels();
             prepareChannelsArrays();
             spawnAsyncCompletionNotifier();
+            registerWith(metricRegistrator);
             // This will flush local memory (_active is volatile)
             _passive = false;
             _active = true;

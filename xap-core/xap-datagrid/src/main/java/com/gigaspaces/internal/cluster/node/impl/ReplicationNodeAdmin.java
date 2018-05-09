@@ -162,7 +162,7 @@ public class ReplicationNodeAdmin
                     + ReplicationNodeMode.ACTIVE + " mode");
 
         for (IReplicationSourceGroup sourceGroup : _replicationNode.getReplicationSourceGroups())
-            sourceGroup.setActive();
+            sourceGroup.setActive(_replicationNode.getMetricRegister());
         for (IReplicationTargetGroup targetGroup : _replicationNode.getReplicationTargetGroups())
             targetGroup.setActive();
 

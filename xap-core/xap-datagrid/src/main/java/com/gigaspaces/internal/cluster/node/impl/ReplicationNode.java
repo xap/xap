@@ -1038,5 +1038,7 @@ public class ReplicationNode
         _replicaHandler.setDirectPersistencyBackupSyncIteratorHandler(directPersistencyBackupSyncIteratorHandler);
     }
 
-
+    public MetricRegistrator getMetricRegister() {
+        return metricRegister;
+    }
 }

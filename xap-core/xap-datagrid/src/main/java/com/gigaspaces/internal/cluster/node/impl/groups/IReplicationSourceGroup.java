@@ -137,7 +137,7 @@ public interface IReplicationSourceGroup {
 
     IReplicationSourceGroupStatistics getStatistics();
 
-    void setActive();
+    void setActive(MetricRegistrator metricRegistrator);
 
     void setPassive();
 

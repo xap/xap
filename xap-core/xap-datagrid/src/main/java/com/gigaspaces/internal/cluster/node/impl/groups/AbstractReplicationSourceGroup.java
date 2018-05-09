@@ -379,7 +379,7 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
         return "Replication [" + _myLookupName + "]: ";
     }
 
-    public void setActive() {
+    public void setActive(MetricRegistrator metricRegistrator) {
         // Do nothing, only specific groups should treat this
     }
 
