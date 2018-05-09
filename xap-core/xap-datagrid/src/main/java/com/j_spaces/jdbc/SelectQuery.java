@@ -738,7 +738,7 @@ public class SelectQuery extends AbstractDMLQuery {
         }
     }
 
-    //fix for GS-13451
+    //fix for GS-13451, GS-13537
     private static boolean isCommonJavaType(SelectColumn column){
         QueryColumnData columnData = column.getColumnData();
         int propertyIndex = columnData.getColumnIndexInTable();
@@ -752,7 +752,7 @@ public class SelectQuery extends AbstractDMLQuery {
         if( columnPath.contains( "." ) ) {
             try {
                 Class<?> type = getFieldClassType(columnData);
-                commonJavaType = ReflectionUtils.isCommonJavaType(type);
+                commonJavaType = ReflectionUtils.isCommonJavaType(type) || type.isEnum();
             }
             catch( Exception e ){
                 if( _logger.isLoggable( Level.SEVERE ) ){
@@ -763,7 +763,8 @@ public class SelectQuery extends AbstractDMLQuery {
         else {
             PropertyInfo propertyInfo =
                 columnData.getColumnTableData().getTypeDesc().getProperties()[propertyIndex];
-            commonJavaType = propertyInfo.isCommonJavaType();
+            commonJavaType = propertyInfo.isCommonJavaType() ||
+                             ( propertyInfo.getType() != null && propertyInfo.getType().isEnum() );
         }
 
         return commonJavaType;

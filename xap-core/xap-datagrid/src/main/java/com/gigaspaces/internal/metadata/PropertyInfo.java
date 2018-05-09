@@ -73,8 +73,8 @@ public class PropertyInfo implements SpacePropertyDescriptor, Externalizable {
         this._primitive = ReflectionUtils.isPrimitive(typeName);
         this._spacePrimitive = ReflectionUtils.isSpacePrimitive(_typeName);
         this._documentSupport = documentSupport != SpaceDocumentSupport.DEFAULT
-                ? documentSupport
-                : SpaceDocumentSupportHelper.getDefaultDocumentSupport(_type);
+                                ? documentSupport
+                                : SpaceDocumentSupportHelper.getDefaultDocumentSupport(_type);
         this._storageType = storageType;
         this._dotnetStorageType = dotNetStorageType;
     }
@@ -131,14 +131,14 @@ public class PropertyInfo implements SpacePropertyDescriptor, Externalizable {
     }
 
     public Object beforeSerialize(Object value)
-            throws IOException {
+        throws IOException {
         if (_spacePrimitive)
             return value;
         return SerializationUtil.serializeFieldValue(value, _storageType);
     }
 
     public Object afterDeserialize(Object value)
-            throws IOException, ClassNotFoundException {
+        throws IOException, ClassNotFoundException {
         if (_spacePrimitive)
             return value;
         return SerializationUtil.deSerializeFieldValue(value, _storageType);
@@ -146,7 +146,7 @@ public class PropertyInfo implements SpacePropertyDescriptor, Externalizable {
 
     @Override
     public void readExternal(ObjectInput in)
-            throws IOException, ClassNotFoundException {
+        throws IOException, ClassNotFoundException {
         _name = IOUtils.readString(in);
         _typeName = IOUtils.readString(in);
         _spacePrimitive = in.readBoolean();
@@ -157,7 +157,7 @@ public class PropertyInfo implements SpacePropertyDescriptor, Externalizable {
 
     @Override
     public void writeExternal(ObjectOutput out)
-            throws IOException {
+        throws IOException {
         IOUtils.writeString(out, _name);
         IOUtils.writeString(out, _typeName);
         out.writeBoolean(_spacePrimitive);
@@ -176,6 +176,6 @@ public class PropertyInfo implements SpacePropertyDescriptor, Externalizable {
     }
 
     public boolean isCommonJavaType() {
-        return ReflectionUtils.isCommonJavaType(_typeName) || ( _type != null && _type.isEnum() );
+        return ReflectionUtils.isCommonJavaType(_typeName);
     }
 }
