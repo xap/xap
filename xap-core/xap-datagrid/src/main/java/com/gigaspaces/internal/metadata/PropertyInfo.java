@@ -176,6 +176,6 @@ public class PropertyInfo implements SpacePropertyDescriptor, Externalizable {
     }
 
     public boolean isCommonJavaType() {
-        return ReflectionUtils.isCommonJavaType(_typeName) || ( _type != null && _type.isEnum() );
+        return ReflectionUtils.isCommonJavaType(_typeName);
     }
 }

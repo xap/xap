@@ -60,7 +60,7 @@ public abstract class ReflectionUtils {
 
     public static boolean isCommonJavaType(Class<? extends Object> clazz) {
         String name = clazz.getName();
-        return isCommonJavaType(name) || clazz.isEnum();
+        return isCommonJavaType(name);
     }
 
     /**
