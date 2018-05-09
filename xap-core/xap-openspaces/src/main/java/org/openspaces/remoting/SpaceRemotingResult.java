@@ -33,7 +33,7 @@ public interface SpaceRemotingResult<T> {
      * Returns the routing index for the given result in cases where the remote invocation was
      * directed to a specific cluster instance.
      */
-    Integer getRouting();
+    Object getRouting();
 
     /**
      * The result of the remote invocation. Note, <code>null</code> value might mean that remote
