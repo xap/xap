@@ -282,7 +282,7 @@
                                 <descriptor>src/main/assembly/zip-product.xml</descriptor>
                             </descriptors>
                             <appendAssemblyId>false</appendAssemblyId>
-                            <finalName>gigaspaces-xap-${xap.version}-${xap.milestone}-b${xap.build.number}
+                            <finalName>gigaspaces-xap-open-${xap.version}-${xap.milestone}-b${xap.build.number}
                             </finalName>
                             <attach>true</attach>
                             <outputDirectory/>
