@@ -12,9 +12,9 @@
         <spring.security.version>4.2.3.RELEASE</spring.security.version>
         <junit.version>4.12</junit.version>
         <jetty.version>9.2.24.v20180105</jetty.version>
-        <xap.version>12.3.0</xap.version>
+        <xap.version>12.3.1</xap.version>
         <xap.milestone>m1</xap.milestone>
-        <xap.build.number>18900-10</xap.build.number>
+        <xap.build.number>19200-10</xap.build.number>
         <xap.git.sha>unspecified</xap.git.sha>
         <xap.git.branch>master</xap.git.branch>
         <xap.release.arguments />
