@@ -101,6 +101,7 @@ public class SpaceDocumentSupportHelper {
         result.put(java.lang.String.class, SpaceDocumentSupport.COPY);
         result.put(java.util.Date.class, SpaceDocumentSupport.COPY);
         result.put(java.util.UUID.class, SpaceDocumentSupport.COPY);
+        result.put(java.util.Calendar.class, SpaceDocumentSupport.COPY);
         result.put(java.sql.Date.class, SpaceDocumentSupport.COPY);
         result.put(java.sql.Time.class, SpaceDocumentSupport.COPY);
         result.put(java.sql.Timestamp.class, SpaceDocumentSupport.COPY);
@@ -126,6 +127,23 @@ public class SpaceDocumentSupportHelper {
         // GigaSpaces types:
         result.put(com.gigaspaces.document.SpaceDocument.class, SpaceDocumentSupport.COPY);
         result.put(com.gigaspaces.document.DocumentProperties.class, SpaceDocumentSupport.COPY);
+
+        //java 8 java.time classes
+        result.put(java.time.LocalDateTime.class, SpaceDocumentSupport.COPY);
+        result.put(java.time.LocalDate.class, SpaceDocumentSupport.COPY);
+        result.put(java.time.LocalTime.class, SpaceDocumentSupport.COPY);
+        result.put(java.time.Duration.class, SpaceDocumentSupport.COPY);
+        result.put(java.time.DayOfWeek.class, SpaceDocumentSupport.COPY);
+        result.put(java.time.MonthDay.class, SpaceDocumentSupport.COPY);
+        result.put(java.time.Period.class, SpaceDocumentSupport.COPY);
+        result.put(java.time.Year.class, SpaceDocumentSupport.COPY);
+        result.put(java.time.YearMonth.class, SpaceDocumentSupport.COPY);
+        result.put(java.time.ZonedDateTime.class, SpaceDocumentSupport.COPY);
+        result.put(java.time.ZoneId.class, SpaceDocumentSupport.COPY);
+        result.put(java.time.ZoneOffset.class, SpaceDocumentSupport.COPY);
+        result.put(java.time.Instant.class, SpaceDocumentSupport.COPY);
+        result.put(java.time.OffsetDateTime.class, SpaceDocumentSupport.COPY);
+        result.put(java.time.OffsetTime.class, SpaceDocumentSupport.COPY);
 
         return result;
     }
