@@ -447,6 +447,22 @@ public abstract class ReflectionUtils {
         commonJavaTypes.add(java.sql.Timestamp.class.getName());
         commonJavaTypes.add(java.sql.Time.class.getName());
 
+        commonJavaTypes.add(java.time.LocalDateTime.class.getName());
+        commonJavaTypes.add(java.time.LocalDate.class.getName());
+        commonJavaTypes.add(java.time.LocalTime.class.getName());
+        commonJavaTypes.add(java.time.Duration.class.getName());
+        commonJavaTypes.add(java.time.DayOfWeek.class.getName());
+        commonJavaTypes.add(java.time.MonthDay.class.getName());
+        commonJavaTypes.add(java.time.Period.class.getName());
+        commonJavaTypes.add(java.time.Year.class.getName());
+        commonJavaTypes.add(java.time.YearMonth.class.getName());
+        commonJavaTypes.add(java.time.ZonedDateTime.class.getName());
+        commonJavaTypes.add(java.time.ZoneId.class.getName());
+        commonJavaTypes.add(java.time.ZoneOffset.class.getName());
+        commonJavaTypes.add(java.time.Instant.class.getName());
+        commonJavaTypes.add(java.time.OffsetDateTime.class.getName());
+        commonJavaTypes.add(java.time.OffsetTime.class.getName());
+
         return commonJavaTypes;
     }
 }
