@@ -133,9 +133,7 @@ public class OffHeapMemoryPool {
             delete(info, true);
             allocateAndWrite(info, buf, true);
         } else {
-            int headerSize = calculateHeaderSize(buf.length);
-            putHeaderToUnsafe(info.getOffHeapAddress(), buf.length);
-            writeBytes(info.getOffHeapAddress() + headerSize, buf);
+            writeBytes(info.getOffHeapAddress() + (long) (oldHeaderSize), buf);
         }
     }
 
