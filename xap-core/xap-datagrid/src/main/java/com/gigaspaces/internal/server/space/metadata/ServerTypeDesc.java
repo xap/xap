@@ -51,10 +51,10 @@ public class ServerTypeDesc implements IServerTypeDesc {
     }
 
     public ServerTypeDesc(int typeId, String typeName, ITypeDesc typeDesc, IServerTypeDesc superType) {
-        this(typeId, typeName, typeDesc,  superType, null, new LongCounter());
+        this(typeId, typeName, typeDesc,  superType, null);
     }
 
-    private ServerTypeDesc(int typeId, String typeName, ITypeDesc typeDesc, IServerTypeDesc superType,Short code, LongCounter offHeapTypeCounter) {
+    private ServerTypeDesc(int typeId, String typeName, ITypeDesc typeDesc, IServerTypeDesc superType,Short code) {
         this._typeId = typeId;
         this._typeName = typeName;
         this._isRootType = typeName.equals(ROOT_TYPE_NAME);
@@ -72,6 +72,9 @@ public class ServerTypeDesc implements IServerTypeDesc {
         if (code == null)
         {
             Integer c = _codesGen.incrementAndGet();
+            if(c > Short.MAX_VALUE){
+                throw new IllegalStateException("type map key has reached Short.MAX_VALUE, cannot create more ServerTypeDec instances");
+            }
             code = c.shortValue();
             _codesRepo.put(code,this);
         }
@@ -145,7 +148,7 @@ public class ServerTypeDesc implements IServerTypeDesc {
 
     public IServerTypeDesc createCopy(IServerTypeDesc superType) {
         // Create a copy of this type with the new super type:
-        ServerTypeDesc copy = new ServerTypeDesc(this._typeId, this._typeName, this._typeDesc, superType);
+        ServerTypeDesc copy = new ServerTypeDesc(this._typeId, this._typeName, this._typeDesc, superType, this._serverTypeDescCode);
         copy._inactive = this._inactive;
         IServerTypeDesc oldServerTypeDesc = _codesRepo.put(this._serverTypeDescCode, copy);
         if(oldServerTypeDesc != null){
