@@ -83,6 +83,15 @@ public abstract class AbstractRunCommand extends CliCommand {
                     env.get("XAP_CLASSPATH_EXT"));
 
         }
+
+        //fix for GS-13546
+        String additionalClasspathLibs = toClassPath(
+            SystemInfo.singleton().locations().getLibPlatform() + File.separator + "service-grid" + File.separator + "*",
+                   SystemInfo.singleton().locations().getLibPlatform() + File.separator + "logger" + File.separator + "*",
+                   SystemInfo.singleton().locations().getLibPlatform() + File.separator + "zookeeper" + File.separator + "*" );
+
+        result = result + ( result.endsWith( File.pathSeparator ) ? "" : File.pathSeparator ) + additionalClasspathLibs;
+
         return result;
     }
 
