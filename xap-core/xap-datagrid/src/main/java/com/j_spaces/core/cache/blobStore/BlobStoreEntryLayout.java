@@ -433,7 +433,7 @@ public class BlobStoreEntryLayout implements Externalizable {
             out.writeLong(_generationId);
             out.writeLong(_sequenceId);
         }
-//        out.writeShort(_blobStoreVersion);
+        out.writeShort(_blobStoreVersion);
         out.writeByte(_entryTypeCode);
         out.writeLong(_scn);
         if ((flags & FLAG_ORDER) == FLAG_ORDER) {
@@ -599,6 +599,7 @@ public class BlobStoreEntryLayout implements Externalizable {
             _sequenceId = in.readLong();
         }
 
+        _blobStoreVersion = in.readShort();
         _entryTypeCode = in.readByte();
         _scn = in.readLong();
         _transient = (flags & FLAG_TRANSIENT) == FLAG_TRANSIENT;
