@@ -18,6 +18,7 @@
 package org.openspaces.pu.container.standalone;
 
 import com.gigaspaces.admin.cli.RuntimeInfo;
+import com.gigaspaces.internal.utils.JdkVersion;
 import com.gigaspaces.logger.GSLogConfigLoader;
 
 import org.apache.commons.logging.Log;
@@ -32,6 +33,8 @@ import org.openspaces.pu.container.support.ConfigLocationParser;
 import org.openspaces.pu.container.support.ProcessingUnitPathParser;
 import org.springframework.context.ApplicationContext;
 
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 
 /**
@@ -98,6 +101,15 @@ public class StandaloneProcessingUnitContainer extends ApplicationContextProcess
      * please consult GigaSpaces reference documentation within the Space URL section. </ul>
      */
     public static void main(String[] args) throws Exception {
+
+        ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
+        if (! (currentClassLoader instanceof URLClassLoader)) {
+            URLClassLoader urlClassLoader = new URLClassLoader(new URL[0], currentClassLoader);
+            Thread.currentThread().setContextClassLoader(urlClassLoader);
+        }
+
+
+
         GSLogConfigLoader.getLoader();
         showUsageOptionsOnHelpCommand(args);
         if (args.length == 0) {
