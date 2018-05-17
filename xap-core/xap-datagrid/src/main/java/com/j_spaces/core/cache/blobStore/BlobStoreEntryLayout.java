@@ -22,6 +22,7 @@
 package com.j_spaces.core.cache.blobStore;
 
 import com.gigaspaces.internal.io.IOArrayException;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.io.MarshObject;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
@@ -43,7 +44,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @com.gigaspaces.api.InternalApi
 public class BlobStoreEntryLayout implements Externalizable {
@@ -430,22 +430,22 @@ public class BlobStoreEntryLayout implements Externalizable {
         byte embeddedSyncInfoFlags = buildEmbeddedSyncInfoFlags();
         out.writeByte(embeddedSyncInfoFlags);
         if ((embeddedSyncInfoFlags & FLAG_CONTAINS_EMBEDDED_SYNC_INFO) == FLAG_CONTAINS_EMBEDDED_SYNC_INFO) {
-            out.writeLong(_generationId);
-            out.writeLong(_sequenceId);
+            IOUtils.writeLong(out,_generationId);
+            IOUtils.writeLong(out,_sequenceId);
         }
-        out.writeShort(_blobStoreVersion);
+        IOUtils.writeShort(out,_blobStoreVersion);
         out.writeByte(_entryTypeCode);
-        out.writeLong(_scn);
+        IOUtils.writeLong(out,_scn);
         if ((flags & FLAG_ORDER) == FLAG_ORDER) {
-            out.writeInt(_order);
+            IOUtils.writeInt(out, _order);
         }
 
         if ((flags & FLAG_VERSIONID) == FLAG_VERSIONID) {
-            out.writeInt(_versionID);
+            IOUtils.writeInt(out,_versionID);
         }
 
         if ((flags & FLAG_EXPIRATION) == FLAG_EXPIRATION) {
-            out.writeLong(_expirationTime);
+            IOUtils.writeLong(out, _expirationTime);
         }
 
         boolean[] fixed_indices = null;
@@ -465,7 +465,7 @@ public class BlobStoreEntryLayout implements Externalizable {
             dynamic_indices = typeData.getIndexesRelatedDynamicProperties();
             //note- version is set to 0 which is first one
         }
-        out.writeShort(indexesStoredVersion);
+        IOUtils.writeShort(out, indexesStoredVersion);
 
         //indexes-related
         writeObjectArray(out, _fieldsValues, typeDesc, true /*indexes*/, fixed_indices);
@@ -595,28 +595,28 @@ public class BlobStoreEntryLayout implements Externalizable {
 
         byte embeddedSyncInfoFlags = in.readByte();
         if ((embeddedSyncInfoFlags & FLAG_CONTAINS_EMBEDDED_SYNC_INFO) == FLAG_CONTAINS_EMBEDDED_SYNC_INFO) {
-            _generationId = in.readLong();
-            _sequenceId = in.readLong();
+            _generationId = IOUtils.readLong(in);
+            _sequenceId = IOUtils.readLong(in);
         }
 
-        _blobStoreVersion = in.readShort();
+        _blobStoreVersion = IOUtils.readShort(in);
         _entryTypeCode = in.readByte();
-        _scn = in.readLong();
+        _scn = IOUtils.readLong(in);
         _transient = (flags & FLAG_TRANSIENT) == FLAG_TRANSIENT;
         if ((flags & FLAG_ORDER) == FLAG_ORDER)
-            _order = in.readInt();
+            _order = IOUtils.readInt(in);
 
         if ((flags & FLAG_VERSIONID) == FLAG_VERSIONID)
-            _versionID = in.readInt();
+            _versionID = IOUtils.readInt(in);
         else
             _versionID = 1;
 
         if ((flags & FLAG_EXPIRATION) == FLAG_EXPIRATION)
-            _expirationTime = in.readLong();
+            _expirationTime = IOUtils.readLong(in);
         else
             _expirationTime = Long.MAX_VALUE;
 
-        short indexesStoredVersion = in.readShort();
+        short indexesStoredVersion = IOUtils.readShort(in);
         _typeName = typeName;
         IServerTypeDesc typeDesc = cacheManager.getEngine().getTypeManager().getServerTypeDesc(_typeName);
 

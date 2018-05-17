@@ -986,5 +986,75 @@ public class IOUtils {
         }
     }
 
+    public static void writeShort(ObjectOutput out, short value) throws IOException {
+        writeInt(out, value);
+    }
+
+    public static void writeInt(ObjectOutput out, int value) throws IOException {
+        byte b = 0;
+        if (value < 0) {
+            b = 64;
+            value = ~value;
+        }
+        b |= (byte) (value & 0x3f);
+
+        for (value = (int) (value >> 6); value != 0; value = (int) (value >> 7)) {
+            b |= 0x80;
+            out.writeByte(b);
+            b = (byte) (value & 0x7f);
+        }
+        out.writeByte(b);
+    }
+
+    public static void writeLong(ObjectOutput out, long value) throws IOException {
+        byte b = 0;
+        if (value < 0L) {
+            b = 64;
+            value = ~value;
+        }
+        b |= (byte) ((int) value & 0x3f);
+        for (value = (long) value >> 6; value != 0L; value = (long) (value) >> 7) {
+            b |= 0x80;
+            out.writeByte(b);
+            b = (byte) ((int) value & 0x7f);
+        }
+        out.writeByte(b);
+    }
+
+    public static short readShort(ObjectInput in) throws IOException {
+        return (short) readInt(in);
+    }
+
+    public static int readInt(ObjectInput in) throws IOException {
+        int b = in.readByte();
+        int value = b & 0x3f;
+        int cBits = 6;
+        boolean fNeg = (b & 0x40) != 0;
+        while ((b & 0x80) != 0) {
+            b = in.readByte();
+            value |= (b & 0x7f) << cBits;
+            cBits += 7;
+        }
+        if (fNeg)
+            value = ~value;
+        return value;
+    }
+
+    public static long readLong(ObjectInput in) throws IOException {
+        int b = in.readByte();
+        long l = b & 0x3f;
+        int cBits = 6;
+        boolean fNeg = (b & 0x40) != 0;
+        while ((b & 0x80) != 0) {
+            b = in.readByte();
+            l |= (long) (b & 0x7f) << cBits;
+            cBits += 7;
+        }
+        if (fNeg)
+            l = ~l;
+        return l;
+    }
+
+
 
 }
