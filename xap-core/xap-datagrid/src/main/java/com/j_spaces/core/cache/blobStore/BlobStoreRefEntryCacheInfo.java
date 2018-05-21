@@ -142,6 +142,7 @@ public class BlobStoreRefEntryCacheInfo
 
     public BlobStoreRefEntryCacheInfo(IEntryHolder eh, int backRefsSize) {
         boolean recoveredFromblobStore = false;
+        boolean restartBlobStoreVersionCount = false;
         _loadedBlobStoreEntry = (BlobStoreEntryHolder) eh;
         if (((BlobStoreEntryHolder) eh).getBlobStoreVersion() != (short) 0) {
             //happens in recovery from OH
@@ -149,6 +150,7 @@ public class BlobStoreRefEntryCacheInfo
             recoveredFromblobStore = true;
             if(_blobStoreVersion == -1){
                 _blobStoreVersion = 1;
+                restartBlobStoreVersionCount = true;
             }
         }
 
@@ -160,7 +162,7 @@ public class BlobStoreRefEntryCacheInfo
         }
         _m_Uid = eh.getUID();
         pin();        //a new entry is always set pinned
-        if (!recoveredFromblobStore)
+        if (!recoveredFromblobStore || restartBlobStoreVersionCount)
             setDirty_impl(true, false/*set_indexes*/, null);
         _serverTypeDescCode = eh.getServerTypeDesc().getServerTypeDescCode();
     }
@@ -258,8 +260,8 @@ public class BlobStoreRefEntryCacheInfo
             _crcForFields = buildCrcForFields(_loadedBlobStoreEntry);
             if(_blobStoreVersion != -1 ) {
                 _blobStoreVersion = (short) (_blobStoreVersion + (short) 1);
-                _loadedBlobStoreEntry.setBlobStoreVersion(_blobStoreVersion);
             }
+            _loadedBlobStoreEntry.setBlobStoreVersion(_blobStoreVersion);
             if (set_indexses && !isDeleted())
                 economizeBackRefs((ArrayList<IObjectInfo<IEntryCacheInfo>>) _backRefs, _loadedBlobStoreEntry, cacheManager.getTypeData(_loadedBlobStoreEntry.getServerTypeDesc()), false /*unloading*/, true/*flushingEntryHolder*/);
         } else
