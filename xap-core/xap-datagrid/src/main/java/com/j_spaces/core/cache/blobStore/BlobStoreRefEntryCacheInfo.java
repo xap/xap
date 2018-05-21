@@ -147,6 +147,9 @@ public class BlobStoreRefEntryCacheInfo
             //happens in recovery from OH
             _blobStoreVersion = ((BlobStoreEntryHolder) eh).getBlobStoreVersion();
             recoveredFromblobStore = true;
+            if(_blobStoreVersion == -1){
+                _blobStoreVersion = 1;
+            }
         }
 
         if (indexesBackRefsKept()) {
@@ -253,8 +256,10 @@ public class BlobStoreRefEntryCacheInfo
         if (value) {
             _status |= STATUS_DIRTY;
             _crcForFields = buildCrcForFields(_loadedBlobStoreEntry);
-            _blobStoreVersion = (short) (_blobStoreVersion + (short) 1);
-            _loadedBlobStoreEntry.setBlobStoreVersion(_blobStoreVersion);
+            if(_blobStoreVersion != -1 ) {
+                _blobStoreVersion = (short) (_blobStoreVersion + (short) 1);
+                _loadedBlobStoreEntry.setBlobStoreVersion(_blobStoreVersion);
+            }
             if (set_indexses && !isDeleted())
                 economizeBackRefs((ArrayList<IObjectInfo<IEntryCacheInfo>>) _backRefs, _loadedBlobStoreEntry, cacheManager.getTypeData(_loadedBlobStoreEntry.getServerTypeDesc()), false /*unloading*/, true/*flushingEntryHolder*/);
         } else
@@ -375,6 +380,7 @@ public class BlobStoreRefEntryCacheInfo
     public IEntryHolder getLatestEntryVersion(CacheManager cacheManager, boolean attach, IBlobStoreEntryHolder lastKnownEntry, Context attachingContext, boolean onlyIndexesPart) {
         BlobStoreEntryHolder res = null;
         if (!onlyIndexesPart &&  lastKnownEntry != null && lastKnownEntry.isOptimizedEntry())
+
             lastKnownEntry = null;
         if (!attach) {
             res = _loadedBlobStoreEntry;
@@ -471,7 +477,7 @@ public class BlobStoreRefEntryCacheInfo
                     return res;
             }
 
-            if (lastKnownEntry != null && lastKnownEntry.getBlobStoreVersion() == _blobStoreVersion) {//the latest known entry wasnt changed- use it, no need to access off-heap storage
+            if (lastKnownEntry != null && lastKnownEntry.getBlobStoreVersion() == _blobStoreVersion && _blobStoreVersion != -1) {//the latest known entry wasnt changed- use it, no need to access off-heap storage
                 res = (BlobStoreEntryHolder) lastKnownEntry;
                 if (attach) {
                     _loadedBlobStoreEntry = res;
@@ -523,13 +529,13 @@ public class BlobStoreRefEntryCacheInfo
         if (context.getBlobStorePreFetchBatchResult() != null) {
             BlobStoreEntryLayout ole = context.getBlobStorePreFetchBatchResult().getFromStore(this);
             if (ole != null) {
-                if (ole.getBlobStoreVersion() != _blobStoreVersion)
+                if (ole.getBlobStoreVersion() != _blobStoreVersion || _blobStoreVersion == -1)
                     return null;
                 res = ole.buildBlobStoreEntryHolder(cacheManager, this);
             } else {
                 //was it in local blobStore cache
                 res = context.getBlobStorePreFetchBatchResult().getFromCache(this);
-                if (res != null && res.getBlobStoreVersion() != _blobStoreVersion)
+                if (res != null && res.getBlobStoreVersion() != _blobStoreVersion || _blobStoreVersion == -1)
                     res = null;
             }
         }
@@ -539,7 +545,7 @@ public class BlobStoreRefEntryCacheInfo
 
     private BlobStoreEntryHolder getFullEntry(CacheManager cacheManager, boolean onlyIndexesPart) {
         BlobStoreEntryHolder dbe = getFromInternalCache(cacheManager);
-        if (dbe != null && dbe.getBlobStoreVersion() != _blobStoreVersion)
+        if (dbe != null && dbe.getBlobStoreVersion() != _blobStoreVersion || _blobStoreVersion == -1)
             dbe = null;  //not the recent one= ignore
         if (dbe == null) {
             if (isWrittenToBlobStore()) {
@@ -578,7 +584,7 @@ public class BlobStoreRefEntryCacheInfo
         if(!isMatchCacheFilter(cacheManager.getBlobStoreInternalCache()))
             return null;
         BlobStoreEntryHolder res = cacheManager.getBlobStoreInternalCache().get(this);
-        return (res != null && res.getBlobStoreVersion() == _blobStoreVersion) ? res : null;
+        return (res != null && res.getBlobStoreVersion() == _blobStoreVersion && _blobStoreVersion != -1) ? res : null;
     }
 
     private void removeFromInternalCache(Context context,CacheManager cacheManager, BlobStoreEntryHolder entry) {
