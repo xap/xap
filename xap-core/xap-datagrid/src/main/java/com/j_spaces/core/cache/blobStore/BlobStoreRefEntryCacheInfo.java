@@ -265,6 +265,9 @@ public class BlobStoreRefEntryCacheInfo
                     CacheManager.getLogger().finest("Blobstore- bumped _blobStoreVersion to "+_blobStoreVersion);
                 }
             }
+            if(_blobStoreVersion == -1 && CacheManager.getLogger().isLoggable(Level.WARNING)){
+                CacheManager.getLogger().warning("Blobstore- _blobStoreVersion has reached max value , disabling update caching optimization");
+            }
             _loadedBlobStoreEntry.setBlobStoreVersion(_blobStoreVersion);
             if (set_indexses && !isDeleted())
                 economizeBackRefs((ArrayList<IObjectInfo<IEntryCacheInfo>>) _backRefs, _loadedBlobStoreEntry, cacheManager.getTypeData(_loadedBlobStoreEntry.getServerTypeDesc()), false /*unloading*/, true/*flushingEntryHolder*/);
