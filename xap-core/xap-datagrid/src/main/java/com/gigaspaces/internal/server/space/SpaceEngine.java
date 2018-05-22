@@ -2099,8 +2099,7 @@ public class SpaceEngine implements ISpaceModeListener {
                 }
             } catch (InterruptedException ex) {
             }  //cannot happen since its always no-wait
-            res = batchOperationContext.getResults() != null ? batchOperationContext.getResults().size()
-                    : 0;
+            res = batchOperationContext.getNumResults();
         }
         if (ah != null) {
             return new Pair<Integer, SingleExplainPlan>(res, ah.getExplainPlan());

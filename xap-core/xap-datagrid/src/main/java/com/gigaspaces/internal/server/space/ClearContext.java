@@ -61,4 +61,9 @@ public class ClearContext
         return true;
     }
 
+    @Override
+    protected boolean keepResultsInBatchContext() {
+        return false;
+    }
+
 }

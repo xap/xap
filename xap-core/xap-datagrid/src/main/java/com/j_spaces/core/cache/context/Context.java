@@ -1029,7 +1029,7 @@ public class Context {
                     answer.m_AnswerPacket.m_EntryPacket = null;
                 }
             } else {//batch op filter
-                if (template.isBatchOperation() && ex == null && template.getBatchOperationContext().hasAnyEntries() && !template.isInitiatedEvictionOperation()) {
+                if (template.isBatchOperation() && ex == null && template.getBatchOperationContext().hasAnyEntries() && !template.isInitiatedEvictionOperation() && template.getBatchOperationContext().getResults() != null) {
                     for (IEntryPacket curep : template.getBatchOperationContext().getResults()) {
                         if (curep != null && curep.hasFixedPropertiesArray() && curep.getFieldValues() != null) {
                             Object[] src = curep.getFieldValues();
