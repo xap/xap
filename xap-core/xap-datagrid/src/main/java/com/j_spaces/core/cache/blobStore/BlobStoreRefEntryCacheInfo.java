@@ -151,6 +151,7 @@ public class BlobStoreRefEntryCacheInfo
             if(_blobStoreVersion == -1){
                 _blobStoreVersion = 1;
                 restartBlobStoreVersionCount = true;
+                CacheManager.getLogger().finest("Blobstore- read _blobStoreVersion = -1 from initial load, set _blobStoreVersion to "+_blobStoreVersion);
             }
         }
 
@@ -260,6 +261,9 @@ public class BlobStoreRefEntryCacheInfo
             _crcForFields = buildCrcForFields(_loadedBlobStoreEntry);
             if(_blobStoreVersion != -1 ) {
                 _blobStoreVersion = (short) (_blobStoreVersion + (short) 1);
+                if(CacheManager.getLogger().isLoggable(Level.FINEST)){
+                    CacheManager.getLogger().finest("Blobstore- bumped _blobStoreVersion to "+_blobStoreVersion);
+                }
             }
             _loadedBlobStoreEntry.setBlobStoreVersion(_blobStoreVersion);
             if (set_indexses && !isDeleted())
@@ -537,7 +541,7 @@ public class BlobStoreRefEntryCacheInfo
             } else {
                 //was it in local blobStore cache
                 res = context.getBlobStorePreFetchBatchResult().getFromCache(this);
-                if (res != null && res.getBlobStoreVersion() != _blobStoreVersion || _blobStoreVersion == -1)
+                if (res != null && (res.getBlobStoreVersion() != _blobStoreVersion || _blobStoreVersion == -1))
                     res = null;
             }
         }
@@ -547,7 +551,7 @@ public class BlobStoreRefEntryCacheInfo
 
     private BlobStoreEntryHolder getFullEntry(CacheManager cacheManager, boolean onlyIndexesPart) {
         BlobStoreEntryHolder dbe = getFromInternalCache(cacheManager);
-        if (dbe != null && dbe.getBlobStoreVersion() != _blobStoreVersion || _blobStoreVersion == -1)
+        if (dbe != null && (dbe.getBlobStoreVersion() != _blobStoreVersion || _blobStoreVersion == -1))
             dbe = null;  //not the recent one= ignore
         if (dbe == null) {
             if (isWrittenToBlobStore()) {
@@ -568,7 +572,11 @@ public class BlobStoreRefEntryCacheInfo
                 } else {
                     ole = (BlobStoreEntryLayout) cacheManager.getBlobStoreStorageHandler().get(getStorageKey_impl(), _blobStorePosition, BlobStoreObjectType.DATA, onlyIndexesPart, this);
                     if(CacheManager.getLogger().isLoggable(Level.FINER)){
-                        CacheManager.getLogger().finer("container [" + cacheManager.getEngine().getFullSpaceName() + "] Blobstore- entry loaded from disk, uid=" + _m_Uid);
+                        if(cacheManager.isPersistentBlobStore()){
+                            CacheManager.getLogger().finer("container [" + cacheManager.getEngine().getFullSpaceName() + "] Blobstore- entry loaded from disk, uid=" + _m_Uid);
+                        } else {
+                            CacheManager.getLogger().finer("container [" + cacheManager.getEngine().getFullSpaceName() + "] Blobstore- entry loaded from off heap, uid=" + _m_Uid);
+                        }
                     }
                 }
                 dbe = ole != null ? ole.buildBlobStoreEntryHolder(cacheManager, this) : null;
