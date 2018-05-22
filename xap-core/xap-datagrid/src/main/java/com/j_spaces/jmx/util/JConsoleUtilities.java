@@ -123,18 +123,24 @@ public class JConsoleUtilities {
      * @return command as array of String
      * @since 10.2
      */
-    public static String[] createJVisualVmCommand(String jmxServiceUrl, String javaHomeDir) {
+    public static String[] createJVisualVmCommand(String jmxServiceUrl, String javaHomeDir, File visualVmFileLaunchFilePath ) {
 
         List<String> commandArray = new ArrayList<String>(5);
 
-        if (javaHomeDir == null) {
-            javaHomeDir = calculateJVisualVmCommandJavaHome();
+        //GS-13424 java 9 support: VisualVM is not part of JDK 9
+        if( visualVmFileLaunchFilePath != null && visualVmFileLaunchFilePath.exists() ){
+            commandArray.add( visualVmFileLaunchFilePath.getPath() );
         }
+        else {
+            if (javaHomeDir == null) {
+                javaHomeDir = calculateJVisualVmCommandJavaHome();
+            }
 
-        if (javaHomeDir != null) {
-            commandArray.add(javaHomeDir + File.separator + "bin" + File.separator + "jvisualvm");
-        } else {
-            commandArray.add("jvisualvm");
+            if (javaHomeDir != null) {
+                commandArray.add(javaHomeDir + File.separator + "bin" + File.separator + "jvisualvm");
+            } else {
+                commandArray.add("jvisualvm");
+            }
         }
 
         commandArray.add("--openjmx");
