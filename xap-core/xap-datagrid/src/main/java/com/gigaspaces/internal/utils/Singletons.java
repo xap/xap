@@ -56,4 +56,24 @@ public class Singletons {
             _instances.remove(name);
         }
     }
+
+    /**
+     * The usage of this method is to ensure that a remove followed by putIfAbsent
+     * is safe from race conditions between the two calls.
+     *
+     * Acts like compare AND set, but with removal. Will remove the key if the
+     * value matches the existing value in the map.
+     *
+     * @return the existing value mapped to this key before removal
+     */
+    public static Object compareAndRemove(String name, Object value) {
+        synchronized (_lock) {
+            final Object existing = _instances.get(name);
+            if (existing == value) {
+                return _instances.remove(name);
+            } else {
+                return existing;
+            }
+        }
+    }
 }
