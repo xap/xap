@@ -261,12 +261,12 @@ public class BlobStoreRefEntryCacheInfo
             _crcForFields = buildCrcForFields(_loadedBlobStoreEntry);
             if(_blobStoreVersion != -1 ) {
                 _blobStoreVersion = (short) (_blobStoreVersion + (short) 1);
+                if(_blobStoreVersion == -1 && CacheManager.getLogger().isLoggable(Level.WARNING)){
+                    CacheManager.getLogger().warning("Blobstore- entry "+getUID()+" of type "+getTypeName()+" has been updated 65535 times, and exhausted its update counter, update optimization for this entry is now disabled");
+                }
                 if(CacheManager.getLogger().isLoggable(Level.FINEST)){
                     CacheManager.getLogger().finest("Blobstore- bumped _blobStoreVersion to "+_blobStoreVersion);
                 }
-            }
-            if(_blobStoreVersion == -1 && CacheManager.getLogger().isLoggable(Level.WARNING)){
-                CacheManager.getLogger().warning("Blobstore- _blobStoreVersion has reached max value , disabling update caching optimization");
             }
             _loadedBlobStoreEntry.setBlobStoreVersion(_blobStoreVersion);
             if (set_indexses && !isDeleted())
