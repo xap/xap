@@ -75,7 +75,10 @@ public class Conversation {
     }
 
     public void handleKey(SelectionKey key) {
-        if (!key.isValid() || !key.channel().isOpen()) {
+        if (!key.channel().isOpen()) {
+            key.cancel(); //ensure key is cancelled when channel is closed
+        }
+        if (!key.isValid()) {
             canceledKey();
             return;
         }

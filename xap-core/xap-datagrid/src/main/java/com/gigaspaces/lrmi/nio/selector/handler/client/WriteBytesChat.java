@@ -43,7 +43,7 @@ public class WriteBytesChat extends AbstractChat<Void> {
      * @return true if done with this chat
      */
     public boolean process(SelectionKey key) {
-        return write(key, msg);
+        return (0 != write(key, msg));
     }
 
     @Override

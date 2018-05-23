@@ -21,6 +21,7 @@ import com.gigaspaces.internal.io.MarshalOutputStream;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.nio.RequestPacket;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -71,11 +72,15 @@ public class LRMIChat extends AbstractChat<ByteBuffer> {
             return false;
         }
         if (mode == Mode.WRITE) {
-            if (write(key, msg)) {
+            final byte writeResult = write(key, msg);
+            if (-1 == writeResult) {
+                return true; //write error, end chat
+            } else if (1 == writeResult) {
+                //done with write, switch to read
                 mode = Mode.HEADER;
                 addInterest(key, SelectionKey.OP_READ);
             }
-            return false;
+            return false; //don't end chat
         } else {
             return read(key);
         }
@@ -93,8 +98,13 @@ public class LRMIChat extends AbstractChat<ByteBuffer> {
         SocketChannel channel = (SocketChannel) key.channel();
         if (mode == Mode.HEADER) {
             try {
-                channel.read(headerBuffer);
+                if (0 > channel.read(headerBuffer)) {
+                    key.cancel(); //ensure key is cancelled on the selector before socket.close()
+                    conversation.close(new EOFException("end of stream has been reached unexpectedly during read of header"));
+                    return true; //done with chat
+                }
             } catch (Throwable t) {
+                key.cancel(); //ensure key is cancelled on the selector before socket.close()
                 conversation.close(t);
                 return true;
             }
@@ -109,8 +119,13 @@ public class LRMIChat extends AbstractChat<ByteBuffer> {
         }
         if (mode == Mode.READ) {
             try {
-                channel.read(readBuf);
+                if (0 > channel.read(readBuf)) {
+                    key.cancel(); //ensure key is cancelled on the selector before socket.close()
+                    conversation.close(new EOFException("end of stream has been reached unexpectedly during input"));
+                    return true; //done with chat
+                }
             } catch (Throwable t) {
+                key.cancel(); //ensure key is cancelled on the selector before socket.close()
                 conversation.close(t);
                 return true;
             }
