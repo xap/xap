@@ -26,12 +26,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -523,7 +518,7 @@ public class ClassLoaderCleaner {
             // Get the keys (loader references are in the key)
             Set<?> keys = cacheList.keySet();
 
-            Field loaderRefField = null;
+            Set<Field> fieldsRef = new HashSet<Field>();
 
             // Iterate over the keys looking at the loader instances
             Iterator<?> keysIter = keys.iterator();
@@ -533,23 +528,50 @@ public class ClassLoaderCleaner {
             while (keysIter.hasNext()) {
                 Object key = keysIter.next();
 
-                if (loaderRefField == null) {
-                    loaderRefField =
-                            key.getClass().getDeclaredField("loaderRef");
-                    loaderRefField.setAccessible(true);
+                if (fieldsRef.isEmpty()) {
+                    for (Field f : key.getClass().getDeclaredFields()) {
+                        if (f.getName().equals("loaderRef")) {
+                            f.setAccessible(true);
+                            fieldsRef.add(f);
+                            break; // Prior to Java 9, there should be only one relevant field in the CacheKey
+                        } else if (f.getName().equals("callerRef")
+                                || f.getName().equals("moduleRef")) { // Relevant for Java 9+
+                            f.setAccessible(true);
+                            fieldsRef.add(f);
+                        }
+                    }
+                    if (fieldsRef.isEmpty()) {
+                        logger.log(Level.WARNING, "Failed to clear ResourceBundle references");
+                        return;
+                    }
                 }
-                WeakReference<?> loaderRef =
-                        (WeakReference<?>) loaderRefField.get(key);
 
-                ClassLoader loader = (ClassLoader) loaderRef.get();
 
-                while (loader != null && loader != classLoader) {
-                    loader = loader.getParent();
-                }
+                for (Field fieldRef : fieldsRef) {
+                    ClassLoader loader = null;
 
-                if (loader != null) {
-                    keysIter.remove();
-                    countRemoved++;
+                    WeakReference<?> weakRef =
+                            (WeakReference<?>) fieldRef.get(key);
+
+                    Object refVal = weakRef.get();
+                    if (refVal != null) {
+                        if (refVal instanceof ClassLoader) {
+                            loader = (ClassLoader) refVal;
+                        } else if (refVal.getClass().getName().equals("java.lang.Module")) { // Java 9
+                            Method method = refVal.getClass().getMethod("getClassLoader");
+                            loader = (ClassLoader) method.invoke(refVal);
+                        }
+
+                        while (loader != null && loader != classLoader) {
+                            loader = loader.getParent();
+                        }
+
+                        if (loader != null) {
+                            keysIter.remove();
+                            countRemoved++;
+                            break;
+                        }
+                    }
                 }
             }
 
