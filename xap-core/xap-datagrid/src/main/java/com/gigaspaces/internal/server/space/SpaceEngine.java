@@ -2072,7 +2072,7 @@ public class SpaceEngine implements ISpaceModeListener {
             } catch (InterruptedException e) {
             } //cannot happen since its always no-wait
         } else {
-            ClearContext batchOperationContext = new ClearContext(template, Integer.MAX_VALUE);
+            ClearContext batchOperationContext = new ClearContext(template, Integer.MAX_VALUE,_filterManager);
             try {
                 ah = readMultiple(template,
                         txn,

@@ -21,6 +21,8 @@ package com.gigaspaces.internal.server.space;
 
 import com.gigaspaces.client.ClearException;
 import com.gigaspaces.internal.transport.ITemplatePacket;
+import com.j_spaces.core.filters.FilterManager;
+import com.j_spaces.core.filters.FilterOperationCodes;
 
 import java.util.Collections;
 
@@ -38,9 +40,10 @@ public class ClearContext
      * @param template
      * @param maxEntries
      */
-    public ClearContext(ITemplatePacket template, int maxEntries) {
+    private final boolean _hasAfterOpFilter;
+    public ClearContext(ITemplatePacket template, int maxEntries,FilterManager fm) {
         super(template, maxEntries, maxEntries);
-
+        _hasAfterOpFilter = fm._isFilter[FilterOperationCodes.AFTER_TAKE_MULTIPLE];
     }
 
     /**
@@ -62,8 +65,9 @@ public class ClearContext
     }
 
     @Override
-    protected boolean keepResultsInBatchContext() {
-        return false;
+    protected boolean keepResultsInBatchContext()
+    {
+        return _hasAfterOpFilter;
     }
 
 }
