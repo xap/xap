@@ -72,6 +72,10 @@ public abstract class BatchQueryOperationContext {
         return true;
     }
 
+    protected void setResults(List<IEntryPacket> _results) {
+        this._results = _results;
+    }
+
     public List<IEntryPacket> getResults() {
         return _results;
     }

@@ -45,7 +45,7 @@ public class ClearContext
         super(template, maxEntries, maxEntries);
         _hasAfterOpFilter = fm._isFilter[FilterOperationCodes.AFTER_TAKE_MULTIPLE];
         if (keepResultsInBatchContext() && super.getResults() == null)
-            super.createResultList(template, maxEntries);
+            setResults(super.createResultList(template, maxEntries));
     }
 
     /**
