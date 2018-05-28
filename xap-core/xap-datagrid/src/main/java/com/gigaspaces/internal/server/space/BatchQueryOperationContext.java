@@ -52,7 +52,7 @@ public abstract class BatchQueryOperationContext {
     /**
      * Create a list that will accumulate the batch operation results.
      */
-    private List<IEntryPacket> createResultList(ITemplatePacket template,
+    protected List<IEntryPacket> createResultList(ITemplatePacket template,
                                                 int maxEntries) {
 
         if (template.getMultipleUIDs() != null)
