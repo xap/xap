@@ -122,6 +122,31 @@ public class FilterManager implements ISpaceComponentsHandler {
                 _filters[i] = new PrioritySpaceFiltersHolder(filterHolders);
             }
         }
+
+    }
+
+
+    //has AfterTakeMultiple filter other then jSpaceStatistics
+    private boolean initNonStatisticsAfterTakeMultipleOpFilter() {
+        if(!_isFilter[FilterOperationCodes.AFTER_TAKE_MULTIPLE]){
+            return false;
+        }
+
+        PrioritySpaceFiltersHolder prioritySpaceFiltersHolder = _filters[FilterOperationCodes.AFTER_TAKE_MULTIPLE];
+
+        if(prioritySpaceFiltersHolder.isSingleFilterHolder){
+            return !(prioritySpaceFiltersHolder.singleFilterHolder.getFilter() instanceof JSpaceStatistics);
+        } else {
+            for (FilterHolder[] prioritizedFilterHolder : prioritySpaceFiltersHolder.prioritizedFilterHolders) {
+                for (FilterHolder filterHolder : prioritizedFilterHolder) {
+                    if(!(filterHolder.getFilter() instanceof JSpaceStatistics)){
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     public ISpaceFilter getFilterObject(String filterId) {

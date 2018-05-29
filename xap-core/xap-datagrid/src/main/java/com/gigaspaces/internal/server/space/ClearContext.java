@@ -40,10 +40,10 @@ public class ClearContext
      * @param template
      * @param maxEntries
      */
-    private final boolean _hasAfterOpFilter;
+    private final boolean _hasFilterRequiresFullSpaceFilterEntry;
     public ClearContext(ITemplatePacket template, int maxEntries,FilterManager fm) {
         super(template, maxEntries, maxEntries);
-        _hasAfterOpFilter = fm._isFilter[FilterOperationCodes.AFTER_TAKE_MULTIPLE];
+        _hasFilterRequiresFullSpaceFilterEntry = fm.hasFilterRequiresFullSpaceFilterEntry(FilterOperationCodes.AFTER_TAKE_MULTIPLE);
         if (keepResultsInBatchContext() && super.getResults() == null)
             setResults(super.createResultList(template, maxEntries));
     }
@@ -69,7 +69,7 @@ public class ClearContext
     @Override
     protected boolean keepResultsInBatchContext()
     {
-        return _hasAfterOpFilter;
+        return _hasFilterRequiresFullSpaceFilterEntry;
     }
 
 }
