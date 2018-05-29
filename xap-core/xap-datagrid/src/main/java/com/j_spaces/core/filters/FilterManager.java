@@ -79,6 +79,7 @@ public class FilterManager implements ISpaceComponentsHandler {
     private final PrioritySpaceFiltersHolder[] _filters;
     private final Map<String, FilterHolder> _filtersRepository;
     private final SpaceTypeManager _typeManager;
+    private boolean _hasNonStatisticsAfterTakeMultipleFilter;
 
     public FilterManager(SpaceTypeManager typeManager, IJSpace space, SpaceEngine engine) {
         _filters = new PrioritySpaceFiltersHolder[FilterOperationCodes.MAX_FILTER_OPERATION_CODES];
@@ -122,6 +123,35 @@ public class FilterManager implements ISpaceComponentsHandler {
                 _filters[i] = new PrioritySpaceFiltersHolder(filterHolders);
             }
         }
+
+        _hasNonStatisticsAfterTakeMultipleFilter = initNonStatisticsAfterTakeMultipleOpFilter();
+    }
+
+    public boolean hasNonStatisticsAfterTakeMultipleOpFilter() {
+        return _hasNonStatisticsAfterTakeMultipleFilter;
+    }
+
+    //has AfterTakeMultiple filter other then jSpaceStatistics
+    private boolean initNonStatisticsAfterTakeMultipleOpFilter() {
+        if(!_isFilter[FilterOperationCodes.AFTER_TAKE_MULTIPLE]){
+            return false;
+        }
+
+        PrioritySpaceFiltersHolder prioritySpaceFiltersHolder = _filters[FilterOperationCodes.AFTER_TAKE_MULTIPLE];
+
+        if(prioritySpaceFiltersHolder.isSingleFilterHolder){
+            return !(prioritySpaceFiltersHolder.singleFilterHolder.getFilter() instanceof JSpaceStatistics);
+        } else {
+            for (FilterHolder[] prioritizedFilterHolder : prioritySpaceFiltersHolder.prioritizedFilterHolders) {
+                for (FilterHolder filterHolder : prioritizedFilterHolder) {
+                    if(!(filterHolder.getFilter() instanceof JSpaceStatistics)){
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     public ISpaceFilter getFilterObject(String filterId) {
