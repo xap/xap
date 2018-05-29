@@ -775,7 +775,7 @@ public class SystemProperties extends CommonSystemProperties {
     public static final String QUERY_PROCESSOR_CLUSTER_LOOKUP_TIMEOUT = "com.gs.queryProcessor.cluster-lookup-timeout";
 
     //GS-13424 java 9 support: VisualVM is not part of JDK 9
-    public static final String VISUAL_VM_LAUNCH_FILE_PATH = "com.gs.visualvm.launcher-file.path";
+    public static final String VISUAL_VM_LAUNCH_FILE_PATH = "com.gs.visualvm.binary";
 
     private static final Map<String, String> defaultValues = initDefaultValues();
 
