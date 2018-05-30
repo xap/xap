@@ -2040,8 +2040,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
         try {
             BatchQueryOperationContext operationContext = take
-                    ? new TakeMultipleContext(template, maxEntries, minEntries, _engine.getFilterManager())
-                    : new ReadMultipleContext(template, maxEntries, minEntries, _engine.getFilterManager());
+                    ? new TakeMultipleContext(template, maxEntries, minEntries)
+                    : new ReadMultipleContext(template, maxEntries, minEntries);
             AnswerHolder ah = null;
             if (take && txn != null && !_engine.isLocalCache()) {
                     _engine.getTransactionHandler().checkTransactionDisconnection(template.getOperationID(),(ServerTransaction)txn);
