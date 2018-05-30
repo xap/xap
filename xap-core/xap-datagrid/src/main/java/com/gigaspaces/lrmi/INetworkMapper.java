@@ -24,6 +24,8 @@ package com.gigaspaces.lrmi;
  * @since 8.0
  */
 public interface INetworkMapper {
+    ServerAddress mapHost(ServerAddress serverAddress);
+
     /**
      * Maps a given network address to another one (not necessarily different)
      */

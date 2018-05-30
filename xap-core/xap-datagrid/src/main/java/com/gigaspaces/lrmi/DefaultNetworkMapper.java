@@ -91,6 +91,22 @@ public class DefaultNetworkMapper
     }
 
 
+    @Override
+    public ServerAddress mapHost(ServerAddress serverAddress) {
+        _logger.warning("request to mapHost " + serverAddress);
+        for (ServerAddress from:  _mapping.keySet()){
+            if (serverAddress.getHost().equalsIgnoreCase(from.getHost())){
+                String mapped = _mapping.get(from).getHost();
+                ServerAddress res = new ServerAddress(mapped, serverAddress.getPort());
+                _logger.warning("hostMap from " + serverAddress + " to " + res);
+                return res;
+            }
+            _logger.warning("hostMap no mapping" + serverAddress);
+        }
+        return serverAddress;
+    }
+
+    @Override
     public ServerAddress map(ServerAddress serverAddress) {
         _logger.warning("enter to map with param "+ serverAddress);
         _logger.warning("********************printing map details**************************");

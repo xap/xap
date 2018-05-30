@@ -109,7 +109,7 @@ public class ConnectionUrlDescriptor {
 
 
     private ServerAddress mapAddress(String host, int port) {
-        return LRMIRuntime.getRuntime().getNetworkMapper().map(new ServerAddress(host, port));
+        return LRMIRuntime.getRuntime().getNetworkMapper().mapHost(new ServerAddress(host, port));
     }
 
 
