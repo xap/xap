@@ -41,7 +41,7 @@ public class ReadMultipleContext
 
     public ReadMultipleContext(ITemplatePacket template, int maxEntries, int minEntries ,FilterManager fm) {
         super(template, maxEntries, minEntries);
-        _hasFilterRequiresFullSpaceFilterEntry = fm.hasFilterRequiresFullSpaceFilterEntry(FilterOperationCodes.AFTER_TAKE_MULTIPLE);
+        _hasFilterRequiresFullSpaceFilterEntry = fm.hasFilterRequiresFullSpaceFilterEntry(FilterOperationCodes.AFTER_READ_MULTIPLE);
         if (keepResultsInBatchContext() && super.getResults() == null)
             setResults(super.createResultList(template, maxEntries));
     }
