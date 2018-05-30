@@ -79,7 +79,6 @@ public class FilterManager implements ISpaceComponentsHandler {
     private final PrioritySpaceFiltersHolder[] _filters;
     private final Map<String, FilterHolder> _filtersRepository;
     private final SpaceTypeManager _typeManager;
-    private boolean _hasNonStatisticsAfterTakeMultipleFilter;
 
     public FilterManager(SpaceTypeManager typeManager, IJSpace space, SpaceEngine engine) {
         _filters = new PrioritySpaceFiltersHolder[FilterOperationCodes.MAX_FILTER_OPERATION_CODES];
@@ -124,12 +123,8 @@ public class FilterManager implements ISpaceComponentsHandler {
             }
         }
 
-        _hasNonStatisticsAfterTakeMultipleFilter = initNonStatisticsAfterTakeMultipleOpFilter();
     }
 
-    public boolean hasNonStatisticsAfterTakeMultipleOpFilter() {
-        return _hasNonStatisticsAfterTakeMultipleFilter;
-    }
 
     //has AfterTakeMultiple filter other then jSpaceStatistics
     private boolean initNonStatisticsAfterTakeMultipleOpFilter() {

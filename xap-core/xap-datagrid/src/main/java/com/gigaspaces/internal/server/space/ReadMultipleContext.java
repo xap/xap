@@ -21,6 +21,8 @@ package com.gigaspaces.internal.server.space;
 
 import com.gigaspaces.client.ReadMultipleException;
 import com.gigaspaces.internal.transport.ITemplatePacket;
+import com.j_spaces.core.filters.FilterManager;
+import com.j_spaces.core.filters.FilterOperationCodes;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -35,9 +37,13 @@ import java.util.HashSet;
 public class ReadMultipleContext
         extends BatchQueryOperationContext {
 
-    public ReadMultipleContext(ITemplatePacket template, int maxEntries, int minEntries) {
-        super(template, maxEntries, minEntries);
+    private final boolean _hasFilterRequiresFullSpaceFilterEntry;
 
+    public ReadMultipleContext(ITemplatePacket template, int maxEntries, int minEntries ,FilterManager fm) {
+        super(template, maxEntries, minEntries);
+        _hasFilterRequiresFullSpaceFilterEntry = fm.hasFilterRequiresFullSpaceFilterEntry(FilterOperationCodes.AFTER_TAKE_MULTIPLE);
+        if (keepResultsInBatchContext() && super.getResults() == null)
+            setResults(super.createResultList(template, maxEntries));
     }
 
     /**
@@ -52,6 +58,12 @@ public class ReadMultipleContext
     @Override
     public void createProcessedUidsIfNeeded() {
         _processedUids = new HashSet<String>();
+    }
+
+    @Override
+    protected boolean keepResultsInBatchContext()
+    {
+        return _hasFilterRequiresFullSpaceFilterEntry;
     }
 
 

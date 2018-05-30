@@ -21,6 +21,8 @@ package com.gigaspaces.internal.server.space;
 
 import com.gigaspaces.client.TakeMultipleException;
 import com.gigaspaces.internal.transport.ITemplatePacket;
+import com.j_spaces.core.filters.FilterManager;
+import com.j_spaces.core.filters.FilterOperationCodes;
 
 import java.util.Collections;
 
@@ -34,10 +36,15 @@ import java.util.Collections;
 public class TakeMultipleContext
         extends BatchQueryOperationContext {
 
-    public TakeMultipleContext(ITemplatePacket template, int maxEntries, int minEntries) {
-        super(template, maxEntries, minEntries);
+    private final boolean _hasFilterRequiresFullSpaceFilterEntry;
 
+    public TakeMultipleContext(ITemplatePacket template, int maxEntries, int minEntries,FilterManager fm) {
+        super(template, maxEntries, minEntries);
+        _hasFilterRequiresFullSpaceFilterEntry = fm.hasFilterRequiresFullSpaceFilterEntry(FilterOperationCodes.AFTER_TAKE_MULTIPLE);
+        if (keepResultsInBatchContext() && super.getResults() == null)
+            setResults(super.createResultList(template, maxEntries));
     }
+
 
     /**
      * @param t
@@ -47,4 +54,10 @@ public class TakeMultipleContext
         throw new TakeMultipleException(getResults(), Collections.singletonList(t));
     }
 
+
+    @Override
+    protected boolean keepResultsInBatchContext()
+    {
+        return _hasFilterRequiresFullSpaceFilterEntry;
+    }
 }
