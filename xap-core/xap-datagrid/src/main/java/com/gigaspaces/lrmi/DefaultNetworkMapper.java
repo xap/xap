@@ -50,7 +50,7 @@ public class DefaultNetworkMapper
         InputStream resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(NETWORK_MAPPING_FILE);
         if (resourceAsStream == null) {
             if (_logger.isLoggable(Level.INFO))
-                _logger.info("Could not locate networking mapping file " + NETWORK_MAPPING_FILE + " in the classpath, no mapping created");
+                _logger.info(" file " + NETWORK_MAPPING_FILE + " in the classpath, no mapping created");
             return;
         }
 
@@ -92,15 +92,26 @@ public class DefaultNetworkMapper
 
 
     public ServerAddress map(ServerAddress serverAddress) {
+        _logger.warning("enter to map with param "+ serverAddress);
+        _logger.warning("********************printing map details**************************");
+        for (ServerAddress from:  _mapping.keySet()){
+            ServerAddress to = _mapping.get(from);
+            _logger.warning("from: "+ from + ", to: "+ to);
+        }
+        _logger.warning("********************end printing map details**************************");
+
         ServerAddress transformed = _mapping.get(serverAddress);
         //No mapping, return original
         if (transformed == null) {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("No mapping exists for provided address " + serverAddress + " returning original address");
+            if (_logger.isLoggable(Level.FINEST)) {
+                _logger.warning("No mapping exists for provided address " + serverAddress + " returning original address");
+            }
             return serverAddress;
         }
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("Mapping  address " + serverAddress + " to " + transformed);
+        if (_logger.isLoggable(Level.FINEST)) {
+            _logger.warning("Mapping  address " + serverAddress + " to " + transformed);
+        }
+        _logger.warning("enter to map with server address "+ serverAddress +", to " +  transformed);
         return transformed;
     }
 
