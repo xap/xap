@@ -62,13 +62,15 @@ public class ConnectionUrlDescriptor {
 
         _devLogger.warning("ConnectionUrlDescriptor , MappedFile -  Entry - .....hostName"  +hostname +", port="+ port  );
 
-        ServerAddress transformedAddress = mapAddress(hostname, port);
+        //ServerAddress transformedAddress = mapAddress(hostname, port);
+
+        XapNetworkInfo networkInfo = SystemInfo.singleton().network();
+        _hostname = networkInfo.getPublicHost().getHostName();
+        ServerAddress transformedAddress = new ServerAddress(_hostname, port);
 
         //_hostname=transformedAddress.getHost();
         _port = transformedAddress.getPort();
         System.out.println("ConnectionUrlDescriptor, MappedFile -  Exit  - .....hostName"  +transformedAddress.getHost() +", port="+ _port  );
-        XapNetworkInfo networkInfo = SystemInfo.singleton().network();
-        _hostname = networkInfo.getPublicHost().getHostName();
         _devLogger.warning("ConnectionUrlDescriptor, use networkInfo host="+ _hostname + ", hostId="+networkInfo.getPublicHostId());
 
         _protocol = protocol;
