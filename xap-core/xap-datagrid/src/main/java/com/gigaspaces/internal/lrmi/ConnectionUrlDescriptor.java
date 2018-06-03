@@ -16,10 +16,14 @@
 
 package com.gigaspaces.internal.lrmi;
 
+import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.LRMIRuntime;
 import com.gigaspaces.lrmi.ServerAddress;
+import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.XapNetworkInfo;
 
 import java.net.InetSocketAddress;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,6 +48,8 @@ public class ConnectionUrlDescriptor {
     private final long _lrmiRuntimeId;
     private final String _serviceDetails;
 
+    private static final Logger _devLogger = Logger.getLogger(Constants.LOGGER_DEV);
+
     public ConnectionUrlDescriptor(
             String protocol,
             String hostname,
@@ -54,13 +60,17 @@ public class ConnectionUrlDescriptor {
             long lrmiRuntimeId,
             String serviceDetails) {
 
-        System.out.println("************* new code host="  +hostname +", port="+ port  );
+        _devLogger.warning("ConnectionUrlDescriptor , MappedFile -  Entry - .....hostName"  +hostname +", port="+ port  );
 
         ServerAddress transformedAddress = mapAddress(hostname, port);
 
-        _hostname=transformedAddress.getHost();
+        //_hostname=transformedAddress.getHost();
         _port = transformedAddress.getPort();
-        System.out.println("************* new code after transform host="  +_hostname +", port="+ _port  );
+        System.out.println("ConnectionUrlDescriptor, MappedFile -  Exit  - .....hostName"  +transformedAddress.getHost() +", port="+ _port  );
+        XapNetworkInfo networkInfo = SystemInfo.singleton().network();
+        _hostname = networkInfo.getPublicHost().getHostName();
+        _devLogger.warning("ConnectionUrlDescriptor, use networkInfo host="+ _hostname + ", hostId="+networkInfo.getPublicHostId());
+
         _protocol = protocol;
 //        _hostname = hostname;
 //        _port = port;

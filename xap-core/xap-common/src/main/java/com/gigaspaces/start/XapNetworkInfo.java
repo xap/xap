@@ -45,6 +45,10 @@ public class XapNetworkInfo {
         }
     }
 
+
+
+
+
     public String getHostId() {
         return hostId;
     }
