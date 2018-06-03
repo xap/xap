@@ -1,9 +1,11 @@
 package com.gigaspaces.start;
 
+import com.gigaspaces.logger.Constants;
 import org.jini.rio.boot.BootUtil;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.logging.Logger;
 
 /**
  * @author Niv Ingberg
@@ -14,15 +16,17 @@ public class XapNetworkInfo {
     private final InetAddress host;
     private final InetAddress publicHost;
     private String publicHostId;
+    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
 
     public XapNetworkInfo() {
         try {
             this.hostId = BootUtil.getHostAddress();
             this.host = InetAddress.getByName(hostId);
-            System.out.println("before  inititlize hostId=" + hostId + ", host="+host);
+            _logger.warning("before  inititlize hostId=" + hostId + ", host="+host);
+
             publicHostId = System.getenv("XAP_NIC_ADDRESS_PUBLIC");
             if(publicHostId !=null){
-                System.out.println("got XAP_NIC_ADDRESS_PUBLIC " + publicHostId);
+                _logger.warning("got XAP_NIC_ADDRESS_PUBLIC " + publicHostId);
             }
             if(publicHostId == null ){
                 publicHostId=hostId;
@@ -33,7 +37,7 @@ public class XapNetworkInfo {
             else{
                 publicHost = InetAddress.getByName(publicHostId);
             }
-            System.out.println("after inititlize publicHostId=" + publicHostId + ", publicHost="+publicHost);
+            _logger.warning("after inititlize publicHostId=" + publicHostId + ", publicHost="+publicHost);
 
 
         } catch (UnknownHostException e) {
