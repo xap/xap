@@ -93,7 +93,7 @@ public class DefaultNetworkMapper
 
     @Override
     public ServerAddress mapHost(ServerAddress serverAddress) {
-        _logger.warning("request to mapHost " + serverAddress);
+        _logger.warning(  "request to mapHost " + serverAddress);
         for (ServerAddress from:  _mapping.keySet()){
             if (serverAddress.getHost().equalsIgnoreCase(from.getHost())){
                 String mapped = _mapping.get(from).getHost();
