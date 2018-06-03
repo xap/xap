@@ -23,7 +23,6 @@ public class XapNetworkInfo {
             this.hostId = BootUtil.getHostAddress();
             this.host = InetAddress.getByName(hostId);
             _logger.warning("before  inititlize hostId=" + hostId + ", host="+host);
-
             publicHostId = System.getenv("XAP_NIC_ADDRESS_PUBLIC");
             if(publicHostId !=null){
                 _logger.warning("got XAP_NIC_ADDRESS_PUBLIC " + publicHostId);

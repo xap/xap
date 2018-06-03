@@ -59,28 +59,27 @@ public class ConnectionUrlDescriptor {
             long objectClassLoaderId,
             long lrmiRuntimeId,
             String serviceDetails) {
-
         _devLogger.warning("ConnectionUrlDescriptor , MappedFile -  Entry - .....hostName"  +hostname +", port="+ port  );
 
-        //ServerAddress transformedAddress = mapAddress(hostname, port);
-
-        XapNetworkInfo networkInfo = SystemInfo.singleton().network();
-        _hostname = networkInfo.getPublicHost().getHostName();
-        ServerAddress transformedAddress = new ServerAddress(_hostname, port);
-
-        //_hostname=transformedAddress.getHost();
-        _port = transformedAddress.getPort();
-        System.out.println("ConnectionUrlDescriptor, MappedFile -  Exit  - .....hostName"  +transformedAddress.getHost() +", port="+ _port  );
-        _devLogger.warning("ConnectionUrlDescriptor, use networkInfo host="+ _hostname + ", hostId="+networkInfo.getPublicHostId());
-
         _protocol = protocol;
-//        _hostname = hostname;
-//        _port = port;
+        _port = port;
         _pid = pid;
         _objectId = objectId;
         _objectClassLoaderId = objectClassLoaderId;
         _lrmiRuntimeId = lrmiRuntimeId;
         _serviceDetails = serviceDetails;
+
+        XapNetworkInfo networkInfo = SystemInfo.singleton().network();
+        if (networkInfo.getPublicHost().getHostName() != null ){
+            _hostname = networkInfo.getPublicHost().getHostName();
+            _devLogger.warning("public host name configured so set it, hostname=" + _hostname);
+        }
+        else{
+            _hostname = hostname;
+            _devLogger.warning("public host name is not configured so set  hostname=" + _hostname);
+        }
+        ServerAddress transformedAddress = new ServerAddress(_hostname, port);
+        _devLogger.warning("ConnectionUrlDescriptor, use networkInfo host="+ _hostname + ", hostId="+networkInfo.getPublicHostId());
     }
 
     public String getProtocol() {
