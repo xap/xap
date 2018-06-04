@@ -8,7 +8,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sigar.version>1.6.5</sigar.version>
-        <spring.version>4.3.13.RELEASE</spring.version>
+        <spring.version>4.3.17.RELEASE</spring.version>
         <spring.security.version>4.2.3.RELEASE</spring.security.version>
         <junit.version>4.12</junit.version>
         <jetty.version>9.2.24.v20180105</jetty.version>
