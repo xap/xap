@@ -19,11 +19,14 @@ public class XapManagerConfig {
     }
 
     public XapManagerConfig(String host, Properties properties) {
+
         this.host = host;
         this.properties = properties;
     }
 
     public static XapManagerConfig parse(String s) {
+
+        System.out.println("XapManagerConfig:parse input =" + s);
         final String[] tokens = s.split(";");
         final String host = tokens[0];
         final Properties properties = new Properties();
@@ -34,8 +37,11 @@ public class XapManagerConfig {
                 throw new IllegalArgumentException("Invalid manager config '" + s + "' - element '" + token + "' does not contain '='");
             String key = token.substring(0, pos);
             String value = token.substring(pos+1);
+            System.out.println("XapManagerConfig:parse key=" + key+", val="+value );
             properties.setProperty(key, value);
         }
+
+
         return new XapManagerConfig(host, properties);
     }
 

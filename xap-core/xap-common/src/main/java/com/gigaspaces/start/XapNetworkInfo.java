@@ -16,27 +16,36 @@ public class XapNetworkInfo {
     private final InetAddress host;
     private final InetAddress publicHost;
     private String publicHostId;
+    private boolean isPublicIpConfigure;
     final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
 
     public XapNetworkInfo() {
         try {
             this.hostId = BootUtil.getHostAddress();
             this.host = InetAddress.getByName(hostId);
-            _logger.warning("before  inititlize hostId=" + hostId + ", host="+host);
+            System.out.println("before inititlize hostId=" + hostId + ", host="+host);
             publicHostId = System.getenv("XAP_NIC_ADDRESS_PUBLIC");
             if(publicHostId !=null){
-                _logger.warning("got XAP_NIC_ADDRESS_PUBLIC " + publicHostId);
+                isPublicIpConfigure=true;
+                System.out.println("got XAP_NIC_ADDRESS_PUBLIC " + publicHostId);
+            }
+            else{
+                isPublicIpConfigure=false;
             }
             if(publicHostId == null ){
                 publicHostId=hostId;
+                System.out.println("public hostID=null, set it as host ID" + publicHostId);
             }
             if(publicHostId.equals(hostId)){
                 publicHost=host;
             }
             else{
                 publicHost = InetAddress.getByName(publicHostId);
+
             }
-            _logger.warning("after inititlize publicHostId=" + publicHostId + ", publicHost="+publicHost);
+
+            System.out.println("after inititlize publicHostId=" + publicHostId + ", publicHostName="+publicHost.getHostName()
+                    +", hosteAddrewss="+ publicHost.getHostAddress());
 
 
         } catch (UnknownHostException e) {
@@ -63,5 +72,10 @@ public class XapNetworkInfo {
 
     public InetAddress getPublicHost() {
         return publicHost;
+    }
+
+
+    public boolean isPublicIpConfigure(){
+        return isPublicIpConfigure;
     }
 }

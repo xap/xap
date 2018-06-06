@@ -259,14 +259,19 @@ public class Webster implements Runnable {
         for (int i = 0; i < putGetZipMutex.length; i++) {
             putGetZipMutex[i] = new Object();
         }
+        System.out.println("Webster Entry roots="+ roots +", bindAddress="+bindAddress );
 
         restrictAccess = Boolean.parseBoolean(System.getProperty(
                 "org.jini.rio.tools.webster.restrictAccess", "true"));
 
+        System.out.println("Webster restricAddress="+restrictAccess );
         String d = System.getProperty("org.jini.rio.tools.webster.debug");
+        System.out.println("1 Webster d="+d);
+
         if (d != null)
             debug = true;
         d = System.getProperty("webster.debug");
+        System.out.println("2 Webster d="+d);
         if (d != null)
             debug = true;
         setupRoots(roots);
@@ -276,6 +281,7 @@ public class Webster implements Runnable {
             if (Boolean.getBoolean("org.jini.rio.tools.webster.tls")) {
                 if (System.getProperty("javax.net.ssl.keyStore", null) != null) {
                     serverSocketFactory = SSLServerSocketFactory.getDefault();
+                    System.out.println("Webstr dfault");
                 } else {
                     KeyStore ks = keystore();
                     if (ks != null) {
@@ -284,6 +290,7 @@ public class Webster implements Runnable {
                         kmf.init(ks, "foo".toCharArray());
                         sslContext.init(kmf.getKeyManagers(), null, null);
                         serverSocketFactory = sslContext.getServerSocketFactory();
+                        System.out.println("Webstr ssl");
                     }
                 }
                 protocol = "https";
@@ -293,14 +300,19 @@ public class Webster implements Runnable {
         }
         if (serverSocketFactory == null) {
             serverSocketFactory = ServerSocketFactory.getDefault();
+            System.out.println("2 Webstr default");
         }
 
         try {
+            System.out.println("Webster bindaddress="+bindAddress);
             if (bindAddress == null) {
+                System.out.println("Webster port:"+port);
                 ss = serverSocketFactory.createServerSocket(port);
             } else {
                 InetAddress addr = InetAddress.getByName(bindAddress);
+                System.out.println("Webster Inetaddr:"+addr);
                 ss = serverSocketFactory.createServerSocket(port, 0, addr);
+                System.out.println("Webster after...:"+addr);
             }
 
             port = ss.getLocalPort();
@@ -410,9 +422,17 @@ public class Webster implements Runnable {
      * @return The host address the server socket Webster is using is bound to. If the socket is
      * null, return null.
      */
+    //return publi
     public String getAddress() {
-        if (ss == null)
+        System.out.println("in getAddress return ");
+
+        if (ss == null) {
             return (null);
+        }
+        if(SystemInfo.singleton().network().isPublicIpConfigure()){
+            System.out.println("in getAddress return " +BootIOUtils.wrapIpv6HostAddressIfNeeded(SystemInfo.singleton().network().getPublicHost()));
+            return BootIOUtils.wrapIpv6HostAddressIfNeeded(SystemInfo.singleton().network().getPublicHost());
+        }
         return BootIOUtils.wrapIpv6HostAddressIfNeeded(ss.getInetAddress());
     }
 

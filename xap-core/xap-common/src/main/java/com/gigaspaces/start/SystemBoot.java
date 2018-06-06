@@ -270,9 +270,14 @@ public class SystemBoot {
             final Collection<Closeable> customServices = new ArrayList<Closeable>();
             for (String service : services) {
                 ServiceDescriptor serviceDescriptor = systemConfig.getServiceDescriptor(service);
-                if (logger.isLoggable(Level.CONFIG))
+                if (logger.isLoggable(Level.CONFIG)) {
                     logger.log(Level.CONFIG, "Creating service " + service + (serviceDescriptor == null ? "" :
-                    " with serviceDescriptor " + serviceDescriptor));
+                            " with serviceDescriptor " + serviceDescriptor));
+                    System.out.println("Creating service " + service + (serviceDescriptor == null ? "" :
+                            " with serviceDescriptor " + serviceDescriptor));
+
+                }
+
                 if (serviceDescriptor != null) {
                     serviceDescriptor.create(config);
                 } else {

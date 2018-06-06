@@ -488,6 +488,7 @@ public class SystemConfig {
      */
     public Webster getWebster() throws BindException, ConfigurationException,
             UnknownHostException {
+        System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX***************in getWebster");
         if (webster == null) {
             String deployRoot = System.getProperty("com.gs.deploy", rootDir + "deploy");
             System.setProperty("com.gs.deploy", deployRoot);
@@ -527,8 +528,13 @@ public class SystemConfig {
             httpServerRetries = Integer.getInteger(COMPONENT + ".httpServerRetries", httpServerRetries);
 
             //override with sys. property inside
-            final XapManagerConfig currServer = SystemInfo.singleton().getManagerClusterInfo().getCurrServer();
-            String hostAddress = currServer != null ? currServer.getHost() : getDefaultHostAddress();
+
+            ///***********ASK NIV ***************************
+            //final XapManagerConfig currServer = SystemInfo.singleton().getManagerClusterInfo().getCurrServer();
+            //String hostAddress = currServer != null ? currServer.getHost() : getDefaultHostAddress();
+
+            String hostAddress = getDefaultHostAddress();
+            System.out.println("***************new webster with  defaultAddess ");
 
             for (int i = 0; i < httpServerRetries; i++) {
                 try {
@@ -966,6 +972,8 @@ public class SystemConfig {
          * @see com.sun.jini.start.ServiceDescriptor#create
          */
         public Object create(Configuration config) throws Exception {
+
+            System.out.println("-------------------------------------in create  11");
             MBeanServer mbs = null;
             SystemBoot.ensureSecurityManager();
 
@@ -977,7 +985,9 @@ public class SystemConfig {
 
             int jmxRemotePort = -1;
             String jmxRemotePortStr = System.getProperty(CommonSystemProperties.JMX_REMOTE_PORT);
+            System.out.println("-------------------------------------in create  22");
             if (jmxRemotePortStr != null) {
+                System.out.println("-------------------------------------in create  33");
                 try {
                     jmxRemotePort = Integer.parseInt(jmxRemotePortStr);
                 } catch (Exception e) {
@@ -985,15 +995,20 @@ public class SystemConfig {
                 }
             }
             if (jmxRemotePort > 0) {
+                System.out.println("-------------------------------------in create  44");
                 logger.info("System property [" + CommonSystemProperties.JMX_REMOTE_PORT + "] has value:" + jmxRemotePort);
             }
             Registry registry = null;
+            System.out.println("-------------------------------------in create  55");
             if (jmxRemotePort < 0) {
+                System.out.println("-------------------------------------in create  66");
 
                 if (logger.isLoggable(Level.FINER))
                     logger.log(Level.FINER, "Starting RMI Registry initialization: initial port=" + registryPort + ", retries=" + registryRetries);
                 RemoteException registryCreationException = null;
+                System.out.println("-------------------------------------in create  77");
                 for (int i = 0; i < registryRetries; i++) {
+                    System.out.println("-------------------------------------in create  88");
                     try {
                         registry = LocateRegistry.createRegistry(registryPort);
                         break;
@@ -1008,6 +1023,7 @@ public class SystemConfig {
 
                 Thread.currentThread().setContextClassLoader(cl);
 
+                System.out.println("-------------------------------------in create   registry= "+ registry);
                 if (registry == null) {
                     logger.log(Level.SEVERE,
                             "Unable to create RMI Registry, tried port range ["
@@ -1022,7 +1038,13 @@ public class SystemConfig {
                     System.setProperty(CommonSystemProperties.REGISTRY_PORT, Integer.toString(registryPort));
                     if (logger.isLoggable(Level.FINE))
                         logger.fine("Created RMI Registry: " + registry.toString() + " using port " + registryPort);
+
+
                     String defaultAddress = SystemInfo.singleton().network().getHostId();
+                    if(SystemInfo.singleton().network().isPublicIpConfigure()){
+                        defaultAddress=SystemInfo.singleton().network().getPublicHostId();
+                        System.out.println("-------------------------------------ser publicHostID="+defaultAddress );
+                    }
                     String hostAddress =
                             (String) config.getEntry(COMPONENT,
                                     "hostAddress",
@@ -1030,7 +1052,9 @@ public class SystemConfig {
                                     defaultAddress);
                     //mbs = ManagementFactory.getPlatformMBeanServer();
                     mbs = MBeanServerFactory.getMBeanServer();
+                    System.out.println("-------------------------------------in create  88888");
                     if (mbs != null) {
+                        System.out.println("-------------------------------------in create  99999 hostAddress="+hostAddress +", " + registryPort);
                         final String jmxServiceURL = JMXUtilities.createJMXUrl(hostAddress, registryPort);
                     /* Set the JMX property to true */
                         System.setProperty(CommonSystemProperties.JMX_ENABLED_PROP, Boolean.TRUE.toString());
@@ -1039,8 +1063,14 @@ public class SystemConfig {
                         final long start = System.currentTimeMillis();
                         JMXConnectorServer jmxConn = JMXConnectorServerFactory.newJMXConnectorServer(
                                 new JMXServiceURL(jmxServiceURL), (Map) System.getProperties(), mbs);
-                        jmxConn.start();
+
+                        System.out.println("-------------------------------------in create  before start="+ jmxServiceURL);
+                        ///remove this line
                         System.setProperty(CommonSystemProperties.JMX_SERVICE_URL, jmxServiceURL);
+                        jmxConn.start();
+                        System.out.println("-------------------------------------in create  after start");
+                        System.setProperty(CommonSystemProperties.JMX_SERVICE_URL, jmxServiceURL);
+                        System.out.println("-------------------------------------in create  set JMX Property = "+ jmxServiceURL);
                         final long duration = System.currentTimeMillis() - start;
                         if (logger.isLoggable(Level.INFO))
                             logger.info("Exported JMX Platform MBeanServer with RMI Connector " +
@@ -1066,6 +1096,7 @@ public class SystemConfig {
                     /* Set the JMX property to true */
                     System.setProperty(CommonSystemProperties.JMX_ENABLED_PROP, Boolean.TRUE.toString());
                     System.setProperty(CommonSystemProperties.CREATE_JMX_CONNECTOR_PROP, Boolean.FALSE.toString());
+                    System.out.println("SystemConfig 1097 GGGGGGGGGGGGGGGGGGGGG ser JMX_URL="+jmxServiceURL);
                     System.setProperty(CommonSystemProperties.JMX_SERVICE_URL, jmxServiceURL);
                 } else {
                     logger.info("Unable to acquire JMX Platform MBeanServer, running with Java version " + System.getProperty("java.version"));

@@ -70,15 +70,8 @@ public class ConnectionUrlDescriptor {
         _serviceDetails = serviceDetails;
 
         XapNetworkInfo networkInfo = SystemInfo.singleton().network();
-        if (networkInfo.getPublicHost().getHostName() != null ){
-            _hostname = networkInfo.getPublicHost().getHostName();
-            _devLogger.warning("public host name configured so set it, hostname=" + _hostname);
-        }
-        else{
-            _hostname = hostname;
-            _devLogger.warning("public host name is not configured so set  hostname=" + _hostname);
-        }
-        ServerAddress transformedAddress = new ServerAddress(_hostname, port);
+        _hostname = networkInfo.getPublicHostId();
+        //_hostname = networkInfo.getPublicHost().getHostName();
         _devLogger.warning("ConnectionUrlDescriptor, use networkInfo host="+ _hostname + ", hostId="+networkInfo.getPublicHostId());
     }
 

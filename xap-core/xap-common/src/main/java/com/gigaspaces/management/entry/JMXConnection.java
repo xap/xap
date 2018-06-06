@@ -49,6 +49,7 @@ public class JMXConnection extends net.jini.entry.AbstractEntry implements Exter
      * @param name          A Human readable name for the connector
      */
     public JMXConnection(String jmxServiceURL, String name) {
+        System.out.println("XXXXXXXXXXXXX  in JMXConnection jmxServiceURL="+ jmxServiceURL +", name="+name  ) ;
         this.jmxServiceURL = jmxServiceURL;
         this.name = name;
     }

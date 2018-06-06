@@ -64,10 +64,13 @@ public class XapManagerClusterInfo {
 
     private static Collection<XapManagerConfig> parseShort() {
         final String var = get(SERVERS_PROPERTY, SERVERS_ENV_VAR);
+        System.out.println("parseShort:"+ var);
         return parseServersEnvVar( var );
     }
 
     public static Collection<XapManagerConfig> parseServersEnvVar( String serversEnvVar ) {
+
+        System.out.println("parseServersEnvVar:"+ serversEnvVar);
         final Collection<XapManagerConfig> result = new ArrayList<XapManagerConfig>();
         if (serversEnvVar != null && !serversEnvVar.isEmpty()) {
             final String[] tokens = serversEnvVar.split(",");
@@ -114,8 +117,10 @@ public class XapManagerClusterInfo {
     }
 
     private XapManagerConfig findManagerByHost(InetAddress currHost) {
+        logger.log(Level.WARNING, "findManagerByHost: currHost=" + currHost.getHostName());
         XapManagerConfig result = null;
         for (XapManagerConfig server : servers) {
+            System.out.println("in findManger server = " + server.getHost());
             if (server.getHost().equals(currHost.getHostName()) || server.getHost().equals(currHost.getHostAddress()))
                 result = server;
         }
@@ -130,6 +135,11 @@ public class XapManagerClusterInfo {
             else
                 logger.log(Level.CONFIG, "Current manager is " + result);
         }
+
+        if(result != null){
+            logger.log(Level.WARNING, "findManagerByHost: result=" + result.getHost());
+        }
+
         return result;
     }
 }
