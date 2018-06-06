@@ -41,9 +41,11 @@ public class OutputJVMOptions {
         final String vmName = getJvmName();
         if (vmName.equals("HOTSPOT")) {
             String result = "-server -XX:+AggressiveOpts -XX:+HeapDumpOnOutOfMemoryError";
-            final int vmVersion = getVmVersion();
-            if (vmVersion < 8)
+            if (!JdkVersion.isAtLeastJava18()) { // < 8
                 result += " -XX:MaxPermSize=256m";
+            } else if (JdkVersion.getMajorJavaVersion() == JdkVersion.JAVA_9) {
+                result += " --add-modules=ALL-SYSTEM";
+            }
             return result;
         }
 
@@ -64,13 +66,5 @@ public class OutputJVMOptions {
         else
             result = split[0];
         return result.toUpperCase();
-    }
-
-    private static int getVmVersion() {
-        final String vmVersion = System.getProperty("java.version");
-        final String version = vmVersion.contains(".")
-                ? vmVersion.substring(vmVersion.indexOf('.') + 1, vmVersion.lastIndexOf('.'))
-                : vmVersion;
-        return Integer.parseInt(version);
     }
 }
