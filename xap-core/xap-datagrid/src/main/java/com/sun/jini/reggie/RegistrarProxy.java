@@ -209,7 +209,9 @@ class RegistrarProxy
                         e instanceof StackOverflowError)) {
             throw (Error) e;
         }
-        logger.log(Level.INFO, "unmarshalling failure", e);
+        if (logger.isLoggable(Level.FINEST)) {
+            logger.log(Level.FINEST, "unmarshalling failure", e);
+        }
     }
 
     // Inherit javadoc
