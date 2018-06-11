@@ -317,6 +317,8 @@ public class BootUtil {
                     if (!locatorURL.startsWith("jini://")) {
                         locatorURL = "jini://" + locatorURL;
                     }
+                    System.out.println("");
+
                     LookupLocator lookupLocator = new LookupLocator(locatorURL);
                     locatorList.add(lookupLocator);
                 } catch (MalformedURLException ex) {

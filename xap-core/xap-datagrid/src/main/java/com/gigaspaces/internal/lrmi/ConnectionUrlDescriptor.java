@@ -59,7 +59,7 @@ public class ConnectionUrlDescriptor {
             long objectClassLoaderId,
             long lrmiRuntimeId,
             String serviceDetails) {
-        _devLogger.warning("ConnectionUrlDescriptor , MappedFile -  Entry - .....hostName"  +hostname +", port="+ port  );
+
 
         _protocol = protocol;
         _port = port;
@@ -72,7 +72,7 @@ public class ConnectionUrlDescriptor {
         XapNetworkInfo networkInfo = SystemInfo.singleton().network();
         _hostname = networkInfo.getPublicHostId();
         //_hostname = networkInfo.getPublicHost().getHostName();
-        _devLogger.warning("ConnectionUrlDescriptor, use networkInfo host="+ _hostname + ", hostId="+networkInfo.getPublicHostId());
+
     }
 
     public String getProtocol() {

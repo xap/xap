@@ -192,9 +192,9 @@ class DiscoveryV1 extends Discovery {
 
             // derive client host
             String host = packet.getAddress().getHostAddress();
-
             // read client port
             int port = buf.getInt();
+            System.out.println("-------------------------Discover1 host=" +host +", port=" + port );
 
             // read known service IDs
             int nids = buf.getInt();

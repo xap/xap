@@ -2,8 +2,10 @@ package com.gigaspaces.start.manager;
 
 import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.logger.Constants;
+import com.gigaspaces.start.SystemInfo;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,6 +19,7 @@ public class XapManagerClusterInfo {
     public static final String SERVER_ENV_VAR = "XAP_MANAGER_SERVER";
 
     private final XapManagerConfig currServer;
+
     private final XapManagerConfig[] servers;
 
     public XapManagerClusterInfo(InetAddress currHost) {
@@ -117,18 +120,26 @@ public class XapManagerClusterInfo {
     }
 
     private XapManagerConfig findManagerByHost(InetAddress currHost) {
+
         logger.log(Level.WARNING, "findManagerByHost: currHost=" + currHost.getHostName());
         XapManagerConfig result = null;
         for (XapManagerConfig server : servers) {
+            logger.log(Level.WARNING, "1111111111111111111111111111111111111111111111");
             System.out.println("in findManger server = " + server.getHost());
-            if (server.getHost().equals(currHost.getHostName()) || server.getHost().equals(currHost.getHostAddress()))
+            if (server.getHost().equals(currHost.getHostName()) || server.getHost().equals(currHost.getHostAddress())){
                 result = server;
+                logger.log(Level.WARNING, "222222222222222222222222222222222222222222222222222222");
+
+            }
         }
         if (result == null && servers.length == 1) {
-            if (servers[0].getHost().equals("localhost") || servers[0].getHost().equals("127.0.0.1"))
+            logger.log(Level.WARNING, "3333333333333333333333333333333333333333333333333333333333333333");
+            if (servers[0].getHost().equals("localhost") || servers[0].getHost().equals("127.0.0.1")){
                 result = servers[0];
+                logger.log(Level.WARNING, "44444444444444444444444444444444444444444444444444444444444444");
+            }
         }
-
+        logger.log(Level.WARNING, "555555555555555555555555555555555555555555555555");
         if (logger.isLoggable(Level.CONFIG)) {
             if (result == null)
                 logger.log(Level.CONFIG, "Current host [" + currHost +"] is not part of configured managers");
@@ -136,7 +147,9 @@ public class XapManagerClusterInfo {
                 logger.log(Level.CONFIG, "Current manager is " + result);
         }
 
+        logger.log(Level.WARNING, "findManagerByHost: result=" + result);
         if(result != null){
+            logger.log(Level.WARNING, "6666666666666666666666666666666666666666666666666666666666");
             logger.log(Level.WARNING, "findManagerByHost: result=" + result.getHost());
         }
 

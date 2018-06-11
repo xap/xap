@@ -45,7 +45,7 @@ public class XapNetworkInfo {
             }
 
             System.out.println("after inititlize publicHostId=" + publicHostId + ", publicHostName="+publicHost.getHostName()
-                    +", hosteAddrewss="+ publicHost.getHostAddress());
+                    +", hosteAddrewss="+ host.getHostAddress());
 
 
         } catch (UnknownHostException e) {

@@ -17,6 +17,7 @@
  */
 package net.jini.core.discovery;
 
+import com.gigaspaces.start.SystemInfo;
 import net.jini.core.lookup.ServiceRegistrar;
 import net.jini.discovery.Constants;
 import net.jini.io.MarshalInputStream;
@@ -93,12 +94,16 @@ public class LookupLocator implements Serializable {
      * @throws NullPointerException  if <code>url</code> is <code>null</code>
      */
     public LookupLocator(String url) throws MalformedURLException {
+        System.out.println("ion LookupLocator url" + url  );
         if (url == null) {
             throw new NullPointerException("url is null");
         }
+
         URI uri = null;
         try {
             uri = new URI(url);
+
+
         } catch (URISyntaxException e) {
             MalformedURLException mue =
                     new MalformedURLException("URI parsing failure: " + url);
@@ -215,7 +220,16 @@ public class LookupLocator implements Serializable {
      * @return a String representing the host value
      */
     public String getHost() {
-        return host;
+
+        if(SystemInfo.singleton() != null &&  SystemInfo.singleton().network() !=null && SystemInfo.singleton().network().isPublicIpConfigure()){
+            System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%return new host " + SystemInfo.singleton().network().getPublicHost().getHostAddress() );
+            return  SystemInfo.singleton().network().getPublicHost().getHostAddress();
+        }
+        else{
+            return host;
+
+        }
+
     }
 
     /**

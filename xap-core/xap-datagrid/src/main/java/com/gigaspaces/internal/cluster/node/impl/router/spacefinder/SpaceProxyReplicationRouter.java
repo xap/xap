@@ -186,6 +186,7 @@ public class SpaceProxyReplicationRouter
     @SuppressWarnings("deprecation")
     public synchronized IReplicationMonitoredConnection getUrlConnection(
             Object customUrl) {
+        System.out.println("IReplicationMonitoredConnection:getUrlConnection ZZZZZZZZZZZZZZZZZZZZZZZZZZZz" + customUrl);
         if (isClosed())
             throw new ClosedResourceException("Replication Router ["
                     + getMyLookupName() + "] is closed");

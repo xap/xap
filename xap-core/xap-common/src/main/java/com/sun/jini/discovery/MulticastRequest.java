@@ -67,6 +67,8 @@ public class MulticastRequest {
                             int port,
                             String[] groups,
                             ServiceID[] serviceIDs) {
+
+        System.out.println("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSin MulticastRequest host ="+host);
         groups = (groups != null) ? (String[]) groups.clone() : new String[0];
         serviceIDs = (serviceIDs != null) ?
                 (ServiceID[]) serviceIDs.clone() : new ServiceID[0];

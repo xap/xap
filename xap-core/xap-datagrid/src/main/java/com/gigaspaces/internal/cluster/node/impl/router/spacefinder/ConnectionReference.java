@@ -40,6 +40,10 @@ public class ConnectionReference<T, L>
     private boolean _closed;
 
     public ConnectionReference(AbstractProxyBasedReplicationMonitoredConnection<T, L> connection) {
+        if(true){
+            new Exception().printStackTrace();
+        }
+        System.out.println("ZZZZZZZZZZZZZZZZZZZZZZZZZZZz" + connection.getConnectionUrl());
         _connection = connection;
         _connection.addReference();
     }

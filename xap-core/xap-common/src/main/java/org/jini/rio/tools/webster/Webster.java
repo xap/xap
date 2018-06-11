@@ -110,7 +110,8 @@ public class Webster implements Runnable {
      * port will be allocated.
      */
     public Webster() throws BindException {
-        this.port = Integer.getInteger(WEBSTER_PORT, 0);
+        this.port = Integer.getInteger(WEBSTER_PORT, 8200);
+        System.out.println("Webstr port= " + port);
         initialize();
     }
 
@@ -120,7 +121,8 @@ public class Webster implements Runnable {
      * @param port The port to use
      */
     public Webster(int port) throws BindException {
-        this.port = Integer.getInteger(WEBSTER_PORT, 0);
+        this.port = Integer.getInteger(WEBSTER_PORT, 8200);
+        System.out.println("Webstr port= " + port);
         initialize();
     }
 
@@ -131,7 +133,8 @@ public class Webster implements Runnable {
      *              directories
      */
     public Webster(String roots) throws BindException {
-        this.port = Integer.getInteger(WEBSTER_PORT, 0);
+        this.port = Integer.getInteger(WEBSTER_PORT, 8200);
+        System.out.println("Webstr port= " + port);
         initialize(roots);
     }
 
@@ -159,6 +162,7 @@ public class Webster implements Runnable {
     public Webster(int port, String roots, String bindAddress)
             throws BindException {
         this.port = port;
+        System.out.println("Webstr port= " + port);
         initialize(roots, bindAddress);
     }
 
@@ -316,6 +320,7 @@ public class Webster implements Runnable {
             }
 
             port = ss.getLocalPort();
+            System.out.println("Webster port:"+port);
 
             if (logger.isLoggable(Level.FINE) || debug) {
                 String msg = "Webster serving on : "
@@ -493,6 +498,7 @@ public class Webster implements Runnable {
      * Get the port Webster is bound to
      */
     public int getPort() {
+        System.out.println("Webster get port return port=" + port);
         return (port);
     }
 

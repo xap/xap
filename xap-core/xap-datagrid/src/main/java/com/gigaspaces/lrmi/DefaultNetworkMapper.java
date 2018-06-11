@@ -108,13 +108,12 @@ public class DefaultNetworkMapper
 
     @Override
     public ServerAddress map(ServerAddress serverAddress) {
-        _logger.warning("enter to map with param "+ serverAddress);
-        _logger.warning("********************printing map details**************************");
+
         for (ServerAddress from:  _mapping.keySet()){
             ServerAddress to = _mapping.get(from);
-            _logger.warning("from: "+ from + ", to: "+ to);
+
         }
-        _logger.warning("********************end printing map details**************************");
+
 
         ServerAddress transformed = _mapping.get(serverAddress);
         //No mapping, return original

@@ -9,6 +9,7 @@ public class XapManagerConfig {
     // List of servers.
     // Each server has a host, and a map of component-to-port
     private final String host;
+
     private final Properties properties;
 
     private static final String DEFAULT_REST = System.getProperty(CommonSystemProperties.MANAGER_REST_PORT, "8090");
@@ -19,7 +20,7 @@ public class XapManagerConfig {
     }
 
     public XapManagerConfig(String host, Properties properties) {
-
+        System.out.println("XapManagerConfig:Constrctor - host =" + host);
         this.host = host;
         this.properties = properties;
     }
@@ -83,3 +84,4 @@ public class XapManagerConfig {
         return result;
     }
 }
+

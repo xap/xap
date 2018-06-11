@@ -73,8 +73,9 @@ public class SystemInfo {
         this.productType = new File(locations.insightedge).exists() ? ProductType.InsightEdge : ProductType.XAP;
         this.timeProvider = new XapTimeProvider();
         System.out.println("in SystemInfo:" + network.getPublicHost());
-        //this.managerClusterInfo = new XapManagerClusterInfo(network.getPublicHost());
-        this.managerClusterInfo = new XapManagerClusterInfo(network.getHost());
+        this.managerClusterInfo = new XapManagerClusterInfo(network.getPublicHost());
+
+        //this.managerClusterInfo = new XapManagerClusterInfo(network.getHost());
         this.lookup = new XapLookup(managerClusterInfo);
     }
 

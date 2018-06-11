@@ -598,6 +598,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             loginContext = (LoginContext) config.getEntry(
                     COMPONENT, "loginContext", LoginContext.class, null);
 
+
             this.host = SystemInfo.singleton().network().getHost();
             PrivilegedExceptionAction init = new PrivilegedExceptionAction() {
                 public Object run() throws Exception {
@@ -1652,6 +1653,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          */
         public void run() {
             InetAddress[] addr = new InetAddress[]{};
+
+            System.out.println("------------------------GigaRegister host=" + host);
             try {
                 try {
                     InetAddress[] addrByName = InetAddress.getAllByName(host);
@@ -4978,7 +4981,9 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         unexportWait = Config.getLongEntry(
                 config, COMPONENT, "unexportWait", unexportWait,
                 0, Long.MAX_VALUE);
+
         String defaultValue = SystemInfo.singleton().network().getHostId();
+
         String unicastDiscoveryHost;
         try {
             unicastDiscoveryHost = (String) Config.getNonNullEntry(

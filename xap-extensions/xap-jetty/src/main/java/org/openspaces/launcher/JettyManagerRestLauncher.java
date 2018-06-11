@@ -90,7 +90,11 @@ public class JettyManagerRestLauncher implements Closeable {
 
     private void initConnectors(Server server, XapManagerConfig config)
             throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException {
-        final String host = config.getHost();
+        String host = config.getHost();
+        if(SystemInfo.singleton().network().isPublicIpConfigure()){
+            System.out.println("in Jetty config public address host= " + host + " becaome ="+ SystemInfo.singleton().network().getHostId());
+            host = SystemInfo.singleton().network().getHostId();
+        }
         final int port = Integer.parseInt(config.getAdminRest());
         SslContextFactory sslContextFactory = createSslContextFactoryIfNeeded();
         JettyUtils.createConnector(server, host, port, sslContextFactory);
@@ -108,6 +112,7 @@ public class JettyManagerRestLauncher implements Closeable {
     }
 
     private void initWebApps(Server server) {
+        System.out.println("in initwebaddress");
         ContextHandlerCollection handler = new ContextHandlerCollection();
         File webApps = new File(SystemInfo.singleton().locations().getLibPlatform() + "/manager/webapps");
         FilenameFilter warFilesFilter = new FilenameFilter() {
@@ -145,6 +150,7 @@ public class JettyManagerRestLauncher implements Closeable {
 
     private SslContextFactory createSslContextFactoryIfNeeded()
             throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException {
+        System.out.println("in createSslContextFactoryIfNeeded");
         boolean sslEnabled = Boolean.getBoolean(SystemProperties.MANAGER_REST_SSL_ENABLED);
         if (!sslEnabled) {
             boolean isSecured = Boolean.getBoolean(SystemProperties.SECURITY_ENABLED);

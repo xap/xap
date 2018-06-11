@@ -516,7 +516,7 @@ public class SystemConfig {
             if (addHttpRoots != null)
                 httpRoots = httpRoots + ";" + addHttpRoots;
 
-            int httpPort = (Integer) config.getEntry(COMPONENT, "httpPort", int.class, 0);
+            int httpPort = (Integer) config.getEntry(COMPONENT, "httpPort", int.class, 8200);
 
             //override with sys. property -Dcom.gigaspaces.start.httpPort
             httpPort = Integer.getInteger(COMPONENT + ".httpPort", httpPort);
