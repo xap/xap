@@ -622,10 +622,21 @@ public class SpaceTypeDescriptorBuilder {
             SpaceIndex index = _indexes.get(propertyName);
             if (index == null)
                 addPropertyIndex(propertyName, indexType);
-            else if (index.getIndexType() != indexType)
-                throw new IllegalArgumentException("Cannot add index '" + index.getName() + "' - an index with the same name is already defined.");
+            else if (!isEquivalent(index.getIndexType(), indexType))
+                throw new IllegalArgumentException("Cannot add index '" + index.getName() + "' as " + indexType + " - it's already indexed as " + index.getIndexType());
         }
     }
+
+    private static boolean isEquivalent(SpaceIndexType a, SpaceIndexType b) {
+        if (a == b)
+            return true;
+        if ((a == SpaceIndexType.BASIC || a == SpaceIndexType.EQUAL) && (b == SpaceIndexType.BASIC || b == SpaceIndexType.EQUAL))
+            return true;
+        if ((a == SpaceIndexType.EXTENDED || a == SpaceIndexType.EQUAL_AND_ORDERED) && (b == SpaceIndexType.EXTENDED || b == SpaceIndexType.EQUAL_AND_ORDERED))
+            return true;
+        return false;
+    }
+
 
     /**
      * Adds a QueryExtension information for the specified path

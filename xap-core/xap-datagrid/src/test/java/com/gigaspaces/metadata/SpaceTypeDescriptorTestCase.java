@@ -113,6 +113,7 @@ import com.gigaspaces.metadata.gsxml.fifoGrouping.PojoIllegalFifoGroupingOnColle
 import com.gigaspaces.metadata.gsxml.fifoGrouping.PojoIllegalFifoGroupingOnCollectionXml;
 import com.gigaspaces.metadata.gsxml.fifoGrouping.PojoIllegalFifoGroupingPropertyOnSpaceExcludeXml;
 import com.gigaspaces.metadata.index.SpaceIndex;
+import com.gigaspaces.metadata.index.SpaceIndexFactory;
 import com.gigaspaces.metadata.index.SpaceIndexType;
 import com.gigaspaces.metadata.pojos.PojoIllegalStorageType;
 import com.gigaspaces.metadata.pojos.PojoNoProperties;
@@ -1199,6 +1200,73 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         inheritStorageTypeAndDeclareAnnotation();
 
         IllegalStorageTypeDocument();
+    }
+
+    public void testExplicitRoutingIndex() {
+        // Test implicit routing index:
+        testExplicitRoutingIndex(SpaceIndexType.EQUAL, false);
+        testExplicitRoutingIndex(SpaceIndexType.BASIC, false);
+        testExplicitRoutingIndex(SpaceIndexType.ORDERED, true);
+        testExplicitRoutingIndex(SpaceIndexType.EQUAL_AND_ORDERED, true);
+        testExplicitRoutingIndex(SpaceIndexType.EXTENDED, true);
+
+        // Test explicit new default routing index:
+        testExplicitRoutingIndex(SpaceIndexType.EQUAL, SpaceIndexType.EQUAL, false);
+        testExplicitRoutingIndex(SpaceIndexType.EQUAL, SpaceIndexType.BASIC, false);
+        testExplicitRoutingIndex(SpaceIndexType.EQUAL, SpaceIndexType.ORDERED, true);
+        testExplicitRoutingIndex(SpaceIndexType.EQUAL, SpaceIndexType.EQUAL_AND_ORDERED, true);
+        testExplicitRoutingIndex(SpaceIndexType.EQUAL, SpaceIndexType.EXTENDED, true);
+
+        // Test explicit old default routing index:
+        testExplicitRoutingIndex(SpaceIndexType.BASIC, SpaceIndexType.EQUAL, false);
+        testExplicitRoutingIndex(SpaceIndexType.BASIC, SpaceIndexType.BASIC, false);
+        testExplicitRoutingIndex(SpaceIndexType.BASIC, SpaceIndexType.ORDERED, true);
+        testExplicitRoutingIndex(SpaceIndexType.BASIC, SpaceIndexType.EQUAL_AND_ORDERED, true);
+        testExplicitRoutingIndex(SpaceIndexType.BASIC, SpaceIndexType.EXTENDED, true);
+
+        // Test explicit non-default routing index:
+        testExplicitRoutingIndex(SpaceIndexType.ORDERED, SpaceIndexType.EQUAL, true);
+        testExplicitRoutingIndex(SpaceIndexType.ORDERED, SpaceIndexType.BASIC, true);
+        testExplicitRoutingIndex(SpaceIndexType.ORDERED, SpaceIndexType.ORDERED, false);
+        testExplicitRoutingIndex(SpaceIndexType.ORDERED, SpaceIndexType.EQUAL_AND_ORDERED, true);
+        testExplicitRoutingIndex(SpaceIndexType.ORDERED, SpaceIndexType.EXTENDED, true);
+
+        // Test explicit non-default routing index:
+        testExplicitRoutingIndex(SpaceIndexType.EQUAL_AND_ORDERED, SpaceIndexType.EQUAL, true);
+        testExplicitRoutingIndex(SpaceIndexType.EQUAL_AND_ORDERED, SpaceIndexType.BASIC, true);
+        testExplicitRoutingIndex(SpaceIndexType.EQUAL_AND_ORDERED, SpaceIndexType.ORDERED, true);
+        testExplicitRoutingIndex(SpaceIndexType.EQUAL_AND_ORDERED, SpaceIndexType.EQUAL_AND_ORDERED, false);
+        testExplicitRoutingIndex(SpaceIndexType.EQUAL_AND_ORDERED, SpaceIndexType.EXTENDED, false);
+
+        // Test explicit non-default routing index:
+        testExplicitRoutingIndex(SpaceIndexType.EXTENDED, SpaceIndexType.EQUAL, true);
+        testExplicitRoutingIndex(SpaceIndexType.EXTENDED, SpaceIndexType.BASIC, true);
+        testExplicitRoutingIndex(SpaceIndexType.EXTENDED, SpaceIndexType.ORDERED, true);
+        testExplicitRoutingIndex(SpaceIndexType.EXTENDED, SpaceIndexType.EQUAL_AND_ORDERED, false);
+        testExplicitRoutingIndex(SpaceIndexType.EXTENDED, SpaceIndexType.EXTENDED, false);
+    }
+
+    private void testExplicitRoutingIndex(SpaceIndexType propIndexType, boolean shouldFail) {
+        testExplicitRoutingIndex(null, propIndexType, shouldFail);
+    }
+    private void testExplicitRoutingIndex(SpaceIndexType routingIndexType, SpaceIndexType propIndexType, boolean shouldFail) {
+        SpaceTypeDescriptorBuilder builder = new SpaceTypeDescriptorBuilder("foo");
+        builder.addIndex(SpaceIndexFactory.createPropertyIndex("property", propIndexType));
+
+        try {
+            if (routingIndexType == null)
+                builder.routingProperty("property");
+            else
+                builder.routingProperty("property", routingIndexType);
+            if (shouldFail)
+                Assert.fail("Should have failed");
+        } catch (RuntimeException e) {
+            if (!shouldFail)
+                throw e;
+            System.out.println(e.getMessage());
+            Assert.assertTrue(e.getMessage().contains(propIndexType.name()));
+            return;
+        }
     }
 
     private void nonOBJECTStorageTypeOnPrimitiveProperty() {
