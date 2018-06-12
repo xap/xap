@@ -38,7 +38,7 @@ public class RestServiceFactory extends ServiceFactory {
         classpath.appendPlatform("service-grid/xap-admin.jar")
                 .appendPlatform("service-grid/xap-service-grid.jar")
                 .appendPlatform("logger")
-                .append(SystemInfo.singleton().locations().getLibOptionalSecurity())
+                .append(SystemInfo.singleton().locations().getLibOptionalSecurity(), null, false)
                 .appendPlatform("scala")
                 // Required jars: spring-context-*, spring-beans-*, spring-core-*, commons-logging-*, xap-datagrid, xap-asm, xap-trove
                 .appendRequired(ClasspathBuilder.startsWithFilter("spring-", "commons-", "xap-datagrid", "xap-openspaces", "xap-asm", "xap-trove"))

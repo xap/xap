@@ -54,9 +54,14 @@ public class ClasspathBuilder {
     }
 
     public ClasspathBuilder append(String path, FileFilter filter) {
+        return append(path, filter, true);
+    }
+
+    public ClasspathBuilder append(String path, FileFilter filter, boolean archivesOnly) {
+        filter = archivesOnly ? new JarFileFilter(filter) : filter;
         File f = new File(path);
         if (f.isDirectory()) {
-            final File[] files = BootIOUtils.listFiles(f, new JarFileFilter(filter));
+            final File[] files = BootIOUtils.listFiles(f, filter);
             for (File file : files)
                 this.files.add(file);
         } else {
