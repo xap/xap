@@ -155,6 +155,6 @@ From the ${XAP_HOME}/bin directory, run:
 
 This will run the translator (as a single data-grid) and the feeder.
 
-To start a partitioned translator (data-grid of 2 partitions), add the -cluster arguments: 
+To start a partitioned translator (data-grid of 2 partitions), add the --partitions arguments:
 
 - ./xap pu run --lus --partitions=2 ../examples/hola-mundo/translator/target/hola-mundo-translator.jar
