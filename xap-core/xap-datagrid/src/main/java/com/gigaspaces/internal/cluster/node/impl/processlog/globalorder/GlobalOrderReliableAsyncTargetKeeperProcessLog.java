@@ -32,8 +32,11 @@ import com.gigaspaces.internal.cluster.node.impl.groups.handshake.IHandshakeIter
 import com.gigaspaces.internal.cluster.node.impl.groups.reliableasync.IReplicationReliableAsyncMediator;
 import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPacket;
 import com.gigaspaces.internal.cluster.node.impl.packets.data.IReplicationPacketDataConsumer;
+import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.AbstractReplicationPacketSingleEntryData;
 import com.gigaspaces.internal.cluster.node.impl.processlog.IReplicationProcessLogExceptionHandler;
 import com.gigaspaces.internal.cluster.node.impl.processlog.reliableasync.IReplicationReliableAsyncKeeperTargetProcessLog;
+import com.gigaspaces.internal.server.storage.ICustomTypeDescLoader;
+import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.utils.ConditionLatch;
 import com.gigaspaces.internal.utils.ConditionLatch.Predicate;
 import com.j_spaces.core.exception.internal.ReplicationInternalSpaceException;
@@ -180,7 +183,17 @@ public class GlobalOrderReliableAsyncTargetKeeperProcessLog
             ReliableAsyncHandshakeIteration sharedHandshakeIteration = (ReliableAsyncHandshakeIteration) handshakeIteration;
             List<IReplicationOrderedPacket> packets = sharedHandshakeIteration.getPackets();
             for (IReplicationOrderedPacket packet : packets) {
+                loadTypeDecIfNeeded(packet);
                 _mediator.reliableAsyncSourceKeep(sourceMemberName, packet);
+            }
+        }
+    }
+
+    private void loadTypeDecIfNeeded(IReplicationOrderedPacket packet) {
+        if(packet.getData() instanceof AbstractReplicationPacketSingleEntryData){
+            IEntryData mainEntryData = ((AbstractReplicationPacketSingleEntryData) packet.getData()).getMainEntryData();
+            if(mainEntryData instanceof ICustomTypeDescLoader){
+                ((ICustomTypeDescLoader) mainEntryData).loadTypeDescriptor(_dataConsumer.getTypeManager());
             }
         }
     }

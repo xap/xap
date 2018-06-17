@@ -19,8 +19,11 @@ package com.gigaspaces.internal.cluster.node.impl.backlog.reliableasync;
 import com.gigaspaces.internal.cluster.node.impl.ReplicationLogUtils;
 import com.gigaspaces.internal.cluster.node.impl.groups.handshake.IHandshakeIteration;
 import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPacket;
+import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.ChangeReplicationPacketData;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.utils.StringUtils;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -42,11 +45,30 @@ public class ReliableAsyncHandshakeIteration
 
     public void readExternal(ObjectInput in) throws IOException,
             ClassNotFoundException {
-        _packets = IOUtils.readObject(in);
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v12_3_1)){
+            ChangeReplicationPacketData.forRecovery.set(true);
+            try{
+                _packets = IOUtils.readObject(in);
+            } finally {
+                ChangeReplicationPacketData.forRecovery.remove();
+            }
+        } else {
+            _packets = IOUtils.readObject(in);
+        }
+
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
-        IOUtils.writeObject(out, _packets);
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v12_3_1)){
+            ChangeReplicationPacketData.forRecovery.set(true);
+            try{
+               IOUtils.writeObject(out, _packets);
+            } finally {
+                ChangeReplicationPacketData.forRecovery.remove();
+            }
+        } else {
+            IOUtils.writeObject(out, _packets);
+        }
     }
 
     public List<IReplicationOrderedPacket> getPackets() {

@@ -218,5 +218,10 @@ public class ReplicationPacketDataConsumer
         }
     }
 
+    @Override
+    public SpaceTypeManager getTypeManager() {
+        return _typeManager;
+    }
+
 
 }

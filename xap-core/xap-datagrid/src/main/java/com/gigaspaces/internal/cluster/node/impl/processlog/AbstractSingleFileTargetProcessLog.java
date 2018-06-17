@@ -33,7 +33,7 @@ import java.util.logging.Logger;
 public abstract class AbstractSingleFileTargetProcessLog {
 
     protected final Logger _specificLogger;
-    private final IReplicationPacketDataConsumer _dataConsumer;
+    protected final IReplicationPacketDataConsumer _dataConsumer;
     private final IReplicationProcessLogExceptionHandler _exceptionHandler;
     private final IReplicationInFacade _replicationInFacade;
     private final String _name;

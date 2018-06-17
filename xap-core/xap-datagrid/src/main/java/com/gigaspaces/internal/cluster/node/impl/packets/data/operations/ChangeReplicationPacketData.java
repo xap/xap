@@ -39,7 +39,6 @@ import com.j_spaces.core.ObjectTypes;
 import com.j_spaces.core.OperationID;
 import com.j_spaces.core.cluster.IReplicationFilterEntry;
 import com.j_spaces.core.cluster.ReplicationOperationType;
-
 import net.jini.core.transaction.Transaction;
 
 import java.io.IOException;
@@ -47,6 +46,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.logging.Logger;
 
 
 @com.gigaspaces.api.InternalApi
@@ -58,6 +58,8 @@ public class ChangeReplicationPacketData
 
     private static final String ChangeReplicationPacketData = null;
 
+    private static final Logger _logger = Logger.getLogger("com.gigaspaces.internal.cluster.node.impl.packets.data.operations.ChangeReplicationPacketData");
+
     private transient long _expirationTime;
     private transient IEntryData _previousEntryData;
 
@@ -68,6 +70,13 @@ public class ChangeReplicationPacketData
     private Object _id;
     private int _version;
     private int _previousVersion;
+
+    public static final ThreadLocal<Boolean> forRecovery = new ThreadLocal<Boolean>() {
+        @Override
+        public Boolean initialValue() {
+            return false;
+        }
+    };
 
 
     public ChangeReplicationPacketData() {
@@ -267,6 +276,10 @@ public class ChangeReplicationPacketData
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         writeExternalImpl(out, LRMIInvocationContext.getEndpointLogicalVersion());
+        if (forRecovery.get()) {
+            _logger.fine("Serializing packet data "+this+" with full entryData due to recovery process");
+            serializeEntryData(_entryData, out);
+        }
     }
 
     private static final byte FLAGS_TIME_TO_LIVE = 1 << 0;
@@ -317,6 +330,9 @@ public class ChangeReplicationPacketData
         super.readExternal(in);
         readExternalImpl(in, LRMIInvocationContext.getEndpointLogicalVersion());
         _expirationTime = _timeToLive != Long.MAX_VALUE ? _timeToLive + SystemTime.timeMillis() : Long.MAX_VALUE;
+        if (forRecovery.get()) {
+            _entryData = deserializeEntryData(in);
+        }
     }
 
     private void readExternalImpl(ObjectInput in, PlatformLogicalVersion version) throws IOException,

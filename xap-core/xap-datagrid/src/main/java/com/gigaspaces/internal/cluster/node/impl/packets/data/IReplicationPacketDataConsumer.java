@@ -20,6 +20,7 @@ package com.gigaspaces.internal.cluster.node.impl.packets.data;
 import com.gigaspaces.internal.cluster.node.IReplicationInContext;
 import com.gigaspaces.internal.cluster.node.handlers.IReplicationInFacade;
 import com.gigaspaces.internal.cluster.node.impl.filters.IReplicationInFilterCallback;
+import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.j_spaces.core.cluster.IReplicationFilterEntry;
 
 
@@ -71,5 +72,7 @@ public interface IReplicationPacketDataConsumer<T extends IReplicationPacketData
      * @param participantsMetadata TODO
      */
     IReplicationPacketData<?> merge(IReplicationPacketData<?>[] allParticipantsData, IReplicationParticipantsMetadata participantsMetadata);
+
+    SpaceTypeManager getTypeManager();
 
 }
