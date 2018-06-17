@@ -15,7 +15,7 @@ import java.util.List;
 @Command(name = "demo", header = "Run a Space in high availability mode (2 primaries with 1 backup each)")
 public class DemoCommand extends CliCommand {
 
-    private final String SPACE_NAME = "demo-space";
+    private final String SPACE_NAME = XapCliUtils.DEMO_SPACE_NAME;
     private final boolean HA = true;
     private final int PARTITIONS_COUNT = 2;
 

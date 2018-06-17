@@ -24,6 +24,7 @@ public class XapCliUtils {
     private static final long processTimeoutInSeconds;
     private static final String PROCESS_TERMINATION_TIMEOUT = "com.gs.cli.process-termination-timeout";
     private static final AtomicInteger timedOutProcesses = new AtomicInteger(0);
+    public static final String DEMO_SPACE_NAME = "demo-space";
 
     static {
         GSLogConfigLoader.getLoader("cli");
