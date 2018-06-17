@@ -55,6 +55,12 @@ public class CliExecutor {
         }
     }
 
+    public static void printWarning(Throwable t) {
+        String message = t.getLocalizedMessage();
+        if (message == null) message = t.toString();
+        System.err.println("\n[WARNING] " + message);
+    }
+
     public static CommandLine toCommandLine(Object command) {
         CommandLine cmd = new CommandLine(command);
         if (command instanceof SubCommandContainer) {
