@@ -121,6 +121,10 @@
         </dependency>
         <dependency>
             <groupId>org.gigaspaces</groupId>
+            <artifactId>xap-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.gigaspaces</groupId>
             <artifactId>xap-spatial</artifactId>
         </dependency>
         <dependency>
