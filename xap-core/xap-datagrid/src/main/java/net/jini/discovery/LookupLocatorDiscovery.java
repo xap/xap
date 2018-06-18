@@ -1568,6 +1568,7 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
      */
     class InternalDiscoverylListener implements DiscoveryListener {
         public void discovered(DiscoveryEvent discoveryEvent) {
+            System.out.println("----------------------in InternalDiscoveryLisner");
             ServiceRegistrar[] sr = discoveryEvent.getRegistrars();
             for (int i = 0; i < sr.length; i++) {
                 LookupAliveTask lat = null;
@@ -1648,6 +1649,7 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                             "Set unicast ping to [" + invocationDelay + "]");
             }
             LookupLocator locator = proxy.getLocator();
+            System.out.println("-----------------------LookupAliveTask: " + locator.getHost() + "," + locator.getPort() );
             locatorString =
                     "jini://" + locator.getHost() + ":" + locator.getPort();
         }
@@ -1661,6 +1663,7 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
         }
 
         public void run() {
+
             if (logger.isLoggable(Level.FINE))
                 logger.fine("Started LookupAliveTask for " + locatorString);
             while (!interrupted()) {
@@ -1675,6 +1678,7 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                             + invocationDelay);
                 }
                 try {
+                    System.out.println("-----------------------LookupAliveTask: " + locatorString );
                     if (logger.isLoggable(Level.FINE))
                         logger.fine(
                                 "invoke getLocator() on : " + locatorString);
