@@ -17,6 +17,7 @@
  */
 package net.jini.core.discovery;
 
+import com.gigaspaces.start.SystemInfo;
 import net.jini.core.lookup.ServiceRegistrar;
 import net.jini.discovery.Constants;
 import net.jini.io.MarshalInputStream;
@@ -34,6 +35,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.Collections;
+import java.util.logging.Logger;
 
 /**
  * A utility class that performs unicast discovery, using version 1 of the unicast discovery

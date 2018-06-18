@@ -103,7 +103,7 @@ public class BaseServerPeer
     public String getConnectionURL() {
         return new ConnectionUrlDescriptor(
                 _protocolAdapter.getName(),
-                _protocolAdapter.getHostName(),
+                SystemInfo.singleton().network().getPublicHostId(),
                 _protocolAdapter.getPort(),
                 SystemInfo.singleton().os().processId(),
                 _objectId,

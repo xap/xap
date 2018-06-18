@@ -43,7 +43,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -413,7 +412,12 @@ public class Webster implements Runnable {
     public String getAddress() {
         if (ss == null)
             return (null);
-        return BootIOUtils.wrapIpv6HostAddressIfNeeded(ss.getInetAddress());
+
+        final InetAddress inetAddress = SystemInfo.singleton().network().isPublicHostConfigured() ?
+                SystemInfo.singleton().network().getPublicHost() :
+                ss.getInetAddress();
+
+        return BootIOUtils.wrapIpv6HostAddressIfNeeded(inetAddress);
     }
 
     public String getHostName() {

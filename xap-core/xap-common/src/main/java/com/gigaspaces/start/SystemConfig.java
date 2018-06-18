@@ -515,6 +515,7 @@ public class SystemConfig {
             if (addHttpRoots != null)
                 httpRoots = httpRoots + ";" + addHttpRoots;
 
+            //using for Webster
             int httpPort = (Integer) config.getEntry(COMPONENT, "httpPort", int.class, 0);
 
             //override with sys. property -Dcom.gigaspaces.start.httpPort
@@ -528,7 +529,7 @@ public class SystemConfig {
 
             //override with sys. property inside
             final XapManagerConfig currServer = SystemInfo.singleton().getManagerClusterInfo().getCurrServer();
-            String hostAddress = currServer != null ? currServer.getHost() : getDefaultHostAddress();
+            String hostAddress = currServer != null ? SystemInfo.singleton().network().getHost().getHostAddress() : getDefaultHostAddress();
 
             for (int i = 0; i < httpServerRetries; i++) {
                 try {

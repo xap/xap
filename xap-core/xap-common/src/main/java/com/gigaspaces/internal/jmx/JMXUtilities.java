@@ -31,7 +31,7 @@ public class JMXUtilities {
         String url = SystemBoot.getJMXServiceURL();
 
         return url == null ? null : new JMXConnection(url, serviceName + "_" +
-                SystemInfo.singleton().network().getHostId() + "_" + SystemBoot.getRegistryPort());
+                SystemInfo.singleton().network().getPublicHostId() + "_" + SystemBoot.getRegistryPort());
     }
 
     public static String createJMXUrl(String hostName, int port) {
