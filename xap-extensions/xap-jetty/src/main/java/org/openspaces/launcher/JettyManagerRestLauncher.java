@@ -90,7 +90,13 @@ public class JettyManagerRestLauncher implements Closeable {
 
     private void initConnectors(Server server, XapManagerConfig config)
             throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException {
-        final String host = config.getHost();
+        String host = config.getHost();
+        if(SystemInfo.singleton().network().isPublicIpConfigure()){
+            String __host__ = host; //TODO remove - for logger
+            host = SystemInfo.singleton().network().getHostId(); //needs to be the bind address (private ip)
+
+            logger.info("----> JettyManagerRestLauncher.initConnectors() NEW[host="+host + "] PREV[" + __host__+"]");
+        }
         final int port = Integer.parseInt(config.getAdminRest());
         SslContextFactory sslContextFactory = createSslContextFactoryIfNeeded();
         JettyUtils.createConnector(server, host, port, sslContextFactory);

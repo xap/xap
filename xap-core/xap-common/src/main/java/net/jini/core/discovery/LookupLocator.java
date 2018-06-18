@@ -17,6 +17,7 @@
  */
 package net.jini.core.discovery;
 
+import com.gigaspaces.start.SystemInfo;
 import net.jini.core.lookup.ServiceRegistrar;
 import net.jini.discovery.Constants;
 import net.jini.io.MarshalInputStream;
@@ -34,6 +35,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.Collections;
+import java.util.logging.Logger;
 
 /**
  * A utility class that performs unicast discovery, using version 1 of the unicast discovery
@@ -72,6 +74,22 @@ public class LookupLocator implements Serializable {
      * The timeout after which we give up waiting for a response from the lookup service.
      */
     static final int defaultTimeout = Integer.getInteger("net.jini.discovery.timeout", new Integer(60 * 1000)).intValue();
+
+    private final static Logger logger = Logger.getLogger("net.jini.core.discovery");
+
+    //TODO remove this - only for logging
+    public static String getCallStackTraces( int deep ) {
+        final int shift = 2;//allows not to display call to this method and this call itself
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        StringBuilder stringBuilder = new StringBuilder("\n");
+        for( int i = 0; i < deep && i + shift < stackTrace.length; i++ ){
+            stringBuilder.append( stackTrace[ i + shift ] );
+            stringBuilder.append( "\n" );
+        }
+
+        return stringBuilder.toString();
+    }
+
 
     /**
      * Construct a new <code>LookupLocator</code> object, set up to perform discovery to the given
@@ -145,6 +163,7 @@ public class LookupLocator implements Serializable {
             if (port == -1) {
                 port = discoveryPort;
             }
+            logger.info("----> LookupLocator.ctr url="+url + " host="+host + " port="+port +" caller: " + getCallStackTraces(5));
         } catch (URISyntaxException e) {
             handle3986Authority(uri);
         }
@@ -189,6 +208,7 @@ public class LookupLocator implements Serializable {
             }
             this.host = host;
             this.port = port;
+            logger.info("----> LookupLocator.ctr() host="+host + " port="+port + " caller: " + getCallStackTraces(5));
         } catch (URISyntaxException e) {
             uri = try3986Authority(host, port);
             assert ((this.port > 0) && (this.port < 65536));
@@ -214,8 +234,25 @@ public class LookupLocator implements Serializable {
      *
      * @return a String representing the host value
      */
+    private boolean alreadyLogged = false; //TODO remove - for logger
     public String getHost() {
-        return host;
+        if(SystemInfo.singleton().network().isPublicIpConfigure()){
+            String hostAddress = SystemInfo.singleton().network().getPublicHost().getHostAddress();
+
+            if (!alreadyLogged) {
+                logger.info("----> LookupLocator.getHost() NEW[hostAddress=" + hostAddress + "] PREV[" + host + "]");
+                alreadyLogged = true;
+            }
+
+            return hostAddress;
+        }
+        else{
+            return host;
+
+        }
+
+        //return host;
+
     }
 
     /**

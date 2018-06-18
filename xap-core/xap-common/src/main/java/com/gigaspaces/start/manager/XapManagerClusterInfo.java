@@ -116,14 +116,15 @@ public class XapManagerClusterInfo {
     private XapManagerConfig findManagerByHost(InetAddress currHost) {
         XapManagerConfig result = null;
         for (XapManagerConfig server : servers) {
-            if (server.getHost().equals(currHost.getHostName()) || server.getHost().equals(currHost.getHostAddress()))
+            if (server.getHost().equals(currHost.getHostName()) || server.getHost().equals(currHost.getHostAddress())){
                 result = server;
+            }
         }
         if (result == null && servers.length == 1) {
-            if (servers[0].getHost().equals("localhost") || servers[0].getHost().equals("127.0.0.1"))
+            if (servers[0].getHost().equals("localhost") || servers[0].getHost().equals("127.0.0.1")){
                 result = servers[0];
+            }
         }
-
         if (logger.isLoggable(Level.CONFIG)) {
             if (result == null)
                 logger.log(Level.CONFIG, "Current host [" + currHost +"] is not part of configured managers");
