@@ -515,8 +515,8 @@ public class SystemConfig {
             if (addHttpRoots != null)
                 httpRoots = httpRoots + ";" + addHttpRoots;
 
-            final int WEBSTER_PORT_TODO = 8200;
-            int httpPort = (Integer) config.getEntry(COMPONENT, "httpPort", int.class, WEBSTER_PORT_TODO);
+            //using for Webster
+            int httpPort = (Integer) config.getEntry(COMPONENT, "httpPort", int.class, 0);
 
             //override with sys. property -Dcom.gigaspaces.start.httpPort
             httpPort = Integer.getInteger(COMPONENT + ".httpPort", httpPort);
