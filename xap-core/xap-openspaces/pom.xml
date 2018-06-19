@@ -206,39 +206,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.openjpa</groupId>
-            <artifactId>openjpa</artifactId>
-            <version>2.0.1</version>
-            <exclusions>
-                <!--due to dependency check exclude version 3.2.1 from commons collection and bring it separately  -->
-            <exclusion>
-                <groupId>commons-collections</groupId>
-                <artifactId>commons-collections</artifactId>
-            </exclusion>
-            </exclusions>
-        </dependency>
-
-
-        <dependency>
-            <!--remove this if you remove openJPA-->
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
-            <version>3.2.2</version>
-        </dependency>
-
-
-        <dependency>
-
-            <groupId>org.apache.geronimo.specs</groupId>
-            <artifactId>geronimo-jpa_2.0_spec</artifactId>
-            <version>1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.geronimo.specs</groupId>
-            <artifactId>geronimo-jta_1.1_spec</artifactId>
-            <version>1.1.1</version>
-        </dependency>
-        <dependency>
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
             <version>2.3.2</version>
