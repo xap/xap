@@ -27,7 +27,6 @@ import com.gigaspaces.internal.utils.xslt.XSLTConverter;
 import com.gigaspaces.lrmi.nio.info.NIODetails;
 import com.gigaspaces.lrmi.nio.info.NIOInfoProvider;
 import com.gigaspaces.management.entry.JMXConnection;
-import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.SpaceOperations;
@@ -1325,10 +1324,6 @@ public class JSpaceUtilities {
         if (lookupLocators != null) {
             for (LookupLocator lookupLocator : lookupLocators) {
                 String locator = lookupLocator.getHost() + ":" + lookupLocator.getPort();
-// TODO should already have correct locator
-//                if(SystemInfo.singleton().network().isPublicIpConfigure()){
-//                    locator = SystemInfo.singleton().network().getPublicHost().getHostAddress() + ":" + lookupLocator.getPort();
-//                }
                 if (mergedLocators.length() == 0) {
                     mergedLocators = locator;
                 } else {

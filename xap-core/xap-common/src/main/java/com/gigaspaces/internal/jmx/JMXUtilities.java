@@ -23,34 +23,18 @@ import com.gigaspaces.start.SystemInfo;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.logging.Logger;
 
 @com.gigaspaces.api.InternalApi
 public class JMXUtilities {
 
-    private static final Logger logger = Logger.getLogger("com.gigaspaces.internal.jmx");
-
     public static JMXConnection createJMXConnectionAttribute(String serviceName) {
         String url = SystemBoot.getJMXServiceURL();
 
-        /*TODO remove - for logger*/ JMXConnection __retval__= (url == null ? null : new JMXConnection(url, serviceName + "_" +
-                SystemInfo.singleton().network().getHostId() + "_" + SystemBoot.getRegistryPort()));
-
-        JMXConnection retval= url == null ? null : new JMXConnection(url, serviceName + "_" +
+        return url == null ? null : new JMXConnection(url, serviceName + "_" +
                 SystemInfo.singleton().network().getPublicHostId() + "_" + SystemBoot.getRegistryPort());
-
-        logger.info("----> JMXUtilities.createJMXConnectionAttribute() NEW["+retval+ "] PREV[" + __retval__+"]");
-        return retval;
     }
 
     public static String createJMXUrl(String hostName, int port) {
-//
-// TODO should be called with correct hostName
-//
-//        if(SystemInfo.singleton().network().isPublicIpConfigure()){
-//            hostName=SystemInfo.singleton().network().getPublicHost().getHostName();
-//        }
-
         if (isHostNameOfIpv6AndNeedsSquareBrackets(hostName))
             hostName = "[" + hostName + "]";
         return createJMXUrl(hostName + ":" + port);

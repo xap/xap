@@ -28,7 +28,9 @@ import com.gigaspaces.time.ITimeProvider;
 import net.jini.core.discovery.LookupLocator;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -70,14 +72,7 @@ public class SystemInfo {
         this.locations = new XapLocations(xapHome);
         this.productType = new File(locations.insightedge).exists() ? ProductType.InsightEdge : ProductType.XAP;
         this.timeProvider = new XapTimeProvider();
-
-        XapManagerClusterInfo __managerClusterInfo__ = new XapManagerClusterInfo(network.getHost());
-        this.managerClusterInfo = new XapManagerClusterInfo(network.getPublicHost());
-
-        //CANT PUT LOGGER HERE
-        System.out.println("----> SystemInfo.ctr() NEW[managerClusterInfo="+managerClusterInfo + " getCurrServer="+managerClusterInfo.getCurrServer()
-                +"] PREV[" + __managerClusterInfo__ +" getCurrServer="+__managerClusterInfo__.getCurrServer()+"]");
-
+        this.managerClusterInfo = new XapManagerClusterInfo(network().getPublicHost());
         this.lookup = new XapLookup(managerClusterInfo);
     }
 

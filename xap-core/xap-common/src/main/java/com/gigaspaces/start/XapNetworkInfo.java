@@ -4,7 +4,6 @@ import org.jini.rio.boot.BootUtil;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.logging.Logger;
 
 /**
  * @author Niv Ingberg
@@ -27,25 +26,14 @@ public class XapNetworkInfo {
             NEW CODE
              */
             publicHostId = System.getenv("XAP_NIC_ADDRESS_PUBLIC");
-            if(publicHostId !=null){
-                isPublicIpConfigure=true;
-            }
-            else{
-                isPublicIpConfigure=false;
-            }
-            if(publicHostId == null ){
-                publicHostId=hostId;
-            }
-            if(publicHostId.equals(hostId)){
-                publicHost=host;
-            }
-            else{
+
+            if (publicHostId == null) {
+                publicHostId = hostId;
+                publicHost = host;
+            } else {
+                isPublicIpConfigure = true;
                 publicHost = InetAddress.getByName(publicHostId);
-
             }
-
-            //CAN'T USE LOGGER HERE - NOT INITIALIZED YET
-            System.out.println("----> XapNetworkInfo.ctr() NEW[publicHostId="+publicHostId + " publicHost="+publicHost+"] PREV[hostId="+hostId + " host="+host+"]");
 
         } catch (UnknownHostException e) {
             throw new IllegalStateException("Failed to get network information", e);

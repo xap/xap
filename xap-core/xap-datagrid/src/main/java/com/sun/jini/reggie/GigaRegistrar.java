@@ -4978,7 +4978,10 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         unexportWait = Config.getLongEntry(
                 config, COMPONENT, "unexportWait", unexportWait,
                 0, Long.MAX_VALUE);
-        String defaultValue = SystemInfo.singleton().network().getHostId();
+
+        //configure default for unicast discovery host
+        String defaultValue = SystemInfo.singleton().network().getPublicHostId();
+
         String unicastDiscoveryHost;
         try {
             unicastDiscoveryHost = (String) Config.getNonNullEntry(

@@ -515,8 +515,8 @@ public class SystemConfig {
             if (addHttpRoots != null)
                 httpRoots = httpRoots + ";" + addHttpRoots;
 
-            //TODO use property instead of hard-coded port
-            int httpPort = (Integer) config.getEntry(COMPONENT, "httpPort", int.class, 8200);
+            final int WEBSTER_PORT_TODO = 8200;
+            int httpPort = (Integer) config.getEntry(COMPONENT, "httpPort", int.class, WEBSTER_PORT_TODO);
 
             //override with sys. property -Dcom.gigaspaces.start.httpPort
             httpPort = Integer.getInteger(COMPONENT + ".httpPort", httpPort);
@@ -528,13 +528,8 @@ public class SystemConfig {
             httpServerRetries = Integer.getInteger(COMPONENT + ".httpServerRetries", httpServerRetries);
 
             //override with sys. property inside
-
-            ///***********ASK NIV ***************************
             final XapManagerConfig currServer = SystemInfo.singleton().getManagerClusterInfo().getCurrServer();
-            String __hostAddress__ = currServer != null ? currServer.getHost() : getDefaultHostAddress();
-            String hostAddress = getDefaultHostAddress();
-            logger.info("----> SystemConfig.getWebster() currServer="+currServer+" NEW[hostAddress="+hostAddress + "] PREV[" + __hostAddress__+"]");
-
+            String hostAddress = currServer != null ? SystemInfo.singleton().network().getHost().getHostAddress() : getDefaultHostAddress();
 
             for (int i = 0; i < httpServerRetries; i++) {
                 try {
@@ -1029,14 +1024,6 @@ public class SystemConfig {
                     if (logger.isLoggable(Level.FINE))
                         logger.fine("Created RMI Registry: " + registry.toString() + " using port " + registryPort);
                     String defaultAddress = SystemInfo.singleton().network().getHostId();
-                    if(SystemInfo.singleton().network().isPublicIpConfigure()){
-
-                        String __defaultAddress__ = defaultAddress;
-                        defaultAddress=SystemInfo.singleton().network().getPublicHostId();
-
-                        logger.info("----> JMXServiceDescriptor.create() NEW[defaultAddress="+defaultAddress + "] PREV[" + __defaultAddress__+"]");
-
-                    }
                     String hostAddress =
                             (String) config.getEntry(COMPONENT,
                                     "hostAddress",

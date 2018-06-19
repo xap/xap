@@ -110,8 +110,7 @@ public class Webster implements Runnable {
      * port will be allocated.
      */
     public Webster() throws BindException {
-        //TODO use property instead of hard coded port
-        this.port = Integer.getInteger(WEBSTER_PORT, 8200);
+        this.port = Integer.getInteger(WEBSTER_PORT, 0);
         initialize();
     }
 
@@ -121,8 +120,7 @@ public class Webster implements Runnable {
      * @param port The port to use
      */
     public Webster(int port) throws BindException {
-        //TODO use property instead of hard coded port
-        this.port = Integer.getInteger(WEBSTER_PORT, 8200);
+        this.port = Integer.getInteger(WEBSTER_PORT, 0);
         initialize();
     }
 
@@ -133,8 +131,7 @@ public class Webster implements Runnable {
      *              directories
      */
     public Webster(String roots) throws BindException {
-        //TODO use property instead of hard coded port
-        this.port = Integer.getInteger(WEBSTER_PORT, 8200);
+        this.port = Integer.getInteger(WEBSTER_PORT, 0);
         initialize(roots);
     }
 
@@ -414,17 +411,14 @@ public class Webster implements Runnable {
      * null, return null.
      */
     public String getAddress() {
-        if (ss == null) {
+        if (ss == null)
             return (null);
-        }
-        if(SystemInfo.singleton().network().isPublicIpConfigure()){
 
-            String __retval__ = BootIOUtils.wrapIpv6HostAddressIfNeeded(ss.getInetAddress());
-            String retval= BootIOUtils.wrapIpv6HostAddressIfNeeded(SystemInfo.singleton().network().getPublicHost());
-            logger.info("----> Webster.getAddress() NEW["+retval + "] PREV[" + __retval__+"]");
-            return retval;
-        }
-        return BootIOUtils.wrapIpv6HostAddressIfNeeded(ss.getInetAddress());
+        final InetAddress inetAddress = SystemInfo.singleton().network().isPublicIpConfigure() ?
+                SystemInfo.singleton().network().getPublicHost() :
+                ss.getInetAddress();
+
+        return BootIOUtils.wrapIpv6HostAddressIfNeeded(inetAddress);
     }
 
     public String getHostName() {

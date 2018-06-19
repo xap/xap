@@ -16,11 +16,7 @@
 
 package com.gigaspaces.internal.lrmi;
 
-import com.gigaspaces.start.SystemInfo;
-import com.gigaspaces.start.XapNetworkInfo;
-
 import java.net.InetSocketAddress;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,8 +41,6 @@ public class ConnectionUrlDescriptor {
     private final long _lrmiRuntimeId;
     private final String _serviceDetails;
 
-    private static final Logger logger = Logger.getLogger("com.gigaspaces.internal.lrmi");
-
     public ConnectionUrlDescriptor(
             String protocol,
             String hostname,
@@ -57,18 +51,13 @@ public class ConnectionUrlDescriptor {
             long lrmiRuntimeId,
             String serviceDetails) {
         _protocol = protocol;
+        _hostname = hostname;
         _port = port;
         _pid = pid;
         _objectId = objectId;
         _objectClassLoaderId = objectClassLoaderId;
         _lrmiRuntimeId = lrmiRuntimeId;
         _serviceDetails = serviceDetails;
-       // _hostname = hostname;
-
-        XapNetworkInfo networkInfo = SystemInfo.singleton().network();
-        _hostname = networkInfo.getPublicHostId();
-
-        logger.info("----> ConnectionUrlDescriptor.ctr() NEW[_hostname="+_hostname + "] PREV[" + hostname+"]");
     }
 
     public String getProtocol() {
