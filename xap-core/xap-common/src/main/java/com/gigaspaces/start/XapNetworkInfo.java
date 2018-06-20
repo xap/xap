@@ -25,7 +25,7 @@ public class XapNetworkInfo {
             /*
             NEW CODE
              */
-            publicHostId = System.getenv("XAP_NIC_ADDRESS_PUBLIC");
+            publicHostId = System.getenv("XAP_PUBLIC_HOST");
 
             if (publicHostId == null) {
                 publicHostId = hostId;
