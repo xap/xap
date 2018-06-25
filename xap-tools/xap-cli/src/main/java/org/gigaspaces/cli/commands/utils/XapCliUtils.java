@@ -7,11 +7,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,28 +19,26 @@ import java.util.logging.Logger;
 public class XapCliUtils {
 
     private static Logger LOGGER;
-    private static final long processTimeoutInSeconds;
     private static final String PROCESS_TERMINATION_TIMEOUT = "com.gs.cli.process-termination-timeout";
-    private static final AtomicInteger timedOutProcesses = new AtomicInteger(0);
+    private static final long processTimeoutInSeconds = Long.getLong(PROCESS_TERMINATION_TIMEOUT, 60);
     public static final String DEMO_SPACE_NAME = "demo-space";
 
     static {
         GSLogConfigLoader.getLoader("cli");
         LOGGER = Logger.getLogger(Constants.LOGGER_CLI);
-        processTimeoutInSeconds = Long.getLong(PROCESS_TERMINATION_TIMEOUT, 60);
     }
 
     public static void executeProcessesWrapper(List<ProcessBuilderWrapper> processBuilderWrappers) throws InterruptedException {
         final ExecutorService executorService = Executors.newCachedThreadPool();
+        addShutdownHookToKillSubProcessesOnExit(executorService, processBuilderWrappers);
         //wait forever
         final int TIMEOUT = Integer.MAX_VALUE;
 
         for (final ProcessBuilderWrapper processBuilderWrapper : processBuilderWrappers) {
 
-            executorService.submit(new Callable<Integer>() {
+            executorService.submit(new Runnable() {
                 @Override
-                public Integer call() throws Exception {
-                    Process process = null;
+                public void run() {
                     try {
                         long startTime = System.currentTimeMillis();
                         while (!processBuilderWrapper.allowToStart()) {
@@ -53,9 +49,7 @@ public class XapCliUtils {
                             }
                         }
 
-                        final ProcessBuilder processBuilder = processBuilderWrapper.getProcessBuilder();
-
-                        process = processBuilder.start();
+                        Process process = processBuilderWrapper.start();
                         process.waitFor();
                         if (processBuilderWrapper.isSyncCommand()) {
                             System.exit(process.exitValue());
@@ -65,24 +59,15 @@ public class XapCliUtils {
                             LOGGER.log(Level.SEVERE, e.toString(), e);
                         }
                     } catch (InterruptedException e) {
-                        if (process != null) {
-                            if (!process.waitFor(processTimeoutInSeconds, TimeUnit.SECONDS)) {
-                                timedOutProcesses.incrementAndGet();
-                                LOGGER.fine("Shutdown did not complete before the timeout (" + processTimeoutInSeconds + " seconds) elapsed, some sub-processes might still be running");
-                                process.destroyForcibly();
-                            }
+                        if (LOGGER.isLoggable(Level.FINE)) {
+                            LOGGER.log(Level.FINE, e.toString(), e);
                         }
-                        if (LOGGER.isLoggable(Level.SEVERE)) {
-                            LOGGER.log(Level.SEVERE, e.toString(), e);
-                        }
-
+                        Thread.currentThread().interrupt();
                     }
-                    return process.exitValue();
                 }
             });
         }
 
-        addShutdownHookToKillSubProcessesOnExit(executorService);
         executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
     }
 
@@ -104,24 +89,65 @@ public class XapCliUtils {
     }
 
 
-    public static void addShutdownHookToKillSubProcessesOnExit(final ExecutorService executorService) {
+    public static void addShutdownHookToKillSubProcessesOnExit(final ExecutorService executorService, final List<ProcessBuilderWrapper> processBuilderWrappers) {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                System.out.println("Started shutdown, waiting " + processTimeoutInSeconds + " seconds for sub-processes to stop (configure timeout duration via the " + PROCESS_TERMINATION_TIMEOUT + " system property)");
-                long start = System.currentTimeMillis();
-                executorService.shutdownNow();
+                final long start = System.currentTimeMillis();
+                final long deadline = start + processTimeoutInSeconds * 1000;
+                int destroyed = 0;
+                int zombies = 0;
+                //executorService.shutdownNow();
+                executorService.shutdown();
+
+                // Destroy all processes, collect processes which don't die immediately.
+                List<Process> processes = new ArrayList<Process>();
+                for (ProcessBuilderWrapper processBuilderWrapper : processBuilderWrappers) {
+                    Process process = processBuilderWrapper.destroy();
+                    if (process != null) {
+                        if (process.isAlive()) {
+                            processes.add(process);
+                        }
+                        else {
+                            destroyed++;
+                        }
+                    }
+                }
+
+                if (!processes.isEmpty()) {
+                    System.out.println("Shutdown in progress, waiting " + processTimeoutInSeconds + " seconds for sub-processes to stop (configure timeout duration via the " + PROCESS_TERMINATION_TIMEOUT + " system property)");
+                    for (Process process : processes) {
+                        if (killProcess(process, deadline)) {
+                            destroyed++;
+                        } else {
+                            zombies++;
+                        }
+                    }
+                }
+
+                final long duration = (System.currentTimeMillis() - start);
+                if (zombies == 0) {
+                    System.out.printf("Shutdown completed successfully - %d sub-processes were terminated (duration: %dms)%n", destroyed, duration);
+                } else {
+                    System.err.println("Shutdown did not complete before the timeout (" + processTimeoutInSeconds + " seconds) elapsed - "
+                            + destroyed + " sub-processes were terminated but "
+                            + zombies + " sub-processes might still be running");
+                }
+            }
+
+            private boolean killProcess(Process process, long deadline) {
+                long timeout = deadline - System.currentTimeMillis();
+                if (timeout < 1)
+                    timeout = 1;
                 try {
-                    boolean threadsFinishedOnTime = executorService.awaitTermination(processTimeoutInSeconds + 1, TimeUnit.SECONDS);
-                    if (threadsFinishedOnTime && timedOutProcesses.get() == 0) {
-                        long took = (System.currentTimeMillis() - start);
-                        System.out.println("Shutdown completed successfully (duration: " + TimeUnit.MILLISECONDS.toSeconds(took) + "s)");
-                    } else {
-                        System.err.println("Shutdown did not complete before the timeout (" + processTimeoutInSeconds + " seconds) elapsed, some sub-processes might still be running");
+                    if (process.waitFor(timeout, TimeUnit.MILLISECONDS)) {
+                        return true;
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
+                process.destroyForcibly();
+                return !process.isAlive();
             }
         });
     }
