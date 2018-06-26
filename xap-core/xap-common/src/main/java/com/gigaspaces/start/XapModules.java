@@ -37,6 +37,7 @@ public enum XapModules {
     WAN("/optional/wan-gateway/xap-wan-gateway", ClassLoaderType.COMMON),
     SERVICE_GRID("/platform/service-grid/xap-service-grid", ClassLoaderType.COMMON),
     // Service modules
+    JPA_SPRING("/optional/jpa/xap-jpa-spring", ClassLoaderType.SERVICE),
     MAP_SPRING("/optional/map/xap-map-spring", ClassLoaderType.SERVICE),
     NEAR_CACHE_SPRING("/optional/near-cache/xap-near-cache-spring", ClassLoaderType.SERVICE),
     INTEROP_SPRING("/optional/interop/xap-interop-spring", ClassLoaderType.SERVICE),

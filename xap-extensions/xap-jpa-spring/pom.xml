@@ -9,7 +9,7 @@
         <relativePath>../../</relativePath>
     </parent>
 
-    <artifactId>xap-jpa</artifactId>
+    <artifactId>xap-jpa-spring</artifactId>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -64,7 +64,6 @@
     </dependencies>
 
     <build>
-        <finalName>xap-jpa</finalName>
         <extensions>
             <extension>
                 <groupId>org.kuali.maven.wagons</groupId>

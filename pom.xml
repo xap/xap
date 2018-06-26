@@ -44,7 +44,7 @@
         <module>xap-extensions/xap-jetty</module>
         <module>xap-extensions/xap-map</module>
         <module>xap-extensions/xap-map-spring</module>
-        <module>xap-extensions/xap-jpa</module>
+        <module>xap-extensions/xap-jpa-spring</module>
         <module>xap-extensions/xap-spatial</module>
         <module>xap-extensions/xap-mongodb</module>
         <module>xap-extensions/xap-cassandra</module>
@@ -165,7 +165,7 @@
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
-                <artifactId>xap-jpa</artifactId>
+                <artifactId>xap-jpa-spring</artifactId>
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>

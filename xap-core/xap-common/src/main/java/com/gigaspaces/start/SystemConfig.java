@@ -333,7 +333,12 @@ public class SystemConfig {
         classpathBuilder.appendOptional("metrics");
         classpathBuilder.appendOptional("spatial");
         classpathBuilder.appendOptional("full-text-search");
-        classpathBuilder.appendOptional("jpa");
+        classpathBuilder.appendOptional("jpa", new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return !file.getName().equals(XapModules.JPA_SPRING.getJarFileName());
+            }
+        });
         classpathBuilder.appendPlatform("commons"); // Apache Commons libraries
         classpathBuilder.appendOptional("groovy");
         classpathBuilder.appendOptional("jruby");
