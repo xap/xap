@@ -126,6 +126,16 @@
             </includes>
             <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
         </dependencySet>
+        <dependencySet>
+            <useProjectArtifact>false</useProjectArtifact>
+            <outputDirectory>product/lib/optional/jpa</outputDirectory>
+            <includes>
+                <include>commons-collections:commons-collections</include>
+                <include>org.apache.openjpa:openjpa</include>
+                <include>org.apache.geronimo.specs:geronimo-jpa_2.0_spec</include>
+                <include>org.apache.geronimo.specs:geronimo-jta_1.1_spec</include>
+            </includes>
+        </dependencySet>
 
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>

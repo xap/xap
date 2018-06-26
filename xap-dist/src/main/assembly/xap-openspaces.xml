@@ -25,14 +25,6 @@
             </includes>
         </dependencySet>
 
-        <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
-            <outputDirectory>product/lib/optional/jpa</outputDirectory>
-            <includes>
-                <include>commons-collections:commons-collections</include>
-            </includes>
-        </dependencySet>
-
     </dependencySets>
     <fileSets>
         <!--  non lib directories -->
@@ -91,15 +83,6 @@
                 <include>activation-*</include>
                 <include>transactions-jta-*</include>
                 <include>geronimo-j2ee-connector_1.5_spec-*</include>
-            </includes>
-        </fileSet>
-        <fileSet>
-            <directory>${project.basedir}/../xap-core/xap-openspaces/target/dependency</directory>
-            <outputDirectory>product/lib/optional/jpa</outputDirectory>
-            <includes>
-                <include>openjpa-*</include>
-                <include>geronimo-jpa*</include>
-                <include>geronimo-jta*</include>
             </includes>
         </fileSet>
         <!--  Add javadoc file to package -->
