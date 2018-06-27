@@ -4,7 +4,7 @@
     <groupId>org.gigaspaces</groupId>
     <artifactId>xap</artifactId>
     <packaging>pom</packaging>
-    <version>12.3.1-SNAPSHOT</version>
+    <version>13.0.0-SNAPSHOT</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sigar.version>1.6.5</sigar.version>
@@ -12,9 +12,9 @@
         <spring.security.version>4.2.3.RELEASE</spring.security.version>
         <junit.version>4.12</junit.version>
         <jetty.version>9.2.24.v20180105</jetty.version>
-        <xap.version>12.3.1</xap.version>
+        <xap.version>13.0.0</xap.version>
         <xap.milestone>m1</xap.milestone>
-        <xap.build.number>19200-10</xap.build.number>
+        <xap.build.number>19901-10</xap.build.number>
         <xap.git.sha>unspecified</xap.git.sha>
         <xap.git.branch>master</xap.git.branch>
         <xap.release.arguments />
