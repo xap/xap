@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -18,6 +20,11 @@
             <groupId>org.hyperic</groupId>
             <artifactId>sigar</artifactId>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+
         <!--
          Bouncy Castle - completely optional, only needed when:
        - you generate a temporary self-signed certificate using SelfSignedCertificate, and
@@ -26,6 +33,7 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk15on</artifactId>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>
@@ -33,8 +41,10 @@
     <build>
         <resources>
             <resource>
-                <directory>${project.basedir}/src/main/resources/com/gigaspaces/internal/version/</directory>
-                <targetPath>${project.basedir}/target/classes/com/gigaspaces/internal/version/</targetPath>
+                <directory>${project.basedir}/src/main/resources/com/gigaspaces/internal/version/
+                </directory>
+                <targetPath>${project.basedir}/target/classes/com/gigaspaces/internal/version/
+                </targetPath>
                 <filtering>true</filtering>
             </resource>
             <resource>
@@ -53,6 +63,28 @@
                         </manifestEntries>
                     </archive>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <!--<version>3.1.1</version>-->
+                <executions>
+                    <execution>
+                        <id>analyze</id>
+                        <goals>
+                            <goal>analyze-only</goal>
+                        </goals>
+                        <configuration>
+                            <failOnWarning>true</failOnWarning>
+                            <outputXML>true</outputXML>
+                            <ignoreNonCompile>true</ignoreNonCompile>
+                            <ignoredUsedUndeclaredDependencies>
+                                <ignoredUsedUndeclaredDependency>
+                                    org.bouncycastle:bcprov-jdk15on:jar
+                                </ignoredUsedUndeclaredDependency>
+                            </ignoredUsedUndeclaredDependencies>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

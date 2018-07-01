@@ -34,43 +34,54 @@
 		<module>feeder</module>
 		<module>verifier</module>
 	</modules>
-	<dependencies>
-		<dependency>
-			<groupId>org.gigaspaces</groupId>
-			<artifactId>xap-openspaces</artifactId>
-			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-test</artifactId>
-			<version>${spring.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.scala-lang</groupId>
-			<artifactId>scala-library</artifactId>
-			<version>${scala.version}</version>
-		</dependency>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.gigaspaces</groupId>
+                <artifactId>xap-datagrid</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.gigaspaces</groupId>
+                <artifactId>xap-scala-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-reflect</artifactId>
+                <version>${scala.version}</version>
+            </dependency>
 
-		<dependency>
-			<groupId>org.scala-lang</groupId>
-			<artifactId>scala-reflect</artifactId>
-			<version>${scala.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.scala-lang</groupId>
-			<artifactId>scala-compiler</artifactId>
-			<version>${scala.version}</version>
-		</dependency>
-	</dependencies>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-compiler</artifactId>
+                <version>${scala.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.gigaspaces</groupId>
+                <artifactId>xap-openspaces</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.12</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>${spring.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-library</artifactId>
+                <version>${scala.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 	<build>
 		<defaultGoal>package</defaultGoal>
 		<testResources>
@@ -99,16 +110,16 @@
 	</build>
 	
 	<!-- Align spring versions for all projects using openspaces -->
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.gigaspaces</groupId>
-        <artifactId>xap-openspaces</artifactId>
-		  <version>${project.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
+  <!--<dependencyManagement>-->
+    <!--<dependencies>-->
+      <!--<dependency>-->
+        <!--<groupId>org.gigaspaces</groupId>-->
+        <!--<artifactId>xap-openspaces</artifactId>-->
+		  <!--<version>${project.version}</version>-->
+        <!--<type>pom</type>-->
+        <!--<scope>import</scope>-->
+      <!--</dependency>-->
+    <!--</dependencies>-->
+  <!--</dependencyManagement>-->
 
 </project>

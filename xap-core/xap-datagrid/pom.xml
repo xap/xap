@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>xap-datagrid</artifactId>
@@ -32,6 +34,14 @@
         <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-trove</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
         </dependency>
 
     </dependencies>
@@ -78,7 +88,6 @@
                     <target>1.6</target>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>javacc-maven-plugin</artifactId>
@@ -90,7 +99,8 @@
                         </goals>
                         <configuration>
                             <outputDirectory>src/java</outputDirectory>
-                            <sourceDirectory>src/java/com/j_spaces/jdbc/parser/grammar/</sourceDirectory>
+                            <sourceDirectory>src/java/com/j_spaces/jdbc/parser/grammar/
+                            </sourceDirectory>
                             <tokenExtends>com.j_spaces.jdbc.parser.SerializableToken</tokenExtends>
                         </configuration>
                     </execution>
@@ -102,6 +112,21 @@
                 <configuration>
                     <excludePackageNames>*.internal.*</excludePackageNames>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>analyze</id>
+                        <goals>
+                            <goal>analyze-only</goal>
+                        </goals>
+                        <configuration>
+                            <failOnWarning>true</failOnWarning>
+                            <outputXML>true</outputXML>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

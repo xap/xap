@@ -1,12 +1,14 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<artifactId>xap-mongodb</artifactId>
-	<packaging>jar</packaging>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>xap-mongodb</artifactId>
+    <packaging>jar</packaging>
 
-	<properties>
-		<junitVersion>4.12</junitVersion>
-		<skipTests>false</skipTests>
-	</properties>
+    <properties>
+        <junitVersion>4.12</junitVersion>
+        <skipTests>false</skipTests>
+    </properties>
 
 	<parent>
 		<artifactId>xap</artifactId>
@@ -15,126 +17,143 @@
 		<relativePath>../../</relativePath>
 	</parent>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.gigaspaces</groupId>
-			<artifactId>xap-openspaces</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<!-- mongodb java driver -->
-		<dependency>
-			<groupId>org.mongodb</groupId>
-			<artifactId>mongo-java-driver</artifactId>
-			<version>3.2.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.antlr</groupId>
-			<artifactId>antlr4-runtime</artifactId>
-			<version>4.0</version>
-		</dependency>
+    <dependencies>
+        <dependency>
+            <groupId>org.gigaspaces</groupId>
+            <artifactId>xap-openspaces</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- mongodb java driver -->
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>4.0</version>
+        </dependency>
 
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>${junitVersion}</version>
-			<scope>test</scope>
-		</dependency>
-		<!-- mongo embedded server implementation for testing -->
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-compress</artifactId>
-			<version>1.5</version>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junitVersion}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- mongo embedded server implementation for testing -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.5</version>
+        </dependency>
+    </dependencies>
 
-	<build>
-	   <extensions>
-			<extension>
-				<groupId>org.kuali.maven.wagons</groupId>
-				<artifactId>maven-s3-wagon</artifactId>
-				<version>1.1.20</version>
-			</extension>
-		</extensions>
+    <build>
+        <extensions>
+            <extension>
+                <groupId>org.kuali.maven.wagons</groupId>
+                <artifactId>maven-s3-wagon</artifactId>
+                <version>1.1.20</version>
+            </extension>
+        </extensions>
 
-		<plugins>
+        <plugins>
 
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
-				</configuration>
-			</plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>default-jar</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-						<phase>package</phase>
-						<configuration>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
                             <finalName>${project.artifactId}</finalName>
                         </configuration>
-					</execution>
-					<execution>
-						<goals>
-							<goal>test-jar</goal>
-						</goals>
-						<phase>package</phase>
-					</execution>
-				</executions>
-			</plugin>
+                    </execution>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
 
-			<!--<plugin>-->
-				<!--<artifactId>maven-assembly-plugin</artifactId>-->
-				<!--<version>2.3</version>-->
-				<!--<configuration>-->
-					<!--<descriptors>-->
-						<!--<descriptor>src/main/assembly/package-docs.xml</descriptor>-->
-					<!--</descriptors>-->
-					<!--<finalName>${project.artifactId}</finalName>-->
-					<!--<appendAssemblyId>false</appendAssemblyId>-->
-				<!--</configuration>-->
-				<!--<executions>-->
-					<!--<execution>-->
-						<!--<phase>package</phase>-->
-						<!--<goals>-->
-							<!--<goal>assembly</goal>-->
-						<!--</goals>-->
-					<!--</execution>-->
-				<!--</executions>-->
-			<!--</plugin>-->
+            <!--<plugin>-->
+            <!--<artifactId>maven-assembly-plugin</artifactId>-->
+            <!--<version>2.3</version>-->
+            <!--<configuration>-->
+            <!--<descriptors>-->
+            <!--<descriptor>src/main/assembly/package-docs.xml</descriptor>-->
+            <!--</descriptors>-->
+            <!--<finalName>${project.artifactId}</finalName>-->
+            <!--<appendAssemblyId>false</appendAssemblyId>-->
+            <!--</configuration>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<phase>package</phase>-->
+            <!--<goals>-->
+            <!--<goal>assembly</goal>-->
+            <!--</goals>-->
+            <!--</execution>-->
+            <!--</executions>-->
+            <!--</plugin>-->
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<executions>
-					<execution>
-						<goals>
-							<goal>test</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
                     <skipTests>${skipTests}</skipTests>
-					<testFailureIgnore>false</testFailureIgnore>
-					<argLine>-Xms1024m -Xmx1024m</argLine>
-					<includes>
-						<include>**/AllTests.java</include>
-						<include>**/*TestSuite.java</include>
-					</includes>
-					<excludes>
-						<exclude>**/*Abstract*</exclude>
-					</excludes>
-					<additionalClasspathElements>
-						<additionalClasspathElement>src/test/resources</additionalClasspathElement>
-					</additionalClasspathElements>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+                    <testFailureIgnore>false</testFailureIgnore>
+                    <argLine>-Xms1024m -Xmx1024m</argLine>
+                    <includes>
+                        <include>**/AllTests.java</include>
+                        <include>**/*TestSuite.java</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/*Abstract*</exclude>
+                    </excludes>
+                    <additionalClasspathElements>
+                        <additionalClasspathElement>src/test/resources</additionalClasspathElement>
+                    </additionalClasspathElements>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                            <excludeTransitive>true</excludeTransitive>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
