@@ -1170,7 +1170,8 @@ public class LeaseManager {
                                         Context ctx = _cacheManager.getCacheContext();
                                         try {
                                             if (_cacheManager.isEvictableCachePolicy()) {
-                                                if (_cacheManager.requiresEvictionReplicationProtection() && _cacheManager.getEvictionReplicationsMarkersRepository().isEntryEvictable(entry.getUID(), false /*alreadyLocked*/))
+                                                // fix GS-13590
+                                                if (_cacheManager.requiresEvictionReplicationProtection() && !entry.isTransient() && !_cacheManager.getEvictionReplicationsMarkersRepository().isEntryEvictable(entry.getUID(), false /*alreadyLocked*/))
                                                     continue; //markers repository- entry cannot be evicted
 
                                                 IEntryCacheInfo pe = null;
