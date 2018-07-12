@@ -20,8 +20,10 @@ import com.gigaspaces.client.transaction.ITransactionManagerProvider;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.exceptions.BatchQueryException;
 import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ProjectionTemplate;
+import com.gigaspaces.internal.utils.ReflectionUtils;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.query.aggregators.AggregationSet;
 import com.gigaspaces.security.AccessDeniedException;
@@ -598,31 +600,31 @@ public class SelectQuery extends AbstractDMLQuery {
      */
     @Override
     public SelectQuery clone() {
-      SelectQuery query = new SelectQuery();
-      query.tables = this.tables;
-      query._tablesData = _tablesData;
-      query.rownum = (RowNumNode) (this.rownum == null ? null : rownum.clone());
-      query.orderColumns = this.orderColumns;
-      query.groupColumn = this.groupColumn;
-      query.isPrepared = this.isPrepared;
-      query.forUpdate = this.forUpdate;
-      query.isAggFunction = this.isAggFunction;
-      query.isDistinct = isDistinct;
-      query.setRouting(this.getRouting());
-      query.setProjectionTemplate(this.getProjectionTemplate());
-      query.setContainsSubQueries(this.containsSubQueries());
-      query.isSelectAll = this.isSelectAll;
+        SelectQuery query = new SelectQuery();
+        query.tables = this.tables;
+        query._tablesData = _tablesData;
+        query.rownum = (RowNumNode) (this.rownum == null ? null : rownum.clone());
+        query.orderColumns = this.orderColumns;
+        query.groupColumn = this.groupColumn;
+        query.isPrepared = this.isPrepared;
+        query.forUpdate = this.forUpdate;
+        query.isAggFunction = this.isAggFunction;
+        query.isDistinct = isDistinct;
+        query.setRouting(this.getRouting());
+        query.setProjectionTemplate(this.getProjectionTemplate());
+        query.setContainsSubQueries(this.containsSubQueries());
+        query.isSelectAll = this.isSelectAll;
 
-      query.queryColumns = new ArrayList();
+        query.queryColumns = new ArrayList();
 
-      for (SelectColumn col : this.getQueryColumns()) {
-        if (!col.isDynamic())
-          query.queryColumns.add(col);
-      }
+        for (SelectColumn col : this.getQueryColumns()) {
+            if (!col.isDynamic())
+                query.queryColumns.add(col);
+        }
 
-      if (this.getExpTree() != null)
-        query.setExpTree((ExpNode) this.getExpTree().clone()); //clone all the tree.
-      return query;
+        if (this.getExpTree() != null)
+            query.setExpTree((ExpNode) this.getExpTree().clone()); //clone all the tree.
+        return query;
     }
 
     /**
@@ -712,23 +714,82 @@ public class SelectQuery extends AbstractDMLQuery {
         if (Modifiers.contains(getReadModifier(), Modifiers.RETURN_STRING_PROPERTIES) || (Modifiers.contains(getReadModifier(), Modifiers.RETURN_DOCUMENT_PROPERTIES))) {
             if (isOrderBy()) {
                 for (SelectColumn column : orderColumns) {
-                    QueryColumnData columnData = column.getColumnData();
-                    int propertyIndex = columnData.getColumnIndexInTable();
-                    if (!columnData.getColumnTableData().getTypeDesc().getProperties()[propertyIndex].isCommonJavaType())
-                        throw new UnsupportedOperationException("ORDER BY can only be performed by specifying java common types while provided type is: "
-                                + columnData.getColumnTableData().getTypeDesc().getPropertiesTypes()[propertyIndex]);
+                    if (!isCommonJavaType( column )) {
+                        QueryColumnData columnData = column.getColumnData();
+                        int propertyIndex = columnData.getColumnIndexInTable();
+                        throw new UnsupportedOperationException(
+                                "ORDER BY can only be performed by specifying java common types while provided type is: "
+                                        + columnData.getColumnTableData().getTypeDesc()
+                                        .getPropertiesTypes()[propertyIndex]);
+                    }
                 }
             }
             if (isGroupBy()) {
                 for (SelectColumn column : groupColumn) {
-                    QueryColumnData columnData = column.getColumnData();
-                    int propertyIndex = columnData.getColumnIndexInTable();
-                    if (!columnData.getColumnTableData().getTypeDesc().getProperties()[propertyIndex].isCommonJavaType())
-                        throw new UnsupportedOperationException("GROUP BY can only be performed by specifying java common types while provided type is: "
-                                + columnData.getColumnTableData().getTypeDesc().getPropertiesTypes()[propertyIndex]);
+                    if (!isCommonJavaType( column )) {
+                        QueryColumnData columnData = column.getColumnData();
+                        int propertyIndex = columnData.getColumnIndexInTable();
+                        throw new UnsupportedOperationException(
+                                "GROUP BY can only be performed by specifying java common types while provided type is: "
+                                        + columnData.getColumnTableData().getTypeDesc().getPropertiesTypes()[propertyIndex]);
+                    }
                 }
             }
         }
+    }
+
+    //fix for GS-13451, GS-13537
+    private static boolean isCommonJavaType(SelectColumn column){
+        QueryColumnData columnData = column.getColumnData();
+        int propertyIndex = columnData.getColumnIndexInTable();
+
+        String columnPath = columnData.getColumnPath();
+
+        boolean commonJavaType = false;
+
+        //if path is not simple, i.e. has delimiters
+        //for example possible value here can be: teamMemberKey.contractMonth
+        if( columnPath.contains( "." ) ) {
+            try {
+                Class<?> type = getFieldClassType(columnData);
+                commonJavaType = ReflectionUtils.isCommonJavaType(type) || type.isEnum();
+            }
+            catch( Exception e ){
+                if( _logger.isLoggable( Level.SEVERE ) ){
+                    _logger.log( Level.SEVERE, "Failed verifying common Java type for [" + columnPath + "]", e );
+                }
+            }
+        }
+        else {
+            PropertyInfo propertyInfo =
+                    columnData.getColumnTableData().getTypeDesc().getProperties()[propertyIndex];
+            commonJavaType = propertyInfo.isCommonJavaType() ||
+                    ( propertyInfo.getType() != null && propertyInfo.getType().isEnum() );
+        }
+
+        return commonJavaType;
+    }
+
+    //fix for GS-13451
+    private static Class<?> getFieldClassType( QueryColumnData columnData ) throws NoSuchFieldException{
+
+        //for example columnPath has value "teamMemberKey.contractMonth"
+        String columnPath = columnData.getColumnPath();
+        String[] paths = columnPath.split("\\.");
+        Class<?> fieldClassType = null;
+        for( String path : paths ){
+
+            if( fieldClassType == null ) {
+                fieldClassType = columnData.getColumnTableData().getTypeDesc().getObjectClass();
+            }
+            //for example: for first loop iteration at this point fieldClassType has value: class teammember.TeamMemberInfo
+            //path has value "teamMemberKey"
+
+            fieldClassType = fieldClassType.getDeclaredField( path ).getType();
+            //for example: for first loop iteration at this point fieldClassType has value: class class teammember.TeamMemberKey
+        }
+
+        return fieldClassType;
     }
 
     /**
