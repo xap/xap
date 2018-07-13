@@ -21,12 +21,22 @@ public class XapCliUtils {
     private static Logger LOGGER;
     private static final String PROCESS_TERMINATION_TIMEOUT = "com.gs.cli.process-termination-timeout";
     private static final long processTimeoutInSeconds = Long.getLong(PROCESS_TERMINATION_TIMEOUT, 60);
-    public static final String DEMO_SPACE_NAME = "demo-space";
+    public static final String DEMO_SPACE_NAME;
+    public static final String INSIGHTEDGE_DEMO_SPACE_NAME = "insightedge-space";
 
     static {
         GSLogConfigLoader.getLoader("cli");
         LOGGER = Logger.getLogger(Constants.LOGGER_CLI);
+        if ( System.getenv("IS_I9E") !=null && System.getenv("IS_I9E").equalsIgnoreCase("true")) {
+            DEMO_SPACE_NAME="insightedge-space";
+        }
+        else{
+            DEMO_SPACE_NAME = "demo-space";
+
+        }
     }
+
+
 
     public static void executeProcessesWrapper(List<ProcessBuilderWrapper> processBuilderWrappers) throws InterruptedException {
         final ExecutorService executorService = Executors.newCachedThreadPool();
