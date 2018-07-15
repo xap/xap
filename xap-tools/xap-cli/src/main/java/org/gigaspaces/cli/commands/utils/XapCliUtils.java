@@ -28,11 +28,11 @@ public class XapCliUtils {
         GSLogConfigLoader.getLoader("cli");
         LOGGER = Logger.getLogger(Constants.LOGGER_CLI);
         if ( System.getenv("IS_I9E") !=null && System.getenv("IS_I9E").equalsIgnoreCase("true")) {
-            DEMO_SPACE_NAME = "demo-space";
+            DEMO_SPACE_NAME="insightedge-space";
         }
         else{
+            DEMO_SPACE_NAME = "demo-space";
 
-            DEMO_SPACE_NAME="insightedge-space";
         }
     }
 

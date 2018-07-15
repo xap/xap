@@ -24,11 +24,11 @@ public class DemoCommand extends CliCommand {
 
         if ( System.getenv("IS_I9E") !=null && System.getenv("IS_I9E").equalsIgnoreCase("true")) {
             isXapTest=false;
-            SPACE_NAME = XapCliUtils.DEMO_SPACE_NAME;
+            SPACE_NAME=XapCliUtils.INSIGHTEDGE_DEMO_SPACE_NAME;
         }
         else{
             isXapTest=true;
-            SPACE_NAME=XapCliUtils.INSIGHTEDGE_DEMO_SPACE_NAME;
+            SPACE_NAME = XapCliUtils.DEMO_SPACE_NAME;
         }
 
     }
