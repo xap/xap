@@ -15,9 +15,23 @@ import java.util.List;
 @Command(name = "demo", header = "Run a Space in high availability mode (2 primaries with 1 backup each)")
 public class DemoCommand extends CliCommand {
 
-    private final String SPACE_NAME = XapCliUtils.DEMO_SPACE_NAME;
+    private final String SPACE_NAME;
     private final boolean HA = true;
     private final int PARTITIONS_COUNT = 2;
+    private final boolean isXapTest;
+
+    public DemoCommand(){
+
+        if ( System.getenv("IS_I9E") !=null && System.getenv("IS_I9E").equalsIgnoreCase("true")) {
+            isXapTest=false;
+            SPACE_NAME = XapCliUtils.DEMO_SPACE_NAME;
+        }
+        else{
+            isXapTest=true;
+            SPACE_NAME=XapCliUtils.INSIGHTEDGE_DEMO_SPACE_NAME;
+        }
+
+    }
 
     @Override
     protected void execute() throws Exception {
