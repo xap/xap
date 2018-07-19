@@ -60,7 +60,11 @@ public class XapManagerConfig {
     }
 
     public String getAdminRestUrl() {
-        return (SSL_ENABLED ? "https" : "http") + "://" + getHost() + ":" + getAdminRest();
+        return getAdminRestUrl(getAdminRest());
+    }
+
+    public String getAdminRestUrl(String port) {
+        return (SSL_ENABLED ? "https" : "http") + "://" + getHost() + ":" + port;
     }
 
     public String getProperty(String key) {
