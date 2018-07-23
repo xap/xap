@@ -345,7 +345,7 @@
     <parent>
         <artifactId>xap</artifactId>
         <groupId>org.gigaspaces</groupId>
-        <version>14.0.0-SNAPSHOT</version>
+        <version>14.0.0-m4-19904-21</version>
         <relativePath>../../</relativePath>
     </parent>
     <repositories>
