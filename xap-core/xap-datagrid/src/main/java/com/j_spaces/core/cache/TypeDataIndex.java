@@ -185,9 +185,9 @@ public class TypeDataIndex<K> {
         _NTemplates = new ConcurrentHashMap<Object, IStoredList<TemplateCacheInfo>[]>();
 
         if (_useConcurrentSl) {
-            _nullEntries = StoredListFactory.createConcurrentList(false);
-            _RTNullTemplates = StoredListFactory.createConcurrentList(false /*segmented*/, true /*supportFifo*/);
-            _NNullTemplates = StoredListFactory.createConcurrentList(false /*segmented*/, true /*supportFifo*/);
+            _nullEntries = StoredListFactory.createConcurrentSegmentedList(true/* supportFifoPerSegment*/,1 /* inputNumOfSegments*/,true /* padded*/);
+            _RTNullTemplates = StoredListFactory.createConcurrentSegmentedList(true/* supportFifoPerSegment*/,1 /* inputNumOfSegments*/,true /* padded*/);
+            _NNullTemplates = StoredListFactory.createConcurrentSegmentedList(true/* supportFifoPerSegment*/,1 /* inputNumOfSegments*/,true /* padded*/);
         } else {
             _nullEntries = StoredListFactory.createRandomScanList(true);
             _RTNullTemplates = StoredListFactory.createList(true);
@@ -484,9 +484,9 @@ public class TypeDataIndex<K> {
                     //a single object is stored, create a SL and add it
                     if (newSL == null) {
                         if (_useEconomyHashMap)
-                            newSL = StoredListFactory.createConcurrentList(false /*segmented*/, pType.isAllowFifoIndexScans(), fieldValue);
+                            newSL = StoredListFactory.createConcurrentSegmentedList(false /*segmented*/, pType.isAllowFifoIndexScans(), fieldValue);
                         else
-                            newSL = StoredListFactory.createConcurrentList(false /*segmented*/, pType.isAllowFifoIndexScans());
+                            newSL = StoredListFactory.createConcurrentList(pType.isAllowFifoIndexScans());
                     }
                     otheroi = newSL.addUnlocked(currentSL.getObjectFromHead());
                     myoi = newSL.addUnlocked(pEntry);
@@ -1260,7 +1260,7 @@ public class TypeDataIndex<K> {
             // either wasn't found or we just helped remove it
             if (t_vec == null) {
                 // create vector
-                templates = StoredListFactory.createConcurrentList(false /*segmented*/, true /*supportFifo*/);
+                templates = StoredListFactory.createConcurrentList(true /*supportFifo*/);
                 oi = templates.add(pTemplate);
                 t_vec = new IStoredList[2];
                 t_vec[0] = templates;
@@ -1306,7 +1306,7 @@ public class TypeDataIndex<K> {
             // either wasn't found or we just helped remove it
             if (t_vec == null) {
                 // create vector
-                templates = StoredListFactory.createConcurrentList(false /*segmented*/, true /*supportFifo*/);
+                templates = StoredListFactory.createConcurrentList(true /*supportFifo*/);
                 oi = templates.add(pTemplate);
                 t_vec = new IStoredList[2];
                 t_vec[0] = templates;

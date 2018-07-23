@@ -2013,7 +2013,10 @@ public class LeaseManager {
 
         private Cell(int segmentsPerExpirationCell, Long expirationTime) {
             _expirationTime = expirationTime;
-            _entriesExpired = StoredListFactory.createConcurrentList(segmentsPerExpirationCell);
+            if (segmentsPerExpirationCell == 1)
+                _entriesExpired = StoredListFactory.createConcurrentList(true);
+            else
+                _entriesExpired = StoredListFactory.createConcurrentSegmentedList(true /*supportsFifoPerSegment*/,segmentsPerExpirationCell,false /* padded*/);
         }
 
         private Long getCellKey() {
@@ -2050,7 +2053,7 @@ public class LeaseManager {
                 if (notifyTemplatesExpired == null) {
                     synchronized (this) {
                         if (_notifyTemplatesExpired == null)
-                            _notifyTemplatesExpired = StoredListFactory.createConcurrentList(false /*segmented*/, true /*supportFifoPerSegment*/);
+                            _notifyTemplatesExpired = StoredListFactory.createConcurrentList(true /*supportFifoPerSegment*/);
                         notifyTemplatesExpired = _notifyTemplatesExpired;
                     }//synchronized
                 }

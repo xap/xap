@@ -67,7 +67,7 @@ public abstract class TimeBasedSpaceEvictionStrategy extends SpaceEvictionStrate
         _harvestMainInterval = harvestMainInterval;
         _harvestShortLivedInterval = harvestShortLivedInterval;
         _expirationList = new FastConcurrentSkipListMap<Long, Cell>();
-        _shortLived = StoredListFactory.createConcurrentList(false /*segmented*/, true/* fifo*/);
+        _shortLived = StoredListFactory.createConcurrentList(true/* fifo*/);
     }
 
     @Override
@@ -265,7 +265,7 @@ public abstract class TimeBasedSpaceEvictionStrategy extends SpaceEvictionStrate
 
         private Cell(long expirationTime) {
             _expirationTime = expirationTime;
-            _entriesExpired = StoredListFactory.createConcurrentList(false /*segmented*/, true/* fifo*/);
+            _entriesExpired = StoredListFactory.createConcurrentList(true/* fifo*/);
         }
 
         private Long getCellKey() {

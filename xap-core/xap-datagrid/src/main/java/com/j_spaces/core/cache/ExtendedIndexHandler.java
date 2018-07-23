@@ -147,7 +147,7 @@ public class ExtendedIndexHandler<K>
                 }
                 //a single object is stored, create a SL and add it
                 if (newSL == null)
-                    newSL = StoredListFactory.createConcurrentList(false, pType.isAllowFifoIndexScans());
+                    newSL = StoredListFactory.createConcurrentList(pType.isAllowFifoIndexScans());
 
                 otheroi = newSL.addUnlocked(currentSL.getObjectFromHead());
                 myoi = newSL.addUnlocked(pEntry);

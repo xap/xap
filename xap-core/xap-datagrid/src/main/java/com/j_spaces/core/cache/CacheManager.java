@@ -3611,7 +3611,7 @@ public class CacheManager extends AbstractCacheManager
             // either wasn't found or we just helped remove it
             if (templates == null) {
                 // create vector
-                templates = StoredListFactory.createConcurrentList(false /*segmented*/, true /*supportFifo*/);
+                templates = StoredListFactory.createConcurrentList(true /*supportFifo*/);
                 oi = templates.add(pTemplate);
                 templates = uidTemplates.putIfAbsent(template.getUidToOperateBy(), templates);
 
@@ -4731,7 +4731,7 @@ public class CacheManager extends AbstractCacheManager
 
                 Object entryValue = index.getIndexValue(entryData);
                 if (index.isMultiValuePerEntryIndex() && entryValue != null) {
-                    IStoredList<TemplateCacheInfo> multiValueTemplates = new ConcurrentSegmentedStoredList<TemplateCacheInfo>(false);
+                    IStoredList<TemplateCacheInfo> multiValueTemplates = new ConcurrentSegmentedStoredList<TemplateCacheInfo>(true  /* supportsFifoPerSegment*/,1, true /*padded*/);
                     nullTemplatesVector = (matchTarget == MatchTarget.READ_TAKE) ? index._RTNullTemplates : index._NNullTemplates;
                     // Collect templates for collection items
                     for (Object value : (Collection<?>) entryValue) {

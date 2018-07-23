@@ -19,7 +19,7 @@ package com.j_spaces.kernel.list;
 
 import com.gigaspaces.internal.utils.concurrent.UncheckedAtomicReferenceFieldUpdater;
 import com.j_spaces.kernel.IObjectInfo;
-import com.j_spaces.kernel.list.ConcurrentSegmentedStoredList.SegmentedListIterator;
+import com.j_spaces.kernel.list.ConcurrentStoredList.SegmentedListIterator;
 
 import java.io.Serializable;
 import java.util.ArrayList;
