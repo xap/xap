@@ -79,6 +79,7 @@ import org.jini.rio.boot.SpaceInstanceRemoteClassLoaderInfo;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * LRMI Stub implementation of <code>IRemoteJSpaceImpl</code> interface.
@@ -626,5 +627,10 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     @Override
     public Map<String, LocalViewDetails> getLocalViewDetails() throws RemoteException {
         return ((IInternalRemoteJSpaceAdmin) getProxy()).getLocalViewDetails();
+    }
+
+    @Override
+    public boolean demoteToBackup(int timeout, TimeUnit unit) {
+        return getProxy().demoteToBackup(timeout, unit);
     }
 }

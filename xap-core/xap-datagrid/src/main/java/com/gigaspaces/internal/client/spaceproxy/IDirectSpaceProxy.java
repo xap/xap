@@ -37,6 +37,7 @@ import com.j_spaces.core.client.sql.IQueryManager;
 
 import java.rmi.RemoteException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A direct space proxy working on an actual space.
@@ -128,4 +129,6 @@ public interface IDirectSpaceProxy extends ISpaceProxy {
     void setQuiesceToken(QuiesceToken token);
 
     ISpaceQuery prepareTemplate(Object template);
+
+    boolean demoteToBackup(int timeout, TimeUnit unit);
 }

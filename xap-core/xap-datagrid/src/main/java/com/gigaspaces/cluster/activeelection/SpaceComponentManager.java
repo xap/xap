@@ -182,15 +182,15 @@ public class SpaceComponentManager
 
             // PRIMARY -- > BACKUP
             case PRIMARY:
-                // Restart space when switching from primary to backup
-                try {
-                    _space.stopInternal();
-                    _space.startInternal();
-                } catch (RemoteException e) {
-                    if (_logger.isLoggable(Level.WARNING)) {
-                        _logger.log(Level.WARNING, "Failed moving to backup", e);
-                    }
-                }
+//                // Restart space when switching from primary to backup
+//                try {
+//                    _space.stopInternal();
+//                    _space.startInternal();
+//                } catch (RemoteException e) {
+//                    if (_logger.isLoggable(Level.WARNING)) {
+//                        _logger.log(Level.WARNING, "Failed moving to backup", e);
+//                    }
+//                }
 
                 break;
         }

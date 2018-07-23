@@ -39,6 +39,7 @@ import net.jini.id.Uuid;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The GigaSpaces remote interface.
@@ -146,4 +147,6 @@ public interface IRemoteSpace
     SpaceConnectResult connect(SpaceConnectRequest request) throws RemoteException;
 
     DirectPersistencySyncListBatch getSynchronizationListBatch() throws RemoteException;
+
+    boolean demoteToBackup(int timeout, TimeUnit unit);
 }

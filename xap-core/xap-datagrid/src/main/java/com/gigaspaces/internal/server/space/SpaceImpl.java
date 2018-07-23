@@ -1413,7 +1413,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 throw new ActiveElectionException("This cluster configuration requires a running Jini Lookup Service. " +
                         " Make sure this space is registering/joining a running Jini Lookup Service (i.e. verify the <jini_lus><enabled>true<enabled> element in the relevant container schema).");
 
-            changeSpaceState(ISpaceState.STARTING, true, false);
+            //TODO - Should we change the SpaceState to Starting in case we are moving a primary to be a backup ?
+            if (_spaceState.getState() != ISpaceState.STARTED)
+                changeSpaceState(ISpaceState.STARTING, true, false);
+
             boolean useZooKeeper = !SystemInfo.singleton().getManagerClusterInfo().isEmpty();
             try {
                 LeaderSelectorHandlerConfig leaderSelectorHandlerConfig = new LeaderSelectorHandlerConfig();
@@ -3561,5 +3564,78 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         public void serviceChanged(ServiceDiscoveryEvent event) {
 
         }
+    }
+
+    @Override
+    public boolean demoteToBackup(int timeout, TimeUnit unit) {
+        if (!isPrimary()) {
+            //space is not primary
+            return false;
+        }
+
+        List<ReplicationStatistics.OutgoingChannel> backupChannels = getHolder().getReplicationStatistics().getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE);
+        if (backupChannels.size() != 1) {
+            //more than one backup
+            _logger.info("Couldn't demote to backup - there should be exactly one backup, current channels: ("+backupChannels.size()+")");
+            return false;
+        }
+
+        ReplicationStatistics.OutgoingChannel backupChannel = backupChannels.get(0);
+
+        if (!backupChannel.getChannelState().equals(ReplicationStatistics.ChannelState.ACTIVE)) {
+            //backup replication is not active
+            _logger.info("Couldn't demote to backup - backup replication channel is not active ("+backupChannel.getChannelState()+")");
+            return false;
+        }
+
+
+        try {
+
+            //TODO quiesce token - replace with empty token
+            _logger.info("Demoting to backup, entering quiesce mode...");
+            getQuiesceHandler().quiesce("Space is demoting from primary to backup", new DefaultQuiesceToken("myToken"));
+
+
+            long lastKeyInRedoLog = getHolder().getReplicationStatistics().getOutgoingReplication().getLastKeyInRedoLog();
+
+            if (backupChannel.getLastConfirmedKeyFromTarget() != lastKeyInRedoLog) {
+                //Backup is not synced
+                _logger.info("Couldn't demote to backup - backup is not synced ("+backupChannel.getLastConfirmedKeyFromTarget()+" != "+lastKeyInRedoLog+")");
+                return false;
+            }
+
+            //TODO recheck above preconditions again after entering quiesce mode
+            //Wait timeout if necessary (e.g. wait for replication from primary to backup)
+
+            // wait for no activity
+            //TODO
+
+            //close outgoing connections
+            getEngine().getReplicationNode().getAdmin().setPassive();
+
+
+            //Restart leader selector handler (in case of ZK then it restarts
+            // the connection to ZK so the backup becomes primary)
+            final boolean isLookupServiceEnabled = _isLusRegEnabled && !isPrivate();
+
+            try {
+                _leaderSelector.terminate();
+                _leaderSelector = initLeaderSelectorHandler(isLookupServiceEnabled);
+            } catch (RemoteException e) {
+                _logger.log(Level.SEVERE, "Unable to reinitialize leader selector ", e);
+                return false;
+            } catch (ActiveElectionException e) {
+                _logger.log(Level.SEVERE, "Unable to reinitialize leader selector ", e);
+                return false;
+            }
+
+        } finally {
+            //TODO if failed, need to reopen connections
+            _logger.info("Demoting to backing finished, exiting quiesce mode...");
+            getQuiesceHandler().unquiesce();
+        }
+
+
+        return true;
     }
 }

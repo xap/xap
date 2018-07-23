@@ -84,6 +84,7 @@ import java.io.ObjectOutput;
 import java.rmi.RemoteException;
 import java.security.SecureRandom;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -715,6 +716,13 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
         }
         queryPacket.setSerializeTypeDesc(false);
         return new EntrySnapshot(queryPacket);
+    }
+
+    @Override
+    public boolean demoteToBackup(int timeout, TimeUnit unit) {
+        IRemoteSpace spaceImpl = getRemoteJSpace();
+
+        return spaceImpl.demoteToBackup(timeout, unit);
     }
 
 }
