@@ -771,6 +771,7 @@ public class SystemProperties extends CommonSystemProperties {
     public static final String MANAGER_ZOOKEEPER_LEADER_ELECTION_PORT = "com.gs.manager.zookeeper.leader-election.port";
 
     public static final String MANAGER_ADMIN_WITH_STATISTICS_HISTORY = "com.gs.admin.with-stats-history";
+    public static final String MANAGER_ADMIN_DISCOVER_UN_MANAGED_SPACES = "com.gs.admin.discover-un-managed-spaces";
 
     public static final String QUERY_PROCESSOR_CLUSTER_LOOKUP_TIMEOUT = "com.gs.queryProcessor.cluster-lookup-timeout";
 
