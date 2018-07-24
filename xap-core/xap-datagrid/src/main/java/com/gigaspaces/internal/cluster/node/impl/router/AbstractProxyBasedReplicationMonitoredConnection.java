@@ -182,6 +182,9 @@ public abstract class AbstractProxyBasedReplicationMonitoredConnection<T, L> imp
             _proxyId = proxyId;
             _connectionState = ConnectionState.CONNECTED;
 
+            if (_specificLogger.isLoggable(Level.INFO))
+                _specificLogger.info("Connection state updated to 'CONNECTED', Lookup name: "+endPointLookupName);
+
             addPendingEvent(newTarget ? StateChangedEvent.CONNECTED_NEW
                     : StateChangedEvent.CONNECTED_OLD);
         }
@@ -226,6 +229,11 @@ public abstract class AbstractProxyBasedReplicationMonitoredConnection<T, L> imp
 
             _connectionProxy = new DisconnectionProxy();
             _connectionState = ConnectionState.DISCONNECTED;
+
+            if (_specificLogger.isLoggable(Level.WARNING)) {
+                _specificLogger.warning("Connection state updated to 'DISCONNECTED', Lookup name: " +_endPointLookupName+ ", Reason: " + reason);
+            }
+
             addPendingEvent(StateChangedEvent.DISCONNECTED);
         }
     }
