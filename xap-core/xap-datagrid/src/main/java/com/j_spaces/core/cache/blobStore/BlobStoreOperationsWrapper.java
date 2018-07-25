@@ -25,8 +25,9 @@ import com.gigaspaces.metrics.ThroughputMetric;
 import com.gigaspaces.server.blobstore.*;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.cache.CacheManager;
+import com.j_spaces.core.cache.blobStore.memory_pool.AbstractMemoryPool;
 import com.j_spaces.core.cache.blobStore.offheap.OffHeapStorageContainer;
-import com.j_spaces.core.cache.blobStore.offheap.OffHeapMemoryPool;
+import com.j_spaces.core.cache.blobStore.memory_pool.OffHeapMemoryPool;
 import com.j_spaces.kernel.threadpool.DynamicExecutors;
 
 import java.util.List;
@@ -53,7 +54,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     private final boolean _needSerialization;
     private final OffHeapMemoryPool _offHeapCache;
     private final boolean _isOffHeap;
-    private final OffHeapMemoryPool _offHeapStore;
+    private final AbstractMemoryPool _offHeapStore;
 
     private MetricRegistrator _registrator;
     private ExecutorService _preFetchThreadPool;
@@ -75,7 +76,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
 //		_needSerialization = !(blobStore instanceof BlobStoreNoSerializationHashMock);
         _needSerialization = true;
         _isOffHeap = blobStore instanceof OffHeapStorageContainer;
-        _offHeapStore = _isOffHeap ? ((OffHeapStorageContainer)blobStore).getOffHeapStorage() : null;
+        _offHeapStore = _isOffHeap ? ((OffHeapStorageContainer)blobStore).getTransientMemoryStorage() : null;
 
         //TODO: some properties are only set after initialize , here we ONLY use 'off-heap-cache-memory-threshold' property
         Properties p = _blobStore.getProperties();
@@ -96,7 +97,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
     }
 
     @Override
-    public OffHeapMemoryPool getOffHeapStore() {
+    public AbstractMemoryPool getOffHeapStore() {
         return _offHeapStore;
     }
 

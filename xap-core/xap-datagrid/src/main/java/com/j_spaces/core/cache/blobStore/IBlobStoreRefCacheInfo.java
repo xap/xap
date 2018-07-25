@@ -19,7 +19,8 @@ package com.j_spaces.core.cache.blobStore;
 
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.j_spaces.core.cache.CacheManager;
-import com.j_spaces.core.cache.blobStore.offheap.OffHeapMemoryPool;
+import com.j_spaces.core.cache.blobStore.memory_pool.AbstractMemoryPool;
+import com.j_spaces.core.cache.blobStore.memory_pool.OffHeapMemoryPool;
 import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.context.Context;
 
@@ -84,5 +85,5 @@ public interface IBlobStoreRefCacheInfo {
 
     void setMatchCacheFilter(IBlobStoreCacheHandler blobStoreCacheHandler, boolean val);
 
-    void freeOffHeap(CacheManager cacheManager, OffHeapMemoryPool offHeapMemoryPool);
+    void freeOffHeap(CacheManager cacheManager, AbstractMemoryPool offHeapMemoryPool);
 }

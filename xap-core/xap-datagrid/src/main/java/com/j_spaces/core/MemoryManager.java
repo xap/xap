@@ -22,7 +22,8 @@ import com.gigaspaces.internal.utils.concurrent.GSThread;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.core.cache.AbstractCacheManager;
 import com.j_spaces.core.cache.CacheManager;
-import com.j_spaces.core.cache.blobStore.offheap.OffHeapMemoryPool;
+import com.j_spaces.core.cache.blobStore.memory_pool.AbstractMemoryPool;
+import com.j_spaces.core.cache.blobStore.memory_pool.OffHeapMemoryPool;
 import com.j_spaces.kernel.JSpaceUtilities;
 import com.j_spaces.kernel.SystemProperties;
 
@@ -94,7 +95,7 @@ public class MemoryManager implements Closeable {
     final private boolean _forceLeaseReaper;
 
     private final IProcessMemoryManager _processMemoryManager;
-    private final OffHeapMemoryPool _offHeapStorage;
+    private final AbstractMemoryPool _offHeapStorage;
 
     private final Logger _logger;
 
@@ -235,7 +236,7 @@ public class MemoryManager implements Closeable {
         start();
     }
 
-    private OffHeapMemoryPool initOffHeapStorage() {
+    private AbstractMemoryPool initOffHeapStorage() {
         if (!(_cacheManager instanceof CacheManager))
             return null;
         final CacheManager cacheManager = (CacheManager)_cacheManager;

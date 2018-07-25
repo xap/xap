@@ -65,7 +65,7 @@ public class BlobStoreInitialLoadDataIterator implements ISAdapterIterator<IEntr
         oeh.getBlobStoreResidentPart().setBlobStorePosition(res.getPosition());
         if (_engine.getCacheManager().hasBlobStoreOffHeapCache()) {
             try {
-                _engine.getCacheManager().getBlobStoreStorageHandler().getOffHeapCache().allocateAndWrite(oeh.getBlobStoreResidentPart(), entryLayout.getIndexValuesBytes(_engine.getCacheManager()), false);
+                _engine.getCacheManager().getBlobStoreStorageHandler().getOffHeapCache().write(oeh.getBlobStoreResidentPart(), entryLayout.getIndexValuesBytes(_engine.getCacheManager()));
             } catch (IOException e) {
                 CacheManager.getLogger().severe("Blobstore- BLRECI:BlobStoreInitialLoadDataIterator.next got execption" + e.toString() + e.getStackTrace());
                 throw new RuntimeException("Blobstore- BLRECI:BlobStoreInitialLoadDataIterator.next got execption" + e.toString() + e.getStackTrace());

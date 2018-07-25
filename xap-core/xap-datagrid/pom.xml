@@ -34,6 +34,11 @@
             <artifactId>xap-trove</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.gigaspaces.pmem</groupId>
+            <artifactId>temp-pmem-jni</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>

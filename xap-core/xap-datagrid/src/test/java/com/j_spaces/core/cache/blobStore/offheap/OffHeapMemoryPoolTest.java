@@ -1,6 +1,7 @@
 package com.j_spaces.core.cache.blobStore.offheap;
 
 import com.j_spaces.core.cache.blobStore.BlobStoreRefEntryCacheInfo;
+import com.j_spaces.core.cache.blobStore.memory_pool.OffHeapMemoryPool;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -41,7 +42,7 @@ public class OffHeapMemoryPoolTest {
         BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
         byte[] buffer = "Test Buffer".getBytes();
 
-        offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
+        offHeapMemoryPool.write(infoMock, buffer);
         assertBufferWrittenToOffheap(infoMock, buffer);
     }
 
@@ -50,7 +51,7 @@ public class OffHeapMemoryPoolTest {
         byte[] buffer = "".getBytes();
 
         try {
-            offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
+            offHeapMemoryPool.write(infoMock, buffer);
             Assert.fail("allocateAndWrite should have thrown exception but didn't");
         } catch (RuntimeException e) {
             Assert.assertTrue("allocateAndWrite should have thrown exception with another msg\n",
@@ -64,7 +65,7 @@ public class OffHeapMemoryPoolTest {
         byte[] buffer = "Test Buffer".getBytes();
 
         try {
-            offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
+            offHeapMemoryPool.write(infoMock, buffer);
             Assert.fail("allocateAndWrite should have thrown exception but didn't");
         } catch (IllegalStateException e) {
             Assert.assertTrue("allocateAndWrite should have throun exception with another msg\n",
@@ -81,7 +82,7 @@ public class OffHeapMemoryPoolTest {
         BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
         byte[] buffer = "Test Buffer".getBytes();
 
-        offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
+        offHeapMemoryPool.write(infoMock, buffer);
         assertBufferWrittenToOffheap(infoMock, buffer);
         buffer = "another text".getBytes();
         offHeapMemoryPool.update(infoMock, buffer);
@@ -106,7 +107,7 @@ public class OffHeapMemoryPoolTest {
         BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
         byte[] buffer = "Test Buffer".getBytes();
 
-        offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
+        offHeapMemoryPool.write(infoMock, buffer);
         assertBufferWrittenToOffheap(infoMock, buffer);
         buffer = "short".getBytes();
         offHeapMemoryPool.update(infoMock, buffer);
@@ -117,10 +118,10 @@ public class OffHeapMemoryPoolTest {
         BlobStoreOffHeapInfoMock infoMock = new BlobStoreOffHeapInfoMock();
         byte[] buffer = "Test Buffer".getBytes();
 
-        offHeapMemoryPool.allocateAndWrite(infoMock, buffer, false);
+        offHeapMemoryPool.write(infoMock, buffer);
         assertBufferWrittenToOffheap(infoMock, buffer);
 
-        offHeapMemoryPool.delete(infoMock, false);
+        offHeapMemoryPool.delete(infoMock);
         Assert.assertEquals("Infomock address not changed to UNALLOCATED_OFFHEAP_MEMORY after delete\n", infoMock.getOffHeapAddress(), BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY);
     }
 
