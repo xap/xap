@@ -92,43 +92,79 @@ public class SpaceRunCommand extends AbstractRunCommand {
     }
 
     public static ProcessBuilder buildPartitionedSpaceCommand(int id, String name, boolean ha, int partitions) {
-        return buildPartitionedSpaceCommand(id, false, name, ha, partitions);
+        ProcessBuilder pb = new CommandBuilder(name).topology(partitions, ha).instance(id, false).toProcessBuilder();
+        showCommand("Starting Partitioned Space with line:", pb.command());
+        return pb;
     }
 
     public static ProcessBuilder buildPartitionedBackupSpaceCommand(int id, String name, boolean ha, int partitions) {
-        return buildPartitionedSpaceCommand(id, true, name, ha, partitions);
-    }
-
-    public static ProcessBuilder buildPartitionedSpaceCommand(int id, boolean backup, String name, boolean ha, int partitions) {
-
-        final ProcessBuilder pb = createJavaProcessBuilder();
-        final Collection<String> commands = new LinkedHashSet<String>();
-        commands.add("-Dcom.gs.start-embedded-lus=false");
-
-        String[] options = {"XAP_SPACE_INSTANCE_OPTIONS", "XAP_OPTIONS"};
-        addOptions(commands, options);
-
-        commands.add("-classpath");
-        commands.add(getSpaceClassPath(pb.environment()));
-
-        commands.add("org.openspaces.pu.container.integrated.IntegratedProcessingUnitContainer");
-        commands.add("-name");
-        commands.add(name);
-
-        commands.add("-cluster");
-        commands.add("schema=partitioned");
-        if(ha){
-            commands.add("total_members=" + partitions + ",1");
-        } else{
-            commands.add("total_members=" + partitions + ",0");
-        }
-        commands.add("id=" + id);
-        if(backup){
-            commands.add("backup_id=1");
-        }
-
-        pb.command().addAll(commands);
+        ProcessBuilder pb = new CommandBuilder(name).topology(partitions, ha).instance(id, true).toProcessBuilder();
         showCommand("Starting Partitioned Space with line:", pb.command());
         return pb;
+    }
+
+    public static class CommandBuilder {
+        final String name;
+        private int partitions;
+        private boolean ha;
+        private int partitionId;
+        private boolean isBackupInstance;
+        private String javaHeap;
+
+        public CommandBuilder(String name) {
+            this.name = name;
+        }
+
+        public CommandBuilder topology(int partitions, boolean ha) {
+            this.partitions = partitions;
+            this.ha = ha;
+            return this;
+        }
+
+        public CommandBuilder instance(int partitionId, boolean isBackupInstance) {
+            this.partitionId = partitionId;
+            this.isBackupInstance = isBackupInstance;
+            return this;
+        }
+
+        public ProcessBuilder toProcessBuilder() {
+            final ProcessBuilder pb = createJavaProcessBuilder();
+            final Collection<String> commands = new LinkedHashSet<String>();
+            commands.add("-Dcom.gs.start-embedded-lus=false");
+
+            if (javaHeap !=null && javaHeap.length() != 0) {
+                commands.add("-Xms" + javaHeap);
+                commands.add("-Xmx" + javaHeap);
+            }
+            String[] options = {"XAP_SPACE_INSTANCE_OPTIONS", "XAP_OPTIONS"};
+            addOptions(commands, options);
+
+            commands.add("-classpath");
+            commands.add(getSpaceClassPath(pb.environment()));
+
+            commands.add("org.openspaces.pu.container.integrated.IntegratedProcessingUnitContainer");
+            commands.add("-name");
+            commands.add(name);
+
+            commands.add("-cluster");
+            commands.add("schema=partitioned");
+            if(ha){
+                commands.add("total_members=" + partitions + ",1");
+            } else{
+                commands.add("total_members=" + partitions + ",0");
+            }
+            commands.add("id=" + partitionId);
+            if(isBackupInstance){
+                commands.add("backup_id=1");
+            }
+
+            pb.command().addAll(commands);
+            return pb;
+        }
+
+        public CommandBuilder javaHeap(String javaHeap) {
+            this.javaHeap = javaHeap;
+            return this;
+        }
     }
 }
