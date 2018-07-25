@@ -7,10 +7,12 @@ public class BlobStoreOffHeapInfoMock implements IBlobStoreOffHeapInfo {
 
     private long address;
     private String typeName;
+    private short typeCode;
 
     public BlobStoreOffHeapInfoMock() {
         this.address = BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY;
         this.typeName = "dummy Type Name";
+        typeCode = (short) 3;
     }
 
     @Override
@@ -26,5 +28,10 @@ public class BlobStoreOffHeapInfoMock implements IBlobStoreOffHeapInfo {
     @Override
     public String getTypeName() {
         return  this.typeName;
+    }
+
+    @Override
+    public short getServerTypeDescCode() {
+        return typeCode;
     }
 }

@@ -74,7 +74,8 @@ import com.j_spaces.core.admin.SpaceRuntimeInfo;
 import com.j_spaces.core.admin.TemplateInfo;
 import com.j_spaces.core.cache.TerminatingFifoXtnsInfo.FifoXtnEntryInfo;
 import com.j_spaces.core.cache.blobStore.*;
-import com.j_spaces.core.cache.blobStore.offheap.OffHeapMemoryPool;
+import com.j_spaces.core.cache.blobStore.memory_pool.AbstractMemoryPool;
+import com.j_spaces.core.cache.blobStore.memory_pool.OffHeapMemoryPool;
 import com.j_spaces.core.cache.blobStore.optimizations.BlobStoreOperationOptimizations;
 import com.j_spaces.core.cache.blobStore.recovery.BlobStoreRecoveryHelper;
 import com.j_spaces.core.cache.blobStore.recovery.BlobStoreRecoveryHelperWrapper;
@@ -394,14 +395,14 @@ public class CacheManager extends AbstractCacheManager
     }
 
     private void setOffHeapProperties(Properties customProperties) {
-        if(customProperties.getProperty(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP)!= null && !hasBlobStoreOffHeapCache() && !hasBlobStoreOffHeapStore()){
-            _logger.warning(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP+" is set but no off heap memory is used");
-        } else{
+        if (customProperties.getProperty(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP) != null && !hasBlobStoreOffHeapCache() && !hasBlobStoreOffHeapStore()) {
+            _logger.warning(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP + " is set but no off heap memory is used");
+        } else {
             long minimalDiffToAllocate = StringUtils.parseStringAsBytes(customProperties.getProperty(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP, BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_DEFAULT_VALUE));
-            if(_blobStoreStorageHandler.getOffHeapStore() != null){
-                _blobStoreStorageHandler.getOffHeapStore().setMinimalDiffToAllocate((int) minimalDiffToAllocate);
+            if(_blobStoreStorageHandler.getOffHeapStore() != null &&  _blobStoreStorageHandler.getOffHeapStore() instanceof OffHeapMemoryPool){
+                ((OffHeapMemoryPool) _blobStoreStorageHandler.getOffHeapStore()).setMinimalDiffToAllocate((int) minimalDiffToAllocate);
             }
-            if(_blobStoreStorageHandler.getOffHeapCache() != null){
+            if (_blobStoreStorageHandler.getOffHeapCache() != null) {
                 _blobStoreStorageHandler.getOffHeapCache().setMinimalDiffToAllocate((int) minimalDiffToAllocate);
             }
         }
@@ -3262,35 +3263,40 @@ public class CacheManager extends AbstractCacheManager
 
     private void freeOffHeapCache() {
 
-        OffHeapMemoryPool offHeapMemoryPool = hasBlobStoreOffHeapCache() ? getBlobStoreStorageHandler().getOffHeapCache() : getBlobStoreStorageHandler().getOffHeapStore();
+        AbstractMemoryPool memoryPool = hasBlobStoreOffHeapCache() ? getBlobStoreStorageHandler().getOffHeapCache() : getBlobStoreStorageHandler().getOffHeapStore();
 
-        if (offHeapMemoryPool != null && offHeapMemoryPool.getUsedBytes() == 0) {
+        if (memoryPool != null && memoryPool.getUsedBytes() == 0) {
             return;
         }
 
         Context context = null;
         try {
             context = getCacheContext();
-            for (IServerTypeDesc serverTypeDesc : getTypeManager().getSafeTypeTable().values()) {
-                if (serverTypeDesc.isRootType() || serverTypeDesc.getTypeDesc().isInactive() || !serverTypeDesc.getTypeDesc().isBlobstoreEnabled())
-                    continue;
-                final IScanListIterator<IEntryCacheInfo> entriesIter = getTypeData(serverTypeDesc).scanTypeEntries();
-                if (entriesIter != null) {
-                    try {
-                        while (entriesIter.hasNext()) {
-                            IEntryCacheInfo entry = entriesIter.next();
-                            if (entry != null && entry.isBlobStoreEntry()) {
-                                ((IBlobStoreRefCacheInfo) entry).freeOffHeap(this, offHeapMemoryPool);
+            if (memoryPool.isOffHeap()) {
+                for (IServerTypeDesc serverTypeDesc : getTypeManager().getSafeTypeTable().values()) {
+                    if (serverTypeDesc.isRootType() || serverTypeDesc.getTypeDesc().isInactive() || !serverTypeDesc.getTypeDesc().isBlobstoreEnabled())
+                        continue;
+                    final IScanListIterator<IEntryCacheInfo> entriesIter = getTypeData(serverTypeDesc).scanTypeEntries();
+                    if (entriesIter != null) {
+                        try {
+                            while (entriesIter.hasNext()) {
+                                IEntryCacheInfo entry = entriesIter.next();
+                                if (entry != null && entry.isBlobStoreEntry()) {
+                                    ((IBlobStoreRefCacheInfo) entry).freeOffHeap(this, memoryPool);
+                                }
                             }
+                            entriesIter.releaseScan();
+                        } catch (SAException ex) {
+                            _logger.log(Level.WARNING, "caught exception while cleaning offheap entries during shutdown", ex);
                         }
-                        entriesIter.releaseScan();
-                    } catch (SAException ex) {
-                        _logger.log(Level.WARNING, "caught exception while cleaning offheap entries during shutdown", ex);
                     }
                 }
+            } else if (memoryPool.isPmem()) {
+                memoryPool.close();
             }
-            if (_logger.isLoggable(Level.WARNING) && offHeapMemoryPool != null) {
-                final long count = offHeapMemoryPool.getUsedBytes();
+
+            if (_logger.isLoggable(Level.WARNING) && memoryPool != null) {
+                final long count = memoryPool.getUsedBytes();
                 if (count != 0) {
                     _logger.log(Level.WARNING, "offheap used bytes still consumes " + count + " bytes");
                 }
@@ -5413,6 +5419,7 @@ public class CacheManager extends AbstractCacheManager
         }
 
         private void registerTypeMetrics(final IServerTypeDesc serverTypeDesc) {
+            short typeDescCode = serverTypeDesc.getServerTypeDescCode();
             final String typeName = serverTypeDesc.getTypeName();
             final String metricTypeName = typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) ? "total" : typeName;
             final MetricRegistrator registrator = _engine.getMetricRegistrator();
@@ -5430,9 +5437,9 @@ public class CacheManager extends AbstractCacheManager
             });
             if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && isBlobStoreCachePolicy()) {
                 if (getBlobStoreStorageHandler().getOffHeapCache() != null)
-                    getBlobStoreStorageHandler().getOffHeapCache().register(typeName);
+                    getBlobStoreStorageHandler().getOffHeapCache().register(typeName, typeDescCode);
                 if (getBlobStoreStorageHandler().getOffHeapStore() != null)
-                    getBlobStoreStorageHandler().getOffHeapStore().register(typeName);
+                    getBlobStoreStorageHandler().getOffHeapStore().register(typeName, typeDescCode);
             }
         }
 
@@ -5442,10 +5449,12 @@ public class CacheManager extends AbstractCacheManager
             registrator.unregisterByPrefix(registrator.toPath("data", "entries", metricTypeName));
             registrator.unregisterByPrefix(registrator.toPath("data", "notify-templates", metricTypeName));
             if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && isBlobStoreCachePolicy()) {
-                if (getBlobStoreStorageHandler().getOffHeapCache() != null)
-                    getBlobStoreStorageHandler().getOffHeapCache().unregister(typeName);
+                short typeDescCode = _typeManager.getServerTypeDesc(typeName).getServerTypeDescCode();
+                if (getBlobStoreStorageHandler().getOffHeapCache() != null) {
+                    getBlobStoreStorageHandler().getOffHeapCache().unregister(typeName, typeDescCode);
+                }
                 if (getBlobStoreStorageHandler().getOffHeapStore() != null)
-                    getBlobStoreStorageHandler().getOffHeapStore().unregister(typeName);
+                    getBlobStoreStorageHandler().getOffHeapStore().unregister(typeName, typeDescCode);
             }
         }
 

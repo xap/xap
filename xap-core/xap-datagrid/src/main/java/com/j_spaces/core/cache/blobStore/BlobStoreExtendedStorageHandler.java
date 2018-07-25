@@ -19,7 +19,8 @@ package com.j_spaces.core.cache.blobStore;
 
 import com.gigaspaces.datasource.DataIterator;
 import com.gigaspaces.server.blobstore.*;
-import com.j_spaces.core.cache.blobStore.offheap.OffHeapMemoryPool;
+import com.j_spaces.core.cache.blobStore.memory_pool.AbstractMemoryPool;
+import com.j_spaces.core.cache.blobStore.memory_pool.OffHeapMemoryPool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -209,7 +210,7 @@ public abstract class BlobStoreExtendedStorageHandler {
 
     public abstract OffHeapMemoryPool getOffHeapCache();
 
-    public abstract OffHeapMemoryPool getOffHeapStore();
+    public abstract AbstractMemoryPool getOffHeapStore();
 
     public abstract BlobStoreStorageStatistics getStorageStatistics();
 }

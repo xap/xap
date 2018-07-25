@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @com.gigaspaces.api.InternalApi
 public class ServerTypeDesc implements IServerTypeDesc {
-    private static final AtomicInteger  _codesGen = new AtomicInteger();
+    private static final AtomicInteger  _codesGen = new AtomicInteger(-1);
     private static final ConcurrentMap<Short,IServerTypeDesc> _codesRepo = new ConcurrentHashMap<Short, IServerTypeDesc>();
 
     private final int _typeId;

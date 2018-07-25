@@ -22,7 +22,8 @@ import com.gigaspaces.internal.utils.concurrent.GSThread;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.core.cache.AbstractCacheManager;
 import com.j_spaces.core.cache.CacheManager;
-import com.j_spaces.core.cache.blobStore.offheap.OffHeapMemoryPool;
+import com.j_spaces.core.cache.blobStore.memory_pool.AbstractMemoryPool;
+import com.j_spaces.core.cache.blobStore.memory_pool.OffHeapMemoryPool;
 import com.j_spaces.kernel.JSpaceUtilities;
 import com.j_spaces.kernel.SystemProperties;
 
@@ -94,7 +95,7 @@ public class MemoryManager implements Closeable {
     final private boolean _forceLeaseReaper;
 
     private final IProcessMemoryManager _processMemoryManager;
-    private final OffHeapMemoryPool _offHeapStorage;
+    private final AbstractMemoryPool _offHeapStorage;
 
     private final Logger _logger;
 
@@ -235,7 +236,7 @@ public class MemoryManager implements Closeable {
         start();
     }
 
-    private OffHeapMemoryPool initOffHeapStorage() {
+    private AbstractMemoryPool initOffHeapStorage() {
         if (!(_cacheManager instanceof CacheManager))
             return null;
         final CacheManager cacheManager = (CacheManager)_cacheManager;
@@ -343,14 +344,18 @@ public class MemoryManager implements Closeable {
     private void monitorOffHeap() {
         if (_offHeapStorage == null)
             return;
+
         long bytesUsed = _offHeapStorage.getUsedBytes();
-        if (bytesUsed >= _offHeapStorage.getThreshold()) {
-            long used = bytesUsed / (1024*1024);
-            long max = _offHeapStorage.getThreshold() / (1024*1024);
+        long threshold = _offHeapStorage.getThreshold();
+        int MBFactor = 1024 * 1024;
+
+        if (bytesUsed >= threshold * (_memoryUsageHighLevel / 100)) {
+            String used = bytesUsed > MBFactor ?  (bytesUsed / MBFactor) + " mb" : bytesUsed + " b" ;
+            String max = threshold > MBFactor ? (threshold / MBFactor) +" mb" : threshold + " b";
             String hostId = SystemInfo.singleton().network().getHostId();
-            String msg = "Off Heap Memory shortage at: host: " + hostId + ", space " + _spaceName
-                    + ", container " + _containerName + ", total off heap memory: " + max + " mb, used off heap memory: " + used + " mb";
-            throw new OffHeapMemoryShortageException(msg, _spaceName, _containerName, hostId, bytesUsed, _offHeapStorage.getThreshold());
+            String msg = "Off Heap Memory reached "+_memoryUsageHighLevel+"% at: host: " + hostId + ", space " + _spaceName
+                    + ", container " + _containerName + ", total off heap memory: " + max + ", used off heap memory: " + used;
+            throw new OffHeapMemoryShortageException(msg, _spaceName, _containerName, hostId, bytesUsed, threshold);
         }
     }
 

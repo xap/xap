@@ -16,14 +16,13 @@
 
 //
 
-package com.j_spaces.core.cache.blobStore.offheap;
+package com.j_spaces.core.cache.blobStore.memory_pool;
 
 import com.gigaspaces.internal.utils.concurrent.UnsafeHolder;
 import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.j_spaces.core.cache.blobStore.BlobStoreRefEntryCacheInfo;
 import com.j_spaces.core.cache.blobStore.IBlobStoreOffHeapInfo;
-import sun.misc.Unsafe;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,52 +33,116 @@ import java.util.logging.Logger;
  * @author Yael Nahon
  * @since 12.2
  */
-public class OffHeapMemoryPool {
+public class OffHeapMemoryPool extends AbstractMemoryPool {
 
-    private volatile static Unsafe _unsafe;
-    private static Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
-
-    private final long threshold;
-    private final LongCounter totalCounter = new LongCounter();
-    private final Map<String, LongCounter> typesCounters = new ConcurrentHashMap<String, LongCounter>();
-    private MetricRegistrator metricRegistrator;
+    private Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
     private int minimalDiffToAllocate;
+    private final LongCounter totalCounter = new LongCounter();
+    private final Map<Short, LongCounter> typesCounters = new ConcurrentHashMap<Short, LongCounter>();
 
     public OffHeapMemoryPool(long threshold) {
-        this.threshold = threshold;
-        if(!UnsafeHolder.isAvailable()){
+        super(threshold);
+        if (!UnsafeHolder.isAvailable()) {
             throw new RuntimeException(" unsafe instance could not be obtained");
         }
-    }
-
-    public void initMetrics(MetricRegistrator metricRegistrator) {
-        this.metricRegistrator = metricRegistrator;
-        this.metricRegistrator.register(metricsPath("total"), totalCounter);
-    }
-
-    public long getThreshold() {
-        return threshold;
     }
 
     public void setMinimalDiffToAllocate(int minimalDiffToAllocate) {
         this.minimalDiffToAllocate = minimalDiffToAllocate;
     }
 
-    public void register(String typeName) {
+    @Override
+    public void initMetrics(MetricRegistrator metricRegistrator) {
+        setMetricRegistrator(metricRegistrator);
+        getMetricRegistrator().register(metricsPath("total"), totalCounter);
+    }
+
+    @Override
+    public void register(String typeName, short typeCode) {
         LongCounter counter = new LongCounter();
-        typesCounters.put(typeName, counter);
-        metricRegistrator.register(metricsPath(typeName), counter);
+        typesCounters.put(typeCode, counter);
+        getMetricRegistrator().register(metricsPath(typeName), counter);
     }
 
-    public void unregister(String typeName) {
-        typesCounters.remove(typeName);
-        metricRegistrator.unregisterByPrefix(metricsPath(typeName));
+    @Override
+    public void unregister(String typeName, short typeCode) {
+        typesCounters.remove(typeCode);
+        getMetricRegistrator().unregisterByPrefix(metricsPath(typeName));
     }
 
-    public void allocateAndWrite(IBlobStoreOffHeapInfo info, byte[] buf, boolean fromUpdate) {
+    @Override
+    public long getUsedBytes() {
+        return totalCounter.getCount();
+    }
+
+    @Override
+    public void write(IBlobStoreOffHeapInfo info, byte[] buf) {
+        allocateAndWriteImpl(info, buf, false);
+    }
+
+    @Override
+    public byte[] get(IBlobStoreOffHeapInfo info) {
+        if (info.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
+            throw new IllegalStateException("trying to read from off heap but no address found");
+        }
+        int headerSize = getHeaderSizeFromUnsafe(info.getOffHeapAddress());
+        int numOfBytes = getHeaderFromUnsafe(info.getOffHeapAddress(), headerSize);
+        return readBytes(info.getOffHeapAddress() + (long) (headerSize), numOfBytes);
+    }
+
+    @Override
+    public void update(IBlobStoreOffHeapInfo info, byte[] buf) {
+        if (info.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
+            throw new IllegalStateException("trying to update when no off heap memory is allocated");
+        }
+        int oldHeaderSize = getHeaderSizeFromUnsafe(info.getOffHeapAddress());
+        int oldEntryLength = getHeaderFromUnsafe(info.getOffHeapAddress(), oldHeaderSize);
+        if (oldEntryLength < buf.length || (oldEntryLength - buf.length >= minimalDiffToAllocate)) {
+            deleteImpl(info, true);
+            allocateAndWriteImpl(info, buf, true);
+        } else {
+            writeBytes(info.getOffHeapAddress() + (long) (oldHeaderSize), buf);
+        }
+    }
+
+    @Override
+    public void delete(IBlobStoreOffHeapInfo info) {
+        deleteImpl(info, false);
+    }
+
+    @Override
+    public boolean isPmem() {
+        return false;
+    }
+
+    @Override
+    public boolean isOffHeap() {
+        return true;
+    }
+
+    @Override
+    public void close() {
+        throw new UnsupportedOperationException("OffHeapMemoryPool.close() is not supported");
+    }
+
+    private void incrementMetrics(long n, short typeCode) {
+        totalCounter.inc(n);
+        LongCounter typeCounter = typesCounters.get(typeCode);
+        if (typeCounter != null)
+            typeCounter.inc(n);
+    }
+
+    private void decrementMetrics(long n, short typeCode) {
+        totalCounter.dec(n);
+        LongCounter typeCounter = typesCounters.get(typeCode);
+        if (typeCounter != null)
+            typeCounter.dec(n);
+    }
+
+    private void allocateAndWriteImpl(IBlobStoreOffHeapInfo info, byte[] buf, boolean fromUpdate) {
         long newAddress;
 
-        if(info.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY){
+        if (info.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             fromUpdate = false;
         }
 
@@ -89,7 +152,7 @@ public class OffHeapMemoryPool {
 
         int headerSize = calculateHeaderSize(buf.length);
         try {
-            if(fromUpdate){
+            if (fromUpdate) {
                 newAddress = UnsafeHolder.reallocateMemory(info.getOffHeapAddress(), headerSize + buf.length);
             } else {
                 newAddress = UnsafeHolder.allocateMemory(headerSize + buf.length);
@@ -110,67 +173,20 @@ public class OffHeapMemoryPool {
         putHeaderToUnsafe(newAddress, buf.length);
         writeBytes(newAddress + headerSize, buf);
         info.setOffHeapAddress(newAddress);
-        incrementMetrics(headerSize + buf.length, info.getTypeName());
+        incrementMetrics(headerSize + buf.length, info.getServerTypeDescCode());
     }
 
-    public byte[] get(IBlobStoreOffHeapInfo info) {
-        if (info.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
-            throw new IllegalStateException("trying to read from off heap but no address found");
-        }
-        int headerSize = getHeaderSizeFromUnsafe(info.getOffHeapAddress());
-        int numOfBytes = getHeaderFromUnsafe(info.getOffHeapAddress(), headerSize);
-        byte[] bytes = readBytes(info.getOffHeapAddress() + (long) (headerSize), numOfBytes);
-        return bytes;
-    }
-
-    public void update(IBlobStoreOffHeapInfo info, byte[] buf) {
-        if (info.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
-            throw new IllegalStateException("trying to update when no off heap memory is allocated");
-        }
-        int oldHeaderSize = getHeaderSizeFromUnsafe(info.getOffHeapAddress());
-        int oldEntryLength = getHeaderFromUnsafe(info.getOffHeapAddress(), oldHeaderSize);
-        if (oldEntryLength < buf.length || (oldEntryLength - buf.length >= minimalDiffToAllocate)) {
-            delete(info, true);
-            allocateAndWrite(info, buf, true);
-        } else {
-            writeBytes(info.getOffHeapAddress() + (long) (oldHeaderSize), buf);
-        }
-    }
-
-    public void delete(IBlobStoreOffHeapInfo info, boolean fromUpdate) {
+    private void deleteImpl(IBlobStoreOffHeapInfo info, boolean fromUpdate) {
         long valuesAddress = info.getOffHeapAddress();
         if (valuesAddress != BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             int headerSize = getHeaderSizeFromUnsafe(info.getOffHeapAddress());
-            int numOfBytes = getHeaderFromUnsafe(valuesAddress,headerSize);
-            if(!fromUpdate){
+            int numOfBytes = getHeaderFromUnsafe(valuesAddress, headerSize);
+            if (!fromUpdate) {
                 UnsafeHolder.freeFromMemory(valuesAddress);
                 info.setOffHeapAddress(BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY);
             }
-            decrementMetrics(headerSize + numOfBytes, info.getTypeName());
+            decrementMetrics(headerSize + numOfBytes, info.getServerTypeDescCode());
         }
-    }
-
-    public long getUsedBytes() {
-        return totalCounter.getCount();
-    }
-
-    private String metricsPath(String typeName) {
-        return metricRegistrator.toPath("used-bytes", typeName);
-    }
-
-    private void incrementMetrics(long n, String typeName) {
-        totalCounter.inc(n);
-        LongCounter typeCounter = typesCounters.get(typeName);
-        if (typeCounter != null)
-            typeCounter.inc(n);
-    }
-
-    private void decrementMetrics(long n, String typeName) {
-        totalCounter.dec(n);
-        LongCounter typeCounter = typesCounters.get(typeName);
-        if (typeCounter != null)
-            typeCounter.dec(n);
-
     }
 
     private static void writeBytes(long address, byte[] bytes) {

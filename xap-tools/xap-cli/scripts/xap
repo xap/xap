@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 . `dirname $0`/setenv.sh
 XAP_CLI_CP=${XAP_HOME}/tools/cli/*:${GS_JARS}
 java ${XAP_OPTIONS} -cp ${XAP_CLI_CP} org.gigaspaces.cli.commands.XapMainCommand $*
