@@ -14,18 +14,24 @@ import java.util.logging.Logger;
  */
 public class PmemMemoryPool extends AbstractMemoryPool {
 
+    private final boolean verbose;
+    private String fileName;
     private Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
     private TempPmemDriverJNI pmemDriver = new TempPmemDriverJNI();
-    private String fileName;
 
     public PmemMemoryPool(long threshold, String fileName, boolean verbose) {
         super(threshold);
         this.fileName = fileName;
+        this.verbose = verbose;
+    }
+
+    public void initPool(String spaceName){
         try {
+            fileName += "_"+spaceName;
             pmemDriver.init(fileName, threshold, verbose);
         } catch (TempPmemException e) {
-            logger.log(Level.SEVERE, "Failed to create pmem pool", e);
-            throw new RuntimeException("Failed to create pmem pool", e);
+            logger.log(Level.SEVERE, "Failed to init pmem pool", e);
+            throw new RuntimeException("Failed to init pmem pool", e);
         }
     }
 
@@ -84,6 +90,10 @@ public class PmemMemoryPool extends AbstractMemoryPool {
             logger.log(Level.SEVERE, "Failed to execute bulk operation in pmem pool " + fileName, e);
             throw new RuntimeException("Failed to execute bulk operation in pmem pool " + fileName, e);
         }
+    }
+
+    public String getFileName() {
+        return fileName;
     }
 
     public void close() {
