@@ -231,7 +231,7 @@ public abstract class AbstractProxyBasedReplicationMonitoredConnection<T, L> imp
             _connectionState = ConnectionState.DISCONNECTED;
 
             if (_specificLogger.isLoggable(Level.WARNING)) {
-                _specificLogger.warning("Connection state updated to 'DISCONNECTED', Lookup name: " +_endPointLookupName+ ", Reason: " + reason.getStackTrace());
+                _specificLogger.warning("Connection state updated to 'DISCONNECTED', Lookup name: " +_endPointLookupName+ ", Reason: " + reason);
             }
 
             addPendingEvent(StateChangedEvent.DISCONNECTED);
