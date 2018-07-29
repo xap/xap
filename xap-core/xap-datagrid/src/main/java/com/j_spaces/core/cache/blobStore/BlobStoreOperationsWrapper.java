@@ -76,7 +76,7 @@ public class BlobStoreOperationsWrapper extends BlobStoreExtendedStorageHandler 
 //		_needSerialization = !(blobStore instanceof BlobStoreNoSerializationHashMock);
         _needSerialization = true;
         _isOffHeap = blobStore instanceof OffHeapStorageContainer;
-        _offHeapStore = _isOffHeap ? ((OffHeapStorageContainer)blobStore).getTransientMemoryStorage() : null;
+        _offHeapStore = _isOffHeap ? ((OffHeapStorageContainer)blobStore).getMemoryPool() : null;
 
         //TODO: some properties are only set after initialize , here we ONLY use 'off-heap-cache-memory-threshold' property
         Properties p = _blobStore.getProperties();

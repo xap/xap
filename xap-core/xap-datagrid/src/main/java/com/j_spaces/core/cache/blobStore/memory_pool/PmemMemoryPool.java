@@ -21,13 +21,13 @@ public class PmemMemoryPool extends AbstractMemoryPool {
 
     public PmemMemoryPool(long threshold, String fileName, boolean verbose) {
         super(threshold);
-        this.fileName = fileName;
+        this.fileName = fileName.substring(0,fileName.indexOf(".txt"));
         this.verbose = verbose;
     }
 
     public void initPool(String spaceName){
         try {
-            fileName += "_"+spaceName;
+            fileName += "_"+spaceName+".pool.txt";
             pmemDriver.init(fileName, threshold, verbose);
         } catch (TempPmemException e) {
             logger.log(Level.SEVERE, "Failed to init pmem pool", e);
