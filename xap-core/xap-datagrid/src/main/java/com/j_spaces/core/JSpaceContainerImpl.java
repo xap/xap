@@ -351,7 +351,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
         this._spaceName = spaceURL.getSpaceName();
         this._clusterSchema = spaceURL.getClusterSchema();
         this._lock = new Object();
-        this._hostname = SystemInfo.singleton().network().getHost().getHostName();
+        //this._hostname = SystemInfo.singleton().network().getHost().getHostName();
+        this._hostname = SystemInfo.singleton().network().getPublicHost().getHostName();
 
         // print system/GS info
         RuntimeInfo.logRuntimeInfo(_logger, "Starting space...");
@@ -2134,6 +2135,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                 _rmiHostAndPort = hostName + ":" + jndiPort;
 
                 if (!isStartedRMIRegistry && registryPortStr == null) {
+
+
                     String jmxServiceURL = JMXUtilities.createJMXUrl(_rmiHostAndPort);
                     System.setProperty(CommonSystemProperties.JMX_SERVICE_URL, jmxServiceURL);
                     if (_logger.isLoggable(Level.CONFIG))
