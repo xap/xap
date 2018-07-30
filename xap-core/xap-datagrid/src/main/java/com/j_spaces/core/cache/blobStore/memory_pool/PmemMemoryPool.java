@@ -1,5 +1,6 @@
 package com.j_spaces.core.cache.blobStore.memory_pool;
 
+import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.pmem.TempPmemDriverJNI;
 import com.gigaspaces.pmem.TempPmemException;
 import com.j_spaces.core.cache.blobStore.BlobStoreRefEntryCacheInfo;
@@ -15,20 +16,22 @@ import java.util.logging.Logger;
 public class PmemMemoryPool extends AbstractMemoryPool {
 
     private final boolean verbose;
+    private boolean active = false;
     private String fileName;
     private Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
     private TempPmemDriverJNI pmemDriver = new TempPmemDriverJNI();
 
     public PmemMemoryPool(long threshold, String fileName, boolean verbose) {
         super(threshold);
-        this.fileName = fileName.substring(0,fileName.indexOf(".txt"));
+        this.fileName = fileName.substring(0, fileName.indexOf(".txt"));
         this.verbose = verbose;
     }
 
-    public void initPool(String spaceName){
+    public void initPool(String spaceName) {
         try {
-            fileName += "_"+spaceName+".pool.txt";
+            fileName += "_" + spaceName + ".pool.txt";
             pmemDriver.init(fileName, threshold, verbose);
+            active = true;
         } catch (TempPmemException e) {
             logger.log(Level.SEVERE, "Failed to init pmem pool", e);
             throw new RuntimeException("Failed to init pmem pool", e);
@@ -97,11 +100,18 @@ public class PmemMemoryPool extends AbstractMemoryPool {
     }
 
     public void close() {
-        try {
-            pmemDriver.close(fileName);
-        } catch (TempPmemException e) {
-            logger.log(Level.SEVERE, "Failed to close pmem pool " + fileName, e);
-            throw new RuntimeException("Failed to close pmem pool " + fileName, e);
+        if (active) {
+            try {
+                pmemDriver.close(fileName);
+                active = false;
+                getTotalCounter().reset();
+                for (LongCounter counter : getTypesCounters().values()) {
+                    counter.reset();
+                }
+            } catch (TempPmemException e) {
+                logger.log(Level.SEVERE, "Failed to close pmem pool " + fileName, e);
+                throw new RuntimeException("Failed to close pmem pool " + fileName, e);
+            }
         }
     }
 }

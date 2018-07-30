@@ -71,4 +71,12 @@ public abstract class AbstractMemoryPool {
     public abstract void update(IBlobStoreOffHeapInfo info, byte[] buf);
 
     public abstract void delete(IBlobStoreOffHeapInfo info);
+
+    public LongCounter getTotalCounter() {
+        return totalCounter;
+    }
+
+    public Map<String, LongCounter> getTypesCounters() {
+        return typesCounters;
+    }
 }
