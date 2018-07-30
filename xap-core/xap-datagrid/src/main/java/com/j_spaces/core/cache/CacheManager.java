@@ -76,6 +76,7 @@ import com.j_spaces.core.cache.TerminatingFifoXtnsInfo.FifoXtnEntryInfo;
 import com.j_spaces.core.cache.blobStore.*;
 import com.j_spaces.core.cache.blobStore.memory_pool.AbstractMemoryPool;
 import com.j_spaces.core.cache.blobStore.memory_pool.OffHeapMemoryPool;
+import com.j_spaces.core.cache.blobStore.memory_pool.PmemMemoryPool;
 import com.j_spaces.core.cache.blobStore.optimizations.BlobStoreOperationOptimizations;
 import com.j_spaces.core.cache.blobStore.recovery.BlobStoreRecoveryHelper;
 import com.j_spaces.core.cache.blobStore.recovery.BlobStoreRecoveryHelperWrapper;
@@ -3272,6 +3273,7 @@ public class CacheManager extends AbstractCacheManager
         Context context = null;
         try {
             context = getCacheContext();
+            if(memoryPool instanceof OffHeapMemoryPool){
             for (IServerTypeDesc serverTypeDesc : getTypeManager().getSafeTypeTable().values()) {
                 if (serverTypeDesc.isRootType() || serverTypeDesc.getTypeDesc().isInactive() || !serverTypeDesc.getTypeDesc().isBlobstoreEnabled())
                     continue;
@@ -3290,6 +3292,10 @@ public class CacheManager extends AbstractCacheManager
                     }
                 }
             }
+            } else if (memoryPool instanceof PmemMemoryPool) {
+                ((PmemMemoryPool) memoryPool).close();
+            }
+
             if (_logger.isLoggable(Level.WARNING) && memoryPool != null) {
                 final long count = memoryPool.getUsedBytes();
                 if (count != 0) {
