@@ -49,7 +49,7 @@ public class PmemMemoryPool extends AbstractMemoryPool {
         } finally {
             info.setOffHeapAddress(offset);
         }
-        incrementMetrics(buf.length, info.getTypeName());
+        incrementMetrics(buf.length + 4, info.getTypeName());
     }
 
     @Override
@@ -66,9 +66,9 @@ public class PmemMemoryPool extends AbstractMemoryPool {
     public void update(IBlobStoreOffHeapInfo info, byte[] buf) {
         try {
             //TODO: optimize - move metric counters to c and add getters in JNI
-            decrementMetrics(pmemDriver.get(info.getOffHeapAddress()).length, info.getTypeName());
+            decrementMetrics(pmemDriver.get(info.getOffHeapAddress()).length + 4, info.getTypeName());
             info.setOffHeapAddress(pmemDriver.replace(buf, info.getOffHeapAddress()));
-            incrementMetrics(info.getOffHeapAddress(), info.getTypeName());
+            incrementMetrics(buf.length + 4, info.getTypeName());
         } catch (TempPmemException e) {
             logger.log(Level.SEVERE, "Failed to update object at offset " + info.getOffHeapAddress() + " in pmem pool " + fileName, e);
             throw new RuntimeException("Failed to update object at offset " + info.getOffHeapAddress() + " in pmem pool " + fileName, e);
@@ -78,7 +78,7 @@ public class PmemMemoryPool extends AbstractMemoryPool {
     @Override
     public void delete(IBlobStoreOffHeapInfo info) {
         try {
-            decrementMetrics(pmemDriver.get(info.getOffHeapAddress()).length, info.getTypeName());
+            decrementMetrics(pmemDriver.get(info.getOffHeapAddress()).length + 4, info.getTypeName());
             pmemDriver.delete(info.getOffHeapAddress());
         } catch (TempPmemException e) {
             logger.log(Level.SEVERE, "Failed to delete object at offset " + info.getOffHeapAddress() + " from pmem pool " + fileName, e);
