@@ -42,6 +42,8 @@ public class ContainerConfig
     public String homeDir;
     public String containerHostName;
     public String jndiUrl;
+    //in case we run behind docker this member initialized with the public ip and not private, in case we run regular this member initialized same as jndiUtl
+    private String jndiPublicUrl;
     public String containerName;
     public String license;
     public String lookupGroups;
@@ -121,6 +123,16 @@ public class ContainerConfig
 
     public String getJndiURL() {
         return jndiUrl;
+    }
+
+    public String getJndiPublicURL() {
+        if(jndiPublicUrl ==null ){
+            jndiPublicUrl=jndiUrl;
+        }
+        return jndiPublicUrl;
+    }
+    public void setJndiPublicURL(String jndiPublicUrl) {
+        this.jndiPublicUrl = jndiPublicUrl;
     }
 
     public boolean isShutdownHook() {

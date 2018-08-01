@@ -69,6 +69,7 @@ public class CommonSystemProperties {
      * System property set when SystemConfig binds the JMX PlatformMBeanServer to the RMI Registry
      */
     public static final String JMX_SERVICE_URL = "com.gigaspaces.system.jmxServiceURL";
+    public static final String JMX_PUBLIC_SERVICE_URL = "com.gigaspaces.system.jmxDockerServicePublicURL";
 
     public static final String MANAGER_REST_PORT = "com.gs.manager.rest.port";
     public static final String MANAGER_REST_SSL_ENABLED = "com.gs.manager.rest.ssl.enabled";

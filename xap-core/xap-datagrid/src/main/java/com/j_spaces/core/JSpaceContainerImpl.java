@@ -351,8 +351,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
         this._spaceName = spaceURL.getSpaceName();
         this._clusterSchema = spaceURL.getClusterSchema();
         this._lock = new Object();
-        //this._hostname = SystemInfo.singleton().network().getHost().getHostName();
-        this._hostname = SystemInfo.singleton().network().getPublicHost().getHostName();
+        this._hostname = SystemInfo.singleton().network().getHost().getHostName();
+
 
         // print system/GS info
         RuntimeInfo.logRuntimeInfo(_logger, "Starting space...");
@@ -1849,6 +1849,12 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
             containerConfig.jndiUrl = JProperties.getContainerProperty(_containerName, LOOKUP_JNDI_URL_PROP,
                     null,
                     false);
+            if(SystemInfo.singleton().network().isPublicHostConfigured()){
+               //ugly ugly. build the new public jmx url
+                String port = containerConfig.jndiUrl.substring(containerConfig.jndiUrl.lastIndexOf(":"));
+                containerConfig.setJndiPublicURL( SystemInfo.singleton().network().getPublicHostId() + port);
+            }
+
 
             containerConfig.lookupGroups = JProperties.getContainerProperty(_containerName,
                     LOOKUP_GROUP_PROP,
@@ -2156,6 +2162,7 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
 
         return _rmiHostAndPort;
     }
+
 
     /**
      * Strong references to transient reggie, this prevents the transient service from getting

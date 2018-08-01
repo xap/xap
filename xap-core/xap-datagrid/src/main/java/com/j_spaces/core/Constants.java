@@ -233,6 +233,9 @@ public interface Constants {
         String LOOKUP_JNDI_URL_PROP = Container.PREFIX
                 + "directory_services.jndi.url";
 
+        String LOOKUP_JNDI_PUBLIC_URL_PROP = Container.PREFIX
+                + "directory_services.jndi.public.url";
+
         String LOOKUP_JMS_ENABLED_DEFAULT = "false";
 
         String LOOKUP_JMS_ENABLED_PROP = Container.PREFIX

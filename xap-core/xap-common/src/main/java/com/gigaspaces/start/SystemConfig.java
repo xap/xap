@@ -1034,10 +1034,12 @@ public class SystemConfig {
                                     "hostAddress",
                                     String.class,
                                     defaultAddress);
+                    String publicHostAddress= SystemInfo.singleton().network().getPublicHostId();
                     //mbs = ManagementFactory.getPlatformMBeanServer();
                     mbs = MBeanServerFactory.getMBeanServer();
                     if (mbs != null) {
                         final String jmxServiceURL = JMXUtilities.createJMXUrl(hostAddress, registryPort);
+                        final String jmxServicePublicURL = JMXUtilities.createJMXUrl(publicHostAddress, registryPort);
                     /* Set the JMX property to true */
                         System.setProperty(CommonSystemProperties.JMX_ENABLED_PROP, Boolean.TRUE.toString());
                         System.setProperty(CommonSystemProperties.CREATE_JMX_CONNECTOR_PROP, Boolean.FALSE.toString());
@@ -1047,6 +1049,7 @@ public class SystemConfig {
                                 new JMXServiceURL(jmxServiceURL), (Map) System.getProperties(), mbs);
                         jmxConn.start();
                         System.setProperty(CommonSystemProperties.JMX_SERVICE_URL, jmxServiceURL);
+                        System.setProperty(CommonSystemProperties.JMX_PUBLIC_SERVICE_URL, jmxServicePublicURL);
                         final long duration = System.currentTimeMillis() - start;
                         if (logger.isLoggable(Level.INFO))
                             logger.info("Exported JMX Platform MBeanServer with RMI Connector " +
