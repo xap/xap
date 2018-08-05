@@ -38,20 +38,20 @@ public class PuRunCommand extends AbstractRunCommand {
             processBuilders.add(buildStartLookupServiceCommand());
         }
         if (partitions == 0) {
-            processBuilders.add(buildSinglePuCommand());
+            processBuilders.add(buildPuCommand(0, false));
         } else {
             for (int id = 1; id < partitions+1; id++) {
                 if (instances == null) {
-                    processBuilders.add(buildPartitionedPuCommand(id));
+                    processBuilders.add(buildPuCommand(id, false));
                     if (ha) {
-                        processBuilders.add(buildPartitionedBackupPuCommand(id));
+                        processBuilders.add(buildPuCommand(id, true));
                     }
                 } else {
                     if (containsInstance(instances, id + "_" + 1)) {
-                        processBuilders.add(buildPartitionedPuCommand(id));
+                        processBuilders.add(buildPuCommand(id, false));
                     }
                     if (containsInstance(instances, id + "_" + 2)) {
-                        processBuilders.add(buildPartitionedBackupPuCommand(id));
+                        processBuilders.add(buildPuCommand(id, true));
                     }
                 }
             }
@@ -59,67 +59,36 @@ public class PuRunCommand extends AbstractRunCommand {
         XapCliUtils.executeProcesses(processBuilders);
     }
 
-    private ProcessBuilder buildSinglePuCommand(){
-
+    private ProcessBuilder buildPuCommand(int id, boolean backup) {
         final ProcessBuilder pb = createJavaProcessBuilder();
         final Collection<String> commands = new LinkedHashSet<String>();
         commands.add("-Dcom.gs.start-embedded-lus=false");
-
-        String[] options = {"XAP_OPTIONS"};
-        addOptions(commands, options);
-
+        addOptions(commands, new String[] {"XAP_OPTIONS"});
         commands.add("-classpath");
         commands.add(getProcessingUnitClassPath(pb.environment()));
         commands.add("org.openspaces.pu.container.standalone.StandaloneProcessingUnitContainer");
         commands.add("-path");
         commands.add(path.getPath());
+        if (id != 0) {
+            commands.add("-cluster");
+            commands.add("schema=partitioned");
+            if (ha) {
+                commands.add("total_members=" + partitions + ",1");
+            } else {
+                commands.add("total_members=" + partitions + ",0");
+            }
+            commands.add("id=" + id);
+            if (backup) {
+                commands.add("backup_id=1");
+            }
+        }
 
         pb.command().addAll(commands);
         showCommand("Starting Process Unit with line:", pb.command());
         return pb;
-    }
-
-    private ProcessBuilder buildPartitionedPuCommand(int id) {
-        return buildPartitionedPuCommand(id, false);
-    }
-
-    private ProcessBuilder buildPartitionedBackupPuCommand(int id) {
-        return buildPartitionedPuCommand(id, true);
     }
 
     private static String getProcessingUnitClassPath(Map<String, String> env) {
         return toClassPath(env.get("PRE_CLASSPATH"), getGsJars(env), getSpringJars(env), env.get("POST_CLASSPATH"));
-    }
-
-    private ProcessBuilder buildPartitionedPuCommand(int id, boolean backup) {
-
-        final ProcessBuilder pb = createJavaProcessBuilder();
-        final Collection<String> commands = new LinkedHashSet<String>();
-        commands.add("-Dcom.gs.start-embedded-lus=false");
-
-        String[] options = {"XAP_OPTIONS"};
-        addOptions(commands, options);
-
-        commands.add("-classpath");
-        commands.add(getProcessingUnitClassPath(pb.environment()));
-        commands.add("org.openspaces.pu.container.standalone.StandaloneProcessingUnitContainer");
-        commands.add("-path");
-        commands.add(path.getPath());
-
-        commands.add("-cluster");
-        commands.add("schema=partitioned");
-        if(ha){
-            commands.add("total_members=" + partitions + ",1");
-        } else{
-            commands.add("total_members=" + partitions + ",0");
-        }
-        commands.add("id=" + id);
-        if(backup){
-            commands.add("backup_id=1");
-        }
-
-        pb.command().addAll(commands);
-        showCommand("Starting Process Unit with line:", pb.command());
-        return pb;
     }
 }

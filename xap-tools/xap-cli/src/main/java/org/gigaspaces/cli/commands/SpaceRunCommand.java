@@ -39,46 +39,26 @@ public class SpaceRunCommand extends AbstractRunCommand {
             processBuilders.add(buildStartLookupServiceCommand());
         }
         if (partitions == 0) {
-            processBuilders.add(buildSingleSpaceCommand());
+            processBuilders.add(buildSpaceCommand(0, false));
         } else {
             for (int id = 1; id < partitions+1; id++) {
                 if (instances == null) {
-                    processBuilders.add(buildPartitionedSpaceCommand(id, name, ha, partitions));
+                    processBuilders.add(buildSpaceCommand(id, false));
                     if (ha) {
-                        processBuilders.add(buildPartitionedBackupSpaceCommand(id, name, ha, partitions));
+                        processBuilders.add(buildSpaceCommand(id, true));
                     }
                 } else {
                     if (containsInstance(instances,id + "_" + 1)) {
-                        processBuilders.add(buildPartitionedSpaceCommand(id, name, ha, partitions));
+                        processBuilders.add(buildSpaceCommand(id, false));
                     }
                     if (containsInstance(instances, id + "_" + 2)) {
-                        processBuilders.add(buildPartitionedBackupSpaceCommand(id, name, ha, partitions));
+                        processBuilders.add(buildSpaceCommand(id, true));
                     }
                 }
             }
         }
 
         XapCliUtils.executeProcesses(processBuilders);
-    }
-
-    private ProcessBuilder buildSingleSpaceCommand() {
-
-        final ProcessBuilder pb = createJavaProcessBuilder();
-        final Collection<String> commands = new LinkedHashSet<String>();
-        commands.add("-Dcom.gs.start-embedded-lus=false");
-
-        String[] options = {"XAP_SPACE_INSTANCE_OPTIONS", "XAP_OPTIONS"};
-        addOptions(commands, options);
-
-        commands.add("-classpath");
-        commands.add(getSpaceClassPath(pb.environment()));
-        commands.add("org.openspaces.pu.container.integrated.IntegratedProcessingUnitContainer");
-        commands.add("-name");
-        commands.add(name);
-
-        pb.command().addAll(commands);
-        showCommand("Starting Space with line:", pb.command());
-        return pb;
     }
 
     private static String getSpaceClassPath(Map<String, String> env) {
@@ -91,15 +71,9 @@ public class SpaceRunCommand extends AbstractRunCommand {
                 File.separatorChar + "datagrid";
     }
 
-    public static ProcessBuilder buildPartitionedSpaceCommand(int id, String name, boolean ha, int partitions) {
-        ProcessBuilder pb = new CommandBuilder(name).topology(partitions, ha).instance(id, false).toProcessBuilder();
-        showCommand("Starting Partitioned Space with line:", pb.command());
-        return pb;
-    }
-
-    public static ProcessBuilder buildPartitionedBackupSpaceCommand(int id, String name, boolean ha, int partitions) {
-        ProcessBuilder pb = new CommandBuilder(name).topology(partitions, ha).instance(id, true).toProcessBuilder();
-        showCommand("Starting Partitioned Space with line:", pb.command());
+    private ProcessBuilder buildSpaceCommand(int id, boolean isBackup) {
+        ProcessBuilder pb = new CommandBuilder(name).topology(partitions, ha).instance(id, isBackup).toProcessBuilder();
+        showCommand("Starting Space with line:", pb.command());
         return pb;
     }
 
@@ -146,16 +120,18 @@ public class SpaceRunCommand extends AbstractRunCommand {
             commands.add("-name");
             commands.add(name);
 
-            commands.add("-cluster");
-            commands.add("schema=partitioned");
-            if(ha){
-                commands.add("total_members=" + partitions + ",1");
-            } else{
-                commands.add("total_members=" + partitions + ",0");
-            }
-            commands.add("id=" + partitionId);
-            if(isBackupInstance){
-                commands.add("backup_id=1");
+            if (partitionId != 0) {
+                commands.add("-cluster");
+                commands.add("schema=partitioned");
+                if (ha) {
+                    commands.add("total_members=" + partitions + ",1");
+                } else {
+                    commands.add("total_members=" + partitions + ",0");
+                }
+                commands.add("id=" + partitionId);
+                if (isBackupInstance) {
+                    commands.add("backup_id=1");
+                }
             }
 
             pb.command().addAll(commands);
