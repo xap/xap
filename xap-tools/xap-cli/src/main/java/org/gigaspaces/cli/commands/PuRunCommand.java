@@ -1,5 +1,8 @@
 package org.gigaspaces.cli.commands;
 
+import com.gigaspaces.CommonSystemProperties;
+import com.gigaspaces.start.SystemInfo;
+import org.gigaspaces.cli.JavaCommandBuilder;
 import org.gigaspaces.cli.commands.utils.XapCliUtils;
 
 import picocli.CommandLine.Command;
@@ -60,35 +63,28 @@ public class PuRunCommand extends AbstractRunCommand {
     }
 
     private ProcessBuilder buildPuCommand(int id, boolean backup) {
-        final ProcessBuilder pb = createJavaProcessBuilder();
-        final Collection<String> commands = new LinkedHashSet<String>();
-        commands.add("-Dcom.gs.start-embedded-lus=false");
-        addOptions(commands, new String[] {"XAP_OPTIONS"});
-        commands.add("-classpath");
-        commands.add(getProcessingUnitClassPath(pb.environment()));
-        commands.add("org.openspaces.pu.container.standalone.StandaloneProcessingUnitContainer");
-        commands.add("-path");
-        commands.add(path.getPath());
+        final JavaCommandBuilder command = new JavaCommandBuilder()
+                .systemProperty(CommonSystemProperties.START_EMBEDDED_LOOKUP, "false")
+                .optionsFromEnv("XAP_OPTIONS");
+        command.classpathFromEnv("PRE_CLASSPATH");
+        appendGsClasspath(command);
+        command.classpathFromEnv("SPRING_JARS", () -> {
+            //SPRING_JARS="%XAP_HOME%\lib\optional\spring\*:%XAP_HOME%\lib\optional\security\*"
+            SystemInfo.XapLocations locations = SystemInfo.singleton().locations();
+            command.classpath(locations.getLibOptional() + File.separator + "spring" + File.separator + "*");
+            command.classpath(locations.getLibOptional() + File.separator + "security" + File.separator + "*");
+        });
+        command.classpathFromEnv("POST_CLASSPATH");
+        command.mainClass("org.openspaces.pu.container.standalone.StandaloneProcessingUnitContainer");
+        command.arg("-path").arg(path.getPath());
         if (id != 0) {
-            commands.add("-cluster");
-            commands.add("schema=partitioned");
-            if (ha) {
-                commands.add("total_members=" + partitions + ",1");
-            } else {
-                commands.add("total_members=" + partitions + ",0");
-            }
-            commands.add("id=" + id);
-            if (backup) {
-                commands.add("backup_id=1");
-            }
+            command.arg("-cluster")
+                    .arg("schema=partitioned")
+                    .arg("total_members=" + partitions + "," + (ha ? "1" : "0"))
+                    .arg("id=" + id)
+                    .arg(backup ? "backup_id=1" : "");
         }
 
-        pb.command().addAll(commands);
-        showCommand("Starting Process Unit with line:", pb.command());
-        return pb;
-    }
-
-    private static String getProcessingUnitClassPath(Map<String, String> env) {
-        return toClassPath(env.get("PRE_CLASSPATH"), getGsJars(env), getSpringJars(env), env.get("POST_CLASSPATH"));
+        return toProcessBuilder(command, "processing unit");
     }
 }

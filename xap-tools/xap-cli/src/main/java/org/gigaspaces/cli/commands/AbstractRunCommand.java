@@ -3,10 +3,9 @@ package org.gigaspaces.cli.commands;
 import com.gigaspaces.start.SystemInfo;
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.CliCommandException;
+import org.gigaspaces.cli.JavaCommandBuilder;
 
-import java.io.File;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.logging.Level;
 
 public abstract class AbstractRunCommand extends CliCommand {
 
@@ -25,101 +24,46 @@ public abstract class AbstractRunCommand extends CliCommand {
     }
 
     protected static ProcessBuilder buildStartLookupServiceCommand() {
-        final ProcessBuilder pb = createJavaProcessBuilder();
-
-        Collection<String> commands = new LinkedHashSet<String>();
-        String[] options = {"XAP_LUS_OPTIONS", "XAP_OPTIONS"};
-        addOptions(commands, options);
-
-        commands.add("-classpath");
-        commands.add(toClassPath(SystemInfo.singleton().getXapHome(), getGsJars(pb.environment())));
-        commands.add("com.gigaspaces.internal.lookup.LookupServiceFactory");
-
-        pb.command().addAll(commands);
-        showCommand("Starting Lookup Service with line:", pb.command());
-        return pb;
+        final JavaCommandBuilder command = new JavaCommandBuilder()
+                .optionsFromEnv("XAP_LUS_OPTIONS")
+                .optionsFromEnv("XAP_OPTIONS")
+                .mainClass("com.gigaspaces.internal.lookup.LookupServiceFactory");
+        command.classpath(SystemInfo.singleton().getXapHome());
+        appendGsClasspath(command);
+        return toProcessBuilder(command, "lookup service");
     }
 
-    public static ProcessBuilder createJavaProcessBuilder() {
-        ProcessBuilder processBuilder = new ProcessBuilder(getJavaCommand());
+    protected static ProcessBuilder toProcessBuilder(JavaCommandBuilder command, String desc) {
+        ProcessBuilder processBuilder = command.toProcessBuilder();
         processBuilder.inheritIO();
+        if (LOGGER.isLoggable(Level.FINE)) {
+            String message = "Starting " + desc + " with line:";
+            String commandline = String.join(" ", processBuilder.command());
+            LOGGER.fine(message + System.lineSeparator() + commandline + System.lineSeparator());
+            //System.out.println(message + System.lineSeparator() + commandline + System.lineSeparator());
+        }
+
         return processBuilder;
     }
 
-    private static String getJavaCommand() {
-        String command = System.getenv("JAVACMD");
-        if (command == null) {
-            String javaHome = System.getenv("JAVA_HOME");
-            if (javaHome == null)
-                javaHome = System.getenv("XapNet.Runtime.JavaHome");
-            if (javaHome != null)
-                command = javaHome + File.separator + "bin" + File.separator + "java";
-        }
-        if (command == null)
-            command = "java";
-        return command;
-    }
+    protected static void appendGsClasspath(JavaCommandBuilder command) {
+        final SystemInfo.XapLocations locations = SystemInfo.singleton().locations();
 
-    protected static String toClassPath(String ... paths) {
-        StringBuilder sb = new StringBuilder();
-        for (String path : paths) {
-            if (path == null || path.isEmpty())
-                continue;
-            if (sb.length() != 0)
-                sb.append(File.pathSeparatorChar);
-            sb.append(path);
-        }
-
-        return sb.toString();
-    }
-
-    protected static String getGsJars(Map<String, String> env) {
-        String result = env.get("GS_JARS");
-        if (result == null) {
-            //set GS_JARS="%XAP_HOME%\lib\platform\ext\*";"%XAP_HOME%";"%XAP_HOME%\lib\required\*";"%XAP_HOME%\lib\optional\pu-common\*";"%XAP_CLASSPATH_EXT%"
-            result = toClassPath(SystemInfo.singleton().locations().getLibPlatform() + File.separator + "ext" + File.separator + "*",
-                    SystemInfo.singleton().locations().getLibRequired() + File.separator + "*",
-                    SystemInfo.singleton().locations().getLibOptional() + File.separator + "pu-common" + File.separator + "*",
-                    env.get("XAP_CLASSPATH_EXT"));
-
-        }
+        command.classpathFromEnv("GS_JARS", new Runnable() {
+            @Override
+            public void run() {
+                //GS_JARS="%XAP_HOME%\lib\platform\ext\*";"%XAP_HOME%";"%XAP_HOME%\lib\required\*";"%XAP_HOME%\lib\optional\pu-common\*";"%XAP_CLASSPATH_EXT%"
+                command.classpathFromPath(locations.getLibPlatform(), "ext", "*");
+                command.classpathFromPath(locations.getLibRequired(),"*");
+                command.classpathFromPath(locations.getLibOptional(), "pu-common", "*");
+                command.classpathFromEnv("XAP_CLASSPATH_EXT");
+            }
+        });
 
         //fix for GS-13546
-        String additionalClasspathLibs = toClassPath(
-            SystemInfo.singleton().locations().getLibPlatform() + File.separator + "service-grid" + File.separator + "*",
-                   SystemInfo.singleton().locations().getLibPlatform() + File.separator + "logger" + File.separator + "*",
-                   SystemInfo.singleton().locations().getLibPlatform() + File.separator + "zookeeper" + File.separator + "*" );
-
-        result = result + ( result.endsWith( File.pathSeparator ) ? "" : File.pathSeparator ) + additionalClasspathLibs;
-
-        return result;
-    }
-
-    protected static String getSpringJars(Map<String, String> env) {
-        String result = env.get("SPRING_JARS");
-        if (result == null) {
-            //set SPRING_JARS="%XAP_HOME%\lib\optional\spring\*;%XAP_HOME%\lib\optional\security\*;"
-            result = toClassPath(SystemInfo.singleton().locations().getLibOptional() + File.separator + "spring" + File.separator + "*",
-                    SystemInfo.singleton().locations().getLibOptional() + File.separator + "security" + File.separator + "*");
-        }
-        return result;
-    }
-
-    public static void addOptions(Collection<String> command, String[] options) {
-        for (String option : options) {
-            if (System.getenv(option) != null) {
-                Collections.addAll(command, System.getenv(option).split(" "));
-            }
-        }
-    }
-
-    public static void showCommand(String message, List<String> command) {
-        String commandline = command.toString().replace(",", "");
-        if (commandline.length()>2) {
-            commandline = commandline.substring(1, commandline.length() - 1);
-        }
-        LOGGER.fine(message + System.lineSeparator() + commandline + System.lineSeparator());
-        //System.out.println(message + System.lineSeparator() + commandline + System.lineSeparator());
+        command.classpathFromPath(locations.getLibPlatform(), "service-grid", "*");
+        command.classpathFromPath(locations.getLibPlatform(), "logger", "*");
+        command.classpathFromPath(locations.getLibPlatform(), "zookeeper", "*");
     }
 
     protected boolean containsInstance(String[] instances, String instance) {

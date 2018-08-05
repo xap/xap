@@ -432,7 +432,6 @@ public class SystemProperties extends CommonSystemProperties {
     public final static String LOOKUP_JNDI_URL = "com.gs.jndi.url";
     public final static String LOOKUP_JNDI_URL_DEFAULT = Constants.LookupManager.LOOKUP_JNDI_URL_DEFAULT;
 
-    public final static String START_EMBEDDED_LOOKUP = "com.gs.start-embedded-lus";
     public final static String START_EMBEDDED_LOOKUP_DEFAULT = Constants.LookupManager.START_EMBEDDED_LOOKUP_DEFAULT;
 
     public final static String START_EMBEDDED_MAHALO = "com.gs.start-embedded-mahalo";

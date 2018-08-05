@@ -1,6 +1,8 @@
 package org.gigaspaces.cli.commands;
 
+import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.start.SystemInfo;
+import org.gigaspaces.cli.JavaCommandBuilder;
 import org.gigaspaces.cli.commands.utils.XapCliUtils;
 
 import picocli.CommandLine.Command;
@@ -61,10 +63,6 @@ public class SpaceRunCommand extends AbstractRunCommand {
         XapCliUtils.executeProcesses(processBuilders);
     }
 
-    private static String getSpaceClassPath(Map<String, String> env) {
-        return toClassPath(env.get("PRE_CLASSPATH"), getDataGridTemplate(), getGsJars(env), env.get("POST_CLASSPATH"));
-    }
-
     private static String getDataGridTemplate() {
         return SystemInfo.singleton().locations().deploy() +
                 File.separatorChar + "templates" +
@@ -72,9 +70,11 @@ public class SpaceRunCommand extends AbstractRunCommand {
     }
 
     private ProcessBuilder buildSpaceCommand(int id, boolean isBackup) {
-        ProcessBuilder pb = new CommandBuilder(name).topology(partitions, ha).instance(id, isBackup).toProcessBuilder();
-        showCommand("Starting Space with line:", pb.command());
-        return pb;
+        JavaCommandBuilder command = new CommandBuilder(name)
+                .topology(partitions, ha)
+                .instance(id, isBackup)
+                .toCommand();
+        return toProcessBuilder(command, "space");
     }
 
     public static class CommandBuilder {
@@ -101,41 +101,29 @@ public class SpaceRunCommand extends AbstractRunCommand {
             return this;
         }
 
-        public ProcessBuilder toProcessBuilder() {
-            final ProcessBuilder pb = createJavaProcessBuilder();
-            final Collection<String> commands = new LinkedHashSet<String>();
-            commands.add("-Dcom.gs.start-embedded-lus=false");
+        public JavaCommandBuilder toCommand() {
+            final JavaCommandBuilder command = new JavaCommandBuilder()
+                    .systemProperty(CommonSystemProperties.START_EMBEDDED_LOOKUP, "false")
+                    .optionsFromEnv("XAP_SPACE_INSTANCE_OPTIONS")
+                    .optionsFromEnv("XAP_OPTIONS")
+                    .heap(javaHeap);
 
-            if (javaHeap !=null && javaHeap.length() != 0) {
-                commands.add("-Xms" + javaHeap);
-                commands.add("-Xmx" + javaHeap);
-            }
-            String[] options = {"XAP_SPACE_INSTANCE_OPTIONS", "XAP_OPTIONS"};
-            addOptions(commands, options);
-
-            commands.add("-classpath");
-            commands.add(getSpaceClassPath(pb.environment()));
-
-            commands.add("org.openspaces.pu.container.integrated.IntegratedProcessingUnitContainer");
-            commands.add("-name");
-            commands.add(name);
+            command.classpathFromEnv("PRE_CLASSPATH");
+            command.classpath(getDataGridTemplate());
+            appendGsClasspath(command);
+            command.classpathFromEnv("POST_CLASSPATH");
+            command.mainClass("org.openspaces.pu.container.integrated.IntegratedProcessingUnitContainer");
+            command.arg("-name").arg(name);
 
             if (partitionId != 0) {
-                commands.add("-cluster");
-                commands.add("schema=partitioned");
-                if (ha) {
-                    commands.add("total_members=" + partitions + ",1");
-                } else {
-                    commands.add("total_members=" + partitions + ",0");
-                }
-                commands.add("id=" + partitionId);
-                if (isBackupInstance) {
-                    commands.add("backup_id=1");
-                }
+                command.arg("-cluster")
+                        .arg("schema=partitioned")
+                        .arg("total_members=" + partitions + "," + (ha ? "1" : "0"))
+                        .arg("id=" + partitionId)
+                        .arg(isBackupInstance ? "backup_id=1" : "");
             }
 
-            pb.command().addAll(commands);
-            return pb;
+            return command;
         }
 
         public CommandBuilder javaHeap(String javaHeap) {

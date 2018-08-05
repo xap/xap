@@ -33,6 +33,18 @@ public class ClasspathBuilder {
 
     private final List<File> files = new ArrayList<File>();
 
+    public ClasspathBuilder appendLib(String path) {
+        return appendLib(path, null);
+    }
+
+    public ClasspathBuilder appendLib(String path, FileFilter filter) {
+        return append(path(SystemInfo.singleton().locations().lib(), path), filter);
+    }
+
+    public ClasspathBuilder appendRequired() {
+        return appendRequired(null);
+    }
+
     public ClasspathBuilder appendRequired(FileFilter filter) {
         return append(SystemInfo.singleton().locations().getLibRequired(), filter);
     }
