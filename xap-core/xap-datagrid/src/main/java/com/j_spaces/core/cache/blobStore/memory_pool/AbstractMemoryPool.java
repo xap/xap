@@ -72,6 +72,12 @@ public abstract class AbstractMemoryPool {
 
     public abstract void delete(IBlobStoreOffHeapInfo info);
 
+    public abstract boolean isPmem();
+
+    public abstract boolean isOffHeap();
+
+    public abstract void close();
+
     public LongCounter getTotalCounter() {
         return totalCounter;
     }

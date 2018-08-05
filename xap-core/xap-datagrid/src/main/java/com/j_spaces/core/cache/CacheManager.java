@@ -76,7 +76,6 @@ import com.j_spaces.core.cache.TerminatingFifoXtnsInfo.FifoXtnEntryInfo;
 import com.j_spaces.core.cache.blobStore.*;
 import com.j_spaces.core.cache.blobStore.memory_pool.AbstractMemoryPool;
 import com.j_spaces.core.cache.blobStore.memory_pool.OffHeapMemoryPool;
-import com.j_spaces.core.cache.blobStore.memory_pool.PmemMemoryPool;
 import com.j_spaces.core.cache.blobStore.optimizations.BlobStoreOperationOptimizations;
 import com.j_spaces.core.cache.blobStore.recovery.BlobStoreRecoveryHelper;
 import com.j_spaces.core.cache.blobStore.recovery.BlobStoreRecoveryHelperWrapper;
@@ -396,14 +395,14 @@ public class CacheManager extends AbstractCacheManager
     }
 
     private void setOffHeapProperties(Properties customProperties) {
-        if(customProperties.getProperty(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP)!= null && !hasBlobStoreOffHeapCache() && !hasBlobStoreOffHeapStore()){
-            _logger.warning(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP+" is set but no off heap memory is used");
-        } else{
+        if (customProperties.getProperty(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP) != null && !hasBlobStoreOffHeapCache() && !hasBlobStoreOffHeapStore()) {
+            _logger.warning(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP + " is set but no off heap memory is used");
+        } else {
             long minimalDiffToAllocate = StringUtils.parseStringAsBytes(customProperties.getProperty(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP, BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_DEFAULT_VALUE));
             if(_blobStoreStorageHandler.getOffHeapStore() != null &&  _blobStoreStorageHandler.getOffHeapStore() instanceof OffHeapMemoryPool){
                 ((OffHeapMemoryPool) _blobStoreStorageHandler.getOffHeapStore()).setMinimalDiffToAllocate((int) minimalDiffToAllocate);
             }
-            if(_blobStoreStorageHandler.getOffHeapCache() != null){
+            if (_blobStoreStorageHandler.getOffHeapCache() != null) {
                 _blobStoreStorageHandler.getOffHeapCache().setMinimalDiffToAllocate((int) minimalDiffToAllocate);
             }
         }
@@ -3273,27 +3272,27 @@ public class CacheManager extends AbstractCacheManager
         Context context = null;
         try {
             context = getCacheContext();
-            if(memoryPool instanceof OffHeapMemoryPool){
-            for (IServerTypeDesc serverTypeDesc : getTypeManager().getSafeTypeTable().values()) {
-                if (serverTypeDesc.isRootType() || serverTypeDesc.getTypeDesc().isInactive() || !serverTypeDesc.getTypeDesc().isBlobstoreEnabled())
-                    continue;
-                final IScanListIterator<IEntryCacheInfo> entriesIter = getTypeData(serverTypeDesc).scanTypeEntries();
-                if (entriesIter != null) {
-                    try {
-                        while (entriesIter.hasNext()) {
-                            IEntryCacheInfo entry = entriesIter.next();
-                            if (entry != null && entry.isBlobStoreEntry()) {
-                                ((IBlobStoreRefCacheInfo) entry).freeOffHeap(this, memoryPool);
+            if (memoryPool.isOffHeap()) {
+                for (IServerTypeDesc serverTypeDesc : getTypeManager().getSafeTypeTable().values()) {
+                    if (serverTypeDesc.isRootType() || serverTypeDesc.getTypeDesc().isInactive() || !serverTypeDesc.getTypeDesc().isBlobstoreEnabled())
+                        continue;
+                    final IScanListIterator<IEntryCacheInfo> entriesIter = getTypeData(serverTypeDesc).scanTypeEntries();
+                    if (entriesIter != null) {
+                        try {
+                            while (entriesIter.hasNext()) {
+                                IEntryCacheInfo entry = entriesIter.next();
+                                if (entry != null && entry.isBlobStoreEntry()) {
+                                    ((IBlobStoreRefCacheInfo) entry).freeOffHeap(this, memoryPool);
+                                }
                             }
+                            entriesIter.releaseScan();
+                        } catch (SAException ex) {
+                            _logger.log(Level.WARNING, "caught exception while cleaning offheap entries during shutdown", ex);
                         }
-                        entriesIter.releaseScan();
-                    } catch (SAException ex) {
-                        _logger.log(Level.WARNING, "caught exception while cleaning offheap entries during shutdown", ex);
                     }
                 }
-            }
-            } else if (memoryPool instanceof PmemMemoryPool) {
-                ((PmemMemoryPool) memoryPool).close();
+            } else if (memoryPool.isPmem()) {
+                memoryPool.close();
             }
 
             if (_logger.isLoggable(Level.WARNING) && memoryPool != null) {

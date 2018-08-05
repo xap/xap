@@ -118,6 +118,21 @@ public class OffHeapMemoryPool extends AbstractMemoryPool {
         deleteImpl(info, false);
     }
 
+    @Override
+    public boolean isPmem() {
+        return false;
+    }
+
+    @Override
+    public boolean isOffHeap() {
+        return true;
+    }
+
+    @Override
+    public void close() {
+        throw new UnsupportedOperationException("OffHeapMemoryPool.close() is not supported");
+    }
+
     private void deleteImpl(IBlobStoreOffHeapInfo info, boolean fromUpdate) {
         long valuesAddress = info.getOffHeapAddress();
         if (valuesAddress != BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
