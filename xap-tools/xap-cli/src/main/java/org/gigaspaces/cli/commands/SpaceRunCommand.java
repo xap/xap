@@ -20,22 +20,24 @@ import java.util.*;
 public class SpaceRunCommand extends AbstractRunCommand {
 
     @Parameters(index = "0", description = "Name of Space to run")
-    String name;
+    public String name;
     @Option(names = {"--partitions"}, description = "Specify the number of partitions for the Processing Unit")
-    int partitions;
+    public int partitions;
     @Option(names = {"--ha"}, description = "High availability (add one backup per partition)")
-    boolean ha;
+    public boolean ha;
     @Option(names = {"--instances"}, split = ",", description = "Specify one or more instances to run (for example: --instances=1_1,1_2). "
                                                                     + "If no instances are specified, runs all instances.")
     String[] instances;
     @Option(names = {"--lus"}, description = "Start a lookup service")
-    boolean lus;
+    public boolean lus;
 
     @Override
     protected void execute() throws Exception {
-
         validateOptions(partitions, ha, instances);
+        XapCliUtils.executeProcesses(toProcessBuilders());
+    }
 
+    public List<ProcessBuilder> toProcessBuilders() {
         final List<ProcessBuilder> processBuilders = new ArrayList<ProcessBuilder>();
         if (lus) {
             processBuilders.add(buildStartLookupServiceCommand());
@@ -59,8 +61,7 @@ public class SpaceRunCommand extends AbstractRunCommand {
                 }
             }
         }
-
-        XapCliUtils.executeProcesses(processBuilders);
+        return processBuilders;
     }
 
     private static String getDataGridTemplate() {
