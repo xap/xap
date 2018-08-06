@@ -763,7 +763,7 @@ public class TypeData {
 
     private static <T> IStoredList<T> createStoreList(boolean isConcurrent) {
         if (isConcurrent)
-            return StoredListFactory.createConcurrentList(false /*segmented*/, true /*supportFifo*/);
+            return StoredListFactory.createConcurrentSegmentedList(true /*supportsFifoPerSegment*/,1 /*numOfSegments*/,true /* padded*/);
 
         return StoredListFactory.createList(false);
     }
@@ -921,13 +921,13 @@ public class TypeData {
     private static IStoredList<IEntryCacheInfo> createEntriesStoredList(boolean fifoSupport, boolean useConcurrentStoreList) {
         if (fifoSupport) {
             if (useConcurrentStoreList)
-                return StoredListFactory.createConcurrentPaddedList(false /*segmented*/, true /*supportFifo*/);
+                return StoredListFactory.createConcurrentSegmentedList(true /* supportsFifoPerSegment*/,1 /*numOfSegments*/,true /*padded*/);
             else
                 return StoredListFactory.createRandomScanList(false);
         }
 
         if (useConcurrentStoreList)
-            return StoredListFactory.createConcurrentList(true /*segmented*/);
+            return StoredListFactory.createConcurrentSegmentedList(false /* supportsFifoPerSegment*/);
         else
             return StoredListFactory.createSegmentedList();
     }

@@ -90,7 +90,7 @@ public class TemplatesExtendedIndexHandler<K>
             }
             //a single object is stored, create a SL and add it
             if (newSL == null)
-                newSL = StoredListFactory.createConcurrentList(false, true);
+                newSL = StoredListFactory.createConcurrentList(true);
 
             IObjectInfo otheroi = newSL.addUnlocked(currentSL.getObjectFromHead());
             IObjectInfo myoi = newSL.addUnlocked(pTemplate);

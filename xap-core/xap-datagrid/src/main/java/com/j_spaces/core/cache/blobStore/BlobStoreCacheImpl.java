@@ -66,7 +66,7 @@ public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
         BLOB_STORE_INTERNAL_CACHE_CAPACITY = capacity;
         int numOfCHMSegents = Integer.getInteger(SystemProperties.CACHE_MANAGER_HASHMAP_SEGMENTS, SystemProperties.CACHE_MANAGER_HASHMAP_SEGMENTS_DEFAULT);
         _entries = new ConcurrentHashMap<BlobStoreRefEntryCacheInfo, CacheInfoHolder>(BLOB_STORE_INTERNAL_CACHE_CAPACITY, 0.75f, numOfCHMSegents);
-        _quasiLru = StoredListFactory.createConcurrentList(true /*segmented*/, true /*supportFifoPerSegment*/);
+        _quasiLru = StoredListFactory.createConcurrentSegmentedList(true /*supportFifoPerSegment*/);
     }
 
 

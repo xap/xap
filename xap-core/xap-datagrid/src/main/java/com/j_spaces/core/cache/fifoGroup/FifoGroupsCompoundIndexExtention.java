@@ -96,7 +96,7 @@ public class FifoGroupsCompoundIndexExtention<K> implements IFifoGroupsIndexExte
 
             if (curMainList == null) {
                 if (newMainList == null) {
-                    newMainList = StoredListFactory.createConcurrentList(false /*segmented*/, true /*supportFifo*/);
+                    newMainList = StoredListFactory.createConcurrentList(true /*supportFifo*/);
                     newfgoi = newMainList.add(valToKeep);
                 }
                 fgoi = newfgoi;

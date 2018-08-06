@@ -44,7 +44,7 @@ public class FifoGroupsMainIndexExtention<K> implements IFifoGroupsIndexExtentio
 
     public FifoGroupsMainIndexExtention(CacheManager cacheManager, TypeDataIndex<K> index) {
         _index = index;
-        _fifoGroupValues = StoredListFactory.createConcurrentList(true /*segmented*/, true /*supportFifo*/);
+        _fifoGroupValues = StoredListFactory.createConcurrentSegmentedList(true /*supportFifo*/);
         _fifoGroupsBackrefs = new ConcurrentHashMap<Object, IObjectInfo<IEntryCacheInfo>>();
         _fifoGroupsCacheImpl = cacheManager.getFifoGroupCacheImpl();
     }

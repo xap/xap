@@ -17,10 +17,7 @@
 package com.j_spaces.kernel;
 
 import com.gigaspaces.internal.utils.collections.economy.ConcurrentSegmentedStoredListHashmapEntry;
-import com.j_spaces.kernel.list.ConcurrentSegmentedStoredList;
-import com.j_spaces.kernel.list.ExternallyLockedStoredList;
-import com.j_spaces.kernel.list.RwlLocksPool;
-import com.j_spaces.kernel.list.RwlSegmentedStoredList;
+import com.j_spaces.kernel.list.*;
 
 import java.util.concurrent.locks.ReadWriteLock;
 
@@ -82,46 +79,36 @@ public final class StoredListFactory {
      *
      * @return IStoredList
      */
-    public static <T> IStoredList<T> createConcurrentList(boolean segmented) {
-        return createConcurrentList(segmented, false /*supportFifoPerSegment*/);
+    public static <T> IStoredList<T> createConcurrentList(boolean supportsFifo) {
+        return new ConcurrentStoredList<T>(false /* segmented*/, supportsFifo);
     }
 
     /**
-     * Creates a concurrent stored list - used for highly concurrent lists.
+     * Creates a concurrent segmented stored list - used for highly concurrent lists.
      *
      * @return IStoredList
      */
-    public static <T> IStoredList<T> createConcurrentList(int numOfSegments) {
-        return new ConcurrentSegmentedStoredList<T>(numOfSegments);
+    public static <T> IStoredList<T> createConcurrentSegmentedList(boolean supportsFifoPerSegment) {
+        return createConcurrentSegmentedList(supportsFifoPerSegment,0 /*numOfSegments*/,true /* padded*/);
+    }
+    /**
+     * Creates a concurrent segmented stored list - used for highly concurrent lists.
+     *
+     * @return IStoredList
+     */
+    public static <T> IStoredList<T> createConcurrentSegmentedList(boolean supportsFifoPerSegment,int numOfSegments,boolean padded) {
+        return new ConcurrentSegmentedStoredList<T>(supportsFifoPerSegment,numOfSegments,padded);
     }
 
-    /**
-     * Creates a concurrent stored list - used for highly concurrent lists.
-     *
-     * @return IStoredList
-     */
-    public static <T> IStoredList<T> createConcurrentList(boolean segmented, boolean supportFifoPerSegment) {
-        return new ConcurrentSegmentedStoredList<T>(segmented, supportFifoPerSegment);
-    }
-
-    /**
-     * Creates a concurrent padded stored list - used for highly concurrent lists.
-     *
-     * @return IStoredList
-     */
-    public static <T> IStoredList<T> createConcurrentPaddedList(boolean segmented, boolean supportFifoPerSegment) {
-        return new ConcurrentSegmentedStoredList<T>(segmented, supportFifoPerSegment,true);
-    }
     /**
      * Creates a segmented stored list - used for highly concurrent lists. this SL supports serving
      * as a EconomyConcurrentHashMap HashEntry for storing an index value
      *
      * @return oncurrentSegmentedStoredListHashmapEntry
      */
-    public static <T> IStoredList<T> createConcurrentList(boolean segmented, boolean supportFifoPerSegment, Object StoredIndexValueInHashmap) {
+    public static <T> IStoredList<T> createConcurrentSegmentedList(boolean segmented, boolean supportFifoPerSegment, Object StoredIndexValueInHashmap) {
         return new ConcurrentSegmentedStoredListHashmapEntry<T>(segmented, supportFifoPerSegment, StoredIndexValueInHashmap);
     }
-
 
     /**
      * @return StoredList instance according to the given parameters and JVM Version.

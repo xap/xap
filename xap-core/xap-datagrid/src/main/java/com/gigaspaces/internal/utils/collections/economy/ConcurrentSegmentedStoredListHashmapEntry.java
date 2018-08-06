@@ -19,6 +19,7 @@ package com.gigaspaces.internal.utils.collections.economy;
 
 import com.j_spaces.kernel.IStoredList;
 import com.j_spaces.kernel.list.ConcurrentSegmentedStoredList;
+import com.j_spaces.kernel.list.ConcurrentStoredList;
 
 /**
  * TODO	add Javadoc
@@ -32,14 +33,14 @@ import com.j_spaces.kernel.list.ConcurrentSegmentedStoredList;
 //public class ConcurrentSegmentedStoredListHashmapEntry<K,T>
 @com.gigaspaces.api.InternalApi
 public class ConcurrentSegmentedStoredListHashmapEntry<T>
-        extends ConcurrentSegmentedStoredList<T>
+        extends ConcurrentStoredList<T>
 //		implements IStoredListHashmapEntry<K, T>
 {
 
     final Object _key;
 
     public ConcurrentSegmentedStoredListHashmapEntry(boolean segmented, boolean supportFifoPerSegment, Object key) {
-        super(segmented, supportFifoPerSegment);
+        super(false,supportFifoPerSegment);
         _key = key;
     }
 
