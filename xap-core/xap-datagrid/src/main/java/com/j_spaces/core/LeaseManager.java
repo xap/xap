@@ -862,6 +862,17 @@ public class LeaseManager {
         return entry;
     }
 
+    /**
+     * called as part of demote from primary to backup in order to verify LM is not active
+     * @return true if no cycle false if timeout pqassed and cycle still busy
+     */
+
+    public boolean waitForNoCycleOnQuiesce(long timeout)
+    {
+        return
+                _leaseReaperDaemon.waitForNoCycleOnQuiesce(timeout);
+    }
+
     private static String getExtendLeasePeriodDescription(boolean leaseExpired, boolean cancelLease) {
         return cancelLease ? (leaseExpired ? "expire" : "cancel") : "renew";
     }
@@ -888,6 +899,8 @@ public class LeaseManager {
         private long _cycleCount;
         private long _lastCycleEnded;
         private boolean _force;
+        private volatile boolean _inCycle;
+        private boolean _waitingToBeNotifiedOnCurrentCycleTermination;
 
         /**
          * LeaseReaper daemon thread.
@@ -916,13 +929,15 @@ public class LeaseManager {
                             _logger.finest(this.getName()
                                     + " - woke up for reaping.");
                         }
-                        if (_spaceImpl.getQuiesceHandler() != null && _spaceImpl.getQuiesceHandler().isQuiesced()) {//space in quiesce mode dont reap and harvest
-                            if (_logger.isLoggable(Level.FINEST)) {
-                                _logger.finest(this.getName()
-                                        + " - is not reaping since space in quiesce mode.");
-                            }
+                        if (isSpaceInQuiesce(true))
                             skippedReapingInQuiesceMode = true;
-                        } else {
+                        if (!skippedReapingInQuiesceMode) {
+                            _inCycle = true;
+                            //recheck after signaling incycle
+                            if (isSpaceInQuiesce(true))
+                                skippedReapingInQuiesceMode = true;
+                        }
+                        if (!skippedReapingInQuiesceMode) {
                             reapExpiredEntries();
                             reapUnusedXtns();
                             reapExpiredXtns();
@@ -942,12 +957,38 @@ public class LeaseManager {
                                     + " - caught Exception", e);
                         }
                     }
+                    finally
+                    {
+                        if (_inCycle)
+                        {
+                            synchronized(_cycleLock)
+                            {
+                                _inCycle=false;
+                                if (_waitingToBeNotifiedOnCurrentCycleTermination)
+                                {
+                                    _waitingToBeNotifiedOnCurrentCycleTermination =false;
+                                    _cycleLock.notifyAll();
+                                }
+                            }
+                        }
+                    }
                 }
             } finally {
                 if (_logger.isLoggable(Level.FINE)) {
                     _logger.fine(this.getName() + " terminated.");
                 }
             }
+        }
+
+        private boolean isSpaceInQuiesce(boolean useLogger) {
+            if (_spaceImpl.getQuiesceHandler() != null && _spaceImpl.getQuiesceHandler().isQuiesced()) {//space in quiesce mode dont reap and harvest
+                if (useLogger && _logger.isLoggable(Level.FINEST)) {
+                    _logger.finest(this.getName()
+                            + " - is not reaping since space in quiesce mode.");
+                }
+                return true;
+            }
+            return false;
         }
 
         public boolean forceCycle(boolean mustExecute) {
@@ -1060,6 +1101,36 @@ public class LeaseManager {
             if (_expirationList != null)
                 _expirationList.clear();
         }
+
+        /**
+         * called as part of demote from primary to backup in order to verify LM is not active
+         * @return true if no cycle false if timeout pqassed and cycle still busy
+         */
+
+        boolean waitForNoCycleOnQuiesce(long timeout)
+        {
+            //TBD LOGGER MESSAGES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
+            if (timeout == 0)
+                throw new RuntimeException("timeout must be supplied!");
+            if (!isSpaceInQuiesce(false))
+                throw new RuntimeException("space not in quiesce mode!");
+
+            if (!_inCycle)
+                return true;
+            synchronized(_cycleLock)
+            {
+                if (!_inCycle)
+                    return true;
+                _waitingToBeNotifiedOnCurrentCycleTermination = true;
+                try {
+                    _cycleLock.wait(timeout);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                return _inCycle;
+            }
+        }
+
 
       /* --------------------------- Reaper tasks -------------------------- */
 
