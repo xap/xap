@@ -900,7 +900,6 @@ public class LeaseManager {
         private long _lastCycleEnded;
         private boolean _force;
         private volatile boolean _inCycle;
-        private boolean _waitingToBeNotifiedOnCurrentCycleTermination;
 
         /**
          * LeaseReaper daemon thread.
@@ -964,11 +963,7 @@ public class LeaseManager {
                             synchronized(_cycleLock)
                             {
                                 _inCycle=false;
-                                if (_waitingToBeNotifiedOnCurrentCycleTermination)
-                                {
-                                    _waitingToBeNotifiedOnCurrentCycleTermination =false;
-                                    _cycleLock.notifyAll();
-                                }
+                                _cycleLock.notifyAll();
                             }
                         }
                     }
@@ -1025,6 +1020,7 @@ public class LeaseManager {
 
         private void signalEndCycle() {
             synchronized (_cycleLock) {
+                _inCycle = false;
                 _force = false;
                 _cycleCount++;
                 _lastCycleEnded = SystemTime.timeMillis();
@@ -1121,13 +1117,13 @@ public class LeaseManager {
             {
                 if (!_inCycle)
                     return true;
-                _waitingToBeNotifiedOnCurrentCycleTermination = true;
+
                 try {
                     _cycleLock.wait(timeout);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                return _inCycle;
+                return !_inCycle;
             }
         }
 
