@@ -200,6 +200,7 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
      * Maximum delay for unexport attempts
      */
     private static final long MAX_UNEXPORT_DELAY = 1000 * 60; // 1 minute
+    private static final String COLON = ":";
 
     private final static String SPACE_TAG = "JSpaces";
     private final static String SPACE_CONFIG = "space-config";
@@ -1851,7 +1852,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                     false);
             if(SystemInfo.singleton().network().isPublicHostConfigured()){
                //ugly ugly. build the new public jmx url
-                String port = containerConfig.jndiUrl.substring(containerConfig.jndiUrl.lastIndexOf(":"));
+                JmxUrlData jmxUrlData = retrieveUrlData(containerConfig.jndiUrl);
+                int  port = jmxUrlData.getPort();
                 containerConfig.setJndiPublicURL( SystemInfo.singleton().network().getPublicHostId() + port);
             }
 
@@ -2061,6 +2063,34 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
         return _schemaName;
     }
 
+    private class JmxUrlData{
+        private String _jmxUrl;
+        private int _port;
+        private JmxUrlData(String url, int port){
+            _jmxUrl=url;
+            _port=port;
+        }
+        private int getPort(){
+            return  _port;
+        }
+        private String getUrl(){
+            return _jmxUrl;
+        }
+    }
+
+    private JmxUrlData retrieveUrlData(String hostAndPort){
+        if ( hostAndPort != null && hostAndPort.indexOf(':') != -1){
+            int port=0;
+            int portSeparator = hostAndPort.lastIndexOf(COLON);
+            String hostName = hostAndPort.substring(0, portSeparator);
+            int jndiPort = Integer.parseInt(hostAndPort.substring(portSeparator + 1));
+            return new JmxUrlData(hostName,jndiPort);
+        }
+        else{
+            return null;
+        }
+    }
+
     /**
      * Run RMIRegistry Parse valid JNDI port. If JNDI port really valid, trying to startRMIRegistry
      * on this port. Any exception during start is ignored.
@@ -2084,14 +2114,13 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
             return _rmiHostAndPort;
 
         _rmiHostAndPort = hostAndPort;
-
-        if (hostAndPort != null && hostAndPort.indexOf(':') != -1) {
+        JmxUrlData jmxData = retrieveUrlData(hostAndPort);
+        if (jmxData != null) {
             try {
                 int jndiPort = 0;
                 // ignore jndi host
-                int portSeparator = hostAndPort.lastIndexOf(":");
-                String hostName = hostAndPort.substring(0, portSeparator);
-                jndiPort = Integer.parseInt(hostAndPort.substring(portSeparator + 1));
+                String hostName = jmxData.getUrl();
+                jndiPort = jmxData.getPort();
 
                 String registryPortStr = System.getProperty(CommonSystemProperties.REGISTRY_PORT);
                 boolean isStartedRMIRegistry = false;

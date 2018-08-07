@@ -1071,11 +1071,14 @@ public class SystemConfig {
                                 defaultAddress);
                 mbs = MBeanServerFactory.getMBeanServer();
                 if (mbs != null) {
+                    String publicHostAddress= SystemInfo.singleton().network().getPublicHostId();
                     final String jmxServiceURL = JMXUtilities.createJMXUrl(hostAddress, jmxRemotePort);
+                    final String jmxServicePublicURL = JMXUtilities.createJMXUrl(publicHostAddress, registryPort);
                     /* Set the JMX property to true */
                     System.setProperty(CommonSystemProperties.JMX_ENABLED_PROP, Boolean.TRUE.toString());
                     System.setProperty(CommonSystemProperties.CREATE_JMX_CONNECTOR_PROP, Boolean.FALSE.toString());
                     System.setProperty(CommonSystemProperties.JMX_SERVICE_URL, jmxServiceURL);
+                    System.setProperty(CommonSystemProperties.JMX_PUBLIC_SERVICE_URL, jmxServicePublicURL);
                 } else {
                     logger.info("Unable to acquire JMX Platform MBeanServer, running with Java version " + System.getProperty("java.version"));
                 }

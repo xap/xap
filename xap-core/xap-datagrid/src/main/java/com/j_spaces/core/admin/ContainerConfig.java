@@ -127,7 +127,7 @@ public class ContainerConfig
 
     public String getJndiPublicURL() {
         if(jndiPublicUrl ==null ){
-            jndiPublicUrl=jndiUrl;
+            return jndiUrl;
         }
         return jndiPublicUrl;
     }
