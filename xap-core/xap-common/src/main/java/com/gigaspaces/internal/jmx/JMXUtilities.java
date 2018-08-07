@@ -16,20 +16,24 @@
 
 package com.gigaspaces.internal.jmx;
 
+import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.management.entry.JMXConnection;
 import com.gigaspaces.start.SystemBoot;
 import com.gigaspaces.start.SystemInfo;
-
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+
 
 @com.gigaspaces.api.InternalApi
 public class JMXUtilities {
 
     public static JMXConnection createJMXConnectionAttribute(String serviceName) {
-        String url = SystemBoot.getJMXServiceURL();
 
+        String url = SystemBoot.getJMXServiceURL();
+        if(SystemInfo.singleton().network().isPublicHostConfigured()){
+            url= System.getProperty(CommonSystemProperties.JMX_PUBLIC_SERVICE_URL);
+        }
         return url == null ? null : new JMXConnection(url, serviceName + "_" +
                 SystemInfo.singleton().network().getPublicHostId() + "_" + SystemBoot.getRegistryPort());
     }
