@@ -3598,12 +3598,13 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
             long lastKeyInRedoLog = getHolder().getReplicationStatistics().getOutgoingReplication().getLastKeyInRedoLog();
 
-            if (backupChannel.getLastConfirmedKeyFromTarget() != lastKeyInRedoLog) {
+            if (getHolder().getReplicationStatistics().getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE).get(0).getLastConfirmedKeyFromTarget() != lastKeyInRedoLog) {
                 //Backup is not synced
                 _logger.info("Couldn't demote to backup - backup is not synced ("+backupChannel.getLastConfirmedKeyFromTarget()+" != "+lastKeyInRedoLog+")");
                 return false;
             }
 
+            _logger.info("size during demote = "+getHolder().getReplicationStatistics().getOutgoingReplication().getRedoLogSize());
             //TODO recheck above preconditions again after entering quiesce mode
             //Wait timeout if necessary (e.g. wait for replication from primary to backup)
 
@@ -3631,7 +3632,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
         } finally {
             //TODO if failed, need to reopen connections
-            _logger.info("Demoting to backing finished, exiting quiesce mode...");
+            _logger.info("Demoting to backup finished, exiting quiesce mode...");
             getQuiesceHandler().unquiesce();
         }
 
