@@ -151,6 +151,33 @@ public class PUZipUtils {
     }
 
     public static long downloadProcessingUnit(String puName, URL url, File extractToTarget, File tempLocation) throws Exception {
+
+        File tempFile = new File(tempLocation, puName.replace('\\', '/') + random.nextLong() + ".zip");
+
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("Downloading [" + puName + "] from [" + url.toString() + "] to [" + tempFile.getAbsolutePath() + "], extracted to [" + extractToTarget.getAbsolutePath() + "]");
+        }
+
+        long size = 0;
+
+        try {
+            downloadProcessingUnit(url, tempFile, puName);
+
+            size = tempFile.length();
+
+            try {
+                PUZipUtils.unzip(tempFile, extractToTarget);
+            } catch (Exception e) {
+                throw new DownloadProcessingUnitException("Failed to extract processing unit [" + puName + "] downloaded temp zip file from [" + tempFile.getAbsolutePath() + "] into [" + extractToTarget.getAbsolutePath() + "] zipfile size is " + size + " original download URL is " + url, e);
+            }
+        } finally {
+            tempFile.delete();
+        }
+
+        return size;
+    }
+
+    public static void downloadProcessingUnit(URL url, File target, String puName) throws DownloadProcessingUnitException {
         TLSUtils.enableHttpsClient();
         HttpURLConnection conn;
         try {
@@ -192,67 +219,46 @@ public class PUZipUtils {
             }
         }
 
-        File tempFile = new File(tempLocation, puName.replace('\\', '/') + random.nextLong() + ".zip");
-        tempFile.getParentFile().mkdirs();
-
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Downloading [" + puName + "] from [" + url.toString() + "] to [" + tempFile.getAbsolutePath() + "], extracted to [" + extractToTarget.getAbsolutePath() + "]");
-        }
-
-        long size = 0;
+        target.getParentFile().mkdirs();
 
         try {
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            OutputStream out = new FileOutputStream(target);
             try {
-                InputStream in = new BufferedInputStream(conn.getInputStream());
-                OutputStream out = new FileOutputStream(tempFile);
-                try {
-                    int byteCount = 0;
-                    byte[] buffer = new byte[4098];
-                    int bytesRead = -1;
-                    while ((bytesRead = in.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesRead);
-                        byteCount += bytesRead;
-                    }
-                    out.flush();
-                } finally {
-                    try {
-                        in.close();
-                    } catch (IOException ex) {
-                        // ignore
-                    }
-                    try {
-                        out.close();
-                    } catch (IOException ex) {
-                        // ignore
-                    }
+                int byteCount = 0;
+                byte[] buffer = new byte[4098];
+                int bytesRead = -1;
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
+                    byteCount += bytesRead;
                 }
-                conn.disconnect();
-
-                RandomAccessFile ras = new RandomAccessFile(tempFile, "rw");
-                ras.getFD().sync();
-                ras.close();
-            } catch (IOException e) {
-                throw new DownloadProcessingUnitException("Failed to read processing unit [" + puName + "] from [" + url.toString() + "] into [" + tempFile.getAbsolutePath() + "]", e);
+                out.flush();
             } finally {
                 try {
-                    conn.disconnect();
-                } catch (Exception e) {
+                    in.close();
+                } catch (IOException ex) {
+                    // ignore
+                }
+                try {
+                    out.close();
+                } catch (IOException ex) {
                     // ignore
                 }
             }
+            conn.disconnect();
 
-            size = tempFile.length();
-
-            try {
-                PUZipUtils.unzip(tempFile, extractToTarget);
-            } catch (Exception e) {
-                throw new DownloadProcessingUnitException("Failed to extract processing unit [" + puName + "] downloaded temp zip file from [" + tempFile.getAbsolutePath() + "] into [" + extractToTarget.getAbsolutePath() + "] zipfile size is " + size + " original download URL is " + url, e);
-            }
+            RandomAccessFile ras = new RandomAccessFile(target, "rw");
+            ras.getFD().sync();
+            ras.close();
+        } catch (IOException e) {
+            throw new DownloadProcessingUnitException("Failed to read processing unit [" + puName + "] from [" + url.toString() + "] into [" + target.getAbsolutePath() + "]", e);
         } finally {
-            tempFile.delete();
+            try {
+                conn.disconnect();
+            } catch (Exception e) {
+                // ignore
+            }
         }
-
-        return size;
     }
 
     public static long unzip(File targetZip, File dirToExtract) throws Exception {
