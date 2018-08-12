@@ -34,6 +34,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class PostponedAsyncOperationsQueue {
+    public static final String THREADS_NAME_PREFIX = "PostponedAsyncOperationsQueue-";
     private static final int CAPACITY = 10000;
     private final Logger _logger;
     private final ThreadPoolExecutor _threadPoolExecutor;
@@ -44,7 +45,7 @@ public class PostponedAsyncOperationsQueue {
         _threadPoolExecutor = new ThreadPoolExecutor(0, 1,
                 60L, TimeUnit.SECONDS,
                 new LinkedBlockingDeque<Runnable>(CAPACITY),
-                new GSThreadFactory("PostponedAsyncOperationsQueue-" + name, true));
+                new GSThreadFactory(THREADS_NAME_PREFIX + name, true));
 
         this._logger = Logger.getLogger(Constants.LOGGER_SPACEPROXY_ROUTER + '.' + name);
     }

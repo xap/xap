@@ -19,6 +19,7 @@ package com.gigaspaces.internal.remoting;
 import com.gigaspaces.async.AsyncFuture;
 import com.gigaspaces.async.AsyncFutureListener;
 import com.gigaspaces.async.internal.DefaultAsyncResult;
+import com.gigaspaces.internal.remoting.routing.clustered.PostponedAsyncOperationsQueue;
 import com.gigaspaces.internal.remoting.routing.clustered.RemoteOperationsExecutorProxy;
 import com.gigaspaces.internal.utils.concurrent.ContextClassLoaderRunnable;
 import com.gigaspaces.lrmi.LRMIRuntime;
@@ -30,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static com.gigaspaces.internal.remoting.routing.clustered.PostponedAsyncOperationsQueue.THREADS_NAME_PREFIX;
 
 /**
  * @author Niv Ingberg
@@ -43,7 +46,7 @@ public class RemoteOperationFutureListener<T extends RemoteOperationResult> impl
     private volatile Object _result;
     private volatile ExecutionException _exception;
     private volatile AsyncFutureListener<Object> _listener;
-    private boolean _triggeredListener;
+    private volatile boolean _triggeredListener;
 
     public RemoteOperationFutureListener(Logger logger, AsyncFutureListener<Object> listener) {
         this(logger, listener, true);
@@ -165,8 +168,21 @@ public class RemoteOperationFutureListener<T extends RemoteOperationResult> impl
             }
         }
         //Trigger listener outside of lock, avoid potential deadlocks
-        if (listener != null)
-            invokeListener(listener);
+        if (listener != null) {
+            //Issue GS-13614 - PostponedAsyncOperationsQueue should delegate the invoke listener to an LRMI thread
+            if(Thread.currentThread().getName().contains(THREADS_NAME_PREFIX)) {
+                final AsyncFutureListener<Object> listnr = listener;
+                LRMIRuntime.getRuntime().getThreadPool().execute(new ContextClassLoaderRunnable() {
+                    @Override
+                    public void execute() {
+                        invokeListener(listnr);
+                    }
+                });
+            }
+            else {
+                invokeListener(listener);
+            }
+        }
     }
 
     protected boolean onOperationResultArrival(RemoteOperationRequest<T> request) {
