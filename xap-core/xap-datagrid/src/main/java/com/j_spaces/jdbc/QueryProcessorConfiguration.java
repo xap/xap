@@ -66,7 +66,7 @@ public class QueryProcessorConfiguration {
     private long _writeLease = Long.parseLong(QueryProcessorInfo.QP_SPACE_WRITE_LEASE_DEFAULT);
     private long _transactionTimeout = Integer.parseInt(QueryProcessorInfo.QP_TRANSACTION_TIMEOUT_DEFAULT);
     private boolean _parserCaseSensitivity = Boolean.parseBoolean(QueryProcessorInfo.QP_PARSER_CASE_SENSETIVITY_DEFAULT);
-    private String _dateFormat = QueryProcessorInfo.QP_DATE_FORMAT;
+    private String _dateFormat = QueryProcessorInfo.QP_DATE_FORMAT_DEFAULT;
     private String _dateTimeFormat = QueryProcessorInfo.QP_DATETIME_FORMAT_DEFAULT;
     private String _timeFormat = QueryProcessorInfo.QP_TIME_FORMAT_DEFAULT;
     private boolean _traceExecTime = Boolean.parseBoolean(QueryProcessorInfo.QP_TRACE_EXEC_TIME_DEFAULT);
