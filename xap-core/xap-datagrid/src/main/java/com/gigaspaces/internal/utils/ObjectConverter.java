@@ -50,7 +50,7 @@ import java.util.logging.Logger;
  */
 public abstract class ObjectConverter {
     private static final Map<String, AbstractParser> _typeParserMap = createTypeConverterMap();
-    private static final Map<String, AbstractParser> _runtimeGeneratedParserMap = createTypeConverterMap();
+    private static final Map<String, AbstractParser> _runtimeGeneratedParserMap = new ConcurrentHashMap<String, AbstractParser>();
 
     public static Object convert(Object obj, Class<?> type)
             throws SQLException {
