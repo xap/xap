@@ -204,7 +204,7 @@ public class ClusterRemoteOperationRouter extends AbstractRemoteOperationRouter 
 
         private volatile RemoteOperationsExecutorProxy _proxy;
         private volatile ExecutionStatus _lastExecutionStatus;
-        private long _initialFailureTime;
+        private volatile long _initialFailureTime;
 
         public AsyncOperationExecutor(RemoteOperationRequest<T> request, RemoteOperationFutureListener<T> listener) {
             this._request = request;
