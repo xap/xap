@@ -175,6 +175,14 @@ public class ReplicationFilterManager implements ISpaceComponentsHandler {
         return true;
     }
 
+    @Override
+    public void close(boolean primaryOnly) {
+        if (primaryOnly != _startIfPrimaryOnly)
+            return;
+
+        close();
+    }
+
 
     public ReplicationFilterWrapper getInputFilter() {
         return _inputFilterWrapper;

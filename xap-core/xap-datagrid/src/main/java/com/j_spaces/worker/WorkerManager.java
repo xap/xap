@@ -223,4 +223,14 @@ public class WorkerManager implements ISpaceComponentsHandler {
     public boolean isRecoverySupported() {
         return false;
     }
+
+    @Override
+    public void close(boolean primaryOnly) {
+        for (Iterator<WorkerInfo> iterator = workerTable.values().iterator(); iterator.hasNext(); ) {
+            WorkerInfo worker = iterator.next();
+            if (primaryOnly == worker.isStartIfPrimaryOnly()) {
+                close(worker);
+            }
+        }
+    }
 }

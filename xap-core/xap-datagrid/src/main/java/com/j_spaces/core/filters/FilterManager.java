@@ -490,6 +490,22 @@ public class FilterManager implements ISpaceComponentsHandler {
         return true;
     }
 
+    @Override
+    public void close(boolean primaryOnly) {
+        for (FilterHolder filterHolder : _filtersRepository.values()) {
+            if (primaryOnly != filterHolder.isPrimaryOnly())
+                continue;
+
+            try {
+                filterHolder.close(); // could throw RuntimeException
+            } catch (RuntimeException ex) {
+                if (_logger.isLoggable(Level.SEVERE)) {
+                    _logger.log(Level.SEVERE, "Failed to close filter " + filterHolder.getName(), ex);
+                }
+            }
+        }
+    }
+
     public boolean hasFilterRequiresFullSpaceFilterEntry(int operationCode) {
         PrioritySpaceFiltersHolder prioritySpaceFiltersHolder = _filters[operationCode];
         if (prioritySpaceFiltersHolder == null)

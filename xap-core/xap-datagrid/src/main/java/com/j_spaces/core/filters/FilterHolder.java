@@ -82,6 +82,12 @@ public class FilterHolder {
         return _initialized;
     }
 
+    public void close() throws RuntimeException {
+        _initialized = false;
+        getFilter().close();
+    }
+
+
     public boolean isPassFilterEntry() {
         return _filterProvider.isPassFilterEntry();
     }

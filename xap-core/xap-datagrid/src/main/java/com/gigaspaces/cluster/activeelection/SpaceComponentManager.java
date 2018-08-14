@@ -148,6 +148,20 @@ public class SpaceComponentManager
 
     }// beforeSpaceModeChange
 
+    private void closePrimaryOnlyComponents() {
+        SpaceInitializationIndicator.setInitializer();
+
+        _logger.info(">>> Closing primary only components:");
+
+        for (Iterator<ISpaceComponentsHandler> iterator = _componentsHandlers.iterator(); iterator.hasNext(); ) {
+            ISpaceComponentsHandler handler = iterator.next();
+            _logger.info(">>> Closing primary only component: " + handler.toString());
+            handler.close(true);
+        }
+
+        SpaceInitializationIndicator.unsetInitializer();
+
+    }
     /*
      * @see com.j_spaces.core.ISpaceModeListener#afterSpaceModeChange(com.gigaspaces.cluster.init.Mode)
      */
@@ -182,6 +196,7 @@ public class SpaceComponentManager
 
             // PRIMARY -- > BACKUP
             case PRIMARY:
+                closePrimaryOnlyComponents();
 //                // Restart space when switching from primary to backup
 //                try {
 //                    _space.stopInternal();

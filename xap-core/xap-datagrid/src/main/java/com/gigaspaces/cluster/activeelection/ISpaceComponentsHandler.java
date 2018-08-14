@@ -47,4 +47,10 @@ public interface ISpaceComponentsHandler
      */
     boolean isRecoverySupported();
 
+
+    /**
+     * @param primaryOnly
+     */
+    void close(boolean primaryOnly);
+
 }
