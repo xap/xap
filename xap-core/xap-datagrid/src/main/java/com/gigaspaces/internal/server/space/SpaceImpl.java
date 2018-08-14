@@ -3579,6 +3579,12 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         }
 
 
+
+        if (_clusterInfo.getNumberOfBackups() != 1) {
+            _logger.info("Couldn't demote to backup - cluster should be configured with exactly one backup, backups: (" + _clusterInfo.getNumberOfBackups() + ")");
+            return false;
+        }
+
         List<ReplicationStatistics.OutgoingChannel> backupChannels = getHolder().getReplicationStatistics().getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE);
         if (backupChannels.size() != 1) {
             //more than one backup
