@@ -3573,8 +3573,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             return false;
         }
 
-        if (!_leaderSelector.getClass().getSimpleName().equals(LEADER_SELECTOR_HANDLER_CLASS_NAME)) {
-            _logger.info("Primary demotion is supported with Zookeeper leader election only.");
+        if (!_leaderSelector.getClass().getName().equals(LEADER_SELECTOR_HANDLER_CLASS_NAME)) {
+            _logger.info("Primary demotion is only supported with Zookeeper leader election.");
             return false;
         }
 
