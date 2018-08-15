@@ -3625,7 +3625,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
             if (!leaseManagerCycleFinished) {
                 _logger.info("Couldn't demote to backup - lease manager cycle timeout");
-                getQuiesceHandler().unquiesce();
                 return false;
             }
 
@@ -3633,7 +3632,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
             if (remainingTime <= 0) {
                 _logger.info("Couldn't demote to backup - timeout waiting for a lease manager cycle");
-                getQuiesceHandler().unquiesce();
                 return false;
             }
 
@@ -3644,7 +3642,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             remainingTime = end - System.currentTimeMillis();
             if (remainingTime <= 0) {
                 _logger.info("Couldn't demote to backup - timeout while waiting for active transactions");
-                getQuiesceHandler().unquiesce();
                 return false;
             }
 
@@ -3692,7 +3689,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             }
 
         } finally {
-            //TODO if failed, need to reopen connections
             _logger.info("Demoting to backup finished, exiting quiesce mode...");
             getQuiesceHandler().unquiesce();
         }
