@@ -151,11 +151,8 @@ public class SpaceComponentManager
     private void closePrimaryOnlyComponents() {
         SpaceInitializationIndicator.setInitializer();
 
-        _logger.info(">>> Closing primary only components:");
-
         for (Iterator<ISpaceComponentsHandler> iterator = _componentsHandlers.iterator(); iterator.hasNext(); ) {
             ISpaceComponentsHandler handler = iterator.next();
-            _logger.info(">>> Closing primary only component: " + handler.toString());
             handler.close(true);
         }
 
