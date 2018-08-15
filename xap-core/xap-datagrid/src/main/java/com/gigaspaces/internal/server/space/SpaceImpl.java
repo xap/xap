@@ -289,7 +289,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             initClassLoadersManager(spaceConfig.getSupportCodeChange(), spaceConfig.getMaxClassLoaders());
         }
 
-        boolean useZooKeeper = !SystemInfo.singleton().getManagerClusterInfo().isEmpty();
+        boolean useZooKeeper = useZooKeeper();
         if(useZooKeeper){
             zookeeperLastPrimaryHandler = new ZookeeperLastPrimaryHandler(this, _logger);
         }
@@ -1406,6 +1406,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         _componentManager = new SpaceComponentManager(this);
     }
 
+    private boolean useZooKeeper() {
+        return !SystemInfo.singleton().getManagerClusterInfo().isEmpty();
+    }
+
     private LeaderSelectorHandler initLeaderSelectorHandler(boolean isLookupServiceEnabled) throws RemoteException, ActiveElectionException {
         LeaderSelectorHandler leaderSelectorHandler = null;
         if (_clusterPolicy != null && _clusterPolicy.isPrimaryElectionAvailable()) {
@@ -1417,7 +1421,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             if (_spaceState.getState() != ISpaceState.STARTED)
                 changeSpaceState(ISpaceState.STARTING, true, false);
 
-            boolean useZooKeeper = !SystemInfo.singleton().getManagerClusterInfo().isEmpty();
+            boolean useZooKeeper = useZooKeeper();
             try {
                 LeaderSelectorHandlerConfig leaderSelectorHandlerConfig = new LeaderSelectorHandlerConfig();
                 leaderSelectorHandlerConfig.setSpace(this);
@@ -3572,14 +3576,20 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             //space is not primary
             return false;
         }
+
+        if (!useZooKeeper()) {
+            _logger.info("Primary demotion is only supported with Zookeeper leader selector.");
+            return false;
+        }
+
         if (_clusterInfo.getNumberOfBackups() != 1) {
             _logger.info("Couldn't demote to backup - cluster should be configured with exactly one backup, backups: (" + _clusterInfo.getNumberOfBackups() + ")");
             return false;
         }
 
-        //TODO check if leaderSelector is available (i.e. is Primary Backup mode)
-        if (!_leaderSelector.getClass().getName().equals(LEADER_SELECTOR_HANDLER_CLASS_NAME)) {
-            _logger.info("Primary demotion is only supported with Zookeeper leader election.");
+        //In case that we use ZooKeeper but leader selector is not ZK based leader selector
+        if (_leaderSelector == null || !_leaderSelector.getClass().getName().equals(LEADER_SELECTOR_HANDLER_CLASS_NAME)) {
+            _logger.info("Primary demotion is only supported with Zookeeper leader selector.");
             return false;
         }
 
@@ -3605,11 +3615,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             _logger.info("Demoting to backup, entering quiesce mode...");
             getQuiesceHandler().quiesce("Space is demoting from primary to backup", new DefaultQuiesceToken("myToken"));
 
-            try {
-                Thread.sleep(unit.toMillis(timeout));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
 
             long lastKeyInRedoLog = getHolder().getReplicationStatistics().getOutgoingReplication().getLastKeyInRedoLog();
 
