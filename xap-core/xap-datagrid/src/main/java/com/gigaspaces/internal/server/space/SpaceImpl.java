@@ -3571,7 +3571,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     }
 
     @Override
-    public boolean demoteToBackup(int timeout, TimeUnit unit) {
+    public boolean demoteToBackup(int timeToWait, TimeUnit unit) {
+        long timeToWaitInMs = unit.toMillis(timeToWait);
+        long end = timeToWaitInMs + System.currentTimeMillis();
+
         if (!isPrimary()) {
             //space is not primary
             return false;
@@ -3614,6 +3617,44 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             //TODO quiesce token - replace with empty token
             _logger.info("Demoting to backup, entering quiesce mode...");
             getQuiesceHandler().quiesce("Space is demoting from primary to backup", new DefaultQuiesceToken("myToken"));
+
+
+            long remainingTime = end - System.currentTimeMillis();
+
+            boolean leaseManagerCycleFinished = _engine.getLeaseManager().waitForNoCycleOnQuiesce(remainingTime);
+
+            if (!leaseManagerCycleFinished) {
+                _logger.info("Couldn't demote to backup - lease manager cycle timeout");
+                getQuiesceHandler().unquiesce();
+                return false;
+            }
+
+            remainingTime = end - System.currentTimeMillis();
+
+            if (remainingTime <= 0) {
+                _logger.info("Couldn't demote to backup - timeout waiting for a lease manager cycle");
+                getQuiesceHandler().unquiesce();
+                return false;
+            }
+
+//            remainingTime = end - System.currentTimeMillis();
+//            _engine.getTransactionHandler().abortOpenTransactions();
+//            _engine.getTransactionHandler().waitForActiveTransactions(remainingTime);
+
+            remainingTime = end - System.currentTimeMillis();
+            if (remainingTime <= 0) {
+                _logger.info("Couldn't demote to backup - timeout while waiting for active transactions");
+                getQuiesceHandler().unquiesce();
+                return false;
+            }
+
+
+            //Sleep for the remaining time
+            try {
+                Thread.sleep(remainingTime);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
 
             long lastKeyInRedoLog = getHolder().getReplicationStatistics().getOutgoingReplication().getLastKeyInRedoLog();
