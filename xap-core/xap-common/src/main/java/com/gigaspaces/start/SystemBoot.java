@@ -505,6 +505,11 @@ public class SystemBoot {
                 // we do that since within the IDE it does not pass that " character.
                 int eqIdx = args[i].indexOf('=');
                 if (eqIdx > 0) {
+                    //if the format is xxx= we will transform it to xxx=""
+                    if(args[i].length()==eqIdx+1){
+                        args[i] += "\"\"";
+                        continue;
+                    }
                     if (args[i].charAt(eqIdx + 1) != '\"') {
                         args[i] = args[i].substring(0, eqIdx) + "=\"" + args[i].substring(eqIdx + 1);
                     }
