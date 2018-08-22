@@ -19,9 +19,13 @@
 package com.j_spaces.core.cache.blobStore.memory_pool;
 
 import com.gigaspaces.internal.utils.concurrent.UnsafeHolder;
+import com.gigaspaces.metrics.LongCounter;
+import com.gigaspaces.metrics.MetricRegistrator;
 import com.j_spaces.core.cache.blobStore.BlobStoreRefEntryCacheInfo;
 import com.j_spaces.core.cache.blobStore.IBlobStoreOffHeapInfo;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,12 +36,13 @@ import java.util.logging.Logger;
 public class OffHeapMemoryPool extends AbstractMemoryPool {
 
     private Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
-
     private int minimalDiffToAllocate;
+    private final LongCounter totalCounter = new LongCounter();
+    private final Map<String, LongCounter> typesCounters = new ConcurrentHashMap<String, LongCounter>();
 
     public OffHeapMemoryPool(long threshold) {
         super(threshold);
-        if(!UnsafeHolder.isAvailable()){
+        if (!UnsafeHolder.isAvailable()) {
             throw new RuntimeException(" unsafe instance could not be obtained");
         }
     }
@@ -47,45 +52,32 @@ public class OffHeapMemoryPool extends AbstractMemoryPool {
     }
 
     @Override
-    public void write(IBlobStoreOffHeapInfo info, byte[] buf) {
-        allocateAndWriteImpl(info, buf, false);
+    public void initMetrics(MetricRegistrator metricRegistrator) {
+        setMetricRegistrator(metricRegistrator);
+        getMetricRegistrator().register(metricsPath("total"), totalCounter);
     }
 
-    private void allocateAndWriteImpl(IBlobStoreOffHeapInfo info, byte[] buf, boolean fromUpdate) {
-        long newAddress;
+    @Override
+    public void register(String typeName) {
+        LongCounter counter = new LongCounter();
+        typesCounters.put(typeName, counter);
+        getMetricRegistrator().register(metricsPath(typeName), counter);
+    }
 
-        if(info.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY){
-            fromUpdate = false;
-        }
+    @Override
+    public void unregister(String typeName) {
+        typesCounters.remove(typeName);
+        getMetricRegistrator().unregisterByPrefix(metricsPath(typeName));
+    }
 
-        if (info.getOffHeapAddress() != BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY && !fromUpdate) {
-            throw new IllegalStateException("trying to allocateAndWrite when already allocated in off heap");
-        }
+    @Override
+    public long getUsedBytes() {
+        return totalCounter.getCount();
+    }
 
-        int headerSize = calculateHeaderSize(buf.length);
-        try {
-            if(fromUpdate){
-                newAddress = UnsafeHolder.reallocateMemory(info.getOffHeapAddress(), headerSize + buf.length);
-            } else {
-                newAddress = UnsafeHolder.allocateMemory(headerSize + buf.length);
-            }
-
-        } catch (Error e) {
-            logger.log(Level.SEVERE, "failed to allocateAndWrite offheap space", e);
-            throw e;
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "failed to allocateAndWrite offheap space");
-            throw new RuntimeException("failed to allocateAndWrite offheap space", e);
-        }
-        if (newAddress == 0) {
-            logger.log(Level.SEVERE, "failed to allocateAndWrite offheap space");
-            throw new RuntimeException("failed to allocateAndWrite offheap space");
-        }
-
-        putHeaderToUnsafe(newAddress, buf.length);
-        writeBytes(newAddress + headerSize, buf);
-        info.setOffHeapAddress(newAddress);
-        incrementMetrics(headerSize + buf.length, info.getTypeName());
+    @Override
+    public void write(IBlobStoreOffHeapInfo info, byte[] buf) {
+        allocateAndWriteImpl(info, buf, false);
     }
 
     @Override
@@ -106,7 +98,7 @@ public class OffHeapMemoryPool extends AbstractMemoryPool {
         int oldHeaderSize = getHeaderSizeFromUnsafe(info.getOffHeapAddress());
         int oldEntryLength = getHeaderFromUnsafe(info.getOffHeapAddress(), oldHeaderSize);
         if (oldEntryLength < buf.length || (oldEntryLength - buf.length >= minimalDiffToAllocate)) {
-            deleteImpl(info,true);
+            deleteImpl(info, true);
             allocateAndWriteImpl(info, buf, true);
         } else {
             writeBytes(info.getOffHeapAddress() + (long) (oldHeaderSize), buf);
@@ -133,12 +125,63 @@ public class OffHeapMemoryPool extends AbstractMemoryPool {
         throw new UnsupportedOperationException("OffHeapMemoryPool.close() is not supported");
     }
 
+    private void incrementMetrics(long n, String typeName) {
+        totalCounter.inc(n);
+        LongCounter typeCounter = typesCounters.get(typeName);
+        if (typeCounter != null)
+            typeCounter.inc(n);
+    }
+
+    private void decrementMetrics(long n, String typeName) {
+        totalCounter.dec(n);
+        LongCounter typeCounter = typesCounters.get(typeName);
+        if (typeCounter != null)
+            typeCounter.dec(n);
+    }
+
+    private void allocateAndWriteImpl(IBlobStoreOffHeapInfo info, byte[] buf, boolean fromUpdate) {
+        long newAddress;
+
+        if (info.getOffHeapAddress() == BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
+            fromUpdate = false;
+        }
+
+        if (info.getOffHeapAddress() != BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY && !fromUpdate) {
+            throw new IllegalStateException("trying to allocateAndWrite when already allocated in off heap");
+        }
+
+        int headerSize = calculateHeaderSize(buf.length);
+        try {
+            if (fromUpdate) {
+                newAddress = UnsafeHolder.reallocateMemory(info.getOffHeapAddress(), headerSize + buf.length);
+            } else {
+                newAddress = UnsafeHolder.allocateMemory(headerSize + buf.length);
+            }
+
+        } catch (Error e) {
+            logger.log(Level.SEVERE, "failed to allocateAndWrite offheap space", e);
+            throw e;
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "failed to allocateAndWrite offheap space");
+            throw new RuntimeException("failed to allocateAndWrite offheap space", e);
+        }
+        if (newAddress == 0) {
+            logger.log(Level.SEVERE, "failed to allocateAndWrite offheap space");
+            throw new RuntimeException("failed to allocateAndWrite offheap space");
+        }
+
+        putHeaderToUnsafe(newAddress, buf.length);
+        writeBytes(newAddress + headerSize, buf);
+        info.setOffHeapAddress(newAddress);
+        incrementMetrics(headerSize + buf.length, info.getTypeName());
+    }
+
     private void deleteImpl(IBlobStoreOffHeapInfo info, boolean fromUpdate) {
         long valuesAddress = info.getOffHeapAddress();
         if (valuesAddress != BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY) {
             int headerSize = getHeaderSizeFromUnsafe(info.getOffHeapAddress());
-            int numOfBytes = getHeaderFromUnsafe(valuesAddress,headerSize);
-            if(!fromUpdate){
+            int numOfBytes = getHeaderFromUnsafe(valuesAddress, headerSize);
+            if (!fromUpdate) {
                 UnsafeHolder.freeFromMemory(valuesAddress);
                 info.setOffHeapAddress(BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY);
             }

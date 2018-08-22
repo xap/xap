@@ -13,56 +13,35 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class AbstractMemoryPool {
     protected final long threshold;
-    private final LongCounter totalCounter = new LongCounter();
-    private final Map<String, LongCounter> typesCounters = new ConcurrentHashMap<String, LongCounter>();
     private MetricRegistrator metricRegistrator;
 
     protected AbstractMemoryPool(long threshold) {
         this.threshold = threshold;
     }
 
-    public void initMetrics(MetricRegistrator metricRegistrator) {
-        this.metricRegistrator = metricRegistrator;
-        this.metricRegistrator.register(metricsPath("total"), totalCounter);
+    protected String metricsPath(String typeName) {
+        return metricRegistrator.toPath("used-bytes", typeName);
     }
 
     public long getThreshold() {
         return threshold;
     }
 
-    public void register(String typeName) {
-        LongCounter counter = new LongCounter();
-        typesCounters.put(typeName, counter);
-        metricRegistrator.register(metricsPath(typeName), counter);
+    public MetricRegistrator getMetricRegistrator() {
+        return metricRegistrator;
     }
 
-    public void unregister(String typeName) {
-        typesCounters.remove(typeName);
-        metricRegistrator.unregisterByPrefix(metricsPath(typeName));
+    public void setMetricRegistrator(MetricRegistrator metricRegistrator) {
+        this.metricRegistrator = metricRegistrator;
     }
 
-    public long getUsedBytes() {
-        return totalCounter.getCount();
-    }
+    public abstract void initMetrics(MetricRegistrator metricRegistrator);
 
-    private String metricsPath(String typeName) {
-        return metricRegistrator.toPath("used-bytes", typeName);
-    }
+    public abstract void register(String typeName);
 
-    protected void incrementMetrics(long n, String typeName) {
-        totalCounter.inc(n);
-        LongCounter typeCounter = typesCounters.get(typeName);
-        if (typeCounter != null)
-            typeCounter.inc(n);
-    }
+    public abstract void unregister(String typeName);
 
-    protected void decrementMetrics(long n, String typeName) {
-        totalCounter.dec(n);
-        LongCounter typeCounter = typesCounters.get(typeName);
-        if (typeCounter != null)
-            typeCounter.dec(n);
-
-    }
+    public abstract long getUsedBytes();
 
     public abstract void write(IBlobStoreOffHeapInfo info, byte[] buf);
 
@@ -77,12 +56,4 @@ public abstract class AbstractMemoryPool {
     public abstract boolean isOffHeap();
 
     public abstract void close();
-
-    public LongCounter getTotalCounter() {
-        return totalCounter;
-    }
-
-    public Map<String, LongCounter> getTypesCounters() {
-        return typesCounters;
-    }
 }
