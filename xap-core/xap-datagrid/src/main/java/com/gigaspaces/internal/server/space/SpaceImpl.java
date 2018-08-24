@@ -67,6 +67,7 @@ import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
+import com.gigaspaces.internal.server.space.demote.DemoteHandler;
 import com.gigaspaces.internal.server.space.executors.SpaceActionExecutor;
 import com.gigaspaces.internal.server.space.operations.SpaceOperationsExecutor;
 import com.gigaspaces.internal.server.space.operations.WriteEntriesResult;
@@ -218,6 +219,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private final PrimarySpaceModeListeners primarySpaceModeListeners = new PrimarySpaceModeListeners();
     private final CompositeSpaceModeListener _internalSpaceModesListeners = new CompositeSpaceModeListener();
     private final IStubHandler _stubHandler;
+    private final DemoteHandler _demoteHandler;
 
     private SpaceConfig _spaceConfig;
     private SpaceEngine _engine;
@@ -283,6 +285,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         this._embeddedCredentialsProvider = securityEnabled ? extractCredentials(customProperties, spaceConfig) : null;
         //init quiesce handler before startInternal to ensure no operations will arrive before handler is initialized
         this._quiesceHandler = new QuiesceHandler(this, getQuiesceStateChangedEvent(customProperties));
+        this._demoteHandler = new DemoteHandler(this);
         this._stubHandler = new LRMIStubHandlerImpl();
 
         if(spaceConfig != null){
@@ -1406,8 +1409,30 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         _componentManager = new SpaceComponentManager(this);
     }
 
-    private boolean useZooKeeper() {
+    public boolean useZooKeeper() {
         return !SystemInfo.singleton().getManagerClusterInfo().isEmpty();
+    }
+
+    private boolean isLookupServiceEnabled() {
+        return _isLusRegEnabled && !isPrivate();
+    }
+
+    public boolean restartLeaderSelectorHandler() {
+        try {
+            _leaderSelector.terminate();
+            _leaderSelector = initLeaderSelectorHandler(isLookupServiceEnabled());
+        } catch (RemoteException e) {
+            _logger.log(Level.SEVERE, "Unable to reinitialize leader selector ", e);
+            return false;
+        } catch (ActiveElectionException e) {
+            _logger.log(Level.SEVERE, "Unable to reinitialize leader selector ", e);
+            return false;
+        }
+        return true;
+    }
+
+    public LeaderSelectorHandler getLeaderSelector() {
+        return _leaderSelector;
     }
 
     private LeaderSelectorHandler initLeaderSelectorHandler(boolean isLookupServiceEnabled) throws RemoteException, ActiveElectionException {
@@ -2915,7 +2940,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         if (_spaceState.getState() == ISpaceState.STARTED)
             throw new SpaceAlreadyStartedException("Space [" + getServiceName() + "] already started");
 
-        final boolean isLookupServiceEnabled = _isLusRegEnabled && !isPrivate();
+        final boolean isLookupServiceEnabled = isLookupServiceEnabled();
         try {
             _clusterFailureDetector = initClusterFailureDetector(_clusterPolicy);
             _engine = new SpaceEngine(this);
@@ -3572,128 +3597,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     @Override
     public boolean demoteToBackup(int timeToWait, TimeUnit unit) {
-        long timeToWaitInMs = unit.toMillis(timeToWait);
-        long end = timeToWaitInMs + System.currentTimeMillis();
-
-        if (!isPrimary()) {
-            //space is not primary
-            return false;
-        }
-
-        if (!useZooKeeper()) {
-            _logger.info("Primary demotion is only supported with Zookeeper leader selector.");
-            return false;
-        }
-
-        if (_clusterInfo.getNumberOfBackups() != 1) {
-            _logger.info("Couldn't demote to backup - cluster should be configured with exactly one backup, backups: (" + _clusterInfo.getNumberOfBackups() + ")");
-            return false;
-        }
-
-        //In case that we use ZooKeeper but leader selector is not ZK based leader selector
-        if (_leaderSelector == null || !_leaderSelector.getClass().getName().equals(LEADER_SELECTOR_HANDLER_CLASS_NAME)) {
-            _logger.info("Primary demotion is only supported with Zookeeper leader selector.");
-            return false;
-        }
-
-        List<ReplicationStatistics.OutgoingChannel> backupChannels = getHolder().getReplicationStatistics().getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE);
-        if (backupChannels.size() != 1) {
-            //more than one backup
-            _logger.info("Couldn't demote to backup - there should be exactly one backup, current channels: ("+backupChannels.size()+")");
-            return false;
-        }
-
-        ReplicationStatistics.OutgoingChannel backupChannel = backupChannels.get(0);
-
-        if (!backupChannel.getChannelState().equals(ReplicationStatistics.ChannelState.ACTIVE)) {
-            //backup replication is not active
-            _logger.info("Couldn't demote to backup - backup replication channel is not active ("+backupChannel.getChannelState()+")");
-            return false;
-        }
-
-
-        try {
-
-            //TODO quiesce token - replace with empty token
-            _logger.info("Demoting to backup, entering quiesce mode...");
-            getQuiesceHandler().quiesce("Space is demoting from primary to backup", new DefaultQuiesceToken("myToken"));
-
-
-            long remainingTime = end - System.currentTimeMillis();
-
-            boolean leaseManagerCycleFinished = _engine.getLeaseManager().waitForNoCycleOnQuiesce(remainingTime);
-
-            if (!leaseManagerCycleFinished) {
-                _logger.info("Couldn't demote to backup - lease manager cycle timeout");
-                return false;
-            }
-
-            remainingTime = end - System.currentTimeMillis();
-
-            if (remainingTime <= 0) {
-                _logger.info("Couldn't demote to backup - timeout waiting for a lease manager cycle");
-                return false;
-            }
-
-//            remainingTime = end - System.currentTimeMillis();
-//            _engine.getTransactionHandler().abortOpenTransactions();
-//            _engine.getTransactionHandler().waitForActiveTransactions(remainingTime);
-
-            remainingTime = end - System.currentTimeMillis();
-            if (remainingTime <= 0) {
-                _logger.info("Couldn't demote to backup - timeout while waiting for active transactions");
-                return false;
-            }
-
-
-            //Sleep for the remaining time
-            try {
-                Thread.sleep(remainingTime);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-
-            long lastKeyInRedoLog = getHolder().getReplicationStatistics().getOutgoingReplication().getLastKeyInRedoLog();
-
-            if (getHolder().getReplicationStatistics().getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE).get(0).getLastConfirmedKeyFromTarget() != lastKeyInRedoLog) {
-                //Backup is not synced
-                _logger.info("Couldn't demote to backup - backup is not synced ("+backupChannel.getLastConfirmedKeyFromTarget()+" != "+lastKeyInRedoLog+")");
-                return false;
-            }
-
-            _logger.info("size during demote = "+getHolder().getReplicationStatistics().getOutgoingReplication().getRedoLogSize());
-            //TODO recheck above preconditions again after entering quiesce mode
-            //Wait timeout if necessary (e.g. wait for replication from primary to backup)
-
-            // wait for no activity
-            //TODO
-
-            //close outgoing connections
-            getEngine().getReplicationNode().getAdmin().setPassive();
-
-
-            //Restart leader selector handler (in case of ZK then it restarts
-            // the connection to ZK so the backup becomes primary)
-            final boolean isLookupServiceEnabled = _isLusRegEnabled && !isPrivate();
-
-            try {
-                _leaderSelector.terminate();
-                _leaderSelector = initLeaderSelectorHandler(isLookupServiceEnabled);
-            } catch (RemoteException e) {
-                _logger.log(Level.SEVERE, "Unable to reinitialize leader selector ", e);
-                return false;
-            } catch (ActiveElectionException e) {
-                _logger.log(Level.SEVERE, "Unable to reinitialize leader selector ", e);
-                return false;
-            }
-
-        } finally {
-            _logger.info("Demoting to backup finished, exiting quiesce mode...");
-            getQuiesceHandler().unquiesce();
-        }
-
-
-        return true;
+        return _demoteHandler.demote(timeToWait, unit);
     }
 }
