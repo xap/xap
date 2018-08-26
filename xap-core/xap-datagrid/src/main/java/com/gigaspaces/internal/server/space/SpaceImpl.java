@@ -3572,7 +3572,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             //space is not primary
             return false;
         }
-
         if (_clusterInfo.getNumberOfBackups() != 1) {
             _logger.info("Couldn't demote to backup - cluster should be configured with exactly one backup, backups: (" + _clusterInfo.getNumberOfBackups() + ")");
             return false;
@@ -3606,6 +3605,11 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             _logger.info("Demoting to backup, entering quiesce mode...");
             getQuiesceHandler().quiesce("Space is demoting from primary to backup", new DefaultQuiesceToken("myToken"));
 
+            try {
+                Thread.sleep(unit.toMillis(timeout));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
             long lastKeyInRedoLog = getHolder().getReplicationStatistics().getOutgoingReplication().getLastKeyInRedoLog();
 
