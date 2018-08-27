@@ -269,6 +269,7 @@ public class ReplicationNodeConfigBuilder {
                 filters,
                 null,
                 null,
+                replicationPolicy.isNetworkCompressionEnabled(),
                 groupMemberNames.toArray(new String[groupMemberNames.size()]));
 
         for (String memberName : groupMemberNames) {
@@ -333,6 +334,7 @@ public class ReplicationNodeConfigBuilder {
                 filters,
                 null,
                 null,
+                replicationPolicy.isNetworkCompressionEnabled(),
                 groupMemberNames.toArray(new String[groupMemberNames.size()]));
 
         for (String memberName : groupMemberNames) {
@@ -387,7 +389,9 @@ public class ReplicationNodeConfigBuilder {
                 null,
                 filters,
                 null,
-                null, groupMemberNames.toArray(new String[groupMemberNames.size()]));
+                null,
+                true,
+                groupMemberNames.toArray(new String[groupMemberNames.size()]));
 
         DynamicSourceGroupConfigHolder configHolder = new DynamicSourceGroupConfigHolder(sourceGroupConfig);
 
@@ -442,6 +446,7 @@ public class ReplicationNodeConfigBuilder {
                 filters,
                 null,
                 null,
+                replicationPolicy.isNetworkCompressionEnabled(),
                 groupMemberNames.toArray(new String[groupMemberNames.size()]));
 
         DynamicSourceGroupConfigHolder configHolder = new DynamicSourceGroupConfigHolder(sourceGroupConfig);
@@ -497,6 +502,7 @@ public class ReplicationNodeConfigBuilder {
                 filters,
                 null,
                 null,
+                replicationPolicy.isNetworkCompressionEnabled(),
                 groupMemberNames.toArray(new String[groupMemberNames.size()]));
 
         DynamicAsyncSourceGroupConfigHolder configHolder = new DynamicAsyncSourceGroupConfigHolder(sourceGroupConfig);
@@ -726,7 +732,7 @@ public class ReplicationNodeConfigBuilder {
                 null,
                 null,
                 syncGroupMemberNames.toArray(new String[syncGroupMemberNames.size()]),
-                reliableAsyncMemberNames.toArray(new String[reliableAsyncMemberNames.size()]), replicationPolicy.getBatchSize(), reliableAsyncSettings.getReliableAsyncCompletionNotifierInterval(), reliableAsyncSettings.getReliableAsyncCompletionNotifierPacketsThreshold());
+                reliableAsyncMemberNames.toArray(new String[reliableAsyncMemberNames.size()]), replicationPolicy.getBatchSize(), reliableAsyncSettings.getReliableAsyncCompletionNotifierInterval(), reliableAsyncSettings.getReliableAsyncCompletionNotifierPacketsThreshold(), reliableAsyncSettings.getSpaceReplicationSettings().isNetworkCompressionEnabled());
 
         DynamicReliableAsyncSourceGroupConfigHolder configHolder = new DynamicReliableAsyncSourceGroupConfigHolder(sourceGroupConfig);
 
@@ -880,7 +886,7 @@ public class ReplicationNodeConfigBuilder {
                 null,
                 membersGrouping,
                 syncGroupMemberNames.toArray(new String[syncGroupMemberNames.size()]),
-                reliableAsyncMemberNames.toArray(new String[reliableAsyncMemberNames.size()]), mirrorPolicy.getBatchSize(), reliableAsyncSettings.getReliableAsyncCompletionNotifierInterval(), reliableAsyncSettings.getReliableAsyncCompletionNotifierPacketsThreshold());
+                reliableAsyncMemberNames.toArray(new String[reliableAsyncMemberNames.size()]), mirrorPolicy.getBatchSize(), reliableAsyncSettings.getReliableAsyncCompletionNotifierInterval(), reliableAsyncSettings.getReliableAsyncCompletionNotifierPacketsThreshold(), reliableAsyncSettings.getSpaceReplicationSettings().isNetworkCompressionEnabled());
 
         sourceGroupConfig.setChannelConfig(mirrorPolicy.getMirrorMemberName(),
                 new AsyncChannelConfig(mirrorPolicy.getBatchSize(),
@@ -994,7 +1000,9 @@ public class ReplicationNodeConfigBuilder {
                 null,
                 filters,
                 null,
-                membersGrouping, mirrorMembersNames.toArray(new String[mirrorMembersNames.size()]));
+                membersGrouping,
+                replicationPolicy.isNetworkCompressionEnabled(),
+                mirrorMembersNames.toArray(new String[mirrorMembersNames.size()]));
 
         DynamicAsyncSourceGroupConfigHolder configHolder = new DynamicAsyncSourceGroupConfigHolder(sourceGroupConfig);
 

@@ -47,12 +47,37 @@ public class ReliableAsyncSourceGroupConfig
                                           String[] syncMembersLookupNames,
                                           String[] asyncMembersLookupNames,
                                           int backlogCompletionBatchSize, long completionNotifierInterval, long completionNotifierPacketsThreshold) {
+        this(groupName,
+                backlogConfig,
+                groupConsistencyLevelPolicy,
+                filters,
+                lifeCycles,
+                membersGrouping,
+                syncMembersLookupNames,
+                asyncMembersLookupNames,
+                backlogCompletionBatchSize,
+                completionNotifierInterval,
+                completionNotifierPacketsThreshold,
+                true);
+    }
+
+    public ReliableAsyncSourceGroupConfig(String groupName,
+                                          BacklogConfig backlogConfig,
+                                          GroupConsistencyLevelPolicy groupConsistencyLevelPolicy,
+                                          Map<String, IReplicationChannelDataFilter> filters,
+                                          Map<String, DynamicSourceGroupMemberLifeCycle> lifeCycles,
+                                          Map<String, String[]> membersGrouping,
+                                          String[] syncMembersLookupNames,
+                                          String[] asyncMembersLookupNames,
+                                          int backlogCompletionBatchSize, long completionNotifierInterval, long completionNotifierPacketsThreshold, boolean networkCompressionEnabled) {
         super(groupName,
                 backlogConfig,
                 groupConsistencyLevelPolicy,
                 filters,
                 lifeCycles,
-                membersGrouping, mergeMembersLists(syncMembersLookupNames, asyncMembersLookupNames));
+                membersGrouping,
+                networkCompressionEnabled,
+                mergeMembersLists(syncMembersLookupNames, asyncMembersLookupNames));
         _syncMembersLookupNames = syncMembersLookupNames;
         _asyncMembersLookupNames = asyncMembersLookupNames;
         _backlogCompletionBatchSize = backlogCompletionBatchSize;

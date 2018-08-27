@@ -59,7 +59,7 @@ public class DynamicReliableAsyncSourceGroupConfigHolder
                 membersGrouping,
                 reliableAsyncSourceGroupConfig.getSyncMembersLookupNames(),
                 newAsyncMembers,
-                reliableAsyncSourceGroupConfig.getBacklogCompletionBatchSize(), reliableAsyncSourceGroupConfig.getCompletionNotifierInterval(), reliableAsyncSourceGroupConfig.getCompletionNotifierPacketsThreshold());
+                reliableAsyncSourceGroupConfig.getBacklogCompletionBatchSize(), reliableAsyncSourceGroupConfig.getCompletionNotifierInterval(), reliableAsyncSourceGroupConfig.getCompletionNotifierPacketsThreshold(), reliableAsyncSourceGroupConfig.isNetworkCompressionEnabled());
 
         for (String oldMemberName : reliableAsyncSourceGroupConfig.getMembersLookupNames()) {
             AsyncChannelConfig oldMemberConfig = reliableAsyncSourceGroupConfig.getChannelConfig(oldMemberName);
@@ -92,7 +92,7 @@ public class DynamicReliableAsyncSourceGroupConfigHolder
                 lifeCycles,
                 membersGrouping,
                 reliableAsyncSourceGroupConfig.getSyncMembersLookupNames(),
-                newAsyncMembers, reliableAsyncSourceGroupConfig.getBacklogCompletionBatchSize(), reliableAsyncSourceGroupConfig.getCompletionNotifierInterval(), reliableAsyncSourceGroupConfig.getCompletionNotifierPacketsThreshold());
+                newAsyncMembers, reliableAsyncSourceGroupConfig.getBacklogCompletionBatchSize(), reliableAsyncSourceGroupConfig.getCompletionNotifierInterval(), reliableAsyncSourceGroupConfig.getCompletionNotifierPacketsThreshold(), reliableAsyncSourceGroupConfig.isNetworkCompressionEnabled());
 
         for (String oldMemberName : newAsyncMembers) {
             AsyncChannelConfig oldMemberConfig = reliableAsyncSourceGroupConfig.getChannelConfig(oldMemberName);

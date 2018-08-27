@@ -40,11 +40,17 @@ public class SourceGroupConfig<T extends SourceChannelConfig>
     public SourceGroupConfig(String groupName, BacklogConfig backlogConfig,
                              String... membersLookupNames) {
         this(groupName, backlogConfig, null,
-                new HashMap<String, IReplicationChannelDataFilter>(), new HashMap<String, DynamicSourceGroupMemberLifeCycle>(), new HashMap<String, String[]>(), membersLookupNames);
+                new HashMap<String, IReplicationChannelDataFilter>(), new HashMap<String, DynamicSourceGroupMemberLifeCycle>(), new HashMap<String, String[]>(), true, membersLookupNames);
     }
 
-    public SourceGroupConfig(String groupName, BacklogConfig backlogConfig, GroupConsistencyLevelPolicy groupConsistencyLevelPolicy, Map<String, IReplicationChannelDataFilter> filters, Map<String, DynamicSourceGroupMemberLifeCycle> lifeCycles, Map<String, String[]> membersGrouping, String... membersLookupNames) {
-        super(groupName, membersLookupNames);
+    public SourceGroupConfig(String groupName, BacklogConfig backlogConfig, boolean enableNetworkCompression,
+                             String... membersLookupNames) {
+        this(groupName, backlogConfig, null,
+                new HashMap<String, IReplicationChannelDataFilter>(), new HashMap<String, DynamicSourceGroupMemberLifeCycle>(), new HashMap<String, String[]>(), enableNetworkCompression, membersLookupNames);
+    }
+
+    public SourceGroupConfig(String groupName, BacklogConfig backlogConfig, GroupConsistencyLevelPolicy groupConsistencyLevelPolicy, Map<String, IReplicationChannelDataFilter> filters, Map<String, DynamicSourceGroupMemberLifeCycle> lifeCycles, Map<String, String[]> membersGrouping, boolean enableNetworkCompression, String... membersLookupNames) {
+        super(groupName, enableNetworkCompression, membersLookupNames);
         _backlogConfig = backlogConfig;
         _groupConsistencyLevelPolicy = groupConsistencyLevelPolicy;
         _lifeCycles = lifeCycles == null ? new HashMap<String, DynamicSourceGroupMemberLifeCycle>() : lifeCycles;
@@ -122,5 +128,4 @@ public class SourceGroupConfig<T extends SourceChannelConfig>
                 + ", _inconsistentStateDelay=" + _inconsistentStateDelay + ", _inconsistentStateRetries="
                 + _inconsistentStateRetries + ", " + super.toString() + "]";
     }
-
 }

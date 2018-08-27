@@ -50,7 +50,9 @@ public class DynamicAsyncSourceGroupConfigHolder
                 oldConfig.getGroupConsistencyLevelPolicy(),
                 filters,
                 lifeCycles,
-                membersGrouping, newMembers);
+                membersGrouping,
+                config.isNetworkCompressionEnabled(),
+                newMembers);
 
         for (String oldMemberName : oldConfig.getMembersLookupNames()) {
             AsyncChannelConfig oldMemberConfig = oldConfig.getChannelConfig(oldMemberName);
@@ -81,7 +83,9 @@ public class DynamicAsyncSourceGroupConfigHolder
                 oldConfig.getGroupConsistencyLevelPolicy(),
                 filters,
                 lifeCycles,
-                membersGrouping, newMembers);
+                membersGrouping,
+                oldConfig.isNetworkCompressionEnabled(),
+                newMembers);
 
         for (String oldMemberName : newMembers) {
             AsyncChannelConfig oldMemberConfig = oldConfig.getChannelConfig(oldMemberName);

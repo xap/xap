@@ -63,4 +63,6 @@ public interface IReplicationSettings {
     String getBacklogWeightPolicy();
 
     RedoLogCompaction getRedoLogCompaction();
+
+    boolean isNetworkCompressionEnabled();
 }

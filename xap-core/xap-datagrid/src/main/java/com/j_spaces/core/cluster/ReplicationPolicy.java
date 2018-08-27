@@ -83,6 +83,7 @@ public class ReplicationPolicy implements Serializable, Externalizable {
     final static public int DEFAULT_REPL_SPACE_FINDER_REPORT_INTERVAL = 30000; //print report every 30 sec
     final static public int DEFAULT_SYNC_ON_COMMIT_TIMEOUT = 60 * 1000 * 5; // 5 minutes
     final static public long DEFAULT_ASYNC_CHANNEL_SHUTDOWN_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+    final static public boolean DEFAULT_REPL_NETWORK_COMPRESSION = true;
 
     final static public long DEFAULT_MAX_REDO_LOG_CPACITY = -1;
     final static public RedoLogCapacityExceededPolicy DEFAULT_REDO_LOG_CAPACITY_EXCEEDED = RedoLogCapacityExceededPolicy.BLOCK_OPERATIONS;
@@ -139,6 +140,7 @@ public class ReplicationPolicy implements Serializable, Externalizable {
     public long m_SpaceFinderReportInterval = DEFAULT_REPL_SPACE_FINDER_REPORT_INTERVAL;
     public long m_SyncOnCommitTimeout = DEFAULT_SYNC_ON_COMMIT_TIMEOUT;
     private long _asyncChannelShutdownTimeout = DEFAULT_ASYNC_CHANNEL_SHUTDOWN_TIMEOUT;
+    public boolean m_ReplicationNetworkCompression = DEFAULT_REPL_NETWORK_COMPRESSION;
 
 
     private boolean _reliableAsyncRepl = false;
@@ -261,6 +263,7 @@ public class ReplicationPolicy implements Serializable, Externalizable {
 
 
     private interface BitMap {
+
         long OWN_MEMBER_NAME = 1 << 0;
         long REPLICATION_GROUP_NAME = 1 << 1;
         long REPLICATION_GROUP_MEMBERS_NAMES = 1 << 2;
@@ -285,8 +288,8 @@ public class ReplicationPolicy implements Serializable, Externalizable {
         long SYNC_REPLICATION_ENABLED = 1 << 21;
         long SYNC_REPLICATION_POLICY = 1 << 22;
         //long PROTOCOL_ADAPTER_CLASS             = 1 << 23;
-        //long COMMUNICATION_MODE                 = 1 << 24;
         long MAX_REDO_LOG_CAPACITY = 1 << 25;
+        //long COMMUNICATION_MODE                 = 1 << 24;
         long RECOVERY_CHUNK_SIZE = 1 << 26;
         long RECOVERY_THREAD_POOL_SIZE = 1 << 27;
         long CLUSTER_NAME = 1 << 28;
@@ -313,7 +316,6 @@ public class ReplicationPolicy implements Serializable, Externalizable {
         long LOCALVIEW_MAX_REDOLOG_RECOVERY_CAPACITY = 1L << 49;
         long BACKLOG_WEIGHT_POLICY = 1L << 50;
     }
-
     public void writeExternal(ObjectOutput out) throws IOException {
         final PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
 
@@ -736,6 +738,7 @@ public class ReplicationPolicy implements Serializable, Externalizable {
     }
 
     // constructor
+
     public ReplicationPolicy(String clusterName, String replicationGroupName, List<String> replicationGroupMembersNames,
                              List<SpaceURL> replicationGroupMembersURLs, String ownMemberName,
                              Hashtable<String, ReplicationPolicyDescription> replMemberPolicyDescTable, SyncReplPolicy syncReplPolicy, MultiBucketReplicationPolicy multiBucketReplicationPolicy, SwapBacklogConfig swapRedologPolicy) {
@@ -749,7 +752,6 @@ public class ReplicationPolicy implements Serializable, Externalizable {
         this.multiBucketReplicationPolicy = multiBucketReplicationPolicy;
         this.swapRedologPolicy = swapRedologPolicy;
     }
-
     public void setMirrorServiceConfig(MirrorServiceConfig mirrorServiceConfig) {
         _mirrorServiceConfig = mirrorServiceConfig;
     }
@@ -1111,22 +1113,23 @@ public class ReplicationPolicy implements Serializable, Externalizable {
      * Replication policy description for every member.
      */
     public static class ReplicationPolicyDescription implements Externalizable {
-        private static final long serialVersionUID = 2L;
 
+        private static final long serialVersionUID = 2L;
         // transmission policy matrix for this member value = ReplicationTransmissionPolicy
+
         public List<ReplicationTransmissionPolicy> replTransmissionPolicies;  // A list of replicationTransmissionPolicy objects
         public String sourceMemberRecovery; // Source member name for Memory/DB recovery
         public boolean memberRecovery; // overwrite to the group recovery parameter
-
         // replication filters (input and output) for this member
+
         public String inputReplicationFilterClassName;
         public String inputReplicationFilterParamUrl;
         public String outputReplicationFilterClassName;
         public String outputReplicationFilterParamUrl;
         public boolean activeWhenBackup = true;
         public boolean shutdownSpaceOnInitFailure;
-
         private interface BitMap {
+
             int POLICIES = 1 << 0;
             int SOURCE_MEMBER_RECOVERY = 1 << 1;
             int INPUT_REPLICATION_FILTER_CLASSNAME = 1 << 2;
@@ -1137,7 +1140,6 @@ public class ReplicationPolicy implements Serializable, Externalizable {
             int ACTIVE_WHEN_BACKUP = 1 << 7;
             int SHUTDOWN_SPACE_ON_INIT_FAILURE = 1 << 8;
         }
-
 
         public void writeExternal(ObjectOutput out) throws IOException {
             // build flags
@@ -1261,8 +1263,8 @@ public class ReplicationPolicy implements Serializable, Externalizable {
 
             return sb.toString();
         }
-    }/*end ReplicationPolicyDescription class */
 
+    }/*end ReplicationPolicyDescription class */
     /**
      * This method returns the relative position of the specified space member in the replication
      * group, or -1 if the space member is not found.
@@ -1486,5 +1488,9 @@ public class ReplicationPolicy implements Serializable, Externalizable {
 
     public int getConnectionMonitorThreadPoolSize() {
         return connectionMonitorThreadPoolSize;
+    }
+
+    public boolean isNetworkCompressionEnabled() {
+        return m_ReplicationNetworkCompression;
     }
 }

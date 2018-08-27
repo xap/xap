@@ -72,8 +72,11 @@ import com.j_spaces.core.filters.ReplicationStatistics.ReplicationMode;
 import com.j_spaces.core.filters.ReplicationStatistics.ReplicationOperatingMode;
 
 import java.rmi.RemoteException;
+import java.text.DecimalFormat;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -116,6 +119,7 @@ public abstract class AbstractReplicationSourceChannel
     private final int _inconsistentStateRetries;
     private final ReplicationMode _channelType;
     private final Object _customBacklogMetadata;
+    private final boolean _isNetworkCompressionEnabled;
 
     protected final SegmentedAtomicInteger _statisticsCounter = new SegmentedAtomicInteger();
     protected final ThreadLocalPool<ReplicatedDataPacketResource> _packetsPool;
@@ -168,6 +172,7 @@ public abstract class AbstractReplicationSourceChannel
         _receivedTrafficStatistics = new StatisticsHolder<Long>(50, 0L);
         _generatedTrafficStatistics.addSample(SystemTime.timeMillis(), 0L);
         _receivedTrafficStatistics.addSample(SystemTime.timeMillis(), 0L);
+        _isNetworkCompressionEnabled = groupConfig.getConfig().isNetworkCompressionEnabled();
 
         _packetsPool = new ThreadLocalPool<ReplicatedDataPacketResource>(new PoolFactory<ReplicatedDataPacketResource>() {
             public ReplicatedDataPacketResource create() {
@@ -541,25 +546,33 @@ public abstract class AbstractReplicationSourceChannel
      * @return a list of processed packets, containing discarded packets instead of packets that are
      * not relevant any more
      */
-    private List<IReplicationOrderedPacket> beforeDelayedReplication(
+    private boolean beforeDelayedReplication(
             List<IReplicationOrderedPacket> packets) {
-        List<IReplicationOrderedPacket> result = new LinkedList<IReplicationOrderedPacket>();
-        for (IReplicationOrderedPacket packet : packets) {
+        boolean containsDiscardedPacket = false;
+        ListIterator<IReplicationOrderedPacket> iterator = packets.listIterator();
+        while(iterator.hasNext()){
+            IReplicationOrderedPacket packet = iterator.next();
             // Check if the packet is still relevant, if not replace it with
             // discarded packet
             final boolean stillRelevant = packet.getData()
                     .beforeDelayedReplication();
 
-            if (stillRelevant) {
-                result.add(packet);
-            } else {
+            if (!stillRelevant) {
                 if (_specificLogger.isLoggable(Level.FINER))
                     _specificLogger.finer("Packet [" + packet.toString() + "] discarded by the channel filter");
-                result.add(getGroupBacklog().replaceWithDiscarded(packet, false));
+
+                iterator.set(getGroupBacklog().replaceWithDiscarded(packet, false));
+
+                if(!containsDiscardedPacket)
+                    containsDiscardedPacket = true;
+
             }
+
+            else if(!containsDiscardedPacket)
+                containsDiscardedPacket = packet.isDiscardedPacket();
         }
 
-        return result;
+        return containsDiscardedPacket;
     }
 
     /**
@@ -572,9 +585,9 @@ public abstract class AbstractReplicationSourceChannel
         if (packets == null || packets.isEmpty())
             return 0;
 
-        packets = invokeBeforeReplicatingChannelDataFilter(packets);
+        boolean containsDiscardedPacket = invokeBeforeReplicatingChannelDataFilter(packets);
 
-        return replicateBatchAfterChannelFilter(packets);
+        return replicateBatchAfterChannelFilter(packets, containsDiscardedPacket);
     }
 
     protected int replicate(IReplicationOrderedPacket packet)
@@ -592,9 +605,9 @@ public abstract class AbstractReplicationSourceChannel
         if (packets == null || packets.isEmpty())
             return CompletedFuture.INSTANCE;
 
-        packets = invokeBeforeReplicatingChannelDataFilter(packets);
+        boolean containsDiscardedPacket = invokeBeforeReplicatingChannelDataFilter(packets);
 
-        return replicateBatchAsyncAfterChannelFilter(packets, null);
+        return replicateBatchAsyncAfterChannelFilter(packets, null, containsDiscardedPacket);
     }
 
     protected Future replicateAsync(IReplicationOrderedPacket packet)
@@ -608,9 +621,9 @@ public abstract class AbstractReplicationSourceChannel
     }
 
     private int replicateBatchAfterChannelFilter(
-            List<IReplicationOrderedPacket> packets) throws RemoteException,
+            List<IReplicationOrderedPacket> packets, boolean containsDiscardedPacket) throws RemoteException,
             ReplicationException {
-        packets = invokeOutputFilterIfNeeded(packets);
+        invokeOutputFilterIfNeeded(packets, containsDiscardedPacket);
         if (_specificLogger.isLoggable(Level.FINEST))
             _specificLogger.finest("Replicating filtered packets: " + ReplicationLogUtils.packetsToLogString(packets));
 
@@ -634,7 +647,6 @@ public abstract class AbstractReplicationSourceChannel
         try {
             BatchReplicatedDataPacket batchPacket = replicatedDataPacketResource.getBatchPacket();
             batchPacket.setBatch(packets);
-
             Object wiredProcessResult = getConnection().dispatch(batchPacket);
             IProcessResult processResult = _groupBacklog.fromWireForm(wiredProcessResult);
 
@@ -802,8 +814,10 @@ public abstract class AbstractReplicationSourceChannel
     }
 
     private Future replicateBatchAsyncAfterChannelFilter(
-            List<IReplicationOrderedPacket> packets, final IAsyncReplicationListener listener) throws RemoteException {
-        final List<IReplicationOrderedPacket> finalPackets = invokeOutputFilterIfNeeded(packets);
+            List<IReplicationOrderedPacket> packets, final IAsyncReplicationListener listener, boolean containsDiscardedPacket) throws RemoteException {
+        final boolean containsDiscarded = invokeOutputFilterIfNeeded(packets, containsDiscardedPacket);
+        final List<IReplicationOrderedPacket> finalPackets = packets;
+
         if (_specificLogger.isLoggable(Level.FINEST))
             _specificLogger.finest("Replicating filtered packets: "
                     + ReplicationLogUtils.packetsToLogString(finalPackets));
@@ -812,7 +826,38 @@ public abstract class AbstractReplicationSourceChannel
         boolean delegatedToAsync = false;
         try {
             BatchReplicatedDataPacket batchPacket = replicatedDataPacketResource.getBatchPacket();
+
             batchPacket.setBatch(finalPackets);
+
+            if(_isNetworkCompressionEnabled) {
+
+                final int originalSize = finalPackets.size();
+
+                if(_specificLogger.isLoggable(Level.FINEST)){
+                    _specificLogger.finest("Compressing batch packets: "
+                            + ReplicationLogUtils.packetsToLogString(finalPackets));
+                }
+
+                batchPacket.compressBatch(containsDiscarded);
+
+                if (_specificLogger.isLoggable(Level.FINEST)) {
+
+                    double compressionRatio = (double) batchPacket.getBatch().size() / originalSize;
+
+                    String prefix = batchPacket.isCompressed() ? "Finished batch compression." : "Batch contains no discarded packets.";
+
+                    String msg =  prefix + " compressionRatio=" + new DecimalFormat("#.##").format(compressionRatio);
+
+                    _specificLogger.finest(msg);
+
+                }
+            }
+
+            else {
+                if(_specificLogger.isLoggable(Level.FINEST)){
+                    _specificLogger.finest("Discarded packets network compression is disabled");
+                }
+            }
 
             AsyncFuture<Object> processResultFuture = getConnection().dispatchAsync(batchPacket);
             final ReplicateFuture resultFuture = new ReplicateFuture();
@@ -944,32 +989,42 @@ public abstract class AbstractReplicationSourceChannel
     protected void replicateBatchDelayed(List<IReplicationOrderedPacket> packets)
             throws RemoteException, ReplicationException {
         // Execute before delayed first to filter obsolete packets
-        packets = beforeDelayedReplication(packets);
+        boolean containsDiscardedPacket = beforeDelayedReplication(packets);
         // Replicate packets
-        replicateBatchAfterChannelFilter(packets);
+        replicateBatchAfterChannelFilter(packets, containsDiscardedPacket);
     }
 
     protected void replicateBatchDelayedAsync(List<IReplicationOrderedPacket> packets, IAsyncReplicationListener listener)
             throws RemoteException {
         // Execute before delayed first to filter obsolete packets
-        packets = beforeDelayedReplication(packets);
+        boolean containsDiscardedPacket = beforeDelayedReplication(packets);
         // Replicate packets in async manner
-        replicateBatchAsyncAfterChannelFilter(packets, listener);
+        replicateBatchAsyncAfterChannelFilter(packets, listener, containsDiscardedPacket);
     }
 
-    private List<IReplicationOrderedPacket> invokeOutputFilterIfNeeded(
-            List<IReplicationOrderedPacket> packets) {
-        if (!_isOutFiltered)
-            return packets;
+    private boolean invokeOutputFilterIfNeeded(
+            List<IReplicationOrderedPacket> packets, boolean containsDiscardedPacket) {
 
-        LinkedList<IReplicationOrderedPacket> result = new LinkedList<IReplicationOrderedPacket>();
-        for (IReplicationOrderedPacket packet : packets) {
-            if (packet.getData().supportsReplicationFilter())
-                result.add(invokeOutputFilter(packet));
-            else
-                result.add(packet);
+        if (!_isOutFiltered)
+            return containsDiscardedPacket;
+
+        ListIterator<IReplicationOrderedPacket> it = packets.listIterator();
+
+        while(it.hasNext()) {
+            IReplicationOrderedPacket packet = it.next();
+
+            if (packet.getData().supportsReplicationFilter()) {
+                it.set(invokeOutputFilter(packet));
+                if(!containsDiscardedPacket)
+                    containsDiscardedPacket = packet.isDiscardedPacket();
+            }
+            else {
+                it.set(packet);
+            }
+
         }
-        return result;
+
+        return containsDiscardedPacket;
     }
 
     private IReplicationOrderedPacket invokeOutputFilterIfNeeded(
@@ -1047,15 +1102,20 @@ public abstract class AbstractReplicationSourceChannel
                 _specificLogger);
     }
 
-    private List<IReplicationOrderedPacket> invokeBeforeReplicatingChannelDataFilter(
+    private boolean invokeBeforeReplicatingChannelDataFilter(
             List<IReplicationOrderedPacket> packets) {
+        boolean containsDiscardedPacket = false;
+
         if (!isDataFiltered())
-            return packets;
+            return containsDiscardedPacket;
 
 
-        LinkedList<IReplicationOrderedPacket> result = new LinkedList<IReplicationOrderedPacket>();
+        ListIterator<IReplicationOrderedPacket> iterator = packets.listIterator();
         IReplicationOrderedPacket previousDiscardedPacket = null;
-        for (IReplicationOrderedPacket packet : packets) {
+
+        while(iterator.hasNext()) {
+            IReplicationOrderedPacket packet = iterator.next();
+
             IReplicationOrderedPacket filterPacket = ReplicationChannelDataFilterHelper.filterPacket(getDataFilter(),
                     getTargetLogicalVersion(),
                     packet,
@@ -1067,24 +1127,29 @@ public abstract class AbstractReplicationSourceChannel
 
             //current packet was discarded and merged into the previous discarded packet
             if (previousDiscardedPacket == filterPacket)
-                continue;
+                iterator.remove();
 
             //The previous packet is not a discarded one
             if (previousDiscardedPacket == null) {
-                result.add(filterPacket);
+                iterator.set(filterPacket);
                 // Mark the previous as discarded for next iteration
-                if (filterPacket.isDiscardedPacket())
+                if (filterPacket.isDiscardedPacket()) {
                     previousDiscardedPacket = filterPacket;
+                }
             }
             //The previous is discarded but the current was not merged into it
             else if (previousDiscardedPacket != filterPacket) {
-                result.add(filterPacket);
+                iterator.set(filterPacket);
                 //If the current is a newly discarded packet, keep it as the previous discarded, otherwise reset previous
                 //discarded state to null.
                 previousDiscardedPacket = filterPacket.isDiscardedPacket() ? filterPacket : null;
             }
+
+            if(!containsDiscardedPacket)
+                containsDiscardedPacket = filterPacket.isDiscardedPacket();
+
         }
-        return result;
+        return containsDiscardedPacket;
     }
 
     private IReplicationOrderedPacket invokeBeforeReplicatingChannelDataFilter(
@@ -1120,7 +1185,7 @@ public abstract class AbstractReplicationSourceChannel
         long generatedTraffic = getConnection().getGeneratedTraffic();
         long generatedTrafficTP = -1;
         //After disconnection if the underlying stub is replaced or some connections are closed, the generated traffic may reset or reduce on the LRMI layer, we need to reset the traffic here as well otherwise
-        //we will get negative traffic.        
+        //we will get negative traffic.
         if (generatedTraffic >= _lastSampledGeneratedTraffic) {
             generatedTrafficTP = (long) (((float) (generatedTraffic - _lastSampledGeneratedTraffic) / intervalFromLastSample) * 1000);
             // Sample received traffic
@@ -1130,7 +1195,7 @@ public abstract class AbstractReplicationSourceChannel
         long receivedTraffic = getConnection().getReceivedTraffic();
         long receivedTrafficTP = -1;
         //After disconnection if the underlying stub is replaced or some connections are closed, the generated traffic may reset or reduce on the LRMI layer, we need to reset the traffic here as well otherwise
-        //we will get negative traffic.        
+        //we will get negative traffic.
         if (receivedTraffic >= _lastSampledReceivedTraffic) {
             receivedTrafficTP = (long) (((float) (receivedTraffic - _lastSampledReceivedTraffic) / intervalFromLastSample) * 1000);
             _receivedTrafficStatistics.addSample(currentTime, receivedTrafficTP);
@@ -1374,7 +1439,7 @@ public abstract class AbstractReplicationSourceChannel
         if (targetEndpointDetails != null)
             result = targetEndpointDetails.getPlatformLogicalVersion();
 
-        //Workaround to backward issue that may arise since in gateway older then 9.0.1 we don't know the final target version we 
+        //Workaround to backward issue that may arise since in gateway older then 9.0.1 we don't know the final target version we
         //take the worst case scenario and put 8.0.3 which is the version when gateway was introduced.
         //if (result == null && getMemberName().startsWith(GatewayPolicy.GATEWAY_NAME_PREFIX))
         //    result = PlatformLogicalVersion.v8_0_3;

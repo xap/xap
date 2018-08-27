@@ -40,6 +40,7 @@ public class ReplicationSettings
     private long maxRedoLogCapacity = ReplicationPolicy.DEFAULT_MAX_REDO_LOG_CPACITY;
     private long maxRedoLogCapacityDuringRecovery = ReplicationPolicy.DEFAULT_MAX_REDO_LOG_CPACITY;
     private long maxRedoLogMemoryCapacity = ReplicationPolicy.DEFAULT_MAX_REDO_LOG_CPACITY;
+    private boolean isNetworkCompressionEnabled = ReplicationPolicy.DEFAULT_REPL_NETWORK_COMPRESSION;
     private IReplicationInFilter inFilter;
     private IReplicationOutFilter outFilter;
     private ISpaceCopyReplicaInFilter spaceCopyInFilter;
@@ -222,6 +223,11 @@ public class ReplicationSettings
     @Override
     public RedoLogCompaction getRedoLogCompaction() {
         return redoLogCompaction;
+    }
+
+    @Override
+    public boolean isNetworkCompressionEnabled() {
+        return isNetworkCompressionEnabled;
     }
 
     public void setRedoLogCompaction(RedoLogCompaction redoLogCompaction) {

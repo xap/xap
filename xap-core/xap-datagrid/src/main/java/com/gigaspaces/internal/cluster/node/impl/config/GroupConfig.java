@@ -25,10 +25,17 @@ public class GroupConfig {
     private final String _name;
     private final String[] _membersLookupNames;
     private int _historyLength = 50; //TODO configurable?
+    private boolean _enableNetworkCompression;
 
     public GroupConfig(String groupName, String... membersLookupNames) {
         _name = groupName;
         _membersLookupNames = membersLookupNames;
+    }
+
+    public GroupConfig(String groupName, boolean enableNetworkCompression, String... membersLookupNames) {
+        _name = groupName;
+        _membersLookupNames = membersLookupNames;
+        _enableNetworkCompression = enableNetworkCompression;
     }
 
     public String[] getMembersLookupNames() {
@@ -47,11 +54,19 @@ public class GroupConfig {
         _historyLength = historyLength;
     }
 
+    public boolean isNetworkCompressionEnabled() {
+        return _enableNetworkCompression;
+    }
+
+    public void setEnableNetworkCompression(boolean enableNetworkCompression) {
+        this._enableNetworkCompression = enableNetworkCompression;
+    }
+
     @Override
     public String toString() {
         return "GroupConfig [_name=" + _name + ", _membersLookupNames="
                 + Arrays.toString(_membersLookupNames) + ", _historyLength="
-                + _historyLength + "]";
+                + _historyLength + ", _enableNetworkCompression=" + _enableNetworkCompression +  "]";
     }
 
 }

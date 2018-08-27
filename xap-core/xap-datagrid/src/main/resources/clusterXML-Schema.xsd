@@ -197,6 +197,7 @@
 				<xsd:element name="on-conflicting-packets" type="ConflictingPacketsPolicy" minOccurs="0"/>
 				<xsd:element name="recovery-chunk-size" type="xsd:integer" minOccurs="0"/>
 				<xsd:element name="recovery-thread-pool-size" type="xsd:integer" minOccurs="0"/>
+
                 <xsd:element name="connection-monitor-thread-pool-size" type="xsd:integer" minOccurs="0"/>
                 <xsd:element name="processing-type" type="ProcessingType" minOccurs="0"/>
 				<xsd:element name="multi-bucket-processing" minOccurs="0">
@@ -218,7 +219,7 @@
 							<xsd:element name="repl-interval-millis" type="xsd:long" minOccurs="0"/>
 							<xsd:element name="repl-interval-opers" type="xsd:integer" minOccurs="0"/>
 							<xsd:element name="async-channel-shutdown-timeout" type="xsd:long" minOccurs="0"/>
-							
+                            <xsd:element name="repl-network-compression" type="xsd:boolean" minOccurs="0"/>
 							<xsd:element name="reliable" type="xsd:boolean" minOccurs="0"/>
 							<xsd:element name="reliable-async-completion-notifier-interval" type="xsd:long" minOccurs="0"/>
 							<xsd:element name="reliable-async-completion-notifier-packets-threshold" type="xsd:long" minOccurs="0"/>

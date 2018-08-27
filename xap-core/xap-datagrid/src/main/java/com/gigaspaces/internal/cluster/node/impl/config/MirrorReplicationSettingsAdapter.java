@@ -142,6 +142,11 @@ public class MirrorReplicationSettingsAdapter
     }
 
     @Override
+    public boolean isNetworkCompressionEnabled() {
+        return true;
+    }
+
+    @Override
     public boolean supportsChange() {
         return _policy.supportedChangeOperations != null;
     }

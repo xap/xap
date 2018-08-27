@@ -254,6 +254,7 @@
 							    <repl-interval-opers>500</repl-interval-opers>
                                 <reliable>true</reliable>
                                 <async-channel-shutdown-timeout>300000</async-channel-shutdown-timeout>
+								<repl-network-compression>true</repl-network-compression>
                             </async-replication>
 							<sync-replication>
 								<consistency-level>any</consistency-level>

@@ -252,6 +252,7 @@ public class ClusterXML {
     final static public String REPL_FIND_REPORT_INTERVAL_TAG = "repl-find-report-interval";
     final static public String REPL_MEMORY_RECOVERY_TAG = "recovery";
     final static public String REPL_ORIGINAL_STATE_TAG = "repl-original-state";
+    final static public String REPL_NETWORK_COMPRESSION_TAG = "repl-network-compression";
     final static public String REPL_REDO_LOG_CAPACITY_TAG = MIRROR_SERVICE_REDO_LOG_CAPACITY_TAG;
     final static public String REPL_REDO_LOG_MEMORY_CAPACITY_TAG = "redo-log-memory-capacity";
     final static public String REPL_REDO_LOG_COMPACTION_TAG = "redo-log-compaction";
@@ -1746,6 +1747,11 @@ public class ClusterXML {
             value = getNodeValueIfExists(asyncReplElem, REPL_INTERVAL_OPERS_TAG);
             if (value != null)
                 replPolicy.m_ReplicationIntervalOperations = Integer.parseInt(value);
+
+            // REPL_NETWORK_COMPRESSION_TAG
+            value = getNodeValueIfExists(asyncReplElem, REPL_NETWORK_COMPRESSION_TAG);
+            if (value != null)
+                replPolicy.m_ReplicationNetworkCompression = JSpaceUtilities.parseBooleanTag(REPL_NETWORK_COMPRESSION_TAG, value);
 
             // REPL_SYNC_ON_COMMIT_TAG
             value = getNodeValueIfExists(asyncReplElem, REPL_SYNC_ON_COMMIT_TAG);

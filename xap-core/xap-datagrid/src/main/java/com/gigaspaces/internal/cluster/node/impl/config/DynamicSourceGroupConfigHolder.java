@@ -220,7 +220,9 @@ public class DynamicSourceGroupConfigHolder {
                 config.getGroupConsistencyLevelPolicy(),
                 filters,
                 lifeCycles,
-                config.getMembersGrouping(), newMembers);
+                config.getMembersGrouping(),
+                config.isNetworkCompressionEnabled(),
+                newMembers);
         return newConfig;
     }
 
@@ -236,7 +238,9 @@ public class DynamicSourceGroupConfigHolder {
                 config.getGroupConsistencyLevelPolicy(),
                 filters,
                 lifeCycles,
-                config.getMembersGrouping(), newMembers);
+                config.getMembersGrouping(),
+                config.isNetworkCompressionEnabled(),
+                newMembers);
         return newConfig;
     }
 

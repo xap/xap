@@ -92,6 +92,11 @@ public class ReplicationSettingsAdapter
     }
 
     @Override
+    public boolean isNetworkCompressionEnabled() {
+        return _policy.isNetworkCompressionEnabled();
+    }
+
+    @Override
     public String getBacklogWeightPolicy() {
         return _policy.getBacklogWeightPolicy();
     }

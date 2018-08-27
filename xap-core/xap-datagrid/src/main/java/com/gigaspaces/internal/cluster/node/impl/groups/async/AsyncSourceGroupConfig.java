@@ -33,7 +33,14 @@ public class AsyncSourceGroupConfig
                                   BacklogConfig backlogConfig,
                                   GroupConsistencyLevelPolicy groupConsistencyLevelPolicy,
                                   Map<String, IReplicationChannelDataFilter> filters, Map<String, DynamicSourceGroupMemberLifeCycle> lifeCycles, Map<String, String[]> membersGrouping, String[] membersLookupNames) {
-        super(groupName, backlogConfig, groupConsistencyLevelPolicy, filters, lifeCycles, membersGrouping, membersLookupNames);
+        super(groupName, backlogConfig, groupConsistencyLevelPolicy, filters, lifeCycles, membersGrouping, true, membersLookupNames);
+    }
+
+    public AsyncSourceGroupConfig(String groupName,
+                                  BacklogConfig backlogConfig,
+                                  GroupConsistencyLevelPolicy groupConsistencyLevelPolicy,
+                                  Map<String, IReplicationChannelDataFilter> filters, Map<String, DynamicSourceGroupMemberLifeCycle> lifeCycles, Map<String, String[]> membersGrouping, boolean enableNetworkCompression, String[] membersLookupNames) {
+        super(groupName, backlogConfig, groupConsistencyLevelPolicy, filters, lifeCycles, membersGrouping, enableNetworkCompression, membersLookupNames);
     }
 
     @Override
