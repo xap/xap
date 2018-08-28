@@ -54,10 +54,14 @@ public abstract class JeeProcessingUnitContainerProvider extends ApplicationCont
      */
     public static final String BEAN_LEVEL_PROPERTIES_CONTEXT = "beanLevelProperties";
 
+
+    public static final String JETTY_PORT_CONTEXT_PREFIX = "jetty";
+    public static final String JETTY_PORT_CONTEXT_SUFFIX = ".port.actual";
+
     /**
      * @since 12.1
      */
-    public static final String JETTY_PORT_ACTUAL_CONTEXT = "jetty.port.actual";
+    public static final String JETTY_PORT_ACTUAL_CONTEXT = JETTY_PORT_CONTEXT_PREFIX + JETTY_PORT_CONTEXT_SUFFIX;
 
     /**
      * The {@link javax.servlet.ServletContext} key under which the {@link

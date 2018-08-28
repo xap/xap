@@ -25,7 +25,6 @@ import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.NetworkConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.webapp.WebAppContext;
-import org.jini.rio.boot.BootUtil;
 import org.openspaces.pu.container.CannotCloseContainerException;
 import org.openspaces.pu.container.jee.JeeServiceDetails;
 import org.openspaces.pu.container.jee.JeeType;
@@ -37,8 +36,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.web.context.ContextLoader;
 
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * The actual container simply holding the jetty web application context, the application context,
@@ -61,11 +59,11 @@ public class JettyProcessingUnitContainer extends org.openspaces.pu.container.je
 
     private final JettyHolder jettyHolder;
 
-    private final List<FreePortGenerator.PortHandle> portHandels;
+    private final Collection<FreePortGenerator.PortHandle> portHandels;
 
     public JettyProcessingUnitContainer(ApplicationContext applicationContext, WebAppContext webAppContext,
                                         ContextHandlerCollection contextHandlerCollection, JettyHolder jettyHolder,
-                                        List<FreePortGenerator.PortHandle> portHandels) {
+                                        Collection<FreePortGenerator.PortHandle> portHandels) {
         this.applicationContext = applicationContext;
         this.webAppContext = webAppContext;
         this.contextHandlerCollection = contextHandlerCollection;
