@@ -37,9 +37,9 @@ public abstract class AbstractMemoryPool {
 
     public abstract void initMetrics(MetricRegistrator metricRegistrator);
 
-    public abstract void register(String typeName);
+    public abstract void register(String typeName, short typeCode);
 
-    public abstract void unregister(String typeName);
+    public abstract void unregister(String typeName, short typeCode);
 
     public abstract long getUsedBytes();
 

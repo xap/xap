@@ -5419,6 +5419,7 @@ public class CacheManager extends AbstractCacheManager
         }
 
         private void registerTypeMetrics(final IServerTypeDesc serverTypeDesc) {
+            short typeDescCode = serverTypeDesc.getServerTypeDescCode();
             final String typeName = serverTypeDesc.getTypeName();
             final String metricTypeName = typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) ? "total" : typeName;
             final MetricRegistrator registrator = _engine.getMetricRegistrator();
@@ -5436,9 +5437,9 @@ public class CacheManager extends AbstractCacheManager
             });
             if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && isBlobStoreCachePolicy()) {
                 if (getBlobStoreStorageHandler().getOffHeapCache() != null)
-                    getBlobStoreStorageHandler().getOffHeapCache().register(typeName);
+                    getBlobStoreStorageHandler().getOffHeapCache().register(typeName, typeDescCode);
                 if (getBlobStoreStorageHandler().getOffHeapStore() != null)
-                    getBlobStoreStorageHandler().getOffHeapStore().register(typeName);
+                    getBlobStoreStorageHandler().getOffHeapStore().register(typeName, typeDescCode);
             }
         }
 
@@ -5448,10 +5449,12 @@ public class CacheManager extends AbstractCacheManager
             registrator.unregisterByPrefix(registrator.toPath("data", "entries", metricTypeName));
             registrator.unregisterByPrefix(registrator.toPath("data", "notify-templates", metricTypeName));
             if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && isBlobStoreCachePolicy()) {
-                if (getBlobStoreStorageHandler().getOffHeapCache() != null)
-                    getBlobStoreStorageHandler().getOffHeapCache().unregister(typeName);
+                short typeDescCode = _typeManager.getServerTypeDesc(typeName).getServerTypeDescCode();
+                if (getBlobStoreStorageHandler().getOffHeapCache() != null) {
+                    getBlobStoreStorageHandler().getOffHeapCache().unregister(typeName, typeDescCode);
+                }
                 if (getBlobStoreStorageHandler().getOffHeapStore() != null)
-                    getBlobStoreStorageHandler().getOffHeapStore().unregister(typeName);
+                    getBlobStoreStorageHandler().getOffHeapStore().unregister(typeName, typeDescCode);
             }
         }
 

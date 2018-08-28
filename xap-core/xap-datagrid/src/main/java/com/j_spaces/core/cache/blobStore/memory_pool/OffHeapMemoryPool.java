@@ -38,7 +38,7 @@ public class OffHeapMemoryPool extends AbstractMemoryPool {
     private Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
     private int minimalDiffToAllocate;
     private final LongCounter totalCounter = new LongCounter();
-    private final Map<String, LongCounter> typesCounters = new ConcurrentHashMap<String, LongCounter>();
+    private final Map<Short, LongCounter> typesCounters = new ConcurrentHashMap<Short, LongCounter>();
 
     public OffHeapMemoryPool(long threshold) {
         super(threshold);
@@ -58,15 +58,15 @@ public class OffHeapMemoryPool extends AbstractMemoryPool {
     }
 
     @Override
-    public void register(String typeName) {
+    public void register(String typeName, short typeCode) {
         LongCounter counter = new LongCounter();
-        typesCounters.put(typeName, counter);
+        typesCounters.put(typeCode, counter);
         getMetricRegistrator().register(metricsPath(typeName), counter);
     }
 
     @Override
-    public void unregister(String typeName) {
-        typesCounters.remove(typeName);
+    public void unregister(String typeName, short typeCode) {
+        typesCounters.remove(typeCode);
         getMetricRegistrator().unregisterByPrefix(metricsPath(typeName));
     }
 
@@ -125,16 +125,16 @@ public class OffHeapMemoryPool extends AbstractMemoryPool {
         throw new UnsupportedOperationException("OffHeapMemoryPool.close() is not supported");
     }
 
-    private void incrementMetrics(long n, String typeName) {
+    private void incrementMetrics(long n, short typeCode) {
         totalCounter.inc(n);
-        LongCounter typeCounter = typesCounters.get(typeName);
+        LongCounter typeCounter = typesCounters.get(typeCode);
         if (typeCounter != null)
             typeCounter.inc(n);
     }
 
-    private void decrementMetrics(long n, String typeName) {
+    private void decrementMetrics(long n, short typeCode) {
         totalCounter.dec(n);
-        LongCounter typeCounter = typesCounters.get(typeName);
+        LongCounter typeCounter = typesCounters.get(typeCode);
         if (typeCounter != null)
             typeCounter.dec(n);
     }
@@ -173,7 +173,7 @@ public class OffHeapMemoryPool extends AbstractMemoryPool {
         putHeaderToUnsafe(newAddress, buf.length);
         writeBytes(newAddress + headerSize, buf);
         info.setOffHeapAddress(newAddress);
-        incrementMetrics(headerSize + buf.length, info.getTypeName());
+        incrementMetrics(headerSize + buf.length, info.getServerTypeDescCode());
     }
 
     private void deleteImpl(IBlobStoreOffHeapInfo info, boolean fromUpdate) {
@@ -185,7 +185,7 @@ public class OffHeapMemoryPool extends AbstractMemoryPool {
                 UnsafeHolder.freeFromMemory(valuesAddress);
                 info.setOffHeapAddress(BlobStoreRefEntryCacheInfo.UNALLOCATED_OFFHEAP_MEMORY);
             }
-            decrementMetrics(headerSize + numOfBytes, info.getTypeName());
+            decrementMetrics(headerSize + numOfBytes, info.getServerTypeDescCode());
         }
     }
 

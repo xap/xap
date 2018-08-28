@@ -756,6 +756,11 @@ public class BlobStoreRefEntryCacheInfo
         return ServerTypeDesc.getByServerTypeDescCode(_serverTypeDescCode).getTypeName();
     }
 
+    @Override
+    public short getServerTypeDescCode() {
+        return _serverTypeDescCode;
+    }
+
 
     @Override
     public void setBlobStorePosition(Object pos) {
