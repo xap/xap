@@ -50,6 +50,7 @@ import com.gigaspaces.internal.utils.concurrent.AsyncCallable;
 import com.gigaspaces.internal.utils.concurrent.IAsyncHandler;
 import com.gigaspaces.internal.utils.concurrent.IAsyncHandlerProvider;
 import com.gigaspaces.internal.utils.concurrent.IAsyncHandlerProvider.CycleResult;
+import com.gigaspaces.lrmi.DynamicSmartStub;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.j_spaces.core.filters.ReplicationStatistics.ReplicationMode;
 import com.j_spaces.kernel.JSpaceUtilities;
@@ -520,16 +521,21 @@ public class ReliableAsyncReplicationSourceGroup
     }
 
     @Override
-    public void setPassive() {
+    public void setPassive(boolean closeProxy) {
         synchronized (_channelCreationLock) {
-            super.setPassive();
-            _active = false;
-            closeAsyncCompletionNotifier();
-            closeReplicationChannels();
-            clearChannelsArrays();
-            _syncChannelsMap.clear();
-            _asyncChannelsMap.clear();
-            _passive = true;
+            try {
+                super.setPassive(closeProxy);
+                DynamicSmartStub.markProxyAsClosed.set(closeProxy);
+                _active = false;
+                closeAsyncCompletionNotifier();
+                closeReplicationChannels();
+                clearChannelsArrays();
+                _syncChannelsMap.clear();
+                _asyncChannelsMap.clear();
+                _passive = true;
+            } finally {
+                DynamicSmartStub.markProxyAsClosed.remove();
+            }
         }
     }
 

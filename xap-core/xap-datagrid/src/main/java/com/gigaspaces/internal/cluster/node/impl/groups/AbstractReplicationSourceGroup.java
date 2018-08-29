@@ -383,7 +383,7 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
         // Do nothing, only specific groups should treat this
     }
 
-    public void setPassive() {
+    public void setPassive(boolean closeProxy) {
         // Do nothing, only specific groups should treat this
     }
 

@@ -59,8 +59,9 @@ public interface IReplicationNodeAdmin {
     /**
      * Sets the administrated {@link IReplicationNode} as passive mode (i.e containing space is
      * backup)
+     * @param closeProxy - whether to close the stub proxy when it has no more references.
      */
-    void setPassive();
+    void setPassive(boolean closeProxy);
 
     String dumpState();
 
