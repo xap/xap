@@ -126,7 +126,7 @@ public class DemoteHandler {
             //TODO
 
             //close outgoing connections
-            _spaceImpl.getEngine().getReplicationNode().getAdmin().setPassive();
+            _spaceImpl.getEngine().getReplicationNode().getAdmin().setPassive(false);
 
 
             //Restart leader selector handler (in case of ZK then it restarts
