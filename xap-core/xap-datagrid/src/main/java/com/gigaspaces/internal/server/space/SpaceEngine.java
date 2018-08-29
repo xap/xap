@@ -6923,7 +6923,7 @@ public class SpaceEngine implements ISpaceModeListener {
                 break;
             case BACKUP:
                 _duplicateOperationIDFilter.onBecomeBackup();
-                getReplicationNode().getAdmin().setPassive();
+                getReplicationNode().getAdmin().setPassive(true);
                 break;
         }
     }

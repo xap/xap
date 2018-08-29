@@ -172,6 +172,13 @@ public class DynamicSmartStub
     //Indicates this stub is closed at the client side, can no longer be used
     transient private boolean _proxyClosed;
 
+    transient public static final ThreadLocal<Boolean> markProxyAsClosed = new ThreadLocal<Boolean>() {
+        @Override
+        public Boolean initialValue() {
+            return true;
+        }
+    };
+
     // HERE just for externalizable
     public DynamicSmartStub() {
     }
@@ -734,7 +741,8 @@ public class DynamicSmartStub
             if (existingInvocationHandler != null && existingInvocationHandler.decrementReference())
                 _remoteInvHandlerCache.remove(_connectionURL);
             _remoteInvHandler = null;
-            _proxyClosed = true;
+            if (markProxyAsClosed == null || markProxyAsClosed.get())
+                _proxyClosed = true;
         }
     }
 
