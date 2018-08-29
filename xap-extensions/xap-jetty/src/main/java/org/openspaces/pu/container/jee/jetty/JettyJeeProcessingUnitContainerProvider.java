@@ -227,6 +227,7 @@ public class JettyJeeProcessingUnitContainerProvider extends JeeProcessingUnitCo
 
             WebAppContext webAppContext = initWebAppContext(applicationContext);
 
+            //GS-13602
             ContextHandler.Context servletContext = webAppContext.getServletContext();
             Set<Map.Entry<String, FreePortGenerator.PortHandle>> entries = portHandles.entrySet();
             for( Map.Entry<String, FreePortGenerator.PortHandle> entry : entries ) {
@@ -370,21 +371,18 @@ public class JettyJeeProcessingUnitContainerProvider extends JeeProcessingUnitCo
                                              ", connector class name:" + connector.getClass()
                                                  .getName());
                             }
-
+                            //GS-13602
                             if( portHandles.containsKey( connectorKey ) ){
                                 if( logger.isWarnEnabled() ) {
+                                    String messagePrefix = "Port [" + port + "] of connector [" + connectorKey
+                                                     + "] will not be exposed.";
+
                                     logger.warn(connectorName != null ?
-                                                generateConnectorUniquenessWaringMessage(port,
-                                                                                         connectorKey)
-                                                +
-                                                "such connector name already exists, please provide unique connector name"
+                                                messagePrefix
+                                                + " Connector with this name already exists. Please provide a unique connector name."
                                                                       :
-                                                generateConnectorUniquenessWaringMessage(port,
-                                                                                         connectorKey)
-                                                +
-                                                "the same connector class already defined, name property "
-                                                +
-                                                "should be used in order to define unique connector");
+                                                messagePrefix
+                                                + " Connector with this class already exists. To differentiate, please define a connector `name` property.");
                                 }
                             }
                             else {
@@ -466,10 +464,6 @@ public class JettyJeeProcessingUnitContainerProvider extends JeeProcessingUnitCo
         }
 
         return jettyHolder;
-    }
-
-    private String generateConnectorUniquenessWaringMessage(int port, String connectorKey) {
-        return "Port [" + port + "] of connector [" + connectorKey + "] will not be exposed since ";
     }
 
     private void initJettyJmx(JettyHolder jettyHolder) {
