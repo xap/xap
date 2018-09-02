@@ -73,7 +73,6 @@ public class BatchReplicatedDataPacket
             if (_compressed) {
                 _startKey = in.readLong();
                 _totalBatchKeySize = in.readInt();
-//                _totalDiscardedPacketsKeys = in.readInt();
             }
         }
     }
@@ -86,7 +85,6 @@ public class BatchReplicatedDataPacket
             if (_compressed) {
                 out.writeLong(_startKey);
                 out.writeInt(_totalBatchKeySize);
-//                out.writeInt(_totalDiscardedPacketsKeys);
             }
         }
     }
@@ -123,6 +121,8 @@ public class BatchReplicatedDataPacket
         //If batch contains no discarded packet, there is no need to compress
         if(!containsDiscardedPacket) return;
 
+        //If batch contains a single packet, it cannot be compressed any further
+        if(_batch.size() == 1) return;
         /*
         Compression:
         1. Iterate over all packets
@@ -130,6 +130,7 @@ public class BatchReplicatedDataPacket
         3. If packet is discarded, remove from batch
         4. Add key range to total batch key range (for any packet)
          */
+
 
         Iterator<IReplicationOrderedPacket> it = _batch.listIterator();
 
@@ -170,7 +171,7 @@ public class BatchReplicatedDataPacket
         6. set current start key = packet end key + 1;
          */
 
-        List<IReplicationOrderedPacket> result = new LinkedList<IReplicationOrderedPacket>();
+        LinkedList<IReplicationOrderedPacket> result = new LinkedList<IReplicationOrderedPacket>();
 
         long currentStartKey = _startKey;
         long globalEndKey = _startKey + _totalBatchKeySize - 1;
@@ -184,8 +185,10 @@ public class BatchReplicatedDataPacket
         }
 
         //Add a discarded packet to the tail of the batch if needed
-        if(currentStartKey < globalEndKey){
-            result.add(createDiscardedPacket(currentStartKey, globalEndKey));
+
+        long lastEndKey = result.getLast().getEndKey();
+        if(lastEndKey < globalEndKey){
+            result.add(createDiscardedPacket(lastEndKey, globalEndKey));
         }
 
         return result;
@@ -194,8 +197,8 @@ public class BatchReplicatedDataPacket
 
     private GlobalOrderDiscardedReplicationPacket createDiscardedPacket(long startKey, long endKey){
         GlobalOrderDiscardedReplicationPacket packet = new GlobalOrderDiscardedReplicationPacket(startKey);
-        packet.setEndKey(endKey);
-//        _totalDiscardedPacketsKeys -= (endKey - startKey);
+        if(endKey!= startKey)
+            packet.setEndKey(endKey);
         return packet;
     }
 

@@ -844,9 +844,7 @@ public abstract class AbstractReplicationSourceChannel
 
                     double compressionRatio = (double) batchPacket.getBatch().size() / originalSize;
 
-                    String prefix = batchPacket.isCompressed() ? "Finished batch compression." : "Batch contains no discarded packets.";
-
-                    String msg =  prefix + " compressionRatio=" + new DecimalFormat("#.##").format(compressionRatio);
+                    String msg = batchPacket.isCompressed() ? "Finished batch packets compression. compressionRatio=" + new DecimalFormat("#.##").format(compressionRatio): "Batch is incompressible.";
 
                     _specificLogger.finest(msg);
 
