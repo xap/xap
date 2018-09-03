@@ -68,7 +68,7 @@ public class BatchReplicatedDataPacket
             ClassNotFoundException {
         _batch = IOUtils.readObject(in);
 
-        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v12_3_1)) {
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v14_0_0)) {
             _compressed = in.readBoolean();
             if (_compressed) {
                 _startKey = in.readLong();
@@ -80,7 +80,7 @@ public class BatchReplicatedDataPacket
     public void writeExternalImpl(ObjectOutput out, PlatformLogicalVersion endpointLogicalVersion) throws IOException {
         IOUtils.writeObject(out, _batch);
 
-        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v12_3_1)) {
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v14_0_0)) {
             out.writeBoolean(_compressed);
             if (_compressed) {
                 out.writeLong(_startKey);
