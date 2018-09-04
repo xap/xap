@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ***********************************************************************************************************
 # * This script is used to initialize common environment to GigaSpaces XAP Server.                          *
 # * It is highly recommended NOT TO MODIFY THIS SCRIPT, to simplify future upgrades.                        *
