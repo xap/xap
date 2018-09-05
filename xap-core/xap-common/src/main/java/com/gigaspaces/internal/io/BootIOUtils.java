@@ -225,17 +225,21 @@ public class BootIOUtils {
         if (s == null) return 1;
         if (s.equalsIgnoreCase("b")) return 1;
         if (s.equalsIgnoreCase("k")) return 1024;
+        if (s.equalsIgnoreCase("ki")) return 1024;
         if (s.equalsIgnoreCase("kib")) return 1024;
         if (s.equalsIgnoreCase("kb")) return 1000;
         if (s.equalsIgnoreCase("m")) return 1024*1024;
+        if (s.equalsIgnoreCase("mi")) return 1024*1024;
         if (s.equalsIgnoreCase("mib")) return 1024*1024;
         if (s.equalsIgnoreCase("mb")) return 1000*1000;
         if (s.equalsIgnoreCase("g")) return 1024*1024*1024;
+        if (s.equalsIgnoreCase("gi")) return 1024*1024*1024;
         if (s.equalsIgnoreCase("gib")) return 1024*1024*1024;
         if (s.equalsIgnoreCase("gb")) return 1000*1000*1000;
         if (s.equalsIgnoreCase("t")) return 1024*1024*1024*1024;
+        if (s.equalsIgnoreCase("ti")) return 1024*1024*1024*1024;
         if (s.equalsIgnoreCase("tib")) return 1024*1024*1024*1024;
         if (s.equalsIgnoreCase("tb")) return 1000*1000*1000*1000;
-        throw new IllegalArgumentException("Invalid memory unit: '" + s + "'. Supported units: b, kb, kib, k, mb, mib, m, gb, gib, g");
+        throw new IllegalArgumentException("Invalid memory unit: '" + s + "'. Supported units: b, k, ki, kib, kb, m, mi, mib, mb, g, gi, gib, gb, t, ti, tib, tb");
     }
 }
