@@ -203,4 +203,39 @@ public class BootIOUtils {
             result += File.separator + token;
         return result;
     }
+
+
+    public static Long parseStringAsBytes(String property) {
+        if (isEmpty(property))
+            return null;
+
+        // Find first non-digit char:
+        int pos = 0;
+        while (pos < property.length() && Character.isDigit(property.charAt(pos)))
+            pos++;
+
+        String prefix = property.substring(0, pos);
+        long number = Long.parseLong(prefix);
+        String suffix = pos < property.length() ? property.substring(pos) : null;
+        int factor = parseMemoryUnit(suffix);
+        return number * factor;
+    }
+
+    private static int parseMemoryUnit(String s) {
+        if (s == null) return 1;
+        if (s.equalsIgnoreCase("b")) return 1;
+        if (s.equalsIgnoreCase("k")) return 1024;
+        if (s.equalsIgnoreCase("kib")) return 1024;
+        if (s.equalsIgnoreCase("kb")) return 1000;
+        if (s.equalsIgnoreCase("m")) return 1024*1024;
+        if (s.equalsIgnoreCase("mib")) return 1024*1024;
+        if (s.equalsIgnoreCase("mb")) return 1000*1000;
+        if (s.equalsIgnoreCase("g")) return 1024*1024*1024;
+        if (s.equalsIgnoreCase("gib")) return 1024*1024*1024;
+        if (s.equalsIgnoreCase("gb")) return 1000*1000*1000;
+        if (s.equalsIgnoreCase("t")) return 1024*1024*1024*1024;
+        if (s.equalsIgnoreCase("tib")) return 1024*1024*1024*1024;
+        if (s.equalsIgnoreCase("tb")) return 1000*1000*1000*1000;
+        throw new IllegalArgumentException("Invalid memory unit: '" + s + "'. Supported units: b, kb, kib, k, mb, mib, m, gb, gib, g");
+    }
 }
