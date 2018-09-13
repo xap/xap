@@ -190,8 +190,15 @@ public class QueryProcessor implements IQueryProcessor {
     }
 
     public static synchronized void setDefaultConfig(QueryProcessorConfiguration defaultConfig) {
-        if (QueryProcessor.defaultConfig == null)
+        if (QueryProcessor.defaultConfig == null){
             QueryProcessor.defaultConfig = defaultConfig;
+            if( _logger.isLoggable( Level.FINE ) ) {
+                _logger.fine("~~~INITIALIZING of QueryProcessor.defaultConfig" +
+                             ", DateTimeFormat=" + defaultConfig.getDateTimeFormat() +
+                             ", DateFormat=" + defaultConfig.getDateFormat() +
+                             ", TimeFormat=" + defaultConfig.getTimeFormat());
+            }
+        }
     }
 
     public static QueryProcessorConfiguration getDefaultConfig() {
