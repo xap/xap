@@ -106,7 +106,10 @@ public abstract class ObjectConverter {
                     ( JdkVersion.isAtLeastJava18() &&
                         java.time.temporal.Temporal.class.isAssignableFrom( type ) ) ){
                 initDateRelatedTypes();
-                return _runtimeGeneratedParserMap.get(type.getName());
+                parser = _runtimeGeneratedParserMap.get(type.getName());
+                if( parser != null ){
+                    return parser;
+                }
             }
 
 
