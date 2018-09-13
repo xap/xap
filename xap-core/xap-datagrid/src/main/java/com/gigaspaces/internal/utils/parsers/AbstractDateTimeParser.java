@@ -16,9 +16,13 @@
 
 package com.gigaspaces.internal.utils.parsers;
 
+import com.gigaspaces.logger.Constants;
+
 import java.sql.SQLException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Niv Ingberg
@@ -28,9 +32,14 @@ public abstract class AbstractDateTimeParser extends AbstractParser {
     protected final String _desc;
     protected final String _pattern;
 
+    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_QUERY);
+
     protected AbstractDateTimeParser(String desc, String pattern) {
         this._desc = desc;
         this._pattern = pattern;
+        if( _logger.isLoggable(Level.FINE ) ) {
+            _logger.fine("> AbstractDateTimeParser desc=" + desc + ", pattern=" + _pattern);
+        }
     }
 
     protected java.util.Date parseDateTime(String s) throws SQLException {

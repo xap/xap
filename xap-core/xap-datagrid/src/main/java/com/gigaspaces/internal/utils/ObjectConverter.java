@@ -89,6 +89,7 @@ public abstract class ObjectConverter {
                 _runtimeGeneratedParserMap.put(type.getName(), parser);
                 return parser;
             }
+
             // Enum with abstract methods is an inner class of the original Enum
             // and its isEnum() method returns false. Therefore we check its enclosing class.
             if (type.getEnclosingClass() != null && type.getEnclosingClass().isEnum()) {
@@ -99,6 +100,16 @@ public abstract class ObjectConverter {
                 }
                 return parser;
             }
+
+            //fix for GS-13625
+            if( java.util.Date.class.isAssignableFrom( type ) ||
+                    ( JdkVersion.isAtLeastJava18() &&
+                        java.time.temporal.Temporal.class.isAssignableFrom( type ) ) ){
+                initDateRelatedTypes();
+                return _runtimeGeneratedParserMap.get(type.getName());
+            }
+
+
             parser = ConventionObjectParser.getConventionParserIfAvailable(type);
             if (parser != null) {
                 _runtimeGeneratedParserMap.put(type.getName(), parser);
@@ -138,20 +149,22 @@ public abstract class ObjectConverter {
         map.put(com.j_spaces.jdbc.driver.Blob.class.getName(), new BlobParser());
         map.put(com.j_spaces.jdbc.driver.Clob.class.getName(), new ClobParser());
 
-        // Date/Time types:
-        if (JdkVersion.isAtLeastJava18()) {
-            map.put(java.time.LocalDate.class.getName(), new LocalDateParser());
-            map.put(java.time.LocalTime.class.getName(), new LocalTimeParser());
-            map.put(java.time.LocalDateTime.class.getName(), new LocalDateTimeParser());
-        }
-        map.put(java.util.Date.class.getName(), new DateParser());
-        map.put(java.sql.Date.class.getName(), new SqlDateParser());
-        map.put(java.sql.Time.class.getName(), new SqlTimeParser());
-        map.put(java.sql.Timestamp.class.getName(), new SqlTimestampParser());
-
-
         return map;
     }
+
+    private static void initDateRelatedTypes(){
+
+        if (JdkVersion.isAtLeastJava18()) {
+            _runtimeGeneratedParserMap.put(java.time.LocalDate.class.getName(), new LocalDateParser());
+            _runtimeGeneratedParserMap.put(java.time.LocalTime.class.getName(), new LocalTimeParser());
+            _runtimeGeneratedParserMap.put(java.time.LocalDateTime.class.getName(), new LocalDateTimeParser());
+        }
+        _runtimeGeneratedParserMap.put(java.util.Date.class.getName(), new DateParser());
+        _runtimeGeneratedParserMap.put(java.sql.Date.class.getName(), new SqlDateParser());
+        _runtimeGeneratedParserMap.put(java.sql.Time.class.getName(), new SqlTimeParser());
+        _runtimeGeneratedParserMap.put(java.sql.Timestamp.class.getName(), new SqlTimestampParser());
+    }
+
 
     public static void clearRuntimeGeneratedCache(){
         if(!_runtimeGeneratedParserMap.isEmpty()) {
