@@ -73,6 +73,14 @@ public class ChangeSet implements Externalizable, Textualizable {
     }
 
     /**
+     * Returns true if the change set is empty, i.e. does not contain any change operations
+     * @since 14.0
+     */
+    public boolean isEmpty() {
+        return _mutators.isEmpty() && _lease == 0;
+    }
+
+    /**
      * Adds a custom change operation to be executed. Note that when using a replicated topology
      * (e.g. backup space, gateway, mirror) the change operation itself is replicated (and *NOT* the
      * modified entry). Hence, it is imperative that this method will always cause the exact same
