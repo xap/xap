@@ -89,8 +89,8 @@
                             <goal>javacc</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>src/java</outputDirectory>
-                            <sourceDirectory>src/java/com/j_spaces/jdbc/parser/grammar/</sourceDirectory>
+                            <outputDirectory>src/main/java</outputDirectory>
+                            <sourceDirectory>src/main/java/com/j_spaces/jdbc/parser/grammar/</sourceDirectory>
                             <tokenExtends>com.j_spaces.jdbc.parser.SerializableToken</tokenExtends>
                         </configuration>
                     </execution>

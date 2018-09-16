@@ -48,6 +48,7 @@ import com.j_spaces.jdbc.parser.ContainsItemsRootNode;
 import com.j_spaces.jdbc.parser.ContainsNode;
 import com.j_spaces.jdbc.parser.ExpNode;
 import com.j_spaces.jdbc.parser.InNode;
+import com.j_spaces.jdbc.parser.IsNullNode;
 import com.j_spaces.jdbc.parser.LikeNode;
 import com.j_spaces.jdbc.parser.LiteralNode;
 import com.j_spaces.jdbc.parser.NotInNode;
@@ -120,7 +121,7 @@ public class QueryTemplateBuilder
         Object value = null;
         if (right instanceof LiteralNode) {
             value = ((LiteralNode) right).getValue();
-        } else {
+        } else if (!(right instanceof IsNullNode)) {
             value = ((AbstractInNode) right).getConvertedValues(tableData.getTypeDesc(), containsNode.getPath());
         }
         //Object value = ((LiteralNode) containsNode.getRightChild()).getConvertedObject(tableData.getTypeDesc(), containsNode.getPath());
