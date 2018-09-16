@@ -216,6 +216,16 @@ public class ContainsPredicate extends ScalarSpacePredicate {
             for (int i = tokenIndex; i < _tokens.length && item != null; i++)
                 item = AbstractTypeIntrospector.getNestedValue(item, i, _tokens, _propertyInfo, _fieldPath);
 
+            //Handle contains [*].property with is null or is not null
+            switch (_templateMatchCode) {
+                case TemplateMatchCodes.IS_NULL:
+                    if (item == null) return true;
+                    else continue;
+                case TemplateMatchCodes.NOT_NULL:
+                    if (item != null) return true;
+                    else continue;
+            }
+
             if (item != null && executePredicate(item))
                 return true;
         }

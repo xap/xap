@@ -1498,12 +1498,49 @@ ExpNode containsNode(AbstractDMLQuery query,ColumnNode columnNode1) :
           	(
           	  	expNode = containsSingleNode(query,columnNode1,columnPath.toString())
           		|expNode = containsMultipleNode(query,columnNode1,columnPath.toString())
+          		|LOOKAHEAD(2) expNode = containsIsNullNode(query,columnNode1,columnPath.toString())
+          		|LOOKAHEAD(2) expNode = containsIsNotNullNode(query,columnNode1,columnPath.toString())
           		
 	         )
 	       )
    {
 		return expNode;
    }				
+}
+
+ExpNode containsIsNullNode(AbstractDMLQuery query,ColumnNode columnNode1,String columnPath) :
+{
+	IsNullNode valueNode = null;
+}
+{
+
+    (
+        <IS> <NULL>
+    )
+    {
+        //comment
+        valueNode = new IsNullNode(columnNode1, new LiteralNode(null));
+        columnNode1.setName(columnPath);
+        return new ContainsNode(columnNode1, valueNode, TemplateMatchCodes.IS_NULL);
+    }
+}
+
+ExpNode containsIsNotNullNode(AbstractDMLQuery query,ColumnNode columnNode1,String columnPath) :
+{
+	IsNullNode valueNode = null;
+}
+{
+
+    (
+        <IS> <NOT> <NULL>
+    )
+    {
+        //comment
+        valueNode = new IsNullNode(columnNode1, new LiteralNode(null));
+        valueNode.setNot(true);
+        columnNode1.setName(columnPath);
+        return new ContainsNode(columnNode1, valueNode, TemplateMatchCodes.NOT_NULL);
+    }
 }
 
 ExpNode containsMultipleNode(AbstractDMLQuery query,ColumnNode columnNode1,String columnPath) :
@@ -1516,7 +1553,7 @@ ExpNode containsMultipleNode(AbstractDMLQuery query,ColumnNode columnNode1,Strin
       	  columnNode1.setName(columnPath);
       	  valueNode = new ContainsItemsRootNode(SqlContainsItemExpression(query),columnPath,columnNode1);
       	 }
-	<CLOSEPAREN> 				
+	<CLOSEPAREN>
   )
  {
 	 return new ContainsItemNode(columnNode1,valueNode,TemplateMatchCodes.EQ);
