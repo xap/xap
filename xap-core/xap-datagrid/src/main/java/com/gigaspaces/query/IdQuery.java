@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package com.gigaspaces.query;
 
+import java.util.Arrays;
 
 /**
  * Class to encapsulate information of a query based on a Space ID.
@@ -29,7 +28,6 @@ package com.gigaspaces.query;
  * @see com.gigaspaces.query.IdsQuery
  * @since 8.0
  */
-
 public class IdQuery<T> implements ISpaceQuery<T> {
     private final String _typeName;
     private final Object _id;
@@ -245,5 +243,24 @@ public class IdQuery<T> implements ISpaceQuery<T> {
      */
     public String[] getProjections() {
         return _projections;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+        if (!(obj instanceof IdQuery))
+            return false;
+        IdQuery other = (IdQuery) obj;
+
+        return equals(this._id, other._id) &&
+                equals(this._routing, other._routing) &&
+                equals(this._queryResultType, other._queryResultType) &&
+                this._version == other._version &&
+                Arrays.equals(this._projections, other._projections);
+    }
+
+    private static boolean equals(Object o1, Object o2) {
+        return o1 == o2 || o1 != null && o1.equals(o2);
     }
 }
