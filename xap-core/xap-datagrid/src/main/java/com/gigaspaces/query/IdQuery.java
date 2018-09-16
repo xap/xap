@@ -253,7 +253,8 @@ public class IdQuery<T> implements ISpaceQuery<T> {
             return false;
         IdQuery other = (IdQuery) obj;
 
-        return equals(this._id, other._id) &&
+        return equals(this._typeName, other._typeName) &&
+                equals(this._id, other._id) &&
                 equals(this._routing, other._routing) &&
                 equals(this._queryResultType, other._queryResultType) &&
                 this._version == other._version &&
