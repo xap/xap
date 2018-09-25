@@ -169,12 +169,12 @@ public interface Constants {
         String FULL_QP_DATE_FORMAT_PROP = SPACE_CONFIG_PREFIX + QP_DATE_FORMAT_PROP;
 
         String QP_DATETIME_FORMAT = "datetime_format";
-        String QP_DATETIME_FORMAT_DEFAULT = "yyyy-MM-dd hh:mm:ss";
+        String QP_DATETIME_FORMAT_DEFAULT = "yyyy-MM-dd HH:mm:ss";
         String QP_DATETIME_FORMAT_PROP = PREFIX + QP_DATETIME_FORMAT;
         String FULL_QP_DATETIME_FORMAT_PROP = SPACE_CONFIG_PREFIX + QP_DATETIME_FORMAT_PROP;
 
         String QP_TIME_FORMAT = "time_format";
-        String QP_TIME_FORMAT_DEFAULT = "hh:mm:ss";
+        String QP_TIME_FORMAT_DEFAULT = "HH:mm:ss";
         String QP_TIME_FORMAT_PROP = PREFIX + QP_TIME_FORMAT;
         String FULL_QP_TIME_FORMAT_PROP = SPACE_CONFIG_PREFIX + QP_TIME_FORMAT_PROP;
     }

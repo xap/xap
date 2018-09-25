@@ -72,9 +72,9 @@
                <!-- Default Value: -->
 			  <date_format>yyyy-MM-dd</date_format>
 			   <!-- Default Value: -->
-			  <datetime_format>yyyy-MM-dd hh:mm:ss</datetime_format>
+			  <datetime_format>yyyy-MM-dd HH:mm:ss</datetime_format>
 			   <!-- Default Value: -->
-			  <time_format>hh:mm:ss</time_format>
+			  <time_format>HH:mm:ss</time_format>
            </QueryProcessor>
            <!--	Description: Lets you control whether or not entries undergo serialization. 
 			Setting this parameter to 0 (Object Serialization) specifies that neither the engine nor the proxy 
