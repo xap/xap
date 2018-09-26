@@ -35,6 +35,7 @@ import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
 import com.gigaspaces.internal.server.space.SpaceImpl;
+import com.gigaspaces.internal.server.space.demote.DemoteException;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.Constants;
@@ -719,10 +720,10 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
     }
 
     @Override
-    public boolean demoteToBackup(int timeout, TimeUnit unit) {
+    public void demoteToBackup(int timeout, TimeUnit unit) throws DemoteException {
         IRemoteSpace spaceImpl = getRemoteJSpace();
 
-        return spaceImpl.demoteToBackup(timeout, unit);
+        spaceImpl.demoteToBackup(timeout, unit);
     }
 
 }
