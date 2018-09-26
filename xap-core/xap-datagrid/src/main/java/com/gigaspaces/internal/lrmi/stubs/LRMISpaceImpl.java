@@ -38,7 +38,7 @@ import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
-import com.gigaspaces.internal.server.space.demote.DemoteException;
+import com.gigaspaces.internal.server.space.demote.DemoteFailedException;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.lrmi.LRMIMonitoringDetails;
 import com.gigaspaces.lrmi.RemoteStub;
@@ -631,7 +631,7 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     }
 
     @Override
-    public void demoteToBackup(int timeout, TimeUnit unit) throws DemoteException {
+    public void demoteToBackup(int timeout, TimeUnit unit) throws DemoteFailedException {
         getProxy().demoteToBackup(timeout, unit);
     }
 }

@@ -25,7 +25,7 @@ import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
 import com.gigaspaces.internal.server.space.SpaceImpl;
-import com.gigaspaces.internal.server.space.demote.DemoteException;
+import com.gigaspaces.internal.server.space.demote.DemoteFailedException;
 import com.gigaspaces.query.ISpaceQuery;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.IJSpaceContainer;
@@ -131,6 +131,6 @@ public interface IDirectSpaceProxy extends ISpaceProxy {
 
     ISpaceQuery prepareTemplate(Object template);
 
-    void demoteToBackup(int timeout, TimeUnit unit) throws DemoteException;
+    void demoteToBackup(int timeout, TimeUnit unit) throws DemoteFailedException;
 
 }

@@ -28,7 +28,7 @@ public class DemoteHandler {
 
     }
 
-    public void demote(int timeToWait, TimeUnit unit) throws DemoteException {
+    public void demote(int timeToWait, TimeUnit unit) throws DemoteFailedException {
 //        _spaceImpl.beforeOperation(true, false /*checkQuiesceMode*/, null);
 //        _spaceImpl.getQuiesceHandler().suspend("nnnn");
 
@@ -37,7 +37,7 @@ public class DemoteHandler {
         isDemoteInProgress = false;
     }
 
-    public boolean demoteImpl(int timeToWait, TimeUnit unit) throws DemoteException {
+    public boolean demoteImpl(int timeToWait, TimeUnit unit) throws DemoteFailedException {
         long timeToWaitInMs = unit.toMillis(timeToWait);
         long end = timeToWaitInMs + System.currentTimeMillis();
 
@@ -146,10 +146,10 @@ public class DemoteHandler {
             // the connection to ZK so the backup becomes primary)
             //If suspend happens, we need to clean the suspend after the demote!
             if (!_spaceImpl.restartLeaderSelectorHandler()) {
-                throw new DemoteException("Could not restart leader selector");
+                throw new DemoteFailedException("Could not restart leader selector");
             }
 
-        } catch (DemoteException e) {
+        } catch (DemoteFailedException e) {
             abort();
             throw e;
         } finally {
@@ -174,12 +174,12 @@ public class DemoteHandler {
         _spaceImpl.getEngine().getReplicationNode().getAdmin().setPassive(false);
     }
 
-    private void validateCanProgress() throws DemoteException {
+    private void validateCanProgress() throws DemoteFailedException {
         if (isSuspended()) {
-            throw new DemoteException(ERR_SPACE_IS_SUSPENDED);
+            throw new DemoteFailedException(ERR_SPACE_IS_SUSPENDED);
         }
         if (isQuiesced()) {
-            throw new DemoteException(ERR_SPACE_IS_QUIESCED);
+            throw new DemoteFailedException(ERR_SPACE_IS_QUIESCED);
         }
     }
 

@@ -67,7 +67,7 @@ import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
-import com.gigaspaces.internal.server.space.demote.DemoteException;
+import com.gigaspaces.internal.server.space.demote.DemoteFailedException;
 import com.gigaspaces.internal.server.space.demote.DemoteHandler;
 import com.gigaspaces.internal.server.space.executors.SpaceActionExecutor;
 import com.gigaspaces.internal.server.space.operations.SpaceOperationsExecutor;
@@ -3598,7 +3598,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     }
 
     @Override
-    public void demoteToBackup(int timeToWait, TimeUnit unit) throws DemoteException {
+    public void demoteToBackup(int timeToWait, TimeUnit unit) throws DemoteFailedException {
         _demoteHandler.demote(timeToWait, unit);
     }
 }

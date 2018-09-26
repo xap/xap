@@ -22,7 +22,7 @@ import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectResult;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersistencySyncListBatch;
 import com.gigaspaces.internal.cluster.node.impl.router.spacefinder.IReplicationConnectionProxy;
 import com.gigaspaces.internal.remoting.RemoteOperationsExecutor;
-import com.gigaspaces.internal.server.space.demote.DemoteException;
+import com.gigaspaces.internal.server.space.demote.DemoteFailedException;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.security.service.RemoteSecuredService;
 import com.j_spaces.core.SpaceHealthStatus;
@@ -149,5 +149,5 @@ public interface IRemoteSpace
 
     DirectPersistencySyncListBatch getSynchronizationListBatch() throws RemoteException;
 
-    void demoteToBackup(int timeout, TimeUnit unit) throws DemoteException;
+    void demoteToBackup(int timeout, TimeUnit unit) throws DemoteFailedException;
 }
