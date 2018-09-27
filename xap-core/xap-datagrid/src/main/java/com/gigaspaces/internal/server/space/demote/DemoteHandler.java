@@ -37,46 +37,41 @@ public class DemoteHandler {
         isDemoteInProgress = false;
     }
 
-    public boolean demoteImpl(int timeToWait, TimeUnit unit) throws DemoteFailedException {
+    public void demoteImpl(int timeToWait, TimeUnit unit) throws DemoteFailedException {
         long timeToWaitInMs = unit.toMillis(timeToWait);
         long end = timeToWaitInMs + System.currentTimeMillis();
 
         if (!_spaceImpl.isPrimary()) {
             //space is not primary
-            return false;
+            throw new DemoteFailedException("Space is not primary");
         }
 
         validateCanProgress();
 
         if (!_spaceImpl.useZooKeeper()) {
-            _logger.info("Primary demotion is only supported with Zookeeper leader selector.");
-            return false;
+            throw new DemoteFailedException("Primary demotion is only supported with Zookeeper leader selector.");
         }
 
         if (_spaceImpl.getClusterInfo().getNumberOfBackups() != 1) {
-            _logger.info("Couldn't demote to backup - cluster should be configured with exactly one backup, backups: (" + _spaceImpl.getClusterInfo().getNumberOfBackups() + ")");
-            return false;
+            throw new DemoteFailedException("Couldn't demote to backup - cluster should be configured with exactly one backup, backups: (" + _spaceImpl.getClusterInfo().getNumberOfBackups() + ")");
         }
 
         //In case that we use ZooKeeper but leader selector is not ZK based leader selector
         if (_spaceImpl.getLeaderSelector() == null || !_spaceImpl.getLeaderSelector().getClass().getName().equals(LEADER_SELECTOR_HANDLER_CLASS_NAME)) {
-            _logger.info("Primary demotion is only supported with Zookeeper leader selector.");
-            return false;
+            throw new DemoteFailedException("Primary demotion is only supported with Zookeeper leader selector.");
         }
 
         List<ReplicationStatistics.OutgoingChannel> backupChannels = _spaceImpl.getHolder().getReplicationStatistics().getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE);
         if (backupChannels.size() != 1) {
             //more than one backup
-            _logger.info("There should be exactly one backup, current channels: ("+backupChannels.size()+")");
-            return false;
+            throw new DemoteFailedException("There should be exactly one backup, current channels: ("+backupChannels.size()+")");
         }
 
         ReplicationStatistics.OutgoingChannel backupChannel = backupChannels.get(0);
 
         if (!backupChannel.getChannelState().equals(ReplicationStatistics.ChannelState.ACTIVE)) {
             //backup replication is not active
-            _logger.info("Backup replication channel is not active ("+backupChannel.getChannelState()+")");
-            return false;
+            throw new DemoteFailedException("Backup replication channel is not active ("+backupChannel.getChannelState()+")");
         }
 
 
@@ -90,15 +85,13 @@ public class DemoteHandler {
             long remainingTime = end - System.currentTimeMillis();
             boolean leaseManagerCycleFinished = _spaceImpl.getEngine().getLeaseManager().waitForNoCycleOnQuiesce(remainingTime);
             if (!leaseManagerCycleFinished) {
-                _logger.info("Couldn't demote to backup - lease manager cycle timeout");
-                return false;
+                throw new DemoteFailedException("Couldn't demote to backup - lease manager cycle timeout");
             }
 
             remainingTime = end - System.currentTimeMillis();
 
             if (remainingTime <= 0) {
-                _logger.info("Couldn't demote to backup - timeout waiting for a lease manager cycle");
-                return false;
+                throw new DemoteFailedException("Couldn't demote to backup - timeout waiting for a lease manager cycle");
             }
 
 //            remainingTime = end - System.currentTimeMillis();
@@ -107,8 +100,7 @@ public class DemoteHandler {
 
             remainingTime = end - System.currentTimeMillis();
             if (remainingTime <= 0) {
-                _logger.info("Couldn't demote to backup - timeout while waiting for active transactions");
-                return false;
+                throw new DemoteFailedException("Couldn't demote to backup - timeout while waiting for active transactions");
             }
 
 
@@ -124,8 +116,7 @@ public class DemoteHandler {
 
             if (_spaceImpl.getHolder().getReplicationStatistics().getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE).get(0).getLastConfirmedKeyFromTarget() != lastKeyInRedoLog) {
                 //Backup is not synced
-                _logger.info("Couldn't demote to backup - backup is not synced ("+backupChannel.getLastConfirmedKeyFromTarget()+" != "+lastKeyInRedoLog+")");
-                return false;
+                throw new DemoteFailedException("Couldn't demote to backup - backup is not synced ("+backupChannel.getLastConfirmedKeyFromTarget()+" != "+lastKeyInRedoLog+")");
             }
 
             _logger.info("size during demote = "+_spaceImpl.getHolder().getReplicationStatistics().getOutgoingReplication().getRedoLogSize());
@@ -156,9 +147,6 @@ public class DemoteHandler {
             _logger.info("Demoting to backup finished, exiting quiesce mode...");
             _spaceImpl.getQuiesceHandler().unquiesce();
         }
-
-
-        return true;
     }
 
     public boolean isDemoteInProgress() {
