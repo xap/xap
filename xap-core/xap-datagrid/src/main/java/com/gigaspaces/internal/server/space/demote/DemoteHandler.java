@@ -178,9 +178,9 @@ public class DemoteHandler {
         if (isSuspended()) {
             throw new DemoteFailedException(ERR_SPACE_IS_SUSPENDED);
         }
-        if (isQuiesced()) {
-            throw new DemoteFailedException(ERR_SPACE_IS_QUIESCED);
-        }
+//        if (isQuiesced()) {
+//            throw new DemoteFailedException(ERR_SPACE_IS_QUIESCED);
+//        }
     }
 
     private boolean isQuiesced() {
