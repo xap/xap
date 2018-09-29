@@ -17,6 +17,7 @@
 
 package org.openspaces.pu.container.jee.jetty;
 
+import com.gigaspaces.internal.utils.Singletons;
 import com.j_spaces.kernel.ClassLoaderHelper;
 
 import org.apache.commons.logging.Log;
@@ -60,6 +61,7 @@ import java.lang.management.ManagementFactory;
 import java.net.BindException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -129,6 +131,8 @@ public class JettyJeeProcessingUnitContainerProvider extends JeeProcessingUnitCo
     private static final ThreadLocal<ClusterInfo> currentClusterInfo = new ThreadLocal<ClusterInfo>();
 
     private static final ThreadLocal<BeanLevelProperties> currentBeanLevelProperties = new ThreadLocal<BeanLevelProperties>();
+
+    private final static String SERVLET_CONTEXT_PORTS_KEY = "servletcontext.ports";
 
     /**
      * Allows to get the current application context (loaded from <code>pu.xml</code>) during web
@@ -229,18 +233,47 @@ public class JettyJeeProcessingUnitContainerProvider extends JeeProcessingUnitCo
 
             //GS-13602
             ContextHandler.Context servletContext = webAppContext.getServletContext();
+
+            //fix for GS-13602
+            Map<String,Integer> servletContextPortsMap = null;
+            if( jettyHolder.isSingleInstance() ) {
+                servletContextPortsMap = ( Map<String,Integer> )Singletons.get( SERVLET_CONTEXT_PORTS_KEY );
+                if( servletContextPortsMap == null ) {
+                    servletContextPortsMap = new HashMap<String, Integer>(portHandles.size() + 1);
+                }
+            }
             Set<Map.Entry<String, FreePortGenerator.PortHandle>> entries = portHandles.entrySet();
             for( Map.Entry<String, FreePortGenerator.PortHandle> entry : entries ) {
                 String connectorKey = entry.getKey();
                 int port = entry.getValue().getPort();
-                servletContext.setAttribute(JETTY_PORT_CONTEXT_PREFIX +
-                                            "." + connectorKey + JETTY_PORT_CONTEXT_SUFFIX, port);
+                String attrName = JETTY_PORT_CONTEXT_PREFIX + "." + connectorKey + JETTY_PORT_CONTEXT_SUFFIX;
+                servletContext.setAttribute(attrName, port);
+                //only if shared mode applied , GS-13602
+                if( jettyHolder.isSingleInstance() ){
+                    servletContextPortsMap.put( attrName, port );
+                }
             }
 
             //backwards while fixing GS-13602
             if( !portHandles.isEmpty() ) {
                 int port = portHandles.values().iterator().next().getPort();
-                webAppContext.getServletContext().setAttribute(JeeProcessingUnitContainerProvider.JETTY_PORT_ACTUAL_CONTEXT, port);
+                String attrName = JeeProcessingUnitContainerProvider.JETTY_PORT_ACTUAL_CONTEXT;
+                servletContext.setAttribute(attrName, port);
+                //only if shared mode applied , GS-13602
+                if( jettyHolder.isSingleInstance() ) {
+                    servletContextPortsMap.put(attrName, port);
+                }
+            }
+
+            //backwards while fixing GS-13602
+            if( jettyHolder.isSingleInstance() ) {
+
+                Set<Map.Entry<String, Integer>> servletContextPortsEntries = servletContextPortsMap.entrySet();
+                for( Map.Entry<String, Integer> entry : servletContextPortsEntries ){
+                    servletContext.setAttribute( entry.getKey(), entry.getValue() );
+                }
+
+                Singletons.putIfAbsent( SERVLET_CONTEXT_PORTS_KEY, servletContextPortsMap);
             }
 
             HandlerContainer container = jettyHolder.getServer();
