@@ -79,7 +79,7 @@ public class DemoteHandler {
 
             //TODO quiesce token - replace with empty token
             _logger.info("Demoting to backup, entering quiesce mode...");
-            _spaceImpl.getQuiesceHandler().quiesce("Space is demoting from primary to backup", new DefaultQuiesceToken("myToken"));
+            _spaceImpl.getQuiesceHandler().quiesceDemote("Space is demoting from primary to backup");
 
 
             long remainingTime = end - System.currentTimeMillis();
@@ -145,7 +145,7 @@ public class DemoteHandler {
             throw e;
         } finally {
             _logger.info("Demoting to backup finished, exiting quiesce mode...");
-            _spaceImpl.getQuiesceHandler().unquiesce();
+            _spaceImpl.getQuiesceHandler().unquiesceDemote();
         }
     }
 
@@ -166,9 +166,9 @@ public class DemoteHandler {
         if (isSuspended()) {
             throw new DemoteFailedException(ERR_SPACE_IS_SUSPENDED);
         }
-//        if (isQuiesced()) {
-//            throw new DemoteFailedException(ERR_SPACE_IS_QUIESCED);
-//        }
+        if (isQuiesced()) {
+            throw new DemoteFailedException(ERR_SPACE_IS_QUIESCED);
+        }
     }
 
     private boolean isQuiesced() {

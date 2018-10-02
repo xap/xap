@@ -976,7 +976,7 @@ public class LeaseManager {
         }
 
         private boolean isSpaceInQuiesce(boolean useLogger) {
-            if (_spaceImpl.getQuiesceHandler() != null && _spaceImpl.getQuiesceHandler().isQuiesced()) {//space in quiesce mode dont reap and harvest
+            if (_spaceImpl.getQuiesceHandler() != null && _spaceImpl.getQuiesceHandler().isOn()) {//space in quiesce mode dont reap and harvest
                 if (useLogger && _logger.isLoggable(Level.FINEST)) {
                     _logger.finest(this.getName()
                             + " - is not reaping since space in quiesce mode.");
