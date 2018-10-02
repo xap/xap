@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.remoting.routing.clustered;
 
+import com.gigaspaces.admin.quiesce.QuiesceDemoteException;
 import com.gigaspaces.async.AsyncFutureListener;
 import com.gigaspaces.async.AsyncResult;
 import com.gigaspaces.internal.remoting.RemoteOperationFutureListener;
@@ -139,6 +140,8 @@ public class ClusterRemoteOperationRouter extends AbstractRemoteOperationRouter 
             RemoteOperationRequest<T> request, T result, Exception executionException) {
         if (executionException != null) {
             if (executionException instanceof RemoteException)
+                return ExecutionStatus.RETRY_OTHER;
+            if (executionException instanceof QuiesceDemoteException)
                 return ExecutionStatus.RETRY_OTHER;
             if (executionException instanceof UnknownTypeException)
                 return request.processUnknownTypeException(null) ? ExecutionStatus.RETRY_SAME : ExecutionStatus.COMPLETED;

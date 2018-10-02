@@ -907,12 +907,12 @@ public class ActiveElectionManager {
     //@since 10.2.0
     private void suspendPartitionPrimariesOnSplitBrainDetection() {
         QuiesceHandler quiesceHandler = splitBrainRecoveryHolder.getQuiesceHandler();
-        if (!quiesceHandler.isQuiesced()) {
+        if (!quiesceHandler.isOn()) {
             String description = "Space instance [" + _electTemplate.service + "] is in Quiesce state until split-brain is resolved";
             QuiesceToken quiesceToken = quiesceHandler.createSpaceNameToken();
             quiesceHandler.setQuiesceMode(new QuiesceStateChangedEvent(QuiesceState.QUIESCED,
                     quiesceToken, description));
-            if (quiesceHandler.isQuiesced()) {
+            if (quiesceHandler.isOn()) {
                 _logger.info(description + " - Quiesce token [" + quiesceToken + "]");
             } else if (!quiesceHandler.isSupported()) {
                 _logger.warning("Split-brain will need to be resolved by terminating extra primary instances manually");

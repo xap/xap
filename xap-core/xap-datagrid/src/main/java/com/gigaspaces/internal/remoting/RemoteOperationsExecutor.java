@@ -29,6 +29,8 @@ import java.rmi.RemoteException;
 public interface RemoteOperationsExecutor {
     boolean isActive() throws RemoteException;
 
+    boolean isPaused() throws RemoteException;
+
     /***
      * @since 9.0.1
      */
