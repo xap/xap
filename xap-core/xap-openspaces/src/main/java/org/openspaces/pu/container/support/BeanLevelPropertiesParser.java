@@ -24,6 +24,7 @@ import org.springframework.core.io.Resource;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
@@ -90,17 +91,7 @@ public abstract class BeanLevelPropertiesParser {
             }
             Properties props = new Properties();
             if (properties.startsWith(EMBEDDED_PROPERTIES_PREFIX)) {
-                properties = properties.substring(EMBEDDED_PROPERTIES_PREFIX.length());
-                StringTokenizer tokenizer = new StringTokenizer(properties, ";");
-                while (tokenizer.hasMoreTokens()) {
-                    String property = tokenizer.nextToken();
-                    int equalsIndex = property.indexOf('=');
-                    if (equalsIndex == -1) {
-                        props.setProperty(property, "");
-                    } else {
-                        props.setProperty(property.substring(0, equalsIndex), property.substring(equalsIndex + 1));
-                    }
-                }
+                loadParams(properties, props);
             } else {
                 Resource resource = new DefaultResourceLoader() {
                     // override the default load from the classpath to load from the file system
@@ -129,5 +120,19 @@ public abstract class BeanLevelPropertiesParser {
         }
         return beanLevelProperties;
 
+    }
+
+    public static void loadParams(String properties, Map props) {
+        properties = properties.substring(EMBEDDED_PROPERTIES_PREFIX.length());
+        StringTokenizer tokenizer = new StringTokenizer(properties, ";");
+        while (tokenizer.hasMoreTokens()) {
+            String property = tokenizer.nextToken();
+            int equalsIndex = property.indexOf('=');
+            if (equalsIndex == -1) {
+                props.put(property, "");
+            } else {
+                props.put(property.substring(0, equalsIndex), property.substring(equalsIndex + 1));
+            }
+        }
     }
 }
