@@ -1,11 +1,14 @@
 package com.gigaspaces.internal.server.space.demote;
 
-import com.gigaspaces.admin.quiesce.DefaultQuiesceToken;
+import com.gigaspaces.cluster.activeelection.ISpaceModeListener;
+import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.filters.ReplicationStatistics;
 
+import java.rmi.RemoteException;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -17,27 +20,28 @@ import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER
  * @since 14.0
  */
 @com.gigaspaces.api.InternalApi
-public class DemoteHandler {
+public class DemoteHandler implements ISpaceModeListener {
     private final Logger _logger;
     private final SpaceImpl _spaceImpl;
     private volatile boolean isDemoteInProgress = false;
+    private CountDownLatch notify = new CountDownLatch(1);
 
     public DemoteHandler(SpaceImpl spaceImpl) {
         _spaceImpl = spaceImpl;
         _logger = Logger.getLogger(Constants.LOGGER_DEMOTE+ '.' + spaceImpl.getNodeName());
-
     }
 
     public void demote(int timeToWait, TimeUnit unit) throws DemoteFailedException {
 //        _spaceImpl.beforeOperation(true, false /*checkQuiesceMode*/, null);
-//        _spaceImpl.getQuiesceHandler().suspend("nnnn");
 
         isDemoteInProgress = true;
+        _spaceImpl.addInternalSpaceModeListener(this);
         demoteImpl(timeToWait,unit);
+        _spaceImpl.removeInternalSpaceModeListener(this);
         isDemoteInProgress = false;
     }
 
-    public void demoteImpl(int timeToWait, TimeUnit unit) throws DemoteFailedException {
+    private void demoteImpl(int timeToWait, TimeUnit unit) throws DemoteFailedException {
         long timeToWaitInMs = unit.toMillis(timeToWait);
         long end = timeToWaitInMs + System.currentTimeMillis();
 
@@ -140,6 +144,18 @@ public class DemoteHandler {
                 throw new DemoteFailedException("Could not restart leader selector");
             }
 
+                try {
+                    boolean succeeded = notify.await(remainingTime, TimeUnit.MILLISECONDS);
+                    if (!succeeded) {
+                        throw new DemoteFailedException("Space mode wasn't changed to be backup");
+                    }
+                    if (_spaceImpl.getSpaceMode().equals(SpaceMode.PRIMARY)) {
+                        throw new DemoteFailedException("Space mode wasn't changed to backup - space still primary");
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
         } catch (DemoteFailedException e) {
             abort();
             throw e;
@@ -184,4 +200,18 @@ public class DemoteHandler {
   public final String ERR_SPACE_IS_SUSPENDED = "Space is suspended";
   public final String ERR_SPACE_IS_QUIESCED = "Space is quiesced";
 
+    @Override
+    public void beforeSpaceModeChange(SpaceMode newMode) throws RemoteException {
+        _logger.info(">>>>beforeSpaceModeChange>>>> mode: " + newMode);
+    }
+
+    @Override
+    public void afterSpaceModeChange(SpaceMode newMode) throws RemoteException {
+        if (newMode.equals(SpaceMode.BACKUP)) {
+            _logger.info(">>afterSpaceModeChange>> Space mode changed to backup!!");
+        } else {
+            _logger.severe(">>afterSpaceModeChange>> Unexpected Space mode changed to " + newMode);
+        }
+        notify.countDown();
+    }
 }
