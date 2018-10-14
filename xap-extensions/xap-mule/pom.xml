@@ -12,7 +12,7 @@
 	<properties>
 		<muleTitle>mule-integration</muleTitle>
 		<muleVersion>3.7.0</muleVersion>
-		<spring.version>4.3.17.RELEASE</spring.version>
+		<spring.version>4.3.19.RELEASE</spring.version>
         <junitVersion>4.12</junitVersion>
         <skipTests>true</skipTests>
     </properties>

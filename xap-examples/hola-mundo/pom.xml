@@ -27,7 +27,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-orm</artifactId>
-            <version>4.3.17.RELEASE</version>
+            <version>4.3.19.RELEASE</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
