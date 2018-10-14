@@ -34,6 +34,7 @@ set XAP_OPTIONS=-Djava.util.logging.config.file="%XAP_LOGS_CONFIG_FILE%" -Djava.
 
 if not defined JAVA_OPTIONS (
 	pushd "%XAP_HOME%\lib\required"
+	SET JAVA_OPTIONS=%EXT_JAVA_OPTIONS%
 	FOR /F "tokens=*" %%i IN ('%JAVACMD% -cp xap-datagrid.jar com.gigaspaces.internal.utils.OutputJVMOptions') DO set JAVA_OPTIONS=%%i %EXT_JAVA_OPTIONS%
 	popd
 )
