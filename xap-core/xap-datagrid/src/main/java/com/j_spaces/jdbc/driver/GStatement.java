@@ -16,6 +16,7 @@
 
 package com.j_spaces.jdbc.driver;
 
+import com.gigaspaces.logger.Constants;
 import com.j_spaces.jdbc.ResponsePacket;
 import com.j_spaces.jdbc.ResultEntry;
 
@@ -27,6 +28,8 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The Statement implementation using a GConnection and a GResultSet
@@ -40,9 +43,18 @@ public class GStatement implements Statement {
     protected int updateCount = -1; ///default or no results.
     protected ResultSet resultSet = null;
     protected List<String> _queriesBatch;
+    protected boolean throwExceptionOnUnsupportedSqlOperation;
+
+    //logger
+    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_QUERY);
+
+    //user configured behavior with unsupported sql operations
+
+    final public static String THROW_EXCEPTION_ON_UNSUPPORTED_SQL_OPERATION_PROP = "com.j_spaces.jdbc.unsupported-sql-operation-throws-exception";
 
     public GStatement(GConnection connection) {
         this.connection = connection;
+        throwExceptionOnUnsupportedSqlOperation = Boolean.parseBoolean(System.getProperty(THROW_EXCEPTION_ON_UNSUPPORTED_SQL_OPERATION_PROP,"true"));
     }
 
     /**
@@ -200,7 +212,7 @@ public class GStatement implements Statement {
      * @see java.sql.Statement#setFetchSize(int)
      */
     public void setFetchSize(int rows) throws SQLException {
-        throw new SQLException("Command not Supported!", "GSP", -132);
+        handleUnsupportedSqlOperationsCalls("setFetchSize");
     }
 
     /**
@@ -218,7 +230,7 @@ public class GStatement implements Statement {
      * @see java.sql.Statement#setMaxRows(int)
      */
     public void setMaxRows(int max) throws SQLException {
-        throw new SQLException("Command not Supported!", "GSP", -132);
+        handleUnsupportedSqlOperationsCalls("setMaxRows");
     }
 
     /**
@@ -432,5 +444,18 @@ public class GStatement implements Statement {
 
     public boolean isCloseOnCompletion() throws SQLException {
         throw new UnsupportedOperationException();
+    }
+
+    private void handleUnsupportedSqlOperationsCalls(String operation) throws SQLException {
+
+        if(throwExceptionOnUnsupportedSqlOperation){
+            throw new SQLException("Command not Supported!", "GSP", -132);
+        }
+
+        if(_logger.isLoggable(Level.WARNING)){
+            _logger.warning("An unsupported java.sql.Statement." + operation + " command was called and ignored ");
+        }
+
+        return;
     }
 }
