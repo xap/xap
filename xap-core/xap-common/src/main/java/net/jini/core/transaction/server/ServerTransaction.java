@@ -45,7 +45,7 @@ import java.rmi.RemoteException;
  * @since 1.0
  */
 @com.gigaspaces.api.InternalApi
-public class ServerTransaction implements ManagedTransaction, java.io.Serializable, Externalizable, ISwapExternalizable {
+public class  ServerTransaction implements ManagedTransaction, java.io.Serializable, Externalizable, ISwapExternalizable {
     private static final long serialVersionUID = 4552277137549765374L;
 
     // NOTE: All were final fields (can't be now since we implement externalizable)
@@ -410,5 +410,9 @@ public class ServerTransaction implements ManagedTransaction, java.io.Serializab
     public void readFromSwap(ObjectInput in) throws IOException,
             ClassNotFoundException {
         deserialize(in);
+    }
+
+    public ExtendedTransactionManager getTransactionManager() {
+        return mgr;
     }
 }

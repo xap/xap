@@ -178,7 +178,7 @@ public class TransactionHandler {
             addTransactionWithLease(txn);
 
         // if we got here, Xtn does not exist in table
-        XtnEntry xtnEntry = new XtnEntry(txn,_engine.getSpaceImpl().isBackup());
+        XtnEntry xtnEntry = new XtnEntry(txn, _engine.getSpaceImpl().isBackup());
 
         addTransaction(xtnEntry);
         return xtnEntry;
@@ -284,7 +284,7 @@ public class TransactionHandler {
             while (true) {
                 XtnEntry newXtnEntry = null;
                 if (xtnEntry == null) {
-                    newXtnEntry = new XtnEntry(txn,_engine.getSpaceImpl().isBackup());
+                    newXtnEntry = new XtnEntry(txn, _engine.getSpaceImpl().isBackup());
                     xtnEntry = newXtnEntry;
                 }
 
@@ -488,24 +488,28 @@ public class TransactionHandler {
     //check the (rare) state in which under xtn op wasnt returned to the client because of disconnection and
     //the proxy retries with same xtn and operation id
     public void checkTransactionDisconnection(OperationID opid, ServerTransaction txn)
-    throws TransactionException
-    {
+            throws TransactionException {
         XtnEntry xtnEntry = m_XtnTable.get(txn);
         Logger logger = CacheManager.getCacheLogger();
         //Do no remove/change logger, using in unitTest see @PollingContainerTest
-        if(logger.isLoggable(Level.FINER)){
-            if(!(_engine.getSpaceImpl().isBackup()|| opid == null )){
+        if (logger.isLoggable(Level.FINER)) {
+            if (!(_engine.getSpaceImpl().isBackup() || opid == null)) {
 
-                logger.finer("DebugForTest:ThreadID:"+ Thread.currentThread().getName()+"TransactionID= " + txn.id +  "   operationID={"   + opid.toString()+"}") ;
+                logger.finer("DebugForTest:ThreadID:" + Thread.currentThread().getName() + "TransactionID= " + txn.id + "   operationID={" + opid.toString() + "}");
             }
         }
-        if (xtnEntry == null || !xtnEntry.createdOnNonBackup() || opid == null ||! xtnEntry.getXtnData().isOperationID(opid)) {
-            return ;
+        if (xtnEntry == null || !xtnEntry.createdOnNonBackup() || opid == null || !xtnEntry.getXtnData().isOperationID(opid)) {
+            return;
         }
-        TransactionException exception =  new TransactionException("Transaction was disconnected due to communication fault: " +
+        TransactionException exception = new TransactionException("Transaction was disconnected due to communication fault: " +
                 txn.toString());
-        _engine.getLogger().log(Level.WARNING, "Transaction disconnection should be rolled back", exception);
-
-        throw  exception;
+        _engine.getLogger().log(Level.WARNING, "Transaction disconnection has been detected, Transaction will be aborted", exception);
+        try{
+            _engine.abort(txn.getTransactionManager(), txn, false, opid);
+        } catch (Exception e){
+            _engine.getLogger().log(Level.WARNING, "Failed to abort transaction "+txn.toString(), e);
+        }
+        addToPhantomGlobalXtns(txn);
+        throw exception;
     }
 }
