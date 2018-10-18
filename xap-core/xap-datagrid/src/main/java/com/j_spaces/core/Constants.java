@@ -909,7 +909,7 @@ public interface Constants {
 
         String PREFIX = "leader-election.zookeeper.";
         String SESSION_TIMEOUT = PREFIX + "session-timeout";
-        String SESSION_TIMEOUT_DEFAULT = "8000";
+        String SESSION_TIMEOUT_DEFAULT = "15000";
         String FULL_LEADER_SELECTOR_SESSION_TIMEOUT = SPACE_CONFIG_PREFIX + SESSION_TIMEOUT;
         String CONNECTION_TIMEOUT = PREFIX + "connection-timeout";
         String CONNECTION_TIMEOUT_DEFAULT = "5000";
