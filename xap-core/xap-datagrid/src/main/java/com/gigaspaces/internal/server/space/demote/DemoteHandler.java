@@ -35,7 +35,7 @@ public class DemoteHandler implements ISpaceModeListener {
     public void demote(int timeToWait, TimeUnit unit) throws DemoteFailedException {
 //        _spaceImpl.beforeOperation(true, false /*checkQuiesceMode*/, null);
 
-        if (_isDemoteInProgress.compareAndSet(false, true)) {
+        if (!_isDemoteInProgress.compareAndSet(false, true)) {
             throw new DemoteFailedException("Demote is already in progress");
         }
 
@@ -68,20 +68,19 @@ public class DemoteHandler implements ISpaceModeListener {
             }
 
             remainingTime = end - System.currentTimeMillis();
-
             if (remainingTime <= 0) {
                 throw new DemoteFailedException("Couldn't demote to backup - timeout waiting for a lease manager cycle");
             }
 
-//            remainingTime = end - System.currentTimeMillis();
-//            _spaceImpl.getEngine().getTransactionHandler().abortOpenTransactions();
-//            _spaceImpl.getEngine().getTransactionHandler().waitForActiveTransactions(remainingTime);
+//            boolean noActiveTransactions = _spaceImpl.getEngine().getTransactionHandler().waitForActiveTransactions(remainingTime);
+//            if (!noActiveTransactions) {
+//                throw new DemoteFailedException("Couldn't demote to backup - timeout waiting for transactions");
+//            }
 
             remainingTime = end - System.currentTimeMillis();
             if (remainingTime <= 0) {
-                throw new DemoteFailedException("Couldn't demote to backup - timeout while waiting for active transactions");
+                throw new DemoteFailedException("Couldn't demote to backup - timeout while waiting for transactions");
             }
-
 
             //Sleep for the remaining time
             try {
