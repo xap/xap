@@ -10,6 +10,7 @@ import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER_CLASS_NAME;
@@ -23,8 +24,8 @@ import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER
 public class DemoteHandler implements ISpaceModeListener {
     private final Logger _logger;
     private final SpaceImpl _spaceImpl;
-    private volatile boolean isDemoteInProgress = false;
-    private CountDownLatch notify = new CountDownLatch(1);
+    private AtomicBoolean _isDemoteInProgress = new AtomicBoolean(false);
+    private CountDownLatch _latch;
 
     public DemoteHandler(SpaceImpl spaceImpl) {
         _spaceImpl = spaceImpl;
@@ -34,54 +35,28 @@ public class DemoteHandler implements ISpaceModeListener {
     public void demote(int timeToWait, TimeUnit unit) throws DemoteFailedException {
 //        _spaceImpl.beforeOperation(true, false /*checkQuiesceMode*/, null);
 
-        isDemoteInProgress = true;
-        _spaceImpl.addInternalSpaceModeListener(this);
-        demoteImpl(timeToWait,unit);
-        _spaceImpl.removeInternalSpaceModeListener(this);
-        isDemoteInProgress = false;
+        if (_isDemoteInProgress.compareAndSet(false, true)) {
+            throw new DemoteFailedException("Demote is already in progress");
+        }
+
+        validationChecks();
+
+        try {
+            _spaceImpl.addInternalSpaceModeListener(this);
+            _latch = new CountDownLatch(1);
+            demoteImpl(timeToWait, unit);
+        } finally {
+            _spaceImpl.removeInternalSpaceModeListener(this);
+            _isDemoteInProgress.set(false);
+        }
     }
 
     private void demoteImpl(int timeToWait, TimeUnit unit) throws DemoteFailedException {
         long timeToWaitInMs = unit.toMillis(timeToWait);
         long end = timeToWaitInMs + System.currentTimeMillis();
 
-        if (!_spaceImpl.isPrimary()) {
-            //space is not primary
-            throw new DemoteFailedException("Space is not primary");
-        }
-
-        validateCanProgress();
-
-        if (!_spaceImpl.useZooKeeper()) {
-            throw new DemoteFailedException("Primary demotion is only supported with Zookeeper leader selector.");
-        }
-
-        if (_spaceImpl.getClusterInfo().getNumberOfBackups() != 1) {
-            throw new DemoteFailedException("Couldn't demote to backup - cluster should be configured with exactly one backup, backups: (" + _spaceImpl.getClusterInfo().getNumberOfBackups() + ")");
-        }
-
-        //In case that we use ZooKeeper but leader selector is not ZK based leader selector
-        if (_spaceImpl.getLeaderSelector() == null || !_spaceImpl.getLeaderSelector().getClass().getName().equals(LEADER_SELECTOR_HANDLER_CLASS_NAME)) {
-            throw new DemoteFailedException("Primary demotion is only supported with Zookeeper leader selector.");
-        }
-
-        List<ReplicationStatistics.OutgoingChannel> backupChannels = _spaceImpl.getHolder().getReplicationStatistics().getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE);
-        if (backupChannels.size() != 1) {
-            //more than one backup
-            throw new DemoteFailedException("There should be exactly one backup, current channels: ("+backupChannels.size()+")");
-        }
-
-        ReplicationStatistics.OutgoingChannel backupChannel = backupChannels.get(0);
-
-        if (!backupChannel.getChannelState().equals(ReplicationStatistics.ChannelState.ACTIVE)) {
-            //backup replication is not active
-            throw new DemoteFailedException("Backup replication channel is not active ("+backupChannel.getChannelState()+")");
-        }
-
-
         try {
 
-            //TODO quiesce token - replace with empty token
             _logger.info("Demoting to backup, entering quiesce mode...");
             _spaceImpl.getQuiesceHandler().quiesceDemote("Space is demoting from primary to backup");
 
@@ -112,30 +87,27 @@ public class DemoteHandler implements ISpaceModeListener {
             try {
                 Thread.sleep(remainingTime);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                throw new DemoteFailedException("Demote got interrupted");
+                //Thread.currentThread().interrupt(); // TODO good practice
             }
 
 
-            long lastKeyInRedoLog = _spaceImpl.getHolder().getReplicationStatistics().getOutgoingReplication().getLastKeyInRedoLog();
-
-            if (_spaceImpl.getHolder().getReplicationStatistics().getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE).get(0).getLastConfirmedKeyFromTarget() != lastKeyInRedoLog) {
+            long lastKeyInRedoLog = getOutgoingReplication().getLastKeyInRedoLog();
+            ReplicationStatistics.OutgoingChannel backupChannel = getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE).get(0);
+            if (backupChannel.getLastConfirmedKeyFromTarget() != lastKeyInRedoLog) {
                 //Backup is not synced
-                throw new DemoteFailedException("Couldn't demote to backup - backup is not synced ("+backupChannel.getLastConfirmedKeyFromTarget()+" != "+lastKeyInRedoLog+")");
+                throw new DemoteFailedException("Backup is not synced ("+backupChannel.getLastConfirmedKeyFromTarget()+" != "+lastKeyInRedoLog+")");
             }
 
-            _logger.info("size during demote = "+_spaceImpl.getHolder().getReplicationStatistics().getOutgoingReplication().getRedoLogSize());
-            //TODO recheck above preconditions again after entering quiesce mode
-            //Wait timeout if necessary (e.g. wait for replication from primary to backup)
+            validateSpaceStatus(true);
 
-            // wait for no activity
-            //TODO
-            validateCanProgress();
             //close outgoing connections
-            closeChannels();
+            closeOutgoingChannels();
+
 
             //Verify that there was no issues against ZK like suspend, disconnect
-            // If already suspended, abort
-            validateCanProgress();
+            validateSpaceStatus(false);
+
 
             //Restart leader selector handler (in case of ZK then it restarts
             // the connection to ZK so the backup becomes primary)
@@ -144,17 +116,17 @@ public class DemoteHandler implements ISpaceModeListener {
                 throw new DemoteFailedException("Could not restart leader selector");
             }
 
-                try {
-                    boolean succeeded = notify.await(remainingTime, TimeUnit.MILLISECONDS);
-                    if (!succeeded) {
-                        throw new DemoteFailedException("Space mode wasn't changed to be backup");
-                    }
-                    if (_spaceImpl.getSpaceMode().equals(SpaceMode.PRIMARY)) {
-                        throw new DemoteFailedException("Space mode wasn't changed to backup - space still primary");
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+            try {
+                boolean succeeded = _latch.await(5, TimeUnit.SECONDS); // expose as sys prop
+                if (!succeeded) {
+                    throw new DemoteFailedException("Space mode wasn't changed to be backup");
                 }
+                if (_spaceImpl.getSpaceMode().equals(SpaceMode.PRIMARY)) {
+                    throw new DemoteFailedException("Space mode wasn't changed to backup - space still primary");
+                }
+            } catch (InterruptedException e) {
+                throw new DemoteFailedException("Demote got interrupted");
+            }
 
         } catch (DemoteFailedException e) {
             abort();
@@ -165,40 +137,73 @@ public class DemoteHandler implements ISpaceModeListener {
         }
     }
 
+    private void validateStaticConfigurations() throws DemoteFailedException {
+        if (!_spaceImpl.useZooKeeper()) {
+            throw new DemoteFailedException("Primary demotion is only supported with Zookeeper leader selector.");
+        }
+
+        if (_spaceImpl.getClusterInfo().getNumberOfBackups() != 1) {
+            throw new DemoteFailedException("Couldn't demote to backup - cluster should be configured with exactly one backup, backups: (" + _spaceImpl.getClusterInfo().getNumberOfBackups() + ")");
+        }
+
+        //In case that we use ZooKeeper but leader selector is not ZK based leader selector
+        if (_spaceImpl.getLeaderSelector() == null || !_spaceImpl.getLeaderSelector().getClass().getName().equals(LEADER_SELECTOR_HANDLER_CLASS_NAME)) {
+            throw new DemoteFailedException("Primary demotion is only supported with Zookeeper leader selector.");
+        }
+    }
+
+    private void validateSpaceStatus(boolean checkBackupChannel) throws DemoteFailedException {
+        if (!_spaceImpl.isPrimary()) {
+            //space is not primary
+            throw new DemoteFailedException("Space is not primary");
+        }
+
+        if (_spaceImpl.getQuiesceHandler().isSuspended()) {
+            throw new DemoteFailedException("Space is suspended");
+        }
+
+        if (_spaceImpl.getQuiesceHandler().isQuiesced()) {
+            throw new DemoteFailedException("Space is quiesced");
+        }
+
+        if (!checkBackupChannel)
+            return;
+
+        List<ReplicationStatistics.OutgoingChannel> backupChannels = getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE);
+        if (backupChannels.size() != 1) {
+            //more than one backup
+            throw new DemoteFailedException("There should be exactly one backup, current channels: ("+backupChannels.size()+")");
+        }
+
+        ReplicationStatistics.OutgoingChannel backupChannel = backupChannels.get(0);
+
+        if (!backupChannel.getChannelState().equals(ReplicationStatistics.ChannelState.ACTIVE)) {
+            //backup replication is not active
+            throw new DemoteFailedException("Backup replication channel is not active ("+backupChannel.getChannelState()+")");
+        }
+    }
+
+    private void validationChecks() throws DemoteFailedException {
+        validateStaticConfigurations();
+
+        validateSpaceStatus(true);
+    }
+
     public boolean isDemoteInProgress() {
-        return isDemoteInProgress;
+        return _isDemoteInProgress.get();
     }
 
-    private boolean isSuspended() {
-        return _spaceImpl.getQuiesceHandler().isSuspended();
+    private ReplicationStatistics.OutgoingReplication getOutgoingReplication() {
+        return _spaceImpl.getHolder().getReplicationStatistics().getOutgoingReplication();
     }
 
-
-    private void closeChannels() {
+    private void closeOutgoingChannels() {
         _spaceImpl.getEngine().getReplicationNode().getAdmin().setPassive(false);
     }
 
-    private void validateCanProgress() throws DemoteFailedException {
-        if (isSuspended()) {
-            throw new DemoteFailedException(ERR_SPACE_IS_SUSPENDED);
-        }
-        if (isQuiesced()) {
-            throw new DemoteFailedException(ERR_SPACE_IS_QUIESCED);
-        }
-    }
-
-    private boolean isQuiesced() {
-        return _spaceImpl.getQuiesceHandler().isQuiesced();
-    }
-
-
     private void abort() {
         _spaceImpl.getEngine().getReplicationNode().getAdmin().setActive();
-
     }
-
-  public final String ERR_SPACE_IS_SUSPENDED = "Space is suspended";
-  public final String ERR_SPACE_IS_QUIESCED = "Space is quiesced";
 
     @Override
     public void beforeSpaceModeChange(SpaceMode newMode) throws RemoteException {
@@ -212,6 +217,6 @@ public class DemoteHandler implements ISpaceModeListener {
         } else {
             _logger.severe(">>afterSpaceModeChange>> Unexpected Space mode changed to " + newMode);
         }
-        notify.countDown();
+        _latch.countDown();
     }
 }
