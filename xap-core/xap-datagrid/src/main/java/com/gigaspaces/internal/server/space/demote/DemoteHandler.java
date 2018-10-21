@@ -207,14 +207,16 @@ public class DemoteHandler implements ISpaceModeListener {
 
     @Override
     public void beforeSpaceModeChange(SpaceMode newMode) throws RemoteException {
-        _logger.info(">>>>beforeSpaceModeChange>>>> mode: " + newMode);
+        //TODO clean
     }
 
     @Override
     public void afterSpaceModeChange(SpaceMode newMode) throws RemoteException {
         if (newMode.equals(SpaceMode.BACKUP)) {
+            //TODO clean
             _logger.info(">>afterSpaceModeChange>> Space mode changed to backup!!");
         } else {
+            //TODO clean
             _logger.severe(">>afterSpaceModeChange>> Unexpected Space mode changed to " + newMode);
         }
         _latch.countDown();
