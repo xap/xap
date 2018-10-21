@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ************************************************************************************************
 # * This script is used to build XAP.                                                            *
 # * Example: ./build.sh -T 1C -Dmaven.repo.local=/home/kuku/my_repo                              *

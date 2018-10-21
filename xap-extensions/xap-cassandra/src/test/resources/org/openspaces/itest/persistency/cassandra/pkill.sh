@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #########################################################################################
 # This scrip greps through the currently running processes and lists the process IDs 
