@@ -98,14 +98,10 @@ public class DemoteHandler implements ISpaceModeListener {
                 throw new DemoteFailedException("Backup is not synced ("+backupChannel.getLastConfirmedKeyFromTarget()+" != "+lastKeyInRedoLog+")");
             }
 
-            validateSpaceStatus(true);
+            validateSpaceStatus(false);
 
             //close outgoing connections
             closeOutgoingChannels();
-
-
-            //Verify that there was no issues against ZK like suspend, disconnect
-            validateSpaceStatus(false);
 
 
             //Restart leader selector handler (in case of ZK then it restarts
@@ -151,34 +147,33 @@ public class DemoteHandler implements ISpaceModeListener {
         }
     }
 
-    private void validateSpaceStatus(boolean checkBackupChannel) throws DemoteFailedException {
+    private void validateSpaceStatus(boolean checkQuiesce) throws DemoteFailedException {
         if (!_spaceImpl.isPrimary()) {
             //space is not primary
             throw new DemoteFailedException("Space is not primary");
         }
 
-        if (_spaceImpl.getQuiesceHandler().isSuspended()) {
-            throw new DemoteFailedException("Space is suspended");
-        }
+        if (checkQuiesce) {
+            if (_spaceImpl.getQuiesceHandler().isSuspended()) {
+                throw new DemoteFailedException("Space is suspended");
+            }
 
-        if (_spaceImpl.getQuiesceHandler().isQuiesced()) {
-            throw new DemoteFailedException("Space is quiesced");
+            if (_spaceImpl.getQuiesceHandler().isQuiesced()) {
+                throw new DemoteFailedException("Space is quiesced");
+            }
         }
-
-        if (!checkBackupChannel)
-            return;
 
         List<ReplicationStatistics.OutgoingChannel> backupChannels = getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE);
         if (backupChannels.size() != 1) {
             //more than one backup
-            throw new DemoteFailedException("There should be exactly one backup, current channels: ("+backupChannels.size()+")");
+            throw new DemoteFailedException("There should be exactly one backup, current channels: (" + backupChannels.size() + ")");
         }
 
         ReplicationStatistics.OutgoingChannel backupChannel = backupChannels.get(0);
 
         if (!backupChannel.getChannelState().equals(ReplicationStatistics.ChannelState.ACTIVE)) {
             //backup replication is not active
-            throw new DemoteFailedException("Backup replication channel is not active ("+backupChannel.getChannelState()+")");
+            throw new DemoteFailedException("Backup replication channel is not active (" + backupChannel.getChannelState() + ")");
         }
     }
 
