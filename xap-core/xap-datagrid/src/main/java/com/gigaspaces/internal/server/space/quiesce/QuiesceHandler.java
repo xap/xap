@@ -41,12 +41,15 @@ public class QuiesceHandler {
     private final SpaceImpl _spaceImpl;
     private final boolean _supported;
     private volatile Guard _guard;
+    private volatile SuspendInfo _suspendInfo;
 
     public QuiesceHandler(SpaceImpl spaceImpl, QuiesceStateChangedEvent quiesceStateChangedEvent) {
         _spaceImpl = spaceImpl;
         _logger = Logger.getLogger(Constants.LOGGER_QUIESCE + '.' + spaceImpl.getNodeName());
         _supported = !QUIESCE_DISABLED && !_spaceImpl.isLocalCache();
         _guard = null;
+        _suspendInfo = new SuspendInfo(SuspendType.NONE);
+
         if (quiesceStateChangedEvent != null && quiesceStateChangedEvent.getQuiesceState() == QuiesceState.QUIESCED)
             setQuiesceMode(quiesceStateChangedEvent);
     }
@@ -55,6 +58,10 @@ public class QuiesceHandler {
         // Concurrency: snapshot volatile _guard into local variable
         final Guard currGuard = _guard;
         return currGuard != null;
+    }
+
+    public SuspendInfo getSuspendInfo() {
+        return _suspendInfo;
     }
 
     public boolean isSuspended() {
@@ -143,16 +150,18 @@ public class QuiesceHandler {
     }
 
     protected enum Status {
-        SUSPENDED(0, "suspended"),
-        QUIESCED_DEMOTE(1, "demoting"),
-        QUIESCED(2, "quiesced");
+        SUSPENDED(0, "suspended", SuspendType.DISCONNECTED),
+        QUIESCED_DEMOTE(1, "demoting", SuspendType.DEMOTING),
+        QUIESCED(2, "quiesced", SuspendType.QUIESCED);
 
         private int order;
         private String description;
+        private SuspendType suspendType;
 
-        Status(int order, String description) {
+        Status(int order, String description, SuspendType suspendType) {
             this.order = order;
             this.description = description;
+            this.suspendType = suspendType;
         }
 
         private boolean supersedes(Status other) {
@@ -274,6 +283,10 @@ public class QuiesceHandler {
             } else {
                 _logger.info("Quiesce state set to " + desc(_guard));
             }
+
+            if (_guard != null) {
+                _suspendInfo = new SuspendInfo(_guard.status.suspendType);
+            }
             return true;
         } catch (Exception e) {
             return false;
@@ -321,6 +334,9 @@ public class QuiesceHandler {
         guardToRemove.close();
         _guard = removeGuardHelper(_guard, status);
         _logger.info("Removed " + status + ", new state is " + desc(_guard));
+        if (_guard != null) {
+            _suspendInfo = new SuspendInfo(_guard.status.suspendType);
+        }
     }
 
 

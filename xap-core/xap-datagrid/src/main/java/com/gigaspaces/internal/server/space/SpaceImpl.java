@@ -3257,7 +3257,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         if (_engine.isReplicated())
             replicationStatus = _engine.getReplicationNode().getAdmin().getStatus();
 
-        return new RuntimeHolder(getSpaceMode(), replicationStatus, getState());
+        return new RuntimeHolder(getSpaceMode(), replicationStatus, getState(), getQuiesceHandler().getSuspendInfo());
     }
 
     @Override

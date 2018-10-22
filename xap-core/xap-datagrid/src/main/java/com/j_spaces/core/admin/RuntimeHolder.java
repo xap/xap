@@ -17,6 +17,7 @@
 package com.j_spaces.core.admin;
 
 import com.gigaspaces.cluster.activeelection.SpaceMode;
+import com.gigaspaces.internal.server.space.quiesce.SuspendInfo;
 import com.j_spaces.core.ISpaceState;
 
 import java.io.Externalizable;
@@ -41,13 +42,16 @@ public class RuntimeHolder implements Externalizable {
 
     private Integer spaceState = null;
 
+    private SuspendInfo suspendInfo;
+
     public RuntimeHolder() {
     }
 
-    public RuntimeHolder(SpaceMode spaceMode, Object[] replicationStatus, int spaceState) {
+    public RuntimeHolder(SpaceMode spaceMode, Object[] replicationStatus, int spaceState, SuspendInfo suspendInfo) {
         this.spaceMode = spaceMode;
         this.replicationStatus = replicationStatus;
         this.spaceState = spaceState;
+        this.suspendInfo = suspendInfo;
     }
 
     public SpaceMode getSpaceMode() {
@@ -66,6 +70,14 @@ public class RuntimeHolder implements Externalizable {
         return spaceState;
     }
 
+    public SuspendInfo getSuspendInfo() {
+        return suspendInfo;
+    }
+
+    public void setSuspendInfo(SuspendInfo suspendInfo) {
+        this.suspendInfo = suspendInfo;
+    }
+
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeObject(spaceMode);
         if (replicationStatus == null) {
@@ -81,6 +93,15 @@ public class RuntimeHolder implements Externalizable {
             out.writeBoolean(true);
             out.writeInt(spaceState);
         }
+
+        //TODO handle BW
+
+        if (suspendInfo == null) {
+            out.writeBoolean(false);
+        } else{
+            out.writeBoolean(true);
+            out.writeObject(suspendInfo);
+        }
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
@@ -92,5 +113,12 @@ public class RuntimeHolder implements Externalizable {
         if (in.readBoolean()) {
             spaceState = in.readInt();
         }
+
+        //TODO handle BW
+        if (in.readBoolean()) {
+            suspendInfo = (SuspendInfo) in.readObject();
+        }
+
+
     }
 }
