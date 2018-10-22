@@ -139,7 +139,10 @@ public interface IReplicationSourceGroup {
 
     void setActive(MetricRegistrator metricRegistrator);
 
-    void setPassive();
+    /**
+     * @param closeProxy - whether to close the stub proxy when it has no more references.
+     */
+    void setPassive(boolean closeProxy);
 
     boolean flushPendingReplication(long timeout, TimeUnit units);
 

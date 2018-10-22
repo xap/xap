@@ -76,7 +76,7 @@ public class RemoteOperationsExecutorProxy {
     }
 
     public boolean isActive() throws RemoteException {
-        return _executor.isActive();
+        return _executor.isActiveAndNotSuspended();
     }
 
     public String toLogMessage(RemoteOperationRequest<?> request) {
@@ -94,7 +94,7 @@ public class RemoteOperationsExecutorProxy {
 
         try {
             boolean isActive = proxy.isActive();
-            return (isActive || !activeOnly);
+            return (isActive || !activeOnly); //TODO enhance
         } catch (RemoteException e) {
             return false;
         }

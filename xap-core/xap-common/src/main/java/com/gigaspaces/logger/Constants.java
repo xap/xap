@@ -126,6 +126,8 @@ public interface Constants {
     final public static String LOGGER_GSITERATOR = "com.gigaspaces.client.gsiterator";
 
     final public static String LOGGER_QUIESCE = "com.gigaspaces.quiesce";
+    final public static String LOGGER_DEMOTE= "com.gigaspaces.demote";
+
 
     // Space Proxy
     final public static String LOGGER_SPACEPROXY_ROUTER = "com.gigaspaces.spaceproxy.router";

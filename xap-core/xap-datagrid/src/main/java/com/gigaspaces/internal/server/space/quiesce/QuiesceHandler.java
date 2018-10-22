@@ -16,11 +16,7 @@
 
 package com.gigaspaces.internal.server.space.quiesce;
 
-import com.gigaspaces.admin.quiesce.QuiesceException;
-import com.gigaspaces.admin.quiesce.QuiesceState;
-import com.gigaspaces.admin.quiesce.QuiesceStateChangedEvent;
-import com.gigaspaces.admin.quiesce.QuiesceToken;
-import com.gigaspaces.admin.quiesce.QuiesceTokenFactory;
+import com.gigaspaces.admin.quiesce.*;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.logger.Constants;
@@ -55,7 +51,7 @@ public class QuiesceHandler {
             setQuiesceMode(quiesceStateChangedEvent);
     }
 
-    public boolean isQuiesced() {
+    public boolean isOn() {
         // Concurrency: snapshot volatile _guard into local variable
         final Guard currGuard = _guard;
         return currGuard != null;
@@ -64,7 +60,13 @@ public class QuiesceHandler {
     public boolean isSuspended() {
         // Concurrency: snapshot volatile _guard into local variable
         final Guard currGuard = _guard;
-        return currGuard != null && currGuard.suspendLatch != null;
+        return hasGuard(currGuard, Status.SUSPENDED);
+    }
+
+    public boolean isQuiesced() {
+        // Concurrency: snapshot volatile _guard into local variable
+        final Guard currGuard = _guard;
+        return hasGuard(currGuard, Status.QUIESCED);
     }
 
     //disable any non-admin op if q mode on
@@ -84,8 +86,17 @@ public class QuiesceHandler {
             unquiesce();
     }
 
+    public void quiesceDemote(String description) {
+        Guard guard = new Guard(description, null, Status.QUIESCED_DEMOTE);
+        if (addGuard(guard)) {
+            // Cancel (throw exception) on all pending op templates
+            if (_spaceImpl.getEngine() != null)
+                _spaceImpl.getEngine().getCacheManager().getTemplateExpirationManager().returnWithExceptionFromAllPendingTemplates(_guard.exception);
+        }
+    }
+
     public void quiesce(String description, QuiesceToken token) {
-        if (addGuard(new Guard(description, token, false))) {
+        if (addGuard(new Guard(description, token, Status.QUIESCED))) {
             // Cancel (throw exception) on all pending op templates
             if (_spaceImpl.getEngine() != null)
                 _spaceImpl.getEngine().getCacheManager().getTemplateExpirationManager().returnWithExceptionFromAllPendingTemplates(_guard.exception);
@@ -93,72 +104,19 @@ public class QuiesceHandler {
     }
 
     public void unquiesce() {
-        removeGuard(false);
+        removeGuard(Status.QUIESCED);
+    }
+
+    public void unquiesceDemote() {
+        removeGuard(Status.QUIESCED_DEMOTE);
     }
 
     public void suspend(String description) {
-        addGuard(new Guard(description, createSpaceNameToken(), true));
+        addGuard(new Guard(description, createSpaceNameToken(), Status.SUSPENDED));
     }
 
     public void unsuspend() {
-        removeGuard(true);
-    }
-
-    private synchronized boolean addGuard(Guard newGuard) {
-        if (!_supported) {
-            if (QUIESCE_DISABLED)
-                _logger.severe("Quiesce is not supported because the '" + SystemProperties.DISABLE_QUIESCE_MODE + "' was set");
-            if (_spaceImpl.isLocalCache())
-                _logger.severe("Quiesce is not supported for local-cache/local-view");
-            return false;
-        }
-
-        if (_guard == null || newGuard.supersedes(_guard)) {
-            newGuard.innerGuard = _guard;
-            _guard = newGuard;
-            _logger.info("Quiesce state set to " + desc(newGuard));
-            return true;
-        }
-        if (_guard.supersedes(newGuard) && _guard.innerGuard == null) {
-            _guard.innerGuard = newGuard;
-            _logger.info("Quiesce guard was added, but is currently masked because state is " + desc(_guard));
-            return true;
-        }
-        _logger.warning("Quiesce guard was discarded due to ambiguity - current state is " + desc(_guard));
-        return false;
-    }
-
-    private synchronized Guard removeGuard(boolean suspendableGuard) {
-        Guard prevGuard;
-        if (_guard == null) {
-            prevGuard = null;
-            _logger.warning("No guard to remove");
-        } else if (suspendableGuard) {
-            if (_guard.suspendLatch != null) {
-                prevGuard = _guard;
-                _guard = _guard.innerGuard;
-                _logger.info("Removed " + desc(prevGuard) + ", new state is " + desc(_guard));
-            } else {
-                prevGuard = null;
-                _logger.warning("No suspend guard to remove");
-            }
-        } else {
-            if (_guard.suspendLatch == null) {
-                prevGuard = _guard;
-                _guard = null;
-                _logger.info("Removed " + desc(prevGuard) + ", new state is " + desc(_guard));
-            } else if (_guard.innerGuard != null) {
-                prevGuard = _guard.innerGuard;
-                _guard.innerGuard = null;
-                _logger.info("Removed inner " + desc(prevGuard) + ", state remains " + desc(_guard));
-            } else {
-                prevGuard = null;
-                _logger.warning("No quiesce guard to remove");
-            }
-        }
-        if (prevGuard != null)
-            prevGuard.close();
-        return prevGuard;
+        removeGuard(Status.SUSPENDED);
     }
 
     public boolean isSupported() {
@@ -181,28 +139,49 @@ public class QuiesceHandler {
     private static String desc(Guard guard) {
         if (guard == null)
             return "UNQUIESCED";
-        return guard.suspendLatch == null ? "QUIESCED" : "SUSPENDED";
+        return guard.status == Status.SUSPENDED ? "SUSPENDED" : "QUIESCED";
     }
 
-    private class Guard implements Closeable {
-        private final QuiesceToken token;
-        private final CountDownLatch suspendLatch;
-        private final QuiesceException exception;
-        Guard innerGuard;
+    protected enum Status {
+        SUSPENDED(0, "suspended"),
+        QUIESCED_DEMOTE(1, "demoting"),
+        QUIESCED(2, "quiesced");
 
-        Guard(String description, QuiesceToken token, boolean suspend) {
-            this.token = token != null ? token : EmptyToken.INSTANCE;
-            this.suspendLatch = suspend ? new CountDownLatch(1) : null;
-            String errorMessage = "Operation cannot be executed - space [" + _spaceImpl.getServiceName() + "] is " +
-                    (suspend ? "suspended" : "quiesced") +
-                    (StringUtils.hasLength(description) ? " (" + description + ")" : "");
-            this.exception = new QuiesceException(errorMessage);
+        private int order;
+        private String description;
+
+        Status(int order, String description) {
+            this.order = order;
+            this.description = description;
         }
 
-        @Override
-        public void close() {
-            if (suspendLatch != null)
-                suspendLatch.countDown();
+        private boolean supersedes(Status other) {
+            return this.order < other.order;
+        }
+    }
+
+
+    protected class Guard implements Closeable {
+
+        private final QuiesceException exception;
+        private final QuiesceToken token;
+        private final Status status;
+        private final CountDownLatch suspendLatch;
+        private Guard innerGuard;
+
+        Guard(String description, QuiesceToken token, Status status) {
+            this.token = token != null ? token : EmptyToken.INSTANCE;
+            this.status = status;
+            this.suspendLatch = (status == Status.SUSPENDED) ? new CountDownLatch(1) : null;
+
+            String errorMessage = "Operation cannot be executed - space [" + _spaceImpl.getServiceName() + "] is " +
+                    status.description +
+                    (StringUtils.hasLength(description) ? " (" + description + ")" : "");
+            if (status == Status.QUIESCED_DEMOTE) {
+                this.exception = new QuiesceDemoteException(errorMessage);
+            } else {
+                this.exception = new QuiesceException(errorMessage);
+            }
         }
 
         void guard(QuiesceToken operationToken) {
@@ -219,7 +198,13 @@ public class QuiesceHandler {
         }
 
         boolean supersedes(Guard otherGuard) {
-            return this.suspendLatch != null && otherGuard.suspendLatch == null;
+            return this.status.supersedes(otherGuard.status);
+        }
+
+        public void close() {
+            if (suspendLatch != null)
+                suspendLatch.countDown();
+
         }
 
         private boolean safeAwait() {
@@ -239,5 +224,114 @@ public class QuiesceHandler {
                 Thread.currentThread().interrupt();
             }
         }
+
+
+        @Override
+        public String toString() {
+            return "Guard{" +
+                    "status=" + status +
+                    ", innerGuard=" + innerGuard +
+                    '}';
+        }
     }
+
+    private boolean hasGuard(Guard currentGuard, Status status) {
+        if (currentGuard == null) return false;
+
+        return currentGuard.status.equals(status) || hasGuard(currentGuard.innerGuard, status);
+    }
+
+    private Guard getGuard(Guard currentGuard, Status status) {
+        if (currentGuard == null) return null;
+        if (currentGuard.status.equals(status)) return currentGuard;
+        return getGuard(currentGuard.innerGuard, status);
+    }
+
+    private synchronized boolean addGuard(Guard newGuard) {
+        if (!_supported) {
+            if (QUIESCE_DISABLED)
+                _logger.severe("Quiesce is not supported because the '" + SystemProperties.DISABLE_QUIESCE_MODE + "' was set");
+            if (_spaceImpl.isLocalCache())
+                _logger.severe("Quiesce is not supported for local-cache/local-view");
+            return false;
+        }
+
+        if (hasGuard(_guard, newGuard.status)) {
+            _logger.warning("Quiesce guard ["+newGuard.status+"] was discarded, it already exists - current state is " + desc(_guard));
+            return false;
+        }
+
+        if (!guardCanBeAdded(_guard, newGuard)) {
+            _logger.warning("Quiesce guard couldn't be added - current state is " + desc(_guard));
+            return false;
+        }
+
+        try {
+            Guard prevGuard = _guard;
+            _guard = addGuardHelper(_guard, newGuard);
+            if (prevGuard == _guard) {
+                _logger.info("Quiesce guard "+desc(newGuard)+" was added, but is currently masked because state is " + desc(_guard));
+            } else {
+                _logger.info("Quiesce state set to " + desc(_guard));
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean guardCanBeAdded(Guard current, Guard newGuard) {
+        if (current == null) return true;
+        if (current.supersedes(newGuard) || newGuard.supersedes(current)) {
+             return guardCanBeAdded(current.innerGuard, newGuard);
+        } else {
+            return false;
+        }
+    }
+
+    private Guard addGuardHelper(Guard currentGuard, Guard newGuard) throws Exception {
+        Guard res;
+        if (currentGuard == null) {
+            res = newGuard;
+        } else if (currentGuard.supersedes(newGuard)) {
+            res = currentGuard;
+            res.innerGuard = addGuardHelper(currentGuard.innerGuard, newGuard);
+        } else if (newGuard.supersedes(currentGuard)) {
+            res = newGuard;
+            res.innerGuard = addGuardHelper(currentGuard.innerGuard, currentGuard);
+        } else {
+            throw new Exception("Guard could not be added due to ambiguity");
+        }
+
+        return res;
+    }
+
+    private synchronized void removeGuard(Status status) {
+        if (_guard == null) {
+            _logger.warning("No guard to remove");
+            return;
+        }
+
+        Guard guardToRemove = getGuard(_guard, status);
+        if (guardToRemove == null) {
+            _logger.warning("No " + status + " guard to remove");
+            return;
+        }
+
+        guardToRemove.close();
+        _guard = removeGuardHelper(_guard, status);
+        _logger.info("Removed " + status + ", new state is " + desc(_guard));
+    }
+
+
+    //returns the new guard
+    private Guard removeGuardHelper(Guard guard, Status status) {
+        if (guard.status.equals(status)) {
+            return guard.innerGuard;
+        } else {
+            guard.innerGuard = removeGuardHelper(guard.innerGuard, status);
+            return guard;
+        }
+    }
+
 }

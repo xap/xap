@@ -174,7 +174,7 @@ public class ReplicationNodeAdmin
         _replicationNode.setNodeMode(ReplicationNodeMode.ACTIVE);
     }
 
-    public synchronized void setPassive() {
+    public synchronized void setPassive(boolean closeProxy) {
         if (_replicationNode.getNodeMode() == ReplicationNodeMode.PASSIVE)
             return;
         if (_logger.isLoggable(Level.FINER))
@@ -191,7 +191,7 @@ public class ReplicationNodeAdmin
                     + ReplicationNodeMode.PASSIVE + " mode");
 
         for (IReplicationSourceGroup sourceGroup : _replicationNode.getReplicationSourceGroups())
-            sourceGroup.setPassive();
+            sourceGroup.setPassive(closeProxy);
         for (IReplicationTargetGroup targetGroup : _replicationNode.getReplicationTargetGroups())
             targetGroup.setPassive();
 
