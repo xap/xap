@@ -24,7 +24,7 @@ import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER
 public class DemoteHandler implements ISpaceModeListener {
     private final Logger _logger;
     private final SpaceImpl _spaceImpl;
-    private AtomicBoolean _isDemoteInProgress = new AtomicBoolean(false);
+    private final AtomicBoolean _isDemoteInProgress = new AtomicBoolean(false);
     private CountDownLatch _latch;
 
     public DemoteHandler(SpaceImpl spaceImpl) {
@@ -33,15 +33,14 @@ public class DemoteHandler implements ISpaceModeListener {
     }
 
     public void demote(int timeToWait, TimeUnit unit) throws DemoteFailedException {
-//        _spaceImpl.beforeOperation(true, false /*checkQuiesceMode*/, null);
 
         if (!_isDemoteInProgress.compareAndSet(false, true)) {
             throw new DemoteFailedException("Demote is already in progress");
         }
 
-        validationChecks();
-
         try {
+            validationChecks();
+
             _spaceImpl.addInternalSpaceModeListener(this);
             _latch = new CountDownLatch(1);
             demoteImpl(timeToWait, unit);
@@ -87,7 +86,6 @@ public class DemoteHandler implements ISpaceModeListener {
                 Thread.sleep(remainingTime);
             } catch (InterruptedException e) {
                 throw new DemoteFailedException("Demote got interrupted");
-                //Thread.currentThread().interrupt(); // TODO good practice
             }
 
 
@@ -106,13 +104,12 @@ public class DemoteHandler implements ISpaceModeListener {
 
             //Restart leader selector handler (in case of ZK then it restarts
             // the connection to ZK so the backup becomes primary)
-            //If suspend happens, we need to clean the suspend after the demote!
             if (!_spaceImpl.restartLeaderSelectorHandler()) {
                 throw new DemoteFailedException("Could not restart leader selector");
             }
 
             try {
-                boolean succeeded = _latch.await(5, TimeUnit.SECONDS); // expose as sys prop
+                boolean succeeded = _latch.await(5, TimeUnit.SECONDS); // TODO expose as sys prop
                 if (!succeeded) {
                     throw new DemoteFailedException("Space mode wasn't changed to be backup");
                 }

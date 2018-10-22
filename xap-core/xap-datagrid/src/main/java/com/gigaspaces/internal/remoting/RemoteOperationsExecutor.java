@@ -29,7 +29,7 @@ import java.rmi.RemoteException;
 public interface RemoteOperationsExecutor {
     boolean isActive() throws RemoteException;
 
-    boolean isActive2() throws RemoteException;
+    boolean isActiveAndNotSuspended() throws RemoteException;
 
     /***
      * @since 9.0.1

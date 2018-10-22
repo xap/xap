@@ -143,45 +143,39 @@ public class QuiesceHandler {
     }
 
     protected enum Status {
-        SUSPENDED, QUIESCED_DEMOTE, QUIESCED
+        SUSPENDED(0, "suspended"),
+        QUIESCED_DEMOTE(1, "demoting"),
+        QUIESCED(2, "quiesced");
+
+        private int order;
+        private String description;
+
+        Status(int order, String description) {
+            this.order = order;
+            this.description = description;
+        }
+
+        private boolean supersedes(Status other) {
+            return this.order < other.order;
+        }
     }
 
 
     protected class Guard implements Closeable {
 
         private final QuiesceException exception;
-        private final String description;
         private final QuiesceToken token;
         private final Status status;
         private final CountDownLatch suspendLatch;
         private Guard innerGuard;
 
         Guard(String description, QuiesceToken token, Status status) {
-            this.description = description;
             this.token = token != null ? token : EmptyToken.INSTANCE;
             this.status = status;
-            String guardReason; // space [..] is _____
-            switch (status) {
-                case QUIESCED:
-                    guardReason = "quiesced";
-                    suspendLatch = null;
-                    break;
-                case QUIESCED_DEMOTE:
-                    guardReason = "demoting";
-                    suspendLatch = null;
-                    break;
-                case SUSPENDED:
-                    guardReason = "suspended";
-                    suspendLatch = new CountDownLatch(1);
-                    break;
-                default:
-                    guardReason = "";
-                    suspendLatch = null;
-                    break;
-            }
+            this.suspendLatch = (status == Status.SUSPENDED) ? new CountDownLatch(1) : null;
 
             String errorMessage = "Operation cannot be executed - space [" + _spaceImpl.getServiceName() + "] is " +
-                    guardReason +
+                    status.description +
                     (StringUtils.hasLength(description) ? " (" + description + ")" : "");
             if (status == Status.QUIESCED_DEMOTE) {
                 this.exception = new QuiesceDemoteException(errorMessage);
@@ -192,7 +186,7 @@ public class QuiesceHandler {
 
         void guard(QuiesceToken operationToken) {
             if (!token.equals(operationToken)) {
-                if (status == Status.SUSPENDED) {
+                if (suspendLatch != null) {
                     if (safeAwait()) {
                         // Wait a random bit before returning to avoid storming the space.
                         safeSleep(new Random().nextInt(1000));
@@ -204,7 +198,7 @@ public class QuiesceHandler {
         }
 
         boolean supersedes(Guard otherGuard) {
-            return this.status.compareTo(otherGuard.status) < 0;
+            return this.status.supersedes(otherGuard.status);
         }
 
         public void close() {
@@ -245,6 +239,12 @@ public class QuiesceHandler {
         if (currentGuard == null) return false;
 
         return currentGuard.status.equals(status) || hasGuard(currentGuard.innerGuard, status);
+    }
+
+    private Guard getGuard(Guard currentGuard, Status status) {
+        if (currentGuard == null) return null;
+        if (currentGuard.status.equals(status)) return currentGuard;
+        return getGuard(currentGuard.innerGuard, status);
     }
 
     private synchronized boolean addGuard(Guard newGuard) {
@@ -306,18 +306,21 @@ public class QuiesceHandler {
         return res;
     }
 
-    private synchronized boolean removeGuard(Status status) {
+    private synchronized void removeGuard(Status status) {
         if (_guard == null) {
             _logger.warning("No guard to remove");
-            return false;
+            return;
         }
-        if (!hasGuard(_guard, status)) {
-            _logger.warning("No "+status+" guard to remove");
-            return false;
+
+        Guard guardToRemove = getGuard(_guard, status);
+        if (guardToRemove == null) {
+            _logger.warning("No " + status + " guard to remove");
+            return;
         }
+
+        guardToRemove.close();
         _guard = removeGuardHelper(_guard, status);
         _logger.info("Removed " + status + ", new state is " + desc(_guard));
-        return true;
     }
 
 
