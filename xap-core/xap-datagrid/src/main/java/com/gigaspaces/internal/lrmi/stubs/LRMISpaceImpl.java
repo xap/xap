@@ -616,8 +616,8 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     }
 
     @Override
-    public boolean isPaused() throws RemoteException {
-        return getProxy().isPaused();
+    public boolean isActive2() throws RemoteException {
+        return getProxy().isActive2();
     }
 
     @Override

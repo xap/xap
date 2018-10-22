@@ -1752,13 +1752,13 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     @Override
     public boolean isActive() throws RemoteException {
         assertAvailable();
-        return isPrimary();// && !_demoteHandler.isDemoteInProgress();
-        //TODO check who calls isActive !
+        return isPrimary();
     }
 
     @Override
-    public boolean isPaused() throws RemoteException {
-        return _demoteHandler.isDemoteInProgress();
+    public boolean isActive2() throws RemoteException {
+        //TODO is isActive a remote call ?
+        return isActive() && !_demoteHandler.isDemoteInProgress();
     }
 
     @Override
