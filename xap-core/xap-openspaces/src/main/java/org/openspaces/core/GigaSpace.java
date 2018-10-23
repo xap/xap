@@ -2057,7 +2057,9 @@ public interface GigaSpace {
     /**
      * Returns an iterator builder allowing to configure and create a {@link
      * com.j_spaces.core.client.GSIterator} over the Space.
+     * @deprecated since 14.0 - use {@link #iterator(Object)} or one of its overloads instead.
      */
+    @Deprecated
     IteratorBuilder iterator();
 
     /**

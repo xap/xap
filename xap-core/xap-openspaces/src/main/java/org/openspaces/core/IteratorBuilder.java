@@ -68,7 +68,9 @@ import java.util.List;
  *
  * @author kimchy
  * @see GigaSpace#iterator()
+ * @deprecated since 14.0 - use {@link GigaSpace#iterator(Object)} or one of its overloads instead.
  */
+@Deprecated
 public class IteratorBuilder {
 
     final private GigaSpace gigaSpace;

@@ -17,6 +17,7 @@
 
 package com.gigaspaces.client.iterator;
 
+import com.gigaspaces.api.InternalApi;
 import com.gigaspaces.events.EventSessionConfig;
 import com.j_spaces.core.client.ReadModifiers;
 
@@ -28,8 +29,10 @@ import net.jini.core.lease.Lease;
  * @author niv
  * @see com.j_spaces.core.client.GSIterator
  * @since 7.0
+ * @deprecated Since 14.0
  */
-
+@Deprecated
+@InternalApi
 public class GSIteratorConfig {
     private int _bufferSize = 100;
     private IteratorScope _iteratorScope = IteratorScope.FUTURE;

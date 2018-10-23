@@ -151,7 +151,9 @@ import java.util.logging.Logger;
  * @author moran
  * @version 2.0
  * @since 5.0
+ * @deprecated since 14.0 - use {@link com.gigaspaces.client.iterator.SpaceIterator} instead.
  */
+@Deprecated
 @com.gigaspaces.api.InternalApi
 public class GSIterator implements Iterator, Iterable {
     private static final Logger _logger = Logger.getLogger(Constants.LOGGER_GSITERATOR);

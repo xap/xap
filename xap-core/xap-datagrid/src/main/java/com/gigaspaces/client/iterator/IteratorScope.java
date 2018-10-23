@@ -22,7 +22,9 @@ package com.gigaspaces.client.iterator;
  *
  * @author niv
  * @since 7.0
+ * @deprecated Since 14.0
  */
+@Deprecated
 public enum IteratorScope {
     /**
      * Indicates that the iterator will process entries currently in the space, and ignores future
