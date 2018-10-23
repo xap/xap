@@ -314,13 +314,13 @@ public class PUZipUtils {
         return totalSize;
     }
 
-    public static void zip(File dir2zip, File zipFile) throws Exception {
+    public static void zip(File dir2zip, File zipFile) throws IOException {
         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile));
         internalZipDir(dir2zip.getAbsolutePath(), dir2zip.getAbsolutePath(), zos);
         zos.close();
     }
 
-    private static void internalZipDir(String baseDir2zip, String dir2zip, ZipOutputStream zos) throws Exception {
+    private static void internalZipDir(String baseDir2zip, String dir2zip, ZipOutputStream zos) throws IOException {
         //create a new File object based on the directory we have to zip
         File zipDir = new File(dir2zip);
         if (!zipDir.exists()) {
