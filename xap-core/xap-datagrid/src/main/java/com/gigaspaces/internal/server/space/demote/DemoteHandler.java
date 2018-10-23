@@ -26,7 +26,7 @@ public class DemoteHandler implements ISpaceModeListener {
     private final Logger _logger;
     private final SpaceImpl _spaceImpl;
     private final AtomicBoolean _isDemoteInProgress = new AtomicBoolean(false);
-    private CountDownLatch _latch;
+    private volatile CountDownLatch _latch;
 
     public DemoteHandler(SpaceImpl spaceImpl) {
         _spaceImpl = spaceImpl;
