@@ -21,7 +21,7 @@ public class GStatementTest {
     @Test
     public void testUnsupportedSqlOperationsThrowException(){
 
-        System.setProperty(GStatement.THROW_EXCEPTION_ON_UNSUPPORTED_SQL_OPERATION_PROP,"true");
+        System.setProperty(GStatement.IGNORE_UNSUPPORTED_OPTIONS_PROP,"false");
 
         GStatement statement = new GStatement(null);
 
@@ -51,7 +51,7 @@ public class GStatementTest {
     @Test
     public void testUnsupportedSqlOperationsOnlyWarn() {
 
-        System.setProperty(GStatement.THROW_EXCEPTION_ON_UNSUPPORTED_SQL_OPERATION_PROP,"false");
+        System.setProperty(GStatement.IGNORE_UNSUPPORTED_OPTIONS_PROP,"true");
 
         GStatement statement = new GStatement(null);
 

@@ -43,18 +43,18 @@ public class GStatement implements Statement {
     protected int updateCount = -1; ///default or no results.
     protected ResultSet resultSet = null;
     protected List<String> _queriesBatch;
-    protected boolean throwExceptionOnUnsupportedSqlOperation;
+    protected boolean ignoreUnsupportedOptions;
 
     //logger
     final private static Logger _logger = Logger.getLogger(Constants.LOGGER_QUERY);
 
     //user configured behavior with unsupported sql operations
 
-    final public static String THROW_EXCEPTION_ON_UNSUPPORTED_SQL_OPERATION_PROP = "com.j_spaces.jdbc.unsupported-sql-operation-throws-exception";
+    final public static String IGNORE_UNSUPPORTED_OPTIONS_PROP = "com.gigaspaces.jdbc.ignoreUnsupportedOptions";
 
     public GStatement(GConnection connection) {
         this.connection = connection;
-        throwExceptionOnUnsupportedSqlOperation = Boolean.parseBoolean(System.getProperty(THROW_EXCEPTION_ON_UNSUPPORTED_SQL_OPERATION_PROP,"true"));
+        ignoreUnsupportedOptions = Boolean.parseBoolean(System.getProperty(IGNORE_UNSUPPORTED_OPTIONS_PROP,"false"));
     }
 
     /**
@@ -448,7 +448,7 @@ public class GStatement implements Statement {
 
     private void handleUnsupportedSqlOperationsCalls(String operation) throws SQLException {
 
-        if(throwExceptionOnUnsupportedSqlOperation){
+        if(!ignoreUnsupportedOptions){
             throw new SQLException("Command not Supported!", "GSP", -132);
         }
 
