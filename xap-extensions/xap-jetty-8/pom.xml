@@ -10,7 +10,7 @@
     <parent>
         <artifactId>xap</artifactId>
         <groupId>org.gigaspaces</groupId>
-        <version>14.0.0-SNAPSHOT</version>
+        <version>14.0.0-m15-19914-65</version>
         <relativePath>../../</relativePath>
     </parent>
     <repositories>
