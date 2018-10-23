@@ -141,17 +141,6 @@ public interface GigaSpace {
     ExceptionTranslator getExceptionTranslator();
 
     /**
-     * Gets the isolation level from the current running transaction (enabling the usage of Spring
-     * declarative isolation level settings). If there is no transaction in progress or the
-     * transaction isolation is {@link org.springframework.transaction.TransactionDefinition#ISOLATION_DEFAULT}
-     * will use the default isolation level associated with this class.
-     *
-     * @deprecated since 10.1.0 - use {@link #getDefaultReadModifiers()} instead.
-     */
-    @Deprecated
-    int getModifiersForIsolationLevel();
-
-    /**
      * Gets the default {@link WriteModifiers} set during this {@link GigaSpace} configuration. This
      * value is configured either by using a {@link GigaSpaceConfigurer} or through the pu.xml.
      */

@@ -1430,17 +1430,6 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
         return txProvider.getCurrentTransaction();
     }
 
-    /**
-     * Gets the isolation level from the current running transaction (enabling the usage of Spring
-     * declarative isolation level settings). If there is no transaction in progress or the
-     * transaction isolation is {@link org.springframework.transaction.TransactionDefinition#ISOLATION_DEFAULT}
-     * will use the default isolation level associated with this class.
-     */
-    public int getModifiersForIsolationLevel() {
-        final IsolationLevelModifiers modifiers = txProvider.getCurrentTransactionIsolationLevel();
-        return modifiers != null ? modifiers.getCode() : defaultIsolationLevel;
-    }
-
     @Override
     public String toString() {
         return space.toString();
