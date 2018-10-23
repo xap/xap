@@ -79,10 +79,10 @@ public @interface AsyncPolling {
     long receiveTimeout() default SimplePollingEventListenerContainer.DEFAULT_RECEIVE_TIMEOUT;
 
     /**
-     * If set to <code>true</code> will perform snapshot operation on the provided template before
+     * If set to <code>true</code> will perform prepareTemplate operation on the provided template before
      * invoking registering as an event listener.
      *
-     * @see org.openspaces.core.GigaSpace#snapshot(Object)
+     * @see org.openspaces.core.GigaSpace#prepareTemplate(Object)
      * @see org.openspaces.events.polling.SimplePollingEventListenerContainer#setPerformSnapshot(boolean)
      */
     boolean performSnapshot() default true;

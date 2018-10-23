@@ -108,7 +108,7 @@ public @interface Archive {
      * If set to <code>true</code> will perform snapshot operation on the provided template before
      * invoking registering as an event listener.
      *
-     * @see org.openspaces.core.GigaSpace#snapshot(Object)
+     * @see org.openspaces.core.GigaSpace#prepareTemplate(Object)
      * @see org.openspaces.archive.ArchivePollingContainer#setPerformSnapshot(boolean)
      */
     boolean performSnapshot() default true;

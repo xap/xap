@@ -757,10 +757,10 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
     }
 
     /**
-     * If set to <code>true</code> will perform snapshot operation on the provided template before
+     * If set to <code>true</code> will perform prepareTemplate operation on the provided template before
      * invoking registering as an event listener.
      *
-     * @see org.openspaces.core.GigaSpace#snapshot(Object)
+     * @see org.openspaces.core.GigaSpace#prepareTemplate(Object)
      */
     public void setPerformSnapshot(boolean performSnapshot) {
         this.performSnapshot = performSnapshot;

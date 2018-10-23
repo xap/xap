@@ -86,7 +86,7 @@ public class OpenSpacesQueueMessageReceiver extends TransactedPollingMessageRece
 
     protected void doConnect() throws Exception {
         OpenSpacesQueueObject internalTemplate = connector.newQueueTemplate(endpoint.getEndpointURI().getAddress());
-        template = connector.getGigaSpaceObj().snapshot(internalTemplate);
+        template = connector.getGigaSpaceObj().prepareTemplate(internalTemplate);
     }
 
     protected void doDispose() {
