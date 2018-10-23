@@ -336,6 +336,8 @@ public class QuiesceHandler {
         _logger.info("Removed " + status + ", new state is " + desc(_guard));
         if (_guard != null) {
             _suspendInfo = new SuspendInfo(_guard.status.suspendType);
+        } else {
+            _suspendInfo = new SuspendInfo(SuspendType.NONE);
         }
     }
 
