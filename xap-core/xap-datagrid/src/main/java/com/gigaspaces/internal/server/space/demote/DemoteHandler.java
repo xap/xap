@@ -8,9 +8,12 @@ import com.j_spaces.core.filters.ReplicationStatistics;
 
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,13 +30,20 @@ public class DemoteHandler implements ISpaceModeListener {
     private final SpaceImpl _spaceImpl;
     private final AtomicBoolean _isDemoteInProgress = new AtomicBoolean(false);
     private CountDownLatch _latch;
+    private final int _minTimeToDemoteInMs;
+    private static String MIN_TIME_TO_DEMOTE_IN_MS = "demote_handler.min_time_for_demote";
 
     public DemoteHandler(SpaceImpl spaceImpl) {
         _spaceImpl = spaceImpl;
-        _logger = Logger.getLogger(Constants.LOGGER_DEMOTE+ '.' + spaceImpl.getNodeName());
+        _logger = Logger.getLogger(Constants.LOGGER_DEMOTE + '.' + spaceImpl.getNodeName());
+        _minTimeToDemoteInMs = _spaceImpl.getConfigReader().getIntSpaceProperty(MIN_TIME_TO_DEMOTE_IN_MS, "5000");
     }
 
-    public void demote(int timeToWait, TimeUnit unit) throws DemoteFailedException {
+    public void demote(int timeout, TimeUnit unit) throws DemoteFailedException {
+        if (unit.toMillis(timeout) < _minTimeToDemoteInMs) {
+            throw new DemoteFailedException("Timeout must be equal or greater than " + MIN_TIME_TO_DEMOTE_IN_MS + "=" + _minTimeToDemoteInMs + "ms");
+        }
+
 
         if (!_isDemoteInProgress.compareAndSet(false, true)) {
             throw new DemoteFailedException("Demote is already in progress");
@@ -44,16 +54,55 @@ public class DemoteHandler implements ISpaceModeListener {
 
             _spaceImpl.addInternalSpaceModeListener(this);
             _latch = new CountDownLatch(1);
-            demoteImpl(timeToWait, unit);
+            demoteImpl(timeout, unit);
+        } catch (TimeoutException e) {
+            throw new DemoteFailedException(e);
         } finally {
             _spaceImpl.removeInternalSpaceModeListener(this);
             _isDemoteInProgress.set(false);
         }
     }
 
-    private void demoteImpl(int timeToWait, TimeUnit unit) throws DemoteFailedException {
-        long timeToWaitInMs = unit.toMillis(timeToWait);
-        long end = timeToWaitInMs + System.currentTimeMillis();
+
+    private long tryWithinTimeout(String msg, long timeoutMs, Function<Long, Boolean> f) throws TimeoutException {
+        long start = System.currentTimeMillis();
+        Boolean success = f.apply(timeoutMs);
+        if (!success) {
+            throw new TimeoutException(msg);
+        }
+
+        long duration = System.currentTimeMillis() - start;
+        long remainingTime = timeoutMs - duration;
+        if (remainingTime < 0) {
+            throw new TimeoutException(msg);
+        }
+
+        return remainingTime;
+    }
+
+    private long repetitiveTryWithinTimeout(String msg, long timeoutMs, Callable<Boolean> f) throws TimeoutException, DemoteFailedException {
+        long start = System.currentTimeMillis();
+        long remainingTime;
+        while ((remainingTime = timeoutMs - (System.currentTimeMillis() - start)) > 0) {
+            try {
+                Boolean success = f.call();
+                if (success) return remainingTime;
+            } catch (Exception e) {
+                //ignore
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new DemoteFailedException("Demote got interrupted");
+            }
+        }
+
+        throw new TimeoutException(msg);
+    }
+
+    private void demoteImpl(int timeout, TimeUnit timeoutUnit) throws DemoteFailedException, TimeoutException {
+        long start = System.currentTimeMillis();
+        long timeoutMs = timeoutUnit.toMillis(timeout);
 
         try {
 
@@ -61,41 +110,40 @@ public class DemoteHandler implements ISpaceModeListener {
             _spaceImpl.getQuiesceHandler().quiesceDemote("Space is demoting from primary to backup");
 
 
-            long remainingTime = end - System.currentTimeMillis();
-            boolean leaseManagerCycleFinished = _spaceImpl.getEngine().getLeaseManager().waitForNoCycleOnQuiesce(remainingTime);
-            if (!leaseManagerCycleFinished) {
-                throw new DemoteFailedException("Couldn't demote to backup - lease manager cycle timeout");
+            long remainingTime = timeoutMs;
+            remainingTime = tryWithinTimeout("Couldn't demote to backup - lease manager cycle timeout", remainingTime, (innerTimeout) ->
+                    _spaceImpl.getEngine().getLeaseManager().waitForNoCycleOnQuiesce(innerTimeout)
+            );
+
+
+            remainingTime = tryWithinTimeout("Couldn't demote to backup - timeout while waiting for transactions", remainingTime, (innerTimeout) ->
+//                _spaceImpl.getEngine().getTransactionHandler().waitForActiveTransactions(innerTimeout);
+                            true
+            );
+
+
+            //Sleep remaining time to minTimeToDemoteInMs
+            long currentDuration = System.currentTimeMillis() - start;
+            if (currentDuration < _minTimeToDemoteInMs) {
+                try {
+                    Thread.sleep(_minTimeToDemoteInMs - currentDuration);
+                } catch (InterruptedException e) {
+                    throw new DemoteFailedException("Demote got interrupted");
+                }
             }
 
-            remainingTime = end - System.currentTimeMillis();
-            if (remainingTime <= 0) {
-                throw new DemoteFailedException("Couldn't demote to backup - timeout waiting for a lease manager cycle");
-            }
+            repetitiveTryWithinTimeout("Backup is not synced", remainingTime, () -> {
+                long lastKeyInRedoLog = getOutgoingReplication().getLastKeyInRedoLog();
+                ReplicationStatistics.OutgoingChannel backupChannel = getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE).get(0);
+                if (backupChannel.getLastConfirmedKeyFromTarget() == lastKeyInRedoLog) {
+                    return true; //Backup is synced
+                } else {
+                    if (_logger.isLoggable(Level.FINE))
+                        _logger.fine("Backup is not synced (" + backupChannel.getLastConfirmedKeyFromTarget() + " != " + lastKeyInRedoLog + ")");
+                    return false;
+                }
+            });
 
-//            boolean noActiveTransactions = _spaceImpl.getEngine().getTransactionHandler().waitForActiveTransactions(remainingTime);
-//            if (!noActiveTransactions) {
-//                throw new DemoteFailedException("Couldn't demote to backup - timeout waiting for transactions");
-//            }
-
-            remainingTime = end - System.currentTimeMillis();
-            if (remainingTime <= 0) {
-                throw new DemoteFailedException("Couldn't demote to backup - timeout while waiting for transactions");
-            }
-
-            //Sleep for the remaining time
-            try {
-                Thread.sleep(remainingTime);
-            } catch (InterruptedException e) {
-                throw new DemoteFailedException("Demote got interrupted");
-            }
-
-
-            long lastKeyInRedoLog = getOutgoingReplication().getLastKeyInRedoLog();
-            ReplicationStatistics.OutgoingChannel backupChannel = getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE).get(0);
-            if (backupChannel.getLastConfirmedKeyFromTarget() != lastKeyInRedoLog) {
-                //Backup is not synced
-                throw new DemoteFailedException("Backup is not synced ("+backupChannel.getLastConfirmedKeyFromTarget()+" != "+lastKeyInRedoLog+")");
-            }
 
             validateSpaceStatus(false);
 

@@ -4,4 +4,8 @@ public class DemoteFailedException extends Exception {
     public DemoteFailedException(String message) {
         super(message);
     }
+
+    public DemoteFailedException(Throwable cause) {
+        super(cause);
+    }
 }
