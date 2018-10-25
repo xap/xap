@@ -149,5 +149,6 @@ public interface IRemoteSpace
 
     DirectPersistencySyncListBatch getSynchronizationListBatch() throws RemoteException;
 
-    void demoteToBackup(int timeout, TimeUnit unit) throws DemoteFailedException;
+    //TODO add Remoteexception to method
+    void demoteToBackup(long timeout, TimeUnit unit) throws DemoteFailedException;
 }

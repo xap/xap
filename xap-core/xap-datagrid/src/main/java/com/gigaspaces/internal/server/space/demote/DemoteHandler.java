@@ -31,7 +31,7 @@ public class DemoteHandler implements ISpaceModeListener {
     private final AtomicBoolean _isDemoteInProgress = new AtomicBoolean(false);
     private CountDownLatch _latch;
     private final int _minTimeToDemoteInMs;
-    private static String MIN_TIME_TO_DEMOTE_IN_MS = "demote_handler.min_time_for_demote";
+    private final static String MIN_TIME_TO_DEMOTE_IN_MS = "demote_handler.min_time_for_demote";
 
     public DemoteHandler(SpaceImpl spaceImpl) {
         _spaceImpl = spaceImpl;
@@ -39,7 +39,7 @@ public class DemoteHandler implements ISpaceModeListener {
         _minTimeToDemoteInMs = _spaceImpl.getConfigReader().getIntSpaceProperty(MIN_TIME_TO_DEMOTE_IN_MS, "5000");
     }
 
-    public void demote(int timeout, TimeUnit unit) throws DemoteFailedException {
+    public void demote(long timeout, TimeUnit unit) throws DemoteFailedException {
         if (unit.toMillis(timeout) < _minTimeToDemoteInMs) {
             throw new DemoteFailedException("Timeout must be equal or greater than " + MIN_TIME_TO_DEMOTE_IN_MS + "=" + _minTimeToDemoteInMs + "ms");
         }
@@ -100,7 +100,7 @@ public class DemoteHandler implements ISpaceModeListener {
         throw new TimeoutException(msg);
     }
 
-    private void demoteImpl(int timeout, TimeUnit timeoutUnit) throws DemoteFailedException, TimeoutException {
+    private void demoteImpl(long timeout, TimeUnit timeoutUnit) throws DemoteFailedException, TimeoutException {
         long start = System.currentTimeMillis();
         long timeoutMs = timeoutUnit.toMillis(timeout);
 

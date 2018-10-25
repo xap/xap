@@ -131,6 +131,6 @@ public interface IDirectSpaceProxy extends ISpaceProxy {
 
     ISpaceQuery prepareTemplate(Object template);
 
-    void demoteToBackup(int timeout, TimeUnit unit) throws DemoteFailedException;
+    void demoteToBackup(long timeout, TimeUnit unit) throws DemoteFailedException;
 
 }
