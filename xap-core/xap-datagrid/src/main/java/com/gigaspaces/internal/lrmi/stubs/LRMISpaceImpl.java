@@ -636,7 +636,7 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     }
 
     @Override
-    public void demoteToBackup(long timeout, TimeUnit unit) throws DemoteFailedException {
+    public void demoteToBackup(long timeout, TimeUnit unit) throws DemoteFailedException, RemoteException {
         getProxy().demoteToBackup(timeout, unit);
     }
 }
