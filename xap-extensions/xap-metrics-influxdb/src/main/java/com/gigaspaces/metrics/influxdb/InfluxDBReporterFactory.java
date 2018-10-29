@@ -16,7 +16,7 @@
 
 package com.gigaspaces.metrics.influxdb;
 
-import com.gigaspaces.metrics.MetricManagerConfig;
+import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.metrics.MetricReporter;
 import com.gigaspaces.metrics.MetricReporterFactory;
 
@@ -61,7 +61,7 @@ public class InfluxDBReporterFactory extends MetricReporterFactory<MetricReporte
             setRetentionPolicy(properties.getProperty("retention-policy"));
             setUsername(properties.getProperty("username"));
             setPassword(properties.getProperty("password"));
-            setTimePrecision(MetricManagerConfig.parseTimeUnit(properties.getProperty("precision"), TimeUnit.MILLISECONDS));
+            setTimePrecision(StringUtils.parseTimeUnit(properties.getProperty("precision"), TimeUnit.MILLISECONDS));
             setConsistency(properties.getProperty("consistency"));
         } else if (protocol.equalsIgnoreCase("udp")) {
             setHost(properties.getProperty("host"));

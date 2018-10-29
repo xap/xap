@@ -129,8 +129,8 @@ public class MetricManagerConfig {
 
     private void parseSampler(Element element) {
         String levelName = element.getAttribute("name");
-        Long sampleRate = parseDurationAsMillis(element.getAttribute("sample-rate"));
-        Long reportRate = parseDurationAsMillis(element.getAttribute("report-rate"));
+        Long sampleRate = StringUtils.parseDurationAsMillis(element.getAttribute("sample-rate"));
+        Long reportRate = StringUtils.parseDurationAsMillis(element.getAttribute("report-rate"));
         samplers.put(levelName, new MetricSamplerConfig(levelName, sampleRate, reportRate));
     }
 
@@ -154,33 +154,5 @@ public class MetricManagerConfig {
 
     public MetricPatternSet getPatternSet() {
         return patterns;
-    }
-
-    private static Long parseDurationAsMillis(String property) {
-        if (property == null || property.length() == 0)
-            return null;
-
-        // Find first non-digit char:
-        int pos = 0;
-        while (pos < property.length() && Character.isDigit(property.charAt(pos)))
-            pos++;
-
-        String prefix = property.substring(0, pos);
-        long number = Long.parseLong(prefix);
-        String suffix = pos < property.length() ? property.substring(pos) : null;
-        TimeUnit timeUnit = parseTimeUnit(suffix, TimeUnit.MILLISECONDS);
-        return timeUnit.toMillis(number);
-    }
-
-    public static TimeUnit parseTimeUnit(String s, TimeUnit defaultValue) {
-        if (s == null) return defaultValue;
-        if (s.equalsIgnoreCase("n")) return TimeUnit.NANOSECONDS;
-        if (s.equalsIgnoreCase("u")) return TimeUnit.MICROSECONDS;
-        if (s.equalsIgnoreCase("ms")) return TimeUnit.MILLISECONDS;
-        if (s.equalsIgnoreCase("s")) return TimeUnit.SECONDS;
-        if (s.equalsIgnoreCase("m")) return TimeUnit.MINUTES;
-        if (s.equalsIgnoreCase("h")) return TimeUnit.HOURS;
-        if (s.equalsIgnoreCase("d")) return TimeUnit.DAYS;
-        throw new IllegalArgumentException("Invalid time unit: '" + s + "'");
     }
 }
