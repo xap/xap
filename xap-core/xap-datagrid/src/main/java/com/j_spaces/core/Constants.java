@@ -424,6 +424,10 @@ public interface Constants {
         String ENGINE_QUERY_RESULT_SIZE_LIMIT_MEMORY_CHECK_BATCH_SIZE = "engine.query.result.size.limit.memory.check.batch.size";
         String ENGINE_QUERY_RESULT_SIZE_LIMIT_MEMORY_CHECK_BATCH_SIZE_DEFAULT = "0";
 
+        String ENGINE_DEMOTE_MIN_TIMEOUT = "engine.demote-min-timeout";
+        String ENGINE_DEMOTE_MIN_TIMEOUT_DEFAULT = "5s";
+
+
     }
 
     public interface Replication {
