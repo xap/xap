@@ -512,4 +512,16 @@ public class TransactionHandler {
         addToPhantomGlobalXtns(txn);
         throw exception;
     }
+
+
+    public boolean waitForActiveTransactions(long timeoutInMillis) throws InterruptedException {
+        long end = System.currentTimeMillis() + timeoutInMillis;
+        while (System.currentTimeMillis() < end) {
+            if (getXtnTable().isEmpty()) {
+                return true;
+            }
+            Thread.sleep(500);
+        }
+        return false;
+    }
 }
