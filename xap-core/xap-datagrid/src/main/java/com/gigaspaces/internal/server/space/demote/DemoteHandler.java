@@ -3,20 +3,22 @@ package com.gigaspaces.internal.server.space.demote;
 import com.gigaspaces.cluster.activeelection.ISpaceModeListener;
 import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.server.space.SpaceImpl;
+import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.filters.ReplicationStatistics;
 
 import java.rmi.RemoteException;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
+import java.util.function.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.j_spaces.core.Constants.Engine.ENGINE_DEMOTE_MIN_TIMEOUT;
+import static com.j_spaces.core.Constants.Engine.ENGINE_DEMOTE_MIN_TIMEOUT_DEFAULT;
 import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER_CLASS_NAME;
 
 
@@ -29,19 +31,19 @@ public class DemoteHandler implements ISpaceModeListener {
     private final Logger _logger;
     private final SpaceImpl _spaceImpl;
     private final AtomicBoolean _isDemoteInProgress = new AtomicBoolean(false);
-    private CountDownLatch _latch;
-    private final int _minTimeToDemoteInMs;
-    private final static String MIN_TIME_TO_DEMOTE_IN_MS = "demote_handler.min_time_for_demote";
+    private volatile CountDownLatch _latch;
+    private final long _demoteMinTimeout;
+    private final static String MIN_TIME_TO_DEMOTE_IN_MS = ENGINE_DEMOTE_MIN_TIMEOUT;
 
     public DemoteHandler(SpaceImpl spaceImpl) {
         _spaceImpl = spaceImpl;
         _logger = Logger.getLogger(Constants.LOGGER_DEMOTE + '.' + spaceImpl.getNodeName());
-        _minTimeToDemoteInMs = _spaceImpl.getConfigReader().getIntSpaceProperty(MIN_TIME_TO_DEMOTE_IN_MS, "5000");
+        _demoteMinTimeout = StringUtils.parseDurationAsMillis(_spaceImpl.getConfigReader().getSpaceProperty(MIN_TIME_TO_DEMOTE_IN_MS, ENGINE_DEMOTE_MIN_TIMEOUT_DEFAULT));
     }
 
     public void demote(long timeout, TimeUnit unit) throws DemoteFailedException {
-        if (unit.toMillis(timeout) < _minTimeToDemoteInMs) {
-            throw new DemoteFailedException("Timeout must be equal or greater than " + MIN_TIME_TO_DEMOTE_IN_MS + "=" + _minTimeToDemoteInMs + "ms");
+        if (unit.toMillis(timeout) < _demoteMinTimeout) {
+            throw new DemoteFailedException("Timeout must be equal or greater than " + MIN_TIME_TO_DEMOTE_IN_MS + "=" + _demoteMinTimeout + "ms");
         }
 
 
@@ -64,10 +66,9 @@ public class DemoteHandler implements ISpaceModeListener {
     }
 
 
-    private long tryWithinTimeout(String msg, long timeoutMs, Function<Long, Boolean> f) throws TimeoutException {
+    private long tryWithinTimeout(String msg, long timeoutMs, LongPredicate predicate) throws TimeoutException {
         long start = System.currentTimeMillis();
-        Boolean success = f.apply(timeoutMs);
-        if (!success) {
+        if (!predicate.test(timeoutMs)) {
             throw new TimeoutException(msg);
         }
 
@@ -80,19 +81,15 @@ public class DemoteHandler implements ISpaceModeListener {
         return remainingTime;
     }
 
-    private long repetitiveTryWithinTimeout(String msg, long timeoutMs, Callable<Boolean> f) throws TimeoutException, DemoteFailedException {
-        long start = System.currentTimeMillis();
-        long remainingTime;
-        while ((remainingTime = timeoutMs - (System.currentTimeMillis() - start)) > 0) {
-            try {
-                Boolean success = f.call();
-                if (success) return remainingTime;
-            } catch (Exception e) {
-                //ignore
-            }
+    private long repetitiveTryWithinTimeout(String msg, long timeoutMs, BooleanSupplier f) throws TimeoutException, DemoteFailedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        long currTime;
+        while ((currTime = System.currentTimeMillis()) < deadline) {
+            if (f.getAsBoolean()) return deadline - currTime;
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 throw new DemoteFailedException("Demote got interrupted");
             }
         }
@@ -111,38 +108,29 @@ public class DemoteHandler implements ISpaceModeListener {
 
 
             long remainingTime = timeoutMs;
-            remainingTime = tryWithinTimeout("Couldn't demote to backup - lease manager cycle timeout", remainingTime, (innerTimeout) ->
-                    _spaceImpl.getEngine().getLeaseManager().waitForNoCycleOnQuiesce(innerTimeout)
-            );
+            remainingTime = tryWithinTimeout("Couldn't demote to backup - lease manager cycle timeout", remainingTime,
+                    _spaceImpl.getEngine().getLeaseManager()::waitForNoCycleOnQuiesce);
 
 
-            remainingTime = tryWithinTimeout("Couldn't demote to backup - timeout while waiting for transactions", remainingTime, (innerTimeout) ->
-//                _spaceImpl.getEngine().getTransactionHandler().waitForActiveTransactions(innerTimeout);
-                            true
-            );
+            remainingTime = tryWithinTimeout("Couldn't demote to backup - timeout while waiting for transactions", remainingTime,
+                    this::waitForActiveTransactions);
 
 
             //Sleep remaining time to minTimeToDemoteInMs
+            //_logger
             long currentDuration = System.currentTimeMillis() - start;
-            if (currentDuration < _minTimeToDemoteInMs) {
+            if (currentDuration < _demoteMinTimeout) {
+                long timeToSleep = _demoteMinTimeout - currentDuration;
+                _logger.info("Sleeping for ["+timeToSleep+"] to satisfy " + MIN_TIME_TO_DEMOTE_IN_MS);
                 try {
-                    Thread.sleep(_minTimeToDemoteInMs - currentDuration);
+                    Thread.sleep(timeToSleep);
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                     throw new DemoteFailedException("Demote got interrupted");
                 }
             }
 
-            repetitiveTryWithinTimeout("Backup is not synced", remainingTime, () -> {
-                long lastKeyInRedoLog = getOutgoingReplication().getLastKeyInRedoLog();
-                ReplicationStatistics.OutgoingChannel backupChannel = getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE).get(0);
-                if (backupChannel.getLastConfirmedKeyFromTarget() == lastKeyInRedoLog) {
-                    return true; //Backup is synced
-                } else {
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.fine("Backup is not synced (" + backupChannel.getLastConfirmedKeyFromTarget() + " != " + lastKeyInRedoLog + ")");
-                    return false;
-                }
-            });
+            repetitiveTryWithinTimeout("Backup is not synced", remainingTime, this::isBackupSynced);
 
 
             validateSpaceStatus(false);
@@ -166,6 +154,7 @@ public class DemoteHandler implements ISpaceModeListener {
                     throw new DemoteFailedException("Space mode wasn't changed to backup - space still primary");
                 }
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 throw new DemoteFailedException("Demote got interrupted");
             }
 
@@ -256,4 +245,21 @@ public class DemoteHandler implements ISpaceModeListener {
         }
         _latch.countDown();
     }
+
+    private boolean isBackupSynced() {
+        long lastKeyInRedoLog = getOutgoingReplication().getLastKeyInRedoLog();
+        ReplicationStatistics.OutgoingChannel backupChannel = getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE).get(0);
+        //Backup is synced
+        return backupChannel.getLastConfirmedKeyFromTarget() == lastKeyInRedoLog;
+    }
+
+    public boolean waitForActiveTransactions(long timeoutInMillis) {
+        try {
+            return _spaceImpl.getEngine().getTransactionHandler().waitForActiveTransactions(timeoutInMillis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
 }
