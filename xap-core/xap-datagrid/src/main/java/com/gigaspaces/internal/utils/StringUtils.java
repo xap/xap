@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Miscellaneous string utility methods. Mainly for internal use within the framework; consider
@@ -605,5 +606,33 @@ public abstract class StringUtils {
 
     public static Long parseStringAsBytes(String property) {
         return BootIOUtils.parseStringAsBytes(property);
+    }
+
+    public static Long parseDurationAsMillis(String property) {
+        if (property == null || property.length() == 0)
+            return null;
+
+        // Find first non-digit char:
+        int pos = 0;
+        while (pos < property.length() && Character.isDigit(property.charAt(pos)))
+            pos++;
+
+        String prefix = property.substring(0, pos);
+        long number = Long.parseLong(prefix);
+        String suffix = pos < property.length() ? property.substring(pos) : null;
+        TimeUnit timeUnit = parseTimeUnit(suffix, TimeUnit.MILLISECONDS);
+        return timeUnit.toMillis(number);
+    }
+
+    public static TimeUnit parseTimeUnit(String s, TimeUnit defaultValue) {
+        if (s == null) return defaultValue;
+        if (s.equalsIgnoreCase("n")) return TimeUnit.NANOSECONDS;
+        if (s.equalsIgnoreCase("u")) return TimeUnit.MICROSECONDS;
+        if (s.equalsIgnoreCase("ms")) return TimeUnit.MILLISECONDS;
+        if (s.equalsIgnoreCase("s")) return TimeUnit.SECONDS;
+        if (s.equalsIgnoreCase("m")) return TimeUnit.MINUTES;
+        if (s.equalsIgnoreCase("h")) return TimeUnit.HOURS;
+        if (s.equalsIgnoreCase("d")) return TimeUnit.DAYS;
+        throw new IllegalArgumentException("Invalid time unit: '" + s + "'");
     }
 }
