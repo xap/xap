@@ -127,7 +127,6 @@ public class DemoteHandler implements ISpaceModeListener {
 
 
             //Sleep remaining time to minTimeToDemoteInMs
-            //_logger
             long currentDuration = System.currentTimeMillis() - start;
             if (currentDuration < _demoteMinTimeoutMillis) {
                 long timeToSleep = _demoteMinTimeoutMillis - currentDuration;
@@ -234,7 +233,7 @@ public class DemoteHandler implements ISpaceModeListener {
     }
 
     private ReplicationStatistics.OutgoingReplication getOutgoingReplication() {
-        return _spaceImpl.getHolder().getReplicationStatistics().getOutgoingReplication();
+        return _spaceImpl.getEngine().getReplicationNode().getAdmin().getStatistics().getOutgoingReplication();
     }
 
     private void closeOutgoingChannels() {
@@ -262,8 +261,9 @@ public class DemoteHandler implements ISpaceModeListener {
     }
 
     private boolean isBackupSynced() {
-        long lastKeyInRedoLog = getOutgoingReplication().getLastKeyInRedoLog();
-        ReplicationStatistics.OutgoingChannel backupChannel = getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE).get(0);
+        ReplicationStatistics.OutgoingReplication outGoingReplication = getOutgoingReplication();
+        long lastKeyInRedoLog = outGoingReplication.getLastKeyInRedoLog();
+        ReplicationStatistics.OutgoingChannel backupChannel = outGoingReplication.getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE).get(0);
         //Backup is synced
         return backupChannel.getLastConfirmedKeyFromTarget() == lastKeyInRedoLog;
     }
