@@ -13,7 +13,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -66,7 +65,7 @@ public class DemoteHandler implements ISpaceModeListener {
     }
 
 
-    private long tryWithinTimeout(String msg, long timeoutMs, LongPredicate predicate) throws TimeoutException {
+    private long tryWithinTimeout(String msg, long timeoutMs, ParametrizedConditionProvider predicate) throws TimeoutException {
         long start = System.currentTimeMillis();
         if (!predicate.test(timeoutMs)) {
             throw new TimeoutException(msg);
@@ -81,11 +80,11 @@ public class DemoteHandler implements ISpaceModeListener {
         return remainingTime;
     }
 
-    private long repetitiveTryWithinTimeout(String msg, long timeoutMs, BooleanSupplier f) throws TimeoutException, DemoteFailedException {
+    private long repetitiveTryWithinTimeout(String msg, long timeoutMs, ConditionProvider f) throws TimeoutException, DemoteFailedException {
         long deadline = System.currentTimeMillis() + timeoutMs;
         long currTime;
         while ((currTime = System.currentTimeMillis()) < deadline) {
-            if (f.getAsBoolean()) return deadline - currTime;
+            if (f.test()) return deadline - currTime;
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
@@ -108,12 +107,22 @@ public class DemoteHandler implements ISpaceModeListener {
 
 
             long remainingTime = timeoutMs;
-            remainingTime = tryWithinTimeout("Couldn't demote to backup - lease manager cycle timeout", remainingTime,
-                    _spaceImpl.getEngine().getLeaseManager()::waitForNoCycleOnQuiesce);
+            remainingTime = tryWithinTimeout("Couldn't demote to backup - lease manager cycle timeout", remainingTime, new ParametrizedConditionProvider() {
+                        @Override
+                        public boolean test(long innerTimeout) {
+                            return _spaceImpl.getEngine().getLeaseManager().waitForNoCycleOnQuiesce(innerTimeout);
+                        }
+                    });
 
 
             remainingTime = tryWithinTimeout("Couldn't demote to backup - timeout while waiting for transactions", remainingTime,
-                    this::waitForActiveTransactions);
+                    new ParametrizedConditionProvider() {
+                        @Override
+                        public boolean test(long innerTimeout) {
+                            return waitForActiveTransactions(innerTimeout);
+                        }
+                    }
+            );
 
 
             //Sleep remaining time to minTimeToDemoteInMs
@@ -130,7 +139,12 @@ public class DemoteHandler implements ISpaceModeListener {
                 }
             }
 
-            repetitiveTryWithinTimeout("Backup is not synced", remainingTime, this::isBackupSynced);
+            repetitiveTryWithinTimeout("Backup is not synced", remainingTime, new ConditionProvider() {
+                @Override
+                public boolean test() {
+                    return isBackupSynced();
+                }
+            });
 
 
             validateSpaceStatus(false);
@@ -260,6 +274,14 @@ public class DemoteHandler implements ISpaceModeListener {
             Thread.currentThread().interrupt();
             return false;
         }
+    }
+
+    private interface ConditionProvider {
+        boolean test();
+    }
+
+    private interface ParametrizedConditionProvider {
+        boolean test(long value);
     }
 
 }
