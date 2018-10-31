@@ -16,8 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.j_spaces.core.Constants.Engine.ENGINE_DEMOTE_MIN_TIMEOUT;
-import static com.j_spaces.core.Constants.Engine.ENGINE_DEMOTE_MIN_TIMEOUT_DEFAULT;
+import static com.j_spaces.core.Constants.Engine.*;
 import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER_CLASS_NAME;
 
 
@@ -31,18 +30,20 @@ public class DemoteHandler implements ISpaceModeListener {
     private final SpaceImpl _spaceImpl;
     private final AtomicBoolean _isDemoteInProgress = new AtomicBoolean(false);
     private volatile CountDownLatch _latch;
-    private final long _demoteMinTimeout;
+    private final long _demoteMinTimeoutMillis;
     private final static String MIN_TIME_TO_DEMOTE_IN_MS = ENGINE_DEMOTE_MIN_TIMEOUT;
+    private final long _demoteCompletionEventTimeoutMillis;
 
     public DemoteHandler(SpaceImpl spaceImpl) {
         _spaceImpl = spaceImpl;
         _logger = Logger.getLogger(Constants.LOGGER_DEMOTE + '.' + spaceImpl.getNodeName());
-        _demoteMinTimeout = StringUtils.parseDurationAsMillis(_spaceImpl.getConfigReader().getSpaceProperty(MIN_TIME_TO_DEMOTE_IN_MS, ENGINE_DEMOTE_MIN_TIMEOUT_DEFAULT));
+        _demoteMinTimeoutMillis = StringUtils.parseDurationAsMillis(_spaceImpl.getConfigReader().getSpaceProperty(MIN_TIME_TO_DEMOTE_IN_MS, ENGINE_DEMOTE_MIN_TIMEOUT_DEFAULT));
+        _demoteCompletionEventTimeoutMillis = StringUtils.parseDurationAsMillis(_spaceImpl.getConfigReader().getSpaceProperty(ENGINE_DEMOTE_COMPLETION_EVENT_TIMEOUT, ENGINE_DEMOTE_COMPLETION_EVENT_TIMEOUT_DEFAULT));
     }
 
     public void demote(long timeout, TimeUnit unit) throws DemoteFailedException {
-        if (unit.toMillis(timeout) < _demoteMinTimeout) {
-            throw new DemoteFailedException("Timeout must be equal or greater than " + MIN_TIME_TO_DEMOTE_IN_MS + "=" + _demoteMinTimeout + "ms");
+        if (unit.toMillis(timeout) < _demoteMinTimeoutMillis) {
+            throw new DemoteFailedException("Timeout must be equal or greater than " + MIN_TIME_TO_DEMOTE_IN_MS + "=" + _demoteMinTimeoutMillis + "ms");
         }
 
 
@@ -128,8 +129,8 @@ public class DemoteHandler implements ISpaceModeListener {
             //Sleep remaining time to minTimeToDemoteInMs
             //_logger
             long currentDuration = System.currentTimeMillis() - start;
-            if (currentDuration < _demoteMinTimeout) {
-                long timeToSleep = _demoteMinTimeout - currentDuration;
+            if (currentDuration < _demoteMinTimeoutMillis) {
+                long timeToSleep = _demoteMinTimeoutMillis - currentDuration;
                 _logger.info("Sleeping for ["+timeToSleep+"] to satisfy " + MIN_TIME_TO_DEMOTE_IN_MS);
                 try {
                     Thread.sleep(timeToSleep);
@@ -160,7 +161,7 @@ public class DemoteHandler implements ISpaceModeListener {
             }
 
             try {
-                boolean succeeded = _latch.await(5, TimeUnit.SECONDS); // TODO expose as sys prop
+                boolean succeeded = _latch.await(_demoteCompletionEventTimeoutMillis, TimeUnit.MILLISECONDS);
                 if (!succeeded) {
                     throw new DemoteFailedException("Space mode wasn't changed to be backup");
                 }
