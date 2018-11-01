@@ -17,9 +17,7 @@
 package com.gigaspaces.cluster.activeelection;
 
 /**
- * This enum provides the current space mode. <ul> <li>NONE - the space mode is not identified.</li>
- * <li>BACKUP - the space is running in backup mode.</li> <li>PRIMARY - the space is running in
- * primary mode.</li> </ul>
+ * This enum provides the current space mode.
  *
  * @author Igor Goldenberg
  * @version 1.0
@@ -27,5 +25,19 @@ package com.gigaspaces.cluster.activeelection;
  * @since 6.0
  **/
 public enum SpaceMode {
-    NONE, BACKUP, PRIMARY
+    /**
+     * The space mode is not identified.
+     */
+    NONE,
+
+    /**
+     * The space is running in backup mode.
+     */
+    BACKUP,
+
+
+    /**
+     * The space is running in primary mode.
+     */
+    PRIMARY
 }
