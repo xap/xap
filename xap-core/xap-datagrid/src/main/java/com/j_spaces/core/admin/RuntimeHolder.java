@@ -18,6 +18,7 @@ package com.j_spaces.core.admin;
 
 import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.server.space.suspend.SuspendInfo;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.j_spaces.core.ISpaceState;
 
 import java.io.Externalizable;
@@ -94,13 +95,14 @@ public class RuntimeHolder implements Externalizable {
             out.writeInt(spaceState);
         }
 
-        //TODO handle BW
-
-        if (suspendInfo == null) {
-            out.writeBoolean(false);
-        } else{
-            out.writeBoolean(true);
-            out.writeObject(suspendInfo);
+        PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
+        if (version.greaterOrEquals(PlatformLogicalVersion.v14_0_0)) {
+            if (suspendInfo == null) {
+                out.writeBoolean(false);
+            } else {
+                out.writeBoolean(true);
+                out.writeObject(suspendInfo);
+            }
         }
     }
 
@@ -114,11 +116,11 @@ public class RuntimeHolder implements Externalizable {
             spaceState = in.readInt();
         }
 
-        //TODO handle BW
-        if (in.readBoolean()) {
-            suspendInfo = (SuspendInfo) in.readObject();
+        PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
+        if (version.greaterOrEquals(PlatformLogicalVersion.v14_0_0)) {
+            if (in.readBoolean()) {
+                suspendInfo = (SuspendInfo) in.readObject();
+            }
         }
-
-
     }
 }
