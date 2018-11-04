@@ -130,7 +130,7 @@ public class DemoteHandler implements ISpaceModeListener {
             long currentDuration = System.currentTimeMillis() - start;
             if (currentDuration < _demoteMinTimeoutMillis) {
                 long timeToSleep = _demoteMinTimeoutMillis - currentDuration;
-                _logger.info("Sleeping for ["+timeToSleep+"] to satisfy " + MIN_TIME_TO_DEMOTE_IN_MS);
+                _logger.info("Sleeping for ["+timeToSleep+"ms] to satisfy " + MIN_TIME_TO_DEMOTE_IN_MS);
                 try {
                     Thread.sleep(timeToSleep);
                 } catch (InterruptedException e) {
