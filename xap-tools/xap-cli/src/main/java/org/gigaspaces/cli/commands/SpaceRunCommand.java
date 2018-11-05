@@ -2,6 +2,7 @@ package org.gigaspaces.cli.commands;
 
 import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.start.SystemInfo;
+import org.gigaspaces.cli.CliCommandException;
 import org.gigaspaces.cli.JavaCommandBuilder;
 import org.gigaspaces.cli.commands.utils.XapCliUtils;
 
@@ -27,41 +28,22 @@ public class SpaceRunCommand extends AbstractRunCommand {
     public boolean ha;
     @Option(names = {"--instances"}, split = ",", description = "Specify one or more instances to run (for example: --instances=1_1,1_2). "
                                                                     + "If no instances are specified, runs all instances.")
-    String[] instances;
+    List<String> instances;
     @Option(names = {"--lus"}, description = "Start a lookup service")
     public boolean lus;
 
     @Override
     protected void execute() throws Exception {
         validateOptions(partitions, ha, instances);
-        XapCliUtils.executeProcesses(toProcessBuilders());
+        List<ProcessBuilder> processBuilders = toProcessBuilders();
+        if (instances != null && !instances.isEmpty()) {
+            throw new CliCommandException("Invalid instances: " + instances.toString());
+        }
+        XapCliUtils.executeProcesses(processBuilders);
     }
 
     public List<ProcessBuilder> toProcessBuilders() {
-        final List<ProcessBuilder> processBuilders = new ArrayList<ProcessBuilder>();
-        if (lus) {
-            processBuilders.add(buildStartLookupServiceCommand());
-        }
-        if (partitions == 0) {
-            processBuilders.add(buildSpaceCommand(0, false));
-        } else {
-            for (int id = 1; id < partitions+1; id++) {
-                if (instances == null) {
-                    processBuilders.add(buildSpaceCommand(id, false));
-                    if (ha) {
-                        processBuilders.add(buildSpaceCommand(id, true));
-                    }
-                } else {
-                    if (containsInstance(instances,id + "_" + 1)) {
-                        processBuilders.add(buildSpaceCommand(id, false));
-                    }
-                    if (containsInstance(instances, id + "_" + 2)) {
-                        processBuilders.add(buildSpaceCommand(id, true));
-                    }
-                }
-            }
-        }
-        return processBuilders;
+        return toProcessBuilders(instances, partitions, ha, lus);
     }
 
     private static String getDataGridTemplate() {
@@ -70,7 +52,8 @@ public class SpaceRunCommand extends AbstractRunCommand {
                 File.separatorChar + "datagrid";
     }
 
-    private ProcessBuilder buildSpaceCommand(int id, boolean isBackup) {
+    @Override
+    protected ProcessBuilder buildInstanceCommand(int id, boolean isBackup) {
         JavaCommandBuilder command = new CommandBuilder(name)
                 .topology(partitions, ha)
                 .instance(id, isBackup)

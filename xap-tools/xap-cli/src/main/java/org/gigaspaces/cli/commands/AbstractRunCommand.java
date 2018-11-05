@@ -5,17 +5,19 @@ import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.CliCommandException;
 import org.gigaspaces.cli.JavaCommandBuilder;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 
 public abstract class AbstractRunCommand extends CliCommand {
 
-    protected void validateOptions(int partitions, boolean ha, String[] instances) throws CliCommandException {
+    protected void validateOptions(int partitions, boolean ha, List<String> instances) throws CliCommandException {
         //if partitions is not defined
         if (partitions == 0) {
             if (ha) {
                 throw new CliCommandException("Missing argument: '--partitions' when used in conjunction with '--ha' option");
             }
-            if (instances != null) {
+            if (instances != null && !instances.isEmpty()) {
                 throw new CliCommandException("Missing argument: '--partitions' when used in conjunction with '--instances' option");
             }
         } else if (partitions < 0) {
@@ -46,6 +48,37 @@ public abstract class AbstractRunCommand extends CliCommand {
         return processBuilder;
     }
 
+    protected List<ProcessBuilder> toProcessBuilders(List<String> instances, int partitions, boolean ha, boolean lus) {
+        final List<ProcessBuilder> processBuilders = new ArrayList<ProcessBuilder>();
+        if (lus) {
+            processBuilders.add(buildStartLookupServiceCommand());
+        }
+
+        if (partitions == 0) {
+            processBuilders.add(buildInstanceCommand(0, false));
+        } else {
+            for (int id = 1; id < partitions+1; id++) {
+                if (instances == null) {
+                    processBuilders.add(buildInstanceCommand(id, false));
+                    if (ha) {
+                        processBuilders.add(buildInstanceCommand(id, true));
+                    }
+                } else {
+                    if (instances.remove(id + "_" + 1)) {
+                        processBuilders.add(buildInstanceCommand(id, false));
+                    }
+                    if (instances.remove(id + "_" + 2)) {
+                        processBuilders.add(buildInstanceCommand(id, true));
+                    }
+                }
+            }
+        }
+
+        return processBuilders;
+    }
+
+    protected abstract ProcessBuilder buildInstanceCommand(int id, boolean isBackup);
+
     protected static void appendGsClasspath(JavaCommandBuilder command) {
         final SystemInfo.XapLocations locations = SystemInfo.singleton().locations();
 
@@ -64,13 +97,5 @@ public abstract class AbstractRunCommand extends CliCommand {
         command.classpathFromPath(locations.getLibPlatform(), "service-grid", "*");
         command.classpathFromPath(locations.getLibPlatform(), "logger", "*");
         command.classpathFromPath(locations.getLibPlatform(), "zookeeper", "*");
-    }
-
-    protected boolean containsInstance(String[] instances, String instance) {
-        for (String s : instances) {
-            if (s.equals(instance))
-                return true;
-        }
-        return false;
     }
 }

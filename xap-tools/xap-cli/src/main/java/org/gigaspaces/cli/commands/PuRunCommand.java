@@ -28,7 +28,7 @@ public class PuRunCommand extends AbstractRunCommand {
     boolean ha;
     @Option(names = {"--instances" }, split = ",", description = "Specify one or more instances to run (for example: --instances=1_1,1_2). "
                                                                     + "If no instances are specified, runs all instances.")
-    String[] instances;
+    List<String> instances;
     @Option(names = {"--lus"}, description = "Start a lookup service")
     boolean lus;
 
@@ -38,33 +38,15 @@ public class PuRunCommand extends AbstractRunCommand {
         if (!path.exists())
             throw new CliCommandException("File not found: " + path);
 
-        final List<ProcessBuilder> processBuilders = new ArrayList<ProcessBuilder>();
-        if (lus) {
-            processBuilders.add(buildStartLookupServiceCommand());
-        }
-        if (partitions == 0) {
-            processBuilders.add(buildPuCommand(0, false));
-        } else {
-            for (int id = 1; id < partitions+1; id++) {
-                if (instances == null) {
-                    processBuilders.add(buildPuCommand(id, false));
-                    if (ha) {
-                        processBuilders.add(buildPuCommand(id, true));
-                    }
-                } else {
-                    if (containsInstance(instances, id + "_" + 1)) {
-                        processBuilders.add(buildPuCommand(id, false));
-                    }
-                    if (containsInstance(instances, id + "_" + 2)) {
-                        processBuilders.add(buildPuCommand(id, true));
-                    }
-                }
-            }
+        final List<ProcessBuilder> processBuilders = toProcessBuilders(instances, partitions, ha, lus);
+        if (instances != null && !instances.isEmpty()) {
+            throw new CliCommandException("Invalid instances: " + instances.toString());
         }
         XapCliUtils.executeProcesses(processBuilders);
     }
 
-    private ProcessBuilder buildPuCommand(int id, boolean backup) {
+    @Override
+    protected ProcessBuilder buildInstanceCommand(int id, boolean backup) {
         final JavaCommandBuilder command = new JavaCommandBuilder()
                 .systemProperty(CommonSystemProperties.START_EMBEDDED_LOOKUP, "false")
                 .optionsFromEnv("XAP_OPTIONS");
