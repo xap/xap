@@ -938,7 +938,6 @@ public class LeaseManager {
                         }
                         if (!skippedReapingInQuiesceMode) {
                             reapExpiredEntries();
-                            reapUnusedXtns();
                             reapExpiredXtns();
                             reapPhantomGlobalXtns();
                             reapStaleReplicas();
@@ -949,6 +948,7 @@ public class LeaseManager {
                             reapStuck2PCPreparedXtns();
                             reapRecentExtendedUpdates();
                         }
+                        reapUnusedXtns();
                         signalEndCycle();
                     } catch (Exception e) {
                         if (_logger.isLoggable(Level.SEVERE)) {
