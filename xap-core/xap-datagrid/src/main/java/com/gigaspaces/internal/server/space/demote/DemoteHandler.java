@@ -58,7 +58,7 @@ public class DemoteHandler implements ISpaceModeListener {
             _latch = new CountDownLatch(1);
             demoteImpl(maxSuspendTime, unit);
         } catch (TimeoutException e) {
-            throw new DemoteFailedException(e);
+            throw new DemoteFailedException(e.getMessage());
         } finally {
             _spaceImpl.removeInternalSpaceModeListener(this);
             _isDemoteInProgress.set(false);
@@ -187,7 +187,7 @@ public class DemoteHandler implements ISpaceModeListener {
         }
 
         if (_spaceImpl.getClusterInfo().getNumberOfBackups() != 1) {
-            throw new DemoteFailedException("Couldn't demote to backup - cluster should be configured with exactly one backup, backups: (" + _spaceImpl.getClusterInfo().getNumberOfBackups() + ")");
+            throw new DemoteFailedException("Cluster should be configured with exactly one backup, backups: (" + _spaceImpl.getClusterInfo().getNumberOfBackups() + ")");
         }
 
         //In case that we use ZooKeeper but leader selector is not ZK based leader selector
