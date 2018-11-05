@@ -17,25 +17,24 @@
 
 package org.openspaces.events;
 
-import com.gigaspaces.admin.quiesce.QuiesceState;
-import com.gigaspaces.admin.quiesce.QuiesceStateChangedEvent;
 import com.gigaspaces.cluster.activeelection.ISpaceModeListener;
 import com.gigaspaces.cluster.activeelection.SpaceInitializationIndicator;
 import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.dump.InternalDump;
 import com.gigaspaces.internal.dump.InternalDumpProcessor;
 import com.gigaspaces.internal.dump.InternalDumpProcessorFailedException;
+import com.gigaspaces.internal.server.space.suspend.SuspendInfo;
+import com.gigaspaces.internal.server.space.suspend.SuspendInfoChangedListener;
+import com.gigaspaces.internal.server.space.suspend.SuspendType;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.metrics.BeanMetricManager;
 import com.gigaspaces.metrics.LongCounter;
 import com.j_spaces.core.IJSpace;
-import com.j_spaces.core.OperationID;
 import com.j_spaces.core.admin.IInternalRemoteJSpaceAdmin;
 
 import com.j_spaces.core.client.EntrySnapshot;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.openspaces.admin.quiesce.QuiesceStateChangedListener;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.space.mode.AfterSpaceModeChangeEvent;
 import org.openspaces.core.space.mode.BeforeSpaceModeChangeEvent;
@@ -82,7 +81,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author kimchy
  */
 public abstract class AbstractEventListenerContainer implements ApplicationContextAware, Lifecycle, BeanNameAware,
-        InitializingBean, DisposableBean, ApplicationListener<ApplicationEvent>, QuiesceStateChangedListener,
+        InitializingBean, DisposableBean, ApplicationListener<ApplicationEvent>,
         ServiceDetailsProvider, ServiceMonitorsProvider, ProcessingUnitContainerContextAware, InternalDumpProcessor {
 
     protected final Log logger = LogFactory.getLog(getClass());
@@ -304,16 +303,8 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         if (registerSpaceModeListener) {
             SpaceMode currentMode = SpaceMode.PRIMARY;
             if (!SpaceUtils.isRemoteProtocol(gigaSpace.getSpace())) {
-                primaryBackupListener = new PrimaryBackupListener();
-                try {
-                    IJSpace clusterMemberSpace = SpaceUtils.getClusterMemberSpace(gigaSpace.getSpace());
-                    ISpaceModeListener remoteListener = (ISpaceModeListener) clusterMemberSpace.getDirectProxy().getStubHandler()
-                            .exportObject(primaryBackupListener);
-                    currentMode = ((IInternalRemoteJSpaceAdmin) clusterMemberSpace.getAdmin()).addSpaceModeListener(remoteListener);
-                } catch (RemoteException e) {
-                    throw new InvalidDataAccessResourceUsageException("Failed to register space mode listener with space [" + gigaSpace.getSpace()
-                            + "]", e);
-                }
+               currentMode = registerSpaceModeListener();
+               registerSuspendInfoListener();
             }
             SpaceInitializationIndicator.setInitializer();
             try {
@@ -323,6 +314,23 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
                 SpaceInitializationIndicator.unsetInitializer();
             }
         }
+    }
+
+    private SpaceMode registerSpaceModeListener() {
+        primaryBackupListener = new PrimaryBackupListener();
+        try {
+            IJSpace clusterMemberSpace = SpaceUtils.getClusterMemberSpace(gigaSpace.getSpace());
+            ISpaceModeListener remoteListener = (ISpaceModeListener) clusterMemberSpace.getDirectProxy().getStubHandler()
+                    .exportObject(primaryBackupListener);
+            return ((IInternalRemoteJSpaceAdmin) clusterMemberSpace.getAdmin()).addSpaceModeListener(remoteListener);
+        } catch (RemoteException e) {
+            throw new InvalidDataAccessResourceUsageException("Failed to register space mode listener with space [" + gigaSpace.getSpace()
+                    + "]", e);
+        }
+    }
+
+    private void registerSuspendInfoListener() {
+        gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().addListener(primaryBackupListener);
     }
 
     /**
@@ -447,6 +455,8 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
                 } catch (RemoteException e) {
                     logger.warn("Failed to unregister space mode listener with space [" + gigaSpace.getSpace() + "]", e);
                 }
+
+                gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().removeListener(primaryBackupListener);
             }
         }
 
@@ -878,7 +888,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         return transactionManager != null;
     }
 
-    private class PrimaryBackupListener implements ISpaceModeListener {
+    private class PrimaryBackupListener implements ISpaceModeListener, SuspendInfoChangedListener {
 
         public void beforeSpaceModeChange(SpaceMode spaceMode) throws RemoteException {
             onApplicationEvent(new BeforeSpaceModeChangeEvent(gigaSpace.getSpace(), spaceMode));
@@ -887,25 +897,25 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         public void afterSpaceModeChange(SpaceMode spaceMode) throws RemoteException {
             onApplicationEvent(new AfterSpaceModeChangeEvent(gigaSpace.getSpace(), spaceMode));
         }
+
+        @Override
+        public void onSuspendInfoChanged(SuspendInfo suspendInfo) {
+            quiesced = suspendInfo.getSuspendType() != SuspendType.NONE;
+            if (quiesced) {
+                // if container was running before calling quiesce it should resume working after unquiesce
+                boolean runningBeforeQuiesce = running;
+                stop();
+                resumeAfterUnquiesce = runningBeforeQuiesce;
+            } else {
+                // resume only if container was running before calling quiesce
+                if (resumeAfterUnquiesce)
+                    start();
+            }
+        }
     }
 
     protected String message(String message) {
         return "[" + getBeanName() + "] " + message;
-    }
-
-    public void
-    quiesceStateChanged(QuiesceStateChangedEvent event) {
-        quiesced = event.getQuiesceState().equals(QuiesceState.QUIESCED);
-        if (quiesced) {
-            // if container was running before calling quiesce it should resume working after unquiesce
-            boolean runningBeforeQuiesce = this.running;
-            stop();
-            this.resumeAfterUnquiesce = runningBeforeQuiesce;
-        } else {
-            // resume only if container was running before calling quiesce
-            if (resumeAfterUnquiesce)
-                start();
-        }
     }
 
     public void process(InternalDump dump) throws InternalDumpProcessorFailedException {

@@ -19,12 +19,15 @@ package com.gigaspaces.internal.server.space.quiesce;
 import com.gigaspaces.admin.quiesce.*;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.space.suspend.SuspendInfo;
+import com.gigaspaces.internal.server.space.suspend.SuspendInfoChangedListener;
 import com.gigaspaces.internal.server.space.suspend.SuspendType;
 import com.gigaspaces.internal.utils.StringUtils;
+import com.gigaspaces.internal.utils.collections.ConcurrentHashSet;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.kernel.SystemProperties;
 
 import java.io.Closeable;
+import java.util.Collection;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -44,13 +47,14 @@ public class QuiesceHandler {
     private final boolean _supported;
     private volatile Guard _guard;
     private volatile SuspendInfo _suspendInfo;
+    private final Collection<SuspendInfoChangedListener> listeners = new ConcurrentHashSet<SuspendInfoChangedListener>();
 
     public QuiesceHandler(SpaceImpl spaceImpl, QuiesceStateChangedEvent quiesceStateChangedEvent) {
         _spaceImpl = spaceImpl;
         _logger = Logger.getLogger(Constants.LOGGER_QUIESCE + '.' + spaceImpl.getNodeName());
         _supported = !QUIESCE_DISABLED && !_spaceImpl.isLocalCache();
         _guard = null;
-        _suspendInfo = new SuspendInfo(SuspendType.NONE);
+        setSuspendInfo(new SuspendInfo(SuspendType.NONE));
 
         if (quiesceStateChangedEvent != null && quiesceStateChangedEvent.getQuiesceState() == QuiesceState.QUIESCED)
             setQuiesceMode(quiesceStateChangedEvent);
@@ -287,7 +291,7 @@ public class QuiesceHandler {
             }
 
             if (_guard != null) {
-                _suspendInfo = new SuspendInfo(_guard.status.suspendType);
+                setSuspendInfo(new SuspendInfo(_guard.status.suspendType));
             }
             return true;
         } catch (Exception e) {
@@ -337,9 +341,9 @@ public class QuiesceHandler {
         _guard = removeGuardHelper(_guard, status);
         _logger.info("Removed " + status + ", new state is " + desc(_guard));
         if (_guard != null) {
-            _suspendInfo = new SuspendInfo(_guard.status.suspendType);
+            setSuspendInfo(new SuspendInfo(_guard.status.suspendType));
         } else {
-            _suspendInfo = new SuspendInfo(SuspendType.NONE);
+            setSuspendInfo(new SuspendInfo(SuspendType.NONE));
         }
     }
 
@@ -352,6 +356,22 @@ public class QuiesceHandler {
             guard.innerGuard = removeGuardHelper(guard.innerGuard, status);
             return guard;
         }
+    }
+
+    //TODO dispatch listener on different thread ?
+    private void setSuspendInfo(SuspendInfo suspendInfo) {
+        this._suspendInfo = suspendInfo;
+        for (SuspendInfoChangedListener listener : listeners) {
+            listener.onSuspendInfoChanged(suspendInfo);
+        }
+    }
+
+    public void addListener(SuspendInfoChangedListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(SuspendInfoChangedListener listener) {
+        listeners.remove(listener);
     }
 
 }
