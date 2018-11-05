@@ -2,6 +2,7 @@ package org.gigaspaces.cli.commands;
 
 import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.start.SystemInfo;
+import org.gigaspaces.cli.CliCommandException;
 import org.gigaspaces.cli.JavaCommandBuilder;
 import org.gigaspaces.cli.commands.utils.XapCliUtils;
 
@@ -33,8 +34,9 @@ public class PuRunCommand extends AbstractRunCommand {
 
     @Override
     protected void execute() throws Exception {
-
         validateOptions(partitions, ha, instances);
+        if (!path.exists())
+            throw new CliCommandException("File not found: " + path);
 
         final List<ProcessBuilder> processBuilders = new ArrayList<ProcessBuilder>();
         if (lus) {
