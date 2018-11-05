@@ -41,9 +41,9 @@ public class DemoteHandler implements ISpaceModeListener {
         _demoteCompletionEventTimeoutMillis = StringUtils.parseDurationAsMillis(_spaceImpl.getConfigReader().getSpaceProperty(ENGINE_DEMOTE_COMPLETION_EVENT_TIMEOUT, ENGINE_DEMOTE_COMPLETION_EVENT_TIMEOUT_DEFAULT));
     }
 
-    public void demote(long timeout, TimeUnit unit) throws DemoteFailedException {
-        if (unit.toMillis(timeout) < _demoteMinTimeoutMillis) {
-            throw new DemoteFailedException("Timeout must be equal or greater than " + MIN_TIME_TO_DEMOTE_IN_MS + "=" + _demoteMinTimeoutMillis + "ms");
+    public void demote(long maxSuspendTime, TimeUnit unit) throws DemoteFailedException {
+        if (unit.toMillis(maxSuspendTime) < _demoteMinTimeoutMillis) {
+            throw new DemoteFailedException("Max suspend time must be equal or greater than " + MIN_TIME_TO_DEMOTE_IN_MS + "=" + _demoteMinTimeoutMillis + "ms");
         }
 
 
@@ -56,7 +56,7 @@ public class DemoteHandler implements ISpaceModeListener {
 
             _spaceImpl.addInternalSpaceModeListener(this);
             _latch = new CountDownLatch(1);
-            demoteImpl(timeout, unit);
+            demoteImpl(maxSuspendTime, unit);
         } catch (TimeoutException e) {
             throw new DemoteFailedException(e);
         } finally {

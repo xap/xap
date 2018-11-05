@@ -3602,7 +3602,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     }
 
     @Override
-    public void demoteToBackup(long timeToWait, TimeUnit unit) throws DemoteFailedException, RemoteException {
-        _demoteHandler.demote(timeToWait, unit);
+    public void demote(long maxSuspendTime, TimeUnit unit) throws DemoteFailedException, RemoteException {
+        _demoteHandler.demote(maxSuspendTime, unit);
     }
 }

@@ -720,10 +720,10 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
     }
 
     @Override
-    public void demoteToBackup(long timeout, TimeUnit unit) throws DemoteFailedException, RemoteException {
+    public void demote(long maxSuspendTime, TimeUnit unit) throws DemoteFailedException, RemoteException {
         IRemoteSpace spaceImpl = getRemoteJSpace();
 
-        spaceImpl.demoteToBackup(timeout, unit);
+        spaceImpl.demote(maxSuspendTime, unit);
     }
 
 }
