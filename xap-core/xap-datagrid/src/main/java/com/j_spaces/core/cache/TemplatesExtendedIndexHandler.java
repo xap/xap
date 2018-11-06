@@ -249,4 +249,7 @@ public class TemplatesExtendedIndexHandler<K>
         return new ExtendedIndexIterator<TemplateCacheInfo>(mapToScan, _index,originalStart,originalStartCondition, originalEnd,originalEndCondition);
     }
 
+    public FastConcurrentSkipListMap<K, IStoredList<TemplateCacheInfo>> getOrderedStore() {
+        return _orderedStore;
+    }
 }

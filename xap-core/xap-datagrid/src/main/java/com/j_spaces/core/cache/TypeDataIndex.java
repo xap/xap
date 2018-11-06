@@ -97,14 +97,14 @@ public class TypeDataIndex<K> {
 
     //extendex indexes for templates for GT/GE conditions
     private final IExtendedIndex<K, TemplateCacheInfo> m_Notify_GT_Index;
-    private final IExtendedIndex<K, TemplateCacheInfo> m_RT_GT_Index;
+    private final TemplatesExtendedIndexHandler<K> m_RT_GT_Index;
     //extendex indexes for templates for LT/LE conditions
     private final IExtendedIndex<K, TemplateCacheInfo> m_Notify_LT_Index;
-    private final IExtendedIndex<K, TemplateCacheInfo> m_RT_LT_Index;
+    private final TemplatesExtendedIndexHandler<K> m_RT_LT_Index;
 
     //extended index for NE condition
     private final IExtendedIndex<K, TemplateCacheInfo> m_Notify_NE_Index;
-    private final IExtendedIndex<K, TemplateCacheInfo> m_RT_NE_Index;
+    private final TemplatesExtendedIndexHandler<K> m_RT_NE_Index;
 
 
     //non volatile-non protected
@@ -1671,4 +1671,15 @@ public class TypeDataIndex<K> {
         REMOVE_NONEQUALS  /*remove only*/
     }
 
+    public TemplatesExtendedIndexHandler<K> getM_RT_GT_Index() {
+        return m_RT_GT_Index;
+    }
+
+    public TemplatesExtendedIndexHandler<K> getM_RT_LT_Index() {
+        return m_RT_LT_Index;
+    }
+
+    public TemplatesExtendedIndexHandler<K> getM_RT_NE_Index() {
+        return m_RT_NE_Index;
+    }
 }

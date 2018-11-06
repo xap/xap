@@ -104,7 +104,7 @@ public class QuiesceHandler {
         if (addGuard(guard)) {
             // Cancel (throw exception) on all pending op templates
             if (_spaceImpl.getEngine() != null)
-                _spaceImpl.getEngine().getCacheManager().getTemplateExpirationManager().returnWithExceptionFromAllPendingTemplates(_guard.exception);
+                _spaceImpl.getEngine().getTemplateScanner().cancelAllNonNotifyTemplates(_guard.exception);
         }
     }
 
@@ -112,7 +112,7 @@ public class QuiesceHandler {
         if (addGuard(new Guard(description, token, Status.QUIESCED))) {
             // Cancel (throw exception) on all pending op templates
             if (_spaceImpl.getEngine() != null)
-                _spaceImpl.getEngine().getCacheManager().getTemplateExpirationManager().returnWithExceptionFromAllPendingTemplates(_guard.exception);
+                _spaceImpl.getEngine().getTemplateScanner().cancelAllNonNotifyTemplates(_guard.exception);
         }
     }
 

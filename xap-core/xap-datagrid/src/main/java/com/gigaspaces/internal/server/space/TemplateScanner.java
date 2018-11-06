@@ -36,18 +36,19 @@ import com.j_spaces.core.TemplateDeletedException;
 import com.j_spaces.core.TransactionConflictException;
 import com.j_spaces.core.TransactionNotActiveException;
 import com.j_spaces.core.XtnEntry;
-import com.j_spaces.core.cache.CacheManager;
-import com.j_spaces.core.cache.IExtendedIndexIterator;
-import com.j_spaces.core.cache.TemplateCacheInfo;
+import com.j_spaces.core.cache.*;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.ICollection;
 import com.j_spaces.kernel.IStoredList;
 import com.j_spaces.kernel.IStoredListIterator;
 
+import com.j_spaces.kernel.list.ScanSingleListIterator;
 import net.jini.core.transaction.server.ServerTransaction;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -73,6 +74,83 @@ public class TemplateScanner {
         this._regexCache = new RegexCache(engine.getConfigReader());
         this._engine = engine;
     }
+
+    //TODO test with template null
+    //TODO test with template with index that is not spaceId
+    public void cancelAllNonNotifyTemplates(Exception ex) {
+        Map<String, IServerTypeDesc> safeTypeTable = _typeManager.getSafeTypeTable();
+        if (safeTypeTable == null) return;
+        for (IServerTypeDesc serverTypeDesc : safeTypeTable.values()) {
+            TypeData typeData = _cacheManager.getTypeData(serverTypeDesc);
+            if (typeData == null) continue;
+
+            //ReadTakeUidTemplates
+            cancelTemplates(typeData.getReadTakeUidTemplates(), ex);
+
+            //ReadTakeTemplates
+            cancelTemplates(typeData.getReadTakeTemplates(), ex);
+            //ReadTakeExtendedTemplates
+            cancelTemplates(typeData.getReadTakeExtendedTemplates(), ex);
+
+            //IndexedTemplates
+            if (typeData.getIndexes() != null) {
+                for (TypeDataIndex typeDataIndex : typeData.getIndexes()) {
+                    //ReadTakeTemplates
+                    ConcurrentHashMap<Object, IStoredList<TemplateCacheInfo>[]> rtTemplates = typeDataIndex._RTTemplates;
+                    if (rtTemplates != null) {
+                        for (IStoredList<TemplateCacheInfo>[] iStoredLists : rtTemplates.values()) {
+                            for (IStoredList<TemplateCacheInfo> iStoredList : iStoredLists) {
+                                cancelTemplates(iStoredList, ex);
+                            }
+                        }
+                    }
+
+                    //ReadTakeNullTemplates
+                    cancelTemplates(typeDataIndex._RTNullTemplates, ex);
+
+                    //ReadTake GT,LT,NE Index Templates
+                    if (typeDataIndex.getM_RT_GT_Index() != null) {
+                        cancelTemplates(typeDataIndex.getM_RT_GT_Index().getOrderedStore(), ex);
+                    }
+                    if (typeDataIndex.getM_RT_LT_Index() != null) {
+                        cancelTemplates(typeDataIndex.getM_RT_LT_Index().getOrderedStore(), ex);
+                    }
+                    if (typeDataIndex.getM_RT_NE_Index() != null) {
+                        cancelTemplates(typeDataIndex.getM_RT_NE_Index().getOrderedStore(), ex);
+                    }
+                }
+            }
+
+        }
+    }
+
+    private void cancelTemplates(Map<?, IStoredList<TemplateCacheInfo>> map, Exception ex) {
+        if (map == null) return;
+        for (IStoredList<TemplateCacheInfo> storedList : map.values()) {
+            cancelTemplates(storedList, ex);
+        }
+    }
+
+
+    private void cancelTemplates(IStoredList<TemplateCacheInfo> templates, Exception ex) {
+        if (templates == null) return;
+
+        if (templates.isEmpty()) return;
+
+        ScanSingleListIterator<TemplateCacheInfo> iterator = new ScanSingleListIterator<TemplateCacheInfo>(templates, false);
+        //TODO consider using iterator.reuse();
+        try {
+            while (iterator.hasNext()) {
+                ITemplateHolder templateHolder = iterator.next().getSubject().m_TemplateHolder;
+                TemplateExpirationManager.cancelTemplateHolder(templateHolder, ex, _cacheManager, false, null);
+
+            }
+        } finally {
+            iterator.releaseScan();
+        }
+    }
+
+
 
     public RegexCache getRegexCache() {
         return _regexCache;
