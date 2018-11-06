@@ -7,7 +7,7 @@
     <parent>
         <artifactId>xap</artifactId>
         <groupId>org.gigaspaces</groupId>
-        <version>14.0.0-SNAPSHOT</version>
+        <version>14.0.0-rc2-19916-78</version>
         <relativePath>../../</relativePath>
     </parent>
     <artifactId>xap-map</artifactId>
