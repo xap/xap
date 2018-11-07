@@ -11,7 +11,7 @@
         <spring.version>4.3.19.RELEASE</spring.version>
         <spring.security.version>4.2.8.RELEASE</spring.security.version>
         <junit.version>4.12</junit.version>
-        <jetty.version>9.2.24.v20180105</jetty.version>
+        <jetty.version>9.2.26.v20180806</jetty.version>
         <xap.version>14.0.0</xap.version>
         <xap.milestone>m1</xap.milestone>
         <xap.build.number>19901-10</xap.build.number>
