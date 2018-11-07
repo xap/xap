@@ -4,7 +4,7 @@
 # * It is highly recommended NOT TO MODIFY THIS SCRIPT, to simplify future upgrades.                        *
 # * If you need to override the defaults, please modify setenv-overrides.sh or set                          *
 # * the XAP_SETTINGS_FILE environment variable to your custom script.                                       *
-# * For more information see http://docs.gigaspaces.com/xap/12.3/started/common-environment-variables.html *
+# * For more information see http://docs.gigaspaces.com/xap/14.0/started/common-environment-variables.html *
 # ***********************************************************************************************************
 #Load overrides settings.
 DIRNAME=$(dirname ${BASH_SOURCE[0]})

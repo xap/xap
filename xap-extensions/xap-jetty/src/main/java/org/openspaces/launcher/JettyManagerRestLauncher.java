@@ -1,5 +1,6 @@
 package org.openspaces.launcher;
 
+import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.nio.filters.SelfSignedCertificate;
 import com.gigaspaces.start.SystemInfo;
@@ -152,7 +153,7 @@ public class JettyManagerRestLauncher implements Closeable {
                     throw new SecurityException(
                             "Security is enabled, but SSL is not configured. Please configure SSL using the system property '"
                                     +SystemProperties.MANAGER_REST_SSL_ENABLED+"'. " +
-                                    "For more information: 'http://docs.gigaspaces.com/xap/12.3/admin/xap-manager-rest.html#security'");
+                                    "For more information: '" + PlatformVersion.getProductHelpUrl() + "/admin/xap-manager-rest.html#security'");
 
                 logger.warning("Security is enabled, but SSL was explicitly disabled - passwords will be sent over the network without encryption");
             }
