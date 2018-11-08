@@ -17,6 +17,7 @@
 
 package org.openspaces.events.polling;
 
+import com.gigaspaces.admin.quiesce.QuiesceException;
 import org.openspaces.core.SpaceInterruptedException;
 import org.openspaces.events.AbstractEventListenerContainer;
 import org.openspaces.events.SpaceDataEventListener;
@@ -1057,6 +1058,10 @@ public class SimplePollingEventListenerContainer extends AbstractEventListenerCo
             return receiveOperationHandler.receive(template, getGigaSpace(), getReceiveTimeout());
         } catch (SpaceInterruptedException e) {
             // we got an interrupted exception, it means no receive operation so return null.
+            return null;
+        } catch (QuiesceException e) {
+            if (logger.isDebugEnabled())
+                logger.debug("receiveEvent got QuiesceException" , e);
             return null;
         }
     }

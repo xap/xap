@@ -900,16 +900,25 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
 
         @Override
         public void onSuspendInfoChanged(SuspendInfo suspendInfo) {
+            logger.info(message("SuspendType was updated to " + suspendInfo.getSuspendType()));
             quiesced = suspendInfo.getSuspendType() != SuspendType.NONE;
             if (quiesced) {
+                if (logger.isDebugEnabled())
+                    logger.debug(message("SuspendType was updated to " + suspendInfo.getSuspendType())+", stopping...");
                 // if container was running before calling quiesce it should resume working after unquiesce
                 boolean runningBeforeQuiesce = running;
                 stop();
                 resumeAfterUnquiesce = runningBeforeQuiesce;
             } else {
                 // resume only if container was running before calling quiesce
-                if (resumeAfterUnquiesce)
+                if (resumeAfterUnquiesce) {
+                    if (logger.isDebugEnabled())
+                        logger.debug(message("SuspendType was updated to " + suspendInfo.getSuspendType())+", starting...");
                     start();
+                } else {
+                    if (logger.isDebugEnabled())
+                        logger.debug(message("SuspendType was updated to " + suspendInfo.getSuspendType())+" but resumeAfterUnquiesce was set to false, not resuming...");
+                }
             }
         }
     }
