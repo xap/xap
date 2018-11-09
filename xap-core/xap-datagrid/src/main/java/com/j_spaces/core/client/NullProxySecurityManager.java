@@ -50,6 +50,11 @@ public class NullProxySecurityManager implements IProxySecurityManager {
     }
 
     @Override
+    public SpaceContext acquireContext(IRemoteSpace remoteSpace, CredentialsProvider credentialsProvider) throws RemoteException {
+        return _spaceProxy.getProxyRouter().getDefaultSpaceContext();
+    }
+
+    @Override
     public CredentialsProvider getCredentialsProvider() {
         return null;
     }

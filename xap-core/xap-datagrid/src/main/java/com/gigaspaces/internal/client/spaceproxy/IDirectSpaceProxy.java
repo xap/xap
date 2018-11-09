@@ -27,6 +27,7 @@ import com.gigaspaces.internal.server.space.IRemoteSpace;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.space.demote.DemoteFailedException;
 import com.gigaspaces.query.ISpaceQuery;
+import com.gigaspaces.security.directory.CredentialsProvider;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.IJSpaceContainer;
 import com.j_spaces.core.IStubHandler;
@@ -131,6 +132,15 @@ public interface IDirectSpaceProxy extends ISpaceProxy {
 
     ISpaceQuery prepareTemplate(Object template);
 
-    void demote(long maxSuspendTime, TimeUnit unit) throws DemoteFailedException, RemoteException;
+    /**
+     * Internal demote API for swapping from primary to backup Space.
+     * @param maxSuspendTime maximum suspend time for the operation to complete
+     * @param timeUnit max suspend time unit to use
+     * @param credentialsProvider security credentials, or {@code null}, or {@link com.gigaspaces.security.directory.EmptyCredentialsProvider}
+     * @throws DemoteFailedException
+     * @throws RemoteException
+     * @since 14.0.0
+     */
+    void demote(long maxSuspendTime, TimeUnit timeUnit, CredentialsProvider credentialsProvider) throws DemoteFailedException, RemoteException;
 
 }
