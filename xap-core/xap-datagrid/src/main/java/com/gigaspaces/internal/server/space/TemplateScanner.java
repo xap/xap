@@ -142,8 +142,9 @@ public class TemplateScanner {
         try {
             while (iterator.hasNext()) {
                 ITemplateHolder templateHolder = iterator.next().getSubject().m_TemplateHolder;
-                TemplateExpirationManager.cancelTemplateHolder(templateHolder, ex, _cacheManager, false, null);
-
+                if (!templateHolder.isDeleted()) {
+                    _cacheManager.getTemplateExpirationManager().cancelTemplateHolder(templateHolder, ex);
+                }
             }
         } finally {
             iterator.releaseScan();

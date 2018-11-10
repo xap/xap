@@ -83,14 +83,18 @@ public class TemplateExpirationManager implements IConsumerObject<Object> {
             fromTimerThread = false;
         }
 
-        cancelTemplateHolder(template, exp, _cacheManager, fromTimerThread, _expirationList);
+        cancelTemplateHolder(template, exp, fromTimerThread);
+    }
+
+    public void cancelTemplateHolder(ITemplateHolder template, Exception exp) {
+        cancelTemplateHolder(template, exp, false);
     }
 
 
-    public static void cancelTemplateHolder(ITemplateHolder template, Exception exp, CacheManager cacheManager, boolean fromTimerThread, FastConcurrentSkipListMap<TemplateKey, ITemplateHolder> _expirationList) {
+    private void cancelTemplateHolder(ITemplateHolder template, Exception exp, boolean fromTimerThread) {
         IResponseContext respContext = template.getResponseContext();
         if (respContext != null || template.getMultipleIdsContext() != null || exp != null) {
-            ILockObject templateLock = cacheManager.getLockManager().getLockObject(template, false /*isEvictable*/);
+            ILockObject templateLock = _cacheManager.getLockManager().getLockObject(template, false /*isEvictable*/);
             Context context = null;
             AnswerHolder aHolder = template.getAnswerHolder();
             try {
@@ -99,12 +103,12 @@ public class TemplateExpirationManager implements IConsumerObject<Object> {
                     synchronized (aHolder) {
                         if (!template.isDeleted()) {
                             if (!fromTimerThread)
-                                removeTemplate(template, _expirationList);
+                                removeTemplate(template);
                             else  //already removed from list by timer thread
                                 template.setInExpirationManager(false);
-                            context = cacheManager.getCacheContext();
+                            context = _cacheManager.getCacheContext();
                             context.setOperationAnswer(template, null, exp);
-                            cacheManager.removeTemplate(context, template, false, true /*origin*/, false);
+                            _cacheManager.removeTemplate(context, template, false, true /*origin*/, false);
                         } else {
                             return;
                         }
@@ -114,8 +118,8 @@ public class TemplateExpirationManager implements IConsumerObject<Object> {
                 _logger.log(Level.FINE, "exception occurred during template removing", ex);
             } finally {
                 if (templateLock != null)
-                    cacheManager.getLockManager().freeLockObject(templateLock);
-                cacheManager.freeCacheContext(context);
+                    _cacheManager.getLockManager().freeLockObject(templateLock);
+                _cacheManager.freeCacheContext(context);
             }
 
         }
@@ -211,8 +215,6 @@ public class TemplateExpirationManager implements IConsumerObject<Object> {
             if (!template.isDeleted())
                 _threadPool.enqueueBlocked(new ReturnWithExecption(template, exp));
             }
-
-
     }
 
     private static TemplateKey createTemplateKey(ITemplateHolder template) {
@@ -222,16 +224,13 @@ public class TemplateExpirationManager implements IConsumerObject<Object> {
         return new TemplateKey(bucketKey, template.getUID(), template);
     }
 
-    private static void removeTemplate(ITemplateHolder template, FastConcurrentSkipListMap<TemplateKey, ITemplateHolder> _expirationList) {
+    public void removeTemplate(ITemplateHolder template) {
         if (!template.isInExpirationManager())
             return;
         template.setInExpirationManager(false);
         _expirationList.remove(createTemplateKey(template));
     }
 
-    public void removeTemplate(ITemplateHolder template) {
-       removeTemplate(template, _expirationList);
-    }
 
     private class Timer extends GSThread {
         private volatile boolean _closed;
