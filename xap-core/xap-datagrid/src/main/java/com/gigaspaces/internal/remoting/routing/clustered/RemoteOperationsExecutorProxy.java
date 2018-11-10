@@ -101,7 +101,7 @@ public class RemoteOperationsExecutorProxy {
 
         try {
             boolean isActive = proxy.isActive();
-            return (isActive || !activeOnly); //TODO enhance
+            return (isActive || !activeOnly);
         } catch (RemoteException e) {
             return false;
         }
