@@ -6,8 +6,8 @@
 	xmlns:os-archive="http://www.openspaces.org/schema/archive"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
 	                    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
-	                    http://www.openspaces.org/schema/core http://www.openspaces.org/schema/12.3/core/openspaces-core.xsd
-						http://www.openspaces.org/schema/archive http://www.openspaces.org/schema/12.3/archive/openspaces-archive.xsd">
+	                    http://www.openspaces.org/schema/core http://www.openspaces.org/schema/14.0/core/openspaces-core.xsd
+						http://www.openspaces.org/schema/archive http://www.openspaces.org/schema/14.0/archive/openspaces-archive.xsd">
 
 	<context:annotation-config />
 
