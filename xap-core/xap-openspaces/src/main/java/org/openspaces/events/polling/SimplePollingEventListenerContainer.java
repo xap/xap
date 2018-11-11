@@ -1060,8 +1060,11 @@ public class SimplePollingEventListenerContainer extends AbstractEventListenerCo
             // we got an interrupted exception, it means no receive operation so return null.
             return null;
         } catch (QuiesceException e) {
-            if (logger.isDebugEnabled())
-                logger.debug("receiveEvent got QuiesceException" , e);
+            if (logger.isDebugEnabled()) {
+                logger.debug("receiveEvent got QuiesceException", e);
+            } else {
+                logger.info("receiveEvent was interrupted because space is suspended");
+            }
             return null;
         }
     }
