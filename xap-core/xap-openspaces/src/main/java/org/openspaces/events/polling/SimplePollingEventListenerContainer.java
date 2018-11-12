@@ -1061,9 +1061,9 @@ public class SimplePollingEventListenerContainer extends AbstractEventListenerCo
             return null;
         } catch (QuiesceException e) {
             if (logger.isDebugEnabled()) {
-                logger.debug("receiveEvent got QuiesceException", e);
+                logger.debug(message("receiveEvent got QuiesceException"), e);
             } else {
-                logger.info("receiveEvent was interrupted because space is suspended");
+                logger.info(message("receiveEvent was interrupted because space is suspended"));
             }
             return null;
         }
