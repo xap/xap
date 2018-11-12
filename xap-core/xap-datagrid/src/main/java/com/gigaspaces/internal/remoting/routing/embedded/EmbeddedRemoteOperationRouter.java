@@ -128,7 +128,7 @@ public class EmbeddedRemoteOperationRouter extends AbstractRemoteOperationRouter
     @Override
     public RemoteOperationsExecutorProxy getAnyActiveMember() {
         try {
-            return _memberProxy.isActive() ? _memberProxy : null;
+            return _memberProxy.isActiveQuiesceTokenAware() ? _memberProxy : null;
         } catch (RemoteException e) {
             return null;
         }

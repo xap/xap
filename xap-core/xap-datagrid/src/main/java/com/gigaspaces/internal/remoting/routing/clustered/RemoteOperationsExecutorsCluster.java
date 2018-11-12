@@ -293,7 +293,7 @@ public class RemoteOperationsExecutorsCluster {
             if (_logger.isLoggable(Level.FINEST))
                 _logger.log(Level.FINEST, "Checking if " + _memberName + (_activeOnly ? " is active..." : " is available..."));
             try {
-                boolean isActive = _proxy.isActive();
+                boolean isActive = _proxy.isActiveQuiesceTokenAware();
                 if (!_activeOnly) {
                     if (_logger.isLoggable(Level.FINE))
                         _logger.log(Level.FINE, "Member " + _memberName + " is available.");

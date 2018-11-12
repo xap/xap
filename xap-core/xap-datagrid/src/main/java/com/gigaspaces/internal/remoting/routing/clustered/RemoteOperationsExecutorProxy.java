@@ -79,6 +79,10 @@ public class RemoteOperationsExecutorProxy {
     }
 
     public boolean isActive() throws RemoteException {
+        return _executor.isActive();
+    }
+
+    public boolean isActiveQuiesceTokenAware() throws RemoteException {
         if (_quiesceTokenProvider.getToken() != null) {
             return _executor.isActive();
         } else {
@@ -100,7 +104,7 @@ public class RemoteOperationsExecutorProxy {
             return false;
 
         try {
-            boolean isActive = proxy.isActive();
+            boolean isActive = proxy.isActiveQuiesceTokenAware();
             return (isActive || !activeOnly);
         } catch (RemoteException e) {
             return false;
