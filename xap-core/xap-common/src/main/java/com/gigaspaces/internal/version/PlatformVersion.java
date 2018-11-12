@@ -16,8 +16,12 @@
 
 package com.gigaspaces.internal.version;
 
+import com.gigaspaces.logger.LoggerSystemInfo;
+import com.gigaspaces.start.Locator;
+import com.gigaspaces.start.ProductType;
 import com.gigaspaces.start.SystemInfo;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.logging.ErrorManager;
@@ -38,7 +42,8 @@ public class PlatformVersion {
     private final int subBuildNumber;
     private final String revision;
     private final String productHelpUrl;
-//    private final String product;
+    private final ProductType productType;
+    private final String xapHome;
 
     public PlatformVersion(Properties properties) {
         version = properties.getProperty("xap.version", "14.0.0");
@@ -46,9 +51,10 @@ public class PlatformVersion {
         buildNumber = properties.getProperty("xap.build.number", "19901-10");
         revision = properties.getProperty("xap.git.sha", "unspecified");
 
-//        product = SystemInfo.singleton().getProductType().toString();
+        this.xapHome = LoggerSystemInfo.xapHome;
+        this.productType = new File(xapHome+File.separator+ "insightedge").exists() ? ProductType.InsightEdge : ProductType.XAP;
 
-        shortOfficialVersion = "XAP " + version + " " + milestone.toUpperCase();
+        shortOfficialVersion = productType.name() +" " + version + " " + milestone.toUpperCase();
         officialVersion = "GigaSpaces " + shortOfficialVersion + " (build " + buildNumber + ", revision " + revision + ")";
 
         String[] versionTokens = version.split("\\.");
@@ -84,6 +90,10 @@ public class PlatformVersion {
             errorManager.error("Failed to load version properties from " + path, new Exception(t), ErrorManager.OPEN_FAILURE);
         }
         return properties;
+    }
+
+    public ProductType getProductType() {
+        return productType;
     }
 
     public byte getMajorVersion() {

@@ -52,7 +52,6 @@ public class SystemInfo {
     private final String xapHome;
     private final String xapHomeFwdSlash;
     private final XapLocations locations;
-    private final ProductType productType;
     private final XapLookup lookup;
     private final XapNetworkInfo network;
     private final XapOperatingSystem os;
@@ -70,7 +69,6 @@ public class SystemInfo {
         this.os = new XapOperatingSystem(LoggerSystemInfo.processId);
         this.network = LoggerSystemInfo.networkInfo;
         this.locations = new XapLocations(xapHome);
-        this.productType = new File(locations.insightedge).exists() ? ProductType.InsightEdge : ProductType.XAP;
         this.timeProvider = new XapTimeProvider();
         this.managerClusterInfo = new XapManagerClusterInfo(network.getPublicHost());
         this.lookup = new XapLookup(managerClusterInfo);
@@ -83,10 +81,6 @@ public class SystemInfo {
 
     public String getXapHomeFwdSlash() {
         return xapHomeFwdSlash;
-    }
-
-    public ProductType getProductType() {
-        return productType;
     }
 
     public XapLocations locations() {
