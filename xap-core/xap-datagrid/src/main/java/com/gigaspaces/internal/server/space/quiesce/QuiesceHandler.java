@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
- * Quiesce core functionality
+ * Suspend/Quiesce core functionality
  *
  * @author Yechiel
  * @version 10.1
@@ -51,7 +51,7 @@ public class QuiesceHandler {
 
     public QuiesceHandler(SpaceImpl spaceImpl, QuiesceStateChangedEvent quiesceStateChangedEvent) {
         _spaceImpl = spaceImpl;
-        _logger = Logger.getLogger(Constants.LOGGER_QUIESCE + '.' + spaceImpl.getNodeName());
+        _logger = Logger.getLogger(Constants.LOGGER_SUSPEND + '.' + spaceImpl.getNodeName());
         _supported = !QUIESCE_DISABLED && !_spaceImpl.isLocalCache();
         _guard = null;
         setSuspendInfo(new SuspendInfo(SuspendType.NONE));
@@ -73,7 +73,7 @@ public class QuiesceHandler {
     public boolean isSuspended() {
         // Concurrency: snapshot volatile _guard into local variable
         final Guard currGuard = _guard;
-        return hasGuard(currGuard, Status.SUSPENDED);
+        return hasGuard(currGuard, Status.DISCONNECTED);
     }
 
     public boolean isQuiesced() {
@@ -100,7 +100,7 @@ public class QuiesceHandler {
     }
 
     public void quiesceDemote(String description) {
-        Guard guard = new Guard(description, null, Status.QUIESCED_DEMOTE);
+        Guard guard = new Guard(description, null, Status.DEMOTING);
         if (addGuard(guard)) {
             // Cancel (throw exception) on all pending op templates
             if (_spaceImpl.getEngine() != null)
@@ -121,15 +121,15 @@ public class QuiesceHandler {
     }
 
     public void unquiesceDemote() {
-        removeGuard(Status.QUIESCED_DEMOTE);
+        removeGuard(Status.DEMOTING);
     }
 
     public void suspend(String description) {
-        addGuard(new Guard(description, createSpaceNameToken(), Status.SUSPENDED));
+        addGuard(new Guard(description, createSpaceNameToken(), Status.DISCONNECTED));
     }
 
     public void unsuspend() {
-        removeGuard(Status.SUSPENDED);
+        removeGuard(Status.DISCONNECTED);
     }
 
     public boolean isSupported() {
@@ -151,13 +151,13 @@ public class QuiesceHandler {
 
     private static String desc(Guard guard) {
         if (guard == null)
-            return "UNQUIESCED";
-        return guard.status == Status.SUSPENDED ? "SUSPENDED" : "QUIESCED";
+            return "NONE";
+        return guard.status.suspendType.name();
     }
 
     protected enum Status {
-        SUSPENDED(0, "suspended", SuspendType.DISCONNECTED),
-        QUIESCED_DEMOTE(1, "demoting", SuspendType.DEMOTING),
+        DISCONNECTED(0, "disconnected", SuspendType.DISCONNECTED),
+        DEMOTING(1, "demoting", SuspendType.DEMOTING),
         QUIESCED(2, "quiesced", SuspendType.QUIESCED);
 
         private int order;
@@ -187,7 +187,7 @@ public class QuiesceHandler {
         Guard(String description, QuiesceToken token, Status status) {
             this.token = token != null ? token : EmptyToken.INSTANCE;
             this.status = status;
-            this.suspendLatch = (status == Status.SUSPENDED) ? new CountDownLatch(1) : null;
+            this.suspendLatch = (status == Status.DISCONNECTED) ? new CountDownLatch(1) : null;
 
             String errorMessage = "Operation cannot be executed - space [" + _spaceImpl.getServiceName() + "] is " +
                     status.description +
@@ -261,19 +261,19 @@ public class QuiesceHandler {
     private synchronized boolean addGuard(Guard newGuard) {
         if (!_supported) {
             if (QUIESCE_DISABLED)
-                _logger.severe("Quiesce is not supported because the '" + SystemProperties.DISABLE_QUIESCE_MODE + "' was set");
+                _logger.severe("Suspend is not supported because the '" + SystemProperties.DISABLE_QUIESCE_MODE + "' was set");
             if (_spaceImpl.isLocalCache())
-                _logger.severe("Quiesce is not supported for local-cache/local-view");
+                _logger.severe("Suspend is not supported for local-cache/local-view");
             return false;
         }
 
         if (hasGuard(_guard, newGuard.status)) {
-            _logger.warning("Quiesce guard ["+newGuard.status+"] was discarded, it already exists - current state is " + desc(_guard));
+            _logger.warning("Suspend guard ["+newGuard.status+"] was discarded, it already exists - current state is " + desc(_guard));
             return false;
         }
 
         if (!guardCanBeAdded(_guard, newGuard)) {
-            _logger.warning("Quiesce guard couldn't be added - current state is " + desc(_guard));
+            _logger.warning("Suspend guard couldn't be added - current state is " + desc(_guard));
             return false;
         }
 
@@ -281,9 +281,9 @@ public class QuiesceHandler {
             Guard prevGuard = _guard;
             _guard = addGuardHelper(_guard, newGuard);
             if (prevGuard == _guard) {
-                _logger.info("Quiesce guard "+desc(newGuard)+" was added, but is currently masked because state is " + desc(_guard));
+                _logger.info("Suspend guard "+desc(newGuard)+" was added, but is currently masked because state is " + desc(_guard));
             } else {
-                _logger.info("Quiesce state set to " + desc(_guard));
+                _logger.info("Suspend state set to " + desc(_guard));
             }
 
             if (_guard != null) {

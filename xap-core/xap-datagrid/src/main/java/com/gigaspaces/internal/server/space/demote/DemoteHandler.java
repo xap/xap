@@ -103,7 +103,7 @@ public class DemoteHandler implements ISpaceModeListener {
 
         try {
 
-            _logger.info("Demoting to backup, entering quiesce mode...");
+            _logger.info("Demoting to backup, setting suspend type to DEMOTING...");
             _spaceImpl.getQuiesceHandler().quiesceDemote("Space is demoting from primary to backup");
 
 
@@ -176,7 +176,7 @@ public class DemoteHandler implements ISpaceModeListener {
             abort();
             throw e;
         } finally {
-            _logger.info("Demoting to backup finished, exiting quiesce mode...");
+            _logger.info("Demoting to backup finished");
             _spaceImpl.getQuiesceHandler().unquiesceDemote();
         }
     }
@@ -204,7 +204,7 @@ public class DemoteHandler implements ISpaceModeListener {
 
         if (checkQuiesce) {
             if (_spaceImpl.getQuiesceHandler().isSuspended()) {
-                throw new DemoteFailedException("Space is suspended");
+                throw new DemoteFailedException("Space is disconnected from ZooKeeper");
             }
 
             if (_spaceImpl.getQuiesceHandler().isQuiesced()) {

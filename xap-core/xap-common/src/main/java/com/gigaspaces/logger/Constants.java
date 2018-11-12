@@ -125,7 +125,7 @@ public interface Constants {
     final public static String LOGGER_CLIENT = "com.gigaspaces.client";
     final public static String LOGGER_GSITERATOR = "com.gigaspaces.client.gsiterator";
 
-    final public static String LOGGER_QUIESCE = "com.gigaspaces.quiesce";
+    final public static String LOGGER_SUSPEND = "com.gigaspaces.suspend";
     final public static String LOGGER_DEMOTE= "com.gigaspaces.demote";
 
 
