@@ -18,6 +18,7 @@ package com.gigaspaces.internal.client.spaceproxy.router;
 
 import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceOperationRequest;
+import com.gigaspaces.internal.quiesce.QuiesceTokenProvider;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.routing.clustered.RemoteOperationsExecutorProxy;
 import com.gigaspaces.internal.remoting.routing.embedded.EmbeddedRemoteOperationRouter;
@@ -36,8 +37,8 @@ import java.rmi.RemoteException;
 public class SpaceEmbeddedRemoteOperationRouter extends EmbeddedRemoteOperationRouter implements SpaceProxyRemoteOperationRouter {
     private final SpaceProxyImpl _spaceProxy;
 
-    public SpaceEmbeddedRemoteOperationRouter(SpaceProxyImpl spaceProxy, int partitionId) {
-        super(new RemoteOperationsExecutorProxy(spaceProxy.getRemoteMemberName(), spaceProxy.getRemoteJSpace()),
+    public SpaceEmbeddedRemoteOperationRouter(SpaceProxyImpl spaceProxy, int partitionId, QuiesceTokenProvider quiesceTokenProvider) {
+        super(new RemoteOperationsExecutorProxy(spaceProxy.getRemoteMemberName(), spaceProxy.getRemoteJSpace(), quiesceTokenProvider),
                 partitionId, spaceProxy.getName(), LRMIRuntime.getRuntime().getThreadPool());
         _spaceProxy = spaceProxy;
     }

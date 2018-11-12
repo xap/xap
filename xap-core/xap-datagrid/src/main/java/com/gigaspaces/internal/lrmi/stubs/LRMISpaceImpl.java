@@ -75,6 +75,7 @@ import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.UnknownTransactionException;
 import net.jini.core.transaction.server.TransactionManager;
 import net.jini.id.Uuid;
+
 import org.jini.rio.boot.SpaceInstanceRemoteClassLoaderInfo;
 
 import java.rmi.RemoteException;
@@ -636,7 +637,7 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     }
 
     @Override
-    public void demote(long maxSuspendTime, TimeUnit unit) throws DemoteFailedException, RemoteException {
-        getProxy().demote(maxSuspendTime, unit);
+    public void demote(long maxSuspendTime, TimeUnit unit, SpaceContext sc) throws DemoteFailedException, RemoteException {
+        getProxy().demote(maxSuspendTime, unit, sc);
     }
 }

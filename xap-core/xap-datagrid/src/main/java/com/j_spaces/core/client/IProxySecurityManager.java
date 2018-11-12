@@ -39,7 +39,10 @@ public interface IProxySecurityManager {
 
     SpaceContext acquireContext(IRemoteSpace rj) throws RemoteException;
 
+    SpaceContext acquireContext(IRemoteSpace remoteSpace, CredentialsProvider credentialsProvider) throws RemoteException;
+
     SpaceContext getThreadSpaceContext();
 
     SpaceContext setThreadSpaceContext(SpaceContext sc);
+
 }

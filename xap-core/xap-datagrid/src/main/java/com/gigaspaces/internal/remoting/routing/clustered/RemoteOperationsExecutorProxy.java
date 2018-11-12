@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.remoting.routing.clustered;
 
 import com.gigaspaces.async.AsyncFutureListener;
+import com.gigaspaces.internal.quiesce.QuiesceTokenProvider;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
 import com.gigaspaces.internal.remoting.RemoteOperationsExecutor;
@@ -34,10 +35,12 @@ import java.rmi.RemoteException;
 public class RemoteOperationsExecutorProxy {
     private final String _name;
     private final RemoteOperationsExecutor _executor;
+    private final QuiesceTokenProvider _quiesceTokenProvider;
 
-    public RemoteOperationsExecutorProxy(String name, RemoteOperationsExecutor executor) {
+    public RemoteOperationsExecutorProxy(String name, RemoteOperationsExecutor executor, QuiesceTokenProvider quiesceTokenProvider) {
         this._name = name;
         this._executor = executor;
+        this._quiesceTokenProvider = quiesceTokenProvider;
     }
 
     public String getName() {
@@ -76,7 +79,11 @@ public class RemoteOperationsExecutorProxy {
     }
 
     public boolean isActive() throws RemoteException {
-        return _executor.isActiveAndNotSuspended();
+        if (_quiesceTokenProvider.getToken() != null) {
+            return _executor.isActive();
+        } else {
+            return _executor.isActiveAndNotSuspended();
+        }
     }
 
     public String toLogMessage(RemoteOperationRequest<?> request) {
@@ -94,7 +101,7 @@ public class RemoteOperationsExecutorProxy {
 
         try {
             boolean isActive = proxy.isActive();
-            return (isActive || !activeOnly); //TODO enhance
+            return (isActive || !activeOnly);
         } catch (RemoteException e) {
             return false;
         }

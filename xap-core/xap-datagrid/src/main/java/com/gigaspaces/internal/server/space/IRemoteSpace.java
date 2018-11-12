@@ -25,6 +25,7 @@ import com.gigaspaces.internal.remoting.RemoteOperationsExecutor;
 import com.gigaspaces.internal.server.space.demote.DemoteFailedException;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.security.service.RemoteSecuredService;
+import com.j_spaces.core.SpaceContext;
 import com.j_spaces.core.SpaceHealthStatus;
 import com.j_spaces.jdbc.IQueryProcessor;
 import com.sun.jini.start.ServiceProxyAccessor;
@@ -78,6 +79,20 @@ public interface IRemoteSpace
 
     Class<?> loadRemoteClass(String className)
             throws RemoteException, ClassNotFoundException;
+
+
+
+    /**
+     * Demote leadership and become a backup Space, in the specified operation timeout.
+     *
+     * @param maxSuspendTime The maximum time allowed to be in suspended state, after which the operation is aborted.
+     * @param unit The unit of time for the maxSuspendTime parameter.
+     * @param sc The SpaceContext for security check in the server side.
+     * @throws DemoteFailedException
+     * @throws RemoteException
+     * @since 14.0.0
+     */
+    void demote(long maxSuspendTime, TimeUnit unit, SpaceContext sc) throws DemoteFailedException, RemoteException;
 
     ////////////////////////////////////////
     // CRUD entry Operations
@@ -148,6 +163,4 @@ public interface IRemoteSpace
     SpaceConnectResult connect(SpaceConnectRequest request) throws RemoteException;
 
     DirectPersistencySyncListBatch getSynchronizationListBatch() throws RemoteException;
-
-    void demote(long maxSuspendTime, TimeUnit unit) throws DemoteFailedException, RemoteException;
 }

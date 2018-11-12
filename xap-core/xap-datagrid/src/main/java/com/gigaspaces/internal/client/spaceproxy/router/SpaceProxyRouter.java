@@ -23,6 +23,7 @@ import com.gigaspaces.internal.client.spaceproxy.operations.SpaceOperationResult
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.cluster.SpaceProxyLoadBalancerType;
 import com.gigaspaces.internal.lookup.SpaceUrlUtils;
+import com.gigaspaces.internal.quiesce.QuiesceTokenProviderImpl;
 import com.gigaspaces.internal.remoting.RemoteOperationFutureListener;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.routing.clustered.PostponedAsyncOperationsQueue;
@@ -64,12 +65,14 @@ public class SpaceProxyRouter {
     private final RemoteSpaceProxyLocator _proxyLocator;
     private final boolean isGateway;
     private final boolean isSecured;
+    private final QuiesceTokenProviderImpl quiesceTokenProvider;
 
     public SpaceProxyRouter(SpaceProxyImpl spaceProxy) {
         this._logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEPROXY_ROUTER + '.' + spaceProxy.getName());
         this._clusterInfo = spaceProxy.getSpaceClusterInfo();
         this.isGateway = spaceProxy.isGatewayProxy();
         this.isSecured = spaceProxy.isSecured();
+        this.quiesceTokenProvider = new QuiesceTokenProviderImpl();
         updateDefaultSpaceContext(null);
         Properties properties = loadConfig(spaceProxy.getProxySettings().getCustomProperties(), _clusterInfo);
         this._config = new SpaceRemoteOperationsExecutorsClusterConfig(properties);
@@ -87,7 +90,7 @@ public class SpaceProxyRouter {
         if (spaceProxy.isEmbedded() && (!_clusterInfo.isPartitioned() || !spaceProxy.isClustered())) {
             int partitionId = PartitionedClusterUtils.extractPartitionIdFromSpaceName(spaceProxy.getRemoteMemberName());
             this._postponedAsyncOperationsQueue = null;
-            this._router = new SpaceEmbeddedRemoteOperationRouter(spaceProxy, partitionId);
+            this._router = new SpaceEmbeddedRemoteOperationRouter(spaceProxy, partitionId, quiesceTokenProvider);
         } else {
             this._postponedAsyncOperationsQueue = new PostponedAsyncOperationsQueue(spaceProxy.getName());
             if (spaceProxy.isClustered()) {
@@ -123,7 +126,7 @@ public class SpaceProxyRouter {
 
     private SpaceProxyRemoteOperationRouter createClusteredRouter(SpaceProxyImpl spaceProxy, List<String> membersNames,
                                                                   RemoteOperationsExecutorsClusterConfig config) {
-        final RemoteOperationsExecutorProxy defaultProxy = new RemoteOperationsExecutorProxy(spaceProxy.getRemoteMemberName(), spaceProxy.getRemoteJSpace());
+        final RemoteOperationsExecutorProxy defaultProxy = new RemoteOperationsExecutorProxy(spaceProxy.getRemoteMemberName(), spaceProxy.getRemoteJSpace(), quiesceTokenProvider);
         final RemoteOperationsExecutorsCluster cluster = new RemoteOperationsExecutorsCluster(spaceProxy.getName(), _clusterInfo, -1,
                 membersNames, config, _asyncHandlerProvider, _proxyLocator, defaultProxy);
         return new SpaceClusterRemoteOperationRouter(cluster, _postponedAsyncOperationsQueue, spaceProxy);
@@ -136,7 +139,7 @@ public class SpaceProxyRouter {
         for (int i = 0; i < partitions.length; i++) {
             final List<String> members = clusterInfo.getPartitionMembersNames(i);
             if (isEmbeddedPartition(members, embeddedMemberName))
-                partitions[i] = new SpaceEmbeddedRemoteOperationRouter(spaceProxy, i);
+                partitions[i] = new SpaceEmbeddedRemoteOperationRouter(spaceProxy, i, quiesceTokenProvider);
             else {
                 RemoteOperationsExecutorsCluster cluster = new RemoteOperationsExecutorsCluster(spaceProxy.getName(),
                         clusterInfo, i, members, config, _asyncHandlerProvider, _proxyLocator, null);
@@ -190,7 +193,7 @@ public class SpaceProxyRouter {
             }
         }
 
-        return new RemoteSpaceProxyLocator(spaceProxy.getName(), spaceUrl);
+        return new RemoteSpaceProxyLocator(spaceProxy.getName(), spaceUrl, quiesceTokenProvider);
     }
 
     private boolean isEmbeddedPartition(List<String> members, String embeddedMemberName) {
@@ -279,7 +282,9 @@ public class SpaceProxyRouter {
     private void updateDefaultSpaceContext(QuiesceToken token) {
         this._defaultSpaceContext = isSecured || isGateway || token != null
                 ? new SpaceContext(isGateway) : null;
-        if (token != null)
+        if (token != null) {
             _defaultSpaceContext.setQuiesceToken(token);
+        }
+        quiesceTokenProvider.setToken(token);
     }
 }

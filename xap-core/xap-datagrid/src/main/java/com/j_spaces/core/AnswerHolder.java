@@ -16,6 +16,7 @@
 
 package com.j_spaces.core;
 
+import com.gigaspaces.admin.quiesce.QuiesceException;
 import com.gigaspaces.client.protective.ProtectiveModeException;
 import com.gigaspaces.events.GSEventRegistration;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
@@ -128,6 +129,8 @@ public class AnswerHolder {
                 throw (ProtectiveModeException) exception;
             if (exception instanceof IllegalArgumentException)
                 throw (IllegalArgumentException) exception;
+            if (exception instanceof QuiesceException)
+                throw (QuiesceException)exception;
 
             JSpaceUtilities.throwEngineInternalSpaceException(exception.toString(), exception);
         }

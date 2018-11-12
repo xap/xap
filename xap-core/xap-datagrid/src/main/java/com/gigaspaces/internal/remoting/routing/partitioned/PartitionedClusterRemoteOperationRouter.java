@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.remoting.routing.partitioned;
 
 import com.gigaspaces.async.AsyncFutureListener;
+import com.gigaspaces.internal.quiesce.QuiesceTokenProviderImpl;
 import com.gigaspaces.internal.remoting.RemoteOperationFutureListener;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
@@ -38,7 +39,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOperationRouter {
-    private static final RemoteOperationsExecutorProxy _dummyProxy = new RemoteOperationsExecutorProxy("dummy", null);
+    private static final RemoteOperationsExecutorProxy _dummyProxy = new RemoteOperationsExecutorProxy("dummy", null, new QuiesceTokenProviderImpl());
 
     private final RemoteOperationRouter[] _partitions;
     private final CoordinatorFactory _listenerFactory;

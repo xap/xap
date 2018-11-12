@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.remoting.routing.clustered;
 
+import com.gigaspaces.internal.quiesce.QuiesceTokenProvider;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.client.FinderException;
@@ -41,10 +42,13 @@ public class RemoteSpaceProxyLocator implements RemoteOperationsExecutorProxyLoc
     private final SpaceURL _spaceURL;
     private final Map<String, SpaceURL> _membersUrls;
 
-    public RemoteSpaceProxyLocator(String name, SpaceURL spaceUrl) {
+    private final QuiesceTokenProvider _quiesceTokenProvider;
+
+    public RemoteSpaceProxyLocator(String name, SpaceURL spaceUrl, QuiesceTokenProvider quiesceTokenProvider) {
         this._logger = Logger.getLogger(Constants.LOGGER_SPACEPROXY_ROUTER_LOOKUP + '.' + name);
         this._spaceURL = spaceUrl;
         this._membersUrls = new ConcurrentHashMap<String, SpaceURL>();
+        this._quiesceTokenProvider = quiesceTokenProvider;
     }
 
     public SpaceURL getMemberUrl(String memberName) {
@@ -71,7 +75,7 @@ public class RemoteSpaceProxyLocator implements RemoteOperationsExecutorProxyLoc
             IRemoteSpace proxy = SpaceFinder.findJiniSpace(memberURL, spaceUuid, memberURL.getCustomProperties(), LOOKUP_TIMEOUT, lookupType);
             if (_logger.isLoggable(Level.FINE))
                 _logger.log(Level.FINE, "Server " + memberName + " was found at [" + memberURL + "].");
-            return new RemoteOperationsExecutorProxy(memberName, proxy);
+            return new RemoteOperationsExecutorProxy(memberName, proxy, _quiesceTokenProvider);
         } catch (FinderException e) {
             if (_logger.isLoggable(Level.FINEST))
                 _logger.log(Level.FINEST, "Could not find server " + memberName + " at " + memberURL + ".", e);

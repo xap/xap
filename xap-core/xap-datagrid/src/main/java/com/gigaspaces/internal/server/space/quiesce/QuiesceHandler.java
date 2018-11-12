@@ -192,11 +192,7 @@ public class QuiesceHandler {
             String errorMessage = "Operation cannot be executed - space [" + _spaceImpl.getServiceName() + "] is " +
                     status.description +
                     (StringUtils.hasLength(description) ? " (" + description + ")" : "");
-            if (status == Status.QUIESCED_DEMOTE) {
-                this.exception = new QuiesceDemoteException(errorMessage);
-            } else {
-                this.exception = new QuiesceException(errorMessage);
-            }
+            this.exception = new QuiesceException(errorMessage);
         }
 
         void guard(QuiesceToken operationToken) {
