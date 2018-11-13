@@ -55,6 +55,7 @@ public class ExchangeCountDownLatch<T> extends CountDownLatch {
             throws InterruptedException, TimeoutException {
         if (super.await(timeout, unit))
             return _obj;
-        throw new TimeoutException();
+
+        throw new TimeoutException( "Operation timed out after " + timeout + " " + unit.name().toLowerCase() );
     }
 }
