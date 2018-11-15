@@ -18,9 +18,9 @@ package com.gigaspaces.internal.server.space.quiesce;
 
 import com.gigaspaces.admin.quiesce.*;
 import com.gigaspaces.internal.server.space.SpaceImpl;
-import com.gigaspaces.internal.server.space.suspend.SuspendInfo;
+import com.gigaspaces.server.space.suspend.SuspendInfo;
 import com.gigaspaces.internal.server.space.suspend.SuspendInfoChangedListener;
-import com.gigaspaces.internal.server.space.suspend.SuspendType;
+import com.gigaspaces.server.space.suspend.SuspendType;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.utils.collections.ConcurrentHashSet;
 import com.gigaspaces.logger.Constants;
