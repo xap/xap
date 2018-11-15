@@ -1,4 +1,4 @@
-package com.gigaspaces.internal.server.space.suspend;
+package com.gigaspaces.server.space.suspend;
 
 /**
  * This enum provides the current space suspend type.

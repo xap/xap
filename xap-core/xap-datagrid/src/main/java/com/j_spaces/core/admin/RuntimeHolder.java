@@ -17,7 +17,7 @@
 package com.j_spaces.core.admin;
 
 import com.gigaspaces.cluster.activeelection.SpaceMode;
-import com.gigaspaces.internal.server.space.suspend.SuspendInfo;
+import com.gigaspaces.server.space.suspend.SuspendInfo;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.j_spaces.core.ISpaceState;
 
