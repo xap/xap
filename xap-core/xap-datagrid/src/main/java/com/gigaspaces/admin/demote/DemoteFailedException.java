@@ -1,4 +1,4 @@
-package com.gigaspaces.internal.server.space.demote;
+package com.gigaspaces.admin.demote;
 
 public class DemoteFailedException extends Exception {
     public DemoteFailedException(String message) {

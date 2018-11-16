@@ -78,7 +78,7 @@ import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
-import com.gigaspaces.internal.server.space.demote.DemoteFailedException;
+import com.gigaspaces.admin.demote.DemoteFailedException;
 import com.gigaspaces.internal.server.space.demote.DemoteHandler;
 import com.gigaspaces.internal.server.space.executors.SpaceActionExecutor;
 import com.gigaspaces.internal.server.space.operations.SpaceOperationsExecutor;
