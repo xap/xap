@@ -1,5 +1,6 @@
 package com.gigaspaces.internal.server.space.demote;
 
+import com.gigaspaces.admin.demote.DemoteFailedException;
 import com.gigaspaces.cluster.activeelection.ISpaceModeListener;
 import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.server.space.SpaceImpl;
