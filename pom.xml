@@ -55,7 +55,6 @@
         <module>xap-extensions/xap-full-text-search</module>
         <module>xap-tools/xap-cli</module>
         <module>xap-dist</module>
-        <module>aggregate-source</module>
     </modules>
 
     <dependencies>
