@@ -4,9 +4,9 @@
                              http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.barakb</groupId>
+    <groupId>org.gigaspaces</groupId>
     <artifactId>aggregate-source</artifactId>
-    <version>${project.version}</version>
+    <version>14.0.1-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>aggregate-source</name>
