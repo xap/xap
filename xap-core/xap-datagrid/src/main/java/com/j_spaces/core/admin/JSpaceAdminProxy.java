@@ -34,6 +34,7 @@ import com.gigaspaces.lrmi.nio.info.NIOStatistics;
 import com.gigaspaces.management.space.LocalCacheDetails;
 import com.gigaspaces.management.space.LocalViewDetails;
 import com.gigaspaces.management.transport.ITransportConnection;
+import com.gigaspaces.server.space.suspend.SuspendType;
 import com.j_spaces.core.DropClassException;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.SpaceContext;
@@ -103,6 +104,16 @@ public class JSpaceAdminProxy
      */
     public void restart() throws RemoteException {
         ((IInternalRemoteJSpaceAdmin) adminImpl).restart();
+    }
+
+    @Override
+    public SuspendType addSpaceSuspendTypeListener(SuspendTypeChangedInternalListener listener) {
+        return ((IInternalRemoteJSpaceAdmin) adminImpl).addSpaceSuspendTypeListener(listener);
+    }
+
+    @Override
+    public void removeSpaceSuspendTypeListener(SuspendTypeChangedInternalListener listener) {
+        ((IInternalRemoteJSpaceAdmin) adminImpl).removeSpaceSuspendTypeListener(listener);
     }
 
     @Override

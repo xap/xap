@@ -128,6 +128,7 @@ import com.gigaspaces.security.authorities.SpaceAuthority.SpacePrivilege;
 import com.gigaspaces.security.directory.CredentialsProvider;
 import com.gigaspaces.security.directory.CredentialsProviderHelper;
 import com.gigaspaces.security.service.SecurityInterceptor;
+import com.gigaspaces.server.space.suspend.SuspendType;
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.time.SystemTime;
 import com.gigaspaces.utils.Pair;
@@ -172,13 +173,7 @@ import com.j_spaces.core.UnknownTypeException;
 import com.j_spaces.core.UnknownTypesException;
 import com.j_spaces.core.UpdateOrWriteContext;
 import com.j_spaces.core.XtnEntry;
-import com.j_spaces.core.admin.IInternalRemoteJSpaceAdmin;
-import com.j_spaces.core.admin.JSpaceAdminImpl;
-import com.j_spaces.core.admin.RuntimeHolder;
-import com.j_spaces.core.admin.SpaceConfig;
-import com.j_spaces.core.admin.SpaceRuntimeInfo;
-import com.j_spaces.core.admin.StatisticsAdmin;
-import com.j_spaces.core.admin.TemplateInfo;
+import com.j_spaces.core.admin.*;
 import com.j_spaces.core.client.BasicTypeInfo;
 import com.j_spaces.core.client.EntryAlreadyInSpaceException;
 import com.j_spaces.core.client.EntryNotInSpaceException;
@@ -3730,4 +3725,18 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         assertAuthorizedForPrivilege(GridAuthority.GridPrivilege.MANAGE_PU, sc);
         _demoteHandler.demote(maxSuspendTime, unit);
     }
+
+    public SuspendType addSpaceSuspendTypeListener(SuspendTypeChangedInternalListener listener) {
+        if (listener == null) {
+            throw new IllegalArgumentException("Callback listener supplied for space suspend type changes is <null>.");
+        }
+        _quiesceHandler.addSpaceSuspendTypeListener(listener);
+
+        return _quiesceHandler.getSuspendInfo().getSuspendType();
+    }
+
+    public void removeSpaceSuspendTypeListener(SuspendTypeChangedInternalListener listener) {
+        _quiesceHandler.removeSpaceSuspendTypeListener(listener);
+    }
+
 }

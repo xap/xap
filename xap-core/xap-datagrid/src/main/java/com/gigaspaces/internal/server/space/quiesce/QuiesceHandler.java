@@ -24,10 +24,13 @@ import com.gigaspaces.server.space.suspend.SuspendType;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.utils.collections.ConcurrentHashSet;
 import com.gigaspaces.logger.Constants;
+import com.j_spaces.core.admin.SuspendTypeChangedInternalListener;
 import com.j_spaces.kernel.SystemProperties;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +50,8 @@ public class QuiesceHandler {
     private final boolean _supported;
     private volatile Guard _guard;
     private volatile SuspendInfo _suspendInfo;
-    private final Collection<SuspendInfoChangedListener> listeners = new ConcurrentHashSet<SuspendInfoChangedListener>();
+    private final Collection<SuspendTypeChangedInternalListener> suspendTypeChangeListeners = new ConcurrentHashSet<SuspendTypeChangedInternalListener>();
+
 
     public QuiesceHandler(SpaceImpl spaceImpl, QuiesceStateChangedEvent quiesceStateChangedEvent) {
         _spaceImpl = spaceImpl;
@@ -276,7 +280,7 @@ public class QuiesceHandler {
         }
 
         if (hasGuard(_guard, newGuard.status)) {
-            _logger.warning("Suspend guard ["+newGuard.status+"] was discarded, it already exists - current state is " + desc(_guard));
+            _logger.warning("Suspend guard [" + newGuard.status + "] was discarded, it already exists - current state is " + desc(_guard));
             return false;
         }
 
@@ -289,7 +293,7 @@ public class QuiesceHandler {
             Guard prevGuard = _guard;
             _guard = addGuardHelper(_guard, newGuard);
             if (prevGuard == _guard) {
-                _logger.info("Suspend guard "+desc(newGuard)+" was added, but is currently masked because state is " + desc(_guard));
+                _logger.info("Suspend guard " + desc(newGuard) + " was added, but is currently masked because state is " + desc(_guard));
             } else {
                 _logger.info("Suspend state set to " + desc(_guard));
             }
@@ -306,7 +310,7 @@ public class QuiesceHandler {
     private boolean guardCanBeAdded(Guard current, Guard newGuard) {
         if (current == null) return true;
         if (current.supersedes(newGuard) || newGuard.supersedes(current)) {
-             return guardCanBeAdded(current.innerGuard, newGuard);
+            return guardCanBeAdded(current.innerGuard, newGuard);
         } else {
             return false;
         }
@@ -362,20 +366,29 @@ public class QuiesceHandler {
         }
     }
 
-    //TODO dispatch listener on different thread ?
     private void setSuspendInfo(SuspendInfo suspendInfo) {
+        boolean isSuspendTypeChanged = true;
+
+        if (_suspendInfo != null && _suspendInfo.getSuspendType().equals(suspendInfo.getSuspendType())) {
+            isSuspendTypeChanged = false;
+        }
+
         this._suspendInfo = suspendInfo;
-        for (SuspendInfoChangedListener listener : listeners) {
-            listener.onSuspendInfoChanged(suspendInfo);
+
+        // Todo: check this with a test
+        if (isSuspendTypeChanged) {
+            for (SuspendTypeChangedInternalListener listener : suspendTypeChangeListeners) {
+                listener.onSuspendTypeChanged(suspendInfo.getSuspendType());
+            }
         }
     }
 
-    public void addListener(SuspendInfoChangedListener listener) {
-        listeners.add(listener);
+    public void addSpaceSuspendTypeListener(SuspendTypeChangedInternalListener listener) {
+        suspendTypeChangeListeners.add(listener);
     }
 
-    public void removeListener(SuspendInfoChangedListener listener) {
-        listeners.remove(listener);
+    public void removeSpaceSuspendTypeListener(SuspendTypeChangedInternalListener listener) {
+        suspendTypeChangeListeners.remove(listener);
     }
 
     Guard getGuard() {

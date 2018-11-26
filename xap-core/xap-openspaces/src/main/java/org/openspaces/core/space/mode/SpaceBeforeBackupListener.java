@@ -25,4 +25,5 @@ package org.openspaces.core.space.mode;
 public interface SpaceBeforeBackupListener {
 
     void onBeforeBackup(BeforeSpaceModeChangeEvent event);
+
 }
