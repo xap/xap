@@ -32,6 +32,7 @@ import com.gigaspaces.metrics.LongCounter;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.admin.IInternalRemoteJSpaceAdmin;
 
+import com.j_spaces.core.admin.SuspendTypeChangedInternalListener;
 import com.j_spaces.core.client.EntrySnapshot;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -118,7 +119,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
     private DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
     protected boolean disableTransactionValidation = false;
 
-    protected  ThreadLocal<EntrySnapshot> snapshotTemplateThreadLocal = new ThreadLocal<EntrySnapshot>();
+    protected ThreadLocal<EntrySnapshot> snapshotTemplateThreadLocal = new ThreadLocal<EntrySnapshot>();
 
     /**
      * Sets the GigaSpace instance to be used for space event listening operations.
@@ -157,6 +158,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
     }
 
     /**
+     *
      */
     public void setRegisterSpaceModeListener(boolean registerSpaceModeListener) {
         this.registerSpaceModeListener = registerSpaceModeListener;
@@ -303,8 +305,8 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         if (registerSpaceModeListener) {
             SpaceMode currentMode = SpaceMode.PRIMARY;
             if (!SpaceUtils.isRemoteProtocol(gigaSpace.getSpace())) {
-               currentMode = registerSpaceModeListener();
-               registerSuspendInfoListener();
+                currentMode = registerSpaceModeListener();
+                registerSuspendInfoListener();
             }
             SpaceInitializationIndicator.setInitializer();
             try {
@@ -330,7 +332,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
     }
 
     private void registerSuspendInfoListener() {
-        gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().addListener(primaryBackupListener);
+        gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().addSpaceSuspendTypeListener(primaryBackupListener);
     }
 
     /**
@@ -391,7 +393,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             throw new IllegalArgumentException("dynamicTemplate and template are mutually exclusive.");
         }
 
-       if (performSnapshot && template != null) {
+        if (performSnapshot && template != null) {
             if (logger.isTraceEnabled()) {
                 logger.trace(message("Performing snapshot on template [" + template + "]"));
             }
@@ -456,7 +458,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
                     logger.warn("Failed to unregister space mode listener with space [" + gigaSpace.getSpace() + "]", e);
                 }
 
-                gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().removeListener(primaryBackupListener);
+                gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().removeSpaceSuspendTypeListener(primaryBackupListener);
             }
         }
 
@@ -793,10 +795,10 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         if (isPerformSnapshot() && getTransactionManager() != null) {
             EntrySnapshot entrySnapshotTemplate = snapshotTemplateThreadLocal.get();
             //this is the first time, there is no template in thread local
-            if (entrySnapshotTemplate == null ) {
+            if (entrySnapshotTemplate == null) {
                 ITemplatePacket cloned = ((EntrySnapshot) receiveTemplate).getTemplatePacket().clone();
                 cloned.setOperationID(null);
-                entrySnapshotTemplate = new EntrySnapshot (cloned);
+                entrySnapshotTemplate = new EntrySnapshot(cloned);
                 snapshotTemplateThreadLocal.set(entrySnapshotTemplate);
                 return entrySnapshotTemplate;
             } else {
@@ -888,7 +890,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         return transactionManager != null;
     }
 
-    private class PrimaryBackupListener implements ISpaceModeListener, SuspendInfoChangedListener {
+    private class PrimaryBackupListener implements ISpaceModeListener, SuspendTypeChangedInternalListener {
 
         public void beforeSpaceModeChange(SpaceMode spaceMode) throws RemoteException {
             onApplicationEvent(new BeforeSpaceModeChangeEvent(gigaSpace.getSpace(), spaceMode));
@@ -899,12 +901,12 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         }
 
         @Override
-        public void onSuspendInfoChanged(SuspendInfo suspendInfo) {
-            logger.info(message("SuspendType was updated to " + suspendInfo.getSuspendType()));
-            quiesced = suspendInfo.getSuspendType() != SuspendType.NONE;
+        public void onSuspendTypeChanged(SuspendType suspendType) {
+            logger.info(message("SuspendType was updated to " + suspendType));
+            quiesced = suspendType != SuspendType.NONE;
             if (quiesced) {
                 if (logger.isDebugEnabled())
-                    logger.debug(message("SuspendType was updated to " + suspendInfo.getSuspendType())+", stopping...");
+                    logger.debug(message("SuspendType was updated to " + suspendType) + ", stopping...");
                 // if container was running before calling quiesce it should resume working after unquiesce
                 boolean runningBeforeQuiesce = running;
                 stop();
@@ -913,11 +915,11 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
                 // resume only if container was running before calling quiesce
                 if (resumeAfterUnquiesce) {
                     if (logger.isDebugEnabled())
-                        logger.debug(message("SuspendType was updated to " + suspendInfo.getSuspendType())+", starting...");
+                        logger.debug(message("SuspendType was updated to " + suspendType) + ", starting...");
                     start();
                 } else {
                     if (logger.isDebugEnabled())
-                        logger.debug(message("SuspendType was updated to " + suspendInfo.getSuspendType())+" but resumeAfterUnquiesce was set to false, not resuming...");
+                        logger.debug(message("SuspendType was updated to " + suspendType) + " but resumeAfterUnquiesce was set to false, not resuming...");
                 }
             }
         }

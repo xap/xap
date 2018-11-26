@@ -28,6 +28,7 @@ import com.gigaspaces.lrmi.nio.info.NIOInfoProvider;
 import com.gigaspaces.management.space.LocalCacheDetails;
 import com.gigaspaces.management.space.LocalViewDetails;
 import com.gigaspaces.management.transport.ITransportConnection;
+import com.gigaspaces.server.space.suspend.SuspendType;
 import com.j_spaces.core.SpaceContext;
 import com.j_spaces.core.SpaceCopyStatus;
 import com.j_spaces.core.client.TransactionInfo;
@@ -309,4 +310,16 @@ public interface IInternalRemoteJSpaceAdmin extends IRemoteJSpaceAdmin, NIOInfoP
      **/
     @Deprecated
     void restart() throws RemoteException;
+
+    /**
+     * Adds a listener to be called back with {@link SuspendTypeChangedInternalListener} suspend type changes.
+     * @param listener - {@link SuspendTypeChangedInternalListener} that will receive notification when a space suspend type changes ({@link SuspendType})
+     */
+    SuspendType addSpaceSuspendTypeListener(SuspendTypeChangedInternalListener listener);
+
+    /**
+     * Removes this listener so that it no longer receives call backs of space suspend type changes.
+     * @param listener - {@link SuspendTypeChangedInternalListener} that will stop receiving notification when a space suspend type changes ({@link SuspendType})
+     */
+    void removeSpaceSuspendTypeListener(SuspendTypeChangedInternalListener listener);
 }

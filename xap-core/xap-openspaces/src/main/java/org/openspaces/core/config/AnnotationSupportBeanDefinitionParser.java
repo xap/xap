@@ -19,6 +19,8 @@ package org.openspaces.core.config;
 
 import org.openspaces.core.space.mode.registry.ModeAnnotationRegistry;
 import org.openspaces.core.space.mode.registry.ModeAnnotationRegistryPostProcessor;
+import org.openspaces.core.space.suspend.anntations.registery.SuspendTypeAnnotationRegistry;
+import org.openspaces.core.space.suspend.anntations.registery.SuspendTypeAnnotationRegistryPostProcessor;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.parsing.BeanComponentDefinition;
 import org.springframework.beans.factory.support.RootBeanDefinition;
@@ -35,15 +37,19 @@ public class AnnotationSupportBeanDefinitionParser implements BeanDefinitionPars
 
     public BeanDefinition parse(Element element, ParserContext parserContext) {
 
-        BeanDefinition bd = new RootBeanDefinition(ModeAnnotationRegistry.class);
-        BeanComponentDefinition bcd = new BeanComponentDefinition(bd, "internal-modeAnnotationRegistry");
-        parserContext.registerBeanComponent(bcd);
+        registerBeanComponent(parserContext, ModeAnnotationRegistry.class, "internal-modeAnnotationRegistry");
+        registerBeanComponent(parserContext, ModeAnnotationRegistryPostProcessor.class, "internal-modeAnnotationRegistryPostProcessor");
 
-        bd = new RootBeanDefinition(ModeAnnotationRegistryPostProcessor.class);
-        bcd = new BeanComponentDefinition(bd, "internal-modeAnnotationRegistryPostProcessor");
-        parserContext.registerBeanComponent(bcd);
+        registerBeanComponent(parserContext, SuspendTypeAnnotationRegistry.class, "internal-suspendTypeAnnotationRegistry");
+        registerBeanComponent(parserContext, SuspendTypeAnnotationRegistryPostProcessor.class, "internal-suspendTypeAnnotationRegistryPostProcessor");
 
         return null;
+    }
+
+    private void registerBeanComponent(ParserContext parserContext, Class<?> beanClass, String beanName) {
+        BeanDefinition bd = new RootBeanDefinition(beanClass);
+        BeanComponentDefinition bcd = new BeanComponentDefinition(bd, beanName);
+        parserContext.registerBeanComponent(bcd);
     }
 
 }

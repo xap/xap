@@ -49,17 +49,13 @@ import com.gigaspaces.management.space.LocalCacheDetails;
 import com.gigaspaces.management.space.LocalViewDetails;
 import com.gigaspaces.management.transport.ITransportConnection;
 import com.gigaspaces.security.service.RemoteSecuredService;
+import com.gigaspaces.server.space.suspend.SuspendType;
 import com.j_spaces.core.DropClassException;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.SpaceContext;
 import com.j_spaces.core.SpaceCopyStatus;
 import com.j_spaces.core.SpaceHealthStatus;
-import com.j_spaces.core.admin.IInternalRemoteJSpaceAdmin;
-import com.j_spaces.core.admin.IRemoteJSpaceAdmin;
-import com.j_spaces.core.admin.RuntimeHolder;
-import com.j_spaces.core.admin.SpaceConfig;
-import com.j_spaces.core.admin.SpaceRuntimeInfo;
-import com.j_spaces.core.admin.TemplateInfo;
+import com.j_spaces.core.admin.*;
 import com.j_spaces.core.client.BasicTypeInfo;
 import com.j_spaces.core.client.SpaceSettings;
 import com.j_spaces.core.client.TransactionInfo;
@@ -161,6 +157,16 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     @Override
     public void restart() throws RemoteException {
         ((IInternalRemoteJSpaceAdmin) getProxy()).restart();
+    }
+
+    @Override
+    public SuspendType addSpaceSuspendTypeListener(SuspendTypeChangedInternalListener listener) {
+        return ((IInternalRemoteJSpaceAdmin) getProxy()).addSpaceSuspendTypeListener(listener);
+    }
+
+    @Override
+    public void removeSpaceSuspendTypeListener(SuspendTypeChangedInternalListener listener) {
+        ((IInternalRemoteJSpaceAdmin) getProxy()).removeSpaceSuspendTypeListener(listener);
     }
 
     @Override

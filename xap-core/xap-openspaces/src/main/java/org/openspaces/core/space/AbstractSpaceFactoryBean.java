@@ -27,6 +27,7 @@ import com.gigaspaces.internal.dump.InternalDumpProcessorFailedException;
 import com.gigaspaces.security.directory.CredentialsProvider;
 import com.gigaspaces.security.directory.DefaultCredentialsProvider;
 import com.gigaspaces.security.directory.UserDetails;
+import com.gigaspaces.server.space.suspend.SuspendType;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.admin.IInternalRemoteJSpaceAdmin;
 import com.j_spaces.core.admin.SpaceRuntimeInfo;
@@ -41,6 +42,9 @@ import org.openspaces.core.space.mode.SpaceAfterBackupListener;
 import org.openspaces.core.space.mode.SpaceAfterPrimaryListener;
 import org.openspaces.core.space.mode.SpaceBeforeBackupListener;
 import org.openspaces.core.space.mode.SpaceBeforePrimaryListener;
+import com.j_spaces.core.admin.SuspendTypeChangedInternalListener;
+import org.openspaces.core.space.suspend.SuspendTypeChangedEvent;
+import org.openspaces.core.space.suspend.SuspendTypeChangedListener;
 import org.openspaces.core.util.SpaceUtils;
 import org.openspaces.pu.service.ServiceDetails;
 import org.openspaces.pu.service.ServiceDetailsProvider;
@@ -58,6 +62,8 @@ import org.springframework.dao.DataAccessException;
 
 import java.io.PrintWriter;
 import java.rmi.RemoteException;
+import java.text.MessageFormat;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -95,7 +101,11 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
 
     private SpaceMode currentSpaceMode;
 
+    private SuspendType currentSuspendType;
+
     private PrimaryBackupListener appContextPrimaryBackupListener;
+
+    private SuspendTypeChangedInternalListener suspendTypeInternalListener;
 
     private ISpaceModeListener primaryBackupListener;
 
@@ -187,22 +197,31 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
      */
     public synchronized void afterPropertiesSet() throws DataAccessException {
         this.space = (ISpaceProxy) doCreateSpace();
+        AdminLazyGetter adminLazyGetter = new AdminLazyGetter(space);
 
-        // register the space mode listener with the space
         if (isRegisterForSpaceModeNotifications()) {
-            appContextPrimaryBackupListener = new PrimaryBackupListener();
             try {
-                IJSpace clusterMemberSpace = SpaceUtils.getClusterMemberSpace(space);
-                currentSpaceMode = ((IInternalRemoteJSpaceAdmin) clusterMemberSpace.getAdmin()).addSpaceModeListener(appContextPrimaryBackupListener);
+                appContextPrimaryBackupListener = new PrimaryBackupListener();
+                IInternalRemoteJSpaceAdmin admin = (IInternalRemoteJSpaceAdmin) adminLazyGetter.getAdmin();
+                currentSpaceMode = admin.addSpaceModeListener(appContextPrimaryBackupListener);
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Space [" + clusterMemberSpace + "] mode is [" + currentSpaceMode + "]");
+                    logger.debug("Space [" + adminLazyGetter.getClusterMemberSpace() + "] mode is [" + currentSpaceMode + "]");
                 }
             } catch (RemoteException e) {
-                throw new CannotCreateSpaceException("Failed to register space mode listener with space [" + space
-                        + "]", e);
+                throw new CannotCreateSpaceException(MessageFormat.format("Failed to register space mode listener with space [{0}]", space), e);
             }
         } else {
             currentSpaceMode = SpaceMode.PRIMARY;
+        }
+
+        if (isEmbedded()) {
+            try {
+                suspendTypeInternalListener = new SuspendTypeChangedInternalListenerImpl();
+                IInternalRemoteJSpaceAdmin admin = (IInternalRemoteJSpaceAdmin) adminLazyGetter.getAdmin();
+                currentSuspendType = admin.addSpaceSuspendTypeListener(suspendTypeInternalListener);
+            } catch (RemoteException e) {
+                throw new CannotCreateSpaceException(MessageFormat.format("Failed to register space suspend type listener with space [{0}]", space), e);
+            }
         }
 
         memberAliveIndicator = new SpaceMemberAliveIndicator(space, enableMemberAliveIndicator);
@@ -223,28 +242,41 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
             return;
         }
 
-        if (isRegisterForSpaceModeNotifications()) {
+        boolean isEmbedded = isEmbedded();
+        AdminLazyGetter adminLazyGetter = new AdminLazyGetter(space);
+
+        if (appContextPrimaryBackupListener != null && isRegisterForSpaceModeNotifications()) {
             // unregister the space mode listener
-            IJSpace clusterMemberSpace = SpaceUtils.getClusterMemberSpace(space);
             try {
-                ((IInternalRemoteJSpaceAdmin) clusterMemberSpace.getAdmin()).removeSpaceModeListener(appContextPrimaryBackupListener);
+                IInternalRemoteJSpaceAdmin admin = (IInternalRemoteJSpaceAdmin) adminLazyGetter.getAdmin();
+                admin.removeSpaceModeListener(appContextPrimaryBackupListener);
             } catch (RemoteException e) {
                 logger.warn("Failed to unregister space mode listener with space [" + space + "]", e);
             }
         }
-        try {
 
+        if (suspendTypeInternalListener != null && isEmbedded) {
+            // unregister the space suspend type listener
+            try {
+                IInternalRemoteJSpaceAdmin admin = (IInternalRemoteJSpaceAdmin) adminLazyGetter.getAdmin();
+                admin.removeSpaceSuspendTypeListener(suspendTypeInternalListener);
+            } catch (RemoteException e) {
+                logger.warn("Failed to unregister space suspend type listener with space [" + space + "]", e);
+            }
+        }
+
+        try {
             // shutdown the space if we are in embedded mode
-            if (!SpaceUtils.isRemoteProtocol(space)) {
+            if (isEmbedded) {
                 space.getDirectProxy().shutdown();
             }
             space.close();
-
         } catch (RemoteException e) {
             throw new CannotCloseSpaceException("Failed to close space", e);
         } finally {
             space = null;
         }
+
     }
 
     /**
@@ -263,7 +295,7 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
                 try {
                     applicationContext.publishEvent(new BeforeSpaceModeChangeEvent(space, currentSpaceMode));
                     applicationContext.publishEvent(new AfterSpaceModeChangeEvent(space, currentSpaceMode));
-
+                    fireSuspendTypeChangedEvent(currentSuspendType);
                     if (currentSpaceMode == SpaceMode.BACKUP) {
                         fireSpaceBeforeBackupEvent();
                         fireSpaceAfterBackupEvent();
@@ -335,6 +367,10 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
         if (registerForSpaceMode != null) {
             return registerForSpaceMode;
         }
+        return isEmbedded();
+    }
+
+    private boolean isEmbedded() {
         return !SpaceUtils.isRemoteProtocol(space);
     }
 
@@ -383,7 +419,7 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
     /**
      * Sends {@link AfterSpaceModeChangeEvent} events with space mode {@link SpaceMode#PRIMARY} to
      * all beans in the application context that implement the {@link SpaceAfterPrimaryListener}
-     * interface.
+     * interface
      */
     protected void fireSpaceAfterPrimaryEvent() {
         if (applicationContext != null) {
@@ -472,4 +508,59 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
             }
         }
     }
+
+    /**
+     * Internal listener for delegating space suspendType changes to all classes that implements the interface {@link SuspendTypeChangedListener}
+     */
+    private class SuspendTypeChangedInternalListenerImpl implements SuspendTypeChangedInternalListener {
+
+        @Override
+        public void onSuspendTypeChanged(SuspendType suspendType) {
+            currentSuspendType = suspendType;
+            fireSuspendTypeChangedEvent(suspendType);
+        }
+
+    }
+
+    private void fireSuspendTypeChangedEvent(SuspendType suspendType) {
+        if (applicationContext != null) {
+            Collection<SuspendTypeChangedListener> listeners = applicationContext.getBeansOfType(SuspendTypeChangedListener.class).values();
+
+            for (SuspendTypeChangedListener listener : listeners) {
+                SuspendTypeChangedEvent event = new SuspendTypeChangedEvent(space, suspendType);
+                listener.onSuspendTypeChanged(event);
+            }
+        }
+    }
+
+    private class AdminLazyGetter {
+        private ISpaceProxy space;
+        private IJSpace clusterMemberSpace;
+        private Object admin;
+
+        public AdminLazyGetter(ISpaceProxy space) {
+            this.space = space;
+        }
+
+        public Object getAdmin() throws RemoteException {
+            if (clusterMemberSpace == null) {
+                clusterMemberSpace = SpaceUtils.getClusterMemberSpace(space);
+            }
+
+            if (admin == null) {
+                admin = clusterMemberSpace.getAdmin();
+            }
+
+            return admin;
+        }
+
+        public IJSpace getClusterMemberSpace() {
+            if (clusterMemberSpace == null) {
+                clusterMemberSpace = SpaceUtils.getClusterMemberSpace(space);
+            }
+
+            return clusterMemberSpace;
+        }
+    }
+
 }
