@@ -244,6 +244,14 @@ public class QuiesceHandler {
                     ", innerGuard=" + innerGuard +
                     '}';
         }
+
+        Status getStatus() {
+            return status;
+        }
+
+        Guard getInnerGuard() {
+            return innerGuard;
+        }
     }
 
     private boolean hasGuard(Guard currentGuard, Status status) {
@@ -258,7 +266,7 @@ public class QuiesceHandler {
         return getGuard(currentGuard.innerGuard, status);
     }
 
-    private synchronized boolean addGuard(Guard newGuard) {
+    synchronized boolean addGuard(Guard newGuard) {
         if (!_supported) {
             if (QUIESCE_DISABLED)
                 _logger.severe("Suspend is not supported because the '" + SystemProperties.DISABLE_QUIESCE_MODE + "' was set");
@@ -321,7 +329,7 @@ public class QuiesceHandler {
         return res;
     }
 
-    private synchronized void removeGuard(Status status) {
+    synchronized void removeGuard(Status status) {
         if (_guard == null) {
             _logger.warning("No guard to remove");
             return;
@@ -368,6 +376,10 @@ public class QuiesceHandler {
 
     public void removeListener(SuspendInfoChangedListener listener) {
         listeners.remove(listener);
+    }
+
+    Guard getGuard() {
+        return _guard;
     }
 
 }
