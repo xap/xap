@@ -17,7 +17,7 @@
 
     <bean id="listenerByInterface" class="org.openspaces.test.suspendtype.listeners.SpaceSuspendTypeChangedListenerByInterface"/>
 
-    <os-core:space id="space" url="/./AnnotationsCheckSpace?cluster_schema=primary_backup&amp;total_members=1,1&amp;id=1" lookup-groups="Test"/>
+    <os-core:embedded-space id="space" space-name="mySpace"/>
 
     <os-core:giga-space id="gigaSpace" space="space"/>
 
