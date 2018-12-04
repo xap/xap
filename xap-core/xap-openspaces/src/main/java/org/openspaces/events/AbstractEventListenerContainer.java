@@ -97,7 +97,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
     private SpaceMode currentSpaceMode;
     private volatile boolean autoStart = true;
     private volatile boolean quiesced = false;
-    private volatile boolean resumeAfterUnquiesce = false;
+    private volatile boolean resumeAfterSuspendTypeChangeToNone = false;
     private BeanMetricManager beanMetricManager;
 
     private SpaceDataEventListener eventListener;
@@ -546,7 +546,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         doBeforeStop();
         synchronized (this.lifecycleMonitor) {
             this.running = false;
-            this.resumeAfterUnquiesce = false;
+            this.resumeAfterSuspendTypeChangeToNone = false;
             this.lifecycleMonitor.notifyAll();
             unregisterMetrics();
         }
@@ -905,28 +905,28 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         }
 
     }
+
     private class SuspendTypeInternalListener implements SuspendTypeChangedInternalListener {
 
         @Override
         public void onSuspendTypeChanged(SuspendType suspendType) {
             logger.info(message("SuspendType was updated to " + suspendType));
-            quiesced = suspendType != SuspendType.NONE;
-            if (quiesced) {
+            if (suspendType != SuspendType.NONE) {
                 if (logger.isDebugEnabled())
                     logger.debug(message("SuspendType was updated to " + suspendType) + ", stopping...");
                 // if container was running before calling quiesce it should resume working after unquiesce
-                boolean runningBeforeQuiesce = running;
+                boolean containerRunBefore = running;
                 stop();
-                resumeAfterUnquiesce = runningBeforeQuiesce;
+                resumeAfterSuspendTypeChangeToNone = containerRunBefore;
             } else {
                 // resume only if container was running before calling quiesce
-                if (resumeAfterUnquiesce) {
+                if (resumeAfterSuspendTypeChangeToNone) {
                     if (logger.isDebugEnabled())
                         logger.debug(message("SuspendType was updated to " + suspendType) + ", starting...");
                     start();
                 } else {
                     if (logger.isDebugEnabled())
-                        logger.debug(message("SuspendType was updated to " + suspendType) + " but resumeAfterUnquiesce was set to false, not resuming...");
+                        logger.debug(message("SuspendType was updated to " + suspendType) + " but resumeAfterSuspendTypeChangeToNone was set to false, not resuming...");
                 }
             }
         }
