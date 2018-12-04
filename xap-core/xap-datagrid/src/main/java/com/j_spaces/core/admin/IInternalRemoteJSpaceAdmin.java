@@ -23,6 +23,7 @@ import com.gigaspaces.internal.jvm.JVMInfoProvider;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.os.OSInfoProvider;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
+import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.lrmi.nio.info.NIOInfoProvider;
 import com.gigaspaces.management.space.LocalCacheDetails;

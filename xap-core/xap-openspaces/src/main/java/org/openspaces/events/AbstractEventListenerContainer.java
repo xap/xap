@@ -23,16 +23,13 @@ import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.dump.InternalDump;
 import com.gigaspaces.internal.dump.InternalDumpProcessor;
 import com.gigaspaces.internal.dump.InternalDumpProcessorFailedException;
-import com.gigaspaces.server.space.suspend.SuspendInfo;
-import com.gigaspaces.internal.server.space.suspend.SuspendInfoChangedListener;
-import com.gigaspaces.server.space.suspend.SuspendType;
+import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.metrics.BeanMetricManager;
 import com.gigaspaces.metrics.LongCounter;
+import com.gigaspaces.server.space.suspend.SuspendType;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.admin.IInternalRemoteJSpaceAdmin;
-
-import com.j_spaces.core.admin.SuspendTypeChangedInternalListener;
 import com.j_spaces.core.client.EntrySnapshot;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -51,11 +48,7 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.Lifecycle;
+import org.springframework.context.*;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -99,7 +92,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
     private SpaceMode currentSpaceMode;
     private volatile boolean autoStart = true;
     private volatile boolean quiesced = false;
-    private volatile boolean resumeAfterUnquiesce = false;
+    private volatile boolean resumeAfterSuspend = false;
     private BeanMetricManager beanMetricManager;
 
     private SpaceDataEventListener eventListener;
@@ -120,6 +113,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
     protected boolean disableTransactionValidation = false;
 
     protected ThreadLocal<EntrySnapshot> snapshotTemplateThreadLocal = new ThreadLocal<EntrySnapshot>();
+    private SuspendTypeChangedInternalListener suspendTypeListener;
 
     /**
      * Sets the GigaSpace instance to be used for space event listening operations.
@@ -302,11 +296,17 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             doStart();
         }
 
+        boolean embedded = !SpaceUtils.isRemoteProtocol(gigaSpace.getSpace());
+
+        // Register the suspendTypeListener (for reacting to suspendTypeChanges) only if this container is listening on embedded space
+        if (embedded) {
+            gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().addSpaceSuspendTypeListener(suspendTypeListener);
+        }
+
         if (registerSpaceModeListener) {
             SpaceMode currentMode = SpaceMode.PRIMARY;
-            if (!SpaceUtils.isRemoteProtocol(gigaSpace.getSpace())) {
+            if (embedded) {
                 currentMode = registerSpaceModeListener();
-                registerSuspendInfoListener();
             }
             SpaceInitializationIndicator.setInitializer();
             try {
@@ -329,10 +329,6 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             throw new InvalidDataAccessResourceUsageException("Failed to register space mode listener with space [" + gigaSpace.getSpace()
                     + "]", e);
         }
-    }
-
-    private void registerSuspendInfoListener() {
-        gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().addSpaceSuspendTypeListener(primaryBackupListener);
     }
 
     /**
@@ -447,8 +443,14 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             unregisterMetrics();
         }
 
+        boolean embedded = !SpaceUtils.isRemoteProtocol(gigaSpace.getSpace());
+
+        if (embedded) {
+            gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().removeSpaceSuspendTypeListener(suspendTypeListener);
+        }
+
         if (registerSpaceModeListener) {
-            if (!SpaceUtils.isRemoteProtocol(gigaSpace.getSpace())) {
+            if (embedded) {
                 IJSpace clusterMemberSpace = SpaceUtils.getClusterMemberSpace(gigaSpace.getSpace());
                 try {
                     ISpaceModeListener remoteListener = (ISpaceModeListener) clusterMemberSpace.getDirectProxy().getStubHandler()
@@ -457,8 +459,6 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
                 } catch (RemoteException e) {
                     logger.warn("Failed to unregister space mode listener with space [" + gigaSpace.getSpace() + "]", e);
                 }
-
-                gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().removeSpaceSuspendTypeListener(primaryBackupListener);
             }
         }
 
@@ -542,7 +542,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         doBeforeStop();
         synchronized (this.lifecycleMonitor) {
             this.running = false;
-            this.resumeAfterUnquiesce = false;
+            this.resumeAfterSuspend = false;
             this.lifecycleMonitor.notifyAll();
             unregisterMetrics();
         }
@@ -890,7 +890,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         return transactionManager != null;
     }
 
-    private class PrimaryBackupListener implements ISpaceModeListener, SuspendTypeChangedInternalListener {
+    private class PrimaryBackupListener implements ISpaceModeListener {
 
         public void beforeSpaceModeChange(SpaceMode spaceMode) throws RemoteException {
             onApplicationEvent(new BeforeSpaceModeChangeEvent(gigaSpace.getSpace(), spaceMode));
@@ -900,26 +900,29 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             onApplicationEvent(new AfterSpaceModeChangeEvent(gigaSpace.getSpace(), spaceMode));
         }
 
+    }
+
+    private class SuspendTypeInternalListener implements SuspendTypeChangedInternalListener {
+
         @Override
         public void onSuspendTypeChanged(SuspendType suspendType) {
             logger.info(message("SuspendType was updated to " + suspendType));
-            quiesced = suspendType != SuspendType.NONE;
-            if (quiesced) {
+            if (suspendType != SuspendType.NONE) {
                 if (logger.isDebugEnabled())
                     logger.debug(message("SuspendType was updated to " + suspendType) + ", stopping...");
                 // if container was running before calling quiesce it should resume working after unquiesce
-                boolean runningBeforeQuiesce = running;
+                boolean runningBeforeSuspend = running;
                 stop();
-                resumeAfterUnquiesce = runningBeforeQuiesce;
+                resumeAfterSuspend = runningBeforeSuspend;
             } else {
                 // resume only if container was running before calling quiesce
-                if (resumeAfterUnquiesce) {
+                if (resumeAfterSuspend) {
                     if (logger.isDebugEnabled())
                         logger.debug(message("SuspendType was updated to " + suspendType) + ", starting...");
                     start();
                 } else {
                     if (logger.isDebugEnabled())
-                        logger.debug(message("SuspendType was updated to " + suspendType) + " but resumeAfterUnquiesce was set to false, not resuming...");
+                        logger.debug(message("SuspendType was updated to " + suspendType) + " but resumeAfterSuspend was set to false, not resuming...");
                 }
             }
         }

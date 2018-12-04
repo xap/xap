@@ -30,6 +30,7 @@ import java.lang.reflect.Method;
  * Scans the bean's methods for the annotations {@link SuspendTypeChanged} and registers them in the {@link SuspendTypeAnnotationRegistry}.
  *
  * @author Elad Gur
+ * @since 14.0.1
  */
 public class SuspendTypeAnnotationRegistryPostProcessor implements BeanPostProcessor, ApplicationContextAware {
 

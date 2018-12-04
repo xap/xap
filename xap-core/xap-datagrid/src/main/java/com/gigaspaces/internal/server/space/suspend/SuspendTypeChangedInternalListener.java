@@ -1,4 +1,4 @@
-package com.j_spaces.core.admin;
+package com.gigaspaces.internal.server.space.suspend;
 
 import com.gigaspaces.api.InternalApi;
 import com.gigaspaces.server.space.suspend.SuspendType;
@@ -7,7 +7,7 @@ import com.gigaspaces.server.space.suspend.SuspendType;
  * Internal listener interface for receiving events when a space change its suspendType
  *
  * @author Elad Gur
- * @since 14.0
+ * @since 14.0.1
  */
 @InternalApi
 public interface SuspendTypeChangedInternalListener {

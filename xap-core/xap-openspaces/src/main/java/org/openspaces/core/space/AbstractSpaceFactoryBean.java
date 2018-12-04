@@ -42,7 +42,7 @@ import org.openspaces.core.space.mode.SpaceAfterBackupListener;
 import org.openspaces.core.space.mode.SpaceAfterPrimaryListener;
 import org.openspaces.core.space.mode.SpaceBeforeBackupListener;
 import org.openspaces.core.space.mode.SpaceBeforePrimaryListener;
-import com.j_spaces.core.admin.SuspendTypeChangedInternalListener;
+import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
 import org.openspaces.core.space.suspend.SuspendTypeChangedEvent;
 import org.openspaces.core.space.suspend.SuspendTypeChangedListener;
 import org.openspaces.core.util.SpaceUtils;
@@ -295,7 +295,6 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
                 try {
                     applicationContext.publishEvent(new BeforeSpaceModeChangeEvent(space, currentSpaceMode));
                     applicationContext.publishEvent(new AfterSpaceModeChangeEvent(space, currentSpaceMode));
-                    fireSuspendTypeChangedEvent(currentSuspendType);
                     if (currentSpaceMode == SpaceMode.BACKUP) {
                         fireSpaceBeforeBackupEvent();
                         fireSpaceAfterBackupEvent();
@@ -303,6 +302,7 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
                         fireSpaceBeforePrimaryEvent();
                         fireSpaceAfterPrimaryEvent();
                     }
+                    fireSuspendTypeChangedEvent(currentSuspendType);
                 } finally {
                     SpaceInitializationIndicator.unsetInitializer();
                 }
