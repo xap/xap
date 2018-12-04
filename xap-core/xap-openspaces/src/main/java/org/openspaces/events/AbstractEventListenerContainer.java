@@ -23,8 +23,6 @@ import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.dump.InternalDump;
 import com.gigaspaces.internal.dump.InternalDumpProcessor;
 import com.gigaspaces.internal.dump.InternalDumpProcessorFailedException;
-import com.gigaspaces.server.space.suspend.SuspendInfo;
-import com.gigaspaces.internal.server.space.suspend.SuspendInfoChangedListener;
 import com.gigaspaces.server.space.suspend.SuspendType;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.metrics.BeanMetricManager;
@@ -120,6 +118,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
     protected boolean disableTransactionValidation = false;
 
     protected ThreadLocal<EntrySnapshot> snapshotTemplateThreadLocal = new ThreadLocal<EntrySnapshot>();
+    private SuspendTypeChangedInternalListener suspendTypeListener;
 
     /**
      * Sets the GigaSpace instance to be used for space event listening operations.
@@ -302,11 +301,12 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             doStart();
         }
 
+        registerSuspendTypeListener();
+
         if (registerSpaceModeListener) {
             SpaceMode currentMode = SpaceMode.PRIMARY;
             if (!SpaceUtils.isRemoteProtocol(gigaSpace.getSpace())) {
                 currentMode = registerSpaceModeListener();
-                registerSuspendInfoListener();
             }
             SpaceInitializationIndicator.setInitializer();
             try {
@@ -331,8 +331,12 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         }
     }
 
-    private void registerSuspendInfoListener() {
-        gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().addSpaceSuspendTypeListener(primaryBackupListener);
+    private void registerSuspendTypeListener() {
+        if (suspendTypeListener == null) {
+            suspendTypeListener = new SuspendTypeInternalListener();
+        }
+
+        gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().addSpaceSuspendTypeListener(suspendTypeListener);
     }
 
     /**
@@ -458,7 +462,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
                     logger.warn("Failed to unregister space mode listener with space [" + gigaSpace.getSpace() + "]", e);
                 }
 
-                gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().removeSpaceSuspendTypeListener(primaryBackupListener);
+                gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().removeSpaceSuspendTypeListener(suspendTypeListener);
             }
         }
 
@@ -890,7 +894,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         return transactionManager != null;
     }
 
-    private class PrimaryBackupListener implements ISpaceModeListener, SuspendTypeChangedInternalListener {
+    private class PrimaryBackupListener implements ISpaceModeListener {
 
         public void beforeSpaceModeChange(SpaceMode spaceMode) throws RemoteException {
             onApplicationEvent(new BeforeSpaceModeChangeEvent(gigaSpace.getSpace(), spaceMode));
@@ -899,6 +903,9 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         public void afterSpaceModeChange(SpaceMode spaceMode) throws RemoteException {
             onApplicationEvent(new AfterSpaceModeChangeEvent(gigaSpace.getSpace(), spaceMode));
         }
+
+    }
+    private class SuspendTypeInternalListener implements SuspendTypeChangedInternalListener {
 
         @Override
         public void onSuspendTypeChanged(SuspendType suspendType) {
