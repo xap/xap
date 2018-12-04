@@ -28,7 +28,6 @@ import com.gigaspaces.security.SecurityException;
 import com.gigaspaces.security.directory.CredentialsProvider;
 import com.gigaspaces.security.directory.CredentialsProviderHelper;
 import com.gigaspaces.security.directory.DefaultCredentialsProvider;
-import com.gigaspaces.start.SystemBoot;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.JSpaceContainerImpl;
@@ -40,12 +39,10 @@ import com.j_spaces.kernel.SystemProperties;
 import com.j_spaces.kernel.log.JProperties;
 import com.sun.jini.proxy.DefaultProxyPivot;
 import com.sun.jini.start.LifeCycle;
-import org.jini.rio.resources.util.SecurityPolicyLoader;
 
 import java.io.File;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.Properties;
@@ -130,10 +127,6 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class SpaceFinder {
     private static final Map<SpaceURL, SpaceImpl> _embeddedSpaces = new WeakHashMap<SpaceURL, SpaceImpl>();
-
-    private static boolean securityManagerEnabled = false;
-    private static SecurityManager currentSecurityManager = null;
-    private static boolean alreadySetSecurity;
 
     private static final SpaceFinder spaceFinder = new SpaceFinder();
 
@@ -368,33 +361,6 @@ public class SpaceFinder {
         return SpaceURLParser.parseURL(url, customProperties);
     }
 
-    private static void initSecurityManagerIfNeeded(String spaceUrl) {
-        if (alreadySetSecurity)
-            return;
-
-        try {
-            securityManagerEnabled = spaceUrl.indexOf("securityManager=true") != -1;
-            if (securityManagerEnabled) {
-
-                if (System.getProperty("java.security.policy") == null)
-                    SecurityPolicyLoader.load(SystemBoot.class, "policy.all");
-
-                /** Set specified security manager only if defined securitymanger=true in SpaceFinder URL.
-                 * Ignores any occurred exception, Warning message will be displayed. */
-                // get current security manager
-                currentSecurityManager = System.getSecurityManager();
-
-                // set security manager
-                if (currentSecurityManager == null ||
-                        !(currentSecurityManager instanceof RMISecurityManager))
-                    System.setSecurityManager(new RMISecurityManager());
-                alreadySetSecurity = true;
-            }
-        } catch (Exception e) {
-            System.err.println("WARNING: Failed to find: " + spaceUrl + ". Failed to set RMISecurityManager. \n" + e.getMessage());
-        }
-    }
-
     protected Object findService(String url, Properties customProperties, LifeCycle lifeCycle,
                                  CredentialsProvider credentialsProvider)
             throws FinderException {
@@ -454,8 +420,6 @@ public class SpaceFinder {
                                  LookupType lookupType)
             throws FinderException {
         try {
-            initSecurityManagerIfNeeded(url.getURL());
-
             // If user details are not provided, search custom properties:
             if (credentialsProvider == null && customProperties != null) {
                 final String username = (String) customProperties.remove(Constants.Security.USERNAME);
@@ -482,14 +446,6 @@ public class SpaceFinder {
             throw e;
         } catch (Exception e) {
             throw new FinderException("Failed to find: " + url, e);
-        } finally {
-            if (securityManagerEnabled && currentSecurityManager != null) {
-                try {
-                    System.setSecurityManager(currentSecurityManager);
-                } catch (Exception e) {
-                    System.err.println("WARNING: Failed to set RMISecurityManager. \n" + e.getMessage());
-                }
-            }
         }
     }
 

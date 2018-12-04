@@ -28,9 +28,7 @@ import com.gigaspaces.time.ITimeProvider;
 import net.jini.core.discovery.LookupLocator;
 
 import java.io.File;
-import java.net.InetAddress;
 import java.net.MalformedURLException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -73,7 +71,6 @@ public class SystemInfo {
         this.managerClusterInfo = new XapManagerClusterInfo(network.getPublicHost());
         this.lookup = new XapLookup(managerClusterInfo);
     }
-
 
     public String getXapHome() {
         return xapHome;

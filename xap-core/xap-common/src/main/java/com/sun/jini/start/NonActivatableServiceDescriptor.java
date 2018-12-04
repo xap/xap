@@ -456,7 +456,6 @@ public class NonActivatableServiceDescriptor
      * @throws java.lang.Exception Thrown if there was any problem creating the object.
      */
     public Object create(Configuration config) throws Exception {
-        ServiceStarter.ensureSecurityManager();
         logger.entering(NonActivatableServiceDescriptor.class.getName(),
                 "create", new Object[]{config});
         if (config == null) {
