@@ -27,7 +27,6 @@ import net.jini.security.BasicProxyPreparer;
 import net.jini.security.ProxyPreparer;
 
 import java.rmi.Naming;
-import java.rmi.RMISecurityManager;
 import java.rmi.activation.ActivationException;
 import java.rmi.activation.ActivationSystem;
 import java.security.PrivilegedActionException;
@@ -273,15 +272,6 @@ public class ServiceStarter {
     }
 
     /**
-     * Utility routine that sets a security manager if one isn't already present.
-     */
-    synchronized static void ensureSecurityManager() {
-        if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new RMISecurityManager());
-        }
-    }
-
-    /**
      * Utility routine that returns a "prepared" activation system proxy for a system at the given
      * <code>host</code> and <code>port</code>.
      *
@@ -406,7 +396,6 @@ public class ServiceStarter {
      * @see net.jini.config.ConfigurationProvider
      */
     public static void main(String[] args) {
-        ensureSecurityManager();
         try {
             logger.entering(ServiceStarter.class.getName(),
                     "main", (Object[]) args);

@@ -30,9 +30,8 @@ fi
 
 export XAP_HOME=${XAP_HOME=`(cd $DIRNAME/..; pwd )`}
 export XAP_NIC_ADDRESS=${XAP_NIC_ADDRESS="`hostname`"}
-export XAP_SECURITY_POLICY=${XAP_SECURITY_POLICY=${XAP_HOME}/policy/policy.all}
 export XAP_LOGS_CONFIG_FILE=${XAP_LOGS_CONFIG_FILE=${XAP_HOME}/config/log/xap_logging.properties}
-export XAP_OPTIONS="-Djava.util.logging.config.file=${XAP_LOGS_CONFIG_FILE} -Djava.security.policy=${XAP_SECURITY_POLICY} -Djava.rmi.server.hostname=${XAP_NIC_ADDRESS} -Dcom.gs.home=${XAP_HOME}"
+export XAP_OPTIONS="-Djava.util.logging.config.file=${XAP_LOGS_CONFIG_FILE} -Djava.rmi.server.hostname=${XAP_NIC_ADDRESS} -Dcom.gs.home=${XAP_HOME}"
 export EXT_LD_LIBRARY_PATH=${EXT_LD_LIBRARY_PATH=}
 
 if [ -z "${JAVA_OPTIONS}" ]; then

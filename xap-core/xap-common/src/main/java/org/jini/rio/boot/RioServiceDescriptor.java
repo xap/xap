@@ -115,10 +115,9 @@ public class RioServiceDescriptor implements ServiceDescriptor {
                                 String[] serverConfigArgs,
                                 LifeCycle lifeCycle) {
         if (codebase == null
-                || policy == null
                 || classpath == null
                 || implClassName == null)
-            throw new NullPointerException("Codebase, policy, classpath, and "
+            throw new NullPointerException("Codebase, classpath, and "
                     + "implementation cannot be null");
         this.name = name;
         this.codebase = codebase;
@@ -134,13 +133,12 @@ public class RioServiceDescriptor implements ServiceDescriptor {
      * <code>null</code> for the <code>LifeCycle</code> reference.
      */
     public RioServiceDescriptor(String name, String codebase,
-                                String policy,
                                 String classpath,
                                 String implClassName,
                                 // Optional Args
                                 String[] serverConfigArgs) {
         this(name, codebase,
-                policy,
+                System.getProperty("java.security.policy"),
                 classpath,
                 implClassName,
                 serverConfigArgs,
@@ -276,23 +274,22 @@ public class RioServiceDescriptor implements ServiceDescriptor {
                             "Global policy set: {0}",
                             globalPolicy);
             }
-            DynamicPolicyProvider service_policy =
-                    new DynamicPolicyProvider(
-                            new PolicyFileProvider(getPolicy()));
-            LoaderSplitPolicyProvider splitServicePolicy =
-                    new LoaderSplitPolicyProvider(jsbCL,
-                            service_policy,
-                            new DynamicPolicyProvider(
-                                    initialGlobalPolicy));
-            /*
-             * Grant "this" code enough permission to do its work under the
-             * service policy, which takes effect (below) after the context
-             * loader is (re)set.
-             */
-            splitServicePolicy.grant(RioServiceDescriptor.class,
-                    null, /* Principal[] */
-                    new Permission[]{new AllPermission()});
-            globalPolicy.setPolicy(jsbCL, splitServicePolicy);
+            final String policy = getPolicy();
+            if (policy != null) {
+                DynamicPolicyProvider service_policy = new DynamicPolicyProvider(new PolicyFileProvider(policy));
+                LoaderSplitPolicyProvider splitServicePolicy = new LoaderSplitPolicyProvider(jsbCL, service_policy,
+                                new DynamicPolicyProvider(initialGlobalPolicy));
+
+                /*
+                 * Grant "this" code enough permission to do its work under the
+                 * service policy, which takes effect (below) after the context
+                 * loader is (re)set.
+                 */
+                splitServicePolicy.grant(RioServiceDescriptor.class,
+                        null, /* Principal[] */
+                        new Permission[]{new AllPermission()});
+                globalPolicy.setPolicy(jsbCL, splitServicePolicy);
+            }
         }
         try {
             Object impl = null;

@@ -581,7 +581,6 @@ public class SystemConfig {
         }
 
         return (new RioServiceDescriptor("LUS", handlerCodebase,
-                System.getProperty("java.security.policy"),
                 handlerClasspath,
                 "com.gigaspaces.grid.lookup.LookupHandler",
                 confArgs));
@@ -611,7 +610,6 @@ public class SystemConfig {
         }
 
         return (new RioServiceDescriptor("TM", handlerCodebase,
-                System.getProperty("java.security.policy"),
                 handlerClasspath,
                 "com.sun.jini.mahalo.TransientMahaloImpl",
                 confArgs));
@@ -680,7 +678,6 @@ public class SystemConfig {
             }
             svcDesc =
                     new RioServiceDescriptor("GSA", gsaCodebase,
-                            System.getProperty("java.security.policy"),
                             gsaClasspath,
                             "com.gigaspaces.grid.gsa.GSAImpl",
                             confArgs);
@@ -726,7 +723,6 @@ public class SystemConfig {
             }
             svcDesc =
                     new RioServiceDescriptor("GSC", gscCodebase,
-                            System.getProperty("java.security.policy"),
                             gscClasspath,
                             "com.gigaspaces.grid.gsc.GSCImpl",
                             confArgs);
@@ -773,7 +769,6 @@ public class SystemConfig {
             }
             svcDesc =
                     new RioServiceDescriptor("GSM", gsmCodebase,
-                            System.getProperty("java.security.policy"),
                             gsmClasspath,
                             "com.gigaspaces.grid.gsm.GSMImpl",
                             confArgs);
@@ -862,7 +857,6 @@ public class SystemConfig {
             }
             svcDesc =
                     new RioServiceDescriptor("ESM", esmCodebase,
-                            System.getProperty("java.security.policy"),
                             esmClasspath,
                             "org.openspaces.grid.esm.ESMImpl",
                             confArgs);
@@ -921,7 +915,6 @@ public class SystemConfig {
         }
         ServiceDescriptor svcDesc =
                 new RioServiceDescriptor("GS", gsCodebase,
-                        System.getProperty("java.security.policy"),
                         gsClasspath,
                         "com.j_spaces.start.JSpaceServiceImpl",
                         confArgs);
@@ -973,7 +966,6 @@ public class SystemConfig {
          */
         public Object create(Configuration config) throws Exception {
             MBeanServer mbs = null;
-            SystemBoot.ensureSecurityManager();
 
             int registryPort = (Integer) getConfigEntry(config, COMPONENT, "registryPort", int.class, CommonSystemProperties.REGISTRY_PORT, 10098);
             int registryRetries = (Integer) getConfigEntry(config, COMPONENT, "registryRetries", Integer.class, CommonSystemProperties.REGISTRY_RETRIES, 20);

@@ -299,7 +299,6 @@ public class SharedActivationGroupDescriptor
      * system group instance.
      */
     public Object create(Configuration config) throws Exception {
-        ServiceStarter.ensureSecurityManager();
         logger.entering(SharedActivationGroupDescriptor.class.getName(),
                 "create", new Object[]{config});
 

@@ -30,7 +30,6 @@ import net.jini.config.ConfigurationException;
 
 import org.jini.rio.boot.BootUtil;
 import org.jini.rio.boot.CommonClassLoader;
-import org.jini.rio.resources.util.SecurityPolicyLoader;
 
 import java.beans.Introspector;
 import java.io.*;
@@ -39,7 +38,6 @@ import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.rmi.RMISecurityManager;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -119,16 +117,6 @@ public class SystemBoot {
 
     public static void iAmTheGSC() {
         runningWithinGSC = true;
-    }
-
-    /**
-     * Utility routine that sets a security manager (if one isn't already present) and the security
-     * policy
-     */
-    public synchronized static void ensureSecurityManager() {
-        SecurityPolicyLoader.load(SystemBoot.class, "policy.all");
-        //noinspection deprecation
-        System.setSecurityManager(new RMISecurityManager());
     }
 
     /**
@@ -232,7 +220,6 @@ public class SystemBoot {
             final String command = BootUtil.arrayToDelimitedString(args, " ");
             boolean isSilent = isSilent(command);
             preProcess(args);
-            ensureSecurityManager();
             processRole = getLogFileName(args);
             logger = getLogger(processRole);
 

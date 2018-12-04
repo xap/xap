@@ -35,10 +35,6 @@ public interface Constants {
     String SPACE_CONFIG_PREFIX = "space-config.";
     String IS_SPACE_LOAD_ON_STARTUP = "load-on-startup";
 
-    public interface System {
-        String SYSTEM_GS_POLICY = "policy/policy.all";
-    }
-
     public interface Schemas {
         String SCHEMA_ELEMENT = "schema";
         String FULL_SCHEMA_ELEMENT = SPACE_CONFIG_PREFIX + SCHEMA_ELEMENT;

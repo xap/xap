@@ -196,7 +196,8 @@ public class RioActivatableServiceDescriptor extends RioServiceDescriptor {
                 policy,
                 classpath,
                 implClassName,
-                serverConfigArgs);
+                serverConfigArgs,
+                null);
         if (sharedGroupLog == null)
             throw new NullPointerException("Shared VM log cannot be null");
         this.sharedGroupLog = sharedGroupLog;

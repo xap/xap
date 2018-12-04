@@ -315,7 +315,7 @@ public class SpaceURL extends Properties implements Externalizable {
 
     /**
      * <pre>
-     * if <code>false</code> SpaceFinder will not initialize java.rmi.RMISecurityManager().
+     * if <code>false</code> SpaceFinder will not initialize Security Manager.
      * Example: jini://localhost:10098/containerName/JavaSpaces?securityManager
      * Default: true
      * </pre>
