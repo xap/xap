@@ -301,7 +301,10 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             doStart();
         }
 
-        registerSuspendTypeListener();
+        // Register the suspendTypeListener (for reacting to suspendTypeChanges) only if this container is listening on embedded space
+        if (gigaSpace.getSpace().isEmbedded()) {
+            registerSuspendTypeListener();
+        }
 
         if (registerSpaceModeListener) {
             SpaceMode currentMode = SpaceMode.PRIMARY;
