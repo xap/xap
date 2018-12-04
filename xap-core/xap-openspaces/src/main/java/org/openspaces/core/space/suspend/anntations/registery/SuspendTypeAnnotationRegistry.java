@@ -33,6 +33,7 @@ import java.text.MessageFormat;
  * events arrive they are routed to the registered beans' methods.
  *
  * @author Elad Gur
+ * @since 14.0.1
  */
 public class SuspendTypeAnnotationRegistry extends AbstractAnnotationRegistry
         implements SuspendTypeChangedListener {

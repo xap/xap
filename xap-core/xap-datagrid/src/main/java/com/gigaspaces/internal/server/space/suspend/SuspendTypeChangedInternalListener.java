@@ -7,7 +7,7 @@ import com.gigaspaces.server.space.suspend.SuspendType;
  * Internal listener interface for receiving events when a space change its suspendType
  *
  * @author Elad Gur
- * @since 14.0
+ * @since 14.0.1
  */
 @InternalApi
 public interface SuspendTypeChangedInternalListener {
