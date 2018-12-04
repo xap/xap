@@ -1,4 +1,4 @@
-package com.j_spaces.core.admin;
+package com.gigaspaces.internal.server.space.suspend;
 
 import com.gigaspaces.api.InternalApi;
 import com.gigaspaces.server.space.suspend.SuspendType;

@@ -18,19 +18,16 @@ package com.gigaspaces.internal.server.space.quiesce;
 
 import com.gigaspaces.admin.quiesce.*;
 import com.gigaspaces.internal.server.space.SpaceImpl;
-import com.gigaspaces.server.space.suspend.SuspendInfo;
-import com.gigaspaces.internal.server.space.suspend.SuspendInfoChangedListener;
-import com.gigaspaces.server.space.suspend.SuspendType;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.utils.collections.ConcurrentHashSet;
 import com.gigaspaces.logger.Constants;
-import com.j_spaces.core.admin.SuspendTypeChangedInternalListener;
+import com.gigaspaces.server.space.suspend.SuspendInfo;
+import com.gigaspaces.server.space.suspend.SuspendType;
+import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
 import com.j_spaces.kernel.SystemProperties;
 
 import java.io.Closeable;
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;

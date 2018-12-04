@@ -30,7 +30,7 @@ import com.gigaspaces.metrics.LongCounter;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.admin.IInternalRemoteJSpaceAdmin;
 
-import com.j_spaces.core.admin.SuspendTypeChangedInternalListener;
+import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
 import com.j_spaces.core.client.EntrySnapshot;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
