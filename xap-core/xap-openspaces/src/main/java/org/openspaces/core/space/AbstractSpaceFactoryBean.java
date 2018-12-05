@@ -295,7 +295,6 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
                 try {
                     applicationContext.publishEvent(new BeforeSpaceModeChangeEvent(space, currentSpaceMode));
                     applicationContext.publishEvent(new AfterSpaceModeChangeEvent(space, currentSpaceMode));
-                    fireSuspendTypeChangedEvent(currentSuspendType);
                     if (currentSpaceMode == SpaceMode.BACKUP) {
                         fireSpaceBeforeBackupEvent();
                         fireSpaceAfterBackupEvent();
@@ -303,6 +302,7 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
                         fireSpaceBeforePrimaryEvent();
                         fireSpaceAfterPrimaryEvent();
                     }
+                    fireSuspendTypeChangedEvent(currentSuspendType);
                 } finally {
                     SpaceInitializationIndicator.unsetInitializer();
                 }
