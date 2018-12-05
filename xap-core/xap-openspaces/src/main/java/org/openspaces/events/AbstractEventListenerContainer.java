@@ -23,14 +23,13 @@ import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.dump.InternalDump;
 import com.gigaspaces.internal.dump.InternalDumpProcessor;
 import com.gigaspaces.internal.dump.InternalDumpProcessorFailedException;
-import com.gigaspaces.server.space.suspend.SuspendType;
+import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.metrics.BeanMetricManager;
 import com.gigaspaces.metrics.LongCounter;
+import com.gigaspaces.server.space.suspend.SuspendType;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.admin.IInternalRemoteJSpaceAdmin;
-
-import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
 import com.j_spaces.core.client.EntrySnapshot;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -49,11 +48,7 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.Lifecycle;
+import org.springframework.context.*;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -301,14 +296,19 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             doStart();
         }
 
+        boolean embedded = !SpaceUtils.isRemoteProtocol(gigaSpace.getSpace());
+
         // Register the suspendTypeListener (for reacting to suspendTypeChanges) only if this container is listening on embedded space
-        if (gigaSpace.getSpace().isEmbedded()) {
-            registerSuspendTypeListener();
+        if (embedded) {
+            if (suspendTypeListener == null) {
+                suspendTypeListener = new SuspendTypeInternalListener();
+            }
+            gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().addSpaceSuspendTypeListener(suspendTypeListener);
         }
 
         if (registerSpaceModeListener) {
             SpaceMode currentMode = SpaceMode.PRIMARY;
-            if (!SpaceUtils.isRemoteProtocol(gigaSpace.getSpace())) {
+            if (embedded) {
                 currentMode = registerSpaceModeListener();
             }
             SpaceInitializationIndicator.setInitializer();
@@ -332,14 +332,6 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             throw new InvalidDataAccessResourceUsageException("Failed to register space mode listener with space [" + gigaSpace.getSpace()
                     + "]", e);
         }
-    }
-
-    private void registerSuspendTypeListener() {
-        if (suspendTypeListener == null) {
-            suspendTypeListener = new SuspendTypeInternalListener();
-        }
-
-        gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().addSpaceSuspendTypeListener(suspendTypeListener);
     }
 
     /**
@@ -454,8 +446,14 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             unregisterMetrics();
         }
 
+        boolean embedded = !SpaceUtils.isRemoteProtocol(gigaSpace.getSpace());
+
+        if (embedded) {
+            gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().removeSpaceSuspendTypeListener(suspendTypeListener);
+        }
+
         if (registerSpaceModeListener) {
-            if (!SpaceUtils.isRemoteProtocol(gigaSpace.getSpace())) {
+            if (embedded) {
                 IJSpace clusterMemberSpace = SpaceUtils.getClusterMemberSpace(gigaSpace.getSpace());
                 try {
                     ISpaceModeListener remoteListener = (ISpaceModeListener) clusterMemberSpace.getDirectProxy().getStubHandler()
@@ -464,8 +462,6 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
                 } catch (RemoteException e) {
                     logger.warn("Failed to unregister space mode listener with space [" + gigaSpace.getSpace() + "]", e);
                 }
-
-                gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().removeSpaceSuspendTypeListener(suspendTypeListener);
             }
         }
 
@@ -918,9 +914,9 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
                 if (logger.isDebugEnabled())
                     logger.debug(message("SuspendType was updated to " + suspendType) + ", stopping...");
                 // if container was running before calling quiesce it should resume working after unquiesce
-                boolean containerRunBefore = running;
+                boolean runningBeforeSuspend = running;
                 stop();
-                resumeAfterSuspend = containerRunBefore;
+                resumeAfterSuspend = runningBeforeSuspend;
             } else {
                 // resume only if container was running before calling quiesce
                 if (resumeAfterSuspend) {
