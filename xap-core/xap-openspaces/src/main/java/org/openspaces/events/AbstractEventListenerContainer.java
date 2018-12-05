@@ -300,9 +300,6 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
 
         // Register the suspendTypeListener (for reacting to suspendTypeChanges) only if this container is listening on embedded space
         if (embedded) {
-            if (suspendTypeListener == null) {
-                suspendTypeListener = new SuspendTypeInternalListener();
-            }
             gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().addSpaceSuspendTypeListener(suspendTypeListener);
         }
 
