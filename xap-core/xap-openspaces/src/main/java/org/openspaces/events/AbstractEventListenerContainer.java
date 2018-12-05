@@ -97,7 +97,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
     private SpaceMode currentSpaceMode;
     private volatile boolean autoStart = true;
     private volatile boolean quiesced = false;
-    private volatile boolean resumeAfterSuspendTypeChangeToNone = false;
+    private volatile boolean resumeAfterSuspend = false;
     private BeanMetricManager beanMetricManager;
 
     private SpaceDataEventListener eventListener;
@@ -549,7 +549,7 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         doBeforeStop();
         synchronized (this.lifecycleMonitor) {
             this.running = false;
-            this.resumeAfterSuspendTypeChangeToNone = false;
+            this.resumeAfterSuspend = false;
             this.lifecycleMonitor.notifyAll();
             unregisterMetrics();
         }
@@ -920,16 +920,16 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
                 // if container was running before calling quiesce it should resume working after unquiesce
                 boolean containerRunBefore = running;
                 stop();
-                resumeAfterSuspendTypeChangeToNone = containerRunBefore;
+                resumeAfterSuspend = containerRunBefore;
             } else {
                 // resume only if container was running before calling quiesce
-                if (resumeAfterSuspendTypeChangeToNone) {
+                if (resumeAfterSuspend) {
                     if (logger.isDebugEnabled())
                         logger.debug(message("SuspendType was updated to " + suspendType) + ", starting...");
                     start();
                 } else {
                     if (logger.isDebugEnabled())
-                        logger.debug(message("SuspendType was updated to " + suspendType) + " but resumeAfterSuspendTypeChangeToNone was set to false, not resuming...");
+                        logger.debug(message("SuspendType was updated to " + suspendType) + " but resumeAfterSuspend was set to false, not resuming...");
                 }
             }
         }
