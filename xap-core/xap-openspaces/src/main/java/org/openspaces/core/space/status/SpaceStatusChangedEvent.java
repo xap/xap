@@ -1,34 +1,26 @@
-package org.openspaces.core.space.suspend;
+package org.openspaces.core.space.status;
 
 import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.server.space.suspend.SuspendType;
 import com.j_spaces.core.IJSpace;
 import org.springframework.context.ApplicationEvent;
 
-public class SpaceChangeEvent extends ApplicationEvent {
+public class SpaceStatusChangedEvent extends ApplicationEvent {
 
     private static final long serialVersionUID = 1L;
     private final SpaceMode spaceMode;
-
-    private SuspendType suspendType;
+    private final SuspendType suspendType;
 
     /**
      * Creates a new Space suspend type changed event.
      *  @param space     The space that changed its suspend type
      * @param suspendType The current suspend type of the space
-     * @param currentSpaceMode
+     * @param spaceMode
      */
-    public SpaceChangeEvent(IJSpace space, SuspendType suspendType, SpaceMode currentSpaceMode) {
+    public SpaceStatusChangedEvent(IJSpace space, SuspendType suspendType, SpaceMode spaceMode) {
         super(space);
         this.suspendType = suspendType;
-        this.spaceMode = currentSpaceMode;
-    }
-
-    /**
-     * Returns the space that initiated this event.
-     */
-    public IJSpace getSpace() {
-        return (IJSpace) getSource();
+        this.spaceMode = spaceMode;
     }
 
     public SuspendType getSuspendType() {

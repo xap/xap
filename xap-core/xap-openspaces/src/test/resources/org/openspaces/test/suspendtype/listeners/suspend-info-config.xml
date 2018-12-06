@@ -13,9 +13,9 @@
     <os-core:giga-space-late-context/>
     <os-core:annotation-support/>
         
-    <bean id="listenerByAnnotations" class="org.openspaces.test.suspendtype.listeners.SpaceSuspendTypeChangedListenerByAnnotations"/>
+    <bean id="listenerByAnnotations" class="org.openspaces.test.suspendtype.listeners.SpaceStatusListenerByAnnotations"/>
 
-    <bean id="listenerByInterface" class="org.openspaces.test.suspendtype.listeners.SpaceSuspendTypeChangedListenerByInterface"/>
+    <bean id="listenerByInterface" class="org.openspaces.test.suspendtype.listeners.SpaceStatusChangedListenerByInterface"/>
 
     <os-core:embedded-space id="space" space-name="mySpace"/>
 

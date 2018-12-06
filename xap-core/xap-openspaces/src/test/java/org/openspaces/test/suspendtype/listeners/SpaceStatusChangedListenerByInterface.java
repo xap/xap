@@ -16,17 +16,17 @@
 
 package org.openspaces.test.suspendtype.listeners;
 
-import org.openspaces.core.space.suspend.SpaceChangeEvent;
-import org.openspaces.core.space.suspend.SuspendTypeChangedListener;
+import org.openspaces.core.space.status.SpaceStatusChangedEvent;
+import org.openspaces.core.space.status.SpaceStatusChangedEventListener;
 
 /**
  * @author Elad GUr
  */
-public class SpaceSuspendTypeChangedListenerByInterface extends AbstractSpaceSuspendTypeChangedListener
-        implements SuspendTypeChangedListener {
+public class SpaceStatusChangedListenerByInterface extends AbstractSpaceStatusChangedListener
+        implements SpaceStatusChangedEventListener {
 
     @Override
-    public void onSuspendTypeChanged(SpaceChangeEvent event) {
+    public void onSpaceStatusChanged(SpaceStatusChangedEvent event) {
         storeEvent(event);
     }
 

@@ -33,13 +33,13 @@ import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = {"suspend-info-config.xml"})
-public class SuspendTypeChangedAPITest {
+public class SpaceStatusChangedAPITest {
 
     @Autowired
-    protected SpaceSuspendTypeChangedListenerByAnnotations listenerByAnnotations;
+    protected SpaceStatusListenerByAnnotations listenerByAnnotations;
 
     @Autowired
-    protected SpaceSuspendTypeChangedListenerByInterface listenerByInterface;
+    protected SpaceStatusChangedListenerByInterface listenerByInterface;
 
     @Autowired
     protected GigaSpace gigaSpace;
@@ -89,7 +89,7 @@ public class SuspendTypeChangedAPITest {
         ensureListenersGotEvents(listenerByAnnotations);
     }
 
-    private void ensureListenersGotEvents(AbstractSpaceSuspendTypeChangedListener listener) {
+    private void ensureListenersGotEvents(AbstractSpaceStatusChangedListener listener) {
         String errorMsg = listener + " didn't got all notifications";
 
         Assert.assertEquals(errorMsg, events, listener.getEvents());

@@ -43,8 +43,8 @@ import org.openspaces.core.space.mode.SpaceAfterPrimaryListener;
 import org.openspaces.core.space.mode.SpaceBeforeBackupListener;
 import org.openspaces.core.space.mode.SpaceBeforePrimaryListener;
 import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
-import org.openspaces.core.space.suspend.SpaceChangeEvent;
-import org.openspaces.core.space.suspend.SuspendTypeChangedListener;
+import org.openspaces.core.space.status.SpaceStatusChangedEvent;
+import org.openspaces.core.space.status.SpaceStatusChangedEventListener;
 import org.openspaces.core.util.SpaceUtils;
 import org.openspaces.pu.service.ServiceDetails;
 import org.openspaces.pu.service.ServiceDetailsProvider;
@@ -510,7 +510,7 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
     }
 
     /**
-     * Internal listener for delegating space suspendType changes to all classes that implements the interface {@link SuspendTypeChangedListener}
+     * Internal listener for delegating space suspendType changes to all classes that implements the interface {@link SpaceStatusChangedEventListener}
      */
     private class SuspendTypeChangedInternalListenerImpl implements SuspendTypeChangedInternalListener {
 
@@ -524,11 +524,11 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
 
     private void fireSuspendTypeChangedEvent(SuspendType suspendType) {
         if (applicationContext != null) {
-            Collection<SuspendTypeChangedListener> listeners = applicationContext.getBeansOfType(SuspendTypeChangedListener.class).values();
+            Collection<SpaceStatusChangedEventListener> listeners = applicationContext.getBeansOfType(SpaceStatusChangedEventListener.class).values();
 
-            for (SuspendTypeChangedListener listener : listeners) {
-                SpaceChangeEvent event = new SpaceChangeEvent(space, suspendType, currentSpaceMode);
-                listener.onSuspendTypeChanged(event);
+            for (SpaceStatusChangedEventListener listener : listeners) {
+                SpaceStatusChangedEvent event = new SpaceStatusChangedEvent(space, suspendType, currentSpaceMode);
+                listener.onSpaceStatusChanged(event);
             }
         }
     }
