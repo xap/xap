@@ -302,7 +302,7 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
                         fireSpaceBeforePrimaryEvent();
                         fireSpaceAfterPrimaryEvent();
                     }
-                    fireSuspendTypeChangedEvent(currentSuspendType);
+                    fireSpaceStatusChangedEvent();
                 } finally {
                     SpaceInitializationIndicator.unsetInitializer();
                 }
@@ -506,6 +506,8 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
             if (primaryBackupListener != null) {
                 primaryBackupListener.afterSpaceModeChange(spaceMode);
             }
+
+            fireSpaceStatusChangedEvent();
         }
     }
 
@@ -517,17 +519,17 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
         @Override
         public void onSuspendTypeChanged(SuspendType suspendType) {
             currentSuspendType = suspendType;
-            fireSuspendTypeChangedEvent(suspendType);
+            fireSpaceStatusChangedEvent();
         }
 
     }
 
-    private void fireSuspendTypeChangedEvent(SuspendType suspendType) {
+    private void fireSpaceStatusChangedEvent() {
         if (applicationContext != null) {
             Collection<SpaceStatusChangedEventListener> listeners = applicationContext.getBeansOfType(SpaceStatusChangedEventListener.class).values();
 
             for (SpaceStatusChangedEventListener listener : listeners) {
-                SpaceStatusChangedEvent event = new SpaceStatusChangedEvent(space, suspendType, currentSpaceMode);
+                SpaceStatusChangedEvent event = new SpaceStatusChangedEvent(space, currentSuspendType, currentSpaceMode);
                 listener.onSpaceStatusChanged(event);
             }
         }
