@@ -19,8 +19,8 @@ package org.openspaces.core.config;
 
 import org.openspaces.core.space.mode.registry.ModeAnnotationRegistry;
 import org.openspaces.core.space.mode.registry.ModeAnnotationRegistryPostProcessor;
-import org.openspaces.core.space.suspend.anntations.registery.SuspendTypeAnnotationRegistry;
-import org.openspaces.core.space.suspend.anntations.registery.SuspendTypeAnnotationRegistryPostProcessor;
+import org.openspaces.core.space.status.registery.SpaceStatusChangedAnnotationRegistry;
+import org.openspaces.core.space.status.registery.SpaceStatusChangedAnnotationRegistryPostProcessor;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.parsing.BeanComponentDefinition;
 import org.springframework.beans.factory.support.RootBeanDefinition;
@@ -40,8 +40,8 @@ public class AnnotationSupportBeanDefinitionParser implements BeanDefinitionPars
         registerBeanComponent(parserContext, ModeAnnotationRegistry.class, "internal-modeAnnotationRegistry");
         registerBeanComponent(parserContext, ModeAnnotationRegistryPostProcessor.class, "internal-modeAnnotationRegistryPostProcessor");
 
-        registerBeanComponent(parserContext, SuspendTypeAnnotationRegistry.class, "internal-suspendTypeAnnotationRegistry");
-        registerBeanComponent(parserContext, SuspendTypeAnnotationRegistryPostProcessor.class, "internal-suspendTypeAnnotationRegistryPostProcessor");
+        registerBeanComponent(parserContext, SpaceStatusChangedAnnotationRegistry.class, "internal-spaceStatusAnnotationRegistry");
+        registerBeanComponent(parserContext, SpaceStatusChangedAnnotationRegistryPostProcessor.class, "internal-spaceStatusAnnotationRegistryPostProcessor");
 
         return null;
     }

@@ -15,9 +15,9 @@
  */
 
 
-package org.openspaces.core.space.suspend.anntations.registery;
+package org.openspaces.core.space.status.registery;
 
-import org.openspaces.core.space.suspend.anntations.SuspendTypeChanged;
+import org.openspaces.core.space.status.SpaceStatusChanged;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -27,12 +27,12 @@ import org.springframework.context.ApplicationContextAware;
 import java.lang.reflect.Method;
 
 /**
- * Scans the bean's methods for the annotations {@link SuspendTypeChanged} and registers them in the {@link SuspendTypeAnnotationRegistry}.
+ * Scans the bean's methods for the annotations {@link SpaceStatusChanged} and registers them in the {@link SpaceStatusChangedAnnotationRegistry}.
  *
  * @author Elad Gur
  * @since 14.0.1
  */
-public class SuspendTypeAnnotationRegistryPostProcessor implements BeanPostProcessor, ApplicationContextAware {
+public class SpaceStatusChangedAnnotationRegistryPostProcessor implements BeanPostProcessor, ApplicationContextAware {
 
     private ApplicationContext applicationContext;
 
@@ -41,7 +41,7 @@ public class SuspendTypeAnnotationRegistryPostProcessor implements BeanPostProce
             return bean;
         }
         // get the registry bean
-        SuspendTypeAnnotationRegistry registry = (SuspendTypeAnnotationRegistry) applicationContext.getBean("internal-suspendTypeAnnotationRegistry");
+        SpaceStatusChangedAnnotationRegistry registry = (SpaceStatusChangedAnnotationRegistry) applicationContext.getBean("internal-spaceStatusAnnotationRegistry");
         if (registry != null) {
             Class<?> beanClass = this.getBeanClass(bean);
             if (beanClass == null) {
@@ -50,8 +50,8 @@ public class SuspendTypeAnnotationRegistryPostProcessor implements BeanPostProce
 
             // find if the bean has the relevant annotations
             for (Method method : beanClass.getMethods()) {
-                if (method.isAnnotationPresent(SuspendTypeChanged.class)) {
-                    registry.registerAnnotation(SuspendTypeChanged.class, bean, method);
+                if (method.isAnnotationPresent(SpaceStatusChanged.class)) {
+                    registry.registerAnnotation(SpaceStatusChanged.class, bean, method);
                 }
             }
         }

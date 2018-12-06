@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 
-package org.openspaces.core.space.suspend.anntations.registery;
+package org.openspaces.core.space.status.registery;
 
 import org.openspaces.core.space.AbstractAnnotationRegistry;
-import org.openspaces.core.space.suspend.SuspendTypeChangedEvent;
-import org.openspaces.core.space.suspend.SuspendTypeChangedListener;
-import org.openspaces.core.space.suspend.anntations.SuspendTypeChanged;
+import org.openspaces.core.space.status.SpaceStatusChangedEvent;
+import org.openspaces.core.space.status.SpaceStatusChangedEventListener;
+import org.openspaces.core.space.status.SpaceStatusChanged;
 
 import java.lang.reflect.Method;
 import java.text.MessageFormat;
 
 /**
- * Receives space mode change events and routs them to beans that use annotations to register as
- * listeners on those events.
- * <p>
- * When the application starts beans that has one or more of the annotation {@link SuspendTypeChanged}
+ * Receives space suspend type and space mode change events and routs them to beans that use annotations to register as
+ * listeners on those events using the {@link SpaceStatusChanged} annotation
+ *
+ * When the application starts beans that has one or more of the annotation {@link SpaceStatusChanged}
  * are registered in this bean, and when
  * events arrive they are routed to the registered beans' methods.
  *
  * @author Elad Gur
  * @since 14.0.1
  */
-public class SuspendTypeAnnotationRegistry extends AbstractAnnotationRegistry
-        implements SuspendTypeChangedListener {
+public class SpaceStatusChangedAnnotationRegistry extends AbstractAnnotationRegistry
+        implements SpaceStatusChangedEventListener {
 
     @Override
     protected void validateMethod(Class<?> annotation, Method method) {
@@ -46,7 +46,7 @@ public class SuspendTypeAnnotationRegistry extends AbstractAnnotationRegistry
     }
 
     private void validateAnnotationsType(Class<?> annotationClass) {
-        if (!annotationClass.equals(SuspendTypeChanged.class)) {
+        if (!annotationClass.equals(SpaceStatusChanged.class)) {
             throw new IllegalArgumentException("The specified annotation is not a space suspend type annotation: " + annotationClass);
         }
     }
@@ -56,17 +56,17 @@ public class SuspendTypeAnnotationRegistry extends AbstractAnnotationRegistry
 
         if (methodParametersTypes.length != expectedNumOfParameters) {
             throw new IllegalArgumentException("The specified method has invalid number of parameters, A valid method may have a single parameter of type " +
-                    SuspendTypeChangedEvent.class.getName());
-        } else if (!methodParametersTypes[0].equals(SuspendTypeChangedEvent.class)) {
+                    SpaceStatusChangedEvent.class.getName());
+        } else if (!methodParametersTypes[0].equals(SpaceStatusChangedEvent.class)) {
             String errorMsg = MessageFormat.format("Illegal target invocation method parameter type: {0}. A valid target invocation method for annotation {1} may have a single parameter of type {2}",
-                    methodParametersTypes[0].getName(), annotation.getSimpleName(), SuspendTypeChangedEvent.class.getName());
+                    methodParametersTypes[0].getName(), annotation.getSimpleName(), SpaceStatusChangedEvent.class.getName());
             throw new IllegalArgumentException(errorMsg);
         }
     }
 
     @Override
-    public void onSuspendTypeChanged(SuspendTypeChangedEvent event) {
-        fireEvent(SuspendTypeChanged.class, event);
+    public void onSpaceStatusChanged(SpaceStatusChangedEvent event) {
+        fireEvent(SpaceStatusChanged.class, event);
     }
 
 }

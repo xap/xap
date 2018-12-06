@@ -43,8 +43,8 @@ import org.openspaces.core.space.mode.SpaceAfterPrimaryListener;
 import org.openspaces.core.space.mode.SpaceBeforeBackupListener;
 import org.openspaces.core.space.mode.SpaceBeforePrimaryListener;
 import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
-import org.openspaces.core.space.suspend.SuspendTypeChangedEvent;
-import org.openspaces.core.space.suspend.SuspendTypeChangedListener;
+import org.openspaces.core.space.status.SpaceStatusChangedEvent;
+import org.openspaces.core.space.status.SpaceStatusChangedEventListener;
 import org.openspaces.core.util.SpaceUtils;
 import org.openspaces.pu.service.ServiceDetails;
 import org.openspaces.pu.service.ServiceDetailsProvider;
@@ -302,7 +302,8 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
                         fireSpaceBeforePrimaryEvent();
                         fireSpaceAfterPrimaryEvent();
                     }
-                    fireSuspendTypeChangedEvent(currentSuspendType);
+
+                    fireSpaceStatusChangedEvent(); // uncomment this for fire event when a space get initialized
                 } finally {
                     SpaceInitializationIndicator.unsetInitializer();
                 }
@@ -506,29 +507,31 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
             if (primaryBackupListener != null) {
                 primaryBackupListener.afterSpaceModeChange(spaceMode);
             }
+
+            fireSpaceStatusChangedEvent();
         }
     }
 
     /**
-     * Internal listener for delegating space suspendType changes to all classes that implements the interface {@link SuspendTypeChangedListener}
+     * Internal listener for delegating space suspendType changes to all classes that implements the interface {@link SpaceStatusChangedEventListener}
      */
     private class SuspendTypeChangedInternalListenerImpl implements SuspendTypeChangedInternalListener {
 
         @Override
         public void onSuspendTypeChanged(SuspendType suspendType) {
             currentSuspendType = suspendType;
-            fireSuspendTypeChangedEvent(suspendType);
+            fireSpaceStatusChangedEvent();
         }
 
     }
 
-    private void fireSuspendTypeChangedEvent(SuspendType suspendType) {
+    private void fireSpaceStatusChangedEvent() {
         if (applicationContext != null) {
-            Collection<SuspendTypeChangedListener> listeners = applicationContext.getBeansOfType(SuspendTypeChangedListener.class).values();
+            Collection<SpaceStatusChangedEventListener> listeners = applicationContext.getBeansOfType(SpaceStatusChangedEventListener.class).values();
 
-            for (SuspendTypeChangedListener listener : listeners) {
-                SuspendTypeChangedEvent event = new SuspendTypeChangedEvent(space, suspendType);
-                listener.onSuspendTypeChanged(event);
+            for (SpaceStatusChangedEventListener listener : listeners) {
+                SpaceStatusChangedEvent event = new SpaceStatusChangedEvent(space, currentSuspendType, currentSpaceMode);
+                listener.onSpaceStatusChanged(event);
             }
         }
     }
