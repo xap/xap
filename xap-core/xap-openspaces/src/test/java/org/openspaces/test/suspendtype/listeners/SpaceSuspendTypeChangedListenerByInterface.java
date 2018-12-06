@@ -16,7 +16,9 @@
 
 package org.openspaces.test.suspendtype.listeners;
 
-import org.openspaces.core.space.suspend.SuspendTypeChangedEvent;
+import com.gigaspaces.cluster.activeelection.SpaceMode;
+import com.gigaspaces.server.space.suspend.SuspendType;
+import org.openspaces.core.space.suspend.SpaceChangeEvent;
 import org.openspaces.core.space.suspend.SuspendTypeChangedListener;
 
 /**
@@ -26,8 +28,38 @@ public class SpaceSuspendTypeChangedListenerByInterface extends AbstractSpaceSus
         implements SuspendTypeChangedListener {
 
     @Override
-    public void onSuspendTypeChanged(SuspendTypeChangedEvent event) {
-        storeEvent(event);
+    public void onSuspendTypeChanged(SpaceChangeEvent event) {
+
+        SpaceMode newSpaceMode = event.getSpaceMode();
+
+        switch (newSpaceMode) {
+            case NONE:
+                // do when Space Mode changed to: NONE
+                break;
+            case BACKUP:
+                // do when Space Mode changed to: BACKUP
+                break;
+            case PRIMARY:
+                // do when Space Mode changed to: PRIMARY
+                break;
+        }
+
+        SuspendType newSuspendType = event.getSuspendType();
+
+        switch (newSuspendType) {
+            case NONE:
+                // do when suspend type changed to: NONE
+                break;
+            case QUIESCED:
+                // do when suspend type changed to: QUIESCED
+                break;
+            case DEMOTING:
+                // do when suspend type changed to: DEMOTING
+                break;
+            case DISCONNECTED:
+                // do when suspend type changed to: DISCONNECTED
+                break;
+        }
     }
 
 }

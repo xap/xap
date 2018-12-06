@@ -12,6 +12,6 @@ public interface SuspendTypeChangedListener {
      * @param suspendTypeChangedEvent - an event that contain the {@link com.gigaspaces.server.space.suspend.SuspendType}
      *                                and the {@link com.j_spaces.core.IJSpace}}
      */
-    void onSuspendTypeChanged(SuspendTypeChangedEvent suspendTypeChangedEvent);
+    void onSuspendTypeChanged(SpaceChangeEvent suspendTypeChangedEvent);
 
 }

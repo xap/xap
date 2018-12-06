@@ -17,7 +17,7 @@
 package org.openspaces.core.space.suspend.anntations.registery;
 
 import org.openspaces.core.space.AbstractAnnotationRegistry;
-import org.openspaces.core.space.suspend.SuspendTypeChangedEvent;
+import org.openspaces.core.space.suspend.SpaceChangeEvent;
 import org.openspaces.core.space.suspend.SuspendTypeChangedListener;
 import org.openspaces.core.space.suspend.anntations.SuspendTypeChanged;
 
@@ -56,16 +56,16 @@ public class SuspendTypeAnnotationRegistry extends AbstractAnnotationRegistry
 
         if (methodParametersTypes.length != expectedNumOfParameters) {
             throw new IllegalArgumentException("The specified method has invalid number of parameters, A valid method may have a single parameter of type " +
-                    SuspendTypeChangedEvent.class.getName());
-        } else if (!methodParametersTypes[0].equals(SuspendTypeChangedEvent.class)) {
+                    SpaceChangeEvent.class.getName());
+        } else if (!methodParametersTypes[0].equals(SpaceChangeEvent.class)) {
             String errorMsg = MessageFormat.format("Illegal target invocation method parameter type: {0}. A valid target invocation method for annotation {1} may have a single parameter of type {2}",
-                    methodParametersTypes[0].getName(), annotation.getSimpleName(), SuspendTypeChangedEvent.class.getName());
+                    methodParametersTypes[0].getName(), annotation.getSimpleName(), SpaceChangeEvent.class.getName());
             throw new IllegalArgumentException(errorMsg);
         }
     }
 
     @Override
-    public void onSuspendTypeChanged(SuspendTypeChangedEvent event) {
+    public void onSuspendTypeChanged(SpaceChangeEvent event) {
         fireEvent(SuspendTypeChanged.class, event);
     }
 

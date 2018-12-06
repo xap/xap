@@ -1,7 +1,7 @@
 package org.openspaces.test.suspendtype.listeners;
 
 import org.openspaces.core.space.suspend.anntations.SuspendTypeChanged;
-import org.openspaces.core.space.suspend.SuspendTypeChangedEvent;
+import org.openspaces.core.space.suspend.SpaceChangeEvent;
 
 /**
  * @author Elad Gur
@@ -9,7 +9,7 @@ import org.openspaces.core.space.suspend.SuspendTypeChangedEvent;
 public class SpaceSuspendTypeChangedListenerByAnnotations extends AbstractSpaceSuspendTypeChangedListener {
 
     @SuspendTypeChanged
-    public void onSuspendInfoChanged(SuspendTypeChangedEvent event) {
+    public void onSuspendInfoChanged(SpaceChangeEvent event) {
         storeEvent(event);
     }
 
