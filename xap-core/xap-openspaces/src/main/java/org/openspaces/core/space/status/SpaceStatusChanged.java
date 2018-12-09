@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 
 /**
- * Allows a bean's method to be invoked when space suspend type changes
+ * Allows a bean's method to be invoked when space suspend type or space mode changes
  * The target invocation method may have a single parameter of type {@link SpaceStatusChangedEvent}.
  *
  * @author Elad Gur

@@ -25,9 +25,9 @@ import java.lang.reflect.Method;
 import java.text.MessageFormat;
 
 /**
- * Receives space mode change events and routs them to beans that use annotations to register as
- * listeners on those events.
- * <p>
+ * Receives space suspend type and space mode change events and routs them to beans that use annotations to register as
+ * listeners on those events using the {@link SpaceStatusChanged} annotation
+ *
  * When the application starts beans that has one or more of the annotation {@link SpaceStatusChanged}
  * are registered in this bean, and when
  * events arrive they are routed to the registered beans' methods.

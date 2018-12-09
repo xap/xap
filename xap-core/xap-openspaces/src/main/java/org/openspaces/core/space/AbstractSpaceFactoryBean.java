@@ -302,7 +302,8 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
                         fireSpaceBeforePrimaryEvent();
                         fireSpaceAfterPrimaryEvent();
                     }
-                    fireSpaceStatusChangedEvent();
+
+                    fireSpaceStatusChangedEvent(); // uncomment this for fire event when a space get initialized
                 } finally {
                     SpaceInitializationIndicator.unsetInitializer();
                 }

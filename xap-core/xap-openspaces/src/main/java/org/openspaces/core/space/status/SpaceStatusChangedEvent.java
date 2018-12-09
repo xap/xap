@@ -12,10 +12,11 @@ public class SpaceStatusChangedEvent extends ApplicationEvent {
     private final SuspendType suspendType;
 
     /**
-     * Creates a new Space suspend type changed event.
-     *  @param space     The space that changed its suspend type
-     * @param suspendType The current suspend type of the space
-     * @param spaceMode
+     * Creates a new Space status changed event that occurred when a space change his {@link SuspendType} or {@link SpaceMode}
+     *
+     * @param space       - The space that changed its suspend type
+     * @param suspendType - The current suspend type of the space
+     * @param spaceMode   - The current space mode
      */
     public SpaceStatusChangedEvent(IJSpace space, SuspendType suspendType, SpaceMode spaceMode) {
         super(space);
@@ -30,4 +31,5 @@ public class SpaceStatusChangedEvent extends ApplicationEvent {
     public SpaceMode getSpaceMode() {
         return spaceMode;
     }
+
 }

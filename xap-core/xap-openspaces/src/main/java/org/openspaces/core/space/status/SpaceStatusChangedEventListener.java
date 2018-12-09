@@ -1,16 +1,18 @@
 package org.openspaces.core.space.status;
 
+import com.gigaspaces.cluster.activeelection.SpaceMode;
+import com.gigaspaces.server.space.suspend.SuspendType;
+
 /**
- * Interface receiving events when a space suspend type changes ({@link com.gigaspaces.server.space.suspend.SuspendType})
+ * Interface receiving events when a space {@link SuspendType} or {@link SpaceMode} change
  *
  * @author Elad Gur
- * @since 14.0.1
+ * @since  14.0.1
  */
 public interface SpaceStatusChangedEventListener {
 
     /**
-     * @param event - an event that contain the {@link com.gigaspaces.server.space.suspend.SuspendType}
-     *                                and the {@link com.j_spaces.core.IJSpace}}
+     * @param event - an {@link SpaceStatusChangedEvent} that contain the {@link SuspendType} and the {@link SpaceMode}}
      */
     void onSpaceStatusChanged(SpaceStatusChangedEvent event);
 
