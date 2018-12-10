@@ -1353,17 +1353,16 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 SpaceURL remoteUrl = (SpaceURL) getURL().clone();
                 remoteUrl.setProperty(SpaceURL.PROTOCOL_NAME, SpaceURL.JINI_PROTOCOL);
                 remoteUrl.setProperty(SpaceURL.HOST_NAME, SpaceURL.ANY);
-                Long queryProcessorSpaceLookupTimeout = Long.getLong(SystemProperties.QUERY_PROCESSOR_CLUSTER_LOOKUP_TIMEOUT);
-                if (queryProcessorSpaceLookupTimeout != null) {
-                    _logger.config("Looking for space for query processor with timeout of " + queryProcessorSpaceLookupTimeout + "ms");
-                    remoteUrl.setProperty(SpaceURL.TIMEOUT, String.valueOf(queryProcessorSpaceLookupTimeout));
-                }
+                Long queryProcessorSpaceLookupTimeout = Long.getLong(   SystemProperties.QUERY_PROCESSOR_CLUSTER_LOOKUP_TIMEOUT,
+                                                                        SystemProperties.QUERY_PROCESSOR_CLUSTER_LOOKUP_TIMEOUT_DEFAULT);
+                remoteUrl.setProperty(SpaceURL.TIMEOUT, String.valueOf(queryProcessorSpaceLookupTimeout));
                 remoteUrl.refreshUrlString();
                 clusterProxy = (IJSpace) SpaceFinder.find(remoteUrl);
             }
             secureProxy(clusterProxy);
-        } else
+        } else {
             clusterProxy = singleProxy;
+        }
 
         QueryProcessor qp = (QueryProcessor) QueryProcessorFactory.newLocalInstance(clusterProxy, singleProxy, null, _securityInterceptor);
         qp.initStub();
