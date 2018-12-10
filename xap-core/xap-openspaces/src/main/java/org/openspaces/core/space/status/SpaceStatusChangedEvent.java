@@ -14,7 +14,7 @@ public class SpaceStatusChangedEvent extends ApplicationEvent {
     /**
      * Creates a new Space status changed event that occurred when a space change his {@link SuspendType} or {@link SpaceMode}
      *
-     * @param space       - The space that changed its suspend type
+     * @param space       - The space that changed its status
      * @param suspendType - The current suspend type of the space
      * @param spaceMode   - The current space mode
      */

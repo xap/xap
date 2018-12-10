@@ -40,8 +40,8 @@ public class AnnotationSupportBeanDefinitionParser implements BeanDefinitionPars
         registerBeanComponent(parserContext, ModeAnnotationRegistry.class, "internal-modeAnnotationRegistry");
         registerBeanComponent(parserContext, ModeAnnotationRegistryPostProcessor.class, "internal-modeAnnotationRegistryPostProcessor");
 
-        registerBeanComponent(parserContext, SpaceStatusChangedAnnotationRegistry.class, "internal-suspendTypeAnnotationRegistry");
-        registerBeanComponent(parserContext, SpaceStatusChangedAnnotationRegistryPostProcessor.class, "internal-suspendTypeAnnotationRegistryPostProcessor");
+        registerBeanComponent(parserContext, SpaceStatusChangedAnnotationRegistry.class, "internal-spaceStatusAnnotationRegistry");
+        registerBeanComponent(parserContext, SpaceStatusChangedAnnotationRegistryPostProcessor.class, "internal-spaceStatusAnnotationRegistryPostProcessor");
 
         return null;
     }

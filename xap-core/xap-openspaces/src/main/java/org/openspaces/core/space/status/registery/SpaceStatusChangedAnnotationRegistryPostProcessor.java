@@ -41,7 +41,7 @@ public class SpaceStatusChangedAnnotationRegistryPostProcessor implements BeanPo
             return bean;
         }
         // get the registry bean
-        SpaceStatusChangedAnnotationRegistry registry = (SpaceStatusChangedAnnotationRegistry) applicationContext.getBean("internal-suspendTypeAnnotationRegistry");
+        SpaceStatusChangedAnnotationRegistry registry = (SpaceStatusChangedAnnotationRegistry) applicationContext.getBean("internal-spaceStatusAnnotationRegistry");
         if (registry != null) {
             Class<?> beanClass = this.getBeanClass(bean);
             if (beanClass == null) {
