@@ -13,7 +13,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <luceneVersion>6.4.2</luceneVersion>
+        <luceneVersion>7.5.0</luceneVersion>
     </properties>
 
     <dependencies>
