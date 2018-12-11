@@ -38,33 +38,27 @@ public class OutputJVMOptions {
     }
 
     private static String getJvmOptions() {
-        final String vmName = getJvmName();
-        if (vmName.equals("HOTSPOT")) {
+        final String vmVendor = getJvmVendor();
+        if (vmVendor.equals("ORACLE")) {
             String result = "-server -XX:+AggressiveOpts -XX:+HeapDumpOnOutOfMemoryError";
             if (!JdkVersion.isAtLeastJava18()) { // < 8
                 result += " -XX:MaxPermSize=256m";
-            } else if (JdkVersion.getMajorJavaVersion() == JdkVersion.JAVA_9) {
-                result += " --add-modules=ALL-SYSTEM";
+            } else if (JdkVersion.isAtLeastJava9()) {
+                result += " --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED --add-modules=ALL-SYSTEM";
             }
             return result;
         }
 
-        if (vmName.equals("J9"))
+        if (vmVendor.equals("IBM"))
             return "-XX:MaxPermSize=256m";
 
         return "";
     }
 
-    private static String getJvmName() {
-        String vmName = System.getProperty("java.vm.name");
-        if (vmName == null)
+    private static String getJvmVendor() {
+        String vmVendor = System.getProperty("java.vendor");
+        if (vmVendor == null)
             return null;
-        String[] split = vmName.split(" |\\(");
-        String result;
-        if (split.length > 1)
-            result = split[1];// e.g. IBM J9 VM --> J9 or Oracle HotSpot(R) --> HotSpot
-        else
-            result = split[0];
-        return result.toUpperCase();
+        return vmVendor.substring(0,vmVendor.indexOf(' ')).toUpperCase();
     }
 }

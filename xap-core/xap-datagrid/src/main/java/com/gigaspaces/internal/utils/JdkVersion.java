@@ -53,6 +53,16 @@ public abstract class JdkVersion {
      */
     public static final int JAVA_9 = 6;
 
+    /**
+     * Constant identifying the 1.10 JVM (Java 10).
+     */
+    public static final int JAVA_10 = 7;
+
+    /**
+     * Constant identifying the 1.11 JVM (Java 10).
+     */
+    public static final int JAVA_11 = 8;
+
 
     private static final String javaVersion;
 
@@ -61,7 +71,11 @@ public abstract class JdkVersion {
     static {
         javaVersion = System.getProperty("java.version");
         // version String should look like "1.4.2_10"
-        if (javaVersion.indexOf("9.") != -1) {
+        if (javaVersion.indexOf("11.") != -1) {
+            majorJavaVersion = JAVA_11;
+        } else if (javaVersion.indexOf("10.") != -1) {
+            majorJavaVersion = JAVA_10;
+        } else if (javaVersion.indexOf("9.") != -1) {
             majorJavaVersion = JAVA_9;
         } else if (javaVersion.indexOf("1.8.") != -1) {
             majorJavaVersion = JAVA_18;
