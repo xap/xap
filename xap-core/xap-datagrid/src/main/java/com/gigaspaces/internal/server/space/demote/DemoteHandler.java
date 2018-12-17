@@ -270,6 +270,10 @@ public class DemoteHandler implements ISpaceModeListener {
     }
 
     public boolean waitForActiveTransactions(long timeoutInMillis) {
+
+        _spaceImpl.getEngine().getTransactionHandler().abortActiveTransactions();
+
+
         try {
             return _spaceImpl.getEngine().getTransactionHandler().waitForActiveTransactions(timeoutInMillis);
         } catch (InterruptedException e) {

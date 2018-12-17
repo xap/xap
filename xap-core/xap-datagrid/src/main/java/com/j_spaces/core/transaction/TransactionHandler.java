@@ -32,6 +32,7 @@ import com.j_spaces.core.client.LocalTransactionManager;
 import com.j_spaces.kernel.SystemProperties;
 import com.sun.jini.mahalo.TxnMgrProxy;
 import net.jini.core.transaction.TransactionException;
+import net.jini.core.transaction.UnknownTransactionException;
 import net.jini.core.transaction.server.ServerTransaction;
 
 import java.rmi.RemoteException;
@@ -523,5 +524,22 @@ public class TransactionHandler {
             Thread.sleep(500);
         }
         return false;
+    }
+
+    public void abortActiveTransactions() {
+        for (XtnEntry xtnEntry : getXtnTable().values()) {
+            if (xtnEntry.isActive()) {
+                try {
+                    _engine.abortSA(xtnEntry.getServerTransaction().getTransactionManager(), xtnEntry.getServerTransaction(), false, false, false, null);
+                } catch (UnknownTransactionException e) {
+                    e.printStackTrace();
+                    //LOGGER
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    //LOGGER
+                }
+                addToPhantomGlobalXtns(xtnEntry.getServerTransaction());
+            }
+        }
     }
 }
