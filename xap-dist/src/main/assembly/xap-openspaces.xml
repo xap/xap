@@ -19,6 +19,19 @@
 
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
+            <outputDirectory>product/lib/platform/javax</outputDirectory>
+            <includes>
+                <include>com.sun.activation:javax.activation</include>
+                <include>javax.transaction:javax.transaction-api</include>
+                <include>javax.xml.bind:jaxb-api</include>
+                <include>com.sun.xml.bind:jaxb-core</include>
+                <include>com.sun.xml.bind:jaxb-impl</include>
+                <include>javax.annotation:javax.annotation-api</include>
+            </includes>
+        </dependencySet>
+
+        <dependencySet>
+            <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>product/deploy/templates/memcached/lib</outputDirectory>
             <includes>
                 <include>io.netty:netty</include>

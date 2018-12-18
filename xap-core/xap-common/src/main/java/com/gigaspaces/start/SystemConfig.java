@@ -345,6 +345,9 @@ public class SystemConfig {
         classpathBuilder.append(System.getProperty("com.gs.pu.classloader.scala-lib-path", gsLibOptional + "scala/lib"));// Scala support
         classpathBuilder.appendPlatform("zookeeper");
         classpathBuilder.appendPlatform("logger");
+        if(isJava11()){
+            classpathBuilder.appendPlatform("javax");
+        }
 
         // I don't expect anybody to use this feature, but its here just to be on the safe side
         boolean osInCommonClassLoader = Boolean.parseBoolean(System.getProperty("com.gs.pu.classloader.os-in-common-classloader", "false"));
@@ -957,6 +960,16 @@ public class SystemConfig {
         return (hostAddress);
     }
 
+    private static boolean isJava11(){
+        String javaVersion = System.getProperty("java.version");
+
+        if(javaVersion == null) return false;
+
+        String majorVersion = javaVersion.substring(0,javaVersion.indexOf("."));
+
+        return majorVersion.equals("11");
+    }
+
     /**
      * Initialize RMI Registry and JMX Platform MBeanServer
      */
@@ -1085,5 +1098,6 @@ public class SystemConfig {
                 defaultValue = Integer.parseInt(propertyValue);
             return config.getEntry(component, name, type, defaultValue);
         }
+
     }
 }

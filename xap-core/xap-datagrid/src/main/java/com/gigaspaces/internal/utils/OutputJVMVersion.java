@@ -36,7 +36,14 @@ public class OutputJVMVersion {
         try {
             if (JVM_VERSION != null) {
                 String shortJvmVersion = JVM_VERSION.substring(0, JVM_VERSION.lastIndexOf('.'));
-                System.out.println(shortJvmVersion);
+                String majorVersion;
+                if(shortJvmVersion.startsWith("1.")){
+                    majorVersion = String.valueOf(shortJvmVersion.charAt(shortJvmVersion.indexOf(".") + 1));
+                }
+                else{
+                    majorVersion = shortJvmVersion.substring(0, shortJvmVersion.indexOf("."));
+                }
+                System.out.println(majorVersion);
                 System.exit(0);
             }
         } catch (Exception e) {

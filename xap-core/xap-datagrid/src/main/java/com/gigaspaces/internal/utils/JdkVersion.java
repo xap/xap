@@ -21,47 +21,47 @@ public abstract class JdkVersion {
     /**
      * Constant identifying the 1.3.x JVM (JDK 1.3).
      */
-    public static final int JAVA_13 = 0;
+    public static final int JAVA_3 = 3;
 
     /**
      * Constant identifying the 1.4.x JVM (J2SE 1.4).
      */
-    public static final int JAVA_14 = 1;
+    public static final int JAVA_4 = 4;
 
     /**
      * Constant identifying the 1.5 JVM (Java 5).
      */
-    public static final int JAVA_15 = 2;
+    public static final int JAVA_5 = 5;
 
     /**
      * Constant identifying the 1.6 JVM (Java 6).
      */
-    public static final int JAVA_16 = 3;
+    public static final int JAVA_6 = 6;
 
     /**
      * Constant identifying the 1.7 JVM (Java 7).
      */
-    public static final int JAVA_17 = 4;
+    public static final int JAVA_7 = 7;
 
     /**
      * Constant identifying the 1.8 JVM (Java 8).
      */
-    public static final int JAVA_18 = 5;
+    public static final int JAVA_8 = 8;
 
     /**
      * Constant identifying the 1.9 JVM (Java 9).
      */
-    public static final int JAVA_9 = 6;
+    public static final int JAVA_9 = 9;
 
     /**
      * Constant identifying the 1.10 JVM (Java 10).
      */
-    public static final int JAVA_10 = 7;
+    public static final int JAVA_10 = 10;
 
     /**
      * Constant identifying the 1.11 JVM (Java 10).
      */
-    public static final int JAVA_11 = 8;
+    public static final int JAVA_11 = 11;
 
 
     private static final String javaVersion;
@@ -78,16 +78,16 @@ public abstract class JdkVersion {
         } else if (javaVersion.indexOf("9.") != -1) {
             majorJavaVersion = JAVA_9;
         } else if (javaVersion.indexOf("1.8.") != -1) {
-            majorJavaVersion = JAVA_18;
+            majorJavaVersion = JAVA_8;
         } else if (javaVersion.indexOf("1.7.") != -1) {
-            majorJavaVersion = JAVA_17;
+            majorJavaVersion = JAVA_7;
         } else if (javaVersion.indexOf("1.6.") != -1) {
-            majorJavaVersion = JAVA_16;
+            majorJavaVersion = JAVA_6;
         } else if (javaVersion.indexOf("1.5.") != -1) {
-            majorJavaVersion = JAVA_15;
+            majorJavaVersion = JAVA_5;
         } else {
             // else leave 1.4 as default (it's either 1.4 or unknown)
-            majorJavaVersion = JAVA_14;
+            majorJavaVersion = JAVA_4;
         }
     }
 
@@ -104,15 +104,15 @@ public abstract class JdkVersion {
 
     /**
      * Get the major version code. This means we can do things like <code>if (getMajorJavaVersion()
-     * < JAVA_14)</code>.
+     * < JAVA_4)</code>.
      *
      * @return a code comparable to the JAVA_XX codes in this class
-     * @see #JAVA_13
-     * @see #JAVA_14
-     * @see #JAVA_15
-     * @see #JAVA_16
-     * @see #JAVA_17
-     * @see #JAVA_18
+     * @see #JAVA_3
+     * @see #JAVA_4
+     * @see #JAVA_5
+     * @see #JAVA_6
+     * @see #JAVA_7
+     * @see #JAVA_8
      * @see #JAVA_9
      */
     public static int getMajorJavaVersion() {
@@ -124,14 +124,14 @@ public abstract class JdkVersion {
      *
      * @return <code>true</code> if the current JVM is at least Java 1.4
      * @see #getMajorJavaVersion()
-     * @see #JAVA_14
-     * @see #JAVA_15
-     * @see #JAVA_16
-     * @see #JAVA_17
-     * @see #JAVA_18
+     * @see #JAVA_4
+     * @see #JAVA_5
+     * @see #JAVA_6
+     * @see #JAVA_7
+     * @see #JAVA_8
      * @see #JAVA_9
      */
-    public static boolean isAtLeastJava14() {
+    public static boolean isAtLeastJava4() {
         return true;
     }
 
@@ -140,14 +140,14 @@ public abstract class JdkVersion {
      *
      * @return <code>true</code> if the current JVM is at least Java 1.5
      * @see #getMajorJavaVersion()
-     * @see #JAVA_15
-     * @see #JAVA_16
-     * @see #JAVA_17
-     * @see #JAVA_18
+     * @see #JAVA_5
+     * @see #JAVA_6
+     * @see #JAVA_7
+     * @see #JAVA_8
      * @see #JAVA_9
      */
-    public static boolean isAtLeastJava15() {
-        return getMajorJavaVersion() >= JAVA_15;
+    public static boolean isAtLeastJava5() {
+        return getMajorJavaVersion() >= JAVA_5;
     }
 
     /**
@@ -155,13 +155,13 @@ public abstract class JdkVersion {
      *
      * @return <code>true</code> if the current JVM is at least Java 1.6
      * @see #getMajorJavaVersion()
-     * @see #JAVA_16
-     * @see #JAVA_17
-     * @see #JAVA_18
+     * @see #JAVA_6
+     * @see #JAVA_7
+     * @see #JAVA_8
      * @see #JAVA_9
      */
-    public static boolean isAtLeastJava16() {
-        return getMajorJavaVersion() >= JAVA_16;
+    public static boolean isAtLeastJava6() {
+        return getMajorJavaVersion() >= JAVA_6;
     }
 
     /**
@@ -169,12 +169,12 @@ public abstract class JdkVersion {
      *
      * @return <code>true</code> if the current JVM is at least Java 1.7
      * @see #getMajorJavaVersion()
-     * @see #JAVA_17
-     * @see #JAVA_18
+     * @see #JAVA_7
+     * @see #JAVA_8
      * @see #JAVA_9
      */
-    public static boolean isAtLeastJava17() {
-        return getMajorJavaVersion() >= JAVA_17;
+    public static boolean isAtLeastJava7() {
+        return getMajorJavaVersion() >= JAVA_7;
     }
 
     /**
@@ -182,11 +182,11 @@ public abstract class JdkVersion {
      *
      * @return <code>true</code> if the current JVM is at least Java 1.8
      * @see #getMajorJavaVersion()
-     * @see #JAVA_18
+     * @see #JAVA_8
      * @see #JAVA_9
      */
-    public static boolean isAtLeastJava18() {
-        return getMajorJavaVersion() >= JAVA_18;
+    public static boolean isAtLeastJava8() {
+        return getMajorJavaVersion() >= JAVA_8;
     }
 
     /**

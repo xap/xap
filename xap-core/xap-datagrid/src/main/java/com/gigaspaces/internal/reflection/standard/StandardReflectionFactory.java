@@ -47,7 +47,7 @@ public class StandardReflectionFactory extends AbstractReflectionFactory {
     @Override
     public <T> String[] getConstructorParametersNames(Constructor<T> ctor) {
 
-        if (!JdkVersion.isAtLeastJava18()) {
+        if (!JdkVersion.isAtLeastJava8()) {
             throw new UnsupportedOperationException("Getting constructor parameters names with standard reflection is available only with java 8 or with ASM");
         }
         return GetParametersNameUtil.getParametersName(ctor);
