@@ -3,14 +3,20 @@ package org.openspaces.launcher;
 import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.nio.filters.SelfSignedCertificate;
+import com.gigaspaces.start.SystemConfig;
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.start.manager.XapManagerConfig;
 import com.j_spaces.kernel.SystemProperties;
-import org.eclipse.jetty.server.*;
+
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.MovedContextHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.webapp.WebInfConfiguration;
+import org.openspaces.core.util.FileUtils;
 import org.springframework.context.support.AbstractXmlApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 
@@ -35,6 +41,12 @@ public class JettyManagerRestLauncher implements Closeable {
 
     private AbstractXmlApplicationContext application;
     private Server server;
+
+
+    private static File workLocation = new File(
+        System.getProperty("com.gs.work",
+            SystemConfig.getInstance().getHomeDir() + "/work") + File.separator + "rest" );
+
 
     public static void main(String[] args) {
         final JettyManagerRestLauncher starter = new JettyManagerRestLauncher();
@@ -71,6 +83,9 @@ public class JettyManagerRestLauncher implements Closeable {
                 if (server.getHandler() == null) {
                     initWebApps(server);
                 }
+                //fix GS-13595, 17.12.2018
+                clearOldTempWarFiles();
+
                 server.start();
             }
             if (logger.isLoggable(Level.INFO)) {
@@ -86,6 +101,31 @@ public class JettyManagerRestLauncher implements Closeable {
         }catch(Exception e){
             logger.log(Level.SEVERE, e.toString(), e);
             System.exit(-1);
+        }
+    }
+
+    //fix GS-13595, 17.12.2018
+    private void clearOldTempWarFiles() {
+
+        File tempDirectory = workLocation;//new File( tempDirPath );
+
+        if( logger.isLoggable( Level.FINE ) ) {
+            logger.info("Temp dir:" + tempDirectory.getPath());
+        }
+
+        File[] filteredFiles = tempDirectory.listFiles();
+
+        for( File file : filteredFiles ){
+            logger.fine("File name:" + file.getName());
+            try {
+                FileUtils.deleteFileOrDirectory(file);
+                logger.fine("Temp file :" + file.getName() + " has been deleted" );
+            }
+            catch( Throwable t ){
+                if( logger.isLoggable( Level.SEVERE ) ){
+                    logger.log( Level.SEVERE, t.toString(), t );
+                }
+            }
         }
     }
 
@@ -120,6 +160,7 @@ public class JettyManagerRestLauncher implements Closeable {
         WebAppContext defaultWebApp = null;
         File[] warFiles = webApps.listFiles(warFilesFilter);
         sortDesc(warFiles);
+
         for (File file : warFiles) {
             WebAppContext webApp = new WebAppContext();
             webApp.setContextPath("/" + file.getName().replace(".war", ""));
@@ -128,6 +169,18 @@ public class JettyManagerRestLauncher implements Closeable {
             handler.addHandler(webApp);
             if (defaultWebApp == null)
                 defaultWebApp = webApp;
+
+            String webAppTmpDir = WebInfConfiguration.getCanonicalNameForWebAppTmpDir(webApp);
+
+            File tmpDir = null;
+            try {
+                tmpDir = File.createTempFile(webAppTmpDir, ".dir", workLocation);
+                webApp.setTempDirectory(tmpDir);
+            } catch (IOException e) {
+                if( logger.isLoggable( Level.SEVERE ) ) {
+                    logger.log(Level.SEVERE, e.toString(), e);
+                }
+            }
         }
 
         if (defaultWebApp != null) {
