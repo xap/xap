@@ -162,10 +162,8 @@ public class JettyManagerRestLauncher implements Closeable {
         sortDesc(warFiles);
 
         boolean isWorkLocationExist = workLocation.exists();
-        logger.info( "isWorkLocationExist=" + isWorkLocationExist );
         if( !isWorkLocationExist ){
-            boolean isWorkLocationCreated = workLocation.mkdirs();
-            logger.info( "isWorkLocationCreated=" + isWorkLocationCreated );
+            workLocation.mkdirs();
         }
 
         for (File file : warFiles) {
@@ -178,11 +176,9 @@ public class JettyManagerRestLauncher implements Closeable {
                 defaultWebApp = webApp;
 
             String webAppTmpDir = WebInfConfiguration.getCanonicalNameForWebAppTmpDir(webApp);
-            logger.info( ">>> webAppTmpDir=" + webAppTmpDir );
-            File tmpDir = null;
             try {
-                tmpDir = File.createTempFile(webAppTmpDir, ".dir", workLocation);
-                webApp.setTempDirectory(tmpDir);
+                File tmpDir = File.createTempFile( webAppTmpDir, ".dir", workLocation );
+                webApp.setTempDirectory( tmpDir );
             } catch (IOException e) {
                 if( logger.isLoggable( Level.SEVERE ) ) {
                     logger.log(Level.SEVERE, e.toString(), e);
