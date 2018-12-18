@@ -98,6 +98,7 @@ import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.transport.ITransportPacket;
 import com.gigaspaces.internal.utils.ReplaceInFileUtils;
+import com.gigaspaces.internal.utils.concurrent.GSThreadFactory;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.lrmi.ILRMIProxy;
@@ -226,6 +227,9 @@ import com.j_spaces.worker.WorkerManager;
 import com.sun.jini.mahalo.ExtendedPrepareResult;
 import com.sun.jini.start.LifeCycle;
 
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 import net.jini.core.entry.Entry;
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.lease.LeaseDeniedException;
@@ -260,12 +264,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -279,10 +279,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -341,6 +338,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private final CompositeSpaceModeListener _internalSpaceModesListeners = new CompositeSpaceModeListener();
     private final IStubHandler _stubHandler;
     private final DemoteHandler _demoteHandler;
+    private final HttpServer _httpServer;
 
     private SpaceConfig _spaceConfig;
     private SpaceEngine _engine;
@@ -400,6 +398,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         this._cleanUnusedEmbeddedGlobalXtns = _configReader.getBooleanSpaceProperty(
                 Engine.ENGINE_CLEAN_UNUSED_EMBEDDED_GLOBAL_XTNS_PROP, Engine.ENGINE_CLEAN_UNUSED_EMBEDDED_GLOBAL_XTNS_DEFAULT);
 
+        this._httpServer = initWebServerIfNeeded();
         this._operationsExecutor = new SpaceOperationsExecutor();
         this._containerProxyRemote = container != null ? container.getContainerProxy() : null;
         this._securityInterceptor = securityEnabled ? new SecurityInterceptor(spaceName, customProperties, true) : null;
@@ -425,6 +424,48 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         // TODO RMI connections are not blocked
         if (_clusterPolicy != null && _clusterPolicy.isPersistentStartupEnabled())
             initSpaceStartupStateManager();
+    }
+
+    private HttpServer initWebServerIfNeeded() throws CreateException {
+        final String prefix = "com.gs.space.rest";
+        boolean enabled = Boolean.getBoolean(prefix + ".enabled");
+        if (!enabled)
+            return null;
+
+        int port = Integer.getInteger(prefix + ".port", 8089);
+        int socketBacklog = Integer.getInteger(prefix + ".socket-backlog", 0);
+        try {
+            HttpServer server = HttpServer.create(new InetSocketAddress(port), socketBacklog);
+            server.createContext("/probes/alive", new HttpHandler() {
+                @Override
+                public void handle(HttpExchange context) throws IOException {
+                    try {
+                        assertAvailable();
+                        httpResponse(context, 200, "OK");
+                    } catch (SpaceUnavailableException e) {
+                        httpResponse(context, 503, e.getMessage());
+                    }
+                }
+            });
+            server.setExecutor(Executors.newSingleThreadExecutor(new GSThreadFactory("WEB", true)));
+            server.start();
+            return server;
+
+        } catch (IOException e) {
+            throw new CreateException("Failed to start web server", e);
+        }
+    }
+
+    private static void httpResponse(HttpExchange context, int responseCode, String response) throws IOException {
+        OutputStream os = context.getResponseBody();
+        if (response == null ) {
+            context.sendResponseHeaders(responseCode, -1);
+        } else {
+            byte[] data = response.getBytes("UTF-8");
+            context.sendResponseHeaders(responseCode, data.length);
+            os.write(data);
+        }
+        os.close();
     }
 
     public ZookeeperLastPrimaryHandler getZookeeperLastPrimaryHandler() {
@@ -1304,6 +1345,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
         if (_jspaceAttr != null)
             _jspaceAttr.clear();
+
+        if (_httpServer != null)
+            _httpServer.stop(1);
 
         _logger.log(logLevel, "Shutdown complete");
     }
