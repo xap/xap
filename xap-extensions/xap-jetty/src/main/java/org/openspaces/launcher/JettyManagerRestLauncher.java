@@ -161,6 +161,13 @@ public class JettyManagerRestLauncher implements Closeable {
         File[] warFiles = webApps.listFiles(warFilesFilter);
         sortDesc(warFiles);
 
+        boolean isWorkLocationExist = workLocation.exists();
+        logger.info( "isWorkLocationExist=" + isWorkLocationExist );
+        if( !isWorkLocationExist ){
+            boolean isWorkLocationCreated = workLocation.mkdirs();
+            logger.info( "isWorkLocationCreated=" + isWorkLocationCreated );
+        }
+
         for (File file : warFiles) {
             WebAppContext webApp = new WebAppContext();
             webApp.setContextPath("/" + file.getName().replace(".war", ""));
@@ -171,7 +178,7 @@ public class JettyManagerRestLauncher implements Closeable {
                 defaultWebApp = webApp;
 
             String webAppTmpDir = WebInfConfiguration.getCanonicalNameForWebAppTmpDir(webApp);
-
+            logger.info( ">>> webAppTmpDir=" + webAppTmpDir );
             File tmpDir = null;
             try {
                 tmpDir = File.createTempFile(webAppTmpDir, ".dir", workLocation);
