@@ -3,7 +3,6 @@ package org.openspaces.launcher;
 import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.nio.filters.SelfSignedCertificate;
-import com.gigaspaces.start.SystemConfig;
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.start.manager.XapManagerConfig;
 import com.j_spaces.kernel.SystemProperties;
@@ -42,11 +41,8 @@ public class JettyManagerRestLauncher implements Closeable {
     private AbstractXmlApplicationContext application;
     private Server server;
 
-
-    private static File workLocation = new File(
-        System.getProperty("com.gs.work",
-            SystemConfig.getInstance().getHomeDir() + "/work") + File.separator + "rest" );
-
+    private final static File workLocation = new File(
+        SystemInfo.singleton().locations().restJettyTempFiles() );
 
     public static void main(String[] args) {
         final JettyManagerRestLauncher starter = new JettyManagerRestLauncher();
@@ -110,16 +106,20 @@ public class JettyManagerRestLauncher implements Closeable {
         File tempDirectory = workLocation;//new File( tempDirPath );
 
         if( logger.isLoggable( Level.FINE ) ) {
-            logger.info("Temp dir:" + tempDirectory.getPath());
+            logger.fine("Temp dir:" + tempDirectory.getPath());
         }
 
         File[] filteredFiles = tempDirectory.listFiles();
 
         for( File file : filteredFiles ){
-            logger.fine("File name:" + file.getName());
+            if( logger.isLoggable( Level.FINE ) ) {
+                logger.fine("File name:" + file.getName());
+            }
             try {
                 FileUtils.deleteFileOrDirectory(file);
-                logger.fine("Temp file :" + file.getName() + " has been deleted" );
+                if( logger.isLoggable( Level.FINE ) ) {
+                    logger.fine("Temp file :" + file.getName() + " has been deleted");
+                }
             }
             catch( Throwable t ){
                 if( logger.isLoggable( Level.SEVERE ) ){

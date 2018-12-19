@@ -166,10 +166,14 @@ public class SystemInfo {
         }
 
         public String restResources() {
-            return work + File.separator + "RESTresources";
+            return path( work, "RESTresources" );
         }
 
-        public String sparkRestApplications() {return work + File.separator + "sparkRESTApplications";}
+        public String restJettyTempFiles() {
+            return path( work, "rest-jetty" );
+        }
+
+        public String sparkRestApplications() {return path( work, "sparkRESTApplications" );}
 
         public String deploy(){
             return deploy;
