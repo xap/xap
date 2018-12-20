@@ -434,6 +434,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
         int port = Integer.getInteger(prefix + ".port", 8089);
         int socketBacklog = Integer.getInteger(prefix + ".socket-backlog", 0);
+        final Logger restLogger = Logger.getLogger(prefix);
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress(port), socketBacklog);
             server.createContext("/probes/alive", new HttpHandler() {
@@ -442,13 +443,17 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                     try {
                         assertAvailable();
                         httpResponse(context, 200, "OK");
+                        if (restLogger.isLoggable(Level.FINE))
+                            restLogger.fine("/probes/alive result: 200 (OK)");
                     } catch (SpaceUnavailableException e) {
                         httpResponse(context, 503, e.getMessage());
+                        restLogger.warning("/probes/alive result: 503 (" + e.getMessage() + ")");
                     }
                 }
             });
             server.setExecutor(Executors.newSingleThreadExecutor(new GSThreadFactory("WEB", true)));
             server.start();
+            restLogger.info("Started rest server at " + server.getAddress());
             return server;
 
         } catch (IOException e) {
