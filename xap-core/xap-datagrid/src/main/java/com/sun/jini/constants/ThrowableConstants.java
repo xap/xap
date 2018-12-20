@@ -23,7 +23,6 @@ import java.io.ObjectStreamException;
 import java.net.NoRouteToHostException;
 import java.net.PortUnreachableException;
 import java.net.ProtocolException;
-import java.rmi.ConnectException;
 import java.rmi.ConnectIOException;
 import java.rmi.MarshalException;
 import java.rmi.NoSuchObjectException;
@@ -48,56 +47,64 @@ public class ThrowableConstants {
     final static Logger logger = Logger.getLogger("com.sun.jini.constants");
 
     /**
-     * Value returned by <code>retryable</code> to indicate that the passed <code>Throwable</code>
-     * does not provide any new information on the state of the object that threw it.
-     *
+     * Value returned by <code>retryable</code> to indicate that the
+     * passed <code>Throwable</code> does not provide any new
+     * information on the state of the object that threw it.
      * @see #retryable
      */
     final static public int INDEFINITE = 0;
 
     /**
-     * Value returned by <code>retryable</code> to indicate that the passed <code>Throwable</code>
-     * implies that retrying the operation that threw the <code>Throwable</code> with the same
-     * arguments and the same expected return value would not be fruitful.
-     *
+     * Value returned by <code>retryable</code> to indicate that the
+     * passed <code>Throwable</code> implies that retrying the
+     * operation that threw the <code>Throwable</code> with the same
+     * arguments and the same expected return value would not be
+     * fruitful.
      * @see #retryable
      */
     final static public int BAD_INVOCATION = 1;
 
     /**
-     * Value returned by <code>retryable</code> to indicate that the passed <code>Throwable</code>
-     * implies that any further operations on the object that threw the <code>Throwable</code> would
-     * not be fruitful.
-     *
+     * Value returned by <code>retryable</code> to indicate that the
+     * passed <code>Throwable</code> implies that any further
+     * operations on the object that threw the <code>Throwable</code>
+     * would not be fruitful.
      * @see #retryable
      */
     final static public int BAD_OBJECT = 2;
 
     /**
-     * Value returned by <code>retryable</code> to indicate that the passed <code>Throwable</code>
-     * was of a type that could not be classified.
-     *
+     * Value returned by <code>retryable</code> to indicate that the
+     * passed <code>Throwable</code> was of a type that could not be
+     * classified.
      * @see #retryable
      */
     final static public int UNCATEGORIZED = 3;
 
     /**
-     * Attempt to classify the passed <code>Throwable</code> in terms of what it implies about the
-     * probability of success of future operations on the object that threw the exception. <p>
+     * Attempt to classify the passed <code>Throwable</code> in terms of
+     * what it implies about the probability of success of future operations
+     * on the object that threw the exception. <p>
      *
-     * Note, the classification used by this method tends to assume the worst. For exceptions that
-     * represent conditions that could get better by themselves but probably will not, it will
-     * return <code>BAD_OBJECT</code> or <code>BAD_INVOCATION</code> instead of
-     * <code>INDEFINITE</code>. This makes it suitable for situations where it is better to give up,
-     * fail early, and notify the next layer up that something is wrong than to continue silently
-     * and retry. It is probably not a good choice for situations where the stakes are higher, like
-     * deciding when to give up on a prepared transaction.
+     * Note, the classification used by this method tends to assume
+     * the worst. For exceptions that represent conditions that could
+     * get better by themselves but probably will not, it will return
+     * <code>BAD_OBJECT</code> or <code>BAD_INVOCATION</code> instead
+     * of <code>INDEFINITE</code>. This makes it suitable for
+     * situations where it is better to give up, fail early, and
+     * notify the next layer up that something is wrong than to
+     * continue silently and retry. It is probably not a good choice
+     * for situations where the stakes are higher, like deciding when
+     * to give up on a prepared transaction.
      *
-     * @return <code>INDEFINITE</code>, <code>BAD_INVOCATION</code>, or <code>BAD_OBJECT</code> if
-     * the exception is a <code>RuntimeException</code>, <code>Error</code>, or
-     * <code>java.rmi.RemoteException</code> depending on the details of the <code>Throwable</code>.
-     * Otherwise return <code>UNCATEGORIZED</code>
-     * @throws NullPointerException if the passed <code>Throwable</code> is <code>null</code>
+     * @return <code>INDEFINITE</code>, <code>BAD_INVOCATION</code>,
+     * or <code>BAD_OBJECT</code> if the exception is a
+     * <code>RuntimeException</code>, <code>Error</code>, or
+     * <code>java.rmi.RemoteException</code> depending on the details of
+     * the <code>Throwable</code>.  Otherwise return
+     * <code>UNCATEGORIZED</code>
+     * @throws NullPointerException if the passed <code>Throwable</code> is
+     * <code>null</code>
      */
     public static int retryable(Throwable t) {
         if (logger.isLoggable(Level.FINEST)) {
@@ -111,7 +118,8 @@ public class ThrowableConstants {
         }
 
         if (t instanceof Error) {
-            if ((t instanceof OutOfMemoryError) || (t instanceof LinkageError)) {
+            if ((t instanceof OutOfMemoryError)
+                    || (t instanceof LinkageError)) {
                 return INDEFINITE;
             }
 
@@ -126,16 +134,16 @@ public class ThrowableConstants {
 
             if (re instanceof NoSuchObjectException
                     || re instanceof UnexpectedException
-                    || re instanceof UnknownHostException
-                    || re instanceof ConnectException) {
+                    || re instanceof UnknownHostException) {
                 return BAD_OBJECT;
             }
 
-            final Throwable detail = re.detail;
+            final Throwable detail = re.getCause();
             if (detail == null)
                 return INDEFINITE;
 
-            if (re instanceof MarshalException || re instanceof UnmarshalException) {
+            if (re instanceof MarshalException
+                    || re instanceof UnmarshalException) {
                 if (detail instanceof ObjectStreamException)
                     return BAD_INVOCATION;
 
