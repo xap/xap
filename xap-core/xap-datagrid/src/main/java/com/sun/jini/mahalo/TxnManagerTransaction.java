@@ -138,7 +138,7 @@ class TxnManagerTransaction
     private static final int SEGMENTS = 4;
 
 
-    private HashMap<ParticipantHandle, ParticipantHandle> _parts = null;
+    private HashMap<Integer, ParticipantHandle> _parts = null;
 
     //if xtn has 1 participant- its stored in singleHandle for optimizations 
     private ParticipantHandle _singleHandle;
@@ -352,7 +352,7 @@ class TxnManagerTransaction
                 transactionsLogger.log(Level.FINEST,
                         "Adding ParticipantHandle: {0}", handle);
             }
-            _parts.put(handle, handle);
+            putInMap(handle.getPartionId(), handle);
         } catch (Exception e) {
             if (transactionsLogger.isLoggable(Level.SEVERE)) {
                 transactionsLogger.log(Level.SEVERE,
@@ -388,7 +388,7 @@ class TxnManagerTransaction
         if (handle.equals(_singleHandle))
             ph = _singleHandle;
         else
-            ph = _parts.get(_parts.get(handle));
+            ph = getFromMap(handle.getPartionId());
 
         if (ph == null) {
             if (operationsLogger.isLoggable(Level.FINER)) {
@@ -492,27 +492,46 @@ class TxnManagerTransaction
                 ph =
                         new ParticipantHandle(part, crashCount, null, _persistent, partitionId, clusterName, clusterProxy);
 
+                System.out.println(">> singleHandler is null? " + (_singleHandle == null));
                 if (_singleHandle == null) {
                     _singleHandle = ph;
                     return;
                 }
-                if (_parts == null) {
-                    _parts = new HashMap<ParticipantHandle, ParticipantHandle>(2);
-                    if (_singleHandle.getStubId() == null && _singleHandle.getParticipant() instanceof ILRMIProxy) {
-                        ILRMIProxy stub = (ILRMIProxy) _singleHandle.getParticipant();
-                        _singleHandle.setStubId(stub.getStubId());
-                    }
-                    _parts.put(_singleHandle, _singleHandle);
-                }
+                System.out.println(">> parts is null? " + (_parts == null));
+
                 if (part instanceof ILRMIProxy) {
                     ILRMIProxy stub = (ILRMIProxy) part;
                     ph.setStubId(stub.getStubId());
                 }
-                ParticipantHandle cur = _parts.get(ph);
-                if (cur == null)
-                    _parts.put(ph, ph);
-                else
-                    cur.setDisableDisjoin();
+
+                if (_parts == null) {
+                    System.out.println(">> checking... "+partitionId+", " + _singleHandle.getPartionId()+", " + ph.getStubId()+", "+_singleHandle.getStubId());
+                    if (partitionId == _singleHandle.getPartionId() && ph.getStubId() != _singleHandle.getStubId()) {
+                        throw new CannotJoinException("wawa");
+                    }
+                    _parts = new HashMap<Integer, ParticipantHandle>(2);
+                    if (_singleHandle.getStubId() == null && _singleHandle.getParticipant() instanceof ILRMIProxy) {
+                        ILRMIProxy stub = (ILRMIProxy) _singleHandle.getParticipant();
+                        _singleHandle.setStubId(stub.getStubId());
+                    }
+                    putInMap(_singleHandle.getPartionId(), _singleHandle);
+                }
+
+                ParticipantHandle cur = getFromMap(ph.getPartionId());
+                System.out.println(">> curr is null? " + (cur == null));
+                if (cur == null) {
+                    putInMap(ph.getPartionId(), ph);
+                }  else {
+                    System.out.println("("+(cur.getPartionId() == partitionId)+") - ("+(cur.getStubId() == ph.getStubId())+")");
+
+                    if (cur.getPartionId() == partitionId && cur.getStubId() != ph.getStubId()) {
+                        System.out.println(">> aborting...");
+                        throw new CannotJoinException("kokoa1");
+                    } else {
+                        System.out.println(">> set disablejoin");
+                        cur.setDisableDisjoin();
+                    }
+                }
             }
 
         } catch (InternalManagerException ime) {
@@ -582,7 +601,7 @@ class TxnManagerTransaction
                         return false;   //cant disjoin this participant
 
                     if (_parts != null) {
-                        _parts.remove(p);
+                        removeFromMap(p.getPartionId());
                         if (_parts.size() == 0)
                             _parts = null;
                     }
@@ -681,8 +700,8 @@ class TxnManagerTransaction
                     else
                         use_light_Commit = (curstate == PREPARED && waitFor == Long.MAX_VALUE);
                 } else if (_parts == null && _singleHandle != null) {
-                    _parts = new HashMap<ParticipantHandle, ParticipantHandle>(1);
-                    _parts.put(_singleHandle, _singleHandle);
+                    _parts = new HashMap<Integer, ParticipantHandle>(1);
+                    putInMap(_singleHandle.getPartionId(), _singleHandle);
                 }
             }
         }
@@ -1584,8 +1603,8 @@ class TxnManagerTransaction
             return null;
         ArrayList<ParticipantHandle> vect = null;
 
-        Map<ParticipantHandle, ParticipantHandle> map = _parts;
-        for (Map.Entry<ParticipantHandle, ParticipantHandle> entry : map.entrySet()) {
+        HashMap<Integer, ParticipantHandle> map = _parts;
+        for (Map.Entry<Integer, ParticipantHandle> entry : map.entrySet()) {
             if (vect == null)
                 vect = new ArrayList<ParticipantHandle>();
             vect.add(entry.getValue());
@@ -1729,5 +1748,18 @@ class TxnManagerTransaction
         modifyTxnState(VOTING);
         modifyTxnState(PREPARED);
 
+    }
+
+
+    private ParticipantHandle getFromMap(Integer key) {
+        return _parts.get(key);
+    }
+
+    private void putInMap(Integer key, ParticipantHandle handle) {
+        _parts.put(key, handle);
+    }
+
+    private void removeFromMap(Integer key) {
+        _parts.remove(key);
     }
 }
