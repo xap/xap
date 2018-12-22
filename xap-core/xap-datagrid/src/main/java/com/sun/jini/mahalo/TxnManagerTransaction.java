@@ -513,8 +513,9 @@ class TxnManagerTransaction
                     putInMap(_singleHandle.getPartionId(), _singleHandle);
 
                     System.out.println(">> checking2... "+partitionId+", " + _singleHandle.getPartionId()+", " + ph.getStubId()+", "+_singleHandle.getStubId()+", ==? "+(ph.getStubId() == _singleHandle.getStubId())+", eq? "+(ph.getStubId().equals(_singleHandle.getStubId())));
-                    if (partitionId == _singleHandle.getPartionId() && !ph.getStubId().equals(_singleHandle.getStubId())) {
-                        throw new CannotJoinException("wawa");
+//                    if (partitionId == _singleHandle.getClusterName().getPartionId() && !ph.getStubId().equals(_singleHandle.getStubId()))
+                    if (isSamePartition(ph, _singleHandle)) {
+                        throw new CannotJoinException("Same handler in join #1");
                     }
                 }
 
@@ -525,9 +526,9 @@ class TxnManagerTransaction
                 }  else {
                     System.out.println("("+(cur.getPartionId() == partitionId)+") - ("+(cur.getStubId() == ph.getStubId())+")");
 
-                    if (cur.getPartionId() == partitionId && !cur.getStubId().equals(ph.getStubId())) {
+                    if (isSamePartition(ph, cur)) {
                         System.out.println(">> aborting...");
-                        throw new CannotJoinException("kokoa1");
+                        throw new CannotJoinException("Same handler in join #2");
                     } else {
                         System.out.println(">> set disablejoin");
                         cur.setDisableDisjoin();
@@ -551,6 +552,16 @@ class TxnManagerTransaction
         if (finer_op_logger) {
             operationsLogger.exiting(TxnManagerTransaction.class.getName(),
                     "join");
+        }
+    }
+
+    private boolean isSamePartition(ParticipantHandle p1, ParticipantHandle p2) {
+        if (p1.getPartionId() == p2.getPartionId() &&
+                p1.getClusterName().equals(p2.getClusterName()) &&
+                !p1.getStubId().equals(p2.getStubId())) {
+            return true;
+        } else {
+            return false;
         }
     }
 
