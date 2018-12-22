@@ -512,8 +512,8 @@ class TxnManagerTransaction
                     }
                     putInMap(_singleHandle.getPartionId(), _singleHandle);
 
-                    System.out.println(">> checking2... "+partitionId+", " + _singleHandle.getPartionId()+", " + ph.getStubId()+", "+_singleHandle.getStubId());
-                    if (partitionId == _singleHandle.getPartionId() && ph.getStubId() != _singleHandle.getStubId()) {
+                    System.out.println(">> checking2... "+partitionId+", " + _singleHandle.getPartionId()+", " + ph.getStubId()+", "+_singleHandle.getStubId()+", ==? "+(ph.getStubId() == _singleHandle.getStubId())+", eq? "+(ph.getStubId().equals(_singleHandle.getStubId())));
+                    if (partitionId == _singleHandle.getPartionId() && !ph.getStubId().equals(_singleHandle.getStubId())) {
                         throw new CannotJoinException("wawa");
                     }
                 }
@@ -525,7 +525,7 @@ class TxnManagerTransaction
                 }  else {
                     System.out.println("("+(cur.getPartionId() == partitionId)+") - ("+(cur.getStubId() == ph.getStubId())+")");
 
-                    if (cur.getPartionId() == partitionId && cur.getStubId() != ph.getStubId()) {
+                    if (cur.getPartionId() == partitionId && !cur.getStubId().equals(ph.getStubId())) {
                         System.out.println(">> aborting...");
                         throw new CannotJoinException("kokoa1");
                     } else {
