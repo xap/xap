@@ -505,16 +505,17 @@ class TxnManagerTransaction
                 }
 
                 if (_parts == null) {
-                    System.out.println(">> checking... "+partitionId+", " + _singleHandle.getPartionId()+", " + ph.getStubId()+", "+_singleHandle.getStubId());
-                    if (partitionId == _singleHandle.getPartionId() && ph.getStubId() != _singleHandle.getStubId()) {
-                        throw new CannotJoinException("wawa");
-                    }
                     _parts = new HashMap<Integer, ParticipantHandle>(2);
                     if (_singleHandle.getStubId() == null && _singleHandle.getParticipant() instanceof ILRMIProxy) {
                         ILRMIProxy stub = (ILRMIProxy) _singleHandle.getParticipant();
                         _singleHandle.setStubId(stub.getStubId());
                     }
                     putInMap(_singleHandle.getPartionId(), _singleHandle);
+
+                    System.out.println(">> checking2... "+partitionId+", " + _singleHandle.getPartionId()+", " + ph.getStubId()+", "+_singleHandle.getStubId());
+                    if (partitionId == _singleHandle.getPartionId() && ph.getStubId() != _singleHandle.getStubId()) {
+                        throw new CannotJoinException("wawa");
+                    }
                 }
 
                 ParticipantHandle cur = getFromMap(ph.getPartionId());
