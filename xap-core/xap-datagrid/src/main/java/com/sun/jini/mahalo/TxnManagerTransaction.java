@@ -138,7 +138,7 @@ class TxnManagerTransaction
     private static final int SEGMENTS = 4;
 
 
-    private HashMap<Integer, ParticipantHandle> _parts = null;
+    private HashMap<PHolder, ParticipantHandle> _parts = null;
 
     //if xtn has 1 participant- its stored in singleHandle for optimizations 
     private ParticipantHandle _singleHandle;
@@ -352,7 +352,7 @@ class TxnManagerTransaction
                 transactionsLogger.log(Level.FINEST,
                         "Adding ParticipantHandle: {0}", handle);
             }
-            putInMap(handle.getPartionId(), handle);
+            putInMap(handle);
         } catch (Exception e) {
             if (transactionsLogger.isLoggable(Level.SEVERE)) {
                 transactionsLogger.log(Level.SEVERE,
@@ -388,7 +388,7 @@ class TxnManagerTransaction
         if (handle.equals(_singleHandle))
             ph = _singleHandle;
         else
-            ph = getFromMap(handle.getPartionId());
+            ph = getFromMap(handle);
 
         if (ph == null) {
             if (operationsLogger.isLoggable(Level.FINER)) {
@@ -492,12 +492,12 @@ class TxnManagerTransaction
                 ph =
                         new ParticipantHandle(part, crashCount, null, _persistent, partitionId, clusterName, clusterProxy);
 
-                System.out.println(">> singleHandler is null? " + (_singleHandle == null));
+//                System.out.println(">> singleHandler is null? " + (_singleHandle == null));
                 if (_singleHandle == null) {
                     _singleHandle = ph;
                     return;
                 }
-                System.out.println(">> parts is null? " + (_parts == null));
+//                System.out.println(">> parts is null? " + (_parts == null));
 
                 if (part instanceof ILRMIProxy) {
                     ILRMIProxy stub = (ILRMIProxy) part;
@@ -505,32 +505,32 @@ class TxnManagerTransaction
                 }
 
                 if (_parts == null) {
-                    _parts = new HashMap<Integer, ParticipantHandle>(2);
+                    _parts = new HashMap<PHolder, ParticipantHandle>(2);
                     if (_singleHandle.getStubId() == null && _singleHandle.getParticipant() instanceof ILRMIProxy) {
                         ILRMIProxy stub = (ILRMIProxy) _singleHandle.getParticipant();
                         _singleHandle.setStubId(stub.getStubId());
                     }
-                    putInMap(_singleHandle.getPartionId(), _singleHandle);
+                    putInMap(_singleHandle);
 
-                    System.out.println(">> checking2... "+partitionId+", " + _singleHandle.getPartionId()+", " + ph.getStubId()+", "+_singleHandle.getStubId()+", ==? "+(ph.getStubId() == _singleHandle.getStubId())+", eq? "+(ph.getStubId().equals(_singleHandle.getStubId())));
+//                    System.out.println(">> checking2... "+partitionId+", " + _singleHandle.getPartionId()+", " + ph.getStubId()+", "+_singleHandle.getStubId()+", ==? "+(ph.getStubId() == _singleHandle.getStubId())+", eq? "+(ph.getStubId().equals(_singleHandle.getStubId())));
 //                    if (partitionId == _singleHandle.getClusterName().getPartionId() && !ph.getStubId().equals(_singleHandle.getStubId()))
                     if (isSamePartition(ph, _singleHandle)) {
                         throw new CannotJoinException("Same handler in join #1");
                     }
                 }
 
-                ParticipantHandle cur = getFromMap(ph.getPartionId());
-                System.out.println(">> curr is null? " + (cur == null));
+                ParticipantHandle cur = getFromMap(ph);
+//                System.out.println(">> curr is null? " + (cur == null));
                 if (cur == null) {
-                    putInMap(ph.getPartionId(), ph);
+                    putInMap(ph);
                 }  else {
-                    System.out.println("("+(cur.getPartionId() == partitionId)+") - ("+(cur.getStubId() == ph.getStubId())+")");
 
+//                    System.out.println("("+(cur.getPartionId() == partitionId)+") - ("+(cur.getStubId() == ph.getStubId())+")");
                     if (isSamePartition(ph, cur)) {
                         System.out.println(">> aborting...");
                         throw new CannotJoinException("Same handler in join #2");
                     } else {
-                        System.out.println(">> set disablejoin");
+//                        System.out.println(">> set disablejoin");
                         cur.setDisableDisjoin();
                     }
                 }
@@ -613,7 +613,7 @@ class TxnManagerTransaction
                         return false;   //cant disjoin this participant
 
                     if (_parts != null) {
-                        removeFromMap(p.getPartionId());
+                        removeFromMap(p);
                         if (_parts.size() == 0)
                             _parts = null;
                     }
@@ -712,8 +712,8 @@ class TxnManagerTransaction
                     else
                         use_light_Commit = (curstate == PREPARED && waitFor == Long.MAX_VALUE);
                 } else if (_parts == null && _singleHandle != null) {
-                    _parts = new HashMap<Integer, ParticipantHandle>(1);
-                    putInMap(_singleHandle.getPartionId(), _singleHandle);
+                    _parts = new HashMap<PHolder, ParticipantHandle>(1);
+                    putInMap(_singleHandle);
                 }
             }
         }
@@ -1615,8 +1615,8 @@ class TxnManagerTransaction
             return null;
         ArrayList<ParticipantHandle> vect = null;
 
-        HashMap<Integer, ParticipantHandle> map = _parts;
-        for (Map.Entry<Integer, ParticipantHandle> entry : map.entrySet()) {
+        HashMap<PHolder, ParticipantHandle> map = _parts;
+        for (Map.Entry<PHolder, ParticipantHandle> entry : map.entrySet()) {
             if (vect == null)
                 vect = new ArrayList<ParticipantHandle>();
             vect.add(entry.getValue());
@@ -1763,15 +1763,15 @@ class TxnManagerTransaction
     }
 
 
-    private ParticipantHandle getFromMap(Integer key) {
-        return _parts.get(key);
+    private ParticipantHandle getFromMap(ParticipantHandle handle) {
+        return _parts.get(new PHolder(handle));
     }
 
-    private void putInMap(Integer key, ParticipantHandle handle) {
-        _parts.put(key, handle);
+    private void putInMap(ParticipantHandle handle) {
+        _parts.put(new PHolder(handle), handle);
     }
 
-    private void removeFromMap(Integer key) {
-        _parts.remove(key);
+    private void removeFromMap(ParticipantHandle handle) {
+        _parts.remove(new PHolder(handle));
     }
 }
