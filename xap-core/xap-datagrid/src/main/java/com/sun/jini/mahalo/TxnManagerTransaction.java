@@ -556,6 +556,8 @@ class TxnManagerTransaction
     }
 
     private boolean isSamePartition(ParticipantHandle p1, ParticipantHandle p2) {
+        if (p1.getPartionId() == -1 && p2.getPartionId() == -1) return !p1.getStubId().equals(p2.getStubId());
+
         if (p1.getPartionId() == p2.getPartionId() &&
                 p1.getClusterName().equals(p2.getClusterName()) &&
                 !p1.getStubId().equals(p2.getStubId())) {
