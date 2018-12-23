@@ -17,6 +17,7 @@
 package com.gigaspaces.start;
 
 import com.gigaspaces.CommonSystemProperties;
+import com.gigaspaces.api.BootException;
 import com.gigaspaces.grid.gsa.AgentHelper;
 import com.gigaspaces.internal.jvm.JVMHelper;
 import com.gigaspaces.internal.jvm.JVMStatistics;
@@ -33,6 +34,7 @@ import org.jini.rio.boot.CommonClassLoader;
 
 import java.beans.Introspector;
 import java.io.*;
+import java.lang.annotation.Annotation;
 import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -303,14 +305,37 @@ public class SystemBoot {
                 }
             }
         } catch (Throwable t) {
-            if (logger != null) {
+            Throwable bootException = getCauseByAnnotation(t, BootException.class);
+            if (bootException != null)
+                reportError(bootException, true);
+            else
+                reportError(t, false);
+            System.exit(1);
+        }
+    }
+
+    private static void reportError(Throwable t, boolean bootError) {
+        if (logger != null) {
+            if (bootError) {
+                logger.log(Level.SEVERE, "Error while booting system - " + t.getMessage());
+            } else
                 logger.log(Level.SEVERE, "Error while booting system - ", t);
+        } else {
+            if (bootError) {
+                System.err.println("Error while booting system - " + t.getMessage());
             } else {
                 System.err.println("Error while booting system - " + t);
                 t.printStackTrace();
             }
-            System.exit(1);
         }
+    }
+
+    private static Throwable getCauseByAnnotation(Throwable root, Class<? extends Annotation> annotationClass) {
+        for (Throwable e = root ; e != null ; e = e.getCause()) {
+            if (e.getClass().getAnnotation(annotationClass) != null)
+                return e;
+        }
+        return null;
     }
 
     /**
