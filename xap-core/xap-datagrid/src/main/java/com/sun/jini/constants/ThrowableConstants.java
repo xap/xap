@@ -23,6 +23,7 @@ import java.io.ObjectStreamException;
 import java.net.NoRouteToHostException;
 import java.net.PortUnreachableException;
 import java.net.ProtocolException;
+import java.rmi.ConnectException;
 import java.rmi.ConnectIOException;
 import java.rmi.MarshalException;
 import java.rmi.NoSuchObjectException;
@@ -134,7 +135,8 @@ public class ThrowableConstants {
 
             if (re instanceof NoSuchObjectException
                     || re instanceof UnexpectedException
-                    || re instanceof UnknownHostException) {
+                    || re instanceof UnknownHostException
+                    || re instanceof ConnectException) {
                 return BAD_OBJECT;
             }
 
