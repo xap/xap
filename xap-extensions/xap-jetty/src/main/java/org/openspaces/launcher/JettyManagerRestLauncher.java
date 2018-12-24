@@ -113,7 +113,7 @@ public class JettyManagerRestLauncher implements Closeable {
 
         for( File file : filteredFiles ){
             if( logger.isLoggable( Level.FINE ) ) {
-                logger.fine("File name:" + file.getName());
+                logger.fine("File name:" + file.getName() + ", exists:" + file.exists());
             }
             try {
                 FileUtils.deleteFileOrDirectory(file);
