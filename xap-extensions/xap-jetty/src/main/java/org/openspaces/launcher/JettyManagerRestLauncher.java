@@ -122,8 +122,8 @@ public class JettyManagerRestLauncher implements Closeable {
                 }
             }
             catch( Throwable t ){
-                if( logger.isLoggable( Level.SEVERE ) ){
-                    logger.log( Level.SEVERE, t.toString(), t );
+                if( logger.isLoggable( Level.WARNING ) ){
+                    logger.log( Level.WARNING, "Failed to delete jetty temp file", t );
                 }
             }
         }
