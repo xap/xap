@@ -1644,6 +1644,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 latch.await();
                 lookupCache.terminate();
             } catch (Exception e) {
+                if (leaderSelectorHandler != null) {
+                    leaderSelectorHandler.terminate();
+                }
                 throw new ActiveElectionException("Failed to initialize Leader Selector handler", e);
             }
         }
