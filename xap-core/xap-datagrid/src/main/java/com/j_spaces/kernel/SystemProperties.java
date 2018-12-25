@@ -697,6 +697,8 @@ public class SystemProperties extends CommonSystemProperties {
      */
     public final static String DISABLE_QUIESCE_MODE = "com.gs.engine.disableQuiesceMode";
 
+    public final static String CLEAR_REST_JETTY_FILES = "com.gs.clear-rest-jetty-files.enabled";
+
 
     public static final boolean ENABLE_DYNAMIC_LOCATORS_DEFAULT = false;
     public static final String DYNAMIC_LOCATORS_MAX_INIT_DELAY = "com.gs.jini_lus.locators.dynamic.max_delay_before_discovery";

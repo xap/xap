@@ -103,27 +103,28 @@ public class JettyManagerRestLauncher implements Closeable {
     //fix GS-13595, 17.12.2018
     private void clearOldTempWarFiles() {
 
-        File tempDirectory = workLocation;//new File( tempDirPath );
+        String clearRestJettyFiles =
+            System.getProperty(SystemProperties.CLEAR_REST_JETTY_FILES, Boolean.FALSE.toString());
+        if( Boolean.parseBoolean( clearRestJettyFiles ) ) {
 
-        if( logger.isLoggable( Level.FINE ) ) {
-            logger.fine("Temp dir:" + tempDirectory.getPath());
-        }
+            File tempDirectory = workLocation;//new File( tempDirPath );
 
-        File[] filteredFiles = tempDirectory.listFiles();
+            File[] filteredFiles = tempDirectory.listFiles();
 
-        for( File file : filteredFiles ){
-            if( logger.isLoggable( Level.FINE ) ) {
-                logger.fine("File name:" + file.getName() + ", exists:" + file.exists());
-            }
-            try {
-                FileUtils.deleteFileOrDirectory(file);
-                if( logger.isLoggable( Level.FINE ) ) {
-                    logger.fine("Temp file :" + file.getName() + " has been deleted");
+            logger.info( filteredFiles.length + " rest jetty files are deleting from [" + tempDirectory.getPath() + "]");
+
+            for (File file : filteredFiles) {
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.fine("File name:" + file.getName() + ", exists:" + file.exists());
                 }
-            }
-            catch( Throwable t ){
-                if( logger.isLoggable( Level.WARNING ) ){
-                    logger.log( Level.WARNING, "Failed to delete jetty temp file, " + t.toString() );
+                try {
+                    FileUtils.deleteFileOrDirectory(file);
+                    logger.info("Deleted temp file :" + file.getName() );
+                } catch (Throwable t) {
+                    if (logger.isLoggable(Level.WARNING)) {
+                        logger.log(Level.WARNING,
+                                   "Failed to delete jetty temp file, " + t.toString());
+                    }
                 }
             }
         }
