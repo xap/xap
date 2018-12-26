@@ -3287,9 +3287,7 @@ public class ServiceDiscoveryManager {
                         sItemSet.add(items[i]);
                     }//endif
                 }//end loop
-                if (sItemSet.size() >= minMatches) {//GS-13724
-                    break;
-                }
+                if (sItemSet.size() == minMatches) break;
                 duration = cache.getLeaseDuration();
             }//end loop
         }//end sync(cacheListener)
