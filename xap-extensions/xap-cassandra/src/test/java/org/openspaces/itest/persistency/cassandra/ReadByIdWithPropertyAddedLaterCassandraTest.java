@@ -58,7 +58,7 @@ public class ReadByIdWithPropertyAddedLaterCassandraTest extends AbstractCassand
         Assert.assertNotNull("No object found", doc);
         Assert.assertEquals("Wrong type name", typeName, doc.getTypeName());
         Assert.assertEquals("Wrong value", keyValue, doc.getProperty(keyName));
-        Assert.assertEquals("Wrong value", somePropValue, doc.getProperty(someProp));
+        Assert.assertEquals("Wrong value", somePropValue, (boolean) doc.getProperty(someProp));
 
         builder.clear().write(createSpaceDocument().setProperty(newProp, newPropValue), keyName);
         _syncInterceptor.onOperationsBatchSynchronization(builder.build());
@@ -69,8 +69,8 @@ public class ReadByIdWithPropertyAddedLaterCassandraTest extends AbstractCassand
         Assert.assertNotNull("No object found", doc);
         Assert.assertEquals("Wrong type name", typeName, doc.getTypeName());
         Assert.assertEquals("Wrong value", keyValue, doc.getProperty(keyName));
-        Assert.assertEquals("Wrong value", somePropValue, doc.getProperty(someProp));
-        Assert.assertEquals("Wrong value", newPropValue, doc.getProperty(newProp));
+        Assert.assertEquals("Wrong value", somePropValue, (boolean) doc.getProperty(someProp));
+        Assert.assertEquals("Wrong value", newPropValue, (int) doc.getProperty(newProp));
     }
 
     private SpaceDocument createSpaceDocument() {

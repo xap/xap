@@ -57,8 +57,8 @@ public class DataIteratorWithPropertyAddedLaterCassandraTest extends AbstractCas
         Assert.assertTrue("No object found", iterator.hasNext());
         doc = (SpaceDocument) iterator.next();
         Assert.assertEquals("Wrong type name", typeName, doc.getTypeName());
-        Assert.assertEquals("Wrong value", 1, doc.getProperty(keyName));
-        Assert.assertEquals("Wrong value", true, doc.getProperty("some_prop"));
+        Assert.assertEquals("Wrong value", 1, (int) doc.getProperty(keyName));
+        Assert.assertEquals("Wrong value", true, (boolean) doc.getProperty("some_prop"));
 
         builder = new MockOperationsBatchDataBuilder();
         builder.write(createSpaceDocument()
@@ -73,14 +73,14 @@ public class DataIteratorWithPropertyAddedLaterCassandraTest extends AbstractCas
         Assert.assertTrue("No object found", iterator.hasNext());
         doc = (SpaceDocument) iterator.next();
         Assert.assertEquals("Wrong type name", typeName, doc.getTypeName());
-        Assert.assertEquals("Wrong value", 1, doc.getProperty(keyName));
-        Assert.assertEquals("Wrong value", true, doc.getProperty("some_prop"));
+        Assert.assertEquals("Wrong value", 1, (int) doc.getProperty(keyName));
+        Assert.assertEquals("Wrong value", true, (boolean) doc.getProperty("some_prop"));
 
         // uncomment if we decide pojo will be restored as documents no matter what
         Assert.assertEquals("Wrong value", newType, doc.getProperty("new_prop"));
 //        Assert.assertEquals("Wrong value", newType.getStr(), ((SpaceDocument)doc.getProperty("new_prop")).getProperty("str"));
 
-        Assert.assertEquals("Wrong value", 2, doc.getProperty("new_prop2"));
+        Assert.assertEquals("Wrong value", 2, (int) doc.getProperty("new_prop2"));
 
         iterator.close();
     }

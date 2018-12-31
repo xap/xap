@@ -91,7 +91,7 @@ public class DifferentConsistencyLevelsCassandraTest extends AbstractCassandraTe
         Assert.assertNotNull("No object found", doc);
         Assert.assertEquals("Wrong type name", typeName, doc.getTypeName());
         Assert.assertEquals("Wrong value", keyValue, doc.getProperty(keyName));
-        Assert.assertEquals("Wrong value", somePropValue, doc.getProperty(someProp));
+        Assert.assertEquals("Wrong value", somePropValue, (boolean) doc.getProperty(someProp));
 
         DataIterator<Object> iterator = _dataSource.getDataIterator(new MockDataSourceQuery(introduceDataType.getTypeDescriptor(),
                 new SpaceDocument(typeName), Integer.MAX_VALUE));
@@ -100,7 +100,7 @@ public class DifferentConsistencyLevelsCassandraTest extends AbstractCassandraTe
         doc = (SpaceDocument) iterator.next();
         Assert.assertEquals("Wrong type name", typeName, doc.getTypeName());
         Assert.assertEquals("Wrong value", keyValue, doc.getProperty(keyName));
-        Assert.assertEquals("Wrong value", somePropValue, doc.getProperty(someProp));
+        Assert.assertEquals("Wrong value", somePropValue, (boolean) doc.getProperty(someProp));
 
     }
 

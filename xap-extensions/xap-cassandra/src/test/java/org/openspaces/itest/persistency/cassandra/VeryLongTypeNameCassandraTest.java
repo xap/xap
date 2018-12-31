@@ -50,8 +50,8 @@ public class VeryLongTypeNameCassandraTest extends AbstractCassandraTest {
         SpaceDocument doc = (SpaceDocument) iterator.next();
         iterator.close();
         Assert.assertEquals("Wrong type name", typeName, doc.getTypeName());
-        Assert.assertEquals("Wrong value", 1, doc.getProperty(keyName));
-        Assert.assertEquals("Wrong value", true, doc.getProperty("some_prop"));
+        Assert.assertEquals("Wrong value", 1, (int) doc.getProperty(keyName));
+        Assert.assertEquals("Wrong value", true, (boolean) doc.getProperty("some_prop"));
     }
 
     private SpaceDocument createSpaceDocument() {

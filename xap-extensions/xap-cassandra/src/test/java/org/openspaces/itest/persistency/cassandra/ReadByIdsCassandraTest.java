@@ -87,10 +87,10 @@ public class ReadByIdsCassandraTest extends AbstractCassandraTest {
         Assert.assertNotNull("got: " + results, doc1);
         Assert.assertNotNull("got: " + results, doc2);
 
-        Assert.assertEquals("bad document", 1, doc1.getProperty(keyName));
-        Assert.assertEquals("bad document", 2, doc2.getProperty(keyName));
-        Assert.assertEquals("bad document", somePropValue, doc1.getProperty(someProp));
-        Assert.assertEquals("bad document", somePropValue, doc2.getProperty(someProp));
+        Assert.assertEquals("bad document", 1, (int) doc1.getProperty(keyName));
+        Assert.assertEquals("bad document", 2, (int) doc2.getProperty(keyName));
+        Assert.assertEquals("bad document", somePropValue, (boolean) doc1.getProperty(someProp));
+        Assert.assertEquals("bad document", somePropValue, (boolean) doc2.getProperty(someProp));
 
 
     }
