@@ -3,7 +3,7 @@ package org.gigaspaces.cli.commands;
 import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.start.SystemInfo;
 import org.gigaspaces.cli.CliCommandException;
-import org.gigaspaces.cli.JavaCommandBuilder;
+import com.gigaspaces.start.JavaCommandBuilder;
 import org.gigaspaces.cli.commands.utils.XapCliUtils;
 
 import picocli.CommandLine.Command;

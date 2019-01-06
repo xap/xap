@@ -1,4 +1,4 @@
-package org.gigaspaces.cli;
+package com.gigaspaces.start;
 
 import java.io.File;
 import java.util.*;

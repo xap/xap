@@ -3,7 +3,7 @@ package org.gigaspaces.cli.commands;
 import com.gigaspaces.start.SystemInfo;
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.CliCommandException;
-import org.gigaspaces.cli.JavaCommandBuilder;
+import com.gigaspaces.start.JavaCommandBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
