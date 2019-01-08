@@ -207,8 +207,6 @@ public class CPeer extends BaseClientPeer {
         // parse connection URL
         ConnectionUrlDescriptor connectionUrlDescriptor = ConnectionUrlDescriptor.fromUrl(connectionURL);
 
-        String host = connectionUrlDescriptor.getHostname();
-
         _objectClassLoaderId = connectionUrlDescriptor.getObjectClassLoaderId();
         _remoteLrmiRuntimeId = connectionUrlDescriptor.getLrmiRuntimeId();
 
@@ -216,18 +214,7 @@ public class CPeer extends BaseClientPeer {
 
         // connect to server
         try {
-            ServerAddress transformedAddress = mapAddress(host, connectionUrlDescriptor.getPort());
-
-            m_SockChannel = createAsyncChannel(transformedAddress.getHost(), transformedAddress.getPort(), lrmiMethod);
-
-            _socketDisplayString = NIOUtils.getSocketDisplayString(m_SockChannel);
-
-            if (_writer != null)
-                _generatedTraffic += _writer.getGeneratedTraffic();
-            _writer = new Writer(m_SockChannel, _config);
-            if (_reader != null)
-                _receivedTraffic += _reader.getReceivedTraffic();
-            _reader = new Reader(m_SockChannel, _config.getSlowConsumerRetries());
+            createChannel(connectionUrlDescriptor, true, lrmiMethod);
 
             // save connection URL
             setConnectionURL(connectionURL);
@@ -250,7 +237,24 @@ public class CPeer extends BaseClientPeer {
         _watchdogContext.watchIdle();
     }
 
-    private SocketChannel createAsyncChannel(String host, int port, LRMIMethod lrmiMethod) throws IOException {
+    private SocketChannel createChannel(ConnectionUrlDescriptor connection, boolean async, LRMIMethod lrmiMethod) throws IOException {
+        ServerAddress address = LRMIRuntime.getRuntime().getNetworkMapper().map(new ServerAddress(connection.getHostname(), connection.getPort()));
+        SocketChannel socketChannel = async ? createAsyncChannel(address, lrmiMethod) : createSyncChannel(address);
+        m_SockChannel = socketChannel;
+        _socketDisplayString = NIOUtils.getSocketDisplayString(socketChannel);
+        if (_writer != null)
+            _generatedTraffic += _writer.getGeneratedTraffic();
+        _writer = new Writer(socketChannel, _config);
+        if (_reader != null)
+            _receivedTraffic += _reader.getReceivedTraffic();
+        _reader = new Reader(socketChannel, _config.getSlowConsumerRetries());
+        return socketChannel;
+    }
+
+    private SocketChannel createAsyncChannel(ServerAddress address, LRMIMethod lrmiMethod) throws IOException {
+        final String host = address.getHost();
+        final int port = address.getPort();
+
         if (_logger.isLoggable(Level.FINE)) {
             _logger.fine("connecting new socket channel to " + host + ":" + port + ", connect timeout=" + _config.getSocketConnectTimeout() + " keepalive=" + LRMIUtilities.KEEP_ALIVE_MODE);
         }
@@ -291,8 +295,6 @@ public class CPeer extends BaseClientPeer {
         // parse connection URL
         ConnectionUrlDescriptor connectionUrlDescriptor = ConnectionUrlDescriptor.fromUrl(connectionURL);
 
-        String host = connectionUrlDescriptor.getHostname();
-
         _objectClassLoaderId = connectionUrlDescriptor.getObjectClassLoaderId();
         _remoteLrmiRuntimeId = connectionUrlDescriptor.getLrmiRuntimeId();
 
@@ -300,17 +302,7 @@ public class CPeer extends BaseClientPeer {
 
         // connect to server
         try {
-            ServerAddress transformedAddress = mapAddress(host, connectionUrlDescriptor.getPort());
-
-            m_SockChannel = createChannel(transformedAddress.getHost(), transformedAddress.getPort());
-            _socketDisplayString = NIOUtils.getSocketDisplayString(m_SockChannel);
-
-            if (_writer != null)
-                _generatedTraffic += _writer.getGeneratedTraffic();
-            _writer = new Writer(m_SockChannel, _config);
-            if (_reader != null)
-                _receivedTraffic += _reader.getReceivedTraffic();
-            _reader = new Reader(m_SockChannel, _config.getSlowConsumerRetries());
+            SocketChannel socketChannel = createChannel(connectionUrlDescriptor, false, null);
 
             // save connection URL
             setConnectionURL(connectionURL);
@@ -328,7 +320,7 @@ public class CPeer extends BaseClientPeer {
             }
 
             try {
-                _filterManager = IOBlockFilterManager.createFilter(_reader, _writer, true, m_SockChannel);
+                _filterManager = IOBlockFilterManager.createFilter(_reader, _writer, true, socketChannel);
             } catch (Exception e) {
                 if (_logger.isLoggable(Level.SEVERE))
                     _logger.log(Level.SEVERE, "Failed to load communication filter " + System.getProperty(SystemProperties.LRMI_NETWORK_FILTER_FACTORY), e);
@@ -368,10 +360,6 @@ public class CPeer extends BaseClientPeer {
         }
     }
 
-    private ServerAddress mapAddress(String host, int port) {
-        return LRMIRuntime.getRuntime().getNetworkMapper().map(new ServerAddress(host, port));
-    }
-
     private void detailedLogging(String methodName, String description) {
         if (_logger.isLoggable(Level.FINER)) {
             String localAddress = "not connected";
@@ -395,7 +383,9 @@ public class CPeer extends BaseClientPeer {
     /**
      * Create a new socket channel and set its parameters
      */
-    private SocketChannel createChannel(String host, int port) throws IOException {
+    private SocketChannel createSyncChannel(ServerAddress address) throws IOException {
+        final String host = address.getHost();
+        final int port = address.getPort();
         if (_logger.isLoggable(Level.FINE))
             _logger.fine("connecting new socket channel to " + host + ":" + port + ", connect timeout=" + _config.getSocketConnectTimeout() + " keepalive=" + LRMIUtilities.KEEP_ALIVE_MODE);
 
