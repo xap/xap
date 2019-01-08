@@ -50,10 +50,6 @@ import java.util.logging.Logger;
 public class Writer implements IChannelWriter {
     final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
 
-    /**
-     * writer socket channel.
-     */
-    final private SocketChannel _sockChannel;
     final private Transmitter _transmitter;
 
     final static public int BUFFER_LIMIT = Integer.getInteger(SystemProperties.MAX_LRMI_BUFFER_SIZE, SystemProperties.MAX_LRMI_BUFFER_SIZE_DEFAULT);
@@ -86,15 +82,14 @@ public class Writer implements IChannelWriter {
     }
 
     public Writer(SocketChannel socketChannel) {
-        this(socketChannel, (ITransportConfig)null);
+        this(socketChannel, null);
     }
 
     public Writer(SocketChannel socketChannel, ITransportConfig config) {
-        this(socketChannel, new TcpTransmitter(socketChannel, config));
+        this(new TcpTransmitter(socketChannel, config));
     }
 
-    public Writer(SocketChannel socketChannel, Transmitter transmitter) {
-        _sockChannel = socketChannel;
+    public Writer(Transmitter transmitter) {
         _transmitter = transmitter;
 
         try {
@@ -125,7 +120,7 @@ public class Writer implements IChannelWriter {
      * @return the endpoint of the connected SocketChannel.
      */
     public SocketAddress getEndPointAddress() {
-        return _sockChannel != null ? _sockChannel.socket().getRemoteSocketAddress() : null;
+        return _transmitter.getEndPointAddress();
     }
 
     public void writeRequest(RequestPacket packet, boolean reuseBuffer, Context ctx) throws IOException, IOFilterException {
@@ -452,7 +447,6 @@ public class Writer implements IChannelWriter {
     }
 
     public void writeProtocolValidationHeader() throws IOException {
-        ProtocolValidation.writeProtocolValidationHeader(_sockChannel, Long.MAX_VALUE);
+        _transmitter.writeProtocolValidationHeader();
     }
-
 }

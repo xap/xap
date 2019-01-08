@@ -6,6 +6,7 @@ import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.lrmi.LRMIInvocationTrace;
 import com.gigaspaces.lrmi.Transmitter;
+import com.gigaspaces.lrmi.nio.ProtocolValidation;
 import com.gigaspaces.lrmi.nio.TemporarySelectorFactory;
 import com.gigaspaces.lrmi.nio.Writer;
 import com.j_spaces.kernel.SystemProperties;
@@ -56,10 +57,20 @@ public class TcpTransmitter extends Transmitter {
     public boolean isBlocking() {
         return _sockChannel.isBlocking();
     }
+    
+    @Override
+    public SocketAddress getEndPointAddress() {
+        return _sockChannel.socket().getRemoteSocketAddress();
+    }
 
     @Override
     public boolean hasQueuedContexts() {
         return !_contexts.isEmpty();
+    }
+
+    @Override
+    public void writeProtocolValidationHeader() throws IOException {
+        ProtocolValidation.writeProtocolValidationHeader(_sockChannel, Long.MAX_VALUE);
     }
 
     @Override
@@ -278,10 +289,5 @@ public class TcpTransmitter extends Transmitter {
             _logger.warning("write to " + getEndPointAddress() + " method " + method + " was fully performed only " + writeTime + " milliseconds after requested" +
                     ", the system may be overloaded or the network is bad.");
         }
-    }
-
-
-    private SocketAddress getEndPointAddress() {
-        return _sockChannel.socket().getRemoteSocketAddress();
     }
 }

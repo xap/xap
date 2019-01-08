@@ -4,6 +4,7 @@ import com.gigaspaces.lrmi.nio.IWriteInterestManager;
 import com.gigaspaces.lrmi.nio.Writer;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 
 public abstract class Transmitter {
@@ -13,7 +14,11 @@ public abstract class Transmitter {
     public abstract boolean isOpen();
     public abstract boolean isBlocking();
 
+    public abstract SocketAddress getEndPointAddress();
+
     public abstract boolean hasQueuedContexts();
+
+    public abstract void writeProtocolValidationHeader() throws IOException;
 
     public abstract void writeBytesToChannelBlocking(ByteBuffer dataBuffer) throws IOException;
 
