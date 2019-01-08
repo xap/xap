@@ -23,10 +23,12 @@ import com.gigaspaces.internal.io.GSByteArrayInputStream;
 import com.gigaspaces.internal.io.MarshalContextClearedException;
 import com.gigaspaces.internal.io.MarshalInputStream;
 import com.gigaspaces.logger.Constants;
+import com.gigaspaces.lrmi.Receiver;
 import com.gigaspaces.lrmi.SmartByteBufferCache;
 import com.gigaspaces.lrmi.nio.SystemRequestHandler.SystemRequestContext;
 import com.gigaspaces.lrmi.nio.filters.IOFilterException;
 import com.gigaspaces.lrmi.nio.filters.IOFilterManager;
+import com.gigaspaces.lrmi.tcp.TcpReceiver;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.kernel.SystemProperties;
 
@@ -77,6 +79,8 @@ public class Reader {
      */
     private final SocketChannel _socketChannel;
 
+    private final Receiver _receiver;
+
     private static final int BUFFER_LIMIT = Integer.getInteger(SystemProperties.MAX_LRMI_BUFFER_SIZE, SystemProperties.MAX_LRMI_BUFFER_SIZE_DEFAULT);
 
 
@@ -116,6 +120,7 @@ public class Reader {
 
     private Reader(SocketChannel sockChannel, int slowConsumerRetries, SystemRequestHandler systemRequestHandler) {
         _socketChannel = sockChannel;
+        _receiver = new TcpReceiver(_socketChannel);
         _headerBuffer.order(ByteOrder.BIG_ENDIAN);
         _streamContext = MarshalInputStream.createContext();
         try {
@@ -491,7 +496,7 @@ public class Reader {
      * @return the endpoint of the connected SocketChannel.
      */
     private SocketAddress getEndPointAddress() {
-        return _socketChannel != null ? _socketChannel.socket().getRemoteSocketAddress() : null;
+        return _receiver.getEndPointAddress();
     }
 
     /**
@@ -673,7 +678,7 @@ public class Reader {
     }
 
     public String readProtocolValidationHeader(ProtocolValidationContext context) throws IOException {
-        int bytesRead = _socketChannel.read(context.buffer);
+        int bytesRead = _receiver.read(context.buffer);
         if (bytesRead == -1) // EOF
             throwCloseConnection();
 
