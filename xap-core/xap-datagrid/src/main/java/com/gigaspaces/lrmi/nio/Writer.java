@@ -167,6 +167,28 @@ public class Writer implements IChannelWriter {
         if (_logger.isLoggable(Level.FINEST)) {
             _logger.finest("--> Write Packet " + packet);
         }
+        ByteBuffer buffer = serialize(packet, requestReuseBuffer);
+
+        if (ctx != null) {
+            // non blocking mode.
+            ctx.setBuffer(buffer);
+            if (_filterManager != null && !ctx.isSystemResponse()) {
+                _filterManager.writeBytesNonBlocking(ctx);
+            } else {
+                //Regular write Bytes non blocking, restore read interest if finish writing synchronously
+                writeBytesToChannelNoneBlocking(ctx, true);
+            }
+        } else {
+            // blocking mode.
+            if (_filterManager != null) {
+                _filterManager.writeBytesBlocking(buffer);
+            } else {
+                writeBytesToChannelBlocking(buffer);
+            }
+        }
+    }
+
+    private ByteBuffer serialize(IPacket packet, boolean requestReuseBuffer) throws IOException {
         ByteBuffer byteBuffer;
         MarshalOutputStream mos;
         GSByteArrayOutputStream bos;
@@ -211,15 +233,7 @@ public class Writer implements IChannelWriter {
         }
         _generatedTraffic += buffer.limit();
         generatedTraffic.add(buffer.limit());
-
-        if (ctx != null) {
-            // non blocking mode.
-            ctx.setBuffer(buffer);
-            writeBytesNonBlocking(ctx);
-        } else {
-            // blocking mode.
-            writeBytesBlocking(buffer);
-        }
+        return buffer;
     }
 
     public static class Context {
@@ -350,19 +364,7 @@ public class Writer implements IChannelWriter {
         return _transmitter.isBlocking();
     }
 
-    private void writeBytesNonBlocking(Context ctx) throws IOException, IOFilterException {
-        if (_filterManager != null && !ctx.isSystemResponse()) {
-            _filterManager.writeBytesNonBlocking(ctx);
-        } else {
-            //Regular write Bytes non blocking, restore read interest if finish writing
-            //synchronously
-            writeBytesToChannelNoneBlocking(ctx, true);
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see com.gigaspaces.lrmi.nio.IChannelWriter#writeBytesToChannelNoneBlocking(com.gigaspaces.lrmi.nio.Writer.Context)
-     */
+    @Override
     public synchronized void writeBytesToChannelNoneBlocking(Context ctx, boolean restoreReadInterest) throws IOException {
         if (_contexts.isEmpty()) {
             noneBlockingWrite(ctx);
@@ -419,18 +421,7 @@ public class Writer implements IChannelWriter {
         }
     }
 
-
-    private void writeBytesBlocking(ByteBuffer dataBuffer) throws IOException, IOFilterException {
-        if (_filterManager != null) {
-            _filterManager.writeBytesBlocking(dataBuffer);
-        } else {
-            writeBytesToChannelBlocking(dataBuffer);
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see com.gigaspaces.lrmi.nio.IChannelWriter#writeBytesToChannelBlocking(java.nio.ByteBuffer)
-     */
+    @Override
     public void writeBytesToChannelBlocking(ByteBuffer dataBuffer) throws IOException {
         _transmitter.writeBytesToChannelBlocking(dataBuffer);
     }
