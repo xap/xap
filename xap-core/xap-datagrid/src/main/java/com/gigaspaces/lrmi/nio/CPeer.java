@@ -230,7 +230,7 @@ public class CPeer extends BaseClientPeer {
 
             if (_writer != null)
                 _generatedTraffic += _writer.getGeneratedTraffic();
-            _writer = new Writer(m_SockChannel, _slowConsumerThroughput, _slowConsumerLatency, _slowConsumerRetries, null);
+            _writer = new Writer(m_SockChannel, _slowConsumerThroughput, _slowConsumerLatency, _slowConsumerRetries);
             if (_reader != null)
                 _receivedTraffic += _reader.getReceivedTraffic();
             _reader = new Reader(m_SockChannel, _slowConsumerRetries);
@@ -313,7 +313,7 @@ public class CPeer extends BaseClientPeer {
 
             if (_writer != null)
                 _generatedTraffic += _writer.getGeneratedTraffic();
-            _writer = new Writer(m_SockChannel, _slowConsumerThroughput, _slowConsumerLatency, _slowConsumerRetries, null);
+            _writer = new Writer(m_SockChannel, _slowConsumerThroughput, _slowConsumerLatency, _slowConsumerRetries);
             if (_reader != null)
                 _receivedTraffic += _reader.getReceivedTraffic();
             _reader = new Reader(m_SockChannel, _slowConsumerRetries);

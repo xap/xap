@@ -101,11 +101,11 @@ public class Writer implements IChannelWriter {
         return pendingWrites;
     }
 
-    public Writer(SocketChannel sockChannel, IWriteInterestManager writeInterestManager) {
-        this(sockChannel, 0, Integer.MAX_VALUE, Integer.MAX_VALUE, writeInterestManager);
+    public Writer(SocketChannel sockChannel) {
+        this(sockChannel, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
     }
 
-    public Writer(SocketChannel sockChannel, int slowConsumerThroughput, int slowConsumerLatency, int slowConsumerRetries, IWriteInterestManager writeInterestManager) {
+    public Writer(SocketChannel sockChannel, int slowConsumerThroughput, int slowConsumerLatency, int slowConsumerRetries) {
         _sockChannel = sockChannel;
         _slowConsumerThroughput = slowConsumerThroughput;
         _slowConsumerLatency = slowConsumerLatency;
@@ -115,7 +115,6 @@ public class Writer implements IChannelWriter {
         _slowConsumerSleepTime = _slowConsumerLatency / _slowConsumerRetries + 1;
         _slowConsumerBytes = (_slowConsumerThroughput * _slowConsumerLatency) / 1000;
         _contexts = new LinkedList<Context>();
-        _writeInterestManager = writeInterestManager;
 
         try {
             _baos = new GSByteArrayOutputStream();

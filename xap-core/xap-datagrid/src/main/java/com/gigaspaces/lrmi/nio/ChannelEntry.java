@@ -118,7 +118,8 @@ public class ChannelEntry implements IWriteInterestManager {
         _readSelectorThread = readSelectorThread;
         _writeSelectorThread = writeSelectorThread;
         _socketChannel = channel;
-        _writer = new Writer(channel, this);
+        _writer = new Writer(channel);
+        _writer.setWriteInterestManager(this);
         _reader = new Reader(channel, _pivot.getSystemRequestHandler());
         _connectionID = UIDGen.nextId();
         _connectionTimeStamp = SystemTime.timeMillis();
