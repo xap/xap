@@ -133,9 +133,6 @@ public class CPeer extends BaseClientPeer {
     private ClientPeerWatchedObjectsContext _watchdogContext;
 
     private boolean _blocking = true;
-    private int _slowConsumerThroughput;
-    private int _slowConsumerLatency;
-    private int _slowConsumerRetries;
 
     private ITransportConfig _config;
     private InetSocketAddress m_Address;
@@ -180,9 +177,6 @@ public class CPeer extends BaseClientPeer {
     public void init(ITransportConfig config) {
         _config = config;
         _blocking = config.isBlockingConnection();
-        _slowConsumerThroughput = config.getSlowConsumerThroughput();
-        _slowConsumerLatency = config.getSlowConsumerLatency();
-        _slowConsumerRetries = config.getSlowConsumerRetries();
         _protocolValidationEnabled = ((NIOConfiguration) config).isProtocolValidationEnabled();
         _asyncConnect = System.getProperty(SystemProperties.LRMI_USE_ASYNC_CONNECT) == null || Boolean.getBoolean(SystemProperties.LRMI_USE_ASYNC_CONNECT);
     }
@@ -193,7 +187,7 @@ public class CPeer extends BaseClientPeer {
     }
 
     public synchronized void connect(String connectionURL, LRMIMethod lrmiMethod) throws MalformedURLException, RemoteException {
-        if (_asyncConnect && IOBlockFilterManager.getFilterFactory() == null && _slowConsumerThroughput == 0 && clientConversationRunner != null) {
+        if (_asyncConnect && IOBlockFilterManager.getFilterFactory() == null && _config.getSlowConsumerThroughput() == 0 && clientConversationRunner != null) {
             connectAsync(connectionURL, lrmiMethod);
         } else {
             connectSync(connectionURL, lrmiMethod);
@@ -230,10 +224,10 @@ public class CPeer extends BaseClientPeer {
 
             if (_writer != null)
                 _generatedTraffic += _writer.getGeneratedTraffic();
-            _writer = new Writer(m_SockChannel, _slowConsumerThroughput, _slowConsumerLatency, _slowConsumerRetries);
+            _writer = new Writer(m_SockChannel, _config);
             if (_reader != null)
                 _receivedTraffic += _reader.getReceivedTraffic();
-            _reader = new Reader(m_SockChannel, _slowConsumerRetries);
+            _reader = new Reader(m_SockChannel, _config.getSlowConsumerRetries());
 
             // save connection URL
             setConnectionURL(connectionURL);
@@ -313,10 +307,10 @@ public class CPeer extends BaseClientPeer {
 
             if (_writer != null)
                 _generatedTraffic += _writer.getGeneratedTraffic();
-            _writer = new Writer(m_SockChannel, _slowConsumerThroughput, _slowConsumerLatency, _slowConsumerRetries);
+            _writer = new Writer(m_SockChannel, _config);
             if (_reader != null)
                 _receivedTraffic += _reader.getReceivedTraffic();
-            _reader = new Reader(m_SockChannel, _slowConsumerRetries);
+            _reader = new Reader(m_SockChannel, _config.getSlowConsumerRetries());
 
             // save connection URL
             setConnectionURL(connectionURL);
@@ -603,7 +597,7 @@ public class CPeer extends BaseClientPeer {
             if (_blocking)
                 _reader.readReply(0, 1000);
             else
-                _reader.readReply(_slowConsumerLatency, 1000);
+                _reader.readReply(_config.getSlowConsumerLatency(), 1000);
         } catch (ClassNotFoundException e) {
             if (_logger.isLoggable(Level.SEVERE))
                 _logger.log(Level.SEVERE, "unexpected exception occured at handshake sequence: [" + getConnectionURL() + "]", e);

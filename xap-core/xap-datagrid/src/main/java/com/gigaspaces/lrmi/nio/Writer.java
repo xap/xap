@@ -16,6 +16,7 @@
 
 package com.gigaspaces.lrmi.nio;
 
+import com.gigaspaces.config.lrmi.ITransportConfig;
 import com.gigaspaces.exception.lrmi.SlowConsumerException;
 import com.gigaspaces.internal.backport.java.util.concurrent.atomic.LongAdder;
 import com.gigaspaces.internal.io.GSByteArrayOutputStream;
@@ -102,14 +103,14 @@ public class Writer implements IChannelWriter {
     }
 
     public Writer(SocketChannel sockChannel) {
-        this(sockChannel, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
+        this(sockChannel, null);
     }
 
-    public Writer(SocketChannel sockChannel, int slowConsumerThroughput, int slowConsumerLatency, int slowConsumerRetries) {
+    public Writer(SocketChannel sockChannel, ITransportConfig config) {
         _sockChannel = sockChannel;
-        _slowConsumerThroughput = slowConsumerThroughput;
-        _slowConsumerLatency = slowConsumerLatency;
-        _slowConsumerRetries = slowConsumerRetries;
+        _slowConsumerThroughput = config != null ? config.getSlowConsumerThroughput() : 0;
+        _slowConsumerLatency = config != null ? config.getSlowConsumerLatency() : Integer.MAX_VALUE;
+        _slowConsumerRetries = config != null ? config.getSlowConsumerRetries() : Integer.MAX_VALUE;
 
         _slowConsumer = _slowConsumerThroughput > 0;
         _slowConsumerSleepTime = _slowConsumerLatency / _slowConsumerRetries + 1;
