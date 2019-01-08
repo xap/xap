@@ -17,7 +17,6 @@
 package com.gigaspaces.lrmi.nio;
 
 import com.gigaspaces.config.lrmi.ITransportConfig;
-import com.gigaspaces.exception.lrmi.SlowConsumerException;
 import com.gigaspaces.internal.backport.java.util.concurrent.atomic.LongAdder;
 import com.gigaspaces.internal.io.GSByteArrayOutputStream;
 import com.gigaspaces.internal.io.MarshalContextClearedException;
@@ -26,17 +25,16 @@ import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.lrmi.LRMIInvocationTrace;
 import com.gigaspaces.lrmi.SmartByteBufferCache;
+import com.gigaspaces.lrmi.Transmitter;
 import com.gigaspaces.lrmi.nio.filters.IOFilterException;
 import com.gigaspaces.lrmi.nio.filters.IOFilterManager;
+import com.gigaspaces.lrmi.tcp.TcpTransmitter;
 import com.j_spaces.kernel.SystemProperties;
 
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -53,16 +51,15 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class Writer implements IChannelWriter {
-    //logger
     final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
-    final private static Logger _slowerConsumerLogger = Logger.getLogger(Constants.LOGGER_LRMI_SLOW_COMSUMER);
 
     /**
      * writer socket channel.
      */
     final private SocketChannel _sockChannel;
+    final private Transmitter _transmitter;
 
-    final static private int BUFFER_LIMIT = Integer.getInteger(SystemProperties.MAX_LRMI_BUFFER_SIZE, SystemProperties.MAX_LRMI_BUFFER_SIZE_DEFAULT);
+    final static public int BUFFER_LIMIT = Integer.getInteger(SystemProperties.MAX_LRMI_BUFFER_SIZE, SystemProperties.MAX_LRMI_BUFFER_SIZE_DEFAULT);
 
     final static private int LENGTH_SIZE = 4; //4 bytes for length
 
@@ -76,12 +73,6 @@ public class Writer implements IChannelWriter {
      */
     final private SmartByteBufferCache _bufferCache = SmartByteBufferCache.getDefaultSmartByteBufferCache();
 
-    final private int _slowConsumerThroughput;
-    final private boolean _slowConsumer;
-    final private int _slowConsumerLatency;
-    final private int _slowConsumerRetries;
-    final private int _slowConsumerSleepTime;
-    final private int _slowConsumerBytes;
     private static final LongAdder generatedTraffic = new LongAdder();
     private long _generatedTraffic;
 
@@ -108,13 +99,7 @@ public class Writer implements IChannelWriter {
 
     public Writer(SocketChannel sockChannel, ITransportConfig config) {
         _sockChannel = sockChannel;
-        _slowConsumerThroughput = config != null ? config.getSlowConsumerThroughput() : 0;
-        _slowConsumerLatency = config != null ? config.getSlowConsumerLatency() : Integer.MAX_VALUE;
-        _slowConsumerRetries = config != null ? config.getSlowConsumerRetries() : Integer.MAX_VALUE;
-
-        _slowConsumer = _slowConsumerThroughput > 0;
-        _slowConsumerSleepTime = _slowConsumerLatency / _slowConsumerRetries + 1;
-        _slowConsumerBytes = (_slowConsumerThroughput * _slowConsumerLatency) / 1000;
+        _transmitter = new TcpTransmitter(sockChannel, config);
         _contexts = new LinkedList<Context>();
 
         try {
@@ -174,7 +159,7 @@ public class Writer implements IChannelWriter {
     }
 
     public boolean isOpen() {
-        return _sockChannel.isOpen();
+        return _transmitter.isOpen();
     }
 
     //Access to contexts should be synchronized
@@ -362,7 +347,7 @@ public class Writer implements IChannelWriter {
 
 
     public boolean isBlocking() {
-        return _sockChannel.isBlocking();
+        return _transmitter.isBlocking();
     }
 
     private void writeBytesNonBlocking(Context ctx) throws IOException, IOFilterException {
@@ -446,100 +431,8 @@ public class Writer implements IChannelWriter {
     /* (non-Javadoc)
      * @see com.gigaspaces.lrmi.nio.IChannelWriter#writeBytesToChannelBlocking(java.nio.ByteBuffer)
      */
-    public void writeBytesToChannelBlocking(ByteBuffer dataBuffer)
-            throws IOException, ClosedChannelException, SlowConsumerException {
-        int totalBytesWritten = 0; // total bytes written from the all buffer
-        int bytesRetries = 0; // total amount of bytes written since the
-        int retries = _slowConsumerRetries;
-        final int length = dataBuffer.remaining();
-        boolean useSlidingWindow = length >= BUFFER_LIMIT;
-
-        int currentPosision = 0;
-        Selector tempSelector = null;
-        SelectionKey tmpKey = null;
-
-        try {
-            while (true) {
-                int bytes;
-                if (useSlidingWindow) {
-                    if (totalBytesWritten >= length) // finish writing all
-                        break;
-
-                    dataBuffer.position(currentPosision).limit(Math.min(length, currentPosision + BUFFER_LIMIT));
-                    ByteBuffer window = dataBuffer.slice();
-                    int windowSize = window.remaining();
-                    bytes = _sockChannel.write(window);
-                    currentPosision += bytes;
-
-                    if (bytes == 0) {
-                        if (tempSelector == null) {
-                            tempSelector = TemporarySelectorFactory.getSelector();
-                            tmpKey = _sockChannel.register(tempSelector, SelectionKey.OP_WRITE);
-                        }
-
-                        tmpKey.interestOps(tmpKey.interestOps() | SelectionKey.OP_WRITE);
-                        int res = tempSelector.select(1000);
-                        tmpKey.interestOps(tmpKey.interestOps() & (~SelectionKey.OP_WRITE));
-
-                        if (res == 1) {
-                            continue;
-                        }
-                    } else if (bytes == windowSize) {
-                        totalBytesWritten += bytes;
-                        continue;
-                    }
-                } else {
-                    bytes = _sockChannel.write(dataBuffer);
-                }
-
-                totalBytesWritten += bytes;
-                if (totalBytesWritten >= length) // finish writing all
-                    break;
-
-                bytesRetries += bytes;
-                if (_slowConsumer && bytesRetries < _slowConsumerBytes) {
-                    if (retries-- == 0) {
-                        String slowConsumerCloseMsg = prepareSlowConsumerCloseMsg(getEndPointAddress());
-                        if (_slowerConsumerLogger.isLoggable(Level.WARNING)) {
-                            _slowerConsumerLogger.warning(slowConsumerCloseMsg);
-                        }
-                        _sockChannel.close();
-                        throw new SlowConsumerException(slowConsumerCloseMsg);
-                    }
-                    //else
-                    try {
-                        if (_slowerConsumerLogger.isLoggable(Level.FINE)) {
-                            _slowerConsumerLogger.fine(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries));
-                        }
-                        Thread.sleep(_slowConsumerSleepTime);
-                    } catch (InterruptedException e) {
-                        IOException ioe = new IOException("Interrupted while writing response.");
-                        ioe.initCause(e);
-                        throw ioe;
-                    }
-                } else {
-                    bytesRetries = 0;
-                    retries = _slowConsumerRetries;
-                }
-
-            }
-        } finally {
-            if (tmpKey != null)
-                tmpKey.cancel();
-
-            if (tempSelector != null) {
-                // releases and clears the key.
-                try {
-                    tempSelector.selectNow();
-                } catch (IOException ex) {
-                }
-
-                TemporarySelectorFactory.returnSelector(tempSelector);
-            }
-        }
-        /*
-        *  _dataBuffer isn't available after this point and should not be used!!
-        */
+    public void writeBytesToChannelBlocking(ByteBuffer dataBuffer) throws IOException {
+        _transmitter.writeBytesToChannelBlocking(dataBuffer);
     }
 
     /**
@@ -645,29 +538,6 @@ public class Writer implements IChannelWriter {
         _baos.setBuffer(streamBuffer, LENGTH_SIZE); // 4 bytes for size 
         return byteBuffer;
     }
-
-
-    /**
-     * Prepares log massage.
-     */
-    private String prepareSlowConsumerSleepMsg(SocketAddress address, int retriesLeft) {
-        return "Sleeping - waiting for slow consumer: " + address +
-                " Retry=" + (_slowConsumerRetries - retriesLeft) +
-                " SlowConsumerThroughput=" + _slowConsumerThroughput +
-                " SlowConsumerRetries=" + _slowConsumerRetries +
-                " SlowConsumerLatency=" + _slowConsumerLatency;
-    }
-
-    /**
-     * Prepares log massage.
-     */
-    private String prepareSlowConsumerCloseMsg(SocketAddress address) {
-        return "Closed slow consumer: " + address +
-                " SlowConsumerThroughput=" + _slowConsumerThroughput +
-                " SlowConsumerRetries=" + _slowConsumerRetries +
-                " SlowConsumerLatency=" + _slowConsumerLatency;
-    }
-
 
     private void removeWriteInterest(boolean restoreReadInterest) {
         if (_writeInterestManager != null) {
