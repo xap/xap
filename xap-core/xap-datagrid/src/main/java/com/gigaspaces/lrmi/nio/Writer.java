@@ -22,7 +22,6 @@ import com.gigaspaces.internal.io.GSByteArrayOutputStream;
 import com.gigaspaces.internal.io.MarshalContextClearedException;
 import com.gigaspaces.internal.io.MarshalOutputStream;
 import com.gigaspaces.logger.Constants;
-import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.lrmi.LRMIInvocationTrace;
 import com.gigaspaces.lrmi.SmartByteBufferCache;
 import com.gigaspaces.lrmi.Transmitter;
@@ -36,8 +35,6 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -66,8 +63,6 @@ public class Writer implements IChannelWriter {
     final private MarshalOutputStream _oos;
     final private GSByteArrayOutputStream _baos;
 
-    final static private int WRITE_DELAY_BEFORE_WARN = Integer.getInteger(SystemProperties.WRITE_DELAY_BEFORE_WARN, SystemProperties.WRITE_DELAY_BEFORE_WARN_DEFAULT);
-
     /**
      * reuse buffer, growing on demand.
      */
@@ -80,10 +75,7 @@ public class Writer implements IChannelWriter {
 
     IOFilterManager _filterManager;
 
-    private final Queue<Context> _contexts;
     private static final LongAdder pendingWrites = new LongAdder();
-
-    private IWriteInterestManager _writeInterestManager;
 
     public static LongAdder getGeneratedTrafficCounter() {
         return generatedTraffic;
@@ -93,14 +85,17 @@ public class Writer implements IChannelWriter {
         return pendingWrites;
     }
 
-    public Writer(SocketChannel sockChannel) {
-        this(sockChannel, null);
+    public Writer(SocketChannel socketChannel) {
+        this(socketChannel, (ITransportConfig)null);
     }
 
-    public Writer(SocketChannel sockChannel, ITransportConfig config) {
-        _sockChannel = sockChannel;
-        _transmitter = new TcpTransmitter(sockChannel, config);
-        _contexts = new LinkedList<Context>();
+    public Writer(SocketChannel socketChannel, ITransportConfig config) {
+        this(socketChannel, new TcpTransmitter(socketChannel, config));
+    }
+
+    public Writer(SocketChannel socketChannel, Transmitter transmitter) {
+        _sockChannel = socketChannel;
+        _transmitter = transmitter;
 
         try {
             _baos = new GSByteArrayOutputStream();
@@ -123,7 +118,7 @@ public class Writer implements IChannelWriter {
      * selector thread will not use _writeInterestManager until write is performed.
      */
     public void setWriteInterestManager(IWriteInterestManager writeInterestManager) {
-        _writeInterestManager = writeInterestManager;
+        _transmitter.setWriteInterestManager(writeInterestManager);
     }
 
     /**
@@ -193,7 +188,7 @@ public class Writer implements IChannelWriter {
         MarshalOutputStream mos;
         GSByteArrayOutputStream bos;
 
-        final boolean reuseBuffer = requestReuseBuffer && _contexts.isEmpty();
+        final boolean reuseBuffer = requestReuseBuffer && !_transmitter.hasQueuedContexts();
         if (reuseBuffer) {
             mos = _oos;
             bos = _baos;
@@ -366,59 +361,7 @@ public class Writer implements IChannelWriter {
 
     @Override
     public synchronized void writeBytesToChannelNoneBlocking(Context ctx, boolean restoreReadInterest) throws IOException {
-        if (_contexts.isEmpty()) {
-            noneBlockingWrite(ctx);
-            if (ctx.getPhase() != Context.Phase.FINISH) {
-                _contexts.offer(ctx);
-                setWriteInterest();
-                pendingWrites.increment();
-            } else {
-                // must call it because we might be here after a ClassProvider writing with a registered
-                // write interest.
-                removeWriteInterest(restoreReadInterest);
-            }
-        } else {
-            _contexts.offer(ctx);
-            setWriteInterest();
-            pendingWrites.increment();
-        }
-    }
-
-    protected void noneBlockingWrite(Context ctx) throws IOException {
-        if (ctx.getPhase() == Context.Phase.START) {
-            int dataLength = ctx.getBuffer().remaining();
-            ctx.setTotalLength(dataLength);
-            ctx.setPhase(Context.Phase.WRITING);
-        }
-        if (ctx.getPhase() == Context.Phase.WRITING) {
-            boolean useSlidingWindow = ctx.getTotalLength() >= BUFFER_LIMIT;
-
-            int bytes;
-            if (useSlidingWindow) {
-                while (ctx.getTotalBytesWritten() < ctx.getTotalLength()) // finish writing all
-                {
-                    ctx.getBuffer().position(ctx.getCurrentPosition()).limit(Math.min(ctx.getTotalLength(), ctx.getCurrentPosition() + BUFFER_LIMIT));
-                    ByteBuffer window = ctx.getBuffer().slice();
-                    int windowSize = window.remaining();
-                    bytes = _sockChannel.write(window);
-                    ctx.setCurrentPosition(ctx.getCurrentPosition() + bytes);
-                    ctx.setTotalBytesWritten(ctx.getTotalBytesWritten() + bytes);
-
-                    if (bytes < windowSize) // socket channel buffer seems to be full, need to wait on the selector.
-                    {
-                        return;
-                    }
-                }
-            } else {
-                bytes = _sockChannel.write(ctx.getBuffer());
-                ctx.setTotalBytesWritten(ctx.getTotalBytesWritten() + bytes);
-            }
-
-            if (ctx.getTotalBytesWritten() == ctx.getTotalLength()) // finish writing all
-            {
-                ctx.setPhase(Context.Phase.FINISH);
-            }
-        }
+        _transmitter.writeBytesToChannelNoneBlocking(ctx, restoreReadInterest);
     }
 
     @Override
@@ -431,45 +374,11 @@ public class Writer implements IChannelWriter {
      *
      * This is synchronized to ensure mutual exclusion with writeBytesToChannelNoneBlocking method
      *
-     * @see #noneBlockingWrite
+     * @see TcpTransmitter#noneBlockingWrite
      */
     public synchronized void onWriteEvent() throws IOException {
-        LRMIInvocationTrace trace = null;
-        try {
-            while (!_contexts.isEmpty()) {
-                Context current = _contexts.peek();
-                trace = current.getTrace();
-                if (trace != null)
-                    LRMIInvocationContext.updateContext(trace, null, null, null, null, false, null, null);
-                noneBlockingWrite(current);
-                if (current.getPhase() != Context.Phase.FINISH) {
-                    // channel write buffer is full, wait on selector.
-                    setWriteInterest();
-                    break;
-                } else {
-                    traceContextTotalWriteTime(current);
-                    _contexts.poll();
-                    pendingWrites.decrement();
-                }
-            }
-            if (_contexts.isEmpty()) {
-                removeWriteInterest(true);
-            }
-        } finally {
-            if (trace != null)
-                LRMIInvocationContext.resetContext();
-        }
+        _transmitter.onWriteEvent();
     }
-
-    private void traceContextTotalWriteTime(Context context) {
-        long writeTime = System.currentTimeMillis() - context.getCreationTime();
-        if (WRITE_DELAY_BEFORE_WARN < writeTime) {
-            String method = context.getTrace() != null ? context.getTrace().getTraceShortDisplayString() : "unknown";
-            _logger.warning("write to " + getEndPointAddress() + " method " + method + " was fully performed only " + writeTime + " milliseconds after requested" +
-                    ", the system may be overloaded or the network is bad.");
-        }
-    }
-
 
     /**
      * @param byteBuffer buffer that might be used by the GSByteArrayOutputStream
@@ -528,18 +437,6 @@ public class Writer implements IChannelWriter {
         byte[] streamBuffer = byteBuffer.array();
         _baos.setBuffer(streamBuffer, LENGTH_SIZE); // 4 bytes for size 
         return byteBuffer;
-    }
-
-    private void removeWriteInterest(boolean restoreReadInterest) {
-        if (_writeInterestManager != null) {
-            _writeInterestManager.removeWriteInterest(restoreReadInterest);
-        }
-    }
-
-    private void setWriteInterest() {
-        if (_writeInterestManager != null) {
-            _writeInterestManager.setWriteInterest();
-        }
     }
 
     public void closeContext() {
