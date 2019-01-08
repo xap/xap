@@ -187,6 +187,7 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
 import static com.j_spaces.core.Constants.CacheManager.*;
@@ -344,8 +345,21 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         // TODO RMI connections are not blocked
         if (_clusterPolicy != null && _clusterPolicy.isPersistentStartupEnabled())
             initSpaceStartupStateManager();
-
         _broadcastTableHandler = new BroadcastTableHandler(this);
+        String fileLusPath = System.getProperty(SystemProperties.LUS_FILE_PATH);
+        if (fileLusPath != null)
+            registerFile(fileLusPath);
+    }
+
+    private void registerFile(String path)  {
+        File file = new File(path, getName() + ".service");
+        try(ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(file))){
+            os.writeObject(getSpaceStub());
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to register space");
+        }
+
+
     }
 
     private ZKCollocatedClientConfig createZKCollocatedClientConfig() {

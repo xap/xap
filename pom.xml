@@ -63,6 +63,7 @@
         <module>xap-extensions/xap-groovy</module>
         <module>xap-extensions/xap-jruby</module>
         <module>xap-extensions/xap-full-text-search</module>
+        <module>xap-extensions/xap-rdma</module>
         <module>xap-tools/xap-cli</module>
         <module>xap-dist</module>
         <module>xap-extensions/xap-reporter</module>
@@ -115,6 +116,12 @@
                 <scope>compile</scope>
             </dependency>
             <dependency>
+                <groupId>com.ibm.disni</groupId>
+                <artifactId>disni</artifactId>
+                <version>2.0</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-datagrid</artifactId>
                 <version>${project.version}</version>
@@ -123,6 +130,18 @@
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-asm</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.gigaspaces</groupId>
+                <artifactId>xap-rdma</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.gigaspaces</groupId>
+                <artifactId>xap-netty</artifactId>
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>

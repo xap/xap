@@ -2120,6 +2120,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
     private NonActivatableServiceDescriptor.Created _reggieCreatedRef = null;
 
     private static NonActivatableServiceDescriptor.Created createLookupServiceIfNeeded(String containerName) {
+        if (System.getProperty(SystemProperties.LUS_FILE_PATH) != null)
+            return null;
         // starting embedded Jini Lookup Service if the [start-embedded-lus] set to true in the container schema
         boolean isEmbeddedReggieEnabled = Boolean.parseBoolean(JProperties.getContainerProperty(containerName,
                 START_EMBEDDED_LOOKUP_PROP, START_EMBEDDED_LOOKUP_DEFAULT, true));

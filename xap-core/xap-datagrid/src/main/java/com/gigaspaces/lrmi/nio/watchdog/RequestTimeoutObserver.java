@@ -23,6 +23,7 @@ import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.lrmi.ConnectionResource;
 import com.gigaspaces.lrmi.LRMIUtilities;
 import com.gigaspaces.lrmi.nio.CPeer;
+import com.gigaspaces.lrmi.nio.LrmiChannel;
 import com.gigaspaces.lrmi.nio.async.AsyncContext;
 import com.gigaspaces.lrmi.nio.watchdog.Watchdog.WatchedObject;
 import com.gigaspaces.time.SystemTime;
@@ -85,11 +86,11 @@ public class RequestTimeoutObserver
 
             // Test connection to server
             // Open a new socket
-            serverAddress = watched.getSocket().socket().getRemoteSocketAddress();
+            serverAddress = watched.getChannel().getRemoteSocketAddress();
             if (serverAddress == null)
-                throw new IOException("Watched socket was already closed: " + watched.getSocket().socket());
+                throw new IOException("Watched socket was already closed: " + watched.getChannel().getSocketDesc());
 
-            final int localPort = watched.getSocket().socket().getLocalPort();
+            final int localPort = watched.getChannel().getLocalPort();
 
             if (_logger.isDebugEnabled())
                 _logger.debug("Attempting to create a new socket to the ServerEndPoint [" + serverAddress + "], local port[" + localPort + "]");
@@ -135,30 +136,22 @@ public class RequestTimeoutObserver
         return "Established new connection with the ServerEndPoint [" + serverAddress + "], assuming connection is valid";
     }
 
-    protected String getInvalidConnectionMessage(SocketAddress serverAddress, SocketChannel watchedSocketChannel, Watchdog.WatchedObject watched) {
+    protected String getInvalidConnectionMessage(SocketAddress serverAddress, LrmiChannel watchedSocketChannel, Watchdog.WatchedObject watched) {
         return "The ServerEndPoint [" + serverAddress + "] is not reachable (timeout [" +
                 _INSPECT_TIMEOUT + "]); closing invalid connection with local address ["
                 + getLocalAddressString(watchedSocketChannel) + "]" + getWatchedObjectInvocationMessage(watched);
     }
 
-    protected String getFailureToCloseInvalidConnectionMessage(SocketAddress serverAddress, SocketChannel watchedSocketChannel) {
+    protected String getFailureToCloseInvalidConnectionMessage(SocketAddress serverAddress, LrmiChannel watchedSocketChannel) {
         return "A connection to the ServerEndPoint [" +
-                watchedSocketChannel.socket().getRemoteSocketAddress() +
+                watchedSocketChannel.getRemoteSocketAddress() +
                 "] that is not reachable, could not be closed. ";
     }
 
-    protected String getLocalAddressString(SocketChannel socketChannel) {
-        String localAddress = "not connected";
-        if (socketChannel != null) {
-            //Avoid possible NPE if socket gets disconnected
-            Socket socket = socketChannel.socket();
-            if (socket != null) {
-                SocketAddress localSocketAddress = socket.getLocalSocketAddress();
-                //Avoid possible NPE if socket gets disconnected
-                if (localSocketAddress != null)
-                    localAddress = localSocketAddress.toString();
-            }
-        }
+    protected String getLocalAddressString(LrmiChannel channel) {
+        //Avoid possible NPE if socket gets disconnected
+        SocketAddress localSocketAddress = channel != null ? channel.getLocalSocketAddress() : null;
+        String localAddress = localSocketAddress != null ? localSocketAddress.toString() : "not connected";
         return localAddress;
     }
 
@@ -185,7 +178,7 @@ public class RequestTimeoutObserver
                             " original invocation version. [original version=" + originalInvocationVersion +
                             ", current version=" + currentWatchedInvocationVersion +
                             "original message [" +
-                            getInvalidConnectionMessage(serverAddress, watched.getSocket(), watched) + "[" + e + "]]");
+                            getInvalidConnectionMessage(serverAddress, watched.getChannel(), watched) + "[" + e + "]]");
                 }
                 continue;
             }
@@ -201,13 +194,13 @@ public class RequestTimeoutObserver
                 LogLevel closeConnectionLoggingLevel = getCloseConnectionLoggingLevel();
 
                 if (closeConnectionLoggingLevel.isEnabled(_logger)) {
-                    String invalidConnectionMessage = getInvalidConnectionMessage(serverAddress, watched.getSocket(), watched);
+                    String invalidConnectionMessage = getInvalidConnectionMessage(serverAddress, watched.getChannel(), watched);
                     closeConnectionLoggingLevel.log(_logger, invalidConnectionMessage + "[" + e + "]", e);
                 }
 
                 // Close the socket
-                if (watched.getSocket().isBlocking()) {
-                    watched.getSocket().close();
+                if (watched.getChannel().isBlocking()) {
+                    watched.getChannel().close();
                 } else {
                     AsyncContext context = ((CPeer) watched.getClient()).getAsyncContext();
                     if (context != null) {
@@ -222,7 +215,7 @@ public class RequestTimeoutObserver
                 }
             } catch (Exception ex) {
                 if (_logger.isDebugEnabled()) {
-                    _logger.debug(getFailureToCloseInvalidConnectionMessage(serverAddress, watched.getSocket()), ex);
+                    _logger.debug(getFailureToCloseInvalidConnectionMessage(serverAddress, watched.getChannel()), ex);
                 }
             }
         }

@@ -590,6 +590,9 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
      * unregister method is invoked during shutdown.
      */
     public GigaRegistrar(String[] configArgs, final LifeCycle lifeCycle) throws Exception {
+        if (System.getProperty(SystemProperties.LUS_FILE_PATH) != null) {
+            throw new IllegalStateException("LUS should not be started when file-lus is configured");
+        }
         try {
             //
             activate();

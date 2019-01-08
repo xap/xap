@@ -22,12 +22,12 @@ import com.gigaspaces.internal.utils.concurrent.GSThread;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.lrmi.ConnectionResource;
+import com.gigaspaces.lrmi.nio.LrmiChannel;
 import com.j_spaces.core.service.ServiceConfigLoader;
 import com.j_spaces.kernel.SystemProperties;
 
 import java.lang.ref.WeakReference;
 import java.net.SocketAddress;
-import java.nio.channels.SocketChannel;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -402,20 +402,20 @@ public class Watchdog extends GSThread {
         /**
          * Add given socket to the watched objects (request group)
          *
-         * @param sock socket
+         * @param channel channel
          */
-        public WatchedObject addRequestWatch(SocketChannel sock, ConnectionResource client) {
-            return addWatch(new WatchedObject(this, sock, client));
+        public WatchedObject addRequestWatch(LrmiChannel channel, ConnectionResource client) {
+            return addWatch(new WatchedObject(this, channel, client));
 
         }
 
         /**
          * Add given socket and cpeer to the watched objects (response group)
          *
-         * @param sock socket
+         * @param channel channel
          */
-        public WatchedObject addResponseWatch(SocketChannel sock, ConnectionResource client) {
-            return addWatch(new ResponseWatchedObject(this, sock, client));
+        public WatchedObject addResponseWatch(LrmiChannel channel, ConnectionResource client) {
+            return addWatch(new ResponseWatchedObject(this, channel, client));
         }
 
         /**
@@ -466,7 +466,7 @@ public class Watchdog extends GSThread {
         // Last time this object was added to watch
         private int _time = UNWATCHED;
         // The socket to watch
-        private final SocketChannel _socket;
+        private final LrmiChannel _channel;
 
         // The client using the watched socket
         protected final ConnectionResource _client;
@@ -485,11 +485,11 @@ public class Watchdog extends GSThread {
 
         /**
          * @param group
-         * @param socket
+         * @param channel
          */
-        public WatchedObject(WatchdogGroup group, SocketChannel socket, ConnectionResource client) {
+        public WatchedObject(WatchdogGroup group, LrmiChannel channel, ConnectionResource client) {
             _watchdogGroup = group;
-            _socket = socket;
+            _channel = channel;
             _client = client;
         }
 
@@ -500,8 +500,8 @@ public class Watchdog extends GSThread {
         /**
          * @return
          */
-        public SocketChannel getSocket() {
-            return _socket;
+        public LrmiChannel getChannel() {
+            return _channel;
         }
 
         public ConnectionResource getClient() {
@@ -551,8 +551,8 @@ public class Watchdog extends GSThread {
         public boolean equals(Object obj) {
             if (!(obj instanceof WatchedObject))
                 return false;
-            SocketAddress myAddress = _socket.socket().getRemoteSocketAddress();
-            SocketAddress hisAddress = ((WatchedObject) obj)._socket.socket().getRemoteSocketAddress();
+            SocketAddress myAddress = _channel.getRemoteSocketAddress();
+            SocketAddress hisAddress = ((WatchedObject) obj)._channel.getRemoteSocketAddress();
             if (myAddress != null)
                 return myAddress.equals(hisAddress);
             return false;
@@ -560,7 +560,7 @@ public class Watchdog extends GSThread {
 
         @Override
         public int hashCode() {
-            SocketAddress address = _socket.socket().getRemoteSocketAddress();
+            SocketAddress address = _channel.getRemoteSocketAddress();
             if (null == address)
                 return 0;
             return address.hashCode();
@@ -592,9 +592,9 @@ public class Watchdog extends GSThread {
      */
     final static class ResponseWatchedObject
             extends WatchedObject {
-        public ResponseWatchedObject(WatchdogGroup group, SocketChannel socket,
+        public ResponseWatchedObject(WatchdogGroup group, LrmiChannel channel,
                                      ConnectionResource client) {
-            super(group, socket, client);
+            super(group, channel, client);
         }
 
         @Override

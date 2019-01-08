@@ -16,6 +16,10 @@
 
 package com.gigaspaces.internal.io;
 
+import com.gigaspaces.api.InternalApi;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -28,7 +32,7 @@ import java.nio.ByteBuffer;
  * @author niv
  * @since 6.6
  */
-@com.gigaspaces.api.InternalApi
+@InternalApi
 public class GSByteArrayOutputStream extends OutputStream {
     /**
      * The buffer where data is stored.
@@ -41,6 +45,7 @@ public class GSByteArrayOutputStream extends OutputStream {
     protected int _count;
 
     private int _compactionNeededTimes;
+    private int maxCapacity;
 
     /**
      * Creates a new byte array output stream. The buffer capacity is initially 32 bytes, though its
@@ -95,6 +100,12 @@ public class GSByteArrayOutputStream extends OutputStream {
         this._count = count;
     }
 
+    public void setBufferWithMaxCapacity(byte[] buf) {
+        setBuffer(buf);
+        maxCapacity = buf.length;
+    }
+
+
     /**
      * Gets internal buffers
      *
@@ -127,7 +138,7 @@ public class GSByteArrayOutputStream extends OutputStream {
      *
      * @return the value of the <code>count</code> field, which is the number of valid bytes in this
      * output stream.
-     * @see java.io.ByteArrayOutputStream#count
+     * @see ByteArrayOutputStream#count
      */
     public int size() {
         return _count;
@@ -207,6 +218,8 @@ public class GSByteArrayOutputStream extends OutputStream {
     public boolean ensureCapacity(int delta) {
         int newcount = _count + delta;
         if (newcount > _buffer.length) {
+            if (newcount > maxCapacity)
+                throw new IllegalStateException("Max capacity breached: " + maxCapacity+", current: " + newcount);
             byte newbuf[] = new byte[Math.max(_buffer.length << 1, newcount)];
             System.arraycopy(_buffer, 0, newbuf, 0, _count);
             _buffer = newbuf;
@@ -232,7 +245,7 @@ public class GSByteArrayOutputStream extends OutputStream {
      * currently accumulated output in the output stream is discarded. The output stream can be used
      * again, reusing the already allocated buffer space.
      *
-     * @see java.io.ByteArrayInputStream#count
+     * @see ByteArrayInputStream#count
      */
 
     public void reset() {
@@ -244,7 +257,7 @@ public class GSByteArrayOutputStream extends OutputStream {
      * the valid contents of the buffer have been copied into it.
      *
      * @return the current contents of this output stream, as a byte array.
-     * @see java.io.ByteArrayOutputStream#size()
+     * @see ByteArrayOutputStream#size()
      */
     public byte[] toByteArray() {
         byte newbuf[] = new byte[_count];

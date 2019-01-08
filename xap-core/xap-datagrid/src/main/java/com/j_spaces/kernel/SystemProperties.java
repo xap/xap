@@ -72,6 +72,8 @@ public class SystemProperties extends CommonSystemProperties {
     public final static String JINI_LUS_LOCATORS = SystemInfo.LOOKUP_LOCATORS_SYS_PROP;
     public final static String JINI_LUS_LOCATORS_DEFAULT = "";
 
+    public static final String LUS_FILE_PATH = "com.gs.file-lus.path";
+
     /* XML */
     public final static String CLUSTER_XML_DEBUG = "com.gs.clusterXML.debug";
 

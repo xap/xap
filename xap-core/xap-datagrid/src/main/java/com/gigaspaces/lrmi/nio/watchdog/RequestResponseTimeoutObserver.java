@@ -21,11 +21,7 @@ import com.gigaspaces.internal.io.MarshalInputStream;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.lrmi.ConnectionResource;
-import com.gigaspaces.lrmi.nio.CPeer;
-import com.gigaspaces.lrmi.nio.ChannelEntry;
-import com.gigaspaces.lrmi.nio.ProtocolValidation;
-import com.gigaspaces.lrmi.nio.ReplyPacket;
-import com.gigaspaces.lrmi.nio.SystemRequestHandler;
+import com.gigaspaces.lrmi.nio.*;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.kernel.SystemProperties;
 
@@ -114,7 +110,7 @@ public class RequestResponseTimeoutObserver extends RequestTimeoutObserver {
     }
 
     @Override
-    protected String getInvalidConnectionMessage(SocketAddress serverAddress, SocketChannel watchedSocketChannel, Watchdog.WatchedObject watched) {
+    protected String getInvalidConnectionMessage(SocketAddress serverAddress, LrmiChannel watchedSocketChannel, Watchdog.WatchedObject watched) {
         if (DISABLE_RESPONSE_WATCH)
             return super.getInvalidConnectionMessage(serverAddress, watchedSocketChannel, watched);
 
@@ -127,12 +123,12 @@ public class RequestResponseTimeoutObserver extends RequestTimeoutObserver {
     }
 
     @Override
-    protected String getFailureToCloseInvalidConnectionMessage(SocketAddress serverAddress, SocketChannel watchedSocketChannel) {
+    protected String getFailureToCloseInvalidConnectionMessage(SocketAddress serverAddress, LrmiChannel watchedSocketChannel) {
         if (DISABLE_RESPONSE_WATCH)
             return super.getFailureToCloseInvalidConnectionMessage(serverAddress, watchedSocketChannel);
 
         return "A connection to the ServerEndPoint [" +
-                watchedSocketChannel.socket().getRemoteSocketAddress() +
+                watchedSocketChannel.getRemoteSocketAddress() +
                 "] that has no invocation in progress at the server peer, could not be closed. ";
     }
 

@@ -92,6 +92,11 @@ public class SpaceURL extends Properties implements Externalizable {
     public final static String JINI_PROTOCOL = "jini:";
 
     /**
+     * jini:// protocol.
+     **/
+    public final static String FILE_PROTOCOL = "file:";
+
+    /**
      * rmi:// protocol.
      **/
     public final static String RMI_PROTOCOL = "rmi:";
@@ -105,7 +110,7 @@ public class SpaceURL extends Properties implements Externalizable {
      * Contains a set of actual space protocols.
      */
     private final static Set<String> AVAILABLE_PROTOCOLS = CollectionUtils.toUnmodifiableSet(
-            JINI_PROTOCOL, RMI_PROTOCOL, EMBEDDED_SPACE_PROTOCOL);
+            JINI_PROTOCOL, RMI_PROTOCOL, EMBEDDED_SPACE_PROTOCOL, FILE_PROTOCOL);
 
 
     /**
@@ -864,6 +869,10 @@ public class SpaceURL extends Properties implements Externalizable {
         return StringUtils.equalsIgnoreCase(getProtocol(), JINI_PROTOCOL);
     }
 
+    public boolean isFileProtocol() {
+        return StringUtils.equalsIgnoreCase(getProtocol(), FILE_PROTOCOL);
+    }
+
     /**
      * Returns true if the protocol is RMI, false otherwise.
      *
@@ -888,7 +897,7 @@ public class SpaceURL extends Properties implements Externalizable {
      * @since 9.0.1
      */
     public boolean isRemoteProtocol() {
-        return isJiniProtocol() || isRmiProtocol();
+        return isJiniProtocol() || isRmiProtocol() || isFileProtocol();
     }
 
     /**

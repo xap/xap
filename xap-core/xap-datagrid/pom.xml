@@ -58,12 +58,14 @@
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-asm</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.gigaspaces</groupId>
+            <artifactId>xap-rdma</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-trove</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>

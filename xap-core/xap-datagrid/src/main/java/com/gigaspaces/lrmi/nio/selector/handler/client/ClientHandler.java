@@ -17,6 +17,7 @@
 package com.gigaspaces.lrmi.nio.selector.handler.client;
 
 
+import com.gigaspaces.lrmi.nio.LrmiChannel;
 import com.gigaspaces.lrmi.nio.selector.handler.AbstractSelectorThread;
 
 import java.io.IOException;
@@ -154,14 +155,14 @@ public class ClientHandler extends AbstractSelectorThread {
         }
     }
 
-    public void addChannel(SocketChannel channelSocket, Context ctx) {
-        _registrations.offer(new RegistrationRequest(channelSocket, ctx, RegistrationRequest.Action.REGISTER));
+    public void addChannel(SocketChannel channel, Context ctx) {
+        _registrations.offer(new RegistrationRequest(channel, ctx, RegistrationRequest.Action.REGISTER));
         _registrationsCounter.incrementAndGet();
         getSelector().wakeup();
     }
 
-    public void removeChannel(SocketChannel channelSocket, Context ctx) {
-        _registrations.offer(new RegistrationRequest(channelSocket, ctx, RegistrationRequest.Action.UNREGISTER));
+    public void removeChannel(SocketChannel channel, Context ctx) {
+        _registrations.offer(new RegistrationRequest(channel, ctx, RegistrationRequest.Action.UNREGISTER));
         _registrationsCounter.incrementAndGet();
         if (ownerThread != Thread.currentThread()) {
             getSelector().wakeup();

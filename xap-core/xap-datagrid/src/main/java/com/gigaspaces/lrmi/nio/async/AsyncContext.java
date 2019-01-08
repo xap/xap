@@ -177,7 +177,7 @@ public class AsyncContext implements Context {
                             if (((LRMIUnhandledException) exception).getStage() == Stage.DESERIALIZATION) {
                                 //We must reset the context because the other side have not completed reading the stream and therefore didn't
                                 //learn all the new context
-                                cpeer.getWriter().resetContext();
+                                cpeer.getWriter().getSerializer().resetContext();
                             }
                         }
 

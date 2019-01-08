@@ -17,7 +17,6 @@
 package com.gigaspaces.lrmi.nio;
 
 import com.gigaspaces.exception.lrmi.LRMIUnhandledException;
-import com.gigaspaces.exception.lrmi.SlowConsumerException;
 import com.gigaspaces.internal.backport.java.util.concurrent.atomic.LongAdder;
 import com.gigaspaces.internal.io.GSByteArrayInputStream;
 import com.gigaspaces.internal.io.MarshalContextClearedException;
@@ -43,12 +42,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.rmi.NoSuchObjectException;
 import java.util.Arrays;
-
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  * A Reader is capable of reading Request Packets and Reply Packets from a Socket Channel. An NIO
  * Client Peer uses an instance of a Reader to read Reply Packets while an NIO Server uses an
@@ -58,10 +55,9 @@ import java.util.Arrays;
  * @since 4.0
  */
 @com.gigaspaces.api.InternalApi
-public class Reader {
+public abstract class Reader {
     private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
     private static final Logger offendingMessageLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI + ".offending");
-    private static final Logger _slowerConsumerLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_SLOW_COMSUMER);
     public static final long SUSPICIOUS_THRESHOLD = Long.valueOf(System.getProperty("com.gs.lrmi.suspicious-threshold", "20000000"));
     private static final LongAdder receivedTraffic = new LongAdder();
 
@@ -72,13 +68,7 @@ public class Reader {
     // to simulate TC_RESET
     private static final byte[] _resetBuffer = new byte[]{ObjectStreamConstants.TC_RESET, ObjectStreamConstants.TC_NULL};
 
-    /**
-     * reader socket channel.
-     */
-    private final SocketChannel _socketChannel;
-
-    private static final int BUFFER_LIMIT = Integer.getInteger(SystemProperties.MAX_LRMI_BUFFER_SIZE, SystemProperties.MAX_LRMI_BUFFER_SIZE_DEFAULT);
-
+    protected static final int BUFFER_LIMIT = Integer.getInteger(SystemProperties.MAX_LRMI_BUFFER_SIZE, SystemProperties.MAX_LRMI_BUFFER_SIZE_DEFAULT);
 
     /* Object stream - initialized with null to simplify the code. */
     private MarshalInputStream _ois;
@@ -87,16 +77,15 @@ public class Reader {
     /* cached data  buffer */
     final private SmartByteBufferCache _bufferCache = SmartByteBufferCache.getDefaultSmartByteBufferCache();
 
+    final protected static int HEADER_SIZE = 4;
     /* data length buffer */
-    final private ByteBuffer _headerBuffer = ByteBuffer.allocateDirect(4); // 4 == size of int in bytes
+    final private ByteBuffer _headerBuffer = ByteBuffer.allocateDirect(HEADER_SIZE);
 
     private boolean _bufferIsOccupied = false;
 
     private IOFilterManager _filterManager;
 
     final private MarshalInputStream.Context _streamContext;
-    //TODO fix read slow consumer to work for all read operations like write operations
-    final private int _slowConsumerRetries;
 
     private long _receivedTraffic;
 
@@ -106,16 +95,8 @@ public class Reader {
         return receivedTraffic;
     }
 
-    public Reader(SocketChannel sockChannel, int slowConsumerRetries) {
-        this(sockChannel, slowConsumerRetries, null);
-    }
-
-    public Reader(SocketChannel sockChannel, SystemRequestHandler systemRequestHandler) {
-        this(sockChannel, Integer.MAX_VALUE, systemRequestHandler);
-    }
-
-    private Reader(SocketChannel sockChannel, int slowConsumerRetries, SystemRequestHandler systemRequestHandler) {
-        _socketChannel = sockChannel;
+    protected Reader(SystemRequestHandler systemRequestHandler) {
+        this._systemRequestHandler = systemRequestHandler;
         _headerBuffer.order(ByteOrder.BIG_ENDIAN);
         _streamContext = MarshalInputStream.createContext();
         try {
@@ -126,8 +107,6 @@ public class Reader {
             }
             throw new RuntimeException("Failed to initialize LRMI Reader stream: ", e);
         }
-        this._slowConsumerRetries = slowConsumerRetries;
-        this._systemRequestHandler = systemRequestHandler;
     }
 
     public MarshalInputStream readRequest(Context ctx) throws IOException, IOFilterException {
@@ -209,181 +188,26 @@ public class Reader {
         this._filterManager = filterManager;
     }
 
-    /**
-     * Prepares log massage.
-     */
-    private String prepareSlowConsumerCloseMsg(SocketAddress address, int slowConsumerLatency) {
-        return "Closed slow consumer: " + address +
-                " SlowConsumerRetries=" + _slowConsumerRetries +
-                " SlowConsumerLatency=" + slowConsumerLatency;
-    }
-
-    private String prepareSlowConsumerSleepMsg(SocketAddress endPointAddress,
-                                               int retries, int slowConsumerLatency) {
-        return "Sleeping - waiting for slow consumer: " + endPointAddress +
-                " Retry=" + retries +
-                " SlowConsumerRetries=" + _slowConsumerRetries +
-                " SlowConsumerLatency=" + slowConsumerLatency;
-    }
-
     public ByteBuffer readBytesFromChannelBlocking(boolean createNewBuffer, int slowConsumerLatency, int sizeLimit)
             throws IOException {
-        /* read header (data length) */
-        int bytesRead = 0;
-        int retries = 0;
-        Selector tempSelector = null;
-        SelectionKey tmpKey = null;
-        _headerBuffer.clear();
-        int originalSoTimeout = 0;
-        try {
-            originalSoTimeout = LRMIUtilities.getAndSetSocketTimeout(_socketChannel, LRMIUtilities.READ_BLOCK_TIMEOUT);
-            while (bytesRead < 4) {
-                int bRead = _socketChannel.read(_headerBuffer);
-                if (bRead == -1) // EOF
-                    throwCloseConnection();
-
-                bytesRead += bRead;
-
-                if (bRead == 0) {
-                    final int selectTimeout = (slowConsumerLatency / _slowConsumerRetries) + 1;
-                    final boolean channelIsBlocking = _socketChannel.isBlocking();
-                    if (slowConsumerLatency > 0 && (++retries) > _slowConsumerRetries) {
-                        String slowConsumerMsg = prepareSlowConsumerCloseMsg(getEndPointAddress(), slowConsumerLatency);
-                        if (_slowerConsumerLogger.isWarnEnabled())
-                            _slowerConsumerLogger.warn(slowConsumerMsg);
-                        throw new SlowConsumerException(slowConsumerMsg);
-                    }
-                    // if bRead == 0 this channel is either none blocking, or it is in blocking mode
-                    // but there the socket buffer was empty while the read was called.
-                    // We should use selector to read from this channel without do busy loop.
-                    if (channelIsBlocking) {
-                        _socketChannel.configureBlocking(false);
-                    }
-                    if (tempSelector == null) {
-                        tempSelector = TemporarySelectorFactory.getSelector();
-                        tmpKey = _socketChannel.register(tempSelector, SelectionKey.OP_READ);
-                    }
-                    tmpKey.interestOps(tmpKey.interestOps() | SelectionKey.OP_READ);
-
-                    if (_slowerConsumerLogger.isDebugEnabled())
-                        _slowerConsumerLogger.debug(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries, slowConsumerLatency));
-
-                    tempSelector.select(slowConsumerLatency == 0 ? 0 : selectTimeout);
-                    tmpKey.interestOps(tmpKey.interestOps() & (~SelectionKey.OP_READ));
-                    if (channelIsBlocking) {
-                        _socketChannel.configureBlocking(true);
-                    }
-                }
-            }
-        } finally {
-            LRMIUtilities.getAndSetSocketTimeout(_socketChannel, originalSoTimeout);
-
-            if (tmpKey != null) {
-                tmpKey.cancel();
-                tmpKey = null;
-            }
-
-            if (tempSelector != null) {
-                // releases and clears the key.
-                try {
-                    tempSelector.selectNow();
-                } catch (IOException ignored) {
-                }
-
-                TemporarySelectorFactory.returnSelector(tempSelector);
-                tempSelector = null;
-            }
-        }
-        _receivedTraffic += 4;
-        receivedTraffic.add(4L);
-        _headerBuffer.flip();
-        int dataLength = _headerBuffer.getInt();
+        final AtomicInteger retries = new AtomicInteger(0);
+        final int dataLength = readHeaderBlocking(_headerBuffer, slowConsumerLatency, retries);
         if (0 < sizeLimit && sizeLimit < dataLength) {
             throw new IOException("Handshake failed expecting message of up to " + sizeLimit + " bytes, actual size is: " + dataLength + " bytes.");
         }
         if (dataLength > SUSPICIOUS_THRESHOLD) {
-            _logger.warn("About to allocate " + dataLength + " bytes - from socket channel: " + _socketChannel);
+            _logger.warn("About to allocate " + dataLength + " bytes - from socket channel: " + getEndpointDesc());
         }
 
         /* allocate the buffer on demand, otherwise reuse the buffer */
-        ByteBuffer buffer;
-        buffer = getByteBufferAllocated(createNewBuffer, dataLength);
-
-        /* read to bytes buffer */
-        bytesRead = 0;
-        /*
-         * Sliding window is used to read the data from the channel using limited size buffer instead of 
-         * reading using all the buffer, this is because Java SocketChannel allocate direct buffer that has the same size as
-         * the user buffer when reading from the channel, this may cause our of memory if user buffer is too long. 
-         */
-        boolean shouldUseSlidingWindow = dataLength >= BUFFER_LIMIT;
-
-        int bRead;
-
-        try {
-            originalSoTimeout = LRMIUtilities.getAndSetSocketTimeout(_socketChannel, LRMIUtilities.READ_BLOCK_TIMEOUT);
-            while (bytesRead < dataLength) {
-                ByteBuffer workingBuffer = buffer;
-                if (shouldUseSlidingWindow) {
-                    buffer.position(bytesRead).limit(Math.min(dataLength, bytesRead + BUFFER_LIMIT));
-                    workingBuffer = buffer.slice();
-                }
-                bRead = _socketChannel.read(workingBuffer);
-                if (bRead == -1) // EOF
-                    throwCloseConnection();
-                bytesRead += bRead;
-
-                if (bRead == 0) {
-                    final int selectTimeout = (slowConsumerLatency / _slowConsumerRetries) + 1;
-                    final boolean channelIsBlocking = _socketChannel.isBlocking();
-                    if (slowConsumerLatency > 0 && (++retries) > _slowConsumerRetries) {
-                        String slowConsumerMsg = prepareSlowConsumerCloseMsg(getEndPointAddress(), slowConsumerLatency);
-                        if (_slowerConsumerLogger.isWarnEnabled())
-                            _slowerConsumerLogger.warn(slowConsumerMsg);
-                        throw new SlowConsumerException(slowConsumerMsg);
-                    }
-                    // if bRead == 0 this channel is either none blocking, or it is in blocking mode
-                    // but there the socket buffer was empty while the read was called.
-                    // We should use selector to read from this channel without do busy loop.
-                    if (channelIsBlocking) {
-                        _socketChannel.configureBlocking(false);
-                    }
-                    if (tempSelector == null) {
-                        tempSelector = TemporarySelectorFactory.getSelector();
-                        tmpKey = _socketChannel.register(tempSelector, SelectionKey.OP_READ);
-                    }
-                    tmpKey.interestOps(tmpKey.interestOps() | SelectionKey.OP_READ);
-                    if (_slowerConsumerLogger.isDebugEnabled())
-                        _slowerConsumerLogger.debug(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries, slowConsumerLatency));
-
-                    tempSelector.select(slowConsumerLatency == 0 ? 0 : selectTimeout);
-                    tmpKey.interestOps(tmpKey.interestOps() & (~SelectionKey.OP_READ));
-                    if (channelIsBlocking) {
-                        _socketChannel.configureBlocking(true);
-                    }
-                }
-            }
-        } finally {
-            LRMIUtilities.getAndSetSocketTimeout(_socketChannel, originalSoTimeout);
-            if (tmpKey != null)
-                tmpKey.cancel();
-
-            if (tempSelector != null) {
-                // releases and clears the key.
-                try {
-                    tempSelector.selectNow();
-                } catch (IOException ignored) {
-                }
-
-                TemporarySelectorFactory.returnSelector(tempSelector);
-            }
-        }
-        _receivedTraffic += buffer.position();
-        receivedTraffic.add(buffer.position());
-        buffer.position(0);
-        buffer.limit(dataLength);
+        final ByteBuffer buffer = getByteBufferAllocated(createNewBuffer, dataLength);
+        readPayloadBlocking(buffer, dataLength, slowConsumerLatency, retries);
         return buffer;
     }
+
+    protected abstract int readHeaderBlocking(ByteBuffer buffer, int slowConsumerLatency, AtomicInteger retries) throws IOException;
+
+    protected abstract void readPayloadBlocking(ByteBuffer buffer, int dataLength, int slowConsumerLatency, AtomicInteger retries) throws IOException;
 
     private ByteBuffer getByteBufferAllocated(boolean createNewBuffer, int dataLength) {
         try {
@@ -400,116 +224,100 @@ public class Reader {
 
     private ByteBuffer readBytesFromChannelNoneBlocking(Context ctx)
             throws IOException {
-        /* read header (data length) */
+
         if (ctx.phase == Context.Phase.START) {
             _headerBuffer.clear();
             ctx.phase = Context.Phase.HEADER;
         }
-
         if (ctx.phase == Context.Phase.HEADER) {
-            int bRead = _socketChannel.read(_headerBuffer);
-            if (bRead == -1) // EOF
-                throwCloseConnection();
-
-            ctx.bytesRead += bRead;
-
-            if (ctx.bytesRead < 4) {
+            if (!readHeaderNonBlocking(ctx))
                 return null;
-            }
-            _receivedTraffic += 4;
-            receivedTraffic.add(4L);
-            _headerBuffer.flip();
-            ctx.dataLength = _headerBuffer.getInt();
-
-            if (ctx.dataLength < 0 && _systemRequestHandler.handles(ctx.dataLength /* represents request header */)) {
-                ctx.systemRequestContext = _systemRequestHandler.getRequestContext(ctx.dataLength);
-                ctx.dataLength = ctx.systemRequestContext.getRequestDataLength();
-            }
-
-            if (ctx.messageSizeLimit != 0 && ctx.messageSizeLimit <= ctx.dataLength) {
-                String offendingAddress = _socketChannel.socket() != null ? String.valueOf(_socketChannel.socket().getRemoteSocketAddress()) : "unknown";
-                String msg = "Handshake failed, expecting message of up to " + ctx.messageSizeLimit + " bytes, actual size is: " + ctx.dataLength + " bytes, offending address is " + offendingAddress;
-                if (offendingMessageLogger.isTraceEnabled()) {
-                    try {
-                        ByteBuffer buffer = getByteBufferAllocated(ctx.createNewBuffer, Math.min(ctx.dataLength, 5 * 1024));
-                        _socketChannel.read(buffer);
-                        buffer.flip();
-                        byte[] bytes = new byte[buffer.remaining()];
-                        buffer.get(bytes);
-                        try {
-                            String str = new String(bytes, "UTF-8");
-                            offendingMessageLogger.trace(msg + ", received string is : " + str);
-                        } catch (UnsupportedEncodingException e) {
-                            offendingMessageLogger.trace(msg + ", base64 encoding of the received  buffer is : " + new BASE64Encoder().encode(bytes));
-                        }
-                    } catch (Exception ignored) {
-                    }
-                }
-                throw new ConnectException(msg);
-            }
             /** allocate the buffer on demand, otherwise reuse the buffer */
             ctx.buffer = getByteBufferAllocated(ctx.createNewBuffer, ctx.dataLength);
-
             ctx.bytesRead = 0;
             ctx.phase = Context.Phase.BODY;
         }
-
         if (ctx.phase == Context.Phase.BODY) {
-            /* read to bytes buffer */
-            boolean shouldUseSlidingWindow = ctx.dataLength >= BUFFER_LIMIT;
-
-            if (shouldUseSlidingWindow) {
-                while (ctx.bytesRead < ctx.dataLength) {
-                    ctx.buffer.position(ctx.bytesRead).limit(Math.min(ctx.dataLength, ctx.bytesRead + BUFFER_LIMIT));
-                    ByteBuffer window = ctx.buffer.slice();
-                    int bRead = _socketChannel.read(window);
-                    if (bRead == -1) // EOF
-                        throwCloseConnection();
-                    ctx.bytesRead += bRead;
-
-                    if (bRead < window.capacity()) {
-                        return null;
-                    }
-                }
-            } else {
-                int bRead = _socketChannel.read(ctx.buffer);
-                if (bRead == -1) // EOF
-                    throwCloseConnection();
-
-                ctx.bytesRead += bRead;
-                if (ctx.bytesRead < ctx.dataLength) {
-                    return null;
-                }
-            }
-
-            ctx.phase = Context.Phase.FINISH;
-            _receivedTraffic += ctx.buffer.position();
-            receivedTraffic.add(ctx.buffer.position());
-            ctx.buffer.position(0);
-            ctx.buffer.limit(ctx.dataLength);
-            return ctx.buffer;
+            return readPayloadNonBlocking(ctx);
         }
         throw new IllegalStateException(String.valueOf(ctx.phase));
     }
 
-    /**
-     * @return the endpoint of the connected SocketChannel.
-     */
-    private SocketAddress getEndPointAddress() {
-        return _socketChannel != null ? _socketChannel.socket().getRemoteSocketAddress() : null;
+    private boolean readHeaderNonBlocking(Context ctx) throws IOException {
+        int bRead = read(_headerBuffer);
+        ctx.bytesRead += bRead;
+
+        if (ctx.bytesRead < HEADER_SIZE) {
+            return false;
+        }
+        incReceivedTraffic(HEADER_SIZE);
+        _headerBuffer.flip();
+        ctx.dataLength = _headerBuffer.getInt();
+
+        // Process system request if needed:
+        if (ctx.dataLength < 0 && _systemRequestHandler.handles(ctx.dataLength /* represents request header */)) {
+            ctx.systemRequestContext = _systemRequestHandler.getRequestContext(ctx.dataLength);
+            ctx.dataLength = ctx.systemRequestContext.getRequestDataLength();
+        }
+
+        if (ctx.messageSizeLimit != 0 && ctx.messageSizeLimit <= ctx.dataLength) {
+            String msg = "Handshake failed, expecting message of up to " + ctx.messageSizeLimit + " bytes, actual size is: " + ctx.dataLength + " bytes, offending address is " + getEndPointAddressDesc();
+            if (offendingMessageLogger.isTraceEnabled()) {
+                try {
+                    ByteBuffer buffer = getByteBufferAllocated(ctx.createNewBuffer, Math.min(ctx.dataLength, 5 * 1024));
+                    directRead(buffer);
+                    buffer.flip();
+                    byte[] bytes = new byte[buffer.remaining()];
+                    buffer.get(bytes);
+                    try {
+                        String str = new String(bytes, "UTF-8");
+                        offendingMessageLogger.trace(msg + ", received string is : " + str);
+                    } catch (UnsupportedEncodingException e) {
+                        offendingMessageLogger.trace(msg + ", base64 encoding of the received  buffer is : " + new BASE64Encoder().encode(bytes));
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+            throw new ConnectException(msg);
+        }
+        return true;
     }
 
-    /**
-     * throws ClosedChannelException if remote peer socket closed
-     */
-    private void throwCloseConnection()
-            throws ClosedChannelException {
-        ClosedChannelException closeEx = new ClosedChannelException();
-        closeEx.initCause(new IOException("Connection has been closed by peer"));
+    private ByteBuffer readPayloadNonBlocking(Context ctx) throws IOException {
+        boolean shouldUseSlidingWindow = ctx.dataLength >= BUFFER_LIMIT;
 
-        throw closeEx;
+        if (shouldUseSlidingWindow) {
+            while (ctx.bytesRead < ctx.dataLength) {
+                ctx.buffer.position(ctx.bytesRead).limit(Math.min(ctx.dataLength, ctx.bytesRead + BUFFER_LIMIT));
+                ByteBuffer window = ctx.buffer.slice();
+                int bRead = read(window);
+                ctx.bytesRead += bRead;
+
+                if (bRead < window.capacity()) {
+                    return null;
+                }
+            }
+        } else {
+            int bRead = read(ctx.buffer);
+
+            ctx.bytesRead += bRead;
+            if (ctx.bytesRead < ctx.dataLength) {
+                return null;
+            }
+        }
+
+        ctx.phase = Context.Phase.FINISH;
+        incReceivedTraffic(ctx.buffer.position());
+        ctx.buffer.position(0);
+        ctx.buffer.limit(ctx.dataLength);
+        return ctx.buffer;
     }
 
+    protected abstract String getEndpointDesc();
+
+    protected abstract SocketAddress getEndPointAddress();
+
+    protected abstract String getEndPointAddressDesc();
 
     public RequestPacket unmarshallRequest(MarshalInputStream stream) throws ClassNotFoundException, NoSuchObjectException {
         RequestPacket packet = new RequestPacket();
@@ -678,12 +486,24 @@ public class Reader {
     }
 
     public String readProtocolValidationHeader(ProtocolValidationContext context) throws IOException {
-        int bytesRead = _socketChannel.read(context.buffer);
-        if (bytesRead == -1) // EOF
-            throwCloseConnection();
-
+        read(context.buffer);
         byte[] contentBuffer = Arrays.copyOf(context.buffer.array(), context.buffer.position());
         return new String(contentBuffer, Charset.forName("UTF-8"));
     }
 
+    protected int read(ByteBuffer buffer) throws IOException {
+        int bytesRead = directRead(buffer);
+        if (bytesRead != -1)
+            return bytesRead;
+        ClosedChannelException e = new ClosedChannelException();
+        e.initCause(new IOException("Connection has been closed by peer"));
+        throw e;
+    }
+
+    protected abstract int directRead(ByteBuffer buffer) throws IOException;
+
+    protected void incReceivedTraffic(int val) {
+        _receivedTraffic += val;
+        receivedTraffic.add(val);
+    }
 }

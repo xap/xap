@@ -29,6 +29,8 @@ import com.gigaspaces.lrmi.nio.filters.IOFilterException;
 import com.gigaspaces.lrmi.nio.filters.IOFilterManager;
 import com.gigaspaces.lrmi.nio.selector.handler.ReadSelectorThread;
 import com.gigaspaces.lrmi.nio.selector.handler.WriteSelectorThread;
+import com.gigaspaces.lrmi.tcp.TcpReader;
+import com.gigaspaces.lrmi.tcp.TcpWriter;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.kernel.SystemProperties;
 
@@ -119,8 +121,9 @@ public class ChannelEntry implements IWriteInterestManager {
         _readSelectorThread = readSelectorThread;
         _writeSelectorThread = writeSelectorThread;
         _socketChannel = channel;
-        _writer = new Writer(channel, this);
-        _reader = new Reader(channel, _pivot.getSystemRequestHandler());
+        _writer = new TcpWriter(channel);
+        _writer.setWriteInterestManager(this);
+        _reader = new TcpReader(channel, _pivot.getSystemRequestHandler());
         _connectionID = UIDGen.nextId();
         _connectionTimeStamp = SystemTime.timeMillis();
         _clientEndPointAddress = clientEndPointAddress;
@@ -267,7 +270,7 @@ public class ChannelEntry implements IWriteInterestManager {
     public void close() throws IOException {
         //Clear the context the inner streams hold upon disconnection
         _socketChannel.close();
-        _writer.closeContext();
+        _writer.getSerializer().closeContext();
         _reader.closeContext();
     }
 
@@ -322,28 +325,28 @@ public class ChannelEntry implements IWriteInterestManager {
     }
 
     public boolean readProtocolValidationHeader(Reader.ProtocolValidationContext context) {
-        try {
-            String protocolHeader = _reader.readProtocolValidationHeader(context);
-            if (!ProtocolValidation.PROTOCOL_STRING.startsWith(protocolHeader)) {
-                removeObsoleteRejectedProtocolHosts();
-                addToRejectedProtocolHosts();
-                return false;
-            }
-
-            if (ProtocolValidation.PROTOCOL_STRING.equals(protocolHeader)) {
-                removeObsoleteRejectedProtocolHosts();
-                _protocolValidated = true;
-            }
-
-            return true;
-        } catch (IOException e) {
-            if (_logger.isDebugEnabled())
-                _logger.debug("Failed to read protocol header from " + getClientEndPointAddress() + " due to IOException", e);
-        } catch (Throwable t) {
-            if (_logger.isErrorEnabled())
-                _logger.error("Failed to read protocol header from " + getClientEndPointAddress(), t);
-        }
-        return false;
+//        try {
+//            String protocolHeader = _reader.readProtocolValidationHeader(context);
+//            if (!ProtocolValidation.PROTOCOL_STRING.startsWith(protocolHeader)) {
+//                removeObsoleteRejectedProtocolHosts();
+//                addToRejectedProtocolHosts();
+//                return false;
+//            }
+//
+//            if (ProtocolValidation.PROTOCOL_STRING.equals(protocolHeader)) {
+//                removeObsoleteRejectedProtocolHosts();
+//                _protocolValidated = true;
+//            }
+//
+//            return true;
+//        } catch (IOException e) {
+//            if (_logger.isLoggable(Level.FINE))
+//                _logger.log(Level.FINE, "Failed to read protocol header from " + getClientEndPointAddress() + " due to IOException", e);
+//        } catch (Throwable t) {
+//            if (_logger.isLoggable(Level.SEVERE))
+//                _logger.log(Level.SEVERE, "Failed to read protocol header from " + getClientEndPointAddress(), t);
+//        }
+        return true;
     }
 
     public void monitorActivity(String trackingId) {

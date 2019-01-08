@@ -41,9 +41,9 @@ import com.j_spaces.kernel.log.JProperties;
 import com.sun.jini.proxy.DefaultProxyPivot;
 import com.sun.jini.start.LifeCycle;
 
-import java.io.File;
-import java.io.InputStream;
+import java.io.*;
 import java.net.MalformedURLException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.Properties;
@@ -437,6 +437,8 @@ public class SpaceFinder {
                 //IRemoteSpace remoteSpace = findJiniSpace(url, customProperties, timeout, lookupType);
                 //result = remoteSpace.getServiceProxy();
                 result = findJiniSpace(url, null, customProperties, timeout, lookupType, true);
+            } else if (url.isFileProtocol()) {
+                result = findFileSpace(url);
             } else
                 throw new SpaceURLValidationException("Unsupported url protocol: " + url.getProtocol());
 
@@ -584,6 +586,21 @@ public class SpaceFinder {
             return result;
         } finally {
             DefaultProxyPivot.updateLazyAccess(previousLazyAccessValue);
+        }
+    }
+
+    private Object findFileSpace(SpaceURL url) throws IOException, ClassNotFoundException {
+        String path = System.getProperty(SystemProperties.LUS_FILE_PATH);
+        if (path == null)
+            throw new IllegalArgumentException("file-lus path was not defined: set it using " + SystemProperties.LUS_FILE_PATH);
+        File serviceFile = new File(path, url.getSpaceName() + ".service");
+        IRemoteSpace remoteSpace = readRemoteService(serviceFile.getAbsolutePath());
+        return remoteSpace.getServiceProxy();
+    }
+
+    private static <T extends Remote> T readRemoteService(String path) throws IOException, ClassNotFoundException {
+        try(ObjectInputStream is = new ObjectInputStream(new FileInputStream(path))){
+            return (T) is.readObject();
         }
     }
 
