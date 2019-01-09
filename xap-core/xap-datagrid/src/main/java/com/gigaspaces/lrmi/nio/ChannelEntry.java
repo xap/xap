@@ -29,6 +29,7 @@ import com.gigaspaces.lrmi.nio.filters.IOFilterException;
 import com.gigaspaces.lrmi.nio.filters.IOFilterManager;
 import com.gigaspaces.lrmi.nio.selector.handler.ReadSelectorThread;
 import com.gigaspaces.lrmi.nio.selector.handler.WriteSelectorThread;
+import com.gigaspaces.lrmi.tcp.TcpReader;
 import com.gigaspaces.lrmi.tcp.TcpWriter;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.kernel.SystemProperties;
@@ -121,7 +122,7 @@ public class ChannelEntry implements IWriteInterestManager {
         _socketChannel = channel;
         _writer = new TcpWriter(channel);
         _writer.setWriteInterestManager(this);
-        _reader = new Reader(channel, _pivot.getSystemRequestHandler());
+        _reader = new TcpReader(channel, _pivot.getSystemRequestHandler());
         _connectionID = UIDGen.nextId();
         _connectionTimeStamp = SystemTime.timeMillis();
         _clientEndPointAddress = clientEndPointAddress;

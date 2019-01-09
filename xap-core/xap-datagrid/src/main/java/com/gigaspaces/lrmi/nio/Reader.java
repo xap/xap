@@ -23,12 +23,10 @@ import com.gigaspaces.internal.io.GSByteArrayInputStream;
 import com.gigaspaces.internal.io.MarshalContextClearedException;
 import com.gigaspaces.internal.io.MarshalInputStream;
 import com.gigaspaces.logger.Constants;
-import com.gigaspaces.lrmi.Receiver;
 import com.gigaspaces.lrmi.SmartByteBufferCache;
 import com.gigaspaces.lrmi.nio.SystemRequestHandler.SystemRequestContext;
 import com.gigaspaces.lrmi.nio.filters.IOFilterException;
 import com.gigaspaces.lrmi.nio.filters.IOFilterManager;
-import com.gigaspaces.lrmi.tcp.TcpReceiver;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.kernel.SystemProperties;
 
@@ -61,7 +59,7 @@ import java.util.logging.Logger;
  * @since 4.0
  */
 @com.gigaspaces.api.InternalApi
-public class Reader {
+public abstract class Reader {
     private static final Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
     private static final Logger offendingMessageLogger = Logger.getLogger(Constants.LOGGER_LRMI + ".offending");
     private static final Logger _slowerConsumerLogger = Logger.getLogger(Constants.LOGGER_LRMI_SLOW_COMSUMER);
@@ -78,12 +76,9 @@ public class Reader {
     /**
      * reader socket channel.
      */
-    private final SocketChannel _socketChannel;
-
-    private final Receiver _receiver;
+    protected final SocketChannel _socketChannel;
 
     private static final int BUFFER_LIMIT = Integer.getInteger(SystemProperties.MAX_LRMI_BUFFER_SIZE, SystemProperties.MAX_LRMI_BUFFER_SIZE_DEFAULT);
-
 
     /* Object stream - initialized with null to simplify the code. */
     private MarshalInputStream _ois;
@@ -111,17 +106,8 @@ public class Reader {
         return receivedTraffic;
     }
 
-    public Reader(SocketChannel sockChannel, int slowConsumerRetries) {
-        this(sockChannel, slowConsumerRetries, null);
-    }
-
-    public Reader(SocketChannel sockChannel, SystemRequestHandler systemRequestHandler) {
-        this(sockChannel, Integer.MAX_VALUE, systemRequestHandler);
-    }
-
-    private Reader(SocketChannel sockChannel, int slowConsumerRetries, SystemRequestHandler systemRequestHandler) {
+    protected Reader(SocketChannel sockChannel, int slowConsumerRetries, SystemRequestHandler systemRequestHandler) {
         _socketChannel = sockChannel;
-        _receiver = new TcpReceiver(_socketChannel);
         _headerBuffer.order(ByteOrder.BIG_ENDIAN);
         _streamContext = MarshalInputStream.createContext();
         try {
@@ -487,9 +473,7 @@ public class Reader {
     /**
      * @return the endpoint of the connected SocketChannel.
      */
-    private SocketAddress getEndPointAddress() {
-        return _receiver.getEndPointAddress();
-    }
+    protected abstract SocketAddress getEndPointAddress();
 
     /**
      * throws ClosedChannelException if remote peer socket closed
@@ -670,7 +654,7 @@ public class Reader {
     }
 
     public String readProtocolValidationHeader(ProtocolValidationContext context) throws IOException {
-        int bytesRead = _receiver.read(context.buffer);
+        int bytesRead = read(context.buffer);
         if (bytesRead == -1) // EOF
             throwCloseConnection();
 
@@ -678,4 +662,5 @@ public class Reader {
         return new String(contentBuffer, Charset.forName("UTF-8"));
     }
 
+    protected abstract int read(ByteBuffer buffer) throws IOException;
 }

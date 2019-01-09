@@ -60,6 +60,7 @@ import com.gigaspaces.lrmi.nio.selector.handler.client.ClientHandler;
 import com.gigaspaces.lrmi.nio.selector.handler.client.Conversation;
 import com.gigaspaces.lrmi.nio.selector.handler.client.LRMIChat;
 import com.gigaspaces.lrmi.nio.selector.handler.client.WriteBytesChat;
+import com.gigaspaces.lrmi.tcp.TcpReader;
 import com.gigaspaces.lrmi.tcp.TcpWriter;
 import com.j_spaces.kernel.SystemProperties;
 
@@ -248,7 +249,7 @@ public class CPeer extends BaseClientPeer {
         _writer = new TcpWriter(socketChannel, _config);
         if (_reader != null)
             _receivedTraffic += _reader.getReceivedTraffic();
-        _reader = new Reader(socketChannel, _config.getSlowConsumerRetries());
+        _reader = new TcpReader(socketChannel, _config.getSlowConsumerRetries());
         return socketChannel;
     }
 
