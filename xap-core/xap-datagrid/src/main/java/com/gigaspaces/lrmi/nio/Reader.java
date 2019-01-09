@@ -87,8 +87,9 @@ public abstract class Reader {
     /* cached data  buffer */
     final private SmartByteBufferCache _bufferCache = SmartByteBufferCache.getDefaultSmartByteBufferCache();
 
+    final protected static int HEADER_SIZE = 4;
     /* data length buffer */
-    final private ByteBuffer _headerBuffer = ByteBuffer.allocateDirect(4); // 4 == size of int in bytes
+    final private ByteBuffer _headerBuffer = ByteBuffer.allocateDirect(HEADER_SIZE);
 
     private boolean _bufferIsOccupied = false;
 
@@ -221,7 +222,14 @@ public abstract class Reader {
     public ByteBuffer readBytesFromChannelBlocking(boolean createNewBuffer, int slowConsumerLatency, int sizeLimit)
             throws IOException {
         final AtomicInteger retries = new AtomicInteger(0);
-        final int dataLength = readHeaderBlocking(slowConsumerLatency, sizeLimit, retries);
+        final int dataLength = readHeaderBlocking(slowConsumerLatency, retries);
+        if (0 < sizeLimit && sizeLimit < dataLength) {
+            throw new IOException("Handshake failed expecting message of up to " + sizeLimit + " bytes, actual size is: " + dataLength + " bytes.");
+        }
+        if (dataLength > SUSPICIOUS_THRESHOLD) {
+            _logger.warning("About to allocate " + dataLength + " bytes - from socket channel: " + _socketChannel);
+        }
+
         /* allocate the buffer on demand, otherwise reuse the buffer */
         final ByteBuffer buffer = getByteBufferAllocated(createNewBuffer, dataLength);
         readPayloadBlocking(buffer, dataLength, slowConsumerLatency, retries);
@@ -284,13 +292,13 @@ public abstract class Reader {
         return temp;
     }
 
-    private int readHeaderBlocking(int slowConsumerLatency, int sizeLimit, AtomicInteger retries) throws IOException {
+    private int readHeaderBlocking(int slowConsumerLatency, AtomicInteger retries) throws IOException {
         TempSelectorHelper temp = null;
         int bytesRead = 0;
 
         _headerBuffer.clear();
         try {
-            while (bytesRead < 4) {
+            while (bytesRead < HEADER_SIZE) {
                 int bRead = read(_headerBuffer);
                 bytesRead += bRead;
 
@@ -302,18 +310,11 @@ public abstract class Reader {
             if (temp != null)
                 temp.close();
         }
-        _receivedTraffic += 4;
-        receivedTraffic.add(4L);
+        _receivedTraffic += HEADER_SIZE;
+        receivedTraffic.add(HEADER_SIZE);
         _headerBuffer.flip();
 
-        int dataLength = _headerBuffer.getInt();
-        if (0 < sizeLimit && sizeLimit < dataLength) {
-            throw new IOException("Handshake failed expecting message of up to " + sizeLimit + " bytes, actual size is: " + dataLength + " bytes.");
-        }
-        if (dataLength > SUSPICIOUS_THRESHOLD) {
-            _logger.warning("About to allocate " + dataLength + " bytes - from socket channel: " + _socketChannel);
-        }
-        return dataLength;
+        return _headerBuffer.getInt();
     }
 
     private void readPayloadBlocking(ByteBuffer buffer, int dataLength, int slowConsumerLatency, AtomicInteger retries) throws IOException {
@@ -390,11 +391,11 @@ public abstract class Reader {
         int bRead = read(_headerBuffer);
         ctx.bytesRead += bRead;
 
-        if (ctx.bytesRead < 4) {
+        if (ctx.bytesRead < HEADER_SIZE) {
             return false;
         }
-        _receivedTraffic += 4;
-        receivedTraffic.add(4L);
+        _receivedTraffic += HEADER_SIZE;
+        receivedTraffic.add(HEADER_SIZE);
         _headerBuffer.flip();
         ctx.dataLength = _headerBuffer.getInt();
 
