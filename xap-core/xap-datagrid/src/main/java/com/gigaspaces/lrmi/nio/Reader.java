@@ -242,9 +242,28 @@ public class Reader {
         return buffer;
     }
 
+    private static class TempSelectorHelper {
+        public SelectionKey key;
+        Selector selector;
+
+        public void close() {
+            if (key != null)
+                key .cancel();
+
+            if (selector != null) {
+                // releases and clears the key.
+                try {
+                    selector.selectNow();
+                } catch (IOException ignored) {
+                }
+
+                TemporarySelectorFactory.returnSelector(selector);
+            }
+        }
+    }
+
     private int readHeaderBlocking(int slowConsumerLatency, int sizeLimit, AtomicInteger retries) throws IOException {
-        SelectionKey tmpKey = null;
-        Selector tempSelector = null;
+        TempSelectorHelper temp = null;
         int bytesRead = 0;
 
         _headerBuffer.clear();
@@ -271,36 +290,26 @@ public class Reader {
                     if (channelIsBlocking) {
                         _socketChannel.configureBlocking(false);
                     }
-                    if (tempSelector == null) {
-                        tempSelector = TemporarySelectorFactory.getSelector();
-                        tmpKey = _socketChannel.register(tempSelector, SelectionKey.OP_READ);
+                    if (temp == null) {
+                        temp = new TempSelectorHelper();
+                        temp.selector = TemporarySelectorFactory.getSelector();
+                        temp.key = _socketChannel.register(temp.selector, SelectionKey.OP_READ);
                     }
-                    tmpKey.interestOps(tmpKey.interestOps() | SelectionKey.OP_READ);
+                    temp.key.interestOps(temp.key.interestOps() | SelectionKey.OP_READ);
 
                     if (_slowerConsumerLogger.isLoggable(Level.FINE))
                         _slowerConsumerLogger.fine(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries.get(), slowConsumerLatency));
 
-                    tempSelector.select(slowConsumerLatency == 0 ? 0 : selectTimeout);
-                    tmpKey.interestOps(tmpKey.interestOps() & (~SelectionKey.OP_READ));
+                    temp.selector.select(slowConsumerLatency == 0 ? 0 : selectTimeout);
+                    temp.key.interestOps(temp.key.interestOps() & (~SelectionKey.OP_READ));
                     if (channelIsBlocking) {
                         _socketChannel.configureBlocking(true);
                     }
                 }
             }
         } finally {
-            if (tmpKey != null) {
-                tmpKey.cancel();
-            }
-
-            if (tempSelector != null) {
-                // releases and clears the key.
-                try {
-                    tempSelector.selectNow();
-                } catch (IOException ignored) {
-                }
-
-                TemporarySelectorFactory.returnSelector(tempSelector);
-            }
+            if (temp != null)
+                temp.close();
         }
         _receivedTraffic += 4;
         receivedTraffic.add(4L);
@@ -326,8 +335,7 @@ public class Reader {
 
         int bytesRead = 0;
         int bRead;
-        SelectionKey tmpKey = null;
-        Selector tempSelector = null;
+        TempSelectorHelper temp = null;
         try {
             while (bytesRead < dataLength) {
                 ByteBuffer workingBuffer = buffer;
@@ -356,34 +364,25 @@ public class Reader {
                     if (channelIsBlocking) {
                         _socketChannel.configureBlocking(false);
                     }
-                    if (tempSelector == null) {
-                        tempSelector = TemporarySelectorFactory.getSelector();
-                        tmpKey = _socketChannel.register(tempSelector, SelectionKey.OP_READ);
+                    if (temp == null) {
+                        temp = new TempSelectorHelper();
+                        temp.selector = TemporarySelectorFactory.getSelector();
+                        temp.key = _socketChannel.register(temp.selector, SelectionKey.OP_READ);
                     }
-                    tmpKey.interestOps(tmpKey.interestOps() | SelectionKey.OP_READ);
+                    temp.key.interestOps(temp.key.interestOps() | SelectionKey.OP_READ);
                     if (_slowerConsumerLogger.isLoggable(Level.FINE))
                         _slowerConsumerLogger.fine(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries.get(), slowConsumerLatency));
 
-                    tempSelector.select(slowConsumerLatency == 0 ? 0 : selectTimeout);
-                    tmpKey.interestOps(tmpKey.interestOps() & (~SelectionKey.OP_READ));
+                    temp.selector.select(slowConsumerLatency == 0 ? 0 : selectTimeout);
+                    temp.key.interestOps(temp.key.interestOps() & (~SelectionKey.OP_READ));
                     if (channelIsBlocking) {
                         _socketChannel.configureBlocking(true);
                     }
                 }
             }
         } finally {
-            if (tmpKey != null)
-                tmpKey.cancel();
-
-            if (tempSelector != null) {
-                // releases and clears the key.
-                try {
-                    tempSelector.selectNow();
-                } catch (IOException ignored) {
-                }
-
-                TemporarySelectorFactory.returnSelector(tempSelector);
-            }
+            if (temp != null)
+                temp.close();
         }
         _receivedTraffic += buffer.position();
         receivedTraffic.add(buffer.position());
