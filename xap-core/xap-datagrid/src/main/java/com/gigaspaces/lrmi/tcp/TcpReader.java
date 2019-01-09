@@ -24,7 +24,7 @@ public class TcpReader extends Reader {
     }
 
     @Override
-    protected int read(ByteBuffer buffer) throws IOException {
+    protected int directRead(ByteBuffer buffer) throws IOException {
         return _socketChannel.read(buffer);
     }
 }

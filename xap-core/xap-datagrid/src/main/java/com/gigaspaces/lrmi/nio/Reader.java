@@ -291,10 +291,7 @@ public abstract class Reader {
         _headerBuffer.clear();
         try {
             while (bytesRead < 4) {
-                int bRead = _socketChannel.read(_headerBuffer);
-                if (bRead == -1) // EOF
-                    throwCloseConnection();
-
+                int bRead = read(_headerBuffer);
                 bytesRead += bRead;
 
                 if (bRead == 0) {
@@ -338,9 +335,7 @@ public abstract class Reader {
                     workingBuffer = buffer.slice();
                 }
 
-                bRead = _socketChannel.read(workingBuffer);
-                if (bRead == -1) // EOF
-                    throwCloseConnection();
+                bRead = read(workingBuffer);
                 bytesRead += bRead;
 
                 if (bRead == 0) {
@@ -392,10 +387,7 @@ public abstract class Reader {
     }
 
     private boolean readHeaderNonBlocking(Context ctx) throws IOException {
-        int bRead = _socketChannel.read(_headerBuffer);
-        if (bRead == -1) // EOF
-            throwCloseConnection();
-
+        int bRead = read(_headerBuffer);
         ctx.bytesRead += bRead;
 
         if (ctx.bytesRead < 4) {
@@ -442,9 +434,7 @@ public abstract class Reader {
             while (ctx.bytesRead < ctx.dataLength) {
                 ctx.buffer.position(ctx.bytesRead).limit(Math.min(ctx.dataLength, ctx.bytesRead + BUFFER_LIMIT));
                 ByteBuffer window = ctx.buffer.slice();
-                int bRead = _socketChannel.read(window);
-                if (bRead == -1) // EOF
-                    throwCloseConnection();
+                int bRead = read(window);
                 ctx.bytesRead += bRead;
 
                 if (bRead < window.capacity()) {
@@ -452,9 +442,7 @@ public abstract class Reader {
                 }
             }
         } else {
-            int bRead = _socketChannel.read(ctx.buffer);
-            if (bRead == -1) // EOF
-                throwCloseConnection();
+            int bRead = read(ctx.buffer);
 
             ctx.bytesRead += bRead;
             if (ctx.bytesRead < ctx.dataLength) {
@@ -474,18 +462,6 @@ public abstract class Reader {
      * @return the endpoint of the connected SocketChannel.
      */
     protected abstract SocketAddress getEndPointAddress();
-
-    /**
-     * throws ClosedChannelException if remote peer socket closed
-     */
-    private void throwCloseConnection()
-            throws ClosedChannelException {
-        ClosedChannelException closeEx = new ClosedChannelException();
-        closeEx.initCause(new IOException("Connection has been closed by peer"));
-
-        throw closeEx;
-    }
-
 
     public RequestPacket unmarshallRequest(MarshalInputStream stream) throws ClassNotFoundException, NoSuchObjectException {
         RequestPacket packet = new RequestPacket();
@@ -654,13 +630,19 @@ public abstract class Reader {
     }
 
     public String readProtocolValidationHeader(ProtocolValidationContext context) throws IOException {
-        int bytesRead = read(context.buffer);
-        if (bytesRead == -1) // EOF
-            throwCloseConnection();
-
+        read(context.buffer);
         byte[] contentBuffer = Arrays.copyOf(context.buffer.array(), context.buffer.position());
         return new String(contentBuffer, Charset.forName("UTF-8"));
     }
 
-    protected abstract int read(ByteBuffer buffer) throws IOException;
+    protected int read(ByteBuffer buffer) throws IOException {
+        int bytesRead = directRead(buffer);
+        if (bytesRead != -1)
+            return bytesRead;
+        ClosedChannelException e = new ClosedChannelException();
+        e.initCause(new IOException("Connection has been closed by peer"));
+        throw e;
+    }
+
+    protected abstract int directRead(ByteBuffer buffer) throws IOException;
 }
