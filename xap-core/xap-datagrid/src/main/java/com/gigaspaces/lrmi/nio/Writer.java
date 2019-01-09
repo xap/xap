@@ -16,7 +16,6 @@
 
 package com.gigaspaces.lrmi.nio;
 
-import com.gigaspaces.config.lrmi.ITransportConfig;
 import com.gigaspaces.internal.backport.java.util.concurrent.atomic.LongAdder;
 import com.gigaspaces.internal.io.GSByteArrayOutputStream;
 import com.gigaspaces.internal.io.MarshalContextClearedException;
@@ -24,17 +23,15 @@ import com.gigaspaces.internal.io.MarshalOutputStream;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.LRMIInvocationTrace;
 import com.gigaspaces.lrmi.SmartByteBufferCache;
-import com.gigaspaces.lrmi.Transmitter;
 import com.gigaspaces.lrmi.nio.filters.IOFilterException;
 import com.gigaspaces.lrmi.nio.filters.IOFilterManager;
-import com.gigaspaces.lrmi.tcp.TcpTransmitter;
+import com.gigaspaces.lrmi.tcp.TcpWriter;
 import com.j_spaces.kernel.SystemProperties;
 
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.SocketChannel;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -47,10 +44,8 @@ import java.util.logging.Logger;
  * @since 4.0
  */
 @com.gigaspaces.api.InternalApi
-public class Writer implements IChannelWriter {
+public abstract class Writer implements IChannelWriter {
     final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
-
-    final private Transmitter _transmitter;
 
     final static public int BUFFER_LIMIT = Integer.getInteger(SystemProperties.MAX_LRMI_BUFFER_SIZE, SystemProperties.MAX_LRMI_BUFFER_SIZE_DEFAULT);
 
@@ -58,6 +53,8 @@ public class Writer implements IChannelWriter {
 
     final private MarshalOutputStream _oos;
     final private GSByteArrayOutputStream _baos;
+
+    protected IWriteInterestManager _writeInterestManager;
 
     /**
      * reuse buffer, growing on demand.
@@ -81,17 +78,7 @@ public class Writer implements IChannelWriter {
         return pendingWrites;
     }
 
-    public Writer(SocketChannel socketChannel) {
-        this(socketChannel, null);
-    }
-
-    public Writer(SocketChannel socketChannel, ITransportConfig config) {
-        this(new TcpTransmitter(socketChannel, config));
-    }
-
-    public Writer(Transmitter transmitter) {
-        _transmitter = transmitter;
-
+    protected Writer() {
         try {
             _baos = new GSByteArrayOutputStream();
             _baos.setSize(LENGTH_SIZE); // mark the buffer to start writing only after the length place
@@ -113,15 +100,13 @@ public class Writer implements IChannelWriter {
      * selector thread will not use _writeInterestManager until write is performed.
      */
     public void setWriteInterestManager(IWriteInterestManager writeInterestManager) {
-        _transmitter.setWriteInterestManager(writeInterestManager);
+        _writeInterestManager = writeInterestManager;
     }
 
     /**
      * @return the endpoint of the connected SocketChannel.
      */
-    public SocketAddress getEndPointAddress() {
-        return _transmitter.getEndPointAddress();
-    }
+    public abstract SocketAddress getEndPointAddress();
 
     public void writeRequest(RequestPacket packet, boolean reuseBuffer, Context ctx) throws IOException, IOFilterException {
         writePacket(packet, reuseBuffer, ctx);
@@ -148,9 +133,7 @@ public class Writer implements IChannelWriter {
         writeReply(packet, true);
     }
 
-    public boolean isOpen() {
-        return _transmitter.isOpen();
-    }
+    public abstract boolean isOpen();
 
     //Access to contexts should be synchronized
     private synchronized void writePacket(IPacket packet, boolean requestReuseBuffer, Context ctx) throws IOException, IOFilterException {
@@ -183,7 +166,7 @@ public class Writer implements IChannelWriter {
         MarshalOutputStream mos;
         GSByteArrayOutputStream bos;
 
-        final boolean reuseBuffer = requestReuseBuffer && !_transmitter.hasQueuedContexts();
+        final boolean reuseBuffer = requestReuseBuffer && !hasQueuedContexts();
         if (reuseBuffer) {
             mos = _oos;
             bos = _baos;
@@ -225,6 +208,8 @@ public class Writer implements IChannelWriter {
         generatedTraffic.add(buffer.limit());
         return buffer;
     }
+
+    protected abstract boolean hasQueuedContexts();
 
     public static class Context {
         public static enum Phase {START, WRITING, FINISH}
@@ -349,31 +334,25 @@ public class Writer implements IChannelWriter {
         this._filterManager = filterManager;
     }
 
-
-    public boolean isBlocking() {
-        return _transmitter.isBlocking();
-    }
-
     @Override
     public synchronized void writeBytesToChannelNoneBlocking(Context ctx, boolean restoreReadInterest) throws IOException {
-        _transmitter.writeBytesToChannelNoneBlocking(ctx, restoreReadInterest);
+        writeNonBlocking(ctx, restoreReadInterest);
     }
 
-    @Override
-    public void writeBytesToChannelBlocking(ByteBuffer dataBuffer) throws IOException {
-        _transmitter.writeBytesToChannelBlocking(dataBuffer);
-    }
+    protected abstract void writeNonBlocking(Context ctx, boolean restoreReadInterest) throws IOException;
 
     /**
      * Called from WriteSelectorThread to complete pending write requests.
      *
      * This is synchronized to ensure mutual exclusion with writeBytesToChannelNoneBlocking method
      *
-     * @see TcpTransmitter#noneBlockingWrite
+     * @see TcpWriter#noneBlockingWrite
      */
     public synchronized void onWriteEvent() throws IOException {
-        _transmitter.onWriteEvent();
+        onWriteEventImpl();
     }
+
+    protected abstract void onWriteEventImpl() throws IOException;
 
     /**
      * @param byteBuffer buffer that might be used by the GSByteArrayOutputStream
@@ -446,7 +425,5 @@ public class Writer implements IChannelWriter {
         return _generatedTraffic;
     }
 
-    public void writeProtocolValidationHeader() throws IOException {
-        _transmitter.writeProtocolValidationHeader();
-    }
+    public abstract void writeProtocolValidationHeader() throws IOException;
 }

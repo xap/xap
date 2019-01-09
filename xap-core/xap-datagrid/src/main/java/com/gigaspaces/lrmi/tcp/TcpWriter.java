@@ -5,7 +5,6 @@ import com.gigaspaces.exception.lrmi.SlowConsumerException;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.lrmi.LRMIInvocationTrace;
-import com.gigaspaces.lrmi.Transmitter;
 import com.gigaspaces.lrmi.nio.ProtocolValidation;
 import com.gigaspaces.lrmi.nio.TemporarySelectorFactory;
 import com.gigaspaces.lrmi.nio.Writer;
@@ -22,7 +21,7 @@ import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class TcpTransmitter extends Transmitter {
+public class TcpWriter extends Writer {
     private static final Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
     private static final Logger _slowerConsumerLogger = Logger.getLogger(Constants.LOGGER_LRMI_SLOW_COMSUMER);
     private static final int BUFFER_LIMIT = Writer.BUFFER_LIMIT;
@@ -37,7 +36,11 @@ public class TcpTransmitter extends Transmitter {
     private final int _slowConsumerSleepTime;
     private final int _slowConsumerBytes;
 
-    public TcpTransmitter(SocketChannel sockChannel, ITransportConfig config) {
+    public TcpWriter(SocketChannel socketChannel) {
+        this(socketChannel, null);
+    }
+
+    public TcpWriter(SocketChannel sockChannel, ITransportConfig config) {
         _sockChannel = sockChannel;
         _contexts = new LinkedList<>();
         _slowConsumerThroughput = config != null ? config.getSlowConsumerThroughput() : 0;
@@ -64,7 +67,7 @@ public class TcpTransmitter extends Transmitter {
     }
 
     @Override
-    public boolean hasQueuedContexts() {
+    protected boolean hasQueuedContexts() {
         return !_contexts.isEmpty();
     }
 
@@ -170,7 +173,7 @@ public class TcpTransmitter extends Transmitter {
     }
 
     @Override
-    public void writeBytesToChannelNoneBlocking(Writer.Context ctx, boolean restoreReadInterest) throws IOException {
+    protected void writeNonBlocking(Writer.Context ctx, boolean restoreReadInterest) throws IOException {
         if (_contexts.isEmpty()) {
             noneBlockingWrite(ctx);
             if (ctx.getPhase() != Writer.Context.Phase.FINISH) {
@@ -190,7 +193,7 @@ public class TcpTransmitter extends Transmitter {
     }
 
     @Override
-    public void onWriteEvent() throws IOException {
+    protected void onWriteEventImpl() throws IOException {
         LRMIInvocationTrace trace = null;
         try {
             while (!_contexts.isEmpty()) {

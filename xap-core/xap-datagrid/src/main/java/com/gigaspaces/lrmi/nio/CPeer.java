@@ -60,6 +60,7 @@ import com.gigaspaces.lrmi.nio.selector.handler.client.ClientHandler;
 import com.gigaspaces.lrmi.nio.selector.handler.client.Conversation;
 import com.gigaspaces.lrmi.nio.selector.handler.client.LRMIChat;
 import com.gigaspaces.lrmi.nio.selector.handler.client.WriteBytesChat;
+import com.gigaspaces.lrmi.tcp.TcpWriter;
 import com.j_spaces.kernel.SystemProperties;
 
 import net.jini.space.InternalSpaceException;
@@ -244,7 +245,7 @@ public class CPeer extends BaseClientPeer {
         _socketDisplayString = NIOUtils.getSocketDisplayString(socketChannel);
         if (_writer != null)
             _generatedTraffic += _writer.getGeneratedTraffic();
-        _writer = new Writer(socketChannel, _config);
+        _writer = new TcpWriter(socketChannel, _config);
         if (_reader != null)
             _receivedTraffic += _reader.getReceivedTraffic();
         _reader = new Reader(socketChannel, _config.getSlowConsumerRetries());
