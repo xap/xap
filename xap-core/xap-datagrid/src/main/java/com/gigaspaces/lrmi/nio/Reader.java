@@ -262,6 +262,42 @@ public class Reader {
         }
     }
 
+    private TempSelectorHelper processEmptyOrNonBlocking(TempSelectorHelper temp, int slowConsumerLatency, AtomicInteger retries) throws IOException {
+        final int selectTimeout = (slowConsumerLatency / _slowConsumerRetries) + 1;
+        final boolean channelIsBlocking = _socketChannel.isBlocking();
+
+        if (slowConsumerLatency > 0 && (retries.incrementAndGet()) > _slowConsumerRetries) {
+            String slowConsumerMsg = prepareSlowConsumerCloseMsg(getEndPointAddress(), slowConsumerLatency);
+            if (_slowerConsumerLogger.isLoggable(Level.WARNING))
+                _slowerConsumerLogger.warning(slowConsumerMsg);
+            throw new SlowConsumerException(slowConsumerMsg);
+        }
+        // if bRead == 0 this channel is either none blocking, or it is in blocking mode
+        // but there the socket buffer was empty while the read was called.
+        // We should use selector to read from this channel without do busy loop.
+        if (channelIsBlocking) {
+            _socketChannel.configureBlocking(false);
+        }
+
+        if (temp == null) {
+            temp = new TempSelectorHelper();
+            temp.selector = TemporarySelectorFactory.getSelector();
+            temp.key = _socketChannel.register(temp.selector, SelectionKey.OP_READ);
+        }
+        temp.key.interestOps(temp.key.interestOps() | SelectionKey.OP_READ);
+
+        if (_slowerConsumerLogger.isLoggable(Level.FINE))
+            _slowerConsumerLogger.fine(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries.get(), slowConsumerLatency));
+
+        temp.selector.select(slowConsumerLatency == 0 ? 0 : selectTimeout);
+        temp.key.interestOps(temp.key.interestOps() & (~SelectionKey.OP_READ));
+        if (channelIsBlocking) {
+            _socketChannel.configureBlocking(true);
+        }
+
+        return temp;
+    }
+
     private int readHeaderBlocking(int slowConsumerLatency, int sizeLimit, AtomicInteger retries) throws IOException {
         TempSelectorHelper temp = null;
         int bytesRead = 0;
@@ -276,35 +312,7 @@ public class Reader {
                 bytesRead += bRead;
 
                 if (bRead == 0) {
-                    final int selectTimeout = (slowConsumerLatency / _slowConsumerRetries) + 1;
-                    final boolean channelIsBlocking = _socketChannel.isBlocking();
-                    if (slowConsumerLatency > 0 && (retries.incrementAndGet()) > _slowConsumerRetries) {
-                        String slowConsumerMsg = prepareSlowConsumerCloseMsg(getEndPointAddress(), slowConsumerLatency);
-                        if (_slowerConsumerLogger.isLoggable(Level.WARNING))
-                            _slowerConsumerLogger.warning(slowConsumerMsg);
-                        throw new SlowConsumerException(slowConsumerMsg);
-                    }
-                    // if bRead == 0 this channel is either none blocking, or it is in blocking mode
-                    // but there the socket buffer was empty while the read was called.
-                    // We should use selector to read from this channel without do busy loop.
-                    if (channelIsBlocking) {
-                        _socketChannel.configureBlocking(false);
-                    }
-                    if (temp == null) {
-                        temp = new TempSelectorHelper();
-                        temp.selector = TemporarySelectorFactory.getSelector();
-                        temp.key = _socketChannel.register(temp.selector, SelectionKey.OP_READ);
-                    }
-                    temp.key.interestOps(temp.key.interestOps() | SelectionKey.OP_READ);
-
-                    if (_slowerConsumerLogger.isLoggable(Level.FINE))
-                        _slowerConsumerLogger.fine(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries.get(), slowConsumerLatency));
-
-                    temp.selector.select(slowConsumerLatency == 0 ? 0 : selectTimeout);
-                    temp.key.interestOps(temp.key.interestOps() & (~SelectionKey.OP_READ));
-                    if (channelIsBlocking) {
-                        _socketChannel.configureBlocking(true);
-                    }
+                    temp = processEmptyOrNonBlocking(temp, slowConsumerLatency, retries);
                 }
             }
         } finally {
@@ -350,34 +358,7 @@ public class Reader {
                 bytesRead += bRead;
 
                 if (bRead == 0) {
-                    final int selectTimeout = (slowConsumerLatency / _slowConsumerRetries) + 1;
-                    final boolean channelIsBlocking = _socketChannel.isBlocking();
-                    if (slowConsumerLatency > 0 && (retries.incrementAndGet()) > _slowConsumerRetries) {
-                        String slowConsumerMsg = prepareSlowConsumerCloseMsg(getEndPointAddress(), slowConsumerLatency);
-                        if (_slowerConsumerLogger.isLoggable(Level.WARNING))
-                            _slowerConsumerLogger.warning(slowConsumerMsg);
-                        throw new SlowConsumerException(slowConsumerMsg);
-                    }
-                    // if bRead == 0 this channel is either none blocking, or it is in blocking mode
-                    // but there the socket buffer was empty while the read was called.
-                    // We should use selector to read from this channel without do busy loop.
-                    if (channelIsBlocking) {
-                        _socketChannel.configureBlocking(false);
-                    }
-                    if (temp == null) {
-                        temp = new TempSelectorHelper();
-                        temp.selector = TemporarySelectorFactory.getSelector();
-                        temp.key = _socketChannel.register(temp.selector, SelectionKey.OP_READ);
-                    }
-                    temp.key.interestOps(temp.key.interestOps() | SelectionKey.OP_READ);
-                    if (_slowerConsumerLogger.isLoggable(Level.FINE))
-                        _slowerConsumerLogger.fine(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries.get(), slowConsumerLatency));
-
-                    temp.selector.select(slowConsumerLatency == 0 ? 0 : selectTimeout);
-                    temp.key.interestOps(temp.key.interestOps() & (~SelectionKey.OP_READ));
-                    if (channelIsBlocking) {
-                        _socketChannel.configureBlocking(true);
-                    }
+                    temp = processEmptyOrNonBlocking(temp, slowConsumerLatency, retries);
                 }
             }
         } finally {
