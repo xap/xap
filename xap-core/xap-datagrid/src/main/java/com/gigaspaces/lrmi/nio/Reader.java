@@ -40,7 +40,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.rmi.NoSuchObjectException;
 import java.util.Arrays;
@@ -70,11 +69,6 @@ public abstract class Reader {
     // to simulate TC_RESET
     private static final byte[] _resetBuffer = new byte[]{ObjectStreamConstants.TC_RESET, ObjectStreamConstants.TC_NULL};
 
-    /**
-     * reader socket channel.
-     */
-    protected final SocketChannel _socketChannel;
-
     protected static final int BUFFER_LIMIT = Integer.getInteger(SystemProperties.MAX_LRMI_BUFFER_SIZE, SystemProperties.MAX_LRMI_BUFFER_SIZE_DEFAULT);
 
     /* Object stream - initialized with null to simplify the code. */
@@ -86,7 +80,7 @@ public abstract class Reader {
 
     final protected static int HEADER_SIZE = 4;
     /* data length buffer */
-    final protected ByteBuffer _headerBuffer = ByteBuffer.allocateDirect(HEADER_SIZE);
+    final private ByteBuffer _headerBuffer = ByteBuffer.allocateDirect(HEADER_SIZE);
 
     private boolean _bufferIsOccupied = false;
 
@@ -94,7 +88,7 @@ public abstract class Reader {
 
     final private MarshalInputStream.Context _streamContext;
 
-    protected long _receivedTraffic;
+    private long _receivedTraffic;
 
     private final SystemRequestHandler _systemRequestHandler;
 
@@ -102,8 +96,8 @@ public abstract class Reader {
         return receivedTraffic;
     }
 
-    protected Reader(SocketChannel sockChannel, SystemRequestHandler systemRequestHandler) {
-        _socketChannel = sockChannel;
+    protected Reader(SystemRequestHandler systemRequestHandler) {
+        this._systemRequestHandler = systemRequestHandler;
         _headerBuffer.order(ByteOrder.BIG_ENDIAN);
         _streamContext = MarshalInputStream.createContext();
         try {
@@ -114,7 +108,6 @@ public abstract class Reader {
             }
             throw new RuntimeException("Failed to initialize LRMI Reader stream: ", e);
         }
-        this._systemRequestHandler = systemRequestHandler;
     }
 
     public MarshalInputStream readRequest(Context ctx) throws IOException, IOFilterException {
@@ -199,12 +192,12 @@ public abstract class Reader {
     public ByteBuffer readBytesFromChannelBlocking(boolean createNewBuffer, int slowConsumerLatency, int sizeLimit)
             throws IOException {
         final AtomicInteger retries = new AtomicInteger(0);
-        final int dataLength = readHeaderBlocking(slowConsumerLatency, retries);
+        final int dataLength = readHeaderBlocking(_headerBuffer, slowConsumerLatency, retries);
         if (0 < sizeLimit && sizeLimit < dataLength) {
             throw new IOException("Handshake failed expecting message of up to " + sizeLimit + " bytes, actual size is: " + dataLength + " bytes.");
         }
         if (dataLength > SUSPICIOUS_THRESHOLD) {
-            _logger.warning("About to allocate " + dataLength + " bytes - from socket channel: " + _socketChannel);
+            _logger.warning("About to allocate " + dataLength + " bytes - from socket channel: " + getEndpointDesc());
         }
 
         /* allocate the buffer on demand, otherwise reuse the buffer */
@@ -213,7 +206,7 @@ public abstract class Reader {
         return buffer;
     }
 
-    protected abstract int readHeaderBlocking(int slowConsumerLatency, AtomicInteger retries) throws IOException;
+    protected abstract int readHeaderBlocking(ByteBuffer buffer, int slowConsumerLatency, AtomicInteger retries) throws IOException;
 
     protected abstract void readPayloadBlocking(ByteBuffer buffer, int dataLength, int slowConsumerLatency, AtomicInteger retries) throws IOException;
 
@@ -262,18 +255,18 @@ public abstract class Reader {
         _headerBuffer.flip();
         ctx.dataLength = _headerBuffer.getInt();
 
+        // Process system request if needed:
         if (ctx.dataLength < 0 && _systemRequestHandler.handles(ctx.dataLength /* represents request header */)) {
             ctx.systemRequestContext = _systemRequestHandler.getRequestContext(ctx.dataLength);
             ctx.dataLength = ctx.systemRequestContext.getRequestDataLength();
         }
 
         if (ctx.messageSizeLimit != 0 && ctx.messageSizeLimit <= ctx.dataLength) {
-            String offendingAddress = _socketChannel.socket() != null ? String.valueOf(_socketChannel.socket().getRemoteSocketAddress()) : "unknown";
-            String msg = "Handshake failed, expecting message of up to " + ctx.messageSizeLimit + " bytes, actual size is: " + ctx.dataLength + " bytes, offending address is " + offendingAddress;
+            String msg = "Handshake failed, expecting message of up to " + ctx.messageSizeLimit + " bytes, actual size is: " + ctx.dataLength + " bytes, offending address is " + getEndPointAddressDesc();
             if (offendingMessageLogger.isLoggable(Level.FINEST)) {
                 try {
                     ByteBuffer buffer = getByteBufferAllocated(ctx.createNewBuffer, Math.min(ctx.dataLength, 5 * 1024));
-                    _socketChannel.read(buffer);
+                    directRead(buffer);
                     buffer.flip();
                     byte[] bytes = new byte[buffer.remaining()];
                     buffer.get(bytes);
@@ -321,10 +314,11 @@ public abstract class Reader {
         return ctx.buffer;
     }
 
-    /**
-     * @return the endpoint of the connected SocketChannel.
-     */
+    protected abstract String getEndpointDesc();
+
     protected abstract SocketAddress getEndPointAddress();
+
+    protected abstract String getEndPointAddressDesc();
 
     public RequestPacket unmarshallRequest(MarshalInputStream stream) throws ClassNotFoundException, NoSuchObjectException {
         RequestPacket packet = new RequestPacket();
@@ -508,7 +502,6 @@ public abstract class Reader {
     }
 
     protected abstract int directRead(ByteBuffer buffer) throws IOException;
-
 
     protected void incReceivedTraffic(int val) {
         _receivedTraffic += val;

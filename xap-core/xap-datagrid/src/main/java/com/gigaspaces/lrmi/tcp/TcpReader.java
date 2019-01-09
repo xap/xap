@@ -20,20 +20,27 @@ public class TcpReader extends Reader {
 
     private static final Logger _slowerConsumerLogger = Logger.getLogger(Constants.LOGGER_LRMI_SLOW_COMSUMER);
 
+    private final SocketChannel _socketChannel;
     //TODO fix read slow consumer to work for all read operations like write operations
     private final int _slowConsumerRetries;
 
-    public TcpReader(SocketChannel sockChannel, int slowConsumerRetries) {
-        this(sockChannel, slowConsumerRetries, null);
+    public TcpReader(SocketChannel socketChannel, int slowConsumerRetries) {
+        this(socketChannel, slowConsumerRetries, null);
     }
 
-    public TcpReader(SocketChannel sockChannel, SystemRequestHandler systemRequestHandler) {
-        this(sockChannel, Integer.MAX_VALUE, systemRequestHandler);
+    public TcpReader(SocketChannel socketChannel, SystemRequestHandler systemRequestHandler) {
+        this(socketChannel, Integer.MAX_VALUE, systemRequestHandler);
     }
 
-    private TcpReader(SocketChannel sockChannel, int slowConsumerRetries, SystemRequestHandler systemRequestHandler) {
-        super(sockChannel, systemRequestHandler);
+    private TcpReader(SocketChannel socketChannel, int slowConsumerRetries, SystemRequestHandler systemRequestHandler) {
+        super(systemRequestHandler);
+        this._socketChannel = socketChannel;
         this._slowConsumerRetries = slowConsumerRetries;
+    }
+
+    @Override
+    protected String getEndpointDesc() {
+        return String.valueOf(_socketChannel);
     }
 
     @Override
@@ -42,19 +49,24 @@ public class TcpReader extends Reader {
     }
 
     @Override
+    protected String getEndPointAddressDesc() {
+        return _socketChannel.socket() != null ? String.valueOf(_socketChannel.socket().getRemoteSocketAddress()) : "unknown";
+    }
+
+    @Override
     protected int directRead(ByteBuffer buffer) throws IOException {
         return _socketChannel.read(buffer);
     }
 
     @Override
-    protected int readHeaderBlocking(int slowConsumerLatency, AtomicInteger retries) throws IOException {
+    protected int readHeaderBlocking(ByteBuffer buffer, int slowConsumerLatency, AtomicInteger retries) throws IOException {
         TempSelectorHelper temp = null;
         int bytesRead = 0;
 
-        _headerBuffer.clear();
+        buffer.clear();
         try {
             while (bytesRead < HEADER_SIZE) {
-                int bRead = read(_headerBuffer);
+                int bRead = read(buffer);
                 bytesRead += bRead;
 
                 if (bRead == 0) {
@@ -66,9 +78,8 @@ public class TcpReader extends Reader {
                 temp.close();
         }
         incReceivedTraffic(HEADER_SIZE);
-        _headerBuffer.flip();
-
-        return _headerBuffer.getInt();
+        buffer.flip();
+        return buffer.getInt();
     }
 
     @Override
