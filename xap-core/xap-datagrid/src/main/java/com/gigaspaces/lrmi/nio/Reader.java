@@ -17,7 +17,6 @@
 package com.gigaspaces.lrmi.nio;
 
 import com.gigaspaces.exception.lrmi.LRMIUnhandledException;
-import com.gigaspaces.exception.lrmi.SlowConsumerException;
 import com.gigaspaces.internal.backport.java.util.concurrent.atomic.LongAdder;
 import com.gigaspaces.internal.io.GSByteArrayInputStream;
 import com.gigaspaces.internal.io.MarshalContextClearedException;
@@ -41,7 +40,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.rmi.NoSuchObjectException;
@@ -62,7 +60,6 @@ import java.util.logging.Logger;
 public abstract class Reader {
     private static final Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
     private static final Logger offendingMessageLogger = Logger.getLogger(Constants.LOGGER_LRMI + ".offending");
-    private static final Logger _slowerConsumerLogger = Logger.getLogger(Constants.LOGGER_LRMI_SLOW_COMSUMER);
     public static final long SUSPICIOUS_THRESHOLD = Long.valueOf(System.getProperty("com.gs.lrmi.suspicious-threshold", "20000000"));
     private static final LongAdder receivedTraffic = new LongAdder();
 
@@ -78,7 +75,7 @@ public abstract class Reader {
      */
     protected final SocketChannel _socketChannel;
 
-    private static final int BUFFER_LIMIT = Integer.getInteger(SystemProperties.MAX_LRMI_BUFFER_SIZE, SystemProperties.MAX_LRMI_BUFFER_SIZE_DEFAULT);
+    protected static final int BUFFER_LIMIT = Integer.getInteger(SystemProperties.MAX_LRMI_BUFFER_SIZE, SystemProperties.MAX_LRMI_BUFFER_SIZE_DEFAULT);
 
     /* Object stream - initialized with null to simplify the code. */
     private MarshalInputStream _ois;
@@ -89,17 +86,15 @@ public abstract class Reader {
 
     final protected static int HEADER_SIZE = 4;
     /* data length buffer */
-    final private ByteBuffer _headerBuffer = ByteBuffer.allocateDirect(HEADER_SIZE);
+    final protected ByteBuffer _headerBuffer = ByteBuffer.allocateDirect(HEADER_SIZE);
 
     private boolean _bufferIsOccupied = false;
 
     private IOFilterManager _filterManager;
 
     final private MarshalInputStream.Context _streamContext;
-    //TODO fix read slow consumer to work for all read operations like write operations
-    final private int _slowConsumerRetries;
 
-    private long _receivedTraffic;
+    protected long _receivedTraffic;
 
     private final SystemRequestHandler _systemRequestHandler;
 
@@ -107,7 +102,7 @@ public abstract class Reader {
         return receivedTraffic;
     }
 
-    protected Reader(SocketChannel sockChannel, int slowConsumerRetries, SystemRequestHandler systemRequestHandler) {
+    protected Reader(SocketChannel sockChannel, SystemRequestHandler systemRequestHandler) {
         _socketChannel = sockChannel;
         _headerBuffer.order(ByteOrder.BIG_ENDIAN);
         _streamContext = MarshalInputStream.createContext();
@@ -119,7 +114,6 @@ public abstract class Reader {
             }
             throw new RuntimeException("Failed to initialize LRMI Reader stream: ", e);
         }
-        this._slowConsumerRetries = slowConsumerRetries;
         this._systemRequestHandler = systemRequestHandler;
     }
 
@@ -202,23 +196,6 @@ public abstract class Reader {
         this._filterManager = filterManager;
     }
 
-    /**
-     * Prepares log massage.
-     */
-    private String prepareSlowConsumerCloseMsg(SocketAddress address, int slowConsumerLatency) {
-        return "Closed slow consumer: " + address +
-                " SlowConsumerRetries=" + _slowConsumerRetries +
-                " SlowConsumerLatency=" + slowConsumerLatency;
-    }
-
-    private String prepareSlowConsumerSleepMsg(SocketAddress endPointAddress,
-                                               int retries, int slowConsumerLatency) {
-        return "Sleeping - waiting for slow consumer: " + endPointAddress +
-                " Retry=" + retries +
-                " SlowConsumerRetries=" + _slowConsumerRetries +
-                " SlowConsumerLatency=" + slowConsumerLatency;
-    }
-
     public ByteBuffer readBytesFromChannelBlocking(boolean createNewBuffer, int slowConsumerLatency, int sizeLimit)
             throws IOException {
         final AtomicInteger retries = new AtomicInteger(0);
@@ -236,122 +213,9 @@ public abstract class Reader {
         return buffer;
     }
 
-    private static class TempSelectorHelper {
-        public SelectionKey key;
-        Selector selector;
+    protected abstract int readHeaderBlocking(int slowConsumerLatency, AtomicInteger retries) throws IOException;
 
-        public void close() {
-            if (key != null)
-                key .cancel();
-
-            if (selector != null) {
-                // releases and clears the key.
-                try {
-                    selector.selectNow();
-                } catch (IOException ignored) {
-                }
-
-                TemporarySelectorFactory.returnSelector(selector);
-            }
-        }
-    }
-
-    private TempSelectorHelper processEmptyOrNonBlocking(TempSelectorHelper temp, int slowConsumerLatency, AtomicInteger retries) throws IOException {
-        final int selectTimeout = (slowConsumerLatency / _slowConsumerRetries) + 1;
-        final boolean channelIsBlocking = _socketChannel.isBlocking();
-
-        if (slowConsumerLatency > 0 && (retries.incrementAndGet()) > _slowConsumerRetries) {
-            String slowConsumerMsg = prepareSlowConsumerCloseMsg(getEndPointAddress(), slowConsumerLatency);
-            if (_slowerConsumerLogger.isLoggable(Level.WARNING))
-                _slowerConsumerLogger.warning(slowConsumerMsg);
-            throw new SlowConsumerException(slowConsumerMsg);
-        }
-        // if bRead == 0 this channel is either none blocking, or it is in blocking mode
-        // but there the socket buffer was empty while the read was called.
-        // We should use selector to read from this channel without do busy loop.
-        if (channelIsBlocking) {
-            _socketChannel.configureBlocking(false);
-        }
-
-        if (temp == null) {
-            temp = new TempSelectorHelper();
-            temp.selector = TemporarySelectorFactory.getSelector();
-            temp.key = _socketChannel.register(temp.selector, SelectionKey.OP_READ);
-        }
-        temp.key.interestOps(temp.key.interestOps() | SelectionKey.OP_READ);
-
-        if (_slowerConsumerLogger.isLoggable(Level.FINE))
-            _slowerConsumerLogger.fine(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries.get(), slowConsumerLatency));
-
-        temp.selector.select(slowConsumerLatency == 0 ? 0 : selectTimeout);
-        temp.key.interestOps(temp.key.interestOps() & (~SelectionKey.OP_READ));
-        if (channelIsBlocking) {
-            _socketChannel.configureBlocking(true);
-        }
-
-        return temp;
-    }
-
-    private int readHeaderBlocking(int slowConsumerLatency, AtomicInteger retries) throws IOException {
-        TempSelectorHelper temp = null;
-        int bytesRead = 0;
-
-        _headerBuffer.clear();
-        try {
-            while (bytesRead < HEADER_SIZE) {
-                int bRead = read(_headerBuffer);
-                bytesRead += bRead;
-
-                if (bRead == 0) {
-                    temp = processEmptyOrNonBlocking(temp, slowConsumerLatency, retries);
-                }
-            }
-        } finally {
-            if (temp != null)
-                temp.close();
-        }
-        _receivedTraffic += HEADER_SIZE;
-        receivedTraffic.add(HEADER_SIZE);
-        _headerBuffer.flip();
-
-        return _headerBuffer.getInt();
-    }
-
-    private void readPayloadBlocking(ByteBuffer buffer, int dataLength, int slowConsumerLatency, AtomicInteger retries) throws IOException {
-        /*
-         * Sliding window is used to read the data from the channel using limited size buffer instead of
-         * reading using all the buffer, this is because Java SocketChannel allocate direct buffer that has the same size as
-         * the user buffer when reading from the channel, this may cause our of memory if user buffer is too long.
-         */
-        boolean shouldUseSlidingWindow = dataLength >= BUFFER_LIMIT;
-
-        int bytesRead = 0;
-        int bRead;
-        TempSelectorHelper temp = null;
-        try {
-            while (bytesRead < dataLength) {
-                ByteBuffer workingBuffer = buffer;
-                if (shouldUseSlidingWindow) {
-                    buffer.position(bytesRead).limit(Math.min(dataLength, bytesRead + BUFFER_LIMIT));
-                    workingBuffer = buffer.slice();
-                }
-
-                bRead = read(workingBuffer);
-                bytesRead += bRead;
-
-                if (bRead == 0) {
-                    temp = processEmptyOrNonBlocking(temp, slowConsumerLatency, retries);
-                }
-            }
-        } finally {
-            if (temp != null)
-                temp.close();
-        }
-        _receivedTraffic += buffer.position();
-        receivedTraffic.add(buffer.position());
-        buffer.position(0);
-        buffer.limit(dataLength);
-    }
+    protected abstract void readPayloadBlocking(ByteBuffer buffer, int dataLength, int slowConsumerLatency, AtomicInteger retries) throws IOException;
 
     private ByteBuffer getByteBufferAllocated(boolean createNewBuffer, int dataLength) {
         try {
@@ -394,8 +258,7 @@ public abstract class Reader {
         if (ctx.bytesRead < HEADER_SIZE) {
             return false;
         }
-        _receivedTraffic += HEADER_SIZE;
-        receivedTraffic.add(HEADER_SIZE);
+        incReceivedTraffic(HEADER_SIZE);
         _headerBuffer.flip();
         ctx.dataLength = _headerBuffer.getInt();
 
@@ -452,8 +315,7 @@ public abstract class Reader {
         }
 
         ctx.phase = Context.Phase.FINISH;
-        _receivedTraffic += ctx.buffer.position();
-        receivedTraffic.add(ctx.buffer.position());
+        incReceivedTraffic(ctx.buffer.position());
         ctx.buffer.position(0);
         ctx.buffer.limit(ctx.dataLength);
         return ctx.buffer;
@@ -646,4 +508,10 @@ public abstract class Reader {
     }
 
     protected abstract int directRead(ByteBuffer buffer) throws IOException;
+
+
+    protected void incReceivedTraffic(int val) {
+        _receivedTraffic += val;
+        receivedTraffic.add(val);
+    }
 }
