@@ -16,6 +16,8 @@
 
 package com.gigaspaces.internal.utils;
 
+import com.gigaspaces.internal.jvm.JavaUtils;
+
 /**
  * Returns the default JVM options for the current JVM vendor and version
  *
@@ -41,9 +43,7 @@ public class OutputJVMOptions {
         final String vmVendor = getJvmVendor();
         if (vmVendor.equals("ORACLE")) {
             String result = "-server -XX:+AggressiveOpts -XX:+HeapDumpOnOutOfMemoryError";
-            if (!JdkVersion.isAtLeastJava8()) { // < 8
-                result += " -XX:MaxPermSize=256m";
-            } else if (JdkVersion.isAtLeastJava9()) {
+            if (JavaUtils.greaterOrEquals(9)) {
                 result += " --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED --add-modules=ALL-SYSTEM";
             }
             return result;
