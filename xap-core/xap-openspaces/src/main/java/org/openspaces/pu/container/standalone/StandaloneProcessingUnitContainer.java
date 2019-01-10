@@ -18,7 +18,6 @@
 package org.openspaces.pu.container.standalone;
 
 import com.gigaspaces.admin.cli.RuntimeInfo;
-import com.gigaspaces.internal.utils.JdkVersion;
 import com.gigaspaces.logger.GSLogConfigLoader;
 
 import org.apache.commons.logging.Log;

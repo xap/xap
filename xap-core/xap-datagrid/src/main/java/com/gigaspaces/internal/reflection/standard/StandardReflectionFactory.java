@@ -26,7 +26,6 @@ import com.gigaspaces.internal.reflection.IParamsConstructor;
 import com.gigaspaces.internal.reflection.IProperties;
 import com.gigaspaces.internal.reflection.ISetterMethod;
 import com.gigaspaces.internal.reflection.ProxyInvocationHandler;
-import com.gigaspaces.internal.utils.JdkVersion;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -46,10 +45,6 @@ public class StandardReflectionFactory extends AbstractReflectionFactory {
 
     @Override
     public <T> String[] getConstructorParametersNames(Constructor<T> ctor) {
-
-        if (!JdkVersion.isAtLeastJava8()) {
-            throw new UnsupportedOperationException("Getting constructor parameters names with standard reflection is available only with java 8 or with ASM");
-        }
         return GetParametersNameUtil.getParametersName(ctor);
     }
 

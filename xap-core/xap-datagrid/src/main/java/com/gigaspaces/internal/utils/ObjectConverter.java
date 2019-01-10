@@ -103,8 +103,7 @@ public abstract class ObjectConverter {
 
             //fix for GS-13625
             if( java.util.Date.class.isAssignableFrom( type ) ||
-                    ( JdkVersion.isAtLeastJava8() &&
-                        java.time.temporal.Temporal.class.isAssignableFrom( type ) ) ){
+                    java.time.temporal.Temporal.class.isAssignableFrom( type ) ){
                 initDateRelatedTypes();
                 parser = _runtimeGeneratedParserMap.get(type.getName());
                 if( parser != null ){
@@ -157,11 +156,9 @@ public abstract class ObjectConverter {
 
     private static void initDateRelatedTypes(){
 
-        if (JdkVersion.isAtLeastJava8()) {
-            _runtimeGeneratedParserMap.put(java.time.LocalDate.class.getName(), new LocalDateParser());
-            _runtimeGeneratedParserMap.put(java.time.LocalTime.class.getName(), new LocalTimeParser());
-            _runtimeGeneratedParserMap.put(java.time.LocalDateTime.class.getName(), new LocalDateTimeParser());
-        }
+        _runtimeGeneratedParserMap.put(java.time.LocalDate.class.getName(), new LocalDateParser());
+        _runtimeGeneratedParserMap.put(java.time.LocalTime.class.getName(), new LocalTimeParser());
+        _runtimeGeneratedParserMap.put(java.time.LocalDateTime.class.getName(), new LocalDateTimeParser());
         _runtimeGeneratedParserMap.put(java.util.Date.class.getName(), new DateParser());
         _runtimeGeneratedParserMap.put(java.sql.Date.class.getName(), new SqlDateParser());
         _runtimeGeneratedParserMap.put(java.sql.Time.class.getName(), new SqlTimeParser());
