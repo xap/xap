@@ -57,6 +57,11 @@ public class BootIOUtils {
         return s == null || s.isEmpty();
     }
 
+    public static String quoteIfContainsSpace(String s) {
+        final String QUOTE = "\"";
+        return s.contains(" ") && !s.startsWith(QUOTE) && !s.endsWith(QUOTE) ? QUOTE + s + QUOTE : s;
+    }
+
     public static void writeMapStringString(ObjectOutput out,
                                             Map<String, String> map) throws IOException {
         if (map == null)

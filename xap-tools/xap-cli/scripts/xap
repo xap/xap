@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
 . `dirname $0`/setenv.sh
-XAP_CLI_CP=${XAP_HOME}/tools/cli/*:${GS_JARS}
-java ${XAP_OPTIONS} -cp ${XAP_CLI_CP} org.gigaspaces.cli.commands.XapMainCommand $*
+GS_COMMAND="`$JAVACMD -cp "$XAP_HOME/lib/required/*" com.gigaspaces.start.GsCommandFactory cli` $*"
+if [[ $GS_COMMAND == Error:* ]]; then
+    echo $GS_COMMAND
+else
+    if [[ $GS_VERBOSE == "true" ]]; then
+        echo Executing GigaSpaces command:
+        echo $GS_COMMAND
+        echo --------------------------------------------------------------------------------
+    fi
+    $GS_COMMAND
+fi

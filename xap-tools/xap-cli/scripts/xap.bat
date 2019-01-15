@@ -1,4 +1,15 @@
 @echo off
+setlocal EnableDelayedExpansion
 call "%~dp0\setenv.bat"
-set XAP_CLI_CP="%XAP_HOME%\tools\cli\*";%GS_JARS%
-java %XAP_OPTIONS% -cp %XAP_CLI_CP% org.gigaspaces.cli.commands.XapMainCommand %*
+FOR /F "tokens=*" %%i IN ('"%JAVACMD% -cp "%XAP_HOME%\lib\required\*"" com.gigaspaces.start.GsCommandFactory cli') DO set GS_COMMAND=%%i %*
+if "!GS_COMMAND:~0,6!"=="Error:" (
+  echo %GS_COMMAND%
+) else (
+  if "%GS_VERBOSE%"=="true" (
+    echo Executing GigaSpaces command:
+    echo %GS_COMMAND%
+    echo --------------------------------------------------------------------------------
+  )
+  %GS_COMMAND%
+)
+endlocal

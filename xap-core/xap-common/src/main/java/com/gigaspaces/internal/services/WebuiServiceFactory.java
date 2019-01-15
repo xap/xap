@@ -20,11 +20,11 @@ public class WebuiServiceFactory extends ServiceFactory {
                 .appendRequired(ClasspathBuilder.startsWithFilter("xap-", "spring-", "commons-"))
                 .appendPlatform("ext")
                 .appendOptional("spring").appendOptional("security")        // $SPRING_JARS
-                .appendOptional("jetty").appendOptional("jetty/xap-jetty")  // $JETTY_JARS
-                .appendOptional("interop")                                  // $INTEROP_JARS
-                .appendOptional("memoryxtend/off-heap")                     // $MEMORYXTEND_JARS
-                .appendOptional("memoryxtend/rocksdb")                      // $MEMORYXTEND_JARS
-                .appendPlatform("commons")                                  // $COMMONS_JARS
+                .appendOptional("jetty").appendOptional("jetty/xap-jetty")
+                .appendOptional("interop")
+                .appendOptional("memoryxtend/off-heap")
+                .appendOptional("memoryxtend/rocksdb")
+                .appendPlatform("commons")
                 .appendPlatform("service-grid");
     }
 }

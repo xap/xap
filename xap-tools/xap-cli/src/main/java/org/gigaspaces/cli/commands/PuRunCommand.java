@@ -1,7 +1,7 @@
 package org.gigaspaces.cli.commands;
 
 import com.gigaspaces.CommonSystemProperties;
-import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.GsCommandFactory;
 import org.gigaspaces.cli.CliCommandException;
 import com.gigaspaces.start.JavaCommandBuilder;
 import org.gigaspaces.cli.commands.utils.XapCliUtils;
@@ -47,19 +47,8 @@ public class PuRunCommand extends AbstractRunCommand {
 
     @Override
     protected ProcessBuilder buildInstanceCommand(int id, boolean backup) {
-        final JavaCommandBuilder command = new JavaCommandBuilder()
-                .systemProperty(CommonSystemProperties.START_EMBEDDED_LOOKUP, "false")
-                .optionsFromEnv("XAP_OPTIONS");
-        command.classpathFromEnv("PRE_CLASSPATH");
-        appendGsClasspath(command);
-        command.classpathFromEnv("SPRING_JARS", () -> {
-            //SPRING_JARS="%XAP_HOME%\lib\optional\spring\*:%XAP_HOME%\lib\optional\security\*"
-            SystemInfo.XapLocations locations = SystemInfo.singleton().locations();
-            command.classpath(locations.getLibOptional() + File.separator + "spring" + File.separator + "*");
-            command.classpath(locations.getLibOptional() + File.separator + "security" + File.separator + "*");
-        });
-        command.classpathFromEnv("POST_CLASSPATH");
-        command.mainClass("org.openspaces.pu.container.standalone.StandaloneProcessingUnitContainer");
+        final JavaCommandBuilder command = new GsCommandFactory().standalonePuInstance()
+                .systemProperty(CommonSystemProperties.START_EMBEDDED_LOOKUP, "false");
         command.arg("-path").arg(path.getPath());
         if (id != 0) {
             command.arg("-cluster")

@@ -1,7 +1,7 @@
 package org.gigaspaces.cli.commands;
 
 import com.gigaspaces.CommonSystemProperties;
-import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.GsCommandFactory;
 import org.gigaspaces.cli.CliCommandException;
 import com.gigaspaces.start.JavaCommandBuilder;
 import org.gigaspaces.cli.commands.utils.XapCliUtils;
@@ -10,7 +10,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -44,12 +43,6 @@ public class SpaceRunCommand extends AbstractRunCommand {
 
     public List<ProcessBuilder> toProcessBuilders() {
         return toProcessBuilders(instances, partitions, ha, lus);
-    }
-
-    private static String getDataGridTemplate() {
-        return SystemInfo.singleton().locations().deploy() +
-                File.separatorChar + "templates" +
-                File.separatorChar + "datagrid";
     }
 
     @Override
@@ -86,19 +79,11 @@ public class SpaceRunCommand extends AbstractRunCommand {
         }
 
         public JavaCommandBuilder toCommand() {
-            final JavaCommandBuilder command = new JavaCommandBuilder()
+            final JavaCommandBuilder command = new GsCommandFactory().spaceInstance()
                     .systemProperty(CommonSystemProperties.START_EMBEDDED_LOOKUP, "false")
-                    .optionsFromEnv("XAP_SPACE_INSTANCE_OPTIONS")
-                    .optionsFromEnv("XAP_OPTIONS")
                     .heap(javaHeap);
 
-            command.classpathFromEnv("PRE_CLASSPATH");
-            command.classpath(getDataGridTemplate());
-            appendGsClasspath(command);
-            command.classpathFromEnv("POST_CLASSPATH");
-            command.mainClass("org.openspaces.pu.container.integrated.IntegratedProcessingUnitContainer");
             command.arg("-name").arg(name);
-
             if (partitionId != 0) {
                 command.arg("-cluster")
                         .arg("schema=partitioned")
