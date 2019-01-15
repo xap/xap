@@ -107,9 +107,8 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
     public static class CustomServerEndpoint extends RdmaActiveEndpoint {
         private ByteBuffer buffers[];
         private IbvMr mrlist[];
-        private int buffercount = 3;
+        private int buffercount = 2;
 
-        private ByteBuffer dataBuf;
         private IbvMr dataMr;
         private ByteBuffer sendBuf;
         private IbvMr sendMr;
@@ -161,12 +160,11 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
                 mrlist[i] = registerMemory(buffers[i]).execute().free().getMr();
             }
 
-            this.dataBuf = buffers[0];
-            this.dataMr = mrlist[0];
-            this.sendBuf = buffers[1];
-            this.sendMr = mrlist[1];
-            this.recvBuf = buffers[2];
-            this.recvMr = mrlist[2];
+
+            this.sendBuf = buffers[0];
+            this.sendMr = mrlist[0];
+            this.recvBuf = buffers[1];
+            this.recvMr = mrlist[1];
 
             sgeSend.setAddr(sendMr.getAddr());
             sgeSend.setLength(sendMr.getLength());
@@ -206,10 +204,6 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
 
         public LinkedList<IbvRecvWR> getWrList_recv() {
             return wrList_recv;
-        }
-
-        public ByteBuffer getDataBuf() {
-            return dataBuf;
         }
 
         public ByteBuffer getSendBuf() {

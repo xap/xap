@@ -132,7 +132,7 @@ public class Client implements RdmaEndpointFactory<Client.CustomClientEndpoint> 
         public CustomClientEndpoint(RdmaActiveEndpointGroup<CustomClientEndpoint> endpointGroup,
                                     RdmaCmId idPriv, boolean serverSide, int buffersize) throws IOException {
             super(endpointGroup, idPriv, serverSide);
-            this.buffercount = 3;
+            this.buffercount = 2;
             buffers = new ByteBuffer[buffercount];
             this.mrlist = new IbvMr[buffercount];
 
@@ -162,10 +162,10 @@ public class Client implements RdmaEndpointFactory<Client.CustomClientEndpoint> 
                 mrlist[i] = registerMemory(buffers[i]).execute().free().getMr();
             }
 
-            this.sendBuf = buffers[1];
-            this.sendMr = mrlist[1];
-            this.recvBuf = buffers[2];
-            this.recvMr = mrlist[2];
+            this.sendBuf = buffers[0];
+            this.sendMr = mrlist[0];
+            this.recvBuf = buffers[1];
+            this.recvMr = mrlist[1];
 
 
             sendBuf.putLong(sendMr.getAddr());
@@ -195,7 +195,6 @@ public class Client implements RdmaEndpointFactory<Client.CustomClientEndpoint> 
 
             DiSNILogger.getLogger().info("SimpleClient::initiated recv");
             this.postRecv(wrList_recv).execute().free();
-
         }
 
         public void dispatchCqEvent(IbvWC wc) throws IOException {
