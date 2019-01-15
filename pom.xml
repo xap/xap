@@ -107,6 +107,12 @@
                 <scope>compile</scope>
             </dependency>
             <dependency>
+                <groupId>com.ibm.disni</groupId>
+                <artifactId>disni</artifactId>
+                <version>2.0</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-datagrid</artifactId>
                 <version>${project.version}</version>
