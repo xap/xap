@@ -1,6 +1,6 @@
 package org.gigaspaces.cli.commands;
 
-import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.GsCommandFactory;
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.CliCommandException;
 import com.gigaspaces.start.JavaCommandBuilder;
@@ -26,13 +26,7 @@ public abstract class AbstractRunCommand extends CliCommand {
     }
 
     protected static ProcessBuilder buildStartLookupServiceCommand() {
-        final JavaCommandBuilder command = new JavaCommandBuilder()
-                .optionsFromEnv("XAP_LUS_OPTIONS")
-                .optionsFromEnv("XAP_OPTIONS")
-                .mainClass("com.gigaspaces.internal.lookup.LookupServiceFactory");
-        command.classpath(SystemInfo.singleton().getXapHome());
-        appendGsClasspath(command);
-        return toProcessBuilder(command, "lookup service");
+        return toProcessBuilder(new GsCommandFactory().lus(), "lookup service");
     }
 
     protected static ProcessBuilder toProcessBuilder(JavaCommandBuilder command, String desc) {
@@ -78,24 +72,4 @@ public abstract class AbstractRunCommand extends CliCommand {
     }
 
     protected abstract ProcessBuilder buildInstanceCommand(int id, boolean isBackup);
-
-    protected static void appendGsClasspath(JavaCommandBuilder command) {
-        final SystemInfo.XapLocations locations = SystemInfo.singleton().locations();
-
-        command.classpathFromEnv("GS_JARS", new Runnable() {
-            @Override
-            public void run() {
-                //GS_JARS="%XAP_HOME%\lib\platform\ext\*";"%XAP_HOME%";"%XAP_HOME%\lib\required\*";"%XAP_HOME%\lib\optional\pu-common\*";"%XAP_CLASSPATH_EXT%"
-                command.classpathFromPath(locations.getLibPlatform(), "ext", "*");
-                command.classpathFromPath(locations.getLibRequired(),"*");
-                command.classpathFromPath(locations.getLibOptional(), "pu-common", "*");
-                command.classpathFromEnv("XAP_CLASSPATH_EXT");
-            }
-        });
-
-        //fix for GS-13546
-        command.classpathFromPath(locations.getLibPlatform(), "service-grid", "*");
-        command.classpathFromPath(locations.getLibPlatform(), "logger", "*");
-        command.classpathFromPath(locations.getLibPlatform(), "zookeeper", "*");
-    }
 }

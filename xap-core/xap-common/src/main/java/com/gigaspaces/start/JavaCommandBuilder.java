@@ -1,5 +1,7 @@
 package com.gigaspaces.start;
 
+import com.gigaspaces.internal.io.BootIOUtils;
+
 import java.io.File;
 import java.util.*;
 
@@ -32,6 +34,10 @@ public class JavaCommandBuilder {
         return new ProcessBuilder(build());
     }
 
+    public String toCommandLine() {
+        return String.join(" ", build());
+    }
+
     public JavaCommandBuilder javaExecutable(String javaExecutable) {
         this.javaExecutable = javaExecutable;
         return this;
@@ -43,8 +49,9 @@ public class JavaCommandBuilder {
     }
 
     public JavaCommandBuilder classpath(String classpath) {
-        if (!isEmpty(classpath))
-            this.classpath.add(classpath);
+        if (!isEmpty(classpath)) {
+            this.classpath.add(BootIOUtils.quoteIfContainsSpace(classpath));
+        }
         return this;
     }
 
@@ -76,12 +83,25 @@ public class JavaCommandBuilder {
         return this;
     }
 
+    public JavaCommandBuilder options(Collection<String> options) {
+        this.options.addAll(options);
+        return this;
+    }
+
     public JavaCommandBuilder optionsFromEnv(String envVarName) {
         String s = env.get(envVarName);
         if (!isEmpty(s)) {
             for (String option : s.split(" ")) {
                 option(option);
             }
+        }
+        return this;
+    }
+
+    public JavaCommandBuilder systemPropertyFromEnv(String key, String envVarName) {
+        String s = env.get(envVarName);
+        if (!isEmpty(s)) {
+            systemProperty(key, s);
         }
         return this;
     }
@@ -121,6 +141,20 @@ public class JavaCommandBuilder {
         }
         if (command == null)
             command = "java";
+        return command;
+    }
+
+    public String getDefaultJavaWindowsExecutable() {
+        String command = env.get("JAVAWCMD");
+        if (command == null) {
+            String javaHome = env.get("JAVA_HOME");
+            if (javaHome == null)
+                javaHome = env.get("XapNet.Runtime.JavaHome");
+            if (javaHome != null)
+                command = javaHome + File.separator + "bin" + File.separator + "javaw";
+        }
+        if (command == null)
+            command = "javaw";
         return command;
     }
 
