@@ -60,8 +60,7 @@ import com.gigaspaces.lrmi.nio.selector.handler.client.ClientHandler;
 import com.gigaspaces.lrmi.nio.selector.handler.client.Conversation;
 import com.gigaspaces.lrmi.nio.selector.handler.client.LRMIChat;
 import com.gigaspaces.lrmi.nio.selector.handler.client.WriteBytesChat;
-import com.gigaspaces.lrmi.tcp.TcpReader;
-import com.gigaspaces.lrmi.tcp.TcpWriter;
+import com.gigaspaces.lrmi.tcp.TcpChannel;
 import com.j_spaces.kernel.SystemProperties;
 
 import net.jini.space.InternalSpaceException;
@@ -120,10 +119,7 @@ public class CPeer extends BaseClientPeer {
     }
 
 
-    private volatile SocketChannel m_SockChannel;
-    private String _socketDisplayString;
-    private Writer _writer;
-    private Reader _reader;
+    private LrmiChannel _channel;
     private final RequestPacket _requestPacket;
     private final ReplyPacket<Object> _replayPacket;
     private final IRemoteClassProviderProvider _remoteConnection = new ClientRemoteClassProviderProvider();
@@ -242,14 +238,11 @@ public class CPeer extends BaseClientPeer {
     private SocketChannel createChannel(ConnectionUrlDescriptor connection, boolean async, LRMIMethod lrmiMethod) throws IOException {
         ServerAddress address = LRMIRuntime.getRuntime().getNetworkMapper().map(new ServerAddress(connection.getHostname(), connection.getPort()));
         SocketChannel socketChannel = async ? createAsyncChannel(address, lrmiMethod) : createSyncChannel(address);
-        m_SockChannel = socketChannel;
-        _socketDisplayString = NIOUtils.getSocketDisplayString(socketChannel);
-        if (_writer != null)
-            _generatedTraffic += _writer.getGeneratedTraffic();
-        _writer = new TcpWriter(socketChannel, _config);
-        if (_reader != null)
-            _receivedTraffic += _reader.getReceivedTraffic();
-        _reader = new TcpReader(socketChannel, _config.getSlowConsumerRetries());
+        if (_channel != null) {
+            _generatedTraffic += _channel.getWriter().getGeneratedTraffic();
+            _receivedTraffic += _channel.getReader().getReceivedTraffic();
+        }
+        _channel = new TcpChannel(socketChannel, _config);
         return socketChannel;
     }
 
@@ -322,7 +315,7 @@ public class CPeer extends BaseClientPeer {
             }
 
             try {
-                _filterManager = IOBlockFilterManager.createFilter(_reader, _writer, true, socketChannel);
+                _filterManager = IOBlockFilterManager.createFilter(_channel.getReader(), _channel.getWriter(), true, socketChannel);
             } catch (Exception e) {
                 if (_logger.isLoggable(Level.SEVERE))
                     _logger.log(Level.SEVERE, "Failed to load communication filter " + System.getProperty(SystemProperties.LRMI_NETWORK_FILTER_FACTORY), e);
@@ -356,7 +349,7 @@ public class CPeer extends BaseClientPeer {
     private void validateProtocol() throws IOException {
         _watchdogContext.watchRequest("protocol-validation");
         try {
-            _writer.writeProtocolValidationHeader();
+            _channel.getWriter().writeProtocolValidationHeader();
         } finally {
             _watchdogContext.watchNone();
         }
@@ -365,15 +358,12 @@ public class CPeer extends BaseClientPeer {
     private void detailedLogging(String methodName, String description) {
         if (_logger.isLoggable(Level.FINER)) {
             String localAddress = "not connected";
-            if (m_SockChannel != null) {
+            if (_channel != null) {
                 //Avoid possible NPE if socket gets disconnected
-                Socket socket = m_SockChannel.socket();
-                if (socket != null) {
-                    SocketAddress localSocketAddress = socket.getLocalSocketAddress();
-                    //Avoid possible NPE if socket gets disconnected
-                    if (localSocketAddress != null)
-                        localAddress = localSocketAddress.toString();
-                }
+                SocketAddress localSocketAddress = _channel.getLocalSocketAddress();
+                //Avoid possible NPE if socket gets disconnected
+                if (localSocketAddress != null)
+                    localAddress = localSocketAddress.toString();
             }
             _logger.finer("At " + methodName + " method, " + description + " [invoker address=" + localAddress + ", ServerEndPoint=" + getConnectionURL() + "]");
         }
@@ -488,29 +478,27 @@ public class CPeer extends BaseClientPeer {
         }
         closeSocketAndUnregisterWatchdog();
 
-        m_SockChannel = null;
-        Writer writer = _writer;
-        if (writer != null) {
-            //Clear the context the inner streams hold upon disconnection
-            writer.closeContext();
-            _generatedTraffic += writer.getGeneratedTraffic();
-            _writer = null;
+        LrmiChannel channel = _channel;
+        if (channel != null) {
+            if (channel.getWriter() != null) {
+                //Clear the context the inner streams hold upon disconnection
+                channel.getWriter().closeContext();
+                _generatedTraffic += channel.getWriter().getGeneratedTraffic();
+            }
+            if (channel.getReader() != null) {
+                //Clear the context the inner streams hold upon disconnection
+                channel.getReader().closeContext();
+                _receivedTraffic += channel.getReader().getReceivedTraffic();
+            }
         }
-        Reader reader = _reader;
-        if (reader != null) {
-            //Clear the context the inner streams hold upon disconnection
-            reader.closeContext();
-            _receivedTraffic += reader.getReceivedTraffic();
-            _reader = null;
-        }
-
+        _channel = null;
         setConnected(false);
     }
 
     private void closeSocketAndUnregisterWatchdog() {
         try {
-            if (m_SockChannel != null)
-                m_SockChannel.close();
+            if (_channel != null)
+                _channel.close();
         } catch (Exception ex) {
             // nothing todo
             if (_logger.isLoggable(Level.FINE))
@@ -523,15 +511,15 @@ public class CPeer extends BaseClientPeer {
     }
 
     public Reader getReader() {
-        return _reader;
+        return _channel != null ? _channel.getReader() :null;
     }
 
-    public SocketChannel getChannel() {
-        return m_SockChannel;
+    public LrmiChannel getChannel() {
+        return _channel;
     }
 
     public Writer getWriter() {
-        return _writer;
+        return _channel != null ? _channel.getWriter() :null;
     }
 
     public void afterInvoke() {
@@ -551,8 +539,8 @@ public class CPeer extends BaseClientPeer {
         public synchronized IClassProvider getClassProvider() throws IOException, IOFilterException {
             try {
                 RequestPacket requestForClass = new RequestPacket(new ClassProviderRequest());
-                _writer.writeRequest(requestForClass);
-                ReplyPacket<IClassProvider> response = _reader.readReply(true);
+                _channel.getWriter().writeRequest(requestForClass);
+                ReplyPacket<IClassProvider> response = _channel.getReader().readReply(true);
 
                 return response.getResult();
             } catch (ClassNotFoundException e) {
@@ -582,14 +570,14 @@ public class CPeer extends BaseClientPeer {
         _watchdogContext.watchRequest("handshake");
         // read empty response
         try {
-            _writer.writeRequest(requestPacket);
+            _channel.getWriter().writeRequest(requestPacket);
             _watchdogContext.watchResponse("handshake");
 
             //In slow consumer we must read this in blocking mode
             if (_blocking)
-                _reader.readReply(0, 1000);
+                _channel.getReader().readReply(0, 1000);
             else
-                _reader.readReply(_config.getSlowConsumerLatency(), 1000);
+                _channel.getReader().readReply(_config.getSlowConsumerLatency(), 1000);
         } catch (ClassNotFoundException e) {
             if (_logger.isLoggable(Level.SEVERE))
                 _logger.log(Level.SEVERE, "unexpected exception occured at handshake sequence: [" + getConnectionURL() + "]", e);
@@ -623,7 +611,7 @@ public class CPeer extends BaseClientPeer {
         if (_contextLogger.isLoggable(Level.FINE)) {
             LRMIInvocationTrace trace = currentContext.getTrace();
             if (trace != null) {
-                trace = trace.setIdentifier(NIOUtils.getSocketDisplayString(m_SockChannel));
+                trace = trace.setIdentifier(_channel.getCurrSocketDisplayString());
                 currentContext.setTrace(trace);
             }
         }
@@ -667,19 +655,19 @@ public class CPeer extends BaseClientPeer {
                         monitoringId,
                         _watchdogContext);
                 _asyncContext = ctx;
-                _writer.setWriteInterestManager(ctx);
-                _handler.addChannel(m_SockChannel, ctx);
+                _channel.getWriter().setWriteInterestManager(ctx);
+                _handler.addChannel(_channel.getSocketChannel(), ctx);
                 FutureContext.setFutureResult(result);
                 return null;
             }
 
             previousThreadName = updateThreadNameIfNeeded();
 
-            _writer.writeRequest(_requestPacket);
+            _channel.getWriter().writeRequest(_requestPacket);
 
             /** if <code>true</code> the client peer mode is one way, don't wait for reply */
             if (lrmiMethod.isOneWay) {
-                _monitoringModule.monitorActivity(monitoringId, _writer, _reader);
+                _monitoringModule.monitorActivity(monitoringId, _channel.getWriter(), _channel.getReader());
                 return null;
             }
 
@@ -694,11 +682,11 @@ public class CPeer extends BaseClientPeer {
                 while (hasMoreIntermidiateRequests) {
                     // read response
                     _watchdogContext.watchResponse(monitoringId);
-                    _reader.readReply(_replayPacket);
+                    _channel.getReader().readReply(_replayPacket);
                     if (_replayPacket.getResult() instanceof ClassProviderRequest) {
                         _replayPacket.clear();
                         _watchdogContext.watchRequest(monitoringId);
-                        _writer.writeRequest(new RequestPacket(getClassProvider()), false);
+                        _channel.getWriter().writeRequest(new RequestPacket(getClassProvider()), false);
                     } else
                         hasMoreIntermidiateRequests = false;
                 }
@@ -711,7 +699,7 @@ public class CPeer extends BaseClientPeer {
                 return _replayPacket.getResult();
             } finally {
                 RemoteClassLoaderContext.set(previousIdentifier);
-                _monitoringModule.monitorActivity(monitoringId, _writer, _reader);
+                _monitoringModule.monitorActivity(monitoringId, _channel.getWriter(), _channel.getReader());
             }
         } catch (LRMIUnhandledException ex) {
             if (ex.getStage() == Stage.DESERIALIZATION) {
@@ -719,7 +707,7 @@ public class CPeer extends BaseClientPeer {
                     _logger.log(Level.FINE, "LRMI caught LRMIUnhandledException during deserialization stage at end point, reseting writer context.", ex);
                 //We must reset the context because the other side have not completed reading the stream and therefore didn't
                 //learn all the new context
-                _writer.resetContext();
+                _channel.getWriter().resetContext();
             }
             if (_logger.isLoggable(Level.FINE))
                 _logger.log(Level.FINE, "LRMI caught LRMIUnhandledException, propogating it upwards.", ex);
@@ -808,7 +796,7 @@ public class CPeer extends BaseClientPeer {
             return null;
 
         String previousThreadName = Thread.currentThread().getName();
-        String newThreadName = previousThreadName + "[" + _socketDisplayString + "]";
+        String newThreadName = previousThreadName + "[" + _channel.getSocketDisplayString() + "]";
         Thread.currentThread().setName(newThreadName);
         return previousThreadName;
     }
@@ -837,12 +825,12 @@ public class CPeer extends BaseClientPeer {
     }
 
     public long getGeneratedTraffic() {
-        Writer writer = _writer;
+        Writer writer = getWriter();
         return _generatedTraffic + (writer != null ? writer.getGeneratedTraffic() : 0);
     }
 
     public long getReceivedTraffic() {
-        Reader reader = _reader;
+        Reader reader = getReader();
         return _receivedTraffic + (reader != null ? reader.getReceivedTraffic() : 0);
     }
 
@@ -863,7 +851,7 @@ public class CPeer extends BaseClientPeer {
 
             // write request
             _requestPacket.set(LRMIRuntime.DUMMY_OBJECT_ID, 0, new Object[]{}, true, false, _dummyMethod, -1, OperationPriority.REGULAR, _serviceVersion);
-            _writer.writeRequest(_requestPacket);
+            _channel.getWriter().writeRequest(_requestPacket);
 
             return true;
         } catch (Throwable t) {
