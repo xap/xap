@@ -16,7 +16,6 @@
 
 package com.gigaspaces.lrmi.nio;
 
-import com.gigaspaces.async.SettableFuture;
 import com.gigaspaces.config.lrmi.ITransportConfig;
 import com.gigaspaces.config.lrmi.nio.NIOConfiguration;
 import com.gigaspaces.exception.lrmi.ApplicationException;
@@ -57,9 +56,6 @@ import com.gigaspaces.lrmi.nio.filters.IOFilterException;
 import com.gigaspaces.lrmi.nio.filters.IOFilterManager;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientConversationRunner;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientHandler;
-import com.gigaspaces.lrmi.nio.selector.handler.client.Conversation;
-import com.gigaspaces.lrmi.nio.selector.handler.client.LRMIChat;
-import com.gigaspaces.lrmi.nio.selector.handler.client.WriteBytesChat;
 import com.gigaspaces.lrmi.tcp.TcpChannel;
 import com.j_spaces.kernel.SystemProperties;
 
@@ -68,16 +64,11 @@ import net.jini.space.InternalSpaceException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
-import java.net.Socket;
 import java.net.SocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.ClosedSelectorException;
-import java.nio.channels.SocketChannel;
 import java.rmi.ConnectException;
 import java.rmi.ConnectIOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -93,8 +84,6 @@ import java.util.logging.Logger;
 public class CPeer extends BaseClientPeer {
     private static final Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
     private static final Logger _contextLogger = Logger.getLogger(Constants.LOGGER_LRMI_CONTEXT);
-
-    private static final int SELECTOR_BUG_CONNECT_RETRY = Integer.getInteger(SystemProperties.LRMI_SELECTOR_BUG_CONNECT_RETRY, 5);
 
     // should the thread name be changed to include socket information during sychonous invocations
     private static final boolean CHANGE_THREAD_NAME_ON_INVOCATION = Boolean.getBoolean("com.gs.lrmi.change.thread.name");
@@ -129,8 +118,6 @@ public class CPeer extends BaseClientPeer {
 
     // WatchedObject are used to monitor the CPeer connection to the server
     private ClientPeerWatchedObjectsContext _watchdogContext;
-
-    private boolean _blocking = true;
 
     private ITransportConfig _config;
     private InetSocketAddress m_Address;
@@ -174,7 +161,6 @@ public class CPeer extends BaseClientPeer {
     */
     public void init(ITransportConfig config) {
         _config = config;
-        _blocking = config.isBlockingConnection();
         _protocolValidationEnabled = ((NIOConfiguration) config).isProtocolValidationEnabled();
         _asyncConnect = System.getProperty(SystemProperties.LRMI_USE_ASYNC_CONNECT) == null || Boolean.getBoolean(SystemProperties.LRMI_USE_ASYNC_CONNECT);
     }
@@ -235,46 +221,14 @@ public class CPeer extends BaseClientPeer {
         _watchdogContext.watchIdle();
     }
 
-    private SocketChannel createChannel(ConnectionUrlDescriptor connection, boolean async, LRMIMethod lrmiMethod) throws IOException {
+    private void createChannel(ConnectionUrlDescriptor connection, boolean async, LRMIMethod lrmiMethod) throws IOException {
         ServerAddress address = LRMIRuntime.getRuntime().getNetworkMapper().map(new ServerAddress(connection.getHostname(), connection.getPort()));
-        SocketChannel socketChannel = async ? createAsyncChannel(address, lrmiMethod) : createSyncChannel(address);
         if (_channel != null) {
             _generatedTraffic += _channel.getWriter().getGeneratedTraffic();
             _receivedTraffic += _channel.getReader().getReceivedTraffic();
         }
-        _channel = new TcpChannel(socketChannel, _config);
-        return socketChannel;
-    }
-
-    private SocketChannel createAsyncChannel(ServerAddress address, LRMIMethod lrmiMethod) throws IOException {
-        final String host = address.getHost();
-        final int port = address.getPort();
-
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("connecting new socket channel to " + host + ":" + port + ", connect timeout=" + _config.getSocketConnectTimeout() + " keepalive=" + LRMIUtilities.KEEP_ALIVE_MODE);
-        }
-        Conversation conversation = new Conversation(new InetSocketAddress(host, port));
-        if (_protocolValidationEnabled) {
-            conversation.addChat(new WriteBytesChat(ProtocolValidation.getProtocolHeaderBytes()));
-        }
-
-        RequestPacket requestPacket = new RequestPacket(new HandshakeRequest(PlatformLogicalVersion.getLogicalVersion()));
-        requestPacket.operationPriority = getOperationPriority(lrmiMethod, LRMIInvocationContext.getCurrentContext());
-        conversation.addChat(new LRMIChat(requestPacket));
-
-        try {
-            SettableFuture<Conversation> future = clientConversationRunner.addConversation(conversation);
-            if (_config.getSocketConnectTimeout() == 0) { // socket zero timeout means wait indefinably.
-                future.get();
-            } else {
-                future.get(_config.getSocketConnectTimeout(), TimeUnit.MILLISECONDS);
-            }
-            conversation.channel().configureBlocking(true);
-            return conversation.channel();
-        } catch (Throwable t) {
-            conversation.close(t);
-            throw new IOException(t);
-        }
+        _channel = async ? TcpChannel.createAsync(address, _config, lrmiMethod, clientConversationRunner) : TcpChannel.createSync(address, _config);
+        m_Address = ((TcpChannel)_channel).getEndpoint();
     }
 
     //Flush the local members to the main memory once done
@@ -297,7 +251,7 @@ public class CPeer extends BaseClientPeer {
 
         // connect to server
         try {
-            SocketChannel socketChannel = createChannel(connectionUrlDescriptor, false, null);
+            createChannel(connectionUrlDescriptor, false, null);
 
             // save connection URL
             setConnectionURL(connectionURL);
@@ -315,7 +269,7 @@ public class CPeer extends BaseClientPeer {
             }
 
             try {
-                _filterManager = IOBlockFilterManager.createFilter(_channel.getReader(), _channel.getWriter(), true, socketChannel);
+                _filterManager = IOBlockFilterManager.createFilter(_channel.getReader(), _channel.getWriter(), true, _channel.getSocketChannel());
             } catch (Exception e) {
                 if (_logger.isLoggable(Level.SEVERE))
                     _logger.log(Level.SEVERE, "Failed to load communication filter " + System.getProperty(SystemProperties.LRMI_NETWORK_FILTER_FACTORY), e);
@@ -370,87 +324,6 @@ public class CPeer extends BaseClientPeer {
         if (_logger.isLoggable(Level.FINEST)) {
             _logger.log(Level.FINEST, "At " + methodName + ", thread stack:" + StringUtils.NEW_LINE + StringUtils.getCurrentStackTrace());
         }
-    }
-
-    /**
-     * Create a new socket channel and set its parameters
-     */
-    private SocketChannel createSyncChannel(ServerAddress address) throws IOException {
-        final String host = address.getHost();
-        final int port = address.getPort();
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("connecting new socket channel to " + host + ":" + port + ", connect timeout=" + _config.getSocketConnectTimeout() + " keepalive=" + LRMIUtilities.KEEP_ALIVE_MODE);
-
-        SocketChannel sockChannel;
-        for (int i = 0; /* true */ ; ++i) {
-            sockChannel = createSocket(host, port);
-            try {
-                sockChannel.socket().connect(m_Address, (int) _config.getSocketConnectTimeout());
-                break;
-            } catch (ClosedSelectorException e) {
-                //handles the error and might throw exception when we retried to much
-                handleConnectError(i, host, port, sockChannel, e);
-            }
-        }
-
-        sockChannel.configureBlocking(_blocking); //setting as nonblocking if needed
-
-		/*
-         * http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6380091
-		 * The bug is that a non-existent thread is being signaled.
-		 * The issue is intermittent and the failure modes vary because the pthread_t of a terminated
-		 * thread is passed to pthread_kill.
-		 * The reason this is happening is because SocketChannelImpl's connect method isn't
-		 * resetting the readerThread so when the channel is closed it attempts to signal the reader.
-		 * The test case provokes this problem because it has a thread that terminates immediately after
-		 * establishing a connection.
-		 *
-		 * Workaround:
-		 * A simple workaround for this one is to call SocketChannel.read(ByteBuffer.allocate(0))
-		 * right after connecting the socket. That will reset the SocketChannelImpl.readerThread member
-		 * so that no interrupting is done when the channel is closed.
-		 **/
-        sockChannel.read(ByteBuffer.allocate(0));
-
-        return sockChannel;
-    }
-
-    /**
-     * Creates a new Socket
-     */
-    private SocketChannel createSocket(String host, int port) throws IOException {
-
-        SocketChannel sockChannel = SocketChannel.open();
-        sockChannel.configureBlocking(true); // blocking just for the connect
-        m_Address = new InetSocketAddress(host, port);
-
-        LRMIUtilities.initNewSocketProperties(sockChannel);
-
-        return sockChannel;
-    }
-
-    /**
-     * Handles the ClosedSelectorException error. This is a workaround for a bug in IBM1.4 JVM
-     * (IZ19325)
-     */
-    private void handleConnectError(int retry, String host, int port,
-                                    SocketChannel sockChannel, ClosedSelectorException e) {
-        // BugID GS-5873: retry to connect, this is a workaround for a bug in IBM1.4 JVM (IZ19325)
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "retrying connection due to closed selector exception: connecting to " +
-                    host + ":" + port + ", connect timeout=" + _config.getSocketConnectTimeout() +
-                    " keepalive=" + LRMIUtilities.KEEP_ALIVE_MODE, e);
-        try {
-            sockChannel.close();
-        } catch (Exception ex) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Failed to close socket: connecting to " +
-                        host + ":" + port + ", connect timeout=" + _config.getSocketConnectTimeout() +
-                        " keepalive=" + LRMIUtilities.KEEP_ALIVE_MODE, ex);
-        }
-
-        if (retry + 1 == SELECTOR_BUG_CONNECT_RETRY)
-            throw e;
     }
 
     //This closes the underline socket and change the socket state to closed, we cannot do disconnect logic
@@ -574,7 +447,7 @@ public class CPeer extends BaseClientPeer {
             _watchdogContext.watchResponse("handshake");
 
             //In slow consumer we must read this in blocking mode
-            if (_blocking)
+            if (_config.isBlockingConnection())
                 _channel.getReader().readReply(0, 1000);
             else
                 _channel.getReader().readReply(_config.getSlowConsumerLatency(), 1000);
@@ -589,7 +462,7 @@ public class CPeer extends BaseClientPeer {
         }
     }
 
-    private OperationPriority getOperationPriority(LRMIMethod lrmiMethod, LRMIInvocationContext currentContext) {
+    public static OperationPriority getOperationPriority(LRMIMethod lrmiMethod, LRMIInvocationContext currentContext) {
         if (lrmiMethod.isLivenessPriority && currentContext.isLivenessPriorityEnabled())
             return OperationPriority.LIVENESS;
 
