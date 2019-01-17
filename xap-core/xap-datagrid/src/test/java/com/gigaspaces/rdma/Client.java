@@ -32,6 +32,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CompletableFuture;
 
 
 public class Client implements RdmaEndpointFactory<Client.CustomClientEndpoint> {
@@ -40,62 +41,46 @@ public class Client implements RdmaEndpointFactory<Client.CustomClientEndpoint> 
     private int port = 8888;
 
     public Client.CustomClientEndpoint createEndpoint(RdmaCmId idPriv, boolean serverSide) throws IOException {
-        return new CustomClientEndpoint(endpointGroup, idPriv, serverSide, 100);
+        return new CustomClientEndpoint(endpointGroup, idPriv, serverSide, 1000);
     }
 
     public void run() throws Exception {
-        //create a EndpointGroup. The RdmaActiveEndpointGroup contains CQ processing and delivers CQ event to the endpoint.dispatchCqEvent() method.
-        endpointGroup = new RdmaActiveEndpointGroup<CustomClientEndpoint>(1000, false, 128, 4, 128);
-        endpointGroup.init(this);
-        //we have passed our own endpoint factory to the group, therefore new endpoints will be of type CustomClientEndpoint
-        //let's create a new client endpoint
-        Client.CustomClientEndpoint endpoint = endpointGroup.createEndpoint();
+        try {
+            //create a EndpointGroup. The RdmaActiveEndpointGroup contains CQ processing and delivers CQ event to the endpoint.dispatchCqEvent() method.
+            endpointGroup = new RdmaActiveEndpointGroup<CustomClientEndpoint>(1000, false, 128, 4, 128);
+            endpointGroup.init(this);
+            //we have passed our own endpoint factory to the group, therefore new endpoints will be of type CustomClientEndpoint
+            //let's create a new client endpoint
+            Client.CustomClientEndpoint endpoint = endpointGroup.createEndpoint();
 
-        //connect to the server
-        InetAddress ipAddress = InetAddress.getByName(host);
-        InetSocketAddress address = new InetSocketAddress(ipAddress, port);
-        endpoint.connect(address, 1000);
-        DiSNILogger.getLogger().info("SimpleClient::client channel set up ");
+            //connect to the server
+            InetAddress ipAddress = InetAddress.getByName(host);
+            InetSocketAddress address = new InetSocketAddress(ipAddress, port);
+            endpoint.connect(address, 1000);
 
-        SVCPostSend svcPostSend = endpoint.postSend(endpoint.wrList_send);
-        SVCPostRecv svcPostRecv = endpoint.postRecv(endpoint.wrList_recv);
-        ByteBuffer recvBuf = endpoint.getRecvBuf();
-        ByteBuffer sendBuf = endpoint.getSendBuf();
+            DiSNILogger.getLogger().info("SimpleClient::client channel set up ");
 
-        svcPostRecv.execute();
-        endpoint.getWcEvents().take();
-        recvBuf.clear();
-        String msgFromServer = recvBuf.asCharBuffer().toString();
+            String msg = "i am the client";
 
-        DiSNILogger.getLogger().info("msg from server is : " + msgFromServer);
+            ClientTransport<String, String> transport = new ClientTransport<>(endpoint);
+            endpoint.setTransport(transport);
+            CompletableFuture<String> future = transport.send(msg);
+            String respond = future.get();
+            DiSNILogger.getLogger().info(respond);
 
-        sendBuf.asCharBuffer().put("Hello from client");
-        svcPostSend.execute();
-        endpoint.getWcEvents().take();
-        sendBuf.clear();
-
-        svcPostRecv.execute();
-        endpoint.getWcEvents().take();
-        recvBuf.clear();
-        msgFromServer = recvBuf.asCharBuffer().toString();
-
-        DiSNILogger.getLogger().info("msg from server is : " + msgFromServer);
-
-        sendBuf.asCharBuffer().put("Hello again from client");
-        svcPostSend.execute();
-        endpoint.getWcEvents().take();
-        sendBuf.clear();
-
-        //close everything
-        endpoint.close();
-        DiSNILogger.getLogger().info("endpoint closed");
-        endpointGroup.close();
-        DiSNILogger.getLogger().info("group closed");
-        System.exit(0);
+            //close everything
+            endpoint.close();
+            DiSNILogger.getLogger().info("endpoint closed");
+            endpointGroup.close();
+            DiSNILogger.getLogger().info("group closed");
+        } catch (Exception e) {
+          DiSNILogger.getLogger().info("got exception", e);
+        } finally {
+            System.exit(0);
+        }
     }
 
     public void launch(String[] args) throws Exception {
-
         this.run();
     }
 
@@ -128,6 +113,8 @@ public class Client implements RdmaEndpointFactory<Client.CustomClientEndpoint> 
         private IbvRecvWR recvWR;
 
         private ArrayBlockingQueue<IbvWC> wcEvents;
+
+        private ClientTransport transport;
 
         public CustomClientEndpoint(RdmaActiveEndpointGroup<CustomClientEndpoint> endpointGroup,
                                     RdmaCmId idPriv, boolean serverSide, int buffersize) throws IOException {
@@ -193,13 +180,13 @@ public class Client implements RdmaEndpointFactory<Client.CustomClientEndpoint> 
             recvWR.setWr_id(2003);
             wrList_recv.add(recvWR);
 
-            DiSNILogger.getLogger().info("SimpleClient::initiated recv");
-            this.postRecv(wrList_recv).execute().free();
+//            DiSNILogger.getLogger().info("SimpleClient::initiated recv");
+//            this.postRecv(wrList_recv).execute().free();
         }
 
         public void dispatchCqEvent(IbvWC wc) throws IOException {
             DiSNILogger.getLogger().info("CLIENT: op code = " + IbvWC.IbvWcOpcode.valueOf(wc.getOpcode()) + ", id = " + wc.getWr_id());
-            wcEvents.add(wc);
+            getTransport().onCompletionEvent(wc);
         }
 
         public ArrayBlockingQueue<IbvWC> getWcEvents() {
@@ -232,6 +219,14 @@ public class Client implements RdmaEndpointFactory<Client.CustomClientEndpoint> 
 
         public IbvRecvWR getRecvWR() {
             return recvWR;
+        }
+
+        public ClientTransport getTransport() {
+            return transport;
+        }
+
+        public void setTransport(ClientTransport transport) {
+            this.transport = transport;
         }
     }
 

@@ -8,12 +8,17 @@ import com.ibm.disni.util.DiSNILogger;
 import com.ibm.disni.verbs.*;
 import org.apache.log4j.BasicConfigurator;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> {
 
@@ -32,10 +37,11 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
     }
 
     public Server.CustomServerEndpoint createEndpoint(RdmaCmId idPriv, boolean serverSide) throws IOException {
-        return new Server.CustomServerEndpoint(endpointGroup, idPriv, serverSide, 100);
+        return new Server.CustomServerEndpoint(endpointGroup, idPriv, serverSide, 1000);
     }
 
     public void run() throws Exception {
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
         //create a EndpointGroup. The RdmaActiveEndpointGroup contains CQ processing and delivers CQ event to the endpoint.dispatchCqEvent() method.
         endpointGroup = new RdmaActiveEndpointGroup<CustomServerEndpoint>(1000, false, 128, 4, 128);
         endpointGroup.init(this);
@@ -50,58 +56,77 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
         DiSNILogger.getLogger().info("SimpleServer::servers bound to address " + address.toString());
 
         //we can accept new connections
-        Server.CustomServerEndpoint clientEndpoint = serverEndpoint.accept();
         //we have previously passed our own endpoint factory to the group, therefore new endpoints will be of type CustomServerEndpoint
         DiSNILogger.getLogger().info("SimpleServer::client connection accepted");
 
+        while (true) {
+            Server.CustomServerEndpoint rdmaEndpoint = serverEndpoint.accept();
+            executorService.submit(() -> {
+                try {
+                    chatWithClient(rdmaEndpoint);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
 
-        ByteBuffer sendBuf = clientEndpoint.getSendBuf();
-        ByteBuffer recvBuf = clientEndpoint.getRecvBuf();
-        SVCPostSend svcPostSend = clientEndpoint.postSend(clientEndpoint.getWrList_send());
-        SVCPostRecv svcPostRecv = clientEndpoint.postRecv(clientEndpoint.getWrList_recv());
 
-        //in our custom endpoints we have prepared (memory registration and work request creation) some memory buffers beforehand.
-        sendBuf.asCharBuffer().put("Hello from the server");
-        DiSNILogger.getLogger().info("sending msg");
-        svcPostSend.execute();
-        DiSNILogger.getLogger().info("waiting for send completion");
-        clientEndpoint.getWcEvents().take();
-        sendBuf.clear();
+//        serverEndpoint.close();
+//        DiSNILogger.getLogger().info("server endpoint closed");
+//        endpointGroup.close();
+//        DiSNILogger.getLogger().info("group closed");
+//        System.exit(0);
+    }
 
-        DiSNILogger.getLogger().info("try receiving msg");
-        svcPostRecv.execute();
-        DiSNILogger.getLogger().info("waiting for receive completion");
-        clientEndpoint.getWcEvents().take();
+    private void chatWithClient(CustomServerEndpoint rdmaEndpoint) throws IOException, InterruptedException {
+
+        ByteBuffer recvBuf = rdmaEndpoint.getRecvBuf();
+
         recvBuf.clear();
-        String msgFromClient = recvBuf.asCharBuffer().toString();
-
+        DiSNILogger.getLogger().info("try receiving msg");
+        rdmaEndpoint.postRecv(rdmaEndpoint.wrList_recv);
+        DiSNILogger.getLogger().info("waiting for receive completion");
+        rdmaEndpoint.getWcEvents().take();
+        recvBuf.clear();
+        String msgFromClient = "";
+        Object object = null;
+        try {
+            object = readObject(recvBuf);
+            if (object instanceof String) {
+                msgFromClient = (String) object;
+            } else {
+                msgFromClient = object + "";
+            }
+        } catch (ClassNotFoundException ignored) {
+        }
         DiSNILogger.getLogger().info("msg from client is : " + msgFromClient);
 
+        String response = msgFromClient.toUpperCase();
 
-        sendBuf.asCharBuffer().put("Hello again from the server");
-        DiSNILogger.getLogger().info("sending msg");
-        svcPostSend.execute();
-        DiSNILogger.getLogger().info("waiting for send completion");
-        clientEndpoint.getWcEvents().take();
-        sendBuf.clear();
+        ByteBuffer buf = rdmaEndpoint.getSendBuf();
 
-        DiSNILogger.getLogger().info("try receiving msg");
-        svcPostRecv.execute();
-        DiSNILogger.getLogger().info("waiting for receive completion");
-        clientEndpoint.getWcEvents().take();
-        recvBuf.clear();
-        msgFromClient = recvBuf.asCharBuffer().toString();
 
-        DiSNILogger.getLogger().info("msg from client is : " + msgFromClient);
+        ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bytesOut);
+        oos.writeObject(response);
+        oos.flush();
+        byte[] bytes = bytesOut.toByteArray();
+        buf.put(bytes);
+        oos.close();
+        bytesOut.close();
 
+        rdmaEndpoint.postSend(rdmaEndpoint.wrList_send).execute().free();
+        rdmaEndpoint.getWcEvents().take();
+        buf.clear();
         //close everything
-        clientEndpoint.close();
         DiSNILogger.getLogger().info("client endpoint closed");
-        serverEndpoint.close();
-        DiSNILogger.getLogger().info("server endpoint closed");
-        endpointGroup.close();
-        DiSNILogger.getLogger().info("group closed");
-        System.exit(0);
+
+    }
+
+    private Object readObject(ByteBuffer buffer) throws IOException, ClassNotFoundException {
+        return ClientTransport.readResponse(buffer);
     }
 
     public static class CustomServerEndpoint extends RdmaActiveEndpoint {
@@ -190,7 +215,7 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
         }
 
         public void dispatchCqEvent(IbvWC wc) throws IOException {
-            DiSNILogger.getLogger().info("SERVER: op code = " + IbvWC.IbvWcOpcode.valueOf(wc.getOpcode()) + ", id = " + wc.getWr_id());
+            DiSNILogger.getLogger().info("SERVER: op code = " + IbvWC.IbvWcOpcode.valueOf(wc.getOpcode()) + ", id = " + wc.getWr_id() + ", err = " + wc.getErr());
             wcEvents.add(wc);
         }
 
