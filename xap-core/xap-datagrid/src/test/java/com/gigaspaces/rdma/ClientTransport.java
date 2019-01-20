@@ -7,30 +7,38 @@ import com.ibm.disni.verbs.*;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 // @todo - handle timeouts ?
 
-public class ClientTransport<Req extends Serializable, Rep extends Serializable> {
+public class ClientTransport {
 
-    private ConcurrentHashMap<Long, CompletableFuture<Rep>> repMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Long, CompletableFuture<RdmaMsg>> repMap = new ConcurrentHashMap<>();
     private AtomicLong nextId = new AtomicLong(0);
-    private RdmaActiveEndpoint endpoint;
+    private Client.CustomClientEndpoint endpoint;
     private final int BUFFER_SIZE = 1000;
     private final ByteBuffer recv_buf = ByteBuffer.allocateDirect(BUFFER_SIZE);
-    private final LinkedList<ByteBuffer> resources = new LinkedList<>();
+    private static final LinkedList<ByteBuffer> resources = new LinkedList<>();
+    private final ArrayBlockingQueue<IbvWC> recvEventQueue = new ArrayBlockingQueue<>(100);
+    private final ArrayBlockingQueue<IbvWC> sendEventQueue = new ArrayBlockingQueue<>(100);
+    private final ExecutorService recvHandler = Executors.newFixedThreadPool(1);
 
-    public ClientTransport(RdmaActiveEndpoint endpoint) {
+    public ClientTransport(Client.CustomClientEndpoint endpoint) {
         this.endpoint = endpoint;
+        recvHandler.submit(new RdmaReceiver(recvEventQueue, repMap, endpoint));
+        try {
+            endpoint.postRecv(endpoint.getWrList_recv()).execute().free();
+        } catch (IOException e) {
+            e.printStackTrace();//TODO
+        }
     }
 
-    public CompletableFuture<Rep> send(Req req) {
+    public CompletableFuture<RdmaMsg> send(RdmaMsg req) {
         long id = nextId.incrementAndGet();
-        CompletableFuture<Rep> future = new CompletableFuture<>();
+        CompletableFuture<RdmaMsg> future = new CompletableFuture<>();
         repMap.put(id, future);
-        future.whenComplete((rep, throwable) -> repMap.remove(id));
+        future.whenComplete((T, throwable) -> repMap.remove(id));
         try {
             ByteBuffer buffer = serializeToBuffer(req, id);
             rdmaSendBuffer(id, buffer).execute().free();
@@ -38,12 +46,6 @@ public class ClientTransport<Req extends Serializable, Rep extends Serializable>
             future.completeExceptionally(e);
         }
         return future;
-    }
-
-    private SVCPostRecv rdmaRecvBuffer(long id, ByteBuffer buffer) throws IOException {
-        IbvMr mr = endpoint.registerMemory(buffer).execute().free().getMr();
-        LinkedList<IbvRecvWR> wrs = createRecvWorkRequest(id, mr);
-        return endpoint.postRecv(wrs);
     }
 
     private SVCPostSend rdmaSendBuffer(long id, ByteBuffer buffer) throws IOException {
@@ -85,7 +87,7 @@ public class ClientTransport<Req extends Serializable, Rep extends Serializable>
         return wr_list;
     }
 
-    private ByteBuffer serializeToBuffer(Req req, long reqId) throws IOException {
+    private ByteBuffer serializeToBuffer(RdmaMsg req, long reqId) throws IOException {
         DiSNILogger.getLogger().info("CLIENT SERIALIZE: reqId = "+reqId);
         ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(bytesOut);
@@ -104,27 +106,20 @@ public class ClientTransport<Req extends Serializable, Rep extends Serializable>
     public void onCompletionEvent(IbvWC event) throws IOException {
 
         if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_SEND)) {
-            rdmaRecvBuffer(event.getWr_id(), this.recv_buf).execute().free();
+//            sendEventQueue.add(event);
+//            rdmaRecvBuffer(event.getWr_id(), this.recv_buf).execute().free();
         }
         if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_RECV)) {
-            long reqId = recv_buf.getLong();
-            DiSNILogger.getLogger().info("CLIENT ON EVENT: reqId = "+reqId);
-            CompletableFuture<Rep> future = repMap.get(reqId);
-            try {
-                Rep rep = readResponse(recv_buf);
-                future.complete(rep);
-            } catch (ClassNotFoundException e) {
-                future.completeExceptionally(e);
-            }
+            recvEventQueue.add(event); //TODO mybe offer? protect capacity
         }
     }
 
-    static <T> T readResponse(ByteBuffer buffer) throws IOException, ClassNotFoundException {
+    static RdmaMsg readResponse(ByteBuffer buffer) throws IOException, ClassNotFoundException {
         byte[] arr = new byte[buffer.remaining()];
         buffer.get(arr);
         buffer.clear();
         try (ByteArrayInputStream ba = new ByteArrayInputStream(arr); ObjectInputStream in = new ObjectInputStream(ba)) {
-            return (T) in.readObject();
+            return (RdmaMsg) in.readObject();
         } catch (Exception e) {
             DiSNILogger.getLogger().error(" failed to read object from stream", e);
             throw e;

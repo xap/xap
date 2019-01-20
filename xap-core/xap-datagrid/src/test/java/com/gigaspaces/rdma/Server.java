@@ -92,27 +92,26 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
         rdmaEndpoint.getWcEvents().take();
         recvBuf.clear();
         String msgFromClient = "";
-        Object object = null;
+        RdmaMsg msg = null;
         long reqId = recvBuf.getLong();
         DiSNILogger.getLogger().info("SERVER: reqId = "+reqId);
         try {
-            object = ClientTransport.readResponse(recvBuf);
-            if (object instanceof String) {
-                msgFromClient = (String) object;
-            } else {
-                msgFromClient = object + "";
-            }
-        } catch (ClassNotFoundException ignored) {
+            msg = ClientTransport.readResponse(recvBuf);
+            msgFromClient = msg.getPayload().toString();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
         DiSNILogger.getLogger().info("msg from client is : " + msgFromClient);
 
         String response = msgFromClient.toUpperCase();
 
+        RdmaMsg rdmaMsg = new RdmaMsg(response);
+
         ByteBuffer buf = rdmaEndpoint.getSendBuf();
         buf.putLong(reqId);
         ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(bytesOut);
-        oos.writeObject(response);
+        oos.writeObject(rdmaMsg);
         oos.flush();
         byte[] bytes = bytesOut.toByteArray();
         buf.put(bytes);
