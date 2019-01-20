@@ -10,6 +10,8 @@ import java.util.LinkedList;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.gigaspaces.rdma.RdmaConstants.BUFFER_SIZE;
+
 // @todo - handle timeouts ?
 
 public class ClientTransport {
@@ -17,9 +19,6 @@ public class ClientTransport {
     private final RdmaSender rdmaSender;
     private ConcurrentHashMap<Long, CompletableFuture<RdmaMsg>> repMap = new ConcurrentHashMap<>();
     private AtomicLong nextId = new AtomicLong(0);
-    private Client.CustomClientEndpoint endpoint;
-    private final int BUFFER_SIZE = 1000;
-    private final ByteBuffer recv_buf = ByteBuffer.allocateDirect(BUFFER_SIZE);
     private static final LinkedList<ByteBuffer> resources = new LinkedList<>();
     private final ArrayBlockingQueue<RdmaMsg> writeRequests = new ArrayBlockingQueue<>(100);
     private final ArrayBlockingQueue<IbvWC> recvEventQueue = new ArrayBlockingQueue<>(100);
@@ -28,18 +27,14 @@ public class ClientTransport {
     private final RdmaResourceManager resourceManager;
 
     public ClientTransport(Client.CustomClientEndpoint endpoint) throws IOException {
-        this.endpoint = endpoint;
 
-        resourceManager = new RdmaResourceManager(endpoint, 5, 100);
+        resourceManager = new RdmaResourceManager(endpoint, 5, BUFFER_SIZE);
+
 
         recvHandler.submit(new RdmaReceiver(recvEventQueue, repMap, endpoint));
         rdmaSender = new RdmaSender(resourceManager, writeRequests);
         sendHandler.submit(rdmaSender);
-        try {
-            endpoint.postRecv(endpoint.getWrList_recv()).execute().free();
-        } catch (IOException e) {
-            e.printStackTrace();//TODO
-        }
+
     }
 
     public CompletableFuture<RdmaMsg> send(RdmaMsg req) {
@@ -80,7 +75,7 @@ public class ClientTransport {
         return wr_list;
     }
 
-    private LinkedList<IbvRecvWR> createRecvWorkRequest(long id, IbvMr mr) {
+    public static LinkedList<IbvRecvWR> createRecvWorkRequest(long id, IbvMr mr) {
         LinkedList<IbvRecvWR> wr_list = new LinkedList<>();
         IbvRecvWR recvWR = new IbvRecvWR();
         recvWR.setWr_id(id);

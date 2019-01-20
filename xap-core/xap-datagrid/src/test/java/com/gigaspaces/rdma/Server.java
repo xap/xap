@@ -19,6 +19,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.gigaspaces.rdma.RdmaConstants.BUFFER_SIZE;
+
 public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> {
 
     RdmaActiveEndpointGroup<CustomServerEndpoint> endpointGroup;
@@ -36,7 +38,7 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
     }
 
     public Server.CustomServerEndpoint createEndpoint(RdmaCmId idPriv, boolean serverSide) throws IOException {
-        return new Server.CustomServerEndpoint(endpointGroup, idPriv, serverSide, 1000);
+        return new Server.CustomServerEndpoint(endpointGroup, idPriv, serverSide, BUFFER_SIZE);
     }
 
     public void run() throws Exception {

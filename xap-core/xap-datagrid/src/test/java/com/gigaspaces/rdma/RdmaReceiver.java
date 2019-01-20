@@ -1,5 +1,6 @@
 package com.gigaspaces.rdma;
 
+import com.ibm.disni.verbs.IbvMr;
 import com.ibm.disni.verbs.IbvWC;
 import com.ibm.disni.verbs.SVCPostRecv;
 
@@ -9,12 +10,15 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.gigaspaces.rdma.RdmaConstants.BUFFER_SIZE;
+
 public class RdmaReceiver implements Runnable {
 
     private final Client.CustomClientEndpoint endpoint;
     private final BlockingQueue<IbvWC> recvCompletionEventQueue;
     private final ConcurrentHashMap<Long, CompletableFuture<RdmaMsg>> futureMap;
     private final SVCPostRecv postRecv;
+    private final ByteBuffer recvBuf;
 
     public RdmaReceiver(BlockingQueue<IbvWC> recvCompletionEventQueue,
                         ConcurrentHashMap<Long, CompletableFuture<RdmaMsg>> futureMap,
@@ -22,7 +26,16 @@ public class RdmaReceiver implements Runnable {
         this.recvCompletionEventQueue = recvCompletionEventQueue;
         this.futureMap = futureMap;
         this.endpoint = endpoint;
-        this.postRecv = endpoint.postRecv(endpoint.getWrList_recv());
+
+        this.recvBuf = ByteBuffer.allocateDirect(BUFFER_SIZE);
+        IbvMr recvMr = endpoint.registerMemory(recvBuf).execute().free().getMr();
+        this.postRecv = endpoint.postRecv(ClientTransport.createRecvWorkRequest(2004, recvMr));
+
+        try {
+            postRecv.execute();
+        } catch (IOException e) {
+            e.printStackTrace();//TODO
+        }
     }
 
     @Override
@@ -54,6 +67,6 @@ public class RdmaReceiver implements Runnable {
     }
 
     private ByteBuffer findBuffer(long wr_id) {
-        return endpoint.getRecvBuf();
+        return recvBuf;
     }
 }
