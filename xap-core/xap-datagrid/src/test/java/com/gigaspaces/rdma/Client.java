@@ -27,6 +27,7 @@ import com.ibm.disni.verbs.*;
 import org.apache.log4j.BasicConfigurator;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -39,6 +40,7 @@ public class Client implements RdmaEndpointFactory<Client.CustomClientEndpoint> 
     RdmaActiveEndpointGroup<CustomClientEndpoint> endpointGroup;
     private String host = "192.168.33.137";
     private int port = 8888;
+    private ClientTransport<String, String> transport;
 
     public Client.CustomClientEndpoint createEndpoint(RdmaCmId idPriv, boolean serverSide) throws IOException {
         return new CustomClientEndpoint(endpointGroup, idPriv, serverSide, 1000);
@@ -61,11 +63,13 @@ public class Client implements RdmaEndpointFactory<Client.CustomClientEndpoint> 
             DiSNILogger.getLogger().info("SimpleClient::client channel set up ");
 
             String msg = "i am the client";
-
-            ClientTransport<String, String> transport = new ClientTransport<>(endpoint);
+            transport = new ClientTransport<>(endpoint);
             endpoint.setTransport(transport);
             CompletableFuture<String> future = transport.send(msg);
             String respond = future.get();
+            DiSNILogger.getLogger().info(respond);
+
+            respond = transport.send("i am connected").get();
             DiSNILogger.getLogger().info(respond);
 
             //close everything
@@ -143,45 +147,42 @@ public class Client implements RdmaEndpointFactory<Client.CustomClientEndpoint> 
         //important: we override the init method to prepare some buffers (memory registration, post recv, etc).
         //This guarantees that at least one recv operation will be posted at the moment this endpoint is connected.
         public void init() throws IOException {
-            super.init();
-
-            for (int i = 0; i < buffercount; i++) {
-                mrlist[i] = registerMemory(buffers[i]).execute().free().getMr();
-            }
-
-            this.sendBuf = buffers[0];
-            this.sendMr = mrlist[0];
-            this.recvBuf = buffers[1];
-            this.recvMr = mrlist[1];
-
-
-            sendBuf.putLong(sendMr.getAddr());
-            sendBuf.putInt(sendMr.getLength());
-            sendBuf.putInt(sendMr.getLkey());
-            sendBuf.clear();
-
-            sgeSend.setAddr(sendMr.getAddr());
-            sgeSend.setLength(sendMr.getLength());
-            sgeSend.setLkey(sendMr.getLkey());
-            sgeList.add(sgeSend);
-            sendWR.setWr_id(2002);
-            sendWR.setSg_list(sgeList);
-            sendWR.setOpcode(IbvSendWR.IBV_WR_SEND);
-            sendWR.setSend_flags(IbvSendWR.IBV_SEND_SIGNALED);
-            wrList_send.add(sendWR);
-
-
-            sgeRecv.setAddr(recvMr.getAddr());
-            sgeRecv.setLength(recvMr.getLength());
-            int lkey = recvMr.getLkey();
-            sgeRecv.setLkey(lkey);
-            sgeListRecv.add(sgeRecv);
-            recvWR.setSg_list(sgeListRecv);
-            recvWR.setWr_id(2003);
-            wrList_recv.add(recvWR);
-
-//            DiSNILogger.getLogger().info("SimpleClient::initiated recv");
-//            this.postRecv(wrList_recv).execute().free();
+//            super.init();
+//
+//            for (int i = 0; i < buffercount; i++) {
+//                mrlist[i] = registerMemory(buffers[i]).execute().free().getMr();
+//            }
+//
+//            this.sendBuf = buffers[0];
+//            this.sendMr = mrlist[0];
+//            this.recvBuf = buffers[1];
+//            this.recvMr = mrlist[1];
+//
+//
+//            sendBuf.putLong(sendMr.getAddr());
+//            sendBuf.putInt(sendMr.getLength());
+//            sendBuf.putInt(sendMr.getLkey());
+//            sendBuf.clear();
+//
+//            sgeSend.setAddr(sendMr.getAddr());
+//            sgeSend.setLength(sendMr.getLength());
+//            sgeSend.setLkey(sendMr.getLkey());
+//            sgeList.add(sgeSend);
+//            sendWR.setWr_id(2002);
+//            sendWR.setSg_list(sgeList);
+//            sendWR.setOpcode(IbvSendWR.IBV_WR_SEND);
+//            sendWR.setSend_flags(IbvSendWR.IBV_SEND_SIGNALED);
+//            wrList_send.add(sendWR);
+//
+//
+//            sgeRecv.setAddr(recvMr.getAddr());
+//            sgeRecv.setLength(recvMr.getLength());
+//            int lkey = recvMr.getLkey();
+//            sgeRecv.setLkey(lkey);
+//            sgeListRecv.add(sgeRecv);
+//            recvWR.setSg_list(sgeListRecv);
+//            recvWR.setWr_id(2003);
+//            wrList_recv.add(recvWR);
         }
 
         public void dispatchCqEvent(IbvWC wc) throws IOException {

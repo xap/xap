@@ -63,7 +63,9 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
             Server.CustomServerEndpoint rdmaEndpoint = serverEndpoint.accept();
             executorService.submit(() -> {
                 try {
-                    chatWithClient(rdmaEndpoint);
+                    while (true){
+                        chatWithClient(rdmaEndpoint);
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (InterruptedException e) {
@@ -86,7 +88,7 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
 
         recvBuf.clear();
         DiSNILogger.getLogger().info("try receiving msg");
-        rdmaEndpoint.postRecv(rdmaEndpoint.wrList_recv);
+        rdmaEndpoint.postRecv(rdmaEndpoint.wrList_recv).execute().free();
         DiSNILogger.getLogger().info("waiting for receive completion");
         rdmaEndpoint.getWcEvents().take();
         recvBuf.clear();
@@ -120,9 +122,6 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
         rdmaEndpoint.postSend(rdmaEndpoint.wrList_send).execute().free();
         rdmaEndpoint.getWcEvents().take();
         buf.clear();
-        //close everything
-        DiSNILogger.getLogger().info("client endpoint closed");
-
     }
 
     private Object readObject(ByteBuffer buffer) throws IOException, ClassNotFoundException {
