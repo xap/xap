@@ -18,7 +18,6 @@ import java.util.LinkedList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> {
 
@@ -94,8 +93,10 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
         recvBuf.clear();
         String msgFromClient = "";
         Object object = null;
+        long reqId = recvBuf.getLong();
+        DiSNILogger.getLogger().info("SERVER: reqId = "+reqId);
         try {
-            object = readObject(recvBuf);
+            object = ClientTransport.readResponse(recvBuf);
             if (object instanceof String) {
                 msgFromClient = (String) object;
             } else {
@@ -108,8 +109,7 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
         String response = msgFromClient.toUpperCase();
 
         ByteBuffer buf = rdmaEndpoint.getSendBuf();
-
-
+        buf.putLong(reqId);
         ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(bytesOut);
         oos.writeObject(response);
@@ -122,10 +122,6 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
         rdmaEndpoint.postSend(rdmaEndpoint.wrList_send).execute().free();
         rdmaEndpoint.getWcEvents().take();
         buf.clear();
-    }
-
-    private Object readObject(ByteBuffer buffer) throws IOException, ClassNotFoundException {
-        return ClientTransport.readResponse(buffer);
     }
 
     public static class CustomServerEndpoint extends RdmaActiveEndpoint {
@@ -215,7 +211,9 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
 
         public void dispatchCqEvent(IbvWC wc) throws IOException {
             DiSNILogger.getLogger().info("SERVER: op code = " + IbvWC.IbvWcOpcode.valueOf(wc.getOpcode()) + ", id = " + wc.getWr_id() + ", err = " + wc.getErr());
-            wcEvents.add(wc);
+            if(IbvWC.IbvWcOpcode.valueOf(wc.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_SEND) || IbvWC.IbvWcOpcode.valueOf(wc.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_RECV)){
+                wcEvents.add(wc);
+            }
         }
 
         public ArrayBlockingQueue<IbvWC> getWcEvents() {

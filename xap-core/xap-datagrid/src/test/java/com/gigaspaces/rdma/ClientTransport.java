@@ -32,7 +32,7 @@ public class ClientTransport<Req extends Serializable, Rep extends Serializable>
         repMap.put(id, future);
         future.whenComplete((rep, throwable) -> repMap.remove(id));
         try {
-            ByteBuffer buffer = serializeToBuffer(req);
+            ByteBuffer buffer = serializeToBuffer(req, id);
             rdmaSendBuffer(id, buffer).execute().free();
         } catch (Exception e) {
             future.completeExceptionally(e);
@@ -85,7 +85,8 @@ public class ClientTransport<Req extends Serializable, Rep extends Serializable>
         return wr_list;
     }
 
-    private ByteBuffer serializeToBuffer(Req req) throws IOException {
+    private ByteBuffer serializeToBuffer(Req req, long reqId) throws IOException {
+        DiSNILogger.getLogger().info("CLIENT SERIALIZE: reqId = "+reqId);
         ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(bytesOut);
         oos.writeObject(req);
@@ -93,7 +94,8 @@ public class ClientTransport<Req extends Serializable, Rep extends Serializable>
         byte[] bytes = bytesOut.toByteArray();
         bytesOut.close();
         oos.close();
-        ByteBuffer direct = ByteBuffer.allocateDirect(bytes.length);
+        ByteBuffer direct = ByteBuffer.allocateDirect(bytes.length + 8);
+        direct.putLong(reqId);
         direct.put(bytes);
         resources.add(direct);
         return direct;
@@ -105,7 +107,9 @@ public class ClientTransport<Req extends Serializable, Rep extends Serializable>
             rdmaRecvBuffer(event.getWr_id(), this.recv_buf).execute().free();
         }
         if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_RECV)) {
-            CompletableFuture<Rep> future = repMap.get(event.getWr_id());
+            long reqId = recv_buf.getLong();
+            DiSNILogger.getLogger().info("CLIENT ON EVENT: reqId = "+reqId);
+            CompletableFuture<Rep> future = repMap.get(reqId);
             try {
                 Rep rep = readResponse(recv_buf);
                 future.complete(rep);
@@ -119,8 +123,7 @@ public class ClientTransport<Req extends Serializable, Rep extends Serializable>
         byte[] arr = new byte[buffer.remaining()];
         buffer.get(arr);
         buffer.clear();
-        try (ByteArrayInputStream ba = new ByteArrayInputStream(arr);
-             ObjectInputStream in = new ObjectInputStream(ba)) {
+        try (ByteArrayInputStream ba = new ByteArrayInputStream(arr); ObjectInputStream in = new ObjectInputStream(ba)) {
             return (T) in.readObject();
         } catch (Exception e) {
             DiSNILogger.getLogger().error(" failed to read object from stream", e);
