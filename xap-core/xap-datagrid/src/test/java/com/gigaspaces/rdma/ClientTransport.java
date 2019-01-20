@@ -25,11 +25,15 @@ public class ClientTransport {
     private final ArrayBlockingQueue<IbvWC> recvEventQueue = new ArrayBlockingQueue<>(100);
     private final ExecutorService recvHandler = Executors.newFixedThreadPool(1);
     private final ExecutorService sendHandler = Executors.newFixedThreadPool(1);
+    private final RdmaResourceManager resourceManager;
 
-    public ClientTransport(Client.CustomClientEndpoint endpoint) {
+    public ClientTransport(Client.CustomClientEndpoint endpoint) throws IOException {
         this.endpoint = endpoint;
+
+        resourceManager = new RdmaResourceManager(endpoint, 5, 100);
+
         recvHandler.submit(new RdmaReceiver(recvEventQueue, repMap, endpoint));
-        rdmaSender = new RdmaSender(endpoint, writeRequests);
+        rdmaSender = new RdmaSender(resourceManager, writeRequests);
         sendHandler.submit(rdmaSender);
         try {
             endpoint.postRecv(endpoint.getWrList_recv()).execute().free();
@@ -123,10 +127,7 @@ public class ClientTransport {
     public void onCompletionEvent(IbvWC event) throws IOException {
 
         if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_SEND)) {
-            //TODO : release buffer by reqId
-            rdmaSender.getSendBuf().clear();
-//            sendEventQueue.add(event);
-//            rdmaRecvBuffer(event.getWr_id(), this.recv_buf).execute().free();
+           resourceManager.releaseResource((short) event.getWr_id());
         }
         if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_RECV)) {
             recvEventQueue.add(event); //TODO mybe offer? protect capacity
