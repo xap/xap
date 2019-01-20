@@ -27,6 +27,7 @@ import com.ibm.disni.verbs.*;
 import org.apache.log4j.BasicConfigurator;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -36,10 +37,25 @@ import java.util.concurrent.CompletableFuture;
 
 
 public class Client implements RdmaEndpointFactory<Client.CustomClientEndpoint> {
+    private final InetSocketAddress address;
+    private final CustomClientEndpoint endpoint;
     RdmaActiveEndpointGroup<CustomClientEndpoint> endpointGroup;
     private String host = "192.168.33.137";
     private int port = 8888;
     private ClientTransport transport;
+
+    public Client() throws IOException {
+        //create a EndpointGroup. The RdmaActiveEndpointGroup contains CQ processing and delivers CQ event to the endpoint.dispatchCqEvent() method.
+        endpointGroup = new RdmaActiveEndpointGroup<CustomClientEndpoint>(1000, false, 128, 4, 128);
+        endpointGroup.init(this);
+        //we have passed our own endpoint factory to the group, therefore new endpoints will be of type CustomClientEndpoint
+        //let's create a new client endpoint
+        endpoint = endpointGroup.createEndpoint();
+
+        //connect to the server
+        InetAddress ipAddress = InetAddress.getByName(host);
+        address = new InetSocketAddress(ipAddress, port);
+    }
 
     public Client.CustomClientEndpoint createEndpoint(RdmaCmId idPriv, boolean serverSide) throws IOException {
         return new CustomClientEndpoint(endpointGroup, idPriv, serverSide, 1000);
@@ -47,35 +63,18 @@ public class Client implements RdmaEndpointFactory<Client.CustomClientEndpoint> 
 
     public void run() throws Exception {
         try {
-            //create a EndpointGroup. The RdmaActiveEndpointGroup contains CQ processing and delivers CQ event to the endpoint.dispatchCqEvent() method.
-            endpointGroup = new RdmaActiveEndpointGroup<CustomClientEndpoint>(1000, false, 128, 4, 128);
-            endpointGroup.init(this);
-            //we have passed our own endpoint factory to the group, therefore new endpoints will be of type CustomClientEndpoint
-            //let's create a new client endpoint
-            Client.CustomClientEndpoint endpoint = endpointGroup.createEndpoint();
-
-            //connect to the server
-            InetAddress ipAddress = InetAddress.getByName(host);
-            InetSocketAddress address = new InetSocketAddress(ipAddress, port);
-            endpoint.connect(address, 1000);
-
+            connect(1000);
             DiSNILogger.getLogger().info("SimpleClient::client channel set up ");
 
-            String msg = "i am the client";
-            transport = new ClientTransport(endpoint);
-            endpoint.setTransport(transport);
-            CompletableFuture<RdmaMsg> future = transport.send(new RdmaMsg(msg));
-            RdmaMsg respond = future.get();
-            DiSNILogger.getLogger().info(respond.getPayload().toString());
+            CompletableFuture<String> future = send("i am the client");
+            String respond = future.get();
+            DiSNILogger.getLogger().info(respond);
 
-            respond = transport.send(new RdmaMsg("i am connected")).get();
-            DiSNILogger.getLogger().info(respond.getPayload().toString());
+            CompletableFuture<String> future1 = send("i am connected");
+            respond = future1.get();
+            DiSNILogger.getLogger().info(respond);
 
-            //close everything
-            endpoint.close();
-            DiSNILogger.getLogger().info("endpoint closed");
-            endpointGroup.close();
-            DiSNILogger.getLogger().info("group closed");
+            close();
         } catch (Exception e) {
             DiSNILogger.getLogger().info("got exception", e);
         } finally {
@@ -83,14 +82,28 @@ public class Client implements RdmaEndpointFactory<Client.CustomClientEndpoint> 
         }
     }
 
-    public void launch(String[] args) throws Exception {
-        this.run();
+    private <T extends Serializable> CompletableFuture<T> send(Serializable msg) {
+        return transport.send(new RdmaMsg(msg)).thenApply(rdmaMsg -> (T) rdmaMsg.getPayload());
+    }
+
+    private void connect(int timeout) throws Exception {
+        endpoint.connect(address, timeout);
+        transport = new ClientTransport(endpoint);
+        endpoint.setTransport(transport);
+    }
+
+    private void close() throws IOException, InterruptedException {
+        //close everything
+        endpoint.close();
+        DiSNILogger.getLogger().info("endpoint closed");
+        endpointGroup.close();
+        DiSNILogger.getLogger().info("group closed");
     }
 
     public static void main(String[] args) throws Exception {
         BasicConfigurator.configure();
         Client simpleClient = new Client();
-        simpleClient.launch(args);
+        simpleClient.run();
     }
 
     public static class CustomClientEndpoint extends RdmaActiveEndpoint {
