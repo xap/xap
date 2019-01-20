@@ -5,6 +5,7 @@ import java.io.*;
 public class RdmaMsg implements Externalizable {
 
     private Serializable payload;
+    private transient long id;
 
 
     public RdmaMsg() {
@@ -20,6 +21,14 @@ public class RdmaMsg implements Externalizable {
 
     public void setPayload(Serializable payload) {
         this.payload = payload;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 
     @Override
