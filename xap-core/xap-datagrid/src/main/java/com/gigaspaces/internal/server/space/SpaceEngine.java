@@ -4648,15 +4648,17 @@ public class SpaceEngine implements ISpaceModeListener {
 
         IEntryPacket entryPacket = null;
         EntryHolderAggregatorContext aggregatorContext = template.getAggregatorContext();
-        if (aggregatorContext != null) {
-            aggregatorContext.scan(entry);
-        } else {
-            if (shadowEntryToUse != null)
+        if (shadowEntryToUse != null) {
+            if (aggregatorContext != null)
+                aggregatorContext.scan(shadowEntryToUse.getEntryData(), entry.getUID(), entry.isTransient());
+            else
                 entryPacket = EntryPacketFactory.createFullPacket(shadowEntryToUse, template, entry.getUID());
-            else {
-                IEntryData entryData = context.isNonBlockingReadOp() ? context.getLastRawMatchSnapshot() : entry.getEntryData();
+        }else {
+            IEntryData entryData = context.isNonBlockingReadOp() ? context.getLastRawMatchSnapshot() : entry.getEntryData();
+            if (aggregatorContext != null)
+                aggregatorContext.scan(entryData, entry.getUID(), entry.isTransient());
+            else
                 entryPacket = EntryPacketFactory.createFullPacket(entry, template, entryData);
-            }
         }
 
         if (!template.isBatchOperation()) {

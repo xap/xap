@@ -86,7 +86,7 @@ public class EntryPacketFactory {
         final IEntryData entryData = entryHolder.getEntryData();
         final long timeToLive = entryData.getTimeToLive(true);
 
-        IEntryPacket entryPacket = create(null /*template*/, entryHolder, entryData, entryData.getFixedPropertiesValues(), entryHolder.getUID(), timeToLive, true);
+        IEntryPacket entryPacket = create(null /*template*/, entryHolder.isTransient(), entryData, entryData.getFixedPropertiesValues(), entryHolder.getUID(), timeToLive, true);
 
         entryPacket.setOperationID(operationID);
         return entryPacket;
@@ -97,7 +97,7 @@ public class EntryPacketFactory {
         final long timeToLive = entryData.getTimeToLive(true);
         final Object[] fixedProperties = getPartialUpdateFieldValues(entryData, partialUpdatedValuesIndicators);
 
-        IEntryPacket entryPacket = create(null /*template*/, entryHolder, entryData, fixedProperties,
+        IEntryPacket entryPacket = create(null /*template*/, entryHolder.isTransient(), entryData, fixedProperties,
                 entryHolder.getUID(), timeToLive, true);
 
         entryPacket.setOperationID(operationID);
@@ -106,40 +106,40 @@ public class EntryPacketFactory {
 
     public static IEntryPacket createFullPacketForReplication(IEntryHolder entryHolder, ITemplateHolder template, String uid, long timeToLive) {
         IEntryData entryData = entryHolder.getEntryData();
-        return create(template, entryHolder, entryData, entryData.getFixedPropertiesValues(), uid, timeToLive, true);
+        return create(template, entryHolder.isTransient(), entryData, entryData.getFixedPropertiesValues(), uid, timeToLive, true);
     }
 
     public static IEntryPacket createFullPacket(IEntryHolder entryHolder, ITemplateHolder template, String uid, long timeToLive,
                                                 IEntryData entryData, OperationID operationId) {
-        IEntryPacket packet = create(template, entryHolder, entryData, entryData.getFixedPropertiesValues(), uid, timeToLive, false);
+        IEntryPacket packet = create(template, entryHolder.isTransient(), entryData, entryData.getFixedPropertiesValues(), uid, timeToLive, false);
         packet.setOperationID(operationId);
         return packet;
     }
 
     public static IEntryPacket createFullPacket(IEntryHolder entry, ITemplateHolder template) {
-        return createFullPacket(entry, template, entry.getEntryData(), entry.getUID());
+        return createFullPacket(template, entry.getEntryData(), entry.getUID(), entry.isTransient());
     }
 
     public static IEntryPacket createFullPacket(IEntryHolder entry, ITemplateHolder template, IEntryData entryData) {
-        return createFullPacket(entry, template, entryData, entry.getUID());
+        return createFullPacket(template, entryData, entry.getUID(), entry.isTransient());
     }
 
     public static IEntryPacket createFullPacket(IEntryHolder entry, ITemplateHolder template, String uid) {
-        return createFullPacket(entry, template, entry.getEntryData(), uid);
+        return createFullPacket(template, entry.getEntryData(), uid, entry.isTransient());
     }
 
-    private static IEntryPacket createFullPacket(IEntryHolder entryHolder, ITemplateHolder template, IEntryData entryData, String uid) {
+    public static IEntryPacket createFullPacket(ITemplateHolder template, IEntryData entryData, String uid, boolean isTransient) {
         if (entryData.getEntryDataType() == EntryDataType.USER_TYPE)
-            return new LocalCacheResponseEntryPacket((UserTypeEntryData) entryData, entryHolder.getUID());
+            return new LocalCacheResponseEntryPacket((UserTypeEntryData) entryData, uid);
 
         final Object[] fixedProperties = entryData.getFixedPropertiesValues();
         final long timeToLive = entryData.getTimeToLive(false);
-        return create(template, entryHolder, entryData, fixedProperties, uid, timeToLive, false);
+        return create(template, isTransient, entryData, fixedProperties, uid, timeToLive, false);
     }
 
-    private static IEntryPacket create(ITemplateHolder template, IEntryHolder entryHolder, IEntryData entryData, Object[] fixedProperties,
+    private static IEntryPacket create(ITemplateHolder template, boolean isTransient, IEntryData entryData, Object[] fixedProperties,
                                        String uid, long timeToLive, boolean forceNonExternalizable) {
-        return createInternal(template, entryHolder.isTransient(), entryData, fixedProperties, uid, timeToLive, QueryResultTypeInternal.NOT_SET, forceNonExternalizable);
+        return createInternal(template, isTransient, entryData, fixedProperties, uid, timeToLive, QueryResultTypeInternal.NOT_SET, forceNonExternalizable);
     }
 
     public static IEntryPacket createRemovePacketForPersistency(IEntryHolder entryHolder, OperationID operationID) {
