@@ -14,7 +14,7 @@ import static com.gigaspaces.lrmi.rdma.RdmaConstants.BUFFER_SIZE;
 
 public class RdmaReceiver implements Runnable {
 
-    private final Client.CustomClientEndpoint endpoint;
+    private final GSRdmaClientEndpoint endpoint;
     private final BlockingQueue<IbvWC> recvCompletionEventQueue;
     private final ConcurrentHashMap<Long, CompletableFuture<RdmaMsg>> futureMap;
     private final SVCPostRecv postRecv;
@@ -22,7 +22,7 @@ public class RdmaReceiver implements Runnable {
 
     public RdmaReceiver(BlockingQueue<IbvWC> recvCompletionEventQueue,
                         ConcurrentHashMap<Long, CompletableFuture<RdmaMsg>> futureMap,
-                        Client.CustomClientEndpoint endpoint) throws IOException {
+                        GSRdmaClientEndpoint endpoint) throws IOException {
         this.recvCompletionEventQueue = recvCompletionEventQueue;
         this.futureMap = futureMap;
         this.endpoint = endpoint;

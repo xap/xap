@@ -26,7 +26,7 @@ public class ClientTransport {
     private final ExecutorService sendHandler = Executors.newFixedThreadPool(1);
     private final RdmaResourceManager resourceManager;
 
-    public ClientTransport(Client.CustomClientEndpoint endpoint) throws IOException {
+    public ClientTransport(GSRdmaClientEndpoint endpoint) throws IOException {
 
         resourceManager = new RdmaResourceManager(endpoint, 5, BUFFER_SIZE);
 
