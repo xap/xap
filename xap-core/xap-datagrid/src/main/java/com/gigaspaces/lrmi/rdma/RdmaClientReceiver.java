@@ -14,7 +14,6 @@ import static com.gigaspaces.lrmi.rdma.RdmaConstants.BUFFER_SIZE;
 
 public class RdmaClientReceiver implements Runnable {
 
-    private final GSRdmaClientEndpoint endpoint;
     private final BlockingQueue<IbvWC> recvCompletionEventQueue;
     private final ConcurrentHashMap<Long, CompletableFuture<RdmaMsg>> futureMap;
     private final SVCPostRecv postRecv;
@@ -25,11 +24,10 @@ public class RdmaClientReceiver implements Runnable {
                               GSRdmaClientEndpoint endpoint) throws IOException {
         this.recvCompletionEventQueue = recvCompletionEventQueue;
         this.futureMap = futureMap;
-        this.endpoint = endpoint;
 
         this.recvBuf = ByteBuffer.allocateDirect(BUFFER_SIZE);
         IbvMr recvMr = endpoint.registerMemory(recvBuf).execute().free().getMr();
-        this.postRecv = endpoint.postRecv(ClientTransport.createRecvWorkRequest(2004, recvMr));
+        this.postRecv = endpoint.postRecv(ClientTransport.createRecvWorkRequest(RdmaConstants.nextId(), recvMr));
 
         try {
             postRecv.execute();
@@ -43,11 +41,10 @@ public class RdmaClientReceiver implements Runnable {
         while (true) {
             try {
                 IbvWC event = recvCompletionEventQueue.take();
-                ByteBuffer buff = findBuffer(event.getWr_id());
-                long reqId = buff.getLong();
+                long reqId = recvBuf.getLong();
                 CompletableFuture future = getFuture(reqId);
                 try {
-                    future.complete(ClientTransport.readResponse(buff));
+                    future.complete(ClientTransport.readResponse(recvBuf));
                 } catch (Exception e) {
                     future.completeExceptionally(e);
                 }
@@ -66,7 +63,4 @@ public class RdmaClientReceiver implements Runnable {
         return futureMap.remove(reqId);
     }
 
-    private ByteBuffer findBuffer(long wr_id) {
-        return recvBuf;
-    }
 }

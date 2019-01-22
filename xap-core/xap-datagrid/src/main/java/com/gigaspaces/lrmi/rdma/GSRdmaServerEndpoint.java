@@ -2,10 +2,7 @@ package com.gigaspaces.lrmi.rdma;
 
 import com.ibm.disni.RdmaActiveEndpointGroup;
 import com.ibm.disni.util.DiSNILogger;
-import com.ibm.disni.verbs.IbvMr;
-import com.ibm.disni.verbs.IbvWC;
-import com.ibm.disni.verbs.RdmaCmId;
-import com.ibm.disni.verbs.SVCPostRecv;
+import com.ibm.disni.verbs.*;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -30,7 +27,7 @@ public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
         this.resourceManager = new RdmaResourceManager(this, 1);
         this.recvBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
         IbvMr recvMr = registerMemory(recvBuffer).execute().free().getMr();
-        this.postRecv = postRecv(ClientTransport.createRecvWorkRequest(2004, recvMr));
+        this.postRecv = postRecv(ClientTransport.createRecvWorkRequest(RdmaConstants.nextId(), recvMr));
     }
 
     public void dispatchCqEvent(IbvWC event) {
@@ -41,6 +38,21 @@ public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
         }
         if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_RECV)) {
             pendingRequests.add(this);
+        }
+    }
+
+    @Override
+    public synchronized void dispatchCmEvent(RdmaCmEvent cmEvent) throws IOException {
+        super.dispatchCmEvent(cmEvent);
+        if(cmEvent.getEvent() == RdmaCmEvent.EventType.RDMA_CM_EVENT_DISCONNECTED.ordinal()){
+            DiSNILogger.getLogger().info("SERVER: closing connection to "+getDstAddr());
+            this.resourceManager = null;
+            this.postRecv.free();
+            try {
+                close();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

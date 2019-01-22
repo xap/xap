@@ -24,6 +24,7 @@ import org.apache.log4j.BasicConfigurator;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 
@@ -49,14 +50,18 @@ public class Client {
             endpoint.connect(address, 1000);
             DiSNILogger.getLogger().info("::client channel set up ");
 
-            CompletableFuture<String> future = endpoint.getTransport().send("i am the client");
-            String respond = future.get();
-            DiSNILogger.getLogger().info(respond);
+            ArrayList<CompletableFuture<String>> futures = new ArrayList<>();
+            for (int i = 0; i < 2; i++) {
+                CompletableFuture<String> send = endpoint.getTransport().send("i am the client msg number " + i);
+                futures.add(send);
+                send.whenComplete((s, throwable) -> DiSNILogger.getLogger().info(s,throwable));
+            }
 
-            CompletableFuture<String> future1 = endpoint.getTransport().send("i am connected");
-            respond = future1.get();
-            DiSNILogger.getLogger().info(respond);
-
+            Thread.sleep(100000);
+//
+//            for (CompletableFuture<String> future : futures) {
+//                String response = future.get();
+//            }
             endpoint.close();
             DiSNILogger.getLogger().info("endpoint closed");
             factory.close();

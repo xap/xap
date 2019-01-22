@@ -1,12 +1,9 @@
 package com.gigaspaces.lrmi.rdma;
 
-import com.ibm.disni.RdmaActiveEndpointGroup;
-import com.ibm.disni.util.DiSNILogger;
 import org.apache.log4j.BasicConfigurator;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ArrayBlockingQueue;
 
 public class Server {
 

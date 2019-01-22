@@ -27,12 +27,10 @@ public class ClientTransport {
     private final RdmaResourceManager resourceManager;
 
     public ClientTransport(GSRdmaClientEndpoint endpoint) throws IOException {
-
-        resourceManager = new RdmaResourceManager(endpoint, 5);
+        resourceManager = new RdmaResourceManager(endpoint, 1);
         recvHandler.submit(new RdmaClientReceiver(recvEventQueue, repMap, endpoint));
         rdmaSender = new RdmaSender(resourceManager, writeRequests);
         sendHandler.submit(rdmaSender);
-
     }
 
     public static LinkedList<IbvRecvWR> createRecvWorkRequest(long id, IbvMr mr) {
@@ -96,21 +94,6 @@ public class ClientTransport {
         return sendMsg(new RdmaMsg(msg)).thenApply(rdmaMsg -> (T) rdmaMsg.getPayload());
     }
 
-    private ByteBuffer serializeToBuffer(RdmaMsg req, long reqId) throws IOException {
-        DiSNILogger.getLogger().info("CLIENT SERIALIZE: reqId = "+reqId);
-        ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(bytesOut);
-        oos.writeObject(req);
-        oos.flush();
-        byte[] bytes = bytesOut.toByteArray();
-        bytesOut.close();
-        oos.close();
-        ByteBuffer direct = ByteBuffer.allocateDirect(bytes.length + 8);
-        direct.putLong(reqId);
-        direct.put(bytes);
-        resources.add(direct);
-        return direct;
-    }
 
     static void serializeToBuffer(ByteBuffer buffer, RdmaMsg req, long reqId) throws IOException {
         DiSNILogger.getLogger().info("CLIENT SERIALIZE: reqId = "+reqId);

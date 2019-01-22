@@ -17,7 +17,8 @@ public class RdmaResourceManager {
         freeResources = new ArrayBlockingQueue<>(resourcesCount);
         for (short i = 0; i < resourcesCount; i++) {
             ByteBuffer direct = ByteBuffer.allocateDirect(RdmaConstants.BUFFER_SIZE);
-            RdmaResource resource = new RdmaResource(i, direct, ClientTransport.rdmaSendBuffer(i, direct, endpoint));
+            short id = (short) RdmaConstants.nextId();
+            RdmaResource resource = new RdmaResource(id, direct, ClientTransport.rdmaSendBuffer(id, direct, endpoint));
             freeResources.add(resource);
         }
     }

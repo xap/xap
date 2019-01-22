@@ -18,7 +18,7 @@ public class RdmaServerTransport implements Runnable {
 
 
     public RdmaServerTransport(InetSocketAddress address, Function<RdmaMsg, RdmaMsg> process) throws Exception {
-        executorService = Executors.newFixedThreadPool(10);
+        executorService = Executors.newFixedThreadPool(1);
         pendingRequests = new ArrayBlockingQueue<GSRdmaServerEndpoint>(RdmaConstants.MAX_INCOMMING_REQUESTS);
 
         GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory();

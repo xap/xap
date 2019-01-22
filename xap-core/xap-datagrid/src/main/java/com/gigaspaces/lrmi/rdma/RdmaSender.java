@@ -1,5 +1,7 @@
 package com.gigaspaces.lrmi.rdma;
 
+import com.ibm.disni.util.DiSNILogger;
+
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -22,6 +24,7 @@ public class RdmaSender implements Runnable {
                 RdmaResource resource = resourceManager.waitForFreeResource();
                 try {
                     long id = rdmaMsg.getId();
+                    DiSNILogger.getLogger().info("writing to client buffer");
                     ClientTransport.serializeToBuffer(resource.getBuffer(), rdmaMsg, id);
                     resource.getPostSend().execute();
                 } catch (IOException e) {
