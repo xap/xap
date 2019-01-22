@@ -56,6 +56,7 @@ import com.gigaspaces.lrmi.nio.filters.IOFilterException;
 import com.gigaspaces.lrmi.nio.filters.IOFilterManager;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientConversationRunner;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientHandler;
+import com.gigaspaces.lrmi.rdma.RdmaChannel;
 import com.gigaspaces.lrmi.tcp.TcpChannel;
 import com.j_spaces.kernel.SystemProperties;
 
@@ -230,8 +231,7 @@ public class CPeer extends BaseClientPeer {
             _receivedTraffic += _channel.getReader().getReceivedTraffic();
         }
         if (isRdma) {
-            // TODO: connect/create RDMa endpoint
-            // _channel = new RdmaChannel which is a mock channel
+            _channel = RdmaChannel.create(address);
         } else {
             _channel = async ? TcpChannel.createAsync(address, _config, lrmiMethod, clientConversationRunner) : TcpChannel.createSync(address, _config);
         }
