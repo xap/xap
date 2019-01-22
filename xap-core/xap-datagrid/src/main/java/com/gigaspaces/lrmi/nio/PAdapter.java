@@ -23,18 +23,13 @@ import com.gigaspaces.internal.lrmi.LRMIMonitoringDetailsImpl;
 import com.gigaspaces.internal.utils.concurrent.GSThread;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.Constants;
-import com.gigaspaces.lrmi.ClientPeerInvocationHandler;
-import com.gigaspaces.lrmi.ConnPoolInvocationHandler;
-import com.gigaspaces.lrmi.ConnectionPool;
-import com.gigaspaces.lrmi.DynamicSmartStub;
-import com.gigaspaces.lrmi.GenericExporter;
-import com.gigaspaces.lrmi.LRMIRuntime;
-import com.gigaspaces.lrmi.ProtocolAdapter;
-import com.gigaspaces.lrmi.ServerPeer;
+import com.gigaspaces.lrmi.*;
 import com.gigaspaces.lrmi.classloading.DefaultClassProvider;
 import com.gigaspaces.lrmi.classloading.IClassProvider;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientConversationRunner;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientHandler;
+import com.gigaspaces.lrmi.rdma.RdmaConstants;
+import com.gigaspaces.lrmi.rdma.RdmaPivot;
 import com.gigaspaces.management.transport.ITransportConnection;
 import com.j_spaces.core.service.ServiceConfigLoader;
 
@@ -66,7 +61,7 @@ public class PAdapter implements ProtocolAdapter<CPeer> {
 
     final static String ADAPTER_NAME = "NIO";
 
-    private Pivot m_Pivot;
+    private AbstractPivot m_Pivot;
     @SuppressWarnings("FieldCanBeLocal")
     private NIOConfiguration _nioConfig;
     private GenericExporter _exporter;
@@ -147,8 +142,12 @@ public class PAdapter implements ProtocolAdapter<CPeer> {
             _logger.config(config.toString());
 
         try {
+            if(RdmaConstants.ENABLED){
+                m_Pivot = new RdmaPivot(_nioConfig, this);
+            } else {
+                m_Pivot = new Pivot(_nioConfig, this);
+            }
             // creates Pivot on specified according to nioConfig
-            m_Pivot = new Pivot(_nioConfig, this);
         } catch (java.io.IOException ex) {
             throw new RemoteException("Failed initialization of LRMI over NIO Protocol Adapter.", ex);
         }
@@ -202,7 +201,7 @@ public class PAdapter implements ProtocolAdapter<CPeer> {
     // TODO Igor.G 15/1/07
     // make pivot accessible outside of NIO package just for management support
     // After cleanup this method need back to be package access
-    public Pivot getPivot() {
+    public AbstractPivot getPivot() {
         return m_Pivot;
     }
 

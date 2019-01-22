@@ -8,15 +8,14 @@ import com.ibm.disni.verbs.RdmaCmId;
 
 import java.io.IOException;
 
-public class GSRdmaClientEndpoint extends RdmaActiveEndpoint {
+public class GSRdmaClientEndpoint extends GSRdmaAbstractEndpoint {
 
 
     private ClientTransport transport;
 
-    public GSRdmaClientEndpoint(RdmaActiveEndpointGroup<GSRdmaClientEndpoint> endpointGroup,
-                                RdmaCmId idPriv, boolean serverSide) throws IOException {
-        super(endpointGroup, idPriv, serverSide);
-
+    public GSRdmaClientEndpoint(RdmaActiveEndpointGroup<GSRdmaAbstractEndpoint> endpointGroup,
+                                RdmaCmId idPriv) throws IOException {
+        super(endpointGroup, idPriv, false);
     }
 
     //important: we override the init method to prepare some buffers (memory registration, post recv, etc).

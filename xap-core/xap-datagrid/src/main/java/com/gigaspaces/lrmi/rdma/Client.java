@@ -39,7 +39,7 @@ public class Client {
 
         //we have passed our own endpoint factory to the group, therefore new endpoints will be of type GSRdmaClientEndpoint
         //let's create a new client endpoint
-        GSRdmaClientEndpoint endpoint = factory.create();
+        GSRdmaClientEndpoint endpoint = (GSRdmaClientEndpoint) factory.create();
 
         //connect to the server
         InetAddress ipAddress = InetAddress.getByName(host);

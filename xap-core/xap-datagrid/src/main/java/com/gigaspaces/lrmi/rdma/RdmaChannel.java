@@ -24,7 +24,7 @@ public class RdmaChannel extends LrmiChannel {
 
     public static RdmaChannel create(ServerAddress address) throws IOException {
         GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory();
-        GSRdmaClientEndpoint endpoint = factory.create();
+        GSRdmaClientEndpoint endpoint = (GSRdmaClientEndpoint) factory.create();
         //connect to the server
         InetAddress ipAddress = InetAddress.getByName(address.getHost());
         InetSocketAddress socketAddress = new InetSocketAddress(ipAddress, address.getPort());

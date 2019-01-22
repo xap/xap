@@ -28,18 +28,10 @@ import com.gigaspaces.internal.lrmi.LRMIInboundMonitoringDetailsImpl;
 import com.gigaspaces.internal.lrmi.LRMIServiceMonitoringDetailsImpl;
 import com.gigaspaces.internal.utils.concurrent.ContextClassLoaderRunnable;
 import com.gigaspaces.logger.Constants;
-import com.gigaspaces.lrmi.ILRMIService;
-import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.lrmi.*;
 import com.gigaspaces.lrmi.LRMIInvocationContext.InvocationStage;
 import com.gigaspaces.lrmi.LRMIInvocationContext.ProxyWriteType;
-import com.gigaspaces.lrmi.LRMIInvocationTrace;
-import com.gigaspaces.lrmi.LRMIMethod;
-import com.gigaspaces.lrmi.LRMIRuntime;
-import com.gigaspaces.lrmi.ObjectRegistry;
 import com.gigaspaces.lrmi.ObjectRegistry.Entry;
-import com.gigaspaces.lrmi.OperationPriority;
-import com.gigaspaces.lrmi.ProtocolAdapter;
-import com.gigaspaces.lrmi.ServerPeer;
 import com.gigaspaces.lrmi.classloading.ClassProviderRequest;
 import com.gigaspaces.lrmi.classloading.IClassProvider;
 import com.gigaspaces.lrmi.classloading.IRemoteClassProviderProvider;
@@ -101,7 +93,7 @@ import java.util.logging.Logger;
  * @since 4.0
  */
 @com.gigaspaces.api.InternalApi
-public class Pivot {
+public class Pivot extends AbstractPivot {
     // logger
     final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
     final private static Logger _contextLogger = Logger.getLogger(Constants.LOGGER_LRMI_CONTEXT);
@@ -251,7 +243,8 @@ public class Pivot {
         _protocolValidationEnabled = config.isProtocolValidationEnabled();
     }
 
-    void shutdown() {
+    @Override
+    public void shutdown() {
         // shutdown the connection manager
         _selectorManager.requestShutdown();
 

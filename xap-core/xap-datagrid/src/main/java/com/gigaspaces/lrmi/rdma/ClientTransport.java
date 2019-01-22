@@ -28,10 +28,10 @@ public class ClientTransport {
 
     public ClientTransport(GSRdmaClientEndpoint endpoint) throws IOException {
 
-        resourceManager = new RdmaResourceManager(endpoint, 5, BUFFER_SIZE);
+        resourceManager = new RdmaResourceManager(endpoint, 5);
 
 
-        recvHandler.submit(new RdmaReceiver(recvEventQueue, repMap, endpoint));
+        recvHandler.submit(new RdmaClientReceiver(recvEventQueue, repMap, endpoint));
         rdmaSender = new RdmaSender(resourceManager, writeRequests);
         sendHandler.submit(rdmaSender);
 

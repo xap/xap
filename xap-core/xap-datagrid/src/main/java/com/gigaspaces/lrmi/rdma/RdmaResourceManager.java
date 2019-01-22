@@ -13,10 +13,10 @@ public class RdmaResourceManager {
     private final Map<Short,RdmaResource> usedResources = new ConcurrentHashMap<>();
     private final ArrayBlockingQueue<RdmaResource> freeResources;
 
-    public RdmaResourceManager(RdmaActiveEndpoint endpoint, int resourcesCount, int bufferSize) throws IOException {
+    public RdmaResourceManager(RdmaActiveEndpoint endpoint, int resourcesCount) throws IOException {
         freeResources = new ArrayBlockingQueue<>(resourcesCount);
         for (short i = 0; i < resourcesCount; i++) {
-            ByteBuffer direct = ByteBuffer.allocateDirect(bufferSize);
+            ByteBuffer direct = ByteBuffer.allocateDirect(RdmaConstants.BUFFER_SIZE);
             RdmaResource resource = new RdmaResource(i, direct, ClientTransport.rdmaSendBuffer(i, direct, endpoint));
             freeResources.add(resource);
         }

@@ -60,19 +60,12 @@ public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> 
         //we have previously passed our own endpoint factory to the group, therefore new endpoints will be of type CustomServerEndpoint
         DiSNILogger.getLogger().info("SimpleServer::client connection accepted");
 
+        executorService.submit(new RdmaServerReceiver(pendingRequests, rdmaMsg -> new RdmaMsg(rdmaMsg.getPayload().toString().toUpperCase())));
+
         while (true) {
-            Server.CustomServerEndpoint rdmaEndpoint = serverEndpoint.accept();
-            executorService.submit(() -> {
-                try {
-                    while (true){
-                        chatWithClient(rdmaEndpoint);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            });
+            GSRdmaServerEndpoint rdmaEndpoint = (GSRdmaServerEndpoint) serverEndpoint.accept();
+            rdmaEndpoint.setPendingRequests(pendingRequests);
+            DiSNILogger.getLogger().info("destination: "+rdmaEndpoint.getDstAddr()+", source: "+rdmaEndpoint.getSrcAddr());
         }
 
 

@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.gigaspaces.lrmi.rdma.RdmaConstants.BUFFER_SIZE;
 
-public class RdmaReceiver implements Runnable {
+public class RdmaClientReceiver implements Runnable {
 
     private final GSRdmaClientEndpoint endpoint;
     private final BlockingQueue<IbvWC> recvCompletionEventQueue;
@@ -20,9 +20,9 @@ public class RdmaReceiver implements Runnable {
     private final SVCPostRecv postRecv;
     private final ByteBuffer recvBuf;
 
-    public RdmaReceiver(BlockingQueue<IbvWC> recvCompletionEventQueue,
-                        ConcurrentHashMap<Long, CompletableFuture<RdmaMsg>> futureMap,
-                        GSRdmaClientEndpoint endpoint) throws IOException {
+    public RdmaClientReceiver(BlockingQueue<IbvWC> recvCompletionEventQueue,
+                              ConcurrentHashMap<Long, CompletableFuture<RdmaMsg>> futureMap,
+                              GSRdmaClientEndpoint endpoint) throws IOException {
         this.recvCompletionEventQueue = recvCompletionEventQueue;
         this.futureMap = futureMap;
         this.endpoint = endpoint;
