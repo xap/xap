@@ -1,4 +1,4 @@
-package com.gigaspaces.rdma;
+package com.gigaspaces.lrmi.rdma;
 
 import com.ibm.disni.RdmaActiveEndpoint;
 import com.ibm.disni.RdmaActiveEndpointGroup;
@@ -19,7 +19,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static com.gigaspaces.rdma.RdmaConstants.BUFFER_SIZE;
+import static com.gigaspaces.lrmi.rdma.RdmaConstants.BUFFER_SIZE;
 
 public class Server implements RdmaEndpointFactory<Server.CustomServerEndpoint> {
 

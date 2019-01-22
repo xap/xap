@@ -1,4 +1,4 @@
-package com.gigaspaces.rdma;
+package com.gigaspaces.lrmi.rdma;
 
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;

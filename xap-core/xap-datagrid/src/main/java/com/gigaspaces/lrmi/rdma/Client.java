@@ -1,4 +1,4 @@
-package com.gigaspaces.rdma;/*
+package com.gigaspaces.lrmi.rdma;/*
  * DiSNI: Direct Storage and Networking Interface
  *
  * Author: Patrick Stuedi <stu@zurich.ibm.com>

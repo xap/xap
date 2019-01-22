@@ -1,4 +1,4 @@
-package com.gigaspaces.rdma;
+package com.gigaspaces.lrmi.rdma;
 
 import com.ibm.disni.RdmaActiveEndpoint;
 

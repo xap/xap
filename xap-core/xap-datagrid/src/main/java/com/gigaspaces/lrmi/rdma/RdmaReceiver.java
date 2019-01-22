@@ -1,4 +1,4 @@
-package com.gigaspaces.rdma;
+package com.gigaspaces.lrmi.rdma;
 
 import com.ibm.disni.verbs.IbvMr;
 import com.ibm.disni.verbs.IbvWC;
@@ -10,7 +10,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.gigaspaces.rdma.RdmaConstants.BUFFER_SIZE;
+import static com.gigaspaces.lrmi.rdma.RdmaConstants.BUFFER_SIZE;
 
 public class RdmaReceiver implements Runnable {
 

@@ -1,4 +1,4 @@
-package com.gigaspaces.rdma;
+package com.gigaspaces.lrmi.rdma;
 
 import com.ibm.disni.RdmaActiveEndpoint;
 import com.ibm.disni.util.DiSNILogger;
@@ -10,7 +10,7 @@ import java.util.LinkedList;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.gigaspaces.rdma.RdmaConstants.BUFFER_SIZE;
+import static com.gigaspaces.lrmi.rdma.RdmaConstants.BUFFER_SIZE;
 
 // @todo - handle timeouts ?
 
