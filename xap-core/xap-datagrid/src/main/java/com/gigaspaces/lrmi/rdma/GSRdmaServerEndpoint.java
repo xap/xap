@@ -31,7 +31,6 @@ public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
         this.recvBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
         IbvMr recvMr = registerMemory(recvBuffer).execute().free().getMr();
         this.postRecv = postRecv(ClientTransport.createRecvWorkRequest(2004, recvMr));
-        postRecv.execute();
     }
 
     public void dispatchCqEvent(IbvWC event) {
@@ -53,8 +52,9 @@ public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
         return resourceManager;
     }
 
-    public void setPendingRequests(ArrayBlockingQueue<GSRdmaServerEndpoint> pendingRequests) {
+    public void init(ArrayBlockingQueue<GSRdmaServerEndpoint> pendingRequests) throws IOException {
         this.pendingRequests = pendingRequests;
+        postRecv.execute();
     }
 
     public SVCPostRecv getPostRecv() {

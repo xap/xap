@@ -525,14 +525,7 @@ public class CPeer extends BaseClientPeer {
                     ClientTransport clientTransport = ((RdmaChannel) _channel).getTransport();
                     CompletableFuture<Serializable> future = clientTransport.send((Serializable) _requestPacket);//TODO: requestPacket isn't serializable
                     LRMIFuture finalResult = result;
-                    future.whenComplete((serializable, throwable) -> {
-                        if (throwable != null) {
-                            finalResult.setResult(throwable);
-                        } else {
-                            finalResult.setResult(serializable);
-                        }
-                    });
-
+                    future.thenAccept(finalResult::setResult).exceptionally(throwable -> {finalResult.setResult(throwable); return null;});
                 } else {
                     final AsyncContext ctx = new AsyncContext(connPool,
                             _handler,
