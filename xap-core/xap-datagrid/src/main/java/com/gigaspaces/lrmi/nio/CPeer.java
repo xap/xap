@@ -49,6 +49,7 @@ import com.gigaspaces.lrmi.nio.selector.handler.client.ClientConversationRunner;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientHandler;
 import com.gigaspaces.lrmi.rdma.ClientTransport;
 import com.gigaspaces.lrmi.rdma.RdmaChannel;
+import com.gigaspaces.lrmi.rdma.RdmaConstants;
 import com.gigaspaces.lrmi.tcp.TcpChannel;
 import com.j_spaces.kernel.SystemProperties;
 import net.jini.space.InternalSpaceException;
@@ -139,7 +140,7 @@ public class CPeer extends BaseClientPeer {
     private AsyncContext _asyncContext = null;
     private boolean _asyncConnect;
 
-    private final boolean isRdma = false;
+    private final boolean isRdma = RdmaConstants.ENABLED;
 
     public static LongAdder getConnectionsCounter() {
         return connections;
