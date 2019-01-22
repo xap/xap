@@ -29,7 +29,7 @@ public class PacketSerializer {
             _baos = new GSByteArrayOutputStream();
             _baos.setSize(LENGTH_SIZE); // mark the buffer to start writing only after the length place
             _oos = new MarshalOutputStream(_baos, true); // add a TC_RESET using the MarshalOutputStream.writeStreamHeader()
-            initBuffer(_baos);
+            _bufferCache.set(wrap((_baos)));
         } catch (Exception e) {
             if (_logger.isLoggable(Level.SEVERE)) {
                 _logger.log(Level.SEVERE, e.getMessage(), e);
@@ -47,7 +47,9 @@ public class PacketSerializer {
         if (reuseBuffer) {
             mos = _oos;
             bos = _baos;
-            byteBuffer = prepareStream();
+            byteBuffer = _bufferCache.get();
+            _baos.setBuffer(byteBuffer.array(), LENGTH_SIZE); // 4 bytes for size
+
         } else // build a temporal buffer and streams
         {
             bos = new GSByteArrayOutputStream();
@@ -85,18 +87,6 @@ public class PacketSerializer {
     }
 
     /**
-     * Wraps a stream with a buffer and save it a soft reference local cache.
-     *
-     * @param bos stream to wrap
-     * @return wrapping ByteBuffer
-     */
-    private ByteBuffer initBuffer(GSByteArrayOutputStream bos) {
-        ByteBuffer byteBuffer = wrap(bos);
-        _bufferCache.set(byteBuffer);
-        return byteBuffer;
-    }
-
-    /**
      * @param byteBuffer buffer that might be used by the GSByteArrayOutputStream
      * @return prepared buffer.
      */
@@ -117,17 +107,6 @@ public class PacketSerializer {
         byteBuffer.position(length);
         byteBuffer.flip();
 
-        return byteBuffer;
-    }
-
-    /**
-     * @return buffer that might be used by the GSByteArrayOutputStream
-     */
-    private ByteBuffer prepareStream() {
-        ByteBuffer byteBuffer = _bufferCache.get();
-
-        byte[] streamBuffer = byteBuffer.array();
-        _baos.setBuffer(streamBuffer, LENGTH_SIZE); // 4 bytes for size
         return byteBuffer;
     }
 
