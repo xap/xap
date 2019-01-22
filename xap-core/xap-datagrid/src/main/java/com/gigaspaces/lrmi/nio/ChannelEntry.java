@@ -269,7 +269,7 @@ public class ChannelEntry implements IWriteInterestManager {
     public void close() throws IOException {
         //Clear the context the inner streams hold upon disconnection
         _socketChannel.close();
-        _writer.closeContext();
+        _writer.getSerializer().closeContext();
         _reader.closeContext();
     }
 

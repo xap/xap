@@ -359,7 +359,7 @@ public class CPeer extends BaseClientPeer {
         if (channel != null) {
             if (channel.getWriter() != null) {
                 //Clear the context the inner streams hold upon disconnection
-                channel.getWriter().closeContext();
+                channel.getWriter().getSerializer().closeContext();
                 _generatedTraffic += channel.getWriter().getGeneratedTraffic();
             }
             if (channel.getReader() != null) {
@@ -608,7 +608,7 @@ public class CPeer extends BaseClientPeer {
                     _logger.log(Level.FINE, "LRMI caught LRMIUnhandledException during deserialization stage at end point, reseting writer context.", ex);
                 //We must reset the context because the other side have not completed reading the stream and therefore didn't
                 //learn all the new context
-                _channel.getWriter().resetContext();
+                _channel.getWriter().getSerializer().resetContext();
             }
             if (_logger.isLoggable(Level.FINE))
                 _logger.log(Level.FINE, "LRMI caught LRMIUnhandledException, propogating it upwards.", ex);

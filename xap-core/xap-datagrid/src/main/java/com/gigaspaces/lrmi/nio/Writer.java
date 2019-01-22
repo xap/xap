@@ -17,12 +17,8 @@
 package com.gigaspaces.lrmi.nio;
 
 import com.gigaspaces.internal.backport.java.util.concurrent.atomic.LongAdder;
-import com.gigaspaces.internal.io.GSByteArrayOutputStream;
-import com.gigaspaces.internal.io.MarshalContextClearedException;
-import com.gigaspaces.internal.io.MarshalOutputStream;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.LRMIInvocationTrace;
-import com.gigaspaces.lrmi.SmartByteBufferCache;
 import com.gigaspaces.lrmi.nio.filters.IOFilterException;
 import com.gigaspaces.lrmi.nio.filters.IOFilterManager;
 import com.gigaspaces.lrmi.tcp.TcpWriter;
@@ -31,7 +27,6 @@ import com.j_spaces.kernel.SystemProperties;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -49,22 +44,12 @@ public abstract class Writer implements IChannelWriter {
 
     final static public int BUFFER_LIMIT = Integer.getInteger(SystemProperties.MAX_LRMI_BUFFER_SIZE, SystemProperties.MAX_LRMI_BUFFER_SIZE_DEFAULT);
 
-    final static private int LENGTH_SIZE = 4; //4 bytes for length
-
-    final private MarshalOutputStream _oos;
-    final private GSByteArrayOutputStream _baos;
+    final private PacketSerializer serializer;
 
     protected IWriteInterestManager _writeInterestManager;
 
-    /**
-     * reuse buffer, growing on demand.
-     */
-    final private SmartByteBufferCache _bufferCache = SmartByteBufferCache.getDefaultSmartByteBufferCache();
-
     private static final LongAdder generatedTraffic = new LongAdder();
     private long _generatedTraffic;
-
-    final private static byte[] DUMMY_BUFFER = new byte[0];
 
     IOFilterManager _filterManager;
 
@@ -79,18 +64,7 @@ public abstract class Writer implements IChannelWriter {
     }
 
     protected Writer() {
-        try {
-            _baos = new GSByteArrayOutputStream();
-            _baos.setSize(LENGTH_SIZE); // mark the buffer to start writing only after the length place
-            _oos = new MarshalOutputStream(_baos, true); // add a TC_RESET using the MarshalOutputStream.writeStreamHeader() 
-            initBuffer(_baos);
-        } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.getMessage(), e);
-            }
-
-            throw new RuntimeException("Failed to initialize LRMI Writer stream: ", e);
-        }
+        serializer = new PacketSerializer();
     }
 
     /**
@@ -140,7 +114,9 @@ public abstract class Writer implements IChannelWriter {
         if (_logger.isLoggable(Level.FINEST)) {
             _logger.finest("--> Write Packet " + packet);
         }
-        ByteBuffer buffer = serialize(packet, requestReuseBuffer);
+        ByteBuffer buffer = serializer.serialize(packet, requestReuseBuffer&& !hasQueuedContexts());
+        _generatedTraffic += buffer.limit();
+        generatedTraffic.add(buffer.limit());
 
         if (ctx != null) {
             // non blocking mode.
@@ -159,54 +135,6 @@ public abstract class Writer implements IChannelWriter {
                 writeBytesToChannelBlocking(buffer);
             }
         }
-    }
-
-    private ByteBuffer serialize(IPacket packet, boolean requestReuseBuffer) throws IOException {
-        ByteBuffer byteBuffer;
-        MarshalOutputStream mos;
-        GSByteArrayOutputStream bos;
-
-        final boolean reuseBuffer = requestReuseBuffer && !hasQueuedContexts();
-        if (reuseBuffer) {
-            mos = _oos;
-            bos = _baos;
-            byteBuffer = prepareStream();
-        } else // build a temporal buffer and streams
-        {
-            bos = new GSByteArrayOutputStream();
-            bos.setSize(LENGTH_SIZE); // for the stream size
-            mos = new MarshalOutputStream(bos, false);
-            byteBuffer = wrap(bos);
-        }
-
-        ByteBuffer buffer;
-        try {
-            packet.writeExternal(mos);
-        } catch (MarshalContextClearedException e) {
-            //Keep original exception for upper layer to handle properly
-            throw e;
-        } catch (Exception e) {
-            throw new MarshallingException("Failed to marsh: " + packet, e);
-        } finally // make sure we clean the buffers even if an exception was thrown
-        {
-            buffer = prepareBuffer(mos, bos, byteBuffer);
-
-            if (reuseBuffer) {
-                bos.setBuffer(DUMMY_BUFFER); // set DUMMY_BUFFER to release the strong reference to the byte[]
-                bos.reset();
-                mos.reset();
-                if (buffer != byteBuffer) // replace the buffer in soft reference if needed
-                    _bufferCache.set(buffer);
-                else
-                    _bufferCache.notifyUsedSize(buffer.limit());
-            } else {
-                //Clear context because this output stream is no longer used
-                mos.closeContext();
-            }
-        }
-        _generatedTraffic += buffer.limit();
-        generatedTraffic.add(buffer.limit());
-        return buffer;
     }
 
     protected abstract boolean hasQueuedContexts();
@@ -354,71 +282,8 @@ public abstract class Writer implements IChannelWriter {
 
     protected abstract void onWriteEventImpl() throws IOException;
 
-    /**
-     * @param byteBuffer buffer that might be used by the GSByteArrayOutputStream
-     * @return prepared buffer.
-     */
-    private ByteBuffer prepareBuffer(MarshalOutputStream mos, GSByteArrayOutputStream bos,
-                                     ByteBuffer byteBuffer) throws IOException {
-        mos.flush();
-
-        int length = bos.size();
-
-        if (byteBuffer.array() != bos.getBuffer()) // the buffer was changed
-        {
-            byteBuffer = wrap(bos);
-        } else {
-            byteBuffer.clear();
-        }
-
-        byteBuffer.putInt(length - LENGTH_SIZE);
-        byteBuffer.position(length);
-        byteBuffer.flip();
-
-        return byteBuffer;
-    }
-
-    /**
-     * Wraps a GSByteArrayOutputStream inner buffer with a ByteBuffer
-     *
-     * @param bos stream to wrap
-     * @return wrapping ByteBuffer
-     */
-    private ByteBuffer wrap(GSByteArrayOutputStream bos) {
-        ByteBuffer byteBuffer = ByteBuffer.wrap(bos.getBuffer());
-        byteBuffer.order(ByteOrder.BIG_ENDIAN);
-        return byteBuffer;
-    }
-
-    /**
-     * Wraps a stream with a buffer and save it a soft reference local cache.
-     *
-     * @param bos stream to wrap
-     * @return wrapping ByteBuffer
-     */
-    private ByteBuffer initBuffer(GSByteArrayOutputStream bos) {
-        ByteBuffer byteBuffer = wrap(bos);
-        _bufferCache.set(byteBuffer);
-        return byteBuffer;
-    }
-
-    /**
-     * @return buffer that might be used by the GSByteArrayOutputStream
-     */
-    private ByteBuffer prepareStream() throws IOException {
-        ByteBuffer byteBuffer = _bufferCache.get();
-
-        byte[] streamBuffer = byteBuffer.array();
-        _baos.setBuffer(streamBuffer, LENGTH_SIZE); // 4 bytes for size 
-        return byteBuffer;
-    }
-
-    public void closeContext() {
-        _oos.closeContext();
-    }
-
-    public void resetContext() {
-        _oos.resetContext();
+    public PacketSerializer getSerializer() {
+        return serializer;
     }
 
     public long getGeneratedTraffic() {
