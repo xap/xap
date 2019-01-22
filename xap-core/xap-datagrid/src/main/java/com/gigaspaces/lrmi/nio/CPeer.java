@@ -142,6 +142,8 @@ public class CPeer extends BaseClientPeer {
     private AsyncContext _asyncContext = null;
     private boolean _asyncConnect;
 
+    private final boolean isRdma = false;
+
     public static LongAdder getConnectionsCounter() {
         return connections;
     }
@@ -227,7 +229,12 @@ public class CPeer extends BaseClientPeer {
             _generatedTraffic += _channel.getWriter().getGeneratedTraffic();
             _receivedTraffic += _channel.getReader().getReceivedTraffic();
         }
-        _channel = async ? TcpChannel.createAsync(address, _config, lrmiMethod, clientConversationRunner) : TcpChannel.createSync(address, _config);
+        if (isRdma) {
+            // TODO: connect/create RDMa endpoint
+            // _channel = new RdmaChannel which is a mock channel
+        } else {
+            _channel = async ? TcpChannel.createAsync(address, _config, lrmiMethod, clientConversationRunner) : TcpChannel.createSync(address, _config);
+        }
         m_Address = ((TcpChannel)_channel).getEndpoint();
     }
 
@@ -517,26 +524,34 @@ public class CPeer extends BaseClientPeer {
                     result.reset(contextClassLoader);
                 }
 
-                final AsyncContext ctx = new AsyncContext(connPool,
-                        _handler,
-                        _requestPacket,
-                        result,
-                        this,
-                        _remoteConnection,
-                        contextClassLoader,
-                        _remoteClassLoaderIdentifier,
-                        monitoringId,
-                        _watchdogContext);
-                _asyncContext = ctx;
-                _channel.getWriter().setWriteInterestManager(ctx);
-                _handler.addChannel(_channel.getSocketChannel(), ctx);
+                if (isRdma) {
+                    // // TODO: send to rdma and inject RDMA future to LRMI future
+                } else {
+                    final AsyncContext ctx = new AsyncContext(connPool,
+                            _handler,
+                            _requestPacket,
+                            result,
+                            this,
+                            _remoteConnection,
+                            contextClassLoader,
+                            _remoteClassLoaderIdentifier,
+                            monitoringId,
+                            _watchdogContext);
+                    _asyncContext = ctx;
+                    _channel.getWriter().setWriteInterestManager(ctx);
+                    _handler.addChannel(_channel.getSocketChannel(), ctx);
+                }
                 FutureContext.setFutureResult(result);
                 return null;
             }
 
             previousThreadName = updateThreadNameIfNeeded();
 
-            _channel.getWriter().writeRequest(_requestPacket);
+            if (isRdma) {
+                // TODO: write request to RDMA and hold
+            } else {
+                _channel.getWriter().writeRequest(_requestPacket);
+            }
 
             /** if <code>true</code> the client peer mode is one way, don't wait for reply */
             if (lrmiMethod.isOneWay) {
@@ -549,21 +564,25 @@ public class CPeer extends BaseClientPeer {
 
             boolean hasMoreIntermidiateRequests = true;
             // Put the class loader id of the remote object in thread local in case a there's a need
-            // to load a remote class, we will use the class loader of the exported object 
+            // to load a remote class, we will use the class loader of the exported object
             LRMIRemoteClassLoaderIdentifier previousIdentifier = RemoteClassLoaderContext.set(_remoteClassLoaderIdentifier);
             try {
-                while (hasMoreIntermidiateRequests) {
-                    // read response
-                    _watchdogContext.watchResponse(monitoringId);
-                    _channel.getReader().readReply(_replayPacket);
-                    if (_replayPacket.getResult() instanceof ClassProviderRequest) {
-                        _replayPacket.clear();
-                        _watchdogContext.watchRequest(monitoringId);
-                        _channel.getWriter().writeRequest(new RequestPacket(getClassProvider()), false);
-                    } else
-                        hasMoreIntermidiateRequests = false;
+                if (isRdma) {
+                    // TODO: read reply via RDMA into _replayPacket
+                    //
+                } else {
+                    while (hasMoreIntermidiateRequests) {
+                        // read response
+                        _watchdogContext.watchResponse(monitoringId);
+                        _channel.getReader().readReply(_replayPacket);
+                        if (_replayPacket.getResult() instanceof ClassProviderRequest) {
+                            _replayPacket.clear();
+                            _watchdogContext.watchRequest(monitoringId);
+                            _channel.getWriter().writeRequest(new RequestPacket(getClassProvider()), false);
+                        } else
+                            hasMoreIntermidiateRequests = false;
+                    }
                 }
-
                 // check for exception from server
                 //noinspection ThrowableResultOfMethodCallIgnored
                 if (_replayPacket.getException() != null)
