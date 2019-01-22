@@ -37,44 +37,6 @@ public class ClientTransport {
 
     }
 
-    public CompletableFuture<RdmaMsg> send(RdmaMsg req) {
-        long id = nextId.incrementAndGet();
-        req.setId(id);
-        CompletableFuture<RdmaMsg> future = new CompletableFuture<>();
-        repMap.put(id, future);
-        future.whenComplete((T, throwable) -> repMap.remove(id));
-        try {
-            writeRequests.add(req);
-        } catch (Exception e) {
-            future.completeExceptionally(e);
-        }
-        return future;
-    }
-
-    static SVCPostSend rdmaSendBuffer(long id, ByteBuffer buffer, RdmaActiveEndpoint endpoint) throws IOException {
-        IbvMr mr = endpoint.registerMemory(buffer).execute().free().getMr();
-        LinkedList<IbvSendWR> wr_list = createSendWorkRequest(id, mr);
-        return endpoint.postSend(wr_list);
-    }
-
-    private static LinkedList<IbvSendWR> createSendWorkRequest(long id, IbvMr mr) {
-        LinkedList<IbvSendWR> wr_list = new LinkedList<>();
-        IbvSendWR sendWR = new IbvSendWR();
-        sendWR.setWr_id(id);
-        //@todo send id in the envelop
-        LinkedList<IbvSge> sgeLinkedList = new LinkedList<>();
-        IbvSge sge = new IbvSge();
-        sge.setAddr(mr.getAddr());
-        sge.setLength(mr.getLength());
-        sge.setLkey(mr.getLkey());
-        sgeLinkedList.add(sge);
-        sendWR.setSg_list(sgeLinkedList);
-        sendWR.setOpcode(IbvSendWR.IBV_WR_SEND);
-        sendWR.setSend_flags(IbvSendWR.IBV_SEND_SIGNALED);
-        wr_list.add(sendWR);
-        return wr_list;
-    }
-
     public static LinkedList<IbvRecvWR> createRecvWorkRequest(long id, IbvMr mr) {
         LinkedList<IbvRecvWR> wr_list = new LinkedList<>();
         IbvRecvWR recvWR = new IbvRecvWR();
@@ -88,6 +50,52 @@ public class ClientTransport {
         recvWR.setSg_list(sgeLinkedList);
         wr_list.add(recvWR);
         return wr_list;
+    }
+
+    private CompletableFuture<RdmaMsg> sendMsg(RdmaMsg req) {
+        long id = nextId.incrementAndGet();
+        req.setId(id);
+        CompletableFuture<RdmaMsg> future = new CompletableFuture<>();
+        repMap.put(id, future);
+        future.whenComplete((T, throwable) -> repMap.remove(id));
+        try {
+            writeRequests.add(req);
+        } catch (Exception e) {
+            future.completeExceptionally(e);
+        }
+        return future;
+    }
+
+    public void onCompletionEvent(IbvWC event) throws IOException {
+
+        if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_SEND)) {
+            resourceManager.releaseResource((short) event.getWr_id());
+        }
+        if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_RECV)) {
+            recvEventQueue.add(event); //TODO mybe offer? protect capacity
+        }
+    }
+
+    private static LinkedList<IbvSendWR> createSendWorkRequest(long id, IbvMr mr) {
+        LinkedList<IbvSendWR> wr_list = new LinkedList<>();
+        IbvSendWR sendWR = new IbvSendWR();
+        sendWR.setWr_id(id);
+        //@todo sendMsg id in the envelop
+        LinkedList<IbvSge> sgeLinkedList = new LinkedList<>();
+        IbvSge sge = new IbvSge();
+        sge.setAddr(mr.getAddr());
+        sge.setLength(mr.getLength());
+        sge.setLkey(mr.getLkey());
+        sgeLinkedList.add(sge);
+        sendWR.setSg_list(sgeLinkedList);
+        sendWR.setOpcode(IbvSendWR.IBV_WR_SEND);
+        sendWR.setSend_flags(IbvSendWR.IBV_SEND_SIGNALED);
+        wr_list.add(sendWR);
+        return wr_list;
+    }
+
+    public <T extends Serializable> CompletableFuture<T> send(Serializable msg) {
+        return sendMsg(new RdmaMsg(msg)).thenApply(rdmaMsg -> (T) rdmaMsg.getPayload());
     }
 
     private ByteBuffer serializeToBuffer(RdmaMsg req, long reqId) throws IOException {
@@ -119,14 +127,10 @@ public class ClientTransport {
         buffer.put(bytes);
     }
 
-    public void onCompletionEvent(IbvWC event) throws IOException {
-
-        if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_SEND)) {
-           resourceManager.releaseResource((short) event.getWr_id());
-        }
-        if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_RECV)) {
-            recvEventQueue.add(event); //TODO mybe offer? protect capacity
-        }
+    static SVCPostSend rdmaSendBuffer(long id, ByteBuffer buffer, RdmaActiveEndpoint endpoint) throws IOException {
+        IbvMr mr = endpoint.registerMemory(buffer).execute().free().getMr();
+        LinkedList<IbvSendWR> wr_list = createSendWorkRequest(id, mr);
+        return endpoint.postSend(wr_list);
     }
 
     static RdmaMsg readResponse(ByteBuffer buffer) throws IOException, ClassNotFoundException {
@@ -141,4 +145,5 @@ public class ClientTransport {
         }
 
     }
+
 }

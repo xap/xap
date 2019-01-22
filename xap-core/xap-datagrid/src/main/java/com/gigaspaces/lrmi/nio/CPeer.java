@@ -31,17 +31,8 @@ import com.gigaspaces.internal.reflection.ReflectionUtil;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.Constants;
-import com.gigaspaces.lrmi.BaseClientPeer;
-import com.gigaspaces.lrmi.ConnectionPool;
-import com.gigaspaces.lrmi.DynamicSmartStub;
-import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.lrmi.*;
 import com.gigaspaces.lrmi.LRMIInvocationContext.InvocationStage;
-import com.gigaspaces.lrmi.LRMIInvocationTrace;
-import com.gigaspaces.lrmi.LRMIMethod;
-import com.gigaspaces.lrmi.LRMIRuntime;
-import com.gigaspaces.lrmi.LRMIUtilities;
-import com.gigaspaces.lrmi.OperationPriority;
-import com.gigaspaces.lrmi.ServerAddress;
 import com.gigaspaces.lrmi.classloading.ClassProviderRequest;
 import com.gigaspaces.lrmi.classloading.IClassProvider;
 import com.gigaspaces.lrmi.classloading.IRemoteClassProviderProvider;
@@ -56,13 +47,14 @@ import com.gigaspaces.lrmi.nio.filters.IOFilterException;
 import com.gigaspaces.lrmi.nio.filters.IOFilterManager;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientConversationRunner;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientHandler;
+import com.gigaspaces.lrmi.rdma.ClientTransport;
 import com.gigaspaces.lrmi.rdma.RdmaChannel;
 import com.gigaspaces.lrmi.tcp.TcpChannel;
 import com.j_spaces.kernel.SystemProperties;
-
 import net.jini.space.InternalSpaceException;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.SocketAddress;
@@ -70,9 +62,13 @@ import java.rmi.ConnectException;
 import java.rmi.ConnectIOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static com.gigaspaces.lrmi.rdma.RdmaConstants.RDMA_SYNC_OP_TIMEOUT;
 
 
 /**
@@ -235,7 +231,7 @@ public class CPeer extends BaseClientPeer {
         } else {
             _channel = async ? TcpChannel.createAsync(address, _config, lrmiMethod, clientConversationRunner) : TcpChannel.createSync(address, _config);
         }
-        m_Address = ((TcpChannel)_channel).getEndpoint();
+        m_Address = ((TcpChannel) _channel).getEndpoint();
     }
 
     //Flush the local members to the main memory once done
@@ -391,7 +387,7 @@ public class CPeer extends BaseClientPeer {
     }
 
     public Reader getReader() {
-        return _channel != null ? _channel.getReader() :null;
+        return _channel != null ? _channel.getReader() : null;
     }
 
     public LrmiChannel getChannel() {
@@ -399,7 +395,7 @@ public class CPeer extends BaseClientPeer {
     }
 
     public Writer getWriter() {
-        return _channel != null ? _channel.getWriter() :null;
+        return _channel != null ? _channel.getWriter() : null;
     }
 
     public void afterInvoke() {
@@ -525,7 +521,17 @@ public class CPeer extends BaseClientPeer {
                 }
 
                 if (isRdma) {
-                    // // TODO: send to rdma and inject RDMA future to LRMI future
+                    ClientTransport clientTransport = ((RdmaChannel) _channel).getTransport();
+                    CompletableFuture<Serializable> future = clientTransport.send((Serializable) _requestPacket);//TODO: requestPacket isn't serializable
+                    LRMIFuture finalResult = result;
+                    future.whenComplete((serializable, throwable) -> {
+                        if (throwable != null) {
+                            finalResult.setResult(throwable);
+                        } else {
+                            finalResult.setResult(serializable);
+                        }
+                    });
+
                 } else {
                     final AsyncContext ctx = new AsyncContext(connPool,
                             _handler,
@@ -546,9 +552,11 @@ public class CPeer extends BaseClientPeer {
             }
 
             previousThreadName = updateThreadNameIfNeeded();
-
+            CompletableFuture<Serializable> rdmaFuture = null;
             if (isRdma) {
                 // TODO: write request to RDMA and hold
+                ClientTransport clientTransport = ((RdmaChannel) _channel).getTransport();
+                rdmaFuture = clientTransport.send((Serializable) _requestPacket);//TODO: requestPacket isn't serializable
             } else {
                 _channel.getWriter().writeRequest(_requestPacket);
             }
@@ -568,8 +576,8 @@ public class CPeer extends BaseClientPeer {
             LRMIRemoteClassLoaderIdentifier previousIdentifier = RemoteClassLoaderContext.set(_remoteClassLoaderIdentifier);
             try {
                 if (isRdma) {
-                    // TODO: read reply via RDMA into _replayPacket
-                    //
+                    rdmaFuture.get(RDMA_SYNC_OP_TIMEOUT, TimeUnit.MILLISECONDS);
+                    // TODO: read serializable result into _replyPacket
                 } else {
                     while (hasMoreIntermidiateRequests) {
                         // read response

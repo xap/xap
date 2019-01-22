@@ -72,7 +72,7 @@ public class Client {
     }
 
     private <T extends Serializable> CompletableFuture<T> send(Serializable msg) {
-        return endpoint.getTransport().send(new RdmaMsg(msg)).thenApply(rdmaMsg -> (T) rdmaMsg.getPayload());
+        return endpoint.getTransport().send(msg);
     }
 
     private void connect(int timeout) throws Exception {
