@@ -51,7 +51,7 @@ public class RdmaClientReceiver implements Runnable {
                 if (res instanceof Throwable) {
                     future.completeExceptionally((Throwable) res);
                 } else {
-                    future.complete(res);
+                    future.complete(new RdmaMsg(res));
                 }
                 try {
                     this.postRecv.execute();
