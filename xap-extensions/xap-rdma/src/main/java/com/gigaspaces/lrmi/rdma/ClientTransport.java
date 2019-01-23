@@ -46,7 +46,7 @@ public class ClientTransport {
         return wr_list;
     }
 
-    private CompletableFuture<RdmaMsg> sendMsg(RdmaMsg req) {
+    public CompletableFuture<RdmaMsg> send(RdmaMsg req) {
         long id = nextId.incrementAndGet();
         req.setId(id);
         CompletableFuture<RdmaMsg> future = new CompletableFuture<>();
@@ -88,21 +88,9 @@ public class ClientTransport {
         return wr_list;
     }
 
-    public <T extends Serializable> CompletableFuture<T> send(Serializable msg) {
-        return sendMsg(new RdmaMsg(msg)).thenApply(rdmaMsg -> (T) rdmaMsg.getPayload());
-    }
-
-
     static void serializeToBuffer(ByteBuffer buffer, RdmaMsg req, long reqId) throws IOException {
-        ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(bytesOut);
-        oos.writeObject(req);
-        oos.flush();
-        byte[] bytes = bytesOut.toByteArray();
-        bytesOut.close();
-        oos.close();
         buffer.putLong(reqId);
-        buffer.put(bytes);
+        req.serialize(buffer);
     }
 
     static SVCPostSend rdmaSendBuffer(long id, ByteBuffer buffer, RdmaActiveEndpoint endpoint) throws IOException {

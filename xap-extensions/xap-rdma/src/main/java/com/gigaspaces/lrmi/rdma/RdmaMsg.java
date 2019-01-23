@@ -1,27 +1,15 @@
 package com.gigaspaces.lrmi.rdma;
 
-import java.io.*;
+import java.nio.ByteBuffer;
 
-public class RdmaMsg implements Externalizable {
+public abstract class RdmaMsg {
 
-    private Serializable payload;
     private transient long id;
 
+    public abstract Object getPayload();
 
-    public RdmaMsg() {
-    }
+    public abstract void setPayload(Object payload);
 
-    public RdmaMsg(Serializable payload) {
-        this.payload = payload;
-    }
-
-    public Serializable getPayload() {
-        return payload;
-    }
-
-    public void setPayload(Serializable payload) {
-        this.payload = payload;
-    }
 
     public long getId() {
         return id;
@@ -31,13 +19,5 @@ public class RdmaMsg implements Externalizable {
         this.id = id;
     }
 
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeObject(payload);
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        this.payload = (Serializable) in.readObject();
-    }
+    public abstract void serialize(ByteBuffer byteBuffer);
 }
