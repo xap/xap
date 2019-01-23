@@ -1,19 +1,13 @@
 package com.gigaspaces.lrmi.rdma;
 
-import com.gigaspaces.lrmi.nio.ByteBufferPacketSerializer;
 import com.gigaspaces.lrmi.nio.IPacket;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
 
 public class LrmiRdmaMsg extends RdmaMsg {
 
     private IPacket payload;
-    private ByteBufferPacketSerializer serializer;
 
-    public LrmiRdmaMsg(IPacket payload, ByteBufferPacketSerializer serializer) {
+    public LrmiRdmaMsg(IPacket payload) {
         this.payload = payload;
-        this.serializer = serializer;
     }
 
     @Override

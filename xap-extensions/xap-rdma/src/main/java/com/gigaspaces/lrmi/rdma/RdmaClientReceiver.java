@@ -24,7 +24,6 @@ public class RdmaClientReceiver implements Runnable {
                               GSRdmaClientEndpoint endpoint) throws IOException {
         this.recvCompletionEventQueue = recvCompletionEventQueue;
         this.futureMap = futureMap;
-
         this.recvBuf = ByteBuffer.allocateDirect(BUFFER_SIZE);
         IbvMr recvMr = endpoint.registerMemory(recvBuf).execute().free().getMr();
         this.postRecv = endpoint.postRecv(ClientTransport.createRecvWorkRequest(RdmaConstants.nextId(), recvMr));

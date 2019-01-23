@@ -14,7 +14,8 @@ public class Server {
         BasicConfigurator.configure();
         InetAddress ipAddress = InetAddress.getByName(host);
         InetSocketAddress address = new InetSocketAddress(ipAddress, port);
-        RdmaServerTransport transport = new RdmaServerTransport(address, rdmaMsg -> new RdmaMsg(rdmaMsg.getPayload().toString().toUpperCase()));
+        RdmaServerTransport transport = new RdmaServerTransport(address,
+                rdmaMsg -> new Client.StringRdmaMsg(rdmaMsg.getPayload().toString().toUpperCase()), 1);
         transport.run();
     }
 

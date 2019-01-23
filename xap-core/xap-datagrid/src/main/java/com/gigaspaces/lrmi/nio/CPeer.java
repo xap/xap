@@ -47,9 +47,7 @@ import com.gigaspaces.lrmi.nio.filters.IOFilterException;
 import com.gigaspaces.lrmi.nio.filters.IOFilterManager;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientConversationRunner;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientHandler;
-import com.gigaspaces.lrmi.rdma.ClientTransport;
-import com.gigaspaces.lrmi.rdma.RdmaChannel;
-import com.gigaspaces.lrmi.rdma.RdmaConstants;
+import com.gigaspaces.lrmi.rdma.*;
 import com.gigaspaces.lrmi.tcp.TcpChannel;
 import com.j_spaces.kernel.SystemProperties;
 import net.jini.space.InternalSpaceException;
@@ -523,9 +521,10 @@ public class CPeer extends BaseClientPeer {
 
                 if (isRdma) {
                     ClientTransport clientTransport = ((RdmaChannel) _channel).getTransport();
-                    CompletableFuture<Serializable> future = clientTransport.send((Serializable) _requestPacket);//TODO: requestPacket isn't serializable
-                    LRMIFuture finalResult = result;
-                    future.thenAccept(finalResult::setResult).exceptionally(throwable -> {finalResult.setResult(throwable); return null;});
+                    CompletableFuture<RdmaMsg> future = clientTransport.send(new LrmiRdmaMsg(_requestPacket));
+                    final LRMIFuture finalResult = result;
+                    future.thenAccept(rdmaMsg -> finalResult.setResult(rdmaMsg.getPayload()))
+                            .exceptionally(throwable -> {finalResult.setResult(throwable); return null;});
                 } else {
                     final AsyncContext ctx = new AsyncContext(connPool,
                             _handler,
@@ -546,11 +545,10 @@ public class CPeer extends BaseClientPeer {
             }
 
             previousThreadName = updateThreadNameIfNeeded();
-            CompletableFuture<Serializable> rdmaFuture = null;
+            CompletableFuture<RdmaMsg> rdmaFuture = null;
             if (isRdma) {
-                // TODO: write request to RDMA and hold
                 ClientTransport clientTransport = ((RdmaChannel) _channel).getTransport();
-                rdmaFuture = clientTransport.send((Serializable) _requestPacket);//TODO: requestPacket isn't serializable
+                rdmaFuture = clientTransport.send(new LrmiRdmaMsg(_requestPacket));
             } else {
                 _channel.getWriter().writeRequest(_requestPacket);
             }
@@ -570,8 +568,8 @@ public class CPeer extends BaseClientPeer {
             LRMIRemoteClassLoaderIdentifier previousIdentifier = RemoteClassLoaderContext.set(_remoteClassLoaderIdentifier);
             try {
                 if (isRdma) {
-                    rdmaFuture.get(RDMA_SYNC_OP_TIMEOUT, TimeUnit.MILLISECONDS);
-                    // TODO: read serializable result into _replyPacket
+                    RdmaMsg resultRdmaMsg = rdmaFuture.get(RDMA_SYNC_OP_TIMEOUT, TimeUnit.MILLISECONDS);
+                    _replayPacket =
                 } else {
                     while (hasMoreIntermidiateRequests) {
                         // read response

@@ -25,7 +25,7 @@ public class RdmaSender implements Runnable {
                 try {
                     long id = rdmaMsg.getId();
                     DiSNILogger.getLogger().info("writing to client buffer");
-                    ClientTransport.serializeToBuffer(resource.getBuffer(), rdmaMsg, id);
+                    resource.serialize(id, rdmaMsg);
                     resource.getPostSend().execute();
                 } catch (IOException e) {
                     e.printStackTrace();
