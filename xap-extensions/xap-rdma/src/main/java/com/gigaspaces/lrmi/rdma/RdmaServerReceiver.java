@@ -35,8 +35,6 @@ public class RdmaServerReceiver implements Runnable {
                     DiSNILogger.getLogger().info("SERVER going to send response - after getting resource");
                     ClientTransport.serializeToBuffer(resource.getBuffer(), response, reqId);
                     resource.getPostSend().execute();
-
-//                    Thread.sleep(1000);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

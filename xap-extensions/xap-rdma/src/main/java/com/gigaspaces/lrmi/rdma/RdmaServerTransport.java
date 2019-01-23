@@ -17,16 +17,18 @@ public class RdmaServerTransport implements Runnable {
     private final RdmaServerEndpoint<GSRdmaAbstractEndpoint> serverEndpoint;
 
 
-    public RdmaServerTransport(InetSocketAddress address, Function<RdmaMsg, RdmaMsg> process) throws Exception {
-        executorService = Executors.newFixedThreadPool(1);
-        pendingRequests = new ArrayBlockingQueue<GSRdmaServerEndpoint>(RdmaConstants.MAX_INCOMMING_REQUESTS);
+    public RdmaServerTransport(InetSocketAddress address, Function<RdmaMsg, RdmaMsg> process, int executorsCount) throws Exception {
+        executorService = Executors.newFixedThreadPool(executorsCount);
+        pendingRequests = new ArrayBlockingQueue<>(RdmaConstants.MAX_INCOMMING_REQUESTS);
 
         GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory();
         serverEndpoint = factory.getEndpointGroup().createServerEndpoint();
 
         serverEndpoint.bind(address, 10);
 
-        executorService.submit(new RdmaServerReceiver(pendingRequests, process));
+        for (int i = 0; i < executorsCount; i++) {
+            executorService.submit(new RdmaServerReceiver(pendingRequests, process));
+        }
     }
 
     @Override

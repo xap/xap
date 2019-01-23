@@ -127,6 +127,12 @@
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
+                <artifactId>xap-rdma</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-scala-core</artifactId>
                 <version>${project.version}</version>
                 <scope>compile</scope>

@@ -18,17 +18,18 @@
             <groupId>org.hyperic</groupId>
             <artifactId>sigar</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-common</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-asm</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.gigaspaces</groupId>
+            <artifactId>xap-rdma</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-trove</artifactId>
