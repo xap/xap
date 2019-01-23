@@ -96,10 +96,6 @@ public class Client {
             this.payload = (String) payload;
         }
 
-        @Override
-        public void serialize(ByteBuffer byteBuffer) {
-            byteBuffer.asCharBuffer().put(payload);
-        }
     }
 
 }

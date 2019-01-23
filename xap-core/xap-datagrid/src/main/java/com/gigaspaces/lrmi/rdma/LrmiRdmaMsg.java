@@ -27,9 +27,4 @@ public class LrmiRdmaMsg extends RdmaMsg {
     }
 
 
-    //not using param ByteBuffer, using internal serializer buffer
-    @Override
-    public void serialize(ByteBuffer byteBuffer) throws IOException {
-        serializer.serialize(payload);
-    }
 }

@@ -21,4 +21,8 @@ public class RdmaResourceFactory {
     public void setEndpoint(RdmaActiveEndpoint endpoint) {
         this.endpoint = endpoint;
     }
+
+    public RdmaActiveEndpoint getEndpoint() {
+        return endpoint;
+    }
 }

@@ -88,10 +88,6 @@ public class ClientTransport {
         return wr_list;
     }
 
-    static void serializeToBuffer(ByteBuffer buffer, RdmaMsg req, long reqId) throws IOException {
-        buffer.putLong(reqId);
-        req.serialize(buffer);
-    }
 
     static SVCPostSend rdmaSendBuffer(long id, ByteBuffer buffer, RdmaActiveEndpoint endpoint) throws IOException {
         IbvMr mr = endpoint.registerMemory(buffer).execute().free().getMr();

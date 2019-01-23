@@ -2,6 +2,9 @@ package com.gigaspaces.lrmi.rdma;
 
 import com.ibm.disni.verbs.SVCPostSend;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 
 public class RdmaResource {
@@ -26,5 +29,17 @@ public class RdmaResource {
 
     public SVCPostSend getPostSend() {
         return postSend;
+    }
+
+    public void serialize(long id, RdmaMsg msg) throws IOException {
+        ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bytesOut);
+        oos.writeObject(msg.getPayload());
+        oos.flush();
+        byte[] bytes = bytesOut.toByteArray();
+        bytesOut.close();
+        oos.close();
+        buffer.putLong(id);
+        buffer.put(bytes);
     }
 }
