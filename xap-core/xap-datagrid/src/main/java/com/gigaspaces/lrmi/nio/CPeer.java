@@ -521,7 +521,7 @@ public class CPeer extends BaseClientPeer {
 
                 if (isRdma) {
                     ClientTransport clientTransport = ((RdmaChannel) _channel).getTransport();
-                    CompletableFuture<RdmaMsg> future = clientTransport.send(new LrmiRdmaMsg(_requestPacket));
+                    CompletableFuture<RdmaMsg> future = clientTransport.send(new RdmaMsg(_requestPacket));
                     final LRMIFuture finalResult = result;
                     future.thenAccept(rdmaMsg -> finalResult.setResult(rdmaMsg.getPayload()))
                             .exceptionally(throwable -> {finalResult.setResult(throwable); return null;});
@@ -548,7 +548,7 @@ public class CPeer extends BaseClientPeer {
             CompletableFuture<RdmaMsg> rdmaFuture = null;
             if (isRdma) {
                 ClientTransport clientTransport = ((RdmaChannel) _channel).getTransport();
-                rdmaFuture = clientTransport.send(new LrmiRdmaMsg(_requestPacket));
+                rdmaFuture = clientTransport.send(new RdmaMsg(_requestPacket));
             } else {
                 _channel.getWriter().writeRequest(_requestPacket);
             }
@@ -569,7 +569,7 @@ public class CPeer extends BaseClientPeer {
             try {
                 if (isRdma) {
                     RdmaMsg resultRdmaMsg = rdmaFuture.get(RDMA_SYNC_OP_TIMEOUT, TimeUnit.MILLISECONDS);
-                    _replayPacket =
+//                    _replayPacket =
                 } else {
                     while (hasMoreIntermidiateRequests) {
                         // read response

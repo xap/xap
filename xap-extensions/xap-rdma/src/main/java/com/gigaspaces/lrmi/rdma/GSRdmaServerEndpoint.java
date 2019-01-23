@@ -7,25 +7,30 @@ import com.ibm.disni.verbs.*;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.function.Function;
 
 import static com.gigaspaces.lrmi.rdma.RdmaConstants.BUFFER_SIZE;
 
 public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
 
     private final RdmaResourceFactory factory;
+    private final Function<ByteBuffer, Object> deserialize;
     private RdmaResourceManager resourceManager;
     private ByteBuffer recvBuffer;
     private SVCPostRecv postRecv;
     private ArrayBlockingQueue<GSRdmaServerEndpoint> pendingRequests;
 
 
-    public GSRdmaServerEndpoint(RdmaActiveEndpointGroup<GSRdmaAbstractEndpoint> endpointGroup, RdmaCmId idPriv, RdmaResourceFactory factory) throws IOException {
+    public GSRdmaServerEndpoint(RdmaActiveEndpointGroup<GSRdmaAbstractEndpoint> endpointGroup, RdmaCmId idPriv, RdmaResourceFactory factory, Function<ByteBuffer, Object> deserialize) throws IOException {
         super(endpointGroup, idPriv, true);
         this.factory = factory;
+        this.deserialize = deserialize;
     }
 
     public void init() throws IOException {
         super.init();
+        factory.setEndpoint(this);
+
         this.resourceManager = new RdmaResourceManager(factory, 1);
         this.recvBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
         IbvMr recvMr = registerMemory(recvBuffer).execute().free().getMr();

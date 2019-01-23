@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 // @todo - handle timeouts ?
 
@@ -24,9 +25,9 @@ public class ClientTransport {
     private final ExecutorService sendHandler = Executors.newFixedThreadPool(1);
     private final RdmaResourceManager resourceManager;
 
-    public ClientTransport(GSRdmaClientEndpoint endpoint, RdmaResourceFactory factory) throws IOException {
+    public ClientTransport(GSRdmaClientEndpoint endpoint, RdmaResourceFactory factory, Function<ByteBuffer, Object> deserializer) throws IOException {
         resourceManager = new RdmaResourceManager(factory, 1);
-        recvHandler.submit(new RdmaClientReceiver(recvEventQueue, repMap, endpoint));
+        recvHandler.submit(new RdmaClientReceiver(recvEventQueue, repMap, endpoint, deserializer));
         rdmaSender = new RdmaSender(resourceManager, writeRequests);
         sendHandler.submit(rdmaSender);
     }
@@ -95,15 +96,16 @@ public class ClientTransport {
         return endpoint.postSend(wr_list);
     }
 
-    static RdmaMsg readResponse(ByteBuffer buffer) throws IOException, ClassNotFoundException {
+    static Object readResponse(ByteBuffer buffer) {
         byte[] arr = new byte[buffer.remaining()];
         buffer.get(arr);
         buffer.clear();
         try (ByteArrayInputStream ba = new ByteArrayInputStream(arr); ObjectInputStream in = new ObjectInputStream(ba)) {
-            return (RdmaMsg) in.readObject();
+            return in.readObject();
         } catch (Exception e) {
             DiSNILogger.getLogger().error(" failed to read object from stream", e);
-            throw e;
+//            throw e;
+            return e;
         }
 
     }

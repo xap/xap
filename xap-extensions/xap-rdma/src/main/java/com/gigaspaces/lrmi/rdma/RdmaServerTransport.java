@@ -4,6 +4,7 @@ import com.ibm.disni.RdmaServerEndpoint;
 import com.ibm.disni.util.DiSNILogger;
 
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -13,21 +14,23 @@ public class RdmaServerTransport implements Runnable {
 
 
     private final ExecutorService executorService;
+    private Function<ByteBuffer, Object> deserialize;
     private final ArrayBlockingQueue<GSRdmaServerEndpoint> pendingRequests;
     private final RdmaServerEndpoint<GSRdmaAbstractEndpoint> serverEndpoint;
 
 
-    public RdmaServerTransport(InetSocketAddress address, Function<RdmaMsg, RdmaMsg> process, int executorsCount) throws Exception {
+    public RdmaServerTransport(InetSocketAddress address, Function<RdmaMsg, RdmaMsg> process, int executorsCount, Function<ByteBuffer, Object> deserialize) throws Exception {
         executorService = Executors.newFixedThreadPool(executorsCount);
+        this.deserialize = deserialize;
         pendingRequests = new ArrayBlockingQueue<>(RdmaConstants.MAX_INCOMMING_REQUESTS);
 
-        GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory(new RdmaResourceFactory());
+        GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory(new RdmaResourceFactory(), deserialize);
         serverEndpoint = factory.getEndpointGroup().createServerEndpoint();
 
         serverEndpoint.bind(address, 10);
 
         for (int i = 0; i < executorsCount; i++) {
-            executorService.submit(new RdmaServerReceiver(pendingRequests, process));
+            executorService.submit(new RdmaServerReceiver(pendingRequests, process, deserialize));
         }
     }
 

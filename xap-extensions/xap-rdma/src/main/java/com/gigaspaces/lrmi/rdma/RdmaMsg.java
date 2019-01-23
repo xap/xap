@@ -1,13 +1,14 @@
 package com.gigaspaces.lrmi.rdma;
 
-public abstract class RdmaMsg {
+public class RdmaMsg {
 
     private transient long id;
+    private Object payload;
 
-    public abstract Object getPayload();
 
-    public abstract void setPayload(Object payload);
-
+    public RdmaMsg(Object payload) {
+        this.payload = payload;
+    }
 
     public long getId() {
         return id;
@@ -16,4 +17,14 @@ public abstract class RdmaMsg {
     public void setId(long id) {
         this.id = id;
     }
+
+
+    public Object getPayload() {
+        return this.payload;
+    }
+
+    public void setPayload(Object payload) {
+        this.payload = payload;
+    }
+
 }

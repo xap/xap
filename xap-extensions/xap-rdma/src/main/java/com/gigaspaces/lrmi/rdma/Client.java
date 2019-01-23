@@ -19,7 +19,7 @@ public class Client {
     public static void main(String[] args) throws Exception {
         BasicConfigurator.configure();
 
-        GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory(new RdmaResourceFactory());
+        GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory(new RdmaResourceFactory(), ClientTransport::readResponse);
 
         //we have passed our own endpoint factory to the group, therefore new endpoints will be of type GSRdmaClientEndpoint
         //let's create a new client endpoint
@@ -49,11 +49,11 @@ public class Client {
     }
 
     private static void oneByOneScenario(GSRdmaClientEndpoint endpoint) throws InterruptedException, ExecutionException {
-        CompletableFuture<RdmaMsg> future = endpoint.getTransport().send(new StringRdmaMsg("i am the client"));
+        CompletableFuture<RdmaMsg> future = endpoint.getTransport().send(new RdmaMsg("i am the client"));
         RdmaMsg respond = future.get();
         DiSNILogger.getLogger().info((String) respond.getPayload());
 
-        CompletableFuture<RdmaMsg> future1 = endpoint.getTransport().send(new StringRdmaMsg("i am connected"));
+        CompletableFuture<RdmaMsg> future1 = endpoint.getTransport().send(new RdmaMsg("i am connected"));
         respond = future1.get();
         DiSNILogger.getLogger().info((String) respond.getPayload());
 
@@ -63,7 +63,7 @@ public class Client {
         ArrayList<CompletableFuture<RdmaMsg>> futures = new ArrayList<>();
         for (int i = 0; i < 2; i++) {
             CompletableFuture<RdmaMsg> send = endpoint.getTransport()
-                    .send(new StringRdmaMsg("i am the client msg number " + i));
+                    .send(new RdmaMsg("i am the client msg number " + i));
             futures.add(send);
             send.whenComplete((s, throwable) -> DiSNILogger.getLogger().info((String) s.getPayload(), throwable));
         }
@@ -78,25 +78,6 @@ public class Client {
         }
     }
 
-    public static class StringRdmaMsg extends RdmaMsg {
-
-        private String payload;
-
-        public StringRdmaMsg(String payload) {
-            this.payload = payload;
-        }
-
-        @Override
-        public Object getPayload() {
-            return payload;
-        }
-
-        @Override
-        public void setPayload(Object payload) {
-            this.payload = (String) payload;
-        }
-
-    }
 
 }
 

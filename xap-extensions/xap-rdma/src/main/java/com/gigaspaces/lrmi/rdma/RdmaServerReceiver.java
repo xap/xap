@@ -10,10 +10,12 @@ public class RdmaServerReceiver implements Runnable {
 
     private final BlockingQueue<GSRdmaServerEndpoint> pendingRequestQueue;
     private Function<RdmaMsg, RdmaMsg> process;
+    private Function<ByteBuffer, Object> deserialize;
 
-    public RdmaServerReceiver(BlockingQueue<GSRdmaServerEndpoint> pendinfRequestQueue, Function<RdmaMsg, RdmaMsg> process) {
+    public RdmaServerReceiver(BlockingQueue<GSRdmaServerEndpoint> pendinfRequestQueue, Function<RdmaMsg, RdmaMsg> process, Function<ByteBuffer, Object> deserialize) {
         this.pendingRequestQueue = pendinfRequestQueue;
         this.process = process;
+        this.deserialize = deserialize;
     }
 
     @Override
@@ -26,7 +28,16 @@ public class RdmaServerReceiver implements Runnable {
                     recvBuff.clear();
                     long reqId = recvBuff.getLong();
                     DiSNILogger.getLogger().info("SERVER: reqId = " + reqId);
-                    RdmaMsg rdmaMsg = ClientTransport.readResponse(recvBuff);
+
+                    Object result = deserialize.apply(recvBuff);
+                    if (result instanceof Throwable) {
+                        throw (Throwable) result;
+                    }
+
+
+
+                    RdmaMsg rdmaMsg = new RdmaMsg(result);
+
                     DiSNILogger.getLogger().info("SERVER got msg: " + rdmaMsg.getPayload());
                     endpoint.getPostRecv().execute();
                     RdmaMsg response = process.apply(rdmaMsg);
@@ -40,7 +51,7 @@ public class RdmaServerReceiver implements Runnable {
                 Thread.currentThread().interrupt();
                 DiSNILogger.getLogger().error("SERVER: server receiver thread was interrupted");
                 return;
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 DiSNILogger.getLogger().error("SERVER: server got exception",e);
                 e.printStackTrace();
             }
