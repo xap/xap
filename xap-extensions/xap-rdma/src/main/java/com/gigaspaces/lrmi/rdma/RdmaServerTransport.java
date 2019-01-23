@@ -21,7 +21,7 @@ public class RdmaServerTransport implements Runnable {
         executorService = Executors.newFixedThreadPool(executorsCount);
         pendingRequests = new ArrayBlockingQueue<>(RdmaConstants.MAX_INCOMMING_REQUESTS);
 
-        GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory();
+        GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory(new RdmaResourceFactory());
         serverEndpoint = factory.getEndpointGroup().createServerEndpoint();
 
         serverEndpoint.bind(address, 10);

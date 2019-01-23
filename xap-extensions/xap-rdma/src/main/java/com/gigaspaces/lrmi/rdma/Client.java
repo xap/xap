@@ -19,7 +19,7 @@ public class Client {
     public static void main(String[] args) throws Exception {
         BasicConfigurator.configure();
 
-        GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory();
+        GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory(new RdmaResourceFactory());
 
         //we have passed our own endpoint factory to the group, therefore new endpoints will be of type GSRdmaClientEndpoint
         //let's create a new client endpoint

@@ -12,19 +12,21 @@ import static com.gigaspaces.lrmi.rdma.RdmaConstants.BUFFER_SIZE;
 
 public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
 
+    private final RdmaResourceFactory factory;
     private RdmaResourceManager resourceManager;
     private ByteBuffer recvBuffer;
     private SVCPostRecv postRecv;
     private ArrayBlockingQueue<GSRdmaServerEndpoint> pendingRequests;
 
 
-    public GSRdmaServerEndpoint(RdmaActiveEndpointGroup<GSRdmaAbstractEndpoint> endpointGroup, RdmaCmId idPriv) throws IOException {
+    public GSRdmaServerEndpoint(RdmaActiveEndpointGroup<GSRdmaAbstractEndpoint> endpointGroup, RdmaCmId idPriv, RdmaResourceFactory factory) throws IOException {
         super(endpointGroup, idPriv, true);
+        this.factory = factory;
     }
 
     public void init() throws IOException {
         super.init();
-        this.resourceManager = new RdmaResourceManager(this, 1);
+        this.resourceManager = new RdmaResourceManager(factory, 1);
         this.recvBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
         IbvMr recvMr = registerMemory(recvBuffer).execute().free().getMr();
         this.postRecv = postRecv(ClientTransport.createRecvWorkRequest(RdmaConstants.nextId(), recvMr));

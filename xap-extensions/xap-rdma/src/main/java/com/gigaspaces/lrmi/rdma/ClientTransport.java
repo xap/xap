@@ -24,8 +24,8 @@ public class ClientTransport {
     private final ExecutorService sendHandler = Executors.newFixedThreadPool(1);
     private final RdmaResourceManager resourceManager;
 
-    public ClientTransport(GSRdmaClientEndpoint endpoint) throws IOException {
-        resourceManager = new RdmaResourceManager(endpoint, 1);
+    public ClientTransport(GSRdmaClientEndpoint endpoint, RdmaResourceFactory factory) throws IOException {
+        resourceManager = new RdmaResourceManager(factory, 1);
         recvHandler.submit(new RdmaClientReceiver(recvEventQueue, repMap, endpoint));
         rdmaSender = new RdmaSender(resourceManager, writeRequests);
         sendHandler.submit(rdmaSender);
