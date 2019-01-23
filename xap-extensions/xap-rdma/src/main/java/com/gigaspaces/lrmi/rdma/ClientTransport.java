@@ -10,8 +10,6 @@ import java.util.LinkedList;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.gigaspaces.lrmi.rdma.RdmaConstants.BUFFER_SIZE;
-
 // @todo - handle timeouts ?
 
 public class ClientTransport {
@@ -96,7 +94,6 @@ public class ClientTransport {
 
 
     static void serializeToBuffer(ByteBuffer buffer, RdmaMsg req, long reqId) throws IOException {
-        DiSNILogger.getLogger().info("CLIENT SERIALIZE: reqId = "+reqId);
         ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(bytesOut);
         oos.writeObject(req);

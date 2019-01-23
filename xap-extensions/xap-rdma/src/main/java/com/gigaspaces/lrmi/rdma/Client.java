@@ -1,23 +1,4 @@
-package com.gigaspaces.lrmi.rdma;/*
- * DiSNI: Direct Storage and Networking Interface
- *
- * Author: Patrick Stuedi <stu@zurich.ibm.com>
- *
- * Copyright (C) 2016-2018, IBM Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
+package com.gigaspaces.lrmi.rdma;
 
 import com.ibm.disni.util.DiSNILogger;
 import org.apache.log4j.BasicConfigurator;
@@ -26,6 +7,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 
 public class Client {
@@ -50,18 +32,9 @@ public class Client {
             endpoint.connect(address, 1000);
             DiSNILogger.getLogger().info("::client channel set up ");
 
-            ArrayList<CompletableFuture<String>> futures = new ArrayList<>();
-            for (int i = 0; i < 2; i++) {
-                CompletableFuture<String> send = endpoint.getTransport().send("i am the client msg number " + i);
-                futures.add(send);
-                send.whenComplete((s, throwable) -> DiSNILogger.getLogger().info(s,throwable));
-            }
+            oneByOneScenario(endpoint);
+//            pipelineScenario(endpoint);
 
-            Thread.sleep(100000);
-//
-//            for (CompletableFuture<String> future : futures) {
-//                String response = future.get();
-//            }
             endpoint.close();
             DiSNILogger.getLogger().info("endpoint closed");
             factory.close();
@@ -71,6 +44,35 @@ public class Client {
             DiSNILogger.getLogger().info("got exception", e);
         } finally {
             System.exit(0);
+        }
+    }
+
+    private static void oneByOneScenario(GSRdmaClientEndpoint endpoint) throws InterruptedException, ExecutionException {
+        CompletableFuture<String> future = endpoint.getTransport().send("i am the client");
+        String respond = future.get();
+        DiSNILogger.getLogger().info(respond);
+
+        CompletableFuture<String> future1 = endpoint.getTransport().send("i am connected");
+        respond = future1.get();
+        DiSNILogger.getLogger().info(respond);
+
+    }
+
+    private static void pipelineScenario(GSRdmaClientEndpoint endpoint) throws InterruptedException {
+        ArrayList<CompletableFuture<String>> futures = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            CompletableFuture<String> send = endpoint.getTransport().send("i am the client msg number " + i);
+            futures.add(send);
+            send.whenComplete((s, throwable) -> DiSNILogger.getLogger().info(s, throwable));
+        }
+
+        for (CompletableFuture<String> future : futures) {
+            try {
+                String response = future.get();
+                DiSNILogger.getLogger().info(response);
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
         }
     }
 
