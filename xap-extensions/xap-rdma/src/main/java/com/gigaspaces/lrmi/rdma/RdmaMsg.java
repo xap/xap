@@ -34,4 +34,13 @@ public class RdmaMsg<REQ, REP> {
     public CompletableFuture<REP> getFuture() {
         return future;
     }
+
+    @Override
+    public String toString() {
+        return "RdmaMsg{" +
+                "id=" + id +
+                ", request=" + request +
+                ", future=" + future +
+                '}';
+    }
 }
