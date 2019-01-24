@@ -31,7 +31,7 @@ public class RdmaResource {
         return postSend;
     }
 
-    public void serialize(long id, Object payload) throws IOException {
+    public void serialize(Object payload) throws IOException {
         ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(bytesOut);
         oos.writeObject(payload);
@@ -39,7 +39,6 @@ public class RdmaResource {
         byte[] bytes = bytesOut.toByteArray();
         bytesOut.close();
         oos.close();
-        buffer.putLong(id);
         buffer.put(bytes);
     }
 }

@@ -8,7 +8,6 @@ import com.gigaspaces.lrmi.AbstractPivot;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.lrmi.LRMIRuntime;
 import com.gigaspaces.lrmi.classloading.ClassProviderRequest;
-import com.gigaspaces.lrmi.classloading.IClassProvider;
 import com.gigaspaces.lrmi.classloading.protocol.lrmi.HandshakeRequest;
 import com.gigaspaces.lrmi.nio.*;
 import com.gigaspaces.management.transport.ITransportConnection;
@@ -17,6 +16,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.rmi.NoSuchObjectException;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,21 +25,24 @@ public class RdmaPivot extends AbstractPivot {
 
     // logger
     final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
-    final private static Logger _contextLogger = Logger.getLogger(Constants.LOGGER_LRMI_CONTEXT);
-    private final IClassProvider _classProvider;
+
+    private final ExecutorService executorService = Executors.newFixedThreadPool(1);
+    private final NIOConfiguration nioConfig;
 
     public RdmaPivot(NIOConfiguration nioConfig, PAdapter protocol) {
         super();
-        _classProvider = protocol.getClassProvider();
+        this.nioConfig = nioConfig;
 
 
         try {
             InetAddress ipAddress = InetAddress.getByName(nioConfig.getBindHostName());
 
             InetSocketAddress address = new InetSocketAddress(ipAddress, Integer.valueOf(nioConfig.getBindPort()));
+
+
             RdmaServerTransport transport = new RdmaServerTransport(address, RdmaPivot::process, 1,
-                    RdmaChannel::deserializeRequestPacket);
-            transport.run();
+                    RdmaChannel::deserializeRequestPacket, new LrmiRdmaResourceFactory());
+            executorService.submit(transport);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -55,8 +59,6 @@ public class RdmaPivot extends AbstractPivot {
         RequestPacket requestPacket = (RequestPacket) req;
         /* link channelEntry with remoteObjID, this gives us info which channelEntries open vs. remoteObjID */
 
-        IResponseContext respContext = null;
-        String monitoringId = null; // TODO ?
         if (requestPacket.isCallBack) {
             throw new UnsupportedOperationException("callback is not supported in RDMA!");
         }
@@ -123,12 +125,12 @@ public class RdmaPivot extends AbstractPivot {
 
     @Override
     public int getPort() {
-        return 0;
+        return Integer.valueOf(nioConfig.getBindPort());
     }
 
     @Override
     public String getHostName() {
-        return null;
+        return nioConfig.getBindHostName();
     }
 
     @Override
@@ -138,7 +140,7 @@ public class RdmaPivot extends AbstractPivot {
 
     @Override
     public void shutdown() {
-
+        executorService.shutdown();
     }
 
     @Override

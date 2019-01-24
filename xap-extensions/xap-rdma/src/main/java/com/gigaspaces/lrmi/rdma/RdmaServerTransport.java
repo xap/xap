@@ -19,12 +19,13 @@ public class RdmaServerTransport implements Runnable {
     private final RdmaServerEndpoint<GSRdmaAbstractEndpoint> serverEndpoint;
 
 
-    public RdmaServerTransport(InetSocketAddress address, Function<Object, Object> process, int executorsCount, Function<ByteBuffer, Object> deserialize) throws Exception {
+    public RdmaServerTransport(InetSocketAddress address, Function<Object, Object> process,
+                               int executorsCount, Function<ByteBuffer, Object> deserialize, RdmaResourceFactory resourceFactory) throws Exception {
         executorService = Executors.newFixedThreadPool(executorsCount);
         this.deserialize = deserialize;
         pendingRequests = new ArrayBlockingQueue<>(RdmaConstants.MAX_INCOMMING_REQUESTS);
 
-        GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory(new RdmaResourceFactory(), deserialize);
+        GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory(resourceFactory, deserialize);
         serverEndpoint = factory.getEndpointGroup().createServerEndpoint();
 
         serverEndpoint.bind(address, 10);

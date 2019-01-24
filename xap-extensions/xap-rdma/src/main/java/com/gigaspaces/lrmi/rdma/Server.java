@@ -16,7 +16,7 @@ public class Server {
         InetSocketAddress address = new InetSocketAddress(ipAddress, port);
         RdmaServerTransport transport = new RdmaServerTransport(address,
                 request -> request.toString().toUpperCase(), 1,
-                ClientTransport::readResponse);
+                ClientTransport::readResponse, new RdmaResourceFactory());
         transport.run();
     }
 

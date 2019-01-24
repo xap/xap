@@ -40,7 +40,8 @@ public class RdmaServerReceiver implements Runnable {
                     DiSNILogger.getLogger().info("SERVER going to send response - waiting for resource for reply: " + reply);
                     RdmaResource resource = endpoint.getResourceManager().waitForFreeResource();
                     DiSNILogger.getLogger().info("SERVER going to send response - after getting resource");
-                    resource.serialize(reqId, reply);
+                    resource.getBuffer().putLong(reqId);
+                    resource.serialize(reply);
                     resource.getPostSend().execute();
                 }
             } catch (InterruptedException e) {

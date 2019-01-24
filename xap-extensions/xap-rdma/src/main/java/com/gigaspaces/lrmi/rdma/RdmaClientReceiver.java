@@ -42,10 +42,13 @@ public class RdmaClientReceiver implements Runnable {
 
     @Override
     public void run() {
+        System.out.println(">> started client receiver");
+
         while (true) {
             try {
                 IbvWC event = recvCompletionEventQueue.take();
                 long reqId = recvBuf.getLong();
+                System.out.println(">> client receiver handling event.. " + reqId);
                 RdmaMsg msg = messageMap.remove(reqId);
                 Object res = deserialize.apply(recvBuf);
                 msg.setReply(res);

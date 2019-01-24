@@ -191,7 +191,7 @@ public class GSByteArrayOutputStream extends OutputStream {
         int newcount = _count + delta;
         if (newcount > _buffer.length) {
             if (newcount > maxCapacity)
-                throw new IllegalStateException("Max capacity breached: ");
+                throw new IllegalStateException("Max capacity breached: " + maxCapacity+", current: " + newcount);
             byte newbuf[] = new byte[Math.max(_buffer.length << 1, newcount)];
             System.arraycopy(_buffer, 0, newbuf, 0, _count);
             _buffer = newbuf;

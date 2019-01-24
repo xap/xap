@@ -224,10 +224,11 @@ public class CPeer extends BaseClientPeer {
         }
         if (isRdma) {
             _channel = RdmaChannel.create(address);
+            m_Address = null;//((RdmaChannel) _channel).getEndpoint();
         } else {
             _channel = async ? TcpChannel.createAsync(address, _config, lrmiMethod, clientConversationRunner) : TcpChannel.createSync(address, _config);
+            m_Address = ((TcpChannel) _channel).getEndpoint();
         }
-        m_Address = ((TcpChannel) _channel).getEndpoint();
     }
 
     //Flush the local members to the main memory once done
