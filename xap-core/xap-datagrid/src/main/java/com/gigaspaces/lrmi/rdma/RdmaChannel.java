@@ -1,10 +1,7 @@
 package com.gigaspaces.lrmi.rdma;
 
 import com.gigaspaces.lrmi.ServerAddress;
-import com.gigaspaces.lrmi.nio.ByteBufferPacketSerializer;
-import com.gigaspaces.lrmi.nio.IPacket;
-import com.gigaspaces.lrmi.nio.LrmiChannel;
-import com.gigaspaces.lrmi.nio.ReplyPacket;
+import com.gigaspaces.lrmi.nio.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -12,6 +9,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.CompletableFuture;
 
 import static com.gigaspaces.lrmi.rdma.RdmaConstants.RDMA_CONNECT_TIMEOUT;
 
@@ -104,8 +102,7 @@ public class RdmaChannel extends LrmiChannel {
         }
     }
 
-    public ClientTransport getTransport(){
-        return endpoint.getTransport();
+    public CompletableFuture<ReplyPacket> submit(RequestPacket requestPacket) {
+        return endpoint.getTransport().send(requestPacket);
     }
-
 }

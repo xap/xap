@@ -516,11 +516,14 @@ public class CPeer extends BaseClientPeer {
                 }
 
                 if (isRdma) {
-                    ClientTransport clientTransport = ((RdmaChannel) _channel).getTransport();
-                    CompletableFuture<RdmaMsg> future = clientTransport.send(new RdmaMsg(_requestPacket));
+                    CompletableFuture<ReplyPacket> future = ((RdmaChannel) _channel).submit(_requestPacket);
                     final LRMIFuture finalResult = result;
-                    future.thenAccept(rdmaMsg -> finalResult.setResult(rdmaMsg.getPayload()))
-                            .exceptionally(throwable -> {finalResult.setResult(throwable); return null;});
+                    future.whenComplete((replyPacket, throwable) -> {
+                        if (throwable != null)
+                            finalResult.setResult(throwable);
+                        else
+                            finalResult.setResultPacket(replyPacket);
+                    });
                 } else {
                     final AsyncContext ctx = new AsyncContext(connPool,
                             _handler,
@@ -541,10 +544,9 @@ public class CPeer extends BaseClientPeer {
             }
 
             previousThreadName = updateThreadNameIfNeeded();
-            CompletableFuture<RdmaMsg> rdmaFuture = null;
+            CompletableFuture<ReplyPacket> rdmaFuture = null;
             if (isRdma) {
-                ClientTransport clientTransport = ((RdmaChannel) _channel).getTransport();
-                rdmaFuture = clientTransport.send(new RdmaMsg(_requestPacket));
+                rdmaFuture = ((RdmaChannel) _channel).submit(_requestPacket);
             } else {
                 _channel.getWriter().writeRequest(_requestPacket);
             }
@@ -565,8 +567,7 @@ public class CPeer extends BaseClientPeer {
             LRMIRemoteClassLoaderIdentifier previousIdentifier = RemoteClassLoaderContext.set(_remoteClassLoaderIdentifier);
             try {
                 if (isRdma) {
-                    RdmaMsg resultRdmaMsg = rdmaFuture.get(RDMA_SYNC_OP_TIMEOUT, TimeUnit.MILLISECONDS);
-                    replyPacket = (ReplyPacket) resultRdmaMsg.getPayload();
+                    replyPacket = rdmaFuture.get(RDMA_SYNC_OP_TIMEOUT, TimeUnit.MILLISECONDS);
                 } else {
                     replyPacket = new ReplyPacket();
                     while (hasMoreIntermidiateRequests) {

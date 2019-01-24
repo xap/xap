@@ -20,8 +20,8 @@ public class LrmiRdmaResource extends RdmaResource {
     }
 
     @Override
-    public void serialize(long id, RdmaMsg msg) throws IOException {
+    public void serialize(long id, Object payload) throws IOException {
         getBuffer().putLong(id);
-        serializer.serialize((IPacket) msg.getPayload());
+        serializer.serialize((IPacket) payload);
     }
 }
