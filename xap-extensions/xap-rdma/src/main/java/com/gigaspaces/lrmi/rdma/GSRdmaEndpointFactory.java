@@ -29,7 +29,7 @@ public class GSRdmaEndpointFactory implements RdmaEndpointFactory<GSRdmaAbstract
     @Override
     public GSRdmaAbstractEndpoint createEndpoint(RdmaCmId id, boolean serverSide) throws IOException {
         if (serverSide) {
-            return new GSRdmaServerEndpoint(endpointGroup, id, factory, deserialize);
+            return new GSRdmaServerEndpoint(endpointGroup, id, factory);
         } else {
             return new GSRdmaClientEndpoint(endpointGroup, id, factory, deserialize);
         }

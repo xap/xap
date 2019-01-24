@@ -2,17 +2,123 @@ package com.gigaspaces.lrmi.rdma;
 
 import com.gigaspaces.config.lrmi.nio.NIOConfiguration;
 import com.gigaspaces.internal.lrmi.LRMIInboundMonitoringDetailsImpl;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.AbstractPivot;
-import com.gigaspaces.lrmi.nio.PAdapter;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.lrmi.LRMIRuntime;
+import com.gigaspaces.lrmi.classloading.ClassProviderRequest;
+import com.gigaspaces.lrmi.classloading.IClassProvider;
+import com.gigaspaces.lrmi.classloading.protocol.lrmi.HandshakeRequest;
+import com.gigaspaces.lrmi.nio.*;
 import com.gigaspaces.management.transport.ITransportConnection;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.rmi.NoSuchObjectException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class RdmaPivot extends AbstractPivot {
 
-    public RdmaPivot(NIOConfiguration nioConfig, PAdapter pAdapter) {
+    // logger
+    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
+    final private static Logger _contextLogger = Logger.getLogger(Constants.LOGGER_LRMI_CONTEXT);
+    private final IClassProvider _classProvider;
+
+    public RdmaPivot(NIOConfiguration nioConfig, PAdapter protocol) {
         super();
+        _classProvider = protocol.getClassProvider();
+
+
+        try {
+            InetAddress ipAddress = InetAddress.getByName(nioConfig.getBindHostName());
+
+            InetSocketAddress address = new InetSocketAddress(ipAddress, Integer.valueOf(nioConfig.getBindPort()));
+            RdmaServerTransport transport = new RdmaServerTransport(address, RdmaPivot::process, 1,
+                    RdmaChannel::deserializeRequestPacket);
+            transport.run();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    public static Object process(Object req) {
+
+        LRMIInvocationContext.updateContext(null, LRMIInvocationContext.ProxyWriteType.UNCACHED, LRMIInvocationContext.InvocationStage.SERVER_UNMARSHAL_REQUEST, PlatformLogicalVersion.getLogicalVersion(), null, false, null, null);
+
+
+
+        RequestPacket requestPacket = (RequestPacket) req;
+        /* link channelEntry with remoteObjID, this gives us info which channelEntries open vs. remoteObjID */
+
+        IResponseContext respContext = null;
+        String monitoringId = null; // TODO ?
+        if (requestPacket.isCallBack) {
+            throw new UnsupportedOperationException("callback is not supported in RDMA!");
+        }
+
+        ReplyPacket replyPacket = consumeAndHandleRequest(requestPacket);
+        return replyPacket;
+    }
+
+
+    private static ReplyPacket consumeAndHandleRequest(RequestPacket requestPacket) {
+        Object reqObject = requestPacket.getRequestObject();
+        if (reqObject != null) {
+            if (reqObject instanceof ClassProviderRequest) { //TODO remote class loading
+                throw new UnsupportedOperationException("Remote classloading is not supported in RDMA");
+//                return new ReplyPacket<IClassProvider>(_classProvider, null);
+            }
+            if (reqObject instanceof HandshakeRequest) {
+                return new ReplyPacket<Object>(null, null);
+            }
+        }
+        Exception resultEx = null;
+        Object result = null;
+        try {
+
+            // Check for dummy packets - ignore them
+            if (requestPacket.getObjectId() != LRMIRuntime.DUMMY_OBJECT_ID) {
+                if (requestPacket.getInvokeMethod() == null) {
+                    _logger.log(Level.WARNING, "canceling invocation of request packet without invokeMethod : " + requestPacket);
+                } else {
+                    result = LRMIRuntime.getRuntime().invoked(requestPacket.getObjectId(),
+                            requestPacket.getInvokeMethod().realMethod,
+                            requestPacket.getArgs());
+                }
+            }
+        } catch (NoSuchObjectException ex) {
+            /** the remote object died, no reason to print-out the message in non debug mode,  */
+            if (requestPacket.isOneWay()) {
+                if (_logger.isLoggable(Level.SEVERE)) {
+                    _logger.log(Level.SEVERE, "Failed to invoke one way method : " + requestPacket.getInvokeMethod() +
+                            "\nReason: This remoteObject: " + requestPacket.getObjectId() +
+                            " has been already unexported.", ex);
+                }
+            }
+
+            resultEx = ex;
+        } catch (Exception ex) {
+            resultEx = ex;
+        }
+
+
+        if (requestPacket.isOneWay()) {
+            if (resultEx != null && _logger.isLoggable(Level.SEVERE)) {
+                _logger.log(Level.SEVERE, "Failed to invoke one-way method: " + requestPacket.getInvokeMethod(), resultEx);
+            }
+
+            return null;
+        }
+
+
+        /** return response */
+        //noinspection unchecked
+        return new ReplyPacket(result, resultEx);
     }
 
     @Override

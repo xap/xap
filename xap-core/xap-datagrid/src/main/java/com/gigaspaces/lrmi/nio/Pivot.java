@@ -181,7 +181,8 @@ public class Pivot extends AbstractPivot {
         }
 
         private void setLRMIInvocationContext() {
-            LRMIInvocationTrace trace = _contextLogger.isLoggable(Level.FINE) ? new LRMIInvocationTrace(null, null, NIOUtils.getSocketDisplayString(channelEntry.getSocketChannel()), false) : null;
+            LRMIInvocationTrace trace = _contextLogger.isLoggable(Level.FINE) ?
+                    new LRMIInvocationTrace(null, null, NIOUtils.getSocketDisplayString(channelEntry.getSocketChannel()), false) : null;
             //We do not need a new snapshot because this is called by a new task which we control
             LRMIInvocationContext.updateContext(trace, ProxyWriteType.UNCACHED, InvocationStage.SERVER_UNMARSHAL_REQUEST, channelEntry.getSourcePlatformLogicalVersion(), null, false, null, channelEntry.getClientEndPointAddress());
         }

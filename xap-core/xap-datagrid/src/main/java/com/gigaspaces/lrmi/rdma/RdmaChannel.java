@@ -25,7 +25,7 @@ public class RdmaChannel extends LrmiChannel {
     }
 
     public static RdmaChannel create(ServerAddress address) throws IOException {
-        GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory(new LrmiRdmaResourceFactory(),RdmaChannel::deserializePacket);
+        GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory(new LrmiRdmaResourceFactory(), RdmaChannel::deserializeReplyPacket);
         GSRdmaClientEndpoint endpoint = (GSRdmaClientEndpoint) factory.create();
         //connect to the server
         InetAddress ipAddress = InetAddress.getByName(address.getHost());
@@ -91,10 +91,19 @@ public class RdmaChannel extends LrmiChannel {
         }
     }
 
-    private static Object deserializePacket(ByteBuffer buffer){
+    public static Object deserializeReplyPacket(ByteBuffer buffer) {
+        IPacket packet = new ReplyPacket<>();
+        return deserializePacket(packet, buffer);
+    }
+
+    public static Object deserializeRequestPacket(ByteBuffer buffer) {
+        IPacket packet = new RequestPacket();
+        return deserializePacket(packet, buffer);
+    }
+
+    private static Object deserializePacket(IPacket packet, ByteBuffer buffer) {
         try {
             ByteBufferPacketSerializer serializer = new ByteBufferPacketSerializer(buffer);
-            IPacket packet = new ReplyPacket<>();
             return serializer.deserialize(packet);
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
