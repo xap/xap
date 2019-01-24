@@ -16,7 +16,7 @@ import java.util.function.Function;
 public class ClientTransport {
 
     private final RdmaSender rdmaSender;
-    private ConcurrentHashMap<Long, CompletableFuture<RdmaMsg>> repMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Long, RdmaMsg> repMap = new ConcurrentHashMap<>();
     private AtomicLong nextId = new AtomicLong(0);
     private static final LinkedList<ByteBuffer> resources = new LinkedList<>();
     private final ArrayBlockingQueue<RdmaMsg> writeRequests = new ArrayBlockingQueue<>(100);
@@ -47,18 +47,18 @@ public class ClientTransport {
         return wr_list;
     }
 
-    public CompletableFuture<RdmaMsg> send(RdmaMsg req) {
+    public <REQ, REP> CompletableFuture<REP> send(REQ request) {
+        RdmaMsg<REQ, REP> rdmaMsg = new RdmaMsg<>(request);
         long id = nextId.incrementAndGet();
-        req.setId(id);
-        CompletableFuture<RdmaMsg> future = new CompletableFuture<>();
-        repMap.put(id, future);
-        future.whenComplete((T, throwable) -> repMap.remove(id));
+        rdmaMsg.setId(id);
+        repMap.put(id, rdmaMsg);
+        rdmaMsg.getFuture().whenComplete((T, throwable) -> repMap.remove(id));
         try {
-            writeRequests.add(req);
+            writeRequests.add(rdmaMsg);
         } catch (Exception e) {
-            future.completeExceptionally(e);
+            rdmaMsg.getFuture().completeExceptionally(e);
         }
-        return future;
+        return rdmaMsg.getFuture();
     }
 
     public void onCompletionEvent(IbvWC event) throws IOException {

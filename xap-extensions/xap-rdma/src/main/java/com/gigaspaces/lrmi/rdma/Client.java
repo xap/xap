@@ -5,7 +5,6 @@ import org.apache.log4j.BasicConfigurator;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -49,29 +48,26 @@ public class Client {
     }
 
     private static void oneByOneScenario(GSRdmaClientEndpoint endpoint) throws InterruptedException, ExecutionException {
-        CompletableFuture<RdmaMsg> future = endpoint.getTransport().send(new RdmaMsg("i am the client"));
-        RdmaMsg respond = future.get();
-        DiSNILogger.getLogger().info((String) respond.getPayload());
+        CompletableFuture<String> future = endpoint.getTransport().send("i am the client");
+        DiSNILogger.getLogger().info(future.get());
 
-        CompletableFuture<RdmaMsg> future1 = endpoint.getTransport().send(new RdmaMsg("i am connected"));
-        respond = future1.get();
-        DiSNILogger.getLogger().info((String) respond.getPayload());
+        CompletableFuture<String> future1 = endpoint.getTransport().send("i am connected");
+        DiSNILogger.getLogger().info(future1.get());
 
     }
 
     private static void pipelineScenario(GSRdmaClientEndpoint endpoint) throws InterruptedException {
-        ArrayList<CompletableFuture<RdmaMsg>> futures = new ArrayList<>();
+        ArrayList<CompletableFuture<String>> futures = new ArrayList<>();
         for (int i = 0; i < 2; i++) {
-            CompletableFuture<RdmaMsg> send = endpoint.getTransport()
-                    .send(new RdmaMsg("i am the client msg number " + i));
+            CompletableFuture<String> send = endpoint.getTransport().send("i am the client msg number " + i);
             futures.add(send);
-            send.whenComplete((s, throwable) -> DiSNILogger.getLogger().info((String) s.getPayload(), throwable));
+            send.whenComplete((s, throwable) -> DiSNILogger.getLogger().info(s, throwable));
         }
 
-        for (CompletableFuture<RdmaMsg> future : futures) {
+        for (CompletableFuture<String> future : futures) {
             try {
-                RdmaMsg response = future.get();
-                DiSNILogger.getLogger().info((String) response.getPayload());
+                String response = future.get();
+                DiSNILogger.getLogger().info(response);
             } catch (ExecutionException e) {
                 e.printStackTrace();
             }

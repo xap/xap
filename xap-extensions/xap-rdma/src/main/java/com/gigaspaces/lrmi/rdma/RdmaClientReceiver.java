@@ -17,16 +17,16 @@ import static com.gigaspaces.lrmi.rdma.RdmaConstants.BUFFER_SIZE;
 public class RdmaClientReceiver implements Runnable {
 
     private final BlockingQueue<IbvWC> recvCompletionEventQueue;
-    private final ConcurrentHashMap<Long, CompletableFuture<RdmaMsg>> futureMap;
+    private final ConcurrentHashMap<Long, RdmaMsg> messageMap;
     private Function<ByteBuffer, Object> deserialize;
     private final SVCPostRecv postRecv;
     private final ByteBuffer recvBuf;
 
     public RdmaClientReceiver(BlockingQueue<IbvWC> recvCompletionEventQueue,
-                              ConcurrentHashMap<Long, CompletableFuture<RdmaMsg>> futureMap,
+                              ConcurrentHashMap<Long, RdmaMsg> messageMap,
                               GSRdmaClientEndpoint endpoint, Function<ByteBuffer, Object> deserialize) throws IOException {
         this.recvCompletionEventQueue = recvCompletionEventQueue;
-        this.futureMap = futureMap;
+        this.messageMap = messageMap;
         this.deserialize = deserialize;
         this.recvBuf = ByteBuffer.allocateDirect(BUFFER_SIZE);
         IbvMr recvMr = endpoint.registerMemory(recvBuf).execute().free().getMr();
@@ -46,13 +46,9 @@ public class RdmaClientReceiver implements Runnable {
             try {
                 IbvWC event = recvCompletionEventQueue.take();
                 long reqId = recvBuf.getLong();
-                CompletableFuture future = getFuture(reqId);
+                RdmaMsg msg = messageMap.remove(reqId);
                 Object res = deserialize.apply(recvBuf);
-                if (res instanceof Throwable) {
-                    future.completeExceptionally((Throwable) res);
-                } else {
-                    future.complete(new RdmaMsg(res));
-                }
+                msg.setReply(res);
                 try {
                     this.postRecv.execute();
                 } catch (IOException e) {
@@ -63,9 +59,4 @@ public class RdmaClientReceiver implements Runnable {
             }
         }
     }
-
-    private CompletableFuture getFuture(long reqId) {
-        return futureMap.remove(reqId);
-    }
-
 }

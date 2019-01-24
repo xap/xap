@@ -1,30 +1,37 @@
 package com.gigaspaces.lrmi.rdma;
 
-public class RdmaMsg {
+import java.util.concurrent.CompletableFuture;
 
-    private transient long id;
-    private Object payload;
+public class RdmaMsg<REQ, REP> {
 
+    private long id;
+    private REQ request;
+    private CompletableFuture<REP> future = new CompletableFuture<>();
 
-    public RdmaMsg(Object payload) {
-        this.payload = payload;
+    public RdmaMsg(REQ request) {
+        this.request = request;
     }
 
     public long getId() {
         return id;
     }
-
     public void setId(long id) {
         this.id = id;
     }
 
-
-    public Object getPayload() {
-        return this.payload;
+    public REQ getRequest() {
+        return request;
     }
 
-    public void setPayload(Object payload) {
-        this.payload = payload;
+    public void setReply(REP reply) {
+        if (reply instanceof Throwable) {
+            future.completeExceptionally((Throwable) reply);
+        } else {
+            future.complete(reply);
+        }
     }
 
+    public CompletableFuture<REP> getFuture() {
+        return future;
+    }
 }
