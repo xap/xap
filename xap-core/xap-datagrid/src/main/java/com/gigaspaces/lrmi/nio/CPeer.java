@@ -53,7 +53,6 @@ import com.j_spaces.kernel.SystemProperties;
 import net.jini.space.InternalSpaceException;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.SocketAddress;
@@ -106,7 +105,6 @@ public class CPeer extends BaseClientPeer {
 
     private LrmiChannel _channel;
     private final RequestPacket _requestPacket;
-    private final ReplyPacket<Object> _replayPacket;
     private final IRemoteClassProviderProvider _remoteConnection = new ClientRemoteClassProviderProvider();
     private long _objectClassLoaderId;
     private long _remoteLrmiRuntimeId;
@@ -150,7 +148,6 @@ public class CPeer extends BaseClientPeer {
         this.clientConversationRunner = clientConversationRunner;
         _serviceVersion = serviceVersion;
         _requestPacket = new RequestPacket();
-        _replayPacket = new ReplyPacket<Object>();
         connections.increment();
     }
 
@@ -400,7 +397,6 @@ public class CPeer extends BaseClientPeer {
     public void afterInvoke() {
         _watchdogContext.watchIdle();
         _requestPacket.clear();
-        _replayPacket.clear();
     }
 
     public IClassProvider getClassProvider() {
@@ -563,20 +559,22 @@ public class CPeer extends BaseClientPeer {
             LRMIInvocationContext.updateContext(null, null, InvocationStage.CLIENT_RECEIVE_REPLY, null, null, false, null, null);
 
             boolean hasMoreIntermidiateRequests = true;
+            ReplyPacket replyPacket;
             // Put the class loader id of the remote object in thread local in case a there's a need
             // to load a remote class, we will use the class loader of the exported object
             LRMIRemoteClassLoaderIdentifier previousIdentifier = RemoteClassLoaderContext.set(_remoteClassLoaderIdentifier);
             try {
                 if (isRdma) {
                     RdmaMsg resultRdmaMsg = rdmaFuture.get(RDMA_SYNC_OP_TIMEOUT, TimeUnit.MILLISECONDS);
-//                    _replayPacket =
+                    replyPacket = (ReplyPacket) resultRdmaMsg.getPayload();
                 } else {
+                    replyPacket = new ReplyPacket();
                     while (hasMoreIntermidiateRequests) {
                         // read response
                         _watchdogContext.watchResponse(monitoringId);
-                        _channel.getReader().readReply(_replayPacket);
-                        if (_replayPacket.getResult() instanceof ClassProviderRequest) {
-                            _replayPacket.clear();
+                        _channel.getReader().readReply(replyPacket);
+                        if (replyPacket.getResult() instanceof ClassProviderRequest) {
+                            replyPacket.clear();
                             _watchdogContext.watchRequest(monitoringId);
                             _channel.getWriter().writeRequest(new RequestPacket(getClassProvider()), false);
                         } else
@@ -585,10 +583,10 @@ public class CPeer extends BaseClientPeer {
                 }
                 // check for exception from server
                 //noinspection ThrowableResultOfMethodCallIgnored
-                if (_replayPacket.getException() != null)
-                    throw _replayPacket.getException();
+                if (replyPacket.getException() != null)
+                    throw replyPacket.getException();
 
-                return _replayPacket.getResult();
+                return replyPacket.getResult();
             } finally {
                 RemoteClassLoaderContext.set(previousIdentifier);
                 _monitoringModule.monitorActivity(monitoringId, _channel.getWriter(), _channel.getReader());
