@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
+import java.util.logging.Logger;
 
 public class RdmaResource {
 
@@ -32,6 +33,7 @@ public class RdmaResource {
     }
 
     public void serialize(Object payload) throws IOException {
+        Logger.getLogger("RdmaLogger").info("serializing payload "+payload);
         ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(bytesOut);
         oos.writeObject(payload);

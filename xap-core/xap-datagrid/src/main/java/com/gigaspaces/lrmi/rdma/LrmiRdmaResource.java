@@ -6,6 +6,7 @@ import com.ibm.disni.verbs.SVCPostSend;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.logging.Logger;
 
 public class LrmiRdmaResource extends RdmaResource {
     private ByteBufferPacketSerializer serializer;
@@ -21,6 +22,8 @@ public class LrmiRdmaResource extends RdmaResource {
 
     @Override
     public void serialize(Object payload) throws IOException {
+        Logger.getLogger("RdmaLogger").info("serializing payload "+payload);
         serializer.serialize((IPacket) payload);
+        Logger.getLogger("Rdma").info("buffer position = "+getBuffer().position());
     }
 }

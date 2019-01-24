@@ -12,8 +12,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-import static com.gigaspaces.lrmi.rdma.RdmaConstants.BUFFER_SIZE;
-
 public class RdmaClientReceiver implements Runnable {
 
     private final BlockingQueue<IbvWC> recvCompletionEventQueue;
@@ -28,7 +26,7 @@ public class RdmaClientReceiver implements Runnable {
         this.recvCompletionEventQueue = recvCompletionEventQueue;
         this.messageMap = messageMap;
         this.deserialize = deserialize;
-        this.recvBuf = ByteBuffer.allocateDirect(BUFFER_SIZE);
+        this.recvBuf = ByteBuffer.allocateDirect(RdmaConstants.bufferSize());
         IbvMr recvMr = endpoint.registerMemory(recvBuf).execute().free().getMr();
         this.postRecv = endpoint.postRecv(ClientTransport.createRecvWorkRequest(RdmaConstants.nextId(), recvMr));
 

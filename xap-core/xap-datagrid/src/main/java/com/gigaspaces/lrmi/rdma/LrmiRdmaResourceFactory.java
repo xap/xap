@@ -8,7 +8,7 @@ public class LrmiRdmaResourceFactory extends RdmaResourceFactory {
     @Override
     public RdmaResource create() throws IOException {
         short id = (short) RdmaConstants.nextId();
-        ByteBuffer buffer = ByteBuffer.allocateDirect(RdmaConstants.BUFFER_SIZE);
+        ByteBuffer buffer = ByteBuffer.allocateDirect(RdmaConstants.bufferSize());
         return new LrmiRdmaResource(id, buffer, ClientTransport.rdmaSendBuffer(id, buffer, this.getEndpoint()));
     }
 }

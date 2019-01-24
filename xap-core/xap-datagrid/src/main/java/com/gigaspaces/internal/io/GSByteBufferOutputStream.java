@@ -1,7 +1,9 @@
 package com.gigaspaces.internal.io;
 
 import java.io.OutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.util.logging.Logger;
 
 public class GSByteBufferOutputStream extends OutputStream {
     private final ByteBuffer byteBuffer;
@@ -19,6 +21,9 @@ public class GSByteBufferOutputStream extends OutputStream {
     public void write(byte b[], int off, int len) {
         if (len == 0)
             return;
+        if (len > byteBuffer.remaining()) {
+            throw new RuntimeException("buffer capacity = "+byteBuffer.capacity()+", len = "+len);
+        }
         byteBuffer.put(b, off, len);
     }
 }

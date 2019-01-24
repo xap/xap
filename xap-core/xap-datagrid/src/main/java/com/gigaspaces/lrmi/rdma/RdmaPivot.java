@@ -26,7 +26,7 @@ public class RdmaPivot extends AbstractPivot {
     // logger
     final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(1);
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final NIOConfiguration nioConfig;
 
     public RdmaPivot(NIOConfiguration nioConfig, PAdapter protocol) {

@@ -7,9 +7,6 @@ import com.ibm.disni.verbs.*;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.function.Function;
-
-import static com.gigaspaces.lrmi.rdma.RdmaConstants.BUFFER_SIZE;
 
 public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
 
@@ -30,7 +27,7 @@ public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
         factory.setEndpoint(this);
 
         this.resourceManager = new RdmaResourceManager(factory, 1);
-        this.recvBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
+        this.recvBuffer = ByteBuffer.allocateDirect(RdmaConstants.bufferSize());
         IbvMr recvMr = registerMemory(recvBuffer).execute().free().getMr();
         this.postRecv = postRecv(ClientTransport.createRecvWorkRequest(RdmaConstants.nextId(), recvMr));
     }
@@ -49,8 +46,8 @@ public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
     @Override
     public synchronized void dispatchCmEvent(RdmaCmEvent cmEvent) throws IOException {
         super.dispatchCmEvent(cmEvent);
-        if(cmEvent.getEvent() == RdmaCmEvent.EventType.RDMA_CM_EVENT_DISCONNECTED.ordinal()){
-            DiSNILogger.getLogger().info("SERVER: closing connection to "+getDstAddr());
+        if (cmEvent.getEvent() == RdmaCmEvent.EventType.RDMA_CM_EVENT_DISCONNECTED.ordinal()) {
+            DiSNILogger.getLogger().info("SERVER: closing connection to " + getDstAddr());
             this.resourceManager = null;
             this.postRecv.free();
             try {
