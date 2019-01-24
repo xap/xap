@@ -5,6 +5,7 @@ import org.apache.log4j.BasicConfigurator;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -12,9 +13,19 @@ import java.util.concurrent.ExecutionException;
 
 public class Client {
 
-    private static String host = "192.168.33.137";
+    private static String host = "";
     private static int port = 8888;
 
+    static {
+        if (host.length() == 0) {
+            try {
+                host = InetAddress.getLocalHost().getHostAddress();
+                System.out.println("Binding to " + host);
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+        }
+    }
     public static void main(String[] args) throws Exception {
         BasicConfigurator.configure();
 
