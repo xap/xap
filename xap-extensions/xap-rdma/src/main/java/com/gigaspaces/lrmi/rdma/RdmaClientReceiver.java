@@ -47,12 +47,14 @@ public class RdmaClientReceiver implements Runnable {
         while (true) {
             try {
                 IbvWC event = recvCompletionEventQueue.take();
+                recvBuf.clear();
                 long reqId = recvBuf.getLong();
                 System.out.println(">> client receiver handling event.. " + reqId);
                 RdmaMsg msg = messageMap.remove(reqId);
                 Object res = deserialize.apply(recvBuf);
                 msg.setReply(res);
                 try {
+                    recvBuf.clear();
                     this.postRecv.execute();
                 } catch (IOException e) {
                     e.printStackTrace(); //TODO

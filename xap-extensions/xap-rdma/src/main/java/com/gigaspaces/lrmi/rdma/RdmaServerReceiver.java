@@ -35,8 +35,16 @@ public class RdmaServerReceiver implements Runnable {
                     }
 
                     DiSNILogger.getLogger().info("SERVER got request: " + request);
+
+                    recvBuff.clear();
                     endpoint.getPostRecv().execute();
                     Object reply = process.apply(request);
+
+                    if (reply == null) {
+                        DiSNILogger.getLogger().info("reply is null, assuming oneway... Not sending result");
+                        continue;
+                    }
+
                     DiSNILogger.getLogger().info("SERVER going to send response - waiting for resource for reply: " + reply);
                     RdmaResource resource = endpoint.getResourceManager().waitForFreeResource();
                     DiSNILogger.getLogger().info("SERVER going to send response - after getting resource");

@@ -506,7 +506,8 @@ public class CPeer extends BaseClientPeer {
             final String monitoringId = Pivot.extractMonitoringId(_requestPacket);
 
             // register the thread with the request watchdog
-            _watchdogContext.watchRequest(monitoringId);
+            if (!isRdma)
+                _watchdogContext.watchRequest(monitoringId);
 
             if (lrmiMethod.isAsync) {
                 LRMIFuture result = (LRMIFuture) FutureContext.getFutureResult();
@@ -554,7 +555,8 @@ public class CPeer extends BaseClientPeer {
 
             /** if <code>true</code> the client peer mode is one way, don't wait for reply */
             if (lrmiMethod.isOneWay) {
-                _monitoringModule.monitorActivity(monitoringId, _channel.getWriter(), _channel.getReader());
+                if (!isRdma)
+                    _monitoringModule.monitorActivity(monitoringId, _channel.getWriter(), _channel.getReader());
                 return null;
             }
 
@@ -591,7 +593,9 @@ public class CPeer extends BaseClientPeer {
                 return replyPacket.getResult();
             } finally {
                 RemoteClassLoaderContext.set(previousIdentifier);
-                _monitoringModule.monitorActivity(monitoringId, _channel.getWriter(), _channel.getReader());
+                if (!isRdma) {
+                    _monitoringModule.monitorActivity(monitoringId, _channel.getWriter(), _channel.getReader());
+                }
             }
         } catch (LRMIUnhandledException ex) {
             if (ex.getStage() == Stage.DESERIALIZATION) {
