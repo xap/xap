@@ -31,10 +31,10 @@ public class RdmaResource {
         return postSend;
     }
 
-    public void serialize(long id, RdmaMsg msg) throws IOException {
+    public void serialize(long id, Object payload) throws IOException {
         ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(bytesOut);
-        oos.writeObject(msg.getPayload());
+        oos.writeObject(payload);
         oos.flush();
         byte[] bytes = bytesOut.toByteArray();
         bytesOut.close();

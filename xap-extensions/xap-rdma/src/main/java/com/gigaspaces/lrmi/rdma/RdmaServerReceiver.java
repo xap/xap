@@ -9,10 +9,10 @@ import java.util.function.Function;
 public class RdmaServerReceiver implements Runnable {
 
     private final BlockingQueue<GSRdmaServerEndpoint> pendingRequestQueue;
-    private Function<RdmaMsg, RdmaMsg> process;
+    private Function<Object, Object> process;
     private Function<ByteBuffer, Object> deserialize;
 
-    public RdmaServerReceiver(BlockingQueue<GSRdmaServerEndpoint> pendinfRequestQueue, Function<RdmaMsg, RdmaMsg> process, Function<ByteBuffer, Object> deserialize) {
+    public RdmaServerReceiver(BlockingQueue<GSRdmaServerEndpoint> pendinfRequestQueue, Function<Object, Object> process, Function<ByteBuffer, Object> deserialize) {
         this.pendingRequestQueue = pendinfRequestQueue;
         this.process = process;
         this.deserialize = deserialize;
@@ -29,22 +29,18 @@ public class RdmaServerReceiver implements Runnable {
                     long reqId = recvBuff.getLong();
                     DiSNILogger.getLogger().info("SERVER: reqId = " + reqId);
 
-                    Object result = deserialize.apply(recvBuff);
-                    if (result instanceof Throwable) {
-                        throw (Throwable) result;
+                    Object request = deserialize.apply(recvBuff);
+                    if (request instanceof Throwable) {
+                        throw (Throwable) request;
                     }
 
-
-
-                    RdmaMsg rdmaMsg = new RdmaMsg(result);
-
-                    DiSNILogger.getLogger().info("SERVER got msg: " + rdmaMsg.getPayload());
+                    DiSNILogger.getLogger().info("SERVER got request: " + request);
                     endpoint.getPostRecv().execute();
-                    RdmaMsg response = process.apply(rdmaMsg);
-                    DiSNILogger.getLogger().info("SERVER going to send response - waiting for resource for response: " + response.getPayload());
+                    Object reply = process.apply(request);
+                    DiSNILogger.getLogger().info("SERVER going to send response - waiting for resource for reply: " + reply);
                     RdmaResource resource = endpoint.getResourceManager().waitForFreeResource();
                     DiSNILogger.getLogger().info("SERVER going to send response - after getting resource");
-                    resource.serialize(reqId, response);
+                    resource.serialize(reqId, reply);
                     resource.getPostSend().execute();
                 }
             } catch (InterruptedException e) {
