@@ -424,6 +424,19 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         // TODO RMI connections are not blocked
         if (_clusterPolicy != null && _clusterPolicy.isPersistentStartupEnabled())
             initSpaceStartupStateManager();
+
+        String fileLusPath = System.getProperty(SystemProperties.LUS_FILE_PATH);
+        if (fileLusPath != null)
+            registerFile(fileLusPath);
+    }
+
+    private void registerFile(String path)  {
+        File file = new File(path, getName() + ".service");
+        try(ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(file))){
+            os.writeObject(getSpaceStub());
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to register space");
+        }
     }
 
     private HttpServer initWebServerIfNeeded() throws CreateException {
