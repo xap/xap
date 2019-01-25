@@ -21,7 +21,6 @@ public class MsgEncoder extends MessageToByteEncoder<RdmaMsg> {
 
     @Override
     protected void encode(ChannelHandlerContext ctx, RdmaMsg msg, ByteBuf out) throws IOException {
-        System.out.println("writing to channel msg" + msg);
         int startIdx = out.writerIndex();
         out.writeBytes(LENGTH_PLACEHOLDER);
         out.writeLong(msg.getId());

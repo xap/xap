@@ -16,12 +16,10 @@ public class ClientHandler extends SimpleChannelInboundHandler<RdmaMsg> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, RdmaMsg reply) {
-        System.out.println("Client read msg=" + reply.getId());
         RdmaMsg request = map.remove(reply.getId());
         CompletableFuture future = request != null ? request.getFuture() : null;
         if (request != null)
             request.setReply(reply.getRequest());
-        System.out.println("Client found future =" +  future + " for id " + request.getId());
     }
 
     @Override

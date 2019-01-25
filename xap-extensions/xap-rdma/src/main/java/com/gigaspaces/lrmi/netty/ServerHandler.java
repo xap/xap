@@ -16,7 +16,6 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         RdmaMsg request = (RdmaMsg) msg;
-        System.out.println("Server read id=" + request.getId());
         Object reply = process.apply(request.getRequest());
         RdmaMsg replyMsg = new RdmaMsg(reply);
         replyMsg.setId(request.getId());

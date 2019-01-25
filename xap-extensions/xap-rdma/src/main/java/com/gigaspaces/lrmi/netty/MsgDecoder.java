@@ -34,7 +34,6 @@ public class MsgDecoder extends LengthFieldBasedFrameDecoder {
             Object payload = deserialize.apply(frame);
             RdmaMsg msg = new RdmaMsg(payload);
             msg.setId(id);
-            logger.info("read message " + msg);
             return msg;
         } catch (Exception e) {
             logger.error(e, e);

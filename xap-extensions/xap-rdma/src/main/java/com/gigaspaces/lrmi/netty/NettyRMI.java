@@ -1,6 +1,5 @@
 package com.gigaspaces.lrmi.netty;
 
-import com.gigaspaces.lrmi.rdma.RdmaMsg;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 
