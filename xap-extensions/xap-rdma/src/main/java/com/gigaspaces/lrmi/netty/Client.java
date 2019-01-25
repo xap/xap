@@ -24,11 +24,12 @@ import java.util.function.Function;
 public class Client implements Closeable {
     private final Channel channel;
     private final Bootstrap bootstrap;
-    private final Map<Long, CompletableFuture<RdmaMsg>> map;
+    private final Map<Long, RdmaMsg> map;
     private final AtomicLong nextId = new AtomicLong();
     private BiFunction<Object, ByteBuf, IOException> serialize;
 
-    public Client(InetSocketAddress inetSocketAddress, Function<ByteBuf, Object> deserialize,
+    public Client(InetSocketAddress inetSocketAddress,
+                  Function<ByteBuf, Object> deserializeReply,
                   BiFunction<Object, ByteBuf, IOException> serialize) throws InterruptedException {
         this.serialize = serialize;
         map = new ConcurrentHashMap<>();
@@ -38,7 +39,7 @@ public class Client implements Closeable {
         bootstrap.remoteAddress(inetSocketAddress);
         bootstrap.handler(new ChannelInitializer<EpollSocketChannel>() {
             protected void initChannel(EpollSocketChannel socketChannel) {
-                socketChannel.pipeline().addLast(new MsgDecoder(deserialize));
+                socketChannel.pipeline().addLast(new MsgDecoder(deserializeReply));
                 socketChannel.pipeline().addLast(new MsgEncoder(serialize));
                 socketChannel.pipeline().addLast(new ClientHandler(map));
             }
@@ -47,14 +48,15 @@ public class Client implements Closeable {
     }
 
 
-    CompletableFuture<RdmaMsg> send(RdmaMsg msg){
+    public <REP, REQ> CompletableFuture<REP> send(REQ request){
+        RdmaMsg<REQ, REP> msg = new RdmaMsg<>(request);
         long id = nextId.incrementAndGet();
         msg.setId(id);
-        CompletableFuture<RdmaMsg> future = new CompletableFuture<>();
-        map.put(id, future);
+        map.put(id, msg);
         channel.writeAndFlush(msg);
-        return future;
+        return msg.getFuture();
     }
+
 
     @Override
     public void close() throws IOException {
@@ -67,10 +69,10 @@ public class Client implements Closeable {
         Client client = new Client(new InetSocketAddress("barak-nixos", 8092),
                 NettyRMI::simpleDeserialize,
                 NettyRMI::simpleSerialize);
-        CompletableFuture<RdmaMsg> future = client.send(new RdmaMsg("I am the client 1"));
-        RdmaMsg msg = future.get();
+        CompletableFuture<String> future = client.send("I am the client 1");
+        String msg = future.get();
         System.out.println("--> Client got " + msg);
-        future = client.send(new RdmaMsg("I am the client 2"));
+        future = client.send("I am the client 2");
          msg = future.get();
         System.out.println("--> Client got " + msg);
 

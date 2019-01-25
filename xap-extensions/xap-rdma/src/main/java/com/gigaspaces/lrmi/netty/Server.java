@@ -14,10 +14,11 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class Server {
+public class Server implements Callable {
     private int port;
     private Function<Object, Object> process;
     private Function<ByteBuf, Object> deserialize;
@@ -29,7 +30,8 @@ public class Server {
         this.deserialize = deserialize;
         this.serialize = serialize;
     }
-    public void run() throws Exception {
+    @Override
+    public Object call() throws Exception {
         EventLoopGroup bossGroup = new EpollEventLoopGroup();
         EventLoopGroup workerGroup = new EpollEventLoopGroup();
         try {
@@ -58,7 +60,9 @@ public class Server {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
         }
+        return null;
     }
+
     public static void main(String[] args) throws Exception {
         BasicConfigurator.configure();
         Logger.getRootLogger().setLevel(Level.INFO);
@@ -67,7 +71,7 @@ public class Server {
             port = Integer.parseInt(args[0]);
         }
 
-        new Server(port, o -> o.toString().toUpperCase(), NettyRMI::simpleDeserialize, NettyRMI::simpleSerialize).run();
+        new Server(port, o -> o.toString().toUpperCase(), NettyRMI::simpleDeserialize, NettyRMI::simpleSerialize).call();
     }
 }
 

@@ -7,22 +7,21 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-
 public class ClientHandler extends SimpleChannelInboundHandler<RdmaMsg> {
-    private Map<Long, CompletableFuture<RdmaMsg>> map;
+    private Map<Long, RdmaMsg> map;
 
-    public ClientHandler(Map<Long, CompletableFuture<RdmaMsg>> map) {
+    public ClientHandler(Map<Long, RdmaMsg> map) {
         this.map = map;
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, RdmaMsg msg) {
-        System.out.println("Client read msg=" + msg.getId());
-        CompletableFuture<RdmaMsg> future = map.remove(msg.getId());
-        System.out.println("Client found future =" +  future + " for id " + msg.getId());
-        if(future != null){
-            future.complete(msg);
-        }
+    protected void channelRead0(ChannelHandlerContext ctx, RdmaMsg reply) {
+        System.out.println("Client read msg=" + reply.getId());
+        RdmaMsg request = map.remove(reply.getId());
+        CompletableFuture future = request != null ? request.getFuture() : null;
+        if (request != null)
+            request.setReply(reply.getRequest());
+        System.out.println("Client found future =" +  future + " for id " + request.getId());
     }
 
     @Override

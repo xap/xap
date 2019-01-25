@@ -1,6 +1,8 @@
 package com.gigaspaces.lrmi.rdma;
 
 import com.gigaspaces.config.lrmi.nio.NIOConfiguration;
+import com.gigaspaces.internal.io.MarshalInputStream;
+import com.gigaspaces.internal.io.MarshalOutputStream;
 import com.gigaspaces.internal.lrmi.LRMIInboundMonitoringDetailsImpl;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.Constants;
@@ -11,7 +13,11 @@ import com.gigaspaces.lrmi.classloading.ClassProviderRequest;
 import com.gigaspaces.lrmi.classloading.protocol.lrmi.HandshakeRequest;
 import com.gigaspaces.lrmi.nio.*;
 import com.gigaspaces.management.transport.ITransportConnection;
+import io.netty.buffer.ByteBuf;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.rmi.NoSuchObjectException;
@@ -33,22 +39,48 @@ public class RdmaPivot extends AbstractPivot {
         super();
         this.nioConfig = nioConfig;
 
-
         try {
             InetAddress ipAddress = InetAddress.getByName(nioConfig.getBindHostName());
-
             InetSocketAddress address = new InetSocketAddress(ipAddress, Integer.valueOf(nioConfig.getBindPort()));
 
-
-            RdmaServerTransport transport = new RdmaServerTransport(address, RdmaPivot::process, 1,
-                    RdmaChannel::deserializeRequestPacket, new LrmiRdmaResourceFactory());
-            executorService.submit(transport);
+            if (RdmaConstants.NETTY_ENABLED) {
+                com.gigaspaces.lrmi.netty.Server nettyServer = new com.gigaspaces.lrmi.netty.Server(address.getPort(),
+                        RdmaPivot::process, this::nettyDeserializeRequest, this::nettySerialize);
+                executorService.submit(nettyServer);
+            } else {
+                RdmaServerTransport transport = new RdmaServerTransport(address, RdmaPivot::process, 1,
+                        RdmaChannel::deserializeRequestPacket, new LrmiRdmaResourceFactory());
+                executorService.submit(transport);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
+    private IOException nettySerialize(Object payload, ByteBuf buf) {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); MarshalOutputStream mos = new MarshalOutputStream(bos, true)) {
+            IPacket packet = (IPacket) payload;
+            packet.writeExternal(mos);
+            mos.flush();
+            buf.writeBytes(bos.toByteArray());
+        } catch (IOException e) {
+            return e;
+        }
+        return null;
+    }
+
+    private Object nettyDeserializeRequest(ByteBuf frame) {
+        byte[] arr = new byte[frame.readableBytes()];
+        frame.readBytes(arr);
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(arr); MarshalInputStream mis = new MarshalInputStream(bis)) {
+            IPacket packet = new RequestPacket();
+            packet.readExternal(mis);
+            return packet;
+        } catch (Exception e) {
+            return e;
+        }
+    }
 
     public static Object process(Object req) {
 
