@@ -1,6 +1,7 @@
 package com.gigaspaces.lrmi.rdma;
 
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

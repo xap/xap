@@ -105,7 +105,6 @@ public class ClientTransport {
             return in.readObject();
         } catch (Exception e) {
             DiSNILogger.getLogger().error(" failed to read object from stream", e);
-//            throw e;
             return e;
         }
 
