@@ -34,19 +34,27 @@ public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
         this.resourceManager = new RdmaResourceManager(factory, 1);
         this.recvBuffer = ByteBuffer.allocateDirect(RdmaConstants.bufferSize());
         IbvMr recvMr = registerMemory(recvBuffer).execute().free().getMr();
-        this.recvList = ClientTransport.createRecvWorkRequest(RdmaConstants.nextId(), recvMr);
+        this.recvList = ClientTransport.createRecvWorkRequest(RdmaConstants.RDMA_SERVER_RECV_ID, recvMr);
         this.postRecv = RdmaConstants.JNI_CACHE_ENABLED ? postRecv(recvList) : null;
     }
 
-    public void dispatchCqEvent(IbvWC event) {
+    public synchronized void dispatchCqEvent(IbvWC event) {
+        long wr_id = event.getWr_id();
+        int opcode = event.getOpcode();
         if (logger.isDebugEnabled()) {
-            logger.debug("SERVER: op code = " + IbvWC.IbvWcOpcode.valueOf(event.getOpcode()) + ", id = " + event.getWr_id() + ", err = " + event.getErr());
+            logger.debug("SERVER: op code = " + IbvWC.IbvWcOpcode.valueOf(opcode) + ", id = " + wr_id + ", err = " + event.getErr());
         }
 
-        if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_SEND)) {
-            resourceManager.releaseResource((short) event.getWr_id());
+        if (wr_id == RdmaConstants.RDMA_SERVER_SEND_ID) {
+            if(IbvWC.IbvWcOpcode.valueOf(opcode).equals(IbvWC.IbvWcOpcode.IBV_WC_RECV)){
+                logger.error("got recv event with send wr id");
+            }
+            resourceManager.releaseResource((short) wr_id);
         }
-        if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_RECV)) {
+        if (wr_id == RdmaConstants.RDMA_SERVER_RECV_ID) {
+            if(IbvWC.IbvWcOpcode.valueOf(opcode).equals(IbvWC.IbvWcOpcode.IBV_WC_SEND)){
+                logger.error("got send event with recv wr id");
+            }
             pendingRequests.add(this);
         }
     }

@@ -34,7 +34,7 @@ public class RdmaClientReceiver implements Runnable {
         this.deserialize = deserialize;
         this.recvBuf = ByteBuffer.allocateDirect(RdmaConstants.bufferSize());
         IbvMr recvMr = endpoint.registerMemory(recvBuf).execute().free().getMr();
-        this.recvList = ClientTransport.createRecvWorkRequest(RdmaConstants.nextId(), recvMr);
+        this.recvList = ClientTransport.createRecvWorkRequest(RdmaConstants.RDMA_CLIENT_RECV_ID, recvMr);
         this.postRecv = RdmaConstants.JNI_CACHE_ENABLED ? endpoint.postRecv(recvList) : null;
 
         try {

@@ -10,6 +10,11 @@ public class RdmaConstants {
     public static final int BUFFER_SIZE = 4 * 1024;
     public static final int RDMA_CONNECT_TIMEOUT = 5000;
     public static final int RDMA_SYNC_OP_TIMEOUT = 5000;
+    public static final int RDMA_CLIENT_SEND_ID = 2000;
+    public static final int RDMA_CLIENT_RECV_ID = 2001;
+    public static final int RDMA_SERVER_SEND_ID = 1000;
+    public static final int RDMA_SERVER_RECV_ID = 1001;
+
     private static AtomicInteger workRequestIdGenerator = new AtomicInteger(1000);
 
     public static int nextId(){

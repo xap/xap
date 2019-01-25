@@ -25,7 +25,7 @@ public class Server {
 
     public static void main(String[] args) throws Exception {
         BasicConfigurator.configure();
-//        org.apache.log4j.Logger.getRootLogger().setLevel(Level.INFO);
+        org.apache.log4j.Logger.getRootLogger().setLevel(Level.INFO);
         InetAddress ipAddress = InetAddress.getByName(host);
         InetSocketAddress address = new InetSocketAddress(ipAddress, port);
         RdmaServerTransport transport = new RdmaServerTransport(address,

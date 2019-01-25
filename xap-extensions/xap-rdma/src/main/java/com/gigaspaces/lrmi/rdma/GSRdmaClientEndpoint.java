@@ -33,13 +33,7 @@ public class GSRdmaClientEndpoint extends GSRdmaAbstractEndpoint {
     }
 
     public void dispatchCqEvent(IbvWC wc) throws IOException {
-        if (logger.isDebugEnabled()) {
-            logger.debug("CLIENT: op code = " + IbvWC.IbvWcOpcode.valueOf(wc.getOpcode()) + ", id = " + wc.getWr_id());
-        }
         getTransport().onCompletionEvent(wc);
-        if (logger.isDebugEnabled()) {
-            logger.debug("CLIENT-DONE: op code = " + IbvWC.IbvWcOpcode.valueOf(wc.getOpcode()) + ", id = " + wc.getWr_id());
-        }
     }
 
 

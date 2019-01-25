@@ -2,6 +2,7 @@ package com.gigaspaces.lrmi.rdma;
 
 import com.ibm.disni.util.DiSNILogger;
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
 import org.slf4j.Logger;
 
 import java.net.InetAddress;
@@ -33,8 +34,7 @@ public class Client {
 
     public static void main(String[] args) throws Exception {
         BasicConfigurator.configure();
-//        org.apache.log4j.Logger.getRootLogger().setLevel(Level.INFO);
-//        logger.isDebugEnabled()
+        org.apache.log4j.Logger.getRootLogger().setLevel(Level.INFO);
 
         GSRdmaEndpointFactory factory = new GSRdmaEndpointFactory(new RdmaResourceFactory(), ClientTransport::readResponse);
 

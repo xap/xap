@@ -13,7 +13,7 @@ public class RdmaResourceFactory {
     }
 
     public RdmaResource create() throws IOException {
-        short id = (short) RdmaConstants.nextId();
+        short id = (short) (endpoint.isServerSide() ? RdmaConstants.RDMA_SERVER_SEND_ID : RdmaConstants.RDMA_CLIENT_SEND_ID);
         ByteBuffer buffer = ByteBuffer.allocateDirect(RdmaConstants.bufferSize());
         return new RdmaResource(id, buffer, endpoint);
     }

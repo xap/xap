@@ -3,6 +3,7 @@ package com.gigaspaces.lrmi.rdma;
 import com.ibm.disni.RdmaActiveEndpoint;
 import com.ibm.disni.util.DiSNILogger;
 import com.ibm.disni.verbs.*;
+import org.slf4j.Logger;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -24,6 +25,7 @@ public class ClientTransport {
     private final ExecutorService recvHandler = Executors.newFixedThreadPool(1);
     private final ExecutorService sendHandler = Executors.newFixedThreadPool(1);
     private final RdmaResourceManager resourceManager;
+    private Logger logger = DiSNILogger.getLogger();
 
     public ClientTransport(GSRdmaClientEndpoint endpoint, RdmaResourceFactory factory, Function<ByteBuffer, Object> deserializer) throws IOException {
         resourceManager = new RdmaResourceManager(factory, 1);
@@ -62,12 +64,23 @@ public class ClientTransport {
         return rdmaMsg.getFuture();
     }
 
-    public void onCompletionEvent(IbvWC event) throws IOException {
-
-        if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_SEND)) {
-            resourceManager.releaseResource((short) event.getWr_id());
+    public synchronized void onCompletionEvent(IbvWC event) throws IOException {
+        long wr_id = event.getWr_id();
+        int opcode = event.getOpcode();
+        if (logger.isDebugEnabled()) {
+            logger.debug("CLIENT: op code = " + IbvWC.IbvWcOpcode.valueOf(opcode) + ", id = " + wr_id + ", err = " + event.getErr());
         }
-        if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_RECV)) {
+
+        if (wr_id == RdmaConstants.RDMA_CLIENT_SEND_ID) {
+            if(IbvWC.IbvWcOpcode.valueOf(opcode).equals(IbvWC.IbvWcOpcode.IBV_WC_RECV)){
+                logger.error("got recv event with send wr id");
+            }
+            resourceManager.releaseResource((short) wr_id);
+        }
+        if (wr_id == RdmaConstants.RDMA_CLIENT_RECV_ID) {
+            if(IbvWC.IbvWcOpcode.valueOf(opcode).equals(IbvWC.IbvWcOpcode.IBV_WC_SEND)){
+                logger.error("got send event with recv wr id");
+            }
             recvEventQueue.add(event); //TODO mybe offer? protect capacity
         }
     }
