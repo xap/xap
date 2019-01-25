@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
@@ -17,6 +19,7 @@ public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
     private SVCPostRecv postRecv;
     private ArrayBlockingQueue<GSRdmaServerEndpoint> pendingRequests;
     private Logger logger = DiSNILogger.getLogger();
+    private LinkedList<IbvRecvWR> recvList;
 
 
     public GSRdmaServerEndpoint(RdmaActiveEndpointGroup<GSRdmaAbstractEndpoint> endpointGroup, RdmaCmId idPriv, RdmaResourceFactory factory) throws IOException {
@@ -31,7 +34,8 @@ public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
         this.resourceManager = new RdmaResourceManager(factory, 1);
         this.recvBuffer = ByteBuffer.allocateDirect(RdmaConstants.bufferSize());
         IbvMr recvMr = registerMemory(recvBuffer).execute().free().getMr();
-        this.postRecv = postRecv(ClientTransport.createRecvWorkRequest(RdmaConstants.nextId(), recvMr));
+        this.recvList = ClientTransport.createRecvWorkRequest(RdmaConstants.nextId(), recvMr);
+        this.postRecv = RdmaConstants.JNI_CACHE_ENABLED ? postRecv(recvList) : null;
     }
 
     public void dispatchCqEvent(IbvWC event) {
@@ -55,7 +59,8 @@ public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
                 logger.debug("SERVER: closing connection to " + getDstAddr());
             }
             this.resourceManager = null;
-            this.postRecv.free();
+            if (RdmaConstants.JNI_CACHE_ENABLED)
+                this.postRecv.free();
             try {
                 close();
             } catch (InterruptedException e) {
@@ -74,11 +79,15 @@ public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
 
     public void init(ArrayBlockingQueue<GSRdmaServerEndpoint> pendingRequests) throws IOException {
         this.pendingRequests = pendingRequests;
-        postRecv.execute();
+        executePostRecv();
     }
 
-    public SVCPostRecv getPostRecv() {
-        return postRecv;
+    public void executePostRecv() throws IOException {
+        if (RdmaConstants.JNI_CACHE_ENABLED) {
+            postRecv.execute();
+        } else {
+            postRecv(recvList).execute().free();
+        }
     }
 }
 

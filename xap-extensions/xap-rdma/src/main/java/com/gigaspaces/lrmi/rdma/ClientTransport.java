@@ -72,7 +72,7 @@ public class ClientTransport {
         }
     }
 
-    private static LinkedList<IbvSendWR> createSendWorkRequest(long id, IbvMr mr) {
+    public static LinkedList<IbvSendWR> createSendWorkRequest(long id, IbvMr mr) {
         LinkedList<IbvSendWR> wr_list = new LinkedList<>();
         IbvSendWR sendWR = new IbvSendWR();
         sendWR.setWr_id(id);
@@ -90,12 +90,6 @@ public class ClientTransport {
         return wr_list;
     }
 
-
-    static SVCPostSend rdmaSendBuffer(long id, ByteBuffer buffer, RdmaActiveEndpoint endpoint) throws IOException {
-        IbvMr mr = endpoint.registerMemory(buffer).execute().free().getMr();
-        LinkedList<IbvSendWR> wr_list = createSendWorkRequest(id, mr);
-        return endpoint.postSend(wr_list);
-    }
 
     static Object readResponse(ByteBuffer buffer) {
         byte[] arr = new byte[buffer.remaining()];

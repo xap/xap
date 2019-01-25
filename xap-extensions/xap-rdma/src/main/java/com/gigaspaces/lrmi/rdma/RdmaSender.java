@@ -30,7 +30,7 @@ public class RdmaSender implements Runnable {
                     }
                     resource.getBuffer().putLong(rdmaMsg.getId());
                     resource.serialize(rdmaMsg.getRequest());
-                    resource.getPostSend().execute();
+                    resource.execute();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

@@ -15,7 +15,7 @@ public class RdmaResourceFactory {
     public RdmaResource create() throws IOException {
         short id = (short) RdmaConstants.nextId();
         ByteBuffer buffer = ByteBuffer.allocateDirect(RdmaConstants.bufferSize());
-        return new RdmaResource(id, buffer, ClientTransport.rdmaSendBuffer(id, buffer, endpoint));
+        return new RdmaResource(id, buffer, endpoint);
     }
 
     public void setEndpoint(RdmaActiveEndpoint endpoint) {

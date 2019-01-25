@@ -42,7 +42,7 @@ public class RdmaServerReceiver implements Runnable {
                     }
 
                     recvBuff.clear();
-                    endpoint.getPostRecv().execute();
+                    endpoint.executePostRecv();
                     Object reply = process.apply(request);
 
                     if (reply == null) {
@@ -58,7 +58,7 @@ public class RdmaServerReceiver implements Runnable {
                     }
                     resource.getBuffer().putLong(reqId);
                     resource.serialize(reply);
-                    resource.getPostSend().execute();
+                    resource.execute();
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
