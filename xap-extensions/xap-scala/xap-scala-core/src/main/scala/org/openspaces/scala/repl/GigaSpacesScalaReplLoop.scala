@@ -20,6 +20,7 @@ import java.io.{BufferedReader, File}
 import com.gigaspaces.start.SystemInfo
 import org.openspaces.scala.util.{ImportReader, Utils}
 
+import scala.io.Source
 import scala.tools.nsc.interpreter._
 import scala.tools.nsc.{GenericRunnerSettings, Properties, Settings}
 
@@ -110,7 +111,7 @@ class GigaSpacesScalaReplLoop(in0: Option[BufferedReader],
   private def runCustomCode(propPath: String, defaultPath: String) {
     val codeFile = new File(Properties.propOrElse(propPath, defaultPath))
     if (codeFile.isFile()) {
-      Utils.withCloseable(io.Source.fromFile(codeFile)) { codeSource =>
+      Utils.withCloseable(Source.fromFile(codeFile)) { codeSource =>
         val code = codeSource.getLines.mkString(Properties.lineSeparator)
         intp.quietRun(code)
       }
