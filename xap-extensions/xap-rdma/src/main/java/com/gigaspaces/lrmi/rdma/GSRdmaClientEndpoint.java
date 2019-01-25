@@ -1,10 +1,10 @@
 package com.gigaspaces.lrmi.rdma;
 
-import com.ibm.disni.RdmaActiveEndpoint;
 import com.ibm.disni.RdmaActiveEndpointGroup;
 import com.ibm.disni.util.DiSNILogger;
 import com.ibm.disni.verbs.IbvWC;
 import com.ibm.disni.verbs.RdmaCmId;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -15,6 +15,7 @@ public class GSRdmaClientEndpoint extends GSRdmaAbstractEndpoint {
     private final Function<ByteBuffer, Object> deserialize;
     private ClientTransport transport;
     private final RdmaResourceFactory factory;
+    private Logger logger = DiSNILogger.getLogger();
 
     public GSRdmaClientEndpoint(RdmaActiveEndpointGroup<GSRdmaAbstractEndpoint> endpointGroup,
                                 RdmaCmId idPriv, RdmaResourceFactory factory, Function<ByteBuffer, Object> deserialize) throws IOException {
@@ -32,9 +33,13 @@ public class GSRdmaClientEndpoint extends GSRdmaAbstractEndpoint {
     }
 
     public void dispatchCqEvent(IbvWC wc) throws IOException {
-        DiSNILogger.getLogger().info("CLIENT: op code = " + IbvWC.IbvWcOpcode.valueOf(wc.getOpcode()) + ", id = " + wc.getWr_id());
+        if (logger.isDebugEnabled()) {
+            logger.debug("CLIENT: op code = " + IbvWC.IbvWcOpcode.valueOf(wc.getOpcode()) + ", id = " + wc.getWr_id());
+        }
         getTransport().onCompletionEvent(wc);
-        DiSNILogger.getLogger().info("CLIENT-DONE: op code = " + IbvWC.IbvWcOpcode.valueOf(wc.getOpcode()) + ", id = " + wc.getWr_id());
+        if (logger.isDebugEnabled()) {
+            logger.debug("CLIENT-DONE: op code = " + IbvWC.IbvWcOpcode.valueOf(wc.getOpcode()) + ", id = " + wc.getWr_id());
+        }
     }
 
 

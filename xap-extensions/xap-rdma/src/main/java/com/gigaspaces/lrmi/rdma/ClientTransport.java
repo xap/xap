@@ -56,6 +56,7 @@ public class ClientTransport {
         try {
             writeRequests.add(rdmaMsg);
         } catch (Exception e) {
+            System.out.println("throwing exception " + e);
             rdmaMsg.getFuture().completeExceptionally(e);
         }
         return rdmaMsg.getFuture();

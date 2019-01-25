@@ -3,6 +3,7 @@ package com.gigaspaces.lrmi.rdma;
 import com.ibm.disni.RdmaActiveEndpointGroup;
 import com.ibm.disni.util.DiSNILogger;
 import com.ibm.disni.verbs.*;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -15,6 +16,7 @@ public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
     private ByteBuffer recvBuffer;
     private SVCPostRecv postRecv;
     private ArrayBlockingQueue<GSRdmaServerEndpoint> pendingRequests;
+    private Logger logger = DiSNILogger.getLogger();
 
 
     public GSRdmaServerEndpoint(RdmaActiveEndpointGroup<GSRdmaAbstractEndpoint> endpointGroup, RdmaCmId idPriv, RdmaResourceFactory factory) throws IOException {
@@ -33,7 +35,9 @@ public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
     }
 
     public void dispatchCqEvent(IbvWC event) {
-        DiSNILogger.getLogger().info("SERVER: op code = " + IbvWC.IbvWcOpcode.valueOf(event.getOpcode()) + ", id = " + event.getWr_id() + ", err = " + event.getErr());
+        if (logger.isDebugEnabled()) {
+            logger.debug("SERVER: op code = " + IbvWC.IbvWcOpcode.valueOf(event.getOpcode()) + ", id = " + event.getWr_id() + ", err = " + event.getErr());
+        }
 
         if (IbvWC.IbvWcOpcode.valueOf(event.getOpcode()).equals(IbvWC.IbvWcOpcode.IBV_WC_SEND)) {
             resourceManager.releaseResource((short) event.getWr_id());
@@ -47,7 +51,9 @@ public class GSRdmaServerEndpoint extends GSRdmaAbstractEndpoint {
     public synchronized void dispatchCmEvent(RdmaCmEvent cmEvent) throws IOException {
         super.dispatchCmEvent(cmEvent);
         if (cmEvent.getEvent() == RdmaCmEvent.EventType.RDMA_CM_EVENT_DISCONNECTED.ordinal()) {
-            DiSNILogger.getLogger().info("SERVER: closing connection to " + getDstAddr());
+            if (logger.isDebugEnabled()) {
+                logger.debug("SERVER: closing connection to " + getDstAddr());
+            }
             this.resourceManager = null;
             this.postRecv.free();
             try {

@@ -1,18 +1,20 @@
 package com.gigaspaces.lrmi.rdma;
 
+import com.ibm.disni.util.DiSNILogger;
 import com.ibm.disni.verbs.SVCPostSend;
+import org.slf4j.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
-import java.util.logging.Logger;
 
 public class RdmaResource {
 
     private final short id;
     private final ByteBuffer buffer;
     private final SVCPostSend postSend;
+    private Logger logger = DiSNILogger.getLogger();
 
     public RdmaResource(short id, ByteBuffer buffer, SVCPostSend postSend) {
         this.id = id;
@@ -33,7 +35,9 @@ public class RdmaResource {
     }
 
     public void serialize(Object payload) throws IOException {
-        Logger.getLogger("RdmaLogger").info("serializing payload "+payload);
+        if(logger.isDebugEnabled()) {
+            logger.debug("serializing payload " + payload);
+        }
         ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(bytesOut);
         oos.writeObject(payload);

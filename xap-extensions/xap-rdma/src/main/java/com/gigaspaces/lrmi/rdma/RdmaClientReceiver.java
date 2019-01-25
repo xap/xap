@@ -47,9 +47,18 @@ public class RdmaClientReceiver implements Runnable {
                 IbvWC event = recvCompletionEventQueue.take();
                 recvBuf.clear();
                 long reqId = recvBuf.getLong();
-                System.out.println(">> client receiver handling event.. " + reqId);
                 RdmaMsg msg = messageMap.remove(reqId);
-                Object res = deserialize.apply(recvBuf);
+                if(msg == null){
+                    System.out.println("Msg is missing "+reqId);
+                    throw new IllegalStateException();
+                }
+                Object res = null;
+                try {
+                    res = deserialize.apply(recvBuf);
+                } catch(Throwable t){
+                    System.out.println("deserialize is wrong "+reqId);
+                    throw new IllegalStateException();
+                }
                 msg.setReply(res);
                 try {
                     recvBuf.clear();
