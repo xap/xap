@@ -137,7 +137,7 @@ public class GsCommandFactory {
         command.systemProperty("com.gs.home", SystemInfo.singleton().getXapHome());
         command.systemProperty("java.util.logging.config.file", env("XAP_LOGS_CONFIG_FILE", this::defaultConfigPath));
         command.systemProperty("java.rmi.server.hostname", System.getenv("XAP_NIC_ADDRESS"));
-        command.optionsFromEnv("XAP_OPTIONS");
+//        command.optionsFromEnv("XAP_OPTIONS");
         command.optionsFromEnv("EXT_JAVA_OPTIONS");
     }
 
