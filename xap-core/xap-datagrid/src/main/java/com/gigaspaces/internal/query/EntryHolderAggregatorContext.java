@@ -17,7 +17,7 @@
 package com.gigaspaces.internal.query;
 
 import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.server.storage.IEntryHolder;
+import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.transport.EntryPacketFactory;
 import com.gigaspaces.internal.transport.IEntryPacket;
@@ -35,7 +35,9 @@ public class EntryHolderAggregatorContext extends SpaceEntriesAggregatorContext 
 
     private final ITemplateHolder template;
     private final int partitionId;
-    private IEntryHolder entryHolder;
+    private IEntryData entryData;
+    private String uid;
+    private boolean isTransient;
 
     public EntryHolderAggregatorContext(List<SpaceEntriesAggregator> aggregators, ITemplateHolder template,
                                         int partitionId) {
@@ -44,8 +46,10 @@ public class EntryHolderAggregatorContext extends SpaceEntriesAggregatorContext 
         this.partitionId = partitionId;
     }
 
-    public void scan(IEntryHolder entryHolder) {
-        this.entryHolder = entryHolder;
+    public void scan(IEntryData entryData, String uid, boolean isTransient) {
+        this.entryData = entryData;
+        this.uid = uid;
+        this.isTransient = isTransient;
         aggregate();
     }
 
@@ -56,12 +60,12 @@ public class EntryHolderAggregatorContext extends SpaceEntriesAggregatorContext 
 
     @Override
     public String getEntryUid() {
-        return entryHolder.getUID();
+        return uid;
     }
 
     @Override
     public RawEntry getRawEntry() {
-        return EntryPacketFactory.createFullPacket(entryHolder, template);
+        return EntryPacketFactory.createFullPacket(template, entryData, uid, isTransient);
     }
 
 
@@ -73,9 +77,9 @@ public class EntryHolderAggregatorContext extends SpaceEntriesAggregatorContext 
 
     @Override
     protected Object getPathValueImpl(String path) {
-        final ITypeDesc typeDesc = entryHolder.getServerTypeDesc().getTypeDesc();
+        final ITypeDesc typeDesc = entryData.getEntryTypeDesc().getTypeDesc();
         if (typeDesc.isAutoGenerateId() && typeDesc.getIdPropertyName().equals(path))
-            return entryHolder.getUID();
-        return entryHolder.getEntryData().getPathValue(path);
+            return uid;
+        return entryData.getPathValue(path);
     }
 }
