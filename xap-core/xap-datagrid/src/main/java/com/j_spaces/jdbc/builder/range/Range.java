@@ -65,7 +65,7 @@ public abstract class Range extends AbstractCustomQuery {
     }
 
     public boolean isIndexed(ITypeDesc typeDesc) {
-        return typeDesc.getIndexes().containsKey(_path);
+        return functionCallDescription == null && typeDesc.getIndexes().containsKey(_path);
     }
 
     public ISpacePredicate getPredicate() {

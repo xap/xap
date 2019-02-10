@@ -203,17 +203,20 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
 
                 int propertyIndex = _typeDesc.getFixedPropertyPosition(fieldName);
                 boolean addedRange = false;
-
-                if (propertyIndex != -1 && (range.getFunctionCallDescription() == null)) {
-                    range.toEntryPacket(this, propertyIndex);
-                    addedRange = true;
-                    if (!range.isRelevantForAllIndexValuesOptimization() || !_typeDesc.getPropertiesIndexTypes()[propertyIndex])
-                        _allIndexValuesQuery = false;
-                    if (possibleCompoundSegments != null && range.suitableAsCompoundIndexSegment()) {
-                        if (usedByRanges == null)
-                            usedByRanges = new HashMap<Range, IQueryIndexScanner>();
-                        usedByRanges.put(range, _dummyNullIndexScanner); //property range, no index scanner created
+                if (propertyIndex != -1 ) {
+                    if (range.getFunctionCallDescription() == null) {
+                        range.toEntryPacket(this, propertyIndex);
+                        addedRange = true;
+                        if (!range.isRelevantForAllIndexValuesOptimization() || !_typeDesc.getPropertiesIndexTypes()[propertyIndex])
+                            _allIndexValuesQuery = false;
+                        if (possibleCompoundSegments != null && range.suitableAsCompoundIndexSegment()) {
+                            if (usedByRanges == null)
+                                usedByRanges = new HashMap<Range, IQueryIndexScanner>();
+                            usedByRanges.put(range, _dummyNullIndexScanner); //property range, no index scanner created
+                        }
                     }
+                    else
+                        _allIndexValuesQuery = false;
                 }
 
 
@@ -267,7 +270,8 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
                     possibleSegments.clear();
                     CompoundIndex index = (CompoundIndex) idx;
                     for (ISpaceCompoundIndexSegment seg : index.getCompoundIndexSegments()) {
-                        if (possibleCompoundSegments.containsKey(seg.getName())) {
+                        Range checkedRange = possibleCompoundSegments.get(seg.getName());
+                        if (checkedRange != null && checkedRange.getFunctionCallDescription() == null) {
                             possibleSegments.add(possibleCompoundSegments.get(seg.getName()));
                         } else {
                             possibleSegments.clear();
@@ -410,9 +414,9 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
                 idRange = _ranges.get(idPropertyName);
 
                 if (idRange != null) {
-                    _allIndexValuesQuery = false; //we use uid actually
-                    int propertyIndex = _typeDesc.getFixedPropertyPosition(idPropertyName);
-                    idRange.toEntryPacket(this, propertyIndex);
+                      _allIndexValuesQuery = false; //we use uid actually
+                      int propertyIndex = _typeDesc.getFixedPropertyPosition(idPropertyName);
+                      idRange.toEntryPacket(this, propertyIndex);
                 }
             }
 
@@ -482,7 +486,8 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
                     possibleSegments.clear();
                     CompoundIndex index = (CompoundIndex) idx;
                     for (ISpaceCompoundIndexSegment seg : index.getCompoundIndexSegments()) {
-                        if (possibleCompoundSegments.containsKey(seg.getName())) {
+                        Range checkedRange = possibleCompoundSegments.get(seg.getName());
+                        if (checkedRange != null && checkedRange.getFunctionCallDescription() == null) {
                             possibleSegments.add(possibleCompoundSegments.get(seg.getName()));
                         } else {
                             possibleSegments.clear();
