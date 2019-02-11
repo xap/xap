@@ -20,12 +20,17 @@ import net.jini.core.lookup.ServiceID;
 
 import org.openspaces.core.cluster.ClusterInfo;
 import org.openspaces.core.properties.BeanLevelProperties;
+import org.openspaces.core.space.SpaceServiceDetails;
+import org.openspaces.core.space.SpaceType;
 import org.openspaces.pu.service.ServiceDetails;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * @author kimchy
@@ -69,6 +74,45 @@ public class PUDetails implements Externalizable {
 
     public Object[] getDetails() {
         return this.details;
+    }
+
+    public SpaceServiceDetails getEmbeddedSpaceServiceDetails() {
+        return getServiceDetails(SpaceServiceDetails.class, sd -> sd.getSpaceType() == SpaceType.EMBEDDED);
+    }
+
+    public SpaceServiceDetails getEmbeddedSpaceServiceDetails(ServiceID serviceID) {
+        return getServiceDetails(SpaceServiceDetails.class, sd -> sd.getSpaceType() == SpaceType.EMBEDDED && sd.getServiceID().equals(serviceID));
+    }
+
+    public List<SpaceServiceDetails> getEmbeddedSpaceServiceDetailsList() {
+        return getServiceDetailsList(SpaceServiceDetails.class, sd -> sd.getSpaceType() == SpaceType.EMBEDDED);
+    }
+
+    public <T> T getServiceDetails(Class<T> serviceType, Predicate<T> filter) {
+        if (details != null) {
+            for (Object detail : details) {
+                if (serviceType.isInstance(detail)) {
+                    T serviceDetails = serviceType.cast(detail);
+                    if (filter == null || filter.test(serviceDetails))
+                        return serviceDetails;
+                }
+            }
+        }
+        return null;
+    }
+
+    public <T> List<T> getServiceDetailsList(Class<T> serviceType, Predicate<T> filter) {
+        List<T> result = new ArrayList<>();
+        if (details != null) {
+            for (Object detail : details) {
+                if (serviceType.isInstance(detail)) {
+                    T serviceDetails = serviceType.cast(detail);
+                    if (filter == null || filter.test(serviceDetails))
+                        result.add(serviceDetails);
+                }
+            }
+        }
+        return result;
     }
 
     /**
