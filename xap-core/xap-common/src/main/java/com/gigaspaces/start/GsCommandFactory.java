@@ -117,27 +117,22 @@ public class GsCommandFactory {
     }
 
     protected void appendXapOptions() {
-        switch (JavaUtils.getVendor().toUpperCase()) {
-            case "ORACLE":
-                command.option("-server");
-                command.option("-XX:+AggressiveOpts");
-                command.option("-XX:+HeapDumpOnOutOfMemoryError");
-                if (JavaUtils.greaterOrEquals(9)) {
-                    command.option("--add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED");
-                    command.option("--add-modules=ALL-SYSTEM");
-                }
-                break;
-            case "IBM":
-                command.option("-XX:MaxPermSize=256m");
-                break;
-            default:
-                break;
+        final String vendor = JavaUtils.getVendor().toUpperCase();
+        if (vendor.startsWith("ORACLE ")) {
+            command.option("-server");
+            command.option("-XX:+AggressiveOpts");
+            command.option("-XX:+HeapDumpOnOutOfMemoryError");
+            if (JavaUtils.greaterOrEquals(9)) {
+                command.option("--add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED");
+                command.option("--add-modules=ALL-SYSTEM");
+            }
+        } else if (vendor.startsWith("IBM ")) {
+            command.option("-XX:MaxPermSize=256m");
         }
 
         command.systemProperty("com.gs.home", SystemInfo.singleton().getXapHome());
         command.systemProperty("java.util.logging.config.file", env("XAP_LOGS_CONFIG_FILE", this::defaultConfigPath));
         command.systemProperty("java.rmi.server.hostname", System.getenv("XAP_NIC_ADDRESS"));
-//        command.optionsFromEnv("XAP_OPTIONS");
         command.optionsFromEnv("EXT_JAVA_OPTIONS");
     }
 

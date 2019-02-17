@@ -4,7 +4,7 @@ import com.gigaspaces.api.InternalApi;
 
 @InternalApi
 public class JavaUtils {
-    private static final String VENDOR = initVendor();
+    private static final String VENDOR = System.getProperty("java.vendor", "");
     private static final int JAVA_VERSION_MAJOR = parseJavaMajorVersion();
     private static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("win");
     private static final boolean isOsx = System.getProperty("os.name").toLowerCase().startsWith("mac os x");
@@ -63,10 +63,5 @@ public class JavaUtils {
 
     public static String getVendor() {
         return VENDOR;
-    }
-
-    private static String initVendor() {
-        String vmVendor = System.getProperty("java.vendor");
-        return vmVendor == null ? "" : vmVendor.substring(0, vmVendor.indexOf(' '));
     }
 }
