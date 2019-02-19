@@ -240,6 +240,7 @@ public class PlatformLogicalVersion implements Externalizable {
     public static final PlatformLogicalVersion v12_3_1 = new PlatformLogicalVersion(12, 3, 1, 19300, 0);
     public static final PlatformLogicalVersion v14_0_0 = new PlatformLogicalVersion(14, 0, 0, 20000, 0);
     public static final PlatformLogicalVersion v14_0_1 = new PlatformLogicalVersion(14, 0, 1, 20100, 0);
+    public static final PlatformLogicalVersion v14_2_0 = new PlatformLogicalVersion(14, 2, 0, 20408, 0);
     //DOCUMENT BACKWARD BREAKING CHANGES, EACH CHANGE IN A LINE
     //GS-XXXX: Short backward breaking description and classes
     //GS-7725: Partial update replication

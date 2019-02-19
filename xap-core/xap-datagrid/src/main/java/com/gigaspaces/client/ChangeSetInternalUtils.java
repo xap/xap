@@ -17,8 +17,10 @@
 package com.gigaspaces.client;
 
 import com.gigaspaces.client.mutators.SpaceEntryMutator;
+import com.gigaspaces.internal.client.mutators.SpaceEntryPathMutator;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author eitany
@@ -28,7 +30,23 @@ import java.util.Collection;
 public class ChangeSetInternalUtils {
 
     public static Collection<SpaceEntryMutator> getMutators(ChangeSet changeSet) {
-        return changeSet.getMutators();
+
+        Collection<SpaceEntryMutator> mutators = changeSet.getMutators();
+        Set<String> nonCachedPaths = changeSet.getNonCachedPaths();
+        if( !nonCachedPaths.isEmpty() ) {
+            for (SpaceEntryMutator spaceEntryMutator : mutators) {
+                if (spaceEntryMutator instanceof SpaceEntryPathMutator) {
+                    SpaceEntryPathMutator spaceEntryPathMutator =
+                        (SpaceEntryPathMutator) spaceEntryMutator;
+                    String path = spaceEntryPathMutator.getPath();
+                    if ( nonCachedPaths.contains(path)) {
+                        spaceEntryPathMutator.disablePathCaching();
+                    }
+                }
+            }
+        }
+
+        return mutators;
     }
 
     public static ChangeSet fromParameters(Collection<SpaceEntryMutator> mutators, long lease) {
