@@ -20,6 +20,8 @@ import com.gigaspaces.client.mutators.SpaceEntryMutator;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.utils.Textualizable;
 import com.gigaspaces.internal.utils.Textualizer;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -35,6 +37,12 @@ public abstract class SpaceEntryPathMutator extends SpaceEntryMutator implements
 
     private String _path;
 
+    /**
+     * if true then path will not be cached
+     * @since 14.2.0 part of fix for GS-13776
+     */
+    private boolean _disablePathCaching = false;
+
     protected SpaceEntryPathMutator() {
     }
 
@@ -49,12 +57,33 @@ public abstract class SpaceEntryPathMutator extends SpaceEntryMutator implements
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        IOUtils.writeRepetitiveString(out, _path);
+        final PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
+        if (version.greaterOrEquals(PlatformLogicalVersion.v12_3_0_PATCH4)) {
+            out.writeBoolean(_disablePathCaching);
+        }
+
+        if( _disablePathCaching ) {
+            IOUtils.writeString(out, _path);
+        }
+        else{
+            IOUtils.writeRepetitiveString(out, _path);
+        }
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        _path = IOUtils.readRepetitiveString(in);
+        final PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
+
+        if (version.greaterOrEquals(PlatformLogicalVersion.v12_3_0_PATCH4)) {
+            _disablePathCaching = in.readBoolean();
+        }
+
+        if( _disablePathCaching ) {
+            _path = IOUtils.readString(in);
+        }
+        else{
+            _path = IOUtils.readRepetitiveString(in);
+        }
     }
 
     @Override
@@ -67,4 +96,12 @@ public abstract class SpaceEntryPathMutator extends SpaceEntryMutator implements
         return Textualizer.toString(this);
     }
 
+    /**
+     * Defines if path will not be cached
+     * @since 14.2.0
+     */
+    public SpaceEntryPathMutator disablePathCaching() {
+        this._disablePathCaching = true;
+        return this;
+    }
 }

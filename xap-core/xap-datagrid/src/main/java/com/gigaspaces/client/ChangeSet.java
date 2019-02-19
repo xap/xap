@@ -38,7 +38,10 @@ import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 
 /**
  * The set of changes to apply for matches entries of the change operation
@@ -53,6 +56,8 @@ public class ChangeSet implements Externalizable, Textualizable {
     private final Collection<SpaceEntryMutator> _mutators;
 
     private long _lease;
+
+    private transient Set<String> _nonCachedPaths = Collections.emptySet();
 
     /**
      * Constructs an empty change set
@@ -83,7 +88,7 @@ public class ChangeSet implements Externalizable, Textualizable {
      * secured space, unlike built-in change operations, the security privilege required for custom
      * change operation is EXECUTE instead of WRITE.
      */
-    public ChangeSet custom(CustomChangeOperation changeOperation) {
+    public ChangeSet custom(SpaceEntryMutator changeOperation) {
         return add(changeOperation);
     }
 
@@ -353,4 +358,20 @@ public class ChangeSet implements Externalizable, Textualizable {
 
     }
 
+    /**
+     * Since 14.2.0
+     */
+    public ChangeSet disablePathCaching(String... nonCachedPaths){
+        this._nonCachedPaths = nonCachedPaths == null ? Collections.emptySet()
+                                : new HashSet(Arrays.asList(nonCachedPaths ) );
+        return this;
+    }
+
+    /**
+     * Since 14.2.0
+     * @return
+     */
+    Set<String> getNonCachedPaths(){
+        return _nonCachedPaths;
+    }
 }
