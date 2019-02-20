@@ -58,7 +58,8 @@ public abstract class SpaceEntryPathMutator extends SpaceEntryMutator implements
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         final PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
-        if (version.greaterOrEquals(PlatformLogicalVersion.v14_2_0)) {
+        if (version.equals(PlatformLogicalVersion.v12_3_0_PATCH4) || /*equal to v12_3_0_PATCH4*/
+            version.greaterOrEquals(PlatformLogicalVersion.v14_2_0)) {
             out.writeBoolean(_disablePathCaching);
         }
 
@@ -74,7 +75,8 @@ public abstract class SpaceEntryPathMutator extends SpaceEntryMutator implements
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         final PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
 
-        if (version.greaterOrEquals(PlatformLogicalVersion.v14_2_0)) {
+        if (version.equals(PlatformLogicalVersion.v12_3_0_PATCH4) || /*equal to v12_3_0_PATCH4*/
+            version.greaterOrEquals(PlatformLogicalVersion.v14_2_0)) {
             _disablePathCaching = in.readBoolean();
         }
 
