@@ -3754,7 +3754,7 @@ public class SpaceEngine implements ISpaceModeListener {
         }
 
         // match should be done against all fields even when uid is provided gs-4091
-        if (!template.isMatchByID()
+        if ( ( !template.isMatchByID() || template.isChangeQuery() /*fix for GS-13604*/ )
                 && !_templateScanner.match(context, entry, template))
             return null;
 

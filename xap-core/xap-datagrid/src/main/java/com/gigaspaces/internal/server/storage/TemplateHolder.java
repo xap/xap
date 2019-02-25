@@ -611,7 +611,7 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
      */
     public boolean isMatchByID() {
         return (_uidToOperateBy != null &&
-                (_templateOperation == SpaceOperations.UPDATE ||
+                ( ( _templateOperation == SpaceOperations.UPDATE ) ||
                         (ReadModifiers.isMatchByID(_operationModifiers))));
 
     }
@@ -725,7 +725,7 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
                 shadowEntryData = sh != null ? masterEntryData.getOtherUpdateUnderXtnEntry().getEntryData() : null;
             }
 
-            if (this.isMatchByID() || this.isEmptyTemplate())
+            if ( ( this.isMatchByID() && !isChangeQuery() ) || this.isEmptyTemplate())
                 res = shadowEntryData == null ? MatchResult.MASTER : MatchResult.MASTER_AND_SHADOW;
             else {
                 boolean masterMatch = _templateData.match(cacheManager, masterEntryData, skipAlreadyMatchedFixedPropertyIndex, skipAlreadyMatchedIndexPath, regexCache);
@@ -1072,6 +1072,11 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
     @Override
     public boolean isChangeMultiple() {
         return isBatchOperation() && isChange();
+    }
+
+    @Override
+    public boolean isChangeQuery() {
+        return isChange() && ( getCustomQuery() != null || getExtendedMatchCodes() != null );
     }
 
     @Override

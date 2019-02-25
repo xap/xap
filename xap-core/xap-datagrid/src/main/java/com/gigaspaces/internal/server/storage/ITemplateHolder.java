@@ -105,6 +105,8 @@ public interface ITemplateHolder extends ISpaceItem, IEntryHolder {
 
     boolean isChangeMultiple();
 
+    boolean isChangeQuery();
+
     BatchQueryOperationContext getBatchOperationContext();
 
     void setBatchOperationContext(BatchQueryOperationContext batchOpContext);
