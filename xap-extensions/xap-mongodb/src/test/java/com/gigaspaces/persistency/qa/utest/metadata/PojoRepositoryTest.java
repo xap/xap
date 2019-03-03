@@ -19,9 +19,9 @@ package com.gigaspaces.persistency.qa.utest.metadata;
 
 import com.gigaspaces.internal.reflection.IGetterMethod;
 import com.gigaspaces.internal.reflection.ISetterMethod;
-import com.gigaspaces.internal.utils.Assert;
 import com.gigaspaces.persistency.metadata.PojoRepository;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -80,12 +80,12 @@ public class PojoRepositoryTest {
 
         PojoA pojoA = (PojoA) repository.getConstructor(PojoA.class)
                 .newInstance();
-        Assert.notNull(pojoA);
+        Assert.assertNotNull(pojoA);
 
         PojoB pojoB = (PojoB) repository.getConstructor(PojoB.class)
                 .newInstance();
 
-        Assert.notNull(pojoB);
+        Assert.assertNotNull(pojoB);
     }
 
     @Test
@@ -100,14 +100,14 @@ public class PojoRepositoryTest {
         IGetterMethod<Object> numberB = repository.getGetter(PojoB.class,
                 "numberB");
 
-        Assert.isNull(nameA.get(pojoB));
-        Assert.isTrue(numberB.get(pojoB).equals(0));
+        Assert.assertNull(nameA.get(pojoB));
+        Assert.assertTrue(numberB.get(pojoB).equals(0));
 
         pojoB.setNameA(MY_NAME);
         pojoB.setNumberB(NUMBER);
 
-        Assert.isTrue(nameA.get(pojoB).equals(MY_NAME));
-        Assert.isTrue(numberB.get(pojoB).equals(NUMBER));
+        Assert.assertTrue(nameA.get(pojoB).equals(MY_NAME));
+        Assert.assertTrue(numberB.get(pojoB).equals(NUMBER));
 
     }
 
@@ -126,8 +126,8 @@ public class PojoRepositoryTest {
         nameA.set(pojoB, MY_NAME);
         numberB.set(pojoB, NUMBER);
 
-        Assert.isTrue(pojoB.getNameA().equals(MY_NAME));
-        Assert.isTrue(pojoB.getNumberB() == NUMBER);
+        Assert.assertTrue(pojoB.getNameA().equals(MY_NAME));
+        Assert.assertTrue(pojoB.getNumberB() == NUMBER);
     }
 
     @Test(expected = IllegalStateException.class)

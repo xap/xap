@@ -18,7 +18,6 @@ package org.openspaces.textsearch;
 
 import com.gigaspaces.SpaceRuntimeException;
 import com.gigaspaces.internal.io.FileUtils;
-import com.gigaspaces.internal.utils.Assert;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.query.extension.QueryExtensionEntryIterator;
 import com.gigaspaces.query.extension.QueryExtensionManager;
@@ -45,6 +44,7 @@ import org.apache.lucene.search.TermQuery;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -107,8 +107,8 @@ public class LuceneTextSearchQueryExtensionManager extends QueryExtensionManager
 
     @Override
     public boolean accept(String typeName, String path, String operation, Object gridValue, Object luceneQuery) {
-        Assert.notNull(gridValue, "Provided value from grid is null");
-        Assert.notNull(luceneQuery, "Provided lucene query is null");
+        Objects.requireNonNull(gridValue, "Provided value from grid is null");
+        Objects.requireNonNull(luceneQuery, "Provided lucene query is null");
         validateOperationName(operation);
 
         if (_logger.isLoggable(Level.FINE))
@@ -220,7 +220,7 @@ public class LuceneTextSearchQueryExtensionManager extends QueryExtensionManager
     }
 
     protected Query createQuery(String typeName, String path, String operationName, Object operand) {
-        Assert.notNull(operand, "Provided operand is null");
+        Objects.requireNonNull(operand, "Provided operand is null");
         validateOperationName(operationName);
         try {
             LuceneTextSearchTypeIndex typeIndex = _luceneHolderMap.get(typeName);

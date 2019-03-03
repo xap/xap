@@ -16,7 +16,6 @@
 
 package org.openspaces.spatial;
 
-import com.gigaspaces.internal.utils.Assert;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.context.jts.JtsSpatialContext;
 import org.locationtech.spatial4j.shape.jts.JtsGeometry;
@@ -37,6 +36,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Factory class for creating spatial shapes.
@@ -96,8 +96,8 @@ public class ShapeFactory {
      */
     public static LineString lineString(Point first, Point second, Point... morePoints) {
         Point[] points = new Point[2 + morePoints.length];
-        points[0] = Assert.argumentNotNull(first, "first");
-        points[1] = Assert.argumentNotNull(second, "second");
+        points[0] = Objects.requireNonNull(first, "first");
+        points[1] = Objects.requireNonNull(second, "second");
         for (int i = 0; i < morePoints.length; i++)
             points[i + 2] = morePoints[i];
         return lineString(points);
@@ -128,9 +128,9 @@ public class ShapeFactory {
      */
     public static Polygon polygon(Point first, Point second, Point third, Point... morePoints) {
         Point[] points = new Point[3 + morePoints.length];
-        points[0] = Assert.argumentNotNull(first, "first");
-        points[1] = Assert.argumentNotNull(second, "second");
-        points[2] = Assert.argumentNotNull(third, "third");
+        points[0] = Objects.requireNonNull(first, "first");
+        points[1] = Objects.requireNonNull(second, "second");
+        points[2] = Objects.requireNonNull(third, "third");
         for (int i = 0; i < morePoints.length; i++)
             points[i + 3] = morePoints[i];
 

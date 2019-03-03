@@ -20,11 +20,7 @@ import java.beans.Introspector;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Miscellaneous class utility methods. Mainly for internal use within the framework; consider
@@ -179,7 +175,10 @@ public abstract class ClassUtils {
      * @throws IllegalArgumentException if the className is empty
      */
     public static String getShortName(String className) {
-        Assert.hasLength(className, "Class name must not be empty");
+        if (!StringUtils.hasLength(className)) {
+            throw new IllegalArgumentException("Class name must not be empty");
+        }
+
         int lastDotIndex = className.lastIndexOf(PACKAGE_SEPARATOR_CHAR);
         int nameEndIndex = className.indexOf(CGLIB_CLASS_SEPARATOR_CHAR);
         if (nameEndIndex == -1) {
@@ -218,7 +217,7 @@ public abstract class ClassUtils {
      * @return the qualified name of the class
      */
     public static String getQualifiedName(Class clazz) {
-        Assert.notNull(clazz, "Class must not be null");
+        Objects.requireNonNull(clazz, "Class must not be null");
         if (clazz.isArray()) {
             return getQualifiedNameForArray(clazz);
         } else {
@@ -235,7 +234,7 @@ public abstract class ClassUtils {
      * @return the qualified name of the method
      */
     public static String getQualifiedMethodName(Method method) {
-        Assert.notNull(method, "Method must not be null");
+        Objects.requireNonNull(method, "Method must not be null");
         return method.getDeclaringClass().getName() + '.' + method.getName();
     }
 
@@ -264,8 +263,8 @@ public abstract class ClassUtils {
      * @see java.lang.Class#getMethod
      */
     public static Method getMethodIfAvailable(Class clazz, String methodName, Class[] paramTypes) {
-        Assert.notNull(clazz, "Class must not be null");
-        Assert.notNull(methodName, "Method name must not be null");
+        Objects.requireNonNull(clazz, "Class must not be null");
+        Objects.requireNonNull(methodName, "Method name must not be null");
         try {
             return clazz.getMethod(methodName, paramTypes);
         } catch (NoSuchMethodException ex) {
@@ -282,8 +281,8 @@ public abstract class ClassUtils {
      * @return the number of methods with the given name
      */
     public static int getMethodCountForName(Class clazz, String methodName) {
-        Assert.notNull(clazz, "Class must not be null");
-        Assert.notNull(methodName, "Method name must not be null");
+        Objects.requireNonNull(clazz, "Class must not be null");
+        Objects.requireNonNull(methodName, "Method name must not be null");
         int count = 0;
         for (Method method : clazz.getDeclaredMethods()) {
             if (methodName.equals(method.getName())) {
@@ -310,8 +309,8 @@ public abstract class ClassUtils {
      * @return whether there is at least one method with the given name
      */
     public static boolean hasAtLeastOneMethodWithName(Class clazz, String methodName) {
-        Assert.notNull(clazz, "Class must not be null");
-        Assert.notNull(methodName, "Method name must not be null");
+        Objects.requireNonNull(clazz, "Class must not be null");
+        Objects.requireNonNull(methodName, "Method name must not be null");
         for (Method method : clazz.getDeclaredMethods()) {
             if (method.getName().equals(methodName)) {
                 return true;
@@ -337,8 +336,8 @@ public abstract class ClassUtils {
      * @throws IllegalArgumentException if the method name is blank or the clazz is null
      */
     public static Method getStaticMethod(Class clazz, String methodName, Class[] args) {
-        Assert.notNull(clazz, "Class must not be null");
-        Assert.notNull(methodName, "Method name must not be null");
+        Objects.requireNonNull(clazz, "Class must not be null");
+        Objects.requireNonNull(methodName, "Method name must not be null");
         try {
             Method method = clazz.getDeclaredMethod(methodName, args);
             if ((method.getModifiers() & Modifier.STATIC) != 0) {
@@ -356,7 +355,7 @@ public abstract class ClassUtils {
      * Short, Integer, Long, Float, or Double.
      */
     public static boolean isPrimitiveWrapper(Class clazz) {
-        Assert.notNull(clazz, "Class must not be null");
+        Objects.requireNonNull(clazz, "Class must not be null");
         return primitiveWrapperTypeMap.containsKey(clazz);
     }
 
@@ -366,7 +365,7 @@ public abstract class ClassUtils {
      * Long, Float, or Double).
      */
     public static boolean isPrimitiveOrWrapper(Class clazz) {
-        Assert.notNull(clazz, "Class must not be null");
+        Objects.requireNonNull(clazz, "Class must not be null");
         return (clazz.isPrimitive() || isPrimitiveWrapper(clazz));
     }
 
@@ -375,7 +374,7 @@ public abstract class ClassUtils {
      * int, long, float, or double.
      */
     public static boolean isPrimitiveArray(Class clazz) {
-        Assert.notNull(clazz, "Class must not be null");
+        Objects.requireNonNull(clazz, "Class must not be null");
         return (clazz.isArray() && clazz.getComponentType().isPrimitive());
     }
 
@@ -384,7 +383,7 @@ public abstract class ClassUtils {
      * Character, Short, Integer, Long, Float, or Double.
      */
     public static boolean isPrimitiveWrapperArray(Class clazz) {
-        Assert.notNull(clazz, "Class must not be null");
+        Objects.requireNonNull(clazz, "Class must not be null");
         return (clazz.isArray() && isPrimitiveWrapper(clazz.getComponentType()));
     }
 
@@ -398,8 +397,8 @@ public abstract class ClassUtils {
      * @return if the target type is assignable from the value type
      */
     public static boolean isAssignable(Class targetType, Class valueType) {
-        Assert.notNull(targetType, "Target type must not be null");
-        Assert.notNull(valueType, "Value type must not be null");
+        Objects.requireNonNull(targetType, "Target type must not be null");
+        Objects.requireNonNull(valueType, "Value type must not be null");
         return (targetType.isAssignableFrom(valueType) ||
                 targetType.equals(primitiveWrapperTypeMap.get(valueType)));
     }
@@ -414,7 +413,7 @@ public abstract class ClassUtils {
      * @return if the type is assignable from the value
      */
     public static boolean isAssignableValue(Class type, Object value) {
-        Assert.notNull(type, "Type must not be null");
+        Objects.requireNonNull(type, "Type must not be null");
         return (value != null ? isAssignable(type, value.getClass()) : !type.isPrimitive());
     }
 
@@ -435,7 +434,7 @@ public abstract class ClassUtils {
      * @see Class#getResource
      */
     public static String addResourcePathToPackagePath(Class clazz, String resourceName) {
-        Assert.notNull(resourceName, "Resource name must not be null");
+        Objects.requireNonNull(resourceName, "Resource name must not be null");
         if (!resourceName.startsWith("/")) {
             return classPackageAsResourcePath(clazz) + '/' + resourceName;
         }
