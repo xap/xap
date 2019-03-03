@@ -52,7 +52,9 @@ public class LuceneTextSearchQueryExtensionManagerTest {
         try {
             _manager.accept("", "", LuceneTextSearchQueryExtensionManager.SEARCH_OPERATION_NAME, null, "");
             Assert.fail("Should throw an exception here");
-        } catch (IllegalArgumentException e) {}
+        } catch (NullPointerException e) {
+            Assert.assertEquals("Provided value from grid is null", e.getMessage());
+        }
     }
 
     @Test
@@ -60,7 +62,9 @@ public class LuceneTextSearchQueryExtensionManagerTest {
         try {
             _manager.accept("", "", LuceneTextSearchQueryExtensionManager.SEARCH_OPERATION_NAME, "", null);
             Assert.fail("Should throw an exception here");
-        } catch (IllegalArgumentException e) {}
+        } catch (NullPointerException e) {
+            Assert.assertEquals("Provided lucene query is null", e.getMessage());
+        }
     }
 
     @Test
@@ -76,7 +80,9 @@ public class LuceneTextSearchQueryExtensionManagerTest {
         try {
             _manager.createQuery("", "", "", null);
             Assert.fail("Should throw an exception here");
-        } catch (IllegalArgumentException e) {}
+        } catch (NullPointerException e) {
+            Assert.assertEquals("Provided operand is null", e.getMessage());
+        }
     }
 
     @Test
