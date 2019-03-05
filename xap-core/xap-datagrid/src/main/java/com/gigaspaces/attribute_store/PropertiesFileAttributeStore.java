@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.gigaspaces.attribute_store;
-
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -36,7 +34,7 @@ import java.util.logging.Logger;
  * @since 10.2
  */
 @com.gigaspaces.api.InternalApi
-public class PropertiesFileAttributeStore extends AttributeStore implements Serializable {
+public class PropertiesFileAttributeStore implements AttributeStore, Serializable {
     private static final long serialVersionUID = 1789885876431145300L;
 
     final private static Logger logger = Logger.getLogger(PropertiesFileAttributeStore.class.getName());
@@ -86,7 +84,7 @@ public class PropertiesFileAttributeStore extends AttributeStore implements Seri
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
     }
 
     @Override

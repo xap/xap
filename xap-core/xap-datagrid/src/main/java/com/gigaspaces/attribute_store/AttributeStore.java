@@ -16,19 +16,18 @@
 
 package com.gigaspaces.attribute_store;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * @author yechiel
  * @since 10.2
  */
-public abstract class AttributeStore {
+public interface AttributeStore extends Closeable {
 
-    public abstract String get(String name) throws IOException;
+    String get(String key) throws IOException;
 
-    public abstract String set(String name, String value) throws IOException;
+    String set(String key, String value) throws IOException;
 
-    public abstract void close() throws Exception;
-
-    public abstract String remove(String key) throws IOException;
+    String remove(String key) throws IOException;
 }

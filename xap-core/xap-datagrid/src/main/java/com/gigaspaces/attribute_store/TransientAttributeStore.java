@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 10.2
  */
 @com.gigaspaces.api.InternalApi
-public class TransientAttributeStore extends AttributeStore implements Serializable {
+public class TransientAttributeStore implements AttributeStore, Serializable {
 
     private final ConcurrentHashMap<String, String> store = new ConcurrentHashMap<String, String>();
 
@@ -40,12 +40,11 @@ public class TransientAttributeStore extends AttributeStore implements Serializa
     }
 
     @Override
-    public String remove(String key) throws IOException {
+    public String remove(String key) {
         return store.remove(key);
     }
 
     @Override
-    public void close() throws Exception {
-
+    public void close() throws IOException {
     }
 }
