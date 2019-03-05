@@ -16,8 +16,6 @@
 
 package org.openspaces.persistency.cassandra.meta;
 
-import antlr.ByteBuffer;
-
 import org.openspaces.persistency.cassandra.meta.mapping.node.TypeNode;
 
 import me.prettyprint.hector.api.Serializer;
@@ -36,7 +34,7 @@ public interface ColumnMetadata {
     String getFullName();
 
     /**
-     * @return The serializer to convert the column value from/to {@link ByteBuffer} representation.
+     * @return The serializer to convert the column value from/to ByteBuffer representation.
      */
     <T> Serializer<T> getSerializer();
 }

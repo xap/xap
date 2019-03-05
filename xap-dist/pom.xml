@@ -121,6 +121,10 @@
         </dependency>
         <dependency>
             <groupId>org.gigaspaces</groupId>
+            <artifactId>xap-hibernate-spring</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.gigaspaces</groupId>
             <artifactId>xap-jpa-spring</artifactId>
         </dependency>
         <dependency>

@@ -231,6 +231,7 @@ public class CacheManager extends AbstractCacheManager
     public CacheManager(SpaceConfigReader configReader, ClusterPolicy clusterPolicy,
                         SpaceTypeManager typeManager, IReplicationNode replicationNode,
                         IStorageAdapter sa, SpaceEngine engine, Properties customProperties) throws CreateException {
+
         _engine = engine;
         _clusterPolicy = clusterPolicy;
         _typeManager = typeManager;
