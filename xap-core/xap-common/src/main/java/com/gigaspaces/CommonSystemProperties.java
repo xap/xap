@@ -79,4 +79,6 @@ public class CommonSystemProperties {
     public static final String SERVICE_GRID_KILL_TIMEOUT = "com.gs.service-grid.process-kill-timeout";
 
     public final static String START_EMBEDDED_LOOKUP = "com.gs.start-embedded-lus";
+
+    public final static String SIGAR_ENABLED = "com.gs.sigar.enabled";
 }

@@ -16,6 +16,9 @@
 
 package com.gigaspaces.internal.sigar;
 
+import com.gigaspaces.CommonSystemProperties;
+import com.gigaspaces.internal.jvm.JavaUtils;
+
 /**
  * @author Niv Ingberg
  * @since 10.1
@@ -23,10 +26,22 @@ package com.gigaspaces.internal.sigar;
 @com.gigaspaces.api.InternalApi
 public class SigarChecker {
 
+    private static final boolean enabled = initEnabled();
+
+    private static final boolean initEnabled() {
+        String enabled = System.getProperty(CommonSystemProperties.SIGAR_ENABLED, "");
+        if (enabled.isEmpty()) {
+            return JavaUtils.isWindows() && JavaUtils.greaterOrEquals(9) ? false : true;
+        } else {
+            return Boolean.parseBoolean(enabled);
+        }
+    }
+
     public static boolean isAvailable() {
         try {
-            return SigarHolder.getSigar() != null;
+            return enabled && SigarHolder.getSigar() != null;
         } catch (Throwable t) {
+            t.printStackTrace();
             return false;
         }
     }
