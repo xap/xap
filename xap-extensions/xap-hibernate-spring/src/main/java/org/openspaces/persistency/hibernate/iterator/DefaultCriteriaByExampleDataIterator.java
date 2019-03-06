@@ -87,7 +87,7 @@ public class DefaultCriteriaByExampleDataIterator implements DataIterator {
         Criteria criteria = session.createCriteria(template.getClass()).add(example);
         criteria.setCacheMode(CacheMode.IGNORE);
         criteria.setCacheable(false);
-        criteria.setFlushMode(FlushMode.NEVER);
+        criteria.setFlushMode(FlushMode.MANUAL);
         return criteria.list().iterator();
     }
 }

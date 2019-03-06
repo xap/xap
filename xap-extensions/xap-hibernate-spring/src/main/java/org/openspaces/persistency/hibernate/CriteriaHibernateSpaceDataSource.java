@@ -87,7 +87,7 @@ public class CriteriaHibernateSpaceDataSource extends DefaultHibernateSpaceDataS
         }
         Object object = null;
         Session session = getSessionFactory().openSession();
-        session.setFlushMode(FlushMode.NEVER);
+        session.setFlushMode(FlushMode.MANUAL);
         Transaction tx = null;
         try {
             tx = session.beginTransaction();

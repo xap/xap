@@ -152,7 +152,7 @@ public class DefaultListQueryDataIterator implements DataIterator {
             Criteria criteria = session.createCriteria(entityName);
             criteria.setCacheMode(CacheMode.IGNORE);
             criteria.setCacheable(false);
-            criteria.setFlushMode(FlushMode.NEVER);
+            criteria.setFlushMode(FlushMode.MANUAL);
             if (from >= 0) {
                 criteria.setFirstResult(from);
                 criteria.setMaxResults(size);

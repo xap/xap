@@ -22,8 +22,9 @@ package org.openspaces.persistency.hibernate;
 import com.j_spaces.kernel.ClassLoaderHelper;
 
 import org.hibernate.SessionFactory;
+import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
+import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.cfg.NamingStrategy;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,7 +39,12 @@ import java.util.logging.Logger;
  */
 @Deprecated
 public class SessionFactoryBuilder {
+
+    private static final String HIBERNATE_IMPLICIT_NAMING_STRATEGY = "hibernate.implicit_naming_strategy";
+    private static final String HIBERNATE_PHYSICAL_NAMING_STRATEGY = "hibernate.physical_naming_strategy";
+
     private static final String HIBERNATE_NAMING_STRATEGY = "hibernate.naming_strategy";
+
     /**
      *
      */
@@ -74,16 +80,36 @@ public class SessionFactoryBuilder {
             }
         }
         // since hibernate doesn't support configuring naming strategies in cfg.xml.
-        // added an option to configure it programatically while using the hibernate.cfg.xml
+        // added an option to configure it programmatically while using the hibernate.cfg.xml
         // for example: add this to hibernate.cfg.xml
         //<property name="hibernate.naming_strategy">com.gigaspaces.test.persistent.SpaceNamingStrategy</property>
 
         String namingStrategyClass = config.getProperty(HIBERNATE_NAMING_STRATEGY);
 
         if (namingStrategyClass != null) {
-            NamingStrategy namingStrategy = (NamingStrategy) ClassLoaderHelper.loadClass(namingStrategyClass).newInstance();
-            config.setNamingStrategy(namingStrategy);
+            _logger.log( Level.WARNING, "Definition of naming strategy [" +
+                             HIBERNATE_NAMING_STRATEGY + "] found, it's unsupported " +
+                             "since hibernate 5.x used, please use instead either [" +
+                             HIBERNATE_IMPLICIT_NAMING_STRATEGY  + "] or [" +
+                             HIBERNATE_PHYSICAL_NAMING_STRATEGY + "]" );
         }
+
+        String physicalNamingStrategyClass = config.getProperty(HIBERNATE_PHYSICAL_NAMING_STRATEGY);
+
+        if (physicalNamingStrategyClass != null) {
+            PhysicalNamingStrategy physicalNamingStrategy =
+                (PhysicalNamingStrategy) ClassLoaderHelper.loadClass(physicalNamingStrategyClass).newInstance();
+            config.setPhysicalNamingStrategy(physicalNamingStrategy);
+        }
+
+        String implicitNamingStrategyClass = config.getProperty(HIBERNATE_IMPLICIT_NAMING_STRATEGY);
+
+        if (implicitNamingStrategyClass != null) {
+            ImplicitNamingStrategy implicitNamingStrategy =
+                (ImplicitNamingStrategy) ClassLoaderHelper.loadClass(implicitNamingStrategyClass).newInstance();
+            config.setImplicitNamingStrategy(implicitNamingStrategy);
+        }
+
         return config.buildSessionFactory();
     }
 
