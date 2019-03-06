@@ -28,6 +28,7 @@ import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BooleanSupplier;
 
 /**
  * This class provides a set of static utility methods used for I/O manipulations. (writing/reading
@@ -246,5 +247,26 @@ public class BootIOUtils {
         if (s.equalsIgnoreCase("tib")) return 1024*1024*1024*1024;
         if (s.equalsIgnoreCase("tb")) return 1000*1000*1000*1000;
         throw new IllegalArgumentException("Invalid memory unit: '" + s + "'. Supported units: b, k, ki, kib, kb, m, mi, mib, mb, g, gi, gib, gb, t, ti, tib, tb");
+    }
+
+    public static boolean waitFor(BooleanSupplier predicate, long timeout, long pollInterval) throws InterruptedException {
+        final long deadline = System.currentTimeMillis() + timeout;
+        while (true) {
+            if (predicate.getAsBoolean())
+                return true;
+            long currTime = System.currentTimeMillis();
+            if (currTime >= deadline)
+                return false;
+            Thread.sleep(Math.min(pollInterval, deadline - currTime));
+        }
+    }
+
+    public static boolean tryWaitFor(BooleanSupplier predicate, long timeout, long pollInterval) {
+        try {
+            return waitFor(predicate, timeout, pollInterval);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 }

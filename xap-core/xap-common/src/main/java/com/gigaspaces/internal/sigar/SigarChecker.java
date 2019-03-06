@@ -54,9 +54,9 @@ public class SigarChecker {
             }
 
             @Override
-            public boolean kill(long pid, long timeoutMillis) {
+            public boolean kill(long pid, long timeout, boolean recursive) {
                 try {
-                    return SigarHolder.kill(pid, timeoutMillis);
+                    return SigarHolder.singleton().kill(pid, timeout, recursive);
                 } catch (Throwable e) {
                     throw new RuntimeException("Failed to kill process " + pid + ": " + e.getMessage(), e);
                 }

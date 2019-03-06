@@ -6,5 +6,5 @@ package com.gigaspaces.internal.os;
  */
 public interface ProcessKiller {
     String getName();
-    boolean kill(long pid, long timeoutMillis);
+    boolean kill(long pid, long timeout, boolean recursive);
 }

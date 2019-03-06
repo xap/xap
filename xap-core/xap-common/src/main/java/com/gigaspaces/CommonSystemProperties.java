@@ -81,4 +81,6 @@ public class CommonSystemProperties {
     public final static String START_EMBEDDED_LOOKUP = "com.gs.start-embedded-lus";
 
     public final static String SIGAR_ENABLED = "com.gs.sigar.enabled";
+
+    public final static String KILL_RECURSIVE = "com.gs.process.kill-recursive";
 }

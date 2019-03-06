@@ -16,10 +16,15 @@
 
 package com.gigaspaces.internal.sigar;
 
+import com.gigaspaces.internal.io.BootIOUtils;
+import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.start.SystemBoot;
 
+import org.hyperic.sigar.ProcState;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
+
+import java.util.*;
 
 /**
  * @author kimchy
@@ -27,75 +32,118 @@ import org.hyperic.sigar.SigarException;
 @com.gigaspaces.api.InternalApi
 public class SigarHolder {
 
-    private static Sigar sigar;
-    private static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("win");
+    private static SigarHolder singleton;
+    private final Sigar sigar;
 
-    public static synchronized Sigar getSigar() {
-        if (sigar == null) {
-            Sigar newSigar = new Sigar();
-            sigar = newSigar.getPid() != -1 ? newSigar : null;
+    public static synchronized SigarHolder singleton() {
+        if (singleton == null) {
+            Sigar sigar = new Sigar();
+            singleton = sigar.getPid() != -1 ? new SigarHolder(sigar) : null;
         }
-        return sigar;
+        return singleton;
     }
 
-    public static boolean kill(long pid, long timeout) throws SigarException {
-        Sigar sigar = getSigar();
+    public static Sigar getSigar() {
+        return singleton().sigar;
+    }
 
-        // Ask nicely, let process a chance to shutdown gracefully:
-        kill(sigar, pid, "SIGTERM");
-        // Wait for process to terminate:
-        boolean isTerminated;
+    public static synchronized void release() {
+        if (!SystemBoot.isRunningWithinGSC()) {
+            if (singleton != null) {
+                singleton.sigar.close();
+                singleton = null;
+            }
+        }
+    }
+
+    private SigarHolder(Sigar sigar) {
+        this.sigar = sigar;
+    }
+
+    public boolean kill(long pid, long timeout, boolean recursive) throws SigarException {
+        Set<Long> pids = recursive ? getDescendants(pid) : Collections.singleton(pid);
+
+        // Ask nicely, let process(s) a chance to shutdown gracefully:
+        if (killAll(pids, "SIGTERM"))
+            return true;
+
+        // Wait for process(s) to terminate:
         try {
-            isTerminated = waitForExit(sigar, pid, timeout, 100 /*pollInterval*/);
+            if (BootIOUtils.waitFor(() -> pruneTerminated(pids), timeout, 100))
+                return true;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            isTerminated = !isAlive(sigar, pid);
+            return false;
         }
-        // If process is still alive, kill it:
-        if (!isTerminated && !isWindows) {
-            kill(sigar, pid, "SIGKILL");
-            isTerminated = !isAlive(sigar, pid);
-        }
-        return isTerminated;
+
+        // force kill remaining process(s) (except on windows - not supported)
+        if (JavaUtils.isWindows())
+            return false;
+        return killAll(pids, "SIGKILL");
     }
 
-    private static boolean waitForExit(Sigar sigar, long pid, long timeout, long pollInterval) throws InterruptedException {
-        final long deadline = System.currentTimeMillis() + timeout;
-        while (isAlive(sigar, pid)) {
-            long currTime = System.currentTimeMillis();
-            if (currTime >= deadline)
-                return false;
-            Thread.sleep(Math.min(pollInterval, deadline - currTime));
+    private boolean killAll(Set<Long> pids, String signal) throws SigarException {
+        for (Long currPid : pids) {
+            kill(currPid, signal);
         }
-        return true;
+        return pruneTerminated(pids);
     }
 
-    private static void kill(Sigar sigar, long pid, String signal) throws SigarException {
+    private Map<Long, ProcState> getAllProcesses() throws SigarException {
+        final Map<Long, ProcState> result = new HashMap<>();
+        for (final long pid : sigar.getProcList()) {
+            try {
+                result.put(pid, sigar.getProcState(pid));
+            } catch (SigarException e) {
+                //logger.log(Level.WARNING, "While scanning for child processes of process " + ppid + ", could not read process state of Process: " + pid + ". Ignoring.", e);
+            }
+        }
+        return result;
+    }
+
+    private Set<Long> getDescendants(long ppid) throws SigarException {
+        Set<Long> result = new LinkedHashSet<>();
+        result.add(ppid);
+        Map<Long, ProcState> processes = getAllProcesses();
+        processes.remove(ppid);
+        while (true) {
+            int sizeBefore = result.size();
+            Iterator<Map.Entry<Long, ProcState>> iterator = processes.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<Long, ProcState> entry = iterator.next();
+                if (result.contains(entry.getValue().getPpid())) {
+                    result.add(entry.getKey());
+                    iterator.remove();
+                }
+            }
+            int sizeAfter = result.size();
+            if (sizeAfter == sizeBefore)
+                return result;
+        }
+    }
+
+    private boolean pruneTerminated(Set<Long> pids) {
+        pids.removeIf(pid -> !isAlive(pid));
+        return pids.isEmpty();
+    }
+
+    private void kill(long pid, String signal) throws SigarException {
         try {
             sigar.kill(pid, signal);
         } catch (SigarException e) {
             // If the signal could not be sent because the process has already terminated, that's ok for us.
-            if (isAlive(sigar, pid))
+            if (isAlive(pid))
                 throw e;
         }
     }
 
-    private static boolean isAlive(Sigar sigar, long pid) {
+    private boolean isAlive(long pid) {
         try {
             //sigar.getProcState(pid) is not used because its unstable.
             sigar.getProcTime(pid);
             return true;
         } catch (SigarException e) {
             return false;
-        }
-    }
-
-    public static synchronized void release() {
-        if (!SystemBoot.isRunningWithinGSC()) {
-            if (sigar != null) {
-                sigar.close();
-                sigar = null;
-            }
         }
     }
 }
