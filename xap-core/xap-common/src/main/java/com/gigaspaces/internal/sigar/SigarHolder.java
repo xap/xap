@@ -61,7 +61,11 @@ public class SigarHolder {
     }
 
     public boolean kill(long pid, long timeout, boolean recursive) throws SigarException {
-        Set<Long> pids = recursive ? getDescendants(pid) : Collections.singleton(pid);
+        Set<Long> pids = new LinkedHashSet<>();
+        pids.add(pid);
+        if (recursive) {
+            pids.addAll(getDescendants(pid));
+        }
 
         // Ask nicely, let process(s) a chance to shutdown gracefully:
         if (killAll(pids, "SIGTERM"))
@@ -103,7 +107,6 @@ public class SigarHolder {
 
     private Set<Long> getDescendants(long ppid) throws SigarException {
         Set<Long> result = new LinkedHashSet<>();
-        result.add(ppid);
         Map<Long, ProcState> processes = getAllProcesses();
         processes.remove(ppid);
         while (true) {
