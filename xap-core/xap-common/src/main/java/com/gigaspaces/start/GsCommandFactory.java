@@ -120,7 +120,10 @@ public class GsCommandFactory {
         final String vendor = JavaUtils.getVendor().toUpperCase();
         if (vendor.startsWith("ORACLE ")) {
             command.option("-server");
-            command.option("-XX:+AggressiveOpts");
+            if (!JavaUtils.greaterOrEquals(11)) {
+                // Deprecated since 11 - https://bugs.openjdk.java.net/browse/JDK-8199777
+                command.option("-XX:+AggressiveOpts");
+            }
             command.option("-XX:+HeapDumpOnOutOfMemoryError");
             if (JavaUtils.greaterOrEquals(9)) {
                 command.option("--add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED");
