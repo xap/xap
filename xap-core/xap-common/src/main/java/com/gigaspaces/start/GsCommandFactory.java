@@ -126,7 +126,7 @@ public class GsCommandFactory {
             }
             command.option("-XX:+HeapDumpOnOutOfMemoryError");
             if (JavaUtils.greaterOrEquals(9)) {
-                command.option("--add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED");
+                command.option("--add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED");
                 command.option("--add-modules=ALL-SYSTEM");
             }
         } else if (vendor.startsWith("IBM ")) {
