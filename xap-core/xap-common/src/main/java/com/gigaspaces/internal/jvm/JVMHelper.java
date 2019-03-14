@@ -20,6 +20,7 @@ import com.gigaspaces.internal.jvm.jmx.JMXJVMDetailsProbe;
 import com.gigaspaces.internal.jvm.jmx.JMXJVMStatisticsProbe;
 import com.gigaspaces.internal.jvm.sigar.SigarJVMDetailsProbe;
 import com.gigaspaces.internal.jvm.sigar.SigarJVMStatisticsProbe;
+import com.gigaspaces.internal.sigar.SigarChecker;
 import com.gigaspaces.logger.LogHelper;
 
 import java.util.logging.Level;
@@ -50,13 +51,15 @@ public class JVMHelper {
         if (detailsProbeClass != null)
             return tryCreateInstance(detailsProbeClass);
 
-        try {
-            JVMDetailsProbe result = new SigarJVMDetailsProbe();
-            result.probeDetails();
-            return result;
-        } catch (Throwable t) {
-            LogHelper.log(_loggerName, Level.FINE, "Trying to load sigar failed", t);
-            // ignore, no sigar
+        if (SigarChecker.isAvailable()) {
+            try {
+                JVMDetailsProbe result = new SigarJVMDetailsProbe();
+                result.probeDetails();
+                return result;
+            } catch (Throwable t) {
+                LogHelper.log(_loggerName, Level.FINE, "Trying to load sigar failed", t);
+                // ignore, no sigar
+            }
         }
 
         try {
@@ -77,13 +80,15 @@ public class JVMHelper {
         if (statisticsProbeClass != null)
             return tryCreateInstance(statisticsProbeClass);
 
-        try {
-            JVMStatisticsProbe result = new SigarJVMStatisticsProbe();
-            result.probeStatistics();
-            return result;
-        } catch (Throwable t) {
-            LogHelper.log(_loggerName, Level.FINE, "Trying to load sigar failed", t);
-            // ignore, no sigar
+        if (SigarChecker.isAvailable()) {
+            try {
+                JVMStatisticsProbe result = new SigarJVMStatisticsProbe();
+                result.probeStatistics();
+                return result;
+            } catch (Throwable t) {
+                LogHelper.log(_loggerName, Level.FINE, "Trying to load sigar failed", t);
+                // ignore, no sigar
+            }
         }
 
         try {

@@ -20,6 +20,7 @@ import com.gigaspaces.internal.os.jmx.JMXOSDetailsProbe;
 import com.gigaspaces.internal.os.jmx.JMXOSStatisticsProbe;
 import com.gigaspaces.internal.os.sigar.SigarOSDetailsProbe;
 import com.gigaspaces.internal.os.sigar.SigarOSStatisticsProbe;
+import com.gigaspaces.internal.sigar.SigarChecker;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,13 +46,15 @@ public class OSHelper {
         String statisticsProbeClass = System.getProperty("gs.admin.os.probe.statistics");
         if (statisticsProbeClass == null) {
             // first try Sigar
-            try {
-                statisticsProbeX = new SigarOSStatisticsProbe();
-                statisticsProbeX.probeStatistics();
-            } catch (Throwable t) {
-                statisticsProbeX = null;
-                _logger.log(Level.FINE, "Trying to load sigar failed", t);
-                // ignore, no sigar
+            if (SigarChecker.isAvailable()) {
+                try {
+                    statisticsProbeX = new SigarOSStatisticsProbe();
+                    statisticsProbeX.probeStatistics();
+                } catch (Throwable t) {
+                    statisticsProbeX = null;
+                    _logger.log(Level.FINE, "Trying to load sigar failed", t);
+                    // ignore, no sigar
+                }
             }
             if (statisticsProbeX == null) {
                 // try JMX
@@ -78,13 +81,15 @@ public class OSHelper {
         String detailsProbeClass = System.getProperty("gs.admin.os.probe.details");
         if (detailsProbeClass == null) {
             // first try Sigar
-            try {
-                detailsProbeX = new SigarOSDetailsProbe();
-                detailsProbeX.probeDetails();
-            } catch (Throwable t) {
-                detailsProbeX = null;
-                _logger.log(Level.FINE, "Trying to load sigar failed", t);
-                // ignore, no sigar
+            if (SigarChecker.isAvailable()) {
+                try {
+                    detailsProbeX = new SigarOSDetailsProbe();
+                    detailsProbeX.probeDetails();
+                } catch (Throwable t) {
+                    detailsProbeX = null;
+                    _logger.log(Level.FINE, "Trying to load sigar failed", t);
+                    // ignore, no sigar
+                }
             }
             if (detailsProbeX == null) {
                 // than JMX
