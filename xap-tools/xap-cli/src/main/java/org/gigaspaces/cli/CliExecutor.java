@@ -6,8 +6,8 @@ import picocli.CommandLine;
 import picocli.CommandLine.*;
 
 import java.io.PrintStream;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 import static java.lang.System.out;
@@ -64,12 +64,11 @@ public class CliExecutor {
     public static CommandLine toCommandLine(Object command) {
         CommandLine cmd = new CommandLine(command);
         if (command instanceof SubCommandContainer) {
-            Collection<Object> subcommands = ((SubCommandContainer) command).getSubCommands();
-            for (Object subcommand : subcommands) {
-                Command commandAnnotation = subcommand.getClass().getAnnotation(Command.class);
+            for (Map.Entry<String, Object> entry : ((SubCommandContainer) command).getSubCommands().getCommands().entrySet()) {
+                Object subcommand = entry.getValue();
                 if (subcommand instanceof SubCommandContainer)
                     subcommand = toCommandLine(subcommand);
-                cmd.addSubcommand(commandAnnotation.name(), subcommand);
+                cmd.addSubcommand(entry.getKey(), subcommand);
             }
         }
         return cmd;

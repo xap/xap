@@ -2,11 +2,9 @@ package org.gigaspaces.cli.commands;
 
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.CliExecutor;
+import org.gigaspaces.cli.CommandsSet;
 import org.gigaspaces.cli.SubCommandContainer;
 import picocli.CommandLine.*;
-
-import java.util.Arrays;
-import java.util.Collection;
 
 @Command(name="xap", headerHeading = XapMainCommand.HEADER, customSynopsis = "xap [global-options] command [options] [parameters]")
 public class XapMainCommand extends CliCommand implements SubCommandContainer {
@@ -27,12 +25,11 @@ public class XapMainCommand extends CliCommand implements SubCommandContainer {
     }
 
     @Override
-    public Collection<Object> getSubCommands() {
-        return Arrays.asList(
-                (Object)
-                new VersionCommand(),
-                new DemoCommand(),
-                new ProcessingUnitCommand(),
-                new SpaceCommand());
+    public CommandsSet getSubCommands() {
+        return new CommandsSet()
+                .add(new VersionCommand())
+                .add(new DemoCommand())
+                .add(new ProcessingUnitCommand())
+                .add(new SpaceCommand());
     }
 }
