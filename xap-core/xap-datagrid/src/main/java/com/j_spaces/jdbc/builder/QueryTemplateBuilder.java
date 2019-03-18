@@ -26,20 +26,7 @@ import com.gigaspaces.metadata.StorageType;
 import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.Stack;
-import com.j_spaces.jdbc.builder.range.CompositeRange;
-import com.j_spaces.jdbc.builder.range.ContainsItemValueRange;
-import com.j_spaces.jdbc.builder.range.ContainsValueRange;
-import com.j_spaces.jdbc.builder.range.EqualValueRange;
-import com.j_spaces.jdbc.builder.range.FunctionCallDescription;
-import com.j_spaces.jdbc.builder.range.InRange;
-import com.j_spaces.jdbc.builder.range.IsNullRange;
-import com.j_spaces.jdbc.builder.range.NotEqualValueRange;
-import com.j_spaces.jdbc.builder.range.NotNullRange;
-import com.j_spaces.jdbc.builder.range.NotRegexRange;
-import com.j_spaces.jdbc.builder.range.Range;
-import com.j_spaces.jdbc.builder.range.RegexRange;
-import com.j_spaces.jdbc.builder.range.RelationRange;
-import com.j_spaces.jdbc.builder.range.SegmentRange;
+import com.j_spaces.jdbc.builder.range.*;
 import com.j_spaces.jdbc.parser.AbstractInNode;
 import com.j_spaces.jdbc.parser.AndNode;
 import com.j_spaces.jdbc.parser.ColumnNode;
@@ -59,6 +46,7 @@ import com.j_spaces.jdbc.query.QueryColumnData;
 import com.j_spaces.jdbc.query.QueryTableData;
 
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -231,7 +219,7 @@ public class QueryTemplateBuilder
         }
         ColumnNode col = ((ColumnNode) node.getLeftChild());
         //todo barak add functionName to all other buildTemplate
-        QueryTemplatePacket template = buildTemplate((LiteralNode) node.getRightChild(), col.getColumnData(), op, nullOp, col.getFunctionCallDescription());
+        QueryTemplatePacket template = buildTemplate((LiteralNode) node.getRightChild(), col.getColumnData(), op, nullOp, col.getFunctionCallDescription(),node);
         node.setTemplate(template);
     }
 
@@ -347,10 +335,8 @@ public class QueryTemplateBuilder
             // Go over the IN values and create a uid array
             Set<String> uids = node.getConvertedValues(info, colNames[0]);
 
-            QueryTemplatePacket template = new QueryTemplatePacket(tableData, query.getQueryResultType());
-            template.setMultipleUids(uids);
-
-            return template;
+            Range range = new UidsRange(column.getColumnPath(), column.getFunctionCallDescription(), uids);
+            return new QueryTemplatePacket(tableData, query.getQueryResultType(), column.getColumnPath(), range);
         }
 
         // Go over the IN values and and create a packet that will be executed later
@@ -367,13 +353,13 @@ public class QueryTemplateBuilder
      * Build space template
      */
     public QueryTemplatePacket buildTemplate(LiteralNode node, QueryColumnData queryColumnData,
-                                             short op, short nullOp, FunctionCallDescription functionCallDescription) throws SQLException {
+                                             short op, short nullOp, FunctionCallDescription functionCallDescription,ExpNode father) throws SQLException {
         QueryTableData tableData = queryColumnData.getColumnTableData();
 
         ITypeDesc typeDesc = tableData.getTypeDesc();
         Object value = node.getConvertedObject(typeDesc, queryColumnData.getColumnPath());
 
-        return new QueryTemplatePacket(tableData, query.getQueryResultType(), queryColumnData.getColumnPath(), toRange(queryColumnData.getColumnPath(), functionCallDescription, value, value == null ? nullOp : op));
+        return new QueryTemplatePacket(tableData, query.getQueryResultType(), queryColumnData.getColumnPath(), toRange(queryColumnData.getColumnPath(), functionCallDescription, value, value == null ? nullOp : op,father,query));
     }
 
     private QueryTemplatePacket buildTemplate(ColumnNode columnNode, String namespace, String op, LiteralNode valueNode) throws SQLException {
@@ -391,13 +377,63 @@ public class QueryTemplateBuilder
      */
     @SuppressWarnings("deprecation")
     public static Range toRange(String colName, FunctionCallDescription functionCallDescription, Object value, short matchCode) {
+        return
+                toRange( colName, functionCallDescription, value,  matchCode,null,null);
+/*
         switch (matchCode) {
             case TemplateMatchCodes.IS_NULL:
                 return new IsNullRange(colName, functionCallDescription);
             case TemplateMatchCodes.NOT_NULL:
                 return new NotNullRange(colName, functionCallDescription);
-            case TemplateMatchCodes.EQ:
+            case TemplateMatchCodes.EQ: {
                 return new EqualValueRange(colName, functionCallDescription, value);
+            }
+            case TemplateMatchCodes.NE:
+                return new NotEqualValueRange(colName, functionCallDescription, value);
+
+            case TemplateMatchCodes.GT:
+                return new SegmentRange(colName, functionCallDescription, castToComparable(value), false, null, false);
+            case TemplateMatchCodes.GE:
+                return new SegmentRange(colName, functionCallDescription, castToComparable(value), true, null, false);
+            case TemplateMatchCodes.LE:
+                return new SegmentRange(colName, functionCallDescription, null, false, castToComparable(value), true);
+            case TemplateMatchCodes.LT:
+                return new SegmentRange(colName, functionCallDescription, null, false, castToComparable(value), false);
+
+            case TemplateMatchCodes.REGEX:
+                return new RegexRange(colName, functionCallDescription, (String) value);
+            case TemplateMatchCodes.NOT_REGEX:
+                return new NotRegexRange(colName, functionCallDescription, (String) value);
+            case TemplateMatchCodes.IN:
+                return new InRange(colName, functionCallDescription, (Set) value);
+        }
+
+        return Range.EMPTY_RANGE;
+*/
+    }
+
+    @SuppressWarnings("deprecation")
+    public static Range toRange(String colName, FunctionCallDescription functionCallDescription, Object value, short matchCode,ExpNode node,AbstractDMLQuery query) {
+        switch (matchCode) {
+            case TemplateMatchCodes.IS_NULL:
+                return new IsNullRange(colName, functionCallDescription);
+            case TemplateMatchCodes.NOT_NULL:
+                return new NotNullRange(colName, functionCallDescription);
+            case TemplateMatchCodes.EQ: {
+                if (node != null) {
+                    ColumnNode column = (ColumnNode) node.getLeftChild();
+                    QueryTableData tableData = column.getColumnData().getColumnTableData();
+                    ITypeDesc info = tableData.getTypeDesc();
+                    String idPropertyName = info.getIdPropertyName();
+                    if (idPropertyName != null && info.isAutoGenerateId() && column.getColumnPath().equals(idPropertyName)) {
+                        String uid = (String)((LiteralNode) node.getRightChild()).getValue();
+                        Set<String> uids = new HashSet<String>();
+                        uids.add(uid);
+                        return  new UidsRange(column.getColumnPath(), column.getFunctionCallDescription(), uids);
+                    }
+                }
+                return new EqualValueRange(colName, functionCallDescription, value);
+            }
             case TemplateMatchCodes.NE:
                 return new NotEqualValueRange(colName, functionCallDescription, value);
 
@@ -420,7 +456,6 @@ public class QueryTemplateBuilder
 
         return Range.EMPTY_RANGE;
     }
-
     /**
      * Cast the object to Comparable otherwise throws an IllegalArgumentException exception
      */

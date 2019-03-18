@@ -203,7 +203,7 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
 
                 int propertyIndex = _typeDesc.getFixedPropertyPosition(fieldName);
                 boolean addedRange = false;
-                if (propertyIndex != -1 ) {
+                if (propertyIndex != -1 || range.isUidsRange()) {
                     if (range.getFunctionCallDescription() == null) {
                         range.toEntryPacket(this, propertyIndex);
                         addedRange = true;
@@ -227,8 +227,8 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
                     }
 
                     // path is the index name
-                    if (range.isIndexed(_typeDesc)) {
-                        if (!range.isRelevantForAllIndexValuesOptimization())
+                    if (range.isIndexed(_typeDesc) || range.isUidsRange()) {
+                        if (!range.isRelevantForAllIndexValuesOptimization()  && !range.isUidsRange())
                             _allIndexValuesQuery = false;
                         IQueryIndexScanner indexScanner = range.getIndexScanner();
                         if (indexScanner != null) {
@@ -319,6 +319,8 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
     }
 
     private boolean isRangeIndexed(Range range) {
+        if (range.isUidsRange())
+            return true;
         if (range.getClass().equals(RelationRange.class)) {
             return range.isIndexed(_typeDesc);
         } else //noinspection SimplifiableIfStatement
@@ -407,18 +409,6 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
             if (customQueries == null)
                 customQueries = new ArrayList<ICustomQuery>();
 
-            //assign uid if exists - uid matching is not supported via custom query 
-            String idPropertyName = typeDesc.getIdPropertyName();
-            Range idRange = null;
-            if (idPropertyName != null && typeDesc.isAutoGenerateId()) {
-                idRange = _ranges.get(idPropertyName);
-
-                if (idRange != null) {
-                      _allIndexValuesQuery = false; //we use uid actually
-                      int propertyIndex = _typeDesc.getFixedPropertyPosition(idPropertyName);
-                      idRange.toEntryPacket(this, propertyIndex);
-                }
-            }
 
             //assign routing property so it can be used by the union packet
             String routingPropertyName = typeDesc.getRoutingPropertyName();
@@ -436,9 +426,7 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
             for (Map.Entry<String, Range> mapEntry : _ranges.entrySet()) {
                 Range range = mapEntry.getValue();
 
-                // don't add the id range since it was already set in the entry packet
-                //also the matching inside the space won't work because the id is auto generated
-                if (idRange != range && !range.isInternalRange())
+                if (!range.isInternalRange())
                     customQueries.add(mapEntry.getValue());
 
                 if (possibleCompoundSegments != null && range.suitableAsCompoundIndexSegment())
@@ -603,22 +591,6 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
 
         // merge the uids
         _multipleUids.retainAll(template.getMultipleUids());
-    }
-
-    protected void unionUids(QueryTemplatePacket template) {
-        // merge the uids
-        if (template.getMultipleUids() != null) {
-            if (_multipleUids == null)
-                _multipleUids = template.getMultipleUids();
-            else
-                _multipleUids.addAll(template.getMultipleUids());
-        }
-        //merge single uid
-        else if (template.getUID() != null) {
-            if (_multipleUids == null)
-                _multipleUids = new HashSet<String>();
-            _multipleUids.add(template.getUID());
-        }
     }
 
     /**

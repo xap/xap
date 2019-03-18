@@ -59,14 +59,9 @@ public class EqualValueRange extends SingleValueRange {
         // check for UID
         ITypeDesc typeDesc = e.getTypeDescriptor();
         String idPropertyName = typeDesc.getIdPropertyName();
-        if (idPropertyName != null && typeDesc.isAutoGenerateId() && typeDesc.getFixedProperty(index).getName().equals(idPropertyName)) {
-            e.setUID((String) getValue());
-        } else {
-
-            e.setFieldValue(index, getValue());
-            //noinspection deprecation
-            e.setExtendedMatchCode(index, TemplateMatchCodes.EQ);
-        }
+        e.setFieldValue(index, getValue());
+        //noinspection deprecation
+        e.setExtendedMatchCode(index, TemplateMatchCodes.EQ);
     }
 
     /* (non-Javadoc)

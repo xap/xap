@@ -707,6 +707,8 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
         MatchResult res = MatchResult.NONE;
         ITransactionalEntryData masterEntryData = null;
         IEntryData shadowEntryData = null;
+        if (getCustomQuery() != null && context != null)
+            context.setOnMatchUid(entry.getUID());
 
         //first- screen by uid if relevant , for in-place-update by id only current class is relevant (no inheritance)
         if (isChangeById() && !getServerTypeDesc().getTypeName().equals(entry.getServerTypeDesc().getTypeName()))

@@ -28,6 +28,7 @@ import com.j_spaces.kernel.IStoredList;
 import com.j_spaces.kernel.list.IObjectsList;
 import com.j_spaces.kernel.list.IScanListIterator;
 import com.j_spaces.kernel.list.MultiIntersectedStoredList;
+import com.j_spaces.kernel.list.ScanUidsIterator;
 
 import java.util.List;
 
@@ -77,6 +78,9 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
         IStoredList<IEntryCacheInfo> shortestPotentialMatchList = null;
         IScanListIterator<IEntryCacheInfo> shortestExtendedIndexMatch = null;
         MultiIntersectedStoredList<IEntryCacheInfo> intersectedList = null;   //if index intersection desired
+        ScanUidsIterator uidsIter = null;
+        int uidsSize = Integer.MAX_VALUE;
+
 
         IndexChoiceNode fatherNode = null;
         IndexChoiceNode choiceNode = null;
@@ -112,12 +116,22 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
 
             //check the return type - can be iterator
             if (result != null && result.isIterator()) {
+                boolean wasUids = uidsIter != null;
+                if (wasUids && !context.isIndicesIntersectionEnabled())
+                    continue; //uids iter wins over iters
+                if (!wasUids && queryIndex.isUidsScanner())
+                {
+                    uidsIter = (ScanUidsIterator)result;
+                    uidsSize = uidsIter.size();
+                }
                 if (context.isIndicesIntersectionEnabled())
                     intersectedList = addToIntersectedList(context, intersectedList, result, template.isFifoTemplate(), false/*shortest*/, typeData);
 
-                shortestExtendedIndexMatch = (IScanListIterator<IEntryCacheInfo>) result;
-                if(isExplainPlan){
-                    shortestIndexName = queryIndex.getIndexName();
+                if (!wasUids) {
+                    shortestExtendedIndexMatch = (IScanListIterator<IEntryCacheInfo>) result;
+                    if (isExplainPlan) {
+                        shortestIndexName = queryIndex.getIndexName();
+                    }
                 }
                 continue;
             }
@@ -146,7 +160,7 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
 
         }
 
-        if (shortestPotentialMatchList != null) {
+        if (shortestPotentialMatchList != null && (uidsSize == Integer.MAX_VALUE || shortestPotentialMatchList.size() <= uidsSize)) {
             if (context.isIndicesIntersectionEnabled()) {
                 intersectedList = addToIntersectedList(context, intersectedList, shortestPotentialMatchList, template.isFifoTemplate(), true/*shortest*/, typeData);
                 if (shortestExtendedIndexMatch != null)

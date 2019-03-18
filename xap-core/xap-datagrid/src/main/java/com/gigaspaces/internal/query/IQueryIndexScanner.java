@@ -69,5 +69,7 @@ public interface IQueryIndexScanner extends Externalizable
      */
     boolean supportsTemplateIndex();
 
+    boolean isUidsScanner();
+
     IObjectsList getIndexedEntriesByType(Context context, TypeData typeData, ITemplateHolder template, int latestIndexToConsider);
 }

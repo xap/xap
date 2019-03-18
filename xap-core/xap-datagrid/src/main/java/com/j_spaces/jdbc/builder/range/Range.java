@@ -262,6 +262,8 @@ public abstract class Range extends AbstractCustomQuery {
         this.function = function;
     }
 
+    public boolean isUidsRange() {return false;}
+
     @Override
     public void readExternal(ObjectInput in)
             throws IOException, ClassNotFoundException {

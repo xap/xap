@@ -157,4 +157,8 @@ public abstract class AbstractQueryIndex implements IQueryIndexScanner {
 
 
     protected abstract IObjectsList getEntriesByIndex(Context context, TypeData typeData, TypeDataIndex<Object> index, boolean fifoGroupsScan);
+
+    @Override
+    public boolean  isUidsScanner() {return false;}
+
 }

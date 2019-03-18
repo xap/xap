@@ -246,6 +246,8 @@ public class Context {
     private Boolean _optimizedBlobStoreReadEnabled;
     private boolean _inInitialLoad;
 
+    private String   _onMatchUid;
+
     public Context() {
     }
 
@@ -474,8 +476,18 @@ public class Context {
         _owningThreadName = null;
         _optimizedBlobStoreReadEnabled = null;
         _inInitialLoad = false;
+        _onMatchUid = null;
     }
 
+    public void setOnMatchUid(String uid)
+    {
+        _onMatchUid = uid;
+    }
+
+    public String getOnMatchUid()
+    {
+        return _onMatchUid;
+    }
     /**
      * @param syncReplFromMultipleOperation the m_SyncReplFromMultipleOperation to set
      */

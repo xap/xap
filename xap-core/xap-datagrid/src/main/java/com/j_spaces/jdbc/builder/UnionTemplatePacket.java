@@ -122,7 +122,6 @@ public class UnionTemplatePacket extends QueryTemplatePacket {
             QueryTemplatePacket result = new QueryTemplatePacket(packet);
 
             result.intersectRanges(template);
-            result.intersectUids(template);
 
             if (!result.isAlwaysEmpty())
                 optimizedPackets.add(result);
@@ -151,7 +150,6 @@ public class UnionTemplatePacket extends QueryTemplatePacket {
                 QueryTemplatePacket newPacket = new QueryTemplatePacket(packet);
 
                 newPacket.intersectRanges(packet2);
-                newPacket.intersectUids(packet2);
 
                 if (!newPacket.isAlwaysEmpty())
                     optimizedPackets.add(newPacket);
@@ -187,9 +185,6 @@ public class UnionTemplatePacket extends QueryTemplatePacket {
 
             addRouting(packet);
 
-            //uids are matched separately in matching - therefore the different treatment
-            unionUids(packet);
-
             if (packet.getCustomQuery() != null) {
                 subQueries.add(packet.getCustomQuery());
 
@@ -198,9 +193,6 @@ public class UnionTemplatePacket extends QueryTemplatePacket {
                 if (customIndexes != null && !customIndexes.isEmpty())
                     indexScanner.add(new CompoundAndIndexScanner(customIndexes));
             }
-        }
-        if (getMultipleUids() != null) {
-            setMultipleUIDs(getMultipleUids().toArray(new String[getMultipleUids().size()]));
         }
 
         //calc the routing of this packet - routing is set only if all the sub packets use the same routing

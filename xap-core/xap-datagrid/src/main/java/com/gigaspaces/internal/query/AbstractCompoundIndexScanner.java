@@ -47,6 +47,8 @@ public abstract class AbstractCompoundIndexScanner implements IQueryIndexScanner
         super();
         this.indexScanners = indexScanners;
     }
+    @Override
+    public boolean  isUidsScanner() {return false;}
 
     public void writeExternal(ObjectOutput out) throws IOException {
         IOUtils.writeObject(out, indexScanners);

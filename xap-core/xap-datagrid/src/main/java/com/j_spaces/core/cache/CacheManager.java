@@ -4347,7 +4347,7 @@ public class CacheManager extends AbstractCacheManager
             return null;
 
         // if there are no indexes on this class, do full-scan
-        if (!entryType.hasIndexes())
+        if (!entryType.hasIndexes() && (template.getCustomQuery() == null || template.getCustomQuery().getCustomIndexes() == null ||template.getCustomQuery().getCustomIndexes().isEmpty() ))
             return entryType.getEntries();
         int latestIndexToConsider = entryType.getLastIndexCreationNumber();
 
@@ -4384,10 +4384,11 @@ public class CacheManager extends AbstractCacheManager
         // get index for scan
         IStoredList<IEntryCacheInfo> resultSL = null;
         IScanListIterator<IEntryCacheInfo> resultOIS = null;
+        ScanUidsIterator uidsIter = null;
         final boolean ignoreOrderedIndexes = entryType.getEntries().size() < _minExtendedIndexActivationSize && !context.isBlobStoreUsePureIndexesAccess();
         context.setIntersectionEnablment(entryType.isBlobStoreClass() && !template.isFifoGroupPoll());
         MultiIntersectedStoredList<IEntryCacheInfo> intersectedList = null;   //if index intersection desired
-
+        int uidsSize =Integer.MAX_VALUE;
 
         final ICustomQuery customQuery = template.getCustomQuery();
         boolean indexUsed = false;
@@ -4418,14 +4419,21 @@ public class CacheManager extends AbstractCacheManager
 
                 //check the return type - can be extended iterator
                 if (result != null && result.isIterator()) {
-                    resultOIS = (IScanListIterator<IEntryCacheInfo>) result;
-                    if (context.isIndicesIntersectionEnabled()) {
-                        intersectedList = addToIntersectedList(context, intersectedList, resultOIS, template.isFifoTemplate(), false/*shortest*/, entryType);
-                    }
-                    // Log index usage
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.log(Level.FINEST, "EXTENDED-INDEX '" + index.getIndexName() + "' has been used for type [" +
-                                entryType.getClassName() + "]");
+                    if (uidsIter == null) {
+                        resultOIS = (IScanListIterator<IEntryCacheInfo>) result;
+                        if (index.isUidsScanner()) {
+                            uidsIter = (ScanUidsIterator) resultOIS;
+                            uidsSize = uidsIter.size();
+                        }
+
+                        if (context.isIndicesIntersectionEnabled()) {
+                            intersectedList = addToIntersectedList(context, intersectedList, resultOIS, template.isFifoTemplate(), false/*shortest*/, entryType);
+                        }
+                        // Log index usage
+                        if (_logger.isLoggable(Level.FINEST)) {
+                            _logger.log(Level.FINEST, "EXTENDED-INDEX '" + index.getIndexName() + "' has been used for type [" +
+                                    entryType.getClassName() + "]");
+                        }
                     }
                     continue;
                 }
@@ -4451,7 +4459,8 @@ public class CacheManager extends AbstractCacheManager
             }
         }
 
-        if (resultSL == null || resultSL.size() > MIN_SIZE_TO_PERFORM_EXPLICIT_PROPERTIES_INDEX_SCAN_
+        if (resultSL == null || (resultSL.size() > MIN_SIZE_TO_PERFORM_EXPLICIT_PROPERTIES_INDEX_SCAN_
+                && uidsSize > MIN_SIZE_TO_PERFORM_EXPLICIT_PROPERTIES_INDEX_SCAN_)
                 || (entryType.isBlobStoreClass() && resultSL != null && resultSL.size() > 0)) {
             final TypeDataIndex[] indexes = entryType.getIndexes();
             for (TypeDataIndex<Object> index : indexes) {
@@ -4564,6 +4573,8 @@ public class CacheManager extends AbstractCacheManager
 
                             if (context.isIndicesIntersectionEnabled())
                                 intersectedList = addToIntersectedList(context, intersectedList, resultOIS, template.isFifoTemplate(), false/*shortest*/, entryType);
+                            if (uidsSize != Integer.MAX_VALUE)
+                                resultOIS = originalOIS;
                         }
                         break; //evaluate
                 }//switch
@@ -4590,7 +4601,7 @@ public class CacheManager extends AbstractCacheManager
             return resultOIS;
         }
 
-        if (resultOIS == null || resultSL.size() < entryType.getEntries().size()) {
+        if (resultOIS == null || (resultSL.size() < entryType.getEntries().size() && (uidsSize == Integer.MAX_VALUE || resultSL.size() <= uidsSize))) {
             if (_logger.isLoggable(Level.FINEST))
                 logSearchCompoundSelection(entryType, resultSL, compound_selection, compound_name);
             if (context.isIndicesIntersectionEnabled()) {
