@@ -711,7 +711,6 @@ public class SystemProperties extends CommonSystemProperties {
     public static final String PERSISTENCY_STORE_DELETE_CURRENT_ON_DESTROY = "com.gs.persistency.delete_current_on_destroy";
 
     public static final String LICENSE_KEY = "com.gs.licensekey";
-    public static final String GET_BUILD_INFO = "com.gs.get-build";
 
     public static final String ENV_REPORT = "com.gs.env.report";
     public static final String DB_CONTAINER_NAME = "com.gs.container.name";
