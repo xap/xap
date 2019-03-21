@@ -83,10 +83,4 @@ public class CommonSystemProperties {
     public final static String SIGAR_ENABLED = "com.gs.sigar.enabled";
 
     public final static String KILL_RECURSIVE = "com.gs.process.kill-recursive";
-
-    /*
-    insightedge system properties
-     */
-    public final static String INCLUDE_SPARK_JARS_PROP = "com.gs.pu.classloader.include-spark";
-    public final static String INCLUDE_SPARK_JARS_DEFAULT = "true";
 }
