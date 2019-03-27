@@ -24,6 +24,10 @@ package com.gigaspaces;
 public class SpaceRuntimeException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
+    public SpaceRuntimeException(String message) {
+        super(message);
+    }
+
     public SpaceRuntimeException(String message, Throwable cause) {
         super(message, cause);
     }
