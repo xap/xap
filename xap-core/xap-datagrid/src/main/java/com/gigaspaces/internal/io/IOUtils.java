@@ -651,6 +651,37 @@ public class IOUtils {
         return map;
     }
 
+    public static <T> void writeMapRepetitiveKeys(ObjectOutput out,
+                                              Map<String, T> map) throws IOException {
+        if (map == null)
+            out.writeInt(-1);
+        else {
+            int length = map.size();
+            out.writeInt(length);
+            for (Entry<String, T> entry : map.entrySet()) {
+                writeRepetitiveString(out, entry.getKey());
+                writeObject(out, entry.getValue());
+            }
+        }
+    }
+
+    public static <T> Map<String, T> readMapRepetitiveKeys(ObjectInput in)
+            throws IOException, ClassNotFoundException {
+        Map<String, T> map = null;
+
+        int length = in.readInt();
+        if (length >= 0) {
+            map = new HashMap<>(length);
+            for (int i = 0; i < length; i++) {
+                String key = readRepetitiveString(in);
+                T value = readObject(in);
+                map.put(key, value);
+            }
+        }
+
+        return map;
+    }
+
 
     /**
      * Should only be used for objects that their class is known to SystemJars.DATA_GRID_JAR,
