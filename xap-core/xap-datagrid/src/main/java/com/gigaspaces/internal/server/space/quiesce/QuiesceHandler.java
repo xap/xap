@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -375,7 +376,11 @@ public class QuiesceHandler {
         // Todo: check this with a test
         if (isSuspendTypeChanged) {
             for (SuspendTypeChangedInternalListener listener : suspendTypeChangeListeners) {
-                listener.onSuspendTypeChanged(suspendInfo.getSuspendType());
+                try {
+                    listener.onSuspendTypeChanged(suspendInfo.getSuspendType());
+                } catch (Exception e) {
+                    _logger.log(Level.WARNING, "Failed to dispatch suspendInfo event to listener [" + listener +"]: " + e.getMessage(), e);
+                }
             }
         }
     }
