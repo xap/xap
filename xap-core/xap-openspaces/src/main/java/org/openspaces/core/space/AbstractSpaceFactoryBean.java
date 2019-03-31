@@ -531,7 +531,11 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
 
             for (SpaceStatusChangedEventListener listener : listeners) {
                 SpaceStatusChangedEvent event = new SpaceStatusChangedEvent(space, currentSuspendType, currentSpaceMode);
-                listener.onSpaceStatusChanged(event);
+                try {
+                    listener.onSpaceStatusChanged(event);
+                } catch (Exception e) {
+                    logger.warn("Failed to dispatch SpaceStatusChangedEvent to listener [" + listener +"]: " + e.getMessage(), e);
+                }
             }
         }
     }
