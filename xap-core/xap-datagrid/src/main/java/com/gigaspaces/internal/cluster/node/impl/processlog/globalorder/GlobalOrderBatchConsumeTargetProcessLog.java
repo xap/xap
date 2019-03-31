@@ -212,7 +212,7 @@ public class GlobalOrderBatchConsumeTargetProcessLog
         // the confirmed key
         int batchSize = packets.size();
         if (batchSize > 0 && lastDataPacketIndex < batchSize - 1) {
-            GlobalOrderDiscardedReplicationPacket packet = (GlobalOrderDiscardedReplicationPacket) packets.get(batchSize - 1);
+            IReplicationOrderedPacket packet = packets.get(batchSize - 1);
             _lastProcessedKey = packet.getEndKey();
         }
 
