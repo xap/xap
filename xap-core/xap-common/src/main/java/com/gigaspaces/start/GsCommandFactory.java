@@ -125,12 +125,12 @@ public class GsCommandFactory {
                 command.option("-XX:+AggressiveOpts");
             }
             command.option("-XX:+HeapDumpOnOutOfMemoryError");
-            if (JavaUtils.greaterOrEquals(9)) {
-                command.option("--add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED");
-                command.option("--add-modules=ALL-SYSTEM");
-            }
         } else if (vendor.startsWith("IBM ")) {
             command.option("-XX:MaxPermSize=256m");
+        }
+        if (JavaUtils.greaterOrEquals(9)) {
+            command.option("--add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED");
+            command.option("--add-modules=ALL-SYSTEM");
         }
 
         command.systemProperty("com.gs.home", SystemInfo.singleton().getXapHome());
