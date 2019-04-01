@@ -214,6 +214,14 @@ public class GlobalOrderBatchConsumeTargetProcessLog
         if (batchSize > 0 && lastDataPacketIndex < batchSize - 1) {
             IReplicationOrderedPacket packet = packets.get(batchSize - 1);
             _lastProcessedKey = packet.getEndKey();
+            if(!packet.isDiscardedPacket()){
+                StringBuilder logMsg = new StringBuilder("last packet in batch, assumed as discarded batch, is not a discarded packet\n");
+                logMsg.append("packets : \n");
+                for (IReplicationOrderedPacket p : packets) {
+                    logMsg.append(p).append("\n");
+                }
+                _specificLogger.warning(logMsg.toString());
+            }
         }
 
         return GlobalOrderProcessResult.OK;
