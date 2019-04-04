@@ -29,7 +29,7 @@ import java.rmi.UnmarshalException;
  * @since 7.1
  */
 @com.gigaspaces.api.InternalApi
-public class PlatformLogicalVersion implements Externalizable {
+public class PlatformLogicalVersion implements Externalizable, Comparable<PlatformLogicalVersion> {
     private static final long serialVersionUID = 1L;
     private static final byte SERIAL_VERSION = Byte.MIN_VALUE + 1;
 
@@ -68,9 +68,12 @@ public class PlatformLogicalVersion implements Externalizable {
         this((byte) majorVersion, (byte) minorVersion, (byte) servicePackVersion, buildNumber, subBuildNumber);
     }
 
-    public boolean exactEquals(PlatformLogicalVersion otherVersion) {
-        return this._buildNumber == otherVersion._buildNumber &&
-                this._subBuildNumber == otherVersion._subBuildNumber;
+    @Override
+    public int compareTo(PlatformLogicalVersion other) {
+        int code = Integer.compare(this._buildNumber, other._buildNumber);
+        if (code != 0)
+            return code;
+        return Integer.compare(this._subBuildNumber, other._subBuildNumber);
     }
 
     /**
@@ -79,11 +82,7 @@ public class PlatformLogicalVersion implements Externalizable {
      * @return true if this logical version is less than other ( < )
      */
     public boolean lessThan(PlatformLogicalVersion otherVersion) {
-        Boolean specialLessThan = specialLessThan(otherVersion);
-        if (specialLessThan != null)
-            return specialLessThan;
-
-        return (_buildNumber < otherVersion._buildNumber) || (_buildNumber == otherVersion._buildNumber && _subBuildNumber < otherVersion._subBuildNumber);
+        return compareTo(otherVersion) < 0;
     }
 
     /**
@@ -92,16 +91,8 @@ public class PlatformLogicalVersion implements Externalizable {
      * @return true if this logical version is greater or equals to the other ( >= )
      */
     public boolean greaterOrEquals(PlatformLogicalVersion otherVersion) {
-        return !lessThan(otherVersion);
+        return compareTo(otherVersion) >=0;
     }
-
-    /**
-     * Handle special cases of version, by default return null to mark a non special case
-     */
-    private Boolean specialLessThan(PlatformLogicalVersion otherVersion) {
-        return null;
-    }
-
 
     public void readExternal(ObjectInput in) throws IOException,
             ClassNotFoundException {
