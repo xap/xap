@@ -141,13 +141,6 @@ public class PlatformVersion {
         return instance.buildNumber;
     }
 
-    /**
-     * @return e.g. ga
-     */
-    public static String getMilestone() {
-        return instance.milestone;
-    }
-
     public static String getProductHelpUrl() {
         return instance.productHelpUrl;
     }
