@@ -925,15 +925,7 @@ public class SystemConfig {
     }
 
     public static String getVersionInfo() {
-        return "v" + getVersionNumber() + " Build " + getBuildNumber();
-    }
-
-    /**
-     * Get the build number from the PlatformVersion. If the PlatformVersion class cannot be loaded,
-     * and empty string is returned
-     */
-    public static String getBuildNumber() {
-        return PlatformVersion.getBuildNumber();
+        return "v" + getVersionNumber() + " Revision " + PlatformVersion.getRevision();
     }
 
     /**

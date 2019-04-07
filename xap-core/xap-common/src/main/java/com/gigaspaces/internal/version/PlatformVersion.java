@@ -17,9 +17,7 @@
 package com.gigaspaces.internal.version;
 
 import com.gigaspaces.logger.LoggerSystemInfo;
-import com.gigaspaces.start.Locator;
 import com.gigaspaces.start.ProductType;
-import com.gigaspaces.start.SystemInfo;
 
 import java.io.File;
 import java.io.InputStream;
