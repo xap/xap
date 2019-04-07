@@ -924,18 +924,6 @@ public class SystemConfig {
         return (svcDesc);
     }
 
-    public static String getVersionInfo() {
-        return "v" + getVersionNumber() + " Revision " + PlatformVersion.getRevision();
-    }
-
-    /**
-     * Get the version number from the PlatformVersion. If the PlatformVersion class cannot be
-     * loaded, and empty string is returned
-     */
-    public static String getVersionNumber() {
-        return PlatformVersion.getVersion();
-    }
-
     /**
      * Get the default host address
      */

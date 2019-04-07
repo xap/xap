@@ -31,7 +31,6 @@ public class PlatformVersion {
     private final String version;
     private final String milestone;
     private final String buildNumber;
-    private final String shortOfficialVersion;
     private final String officialVersion;
     private final byte majorVersion;
     private final byte minorVersion;
@@ -52,8 +51,7 @@ public class PlatformVersion {
         this.xapHome = LoggerSystemInfo.xapHome;
         this.productType = new File(xapHome+File.separator+ "insightedge").exists() ? ProductType.InsightEdge : ProductType.XAP;
 
-        shortOfficialVersion = productType.name() +" " + version + " " + milestone.toUpperCase();
-        officialVersion = "GigaSpaces " + shortOfficialVersion + " (build " + buildNumber + ", revision " + revision + ")";
+        officialVersion = "GigaSpaces " + productType.name() + " " + version + " " + milestone.toUpperCase() + " (build " + buildNumber + ", revision " + revision + ")";
 
         String[] versionTokens = version.split("\\.");
         majorVersion = Byte.parseByte(versionTokens[0]);
@@ -102,15 +100,15 @@ public class PlatformVersion {
         return minorVersion;
     }
 
-    public byte getServicePackVersion() {
+    byte getServicePackVersion() {
         return spVersion;
     }
 
-    public int getShortBuildNumber() {
+    int getShortBuildNumber() {
         return shortBuildNumber;
     }
 
-    public int getSubBuildNumber() {
+    int getSubBuildNumber() {
         return subBuildNumber;
     }
 
@@ -119,13 +117,6 @@ public class PlatformVersion {
      */
     public static String getOfficialVersion() {
         return instance.officialVersion;
-    }
-
-    /**
-     * @return XAP 8.0.6 GA
-     */
-    public static String getShortOfficialVersion() {
-        return instance.shortOfficialVersion;
     }
 
     /**
