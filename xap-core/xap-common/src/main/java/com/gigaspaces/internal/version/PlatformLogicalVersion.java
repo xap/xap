@@ -33,7 +33,7 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
     private static final long serialVersionUID = 1L;
     private static final byte SERIAL_VERSION = Byte.MIN_VALUE + 1;
 
-    private final static PlatformLogicalVersion LOGICAL_VERSION = new PlatformLogicalVersion(PlatformVersion.getInstance());
+    private final static PlatformLogicalVersion LOGICAL_VERSION = fromBuild(PlatformVersion.getInstance());
 
     private byte _majorVersion;
     private byte _minorVersion;
@@ -52,20 +52,24 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
     public PlatformLogicalVersion() {
     }
 
-    private PlatformLogicalVersion(PlatformVersion version) {
-        this(version.getMajorVersion(), version.getMinorVersion(), version.getServicePackVersion(), version.getShortBuildNumber(), version.getSubBuildNumber());
-    }
-
-    private PlatformLogicalVersion(byte majorVersion, byte minorVersion, byte servicePackVersion, int buildNumber, int subBuildNumber) {
-        _majorVersion = majorVersion;
-        _minorVersion = minorVersion;
-        _servicePackVersion = servicePackVersion;
+    private PlatformLogicalVersion(int majorVersion, int minorVersion, int servicePackVersion, int buildNumber, int subBuildNumber) {
+        _majorVersion = (byte) majorVersion;
+        _minorVersion = (byte) minorVersion;
+        _servicePackVersion = (byte) servicePackVersion;
         _buildNumber = buildNumber;
         _subBuildNumber = subBuildNumber;
     }
 
-    public PlatformLogicalVersion(int majorVersion, int minorVersion, int servicePackVersion, int buildNumber, int subBuildNumber) {
-        this((byte) majorVersion, (byte) minorVersion, (byte) servicePackVersion, buildNumber, subBuildNumber);
+    static PlatformLogicalVersion fromBuild(int majorVersion, int minorVersion, int servicePackVersion, int buildNumber) {
+        return fromBuild(majorVersion,  minorVersion, servicePackVersion, buildNumber, 0);
+    }
+
+    static PlatformLogicalVersion fromBuild(int majorVersion, int minorVersion, int servicePackVersion, int buildNumber, int subBuildNumber) {
+        return new PlatformLogicalVersion(majorVersion,  minorVersion, servicePackVersion, buildNumber, subBuildNumber);
+    }
+
+    private static PlatformLogicalVersion fromBuild(PlatformVersion version) {
+        return fromBuild(version.getMajorVersion(), version.getMinorVersion(), version.getServicePackVersion(), version.getShortBuildNumber(), version.getSubBuildNumber());
     }
 
     @Override
@@ -94,6 +98,7 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
         return compareTo(otherVersion) >=0;
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         byte version = in.readByte();
         if (version != SERIAL_VERSION)
@@ -109,6 +114,7 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
         _subBuildNumber = in.readInt();
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeByte(SERIAL_VERSION);
         write(out);
@@ -170,55 +176,55 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
     }
 
     //All marked version
-    //public static final PlatformLogicalVersion v7_1_1 = new PlatformLogicalVersion(7, 1, 1, 4500, 0);
-    //public static final PlatformLogicalVersion v7_1_2 = new PlatformLogicalVersion(7, 1, 2, 4601, 0);
-    //public static final PlatformLogicalVersion v7_1_3 = new PlatformLogicalVersion(7, 1, 3, 4670, 0);
-    //public static final PlatformLogicalVersion v7_1_4 = new PlatformLogicalVersion(7, 1, 4, 4750, 0);
-    //public static final PlatformLogicalVersion v8_0_0 = new PlatformLogicalVersion(8, 0, 0, 5000, 0);
-    //public static final PlatformLogicalVersion v8_0_1 = new PlatformLogicalVersion(8, 0, 1, 5200, 0);
-    //public static final PlatformLogicalVersion v8_0_2 = new PlatformLogicalVersion(8, 0, 2, 5400, 0);
-    //public static final PlatformLogicalVersion v8_0_3 = new PlatformLogicalVersion(8, 0, 3, 5600, 0);
-    //public static final PlatformLogicalVersion v8_0_4 = new PlatformLogicalVersion(8, 0, 4, 5800, 0);
-    //public static final PlatformLogicalVersion v8_0_5 = new PlatformLogicalVersion(8, 0, 5, 6000, 0);
-    //public static final PlatformLogicalVersion v8_0_5_PATCH1 = new PlatformLogicalVersion(8, 0, 5, 6010, 0);
-    //public static final PlatformLogicalVersion v8_0_6 = new PlatformLogicalVersion(8, 0, 6, 6200, 0);
-    //public static final PlatformLogicalVersion v8_0_7 = new PlatformLogicalVersion(8, 0, 7, 6350, 0);
-    //public static final PlatformLogicalVersion v8_0_8 = new PlatformLogicalVersion(8, 0, 8, 6380, 0);
-    //public static final PlatformLogicalVersion v9_0_0 = new PlatformLogicalVersion(9, 0, 0, 6500, 0);
-    //public static final PlatformLogicalVersion v9_0_1 = new PlatformLogicalVersion(9, 0, 1, 6700, 0);
-    //public static final PlatformLogicalVersion v9_0_2 = new PlatformLogicalVersion(9, 0, 2, 6900, 0);
-    public static final PlatformLogicalVersion v9_1_0 = new PlatformLogicalVersion(9, 1, 0, 7500, 0);
-    public static final PlatformLogicalVersion v9_1_1 = new PlatformLogicalVersion(9, 1, 1, 7700, 0);
-    public static final PlatformLogicalVersion v9_1_2 = new PlatformLogicalVersion(9, 1, 2, 7920, 0);
-    public static final PlatformLogicalVersion v9_5_0 = new PlatformLogicalVersion(9, 5, 0, 8500, 0);
-    public static final PlatformLogicalVersion v9_5_1 = new PlatformLogicalVersion(9, 5, 1, 8700, 0);
-    public static final PlatformLogicalVersion v9_5_2 = new PlatformLogicalVersion(9, 5, 2, 8900, 0);
-    public static final PlatformLogicalVersion v9_5_2_PATCH3 = new PlatformLogicalVersion(9, 5, 2, 8933, 0);
-    public static final PlatformLogicalVersion v9_6_0 = new PlatformLogicalVersion(9, 6, 0, 9500, 0);
-    public static final PlatformLogicalVersion v9_6_1 = new PlatformLogicalVersion(9, 6, 1, 9700, 0);
-    public static final PlatformLogicalVersion v9_6_2_PATCH3 = new PlatformLogicalVersion(9, 6, 2, 9930, 0);
-    public static final PlatformLogicalVersion v9_7_0 = new PlatformLogicalVersion(9, 7, 0, 10496, 0);
-    public static final PlatformLogicalVersion v9_7_1 = new PlatformLogicalVersion(9, 7, 1, 10800, 0);
-    public static final PlatformLogicalVersion v9_7_2 = new PlatformLogicalVersion(9, 7, 2, 11000, 0);
-    public static final PlatformLogicalVersion v10_0_0 = new PlatformLogicalVersion(10, 0, 0, 11600, 0);
-    public static final PlatformLogicalVersion v10_0_1 = new PlatformLogicalVersion(10, 0, 1, 11800, 0);
-    public static final PlatformLogicalVersion v10_1_0 = new PlatformLogicalVersion(10, 1, 0, 12600, 0);
-    public static final PlatformLogicalVersion v10_1_1 = new PlatformLogicalVersion(10, 1, 1, 12800, 0);
-    public static final PlatformLogicalVersion v10_2_0 = new PlatformLogicalVersion(10, 2, 0, 13800, 0);
-    public static final PlatformLogicalVersion v10_2_0_PATCH2 = new PlatformLogicalVersion(10, 2, 0, 13820, 0);
-    public static final PlatformLogicalVersion v11_0_0 = new PlatformLogicalVersion(11, 0, 0, 14800, 0);
-    public static final PlatformLogicalVersion v11_0_1 = new PlatformLogicalVersion(11, 0, 1, 14890, 0);
-    public static final PlatformLogicalVersion v12_0_0 = new PlatformLogicalVersion(12, 0, 0, 15790, 0);
-    public static final PlatformLogicalVersion v12_0_1 = new PlatformLogicalVersion(12, 0, 1, 16600, 0);
-    public static final PlatformLogicalVersion v12_1_0 = new PlatformLogicalVersion(12, 1, 0, 17000, 0);
-    public static final PlatformLogicalVersion v12_1_1 = new PlatformLogicalVersion(12, 1, 1, 17100, 0);
-    public static final PlatformLogicalVersion v12_2_0 = new PlatformLogicalVersion(12, 2, 0, 18000, 0);
-    public static final PlatformLogicalVersion v12_3_0 = new PlatformLogicalVersion(12, 3, 0, 19000, 0);
-    public static final PlatformLogicalVersion v12_3_0_PATCH4 = new PlatformLogicalVersion(12, 3, 0, 19040, 0);
-    public static final PlatformLogicalVersion v12_3_1 = new PlatformLogicalVersion(12, 3, 1, 19300, 0);
-    public static final PlatformLogicalVersion v14_0_0 = new PlatformLogicalVersion(14, 0, 0, 20000, 0);
-    public static final PlatformLogicalVersion v14_0_1 = new PlatformLogicalVersion(14, 0, 1, 20100, 0);
-    public static final PlatformLogicalVersion v14_2_0 = new PlatformLogicalVersion(14, 2, 0, 20400, 0);
+    //public static final PlatformLogicalVersion v7_1_1 = fromBuild(7, 1, 1, 4500);
+    //public static final PlatformLogicalVersion v7_1_2 = fromBuild(7, 1, 2, 4601);
+    //public static final PlatformLogicalVersion v7_1_3 = fromBuild(7, 1, 3, 4670);
+    //public static final PlatformLogicalVersion v7_1_4 = fromBuild(7, 1, 4, 4750);
+    //public static final PlatformLogicalVersion v8_0_0 = fromBuild(8, 0, 0, 5000);
+    //public static final PlatformLogicalVersion v8_0_1 = fromBuild(8, 0, 1, 5200);
+    //public static final PlatformLogicalVersion v8_0_2 = fromBuild(8, 0, 2, 5400);
+    //public static final PlatformLogicalVersion v8_0_3 = fromBuild(8, 0, 3, 5600);
+    //public static final PlatformLogicalVersion v8_0_4 = fromBuild(8, 0, 4, 5800);
+    //public static final PlatformLogicalVersion v8_0_5 = fromBuild(8, 0, 5, 6000);
+    //public static final PlatformLogicalVersion v8_0_5_PATCH1 = fromBuild(8, 0, 5, 6010);
+    //public static final PlatformLogicalVersion v8_0_6 = fromBuild(8, 0, 6, 6200);
+    //public static final PlatformLogicalVersion v8_0_7 = fromBuild(8, 0, 7, 6350);
+    //public static final PlatformLogicalVersion v8_0_8 = fromBuild(8, 0, 8, 6380);
+    //public static final PlatformLogicalVersion v9_0_0 = fromBuild(9, 0, 0, 6500);
+    //public static final PlatformLogicalVersion v9_0_1 = fromBuild(9, 0, 1, 6700);
+    //public static final PlatformLogicalVersion v9_0_2 = fromBuild(9, 0, 2, 6900);
+    public static final PlatformLogicalVersion v9_1_0 = fromBuild(9, 1, 0, 7500);
+    public static final PlatformLogicalVersion v9_1_1 = fromBuild(9, 1, 1, 7700);
+    public static final PlatformLogicalVersion v9_1_2 = fromBuild(9, 1, 2, 7920);
+    public static final PlatformLogicalVersion v9_5_0 = fromBuild(9, 5, 0, 8500);
+    public static final PlatformLogicalVersion v9_5_1 = fromBuild(9, 5, 1, 8700);
+    public static final PlatformLogicalVersion v9_5_2 = fromBuild(9, 5, 2, 8900);
+    public static final PlatformLogicalVersion v9_5_2_PATCH3 = fromBuild(9, 5, 2, 8933);
+    public static final PlatformLogicalVersion v9_6_0 = fromBuild(9, 6, 0, 9500);
+    public static final PlatformLogicalVersion v9_6_1 = fromBuild(9, 6, 1, 9700);
+    public static final PlatformLogicalVersion v9_6_2_PATCH3 = fromBuild(9, 6, 2, 9930);
+    public static final PlatformLogicalVersion v9_7_0 = fromBuild(9, 7, 0, 10496);
+    public static final PlatformLogicalVersion v9_7_1 = fromBuild(9, 7, 1, 10800);
+    public static final PlatformLogicalVersion v9_7_2 = fromBuild(9, 7, 2, 11000);
+    public static final PlatformLogicalVersion v10_0_0 = fromBuild(10, 0, 0, 11600);
+    public static final PlatformLogicalVersion v10_0_1 = fromBuild(10, 0, 1, 11800);
+    public static final PlatformLogicalVersion v10_1_0 = fromBuild(10, 1, 0, 12600);
+    public static final PlatformLogicalVersion v10_1_1 = fromBuild(10, 1, 1, 12800);
+    public static final PlatformLogicalVersion v10_2_0 = fromBuild(10, 2, 0, 13800);
+    public static final PlatformLogicalVersion v10_2_0_PATCH2 = fromBuild(10, 2, 0, 13820);
+    public static final PlatformLogicalVersion v11_0_0 = fromBuild(11, 0, 0, 14800);
+    public static final PlatformLogicalVersion v11_0_1 = fromBuild(11, 0, 1, 14890);
+    public static final PlatformLogicalVersion v12_0_0 = fromBuild(12, 0, 0, 15790);
+    public static final PlatformLogicalVersion v12_0_1 = fromBuild(12, 0, 1, 16600);
+    public static final PlatformLogicalVersion v12_1_0 = fromBuild(12, 1, 0, 17000);
+    public static final PlatformLogicalVersion v12_1_1 = fromBuild(12, 1, 1, 17100);
+    public static final PlatformLogicalVersion v12_2_0 = fromBuild(12, 2, 0, 18000);
+    public static final PlatformLogicalVersion v12_3_0 = fromBuild(12, 3, 0, 19000);
+    public static final PlatformLogicalVersion v12_3_0_PATCH4 = fromBuild(12, 3, 0, 19040);
+    public static final PlatformLogicalVersion v12_3_1 = fromBuild(12, 3, 1, 19300);
+    public static final PlatformLogicalVersion v14_0_0 = fromBuild(14, 0, 0, 20000);
+    public static final PlatformLogicalVersion v14_0_1 = fromBuild(14, 0, 1, 20100);
+    public static final PlatformLogicalVersion v14_2_0 = fromBuild(14, 2, 0, 20400);
     //DOCUMENT BACKWARD BREAKING CHANGES, EACH CHANGE IN A LINE
     //GS-XXXX: Short backward breaking description and classes
     //GS-7725: Partial update replication

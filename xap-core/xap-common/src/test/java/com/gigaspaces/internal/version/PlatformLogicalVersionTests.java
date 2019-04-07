@@ -9,9 +9,9 @@ public class PlatformLogicalVersionTests {
         byte major = 0;
         byte minor = 0;
         byte sp = 0;
-        PlatformLogicalVersion version1 = new PlatformLogicalVersion(major, minor, sp, 100, 0);
-        PlatformLogicalVersion version1_1 = new PlatformLogicalVersion(major, minor, sp, 100, 10);
-        PlatformLogicalVersion version2 = new PlatformLogicalVersion(major, minor, sp, 200, 0);
+        PlatformLogicalVersion version1 = PlatformLogicalVersion.fromBuild(major, minor, sp, 100);
+        PlatformLogicalVersion version1_1 = PlatformLogicalVersion.fromBuild(major, minor, sp, 100, 10);
+        PlatformLogicalVersion version2 = PlatformLogicalVersion.fromBuild(major, minor, sp, 200);
 
         Assert.assertEquals(0, version1.compareTo(version1));
         Assert.assertFalse(version1.lessThan(version1));
