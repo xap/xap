@@ -31,6 +31,7 @@ public class PlatformVersion {
     private final String version;
     private final String milestone;
     private final String buildNumber;
+    private final String id;
     private final String officialVersion;
     private final byte majorVersion;
     private final byte minorVersion;
@@ -40,7 +41,6 @@ public class PlatformVersion {
     private final String revision;
     private final String productHelpUrl;
     private final ProductType productType;
-    private final String xapHome;
 
     public PlatformVersion(Properties properties) {
         version = properties.getProperty("xap.version", "14.0.0");
@@ -48,10 +48,10 @@ public class PlatformVersion {
         buildNumber = properties.getProperty("xap.build.number", "19901-10");
         revision = properties.getProperty("xap.git.sha", "unspecified");
 
-        this.xapHome = LoggerSystemInfo.xapHome;
-        this.productType = new File(xapHome+File.separator+ "insightedge").exists() ? ProductType.InsightEdge : ProductType.XAP;
-
-        officialVersion = "GigaSpaces " + productType.name() + " " + version + " " + milestone.toUpperCase() + " (build " + buildNumber + ", revision " + revision + ")";
+        this.id = String.format("%s-%s-%s", version, milestone, buildNumber);
+        this.productType = isInsightEdge() ? ProductType.InsightEdge : ProductType.XAP;
+        officialVersion = String.format("GigaSpaces %s %s %s (build %s, revision %s)",
+                productType.name(), version, milestone.toUpperCase(), buildNumber, revision);
 
         String[] versionTokens = version.split("\\.");
         majorVersion = Byte.parseByte(versionTokens[0]);
@@ -63,6 +63,10 @@ public class PlatformVersion {
         subBuildNumber = buildNumberTokens.length == 1 ? 0 : Integer.parseInt(buildNumberTokens[1]);
 
         productHelpUrl = "https://docs.gigaspaces.com/" + majorVersion + "." + minorVersion;
+    }
+
+    private static boolean isInsightEdge() {
+        return new File(LoggerSystemInfo.xapHome + File.separator + "insightedge").exists();
     }
 
     public static PlatformVersion getInstance() {
@@ -112,6 +116,17 @@ public class PlatformVersion {
         return subBuildNumber;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @return e.g. 6191
+     */
+    public String getBuildNumber() {
+        return buildNumber;
+    }
+
     /**
      * @return GigaSpaces XAP 8.0.6 GA (build 6191)
      */
@@ -132,13 +147,6 @@ public class PlatformVersion {
      */
     public static String getRevision() {
         return instance.revision;
-    }
-
-    /**
-     * @return e.g. 6191
-     */
-    public static String getBuildNumber() {
-        return instance.buildNumber;
     }
 
     public static String getProductHelpUrl() {
