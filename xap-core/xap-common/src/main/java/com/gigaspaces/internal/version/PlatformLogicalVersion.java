@@ -80,6 +80,14 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
         return Integer.compare(this._subBuildNumber, other._subBuildNumber);
     }
 
+    public boolean samePatch(PlatformLogicalVersion other) {
+        return _majorVersion == other._majorVersion &&
+                _minorVersion == other._minorVersion &&
+                _servicePackVersion == other._servicePackVersion &&
+                _buildNumber == other._buildNumber &&
+                _subBuildNumber == other._subBuildNumber;
+    }
+
     /**
      * Returns true if this logical version is less than other ( < )
      *
@@ -132,7 +140,6 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
     public String toString() {
         return "" + _majorVersion + "." + _minorVersion + "." + _servicePackVersion + "." + _buildNumber + "-" + _subBuildNumber;
     }
-
 
     @Override
     public int hashCode() {

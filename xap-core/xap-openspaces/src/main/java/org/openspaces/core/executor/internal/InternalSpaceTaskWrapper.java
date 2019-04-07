@@ -101,7 +101,7 @@ public class InternalSpaceTaskWrapper<T extends Serializable> implements SpaceTa
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
         SupportCodeChangeAnnotationContainer supportCodeChangeAnnotationContainer = null;
-        if(version.equals(PlatformLogicalVersion.v10_2_0_PATCH2) /*equal to v10_2_0_PATCH2*/
+        if(version.samePatch(PlatformLogicalVersion.v10_2_0_PATCH2) /*equal to v10_2_0_PATCH2*/
                 ||
         (version.greaterOrEquals(PlatformLogicalVersion.v11_0_0) && (version.lessThan(PlatformLogicalVersion.v12_1_0)))) { /*11.0.0 <= version < 12.1*/
             boolean supportCodeChange = in.readBoolean();
