@@ -94,11 +94,14 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
         return compareTo(otherVersion) >=0;
     }
 
-    public void readExternal(ObjectInput in) throws IOException,
-            ClassNotFoundException {
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         byte version = in.readByte();
         if (version != SERIAL_VERSION)
             throw new UnmarshalException("Requested version [" + version + "] does not match local version [" + SERIAL_VERSION + "]. Please make sure you are using the same version on both ends, local version is " + PlatformVersion.getOfficialVersion());
+        read(in);
+    }
+
+    public void read(ObjectInput in) throws IOException {
         _majorVersion = in.readByte();
         _minorVersion = in.readByte();
         _servicePackVersion = in.readByte();
@@ -108,6 +111,10 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
 
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeByte(SERIAL_VERSION);
+        write(out);
+    }
+
+    public void write(ObjectOutput out) throws IOException {
         out.writeByte(_majorVersion);
         out.writeByte(_minorVersion);
         out.writeByte(_servicePackVersion);
@@ -160,27 +167,6 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
             return version1;
 
         return version2;
-    }
-
-
-    public byte getMajorVersion() {
-        return _majorVersion;
-    }
-
-    public byte getMinorVersion() {
-        return _minorVersion;
-    }
-
-    public byte getServicePackVersion() {
-        return _servicePackVersion;
-    }
-
-    public int getBuildNumber() {
-        return _buildNumber;
-    }
-
-    public int getSubBuildNumber() {
-        return _subBuildNumber;
     }
 
     //All marked version

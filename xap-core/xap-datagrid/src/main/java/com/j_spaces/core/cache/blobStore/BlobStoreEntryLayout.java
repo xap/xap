@@ -359,11 +359,7 @@ public class BlobStoreEntryLayout implements Externalizable {
             //platform version fields- we dont store the platform version as object to avoid
             //class info in each stream
             PlatformLogicalVersion version = PlatformLogicalVersion.getLogicalVersion();
-            out.writeByte(version.getMajorVersion());
-            out.writeByte(version.getMinorVersion());
-            out.writeByte(version.getServicePackVersion());
-            out.writeInt(version.getBuildNumber());
-            out.writeInt(version.getSubBuildNumber());
+            version.write(out);
         }
 
         out.writeUTF(_m_Uid);
@@ -510,8 +506,8 @@ public class BlobStoreEntryLayout implements Externalizable {
         if ((flags & FLAG_RECOVERABLE) == FLAG_RECOVERABLE) {
             _recoverable = true;
             //construct a logical version of the stored data- will be used when format changes
-            version = new PlatformLogicalVersion(in.readByte()/*majorversion*/, in.readByte()/*minorversion*/,
-                    in.readByte() /*servicepack*/, in.readInt()/*build number*/, in.readInt()/*subbuild*/);
+            version = new PlatformLogicalVersion();
+            version.read(in);
         }
         _m_Uid = in.readUTF();
 
