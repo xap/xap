@@ -80,7 +80,7 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
     @Override
     public int compareTo(PlatformLogicalVersion other) {
         int code;
-        if (_buildNumber >= LAST_BUILD_NUMBER) {
+        if (_buildNumber >= LAST_BUILD_NUMBER && _majorVersion >= 14) {
             if ((code = Integer.compare(this._majorVersion, other._majorVersion)) != 0)
                 return code;
             if ((code = Integer.compare(this._minorVersion, other._minorVersion)) != 0)

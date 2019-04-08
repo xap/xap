@@ -68,9 +68,7 @@ public class PlatformVersion {
     }
 
     private static void initProperties(Properties properties) {
-        StringBuilder sb = new StringBuilder(properties.getProperty(KEY_BUILD_NAME, ""));
-        if (sb.length() == 0 || sb.charAt(0) == '$')
-            sb = new StringBuilder("14.5.0-m1-ci-0");
+        StringBuilder sb = new StringBuilder(properties.getProperty(KEY_BUILD_NAME));
         String version = extractPrefix(sb, "-");
         String buildNum = tryExtractNumericSuffix(sb, "-").orElse(0).toString();
         String milestone = sb.toString();
