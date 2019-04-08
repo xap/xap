@@ -32,8 +32,9 @@ import java.rmi.UnmarshalException;
 public class PlatformLogicalVersion implements Externalizable, Comparable<PlatformLogicalVersion> {
     private static final long serialVersionUID = 1L;
     private static final byte SERIAL_VERSION = Byte.MIN_VALUE + 1;
+    private static final int LAST_BUILD_NUMBER = 30_000;
 
-    private final static PlatformLogicalVersion LOGICAL_VERSION = fromBuild(PlatformVersion.getInstance());
+    private final static PlatformLogicalVersion LOGICAL_VERSION = fromVersion(PlatformVersion.getInstance());
 
     private byte _majorVersion;
     private byte _minorVersion;
@@ -68,16 +69,28 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
         return new PlatformLogicalVersion(majorVersion,  minorVersion, servicePackVersion, buildNumber, subBuildNumber);
     }
 
-    private static PlatformLogicalVersion fromBuild(PlatformVersion version) {
-        return fromBuild(version.getMajorVersion(), version.getMinorVersion(), version.getServicePackVersion(), version.getShortBuildNumber(), version.getSubBuildNumber());
+    static PlatformLogicalVersion fromVersion(int majorVersion, int minorVersion, int servicePackVersion) {
+        return new PlatformLogicalVersion(majorVersion,  minorVersion, servicePackVersion, LAST_BUILD_NUMBER, 0);
+    }
+
+    private static PlatformLogicalVersion fromVersion(PlatformVersion version) {
+        return fromVersion(version.getMajorVersion(), version.getMinorVersion(), version.getServicePackVersion());
     }
 
     @Override
     public int compareTo(PlatformLogicalVersion other) {
-        int code = Integer.compare(this._buildNumber, other._buildNumber);
-        if (code != 0)
-            return code;
-        return Integer.compare(this._subBuildNumber, other._subBuildNumber);
+        int code;
+        if (_buildNumber >= LAST_BUILD_NUMBER) {
+            if ((code = Integer.compare(this._majorVersion, other._majorVersion)) != 0)
+                return code;
+            if ((code = Integer.compare(this._minorVersion, other._minorVersion)) != 0)
+                return code;
+            return Integer.compare(this._servicePackVersion, other._servicePackVersion);
+        } else {
+            if ((code = Integer.compare(this._buildNumber, other._buildNumber)) != 0)
+                return code;
+            return Integer.compare(this._subBuildNumber, other._subBuildNumber);
+        }
     }
 
     public boolean samePatch(PlatformLogicalVersion other) {
@@ -232,6 +245,8 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
     public static final PlatformLogicalVersion v14_0_0 = fromBuild(14, 0, 0, 20000);
     public static final PlatformLogicalVersion v14_0_1 = fromBuild(14, 0, 1, 20100);
     public static final PlatformLogicalVersion v14_2_0 = fromBuild(14, 2, 0, 20400);
+    /* Starting 14.5 build numbers are no longer used. */
+    public static final PlatformLogicalVersion v14_5_0 = fromVersion(14, 5, 0);
     //DOCUMENT BACKWARD BREAKING CHANGES, EACH CHANGE IN A LINE
     //GS-XXXX: Short backward breaking description and classes
     //GS-7725: Partial update replication

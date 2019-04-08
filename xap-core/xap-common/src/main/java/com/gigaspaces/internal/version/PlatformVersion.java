@@ -21,6 +21,7 @@ import com.gigaspaces.start.ProductType;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.logging.ErrorManager;
 
@@ -28,41 +29,82 @@ import java.util.logging.ErrorManager;
 public class PlatformVersion {
     private static final PlatformVersion instance = new PlatformVersion(getVersionPropertiesFromFile("com/gigaspaces/internal/version/PlatformVersion.properties"));
 
+    private static final String KEY_VERSION = "gs.version";
+    private static final String KEY_MILESTONE = "gs.milestone";
+    private static final String KEY_BUILD_NUMBER = "gs.build-number";
+    private static final String KEY_BUILD_NAME = "gs.build-name";
+
     private final String version;
-    private final String milestone;
     private final String buildNumber;
     private final String id;
     private final String officialVersion;
     private final byte majorVersion;
     private final byte minorVersion;
     private final byte spVersion;
-    private final int shortBuildNumber;
-    private final int subBuildNumber;
     private final String revision;
     private final String productHelpUrl;
     private final ProductType productType;
 
     public PlatformVersion(Properties properties) {
-        version = properties.getProperty("xap.version", "14.0.0");
-        milestone = properties.getProperty("xap.milestone", "m1");
-        buildNumber = properties.getProperty("xap.build.number", "19901-10");
-        revision = properties.getProperty("xap.git.sha", "unspecified");
+        initProperties(properties);
+        this.id = properties.getProperty(KEY_BUILD_NAME);
+        this.version = properties.getProperty(KEY_VERSION);
+        String milestone = properties.getProperty(KEY_MILESTONE);
+        this.buildNumber = properties.getProperty(KEY_BUILD_NUMBER);
+        this.revision = properties.getProperty("xap.git.sha", "unspecified");
 
-        this.id = String.format("%s-%s-%s", version, milestone, buildNumber);
         this.productType = isInsightEdge() ? ProductType.InsightEdge : ProductType.XAP;
-        officialVersion = String.format("GigaSpaces %s %s %s (build %s, revision %s)",
-                productType.name(), version, milestone.toUpperCase(), buildNumber, revision);
+        this.officialVersion = "GigaSpaces " + productType +
+                " " + version +
+                (milestone.isEmpty() ? "" : " " + milestone) +
+                (buildNumber.isEmpty() ? "" : "-" + buildNumber);
 
         String[] versionTokens = version.split("\\.");
         majorVersion = Byte.parseByte(versionTokens[0]);
         minorVersion = Byte.parseByte(versionTokens[1]);
         spVersion = Byte.parseByte(versionTokens[2]);
 
-        final String[] buildNumberTokens = buildNumber.split("-");
-        shortBuildNumber = Integer.parseInt(buildNumberTokens[0]);
-        subBuildNumber = buildNumberTokens.length == 1 ? 0 : Integer.parseInt(buildNumberTokens[1]);
-
         productHelpUrl = "https://docs.gigaspaces.com/" + majorVersion + "." + minorVersion;
+    }
+
+    private static void initProperties(Properties properties) {
+        StringBuilder sb = new StringBuilder(properties.getProperty(KEY_BUILD_NAME, ""));
+        if (sb.length() == 0 || sb.charAt(0) == '$')
+            sb = new StringBuilder("14.5.0-m1-ci-0");
+        String version = extractPrefix(sb, "-");
+        String buildNum = tryExtractNumericSuffix(sb, "-").orElse(0).toString();
+        String milestone = sb.toString();
+
+        properties.setProperty(KEY_VERSION, version);
+        properties.setProperty(KEY_BUILD_NUMBER, buildNum);
+        properties.setProperty(KEY_MILESTONE, milestone);
+    }
+
+    private static String extractPrefix(StringBuilder sb, String separator) {
+        int pos = sb.indexOf(separator);
+        String result;
+        if (pos == -1) {
+            result = sb.toString();
+            sb.delete(0, result.length());
+        } else {
+            result = sb.substring(0, pos);
+            sb.delete(0, result.length() + 1);
+        }
+        return result;
+    }
+
+    private static Optional<Integer> tryExtractNumericSuffix(StringBuilder sb, String separator) {
+        int pos = sb.lastIndexOf(separator);
+        if (pos == -1)
+            return Optional.empty();
+        String s = sb.substring(pos+separator.length());
+        try {
+            int num = Integer.parseInt(s);
+            sb.setLength(pos);
+            return Optional.of(num);
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
     }
 
     private static boolean isInsightEdge() {
@@ -106,14 +148,6 @@ public class PlatformVersion {
 
     byte getServicePackVersion() {
         return spVersion;
-    }
-
-    int getShortBuildNumber() {
-        return shortBuildNumber;
-    }
-
-    int getSubBuildNumber() {
-        return subBuildNumber;
     }
 
     public String getId() {
