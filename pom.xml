@@ -12,6 +12,7 @@
         <spring.security.version>4.2.8.RELEASE</spring.security.version>
         <junit.version>4.12</junit.version>
         <jetty.version>9.3.25.v20180904</jetty.version>
+        <gs.version>14.5.0</gs.version>
         <gs.build-name>14.5.0-m1-ci-0</gs.build-name>
         <gs.git-sha.xap>unspecified</gs.git-sha.xap>
         <xap.git.branch>master</xap.git.branch>
