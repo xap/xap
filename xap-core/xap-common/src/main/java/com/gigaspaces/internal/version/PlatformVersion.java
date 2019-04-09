@@ -51,7 +51,7 @@ public class PlatformVersion {
         this.version = properties.getProperty(KEY_VERSION);
         String milestone = properties.getProperty(KEY_MILESTONE);
         this.buildNumber = properties.getProperty(KEY_BUILD_NUMBER);
-        this.revision = properties.getProperty("xap.git.sha", "unspecified");
+        this.revision = properties.getProperty("gs.git-sha.xap", "unspecified");
 
         this.productType = isInsightEdge() ? ProductType.InsightEdge : ProductType.XAP;
         this.officialVersion = "GigaSpaces " + productType +
