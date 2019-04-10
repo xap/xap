@@ -110,12 +110,17 @@ public class ConcurrentSegmentedStoredList<T>
      * store an element
      */
     public IObjectInfo<T> add(T subject) {
-        return addImpl(subject);
+        return add(subject, null);
 
     }
 
+    public IObjectInfo<T> add(T subject, Object segmentHint) {
+        return addImpl(subject, segmentHint);
+    }
+
+
     public IObjectInfo<T> addUnlocked(T subject) {
-        return addImpl(subject);
+        return add(subject, null);
 
     }
 
@@ -124,7 +129,7 @@ public class ConcurrentSegmentedStoredList<T>
         return _segments[0].isSupportFifo();
     }
 
-    private IObjectInfo<T> addImpl(T subject) {
+    private IObjectInfo<T> addImpl(T subject, Object segmentHint) {
         int res = sizeUpdater.incrementAndGet(this);
         if (res < 0)// list was invalidated
         {
@@ -132,10 +137,20 @@ public class ConcurrentSegmentedStoredList<T>
             return null;
         }
 
-        //select a random segment to insert to
-        int seg = drawSegmentNumber(true /*add*/);
+        //select a segment to insert to
+        int seg = 0;
+        if(segmentHint == null || getNumSegments() == 1){
+            seg = drawSegmentNumber(true /*add*/);
+        } else {
+            seg = gwtSegmentByHint(segmentHint);
+        }
+
         StoredListChainSegment<T> segment = _segments[seg];
         return segment.add(subject);
+    }
+
+    private int gwtSegmentByHint(Object segmentHint) {
+        return (Math.abs(segmentHint.hashCode())) % getNumSegments();
     }
 
     /**
@@ -244,7 +259,7 @@ public class ConcurrentSegmentedStoredList<T>
      * establish a scan position. we select a random segment to start from
      */
     public IStoredListIterator<T> establishListScan(boolean randomScan) {
-        if (!randomScan &&  getNumSegments() > 1 && ! isSupportsFifoPerSegment() )
+        if (!randomScan && ! isSupportsFifoPerSegment() )
             throw new RuntimeException("establishListScan non-random scans not supported");
 
         SegmentedListIterator<T> slh = _SLHolderPool.get();

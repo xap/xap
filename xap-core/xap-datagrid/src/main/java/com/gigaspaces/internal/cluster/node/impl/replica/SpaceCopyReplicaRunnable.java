@@ -124,6 +124,7 @@ public class SpaceCopyReplicaRunnable
 
             // Get replica data
             Collection<ISpaceReplicaData> copiedData = result.getResult();
+
             // current stage is done
             if (copiedData == null || copiedData.isEmpty()) {
                 final int arrivalOrder = _orderProvider.getAndIncrement();
