@@ -86,6 +86,7 @@ public class EntryReplicaProducer
                 || replicationPolicy.isFullReplication();
 
         _context = _engine.getCacheManager().getCacheContext();
+        _context.setInMemoryRecovery(true);
 
         if (templatePacket == null) {
             templatePacket = new TemplatePacket();

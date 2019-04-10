@@ -246,6 +246,8 @@ public class Context {
     private Boolean _optimizedBlobStoreReadEnabled;
     private boolean _inInitialLoad;
 
+    private  boolean _inMemoryRecovery;
+
     public Context() {
     }
 
@@ -474,6 +476,7 @@ public class Context {
         _owningThreadName = null;
         _optimizedBlobStoreReadEnabled = null;
         _inInitialLoad = false;
+        _inMemoryRecovery = false;
     }
 
     /**
@@ -1216,5 +1219,13 @@ public class Context {
     public void setInInitialLoad(boolean val)
     {
         _inInitialLoad = val;
+    }
+
+    public boolean isInMemoryRecovery() {
+        return _inMemoryRecovery;
+    }
+
+    public void setInMemoryRecovery(boolean inMemoryRecovery) {
+        this._inMemoryRecovery = inMemoryRecovery;
     }
 }
