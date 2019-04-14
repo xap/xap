@@ -93,4 +93,8 @@ public abstract class AbstractEntryReplicaData extends AbstractReplicaData {
         return "EntryReplicaData " + _entryPacket;
     }
 
+    @Override
+    public boolean isEntryReplicaData() {
+        return true;
+    }
 }

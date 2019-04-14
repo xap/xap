@@ -518,6 +518,7 @@ public class ReplicationNode
     public ISpaceSynchronizeReplicaState spaceSynchronizeReplicaRequest(
             ISpaceSynchronizeReplicaRequestContext context) {
         SpaceSynchronizeReplicaRequestContext replicaContext = (SpaceSynchronizeReplicaRequestContext) context;
+        _replicaHandler.initFifoBatchesHandler();
         if (_loggerReplica.isLoggable(Level.FINE))
             _loggerReplica.fine(getLogPrefix()
                     + "starting space synchronization replica process using Url "
@@ -1040,5 +1041,9 @@ public class ReplicationNode
 
     public MetricRegistrator getMetricRegister() {
         return metricRegister;
+    }
+
+    public ReplicationNodeReplicaHandler getReplicaHandler() {
+        return _replicaHandler;
     }
 }

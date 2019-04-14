@@ -142,14 +142,14 @@ public class ConcurrentSegmentedStoredList<T>
         if(segmentHint == null || getNumSegments() == 1){
             seg = drawSegmentNumber(true /*add*/);
         } else {
-            seg = gwtSegmentByHint(segmentHint);
+            seg = getSegmentByHint(segmentHint);
         }
 
         StoredListChainSegment<T> segment = _segments[seg];
         return segment.add(subject);
     }
 
-    private int gwtSegmentByHint(Object segmentHint) {
+    private int getSegmentByHint(Object segmentHint) {
         return (Math.abs(segmentHint.hashCode())) % getNumSegments();
     }
 
@@ -259,7 +259,7 @@ public class ConcurrentSegmentedStoredList<T>
      * establish a scan position. we select a random segment to start from
      */
     public IStoredListIterator<T> establishListScan(boolean randomScan) {
-        if (!randomScan && ! isSupportsFifoPerSegment() )
+        if (!randomScan &&  getNumSegments() > 1 && ! isSupportsFifoPerSegment())
             throw new RuntimeException("establishListScan non-random scans not supported");
 
         SegmentedListIterator<T> slh = _SLHolderPool.get();

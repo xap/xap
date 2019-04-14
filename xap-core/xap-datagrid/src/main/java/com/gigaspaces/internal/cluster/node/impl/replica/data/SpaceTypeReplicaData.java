@@ -73,6 +73,11 @@ public class SpaceTypeReplicaData
         return false;
     }
 
+    @Override
+    public boolean isEntryReplicaData() {
+        return false;
+    }
+
     public IReplicationFilterEntry toFilterEntry(SpaceTypeManager typeManager) {
         throw new UnsupportedOperationException();
     }
