@@ -12,10 +12,8 @@
         <spring.security.version>4.2.8.RELEASE</spring.security.version>
         <junit.version>4.12</junit.version>
         <jetty.version>9.3.25.v20180904</jetty.version>
-        <xap.version>14.5.0</xap.version>
-        <xap.milestone>m1</xap.milestone>
-        <xap.build.number>20201-10</xap.build.number>
-        <xap.git.sha>unspecified</xap.git.sha>
+        <gs.build-name>14.5.0-m1-ci-0</gs.build-name>
+        <gs.git-sha.xap>unspecified</gs.git-sha.xap>
         <xap.git.branch>master</xap.git.branch>
         <xap.release.arguments />
         <javadoc.jar.name>xap-open</javadoc.jar.name>

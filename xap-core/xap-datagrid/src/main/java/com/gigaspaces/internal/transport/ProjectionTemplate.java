@@ -89,7 +89,7 @@ public class ProjectionTemplate extends AbstractProjectionTemplate {
 
         final PlatformLogicalVersion endpointVersion = LRMIInvocationContext.getEndpointLogicalVersion();
         if (endpointVersion.greaterOrEquals(PlatformLogicalVersion.v9_7_0) ||
-                endpointVersion.samePatch(PlatformLogicalVersion.v9_6_2_PATCH3)) {
+                endpointVersion.patchSameOrGreater(PlatformLogicalVersion.v9_6_2_PATCH3)) {
             IOUtils.writeRepetitiveStringArray(out, _fixedPaths);
             IOUtils.writeRepetitiveStringArray(out, _dynamicPaths);
         } else {
@@ -106,7 +106,7 @@ public class ProjectionTemplate extends AbstractProjectionTemplate {
         _dynamicProperties = IOUtils.readRepetitiveStringArray(in);
         final PlatformLogicalVersion endpointVersion = LRMIInvocationContext.getEndpointLogicalVersion();
         if (endpointVersion.greaterOrEquals(PlatformLogicalVersion.v9_7_0) ||
-                endpointVersion.samePatch(PlatformLogicalVersion.v9_6_2_PATCH3)) {
+                endpointVersion.patchSameOrGreater(PlatformLogicalVersion.v9_6_2_PATCH3)) {
             _fixedPaths = IOUtils.readRepetitiveStringArray(in);
             _dynamicPaths = IOUtils.readRepetitiveStringArray(in);
         }
