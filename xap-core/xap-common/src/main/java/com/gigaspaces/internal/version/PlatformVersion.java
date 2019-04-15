@@ -28,41 +28,45 @@ import java.util.logging.ErrorManager;
 public class PlatformVersion {
     private static final PlatformVersion instance = new PlatformVersion(getVersionPropertiesFromFile("com/gigaspaces/internal/version/PlatformVersion.properties"));
 
-    private final String version;
-    private final String milestone;
-    private final String buildNumber;
     private final String id;
+    private final String version;
     private final String officialVersion;
     private final byte majorVersion;
     private final byte minorVersion;
     private final byte spVersion;
-    private final int shortBuildNumber;
-    private final int subBuildNumber;
     private final String revision;
     private final String productHelpUrl;
     private final ProductType productType;
+    private final String patchId;
+    private final int patchNumber;
 
     public PlatformVersion(Properties properties) {
-        version = properties.getProperty("xap.version", "14.0.0");
-        milestone = properties.getProperty("xap.milestone", "m1");
-        buildNumber = properties.getProperty("xap.build.number", "19901-10");
-        revision = properties.getProperty("xap.git.sha", "unspecified");
-
-        this.id = String.format("%s-%s-%s", version, milestone, buildNumber);
+        this.id = properties.getProperty("gs.build-name");
+        this.revision = properties.getProperty("gs.git-sha.xap", "unspecified");
+        this.version = extractPrefix(id, "-");
         this.productType = isInsightEdge() ? ProductType.InsightEdge : ProductType.XAP;
-        officialVersion = String.format("GigaSpaces %s %s %s (build %s, revision %s)",
-                productType.name(), version, milestone.toUpperCase(), buildNumber, revision);
+        this.officialVersion = "GigaSpaces " + productType + " " + id;
+
+        String[] patchTokens = extractPatchTokens(this.id, this.version);
+        this.patchId = patchTokens[0];
+        this.patchNumber = Integer.parseInt(patchTokens[1]);
 
         String[] versionTokens = version.split("\\.");
         majorVersion = Byte.parseByte(versionTokens[0]);
         minorVersion = Byte.parseByte(versionTokens[1]);
         spVersion = Byte.parseByte(versionTokens[2]);
 
-        final String[] buildNumberTokens = buildNumber.split("-");
-        shortBuildNumber = Integer.parseInt(buildNumberTokens[0]);
-        subBuildNumber = buildNumberTokens.length == 1 ? 0 : Integer.parseInt(buildNumberTokens[1]);
-
         productHelpUrl = "https://docs.gigaspaces.com/" + majorVersion + "." + minorVersion;
+    }
+
+    private static String extractPrefix(String s, String separator) {
+        int pos = s.indexOf(separator);
+        return pos == -1 ? s : s.substring(0, pos);
+    }
+
+    private static String[] extractPatchTokens(String id, String version) {
+        String prefix = version + "-patch-";
+        return id.startsWith(prefix) ? id.replace(prefix, "").split("-") : new String[] {"", "0"};
     }
 
     private static boolean isInsightEdge() {
@@ -108,23 +112,16 @@ public class PlatformVersion {
         return spVersion;
     }
 
-    int getShortBuildNumber() {
-        return shortBuildNumber;
+    String getPatchId() {
+        return patchId;
     }
 
-    int getSubBuildNumber() {
-        return subBuildNumber;
+    int getPatchNumber() {
+        return patchNumber;
     }
 
     public String getId() {
         return id;
-    }
-
-    /**
-     * @return e.g. 6191
-     */
-    public String getBuildNumber() {
-        return buildNumber;
     }
 
     /**
