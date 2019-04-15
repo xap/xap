@@ -37,6 +37,8 @@ public class PlatformVersion {
     private final String revision;
     private final String productHelpUrl;
     private final ProductType productType;
+    private final String patchId;
+    private final int patchNumber;
 
     public PlatformVersion(Properties properties) {
         this.id = properties.getProperty("gs.build-name");
@@ -44,6 +46,10 @@ public class PlatformVersion {
         this.version = extractPrefix(id, "-");
         this.productType = isInsightEdge() ? ProductType.InsightEdge : ProductType.XAP;
         this.officialVersion = "GigaSpaces " + productType + " " + id;
+
+        String[] patchTokens = extractPatchTokens(this.id, this.version);
+        this.patchId = patchTokens[0];
+        this.patchNumber = Integer.parseInt(patchTokens[1]);
 
         String[] versionTokens = version.split("\\.");
         majorVersion = Byte.parseByte(versionTokens[0]);
@@ -56,6 +62,11 @@ public class PlatformVersion {
     private static String extractPrefix(String s, String separator) {
         int pos = s.indexOf(separator);
         return pos == -1 ? s : s.substring(0, pos);
+    }
+
+    private static String[] extractPatchTokens(String id, String version) {
+        String prefix = version + "-patch-";
+        return id.startsWith(prefix) ? id.replace(prefix, "").split("-") : new String[] {"", "0"};
     }
 
     private static boolean isInsightEdge() {
@@ -99,6 +110,14 @@ public class PlatformVersion {
 
     byte getServicePackVersion() {
         return spVersion;
+    }
+
+    String getPatchId() {
+        return patchId;
+    }
+
+    int getPatchNumber() {
+        return patchNumber;
     }
 
     public String getId() {

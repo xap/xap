@@ -70,11 +70,16 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
     }
 
     static PlatformLogicalVersion fromVersion(int majorVersion, int minorVersion, int servicePackVersion) {
-        return new PlatformLogicalVersion(majorVersion,  minorVersion, servicePackVersion, LAST_BUILD_NUMBER, 0);
+        return fromVersion(majorVersion,  minorVersion, servicePackVersion, "", 0);
+    }
+
+    static PlatformLogicalVersion fromVersion(int majorVersion, int minorVersion, int servicePackVersion, String patchId, int patchNum) {
+        return new PlatformLogicalVersion(majorVersion,  minorVersion, servicePackVersion, LAST_BUILD_NUMBER + patchNum, patchId.hashCode());
     }
 
     private static PlatformLogicalVersion fromVersion(PlatformVersion version) {
-        return fromVersion(version.getMajorVersion(), version.getMinorVersion(), version.getServicePackVersion());
+        return fromVersion(version.getMajorVersion(), version.getMinorVersion(), version.getServicePackVersion(),
+                version.getPatchId(), version.getPatchNumber());
     }
 
     @Override
@@ -93,12 +98,12 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
         }
     }
 
-    public boolean samePatch(PlatformLogicalVersion other) {
+    public boolean patchSameOrGreater(PlatformLogicalVersion other) {
         return _majorVersion == other._majorVersion &&
                 _minorVersion == other._minorVersion &&
                 _servicePackVersion == other._servicePackVersion &&
-                _buildNumber == other._buildNumber &&
-                _subBuildNumber == other._subBuildNumber;
+                _subBuildNumber == other._subBuildNumber && // Patch ID
+                _buildNumber >= other._buildNumber;         // Patch Number
     }
 
     /**
