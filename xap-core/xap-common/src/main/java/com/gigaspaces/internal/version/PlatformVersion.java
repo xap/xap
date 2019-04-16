@@ -35,6 +35,7 @@ public class PlatformVersion {
     private final byte minorVersion;
     private final byte spVersion;
     private final String tag;
+    private final Properties shas;
     private final String revision;
     private final String productHelpUrl;
     private final ProductType productType;
@@ -43,11 +44,12 @@ public class PlatformVersion {
 
     public PlatformVersion(Properties properties) {
         this.id = properties.getProperty("gs.build-name");
-        this.tag = properties.getProperty("gs.git-tag", "unspecified");
-        this.revision = properties.getProperty("gs.git-sha.xap", "unspecified");
         this.version = extractPrefix(id, "-");
         this.productType = isInsightEdge() ? ProductType.InsightEdge : ProductType.XAP;
         this.officialVersion = "GigaSpaces " + productType + " " + id;
+        this.tag = properties.getProperty("gs.git-tag");
+        this.shas = extractPropertiesByPrefix(properties, "gs.git-sha.");
+        this.revision = initRevision(tag, shas);
 
         String[] patchTokens = extractPatchTokens(this.id, this.version);
         this.patchId = patchTokens[0];
@@ -73,6 +75,20 @@ public class PlatformVersion {
 
     private static boolean isInsightEdge() {
         return new File(LoggerSystemInfo.xapHome + File.separator + "insightedge").exists();
+    }
+
+    private static String initRevision(String tag, Properties shas) {
+        if (tag != null && !tag.equals("Unspecified"))
+            return tag;
+        return !shas.isEmpty() ? shas.toString() : "unknown";
+    }
+
+    private static Properties extractPropertiesByPrefix(Properties properties, String prefix) {
+        Properties result = new Properties();
+        properties.entrySet().stream()
+                .filter(p -> p.getKey().toString().startsWith(prefix))
+                .forEach(p -> result.put(p.getKey().toString().substring(prefix.length()), p.getValue()));
+        return result;
     }
 
     public static PlatformVersion getInstance() {
