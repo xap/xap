@@ -13,6 +13,7 @@
         <junit.version>4.12</junit.version>
         <jetty.version>9.3.25.v20180904</jetty.version>
         <gs.build-name>14.5.0-m1-ci-0</gs.build-name>
+        <gs.git-tag>Unspecified</gs.git-tag>
         <gs.git-sha.xap>unspecified</gs.git-sha.xap>
         <xap.git.branch>master</xap.git.branch>
         <xap.release.arguments />

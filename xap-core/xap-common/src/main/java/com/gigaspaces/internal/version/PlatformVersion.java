@@ -34,6 +34,7 @@ public class PlatformVersion {
     private final byte majorVersion;
     private final byte minorVersion;
     private final byte spVersion;
+    private final String tag;
     private final String revision;
     private final String productHelpUrl;
     private final ProductType productType;
@@ -42,6 +43,7 @@ public class PlatformVersion {
 
     public PlatformVersion(Properties properties) {
         this.id = properties.getProperty("gs.build-name");
+        this.tag = properties.getProperty("gs.git-tag", "unspecified");
         this.revision = properties.getProperty("gs.git-sha.xap", "unspecified");
         this.version = extractPrefix(id, "-");
         this.productType = isInsightEdge() ? ProductType.InsightEdge : ProductType.XAP;
