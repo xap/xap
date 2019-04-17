@@ -18,7 +18,7 @@ public class SpaceReplicaFifoBatchesHandler {
 
     private final ReplicationNode replicationNode;
     private final Logger logger = Logger.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
-    private TreeMap<Integer, SpaceReplicaBatch> pendingBatches = new TreeMap<Integer, SpaceReplicaBatch>();
+    private final TreeMap<Integer, SpaceReplicaBatch> pendingBatches = new TreeMap<Integer, SpaceReplicaBatch>();
     private int lastProcessed = 0;
     private final Object lock = new Object();
 

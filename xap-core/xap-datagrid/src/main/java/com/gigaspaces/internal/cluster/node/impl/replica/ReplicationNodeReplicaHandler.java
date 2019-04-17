@@ -71,7 +71,7 @@ public class ReplicationNodeReplicaHandler {
     private volatile DirectPersistencyBackupSyncIteratorHandler _directPersistencyBackupSyncIteratorHandler;
     private final ReentrantLock _lock;
     private final SpaceEngine _spaceEngine;
-    private SpaceReplicaFifoBatchesHandler _fifoBatchesHandler;
+    private volatile SpaceReplicaFifoBatchesHandler _fifoBatchesHandler;
 
 
     public ReplicationNodeReplicaHandler(
