@@ -5,6 +5,9 @@ import com.gigaspaces.logger.Constants;
 import picocli.CommandLine;
 import picocli.CommandLine.*;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +34,15 @@ public class CliExecutor {
         }
         System.out.println();
         System.exit(exitCode);
+    }
+
+    public static void generateAutoComplete(Object mainCommand, String[] args) throws IOException {
+        CommandLine commandLine = toCommandLine(mainCommand);
+        String alias = args.length != 0 ? args[0] : commandLine.getCommandName();
+        String generatedScript = picocli.AutoComplete.bash(alias, commandLine);
+        try (FileWriter scriptWriter = new FileWriter(new File(alias + "-autocomplete"))) {
+            scriptWriter.write(generatedScript);
+        }
     }
 
     private static int handleException(Exception e) {
