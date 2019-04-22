@@ -20,6 +20,8 @@
             <outputDirectory>product/tools/cli</outputDirectory>
             <includes>
                 <include>info.picocli:picocli</include>
+                <include>org.jline:jline</include>
+                <include>net.java.dev.jna:jna</include>
             </includes>
         </dependencySet>
     </dependencySets>
