@@ -24,20 +24,21 @@ import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersist
 import com.gigaspaces.internal.cluster.node.impl.filters.ISpaceCopyReplicaOutFilter;
 import com.gigaspaces.internal.cluster.node.impl.groups.IReplicationSourceGroup;
 import com.gigaspaces.internal.cluster.node.impl.packets.ReplicaRequestPacket;
+import com.gigaspaces.internal.cluster.node.impl.replica.data.AbstractEntryReplicaData;
 import com.gigaspaces.internal.cluster.node.replica.SpaceCopyReplicaParameters;
 import com.gigaspaces.internal.extension.XapExtensions;
+import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.utils.collections.CopyOnUpdateMap;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.time.SystemTime;
-import com.j_spaces.core.LeaseManager;
+import com.j_spaces.core.cache.CacheManager;
+import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cluster.IReplicationFilterEntry;
 import com.j_spaces.kernel.SystemProperties;
-import com.gigaspaces.internal.cluster.node.impl.replica.SpaceReplicaDataProducerBuilder;
 
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -70,6 +71,7 @@ public class ReplicationNodeReplicaHandler {
     private volatile DirectPersistencyBackupSyncIteratorHandler _directPersistencyBackupSyncIteratorHandler;
     private final ReentrantLock _lock;
     private final SpaceEngine _spaceEngine;
+    private volatile SpaceReplicaFifoBatchesHandler _fifoBatchesHandler;
 
 
     public ReplicationNodeReplicaHandler(
@@ -241,7 +243,8 @@ public class ReplicationNodeReplicaHandler {
                 }
             };
 
-            ArrayList<ISpaceReplicaData> result = new ArrayList<ISpaceReplicaData>(batchSize);
+            SpaceReplicaBatch result = new SpaceReplicaBatch(batchSize);
+            boolean isFifoBatch = false;
             while (result.size() < batchSize) {
                 ISpaceReplicaData data = replicaData.getProducer().produceNextData(syncCallback);
                 if (data == null)
@@ -257,19 +260,41 @@ public class ReplicationNodeReplicaHandler {
                 }
                 // We add a packet to the batch
                 result.add(data);
+                if(!isFifoBatch){
+                    isFifoBatch = isFifoType(data);
+                }
+
             }
 
+
+            if(isFifoBatch){
+                result.setFifoId(replicaData.nextFifoBatchId());
+            }
 
             if (!result.isEmpty() && _logger.isLoggable(Level.FINEST))
                 _logger.finest(_replicationNode.getLogPrefix()
                         + "context [" + context
                         + "] returning batch " + result);
+
             return result;
         }
         finally
         {
             _lock.unlock();
         }
+    }
+
+    private boolean isFifoType(ISpaceReplicaData data) {
+        if(data.isEntryReplicaData()) {
+            CacheManager cacheManager = _spaceEngine.getCacheManager();
+
+            IServerTypeDesc serverTypeDesc = cacheManager.getTypeManager()
+                    .getServerTypeDesc(((AbstractEntryReplicaData) data).getEntryPacket().getTypeName());
+
+            TypeData typeData = cacheManager.getTypeData(serverTypeDesc);
+            return typeData.isFifoSupport() || (typeData.getFifoGroupingIndex() != null);
+        }
+        return false;
     }
 
     private ReplicaRequestData getReplicaContext(Object context) {
@@ -412,12 +437,31 @@ public class ReplicationNodeReplicaHandler {
         this._directPersistencyBackupSyncIteratorHandler = _directPersistencyBackupSyncIteratorHandler;
     }
 
+    public SpaceReplicaFifoBatchesHandler getFifoBatchesHandler() {
+        return _fifoBatchesHandler;
+    }
+
+    public void initFifoBatchesHandler() {
+        this._fifoBatchesHandler = new SpaceReplicaFifoBatchesHandler(_replicationNode);
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.fine(_replicationNode.getLogPrefix() + "created fifoBatchesHandler");
+        }
+    }
+
+    public void clearFifoBatchesHandler() {
+        this._fifoBatchesHandler = null;
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.fine(_replicationNode.getLogPrefix() + "cleared fifoBatchesHandler");
+        }
+    }
+
     private static class ReplicaRequestData {
         private final String _groupName;
         private final String _originLookupName;
         private final ISpaceReplicaDataProducer<? extends ISpaceReplicaData> _producer;
         private final boolean _synchronizeReplica;
         private volatile long _lastTouched;
+        private int _fifoIdGenerator = 0;
 
         public ReplicaRequestData(
                 String groupName,
@@ -453,6 +497,10 @@ public class ReplicationNodeReplicaHandler {
 
         public boolean isSynchronizeReplica() {
             return _synchronizeReplica;
+        }
+
+        public int nextFifoBatchId() {
+            return ++_fifoIdGenerator;
         }
 
         @Override

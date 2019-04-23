@@ -122,10 +122,9 @@ public class SpaceCopyReplicaRunnable
                 throw result.getException();
             }
 
-            // Get replica data
-            Collection<ISpaceReplicaData> copiedData = result.getResult();
+
             // current stage is done
-            if (copiedData == null || copiedData.isEmpty()) {
+            if (result.getResult() == null || result.getResult().isEmpty()) {
                 final int arrivalOrder = _orderProvider.getAndIncrement();
                 if (arrivalOrder < _orderProvider.getMaxValue())
                     return;
@@ -162,31 +161,52 @@ public class SpaceCopyReplicaRunnable
                     _state.signalEntireCopyStageDoneSucessfully();
                 }
             } else {
-                _lastIterationTimeStamp = SystemTime.timeMillis();
-                // Consume data
-                if (_replicationNode.getBlobStoreReplicaConsumeHelper() != null && copiedData.size() > 1)
-                    _replicationNode.getBlobStoreReplicaConsumeHelper().prepareForBulking();
-                try {
-                    for (ISpaceReplicaData data : copiedData) {
-                        if (_isFiltered && data.supportsReplicationFilter()) {
-                            IReplicationFilterEntry filterEntry = _replicaDataProducer.toFilterEntry(data);
-                            _inFilter.filterIn(filterEntry, _originConnection.getFinalEndpointLookupName());
-                            if (filterEntry.isDiscarded()) {
-                                _intermediateResult.incrementBlockedByFilterEntry();
-                                continue;
-                            }
-                        }
-                        _replicaDataProducer.consumeData(data, _intermediateResult, _replicationNode);
+                if (result.getResult() instanceof SpaceReplicaBatch) {
+                    SpaceReplicaBatch batch = (SpaceReplicaBatch) result.getResult();
+                    if (batch.isFifoBatch()) {
+                        SpaceReplicaFifoBatchesHandler fifoBatchesHandler = _replicationNode.getReplicaHandler().getFifoBatchesHandler();
+                        fifoBatchesHandler.handleIncomingBatch(batch, this);
+                    } else {
+                        // Get replica data
+                        processBatch(result.getResult());
                     }
-                } finally {
-                    if (_replicationNode.getBlobStoreReplicaConsumeHelper() != null)
-                        _replicationNode.getBlobStoreReplicaConsumeHelper().flushBulk();
+                } else {
+                    processBatch(result.getResult());
                 }
-                // Should keep running
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.log(Level.FINEST, _replicationNode.getLogPrefix() + " copied replica batch " + copiedData);
-                getHandler().resumeNow();
             }
+        } catch (Throwable e) {
+            if (!(e instanceof Exception))
+                e = new ExecutionException(e.getMessage(), e);
+            _state.signalCopyStageFailed((Exception) e);
+        }
+    }
+
+    protected void processBatch(Collection<ISpaceReplicaData> copiedData) {
+        try {
+            _lastIterationTimeStamp = SystemTime.timeMillis();
+            // Consume data
+            if (_replicationNode.getBlobStoreReplicaConsumeHelper() != null && copiedData.size() > 1)
+                _replicationNode.getBlobStoreReplicaConsumeHelper().prepareForBulking();
+            try {
+                for (ISpaceReplicaData data : copiedData) {
+                    if (_isFiltered && data.supportsReplicationFilter()) {
+                        IReplicationFilterEntry filterEntry = _replicaDataProducer.toFilterEntry(data);
+                        _inFilter.filterIn(filterEntry, _originConnection.getFinalEndpointLookupName());
+                        if (filterEntry.isDiscarded()) {
+                            _intermediateResult.incrementBlockedByFilterEntry();
+                            continue;
+                        }
+                    }
+                    _replicaDataProducer.consumeData(data, _intermediateResult, _replicationNode);
+                }
+            } finally {
+                if (_replicationNode.getBlobStoreReplicaConsumeHelper() != null)
+                    _replicationNode.getBlobStoreReplicaConsumeHelper().flushBulk();
+            }
+            // Should keep running
+            if (_logger.isLoggable(Level.FINEST))
+                _logger.log(Level.FINEST, _replicationNode.getLogPrefix() + "copied replica batch " + copiedData);
+            getHandler().resumeNow();
         } catch (Throwable e) {
             if (!(e instanceof Exception))
                 e = new ExecutionException(e.getMessage(), e);

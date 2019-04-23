@@ -248,6 +248,8 @@ public class Context {
 
     private String   _onMatchUid;
 
+    private  boolean _inMemoryRecovery;
+
     public Context() {
     }
 
@@ -477,6 +479,7 @@ public class Context {
         _optimizedBlobStoreReadEnabled = null;
         _inInitialLoad = false;
         _onMatchUid = null;
+        _inMemoryRecovery = false;
     }
 
     public void setOnMatchUid(String uid)
@@ -1228,5 +1231,13 @@ public class Context {
     public void setInInitialLoad(boolean val)
     {
         _inInitialLoad = val;
+    }
+
+    public boolean isInMemoryRecovery() {
+        return _inMemoryRecovery;
+    }
+
+    public void setInMemoryRecovery(boolean inMemoryRecovery) {
+        this._inMemoryRecovery = inMemoryRecovery;
     }
 }

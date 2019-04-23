@@ -3489,13 +3489,18 @@ public class CacheManager extends AbstractCacheManager
      */
     public void insertEntryReferences(Context context, IEntryCacheInfo pEntry, TypeData pType, boolean applySequenceNumber) {
         context.clearNumOfIndexesInserted();
+        IEntryData entryData = pEntry.getEntryHolder(this).getEntryData();
         // add entry to type info
-        pEntry.setMainListBackRef(pType.getEntries().add(pEntry));
+        if(pType.getFifoGroupingIndex()!=null){
+            pEntry.setMainListBackRef(((ConcurrentSegmentedStoredList<IEntryCacheInfo>)pType.getEntries()).add(pEntry, pType.getFifoGroupingIndex().getIndexValue(entryData)));
+        }else{
+            pEntry.setMainListBackRef(pType.getEntries().add(pEntry));
+        }
+
         int sequenceNumPlaceHolderPos = 0;
 
         if (pType.hasIndexes()) {
             // add entry to indexes
-            IEntryData entryData = pEntry.getEntryHolder(this).getEntryData();
             int indexBuildNumber = 0;
             final TypeDataIndex[] indexes = pType.getIndexes();
             for (TypeDataIndex index : indexes) {
@@ -4091,7 +4096,8 @@ public class CacheManager extends AbstractCacheManager
             return context.getChosenIntersectedList(true/*final*/);
         if (res != null && !res.isMultiObjectCollection())
             return res.getObjectFromHead();
-        return res != null ? new ScanSingleListIterator(res, template.isFifoTemplate()) : null;
+        return res != null ? new ScanSingleListIterator(res, (template.isFifoTemplate() ||
+                (context.isInMemoryRecovery()  && (typeData.getFifoGroupingIndex()!=null  || typeData.isFifoSupport()))))  : null;
     }
 
 

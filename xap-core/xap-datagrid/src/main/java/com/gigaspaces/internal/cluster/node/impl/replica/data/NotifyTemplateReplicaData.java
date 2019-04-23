@@ -86,6 +86,11 @@ public class NotifyTemplateReplicaData
         return true;
     }
 
+    @Override
+    public boolean isEntryReplicaData() {
+        return false;
+    }
+
     public IReplicationFilterEntry toFilterEntry(SpaceTypeManager typeManager) {
         ITypeDesc typeDesc = getTypeDescriptor(typeManager, _templatePacket);
         return new NotifyReplicationFilterReplicaDataWrapper(_templatePacket, _notifyInfo, _objectType, typeDesc);

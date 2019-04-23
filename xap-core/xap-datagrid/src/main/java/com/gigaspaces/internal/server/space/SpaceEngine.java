@@ -40,6 +40,7 @@ import com.gigaspaces.internal.cluster.node.IReplicationNode;
 import com.gigaspaces.internal.cluster.node.IReplicationNodeAdmin;
 import com.gigaspaces.internal.cluster.node.IReplicationOutContext;
 import com.gigaspaces.internal.cluster.node.impl.FailedSyncSpaceReplicateState;
+import com.gigaspaces.internal.cluster.node.impl.ReplicationNode;
 import com.gigaspaces.internal.cluster.node.impl.ReplicationOutContext;
 import com.gigaspaces.internal.cluster.node.impl.backlog.BacklogConfig.LimitReachedPolicy;
 import com.gigaspaces.internal.cluster.node.impl.backlog.BacklogMemberLimitationConfig;
@@ -6303,6 +6304,9 @@ public class SpaceEngine implements ISpaceModeListener {
     private void waitForCopyResultAndLogStatus(SpaceURL sourceRemoteUrl, long recoveryStartTime, ISpaceCopyReplicaState spaceCopyReplica, boolean spaceSyncOperation)
             throws InterruptedException {
         ISpaceCopyResult result = spaceCopyReplica.waitForCopyResult();
+        if(!_spaceImpl.isPrimary()){
+            ((ReplicationNode) _replicationManager.getReplicationNode()).getReplicaHandler().clearFifoBatchesHandler();
+        }
         Level level = result.isSuccessful() ? Level.INFO : Level.WARNING;
         Throwable error = result.isSuccessful() ? null : result.getFailureReason();
         if (_logger.isLoggable(level))

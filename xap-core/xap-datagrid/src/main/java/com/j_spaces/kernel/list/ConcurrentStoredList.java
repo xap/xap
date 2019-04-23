@@ -83,13 +83,17 @@ public class ConcurrentStoredList<T>
      */
     @Override
     public IObjectInfo<T> add(T subject) {
-        return addImpl(subject);
+        return addImpl(subject, null);
 
+    }
+
+    public IObjectInfo<T> add(T subject, Object segmentHint) {
+        return addImpl(subject, segmentHint);
     }
 
     @Override
     public IObjectInfo<T> addUnlocked(T subject) {
-        return addImpl(subject);
+        return addImpl(subject, null);
 
     }
 
@@ -98,7 +102,7 @@ public class ConcurrentStoredList<T>
         return getSegment(0).isSupportFifo();
     }
 
-    private IObjectInfo<T> addImpl(T subject) {
+    private IObjectInfo<T> addImpl(T subject, Object segmentHint) {
         if (supportsInvalidation())
         {
             int res = incremenetAndGetSize();
@@ -111,10 +115,20 @@ public class ConcurrentStoredList<T>
             incrementSize();
         }
 
-        //select a random segment to insert to
-        int seg = drawSegmentNumber(true /*add*/);
+        //select a segment to insert to
+        int seg = 0;
+        if(segmentHint == null || getNumSegments() == 1){
+            seg = drawSegmentNumber(true /*add*/);
+        } else {
+            seg = getSegmentByHint(segmentHint);
+        }
+
         StoredListChainSegment<T> segment = getSegment(seg);
         return segment.add(subject);
+    }
+
+    private int getSegmentByHint(Object segmentHint) {
+        return (Math.abs(segmentHint.hashCode())) % getNumSegments();
     }
 
     /**

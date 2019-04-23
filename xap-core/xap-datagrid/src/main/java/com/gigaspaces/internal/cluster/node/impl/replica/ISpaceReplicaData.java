@@ -33,4 +33,6 @@ public interface ISpaceReplicaData
 
     boolean supportsReplicationFilter();
 
+    boolean isEntryReplicaData();
+
 }

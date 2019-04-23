@@ -388,7 +388,7 @@ public class TypeData {
         _numOfCustomIndexes = numOfCustomIndexes;
         _anyInitialExtendedIndex = numOfExtendedIndexes > 0;
 
-        _entries = createEntriesStoredList(_fifoSupport, _useConcurrentSl);
+        _entries = createEntriesStoredList(_fifoSupport || _fifoGroupingIndex != null, _useConcurrentSl);
 
         _readTakeTemplates = createStoreList(_useConcurrentSl);
         _notifyTemplates = createStoreList(_useConcurrentSl);
@@ -918,10 +918,15 @@ public class TypeData {
         return _numDurableNotifyTemplatesStored.incrementAndGet();
     }
 
-    private static IStoredList<IEntryCacheInfo> createEntriesStoredList(boolean fifoSupport, boolean useConcurrentStoreList) {
+    private IStoredList<IEntryCacheInfo> createEntriesStoredList(boolean fifoSupport, boolean useConcurrentStoreList) {
         if (fifoSupport) {
-            if (useConcurrentStoreList)
-                return StoredListFactory.createConcurrentSegmentedList(true /* supportsFifoPerSegment*/,1 /*numOfSegments*/,true /*padded*/);
+            if (useConcurrentStoreList) {
+                if(_fifoGroupingIndex != null){
+                    return StoredListFactory.createConcurrentSegmentedList(true /* supportsFifoPerSegment*/, 0 /*numOfSegments*/, true /*padded*/);
+                } else {
+                    return StoredListFactory.createConcurrentSegmentedList(true /* supportsFifoPerSegment*/, 1 /*numOfSegments*/, true /*padded*/);
+                }
+            }
             else
                 return StoredListFactory.createRandomScanList(false);
         }
