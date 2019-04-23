@@ -217,10 +217,20 @@ public class OSStatistics implements Externalizable {
             return txErrors;
         }
 
+        /**
+         *  @since 14.5.0 - will return -1 when using Oshi
+         */
+        //TODO: remove from read/write external
+        @Deprecated
         public long getRxDropped() {
             return rxDropped;
         }
 
+        /**
+         *  @since 14.5.0 - will return -1 when using Oshi
+         */
+        //TODO: remove from read/write external
+        @Deprecated
         public long getTxDropped() {
             return txDropped;
         }

@@ -83,4 +83,6 @@ public class CommonSystemProperties {
     public final static String SIGAR_ENABLED = "com.gs.sigar.enabled";
 
     public final static String KILL_RECURSIVE = "com.gs.process.kill-recursive";
+
+    public final static String OSHI_ENABLED = "com.gs.oshi.enabled";
 }

@@ -345,6 +345,7 @@ public class SystemConfig {
         classpathBuilder.append(System.getProperty("com.gs.pu.classloader.scala-lib-path", gsLibOptional + "scala/lib"));// Scala support
         classpathBuilder.appendPlatform("zookeeper");
         classpathBuilder.appendPlatform("logger");
+        classpathBuilder.appendOptional("oshi");
         if(isJava11()){
             classpathBuilder.appendPlatform("javax");
         }

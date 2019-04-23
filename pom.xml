@@ -8,6 +8,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sigar.version>1.6.5</sigar.version>
+        <oshi.version>3.13.1</oshi.version>
+        <jna.version>5.3.1</jna.version>
         <spring.version>4.3.19.RELEASE</spring.version>
         <spring.security.version>4.2.8.RELEASE</spring.security.version>
         <junit.version>4.12</junit.version>
@@ -214,6 +216,29 @@
                 <artifactId>sigar</artifactId>
                 <version>${sigar.version}</version>
                 <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.github.oshi</groupId>
+                <artifactId>oshi-core</artifactId>
+                <version>${oshi.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.oshi</groupId>
+                <artifactId>oshi-json</artifactId>
+                <version>${oshi.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.java.dev.jna</groupId>
+                <artifactId>jna</artifactId>
+                <version>${jna.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.java.dev.jna</groupId>
+                <artifactId>jna-platform</artifactId>
+                <version>${jna.version}</version>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>

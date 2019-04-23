@@ -89,6 +89,7 @@ public class GsCommandFactory {
         appendGsClasspath();
         //fix for GS-13546
         command.classpathFromPath(locations().getLibPlatform(), "service-grid", "*");
+//        command.classpathFromPath(locations().getLibPlatform(), "oshi", "*");
         command.classpathFromPath(locations().getLibPlatform(), "logger", "*");
         command.classpathFromPath(locations().getLibPlatform(), "zookeeper", "*");
         postClasspath();
@@ -115,6 +116,11 @@ public class GsCommandFactory {
 
     protected void appendSigarClassPath() {
         command.classpathFromPath(locations().getLibOptional(), "sigar", "*");
+    }
+
+    protected void addOshiAndLoggerToClasspath() {
+        command.classpathFromPath(locations().getLibOptional(), "oshi", "*");
+        command.classpathFromPath(locations().getLibPlatform(), "logger", "*");
     }
 
     protected void appendXapOptions() {

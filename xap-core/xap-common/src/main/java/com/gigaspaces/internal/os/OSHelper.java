@@ -20,6 +20,7 @@ import com.gigaspaces.internal.os.jmx.JMXOSDetailsProbe;
 import com.gigaspaces.internal.os.jmx.JMXOSStatisticsProbe;
 import com.gigaspaces.internal.os.sigar.SigarOSDetailsProbe;
 import com.gigaspaces.internal.os.sigar.SigarOSStatisticsProbe;
+import com.gigaspaces.internal.oshi.OshiChecker;
 import com.gigaspaces.internal.sigar.SigarChecker;
 
 import java.util.logging.Level;
@@ -45,8 +46,10 @@ public class OSHelper {
         OSStatisticsProbe statisticsProbeX = null;
         String statisticsProbeClass = System.getProperty("gs.admin.os.probe.statistics");
         if (statisticsProbeClass == null) {
-            // first try Sigar
-            if (SigarChecker.isAvailable()) {
+            if(OshiChecker.isAvailable()){
+
+                statisticsProbeX = new OshiOSStatisticsProbe();
+            } else if (SigarChecker.isAvailable()) {
                 try {
                     statisticsProbeX = new SigarOSStatisticsProbe();
                     statisticsProbeX.probeStatistics();
@@ -80,8 +83,10 @@ public class OSHelper {
         OSDetailsProbe detailsProbeX = null;
         String detailsProbeClass = System.getProperty("gs.admin.os.probe.details");
         if (detailsProbeClass == null) {
-            // first try Sigar
-            if (SigarChecker.isAvailable()) {
+            if(OshiChecker.isAvailable()){
+                detailsProbeX = new OshiOSDetailsProbe();
+
+            } else if (SigarChecker.isAvailable()) {
                 try {
                     detailsProbeX = new SigarOSDetailsProbe();
                     detailsProbeX.probeDetails();
@@ -127,6 +132,7 @@ public class OSHelper {
             return details;
         } catch (Exception e) {
             _logger.log(Level.FINE, "Failed to get configuration", e);
+            e.printStackTrace();
             return NA_DETAILS;
         }
     }

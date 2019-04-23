@@ -16,10 +16,13 @@
 
 package com.gigaspaces.internal.jvm;
 
+import com.gigaspaces.internal.jmx.OshiJVMDetailsProbe;
+import com.gigaspaces.internal.jmx.OshiJVMStatisticsProbe;
 import com.gigaspaces.internal.jvm.jmx.JMXJVMDetailsProbe;
 import com.gigaspaces.internal.jvm.jmx.JMXJVMStatisticsProbe;
 import com.gigaspaces.internal.jvm.sigar.SigarJVMDetailsProbe;
 import com.gigaspaces.internal.jvm.sigar.SigarJVMStatisticsProbe;
+import com.gigaspaces.internal.oshi.OshiChecker;
 import com.gigaspaces.internal.sigar.SigarChecker;
 import com.gigaspaces.logger.LogHelper;
 
@@ -51,7 +54,11 @@ public class JVMHelper {
         if (detailsProbeClass != null)
             return tryCreateInstance(detailsProbeClass);
 
-        if (SigarChecker.isAvailable()) {
+        if(OshiChecker.isAvailable()){
+            OshiJVMDetailsProbe oshiJVMDetailsProbe = new OshiJVMDetailsProbe();
+            oshiJVMDetailsProbe.probeDetails();
+            return oshiJVMDetailsProbe;
+        } else if (SigarChecker.isAvailable()) {
             try {
                 JVMDetailsProbe result = new SigarJVMDetailsProbe();
                 result.probeDetails();
@@ -80,7 +87,11 @@ public class JVMHelper {
         if (statisticsProbeClass != null)
             return tryCreateInstance(statisticsProbeClass);
 
-        if (SigarChecker.isAvailable()) {
+        if(OshiChecker.isAvailable()){
+            OshiJVMStatisticsProbe oshiJVMStatisticsProbe = new OshiJVMStatisticsProbe();
+            oshiJVMStatisticsProbe.probeStatistics();
+            return oshiJVMStatisticsProbe;
+        } else if (SigarChecker.isAvailable()) {
             try {
                 JVMStatisticsProbe result = new SigarJVMStatisticsProbe();
                 result.probeStatistics();

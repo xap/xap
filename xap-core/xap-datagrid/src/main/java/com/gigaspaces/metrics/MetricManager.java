@@ -16,7 +16,16 @@
 
 package com.gigaspaces.metrics;
 
+import com.gigaspaces.internal.os.OSStatistics;
+import com.gigaspaces.internal.os.OshiOSDetailsProbe;
+import com.gigaspaces.internal.os.OshiOSStatisticsProbe;
+import com.gigaspaces.internal.os.sigar.SigarOSDetailsProbe;
+import com.gigaspaces.internal.os.sigar.SigarOSStatisticsProbe;
+import com.gigaspaces.internal.oshi.OshiChecker;
+import com.gigaspaces.internal.oshi.OshiGaugeUtils;
+import com.gigaspaces.internal.oshi.OshiUtils;
 import com.gigaspaces.internal.sigar.SigarChecker;
+import com.gigaspaces.internal.sigar.SigarHolder;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.ConnectionPool;
@@ -36,6 +45,10 @@ import com.gigaspaces.start.SystemBoot;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.kernel.threadpool.DynamicThreadPoolExecutor;
 import com.sun.jini.thread.TaskManager;
+import org.hyperic.sigar.Sigar;
+import oshi.hardware.CentralProcessor;
+import oshi.hardware.GlobalMemory;
+import oshi.util.Util;
 
 import java.io.Closeable;
 import java.io.File;
@@ -95,8 +108,13 @@ public class MetricManager implements Closeable {
 
         final String processName = SystemBoot.getProcessRole();
         if (processName != null) {
-            if (processName.equals("gsa"))
-                registerOperatingSystemMetrics(createRegistrator("os"));
+            if (processName.equals("gsa")){
+                if(OshiChecker.isAvailable()){
+                    registerOperatingSystemMetricsWithOshi(createRegistrator("os"));
+                }else{
+                    registerOperatingSystemMetricsWithSigar(createRegistrator("os"));
+                }
+            }
 
             Map<String, String> processTags = new HashMap<String, String>();
             processTags.put("process_name", processName);
@@ -244,7 +262,7 @@ public class MetricManager implements Closeable {
         }
     }
 
-    private void registerOperatingSystemMetrics(MetricRegistrator registrator) {
+    private void registerOperatingSystemMetricsWithSigar(MetricRegistrator registrator) {
         if (!SigarChecker.isAvailable()) {
             logger.info("Skipping operating system metrics registration - Sigar is not available");
             return;
@@ -291,9 +309,43 @@ public class MetricManager implements Closeable {
         }
     }
 
+    private void registerOperatingSystemMetricsWithOshi(MetricRegistrator registrator) {
+
+        registrator.register(registrator.toPath("cpu", "used-percent"),  OshiGaugeUtils.getCpuPercGauge());
+
+        registrator.register(registrator.toPath("memory", "free-bytes"), OshiGaugeUtils.getFreeMemoryInBytesGauge());
+        registrator.register(registrator.toPath("memory", "actual-free-bytes"), OshiGaugeUtils.getActualFreeMemoryInBytesGauge());
+        registrator.register(registrator.toPath("memory", "used-bytes"), OshiGaugeUtils.getUsedMemoryInBytesGauge());
+        registrator.register(registrator.toPath("memory", "actual-used-bytes"), OshiGaugeUtils.getActualUsedMemoryInBytesGauge());
+        registrator.register(registrator.toPath("memory", "used-percent"), OshiGaugeUtils.getUsedMemoryInPercentGauge());
+
+        registrator.register(registrator.toPath("swap", "free-bytes"), OshiGaugeUtils.getFreeSwapInBytesGauge());
+        registrator.register(registrator.toPath("swap", "used-bytes"), OshiGaugeUtils.getUsedSwapInBytesGauge());
+        registrator.register(registrator.toPath("swap", "used-percent"), OshiGaugeUtils.getUsedSwapInPercentGauge());
+
+        OSStatistics.OSNetInterfaceStats[] netInterfaceStats = OshiUtils.calcNetStats();
+        for(OSStatistics.OSNetInterfaceStats interfaceStats : netInterfaceStats){
+            Map<String, String> newTags = new HashMap<String, String>();
+            newTags.put("nic", interfaceStats.getName());
+            MetricRegistrator networkRegistrator = ((InternalMetricRegistrator) registrator).extend("network", newTags, Collections.EMPTY_MAP);
+            networkRegistrator.register("rx-bytes", OshiGaugeUtils.createRxBytesGauge(interfaceStats));
+            networkRegistrator.register("tx-bytes", OshiGaugeUtils.createTxBytesGauge(interfaceStats));
+            networkRegistrator.register("rx-packets", OshiGaugeUtils.createRxPacketsGauge(interfaceStats));
+            networkRegistrator.register("tx-packets", OshiGaugeUtils.createTxPacketsGauge(interfaceStats));
+            networkRegistrator.register("rx-errors", OshiGaugeUtils.createRxErrorsGauge(interfaceStats));
+            networkRegistrator.register("tx-errors", OshiGaugeUtils.createTxErrorsGauge(interfaceStats));
+            networkRegistrator.register("rx-dropped", OshiGaugeUtils.createRxDroppedGauge(interfaceStats));
+            networkRegistrator.register("tx-dropped", OshiGaugeUtils.createTxDroppedGauge(interfaceStats));
+        }
+    }
+
+
     private MetricRegistrator registerProcessMetricsInternal(Map<String, String> tags) {
         MetricRegistrator registrator = createRegistrator("process", tags);
-        if (!SigarChecker.isAvailable()) {
+        if(OshiChecker.isAvailable()){
+            registrator.register(registrator.toPath("cpu", "time-total"), OshiGaugeUtils.createProcessCpuTotalTimeGauge());
+            registrator.register(registrator.toPath("cpu", "used-percent"), OshiGaugeUtils.createProcessUsedCpuInPercentGauge());
+        } else if (!SigarChecker.isAvailable()) {
             logger.info("Skipping process metrics registration - Sigar is not available");
         } else {
             final SigarProcessMetricFactory factory = new SigarProcessMetricFactory();
