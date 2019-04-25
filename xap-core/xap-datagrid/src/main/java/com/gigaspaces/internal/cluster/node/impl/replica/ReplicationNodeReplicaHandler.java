@@ -29,6 +29,7 @@ import com.gigaspaces.internal.cluster.node.replica.SpaceCopyReplicaParameters;
 import com.gigaspaces.internal.extension.XapExtensions;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceEngine;
+import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.utils.collections.CopyOnUpdateMap;
 import com.gigaspaces.logger.Constants;
@@ -285,14 +286,16 @@ public class ReplicationNodeReplicaHandler {
     }
 
     private boolean isFifoType(ISpaceReplicaData data) {
-        if(data.isEntryReplicaData()) {
+        if (data.isEntryReplicaData()) {
             CacheManager cacheManager = _spaceEngine.getCacheManager();
 
-            IServerTypeDesc serverTypeDesc = cacheManager.getTypeManager()
-                    .getServerTypeDesc(((AbstractEntryReplicaData) data).getEntryPacket().getTypeName());
 
-            TypeData typeData = cacheManager.getTypeData(serverTypeDesc);
-            return typeData.isFifoSupport() || (typeData.getFifoGroupingIndex() != null);
+            IEntryPacket entryPacket = ((AbstractEntryReplicaData) data).getEntryPacket();
+            if (entryPacket != null) {
+                IServerTypeDesc serverTypeDesc = cacheManager.getTypeManager().getServerTypeDesc(entryPacket.getTypeName());
+                TypeData typeData = cacheManager.getTypeData(serverTypeDesc);
+                return typeData.isFifoSupport() || (typeData.getFifoGroupingIndex() != null);
+            }
         }
         return false;
     }
