@@ -63,7 +63,7 @@ public class ProcessorIntegrationTest {
         template.setProcessed(true);
 
         // wait for the result
-        Data result = gigaSpace.take(template, 500);
+        Data result = gigaSpace.take(template, 60*1000);
         // verify it
         assertNotNull("No data object was processed", result);
         assertEquals("Processed Flag is false, data was not processed", true, result.isProcessed());
