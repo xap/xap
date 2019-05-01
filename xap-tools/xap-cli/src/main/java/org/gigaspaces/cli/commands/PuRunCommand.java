@@ -12,6 +12,7 @@ import picocli.CommandLine.Parameters;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @since 12.3
@@ -32,6 +33,12 @@ public class PuRunCommand extends AbstractRunCommand {
     @Option(names = {"--lus"}, description = "Start a lookup service")
     boolean lus;
 
+    @Option(names = {"--properties" }, description = "Location of context level properties file")
+    File propertiesFilePath;
+    // Context properties
+    @Option(names = {"--property" }, description = "Context properties (for example: --property=k1=v1 --property=k2=v2)")
+    Map<String, String> properties;
+
     @Override
     protected void execute() throws Exception {
         validateOptions(partitions, ha, instances);
@@ -50,6 +57,10 @@ public class PuRunCommand extends AbstractRunCommand {
         final JavaCommandBuilder command = new GsCommandFactory().standalonePuInstance()
                 .systemProperty(CommonSystemProperties.START_EMBEDDED_LOOKUP, "false");
         command.arg("-path").arg(path.getPath());
+        if (propertiesFilePath != null)
+            command.arg("-properties").arg("file://" + propertiesFilePath.getPath());
+        if (properties != null && !properties.isEmpty())
+            command.arg("-properties").arg("embed://" + join(properties));
         if (id != 0) {
             command.arg("-cluster")
                     .arg("schema=partitioned")
@@ -59,5 +70,11 @@ public class PuRunCommand extends AbstractRunCommand {
         }
 
         return toProcessBuilder(command, "processing unit");
+    }
+
+    private static String join(Map<String, String> properties) {
+        return properties.entrySet().stream()
+                .map(p -> p.getKey() + "=" + p.getValue())
+                .collect(Collectors.joining(";"));
     }
 }
