@@ -158,7 +158,7 @@ public class GsCommandFactory {
         return locations().config() + File.separator + "log" + File.separator + "xap_logging.properties";
     }
 
-    private static Optional<String> getSystemEnv(String name) {
+    protected static Optional<String> getSystemEnv(String name) {
         String val = System.getenv(name);
         return val != null ? Optional.of(val) : Optional.empty();
     }
