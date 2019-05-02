@@ -19,7 +19,7 @@ import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.jvm.JavaUtils;
 
 import java.io.File;
-import java.util.function.Supplier;
+import java.util.Optional;
 
 /**
  * @author Niv Ingberg
@@ -133,26 +133,31 @@ public class GsCommandFactory {
     }
 
     protected void appendXapOptions() {
-        final String vendor = JavaUtils.getVendor().toUpperCase();
-        if (vendor.startsWith("ORACLE ")) {
-            command.option("-server");
-            if (!JavaUtils.greaterOrEquals(11)) {
-                // Deprecated since 11 - https://bugs.openjdk.java.net/browse/JDK-8199777
-                command.option("-XX:+AggressiveOpts");
+        if (getSystemEnv("XAP_OPTIONS").isPresent()) {
+            command.optionsFromEnv("XAP_OPTIONS");
+        } else {
+            final String vendor = JavaUtils.getVendor().toUpperCase();
+            if (vendor.startsWith("ORACLE ")) {
+                command.option("-server");
+                if (!JavaUtils.greaterOrEquals(11)) {
+                    // Deprecated since 11 - https://bugs.openjdk.java.net/browse/JDK-8199777
+                    command.option("-XX:+AggressiveOpts");
+                }
+                command.option("-XX:+HeapDumpOnOutOfMemoryError");
+            } else if (vendor.startsWith("IBM ")) {
+                command.option("-XX:MaxPermSize=256m");
             }
-            command.option("-XX:+HeapDumpOnOutOfMemoryError");
-        } else if (vendor.startsWith("IBM ")) {
-            command.option("-XX:MaxPermSize=256m");
-        }
-        if (JavaUtils.greaterOrEquals(9)) {
-            command.option("--add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED");
-            command.option("--add-modules=ALL-SYSTEM");
-        }
+            if (JavaUtils.greaterOrEquals(9)) {
+                command.option("--add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED");
+                command.option("--add-modules=ALL-SYSTEM");
+            }
 
-        command.systemProperty("com.gs.home", BootIOUtils.quoteIfContainsSpace(SystemInfo.singleton().getXapHome()));
-        command.systemProperty("java.util.logging.config.file", BootIOUtils.quoteIfContainsSpace(env("XAP_LOGS_CONFIG_FILE", this::defaultConfigPath)));
-        command.systemProperty("java.rmi.server.hostname", System.getenv("XAP_NIC_ADDRESS"));
-        command.optionsFromEnv("EXT_JAVA_OPTIONS");
+            command.systemProperty("com.gs.home", BootIOUtils.quoteIfContainsSpace(SystemInfo.singleton().getXapHome()));
+            command.systemProperty("java.util.logging.config.file", BootIOUtils.quoteIfContainsSpace(getSystemEnv("XAP_LOGS_CONFIG_FILE").orElseGet(this::defaultConfigPath)));
+            command.systemProperty("java.rmi.server.hostname", System.getenv("XAP_NIC_ADDRESS"));
+            command.optionsFromEnv("EXT_JAVA_OPTIONS");
+            command.optionsFromEnv("XAP_OPTIONS_EXT");
+        }
     }
 
     protected void appendGsClasspath() {
@@ -164,12 +169,12 @@ public class GsCommandFactory {
         command.classpathFromEnv("XAP_CLASSPATH_EXT");
     }
 
-    private static String env(String name, Supplier<String> defaultValueProvider) {
-        String val = System.getenv(name);
-        return val != null ? val : defaultValueProvider.get();
-    }
-
     private String defaultConfigPath() {
         return locations().config() + File.separator + "log" + File.separator + "xap_logging.properties";
+    }
+
+    protected static Optional<String> getSystemEnv(String name) {
+        String val = System.getenv(name);
+        return val != null ? Optional.of(val) : Optional.empty();
     }
 }
