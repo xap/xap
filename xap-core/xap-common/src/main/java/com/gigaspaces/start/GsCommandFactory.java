@@ -15,6 +15,7 @@
  */
 package com.gigaspaces.start;
 
+import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.jvm.JavaUtils;
 
 import java.io.File;
@@ -148,8 +149,8 @@ public class GsCommandFactory {
             command.option("--add-modules=ALL-SYSTEM");
         }
 
-        command.systemProperty("com.gs.home", SystemInfo.singleton().getXapHome());
-        command.systemProperty("java.util.logging.config.file", env("XAP_LOGS_CONFIG_FILE", this::defaultConfigPath));
+        command.systemProperty("com.gs.home", BootIOUtils.quoteIfContainsSpace(SystemInfo.singleton().getXapHome()));
+        command.systemProperty("java.util.logging.config.file", BootIOUtils.quoteIfContainsSpace(env("XAP_LOGS_CONFIG_FILE", this::defaultConfigPath)));
         command.systemProperty("java.rmi.server.hostname", System.getenv("XAP_NIC_ADDRESS"));
         command.optionsFromEnv("EXT_JAVA_OPTIONS");
     }
