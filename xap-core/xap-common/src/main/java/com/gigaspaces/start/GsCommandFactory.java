@@ -140,7 +140,7 @@ public class GsCommandFactory {
             command.systemProperty("com.gs.home", BootIOUtils.quoteIfContainsSpace(SystemInfo.singleton().getXapHome()));
             command.systemProperty("java.util.logging.config.file", BootIOUtils.quoteIfContainsSpace(getSystemEnv("XAP_LOGS_CONFIG_FILE").orElseGet(this::defaultConfigPath)));
             command.systemProperty("java.rmi.server.hostname", System.getenv("XAP_NIC_ADDRESS"));
-            command.optionsFromEnv("EXT_JAVA_OPTIONS");
+            command.optionsFromEnv("EXT_JAVA_OPTIONS"); // Deprecated starting 14.5
             command.optionsFromEnv("XAP_OPTIONS_EXT");
         }
     }
