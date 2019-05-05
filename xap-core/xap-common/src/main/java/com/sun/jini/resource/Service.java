@@ -224,10 +224,7 @@ public final class Service {
             if (configs == null) {
                 try {
                     String fullName = prefix + service.getName();
-                    if (loader == null)
-                        configs = ClassLoader.getSystemResources(fullName);
-                    else
-                        configs = loader.getResources(fullName);
+                    configs = loader == null ? ClassLoader.getSystemResources(fullName) : loader.getResources(fullName);
                 } catch (IOException x) {
                     fail(service, ": " + x);
                 }
@@ -249,7 +246,8 @@ public final class Service {
             String cn = nextName;
             nextName = null;
             try {
-                Class c = Class.forName(cn, true, loader);
+                Class c = loader != null ? Class.forName(cn, true, loader) : Class.forName(cn);
+
                 if (!service.isAssignableFrom(c)) {
                     fail(service, "Provider " + cn + " is of incorrect type");
                 }
