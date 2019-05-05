@@ -13,10 +13,11 @@ import picocli.CommandLine.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.logging.Level;
 
 public class CliExecutor {
@@ -30,23 +31,18 @@ public class CliExecutor {
     public static void execute(Object mainCommand, String[] args) {
         int exitCode;
         try {
+            org.fusesource.jansi.AnsiConsole.systemInstall();
             mainCommandLine = toCommandLine(mainCommand);
-            if (args.length == 0) {
-                System.out.println("Starting interactive shell...");
-                executeShell();
-            } else {
-                execute(args);
-            }
+            execute(mainCommandLine, args);
             exitCode = 0;
         } catch (Exception e) {
             exitCode = handleException(e);
         }
-        System.out.println();
         System.exit(exitCode);
     }
 
-    private static void execute(String[] args) {
-        mainCommandLine.parseWithHandler(new CustomResultHandler(), System.out, args);
+    private static void execute(CommandLine mainCommandLine, String[] args) {
+        mainCommandLine.parseWithHandlers(new CustomRunner(), new DefaultExceptionHandler<>(), args);
     }
 
     public static void generateAutoComplete(Object mainCommand, String[] args) throws IOException {
@@ -58,7 +54,8 @@ public class CliExecutor {
         }
     }
 
-    private static void executeShell() {
+    private static void executeShell(CommandLine mainCommandLine) {
+        System.out.println("Starting interactive shell...");
         mainCommandLine.addSubcommand("exit", ShellExitCommand.instance);
         mainCommandLine.addSubcommand("cls", ShellClearCommand.instance);
 
@@ -74,7 +71,7 @@ public class CliExecutor {
             ShellClearCommand.instance.lineReader = (LineReaderImpl) reader;
 
             // start the shell and process input until the user quits with Ctl-D (EOF)
-            execute(new String[] {"--help"});
+            mainCommandLine.usage(System.out);
             while (true) {
                 try {
                     String line = reader.readLine(mainCommandLine.getCommandName() +">");
@@ -82,12 +79,14 @@ public class CliExecutor {
                         //String line = reader.readLine(prompt, null, (MaskingCallback) null, null);
                         ParsedLine pl = reader.getParser().parse(line, 0);
                         String[] arguments = pl.words().toArray(new String[0]);
-                        execute(arguments);
+                        execute(mainCommandLine, arguments);
                     }
                 } catch (UserInterruptException e) {
                     // Ignore
                 } catch (EndOfFileException e) {
                     return;
+                } catch (Exception e) {
+                    handleException(e);
                 }
             }
         } catch (Throwable t) {
@@ -117,13 +116,7 @@ public class CliExecutor {
         }
     }
 
-    public static void printWarning(Throwable t) {
-        String message = t.getLocalizedMessage();
-        if (message == null) message = t.toString();
-        System.err.println("\n[WARNING] " + message);
-    }
-
-    public static CommandLine toCommandLine(Object command) {
+    private static CommandLine toCommandLine(Object command) {
         CommandLine cmd = new CommandLine(command);
         if (command instanceof SubCommandContainer) {
             for (Map.Entry<String, Object> entry : ((SubCommandContainer) command).getSubCommands().getCommands().entrySet()) {
@@ -136,28 +129,31 @@ public class CliExecutor {
         return cmd;
     }
 
-    private static class CustomResultHandler extends CommandLine.RunAll {
+    private static class CustomRunner extends RunLast {
 
         @Override
-        public List<Object> handleParseResult(List<CommandLine> commands, PrintStream out, Help.Ansi ansi) throws ExecutionException {
-            List<Object> result = super.handleParseResult(commands, out, ansi);
-            if (!isHelpRequested(commands)) {
-                CommandLine lastCommand = commands.get(commands.size()-1);
-                if (lastCommand.getCommand() instanceof SubCommandContainer) {
-                    //out.println("Command " + lastCommand.getCommandName() + " requires a sub-command");
-                    lastCommand.usage(out, ansi);
+        protected List<Object> handle(ParseResult parseResult) throws ExecutionException {
+            // Skip to last command:
+            while (parseResult.hasSubcommand())
+                parseResult = parseResult.subcommand();
+
+            CommandLine commandLine = parseResult.commandSpec().commandLine();
+            Callable<Object> command = commandLine.getCommand();
+            try {
+                if (commandLine == mainCommandLine) {
+                    executeShell(mainCommandLine);
+                } else if (command instanceof SubCommandContainer) {
+                    commandLine.usage(out());
+                } else {
+                    command.call();
                 }
+            } catch (ParameterException | ExecutionException ex) {
+                throw ex;
+            } catch (Exception ex) {
+                throw new ExecutionException(commandLine, "Error while calling command (" + command + "): " + ex, ex);
             }
 
-            return result;
-        }
-
-        private boolean isHelpRequested(List<CommandLine> commands) {
-            for (CommandLine command : commands)
-                if (command.isUsageHelpRequested() || command.isVersionHelpRequested())
-                    return true;
-
-            return false;
+            return Collections.emptyList();
         }
     }
 
