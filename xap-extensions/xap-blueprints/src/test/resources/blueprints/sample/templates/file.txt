@@ -1,0 +1,3 @@
+Line 1: no macros
+Line 2: single macro - {{foo}}
+Line 3: multiple macros - {{foo}} and {{bar}}

@@ -46,6 +46,7 @@ public class GsCommandFactory {
     protected JavaCommandBuilder cli() {
         command.mainClass("org.gigaspaces.cli.commands.XapMainCommand");
         command.classpathFromPath(SystemInfo.singleton().getXapHome(), "tools", "cli", "*");
+        command.classpathFromPath(SystemInfo.singleton().locations().getLibPlatform(), "blueprints", "*");
         appendGsClasspath();
         appendXapOptions();
         return command;

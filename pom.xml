@@ -53,6 +53,7 @@
         <module>xap-extensions/xap-jpa-spring</module>
         <module>xap-extensions/xap-spatial</module>
         <module>xap-extensions/xap-mongodb</module>
+        <module>xap-extensions/xap-blueprints</module>
         <module>xap-extensions/xap-cassandra</module>
         <module>xap-extensions/xap-mule</module>
         <module>xap-extensions/xap-metrics-influxdb</module>
@@ -196,6 +197,12 @@
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-cli</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.gigaspaces</groupId>
+                <artifactId>xap-blueprints</artifactId>
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>

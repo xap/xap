@@ -122,6 +122,10 @@
 			<outputDirectory>product</outputDirectory>
 		</fileSet>
 		<!--end runtime files copy -->
+		<fileSet>
+			<directory>${project.basedir}/../xap-extensions/xap-blueprints/blueprints</directory>
+			<outputDirectory>product/config/blueprints</outputDirectory>
+		</fileSet>
 
     </fileSets>
 </assembly>
