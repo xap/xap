@@ -42,6 +42,10 @@ public class BlueprintCommand extends CliCommand implements SubCommandContainer 
         return blueprint;
     }
 
+    static Blueprint getBlueprint(int id) throws IOException {
+        return getDefaultRepository().get(id);
+    }
+
     public static class BlueprintCompletionCandidates extends ArrayList<String> {
         public BlueprintCompletionCandidates() {
             super(getNames());

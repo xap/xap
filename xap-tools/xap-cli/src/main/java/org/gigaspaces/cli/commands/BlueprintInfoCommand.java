@@ -17,7 +17,7 @@ public class BlueprintInfoCommand extends CliCommand {
 
         System.out.println("Blueprint information for " + name + ":");
         System.out.println("--- Values ---");
-        KeyValueFormatter formatter = KeyValueFormatter.builder().builder();
+        KeyValueFormatter formatter = KeyValueFormatter.builder().build();
         blueprint.getValues().forEach(formatter::append);
         System.out.println(formatter.get());
     }

@@ -13,16 +13,14 @@ import picocli.CommandLine.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 
 public class CliExecutor {
 
     private static CommandLine mainCommandLine;
+    private static LineReader shellReader;
 
     public static CommandLine getMainCommand() {
         return mainCommandLine;
@@ -56,30 +54,31 @@ public class CliExecutor {
 
     private static void executeShell(CommandLine mainCommandLine) {
         System.out.println("Starting interactive shell...");
-        mainCommandLine.addSubcommand("exit", ShellExitCommand.instance);
         mainCommandLine.addSubcommand("cls", ShellClearCommand.instance);
+        mainCommandLine.addSubcommand("exit", ShellExitCommand.instance);
 
         try {
             // set up the completion
-            LineReader reader = LineReaderBuilder.builder()
+            shellReader = LineReaderBuilder.builder()
                     .terminal(TerminalBuilder.builder().build())
                     .completer(new PicocliJLineCompleter(mainCommandLine.getCommandSpec()))
                     .parser(new DefaultParser())
                     .build();
 
             // original example injected terminal into commands. not sure if this is required.
-            ShellClearCommand.instance.lineReader = (LineReaderImpl) reader;
+            ShellClearCommand.instance.lineReader = (LineReaderImpl) shellReader;
 
             // start the shell and process input until the user quits with Ctl-D (EOF)
             mainCommandLine.usage(System.out);
             while (true) {
                 try {
-                    String line = reader.readLine(mainCommandLine.getCommandName() +">");
+                    String line = shellReader.readLine(mainCommandLine.getCommandName() +">");
                     if (line != null && !line.isEmpty()) {
                         //String line = reader.readLine(prompt, null, (MaskingCallback) null, null);
-                        ParsedLine pl = reader.getParser().parse(line, 0);
+                        ParsedLine pl = shellReader.getParser().parse(line, 0);
                         String[] arguments = pl.words().toArray(new String[0]);
                         execute(mainCommandLine, arguments);
+                        System.out.println();
                     }
                 } catch (UserInterruptException e) {
                     // Ignore
@@ -92,6 +91,13 @@ public class CliExecutor {
         } catch (Throwable t) {
             t.printStackTrace();
         }
+    }
+
+    public static LineReader getOrCreateReader() throws IOException {
+        return shellReader != null ? shellReader : LineReaderBuilder.builder()
+                .terminal(TerminalBuilder.builder().build())
+                .parser(new DefaultParser())
+                .build();
     }
 
     private static int handleException(Exception e) {

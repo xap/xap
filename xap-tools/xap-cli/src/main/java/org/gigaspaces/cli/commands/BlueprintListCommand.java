@@ -12,8 +12,8 @@ public class BlueprintListCommand extends CliCommand {
         BlueprintRepository repository = BlueprintCommand.getDefaultRepository();
         System.out.println("Available blueprints:");
         System.out.println("---------------------");
-        KeyValueFormatter formatter = KeyValueFormatter.builder().builder();
+        KeyValueFormatter formatter = KeyValueFormatter.builder().build();
         repository.getBlueprints().forEach(b -> formatter.append(b.getName(), b.getDescription()));
-        System.out.println(formatter.get());
+        System.out.print(formatter.get());
     }
 }

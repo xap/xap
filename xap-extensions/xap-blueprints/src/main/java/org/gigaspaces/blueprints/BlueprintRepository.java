@@ -17,7 +17,7 @@ public class BlueprintRepository {
         Objects.requireNonNull(home);
         if (!Files.exists(home))
             throw new IllegalArgumentException("Template manager home does not exist: " + home);
-        this.blueprints = new HashMap<>();
+        this.blueprints = new LinkedHashMap<>();
         for (Blueprint blueprint : Blueprint.fromPath(home)) {
             blueprints.put(blueprint.getName(), blueprint);
         }
@@ -33,5 +33,23 @@ public class BlueprintRepository {
 
     public Blueprint get(String name) {
         return blueprints.get(name);
+    }
+
+    public Blueprint get(int index) {
+        for (Blueprint blueprint : blueprints.values()) {
+            if (index-- == 0)
+                return blueprint;
+        }
+        throw new IllegalStateException();
+    }
+
+    public Optional<Integer> indexOf(String name) {
+        int index = 0;
+        for (Map.Entry<String, Blueprint> entry : blueprints.entrySet()) {
+            if (entry.getKey().equals(name))
+                return Optional.of(index);
+            index++;
+        }
+        return Optional.empty();
     }
 }

@@ -48,7 +48,7 @@ public class KeyValueFormatter {
             return this;
         }
 
-        public KeyValueFormatter builder() {
+        public KeyValueFormatter build() {
             return new KeyValueFormatter(this);
         }
     }
