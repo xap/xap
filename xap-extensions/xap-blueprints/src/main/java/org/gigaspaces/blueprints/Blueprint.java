@@ -1,5 +1,7 @@
 package org.gigaspaces.blueprints;
 
+import com.gigaspaces.internal.version.PlatformVersion;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -110,6 +112,7 @@ public class Blueprint {
     private static Map<String, Object> initDefaultContext() {
         Map<String, Object> result = new HashMap<>();
         result.put("gs.path", (Function<String, String>) s -> s.replace('.', File.separatorChar));
+        result.put("gs.version", PlatformVersion.getInstance().getId());
         return result;
     }
 

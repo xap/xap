@@ -19,7 +19,12 @@
     </properties>
 
     <dependencies>
-		<dependency>
+        <dependency>
+            <groupId>org.gigaspaces</groupId>
+            <artifactId>xap-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
 		    <groupId>com.github.spullara.mustache.java</groupId>
             <artifactId>compiler</artifactId>
             <version>${mustache.version}</version>
