@@ -11,6 +11,9 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 @CommandLine.Command(name="blueprint", aliases = {"bp"}, header = "List of available commands for blueprints")
 public class BlueprintCommand extends CliCommand implements SubCommandContainer {
@@ -37,5 +40,20 @@ public class BlueprintCommand extends CliCommand implements SubCommandContainer 
         if (blueprint == null)
             throw new CliCommandException("Unknown blueprint: " + name + ". Available blueprints: " + repository.getNames());
         return blueprint;
+    }
+
+    public static class BlueprintCompletionCandidates extends ArrayList<String> {
+        public BlueprintCompletionCandidates() {
+            super(getNames());
+        }
+
+        private static Collection<String> getNames() {
+            try {
+                return getDefaultRepository().getNames();
+            } catch (Exception e) {
+                System.out.println("Warning: failed to get blueprints for autocomplete - " + e.getMessage());
+                return Collections.emptyList();
+            }
+        }
     }
 }

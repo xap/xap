@@ -8,7 +8,7 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "info", header = "Provides information on the specified blueprint")
 public class BlueprintInfoCommand extends CliCommand {
 
-    @CommandLine.Parameters(index = "0", description = "Blueprint name")
+    @CommandLine.Parameters(index = "0", description = "Blueprint name", completionCandidates = BlueprintCommand.BlueprintCompletionCandidates.class)
     private String name;
 
     @Override

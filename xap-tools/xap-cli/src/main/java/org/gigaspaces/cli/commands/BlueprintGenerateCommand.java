@@ -14,7 +14,7 @@ import java.util.Map;
 @Command(name="generate", header = "Generates a new GigaSpaces project from the specified blueprint")
 public class BlueprintGenerateCommand extends CliCommand {
 
-    @Parameters(index = "0", description = "Blueprint name")
+    @Parameters(index = "0", description = "Blueprint name", completionCandidates = BlueprintCommand.BlueprintCompletionCandidates.class)
     private String name;
 
     @Parameters(index = "1", description = "Target path for generated project", arity = "0..1")
@@ -29,7 +29,8 @@ public class BlueprintGenerateCommand extends CliCommand {
         Path targetPath = getTargetPath(this.target);
         blueprint.generate(targetPath, properties);
         System.out.println(String.format("Generated project from %s at %s", name, targetPath.toAbsolutePath()));
-        Desktop.getDesktop().open(targetPath.toFile());
+        if (Desktop.isDesktopSupported())
+            Desktop.getDesktop().open(targetPath.toFile());
     }
 
     private Path getImplicitTarget(String name) {
