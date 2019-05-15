@@ -1,5 +1,5 @@
 maven.groupId=com.mycompany.app
-maven.artifactId=my-datagrid-client
+maven.artifactId=my-pu
 maven.version=0.1
 java.version=1.8
 gs.package={{#gs.path}}{{maven.groupId}}{{/gs.path}}
