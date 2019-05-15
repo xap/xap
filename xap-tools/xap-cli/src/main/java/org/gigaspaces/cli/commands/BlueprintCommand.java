@@ -38,7 +38,7 @@ public class BlueprintCommand extends CliCommand implements SubCommandContainer 
         BlueprintRepository repository = getDefaultRepository();
         Blueprint blueprint = repository.get(name);
         if (blueprint == null)
-            throw new CliCommandException("Unknown blueprint: " + name + ". Available blueprints: " + repository.getNames());
+            throw CliCommandException.userError("Unknown blueprint: " + name + ". Available blueprints: " + repository.getNames());
         return blueprint;
     }
 

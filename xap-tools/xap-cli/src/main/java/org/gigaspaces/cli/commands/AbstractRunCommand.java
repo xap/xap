@@ -15,13 +15,13 @@ public abstract class AbstractRunCommand extends CliCommand {
         //if partitions is not defined
         if (partitions == 0) {
             if (ha) {
-                throw new CliCommandException("Missing argument: '--partitions' when used in conjunction with '--ha' option");
+                throw CliCommandException.userError("Missing argument: '--partitions' when used in conjunction with '--ha' option");
             }
             if (instances != null && !instances.isEmpty()) {
-                throw new CliCommandException("Missing argument: '--partitions' when used in conjunction with '--instances' option");
+                throw CliCommandException.userError("Missing argument: '--partitions' when used in conjunction with '--instances' option");
             }
         } else if (partitions < 0) {
-            throw new CliCommandException("Illegal argument: '--partitions="+partitions+"' must be positive");
+            throw CliCommandException.userError("Illegal argument: '--partitions="+partitions+"' must be positive");
         }
     }
 

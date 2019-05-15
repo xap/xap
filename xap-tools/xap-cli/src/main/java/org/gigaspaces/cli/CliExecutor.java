@@ -68,8 +68,9 @@ public class CliExecutor {
             // original example injected terminal into commands. not sure if this is required.
             ShellClearCommand.instance.lineReader = (LineReaderImpl) shellReader;
 
-            // start the shell and process input until the user quits with Ctl-D (EOF)
             mainCommandLine.usage(System.out);
+            System.out.println();
+            // start the shell and process input until the user quits with Ctl-D (EOF)
             while (true) {
                 try {
                     String line = shellReader.readLine(mainCommandLine.getCommandName() +">");
@@ -100,26 +101,31 @@ public class CliExecutor {
                 .build();
     }
 
-    private static int handleException(Exception e) {
-        if (e instanceof ExecutionException) {
-            if (e.getCause() instanceof CliCommandException) {
-                CliCommandException cause = (CliCommandException) e.getCause();
-                printErr(cause);
-                return cause.getExitCode();
-            }
-        }
-        printErr(e);
-        return 1;
-    }
+    private static int handleException(Throwable e) {
+        if (e instanceof ExecutionException && e.getCause() != null)
+            return handleException(e.getCause());
+        if (e instanceof UserInterruptException)
+            return handleException(CliCommandException.userError("Operation was interrupted by CTRL-C."));
+        if (e instanceof EndOfFileException)
+            return handleException(CliCommandException.userError("Operation was aborted by CTRL-D."));
 
-    private static void printErr(Throwable t) {
-        String message = t.getLocalizedMessage();
-        if (message == null) message = t.toString();
-        System.err.println("\n[ERROR] " + message);
-
-        if (!CliCommand.LOGGER.isLoggable(Level.FINE)) {
+        boolean userError = e instanceof CliCommandException && ((CliCommandException) e).isUserError();
+        System.err.println(System.lineSeparator() + (userError ? "" : "[ERROR] ") + getMessage(e));
+        if (!userError && !CliCommand.LOGGER.isLoggable(Level.FINE)) {
             System.err.println("- Configure " + Constants.LOGGER_CLI + " log level for verbosity");
         }
+        System.err.println();
+
+        return getExitCode(e);
+    }
+
+    private static String getMessage(Throwable e) {
+        String message = e.getLocalizedMessage();
+        return message != null ? message : e.toString();
+
+    }
+    private static int getExitCode(Throwable e) {
+        return e instanceof CliCommandException ? ((CliCommandException)e).getExitCode() : 1;
     }
 
     private static CommandLine toCommandLine(Object command) {
@@ -201,7 +207,7 @@ public class CliExecutor {
         }
     }
 
-    @Command(name="exit", aliases = "quit", header = "Exits interactive shell (shortcut: ctrl-d)")
+    @Command(name="exit", aliases = "quit", header = "Exits interactive shell (shortcut: CTRL-D)")
     private static class ShellExitCommand extends CliCommand {
         private static final ShellExitCommand instance = new ShellExitCommand();
 

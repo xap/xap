@@ -5,9 +5,7 @@ import org.gigaspaces.cli.CliCommandException;
 import org.gigaspaces.blueprints.Blueprint;
 import org.gigaspaces.cli.CliExecutor;
 import org.gigaspaces.cli.commands.utils.KeyValueFormatter;
-import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
-import org.jline.reader.UserInterruptException;
 import picocli.CommandLine.*;
 
 import java.awt.*;
@@ -40,19 +38,16 @@ public class BlueprintGenerateCommand extends CliCommand {
     protected void execute() throws Exception {
         this.properties = properties != null ? properties : Collections.emptyMap();
 
-        try {
-            final LineReader interactiveReader = initInteractive();
-            final Blueprint blueprint = initBlueprint(interactiveReader, this.name);
-            final Path target = initTarget(interactiveReader, blueprint, this.target);
-            final Map<String, Object> properties = initProperties(interactiveReader, blueprint, this.properties);
+        assertNotExists(this.target);
+        final LineReader interactiveReader = initInteractive();
+        final Blueprint blueprint = initBlueprint(interactiveReader, this.name);
+        final Path target = initTarget(interactiveReader, blueprint, this.target);
+        final Map<String, Object> properties = initProperties(interactiveReader, blueprint, this.properties);
 
-            blueprint.generate(target, properties);
+        blueprint.generate(target, properties);
 
-            System.out.println(String.format("Generated project from %s at %s", blueprint.getName(), target.toAbsolutePath()));
-            openResult(target, interactiveReader);
-        } catch (UserInterruptException | EndOfFileException e) {
-            System.out.println("Operation was cancelled by user");
-        }
+        System.out.println(String.format("Generated project from %s at %s", blueprint.getName(), target.toAbsolutePath()));
+        openResult(target, interactiveReader);
     }
 
     private void openResult(Path target, LineReader interactiveReader) throws IOException {
@@ -73,12 +68,13 @@ public class BlueprintGenerateCommand extends CliCommand {
         } else {
             interactiveCause = null;
         }
+        LineReader result = null;
         if (interactiveCause != null) {
-            System.out.println("Generating blueprint in interactive mode (" + interactiveCause + ")");
+            System.out.println("Generating blueprint in interactive mode (" + interactiveCause + ")...");
+            result = CliExecutor.getOrCreateReader();
             System.out.println("Please provide a value for each of the following, or simply click ENTER to accept the default value in brackets.");
-            return CliExecutor.getOrCreateReader();
         }
-        return null;
+        return result;
     }
 
     private static Blueprint initBlueprint(LineReader interactiveReader, String name) throws CliCommandException, IOException {
@@ -86,7 +82,7 @@ public class BlueprintGenerateCommand extends CliCommand {
             return BlueprintCommand.getBlueprint(name);
 
         if (interactiveReader == null)
-            throw new CliCommandException("Aborted - blueprint name was not provided and interactive mode was disabled");
+            throw CliCommandException.userError("Blueprint name was not provided and interactive mode was disabled");
 
         System.out.println("List of available blueprints: ");
         AtomicInteger counter = new AtomicInteger();
@@ -165,8 +161,8 @@ public class BlueprintGenerateCommand extends CliCommand {
     }
 
     private static Path assertNotExists(Path path) throws CliCommandException {
-        if (Files.exists(path))
-            throw new CliCommandException("Target path already exists: " + path);
+        if (path != null && Files.exists(path))
+            throw CliCommandException.userError("Target path already exists: " + path);
         return path;
     }
 

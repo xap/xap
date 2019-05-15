@@ -43,11 +43,11 @@ public class PuRunCommand extends AbstractRunCommand {
     protected void execute() throws Exception {
         validateOptions(partitions, ha, instances);
         if (!path.exists())
-            throw new CliCommandException("File not found: " + path);
+            throw CliCommandException.userError("File not found: " + path);
 
         final List<ProcessBuilder> processBuilders = toProcessBuilders(instances, partitions, ha, lus);
         if (instances != null && !instances.isEmpty()) {
-            throw new CliCommandException("Invalid instances: " + instances.toString());
+            throw CliCommandException.userError("Invalid instances: " + instances.toString());
         }
         XapCliUtils.executeProcesses(processBuilders);
     }

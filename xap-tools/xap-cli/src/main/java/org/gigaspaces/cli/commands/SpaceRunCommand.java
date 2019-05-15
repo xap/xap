@@ -36,7 +36,7 @@ public class SpaceRunCommand extends AbstractRunCommand {
         validateOptions(partitions, ha, instances);
         List<ProcessBuilder> processBuilders = toProcessBuilders();
         if (instances != null && !instances.isEmpty()) {
-            throw new CliCommandException("Invalid instances: " + instances.toString());
+            throw CliCommandException.userError("Invalid instances: " + instances.toString());
         }
         XapCliUtils.executeProcesses(processBuilders);
     }
