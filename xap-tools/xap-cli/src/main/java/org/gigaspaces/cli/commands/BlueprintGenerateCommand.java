@@ -36,32 +36,42 @@ public class BlueprintGenerateCommand extends CliCommand {
 
     @Override
     protected void execute() throws Exception {
-        this.properties = properties != null ? properties : Collections.emptyMap();
+        Blueprint blueprint = BlueprintCommand.getBlueprint(this.name);
+        Path target = assertNotExists(this.target);
+        Map<String, Object> properties = this.properties != null ? this.properties : new HashMap<>();
 
-        assertNotExists(this.target);
-        final LineReader interactiveReader = initInteractive();
-        final Blueprint blueprint = initBlueprint(interactiveReader, this.name);
-        final Path target = initTarget(interactiveReader, blueprint, this.target);
-        final Map<String, Object> properties = initProperties(interactiveReader, blueprint, this.properties);
+        final LineReader interactiveReader = initInteractive(blueprint, properties);
+        if (interactiveReader == null) {
+            if (blueprint == null)
+                throw CliCommandException.userError("Blueprint name was not provided and interactive mode is off");
+            if (target == null) {
+                target = getDefaultTarget(blueprint);
+                System.out.println("Target not specified - auto-selected " + target);
+            }
+        } else {
+            if (blueprint == null)
+                blueprint = readBlueprint(interactiveReader);
+            if (target == null)
+                target = readTarget(interactiveReader, getDefaultTarget(blueprint));
+            readProperties(interactiveReader, properties, blueprint.getValues());
+        }
 
         blueprint.generate(target, properties);
 
-        System.out.println(String.format("Generated project from %s at %s", blueprint.getName(), target.toAbsolutePath()));
-        openResult(target, interactiveReader);
-    }
-
-    private void openResult(Path target, LineReader interactiveReader) throws IOException {
-        if (Desktop.isDesktopSupported() && booleanQuestion(interactiveReader,
-                "Would you like to open it using the file explorer?", false)) {
+        System.out.println(CliExecutor.formatAnsi(String.format(
+                "@|bold,fg(green) Generated project from %s at %s|@", blueprint.getName(), target.toAbsolutePath())));
+        if (Desktop.isDesktopSupported() &&
+                interactiveReader != null &&
+                readBoolean(interactiveReader, "Would you like to open it using the file explorer?", false)) {
             Desktop.getDesktop().open(target.toFile());
         }
     }
 
-    private LineReader initInteractive() throws IOException {
+    private LineReader initInteractive(Blueprint blueprint, Map<String, Object> properties) throws IOException {
         String interactiveCause;
         if (interactive != null) {
             interactiveCause = this.interactive ? "interactive option was enabled" : null;
-        } else if (isEmpty(name)) {
+        } else if (blueprint == null) {
             interactiveCause = "blueprint name was not provided";
         } else if (properties.size() == 0) {
             interactiveCause = "no properties were provided";
@@ -77,70 +87,49 @@ public class BlueprintGenerateCommand extends CliCommand {
         return result;
     }
 
-    private static Blueprint initBlueprint(LineReader interactiveReader, String name) throws CliCommandException, IOException {
-        if (!isEmpty(name))
-            return BlueprintCommand.getBlueprint(name);
-
-        if (interactiveReader == null)
-            throw CliCommandException.userError("Blueprint name was not provided and interactive mode was disabled");
-
+    private static Blueprint readBlueprint(LineReader interactiveReader) throws CliCommandException, IOException {
         System.out.println("List of available blueprints: ");
         AtomicInteger counter = new AtomicInteger();
         KeyValueFormatter formatter = KeyValueFormatter.builder().build();
         BlueprintCommand.getDefaultRepository().getBlueprints().forEach(b -> formatter.append("[" + counter.incrementAndGet() + "] " + b.getName(), b.getDescription()));
         System.out.print(formatter.get());
         int defaultBlueprint = BlueprintCommand.getDefaultRepository().indexOf("client").orElse(0) + 1;
-        String input = interactiveReader.readLine(formatRequest("Select a blueprint by name or number", defaultBlueprint));
+        String input = readString(interactiveReader,"Select a blueprint by name or number", defaultBlueprint);
         Optional<Integer> code = isEmpty(input) ? Optional.of(defaultBlueprint) : tryParse(input);
         return code.isPresent()
                 ? BlueprintCommand.getBlueprint(code.get() - 1)
                 : BlueprintCommand.getBlueprint(input);
     }
 
-    private static Path initTarget(LineReader interactiveReader, Blueprint blueprint, Path target) throws CliCommandException {
-        if (target != null)
-            return assertNotExists(target);
-
-        Path defaultTarget = getDefaultTarget(blueprint);
-        if (interactiveReader == null) {
-            System.out.println("Target not specified - auto-selected " + defaultTarget);
-            return defaultTarget;
-        }
-
-        String input = interactiveReader.readLine(formatRequest("Target path", defaultTarget));
+    private static Path readTarget(LineReader interactiveReader, Path defaultTarget) throws CliCommandException {
+        String input = readString(interactiveReader, "Target path", defaultTarget);
         Path result = !isEmpty(input) ? Paths.get(input) : defaultTarget;
         return assertNotExists(result);
     }
 
-    private static Map<String, Object> initProperties(LineReader interactiveReader, Blueprint blueprint, Map<String, Object> commandProperties)
-            throws IOException {
-        if (interactiveReader == null)
-            return commandProperties;
-
-        Map<String, String> blueprintProperties = blueprint.getValues();
-        Map<String, Object> properties = new HashMap<>(commandProperties);
-        long missing = blueprintProperties.keySet().stream().filter(k -> !properties.containsKey(k)).count();
-        if (missing > 0 && booleanQuestion(interactiveReader,
+    private static void readProperties(LineReader interactiveReader, Map<String, Object> commandProperties, Map<String, String> blueprintProperties) {
+        long missing = blueprintProperties.keySet().stream().filter(k -> !commandProperties.containsKey(k)).count();
+        if (missing > 0 && readBoolean(interactiveReader,
                 "There are " + missing + " additional properties in this blueprint - would you like to set them?", false)) {
             AtomicInteger curr = new AtomicInteger();
             blueprintProperties.forEach((k, v) -> {
-                if (!properties.containsKey(k)) {
-                    String input = interactiveReader.readLine(formatRequest(String.format("  (%s/%s) %s", curr.incrementAndGet(), missing, k), v));
-                    properties.put(k, input.isEmpty() ? v : input);
+                if (!commandProperties.containsKey(k)) {
+                    String input = readString(interactiveReader, String.format("  (%s/%s) %s", curr.incrementAndGet(), missing, k), v);
+                    commandProperties.put(k, input.isEmpty() ? v : input);
                 }
             });
         }
-        return properties;
     }
 
-    private static String formatRequest(String name, Object defaultValue) {
-        return String.format("%s [%s]: ", name, defaultValue);
+    private static String readString(LineReader reader, String label, Object defaultValue) {
+        return reader.readLine(CliExecutor.formatAnsi(String.format(
+                "%s [@|bold %s|@]: ", label, defaultValue)));
     }
 
-    private static boolean booleanQuestion(LineReader lineReader, String question, boolean defaultValue) {
+    private static boolean readBoolean(LineReader lineReader, String label, boolean defaultValue) {
         if (lineReader == null)
             return defaultValue;
-        String input = lineReader.readLine(formatRequest(question, defaultValue ? "y" : "n"));
+        String input = readString(lineReader, label, defaultValue ? "y" : "n");
         if (isEmpty(input))
             return defaultValue;
         switch (input.toLowerCase()) {
@@ -151,6 +140,7 @@ public class BlueprintGenerateCommand extends CliCommand {
                 return false;
         }
     }
+
     private static Path getDefaultTarget(Blueprint blueprint){
         String name = "my-" + blueprint.getName();
         int suffix = 1;

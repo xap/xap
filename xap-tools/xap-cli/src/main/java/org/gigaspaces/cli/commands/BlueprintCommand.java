@@ -35,6 +35,8 @@ public class BlueprintCommand extends CliCommand implements SubCommandContainer 
     }
 
     static Blueprint getBlueprint(String name) throws IOException, CliCommandException {
+        if (name == null || name.length() == 0)
+            return null;
         BlueprintRepository repository = getDefaultRepository();
         Blueprint blueprint = repository.get(name);
         if (blueprint == null)

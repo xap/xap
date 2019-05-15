@@ -71,9 +71,10 @@ public class CliExecutor {
             mainCommandLine.usage(System.out);
             System.out.println();
             // start the shell and process input until the user quits with Ctl-D (EOF)
+            String prompt = formatAnsi("@|green " + mainCommandLine.getCommandName() +"|@$ ");
             while (true) {
                 try {
-                    String line = shellReader.readLine(mainCommandLine.getCommandName() +">");
+                    String line = shellReader.readLine(prompt);
                     if (line != null && !line.isEmpty()) {
                         //String line = reader.readLine(prompt, null, (MaskingCallback) null, null);
                         ParsedLine pl = shellReader.getParser().parse(line, 0);
@@ -110,9 +111,14 @@ public class CliExecutor {
             return handleException(CliCommandException.userError("Operation was aborted by CTRL-D."));
 
         boolean userError = e instanceof CliCommandException && ((CliCommandException) e).isUserError();
-        System.err.println(System.lineSeparator() + (userError ? "" : "[ERROR] ") + getMessage(e));
-        if (!userError && !CliCommand.LOGGER.isLoggable(Level.FINE)) {
-            System.err.println("- Configure " + Constants.LOGGER_CLI + " log level for verbosity");
+        System.err.println();
+        if (userError) {
+            System.err.println(formatAnsi("@|bold,fg(yellow) " + getMessage(e) + "|@"));
+        } else {
+            System.err.println(formatAnsi("@|bold,fg(red) [ERROR] " + getMessage(e) + "|@"));
+            if (!CliCommand.LOGGER.isLoggable(Level.FINE)) {
+                System.err.println(formatAnsi("@|bold - Configure " + Constants.LOGGER_CLI + " log level for verbosity|@"));
+            }
         }
         System.err.println();
 
@@ -139,6 +145,10 @@ public class CliExecutor {
             }
         }
         return cmd;
+    }
+
+    public static String formatAnsi(String s) {
+        return Help.Ansi.AUTO.string(s);
     }
 
     private static class CustomRunner extends RunLast {
