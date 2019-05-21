@@ -1,0 +1,4 @@
+id:int,name:string,birthday:date,native:boolean
+1,john,1970-01-01,true
+2,jane,1980-12-31,false
+3,,,
