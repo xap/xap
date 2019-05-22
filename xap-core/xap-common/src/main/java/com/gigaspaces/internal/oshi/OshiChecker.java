@@ -15,7 +15,7 @@ public class OshiChecker {
         String enabled = System.getProperty(CommonSystemProperties.OSHI_ENABLED, "");
 
         if(enabled.isEmpty() || Boolean.parseBoolean(enabled)){
-            logger.info("Oshi is enabled");
+            logger.fine("Oshi is enabled");
             return true;
         }
         return false;
