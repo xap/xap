@@ -1,36 +1,32 @@
 package {{maven.groupId}};
 
-import org.openspaces.core.GigaSpace;
-import org.openspaces.core.GigaSpaceConfigurer;
-import org.openspaces.core.space.CannotFindSpaceException;
-import org.openspaces.core.space.EmbeddedSpaceConfigurer;
-import org.openspaces.core.space.SpaceConfigurer;
-import org.openspaces.core.space.SpaceProxyConfigurer;
-
-import {{maven.groupId}}.demo.Demo;
+import org.openspaces.core.*;
+import org.openspaces.core.space.*;
 
 public class Program {
     public static void main(String[] args) {
-        SpaceConfigurer spaceConfigurer;
-        if (args.length == 0) {
-            System.out.println("Space name not provided - creating an embedded space...");
-            spaceConfigurer = new EmbeddedSpaceConfigurer("mySpace");
-        } else {
-            String spaceName = args[0];
-            System.out.printf("Connecting to space %s...%n", spaceName);
-            spaceConfigurer = new SpaceProxyConfigurer(spaceName);
-        }
+        GigaSpace gigaSpace = getOrCreateSpace(args.length == 0 ? null : args[0]);
+        System.out.println("Connected to space " + gigaSpace.getName());
 
-        try {
-            GigaSpace gigaSpace = new GigaSpaceConfigurer(spaceConfigurer).create();
-            System.out.println("Connected to space, running demo...");
-            Demo.run(gigaSpace);
-        } catch (CannotFindSpaceException e) {
-            System.err.println("Failed to find space: " + e.getMessage());
-        }
+        // ... (your code goes here)
+        System.out.println("Entries in space: " + gigaSpace.count(null));
 
-        spaceConfigurer.close();
         System.out.println("Program completed successfully");
         System.exit(0);
+    }
+
+    public static GigaSpace getOrCreateSpace(String spaceName) {
+        if (spaceName == null) {
+            System.out.println("Space name not provided - creating an embedded space...");
+            return new GigaSpaceConfigurer(new EmbeddedSpaceConfigurer("mySpace")).create();
+        } else {
+            System.out.printf("Connecting to space %s...%n", spaceName);
+            try {
+                return new GigaSpaceConfigurer(new SpaceProxyConfigurer(spaceName)).create();
+            } catch (CannotFindSpaceException e) {
+                System.err.println("Failed to find space: " + e.getMessage());
+                throw e;
+            }
+        }
     }
 }
