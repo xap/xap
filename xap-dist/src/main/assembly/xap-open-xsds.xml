@@ -43,12 +43,6 @@
             <source>${project.basedir}/../xap-core/xap-openspaces/src/main/resources/org/openspaces/jms/config/openspaces-jms.xsd</source>
             <outputDirectory>jms</outputDirectory>
         </file>
-        <!--
-        PREMIUM - TODO in xap-premium
-        <file>
-            <source></source>
-            <outputDirectory>mapdb-blob-store</outputDirectory>
-        </file>-->
         <file>
             <source>${project.basedir}/../xap-core/xap-datagrid/src/main/resources/gigaspaces-metadata.xsd</source>
             <outputDirectory>metadata</outputDirectory>
