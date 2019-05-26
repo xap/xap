@@ -1,5 +1,6 @@
 package org.gigaspaces.cli.commands;
 
+import com.gigaspaces.start.SystemInfo;
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.CliExecutor;
 import org.gigaspaces.cli.CommandsSet;
@@ -26,12 +27,19 @@ public class XapMainCommand extends CliCommand implements SubCommandContainer {
 
     @Override
     public CommandsSet getSubCommands() {
-        return new CommandsSet()
-                .add(new VersionCommand())
-                .add(new HelpCommand())
-                .add(new DemoCommand())
-                .add(new BlueprintCommand())
-                .add(new ProcessingUnitCommand())
-                .add(new SpaceCommand());
+
+        CommandsSet commandsSet = new CommandsSet();
+        commandsSet.add(new VersionCommand());
+        commandsSet.add(new HelpCommand());
+        commandsSet.add(new DemoCommand());
+        // This command is not supported in XAP.NET
+        if (SystemInfo.singleton().locations().xapNetHome() == null)
+            commandsSet.add(new BlueprintCommand());
+        commandsSet.add(new ProcessingUnitCommand());
+        commandsSet.add(new SpaceCommand());
+        // This command is not supported in XAP.NET
+        if (SystemInfo.singleton().locations().xapNetHome() == null)
+            commandsSet.add(new MavenCommand());
+        return commandsSet;
     }
 }

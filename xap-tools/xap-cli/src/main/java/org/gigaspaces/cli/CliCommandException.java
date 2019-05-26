@@ -8,6 +8,10 @@ public class CliCommandException extends Exception {
         super(msg);
     }
 
+    public CliCommandException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
+
     public static CliCommandException userError(String message) {
         return new CliCommandException(message).userError();
     }
