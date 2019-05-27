@@ -66,10 +66,13 @@ public class MavenInstallCommand extends CliCommand {
                     artifacts.size());
         } else {
             try {
-                String mavenPath = JavaUtils.isWindows() ? "mvn.cmd" : "mvn";
-                String mavenGoal = "install";
-                System.out.println("Executing install command: " + mavenPath + " " + mavenGoal + " " + mavenArguments + "...");
-                int exitCode = new ProcessBuilder(mavenPath, mavenGoal, mavenArguments)
+                List<String> commands = new ArrayList<>();
+                commands.add(JavaUtils.isWindows() ? "mvn.cmd" : "mvn");
+                commands.add("install");
+                if(!mavenArguments.isEmpty())
+                    commands.add(mavenArguments);
+                System.out.println("Executing install command: " + String.join(" ",commands));
+                int exitCode = new ProcessBuilder(commands)
                         .directory(target.toAbsolutePath().toFile())
                         .inheritIO()
                         .start()
