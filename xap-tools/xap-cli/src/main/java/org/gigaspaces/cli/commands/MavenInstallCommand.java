@@ -38,15 +38,10 @@ public class MavenInstallCommand extends CliCommand {
     @Override
     protected void execute() throws Exception {
         long startTime = System.currentTimeMillis();
-        Path gsMaven = Paths.get(SystemInfo.singleton().getXapHome(), "tools", "maven");
+        Path gsMaven = Paths.get(SystemInfo.singleton().locations().config(), "maven");
 
         if (artifactsPath == null) {
-            artifactsPath = new ArrayList<>();
-            artifactsPath.add(gsMaven.resolve("xap-artifacts.txt"));
-            // Temp hack pending merge of artifacts files.
-            Path i9eArtifacts = Paths.get(SystemInfo.singleton().getXapHome(), "insightedge", "tools", "maven", "insightedge-artifacts.txt");
-            if (Files.exists(i9eArtifacts))
-                artifactsPath.add(i9eArtifacts);
+            artifactsPath = Collections.singletonList(gsMaven.resolve("gs-artifacts.txt"));
         }
 
         Path target = gsMaven.resolve("installer");
