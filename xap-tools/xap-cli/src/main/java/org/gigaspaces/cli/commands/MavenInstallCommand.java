@@ -166,9 +166,7 @@ public class MavenInstallCommand extends CliCommand {
 
     private static List<String> load(Path path) throws IOException {
         try (Stream<String> stream = Files.lines(path)) {
-            return stream.filter(s -> !s.startsWith("#"))
-                    .map(l -> l.replace("${XAP_HOME}", "${gs.home}")) // Temp, replace when xap-artifacts is fixed.
-                    .collect(Collectors.toList());
+            return stream.filter(s -> !s.startsWith("#")).collect(Collectors.toList());
         }
     }
 
