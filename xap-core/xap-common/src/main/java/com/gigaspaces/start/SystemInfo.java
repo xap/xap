@@ -65,7 +65,7 @@ public class SystemInfo {
         this.xapHomeFwdSlash = new File(xapHome).toString().replace("\\", "/");
         System.setProperty(CommonSystemProperties.GS_HOME + ".fwd-slash", xapHomeFwdSlash);
         this.os = new XapOperatingSystem(LoggerSystemInfo.processId);
-        this.network = LoggerSystemInfo.networkInfo;
+        this.network = XapNetworkInfo.getInstance();
         this.locations = new XapLocations(xapHome);
         this.timeProvider = new XapTimeProvider();
         this.managerClusterInfo = new XapManagerClusterInfo(network.getPublicHost());

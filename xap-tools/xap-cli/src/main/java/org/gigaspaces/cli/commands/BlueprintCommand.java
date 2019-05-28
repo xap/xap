@@ -1,12 +1,9 @@
 package org.gigaspaces.cli.commands;
 
-import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.logger.LoggerSystemInfo;
 import org.gigaspaces.blueprints.Blueprint;
 import org.gigaspaces.blueprints.BlueprintRepository;
-import org.gigaspaces.cli.CliCommand;
-import org.gigaspaces.cli.CliCommandException;
-import org.gigaspaces.cli.CommandsSet;
-import org.gigaspaces.cli.SubCommandContainer;
+import org.gigaspaces.cli.*;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -30,8 +27,12 @@ public class BlueprintCommand extends CliCommand implements SubCommandContainer 
                 .add(new BlueprintGenerateCommand());
     }
 
+    private static BlueprintRepository defaultRepository;
     static BlueprintRepository getDefaultRepository() throws IOException {
-        return new BlueprintRepository(Paths.get(SystemInfo.singleton().locations().config(), "blueprints"));
+        if (defaultRepository == null) {
+            defaultRepository = new BlueprintRepository(Paths.get(LoggerSystemInfo.xapHome, "config", "blueprints"));
+        }
+        return defaultRepository;
     }
 
     static Blueprint getBlueprint(String name) throws IOException, CliCommandException {
@@ -49,8 +50,10 @@ public class BlueprintCommand extends CliCommand implements SubCommandContainer 
     }
 
     public static class BlueprintCompletionCandidates extends ArrayList<String> {
+        private static final Collection<String> names = getNames();
+
         public BlueprintCompletionCandidates() {
-            super(getNames());
+            super(names);
         }
 
         private static Collection<String> getNames() {

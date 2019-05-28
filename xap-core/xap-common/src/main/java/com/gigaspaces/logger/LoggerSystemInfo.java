@@ -2,7 +2,6 @@ package com.gigaspaces.logger;
 
 import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.start.Locator;
-import com.gigaspaces.start.XapNetworkInfo;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
@@ -11,7 +10,6 @@ public class LoggerSystemInfo {
 
     public static final String xapHome = findXapHome();
     public static final long processId = findProcessId();
-    public static final XapNetworkInfo networkInfo = new XapNetworkInfo();
 
     private static String findXapHome() {
         String result = System.getProperty(CommonSystemProperties.GS_HOME);

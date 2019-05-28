@@ -1,5 +1,6 @@
 package org.gigaspaces.cli.commands;
 
+import org.gigaspaces.blueprints.BlueprintRepository;
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.CliCommandException;
 import org.gigaspaces.blueprints.Blueprint;
@@ -91,9 +92,10 @@ public class BlueprintGenerateCommand extends CliCommand {
         System.out.println("List of available blueprints: ");
         AtomicInteger counter = new AtomicInteger();
         KeyValueFormatter formatter = KeyValueFormatter.builder().build();
-        BlueprintCommand.getDefaultRepository().getBlueprints().forEach(b -> formatter.append("[" + counter.incrementAndGet() + "] " + b.getName(), b.getDescription()));
+        BlueprintRepository repository = BlueprintCommand.getDefaultRepository();
+        repository.getBlueprints().forEach(b -> formatter.append("[" + counter.incrementAndGet() + "] " + b.getName(), b.getDescription()));
         System.out.print(formatter.get());
-        int defaultBlueprint = BlueprintCommand.getDefaultRepository().indexOf("client").orElse(0) + 1;
+        int defaultBlueprint = repository.indexOf("client").orElse(0) + 1;
         String input = readString(interactiveReader,"Select a blueprint by name or number", defaultBlueprint);
         Optional<Integer> code = isEmpty(input) ? Optional.of(defaultBlueprint) : tryParse(input);
         return code.isPresent()

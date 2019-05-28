@@ -1,6 +1,5 @@
 package org.gigaspaces.cli.commands;
 
-import com.gigaspaces.start.SystemInfo;
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.CliExecutor;
 import org.gigaspaces.cli.CommandsSet;
@@ -18,6 +17,8 @@ public class XapMainCommand extends CliCommand implements SubCommandContainer {
                     "@|green   /_/ \\_\\/_/    \\_\\_|                                   |@%n" +
                     "%n";
 
+    private static boolean isXapNet = System.getProperty("com.gs.xapnet.home") != null;
+
     protected void execute() throws Exception {
     }
 
@@ -27,19 +28,22 @@ public class XapMainCommand extends CliCommand implements SubCommandContainer {
 
     @Override
     public CommandsSet getSubCommands() {
-
         CommandsSet commandsSet = new CommandsSet();
         commandsSet.add(new VersionCommand());
         commandsSet.add(new HelpCommand());
         commandsSet.add(new DemoCommand());
         // This command is not supported in XAP.NET
-        if (SystemInfo.singleton().locations().xapNetHome() == null)
+        if (!isXapNet())
             commandsSet.add(new BlueprintCommand());
         commandsSet.add(new ProcessingUnitCommand());
         commandsSet.add(new SpaceCommand());
         // This command is not supported in XAP.NET
-        if (SystemInfo.singleton().locations().xapNetHome() == null)
+        if (!isXapNet())
             commandsSet.add(new MavenCommand());
         return commandsSet;
+    }
+
+    public static boolean isXapNet() {
+        return isXapNet;
     }
 }

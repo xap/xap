@@ -1,6 +1,5 @@
 package org.gigaspaces.cli.commands;
 
-import com.gigaspaces.start.SystemInfo;
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.CommandsSet;
 import org.gigaspaces.cli.SubCommandContainer;
@@ -17,7 +16,7 @@ public class ProcessingUnitCommand extends CliCommand implements SubCommandConta
     public CommandsSet getSubCommands() {
         CommandsSet result = new CommandsSet();
         // This command is not supported in XAP.NET
-        if (SystemInfo.singleton().locations().xapNetHome() == null)
+        if (!XapMainCommand.isXapNet())
             result.add(new PuRunCommand());
         return result;
     }
