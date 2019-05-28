@@ -1,7 +1,7 @@
 package org.gigaspaces.cli.commands;
 
 import com.gigaspaces.internal.jvm.JavaUtils;
-import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.logger.LoggerSystemInfo;
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.CliCommandException;
 import picocli.CommandLine;
@@ -38,7 +38,7 @@ public class MavenInstallCommand extends CliCommand {
     @Override
     protected void execute() throws Exception {
         long startTime = System.currentTimeMillis();
-        Path gsMaven = Paths.get(SystemInfo.singleton().locations().config(), "maven");
+        Path gsMaven = Paths.get(LoggerSystemInfo.xapHome, "config", "maven");
 
         if (artifactsPath == null) {
             artifactsPath = Collections.singletonList(gsMaven.resolve("gs-artifacts.txt"));
@@ -93,7 +93,7 @@ public class MavenInstallCommand extends CliCommand {
         lines.add("  <version>1.0</version>");
         lines.add("  <properties>");
         lines.add("    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>");
-        lines.add("    <gs.home>" + SystemInfo.singleton().getXapHome() + "</gs.home>");
+        lines.add("    <gs.home>" + LoggerSystemInfo.xapHome + "</gs.home>");
         lines.add("    <createChecksum>" + createChecksum + "</createChecksum>");
         lines.add("  </properties>");
         lines.add("  <build>");
@@ -117,19 +117,23 @@ public class MavenInstallCommand extends CliCommand {
     }
 
     private List<String> processArtifact(List<String> template, Path target, String artifact) {
-        Path path = Paths.get(artifact.replace("${gs.home}", SystemInfo.singleton().getXapHome()));
-        String fileName = path.getFileName().toString();
-        String name;
+        final Path path = Paths.get(artifact.replace("${gs.home}", LoggerSystemInfo.xapHome));
+        final String fileName = path.getFileName().toString();
+        final String extension = getExtension(fileName);
+        final String name = fileName.substring(0, fileName.length() - extension.length());
+
         try {
-            if (fileName.endsWith(".jar")) {
-                name = fileName.substring(0, fileName.length() - ".jar".length());
-                extractPom(path, target.resolve("pom-" + name + ".xml"));
-            } else if (fileName.equals("pom.xml")) {
-                name = "parent-" + path.getParent().getFileName().toString();
-                artifact = "pom-" + name + ".xml";
-                Files.copy(path, target.resolve(artifact));
-            } else {
-                throw new IllegalArgumentException("Unsupported artifact: " + path);
+            switch (extension) {
+                case ".jar":
+                    extractPom(path, target.resolve("pom-" + name + ".xml"));
+                    break;
+                case ".xml":
+                    artifact = "pom-" + name + ".xml";
+                    Files.copy(path, target.resolve(artifact));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported extension: " + extension);
+
             }
 
             Map<String, String> placeholders = new HashMap<>();
@@ -140,6 +144,10 @@ public class MavenInstallCommand extends CliCommand {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static String getExtension(String s) {
+        return s.substring(s.lastIndexOf('.'));
     }
 
     private static List<String> createXmlTemplate() {
