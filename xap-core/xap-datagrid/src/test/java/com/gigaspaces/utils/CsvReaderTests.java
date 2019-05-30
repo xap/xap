@@ -43,6 +43,15 @@ public class CsvReaderTests {
         Path path = getResourcePath("csv/person-with-types.csv");
         List<SpaceDocument> result = toList(new CsvReader().read(path, typeName));
         assertPersonDocuments(result, typeName);
+
+        SpaceTypeDescriptor typeDescriptor = new CsvReader().readSchema(path, typeName).create();
+        Assert.assertEquals(typeName, typeDescriptor.getTypeName());
+        Assert.assertEquals(5, typeDescriptor.getNumOfFixedProperties());
+        Assert.assertEquals(int.class, typeDescriptor.getFixedProperty("id").getType());
+        Assert.assertEquals(String.class, typeDescriptor.getFixedProperty("name").getType());
+        Assert.assertEquals(LocalDate.class, typeDescriptor.getFixedProperty("birthday").getType());
+        Assert.assertEquals(boolean.class, typeDescriptor.getFixedProperty("native").getType());
+        Assert.assertEquals(Object.class, typeDescriptor.getFixedProperty("_spaceId").getType());
     }
 
     @Test
@@ -94,7 +103,7 @@ public class CsvReaderTests {
         Path path = getResourcePath("csv/person-custom-format.csv");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
         CsvReader reader = CsvReader.builder()
-                .addParser(LocalDate.class.getTypeName(), s -> LocalDate.parse(s, formatter))
+                .addParser(LocalDate.class.getTypeName(), LocalDate.class, s -> LocalDate.parse(s, formatter))
                 .build();
         List<Person> result = toList(reader.read(path, Person.class));
         assertPersonPojos(result);
