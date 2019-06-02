@@ -20,8 +20,8 @@ package org.openspaces.esb.mule.pu;
 import org.mule.api.MuleContext;
 import org.mule.api.context.MuleContextFactory;
 import org.mule.config.ConfigResource;
+import org.mule.config.spring.GSSpringXmlConfigurationBuilder;
 import org.mule.config.spring.OptionalObjectsController;
-import org.mule.config.spring.SpringXmlConfigurationBuilder;
 import org.mule.context.DefaultMuleContextFactory;
 import org.openspaces.pu.service.ServiceDetails;
 import org.openspaces.pu.service.ServiceDetailsProvider;
@@ -91,7 +91,7 @@ public class OpenSpacesMuleContextLoader implements ApplicationContextAware, Ini
                 contextCreated = true;
                 try {
                     muleContextFactory = new DefaultMuleContextFactory();
-                    SpringXmlConfigurationBuilder muleXmlConfigurationBuilder = new SpringXmlConfigurationBuilder(location) {
+                    GSSpringXmlConfigurationBuilder muleXmlConfigurationBuilder = new GSSpringXmlConfigurationBuilder(location) {
 
                         @Override
                         protected ApplicationContext doCreateApplicationContext(MuleContext muleContext, ConfigResource[] configResources, OptionalObjectsController optionalObjectsController) {

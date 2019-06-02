@@ -29,6 +29,7 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionVisitor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+import org.springframework.util.PropertyPlaceholderHelper;
 
 import java.util.HashSet;
 import java.util.Properties;
@@ -116,13 +117,15 @@ public class BeanLevelPropertyPlaceholderConfigurer extends PropertyPlaceholderC
     private class PlaceholderResolvingBeanDefinitionVisitor extends BeanDefinitionVisitor {
 
         private final Properties props;
+        private final PropertyPlaceholderHelper propertyPlaceholderHelper;
 
         public PlaceholderResolvingBeanDefinitionVisitor(Properties props) {
             this.props = props;
+            this.propertyPlaceholderHelper = new PropertyPlaceholderHelper("${", "}");
         }
 
         protected String resolveStringValue(String strVal) throws BeansException {
-            return parseStringValue(strVal, this.props, new HashSet<Object>());
+            return propertyPlaceholderHelper.replacePlaceholders(strVal, props);
         }
     }
 }

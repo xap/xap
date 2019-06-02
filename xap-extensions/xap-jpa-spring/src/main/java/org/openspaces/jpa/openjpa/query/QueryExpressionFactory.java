@@ -691,7 +691,7 @@ public class QueryExpressionFactory implements ExpressionFactory {
      * Return true if the Value is a Type expression and the Type uses joined table strategy.
      */
     public boolean isVerticalType(Value val) {
-        throw new RuntimeException("Unsupported operation.");
+            return false;
     }
 
 

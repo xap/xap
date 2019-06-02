@@ -30,8 +30,8 @@ import org.openspaces.pu.container.support.ClusterInfoParser;
 import org.openspaces.pu.container.support.CommandLineParser;
 import org.openspaces.pu.container.support.ConfigLocationParser;
 import org.openspaces.pu.container.support.SpaceNameParser;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.AbstractApplicationContext;
 
 import java.util.Arrays;
 
@@ -75,9 +75,9 @@ public class IntegratedProcessingUnitContainer extends ApplicationContextProcess
      */
     @Override
     public void close() throws CannotCloseContainerException {
-        if (applicationContext instanceof DisposableBean) {
+        if (applicationContext instanceof AbstractApplicationContext) {
             try {
-                ((DisposableBean) applicationContext).destroy();
+                ((AbstractApplicationContext) applicationContext).close();
             } catch (Exception e) {
                 throw new CannotCloseContainerException("Failed to close container with application context ["
                         + applicationContext + "]", e);

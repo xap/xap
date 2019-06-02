@@ -29,7 +29,7 @@
     </dependencyManagement>
 
     <properties>
-        <spring-version>4.3.19.RELEASE</spring-version>
+        <spring-version>5.1.7.RELEASE</spring-version>
         <exclude.tests>nothing-to-exclude</exclude.tests>
         <jsondoc-version>1.1.1</jsondoc-version>
     </properties>

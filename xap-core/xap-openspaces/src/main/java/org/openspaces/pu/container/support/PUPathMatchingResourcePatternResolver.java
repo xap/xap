@@ -70,9 +70,10 @@ public class PUPathMatchingResourcePatternResolver extends PathMatchingResourceP
         return actualResult;
     }
 
-    protected Set doFindPathMatchingJarResources(Resource rootDirResource, String subPattern) throws IOException {
+    @Override
+    protected Set<Resource> doFindPathMatchingJarResources(Resource rootDirResource, URL rootDirURL, String subPattern) throws IOException {
         try {
-            return super.doFindPathMatchingJarResources(rootDirResource, subPattern);
+            return super.doFindPathMatchingJarResources(rootDirResource, rootDirURL, subPattern);
         } catch (IOException e) {
             // ignore exceptions on shraed-lib, since they come and go when we undeploy and deploy from the FS
             // but still remain in the CommonClassLoader
@@ -82,4 +83,5 @@ public class PUPathMatchingResourcePatternResolver extends PathMatchingResourceP
             throw e;
         }
     }
+
 }
