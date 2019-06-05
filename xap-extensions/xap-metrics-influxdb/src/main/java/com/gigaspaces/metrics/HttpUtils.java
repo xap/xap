@@ -64,6 +64,42 @@ public class HttpUtils {
         }
     }
 
+    public static String get(URL url, String contentType, int timeout) throws IOException {
+
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        try {
+            // Configure connection:
+            connection.setRequestProperty("Content-Type", contentType);//"application/json"
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(timeout);
+            connection.setReadTimeout(timeout);
+            connection.setDoOutput(true);
+
+            // Get response:
+            final int responseCode = connection.getResponseCode();
+            final String error = read(connection.getErrorStream());
+            if (!isValid(responseCode) || error != null)
+                throw new IOException("Getting from " + url + " returned HTTP code " + responseCode +
+                                      " '" + connection.getResponseMessage() + "' with the following error: " + error);
+
+            //read input
+            InputStream inputStream = connection.getInputStream();
+            byte[] tmp = new byte[1024];
+            StringBuilder strBuilder = new StringBuilder();
+            while (inputStream.available() > 0) {
+                int i = inputStream.read(tmp, 0, 1024);
+                if (i < 0) {
+                    break;
+                }
+                strBuilder.append(new String(tmp, 0, i));
+            }
+
+            return strBuilder.toString();
+        } finally {
+            connection.disconnect();
+        }
+    }
+
     private static boolean isValid(int responseCode) {
         return responseCode >= 200 && responseCode < 300;
     }

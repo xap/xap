@@ -37,7 +37,7 @@ public class InfluxDBHttpDispatcher extends InfluxDBDispatcher {
     private final URL url;
 
     public InfluxDBHttpDispatcher(InfluxDBReporterFactory factory) {
-        this.url = toUrl(factory);
+        this.url = toUrl("write", factory);
         if (logger.isLoggable(Level.CONFIG))
             logger.log(Level.CONFIG, "InfluxDBHttpDispatcher created [url=" + url + "]");
     }
@@ -53,7 +53,11 @@ public class InfluxDBHttpDispatcher extends InfluxDBDispatcher {
             throw new IOException("Failed to post [HTTP Code=" + httpCode + ", url=" + url.toString() + "]");
     }
 
-    private static URL toUrl(InfluxDBReporterFactory factory) {
+    private static URL toUrl(String operationName,  InfluxDBReporterFactory factory) {
+        return toUrl( operationName, null, factory );
+    }
+
+    public static URL toUrl(String operationName, String encodedQuery, InfluxDBReporterFactory factory) {
         // See https://influxdb.com/docs/v0.9/guides/writing_data.html
         // "http://localhost:8086/write?db=db1");
         try {
@@ -61,12 +65,18 @@ public class InfluxDBHttpDispatcher extends InfluxDBDispatcher {
                 throw new IllegalArgumentException("Mandatory property not provided - host");
             if (!StringUtils.hasLength(factory.getDatabase()))
                 throw new IllegalArgumentException("Mandatory property not provided - database");
-            String suffix = "/write?db=" + factory.getDatabase();
+            String suffix = "/" + operationName + "?db=" + factory.getDatabase();
             suffix = append(suffix, "rp", factory.getRetentionPolicy());
             suffix = append(suffix, "u", factory.getUsername());
             suffix = append(suffix, "p", factory.getPassword());
             suffix = append(suffix, "precision", toString(factory.getTimePrecision()));
             suffix = append(suffix, "consistency", factory.getConsistency());
+
+            if( encodedQuery != null ){
+                //Returns epoch timestamps
+                suffix = append(suffix, "epoch", "ms");
+                suffix = append(suffix, "q", encodedQuery);
+            }
             return new URL("http", factory.getHost(), factory.getPort(), suffix);
         } catch (MalformedURLException e) {
             throw new RuntimeException("Failed to create InfluxDB HTTP url", e);
