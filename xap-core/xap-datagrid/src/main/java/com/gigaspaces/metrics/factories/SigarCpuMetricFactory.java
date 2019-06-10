@@ -52,7 +52,7 @@ public class SigarCpuMetricFactory {
         return new InternalGauge<Double>(context) {
             @Override
             public Double getValue() throws SigarException {
-                return validate(context.get().getCombined());
+                return validate(context.get().getCombined())*100;
             }
         };
     }

@@ -37,11 +37,11 @@ public class InfluxDBReporter extends MetricReporter {
     private static final Logger logger = Logger.getLogger(InfluxDBReporter.class.getName());
     private static final String END_OF_METRIC = "\n";
     private static final NumberFormat numberFormat = createNumberFormat();
-    private static final int MAX_FRACTION_DIGITS = Integer.getInteger("com.gs.metrics.influxdb.max-fraction-digits", 5);
 
     private static NumberFormat createNumberFormat() {
+        int maxFractionDigits = Integer.getInteger("com.gs.metrics.influxdb.max-fraction-digits", 5);
         NumberFormat numberFormat = NumberFormat.getInstance(Locale.US);
-        numberFormat.setMaximumFractionDigits(MAX_FRACTION_DIGITS);
+        numberFormat.setMaximumFractionDigits(maxFractionDigits);
         numberFormat.setGroupingUsed(false);
         return numberFormat;
     }
