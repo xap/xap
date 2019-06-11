@@ -1,5 +1,6 @@
 package org.gigaspaces.cli.commands;
 
+import com.gigaspaces.internal.jvm.JavaUtils;
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.CliExecutor;
 import org.gigaspaces.cli.CommandsSet;
@@ -43,6 +44,8 @@ public class XapMainCommand extends CliCommand implements SubCommandContainer {
         // This command is not supported in XAP.NET
         if (!isXapNet())
             commandsSet.add(new MavenCommand());
+        if (!JavaUtils.isWindows())
+            commandsSet.add(new CompletionCommand());
         return commandsSet;
     }
 

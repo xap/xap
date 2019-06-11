@@ -43,15 +43,6 @@ public class CliExecutor {
         mainCommandLine.parseWithHandlers(new CustomRunner(), new DefaultExceptionHandler<>(), args);
     }
 
-    public static void generateAutoComplete(Object mainCommand, String[] args) throws IOException {
-        CommandLine commandLine = toCommandLine(mainCommand);
-        String alias = args.length != 0 ? args[0] : commandLine.getCommandName();
-        String generatedScript = picocli.AutoComplete.bash(alias, commandLine);
-        try (FileWriter scriptWriter = new FileWriter(new File(alias + "-autocomplete"))) {
-            scriptWriter.write(generatedScript);
-        }
-    }
-
     private static void executeShell(CommandLine mainCommandLine) {
         System.out.println("Starting interactive shell...");
         mainCommandLine.addSubcommand("cls", ShellClearCommand.instance);
