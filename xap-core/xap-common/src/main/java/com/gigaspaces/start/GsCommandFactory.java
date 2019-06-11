@@ -12,6 +12,7 @@ import java.util.Optional;
  */
 public class GsCommandFactory {
     protected final JavaCommandBuilder command = new JavaCommandBuilder();
+    protected String[] args;
 
     public static void main(String[] args) {
         execute(args, new GsCommandFactory());
@@ -19,6 +20,7 @@ public class GsCommandFactory {
 
     protected static void execute(String[] args, GsCommandFactory builder) {
         try {
+            builder.args = args;
             String s = builder.generate(args[0]).toCommandLine();
             System.out.println(s);
             System.exit(0);
@@ -45,10 +47,14 @@ public class GsCommandFactory {
 
     protected JavaCommandBuilder cli() {
         command.mainClass("org.gigaspaces.cli.commands.XapMainCommand");
+        // Class path:
         command.classpathFromPath(SystemInfo.singleton().getXapHome(), "tools", "cli", "*");
         command.classpathFromPath(SystemInfo.singleton().locations().getLibPlatform(), "blueprints", "*");
         appendGsClasspath();
+        // Options and system properties:
         appendXapOptions();
+        command.optionsFromEnv("XAP_CLI_OPTIONS");
+
         return command;
     }
 
@@ -122,6 +128,11 @@ public class GsCommandFactory {
     protected void addOshiAndLoggerToClasspath() {
         command.classpathFromPath(locations().getLibOptional(), "oshi", "*");
         command.classpathFromPath(locations().getLibPlatform(), "logger", "*");
+    }
+
+    protected void appendMetricToolsClassPath() {
+        appendSigarClassPath();
+        addOshiAndLoggerToClasspath();
     }
 
     protected void appendXapOptions() {

@@ -1,5 +1,5 @@
 @echo off
 setlocal EnableDelayedExpansion
-set GS_COMMAND_ARGS=%*
-call "%~dp0\..\..\bin\xap.bat" run-command scala-repl
+set GS_COMMAND_ID=scala-repl
+call "%~dp0\..\..\bin\gs" %*
 endlocal
