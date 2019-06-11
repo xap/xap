@@ -7,7 +7,21 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.FileWriter;
 
-@CommandLine.Command(name="completion", header = "Generate bash completion script")
+@CommandLine.Command(name="completion", header = {
+        "Generate completion script for bash/zsh shells",
+        "The generated script must be evaluated to provide interactive completion of gigaspaces commands.  This can be done by sourcing it from the .bash _profile.",
+        "",
+        "Detailed instructions on how to do this are available here:",
+        "https://docs.gigaspaces.com/14.5/admin/tools-cli.html#AutocompleteFunctionality",
+        "",
+        "Examples:",
+        "  # Installing bash completion on Linux",
+        "  ## Load the gs completion code for bash into the current shell",
+        "  source <(./gs completion)",
+        "",
+        "  # Installing bash completion on macOS using homebrew",
+        "  ./gs completion > $(brew --prefix)/etc/bash_completion.d/gs"
+        })
 public class CompletionCommand extends CliCommand {
 
     @CommandLine.Option(names = {"--target" }, description = "Target file for output (if not specified, will be printed to standard output)")
