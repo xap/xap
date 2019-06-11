@@ -1,12 +1,13 @@
 package org.gigaspaces.cli.commands;
 
+import com.gigaspaces.internal.jvm.JavaUtils;
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.CliExecutor;
 import org.gigaspaces.cli.CommandsSet;
 import org.gigaspaces.cli.SubCommandContainer;
 import picocli.CommandLine.*;
 
-@Command(name="xap", headerHeading = XapMainCommand.HEADER, customSynopsis = "xap [global-options] command [options] [parameters]")
+@Command(name="gs", headerHeading = XapMainCommand.HEADER, customSynopsis = "gs [global-options] command [options] [parameters]")
 public class XapMainCommand extends CliCommand implements SubCommandContainer {
     public static final String HEADER =
                     "@|green   __   __          _____                                   |@%n" +
@@ -18,6 +19,9 @@ public class XapMainCommand extends CliCommand implements SubCommandContainer {
                     "%n";
 
     private static boolean isXapNet = System.getProperty("com.gs.xapnet.home") != null;
+
+    @Option(names = "--cli-version", description = "Use another CLI version (set '1' for legacy CLI). Overrides XAP_CLI_VERSION environment variable", paramLabel = "<n>", defaultValue = "2")
+    protected int cliVersion;
 
     protected void execute() throws Exception {
     }
@@ -40,6 +44,8 @@ public class XapMainCommand extends CliCommand implements SubCommandContainer {
         // This command is not supported in XAP.NET
         if (!isXapNet())
             commandsSet.add(new MavenCommand());
+        if (!JavaUtils.isWindows())
+            commandsSet.add(new CompletionCommand());
         return commandsSet;
     }
 

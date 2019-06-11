@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-`dirname $0`/../../bin/xap run-command scala-repl $*
+`dirname $0`/../../bin/gs run-command scala-repl $*
