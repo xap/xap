@@ -48,6 +48,7 @@ public class Blueprint {
     public static Collection<Blueprint> fromPath(Path path) throws IOException {
         return Files.list(path)
                 .filter(Blueprint::isValid)
+                .sorted()
                 .map(Blueprint::new)
                 .collect(Collectors.toList());
     }
