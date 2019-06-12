@@ -102,6 +102,7 @@ public class AsyncReplicationSourceGroup
         int batchSize = _batchSize;
         long intervalMilis = _interval;
         int intervalOperations = _intervalOperations;
+        String tag = null; //optional (may be null)
         ReplicationMode channelType = ReplicationMode.ACTIVE_SPACE;
         AsyncChannelConfig specificConfig = asyncGroupConfig.getChannelConfig(memberLookupName);
         // Use specific configuration if available
@@ -110,6 +111,7 @@ public class AsyncReplicationSourceGroup
             intervalMilis = specificConfig.getIntervalMilis();
             intervalOperations = specificConfig.getIntervalOperations();
             channelType = specificConfig.getChannelType();
+            tag = specificConfig.getTag();
         }
         AsyncReplicationSourceChannel channel = new AsyncReplicationSourceChannel(getConfigHolder(),
                 getGroupName(),
@@ -126,7 +128,8 @@ public class AsyncReplicationSourceGroup
                 getStateListener(),
                 groupHistory,
                 channelType,
-                customBacklogMetadata);
+                customBacklogMetadata,
+                tag);
         _channelsMap.put(memberLookupName, channel);
         _channels.add(channel);
         return channel;

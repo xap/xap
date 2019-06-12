@@ -78,7 +78,8 @@ public class AsyncReplicationSourceChannel
             IReplicationChannelDataFilter dataFilter,
             IReplicationSourceGroupStateListener stateListener,
             IReplicationGroupHistory groupHistory, ReplicationMode channelType,
-            Object customBacklogMetadata) {
+            Object customBacklogMetadata,
+            String tag) {
         this(groupConfig,
                 groupName,
                 memberName,
@@ -95,7 +96,8 @@ public class AsyncReplicationSourceChannel
                 stateListener,
                 groupHistory,
                 channelType,
-                customBacklogMetadata);
+                customBacklogMetadata,
+                tag);
     }
 
     public AsyncReplicationSourceChannel(
@@ -108,7 +110,8 @@ public class AsyncReplicationSourceChannel
             boolean autoStart, IReplicationChannelDataFilter dataFilter,
             IReplicationSourceGroupStateListener stateListener,
             IReplicationGroupHistory groupHistory, ReplicationMode channelType,
-            Object customBacklogMetadata) {
+            Object customBacklogMetadata,
+            String tag) {
         super(groupConfig,
                 groupName,
                 memberName,
@@ -121,7 +124,8 @@ public class AsyncReplicationSourceChannel
                 stateListener,
                 groupHistory,
                 channelType,
-                customBacklogMetadata);
+                customBacklogMetadata,
+                tag);
         _batchSize = batchSize;
         _intervalMilis = intervalMilis;
         _intervalOperations = intervalOperations;

@@ -393,6 +393,7 @@ public class ReplicationStatistics
         private Object _targetUuid;
         private ConnectionEndpointDetails _connectionEndpointDetails;
         private ConnectionEndpointDetails _delegatorDetails;
+        private String _tag;
 
         // Externalizable
         public OutgoingChannel() {
@@ -408,7 +409,8 @@ public class ReplicationStatistics
                                long generatedTrafficPerPacket, long redologRetainedSize,
                                ReplicationOperatingMode operatingMode,
                                ReplicationEndpointDetails targetDetails,
-                               ConnectionEndpointDetails delegatorDetails) {
+                               ConnectionEndpointDetails delegatorDetails,
+                               String tag) {
             _targetMemberName = targetMemberName;
             _replicationMode = replicationMode;
             _channelState = channelState;
@@ -430,6 +432,7 @@ public class ReplicationStatistics
             _redologRetainedSize = redologRetainedSize;
             _operatingMode = operatingMode;
             _targetUuid = targetDetails != null ? targetDetails.getUniqueId() : null;
+            _tag = tag;
         }
 
         public long getLastConfirmedKeyFromTarget() {
@@ -602,6 +605,14 @@ public class ReplicationStatistics
             return _delegatorDetails;
         }
 
+        /**
+         * @return a name/id/tag identifying the endpoint remote event listener
+         * @since 14.5
+         */
+        public String getTag() {
+            return _tag;
+        }
+
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
@@ -617,6 +628,8 @@ public class ReplicationStatistics
             builder.append(getTargetDetails());
             builder.append(", \n        getDelegatorDetails()=");
             builder.append(getDelegatorDetails());
+            builder.append(", \n        getTag()=");
+            builder.append(getTag());
             builder.append(", \n        getReplicationMode()=");
             builder.append(getReplicationMode());
             builder.append(", \n        getState()=");
@@ -686,6 +699,10 @@ public class ReplicationStatistics
             _redologRetainedSize = in.readLong();
             _operatingMode = ReplicationOperatingMode.fromCode(in.readByte());
             _channelState = (ChannelState) in.readObject();
+
+            if (endpointLogicalVersion.greaterOrEquals(PlatformLogicalVersion.v14_5_0)) {
+                _tag = IOUtils.readString(in);
+            }
         }
 
         public void writeExternal(ObjectOutput out) throws IOException {
@@ -719,6 +736,10 @@ public class ReplicationStatistics
             out.writeLong(_redologRetainedSize);
             out.writeByte(_operatingMode.getCode());
             out.writeObject(_channelState);
+
+            if (endpointLogicalVersion.greaterOrEquals(PlatformLogicalVersion.v14_5_0)) {
+                IOUtils.writeString(out, _tag);
+            }
         }
     }
 

@@ -73,8 +73,6 @@ import com.j_spaces.core.filters.ReplicationStatistics.ReplicationOperatingMode;
 
 import java.rmi.RemoteException;
 import java.text.DecimalFormat;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.Future;
@@ -135,6 +133,7 @@ public abstract class AbstractReplicationSourceChannel
     private volatile boolean _wasEverActive;
     private IAsyncHandler _inconsistentDuringHandshakeStateHandler;
     private IAsyncHandler _iterativeHandshakeHandler;
+    private final String _tag;
 
     public AbstractReplicationSourceChannel(DynamicSourceGroupConfigHolder groupConfig,
                                             String groupName, String memberName,
@@ -145,7 +144,10 @@ public abstract class AbstractReplicationSourceChannel
                                             IAsyncHandlerProvider asyncHandlerProvider,
                                             IReplicationChannelDataFilter dataFilter,
                                             IReplicationSourceGroupStateListener stateListener,
-                                            IReplicationGroupHistory groupHistory, ReplicationMode channelType, Object customBacklogMetadata) {
+                                            IReplicationGroupHistory groupHistory,
+                                            ReplicationMode channelType,
+                                            Object customBacklogMetadata,
+                                            String tag) {
         _groupName = groupName;
         _replicationRouter = replicationRouter;
         _memberName = memberName;
@@ -173,7 +175,7 @@ public abstract class AbstractReplicationSourceChannel
         _generatedTrafficStatistics.addSample(SystemTime.timeMillis(), 0L);
         _receivedTrafficStatistics.addSample(SystemTime.timeMillis(), 0L);
         _isNetworkCompressionEnabled = groupConfig.getConfig().isNetworkCompressionEnabled();
-
+        _tag = tag;
         _packetsPool = new ThreadLocalPool<ReplicatedDataPacketResource>(new PoolFactory<ReplicatedDataPacketResource>() {
             public ReplicatedDataPacketResource create() {
                 return new ReplicatedDataPacketResource(getGroupName());
@@ -1346,7 +1348,8 @@ public abstract class AbstractReplicationSourceChannel
                 getGroupBacklog().size(getMemberName()),
                 getChannelOpertingMode(),
                 endpointDetails,
-                delegatorDetails);
+                delegatorDetails,
+                _tag);
     }
 
     public void registerWith(MetricRegistrator metricRegister) {

@@ -167,6 +167,8 @@ public class ReplicationNode
     private volatile boolean _closed;
     private volatile ReplicationNodeMode _nodeMode;
 
+    private String tag; //optional (may be null) - name/id/tag of endpoint remote event listener
+
     //blob store stuff
     private BlobStoreReplicaConsumeHelper _blobStoreReplicaConsumeHelper;
     private volatile IDirectPersistencySyncHandler _directPesistencySyncHandler;
@@ -853,7 +855,11 @@ public class ReplicationNode
     }
 
     public String getLogPrefix() {
-        return "Replication [" + getName() + "]: ";
+        String prefix = "Replication [" + getName() + "] ";
+        if (tag != null) {
+            prefix += "tag ["+tag+"] ";
+        }
+        return prefix;
     }
 
     @Override
@@ -991,6 +997,10 @@ public class ReplicationNode
 
     public IReplicationRouterAdmin getRouterAdmin() {
         return _replicationRouter.getAdmin();
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     public class StatisticsMonitor

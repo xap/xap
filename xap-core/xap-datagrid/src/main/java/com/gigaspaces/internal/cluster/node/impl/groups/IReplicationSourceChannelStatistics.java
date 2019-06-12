@@ -60,4 +60,9 @@ public interface IReplicationSourceChannelStatistics {
 
     ConnectionEndpointDetails getDelegatorDetails();
 
+    /**
+     * @return a name/id/tag identifying the endpoint remote event listener
+     * @since 14.5
+     */
+    String getTag();
 }
