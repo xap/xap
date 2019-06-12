@@ -44,6 +44,7 @@ public class ReplicationSourceChannelStatistics
     private final ReplicationOperatingMode _operatingMode;
     private final ReplicationEndpointDetails _targetDetails;
     private final ConnectionEndpointDetails _delegatorDetails;
+    private final String _tag;
 
     public ReplicationSourceChannelStatistics(String name,
                                               ReplicationMode mode, ConnectionState state, boolean active,
@@ -54,7 +55,8 @@ public class ReplicationSourceChannelStatistics
                                               long generatedTrafficPerPacket, long backlogRetainedSize,
                                               ReplicationOperatingMode operatingMode,
                                               ReplicationEndpointDetails targetDetails,
-                                              ConnectionEndpointDetails delegatorDetails) {
+                                              ConnectionEndpointDetails delegatorDetails,
+                                              String tag) {
         _name = name;
         _channelType = mode;
         _connectionState = state;
@@ -72,6 +74,7 @@ public class ReplicationSourceChannelStatistics
         _operatingMode = operatingMode;
         _targetDetails = targetDetails;
         _delegatorDetails = delegatorDetails;
+        _tag = tag;
     }
 
     public String getName() {
@@ -149,4 +152,6 @@ public class ReplicationSourceChannelStatistics
         return _delegatorDetails;
     }
 
+    @Override
+    public String getTag() { return _tag; }
 }

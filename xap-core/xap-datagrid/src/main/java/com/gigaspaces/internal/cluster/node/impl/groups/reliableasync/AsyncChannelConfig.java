@@ -34,6 +34,7 @@ public class AsyncChannelConfig extends SourceChannelConfig {
     private long _intervalMilis;
     private int _intervalOperations;
     private ReplicationMode _channelType;
+    private String _tag;
 
     public AsyncChannelConfig() {
     }
@@ -50,6 +51,22 @@ public class AsyncChannelConfig extends SourceChannelConfig {
         _intervalMilis = intervalMilis;
         _intervalOperations = intervalOperations;
         _channelType = channelType;
+    }
+
+    /**
+     * @param tag a name to identify the channel target.
+     * @since 14.5
+     */
+    public void setTag(String tag) {
+        this._tag = tag;
+    }
+
+    /**
+     * @return a name/id/tag identifying the channel target.
+     * @since 14.5
+     */
+    public String getTag() {
+        return this._tag;
     }
 
     public ReplicationMode getChannelType() {

@@ -105,7 +105,8 @@ public class ReplicationNodeAdmin
                         channelStat.getBacklogRetainedSize(),
                         channelStat.getOperatingType(),
                         channelStat.getTargetDetails(),
-                        channelStat.getDelegatorDetails());
+                        channelStat.getDelegatorDetails(),
+                        channelStat.getTag());
                 outChannelsStat.add(outChannelStat);
             }
         }

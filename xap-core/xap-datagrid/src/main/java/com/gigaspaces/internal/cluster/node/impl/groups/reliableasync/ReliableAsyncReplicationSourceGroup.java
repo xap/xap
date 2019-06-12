@@ -180,6 +180,7 @@ public class ReliableAsyncReplicationSourceGroup
         int batchSize = _asyncChannelBatchSize;
         long intervalMilis = _asyncChannelIntervalMilis;
         int intervalOperations = _asyncChannelIntervalOperations;
+        String tag = null; //optional (may be null)
         ReplicationMode channelType = ReplicationMode.MIRROR;
         AsyncChannelConfig specificConfig = groupConfig.getChannelConfig(memberLookupName);
         // Use specific configuration if available
@@ -188,9 +189,10 @@ public class ReliableAsyncReplicationSourceGroup
             intervalMilis = specificConfig.getIntervalMilis();
             intervalOperations = specificConfig.getIntervalOperations();
             channelType = specificConfig.getChannelType();
-
+            tag = specificConfig.getTag();
         }
-        ReliableAsyncReplicationSourceChannel channel = new ReliableAsyncReplicationSourceChannel(getConfigHolder(),
+        ReliableAsyncReplicationSourceChannel channel = new ReliableAsyncReplicationSourceChannel(
+                getConfigHolder(),
                 getGroupName(),
                 memberLookupName,
                 replicationRouter,
@@ -206,7 +208,8 @@ public class ReliableAsyncReplicationSourceGroup
                 getStateListener(),
                 groupHistory,
                 channelType,
-                customBacklogMetadata);
+                customBacklogMetadata,
+                tag);
         _asyncChannelsMap.put(memberLookupName, channel);
         _asyncChannels.add(channel);
         return channel;

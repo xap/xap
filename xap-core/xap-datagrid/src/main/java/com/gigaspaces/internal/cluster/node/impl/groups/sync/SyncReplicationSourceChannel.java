@@ -91,7 +91,8 @@ public class SyncReplicationSourceChannel
                 stateListener,
                 groupHistory,
                 channelType,
-                customBacklogMetadata);
+                customBacklogMetadata,
+                null /*tag*/);
         _groupBacklog = groupBacklog;
         _throttleController = throttleController;
         _asyncHandlerProvider = asyncHandlerProvider;
