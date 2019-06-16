@@ -35,6 +35,8 @@ public class NotifyContainerBeanDefinitionParser extends AbstractTemplateEventCo
 
     private static final String DURABLE = "durable";
 
+    private static final String TAG = "tag";
+
     private static final String TRIGGER_NOTIFY_TEMPLATE = "trigger-notify-template";
 
     private static final String REPLICATE_NOTIFY_TEMPLATE = "replicate-notify-template";
@@ -160,6 +162,11 @@ public class NotifyContainerBeanDefinitionParser extends AbstractTemplateEventCo
         String durable = element.getAttribute(DURABLE);
         if (StringUtils.hasLength(durable)) {
             builder.addPropertyValue("durable", durable);
+        }
+
+        String tag = element.getAttribute(TAG);
+        if (StringUtils.hasLength(tag)) {
+            builder.addPropertyValue("tag", tag);
         }
 
         String triggerNotifyTemplate = element.getAttribute(TRIGGER_NOTIFY_TEMPLATE);

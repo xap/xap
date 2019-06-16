@@ -103,7 +103,7 @@ public abstract class AbstractDataEventSession implements DataEventSession {
     public EventRegistration addListener(Object template, RemoteEventListener listener, long lease,
                                          MarshalledObject handback, INotifyDelegatorFilter filter, NotifyActionType notifyType)
             throws RemoteException {
-        return addListener(template, lease, new NotifyInfo(listener, notifyType, _config, handback, filter));
+        return addListener(template, lease, new NotifyInfo(listener, notifyType, _config, handback, filter, null));
     }
 
     public EventRegistration addListener(Object template, long lease, NotifyInfo notifyInfo)
@@ -118,7 +118,7 @@ public abstract class AbstractDataEventSession implements DataEventSession {
             throws RemoteException;
 
     public NotifyInfo createNotifyInfo(RemoteEventListener listener, NotifyActionType notifyType) {
-        return new NotifyInfo(listener, notifyType, _config, null, null);
+        return new NotifyInfo(listener, notifyType, _config, null, null, null);
     }
 
     @Override

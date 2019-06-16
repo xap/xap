@@ -60,6 +60,7 @@ public class NotifyEventContainerServiceDetails extends EventContainerServiceDet
         public static final String PASS_ARRAY_AS_IS = "pass-array-as-is";
         public static final String GUARANTEED = "guaranteed";
         public static final String DURABLE = "durable";
+        public static final String TAG = "tag";
     }
 
     public NotifyEventContainerServiceDetails() {
@@ -73,7 +74,8 @@ public class NotifyEventContainerServiceDetails extends EventContainerServiceDet
                                               Boolean notifyTake, Boolean notifyLeaseExpire, Boolean notifyUnmatched,
                                               Boolean notifyMatched, Boolean notifyRematched,
                                               Boolean triggerNotifyTemplate, Boolean replicateNotifyTemplate,
-                                              boolean performTakeOnNotify, boolean passArrayAsIs, boolean guaranteed, boolean durable) {
+                                              boolean performTakeOnNotify, boolean passArrayAsIs, boolean guaranteed,
+                                              boolean durable, String tag) {
         super(id, SERVICE_SUB_TYPE, gigaSpace, "Notify event container", "Notify event container, template [" + template + "]", template, performSnapshot, transactionManager);
         switch (commType) {
             case 0:
@@ -112,6 +114,9 @@ public class NotifyEventContainerServiceDetails extends EventContainerServiceDet
         getAttributes().put(Attributes.PASS_ARRAY_AS_IS, passArrayAsIs);
         getAttributes().put(Attributes.GUARANTEED, guaranteed);
         getAttributes().put(Attributes.DURABLE, durable);
+        if (tag != null) {
+            getAttributes().put(Attributes.TAG, tag);
+        }
     }
 
     public String getCommType() {
@@ -189,6 +194,14 @@ public class NotifyEventContainerServiceDetails extends EventContainerServiceDet
     public Boolean isDurable() {
         Boolean durable = (Boolean) getAttributes().get(Attributes.DURABLE);
         return durable == null ? Boolean.FALSE : durable.booleanValue();
+    }
+
+    /**
+     * @return a name/id/tag in case of a durable event listener, or null.
+     * @since 14.5
+     */
+    public String getTag() {
+        return (String) getAttributes().get(Attributes.TAG);
     }
 
     @Override

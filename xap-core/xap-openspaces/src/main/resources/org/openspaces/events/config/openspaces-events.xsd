@@ -572,6 +572,13 @@
                             </xsd:documentation>
                         </xsd:annotation>
                     </xsd:attribute>
+                    <xsd:attribute name="tag" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:documentation>
+                                A name/id/tag to identify a durable notification listener endpoint.
+                            </xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:attribute>
                     <xsd:attribute name="trigger-notify-template" type="xsd:boolean">
                         <xsd:annotation>
                             <xsd:documentation>

@@ -295,6 +295,16 @@ public class SimpleNotifyContainerConfigurer {
     }
 
     /**
+     * @param tag A name/id/tag to identify this <b>durable</b> notification listener endpoint.
+     * @see org.openspaces.events.notify.SimpleNotifyEventListenerContainer#setTag(String)
+     * @since 14.5
+     */
+    public SimpleNotifyContainerConfigurer tag(String tag) {
+        notifyEventListenerContainer.setTag(tag);
+        return this;
+    }
+
+    /**
      * @see org.openspaces.events.notify.SimpleNotifyEventListenerContainer#setTriggerNotifyTemplate(boolean)
      */
     public SimpleNotifyContainerConfigurer triggerNotifyTemplate(boolean triggerNotifyTemplate) {

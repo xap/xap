@@ -42,7 +42,6 @@ public class RegisterReplicationNotificationRequestInfo extends AbstractSpaceReq
     public RouterStubHolder viewStub;
     public NotifyInfo notifyInfo;
     public long eventId;
-    public String tag;
 
     /**
      * Required for Externalizable
@@ -59,11 +58,6 @@ public class RegisterReplicationNotificationRequestInfo extends AbstractSpaceReq
         IOUtils.writeObject(out, viewStub);
         IOUtils.writeObject(out, notifyInfo);
         out.writeLong(eventId);
-
-        if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v14_5_0)) {
-            IOUtils.writeString(out, tag);
-        }
-
     }
 
     @Override
@@ -75,10 +69,6 @@ public class RegisterReplicationNotificationRequestInfo extends AbstractSpaceReq
         this.viewStub = IOUtils.readObject(in);
         this.notifyInfo = IOUtils.readObject(in);
         this.eventId = in.readLong();
-
-        if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v14_5_0)) {
-            this.tag = IOUtils.readString(in);
-        }
     }
 
     public RegisterReplicationNotificationResponseInfo reduce(List<AsyncResult<RegisterReplicationNotificationResponseInfo>> results)

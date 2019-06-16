@@ -99,6 +99,10 @@ public class NotifyAnnotationPostProcessor implements BeanPostProcessor, Applica
 
         notifyContainerConfigurer.durable(notify.durable());
 
+        if (!notify.tag().isEmpty()) {
+            notifyContainerConfigurer.tag(notify.tag());
+        }
+
         notifyContainerConfigurer.fifo(notify.fifo());
         notifyContainerConfigurer.passArrayAsIs(notify.passArrayAsIs());
 
