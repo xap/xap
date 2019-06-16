@@ -53,8 +53,6 @@ import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.jdbc.builder.SQLQueryTemplatePacket;
 
-import net.jini.core.event.RemoteEventListener;
-import net.jini.core.event.RemoteEventListenerTagProvider;
 import net.jini.id.Uuid;
 import net.jini.id.UuidFactory;
 
@@ -247,7 +245,7 @@ public class ReplicationNotificationClientEndpoint {
             replicationNode.setInBatchConsumptionHandler(batchHanlder);
         }
 
-        replicationNode.setTag(extractTagFromListener(_notifyInfo.getListener()));
+        replicationNode.setTag(_notifyInfo.getTag());
         replicationNode.setInEntryHandler(entryHandler);
         replicationNode.setInEntryLeaseExpiredHandler(entryHandler);
 
@@ -300,7 +298,6 @@ public class ReplicationNotificationClientEndpoint {
                 RegisterReplicationNotificationRequestInfo request = new RegisterReplicationNotificationRequestInfo();
                 request.template = _templatePacket;
                 request.viewStub = getNotificationReplicationNode().getAdmin().getRouterAdmin().getMyRouterStubHolder();
-                request.tag = extractTagFromListener(_notifyInfo.getListener());
                 request.notifyInfo = new NotifyInfo(null, _notifyInfo);
                 request.eventId = _eventID;
 
@@ -381,18 +378,6 @@ public class ReplicationNotificationClientEndpoint {
                     _logger.log(Level.FINE, "Notification replication node unregistration failed", e.getCause());
             }
         }
-    }
-
-    /**
-     * When remoteEventListener is also a tag provider, we can extract the tag for additional information,
-     * to be displayed in logs/statistics.
-     * @return tag or null.
-     */
-    private String extractTagFromListener(RemoteEventListener remoteEventListener) {
-        if (remoteEventListener instanceof RemoteEventListenerTagProvider) {
-            return ((RemoteEventListenerTagProvider) remoteEventListener).getTag();
-        }
-        return null;
     }
 
     public long getEventID() {

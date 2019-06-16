@@ -89,6 +89,15 @@ public @interface Notify {
     boolean durable() default false;
 
     /**
+     * A tag can be supplied to identify a <b>durable</b> notification listener endpoint for debug/auditing purposes.
+     * The tag is attached to the replication statistics and outgoing channel of durable notifications.
+     *
+     * @return A name/id/tag to identify this <b>durable</b> notification listener endpoint.
+     * @since 14.5
+     */
+    String tag() default "";
+
+    /**
      * @see org.openspaces.events.notify.SimpleNotifyEventListenerContainer#setFifo(boolean)
      */
     boolean fifo() default false;

@@ -67,6 +67,7 @@ public class NotifyInfo implements Externalizable, ISwapExternalizable, Textuali
     private INotifyDelegatorFilter _filter;
     private MarshalledObject<?> _handback;
     private CustomInfo _customInfo;
+    private String _tag;
 
     /**
      * Default constructor required by Externalizable.
@@ -90,7 +91,7 @@ public class NotifyInfo implements Externalizable, ISwapExternalizable, Textuali
     }
 
     public NotifyInfo(RemoteEventListener listener, NotifyActionType notifyType, EventSessionConfig config,
-                      MarshalledObject<?> handback, INotifyDelegatorFilter filter) {
+                      MarshalledObject<?> handback, INotifyDelegatorFilter filter, String tag) {
         this(listener, notifyType.getModifier(), config.isFifo(), handback);
         this._filter = filter;
         this._replicateTemplate = config.isReplicateNotifyTemplate();
@@ -102,6 +103,7 @@ public class NotifyInfo implements Externalizable, ISwapExternalizable, Textuali
             this._batchTime = config.getBatchTime();
             this._batchPendingThreshold = config.getBatchPendingThreshold();
         }
+        this._tag = tag;
     }
 
     public NotifyInfo(RemoteEventListener listener, NotifyInfo notifyInfo) {
@@ -119,6 +121,7 @@ public class NotifyInfo implements Externalizable, ISwapExternalizable, Textuali
         this._listener = listener;
         this._filter = notifyInfo._filter;
         this._handback = notifyInfo._handback;
+        this._tag = notifyInfo._tag;
     }
 
     @Override
@@ -141,6 +144,7 @@ public class NotifyInfo implements Externalizable, ISwapExternalizable, Textuali
         textualizer.append("guaranteed", _guaranteedNotifications);
         textualizer.append("handback", _handback);
         textualizer.append("returnPrevValue", isReturnPrevValue());
+        textualizer.append("tag", getTag());
     }
 
     public Boolean getReplicateTemplate() {
@@ -291,6 +295,10 @@ public class NotifyInfo implements Externalizable, ISwapExternalizable, Textuali
         this._batchPendingThreshold = pendingThreshold;
     }
 
+    public String getTag() {
+        return _tag;
+    }
+
     public void applyDefaults(ClusterPolicy clusterPolicy) {
         // if user hasn't specify replication and notification - use the default values.
         if (_triggerNotifyTemplate == null) {
@@ -327,6 +335,7 @@ public class NotifyInfo implements Externalizable, ISwapExternalizable, Textuali
     private static final short FLAG_GUARANTEED_NOTIFY = 1 << 10;
     private static final short FLAG_RETURN_ONLY_UIDS = 1 << 11;
     private static final short FLAG_CUSTOM_INFO = 1 << 12;
+    private static final short FLAG_TAG_STRING = 1 << 13;
 
     /**
      * This flag has been superseeded by FLAG_MODIFIERS - they are never used together.
@@ -397,6 +406,10 @@ public class NotifyInfo implements Externalizable, ISwapExternalizable, Textuali
         }
         if (_customInfo != null)
             IOUtils.writeObject(out, _customInfo);
+
+        if (_tag != null) {
+            IOUtils.writeString(out, _tag);
+        }
     }
 
     private void writeExternalV9_0_2(ObjectOutput out)
@@ -460,6 +473,10 @@ public class NotifyInfo implements Externalizable, ISwapExternalizable, Textuali
         }
         if ((flags & FLAG_CUSTOM_INFO) != 0)
             _customInfo = IOUtils.readObject(in);
+
+        if ((flags & FLAG_TAG_STRING) != 0) {
+            _tag = IOUtils.readString(in);
+        }
 
         _broadcast = (flags & FLAG_BROADCAST) != 0;
         _guaranteedNotifications = (flags & FLAG_GUARANTEED_NOTIFY) != 0;
@@ -538,6 +555,8 @@ public class NotifyInfo implements Externalizable, ISwapExternalizable, Textuali
             flags |= FLAG_GUARANTEED_NOTIFY;
         if (_customInfo != null)
             flags |= FLAG_CUSTOM_INFO;
+        if (_tag != null)
+            flags |= FLAG_TAG_STRING;
 
         return flags;
     }

@@ -18,22 +18,18 @@
 package org.openspaces.events.notify;
 
 import com.gigaspaces.cluster.activeelection.SpaceInitializationIndicator;
-import com.gigaspaces.events.DataEventSession;
-import com.gigaspaces.events.EventSessionConfig;
-import com.gigaspaces.events.NotifyActionType;
+import com.gigaspaces.events.*;
 import com.gigaspaces.events.batching.BatchRemoteEvent;
 import com.gigaspaces.events.batching.BatchRemoteEventListener;
 import com.gigaspaces.internal.events.IInternalEventSessionAdmin;
 import com.j_spaces.core.client.EntryArrivedRemoteEvent;
 import com.j_spaces.core.client.INotifyDelegatorFilter;
-
 import net.jini.core.event.EventRegistration;
 import net.jini.core.event.RemoteEvent;
 import net.jini.core.event.RemoteEventListener;
 import net.jini.core.event.UnknownEventException;
 import net.jini.core.lease.Lease;
 import net.jini.lease.LeaseListener;
-
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.UnusableEntryException;
 import org.openspaces.core.util.SpaceUtils;
@@ -43,7 +39,6 @@ import org.openspaces.pu.service.ServiceMonitors;
 import org.springframework.core.Constants;
 import org.springframework.dao.DataAccessException;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
 import java.io.PrintWriter;
@@ -118,6 +113,8 @@ public class SimpleNotifyEventListenerContainer extends AbstractEventListenerCon
     private boolean passArrayAsIs = false;
 
     private Boolean durable;
+
+    private String tag;
 
     private boolean performTakeOnNotify = false;
 
@@ -519,6 +516,21 @@ public class SimpleNotifyEventListenerContainer extends AbstractEventListenerCon
     }
 
     /**
+     * A tag can be supplied to identify a <b>durable</b> notification listener endpoint for debug/auditing purposes.
+     * The tag is attached to the replication statistics and outgoing channel of durable notifications.
+     *
+     * @param tag A name/id/tag to identify this <b>durable</b> notification listener endpoint.
+     * @since 14.5
+     */
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
+    protected String getTag() {
+        return this.tag;
+    }
+
+    /**
      * When batching is turned on, should the batch of events be passed as an <code>Object[]</code>
      * to the listener. Default to <code>false</code> which means it will be passed one event at a
      * time.
@@ -819,6 +831,9 @@ public class SimpleNotifyEventListenerContainer extends AbstractEventListenerCon
                 eventRegistration != null &&
                 dataEventSession instanceof IInternalEventSessionAdmin) {
             writer.println("===== DURABLE =====");
+            if (getTag() != null) {
+                writer.println("Tag : [" + getTag() + "]");
+            }
             writer.println(((IInternalEventSessionAdmin) dataEventSession).dumpState(eventRegistration));
         }
 
@@ -867,6 +882,7 @@ public class SimpleNotifyEventListenerContainer extends AbstractEventListenerCon
      */
     protected EventRegistration registerListener(DataEventSession dataEventSession, RemoteEventListener listener)
             throws NotifyListenerRegistrationException {
+
         NotifyActionType notifyType = NotifyActionType.NOTIFY_NONE;
         if (notifyWrite != null && notifyWrite) {
             notifyType = notifyType.or(NotifyActionType.NOTIFY_WRITE);
@@ -893,7 +909,9 @@ public class SimpleNotifyEventListenerContainer extends AbstractEventListenerCon
             notifyType = notifyType.or(NotifyActionType.NOTIFY_ALL);
         }
         try {
-            return dataEventSession.addListener(getReceiveTemplate(), listener, listenerLease, null, notifyFilter, notifyType);
+            return ((AbstractDataEventSession) dataEventSession)
+                    .addListener(getReceiveTemplate(), listenerLease,
+                        new NotifyInfo(listener, notifyType, dataEventSession.getSessionConfig(), null, notifyFilter, getTag()));
         } catch (Exception e) {
             throw new NotifyListenerRegistrationException("Failed to register notify listener", e);
         }

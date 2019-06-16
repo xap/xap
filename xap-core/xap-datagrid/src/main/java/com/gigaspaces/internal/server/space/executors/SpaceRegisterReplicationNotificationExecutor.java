@@ -117,7 +117,7 @@ public class SpaceRegisterReplicationNotificationExecutor extends SpaceActionExe
                 requestInfo.notifyInfo.getBatchPendingThreshold(),
                 ReplicationMode.DURABLE_NOTIFICATION,
                 notificationMaxDisconnectionTime);
-        config.setTag(requestInfo.tag); //optional (may be null)
+        config.setTag(requestInfo.notifyInfo.getTag()); //optional (may be null)
 
         groupConfig.addMember(uniqueName, notificationFilter, memberBacklogLimitations, config, notificationsLifeCycle);
 
