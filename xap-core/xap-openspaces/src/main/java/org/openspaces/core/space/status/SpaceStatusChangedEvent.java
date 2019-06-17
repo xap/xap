@@ -32,4 +32,11 @@ public class SpaceStatusChangedEvent extends ApplicationEvent {
         return spaceMode;
     }
 
+    /**
+     * Returns true if the space instance is primary and not suspended, false otherwise.
+     * @since 14.5
+     */
+    public boolean isActive() {
+        return spaceMode.equals(SpaceMode.PRIMARY) && suspendType.equals(SuspendType.NONE);
+    }
 }
