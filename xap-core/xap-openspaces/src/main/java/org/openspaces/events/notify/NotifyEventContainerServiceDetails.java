@@ -201,8 +201,7 @@ public class NotifyEventContainerServiceDetails extends EventContainerServiceDet
      * @since 14.5
      */
     public String getTag() {
-        String tag = (String) getAttributes().get(Attributes.TAG);
-        return tag;
+        return (String) getAttributes().get(Attributes.TAG);
     }
 
     @Override
