@@ -90,7 +90,9 @@ public class OshiGaugeUtils {
         return new Gauge<Double>() {
             @Override
             public Double getValue() throws Exception {
-                return (memory.getSwapUsed()/memory.getSwapTotal())*100d;
+                return memory.getSwapTotal() != 0 ?
+                        (memory.getSwapUsed()/memory.getSwapTotal())*100d :
+                        Double.NaN;
             }
         };
     }
@@ -180,7 +182,7 @@ public class OshiGaugeUtils {
         return new Gauge<Double>() {
             @Override
             public Double getValue() throws Exception {
-                return osProcess.calculateCpuPercent();
+                return osProcess.calculateCpuPercent()*100;
             }
         };
     }
