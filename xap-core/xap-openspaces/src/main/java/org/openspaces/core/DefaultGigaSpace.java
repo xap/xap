@@ -201,6 +201,11 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
     }
 
     @Override
+    public String getSpaceName() {
+        return space.getName();
+    }
+
+    @Override
     public boolean isSecured() {
         return this.space.isSecured();
     }

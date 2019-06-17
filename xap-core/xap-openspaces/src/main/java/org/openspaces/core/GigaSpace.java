@@ -81,6 +81,12 @@ public interface GigaSpace {
     String getName();
 
     /**
+     * Returns the space name.
+     * @since 14.5
+     */
+    String getSpaceName();
+
+    /**
      * Returns wether or not this space is secured.
      *
      * @return true if this space is secured, false otherwise.
