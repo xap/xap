@@ -23,7 +23,6 @@ import com.gigaspaces.internal.services.RestServiceFactory;
 import com.gigaspaces.internal.services.ServiceFactory;
 import com.gigaspaces.internal.services.WebuiServiceFactory;
 import com.gigaspaces.internal.services.ZooKeeperServiceFactory;
-import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.start.manager.XapManagerConfig;
 import com.sun.jini.start.ServiceDescriptor;
 
@@ -51,7 +50,6 @@ import java.rmi.registry.Registry;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 import javax.management.MBeanServer;
 import javax.management.remote.JMXConnectorServer;
@@ -87,8 +85,6 @@ public class SystemConfig {
     private List<URL> addedPlatformJars;
 
     private static final int DEFAULT_PORT_RETRIES = 20;
-
-    private final Pattern commonsLoggingPattern;
 
     private final Map<String, ServiceFactory> serviceFactoryMap = initServiceFactories();
 
@@ -217,8 +213,6 @@ public class SystemConfig {
         }
 
         config = ConfigurationProvider.getInstance(configArgs);
-
-        commonsLoggingPattern = Pattern.compile("commons-logging.*\\.jar");
     }
 
     /**
@@ -315,7 +309,7 @@ public class SystemConfig {
     private List<URL> getDefaultCommonClassLoaderClasspath() throws MalformedURLException {
         ClasspathBuilder classpathBuilder = new ClasspathBuilder();
         try {
-            String commonsLoggingJarFilename = findJarFilenameByRegexPattern(gsLibRequired, commonsLoggingPattern);
+            String commonsLoggingJarFilename = findFilenameByPrefix(gsLibRequired, "spring-jcl-");
             classpathBuilder.append(gsLibRequired + commonsLoggingJarFilename);
         } catch (FileNotFoundException e) {
             if (logger.isLoggable(Level.WARNING)) {
@@ -406,22 +400,17 @@ public class SystemConfig {
         return (platformJARs);
     }
 
-    private static String findJarFilenameByRegexPattern(final String folderPath, final Pattern pattern) throws FileNotFoundException {
+    private static String findFilenameByPrefix(final String folderPath, final String prefix) throws FileNotFoundException {
 
         final File folder = new File(folderPath);
         if (!folder.isDirectory()) {
             throw new FileNotFoundException(folder + " is not a directory.");
         }
 
-        final File[] files = folder.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                return pattern.matcher(file.getName()).matches();
-            }
-        });
+        final File[] files = BootIOUtils.listFiles(folder, file -> file.getName().startsWith(prefix));
 
         if (files.length != 1) {
-            throw new FileNotFoundException("Folder " + folderPath + " should contain exactly one jar that satisfies the pattern " + pattern.toString());
+            throw new FileNotFoundException("Folder " + folderPath + " should contain exactly one jar that starts with " + prefix);
         }
 
         return files[0].getName();

@@ -22,8 +22,8 @@ public class ZooKeeperServiceFactory extends ServiceFactory {
         classpath.appendPlatform("zookeeper")
                 .appendPlatform("logger")
                 .appendPlatform("service-grid")
-                // Required jars: spring-context-*, spring-beans-*, spring-core-*, commons-logging-*, xap-datagrid, xap-asm, xap-trove
-                .appendRequired(ClasspathBuilder.startsWithFilter("spring-", "commons-", "xap-datagrid", "xap-openspaces", "xap-asm", "xap-trove"));
+                // Required jars: spring-context-*, spring-beans-*, spring-core-*, spring-jcl-*, xap-datagrid, xap-asm, xap-trove
+                .appendRequired(ClasspathBuilder.startsWithFilter("spring-", "xap-datagrid", "xap-openspaces", "xap-asm", "xap-trove"));
 
     }
 }
