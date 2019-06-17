@@ -1,1 +1,1 @@
-description=Processing Unit (under construction)
+description=GigaSpaces Processing Unit
