@@ -41,8 +41,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
 
 //import com.gigaspaces.cluster.activeelection.core.ActiveElectionState.State;
 
@@ -190,13 +189,13 @@ public class GSDirectPersistencyLusWaiter extends Thread {
     private boolean isPrimaryActive() throws InterruptedException {
         List<ServiceItem> res = lookup(Integer.MAX_VALUE);
         if (res == null || res.isEmpty()) {
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 _logger.info(_spaceImpl.getEngine().getFullSpaceName() + " waiting for another space to become primary since its storage is  " +
                         "inconsistent, found none so far ");
             }
             return false;
         }
-        if (_logger.isLoggable(Level.INFO)) {
+        if (_logger.isInfoEnabled()) {
             _logger.info(_spaceImpl.getEngine().getFullSpaceName() + " waited for another space to become primary since its storage is  " +
                     "inconsistent and found " + ((IJSpace) (res.get(0).getService())).getName());
         }
@@ -212,8 +211,8 @@ public class GSDirectPersistencyLusWaiter extends Thread {
         ServiceItem[] foundSrv = _namingService.lookup(_electTemplate, maxMatches, null /*filter*/);
 
         if (foundSrv == null) {
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.finest(toString() + " lookup service not found while querying for state: " + _electTemplate._actState.getState());
+            if (_logger.isTraceEnabled()) {
+                _logger.trace(toString() + " lookup service not found while querying for state: " + _electTemplate._actState.getState());
             }
             return null;
         }
@@ -224,9 +223,9 @@ public class GSDirectPersistencyLusWaiter extends Thread {
          */
         List<ServiceItem> matchedSrv = trimServices(foundSrv);
 
-        if (_logger.isLoggable(Level.FINEST)) {
+        if (_logger.isTraceEnabled()) {
             int duplicates = foundSrv.length - matchedSrv.size();
-            _logger.finest(toString() + " found: [" + matchedSrv.size() + "] matches for " +
+            _logger.trace(toString() + " found: [" + matchedSrv.size() + "] matches for " +
                     " serviceTemplate: [" + _electTemplate + "]; matched services: " + matchedSrv +
                     (duplicates > 0 ? " duplicates: [" + duplicates + "]" : ""));
         }
@@ -310,7 +309,7 @@ public class GSDirectPersistencyLusWaiter extends Thread {
                 }
             }
             if (_ex != null) {
-                _logger.severe("space " + _spaceImpl.getEngine().getFullSpaceName() + " got exception while waiting for other space to become primary " + _ex);
+                _logger.error("space " + _spaceImpl.getEngine().getFullSpaceName() + " got exception while waiting for other space to become primary " + _ex);
                 throw _ex;
             }
         }
@@ -328,7 +327,7 @@ public class GSDirectPersistencyLusWaiter extends Thread {
                     Thread.sleep(PERIODIC_SLEEP_TIME);
 
                 } catch (Exception ex) {
-                    _logger.severe("space " + _spaceImpl.getEngine().getFullSpaceName() + " got exception while waiting for other space to become primary " + ex);
+                    _logger.error("space " + _spaceImpl.getEngine().getFullSpaceName() + " got exception while waiting for other space to become primary " + ex);
                     DirectPersistencyRecoveryException e = _ex = new DirectPersistencyRecoveryException("space " + _spaceImpl.getEngine().getFullSpaceName() + " got exception while waiting for other space to become primary", ex);
                     if (_ex == null)
                         _ex = e;

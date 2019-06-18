@@ -67,7 +67,6 @@ public class GsCommandFactory {
         appendGsClasspath();
         //fix for GS-13546
         command.classpathFromPath(locations().getLibPlatform(), "service-grid", "*");
-        command.classpathFromPath(locations().getLibPlatform(), "logger", "*");
         command.classpathFromPath(locations().getLibPlatform(), "zookeeper", "*");
 
         return command;
@@ -80,7 +79,6 @@ public class GsCommandFactory {
         appendGsClasspath();
         //fix for GS-13546
         command.classpathFromPath(locations().getLibPlatform(), "service-grid", "*");
-        command.classpathFromPath(locations().getLibPlatform(), "logger", "*");
         command.classpathFromPath(locations().getLibPlatform(), "zookeeper", "*");
         appendSpringClassPath();
         postClasspath();
@@ -97,7 +95,6 @@ public class GsCommandFactory {
         //fix for GS-13546
         command.classpathFromPath(locations().getLibPlatform(), "service-grid", "*");
 //        command.classpathFromPath(locations().getLibPlatform(), "oshi", "*");
-        command.classpathFromPath(locations().getLibPlatform(), "logger", "*");
         command.classpathFromPath(locations().getLibPlatform(), "zookeeper", "*");
         postClasspath();
 
@@ -125,14 +122,13 @@ public class GsCommandFactory {
         command.classpathFromPath(locations().getLibOptional(), "sigar", "*");
     }
 
-    protected void addOshiAndLoggerToClasspath() {
+    protected void appendOshiClassPath() {
         command.classpathFromPath(locations().getLibOptional(), "oshi", "*");
-        command.classpathFromPath(locations().getLibPlatform(), "logger", "*");
     }
 
     protected void appendMetricToolsClassPath() {
         appendSigarClassPath();
-        addOshiAndLoggerToClasspath();
+        appendOshiClassPath();
     }
 
     protected void appendXapOptions() {

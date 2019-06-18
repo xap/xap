@@ -281,8 +281,7 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.*;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -318,7 +317,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private final String _instanceId;
     private final String _nodeName;
     private final Logger _logger;
-    private final Logger _operationLogger;
+    private final java.util.logging.Logger _operationLogger;
     private final String _spaceMemberName;
     private final String _deployPath;
     private final SpaceConfigReader _configReader;
@@ -388,8 +387,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
         this._instanceId = extractInstanceIdFromContainerName(containerName);
         this._nodeName = _instanceId == "0" ? spaceName : spaceName + "." + _instanceId;
-        this._logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE + "." + _nodeName);
-        this._operationLogger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE_OPERATIONS + "." + _nodeName);
+        this._logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE + "." + _nodeName);
+        this._operationLogger = java.util.logging.Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE_OPERATIONS + "." + _nodeName);
         this._isLusRegEnabled = Boolean.valueOf(JProperties.getContainerProperty(
                 containerName, Constants.LookupManager.LOOKUP_ENABLED_PROP,
                 Constants.LookupManager.LOOKUP_ENABLED_DEFAULT)).booleanValue();
@@ -434,7 +433,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
         int port = Integer.getInteger(prefix + ".port", 8089);
         int socketBacklog = Integer.getInteger(prefix + ".socket-backlog", 0);
-        final Logger restLogger = Logger.getLogger(prefix);
+        final Logger restLogger = LoggerFactory.getLogger(prefix);
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress(port), socketBacklog);
             server.createContext("/probes/alive", new HttpHandler() {
@@ -443,11 +442,11 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                     try {
                         assertAvailable();
                         httpResponse(context, 200, "OK");
-                        if (restLogger.isLoggable(Level.FINE))
-                            restLogger.fine("/probes/alive result: 200 (OK)");
+                        if (restLogger.isDebugEnabled())
+                            restLogger.debug("/probes/alive result: 200 (OK)");
                     } catch (SpaceUnavailableException e) {
                         httpResponse(context, 503, e.getMessage());
-                        restLogger.warning("/probes/alive result: 503 (" + e.getMessage() + ")");
+                        restLogger.warn("/probes/alive result: 503 (" + e.getMessage() + ")");
                     }
                 }
             });
@@ -524,7 +523,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         return _container;
     }
 
-    public Logger getOperationLogger() {
+    public java.util.logging.Logger getOperationLogger() {
         return _operationLogger;
     }
 
@@ -548,7 +547,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             if (m_adminImpl == null)
                 m_adminImpl = new JSpaceAdminImpl(this, m_adminExporter);
         } catch (Exception ex) {
-            _logger.log(Level.SEVERE, "Fail to create admin object", ex);
+            _logger.error("Fail to create admin object", ex);
         }
         return (m_adminImpl != null ? m_adminImpl.getProxy() : null);
     }
@@ -872,8 +871,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 LRMIClassLoadersHolder.dropAllClasses();
             } catch (Exception ex) {
                 // Log internal error...
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, ex.toString(), ex);
+                if (_logger.isErrorEnabled())
+                    _logger.error(ex.toString(), ex);
                 JSpaceUtilities.throwInternalSpaceException("internal error upon clean operation", ex);
             } finally {
                 // clean finished (either successful or not)
@@ -910,8 +909,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 LRMIClassLoadersHolder.dropAllClasses();
             } catch (Exception ex) {
                 // Log internal error...
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, ex.toString(), ex);
+                if (_logger.isErrorEnabled())
+                    _logger.error(ex.toString(), ex);
                 JSpaceUtilities.throwInternalSpaceException("internal error upon clean operation", ex);
             } finally {
                 // clean finished (either successful or not)
@@ -1165,9 +1164,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             if (config.getFiltersInfo() != null && config.getFiltersInfo().length > 0)
                 updateFilterXMLNodes(spaceFileURL, config.getFiltersInfo());
         } catch (Exception ex) {
-            Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_COMMON);
-            if (logger.isLoggable(Level.SEVERE))
-                logger.log(Level.SEVERE, ex.toString(), ex);
+            Logger logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_COMMON);
+            if (logger.isErrorEnabled())
+                logger.error(ex.toString(), ex);
             throw new RemoteException(ex.getMessage(), ex.getCause());
         }
     }
@@ -1300,14 +1299,16 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
      */
     public void shutdown(boolean isDestroy, boolean shutdowContainer) throws RemoteException {
         if (_spaceState.isAborted()) {
-            _logger.fine("Shutdown already in progress...");
+            _logger.debug("Shutdown already in progress...");
             return;
         }
 
         int previousState = _spaceState.getState();
         _spaceState.setState(ISpaceState.ABORTING);
-        Level logLevel = isPrivate() ? Level.FINE : Level.INFO;
-        _logger.log(logLevel, "Beginning shutdown...");
+        if (isPrivate())
+            _logger.debug("Beginning shutdown...");
+        else
+            _logger.info("Beginning shutdown...");
 
         beforeShutdown();
 
@@ -1318,8 +1319,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
         _spaceState.setState(ISpaceState.ABORTED);
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("Life cycle is " + getLifeCycle());
+        if (_logger.isDebugEnabled())
+            _logger.debug("Life cycle is " + getLifeCycle());
 
         if (getLifeCycle() != null)
             getLifeCycle().unregister(SpaceImpl.this);
@@ -1354,7 +1355,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         if (_httpServer != null)
             _httpServer.stop(1);
 
-        _logger.log(logLevel, "Shutdown complete");
+        if (isPrivate())
+            _logger.debug("Shutdown complete");
+        else
+            _logger.info("Shutdown complete");
     }
 
     private void beforeShutdown() {
@@ -1432,8 +1436,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 ISpaceSynchronizeResult synchronizeResult = recoveryState.waitForSynchronizeCompletion(replicationSynchronizationTimeout, TimeUnit.SECONDS);
                 if (synchronizeResult != null) {
                     if (synchronizeResult.isFailed()) {
-                        if (_logger.isLoggable(Level.WARNING))
-                            _logger.warning("Synchronization failed: " + synchronizeResult.getFailureReason());
+                        if (_logger.isWarnEnabled())
+                            _logger.warn("Synchronization failed: " + synchronizeResult.getFailureReason());
                         throw synchronizeResult.getFailureReason();
                     }
                     if (getEngine().getReplicationNode() != null && getEngine().getReplicationNode().getDirectPesistencySyncHandler() != null) {
@@ -1445,19 +1449,19 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                     if (getDirectPersistencyRecoveryHelper() != null && isBackup()) {
                         getDirectPersistencyRecoveryHelper().setPendingBackupRecovery(false);
                     }
-                    if (_logger.isLoggable(Level.INFO)) {
+                    if (_logger.isInfoEnabled()) {
                         long duration = SystemTime.timeMillis() - syncStartTime;
                         _logger.info("Synchronization completed [duration=" + JSpaceUtilities.formatMillis(duration) + "]");
                     }
                 }
             } catch (TimeoutException e) {
                 if (getEngine().getCacheManager().isBlobStoreCachePolicy()) {
-                    if (_logger.isLoggable(Level.SEVERE))
-                        _logger.severe("Timeout occurred [" + replicationSynchronizationTimeout + " seconds] while waiting for replication to synchronize. Will shut down space since blobstore inconsistent space can't be started.");
+                    if (_logger.isErrorEnabled())
+                        _logger.error("Timeout occurred [" + replicationSynchronizationTimeout + " seconds] while waiting for replication to synchronize. Will shut down space since blobstore inconsistent space can't be started.");
                     throw e;
                 }
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.warning("Timeout occurred [" + replicationSynchronizationTimeout + " seconds] while waiting for replication to synchronize. Starting the space without complete synchronization.");
+                if (_logger.isWarnEnabled())
+                    _logger.warn("Timeout occurred [" + replicationSynchronizationTimeout + " seconds] while waiting for replication to synchronize. Starting the space without complete synchronization.");
             } catch (Exception e) {
                 //Restore non replicable state for next iteration
                 changeSpaceState(ISpaceState.STARTING, true, false);
@@ -1507,8 +1511,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
      * Handle primary backup recovery failure
      */
     private void handleRecoveryFailure(Exception e, int retries) throws Exception {
-        if (_logger.isLoggable(Level.WARNING)) {
-            _logger.log(Level.WARNING, "Space recovery failure.", e);
+        if (_logger.isWarnEnabled()) {
+            _logger.warn("Space recovery failure.", e);
         }
 
         if (retries == RecoveryManager.RECOVERY_RETRIES
@@ -1591,10 +1595,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             _leaderSelector.terminate();
             _leaderSelector = initLeaderSelectorHandler(isLookupServiceEnabled());
         } catch (RemoteException e) {
-            _logger.log(Level.SEVERE, "Unable to reinitialize leader selector ", e);
+            _logger.error("Unable to reinitialize leader selector ", e);
             return false;
         } catch (ActiveElectionException e) {
-            _logger.log(Level.SEVERE, "Unable to reinitialize leader selector ", e);
+            _logger.error("Unable to reinitialize leader selector ", e);
             return false;
         }
         return true;
@@ -1742,18 +1746,18 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             int result = Integer.parseInt(propertyValue);
             StorageType storageType = StorageType.fromCode(result);
-            if (storageType != StorageType.OBJECT && _logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, Engine.FULL_ENGINE_SERIALIZATION_TYPE_PROP + "=" + propertyValue + " is deprecated - use POJO annotations or gs.xml instead.");
+            if (storageType != StorageType.OBJECT && _logger.isWarnEnabled())
+                _logger.warn(Engine.FULL_ENGINE_SERIALIZATION_TYPE_PROP + "=" + propertyValue + " is deprecated - use POJO annotations or gs.xml instead.");
             return result;
         } catch (NumberFormatException e) {
             String msg = "Invalid serialization-type specified " + propertyValue;
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, msg, e);
+            if (_logger.isErrorEnabled())
+                _logger.error(msg, e);
             throw new RuntimeException(msg, e);
         } catch (IllegalArgumentException e) {
             String msg = e.getMessage().replace("StorageType", "serialization-type");
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, msg);
+            if (_logger.isErrorEnabled())
+                _logger.error(msg);
             throw new RuntimeException(msg);
         }
     }
@@ -1832,8 +1836,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     private <T extends Throwable> T logException(T e) {
         if (!(e instanceof ProtectiveModeException) && (!(e instanceof ConsistencyLevelViolationException)) && (!(e instanceof QuiesceException))
-                && _logger.isLoggable(Level.SEVERE))
-            _logger.log(Level.SEVERE, e.toString(), e);
+                && _logger.isErrorEnabled())
+            _logger.error(e.toString(), e);
         return e;
     }
 
@@ -2538,10 +2542,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
         try {
             final ServerTransaction transaction = createServerTransaction(mgr, id, numOfParticipants);
-            if (supportsTwoPhaseReplication && _operationLogger.isLoggable(Level.FINEST))
+            if (supportsTwoPhaseReplication && _operationLogger.isLoggable(java.util.logging.Level.FINEST))
                 _operationLogger.finest("preparing transaction [" + _engine.createTransactionDetailsString(transaction, null) + "]");
             final int prepareResult = _engine.prepare(mgr, transaction, false /*singleParticipant*/, supportsTwoPhaseReplication, null /*OperationID*/);
-            if (supportsTwoPhaseReplication && _operationLogger.isLoggable(Level.FINEST))
+            if (supportsTwoPhaseReplication && _operationLogger.isLoggable(java.util.logging.Level.FINEST))
                 _operationLogger.finest("prepared transaction [" + _engine.createTransactionDetailsString(transaction, null) + "] result=" + prepareResult);
 
             return prepareResult;
@@ -2663,8 +2667,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             // See org.openspaces.core.executor.internal.InternalSpaceTaskWrapper#readTaskInNewClassLoader(ObjectInput in).
             Class<?> oneTimeClass = getOneTimeClassIfExists(task);
             if (oneTimeClass != null) {
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.finest("Dropping class of OneTime task " + oneTimeClass.getName());
+                if (_logger.isTraceEnabled()) {
+                    _logger.trace("Dropping class of OneTime task " + oneTimeClass.getName());
                 }
                 ClassLoaderCache.getCache().removeClassLoader(oneTimeClass.getClassLoader());
             }
@@ -3090,7 +3094,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
             if (filterName.equalsIgnoreCase(Filter.DEFAULT_FILTER_SECURITY_NAME)) {
                 String schemaRef = schemaFilePath != null ? " [" + schemaFilePath + "] " : " ";
-                _logger.warning("The filter [" + Filter.DEFAULT_FILTER_SECURITY_NAME
+                _logger.warn("The filter [" + Filter.DEFAULT_FILTER_SECURITY_NAME
                         + "] defined in the space schema file" + schemaRef + "is no longer in use since 7.0.1; Please remove it.");
             }
         }// while filters...
@@ -3111,8 +3115,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     }
 
     public void startInternal() throws RemoteException {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("Starting space [url=" + getURL() + "]...");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Starting space [url=" + getURL() + "]...");
 
         if (_spaceState.getState() == ISpaceState.STARTED)
             throw new SpaceAlreadyStartedException("Space [" + getServiceName() + "] already started");
@@ -3129,14 +3133,14 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             recover();
             _qp = createQueryProcessor();
 
-            if (_logger.isLoggable(Level.INFO) && !isPrivate()) {
+            if (_logger.isInfoEnabled() && !isPrivate()) {
                 long duration = System.currentTimeMillis() - _container.getStartTime();
-                _logger.log(Level.FINE, "Space started [duration=" + duration / 1000d + "s, " +
+                _logger.info("Space started [duration=" + duration / 1000d + "s, " +
                         "url=" + getURL() + ", " + _engine.getCacheManager().getConfigInfo() + "]");
             }
         } catch (Throwable ex) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to start space with url [" + getURL() + "]", ex);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to start space with url [" + getURL() + "]", ex);
 
             shutdown(false/*isDestroy*/, true/*shutdowContainer*/);
             throw new RemoteException(ex.getMessage(), ex);
@@ -3263,7 +3267,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
             _logger.info("Space Stopped successfully");
         } catch (Exception ex) {
-            _logger.log(Level.WARNING, "Failed to stop space", ex);
+            _logger.warn("Failed to stop space", ex);
             if (!_spaceState.isAborted())
                 _spaceState.setState(previousState);
             throw new RemoteException(ex.getMessage(), ex);
@@ -3313,8 +3317,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 _spaceConfig.setClustered(true);
             }
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, ex.toString(), ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(ex.toString(), ex);
             }
             throw new RemoteException(ex.getMessage(), ex.getCause());
         }
@@ -3469,8 +3473,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 SpaceCopyStatusImpl copyStatus = new SpaceCopyStatusImpl(SpaceCopyStatusImpl.COPY_TYPE, getServiceName());
                 copyStatus.setCauseException(ex);
 
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, ex.toString(), ex);
+                if (_logger.isDebugEnabled())
+                    _logger.debug(ex.toString(), ex);
 
                 return copyStatus;
             }
@@ -3661,16 +3665,16 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             ServiceRegistrar[] registrars = event.getRegistrars();
             for (int i = 0; i < registrars.length; i++)
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("Directory Service (Jini Lookup Service registrar): \n" +
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Directory Service (Jini Lookup Service registrar): \n" +
                             "[  Registrar <" + registrars[i].getLocator().getHost() + ':' +
                             registrars[i].getLocator().getPort() + ">  ]" +
                             "[  Member of " + Arrays.asList(registrars[i].getGroups()) +
                             " has been discovered by the <" + getServiceName() + "> space.  ]");
                 }
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, ex.toString(), ex);
+            if (_logger.isErrorEnabled())
+                _logger.error(ex.toString(), ex);
         }
     }
 
@@ -3681,8 +3685,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
             ClusterXML clusterXml = new ClusterXML(_url, clusterConfigURL, _spaceName);
             StringBuilder clusterConfigOutput = clusterXml.getClusterConfigDebugOutput();
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("Cluster Configuration:\n" + clusterConfigOutput);
+            if (_logger.isDebugEnabled())
+                _logger.debug("Cluster Configuration:\n" + clusterConfigOutput);
             ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
             JSpaceUtilities.domWriter(
                     clusterXml.getXMLRootDocument().getDocumentElement(),
@@ -3742,8 +3746,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             Class clazz = ClassLoaderHelper.loadLocalClass(LEADER_SELECTOR_HANDLER_CLASS_NAME);
             return (LeaderSelectorHandler) clazz.newInstance();
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to initialize Leader Selector handler");
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to initialize Leader Selector handler");
             throw new ActiveElectionException("Failed to start [" + (getEngine().getFullSpaceName())
                     + "] Failed to initialize Leader Selector handler.");
         }

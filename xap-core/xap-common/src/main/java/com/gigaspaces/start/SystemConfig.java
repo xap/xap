@@ -48,8 +48,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.*;
 
 import javax.management.MBeanServer;
 import javax.management.remote.JMXConnectorServer;
@@ -80,7 +79,7 @@ public class SystemConfig {
     private final String gsLibPlatform;
     private final String gsLibOptional;
     private final String rootDir;
-    static final private Logger logger = Logger.getLogger(COMPONENT);
+    private static final Logger logger = LoggerFactory.getLogger(COMPONENT);
 
     private List<URL> addedPlatformJars;
 
@@ -138,7 +137,7 @@ public class SystemConfig {
                         new ConfigurationParser(
                                 SystemConfig.class.getClassLoader());
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Creating ConfigurationParser", e);
+                logger.warn("Creating ConfigurationParser", e);
             }
             String configFile = null;
             ArrayList<String> configList = new ArrayList<String>();
@@ -153,10 +152,7 @@ public class SystemConfig {
                             for (int j = 0; j < args.length; j++)
                                 configList.add(args[j]);
                         } catch (Exception e) {
-                            logger.log(Level.WARNING,
-                                    "Parsing override config file " +
-                                            "[" + confArgs[i] + "]",
-                                    e);
+                            logger.warn("Parsing override config file [" + confArgs[i] + "]", e);
                         }
                     }
                 } else {
@@ -195,8 +191,7 @@ public class SystemConfig {
                     try {
                         configArgs[0] = configFileURL.toExternalForm();
                     } catch (Exception e) {
-                        logger.log(Level.WARNING, "Failed to parse Jini Configuration file "
-                                + "[" + configFileURL + "].", e);
+                        logger.warn("Failed to parse Jini Configuration file [" + configFileURL + "].", e);
                     }
                 } else {
                     configArgs[0] = configFile;
@@ -312,8 +307,8 @@ public class SystemConfig {
             String commonsLoggingJarFilename = findFilenameByPrefix(gsLibRequired, "spring-jcl-");
             classpathBuilder.append(gsLibRequired + commonsLoggingJarFilename);
         } catch (FileNotFoundException e) {
-            if (logger.isLoggable(Level.WARNING)) {
-                logger.log(Level.WARNING, "Missing JAR file", e);
+            if (logger.isWarnEnabled()) {
+                logger.warn("Missing JAR file", e);
             }
         }
 
@@ -372,14 +367,14 @@ public class SystemConfig {
 
         URL[] addPlatformJARs = addedPlatformJars.toArray(new URL[addedPlatformJars.size()]);
         if (addPlatformJARs.length > 0) {
-            if (logger.isLoggable(Level.CONFIG)) {
+            if (logger.isDebugEnabled()) {
                 StringBuilder buffer = new StringBuilder();
                 for (int i = 0; i < addPlatformJARs.length; i++) {
                     if (i > 0)
                         buffer.append("\n");
                     buffer.append("    " + addPlatformJARs[i].toExternalForm());
                 }
-                logger.config("addPlatformJARs\n" + buffer.toString());
+                logger.debug("addPlatformJARs\n" + buffer.toString());
             }
             ArrayList<URL> list = new ArrayList<URL>();
             for (int i = 0; i < platformJARs.length; i++)
@@ -388,14 +383,14 @@ public class SystemConfig {
                 list.add(addPlatformJARs[i]);
             platformJARs = list.toArray(new URL[list.size()]);
         }
-        if (logger.isLoggable(Level.FINE)) {
+        if (logger.isDebugEnabled()) {
             StringBuilder buffer = new StringBuilder();
             for (int i = 0; i < platformJARs.length; i++) {
                 if (i > 0)
                     buffer.append("\n");
                 buffer.append("    " + platformJARs[i].toExternalForm());
             }
-            logger.fine("platform JARs\n" + buffer.toString());
+            logger.debug("platform JARs\n" + buffer.toString());
         }
         return (platformJARs);
     }
@@ -443,7 +438,7 @@ public class SystemConfig {
                 (String[]) config.getEntry(COMPONENT, "systemProperties", String[].class, new String[0]);
         if (systemProperties.length > 0) {
             if (systemProperties.length % 2 != 0) {
-                logger.log(Level.WARNING, "systemProperties elements has odd length : " + systemProperties.length);
+                logger.warn("systemProperties elements has odd length : " + systemProperties.length);
             } else {
                 for (int i = 0; i < systemProperties.length; i += 2) {
                     String name = systemProperties[i];
@@ -536,8 +531,8 @@ public class SystemConfig {
                 } catch (BindException e) {
                     if (httpPort == 0)
                         throw e;
-                    if (logger.isLoggable(Level.FINEST))
-                        logger.finest("Failed to create HTTP server using " +
+                    if (logger.isTraceEnabled())
+                        logger.trace("Failed to create HTTP server using " +
                                 "port [" + httpPort + "], increment port " +
                                 "and try again");
                     httpPort++;
@@ -548,8 +543,8 @@ public class SystemConfig {
             /* Set system property */
             System.setProperty(CODESERVER, webster.getURL());
 
-            if (logger.isLoggable(Level.INFO))
-                logger.log(Level.INFO, "Created Webster on " + webster.getURL() + " [roots=" + httpRoots + "]");
+            if (logger.isInfoEnabled())
+                logger.info("Created Webster on " + webster.getURL() + " [roots=" + httpRoots + "]");
         }
         return (webster);
     }
@@ -631,7 +626,7 @@ public class SystemConfig {
         ServiceFactory serviceFactory = serviceFactoryMap.get(key);
         if (serviceFactory != null)
             return serviceFactory.createService();
-        logger.warning("Service " + key + " was not created - service factory was not found");
+        logger.warn("Service " + key + " was not created - service factory was not found");
         return null;
     }
 
@@ -698,7 +693,7 @@ public class SystemConfig {
                             String.class,
                             defaultGSCClasspath.toString());
 
-            logger.fine("GSC configuration Classpath is: " + gscClasspath);
+            logger.debug("GSC configuration Classpath is: " + gscClasspath);
             String gscCodebase = getDefaultCodebase();
 
             String configDir = rootDir + "config" + File.separator + "services" + File.separator;
@@ -794,8 +789,8 @@ public class SystemConfig {
         File libDir = new File(path);
         if (libDir.exists() && libDir.isDirectory()) {
             for (File f : BootIOUtils.listFiles(libDir)) {
-                if (logger.isLoggable(Level.FINE))
-                    logger.fine("Adding " + f.getAbsolutePath() + " to ClassPath");
+                if (logger.isDebugEnabled())
+                    logger.debug("Adding " + f.getAbsolutePath() + " to ClassPath");
                 classpath.append(f.getAbsolutePath()).append(File.pathSeparator);
             }
         }
@@ -962,7 +957,7 @@ public class SystemConfig {
                 try {
                     jmxRemotePort = Integer.parseInt(jmxRemotePortStr);
                 } catch (Exception e) {
-                    logger.log(Level.WARNING, e.toString(), e);
+                    logger.warn(e.toString(), e);
                 }
             }
             if (jmxRemotePort > 0) {
@@ -971,8 +966,8 @@ public class SystemConfig {
             Registry registry = null;
             if (jmxRemotePort < 0) {
 
-                if (logger.isLoggable(Level.FINER))
-                    logger.log(Level.FINER, "Starting RMI Registry initialization: initial port=" + registryPort + ", retries=" + registryRetries);
+                if (logger.isDebugEnabled())
+                    logger.debug("Starting RMI Registry initialization: initial port=" + registryPort + ", retries=" + registryRetries);
                 RemoteException registryCreationException = null;
                 for (int i = 0; i < registryRetries; i++) {
                     try {
@@ -980,8 +975,8 @@ public class SystemConfig {
                         break;
                     } catch (RemoteException e) {
                         registryCreationException = e;
-                        if (logger.isLoggable(Level.FINEST))
-                            logger.finest("Failed to create RMI Registry using port [" + registryPort +
+                        if (logger.isTraceEnabled())
+                            logger.trace("Failed to create RMI Registry using port [" + registryPort +
                                     "], increment port and try again");
                     }
                     registryPort++;
@@ -990,8 +985,7 @@ public class SystemConfig {
                 Thread.currentThread().setContextClassLoader(cl);
 
                 if (registry == null) {
-                    logger.log(Level.SEVERE,
-                            "Unable to create RMI Registry, tried port range ["
+                    logger.error("Unable to create RMI Registry, tried port range ["
                                     + (registryPort - (registryRetries - 1))
                                     + "-"
                                     + (registryPort - 1)
@@ -1001,8 +995,8 @@ public class SystemConfig {
                             registryCreationException);
                 } else {
                     System.setProperty(CommonSystemProperties.REGISTRY_PORT, Integer.toString(registryPort));
-                    if (logger.isLoggable(Level.FINE))
-                        logger.fine("Created RMI Registry: " + registry.toString() + " using port " + registryPort);
+                    if (logger.isDebugEnabled())
+                        logger.debug("Created RMI Registry: " + registry.toString() + " using port " + registryPort);
                     String defaultAddress = SystemInfo.singleton().network().getHostId();
                     String hostAddress =
                             (String) config.getEntry(COMPONENT,
@@ -1026,7 +1020,7 @@ public class SystemConfig {
                         System.setProperty(CommonSystemProperties.JMX_SERVICE_URL, jmxServiceURL);
                         System.setProperty(CommonSystemProperties.JMX_PUBLIC_SERVICE_URL, jmxServicePublicURL);
                         final long duration = System.currentTimeMillis() - start;
-                        if (logger.isLoggable(Level.INFO))
+                        if (logger.isInfoEnabled())
                             logger.info("Exported JMX Platform MBeanServer with RMI Connector " +
                                     "[duration=" + BootUtil.formatDuration(duration) +
                                     ", url=" + jmxServiceURL + "]");

@@ -9,6 +9,17 @@
 	<dependencySets>
 		<dependencySet>
 			<useProjectArtifact>false</useProjectArtifact>
+			<outputDirectory>product/lib/required</outputDirectory>
+			<includes>
+				<include>org.slf4j:slf4j-api</include>
+				<include>org.slf4j:slf4j-jdk14</include>
+			</includes>
+			<useTransitiveDependencies/>
+			<useTransitiveFiltering/>
+		</dependencySet>
+
+		<dependencySet>
+			<useProjectArtifact>false</useProjectArtifact>
 			<outputDirectory>product/lib/optional/jdbc</outputDirectory>
 			<includes>
 				<include>com.h2database:h2</include>

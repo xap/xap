@@ -20,10 +20,9 @@ public class ZooKeeperServiceFactory extends ServiceFactory {
     @Override
     protected void initializeClasspath(ClasspathBuilder classpath) {
         classpath.appendPlatform("zookeeper")
-                .appendPlatform("logger")
                 .appendPlatform("service-grid")
                 // Required jars: spring-context-*, spring-beans-*, spring-core-*, spring-jcl-*, xap-datagrid, xap-asm, xap-trove
-                .appendRequired(ClasspathBuilder.startsWithFilter("spring-", "xap-datagrid", "xap-openspaces", "xap-asm", "xap-trove"));
+                .appendRequired(ClasspathBuilder.startsWithFilter("slf4j-", "spring-", "xap-datagrid", "xap-openspaces", "xap-asm", "xap-trove"));
 
     }
 }
