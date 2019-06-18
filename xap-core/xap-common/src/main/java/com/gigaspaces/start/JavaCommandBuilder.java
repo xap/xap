@@ -3,7 +3,12 @@ package com.gigaspaces.start;
 import com.gigaspaces.internal.io.BootIOUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * @author Niv Ingberg
@@ -51,6 +56,15 @@ public class JavaCommandBuilder {
     public JavaCommandBuilder classpath(String classpath) {
         if (!isEmpty(classpath)) {
             this.classpath.add(BootIOUtils.quoteIfContainsSpace(classpath));
+        }
+        return this;
+    }
+
+    public JavaCommandBuilder classpathFromPath(Path path, Predicate<Path> filter)  {
+        try (Stream<Path> stream = Files.list(path)) {
+            stream.filter(filter).forEach(p -> classpath(p.toString()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         return this;
     }

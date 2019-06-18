@@ -63,7 +63,7 @@
                 <include>spring-expression-*</include>
                 <include>spring-tx-*</include>
                 <include>com.springsource.org.aopalliance-*</include>
-                <include>commons-logging-*</include>
+                <include>spring-jcl-*</include>
             </includes>
         </fileSet>
 

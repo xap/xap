@@ -7,8 +7,7 @@ import com.j_spaces.kernel.ClassLoaderHelper;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
 
 import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ATTRIBUET_STORE_HANDLER_CLASS_NAME;
 
@@ -41,8 +40,8 @@ public class ZookeeperLastPrimaryHandler {
                     .getConstructor(String.class, SpaceConfig.class);
             return (AttributeStore) constructor.newInstance("", _spaceImpl.getConfig());
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to create attribute store ");
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to create attribute store ");
             throw new DirectPersistencyRecoveryException("Failed to start [" + (_spaceImpl.getServiceName())
                     + "] Failed to create attribute store.");
         }
@@ -52,7 +51,7 @@ public class ZookeeperLastPrimaryHandler {
         try {
             _attributeStore.close();
         } catch (Exception e) {
-            _logger.log(Level.WARNING, "Failed to close ZooKeeperAttributeStore", e);
+            _logger.warn("Failed to close ZooKeeperAttributeStore", e);
         }
     }
 
@@ -63,15 +62,15 @@ public class ZookeeperLastPrimaryHandler {
 
     public void setMeAsLastPrimary() throws IOException {
         String previousLastPrimary = _attributeStore.set(_attributeStoreKey, attributeStoreValue);
-        if (_logger.isLoggable(Level.INFO))
-            _logger.log(Level.INFO, "Set as last primary ["+ attributeStoreValue +"] for key ["+_attributeStoreKey+"] in ZK. Previous last primary is ["+previousLastPrimary+"]");
+        if (_logger.isInfoEnabled())
+            _logger.info("Set as last primary ["+ attributeStoreValue +"] for key ["+_attributeStoreKey+"] in ZK. Previous last primary is ["+previousLastPrimary+"]");
     }
 
     public boolean isLastPrimary() {
         try {
             return attributeStoreValue.equals(getLastPrimaryName());
         } catch (IOException e) {
-            _logger.log(Level.WARNING, "Failed to get last primary from ZK", e);
+            _logger.warn("Failed to get last primary from ZK", e);
             return false;
         }
     }
@@ -89,7 +88,7 @@ public class ZookeeperLastPrimaryHandler {
         if (tokens.length == 2)
             return tokens[0];
 
-        _logger.log(Level.WARNING, "Invalid last primary value [" + lastPrimary + "] - expected " + toId("<instance_id>","<service_id>"));
+        _logger.warn("Invalid last primary value [" + lastPrimary + "] - expected " + toId("<instance_id>","<service_id>"));
         return null;
     }
 

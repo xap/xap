@@ -31,8 +31,7 @@ import com.j_spaces.kernel.SystemProperties;
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
 
 /**
  * helper functions in order to maintain direct-persistency recovery consistency
@@ -113,12 +112,12 @@ public class DirectPersistencyRecoveryHelper implements IStorageConsistency, ISp
             return;
         StorageConsistencyModes res = _storageConsistencyHelper.getStorageState();
         boolean validStorageState = res != StorageConsistencyModes.Inconsistent;
-        if (_logger.isLoggable(Level.INFO))
-            _logger.log(Level.INFO, "space tested for storageconsistency - result=" + res);
+        if (_logger.isInfoEnabled())
+            _logger.info("space tested for storageconsistency - result=" + res);
 
         String latestPrimary = getLastPrimaryName();
-        if (_logger.isLoggable(Level.INFO))
-            _logger.log(Level.INFO, "space tested for latest-primary - result=" + latestPrimary);
+        if (_logger.isInfoEnabled())
+            _logger.info("space tested for latest-primary - result=" + latestPrimary);
 
         boolean iWasPrimary = isMeLastPrimary(latestPrimary);
         boolean iMayBePrimary = ((iWasPrimary || latestPrimary == null) && validStorageState);
@@ -126,14 +125,14 @@ public class DirectPersistencyRecoveryHelper implements IStorageConsistency, ISp
             return; //passed ok)
 
         if (!validStorageState && iWasPrimary) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Inconsistent storage state but space was primary]");
+            if (_logger.isErrorEnabled())
+                _logger.error("Inconsistent storage state but space was primary]");
             throw new DirectPersistencyRecoveryException("Failed to start [" + (_spaceImpl.getEngine().getFullSpaceName())
                     + "] inconsistent storage state but space was primary]");
 
         }
-        if (_logger.isLoggable(Level.INFO)) {
-            _logger.log(Level.INFO, "Waiting for any other space to become primary");
+        if (_logger.isInfoEnabled()) {
+            _logger.info("Waiting for any other space to become primary");
         }
         GSDirectPersistencyLusWaiter waiter;
         //initiate a thread that scans the lus waiting for primary to be - temp solution until election is changed
@@ -143,7 +142,7 @@ public class DirectPersistencyRecoveryHelper implements IStorageConsistency, ISp
                     _logger, _spaceImpl.getJoinManager(),
                     new Object());
         } catch (Exception ex) {
-            _logger.severe("Exception while initiating waiter-for-primary thread " + ex);
+            _logger.error("Exception while initiating waiter-for-primary thread " + ex);
             if (ex instanceof DirectPersistencyRecoveryException)
                 throw (DirectPersistencyRecoveryException) ex;
             throw new DirectPersistencyRecoveryException("space " + _spaceImpl.getEngine().getFullSpaceName() + " got exception while initiating waiter-for-primary thread", ex);
@@ -180,8 +179,8 @@ public class DirectPersistencyRecoveryHelper implements IStorageConsistency, ISp
                 _attributeStore.set(_attributeStoreKey, _fullSpaceName);
             }
 
-            if (_logger.isLoggable(Level.INFO))
-                _logger.log(Level.INFO, "Set as last primary");
+            if (_logger.isInfoEnabled())
+                _logger.info("Set as last primary");
         } catch (IOException e) {
             throw new DirectPersistencyAttributeStoreException("Failed to set last primary", e);
         }
@@ -228,8 +227,8 @@ public class DirectPersistencyRecoveryHelper implements IStorageConsistency, ISp
     }
 
     public void handleDirectPersistencyRecoverFailure(int retryCount) {
-        if (_logger.isLoggable(Level.WARNING)) {
-            _logger.warning("failed during recover, retrying for the " + retryCount + " time");
+        if (_logger.isWarnEnabled()) {
+            _logger.warn("failed during recover, retrying for the " + retryCount + " time");
         }
         if (isPendingBackupRecovery() && _recoverRetries == retryCount) {
             throw DirectPersistencyRecoveryException.createBackupNotFinishedRecoveryException(_fullSpaceName);
