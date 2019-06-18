@@ -1,5 +1,6 @@
 package org.gigaspaces.cli;
 
+import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.logger.Constants;
 
 import org.jline.reader.*;
@@ -49,11 +50,14 @@ public class CliExecutor {
         mainCommandLine.addSubcommand("exit", ShellExitCommand.instance);
 
         try {
+            DefaultParser parser = new DefaultParser();
+            if (JavaUtils.isWindows())
+                parser.setEscapeChars(null);
             // set up the completion
             shellReader = LineReaderBuilder.builder()
                     .terminal(TerminalBuilder.builder().build())
                     .completer(new PicocliJLineCompleter(mainCommandLine.getCommandSpec()))
-                    .parser(new DefaultParser())
+                    .parser(parser)
                     .build();
 
             // original example injected terminal into commands. not sure if this is required.
