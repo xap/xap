@@ -5,7 +5,7 @@
 	xmlns:os-core="http://www.openspaces.org/schema/core"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 	                    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
-	                    http://www.openspaces.org/schema/core http://www.openspaces.org/schema/14.2/core/openspaces-core.xsd">
+	                    http://www.openspaces.org/schema/core http://www.openspaces.org/schema/core/openspaces-core.xsd">
 
 	<context:annotation-config />
 

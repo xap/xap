@@ -5,7 +5,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
        http://www.springframework.org/schema/beans/spring-beans.xsd
        http://www.openspaces.org/schema/core
-       http://www.openspaces.org/schema/14.2/core/openspaces-core.xsd">
+       http://www.openspaces.org/schema/core/openspaces-core.xsd">
 
     <bean id="propertiesConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"/>
     
