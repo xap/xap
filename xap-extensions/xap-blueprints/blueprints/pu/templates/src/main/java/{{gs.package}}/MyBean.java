@@ -15,7 +15,7 @@
  */
 package {{maven.groupId}};
 
-import java.util.logging.*;
+import org.slf4j.*;
 import javax.annotation.*;
 import org.springframework.stereotype.Component;
 
@@ -26,37 +26,37 @@ import org.openspaces.core.cluster.*;
 
 @Component
 public class MyBean {
-	private static final Logger logger = Logger.getLogger(MyBean.class.getName());
-	
+    private static final Logger logger = LoggerFactory.getLogger(MyBean.class);
+
     @Resource
     private GigaSpace gigaSpace;
-	
-	@ClusterInfoContext
-	private ClusterInfo clusterInfo;
-	
-	private String id;
 
-	@PostConstruct
-	public void initialize() {
-		id = gigaSpace.getSpaceName() + "[" + (clusterInfo != null ? clusterInfo.getSuffix() : "non-clustered") + "]";
-		logger.info("Initialized " + id);
-		// NOTE: This method is called for both primary and backup instances.
-		// If you wish to do something for primaries only, see @SpaceStatusChanged
-	}
-	
+    @ClusterInfoContext
+    private ClusterInfo clusterInfo;
+
+    private String id;
+
+    @PostConstruct
+    public void initialize() {
+        id = gigaSpace.getSpaceName() + "[" + (clusterInfo != null ? clusterInfo.getSuffix() : "non-clustered") + "]";
+        logger.info("Initialized {}", id);
+        // NOTE: This method is called for both primary and backup instances.
+        // If you wish to do something for primaries only, see @SpaceStatusChanged
+    }
+
     @SpaceStatusChanged
     public void onSpaceStatusChange(SpaceStatusChangedEvent event) {
-		logger.info(String.format("Space %s is %s", id, event.getSpaceMode()));
-		if (event.isActive()) {
-			// If you have initialization code for active instances only, put it here.
-		} else {
-			// Space is backup, or space is primary but suspended.
-			// If your code should only run when the space is active, you should deactivate it here.
-		}
-	}
-	
-	@PreDestroy
-	public void close() {
-		logger.info("Closing " + id);
-	}
+        logger.info("Space {} is {}", id, event.getSpaceMode());
+        if (event.isActive()) {
+            // If you have initialization code for active instances only, put it here.
+        } else {
+            // Space is backup, or space is primary but suspended.
+            // If your code should only run when the space is active, you should deactivate it here.
+        }
+    }
+
+    @PreDestroy
+    public void close() {
+        logger.info("Closing {}", id);
+    }
 }
