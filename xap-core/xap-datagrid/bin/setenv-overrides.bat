@@ -3,7 +3,7 @@ rem ****************************************************************************
 rem * Use this script to override default settings in the setenv.bat script.                                  *
 rem * The setenv script is used to initialize common environment to GigaSpaces XAP Server.                    *
 rem * The setenv script calls this script to allow overriding those settings easily.                          *
-rem * For more information see https://docs.gigaspaces.com/14.2/started/common-environment-variables.html *
+rem * For more information see https://docs.gigaspaces.com/14.5/started/common-environment-variables.html     *
 rem ***********************************************************************************************************
 
 rem Here are some environment variables which are commonly modified:

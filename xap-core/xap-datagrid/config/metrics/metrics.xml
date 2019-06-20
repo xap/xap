@@ -1,7 +1,7 @@
 <metrics-configuration>
     <!-- This file determines the settings for monitoring and metrics. For more information see: -->
-    <!-- https://docs.gigaspaces.com/14.2/admin/web-management-monitoring.html -->
-    <!-- https://docs.gigaspaces.com/14.2/admin/metrics-overview.html -->
+    <!-- https://docs.gigaspaces.com/14.5/admin/web-management-monitoring.html -->
+    <!-- https://docs.gigaspaces.com/14.5/admin/metrics-overview.html -->
 
     <!-- Configure which reporter(s) will be used to collect data from the system -->
     <reporters>

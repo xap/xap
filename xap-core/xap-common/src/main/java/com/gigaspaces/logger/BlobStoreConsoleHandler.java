@@ -19,8 +19,8 @@ package com.gigaspaces.logger;
 import java.io.OutputStream;
 import java.util.logging.ConsoleHandler;
 
-/**
- * Created by Kobi on 8/17/15.
+/*
+ * @author Kobi on 8/17/15.
  */
 @com.gigaspaces.api.InternalApi
 public class BlobStoreConsoleHandler extends ConsoleHandler {

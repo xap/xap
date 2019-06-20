@@ -3,7 +3,7 @@
 ##  Use this script to override default settings in the setenv.sh script.                                   *
 ##  The setenv script is used to initialize common environment to GigaSpaces XAP Server.                    *
 ##  The setenv script calls this script to allow overriding those settings easily.                          *
-##  For more information see https://docs.gigaspaces.com/14.2/started/common-environment-variables.html *
+##  For more information see https://docs.gigaspaces.com/14.5/started/common-environment-variables.html     *
 ## **********************************************************************************************************
 
 ## Here are some environment variables which are commonly modified:
