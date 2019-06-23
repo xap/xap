@@ -182,7 +182,7 @@ public class OshiGaugeUtils {
         return new Gauge<Double>() {
             @Override
             public Double getValue() throws Exception {
-                return osProcess.calculateCpuPercent()*100;
+                return osProcess.calculateCpuPercent();
             }
         };
     }
