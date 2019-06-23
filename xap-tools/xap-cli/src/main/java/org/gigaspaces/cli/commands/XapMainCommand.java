@@ -7,7 +7,7 @@ import org.gigaspaces.cli.CommandsSet;
 import org.gigaspaces.cli.SubCommandContainer;
 import picocli.CommandLine.*;
 
-@Command(name="gs", headerHeading = XapMainCommand.HEADER, customSynopsis = "gs [global-options] command [options] [parameters]")
+@Command(name="gs", headerHeading = XapMainCommand.HEADER, customSynopsis = "gs.{sh|bat} [global-options] command [options] [parameters]")
 public class XapMainCommand extends CliCommand implements SubCommandContainer {
     public static final String HEADER =
                     "@|green   __   __          _____                                   |@%n" +

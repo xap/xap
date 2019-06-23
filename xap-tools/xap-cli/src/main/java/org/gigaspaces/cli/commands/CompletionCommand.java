@@ -17,12 +17,12 @@ import java.io.FileWriter;
         "Examples:",
         "  # Installing bash completion on Linux",
         "  ## Load the gs completion code for bash into the current shell",
-        "  $ source <(./gs completion)",
+        "  $ source <(./gs.sh completion)",
         "  ## Some older bash versions do not support this syntax, you can try this instead:",
-        "  $ source /dev/stdin <<<\"$(./gs completion)\"",
+        "  $ source /dev/stdin <<<\"$(./gs.sh completion)\"",
         "",
         "  # Installing bash completion on macOS using homebrew",
-        "  ./gs completion > $(brew --prefix)/etc/bash_completion.d/gs"
+        "  ./gs.sh completion > $(brew --prefix)/etc/bash_completion.d/gs.sh"
         })
 public class CompletionCommand extends CliCommand {
 
