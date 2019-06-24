@@ -140,7 +140,7 @@ public class JVMStatistics implements Externalizable {
         long timeDelta = getCpuTime() - lastJVMStatistics.getCpuTime();
         long totalDelta = getCpuTotal() - lastJVMStatistics.getCpuTotal();
 
-        if (timeDelta <= 0 || totalDelta < 0) {
+        if( timeDelta <= 0 || totalDelta < 0 || totalDelta > timeDelta ) {
             return -1;
         }
 
