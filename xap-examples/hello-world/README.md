@@ -41,7 +41,7 @@ To connect to a *remote* data-grid, first use the `xap space run` script to laun
 
 From the ${XAP_HOME}/bin directory, run:
 
--  ./xap space run --lus myDataGrid
+-  gs.(sh|bat) space run --lus myDataGrid
 
 Import Maven `examples/hello-world/pom.xml` into your IDE of choice as a maven project.
 Launch the `HelloWorld` main (arguments: `-name` myDataGrid `-mode` remote)
@@ -66,8 +66,8 @@ Each partition instance is loaded separately, as follows:
 
 From the ${XAP_HOME}/bin directory, run:
 
--  ./xap space run --lus --partitions=2 **--instances=1_1** myDataGrid
--  ./xap space run --lus --partitions=2 **--instances=2_1** myDataGrid
+-  gs.(sh|bat) space run --lus --partitions=2 **--instances=1_1** myDataGrid
+-  gs.(sh|bat) space run --lus --partitions=2 **--instances=2_1** myDataGrid
 
 This will simulate a data-grid of 2 partitioned instances (without backups).
 
@@ -93,13 +93,13 @@ Each partition instance can be assigned a backup, as follows:
 
 **First partition:**
 
--  ./xap space run --lus --partitions=2 --ha **--instances=1_1** myDataGrid
--  ./xap space run --lus --partitions=2 --ha **--instances=1_2** myDataGrid
+- gs.(sh|bat) space run --lus --partitions=2 --ha **--instances=1_1** myDataGrid
+- gs.(sh|bat) space run --lus --partitions=2 --ha **--instances=1_2** myDataGrid
 
 **Second partition:**
 
--  ./xap space run --lus --partitions=2 --ha **--instances=2_1** myDataGrid
--  ./xap space run --lus --partitions=2 --ha **--instances=2_2** myDataGrid
+-  gs.(sh|bat) space run --lus --partitions=2 --ha **--instances=2_1** myDataGrid
+-  gs.(sh|bat) space run --lus --partitions=2 --ha **--instances=2_2** myDataGrid
 
 
 The Example should be run in the same manner as before - Launch the `HelloWorld` (arguments: `-name` myDataGrid `-mode` remote).

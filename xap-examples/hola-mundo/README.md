@@ -150,11 +150,11 @@ This will create the processing unit jars that can be referenced by `xap pu run`
 
 From the ${XAP_HOME}/bin directory, run:
 
-- ./xap pu run --lus ../examples/hola-mundo/translator/target/hola-mundo-translator.jar
-- ./xap pu run --lus ../examples/hola-mundo/feeder/target/hola-mundo-feeder.jar
+- gs.(sh|bat) pu run --lus ../examples/hola-mundo/translator/target/hola-mundo-translator.jar
+- gs.(sh|bat) pu run --lus ../examples/hola-mundo/feeder/target/hola-mundo-feeder.jar
 
 This will run the translator (as a single data-grid) and the feeder.
 
 To start a partitioned translator (data-grid of 2 partitions), add the --partitions arguments:
 
-- ./xap pu run --lus --partitions=2 ../examples/hola-mundo/translator/target/hola-mundo-translator.jar
+- gs.(sh|bat) pu run --lus --partitions=2 ../examples/hola-mundo/translator/target/hola-mundo-translator.jar
