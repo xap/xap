@@ -5,7 +5,7 @@ import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.commands.utils.KeyValueFormatter;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "info", header = "Provides information on the specified blueprint")
+@CommandLine.Command(name = "info", header = "Show information for the specified blueprint")
 public class BlueprintInfoCommand extends CliCommand {
 
     @CommandLine.Parameters(index = "0", description = "Blueprint name", completionCandidates = BlueprintCommand.BlueprintCompletionCandidates.class)

@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Command(name="generate", header = "Generates a new GigaSpaces project from the specified blueprint")
+@Command(name="generate", header = "Generate a new GigaSpaces project from the specified blueprint")
 public class BlueprintGenerateCommand extends CliCommand {
 
     @Parameters(index = "0", description = "Blueprint name", arity = "0..1", completionCandidates = BlueprintCommand.BlueprintCompletionCandidates.class)
@@ -63,7 +63,7 @@ public class BlueprintGenerateCommand extends CliCommand {
                 "@|bold,fg(green) Generated project from %s at %s|@", blueprint.getName(), target.toAbsolutePath())));
         if (Desktop.isDesktopSupported() &&
                 interactiveReader != null &&
-                readBoolean(interactiveReader, "Would you like to open it using the file explorer?", false)) {
+                readBoolean(interactiveReader, "Would you like to open it in file explorer?", true)) {
             Desktop.getDesktop().open(target.toFile());
         }
     }
@@ -83,7 +83,7 @@ public class BlueprintGenerateCommand extends CliCommand {
         if (interactiveCause != null) {
             System.out.println("Generating blueprint in interactive mode (" + interactiveCause + ")...");
             result = CliExecutor.getOrCreateReader();
-            System.out.println("Please provide a value for each of the following, or simply click ENTER to accept the default value in brackets.");
+            System.out.println("Please provide a value for each of the following, or click ENTER to accept the [default value]");
         }
         return result;
     }
