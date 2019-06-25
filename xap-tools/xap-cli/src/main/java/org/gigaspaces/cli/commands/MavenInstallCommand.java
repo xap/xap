@@ -20,7 +20,7 @@ import java.util.stream.Stream;
  * @author Niv Ingberg
  * @since 14.5
  */
-@CommandLine.Command(name="install", header = "Installs GigaSpaces artifacts from this package to maven repository")
+@CommandLine.Command(name="install", header = "Installs GigaSpaces artifacts from this package to the Maven repository")
 public class MavenInstallCommand extends CliCommand {
 
     @CommandLine.Option(names = {"--artifacts-path" }, description = "Override default artifacts path", split = ",")
