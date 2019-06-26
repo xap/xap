@@ -11,8 +11,6 @@ import picocli.AutoComplete;
 import picocli.CommandLine;
 import picocli.CommandLine.*;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -21,10 +19,15 @@ import java.util.logging.Level;
 public class CliExecutor {
 
     private static CommandLine mainCommandLine;
+    private static CommandLine currentCommandLine;
     private static LineReader shellReader;
 
     public static CommandLine getMainCommand() {
         return mainCommandLine;
+    }
+
+    public static CommandLine getCurrentCommandLine() {
+        return currentCommandLine;
     }
 
     public static void execute(Object mainCommand, String[] args) {
@@ -155,6 +158,7 @@ public class CliExecutor {
                 parseResult = parseResult.subcommand();
 
             CommandLine commandLine = parseResult.commandSpec().commandLine();
+            currentCommandLine = commandLine;
             Callable<Object> command = commandLine.getCommand();
             try {
                 if (commandLine == mainCommandLine) {
