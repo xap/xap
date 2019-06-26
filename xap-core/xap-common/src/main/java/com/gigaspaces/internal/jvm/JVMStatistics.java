@@ -140,6 +140,8 @@ public class JVMStatistics implements Externalizable {
         long timeDelta = getCpuTime() - lastJVMStatistics.getCpuTime();
         long totalDelta = getCpuTotal() - lastJVMStatistics.getCpuTotal();
 
+        //GS-13876 check totalDelta > timeDelta condition in order to prevent
+        //cpu values greater than 100% ( was seen in gs-ui )
         if( timeDelta <= 0 || totalDelta < 0 || totalDelta > timeDelta ) {
             return -1;
         }
