@@ -286,17 +286,18 @@ public class ReplicationNodeReplicaHandler {
     }
 
     private boolean isFifoType(ISpaceReplicaData data) {
-        if (data.isEntryReplicaData()) {
-            CacheManager cacheManager = _spaceEngine.getCacheManager();
-
-
-            IEntryPacket entryPacket = ((AbstractEntryReplicaData) data).getEntryPacket();
-            if (entryPacket != null) {
-                IServerTypeDesc serverTypeDesc = cacheManager.getTypeManager().getServerTypeDesc(entryPacket.getTypeName());
-                TypeData typeData = cacheManager.getTypeData(serverTypeDesc);
-                return typeData.isFifoSupport() || (typeData.getFifoGroupingIndex() != null);
-            }
-        }
+        //TODO - disbled for 14.5 release due to bug , will return with fix in next version
+//        if (data.isEntryReplicaData()) {
+//            CacheManager cacheManager = _spaceEngine.getCacheManager();
+//
+//
+//            IEntryPacket entryPacket = ((AbstractEntryReplicaData) data).getEntryPacket();
+//            if (entryPacket != null) {
+//                IServerTypeDesc serverTypeDesc = cacheManager.getTypeManager().getServerTypeDesc(entryPacket.getTypeName());
+//                TypeData typeData = cacheManager.getTypeData(serverTypeDesc);
+//                return typeData.isFifoSupport() || (typeData.getFifoGroupingIndex() != null);
+//            }
+//        }
         return false;
     }
 

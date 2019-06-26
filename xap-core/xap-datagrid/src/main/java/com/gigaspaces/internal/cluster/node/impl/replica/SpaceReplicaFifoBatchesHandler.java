@@ -92,7 +92,7 @@ public class SpaceReplicaFifoBatchesHandler {
                 consumer.processBatch(currentBatch.getBatch());
                 onProcessBatchCompletion(currentBatch.getFifoId());
             } else {
-                return;
+                return; //TODO - getHandler().resumeNow();
             }
         }
     }
