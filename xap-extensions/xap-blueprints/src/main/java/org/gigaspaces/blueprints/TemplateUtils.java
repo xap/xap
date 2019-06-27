@@ -1,5 +1,6 @@
 package org.gigaspaces.blueprints;
 
+import com.gigaspaces.internal.jvm.JavaUtils;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
@@ -32,6 +33,9 @@ public class TemplateUtils {
                 try (FileWriter writer = new FileWriter(dst.toFile())) {
                     mf.compile(reader, "temp.name").execute(writer, context);
                 }
+            }
+            if(!JavaUtils.isWindows()) {
+                Files.setPosixFilePermissions(dst, Files.getPosixFilePermissions(src));
             }
         }
     }
