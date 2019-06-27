@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-@CommandLine.Command(name="blueprint", aliases = {"bp"}, header = "List of available commands for blueprints")
+@CommandLine.Command(name="blueprint", header = "List of available commands for blueprints")
 public class BlueprintCommand extends CliCommand implements SubCommandContainer {
 
     @Override
