@@ -250,11 +250,6 @@ public class ScheduledThreadPoolAsyncHandlerProvider extends AbstractAsyncHandle
             return _state == State.STOPPED;
         }
 
-        @Override
-        public String getName() {
-            return _name;
-        }
-
         private Runnable createExecutionTask() {
             return new ExecutionTask(_iteration);
         }

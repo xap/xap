@@ -69,5 +69,4 @@ public interface IAsyncHandler {
      */
     boolean isTerminated();
 
-    String getName();
 }

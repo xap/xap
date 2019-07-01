@@ -167,10 +167,11 @@ public class SpaceCopyReplicaRunnable
                         SpaceReplicaFifoBatchesHandler fifoBatchesHandler = _replicationNode.getReplicaHandler().getFifoBatchesHandler();
                         fifoBatchesHandler.handleIncomingBatch(batch, this);
                     } else {
-                        processBatch(result.getResult(), true);
+                        // Get replica data
+                        processBatch(result.getResult());
                     }
                 } else {
-                    processBatch(result.getResult(), true);
+                    processBatch(result.getResult());
                 }
             }
         } catch (Throwable e) {
@@ -180,7 +181,7 @@ public class SpaceCopyReplicaRunnable
         }
     }
 
-    protected void processBatch(Collection<ISpaceReplicaData> copiedData, boolean resumeNow) {
+    protected void processBatch(Collection<ISpaceReplicaData> copiedData) {
         try {
             _lastIterationTimeStamp = SystemTime.timeMillis();
             // Consume data
@@ -205,10 +206,7 @@ public class SpaceCopyReplicaRunnable
             // Should keep running
             if (_logger.isLoggable(Level.FINEST))
                 _logger.log(Level.FINEST, _replicationNode.getLogPrefix() + "copied replica batch " + copiedData);
-            if(resumeNow){
-                //resubmit SpaceCopyReplicaRunnable task
-                getHandler().resumeNow();
-            }
+            getHandler().resumeNow();
         } catch (Throwable e) {
             if (!(e instanceof Exception))
                 e = new ExecutionException(e.getMessage(), e);

@@ -139,10 +139,5 @@ public abstract class AbstractAsyncHandlerProvider implements IAsyncHandlerProvi
             return true;
         }
 
-        @Override
-        public String getName() {
-            return null;
-        }
-
     }
 }
