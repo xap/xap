@@ -244,5 +244,10 @@ public class ThreadAsyncHandlerProvider extends AbstractAsyncHandlerProvider {
             return _terminated || _stopped;
         }
 
+        @Override
+        public String getName() {
+            return null;
+        }
+
     }
 }
