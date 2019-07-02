@@ -36,6 +36,15 @@
 
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
+            <outputDirectory>product/lib/optional/metrics</outputDirectory>
+            <includes>
+                <include>org.gigaspaces:xap-metrics-hsqldb</include>
+            </includes>
+            <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+        </dependencySet>
+
+        <dependencySet>
+            <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>product/lib/optional/jetty/xap-jetty</outputDirectory>
             <includes>
                 <include>org.gigaspaces:xap-jetty</include>

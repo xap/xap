@@ -102,6 +102,8 @@ public class MetricManagerConfig {
             factory = fromName(factoryClassName);
         } else if (name.equals("influxdb"))
             factory = fromName("com.gigaspaces.metrics.influxdb.InfluxDBReporterFactory");
+        else if (name.equals("hsqldb"))
+            factory = fromName("com.gigaspaces.metrics.hsqldb.HsqlDBReporterFactory");
         else if (name.equals("console"))
             factory = new ConsoleReporterFactory();
         else if (name.equals("file"))

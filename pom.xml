@@ -58,6 +58,7 @@
         <module>xap-extensions/xap-cassandra</module>
         <module>xap-extensions/xap-mule</module>
         <module>xap-extensions/xap-metrics-influxdb</module>
+        <module>xap-extensions/xap-metrics-hsqldb</module>
         <module>xap-extensions/xap-groovy</module>
         <module>xap-extensions/xap-jruby</module>
         <module>xap-extensions/xap-full-text-search</module>
@@ -278,6 +279,12 @@
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-metrics-influxdb</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.gigaspaces</groupId>
+                <artifactId>xap-metrics-hsqldb</artifactId>
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>

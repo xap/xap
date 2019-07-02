@@ -338,6 +338,8 @@ public class SystemConfig {
         if(isJava11()){
             classpathBuilder.appendPlatform("javax");
         }
+        //GS-13825 added hsql jar
+        classpathBuilder.appendOptional("jdbc");
 
         // I don't expect anybody to use this feature, but its here just to be on the safe side
         boolean osInCommonClassLoader = Boolean.parseBoolean(System.getProperty("com.gs.pu.classloader.os-in-common-classloader", "false"));
@@ -347,6 +349,7 @@ public class SystemConfig {
             classpathBuilder.append(gsLibRequired);
             classpathBuilder.appendOptional("spring");
         }
+
         return classpathBuilder.toURLs();
     }
 
