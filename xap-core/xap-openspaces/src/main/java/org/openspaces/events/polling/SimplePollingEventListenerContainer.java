@@ -1056,9 +1056,14 @@ public class SimplePollingEventListenerContainer extends AbstractEventListenerCo
     protected Object receiveEvent(Object template) throws DataAccessException {
         try {
             return receiveOperationHandler.receive(template, getGigaSpace(), getReceiveTimeout());
-        } catch (SpaceInterruptedException e) {
-            // we got an interrupted exception, it means no receive operation so return null.
-            return null;
+        } catch (DataAccessException e) {
+            if (isInterrupted(e)) {
+                // we got an interrupted exception, it means no receive operation so return null.
+                if (logger.isDebugEnabled())
+                    logger.debug("Polling was interrupted - ignoring exception");
+                return null;
+            }
+            throw e;
         } catch (QuiesceException e) {
             if (logger.isDebugEnabled()) {
                 logger.debug(message("receiveEvent got QuiesceException"), e);
@@ -1067,5 +1072,14 @@ public class SimplePollingEventListenerContainer extends AbstractEventListenerCo
             }
             return null;
         }
+    }
+
+    private static boolean isInterrupted(Throwable e) {
+        while (e != null) {
+            if (e instanceof SpaceInterruptedException  || e instanceof InterruptedException)
+                return true;
+            e = e.getCause();
+        }
+        return false;
     }
 }
