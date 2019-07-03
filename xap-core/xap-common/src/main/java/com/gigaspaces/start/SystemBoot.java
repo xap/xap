@@ -195,6 +195,10 @@ public class SystemBoot {
      * Convert comma-separated String to array of Strings
      */
     private static Set<String> toSet(String s) {
+        if (s.endsWith("]")) {
+            s = s.substring(s.indexOf("[")+1, s.length()-1);
+        }
+
         final Set<String> result = new LinkedHashSet<String>();
         for (StringTokenizer tok = new StringTokenizer(s, " ,") ; tok.hasMoreTokens() ; ) {
             result.add(tok.nextToken());

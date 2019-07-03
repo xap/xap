@@ -4,6 +4,8 @@ import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.jvm.JavaUtils;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 
 /**
@@ -53,7 +55,7 @@ public class GsCommandFactory {
         appendGsClasspath();
         // Options and system properties:
         appendXapOptions();
-        command.optionsFromEnv("XAP_CLI_OPTIONS");
+        appendServiceOptions(command, "CLI");
 
         return command;
     }
@@ -176,4 +178,22 @@ public class GsCommandFactory {
         String val = System.getenv(name);
         return val != null ? Optional.of(val) : Optional.empty();
     }
+
+    protected void appendServiceOptions(JavaCommandBuilder command, String serviceType) {
+        String envVar = "XAP_" + serviceType.toUpperCase() + "_OPTIONS";
+        if (System.getenv().containsKey(envVar)) {
+            command.optionsFromEnv(envVar);
+        } else {
+            command.options(getDefaultOptions(serviceType));
+        }
+    }
+
+    protected Collection<String> getDefaultOptions(String serviceType) {
+        switch (serviceType) {
+            case "CLI":
+                return Collections.singletonList("-Xmx512m");
+            default: return Collections.emptyList();
+        }
+    }
+
 }
