@@ -16,23 +16,5 @@ if defined JAVA_HOME (
 	set JAVACMD=java
 )
 
-if defined XAP_HOME goto XAP_HOME_DEFINED
-pushd %~dp0..
-set XAP_HOME=%CD%
-popd
-:XAP_HOME_DEFINED
-
+if not defined XAP_HOME for %%d in ("%~dp0..") do set XAP_HOME=%%~fd
 if not defined XAP_NIC_ADDRESS set XAP_NIC_ADDRESS=%COMPUTERNAME%
-
-if "%VERBOSE%"=="true" (
-	echo ===============================================================================
-	echo GigaSpaces XAP environment verbose information
-	echo XAP_HOME: %XAP_HOME%
-	echo XAP_NIC_ADDRESS: %XAP_NIC_ADDRESS%
-	echo XAP_LOOKUP_GROUPS: %XAP_LOOKUP_GROUPS%
-	echo XAP_LOOKUP_LOCATORS: %XAP_LOOKUP_LOCATORS%
-	echo.
-	echo JAVA_HOME: %JAVA_HOME%
-	echo EXT_JAVA_OPTIONS: %EXT_JAVA_OPTIONS%
-	echo ===============================================================================
-)

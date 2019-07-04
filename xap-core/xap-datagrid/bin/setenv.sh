@@ -23,16 +23,3 @@ fi
 
 export XAP_HOME=${XAP_HOME=`(cd $DIRNAME/..; pwd )`}
 export XAP_NIC_ADDRESS=${XAP_NIC_ADDRESS="`hostname`"}
-
-if [ "${VERBOSE}" = "true" ] ; then
-	echo ===============================================================================
-	echo GigaSpaces XAP environment verbose information
-	echo XAP_HOME: $XAP_HOME
-	echo XAP_NIC_ADDRESS: $XAP_NIC_ADDRESS
-	echo XAP_LOOKUP_GROUPS: $XAP_LOOKUP_GROUPS
-	echo XAP_LOOKUP_LOCATORS: $XAP_LOOKUP_LOCATORS
-	echo
-	echo JAVA_HOME: $JAVA_HOME
-	echo EXT_JAVA_OPTIONS: $EXT_JAVA_OPTIONS
-	echo ===============================================================================
-fi
