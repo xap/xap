@@ -107,7 +107,7 @@ public class BootUtil {
 
         String value = System.getProperty(CommonSystemProperties.HOST_ADDRESS);
         //if (value == null)
-        //    value = System.getenv("XAP_NIC_ADDRESS");
+        //    value = GsEnv.get("NIC_ADDRESS");
         if (value == null) {
             InetAddress inetAddress = java.net.InetAddress.getLocalHost();
             value = BootIOUtils.wrapIpv6HostAddressIfNeeded(inetAddress);

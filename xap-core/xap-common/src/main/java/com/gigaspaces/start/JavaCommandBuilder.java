@@ -1,6 +1,7 @@
 package com.gigaspaces.start;
 
 import com.gigaspaces.internal.io.BootIOUtils;
+import com.gigaspaces.internal.utils.GsEnv;
 
 import java.io.File;
 import java.io.IOException;
@@ -77,15 +78,6 @@ public class JavaCommandBuilder {
         return classpath(env.get(envVarName));
     }
 
-    public JavaCommandBuilder classpathFromEnv(String envVarName, Runnable defaultProvider) {
-        if (env.containsKey(envVarName))
-            classpath(env.get(envVarName));
-        else if (defaultProvider != null) {
-            defaultProvider.run();
-        }
-        return this;
-    }
-
     public JavaCommandBuilder systemProperty(String key, String value) {
         systemProperties.put(key, value);
         return this;
@@ -104,6 +96,16 @@ public class JavaCommandBuilder {
 
     public JavaCommandBuilder optionsFromEnv(String envVarName) {
         String s = env.get(envVarName);
+        if (!isEmpty(s)) {
+            for (String option : s.split(" ")) {
+                option(option);
+            }
+        }
+        return this;
+    }
+
+    public JavaCommandBuilder optionsFromGsEnv(String envVarSuffix) {
+        String s = GsEnv.get(envVarSuffix);
         if (!isEmpty(s)) {
             for (String option : s.split(" ")) {
                 option(option);

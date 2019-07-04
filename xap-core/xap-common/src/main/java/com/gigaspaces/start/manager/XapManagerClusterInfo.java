@@ -1,6 +1,7 @@
 package com.gigaspaces.start.manager;
 
 import com.gigaspaces.CommonSystemProperties;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.logger.Constants;
 
 import java.net.InetAddress;
@@ -13,8 +14,9 @@ public class XapManagerClusterInfo {
 
     public static final String SERVERS_PROPERTY = "com.gs.manager.servers";
     public static final String SERVER_PROPERTY = "com.gs.manager.server";
-    public static final String SERVERS_ENV_VAR = "XAP_MANAGER_SERVERS";
-    public static final String SERVER_ENV_VAR = "XAP_MANAGER_SERVER";
+    public static final String SERVERS_ENV_VAR_SUFFIX = "MANAGER_SERVERS";
+    public static final String SERVERS_ENV_VAR = "GS_" + SERVERS_ENV_VAR_SUFFIX;
+    public static final String SERVER_ENV_VAR_SUFFIX = "MANAGER_SERVER";
 
     private final XapManagerConfig currServer;
     private final XapManagerConfig[] servers;
@@ -63,7 +65,7 @@ public class XapManagerClusterInfo {
     }
 
     private static Collection<XapManagerConfig> parseShort() {
-        final String var = get(SERVERS_PROPERTY, SERVERS_ENV_VAR);
+        final String var = get(SERVERS_PROPERTY, SERVERS_ENV_VAR_SUFFIX);
         return parseServersEnvVar( var );
     }
 
@@ -81,7 +83,7 @@ public class XapManagerClusterInfo {
     private static Collection<XapManagerConfig> parseFull() {
         final Collection<XapManagerConfig> result = new ArrayList<XapManagerConfig>();
         for (int i=1 ; i < 10 ; i++) {
-            final String var = get(SERVER_PROPERTY + "." + i, SERVER_ENV_VAR + "_" + i);
+            final String var = get(SERVER_PROPERTY + "." + i, SERVER_ENV_VAR_SUFFIX + "_" + i);
             if (var != null && var.length() != 0)
                 result.add(parse(var));
             else
@@ -97,15 +99,16 @@ public class XapManagerClusterInfo {
         return result;
     }
 
-    private static String get(String sysProp, String envVar) {
+    private static String get(String sysProp, String envVarSuffix) {
         String result = System.getProperty(sysProp);
         if (result != null) {
             if (logger.isLoggable(Level.CONFIG))
                 logger.log(Level.CONFIG, "Loaded config from system property " + sysProp + "=" + result);
             return result;
         }
-        result = System.getenv(envVar);
-        if (result != null) {
+        String envVar = GsEnv.key(envVarSuffix);
+        if (envVar != null) {
+            result = System.getenv(envVar);
             if (logger.isLoggable(Level.CONFIG))
                 logger.log(Level.CONFIG, "Loaded config from environment variable " + envVar + "=" + result);
             return result;

@@ -18,6 +18,7 @@ package com.gigaspaces.start;
 
 import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.internal.io.BootIOUtils;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.logger.LoggerSystemInfo;
 import com.gigaspaces.start.manager.XapManagerClusterInfo;
@@ -221,8 +222,8 @@ public class SystemInfo {
         private LookupLocator[] locatorsArray;
 
         private XapLookup(XapManagerClusterInfo managerClusterInfo) {
-            setGroups(System.getProperty(XAP_LOOKUP_GROUPS, System.getenv("XAP_LOOKUP_GROUPS")));
-            String explicitLocators = System.getProperty(XAP_LOOKUP_LOCATORS, System.getenv("XAP_LOOKUP_LOCATORS"));
+            setGroups(System.getProperty(XAP_LOOKUP_GROUPS, GsEnv.get("LOOKUP_GROUPS")));
+            String explicitLocators = System.getProperty(XAP_LOOKUP_LOCATORS, GsEnv.get("LOOKUP_LOCATORS"));
             String managerLocators = toLocators(managerClusterInfo);
             if (!BootIOUtils.isEmpty(managerLocators) && !BootIOUtils.isEmpty(explicitLocators) && !managerLocators.equals(explicitLocators))
                 throw new IllegalStateException("Ambiguous locators: Manager locators: [" + managerLocators +"], explicit locators: [" + explicitLocators + "]");
