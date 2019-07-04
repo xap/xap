@@ -52,7 +52,6 @@ public class HsqlDbReporter extends MetricReporter {
     private static final Logger _logger = Logger.getLogger( HsqlDbReporter.class.getName() );
     private Connection con = null;
 
-
     public HsqlDbReporter(HsqlDBReporterFactory factory) {
         super(factory);
 
@@ -277,7 +276,7 @@ public class HsqlDbReporter extends MetricReporter {
         }
         catch (SQLException e) {
             if( _logger.isLoggable( Level.SEVERE ) ){
-                _logger.log( Level.SEVERE, "Exception throw during inserting row [" + insertSQL + "] , " + e.toString(), e );
+                _logger.log( Level.SEVERE, "Exception throw while inserting row [" + insertSQL + "] , " + e.toString(), e );
             }
         }
     }
@@ -403,13 +402,13 @@ public class HsqlDbReporter extends MetricReporter {
 
             strBuilder.append( columnName );
             strBuilder.append( ' ' );
-            strBuilder.append( getHSQLDBDataType( columnValue ) );
+            strBuilder.append( getHSQLDBDataType( columnName, columnValue ) );
             strBuilder.append( ',' );
         }
 
         strBuilder.append( "VALUE" );
         strBuilder.append( ' ' );
-        strBuilder.append( getHSQLDBDataType( value ) );
+        strBuilder.append( getHSQLDBDataType( "VALUE", value ) );
         strBuilder.append( ')' );
 
         return strBuilder.toString();
@@ -427,10 +426,10 @@ public class HsqlDbReporter extends MetricReporter {
         for( Map.Entry<String, Object> entry : entries ){
             String columnName = entry.getKey();
             Object columnValue = entry.getValue();
-            retColumnsMap.put( columnName, getHSQLDBDataType( columnValue ) );
+            retColumnsMap.put( columnName, getHSQLDBDataType( columnName, columnValue ) );
         }
 
-        retColumnsMap.put( "VALUE", getHSQLDBDataType( value ) );
+        retColumnsMap.put( "VALUE", getHSQLDBDataType( "VALUE", value ) );
 
         return retColumnsMap;
     }
@@ -454,7 +453,7 @@ public class HsqlDbReporter extends MetricReporter {
             insertQueryPreparedStatement.setDouble( paramIndex, ( Double )paramValue );
         }
         else if( paramValue instanceof Float ){
-            insertQueryPreparedStatement.setFloat( paramIndex, ( Float )paramValue );
+            insertQueryPreparedStatement.setDouble( paramIndex, ( ( Float )paramValue ).doubleValue() ); ;
         }
         else if( paramValue instanceof Boolean ){
             insertQueryPreparedStatement.setBoolean( paramIndex, ( Boolean )paramValue );
@@ -466,10 +465,37 @@ public class HsqlDbReporter extends MetricReporter {
         }
     }
 
-    private String getHSQLDBDataType( Object value ){
+    private String getHSQLDBDataType( String name, Object value ){
 
+        String lowerCaseName = name.toLowerCase();
         if( value instanceof String ){
-            return "VARCHAR(40)";
+            String type;
+            switch ( lowerCaseName){
+                case "pid":
+                    type = "VARCHAR(10)";
+                    break;
+
+                case "process_name":
+                    type = "VARCHAR(10)";
+                    break;
+
+                case "ip":
+                    type = "VARCHAR(15)";
+                    break;
+
+                case "pu_instance_id":
+                    type = "VARCHAR(10)";
+                    break;
+
+                case "space_instance_id":
+                    type = "VARCHAR(8)";
+                    break;
+
+                default:
+                    type = "VARCHAR(40)";
+            }
+
+            return type;
         }
         if( value instanceof Timestamp ){
             return "TIMESTAMP";
@@ -488,10 +514,10 @@ public class HsqlDbReporter extends MetricReporter {
                 return "SMALLINT";
             }
             if( value instanceof Double ){
-                return "DECIMAL";
+                return "REAL";
             }
             if( value instanceof Float ){
-                return "DECIMAL";
+                return "REAL";
             }
 
             return "NUMERIC";
@@ -528,25 +554,6 @@ public class HsqlDbReporter extends MetricReporter {
             }
         }
     }
-
-   /*
-    private void createTable( Connection con, String tableName, String columnsInfo, String catalog, DatabaseMetaData dbm ) {
-
-        final String realDbTableName = tableName.toUpperCase();
-
-        try {
-            ResultSet tables = dbm.getTables(catalog, null, realDbTableName, null);
-            if (tables.next()) {
-                // Table exists
-                _logger.info("Table [" + realDbTableName + "] exists");
-            } else {
-                createTable( con, realDbTableName, columnsInfo );
-            }
-        } catch (SQLException e) {
-            _logger.log(Level.SEVERE,
-                        "Failed to create table [" + realDbTableName + "] : " + e.getMessage(), e);
-        }
-    }*/
 
     private void createTable( Connection con, String tableName, String columnsInfo ) throws SQLException {
         Statement statement = null;
