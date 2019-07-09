@@ -51,6 +51,7 @@ public class HsqlDbReporter extends MetricReporter {
 
     private static final Logger _logger = Logger.getLogger( HsqlDbReporter.class.getName() );
     private Connection con = null;
+    private Map<String,PreparedStatement> _preparedStatements = new HashMap<>();
 
     public HsqlDbReporter(HsqlDBReporterFactory factory) {
         super(factory);
@@ -166,7 +167,7 @@ public class HsqlDbReporter extends MetricReporter {
             values.append( '?' );//transformValue( entryValue ) );
             values.append( ',' );
 
-            insertRowQueryValues.put( index, transformValue( entryValue ) );
+            insertRowQueryValues.put( index, entryValue );
 
             index++;
         }
@@ -177,13 +178,17 @@ public class HsqlDbReporter extends MetricReporter {
 
         final String insertSQL = "INSERT INTO " + realDbTableName + " (" + columns + ") VALUES (" + values + ")";
 
-        if( _logger.isLoggable( Level.FINER ) ) {
-            _logger.finer("insert row query before setting values [" + insertSQL + "]");
-        }
-
-        PreparedStatement insertQueryPreparedStatement;
         try {
-            insertQueryPreparedStatement = con.prepareStatement( insertSQL );
+            PreparedStatement insertQueryPreparedStatement = _preparedStatements.get(insertSQL);
+            if( _logger.isLoggable( Level.FINER ) ) {
+                _logger.finer("insert row query before setting values [" + insertSQL + "], statement:" + insertQueryPreparedStatement);
+            }
+
+            if( insertQueryPreparedStatement == null ){
+                insertQueryPreparedStatement = con.prepareStatement( insertSQL );
+                //cache just created PreparedStatement if was not stored before
+                _preparedStatements.put( insertSQL, insertQueryPreparedStatement );
+            }
 
             Set<Map.Entry<Integer, Object>> insertRowQueryEntries = insertRowQueryValues.entrySet();
             for( Map.Entry<Integer, Object> entry : insertRowQueryEntries ){
@@ -524,14 +529,6 @@ public class HsqlDbReporter extends MetricReporter {
         }
 
         return "VARCHAR(40)";
-    }
-
-    private Object transformValue( Object value ){
-        if( value instanceof String ){
-            return "'" + value + "'";
-        }
-
-        return value;
     }
 
     private String replaceInvalidTableNameCharacters(String dbTableName) {
