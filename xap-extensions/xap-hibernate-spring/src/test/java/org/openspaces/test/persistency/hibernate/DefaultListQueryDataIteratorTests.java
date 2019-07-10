@@ -8,7 +8,7 @@ import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

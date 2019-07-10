@@ -24,9 +24,11 @@ import com.j_spaces.kernel.ClassLoaderHelper;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+ import org.hibernate.Metamodel;
 import org.hibernate.SessionFactory;
-import org.hibernate.metadata.ClassMetadata;
+import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.persister.entity.AbstractEntityPersister;
+import org.hibernate.persister.entity.EntityPersister;
 import org.openspaces.core.cluster.ClusterInfo;
 import org.openspaces.persistency.hibernate.iterator.HibernateProxyRemoverIterator;
 import org.openspaces.persistency.patterns.ManagedEntriesSpaceDataSource;
@@ -37,6 +39,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import javax.persistence.metamodel.EntityType;
 
 /**
  * A base class for Hibernate based {@link SpaceDataSource} implementations.
@@ -57,7 +61,7 @@ public abstract class AbstractHibernateSpaceDataSource extends ManagedEntriesSpa
     private final ManagedEntitiesContainer sessionManager;
     private final SessionFactory sessionFactory;
     private final Map<String, SpaceTypeDescriptor> initialLoadEntriesTypeDescs = new HashMap<String, SpaceTypeDescriptor>();
-    private Map<String, ClassMetadata> allMappedClassMetaData;
+    private Set<String> managedTypes;
 
     public AbstractHibernateSpaceDataSource(SessionFactory sessionFactory, Set<String> managedEntries, int fetchSize,
                                             boolean performOrderById, String[] initialLoadEntries,
@@ -86,15 +90,24 @@ public abstract class AbstractHibernateSpaceDataSource extends ManagedEntriesSpa
                 result.add(entry);
             }
         } else {
-            // try and derive the managedEntries
-            allMappedClassMetaData = sessionFactory.getAllClassMetadata();
-            for (Map.Entry<String, ClassMetadata> entry : allMappedClassMetaData.entrySet()) {
-                String entityName = entry.getKey();
-                ClassMetadata classMetadata = entry.getValue();
-                if (classMetadata.isInherited()) {
-                    String superClassEntityName = ((AbstractEntityPersister) classMetadata).getMappedSuperclass();
-                    ClassMetadata superClassMetadata = allMappedClassMetaData.get(superClassEntityName);
-                    Class superClass = superClassMetadata.getMappedClass();
+
+            Metamodel metamodel = sessionFactory.getMetamodel();
+            MetamodelImplementor metamodelImplementor = (MetamodelImplementor)metamodel;
+            Set<EntityType<?>> entities = metamodel.getEntities();
+
+            managedTypes = new HashSet<>();
+
+            for ( EntityType entityType : entities ) {
+                if (entityType.getJavaType() == null) continue;
+                String entityName = entityType.getJavaType().getName();
+                EntityPersister entityPersister = metamodelImplementor.entityPersister(entityName);
+                managedTypes.add(entityName);
+                if (entityPersister.isInherited()) {
+                    AbstractEntityPersister abstractEntityPersister = (AbstractEntityPersister)entityPersister;
+                    String superClassEntityName = abstractEntityPersister.getMappedSuperclass();
+                    EntityPersister superClassEntityPersister = metamodelImplementor.entityPersister(superClassEntityName);
+                    Class superClass = superClassEntityPersister.getMappedClass();
+
                     // only filter out classes that their super class has mappings
                     if (superClass != null) {
                         if (logger.isDebugEnabled()) {
@@ -224,7 +237,7 @@ public abstract class AbstractHibernateSpaceDataSource extends ManagedEntriesSpa
         // go through the initial load entries, check for matching queries, make queries for managed entries with a
         // numeric routing field (unless a query already exists)
         for (String type : initialLoadEntries) {
-            if ((allMappedClassMetaData == null || allMappedClassMetaData.containsKey(type)) && !initialLoadQueries.containsKey(type)) {
+            if ((managedTypes == null || managedTypes.contains(type)) && !initialLoadQueries.containsKey(type)) {
                 processInitialLoadEntry(type, query);
             }
         }

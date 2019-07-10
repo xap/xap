@@ -62,7 +62,7 @@ public class SessionFactoryBuilder {
         Configuration config = null;
 
         try {
-            // load the class using reflection to avoid JIT exceptions  
+            // load the class using reflection to avoid JIT exceptions
             config = configure((Configuration) ClassLoaderHelper.loadClass(ANNOTATION_CONFIGURATION_CLASS).newInstance(),
                     hibernateFile);
         } catch (Throwable t) {
