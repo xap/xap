@@ -21,7 +21,7 @@ import com.gigaspaces.datasource.DataSourceSQLQuery;
 import com.j_spaces.core.client.SQLQuery;
 
 import org.hibernate.CacheMode;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.StatelessSession;
 import org.hibernate.proxy.HibernateProxy;

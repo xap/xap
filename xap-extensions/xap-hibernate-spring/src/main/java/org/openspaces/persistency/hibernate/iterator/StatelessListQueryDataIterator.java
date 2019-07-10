@@ -22,7 +22,7 @@ import com.gigaspaces.datasource.DataSourceSQLQuery;
 import com.j_spaces.core.client.SQLQuery;
 
 import org.hibernate.Criteria;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.SessionFactory;
 import org.hibernate.StatelessSession;
 

@@ -24,9 +24,12 @@ import com.gigaspaces.datasource.ManagedDataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.Metamodel;
 import org.hibernate.SessionFactory;
 import org.hibernate.metadata.ClassMetadata;
+import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.persister.entity.AbstractEntityPersister;
+import org.hibernate.persister.entity.EntityPersister;
 import org.openspaces.persistency.hibernate.iterator.HibernateProxyRemoverIterator;
 import org.openspaces.persistency.patterns.ManagedDataSourceEntriesProvider;
 import org.openspaces.persistency.support.ConcurrentMultiDataIterator;
@@ -38,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
+import javax.persistence.metamodel.EntityType;
 
 /**
  * A base class for Hibernate based external data source implementations.
@@ -281,12 +286,16 @@ public abstract class AbstractHibernateExternalDataSource implements ManagedData
                 throw new DataSourceException("Failed to create session factory from properties file [" + hibernateFile + "]", e);
             }
         }
+
         if (managedEntries == null) {
             managedEntries = new HashSet<String>();
             // try and derive the managedEntries
-            Map<String, ClassMetadata> allClassMetaData = sessionFactory.getAllClassMetadata();
-            for (String entityname : allClassMetaData.keySet()) {
-                managedEntries.add(entityname);
+            Metamodel metamodel = sessionFactory.getMetamodel();
+            Set<EntityType<?>> entities = metamodel.getEntities();
+            for (EntityType entityType : entities ) {
+                if (entityType.getJavaType() == null) continue;
+                String typeName = entityType.getJavaType().getName();
+                managedEntries.add( typeName );
             }
         }
         if (logger.isDebugEnabled()) {
@@ -295,14 +304,21 @@ public abstract class AbstractHibernateExternalDataSource implements ManagedData
         if (initialLoadEntries == null) {
             Set<String> initialLoadEntries = new HashSet<String>();
             // try and derive the managedEntries
-            Map<String, ClassMetadata> allClassMetaData = sessionFactory.getAllClassMetadata();
-            for (Map.Entry<String, ClassMetadata> entry : allClassMetaData.entrySet()) {
-                String entityname = entry.getKey();
-                ClassMetadata classMetadata = entry.getValue();
-                if (classMetadata.isInherited()) {
-                    String superClassEntityName = ((AbstractEntityPersister) classMetadata).getMappedSuperclass();
-                    ClassMetadata superClassMetadata = allClassMetaData.get(superClassEntityName);
-                    Class superClass = superClassMetadata.getMappedClass();
+            Metamodel metamodel = sessionFactory.getMetamodel();
+            MetamodelImplementor metamodelImplementor = (MetamodelImplementor)metamodel;
+            Set<EntityType<?>> entities = metamodel.getEntities();
+
+            for( EntityType entityType : entities ){
+                if (entityType.getJavaType() == null) continue;
+                String entityname = entityType.getJavaType().getName();
+                EntityPersister entityPersister = metamodelImplementor.entityPersister(entityname);
+                if (entityPersister.isInherited()) {
+
+                    AbstractEntityPersister abstractEntityPersister = (AbstractEntityPersister)entityPersister;
+                    String superClassEntityName = abstractEntityPersister.getMappedSuperclass();
+                    EntityPersister superClassEntityPersister = metamodelImplementor.entityPersister(superClassEntityName);
+                    Class superClass = superClassEntityPersister.getMappedClass();
+
                     // only filter out classes that their super class has mappings
                     if (superClass != null) {
                         if (logger.isDebugEnabled()) {

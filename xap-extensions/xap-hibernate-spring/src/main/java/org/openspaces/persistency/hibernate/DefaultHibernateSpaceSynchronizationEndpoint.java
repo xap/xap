@@ -27,7 +27,7 @@ import com.gigaspaces.sync.TransactionData;
 
 import org.hibernate.HibernateException;
 import org.hibernate.ObjectNotFoundException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -201,7 +201,7 @@ public class DefaultHibernateSpaceSynchronizationEndpoint extends AbstractHibern
 
             // ignore non existing objects - avoid unnecessary failures                            
             try {
-                Object toDelete = session.load(entry.getClass(), id);
+                Object toDelete = session.get(entry.getClass(), id);
 
                 if (toDelete != null)
                     session.delete(toDelete);
@@ -211,6 +211,7 @@ public class DefaultHibernateSpaceSynchronizationEndpoint extends AbstractHibern
                     logger.trace("Delete Entry failed [" + entry + ']', e);
                 }
             }
+
 
         } else {
             if (useMerge) {

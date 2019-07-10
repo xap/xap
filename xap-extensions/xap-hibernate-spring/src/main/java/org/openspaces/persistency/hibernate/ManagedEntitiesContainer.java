@@ -18,12 +18,13 @@ package org.openspaces.persistency.hibernate;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.Metamodel;
 import org.hibernate.SessionFactory;
-import org.hibernate.metadata.ClassMetadata;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+
+import javax.persistence.metamodel.EntityType;
 
 /**
  * An managed entities container which is used by {@link AbstractHibernateSpaceDataSource} and
@@ -46,9 +47,13 @@ public class ManagedEntitiesContainer {
         if (managedEntries == null) {
             managedEntries = new HashSet<String>();
             // try and derive the managedEntries
-            Map<String, ClassMetadata> allClassMetaData = sessionFactory.getAllClassMetadata();
-            for (String entityname : allClassMetaData.keySet()) {
-                managedEntries.add(entityname);
+
+            Metamodel metamodel = sessionFactory.getMetamodel();
+            Set<EntityType<?>> entities = metamodel.getEntities();
+            for (EntityType entityType : entities ) {
+                if (entityType.getJavaType() == null) continue;
+                String typeName = entityType.getJavaType().getName();
+                managedEntries.add( typeName );
             }
         }
         if (logger.isDebugEnabled()) {

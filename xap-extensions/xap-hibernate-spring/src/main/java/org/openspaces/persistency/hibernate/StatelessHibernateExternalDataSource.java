@@ -27,7 +27,7 @@ import com.j_spaces.core.client.SQLQuery;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Criteria;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.StatelessSession;
 import org.hibernate.Transaction;
 import org.hibernate.criterion.Projections;
