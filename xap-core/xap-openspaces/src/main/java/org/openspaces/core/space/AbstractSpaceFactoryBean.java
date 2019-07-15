@@ -446,22 +446,22 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
         dump.addPrefix("spaces/" + beanName + "/");
         try {
             IJSpace clusterMemberSpace = SpaceUtils.getClusterMemberSpace(space);
-            PrintWriter writer = new PrintWriter(dump.createFileWriter("summary.txt"));
-            writer.println("===== URL =====");
-            writer.println(clusterMemberSpace.getFinderURL());
-            writer.println();
-            writer.println("===== RUNTIME INFO =====");
-            IInternalRemoteJSpaceAdmin admin = ((IInternalRemoteJSpaceAdmin) clusterMemberSpace.getAdmin());
-            SpaceRuntimeInfo runtimeInfo = admin.getRuntimeInfo();
-            for (int i = 0; i < runtimeInfo.m_ClassNames.size(); i++) {
-                writer.println("Class [" + runtimeInfo.m_ClassNames.get(i) + "], Entries [" + runtimeInfo.m_NumOFEntries.get(i) + "], Templates [" + runtimeInfo.m_NumOFTemplates.get(i) + "]");
-            }
+            try (PrintWriter writer = new PrintWriter(dump.createFileWriter("summary.txt"))) {
+                writer.println("===== URL =====");
+                writer.println(clusterMemberSpace.getFinderURL());
+                writer.println();
+                writer.println("===== RUNTIME INFO =====");
+                IInternalRemoteJSpaceAdmin admin = ((IInternalRemoteJSpaceAdmin) clusterMemberSpace.getAdmin());
+                SpaceRuntimeInfo runtimeInfo = admin.getRuntimeInfo();
+                for (int i = 0; i < runtimeInfo.m_ClassNames.size(); i++) {
+                    writer.println("Class [" + runtimeInfo.m_ClassNames.get(i) + "], Entries [" + runtimeInfo.m_NumOFEntries.get(i) + "], Templates [" + runtimeInfo.m_NumOFTemplates.get(i) + "]");
+                }
 
-            writer.println();
-            writer.println("===== REPLICATION INFO =====");
-            writer.println(admin.getReplicationDump());
-            writer.println();
-            writer.close();
+                writer.println();
+                writer.println("===== REPLICATION INFO =====");
+                writer.println(admin.getReplicationDump());
+                writer.println();
+            }
         } catch (Exception e) {
             throw new InternalDumpProcessorFailedException(getName(), "Failed to generate space dump", e);
         } finally {

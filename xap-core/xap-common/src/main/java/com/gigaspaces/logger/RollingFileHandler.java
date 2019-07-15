@@ -365,7 +365,7 @@ public class RollingFileHandler extends StreamHandler {
             FileOutputStream fout = new FileOutputStream(file, append);
             BufferedOutputStream bout = new BufferedOutputStream(fout);
             MeteredStream meteredStream = new MeteredStream(bout, (int) file.length());
-            setOutputStream(meteredStream);
+            setOutputStream(meteredStream); //meteredStream is closed using #closeMeteredStream()
 
             sizeRollingPolicy.setMeteredStream(meteredStream);
             timeRollingPolicy.setTimestamp();
@@ -377,6 +377,9 @@ public class RollingFileHandler extends StreamHandler {
             String filepath = file != null ? file.getAbsolutePath() : filename;
             reportError("Failed while configuring output file: " + filepath, ioe, ErrorManager.OPEN_FAILURE);
             corruptedOutputStream = true;
+            if (sizeRollingPolicy != null) {
+                sizeRollingPolicy.closeMeteredStream();
+            }
         }
     }
 
@@ -523,9 +526,19 @@ public class RollingFileHandler extends StreamHandler {
         }
 
         if (sizeRollingPolicy.hasReachedLimit() || timeRollingPolicy.needsRollover()) {
+            sizeRollingPolicy.closeMeteredStream();
             configureOutputStream();
         }
         super.publish(record);
         super.flush();
+    }
+
+    @Override
+    public synchronized void close() throws SecurityException {
+        super.close();
+
+        if (sizeRollingPolicy != null) {
+            sizeRollingPolicy.closeMeteredStream();
+        }
     }
 }

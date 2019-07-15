@@ -380,23 +380,26 @@ public class LRMIUtilities {
      * @return the new instance of object derived from passed ClassLoader.
      * @throws IOException failed to convert
      **/
-    static public Object convertToAssignableClassLoader(Object obj, ClassLoader classLoader)
+    static Object convertToAssignableClassLoader(Object obj, ClassLoader classLoader)
             throws IOException, ClassNotFoundException {
-        GSByteArrayOutputStream oos = new GSByteArrayOutputStream();
-        MarshalOutputStream mos = new MarshalOutputStream(oos);
-        mos.writeObject(obj);
-        oos.flush();
 
-        GSByteArrayInputStream bais = new GSByteArrayInputStream(oos.toByteArray());
-        ClassLoader origCL = Thread.currentThread().getContextClassLoader();
-        try {
-            ClassLoaderHelper.setContextClassLoader(classLoader, true);
-            MarshalInputStream mis = new MarshalInputStream(bais);
-            return mis.readObject();
-        } finally {
-            ClassLoaderHelper.setContextClassLoader(origCL, true);
+        try (GSByteArrayOutputStream oos = new GSByteArrayOutputStream();
+             MarshalOutputStream mos = new MarshalOutputStream(oos)) {
+            mos.writeObject(obj);
+            mos.flush();
+
+            try (GSByteArrayInputStream bais = new GSByteArrayInputStream(oos.toByteArray())) {
+                ClassLoader origCL = Thread.currentThread().getContextClassLoader();
+                try {
+                    ClassLoaderHelper.setContextClassLoader(classLoader, true);
+                    try (MarshalInputStream mis = new MarshalInputStream(bais)) {
+                        return mis.readObject();
+                    }
+                } finally {
+                    ClassLoaderHelper.setContextClassLoader(origCL, true);
+                }
+            }
         }
-
     }
 
     /**

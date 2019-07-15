@@ -39,18 +39,19 @@ public class RefreshContextLoaderExecutor {
         }
 
         String spaceUrl = args[0];
-        UrlSpaceConfigurer urlSpaceConfigurer = new UrlSpaceConfigurer(spaceUrl);
-        GigaSpace gigaSpace = new GigaSpaceConfigurer(urlSpaceConfigurer.space()).gigaSpace();
+        try (UrlSpaceConfigurer urlSpaceConfigurer = new UrlSpaceConfigurer(spaceUrl)) {
+            GigaSpace gigaSpace = new GigaSpaceConfigurer(urlSpaceConfigurer.space()).gigaSpace();
 
-        ExecutorSpaceRemotingProxyFactoryBean remotingProxyFactoryBean = new ExecutorSpaceRemotingProxyFactoryBean();
-        remotingProxyFactoryBean.setGigaSpace(gigaSpace);
-        remotingProxyFactoryBean.setServiceInterface(RefreshableContextLoader.class);
-        remotingProxyFactoryBean.setBroadcast(true);
-        remotingProxyFactoryBean.afterPropertiesSet();
+            ExecutorSpaceRemotingProxyFactoryBean remotingProxyFactoryBean = new ExecutorSpaceRemotingProxyFactoryBean();
+            remotingProxyFactoryBean.setGigaSpace(gigaSpace);
+            remotingProxyFactoryBean.setServiceInterface(RefreshableContextLoader.class);
+            remotingProxyFactoryBean.setBroadcast(true);
+            remotingProxyFactoryBean.afterPropertiesSet();
 
-        RefreshableContextLoader refreshableContextLoader = (RefreshableContextLoader) remotingProxyFactoryBean.getObject();
-        refreshableContextLoader.refresh();
-
-        urlSpaceConfigurer.close();
+            RefreshableContextLoader refreshableContextLoader = (RefreshableContextLoader) remotingProxyFactoryBean.getObject();
+            if (refreshableContextLoader != null) {
+                refreshableContextLoader.refresh();
+            }
+        }
     }
 }

@@ -83,33 +83,33 @@ public class ContainerConfigFactory {
                     + Constants.Schemas.SCHEMAS_FOLDER + "/" + Constants.Schemas.DEFAULT_SCHEMA
                     + Constants.Schemas.CONTAINER_SCHEMA_FILE_SUFFIX;
 
-            InputStream schemaInputStream = ResourceLoader.getResourceStream(schemaFilePath);
+            try (InputStream schemaInputStream = ResourceLoader.getResourceStream(schemaFilePath)) {
 
-            String folderOwnerPath =
-                    containerSchemaFilePath.substring(
-                            0, containerSchemaFilePath.lastIndexOf(File.separator));
+                String folderOwnerPath =
+                        containerSchemaFilePath.substring(
+                                0, containerSchemaFilePath.lastIndexOf(File.separator));
 
-            File folderOwnerInstance = new File(folderOwnerPath);
-            if (!folderOwnerInstance.exists()) {
-                //create folder owner
-                folderOwnerInstance.mkdirs();
+                File folderOwnerInstance = new File(folderOwnerPath);
+                if (!folderOwnerInstance.exists()) {
+                    //create folder owner
+                    folderOwnerInstance.mkdirs();
+                }
+
+                //create schema file under "schema" directories
+                defaultSchemaFile = new File(containerSchemaFilePath);
+                //Creates OutputStream for the just created file , in order to write into it
+                try (FileOutputStream fos = new FileOutputStream(defaultSchemaFile)) {
+                    int read = 1;
+                    while (read > 0) {
+                        byte[] readBytesArray = new byte[schemaInputStream.available()];
+                        //read form input stream
+                        read = schemaInputStream.read(readBytesArray);
+                        //write to output stream
+                        fos.write(readBytesArray);
+                    }
+                    fos.flush();
+                }
             }
-
-            //create schema file under "schema" directories
-            defaultSchemaFile = new File(containerSchemaFilePath);
-            //Creates OutputStream for the just created file , in order to write into it
-            FileOutputStream fos = new FileOutputStream(defaultSchemaFile);
-            int read = 1;
-            while (read > 0) {
-                byte[] readBytesArray = new byte[schemaInputStream.available()];
-                //read form input stream
-                read = schemaInputStream.read(readBytesArray);
-                //write to output stream
-                fos.write(readBytesArray);
-            }
-            fos.flush();
-            fos.close();
-            schemaInputStream.close();
 
 
             //replace both tags: <default> and </default> with schema prefix name

@@ -75,7 +75,7 @@ public class RestBean implements InitializingBean, ClusterInfoAware, DisposableB
 
     private String port;
 
-    int jettyPort;
+    private int jettyPort;
 
     private FilterHolder filterHolder;
 
@@ -139,13 +139,9 @@ public class RestBean implements InitializingBean, ClusterInfoAware, DisposableB
             throw new CannotCreateContainerException("Port should be number");
         }
         jettyPort += runningNumber;
-        server = new Server();
+        server = new Server(jettyPort);
         server.setStopAtShutdown(true);
         server.setStopTimeout(1000);
-
-        ServerConnector connector = new ServerConnector(server);
-        connector.setPort(jettyPort);
-        server.setConnectors(new Connector[]{connector});
 
         String ispaceName, igroups, ilocators;
 

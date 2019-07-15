@@ -129,27 +129,24 @@ public class ReplicationStartupManager
     protected StartupState loadState() throws IOException {
         createStateFileIfNotExists();
 
-        StartupState state = null;
-
-        BufferedReader reader = new BufferedReader(new FileReader(_stateFile));
-        String stateString = reader.readLine();
+        String stateString;
+        try (BufferedReader reader = new BufferedReader(new FileReader(_stateFile))) {
+            stateString = reader.readLine();
+        }
 
         try {
             // Create an enum from string
             // in case of an empty/null string or illegal - non-enum string
             // state is set to UNINITIALIZED
             if (stateString != null) {
-                state = Enum.valueOf(StartupState.class, stateString);
-
-                return state;
+                return Enum.valueOf(StartupState.class, stateString);
             }
         } catch (IllegalArgumentException e) {
+            //ignore
         }
 
         // No valid state was defined - UNINITIALIZED
-        state = StartupState.UNINITIALIZED;
-
-        return state;
+        return StartupState.UNINITIALIZED;
     }
 
     /**
@@ -175,9 +172,10 @@ public class ReplicationStartupManager
     protected void saveState(StartupState state) throws IOException {
         createStateFileIfNotExists();
 
-        BufferedWriter writer = new BufferedWriter(new FileWriter(_stateFile));
-        writer.write(state.toString());
-        writer.flush();
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(_stateFile))) {
+            writer.write(state.toString());
+            writer.flush();
+        }
     }
 
     /**

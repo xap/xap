@@ -17,6 +17,7 @@
 package com.gigaspaces.logger;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * A rolling policy based on file size limit. If the limit is reached, {@link #hasReachedLimit()}
@@ -54,5 +55,15 @@ public class SizeRollingPolicy {
      */
     public boolean hasReachedLimit(File f) {
         return (limit > 0 && f.length() >= limit);
+    }
+
+    void closeMeteredStream() {
+        try {
+            if (meteredStream != null) {
+                meteredStream.close();
+            }
+        } catch (IOException e) {
+            //ignore
+        }
     }
 }

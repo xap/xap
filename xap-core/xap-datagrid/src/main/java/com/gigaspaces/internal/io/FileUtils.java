@@ -54,19 +54,12 @@ public class FileUtils {
     }
 
     public static void copyFile(File sourceFile, File destFile) throws IOException {
-        FileChannel sourceChannel = null;
-        FileChannel destChannel = null;
-        try {
-            sourceChannel = new FileInputStream(sourceFile).getChannel();
-            destChannel = new FileOutputStream(destFile).getChannel();
+        try (FileInputStream fileInputStream = new FileInputStream(sourceFile);
+             FileChannel sourceChannel = fileInputStream.getChannel();
+             FileOutputStream fileOutputStream = new FileOutputStream(destFile);
+             FileChannel destChannel = fileOutputStream.getChannel()) {
+
             destChannel.transferFrom(sourceChannel, 0, sourceChannel.size());
-        } finally {
-            if (sourceChannel != null) {
-                sourceChannel.close();
-            }
-            if (destChannel != null) {
-                destChannel.close();
-            }
         }
     }
 }

@@ -185,80 +185,74 @@ public class InternalLogHelper {
         File latestFile = files[0];
         for (int fileIndex = 0; fileIndex < files.length; fileIndex++) {
             File file = files[fileIndex];
-            ArrayList<String> lines = new ArrayList<String>();
-            BackwardsFileInputStream fileInputStream = new BackwardsFileInputStream(file);
-            try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(fileInputStream));
-                String line;
-                LogEntryMatcher.Operation operation = matcher.match(new LogEntry(files.length - 1 - fileIndex, LogEntry.Type.FILE_MARKER, file.lastModified(), file.getAbsolutePath()));
-                if (operation == LogEntryMatcher.Operation.BREAK) {
-                    break;
-                }
-                if (operation == LogEntryMatcher.Operation.IGNORE) {
-                    continue;
-                }
-                boolean firstLine = true;
-                long position = fileInputStream.position() + lineSeparator.length();
-                while ((line = reader.readLine()) != null) {
-                    if (firstLine) {
-                        if (line.length() == 0) {
+            ArrayList<String> lines = new ArrayList<>();
+            try (BackwardsFileInputStream fileInputStream = new BackwardsFileInputStream(file)) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(fileInputStream))) {
+                    String line;
+                    LogEntryMatcher.Operation operation = matcher.match(new LogEntry(files.length - 1 - fileIndex, LogEntry.Type.FILE_MARKER, file.lastModified(), file.getAbsolutePath()));
+                    if (operation == LogEntryMatcher.Operation.BREAK) {
+                        break;
+                    }
+                    if (operation == LogEntryMatcher.Operation.IGNORE) {
+                        continue;
+                    }
+                    boolean firstLine = true;
+                    long position = fileInputStream.position() + lineSeparator.length();
+                    while ((line = reader.readLine()) != null) {
+                        if (firstLine) {
+                            if (line.length() == 0) {
+                                continue;
+                            }
+                            firstLine = false;
+                        }
+                        char[] chars = line.toCharArray();
+                        for (int j = 0, k = chars.length - 1; j < k; j++, k--) {
+                            char temp = chars[j];
+                            chars[j] = chars[k];
+                            chars[k] = temp;
+                        }
+                        position -= chars.length + lineSeparator.length();
+                        line = new String(chars);
+                        int idx = line.indexOf(' ');
+                        if (idx == -1) {
+                            lines.add(line);
                             continue;
                         }
-                        firstLine = false;
-                    }
-                    char[] chars = line.toCharArray();
-                    for (int j = 0, k = chars.length - 1; j < k; j++, k--) {
-                        char temp = chars[j];
-                        chars[j] = chars[k];
-                        chars[k] = temp;
-                    }
-                    position -= chars.length + lineSeparator.length();
-                    line = new String(chars);
-                    int idx = line.indexOf(' ');
-                    if (idx == -1) {
-                        lines.add(line);
-                        continue;
-                    }
-                    idx = line.indexOf(' ', idx + 1);
-                    if (idx == -1) {
-                        lines.add(line);
-                        continue;
-                    }
-                    Date timestamp;
-                    try {
-                        timestamp = dateFormat.parse(line.substring(0, idx));
-                    } catch (ParseException e) {
-                        lines.add(line);
-                        continue;
-                    }
-                    // we got a log entry
-                    String logText;
-                    if (lines.isEmpty()) {
-                        logText = line;
-                    } else {
-                        sb.setLength(0);
-                        sb.append(line).append(lineSeparator);
-                        for (int i = lines.size() - 1; i >= 0; i--) {
-                            if (i == 0 && lines.get(i).length() == 0) {
-                                break;
-                            }
-                            sb.append(lines.get(i));
-                            if (i != 0) {
-                                sb.append(lineSeparator);
-                            }
+                        idx = line.indexOf(' ', idx + 1);
+                        if (idx == -1) {
+                            lines.add(line);
+                            continue;
                         }
-                        logText = sb.toString();
+                        Date timestamp;
+                        try {
+                            timestamp = dateFormat.parse(line.substring(0, idx));
+                        } catch (ParseException e) {
+                            lines.add(line);
+                            continue;
+                        }
+                        // we got a log entry
+                        String logText;
+                        if (lines.isEmpty()) {
+                            logText = line;
+                        } else {
+                            sb.setLength(0);
+                            sb.append(line).append(lineSeparator);
+                            for (int i = lines.size() - 1; i >= 0; i--) {
+                                if (i == 0 && lines.get(i).length() == 0) {
+                                    break;
+                                }
+                                sb.append(lines.get(i));
+                                if (i != 0) {
+                                    sb.append(lineSeparator);
+                                }
+                            }
+                            logText = sb.toString();
+                        }
+                        if (matcher.match(new LogEntry(position, LogEntry.Type.LOG, timestamp.getTime(), logText)) == LogEntryMatcher.Operation.BREAK) {
+                            return toEntries(type, pid, files, matcher.entries(), latestFile.lastModified());
+                        }
+                        lines.clear();
                     }
-                    if (matcher.match(new LogEntry(position, LogEntry.Type.LOG, timestamp.getTime(), logText)) == LogEntryMatcher.Operation.BREAK) {
-                        return toEntries(type, pid, files, matcher.entries(), latestFile.lastModified());
-                    }
-                    lines.clear();
-                }
-            } finally {
-                try {
-                    fileInputStream.close();
-                } catch (IOException e) {
-                    // ignore
                 }
             }
         }

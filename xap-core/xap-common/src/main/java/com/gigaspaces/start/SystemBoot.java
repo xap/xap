@@ -987,16 +987,9 @@ public class SystemBoot {
 
     public static boolean isGsaOut( File file ) {
         boolean gsaIsOut = false;
-        RandomAccessFile raf = null;
-        try {
-            raf = new RandomAccessFile(file, "rw");
-        } catch (Exception e) {
-            // gsa is still holding the file
-            gsaIsOut = false;
-        }
-        if (raf != null) {
-            FileChannel channel = raf.getChannel();
-            try {
+
+        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+            try (FileChannel channel = raf.getChannel()) {
                 FileLock lock = channel.tryLock();
                 if (lock != null) {
                     // if we can get a lock on the file, the GSA was force killed, even *without releasing the lock*
@@ -1006,13 +999,10 @@ public class SystemBoot {
                 }
             } catch (Exception e) {
                 gsaIsOut = false;
-            } finally {
-                try {
-                    channel.close();
-                } catch (IOException e) {
-                    // ignore
-                }
             }
+        } catch (Exception e) {
+            // gsa is still holding the file
+            gsaIsOut = false;
         }
 
         return gsaIsOut;

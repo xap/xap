@@ -144,29 +144,30 @@ public abstract class MultiIPDiscovery {
                                               Discovery disco)
             throws IOException, ClassNotFoundException {
         Socket s = new Socket();
-        if (connectionTimeout > Integer.MAX_VALUE) {
-            s.connect(new InetSocketAddress(host, port));
-        } else {
-            s.connect(new InetSocketAddress(host, port),
-                    (int) connectionTimeout);
-        }
-        if (Constants.useSocketTcpNoDelay()) {
-            try {
-                s.setTcpNoDelay(true);
-            } catch (SocketException e) {
-                // ignore possible failures and proceed anyway
-            }
-        }
-        if (Constants.useSocketKeepAlive()) {
-            try {
-                s.setKeepAlive(true);
-            } catch (SocketException e) {
-                // ignore possible failures and proceed anyway
-            }
-        }
-        s.setSoTimeout(dc.getUnicastSocketTimeout(
-                getDefaultUnicastSocketTimeout()));
         try {
+            if (connectionTimeout > Integer.MAX_VALUE) {
+                s.connect(new InetSocketAddress(host, port));
+            } else {
+                s.connect(new InetSocketAddress(host, port),
+                        (int) connectionTimeout);
+            }
+            if (Constants.useSocketTcpNoDelay()) {
+                try {
+                    s.setTcpNoDelay(true);
+                } catch (SocketException e) {
+                    // ignore possible failures and proceed anyway
+                }
+            }
+            if (Constants.useSocketKeepAlive()) {
+                try {
+                    s.setKeepAlive(true);
+                } catch (SocketException e) {
+                    // ignore possible failures and proceed anyway
+                }
+            }
+            s.setSoTimeout(dc.getUnicastSocketTimeout(
+                    getDefaultUnicastSocketTimeout()));
+
             return performDiscovery(disco, dc, s);
         } finally {
             try {

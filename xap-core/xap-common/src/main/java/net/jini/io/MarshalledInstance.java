@@ -133,23 +133,19 @@ public class MarshalledInstance implements Serializable {
         bByteOut.writeByte(buildFlag());
         OptimizedByteArrayOutputStream lByteOut = new OptimizedByteArrayOutputStream();
         lByteOut.writeByte(buildFlag());
-        OutputStream bout = bByteOut;
-        if (USE_GZIP) {
-            bout = new GZIPOutputStream(bout);
+        try (OutputStream bout = USE_GZIP ? new GZIPOutputStream(bByteOut) : bByteOut) {
+            try (OutputStream lout = USE_GZIP ? new GZIPOutputStream(lByteOut) : lByteOut) {
+                try (MarshalledInstanceOutputStream out = new MarshalledInstanceOutputStream(bout, lout, context)) {
+                    out.writeObject(obj);
+                    out.flush();
+                    bout.close();
+                    lout.close();
+                    objBytes = bByteOut.toByteArray();
+                    // locBytes is null if no annotations
+                    locBytes = (out.hadAnnotations() ? lByteOut.toByteArray() : null);
+                }
+            }
         }
-        OutputStream lout = lByteOut;
-        if (USE_GZIP) {
-            lout = new GZIPOutputStream(lout);
-        }
-        MarshalledInstanceOutputStream out =
-                new MarshalledInstanceOutputStream(bout, lout, context);
-        out.writeObject(obj);
-        out.flush();
-        bout.close();
-        lout.close();
-        objBytes = bByteOut.toByteArray();
-        // locBytes is null if no annotations
-        locBytes = (out.hadAnnotations() ? lByteOut.toByteArray() : null);
 
         // Calculate hash from the marshalled representation of object
         // so the hashcode will be comparable when sent between VMs.
@@ -193,29 +189,24 @@ public class MarshalledInstance implements Serializable {
         try {
             OptimizedByteArrayOutputStream baos = new OptimizedByteArrayOutputStream();
             baos.writeByte(buildFlag());
-            OutputStream os = baos;
-            if (USE_GZIP) {
-                os = new GZIPOutputStream(os);
+            try (OutputStream os = USE_GZIP ? new GZIPOutputStream(baos) : baos) {
+                try (ObjectOutputStream oos = new ObjectOutputStream(os)) {
+                    oos.writeObject(mo);
+                    oos.flush();
+                }
             }
-            ObjectOutputStream oos = new ObjectOutputStream(os);
-            oos.writeObject(mo);
-            oos.flush();
-            os.close();
+
             byte[] bytes = baos.toByteArray();
             OptimizedByteArrayInputStream bais = new OptimizedByteArrayInputStream(bytes);
             byte flags = bais.readByte();
-            InputStream is = bais;
-            if (isGzip(flags)) {
-                is = new GZIPInputStream(is);
+            try (InputStream is = isGzip(flags) ? new GZIPInputStream(bais) : bais) {
+                try (ObjectInputStream ois = new FromMOInputStream(is)) {
+                    privateMO =
+                            (MarshalledObject) ois.readObject();
+                }
             }
-            ObjectInputStream ois = new FromMOInputStream(is);
-            privateMO =
-                    (net.jini.io.MarshalledObject) ois.readObject();
-            is.close();
-        } catch (IOException ioe) {
+        } catch (IOException | ClassNotFoundException ioe) {
             throw new AssertionError(ioe);
-        } catch (ClassNotFoundException cnfe) {
-            throw new AssertionError(cnfe);
         }
         objBytes = privateMO.objBytes;
         locBytes = privateMO.locBytes;
@@ -248,30 +239,26 @@ public class MarshalledInstance implements Serializable {
 
         java.rmi.MarshalledObject mo = null;
         try {
-            OptimizedByteArrayOutputStream baos = new OptimizedByteArrayOutputStream();
-            baos.writeByte(buildFlag());
-            OutputStream os = baos;
-            if (USE_GZIP) {
-                os = new GZIPOutputStream(baos);
+            byte[] bytes;
+            try (OptimizedByteArrayOutputStream baos = new OptimizedByteArrayOutputStream()) {
+                baos.writeByte(buildFlag());
+                try (OutputStream os = USE_GZIP ? new GZIPOutputStream(baos) : baos) {
+                    try (ObjectOutputStream oos = new ObjectOutputStream(os)) {
+                        oos.writeObject(privateMO);
+                        oos.flush();
+                    }
+                }
+                bytes = baos.toByteArray();
             }
-            ObjectOutputStream oos = new ObjectOutputStream(os);
-            oos.writeObject(privateMO);
-            oos.flush();
-            os.close();
-            byte[] bytes = baos.toByteArray();
             OptimizedByteArrayInputStream bais = new OptimizedByteArrayInputStream(bytes);
             byte flags = bais.readByte();
-            InputStream is = bais;
-            if (isGzip(flags)) {
-                is = new GZIPInputStream(is);
+            try (InputStream is = isGzip(flags) ? new GZIPInputStream(bais) : bais) {
+                try (ObjectInputStream ois = new ToMOInputStream(is)) {
+                    mo = (java.rmi.MarshalledObject) ois.readObject();
+                }
             }
-            ObjectInputStream ois = new ToMOInputStream(is);
-            mo = (java.rmi.MarshalledObject) ois.readObject();
-            is.close();
-        } catch (IOException ioe) {
+        } catch (IOException | ClassNotFoundException ioe) {
             throw new AssertionError(ioe);
-        } catch (ClassNotFoundException cnfe) {
-            throw new AssertionError(cnfe);
         }
         return mo;
     }
@@ -351,33 +338,33 @@ public class MarshalledInstance implements Serializable {
         }
         OptimizedByteArrayInputStream bin = new OptimizedByteArrayInputStream(objBytes);
         byte bflags = bin.readByte();
-        InputStream bis = bin;
-        if (isGzip(bflags)) {
-            bis = new GZIPInputStream(bis);
-        }
-        // locBytes is null if no annotations
-        OptimizedByteArrayInputStream lin =
-                (locBytes == null ? null : new OptimizedByteArrayInputStream(locBytes));
-        InputStream lis = lin;
-        if (lin != null) {
-            byte flags = lin.readByte();
-            if (isGzip(flags)) {
-                lis = new GZIPInputStream(lis);
+        InputStream lis = null;
+        Object obj;
+        try (InputStream bis = isGzip(bflags) ? new GZIPInputStream(bin) : bin) {
+            // locBytes is null if no annotations
+            OptimizedByteArrayInputStream lin =
+                    (locBytes == null ? null : new OptimizedByteArrayInputStream(locBytes));
+            lis = lin;
+            if (lin != null) {
+                byte flags = lin.readByte();
+                if (isGzip(flags)) {
+                    lis = new GZIPInputStream(lis);
+                }
+            }
+            try (MarshalledInstanceInputStream in = new MarshalledInstanceInputStream(bis, lis,
+                    defaultLoader,
+                    verifyCodebaseIntegrity,
+                    verifierLoader,
+                    context)) {
+                in.useCodebaseAnnotations();
+                obj = in.readObject();
+            }
+        } finally {
+            if (lis != null) {
+                lis.close();
             }
         }
-        MarshalledInstanceInputStream in =
-                new MarshalledInstanceInputStream(bis, lis,
-                        defaultLoader,
-                        verifyCodebaseIntegrity,
-                        verifierLoader,
-                        context);
-        in.useCodebaseAnnotations();
-        Object obj = in.readObject();
-        in.close();
-        bis.close();
-        if (lis != null) {
-            lis.close();
-        }
+
         return obj;
     }
 
