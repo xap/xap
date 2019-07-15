@@ -16,6 +16,7 @@
 
 package com.gigaspaces.metrics.hsqldb;
 
+import com.gigaspaces.internal.utils.Singletons;
 import com.gigaspaces.metrics.MetricRegistrySnapshot;
 import com.gigaspaces.metrics.MetricReporter;
 import com.gigaspaces.metrics.MetricTagsSnapshot;
@@ -52,6 +53,9 @@ public class HsqlDbReporter extends MetricReporter {
     private static final Logger _logger = Logger.getLogger( HsqlDbReporter.class.getName() );
     private Connection con = null;
     private Map<String,PreparedStatement> _preparedStatements = new HashMap<>();
+    private final static String hsqldDbConnectionKey = "HSQL_DB_CONNECTION";
+
+    private static final Object _lock = new Object();
 
     public HsqlDbReporter(HsqlDBReporterFactory factory) {
         super(factory);
@@ -90,8 +94,16 @@ public class HsqlDbReporter extends MetricReporter {
             Class.forName( driverClassName );
             while( con == null ) {
                 try {
-                    con = DriverManager.getConnection(url, username, password);
-                    _logger.info( "Connection to [" + url + "] successfully created" );
+                    synchronized (_lock) {
+                        if( Singletons.get( hsqldDbConnectionKey ) == null ) {
+                            con = DriverManager.getConnection(url, username, password);
+                            Singletons.putIfAbsent(hsqldDbConnectionKey, con);
+                            _logger.info("Connection to [" + url + "] successfully created");
+                        }
+                        else{
+                            con = ( Connection ) Singletons.get( hsqldDbConnectionKey );
+                        }
+                    }
                 }
                 catch( Exception e ){
                     if( _logger.isLoggable( Level.WARNING ) ){
