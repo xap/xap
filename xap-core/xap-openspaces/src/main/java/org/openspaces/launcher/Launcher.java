@@ -69,7 +69,6 @@ public class Launcher implements Closeable {
             System.exit(1);
         }
 
-        initIfNotDefined("org.openspaces.launcher.jetty.session.manager",null, "org.openspaces.pu.container.jee.jetty.GSSessionManager");
         initIfNotDefined("com.gigaspaces.logger.RollingFileHandler.time-rolling-policy", null, "monthly");
         initIfNotDefined("com.gigaspaces.webui.username.mandatory", "USER_NAME_MANDATORY", "false");
 
