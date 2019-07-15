@@ -24,10 +24,10 @@ import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;
 import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.jsp.JettyJspServlet;
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
-import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SessionManager;
+import org.eclipse.jetty.server.session.AbstractSessionManager;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.security.Password;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author Niv Ingberg
@@ -93,20 +94,12 @@ public class JettyLauncher extends WebLauncher {
 
         webAppContext.addServlet(jspServletHolder(), "*.jsp");
 
-        String sessionManager = System.getProperty("org.openspaces.launcher.jetty.session.manager");
-        if (sessionManager != null) {
-            //change default session manager implementation ( in order to change "JSESSIONID" )
-            //GS-10830
-            try {
-                Class sessionManagerClass = Class.forName(sessionManager);
-                SessionManager sessionManagerImpl = (SessionManager) sessionManagerClass.newInstance();
-                webAppContext.getSessionHandler().setSessionManager(sessionManagerImpl);
-            } catch (Throwable t) {
-                System.out.println("Session Manager [" + sessionManager + "] was not set cause following exception:" + t.toString());
-                t.printStackTrace();
-            }
+        // GS-10830 - change default setSessionCookie (in order to change "JSESSIONID")
+        SessionManager sessionManager = webAppContext.getSessionHandler().getSessionManager();
+        if (sessionManager instanceof AbstractSessionManager) {
+            ((AbstractSessionManager) sessionManager).setSessionCookie(SessionManager.__DefaultSessionCookie + "_GigaSpaces_" + UUID.randomUUID());
         } else {
-            System.out.println("Session Manager was not provided");
+            System.out.println("setSessionCookie was not invoked (SessionManager=" + sessionManager + ")");
         }
 
         server.setHandler(webAppContext);

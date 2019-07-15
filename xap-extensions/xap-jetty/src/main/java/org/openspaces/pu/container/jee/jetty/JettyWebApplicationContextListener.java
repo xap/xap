@@ -178,7 +178,7 @@ public class JettyWebApplicationContextListener implements ServletContextListene
                             throw new NoSuchMethodException("replaceDefault");
                         }
                     } catch (Exception e) {
-                        throw new RuntimeException("Failed to replace default session manager with GSSessionManager", e);
+                        throw new RuntimeException("Failed to replace default session manager with GigaSessionManager", e);
                     }
                 }
             }
