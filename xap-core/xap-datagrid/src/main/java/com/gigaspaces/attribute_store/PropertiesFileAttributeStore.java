@@ -56,31 +56,35 @@ public class PropertiesFileAttributeStore implements AttributeStore, Serializabl
 
     @Override
     public String get(String key) throws IOException {
-        FileChannel fileChannel = new RandomAccessFile(file, "rw").getChannel();
-        FileLock fileLock = fileChannel.lock();
-        try {
-            Properties p = readPropertiesFromChannel(fileChannel);
-            return p.getProperty(key);
-        } finally {
-            fileLock.release();
-            fileChannel.close();
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")) {
+            FileChannel fileChannel = randomAccessFile.getChannel();
+            FileLock fileLock = fileChannel.lock();
+            try {
+                Properties p = readPropertiesFromChannel(fileChannel);
+                return p.getProperty(key);
+            } finally {
+                fileLock.release();
+                fileChannel.close();
+            }
         }
     }
 
     @Override
     public String set(String key, String value) throws IOException {
-        FileChannel fileChannel = new RandomAccessFile(file, "rw").getChannel();
-        FileLock fileLock = fileChannel.lock();
-        String oldValue = null;
-        try {
-            Properties p = readPropertiesFromChannel(fileChannel);
-            oldValue = (String) p.setProperty(key, value);
-            writePropertiesToChannel(fileChannel, p);
-        } finally {
-            fileLock.release();
-            fileChannel.close();
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")) {
+            FileChannel fileChannel = randomAccessFile.getChannel();
+            FileLock fileLock = fileChannel.lock();
+            String oldValue = null;
+            try {
+                Properties p = readPropertiesFromChannel(fileChannel);
+                oldValue = (String) p.setProperty(key, value);
+                writePropertiesToChannel(fileChannel, p);
+            } finally {
+                fileLock.release();
+                fileChannel.close();
+            }
+            return oldValue;
         }
-        return oldValue;
     }
 
     @Override
@@ -89,33 +93,37 @@ public class PropertiesFileAttributeStore implements AttributeStore, Serializabl
 
     @Override
     public String remove(String name) throws IOException {
-        FileChannel fileChannel = new RandomAccessFile(file, "rw").getChannel();
-        FileLock fileLock = fileChannel.lock();
-        String oldValue = null;
-        try {
-            Properties p = readPropertiesFromChannel(fileChannel);
-            oldValue = (String) p.remove(name);
-            writePropertiesToChannel(fileChannel, p);
-        } finally {
-            fileLock.release();
-            fileChannel.close();
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")) {
+            FileChannel fileChannel = randomAccessFile.getChannel();
+            FileLock fileLock = fileChannel.lock();
+            String oldValue = null;
+            try {
+                Properties p = readPropertiesFromChannel(fileChannel);
+                oldValue = (String) p.remove(name);
+                writePropertiesToChannel(fileChannel, p);
+            } finally {
+                fileLock.release();
+                fileChannel.close();
+            }
+            return oldValue;
         }
-        return oldValue;
     }
 
     public <T> T withProperties(PropertiesHandler<T> propertiesHandler) throws IOException {
-        FileChannel fileChannel = new RandomAccessFile(file, "rw").getChannel();
-        FileLock fileLock = fileChannel.lock();
-        T ret = null;
-        try {
-            Properties p = readPropertiesFromChannel(fileChannel);
-            ret = propertiesHandler.handle(p);
-            writePropertiesToChannel(fileChannel, p);
-        } finally {
-            fileLock.release();
-            fileChannel.close();
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")) {
+            FileChannel fileChannel = randomAccessFile.getChannel();
+            FileLock fileLock = fileChannel.lock();
+            T ret = null;
+            try {
+                Properties p = readPropertiesFromChannel(fileChannel);
+                ret = propertiesHandler.handle(p);
+                writePropertiesToChannel(fileChannel, p);
+            } finally {
+                fileLock.release();
+                fileChannel.close();
+            }
+            return ret;
         }
-        return ret;
     }
 
     private Properties readPropertiesFromChannel(FileChannel fileChannel) throws IOException {
