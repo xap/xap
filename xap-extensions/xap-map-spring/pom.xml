@@ -7,7 +7,7 @@
     <parent>
         <artifactId>xap</artifactId>
         <groupId>org.gigaspaces</groupId>
-        <version>15.0.0-SNAPSHOT</version>
+        <version>15.0.0-yael-v2-tue-24</version>
         <relativePath>../../</relativePath>
     </parent>
     <artifactId>xap-map-spring</artifactId>
