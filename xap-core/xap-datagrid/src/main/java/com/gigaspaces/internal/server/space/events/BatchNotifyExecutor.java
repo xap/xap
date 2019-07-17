@@ -343,6 +343,7 @@ public class BatchNotifyExecutor {
         private final BatchNotifyExecutor _notifier;
         private long _wakeUpTime;
         private volatile boolean _waiting;
+        private final Object lock = new Object();
 
         public BatchNotifyThread(String fullSpaceName, BatchNotifyExecutor notifier) {
             super("[" + fullSpaceName + "] Batch Notifier");
@@ -353,11 +354,11 @@ public class BatchNotifyExecutor {
         public void notifyIfNeedTo(TimeKey current) {
             if (!_waiting)
                 return;
-            synchronized (this) {
+            synchronized (lock) {
                 if (!_waiting)
                     return;
                 if (current._holder.getTime() < _wakeUpTime)
-                    this.notify();
+                    lock.notify();
             }
 
         }
@@ -366,7 +367,7 @@ public class BatchNotifyExecutor {
         public void run() {
             while (_active) {
                 try {
-                    synchronized (this) {
+                    synchronized (lock) {
                         TimeKey first = null;
                         _waiting = true;
 
@@ -388,7 +389,7 @@ public class BatchNotifyExecutor {
                             }
                         }
                         if (waitTime > 0) {
-                            this.wait(waitTime);
+                            lock.wait(waitTime);
                         }
                         _waiting = false;
                     }
