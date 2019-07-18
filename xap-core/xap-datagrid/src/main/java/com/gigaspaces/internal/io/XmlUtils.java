@@ -20,11 +20,16 @@ import com.j_spaces.kernel.ResourceLoader;
 import com.j_spaces.kernel.SystemProperties;
 
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -213,5 +218,27 @@ public abstract class XmlUtils {
             // TODO: Log warning.
             return defaultValue;
         }
+    }
+
+    public static void forEachChild(Node node, String name, Consumer<Node> processor) {
+        NodeList nodeList = node.getChildNodes();
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Node child = nodeList.item(i);
+            if (child.getNodeName().equals(name)) {
+                processor.accept(child);
+            }
+        }
+    }
+
+    public static <T> List<T> mapChildren(Node node, String name, Function<Node, T> processor) {
+        List<T> result = new ArrayList<>();
+        NodeList nodeList = node.getChildNodes();
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Node child = nodeList.item(i);
+            if (child.getNodeName().equals(name)) {
+                result.add(processor.apply(child));
+            }
+        }
+        return result;
     }
 }
