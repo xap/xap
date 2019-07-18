@@ -4,7 +4,7 @@
     <groupId>org.gigaspaces</groupId>
     <artifactId>xap</artifactId>
     <packaging>pom</packaging>
-    <version>14.5.0</version>
+    <version>14.5.0-patch-c-1</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sigar.version>1.6.5</sigar.version>
@@ -15,7 +15,7 @@
         <spring.security.version>5.1.5.RELEASE</spring.security.version>
         <junit.version>4.12</junit.version>
         <jetty.version>9.3.27.v20190418</jetty.version>
-        <gs.build-name>14.5.0-m1-ci-0</gs.build-name>
+        <gs.build-name>14.5.0-patch-c-1-m1-ci-0</gs.build-name>
         <gs.git-tag>Unspecified</gs.git-tag>
         <gs.git-sha.xap>unspecified</gs.git-sha.xap>
         <xap.git.branch>master</xap.git.branch>
