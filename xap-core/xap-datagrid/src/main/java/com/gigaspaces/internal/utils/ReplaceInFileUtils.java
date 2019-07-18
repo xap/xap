@@ -27,14 +27,6 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.StringTokenizer;
 
-/*******************************************************************************
- * Copyright (c) 2010 GigaSpaces Technologies Ltd. All rights reserved
- *
- * The software source code is proprietary and confidential information of GigaSpaces. You may use
- * the software source code solely under the terms and limitations of The license agreement granted
- * to you by GigaSpaces.
- *******************************************************************************/
-
 /**
  * Using replaceInFile function you need make instance of <code>ReplaceInFileUtils</code> class.
  * Replacing example: ReplaceInFileUtils cli = new ReplaceInFileUtils( fileName );
@@ -61,13 +53,12 @@ public class ReplaceInFileUtils {
         sb = new StringBuffer();
 
         // open input stream from file
-        InputStreamReader isr = new InputStreamReader(new FileInputStream(fileName));
+        try (InputStreamReader isr = new InputStreamReader(new FileInputStream(fileName))) {
 
-        // read file to string buffer
-        while ((ch = isr.read()) != -1)
-            sb.append((char) ch);
-
-        isr.close();
+            // read file to string buffer
+            while ((ch = isr.read()) != -1)
+                sb.append((char) ch);
+        }
     }
 
 
@@ -78,21 +69,19 @@ public class ReplaceInFileUtils {
     static public void copyFiles(String[] files, String destPath)
             throws IOException {
         int ch;
-        BufferedOutputStream bos;
-        BufferedInputStream bis;
 
         // start to copy files destination directory
-        for (int i = 0; i < files.length; i++) {
-            String fileName = files[i].substring(files[i].lastIndexOf("/"));
-            bis = new BufferedInputStream(new FileInputStream(files[i]));
-            bos = new BufferedOutputStream(new FileOutputStream(destPath + fileName));
+        for (String file : files) {
+            String fileName = file.substring(file.lastIndexOf("/"));
+            try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
+                try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(destPath + fileName))) {
+                    while ((ch = bis.read()) != -1) {
+                        bos.write(ch);
+                    }
 
-            while ((ch = bis.read()) != -1)
-                bos.write(ch);
-
-            bos.flush();
-            bos.close();
-            bis.close();
+                    bos.flush();
+                }
+            }
         } /* for */
     }
 
@@ -102,20 +91,17 @@ public class ReplaceInFileUtils {
      * c:/destDir/newFile.txt
      **/
     static public void copyFile(String fileName, String destFileName)
-            throws IOException, FileNotFoundException {
+            throws IOException {
         int ch;
-        BufferedOutputStream bos;
-        BufferedInputStream bis;
+        try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(fileName))) {
+            try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(destFileName))) {
+                while ((ch = bis.read()) != -1) {
+                    bos.write(ch);
+                }
 
-        bis = new BufferedInputStream(new FileInputStream(fileName));
-        bos = new BufferedOutputStream(new FileOutputStream(destFileName));
-
-        while ((ch = bis.read()) != -1)
-            bos.write(ch);
-
-        bos.flush();
-        bos.close();
-        bis.close();
+                bos.flush();
+            }
+        }
     }
 
 
@@ -125,10 +111,9 @@ public class ReplaceInFileUtils {
      * @param oldStr String to find and replace.
      * @param newStr New string to replace.
      **/
-    public void replaceInFile(String oldStr, String newStr)
-            throws IOException {
+    public void replaceInFile(String oldStr, String newStr) {
         int next = 0;
-        String line = null;
+        String line;
 
         line = sb.toString();
 
@@ -152,11 +137,10 @@ public class ReplaceInFileUtils {
      *                       igor best" replaceInFile( "igor", "'replacedStr'", 3, true ); The
      *                       result is str="igor igor 'replacedStr' igor igor best"
      **/
-    public void replaceInFile(String oldStr, String newStr, int fromIndex, boolean isOneIteration)
-            throws IOException {
+    public void replaceInFile(String oldStr, String newStr, int fromIndex, boolean isOneIteration) {
         int next = 0;
         int indexCounter = 1;
-        String line = null;
+        String line;
 
         // check fromIndex != 0
         if (fromIndex <= 0)
