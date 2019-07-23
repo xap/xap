@@ -11,7 +11,7 @@
 	<parent>
 		<artifactId>xap</artifactId>
 		<groupId>org.gigaspaces</groupId>
-		<version>15.0.0-SNAPSHOT</version>
+		<version>15.0.0-yael-v5-tue-47</version>
 		<relativePath>../../</relativePath>
 	</parent>
 
