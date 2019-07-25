@@ -357,7 +357,7 @@ public class QueryTemplateBuilder
         QueryTableData tableData = queryColumnData.getColumnTableData();
 
         ITypeDesc typeDesc = tableData.getTypeDesc();
-        Object value = node.getConvertedObject(typeDesc, queryColumnData.getColumnPath());
+        Object value = functionCallDescription == null ? node.getConvertedObject(typeDesc, queryColumnData.getColumnPath()) : node.getValue();
 
         return new QueryTemplatePacket(tableData, query.getQueryResultType(), queryColumnData.getColumnPath(), toRange(queryColumnData.getColumnPath(), functionCallDescription, value, value == null ? nullOp : op,father,query));
     }
