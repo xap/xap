@@ -16,21 +16,7 @@
 
 package com.j_spaces.jdbc;
 
-import com.gigaspaces.query.sql.functions.AbsSqlFunction;
-import com.gigaspaces.query.sql.functions.AppendSqlFunction;
-import com.gigaspaces.query.sql.functions.CeilSqlFunction;
-import com.gigaspaces.query.sql.functions.CharLengthSqlFunction;
-import com.gigaspaces.query.sql.functions.ConcatSqlFunction;
-import com.gigaspaces.query.sql.functions.FloorSqlFunction;
-import com.gigaspaces.query.sql.functions.InStrSqlFunction;
-import com.gigaspaces.query.sql.functions.LowerSqlFunction;
-import com.gigaspaces.query.sql.functions.ModSqlFunction;
-import com.gigaspaces.query.sql.functions.RoundSqlFunction;
-import com.gigaspaces.query.sql.functions.SqlFunction;
-import com.gigaspaces.query.sql.functions.SqlFunctionExecutionContext;
-import com.gigaspaces.query.sql.functions.ToCharSqlFunction;
-import com.gigaspaces.query.sql.functions.ToNumberSqlFunction;
-import com.gigaspaces.query.sql.functions.UpperSqlFunction;
+import com.gigaspaces.query.sql.functions.*;
 import com.j_spaces.jdbc.builder.range.FunctionCallDescription;
 
 import java.util.HashMap;
@@ -60,6 +46,7 @@ public class SQLFunctions {
         builtInFunctions.put("INSTR", new InStrSqlFunction());
         builtInFunctions.put("TO_NUMBER", new ToNumberSqlFunction());
         builtInFunctions.put("TO_CHAR", new ToCharSqlFunction());
+        builtInFunctions.put("CONTAINS_KEY", new ContainsKeySqlFunction());
     }
 
     public SQLFunctions(Map<String, SqlFunction> userFunctions) {
