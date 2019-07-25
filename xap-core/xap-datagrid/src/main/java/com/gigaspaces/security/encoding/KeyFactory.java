@@ -17,12 +17,7 @@
 
 package com.gigaspaces.security.encoding;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -140,9 +135,9 @@ public class KeyFactory {
                 logger.config("Security key [" + resourceName + "] located in classpath");
             }
 
-            ObjectInputStream in = new ObjectInputStream(inputStream);
-            SecretKey key = (SecretKey) in.readObject();
-            return key;
+            try (ObjectInputStream in = new ObjectInputStream(inputStream)) {
+                return (SecretKey) in.readObject();
+            }
         } catch (Exception e) {
             throw new EncodingException(e);
         }
@@ -156,10 +151,10 @@ public class KeyFactory {
      */
     public static void storeKey(SecretKey key, File file) {
         try {
-            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));
-            out.writeObject(key);
-            out.flush();
-            out.close();
+            try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file))) {
+                out.writeObject(key);
+                out.flush();
+            }
         } catch (Exception e) {
             throw new EncodingException(e);
         }
