@@ -762,6 +762,7 @@ Object param():
      | parameter = <INTEGER_LITERAL> { return new Integer(parameter.image); }
      | parameter = <LONG_LITERAL> { return new Long(parameter.image.substring(0, parameter.image.length() - 1)); }
      | parameter = <FLOATING_POINT_LITERAL> { return (new Float(parameter.image)); }
+     | parameter = <QUESTIONMARK> { return new PreparedNode(null,++conditionIndex);}
      | parameter = id()
                         {
                           String id =  (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? parameter.image : parameter.image.toUpperCase();

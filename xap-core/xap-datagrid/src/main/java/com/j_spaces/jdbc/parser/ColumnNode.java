@@ -24,6 +24,7 @@ import com.j_spaces.jdbc.builder.range.FunctionCallDescription;
 import com.j_spaces.jdbc.query.QueryColumnData;
 
 import java.sql.SQLException;
+import java.util.List;
 
 
 /**
@@ -105,5 +106,18 @@ public class ColumnNode extends ValueNode {
         return SQLUtil.getFieldValue(entry, _columnData);
     }
 
-
+    @Override
+    public void prepareValues(Object[] values) throws SQLException {
+        if (functionCallDescription != null) {
+            List<Object> args = functionCallDescription.getArgs();
+            for (int i = 0; i < args.size(); i++) {
+                Object arg = args.get(i);
+                if (arg instanceof PreparedNode) {
+                    ((PreparedNode) arg).prepareValues(values);
+                    args.set(i, ((PreparedNode) arg).getValue());
+                }
+            }
+        }
+        super.prepareValues(values);
+    }
 }

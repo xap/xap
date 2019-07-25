@@ -72,6 +72,10 @@ public class FunctionCallDescription implements Externalizable, SqlFunctionExecu
         return args.get(index);
     }
 
+    public List<Object> getArgs() {
+        return args;
+    }
+
     public FunctionCallDescription setColumnValue(Object value) {
         this.args.set(columnIndex, value);
         return this;
