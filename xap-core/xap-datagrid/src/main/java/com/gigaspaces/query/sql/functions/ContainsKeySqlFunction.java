@@ -16,6 +16,8 @@
 
 package com.gigaspaces.query.sql.functions;
 
+import com.gigaspaces.annotation.sql.SqlFunctionReturnType;
+
 import java.util.Map;
 
 /**
@@ -25,6 +27,7 @@ import java.util.Map;
  * @since 15.0.0
  */
 @com.gigaspaces.api.InternalApi
+@SqlFunctionReturnType(type = Boolean.class)
 public class ContainsKeySqlFunction extends SqlFunction {
     /***
      *
