@@ -361,7 +361,8 @@ public class QueryTemplateBuilder
 
         ITypeDesc typeDesc = tableData.getTypeDesc();
         Object value;
-        if (functionCallDescription != null && SQLFunctions.getBuildInFunction(functionCallDescription.getName()).getClass().isAnnotationPresent(SqlFunctionReturnType.class)) {
+        if (functionCallDescription != null && SQLFunctions.isBuiltIn(functionCallDescription.getName()) &&
+                SQLFunctions.getBuildInFunction(functionCallDescription.getName()).getClass().isAnnotationPresent(SqlFunctionReturnType.class)) {
             value = ObjectConverter.convert(node.getValue(), SQLFunctions.getBuildInFunction(functionCallDescription.getName()).getClass().getAnnotation(SqlFunctionReturnType.class).type());
         } else {
             value = node.getConvertedObject(typeDesc, queryColumnData.getColumnPath());
