@@ -19,12 +19,15 @@
  */
 package com.j_spaces.jdbc.builder;
 
+import com.gigaspaces.annotation.sql.SqlFunctionReturnType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.query.CompoundContainsItemsCustomQuery;
 import com.gigaspaces.internal.query.IContainsItemsCustomQuery;
+import com.gigaspaces.internal.utils.ObjectConverter;
 import com.gigaspaces.metadata.StorageType;
 import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.AbstractDMLQuery;
+import com.j_spaces.jdbc.SQLFunctions;
 import com.j_spaces.jdbc.Stack;
 import com.j_spaces.jdbc.builder.range.*;
 import com.j_spaces.jdbc.parser.AbstractInNode;
@@ -357,7 +360,12 @@ public class QueryTemplateBuilder
         QueryTableData tableData = queryColumnData.getColumnTableData();
 
         ITypeDesc typeDesc = tableData.getTypeDesc();
-        Object value = functionCallDescription == null ? node.getConvertedObject(typeDesc, queryColumnData.getColumnPath()) : node.getValue();
+        Object value;
+        if (functionCallDescription != null && SQLFunctions.getBuildInFunction(functionCallDescription.getName()).getClass().isAnnotationPresent(SqlFunctionReturnType.class)) {
+            value = ObjectConverter.convert(node.getValue(), SQLFunctions.getBuildInFunction(functionCallDescription.getName()).getClass().getAnnotation(SqlFunctionReturnType.class).type());
+        } else {
+            value = node.getConvertedObject(typeDesc, queryColumnData.getColumnPath());
+        }
 
         return new QueryTemplatePacket(tableData, query.getQueryResultType(), queryColumnData.getColumnPath(), toRange(queryColumnData.getColumnPath(), functionCallDescription, value, value == null ? nullOp : op,father,query));
     }
