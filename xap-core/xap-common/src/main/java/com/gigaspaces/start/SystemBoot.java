@@ -25,10 +25,8 @@ import com.gigaspaces.internal.sigar.SigarChecker;
 import com.gigaspaces.logger.GSLogConfigLoader;
 import com.gigaspaces.logger.RollingFileHandler;
 import com.sun.jini.start.ServiceDescriptor;
-
 import net.jini.config.Configuration;
 import net.jini.config.ConfigurationException;
-
 import org.jini.rio.boot.BootUtil;
 import org.jini.rio.boot.CommonClassLoader;
 
@@ -41,10 +39,7 @@ import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -367,21 +362,21 @@ public class SystemBoot {
 
         waitForStopCommand(mainThread, systemConfig);
         logger.info("Received stop command from GSA, exiting");
+        exitGracefully();
 
-        outStream.ignore = true;
-        errStream.ignore = true;
-        StringBuilder sb = processShutdownHooks();
-        outStream.ignore = false;
-        errStream.ignore = false;
-        System.out.println("Exiting... \n" + sb);
-        System.out.println("gsa-exit-done");
+        System.out.println("gsa-exit-done"); //this text is processed by GigaSpacesShutdownProcessHandler.isShutdownVerification
         System.out.flush();
+
+        gracefulSleep(20);
+        System.exit(0);
+    }
+
+    private static void gracefulSleep(long millis) {
         try {
-            Thread.sleep(20);
+            Thread.sleep(millis);
         } catch (InterruptedException e) {
             // graceful sleep
         }
-        System.exit(0);
     }
 
     private static StringBuilder processShutdownHooks() {
@@ -400,10 +395,13 @@ public class SystemBoot {
                     if (future != null) {
                         future.cancel(true);
                     }
-                    sb.append("> ShutdownHook.run() reported exception: ").append(e)
-                            .append("\n")
-                            .append(BootUtil.getStackTrace(e)).append("\n");
-                    // ignore
+                    if (e instanceof TimeoutException) {
+                        sb.append("> timeout waiting for shutdown hook of: ").append(shutdownHook.getName()).append("\n");
+                    } else {
+                        sb.append("> ShutdownHook.run() reported exception: ").append(e)
+                                .append("\n")
+                                .append(BootUtil.getStackTrace(e)).append("\n");
+                    }
                 }
             }
             shutdownHooks.clear();
@@ -699,6 +697,13 @@ public class SystemBoot {
             stream.close();
         }
 
+        /**
+         * ignore any data sent to this stream
+         */
+        public void setIgnore(boolean ignore) {
+            this.ignore = ignore;
+        }
+
         @Override
         public void write(int i) {
             if (ignore) {
@@ -936,31 +941,34 @@ public class SystemBoot {
         // check for ping if we are in agent
         if (AgentHelper.hasAgentId()) {
             File file = findAgentFile(AgentHelper.getGSAServiceID());
-            boolean gsaIsOut = false;
+            boolean gsaIsOut;
             if (file != null && file.exists()) {
                 gsaIsOut = isGsaOut( file );
             } else {
                 gsaIsOut = true;
             }
             if (gsaIsOut) {
-                // no GSA, print on a different thread (so we won't lock when writing to console)
-                // and wait a bit for the output
-                Thread t = new Thread(new Runnable() {
-                    public void run() {
-                        logger.info("GSA parent missing, exiting");
-                    }
-                });
-                t.start();
-                try {
-                    t.join(1000);
-                } catch (InterruptedException e) {
-                    // ignore
-                }
-                // replace output stream, so the process won't get stuck when outputting and not reading from it
-                outStream.ignore = true;
-                errStream.ignore = true;
+                logger.info("GSA parent missing, exiting");
+                exitGracefully();
+
+                gracefulSleep(20);
                 System.exit(1);
             }
+        }
+    }
+
+    private static void exitGracefully() {
+        logger.info("Exit gracefully");
+
+        // replace output stream, so the process won't get stuck when outputting to stream when processing shutdown hooks
+        if (!logger.isLoggable(Level.FINE)) {
+            outStream.setIgnore(true);
+            errStream.setIgnore(true);
+        }
+
+        StringBuilder output = processShutdownHooks();
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("Processed shutdown-hooks:\n" + output);
         }
     }
 
