@@ -92,6 +92,8 @@ public class ProcessMemoryManager implements IProcessMemoryManager {
                     try {
                         Thread.sleep(_samplerThreadSleepDurationInMs);
                     } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt(); // set interrupt flag
+                        return;
                     }
                 }
                 while (_samplerThreadShouldRun) {
