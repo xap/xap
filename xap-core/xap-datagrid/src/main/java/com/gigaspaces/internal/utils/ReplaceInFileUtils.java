@@ -221,10 +221,10 @@ public class ReplaceInFileUtils {
     public void close()
             throws FileNotFoundException {
         // open file and flush all string-buffer
-        PrintStream ps = new PrintStream(new FileOutputStream(fileName));
-        ps.println(sb.toString());
-        ps.flush();
-        ps.close();
+        try (PrintStream ps = new PrintStream(new FileOutputStream(fileName))) {
+            ps.println(sb.toString());
+            ps.flush();
+        }
     }
 
 
