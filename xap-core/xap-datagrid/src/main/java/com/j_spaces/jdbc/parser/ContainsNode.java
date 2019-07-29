@@ -40,17 +40,22 @@ public class ContainsNode extends ExpNode {
     // Holds the contains fields indexes.
     private short _templateMatchCode;
     private String _path;
+    private String relation;
 
     public ContainsNode() {
         super();
     }
 
-    public ContainsNode(ColumnNode columnNode, ExpNode operatorNode, short templateMatchCode) {
+    public ContainsNode(ColumnNode columnNode, ExpNode operatorNode, short templateMatchCode ) {
         super(columnNode, operatorNode);
         this._templateMatchCode = templateMatchCode;
         this._path = columnNode.getName();
     }
 
+    public ContainsNode(ColumnNode columnNode, ExpNode operatorNode, short templateMatchCode, String relation ){
+        this(columnNode,operatorNode,templateMatchCode);
+        this.relation = relation;
+    }
 
     /* (non-Javadoc)
      * @see com.j_spaces.jdbc.parser.ExpNode#newInstance()
@@ -93,6 +98,7 @@ public class ContainsNode extends ExpNode {
         ContainsNode cloned = (ContainsNode) super.clone();
         cloned._templateMatchCode = _templateMatchCode;
         cloned._path = _path;
+        cloned.relation = relation;
         return cloned;
     }
 
@@ -110,4 +116,11 @@ public class ContainsNode extends ExpNode {
         return _templateMatchCode;
     }
 
+    public boolean isRelationNode(){
+        return _templateMatchCode == TemplateMatchCodes.RELATION;
+    }
+
+    public String getRelation() {
+        return relation;
+    }
 }

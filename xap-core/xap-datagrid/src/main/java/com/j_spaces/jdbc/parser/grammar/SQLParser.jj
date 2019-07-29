@@ -1187,13 +1187,14 @@ ExpNode condition(AbstractDMLQuery query) :
 	     { 
 	        rowNum= new RowNumNode(Integer.parseInt(startIndex.image),Integer.parseInt(endIndex.image));
 	     }
+
 	)
 	{   if( query.getRownum() != null)
 			throw new ParseException("Can't define more than a single condition for rownum. To specify range use rownum(from,to)");			
 		query.setRownum(rowNum);
 		return null;}
 	|
-	columnNode1 = createColumnNode(query,null) {} 
+	columnNode1 = createColumnNode(query,null) {}
       (
       	expNode = containsNode(query,columnNode1)          	          	 
       | expNode = isNullNode(query,columnNode1)
@@ -1243,6 +1244,7 @@ ExpNode conditionNode(AbstractDMLQuery query,ColumnNode columnNode1) :
                 | <LIKE>        { expNode = new LikeNode();}
                 | <NOT> <LIKE>  { expNode = new NotLikeNode(); }
                 | <RLIKE>       { expNode = new RLikeNode();}
+
             ) 
             ( 
             	t = <QUESTIONMARK> { query.setPrepared(true); valueNode = new PreparedNode(null,++conditionIndex); } 
@@ -1332,6 +1334,8 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
 	Token startIndex,endIndex;
 	short templateMatchCode = TemplateMatchCodes.EQ;
 	ContainsItemNode containsItems =null;
+	Token rel = null;
+	String relation = null;
 }
 {
 	(
@@ -1345,6 +1349,9 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
       	| <NOTEQUAL2> { templateMatchCode = TemplateMatchCodes.NE; }	         
         | <LIKE>        { templateMatchCode = TemplateMatchCodes.REGEX; }
         | <NOT> <LIKE>  { templateMatchCode = TemplateMatchCodes.NOT_REGEX; }
+        | rel = <RELATION> { templateMatchCode = TemplateMatchCodes.RELATION;
+                             relation = rel.image;
+                           }
        	| (<OPENPAREN>
        		{
        		  columnNode1.setName(columnPath.toString());
@@ -1371,7 +1378,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
 	    {
 	      	if (columnPath != null)
 	    		 columnNode1.setName(columnPath.toString());
-	   		return new ContainsItemNode(columnNode1, valueNode, templateMatchCode);
+	   		return new ContainsItemNode(columnNode1, valueNode, templateMatchCode, relation);
 	    }
 }
 AndNode containsBetweenItemNode(AbstractDMLQuery query,ColumnNode columnNode1,StringBuilder columnPath) :
@@ -1431,7 +1438,10 @@ AndNode containsBetweenNode(AbstractDMLQuery query,ColumnNode columnNode1,String
 ExpNode containsSimpleNode(AbstractDMLQuery query,ColumnNode columnNode1,String column) :
 {
 	ValueNode valueNode = null;
-	short templateMatchCode;
+	short templateMatchCode = TemplateMatchCodes.EQ;
+	Token rel = null;
+	Token t = null;
+	String relation = null;
 }
 {
 	(
@@ -1444,11 +1454,14 @@ ExpNode containsSimpleNode(AbstractDMLQuery query,ColumnNode columnNode1,String 
 	  	| <NOTEQUAL2> { templateMatchCode = TemplateMatchCodes.NE; }	         
 	    | <LIKE>        { templateMatchCode = TemplateMatchCodes.REGEX; }
 	    | <NOT> <LIKE>  { templateMatchCode = TemplateMatchCodes.NOT_REGEX; }
+        | rel = <RELATION> { templateMatchCode = TemplateMatchCodes.RELATION;
+                             relation = rel.image;
+                           }
    	  )
      valueNode = valueNode(query)
      {
 		columnNode1.setName(column);
-		return new ContainsNode(columnNode1, valueNode, templateMatchCode);
+		return new ContainsNode(columnNode1, valueNode, templateMatchCode, relation);
      }
 }
 ExpNode containsInNode(AbstractDMLQuery query,ColumnNode columnNode1,String column) :

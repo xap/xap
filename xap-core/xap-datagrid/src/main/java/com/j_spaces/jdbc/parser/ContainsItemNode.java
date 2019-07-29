@@ -16,6 +16,13 @@
 
 package com.j_spaces.jdbc.parser;
 
+import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.j_spaces.jdbc.AbstractDMLQuery;
+import com.j_spaces.jdbc.query.QueryColumnData;
+import com.j_spaces.jdbc.query.QueryTableData;
+
+import java.sql.SQLException;
+
 /**
  * node holding a single item inside contains, or a hole expression pointed by value
  *
@@ -26,12 +33,18 @@ package com.j_spaces.jdbc.parser;
 @com.gigaspaces.api.InternalApi
 public class ContainsItemNode extends ContainsNode {
 
+    private ITypeDesc typeDesc =null;
+
     public ContainsItemNode() {
         super();
     }
 
     public ContainsItemNode(ColumnNode columnNode, ExpNode operatorNode, short templateMatchCode) {
         super(columnNode, operatorNode, templateMatchCode);
+    }
+
+    public ContainsItemNode(ColumnNode columnNode, ExpNode operatorNode, short templateMatchCode, String relation) {
+        super(columnNode, operatorNode, templateMatchCode, relation);
     }
 
     /*
@@ -53,5 +66,11 @@ public class ContainsItemNode extends ContainsNode {
         return new ContainsItemNode();
     }
 
+    public void setTypeDesc(ITypeDesc typeDesc) {
+        this.typeDesc = typeDesc;
+    }
 
+    public ITypeDesc getTypeDesc() {
+        return typeDesc;
+    }
 }

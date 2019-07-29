@@ -35,6 +35,7 @@ public enum QueryOperator {
     CONTAINS_TOKEN,
     NOT_REGEX,
     IN,
+    RELATION,
     INTERSECTS,
     WITHIN,
     NOT_SUPPORTED,

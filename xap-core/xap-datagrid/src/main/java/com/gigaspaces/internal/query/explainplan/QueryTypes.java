@@ -175,6 +175,8 @@ public enum QueryTypes {
                 return QueryOperator.NOT_REGEX;
             case 11:
                 return QueryOperator.IN;
+            case 12:
+                return QueryOperator.RELATION;
             default:
                 return QueryOperator.NOT_SUPPORTED;
         }

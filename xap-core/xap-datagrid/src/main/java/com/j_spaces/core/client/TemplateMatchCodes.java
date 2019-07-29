@@ -75,6 +75,11 @@ public class TemplateMatchCodes {
      */
     public static final short IN = 11;
 
+    /**
+     * RELATION operation
+     */
+    public static final short RELATION = 12;
+
     public static boolean supportFifoOrder(short matchCode) {
         return matchCode == EQ || matchCode == IS_NULL;
     }

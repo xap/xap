@@ -27,21 +27,7 @@ import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.Stack;
 import com.j_spaces.jdbc.builder.range.*;
-import com.j_spaces.jdbc.parser.AbstractInNode;
-import com.j_spaces.jdbc.parser.AndNode;
-import com.j_spaces.jdbc.parser.ColumnNode;
-import com.j_spaces.jdbc.parser.ContainsItemNode;
-import com.j_spaces.jdbc.parser.ContainsItemsRootNode;
-import com.j_spaces.jdbc.parser.ContainsNode;
-import com.j_spaces.jdbc.parser.ExpNode;
-import com.j_spaces.jdbc.parser.InNode;
-import com.j_spaces.jdbc.parser.IsNullNode;
-import com.j_spaces.jdbc.parser.LikeNode;
-import com.j_spaces.jdbc.parser.LiteralNode;
-import com.j_spaces.jdbc.parser.NotInNode;
-import com.j_spaces.jdbc.parser.NotLikeNode;
-import com.j_spaces.jdbc.parser.OrNode;
-import com.j_spaces.jdbc.parser.RelationNode;
+import com.j_spaces.jdbc.parser.*;
 import com.j_spaces.jdbc.query.QueryColumnData;
 import com.j_spaces.jdbc.query.QueryTableData;
 
@@ -105,17 +91,21 @@ public class QueryTemplateBuilder
         // handle specific table name for column - used in join
         QueryTableData tableData = queryColumnData.getColumnTableData();
         ExpNode right = containsNode.getRightChild();
+        ITypeDesc typeDesc = tableData.getTypeDesc();
 
         Object value = null;
-        if (right instanceof LiteralNode) {
+        if(right instanceof PreparedNode) { //preparedNode is a literalNode so we have to check for relation here first, also it is NOT AbstractInNode...
+            value = ((PreparedNode) right).getConvertedObject(typeDesc, containsNode.getPath());
+        } else if (right instanceof LiteralNode) {
             value = ((LiteralNode) right).getValue();
         } else if (!(right instanceof IsNullNode)) {
-            value = ((AbstractInNode) right).getConvertedValues(tableData.getTypeDesc(), containsNode.getPath());
+            value = ((AbstractInNode) right).getConvertedValues(typeDesc, containsNode.getPath());
         }
-        //Object value = ((LiteralNode) containsNode.getRightChild()).getConvertedObject(tableData.getTypeDesc(), containsNode.getPath());
 
-        QueryTemplatePacket template = new QueryTemplatePacket(tableData, query.getQueryResultType(),
-                queryColumnData.getColumnPath(), new ContainsValueRange(containsNode.getPath(), functionCallDescription, value, containsNode.getTemplateMatchCode()));
+        ContainsValueRange containsValueRange = containsNode.isRelationNode()
+                        ? new ContainsValueRange(containsNode.getPath(), functionCallDescription, value, containsNode.getTemplateMatchCode(), containsNode.getRelation(), typeDesc.getTypeName())
+                        : new ContainsValueRange(containsNode.getPath(), functionCallDescription, value, containsNode.getTemplateMatchCode());
+        QueryTemplatePacket template = new QueryTemplatePacket(tableData, query.getQueryResultType(), queryColumnData.getColumnPath(), containsValueRange);
 
         containsNode.setTemplate(template);
     }
@@ -185,13 +175,22 @@ public class QueryTemplateBuilder
 
             ExpNode right = node.getRightChild();
 
+
             Object value = null;
+            if(right instanceof PreparedNode && cn.isRelationNode()) { //preparedNode is a literalNode so we have to check for relation here first, also it is NOT AbstractInNode...
+                value = ((PreparedNode) right).getConvertedObject(cn.getTypeDesc(), fullPath);
+            } else
             if (right instanceof LiteralNode) {
                 value = ((LiteralNode) right).getValue();
             } else {
                 value = ((AbstractInNode) right).getConvertedValues(query.getTypeInfo(), fullPath);
             }
-            subs.add(new ContainsItemValueRange(cn.getPath(), sb.toString(), null, value, cn.getTemplateMatchCode()));
+
+            ContainsItemValueRange containsItemValueRange = cn.isRelationNode()
+                    ? new ContainsItemValueRange(cn.getPath(), fullPath, null, value, cn.getTemplateMatchCode(), cn.getRelation(),cn.getTypeDesc().getTypeName())
+                    : new ContainsItemValueRange(cn.getPath(), fullPath, null, value, cn.getTemplateMatchCode());
+
+            subs.add(containsItemValueRange);
             return;
         }
 
@@ -377,39 +376,7 @@ public class QueryTemplateBuilder
      */
     @SuppressWarnings("deprecation")
     public static Range toRange(String colName, FunctionCallDescription functionCallDescription, Object value, short matchCode) {
-        return
-                toRange( colName, functionCallDescription, value,  matchCode,null,null);
-/*
-        switch (matchCode) {
-            case TemplateMatchCodes.IS_NULL:
-                return new IsNullRange(colName, functionCallDescription);
-            case TemplateMatchCodes.NOT_NULL:
-                return new NotNullRange(colName, functionCallDescription);
-            case TemplateMatchCodes.EQ: {
-                return new EqualValueRange(colName, functionCallDescription, value);
-            }
-            case TemplateMatchCodes.NE:
-                return new NotEqualValueRange(colName, functionCallDescription, value);
-
-            case TemplateMatchCodes.GT:
-                return new SegmentRange(colName, functionCallDescription, castToComparable(value), false, null, false);
-            case TemplateMatchCodes.GE:
-                return new SegmentRange(colName, functionCallDescription, castToComparable(value), true, null, false);
-            case TemplateMatchCodes.LE:
-                return new SegmentRange(colName, functionCallDescription, null, false, castToComparable(value), true);
-            case TemplateMatchCodes.LT:
-                return new SegmentRange(colName, functionCallDescription, null, false, castToComparable(value), false);
-
-            case TemplateMatchCodes.REGEX:
-                return new RegexRange(colName, functionCallDescription, (String) value);
-            case TemplateMatchCodes.NOT_REGEX:
-                return new NotRegexRange(colName, functionCallDescription, (String) value);
-            case TemplateMatchCodes.IN:
-                return new InRange(colName, functionCallDescription, (Set) value);
-        }
-
-        return Range.EMPTY_RANGE;
-*/
+        return toRange( colName, functionCallDescription, value,  matchCode,null,null);
     }
 
     @SuppressWarnings("deprecation")
@@ -452,6 +419,8 @@ public class QueryTemplateBuilder
                 return new NotRegexRange(colName, functionCallDescription, (String) value);
             case TemplateMatchCodes.IN:
                 return new InRange(colName, functionCallDescription, (Set) value);
+            case TemplateMatchCodes.RELATION:
+                throw new UnsupportedOperationException("Relation is not supported with index");
         }
 
         return Range.EMPTY_RANGE;
@@ -605,6 +574,11 @@ public class QueryTemplateBuilder
             while (!stack2.isEmpty()) {
                 ExpNode node = stack2.pop();
 
+                if(node.isContainsItemsRootNode()){
+                    ContainsItemsRootNode containsItemsRootNode = (ContainsItemsRootNode) node;
+                    traverseSubItemNodes(containsItemsRootNode.getContainsSubtree(),containsItemsRootNode.createTypeDesc());
+                }
+
                 node.accept(this);
 
                 // check if the template should be converted to space format	       
@@ -631,6 +605,20 @@ public class QueryTemplateBuilder
 
         if (query.isJoined()) {
             buildJoinInfo();
+        }
+    }
+
+    private void traverseSubItemNodes(ExpNode node, ITypeDesc typeDesc) throws SQLException {
+        if(node.isContainsItemNode()){
+            if(((ContainsItemNode)node).isRelationNode())
+                ((ContainsItemNode)node).setTypeDesc(typeDesc);
+            return;
+        }
+        if(node.getLeftChild() != null){
+            traverseSubItemNodes(node.getLeftChild(),typeDesc);
+        }
+        if(node.getRightChild() != null){
+            traverseSubItemNodes(node.getRightChild(),typeDesc);
         }
     }
 

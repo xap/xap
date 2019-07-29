@@ -16,16 +16,16 @@
 
 package org.openspaces.textsearch;
 
+import com.gigaspaces.internal.metadata.SpaceCollectionIndex;
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.query.extension.metadata.DefaultQueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPropertyInfo;
-
 import org.apache.lucene.analysis.Analyzer;
-
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.Properties;
 
 /**
@@ -102,7 +102,19 @@ public class LuceneTextSearchQueryExtensionProvider extends QueryExtensionProvid
     }
 
     private static String makePath(String property, String relativePath) {
-        return relativePath.length() == 0 ? property : property + "." + relativePath;
+        if (relativePath == null || relativePath.length() == 0)
+            return property;
+        else {
+            String path;
+            // Add property name to path
+            if (relativePath.startsWith(SpaceCollectionIndex.COLLECTION_INDICATOR)) {
+                // path = "[*]..."
+                path = property + relativePath;
+            } else {
+                // path = "property..." or "property[*]..."
+                path = property + "." + relativePath;
+            }
+            return path;
+        }
     }
-
 }

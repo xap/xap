@@ -24,6 +24,7 @@ import com.gigaspaces.internal.metadata.SpacePropertyInfo;
 import com.gigaspaces.internal.query.ConvertedObjectWrapper;
 import com.gigaspaces.internal.query.predicate.ISpacePredicate;
 import com.gigaspaces.server.ServerEntry;
+import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.builder.range.FunctionCallDescription;
 
@@ -52,6 +53,10 @@ public class ContainsPredicate extends ScalarSpacePredicate {
     protected String _fieldPath = null;
     protected short[] _containsIndexes;
     protected short _templateMatchCode;
+    private String relation = null;
+    private String typeName;
+    private transient CacheManager cacheManager;
+
 
     /**
      * Default constructor for Externalizable.
@@ -63,6 +68,12 @@ public class ContainsPredicate extends ScalarSpacePredicate {
         super(expectedValue, functionCallDescription);
         this._fieldPath = fieldPath;
         this._templateMatchCode = templateMatchCode;
+    }
+
+    public ContainsPredicate(Object expectedValue, FunctionCallDescription functionCallDescription, String fieldPath, short templateMatchCode, String relation, String typeName) {
+        this(expectedValue,functionCallDescription,fieldPath,templateMatchCode);
+        this.relation = relation;
+        this.typeName = typeName;
     }
 
     @Override
@@ -85,6 +96,11 @@ public class ContainsPredicate extends ScalarSpacePredicate {
         }
         // no match
         return false;
+    }
+
+    @Override
+    public void setCacheManagerForExecution(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
     }
 
     @Override
@@ -240,6 +256,8 @@ public class ContainsPredicate extends ScalarSpacePredicate {
         if (_spacePredicate == null) {
             Object convertedTemplateValue = ConvertedObjectWrapper.create(_expectedValue, valueToMatch.getClass()).getValue();
             _spacePredicate = createSpacePredicate(convertedTemplateValue);
+            if(_spacePredicate.requiresCacheManagerForExecution())
+                _spacePredicate.setCacheManagerForExecution(cacheManager);
         }
         return _spacePredicate.execute(valueToMatch);
     }
@@ -268,6 +286,13 @@ public class ContainsPredicate extends ScalarSpacePredicate {
                 return new NotRegexSpacePredicate(((String) expectedValue).replaceAll("%", ".*").replaceAll("_", "."));
             case TemplateMatchCodes.IN:
                 return new InSpacePredicate((Set) expectedValue);
+            case TemplateMatchCodes.RELATION: {
+                String[] relations = relation.split(":");
+                String namespace = relations[0];
+                String op = relations[1];
+                String path = getContainsPath();
+                return new RelationPredicate(namespace,typeName,path,op,expectedValue);
+            }
             default:
                 throw new IllegalArgumentException("Unsupported contains operator.");
         }
@@ -300,12 +325,20 @@ public class ContainsPredicate extends ScalarSpacePredicate {
         return _propertyInfo;
     }
 
+    protected String getContainsPath(){
+        return _fieldPath;
+    }
+
     @Override
     protected void readExternalImpl(ObjectInput in)
             throws IOException, ClassNotFoundException {
         super.readExternalImpl(in);
         _fieldPath = IOUtils.readString(in);
         _templateMatchCode = in.readShort();
+        if(_templateMatchCode == TemplateMatchCodes.RELATION) {
+            relation = IOUtils.readString(in);
+            typeName = IOUtils.readString(in);
+        }
     }
 
     @Override
@@ -314,6 +347,10 @@ public class ContainsPredicate extends ScalarSpacePredicate {
         super.writeExternalImpl(out);
         IOUtils.writeString(out, _fieldPath);
         out.writeShort(_templateMatchCode);
+        if(_templateMatchCode == TemplateMatchCodes.RELATION) {
+            IOUtils.writeString(out, relation);
+            IOUtils.writeString(out, typeName);
+        }
     }
 
 }

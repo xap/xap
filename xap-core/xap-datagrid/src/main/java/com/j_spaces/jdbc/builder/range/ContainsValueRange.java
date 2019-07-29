@@ -54,6 +54,10 @@ public class ContainsValueRange extends SingleValueRange {
         this._templateMatchCode = templateMatchCode;
     }
 
+    public ContainsValueRange(String colName, FunctionCallDescription functionCallDescription, Object value, short templateMatchCode, String relation, String typeName) {
+        this(colName, functionCallDescription, value, templateMatchCode, new ContainsPredicate(value, functionCallDescription, colName, templateMatchCode, relation,typeName));
+    }
+
     /* (non-Javadoc)
      * @see com.j_spaces.jdbc.builder.range.Range#toExternalEntry(com.j_spaces.core.client.ExternalEntry, int)
      */
@@ -142,6 +146,7 @@ public class ContainsValueRange extends SingleValueRange {
 
     @Override
     public boolean matches(CacheManager cacheManager, ServerEntry entry, String skipAlreadyMatchedIndexPath) {
+        getPredicate().setCacheManagerForExecution(cacheManager);
         return getPredicate().execute(entry);
     }
 
