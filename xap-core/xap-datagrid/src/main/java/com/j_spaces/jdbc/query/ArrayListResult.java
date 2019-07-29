@@ -23,6 +23,7 @@ import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.jdbc.SelectColumn;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 
 /**
@@ -58,6 +59,10 @@ public class ArrayListResult
 
     }
 
+    public ArrayListResult(Collection<IEntryPacket> entries) {
+        super(entries);
+    }
+
     /*
      * (non-Javadoc)
      * @see
@@ -74,6 +79,11 @@ public class ArrayListResult
      */
     public IQueryResultSet<IEntryPacket> newResultSet() {
         return new ArrayListResult();
+    }
+
+    @Override
+    public IQueryResultSet<IEntryPacket> newResultSet(Collection<IEntryPacket> entries) {
+        return new ArrayListResult(entries);
     }
 
     /**

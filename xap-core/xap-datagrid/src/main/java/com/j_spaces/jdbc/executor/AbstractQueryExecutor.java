@@ -513,8 +513,9 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
      * Removes duplicate entries from the result set. The rows are inserted into a TreeSet and only
      * the rows that were successfully added, are considered distinct. Note: TreeSet is used and not
      * HashSet to avoid creating hashCode for all fields.
+     * @return new IQueryResultSet with distinct entries
      */
-    public void filterDistinctEntries(final IQueryResultSet<IEntryPacket> entries) {
+    public IQueryResultSet<IEntryPacket> filterDistinctEntries(final IQueryResultSet<IEntryPacket> entries) {
 
         // First define the comparator for distinct
         TreeSet<IEntryPacket> treeSet = new TreeSet<IEntryPacket>(new Comparator<IEntryPacket>() {
@@ -547,20 +548,16 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
             }
         });
 
-        // Go over the entries ad try to insert each entry to
-        // the set
-        Iterator<IEntryPacket> iter = entries.iterator();
+        //Add entries to the treeSet. The treeSet will contain distinct entries
+        treeSet.addAll(entries);
 
-        while (iter.hasNext()) {
-            IEntryPacket e = iter.next();
-
-            // Only if successfully added to the TreeSet - the row is distinct
-            if (!treeSet.add(e)) {
-                // Remove duplicate entries
-                iter.remove();
-            }
+        //If all unique, return original list
+        if (treeSet.size() == entries.size()) {
+            return entries;
         }
 
+        //Convert the treeSet to a new IQueryResultSet
+        return entries.newResultSet(treeSet);
     }
 
     /**

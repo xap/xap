@@ -34,6 +34,9 @@ public interface IQueryResultSet<T extends IEntryPacket>
 
     IQueryResultSet<T> newResultSet();
 
+    IQueryResultSet<T> newResultSet(Collection<IEntryPacket> entries);
+
+
     Object getFieldValue(SelectColumn column, T entryPacket);
 
     IQueryResultSet<T> intersect(IQueryResultSet<T> set);

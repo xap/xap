@@ -260,7 +260,7 @@ public class SelectQuery extends AbstractDMLQuery {
 
             //Handle distinct quantifier
             if (isDistinct()) {
-                _executor.filterDistinctEntries(entries);
+                entries = _executor.filterDistinctEntries(entries);
             }
 
             //if order by is relevant, this is the place to order.
