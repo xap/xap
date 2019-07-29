@@ -23,6 +23,8 @@ import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.jdbc.JoinedEntry;
 import com.j_spaces.jdbc.SelectColumn;
 
+import java.util.Collection;
+
 /**
  * @author anna
  * @since 7.1
@@ -34,6 +36,14 @@ public class JoinedQueryResult extends ArrayListResult {
      *
      */
     private static final long serialVersionUID = 1L;
+
+    public JoinedQueryResult() {
+        super();
+    }
+
+    public JoinedQueryResult(Collection<IEntryPacket> entries) {
+        super(entries);
+    }
 
     /* (non-Javadoc)
      * @see com.j_spaces.jdbc.query.IQueryResultSet#getFieldValue(com.j_spaces.jdbc.SelectColumn, com.gigaspaces.internal.transport.IEntryPacket)
@@ -51,5 +61,10 @@ public class JoinedQueryResult extends ArrayListResult {
     public IQueryResultSet<IEntryPacket> newResultSet() {
 
         return new JoinedQueryResult();
+    }
+
+    @Override
+    public IQueryResultSet<IEntryPacket> newResultSet(Collection<IEntryPacket> entries) {
+        return new JoinedQueryResult(entries);
     }
 }

@@ -128,8 +128,9 @@ public interface IQueryExecutor {
      * Removes duplicate entries from the result set. The rows are inserted into a TreeSet and only
      * the rows that were successfully added, are considered distinct. Note: TreeSet is used and not
      * HashSet to avoid creating hashCode for all fields.
+     * @return new IQueryResultSet with distinct entries
      */
-    public void filterDistinctEntries(IQueryResultSet<IEntryPacket> entries);
+    public IQueryResultSet<IEntryPacket> filterDistinctEntries(IQueryResultSet<IEntryPacket> entries);
 
     /**
      * Converts the list of ExternaEntries to 2 dimensional array that contains the values of the

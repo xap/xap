@@ -19,6 +19,8 @@ package com.j_spaces.jdbc.query;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.jdbc.SelectColumn;
 
+import java.util.Collection;
+
 
 /**
  * @author anna
@@ -27,6 +29,14 @@ import com.j_spaces.jdbc.SelectColumn;
 @com.gigaspaces.api.InternalApi
 public class ProjectedResultSet extends ArrayListResult {
     private static final long serialVersionUID = 6906220797357296673L;
+
+    public ProjectedResultSet() {
+        super();
+    }
+
+    public ProjectedResultSet(Collection<IEntryPacket> entries) {
+        super(entries);
+    }
 
     @Override
     public Object getFieldValue(SelectColumn column, IEntryPacket entryPacket) {
@@ -39,6 +49,11 @@ public class ProjectedResultSet extends ArrayListResult {
     public IQueryResultSet<IEntryPacket> newResultSet() {
 
         return new ProjectedResultSet();
+    }
+
+    @Override
+    public IQueryResultSet<IEntryPacket> newResultSet(Collection<IEntryPacket> entries) {
+        return new ProjectedResultSet(entries);
     }
 
 }
