@@ -16,7 +16,9 @@
 
 package com.gigaspaces.internal.query.predicate.comparison;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.AbstractTypeIntrospector;
+import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.builder.range.FunctionCallDescription;
 
 import java.io.IOException;
@@ -33,6 +35,7 @@ import java.io.ObjectOutput;
 @com.gigaspaces.api.InternalApi
 public class ContainsItemPredicate extends ContainsPredicate {
     private static final long serialVersionUID = -4499197241040332527L;
+    private String fullPath;
 
     /**
      * Default constructor for Externalizable.
@@ -46,6 +49,11 @@ public class ContainsItemPredicate extends ContainsPredicate {
 
     public ContainsItemPredicate(Object expectedValue, String relativePath, FunctionCallDescription functionCallDescription, short templateMatchCode) {
         super(expectedValue, functionCallDescription, relativePath, templateMatchCode);
+    }
+
+    public ContainsItemPredicate(Object expectedValue, String relativePath, FunctionCallDescription functionCallDescription, short templateMatchCode, String relation, String typeName,String fullPath) {
+        super(expectedValue, functionCallDescription, relativePath, templateMatchCode, relation, typeName);
+        this.fullPath = fullPath;
     }
 
     @Override
@@ -80,14 +88,25 @@ public class ContainsItemPredicate extends ContainsPredicate {
     }
 
     @Override
+    protected String getContainsPath(){
+        return fullPath;
+    }
+
+    @Override
     protected void readExternalImpl(ObjectInput in)
             throws IOException, ClassNotFoundException {
         super.readExternalImpl(in);
+        if(_templateMatchCode == TemplateMatchCodes.RELATION) {
+            fullPath = IOUtils.readString(in);
+        }
     }
 
     @Override
     protected void writeExternalImpl(ObjectOutput out)
             throws IOException {
         super.writeExternalImpl(out);
+        if(_templateMatchCode == TemplateMatchCodes.RELATION) {
+            IOUtils.writeString(out, fullPath);
+        }
     }
 }

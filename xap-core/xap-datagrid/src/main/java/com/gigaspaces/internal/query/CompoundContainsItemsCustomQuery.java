@@ -84,7 +84,7 @@ public class CompoundContainsItemsCustomQuery extends AbstractCustomQuery
     }
 
     @Override
-    public boolean matches(ServerEntry entry, Object collectionItem) {
+    public boolean matches(CacheManager cacheManager, ServerEntry entry, Object collectionItem) {
         // TODO Auto-generated method stub
         if (_isTop)
             throw new IllegalArgumentException("cannot call matches on top root with collection item");
@@ -97,7 +97,7 @@ public class CompoundContainsItemsCustomQuery extends AbstractCustomQuery
             // before the predicate is initialized.
             initialize();
 
-        return performMatching(collectionItem, 0, 0, entry);
+        return performMatching(cacheManager, collectionItem, 0, 0, entry);
     }
 
     @Override
@@ -116,10 +116,10 @@ public class CompoundContainsItemsCustomQuery extends AbstractCustomQuery
             initialize();
 
         Object value = entry.getPropertyValue(_tokens[0]);
-        return (value == null) ? false : performMatching(value, 1, 0, entry);
+        return (value == null) ? false : performMatching(cacheManager, value, 1, 0, entry);
     }
 
-    private boolean performMatching(Object value, int tokenIndex, int currentContainsIndex, ServerEntry entry) {
+    private boolean performMatching(CacheManager cacheManager, Object value, int tokenIndex, int currentContainsIndex, ServerEntry entry) {//
         // Get next collection
         while (tokenIndex != _containsIndexes[currentContainsIndex]) {
             value = AbstractTypeIntrospector.getNestedValue(value, tokenIndex++, _tokens, _propertyInfo, _rootPath);
@@ -138,13 +138,13 @@ public class CompoundContainsItemsCustomQuery extends AbstractCustomQuery
 
         // If this is the last collection perform matching
         if (_containsIndexes.length == ++currentContainsIndex)
-            return matchValue((Collection<?>) value, tokenIndex, entry);
+            return matchValue( cacheManager, (Collection<?>) value, tokenIndex, entry);
 
         // Otherwise, attempt to perform matching for each of the collection items
         for (Object item : (Collection<?>) value) {
             if (item == null)
                 continue;
-            if (performMatching(item, tokenIndex, currentContainsIndex, entry))
+            if (performMatching(cacheManager, item, tokenIndex, currentContainsIndex, entry))
                 return true;
         }
 
@@ -155,22 +155,22 @@ public class CompoundContainsItemsCustomQuery extends AbstractCustomQuery
     /**
      * Perform matching on the provided collection or collection items nested properties.
      */
-    private boolean matchValue(Collection<?> collection, int tokenIndex, ServerEntry entry) {
+    private boolean matchValue(CacheManager cacheManager, Collection<?> collection, int tokenIndex, ServerEntry entry) {
         // contains is last - a.b.c[*] = ?
         if (tokenIndex == _tokens.length)
-            return matchOnRoot(collection, entry);
+            return matchOnRoot(cacheManager, collection, entry);
         else
             throw new RuntimeException("invalid root path: " + _rootPath + " - should end with a collection");
     }
 
-    private boolean matchOnRoot(Collection<?> collection, ServerEntry entry) {
+    private boolean matchOnRoot(CacheManager cacheManager, Collection<?> collection, ServerEntry entry) {
         for (Object item : collection) {
             if (item == null)
                 continue;
             //traverse the subqueries/ranges using this item
             boolean res = true;
             for (IContainsItemsCustomQuery q : _subQueries) {
-                if (!q.matches(entry, item)) {
+                if (!q.matches(cacheManager, entry, item)) {
                     res = false;
                     break;
                 }

@@ -16,7 +16,11 @@
 
 package com.j_spaces.jdbc.parser;
 
+import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
+import com.j_spaces.jdbc.query.QueryColumnData;
+import com.j_spaces.jdbc.query.QueryTableData;
 
 import java.sql.SQLException;
 import java.util.TreeMap;
@@ -89,4 +93,9 @@ public class ContainsItemsRootNode extends LiteralNode {
         return clone;
     }
 
+    public ITypeDesc createTypeDesc()  {
+        QueryColumnData queryColumnData = _rootColumnNode.getColumnData();
+        QueryTableData tableData = queryColumnData.getColumnTableData();
+        return tableData.getTypeDesc();
+    }
 }

@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.query;
 
 import com.gigaspaces.server.ServerEntry;
+import com.j_spaces.core.cache.CacheManager;
 
 /**
  * Represents a custom query related to  a collection item in the space.
@@ -27,7 +28,7 @@ import com.gigaspaces.server.ServerEntry;
 
 public interface IContainsItemsCustomQuery extends ICustomQuery {
 
-    public boolean matches(ServerEntry entry, Object collectionItem);
+    public boolean matches(CacheManager cacheManager, ServerEntry entry, Object collectionItem);
 
     public boolean isRootHandler();
 }

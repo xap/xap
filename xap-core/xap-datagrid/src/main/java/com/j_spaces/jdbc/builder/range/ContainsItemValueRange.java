@@ -16,6 +16,7 @@
 
 package com.j_spaces.jdbc.builder.range;
 
+import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.query.IContainsItemsCustomQuery;
 import com.gigaspaces.internal.query.IQueryIndexScanner;
 import com.gigaspaces.internal.query.predicate.comparison.ContainsItemPredicate;
@@ -23,6 +24,9 @@ import com.gigaspaces.server.ServerEntry;
 import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
+import com.j_spaces.jdbc.parser.ColumnNode;
+import com.j_spaces.jdbc.query.QueryColumnData;
+import com.j_spaces.jdbc.query.QueryTableData;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -44,6 +48,7 @@ public class ContainsItemValueRange extends ContainsValueRange implements
     private transient IContainsItemsCustomQuery _root;
     private transient Range _actualRangeForIndexing;
 
+
     public ContainsItemValueRange() {
         super();
     }
@@ -52,9 +57,14 @@ public class ContainsItemValueRange extends ContainsValueRange implements
         super(fullPath, functionCallDescription, value, templateMatchCode, new ContainsItemPredicate(value, relativePath, functionCallDescription, templateMatchCode));
     }
 
+    public ContainsItemValueRange(String relativePath, String fullPath, FunctionCallDescription functionCallDescription, Object value, short templateMatchCode, String relation, String typeName) {
+        super(fullPath, functionCallDescription, value, templateMatchCode, new ContainsItemPredicate(value, relativePath, functionCallDescription, templateMatchCode, relation,typeName ,fullPath));
+    }
+
     @Override
-    public boolean matches(ServerEntry entry, Object collectionItem) {
+    public boolean matches(CacheManager cacheManager, ServerEntry entry, Object collectionItem) {
         // TODO Auto-generated method stub
+        getPredicate().setCacheManagerForExecution(cacheManager);
         return getPredicate().execute(collectionItem);
     }
 
@@ -130,5 +140,6 @@ public class ContainsItemValueRange extends ContainsValueRange implements
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
     }
+
 
 }
