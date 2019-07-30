@@ -45,16 +45,7 @@ import net.jini.io.MarshalledInstance;
 import net.jini.io.OptimizedByteArrayOutputStream;
 import net.jini.io.UnsupportedConstraintException;
 
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.UTFDataFormatException;
+import java.io.*;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -124,10 +115,12 @@ public class Plaintext {
      */
     public static byte[] toUtf(String s) throws UTFDataFormatException {
         try {
-            OptimizedByteArrayOutputStream bout = new OptimizedByteArrayOutputStream(s.length());
-            DataOutput dout = new DataOutputStream(bout);
-            dout.writeUTF(s);
-            return bout.toByteArray();
+            try (OptimizedByteArrayOutputStream bout = new OptimizedByteArrayOutputStream(s.length())) {
+                try (DataOutputStream dout = new DataOutputStream(bout)) {
+                    dout.writeUTF(s);
+                    return bout.toByteArray();
+                }
+            }
         } catch (UTFDataFormatException e) {
             throw e;
         } catch (IOException e) {
