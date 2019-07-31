@@ -20,9 +20,8 @@ import com.j_spaces.core.IJSpace;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.eclipse.jetty.server.SessionManager;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.session.HashSessionIdManager;
+import org.eclipse.jetty.server.session.DefaultSessionIdManager;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.component.LifeCycle;
@@ -31,17 +30,14 @@ import org.openspaces.core.GigaSpaceConfigurer;
 import org.openspaces.core.cluster.ClusterInfo;
 import org.openspaces.core.properties.BeanLevelProperties;
 import org.openspaces.core.space.UrlSpaceConfigurer;
-import org.openspaces.jee.sessions.jetty.GigaSessionIdManager;
-import org.openspaces.jee.sessions.jetty.GigaSessionManager;
 import org.openspaces.pu.container.jee.JeeProcessingUnitContainerProvider;
+import org.openspaces.pu.container.jee.jetty.session.SpaceSessionDataStore;
 import org.springframework.context.ApplicationContext;
-import org.springframework.util.ReflectionUtils;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-
-import java.lang.reflect.Method;
+import java.util.function.Consumer;
 
 /**
  * An jetty specific {@link javax.servlet.ServletContextListener} that is automatically loaded by
@@ -64,27 +60,10 @@ public class JettyWebApplicationContextListener implements ServletContextListene
     public static final String JETTY_SESSIONS_URL = "jetty.sessions.spaceUrl";
 
     /**
-     * How often the scavenger thread will run in order to check for expired sessions. Set in
-     * <b>seconds</b> and defaults to <code>60 * 5</code> seconds (5 minutes).
-     */
-    public static final String JETTY_SESSIONS_SCAVENGE_PERIOD = "jetty.sessions.scavengePeriod";
-
-    /**
-     * How often an actual update of a <b>non dirty</b> session will be performed to the Space. Set
-     * in <b>seconds</b> and defaults to <code>60</code> seconds.
-     */
-    public static final String JETTY_SESSIONS_SAVE_PERIOD = "jetty.sessions.savePeriod";
-
-    /**
-     * The lease of the {@link org.openspaces.jee.sessions.jetty.SessionData} that is written to the
+     * The lease of the SessionData that is written to the
      * Space. Set in <b>seconds</b> and defaults to FOREVER.
      */
     public static final String JETTY_SESSIONS_LEASE = "jetty.sessions.lease";
-
-    /**
-     * Controls, using a deployment property, the timeout value of sessions. Set in <b>minutes</b>.
-     */
-    public static final String JETTY_SESSIONS_TIMEOUT = "jetty.sessions.timeout";
 
     public void contextInitialized(ServletContextEvent servletContextEvent) {
         final ServletContext servletContext = servletContextEvent.getServletContext();
@@ -94,134 +73,90 @@ public class JettyWebApplicationContextListener implements ServletContextListene
         BeanLevelProperties beanLevelProperties = (BeanLevelProperties) servletContext.getAttribute(JeeProcessingUnitContainerProvider.BEAN_LEVEL_PROPERTIES_CONTEXT);
         ClusterInfo clusterInfo = (ClusterInfo) servletContext.getAttribute(JeeProcessingUnitContainerProvider.CLUSTER_INFO_CONTEXT);
         if (beanLevelProperties != null) {
+            replaceWorkerName(sessionHandler, clusterInfo.getUniqueName().replace('.', '_'));
 
             // automatically enable GigaSpaces Session Manager when passing the relevant property
             String sessionsSpaceUrl = beanLevelProperties.getContextProperties().getProperty(JETTY_SESSIONS_URL);
             if (sessionsSpaceUrl != null) {
-                logger.info("Jetty GigaSpaces Session support using space url [" + sessionsSpaceUrl + "]");
-                GigaSessionManager gigaSessionManager = new GigaSessionManager();
-
-                if (sessionsSpaceUrl.startsWith("bean://")) {
-                    ApplicationContext applicationContext = (ApplicationContext) servletContext.getAttribute(JeeProcessingUnitContainerProvider.APPLICATION_CONTEXT_CONTEXT);
-                    if (applicationContext == null) {
-                        throw new IllegalStateException("Failed to find servlet context bound application context");
-                    }
-                    GigaSpace space;
-                    Object bean = applicationContext.getBean(sessionsSpaceUrl.substring("bean://".length()));
-                    if (bean instanceof GigaSpace) {
-                        space = (GigaSpace) bean;
-                    } else if (bean instanceof IJSpace) {
-                        space = new GigaSpaceConfigurer((IJSpace) bean).create();
-                    } else {
-                        throw new IllegalArgumentException("Bean [" + bean + "] is not of either GigaSpace type or IJSpace type");
-                    }
-                    gigaSessionManager.setSpace(space);
-                } else {
-                    gigaSessionManager.setUrlSpaceConfigurer(new UrlSpaceConfigurer(sessionsSpaceUrl).clusterInfo(clusterInfo));
-                }
-
-                String scavangePeriod = beanLevelProperties.getContextProperties().getProperty(JETTY_SESSIONS_SCAVENGE_PERIOD);
-                if (scavangePeriod != null) {
-                    gigaSessionManager.setScavengePeriod(Integer.parseInt(scavangePeriod));
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Setting scavenge period to [" + scavangePeriod + "] seconds");
-                    }
-                }
-                String savePeriod = beanLevelProperties.getContextProperties().getProperty(JETTY_SESSIONS_SAVE_PERIOD);
-                if (savePeriod != null) {
-                    gigaSessionManager.setSavePeriod(Integer.parseInt(savePeriod));
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Setting save period to [" + savePeriod + "] seconds");
-                    }
-                }
-                String lease = beanLevelProperties.getContextProperties().getProperty(JETTY_SESSIONS_LEASE);
-                if (lease != null) {
-                    gigaSessionManager.setLease(Long.parseLong(lease));
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Setting lease to [" + lease + "] milliseconds");
-                    }
-                }
-
-                // copy over session settings
-
-                SessionManager sessionManager = sessionHandler.getSessionManager();
-                gigaSessionManager.getSessionCookieConfig().setName(sessionManager.getSessionCookieConfig().getName());
-                gigaSessionManager.getSessionCookieConfig().setDomain(sessionManager.getSessionCookieConfig().getDomain());
-                gigaSessionManager.getSessionCookieConfig().setPath(sessionManager.getSessionCookieConfig().getPath());
-                gigaSessionManager.setUsingCookies(sessionManager.isUsingCookies());
-                gigaSessionManager.getSessionCookieConfig().setMaxAge(sessionManager.getSessionCookieConfig().getMaxAge());
-                gigaSessionManager.getSessionCookieConfig().setSecure(sessionManager.getSessionCookieConfig().isSecure());
-                gigaSessionManager.setMaxInactiveInterval(sessionManager.getMaxInactiveInterval());
-                gigaSessionManager.setHttpOnly(sessionManager.getHttpOnly());
-                gigaSessionManager.getSessionCookieConfig().setComment(sessionManager.getSessionCookieConfig().getComment());
-
-                String sessionTimeout = beanLevelProperties.getContextProperties().getProperty(JETTY_SESSIONS_TIMEOUT);
-                if (sessionTimeout != null) {
-                    gigaSessionManager.setMaxInactiveInterval(Integer.parseInt(sessionTimeout) * 60);
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Setting session timeout to [" + sessionTimeout + "] seconds");
-                    }
-                }
-
-                GigaSessionIdManager sessionIdManager = new GigaSessionIdManager(jettyContext.getServer());
-                sessionIdManager.setWorkerName(clusterInfo.getUniqueName().replace('.', '_'));
-                gigaSessionManager.setSessionIdManager(sessionIdManager);
-                // replace the actual session manager inside the LazySessionManager with GS session manager, this is
-                // because in Jetty 9 it no more possible to replace the session manager after the server started
-                // without deleting all webapps.
-                if ("GSLazySessionManager".equals(sessionManager.getClass().getSimpleName())) {
-                    try {
-                        Method method = ReflectionUtils.findMethod(sessionManager.getClass(), "replaceDefault", SessionManager.class);
-                        if (method != null) {
-                            ReflectionUtils.invokeMethod(method, sessionManager, gigaSessionManager);
-                        } else {
-                            throw new NoSuchMethodException("replaceDefault");
-                        }
-                    } catch (Exception e) {
-                        throw new RuntimeException("Failed to replace default session manager with GigaSessionManager", e);
-                    }
-                }
+                logger.info("Jetty GigaSpaces Session Data Store support using space url [" + sessionsSpaceUrl + "]");
+                GigaSpace space = getSpace(sessionsSpaceUrl, servletContext, clusterInfo);
+                initDataSessionStore(sessionsSpaceUrl, sessionHandler, space, beanLevelProperties);
             }
+        }
+    }
 
-            // if we have a simple hash session id manager, set its worker name automatically...
-            if (sessionHandler.getSessionManager().getSessionIdManager() instanceof HashSessionIdManager) {
-                HashSessionIdManager sessionIdManager = (HashSessionIdManager) sessionHandler.getSessionManager().getSessionIdManager();
-                if (sessionIdManager.getWorkerName() == null) {
-                    final String workerName = clusterInfo.getUniqueName().replace('.', '_');
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Automatically setting worker name to [" + workerName + "]");
-                    }
-                    stop(sessionIdManager, "to set worker name");
-                    sessionIdManager.setWorkerName(workerName);
-                    start(sessionIdManager, "to set worker name");
+    private GigaSpace getSpace(String sessionsSpaceUrl, ServletContext servletContext, ClusterInfo clusterInfo) {
+        GigaSpace space;
+        if (sessionsSpaceUrl.startsWith("bean://")) {
+            ApplicationContext applicationContext = (ApplicationContext) servletContext.getAttribute(JeeProcessingUnitContainerProvider.APPLICATION_CONTEXT_CONTEXT);
+            if (applicationContext == null) {
+                throw new IllegalStateException("Failed to find servlet context bound application context");
+            }
+            Object bean = applicationContext.getBean(sessionsSpaceUrl.substring("bean://".length()));
+            if (bean instanceof GigaSpace) {
+                space = (GigaSpace) bean;
+            } else if (bean instanceof IJSpace) {
+                space = new GigaSpaceConfigurer((IJSpace) bean).create();
+            } else {
+                throw new IllegalArgumentException("Bean [" + bean + "] is not of either GigaSpace type or IJSpace type");
+            }
+        } else {
+            space = new GigaSpaceConfigurer(new UrlSpaceConfigurer(sessionsSpaceUrl).clusterInfo(clusterInfo)).create();
+        }
+        return space;
+    }
+
+    private void initDataSessionStore(String sessionsSpaceUrl, SessionHandler sessionHandler, GigaSpace space,
+                                      BeanLevelProperties beanLevelProperties) {
+        final SpaceSessionDataStore spaceSessionDataStore = new SpaceSessionDataStore(space);
+
+        String lease = beanLevelProperties.getContextProperties().getProperty(JETTY_SESSIONS_LEASE);
+        if (lease != null) {
+            spaceSessionDataStore.setLease(Long.parseLong(lease));
+            if (logger.isDebugEnabled()) {
+                logger.debug("Setting lease to [" + lease + "] milliseconds");
+            }
+        }
+
+        restart(sessionHandler.getSessionCache(), sc -> sc.setSessionDataStore(spaceSessionDataStore), "Replacing default session data store");
+    }
+
+    private void replaceWorkerName(SessionHandler sessionHandler, String newWorkerName) {
+        // if we have a default session id manager, set its worker name automatically...
+        if (sessionHandler.getSessionIdManager() instanceof DefaultSessionIdManager) {
+            DefaultSessionIdManager sessionIdManager = (DefaultSessionIdManager) sessionHandler.getSessionIdManager();
+            String currWorkerName = sessionIdManager.getWorkerName();
+            if (currWorkerName == null || currWorkerName.equals("node0")) {
+                if (logger.isInfoEnabled()) {
+                    logger.info("Modifying worker name from [" + currWorkerName + "] to [" + newWorkerName + "]");
                 }
+                restart(sessionIdManager, sim -> sessionIdManager.setWorkerName(newWorkerName), "Modify worker name");
             }
         }
     }
 
     public void contextDestroyed(ServletContextEvent servletContextEvent) {
-
     }
 
-    private void stop(LifeCycle instance, String cause) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Stopping " + instance.toString() + " " + cause);
+    private static <T extends LifeCycle> void restart(T instance, Consumer<T> action, String desc) {
+        if (logger.isInfoEnabled()) {
+            logger.info("Stopping " + instance.toString() + " - " + desc);
         }
         try {
             instance.stop();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to stop " + instance.toString() + " " + cause, e);
+            throw new RuntimeException("Failed to stop " + instance.toString() + " " + desc, e);
         }
-    }
 
-    private void start(LifeCycle instance, String cause) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Starting " + instance.toString() + " " + cause);
+        action.accept(instance);
+
+        if (logger.isInfoEnabled()) {
+            logger.info("Restarting " + instance.toString() + " - " + desc);
         }
         try {
             instance.start();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to start " + instance.toString() + " " + cause, e);
+            throw new RuntimeException("Failed to restart " + instance.toString() + " " + desc, e);
         }
     }
 }
