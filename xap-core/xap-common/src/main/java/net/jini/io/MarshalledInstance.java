@@ -133,23 +133,19 @@ public class MarshalledInstance implements Serializable {
         bByteOut.writeByte(buildFlag());
         OptimizedByteArrayOutputStream lByteOut = new OptimizedByteArrayOutputStream();
         lByteOut.writeByte(buildFlag());
-        OutputStream bout = bByteOut;
-        if (USE_GZIP) {
-            bout = new GZIPOutputStream(bout);
+        try (OutputStream bout = USE_GZIP ? new GZIPOutputStream(bByteOut) : bByteOut) {
+            try (OutputStream lout = USE_GZIP ? new GZIPOutputStream(lByteOut) : lByteOut) {
+                try (MarshalledInstanceOutputStream out = new MarshalledInstanceOutputStream(bout, lout, context)) {
+                    out.writeObject(obj);
+                    out.flush();
+                    bout.close();
+                    lout.close();
+                    objBytes = bByteOut.toByteArray();
+                    // locBytes is null if no annotations
+                    locBytes = (out.hadAnnotations() ? lByteOut.toByteArray() : null);
+                }
+            }
         }
-        OutputStream lout = lByteOut;
-        if (USE_GZIP) {
-            lout = new GZIPOutputStream(lout);
-        }
-        MarshalledInstanceOutputStream out =
-                new MarshalledInstanceOutputStream(bout, lout, context);
-        out.writeObject(obj);
-        out.flush();
-        bout.close();
-        lout.close();
-        objBytes = bByteOut.toByteArray();
-        // locBytes is null if no annotations
-        locBytes = (out.hadAnnotations() ? lByteOut.toByteArray() : null);
 
         // Calculate hash from the marshalled representation of object
         // so the hashcode will be comparable when sent between VMs.
