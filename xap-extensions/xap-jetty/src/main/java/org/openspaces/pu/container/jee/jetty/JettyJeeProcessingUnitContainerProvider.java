@@ -23,15 +23,9 @@ import com.j_spaces.kernel.ClassLoaderHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.eclipse.jetty.jmx.MBeanContainer;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.HandlerContainer;
-import org.eclipse.jetty.server.NetworkConnector;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SessionManager;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.util.log.JavaUtilLog;
 import org.eclipse.jetty.util.resource.FileResource;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -536,35 +530,17 @@ public class JettyJeeProcessingUnitContainerProvider extends JeeProcessingUnitCo
             webAppContext.setSystemClasses(systemClasses.toArray(new String[systemClasses.size()]));
         }
         // don't hide server (jetty) classes from context, since we use it in the JettyWebApplicationContextListener
-        webAppContext.setServerClasses(new String[0]);
+        webAppContext.setServerClasses(new String[] {"org.dummy.DummyClass"});
 
         webAppContext.setDisplayName("web." + getClusterInfo().getName() + "." + getClusterInfo().getSuffix());
         webAppContext.setClassLoader(initWebAppClassLoader(webAppContext));
-        final String SESSION_MANAGER_BEAN = "sessionManager";
-        if (applicationContext.containsBean(SESSION_MANAGER_BEAN)) {
-            SessionManager sessionManager =
-                    (SessionManager) applicationContext.getBean(SESSION_MANAGER_BEAN);
-            if (sessionManager != null) {
-                SessionHandler sessionHandler = webAppContext.getSessionHandler();
-                if (sessionHandler != null) {
-                    //fix for GS-10830
-                    sessionHandler.setSessionManager(new GSLazySessionManager(sessionManager));
-                }
-            }
-        } else {
-            SessionHandler sessionHandler = webAppContext.getSessionHandler();
-            if (sessionHandler != null) {
-                //fix for GS-10830
-                sessionHandler.setSessionManager(new GSLazySessionManager());
-            }
-        }
         return webAppContext;
     }
 
     private ClassLoader initWebAppClassLoader(WebAppContext webAppContext) throws Exception {
         // Provide our own extension to jetty class loader, so we can get the name for it in our logging
         ServiceClassLoader serviceClassLoader = (ServiceClassLoader) Thread.currentThread().getContextClassLoader();
-        JettyWebAppClassLoader webAppClassLoader = new JettyWebAppClassLoader(getJeeClassLoader(), webAppContext, serviceClassLoader.getLogName());
+        JettyWebAppClassLoader webAppClassLoader = new JettyWebAppClassLoader(getJeeClassLoader(), webAppContext, "GsJettyWebApp-" + serviceClassLoader.getLogName());
 
         // add pu-common & web-pu-common jar files
         for (String jar : super.getWebAppClassLoaderJars()) {
