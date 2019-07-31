@@ -5028,9 +5028,9 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         proxyMarshalledObject = proxyMarshalledInstance.convertToMarshalledObject();
 
         OptimizedByteArrayOutputStream os = new OptimizedByteArrayOutputStream();
-        MarshalOutputStream oos = new MarshalOutputStream(os, Collections.EMPTY_SET);
-        oos.writeObject(proxy);
-        oos.close();
+        try (MarshalOutputStream oos = new MarshalOutputStream(os, Collections.EMPTY_SET)) {
+            oos.writeObject(proxy);
+        }
         proxyRegistrarBytes = os.toByteArray();
 
         myLocator = (proxy instanceof RemoteMethodControl) ?
