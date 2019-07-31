@@ -26,8 +26,7 @@ import org.eclipse.jetty.jsp.JettyJspServlet;
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SessionManager;
-import org.eclipse.jetty.server.session.AbstractSessionManager;
+import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.security.Password;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -95,12 +94,7 @@ public class JettyLauncher extends WebLauncher {
         webAppContext.addServlet(jspServletHolder(), "*.jsp");
 
         // GS-10830 - change default setSessionCookie (in order to change "JSESSIONID")
-        SessionManager sessionManager = webAppContext.getSessionHandler().getSessionManager();
-        if (sessionManager instanceof AbstractSessionManager) {
-            ((AbstractSessionManager) sessionManager).setSessionCookie(SessionManager.__DefaultSessionCookie + "_GigaSpaces_" + UUID.randomUUID());
-        } else {
-            System.out.println("setSessionCookie was not invoked (SessionManager=" + sessionManager + ")");
-        }
+        webAppContext.getSessionHandler().setSessionCookie(SessionHandler.__DefaultSessionCookie + "_GigaSpaces_" + UUID.randomUUID());
 
         server.setHandler(webAppContext);
 

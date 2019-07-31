@@ -123,9 +123,6 @@ public class TypeDescFactory {
     }
 
     private static boolean shouldWarnExternalizable(SpaceTypeInfo typeInfo) {
-        if (typeInfo.getType().getName().equals("org.openspaces.jee.sessions.jetty.SessionData"))
-            return false;
-
         return true;
     }
 

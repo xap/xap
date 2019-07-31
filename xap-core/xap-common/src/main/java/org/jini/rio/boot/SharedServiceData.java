@@ -15,10 +15,10 @@
  */
 package org.jini.rio.boot;
 
+import com.gigaspaces.classloader.CustomURLClassLoader;
 import com.gigaspaces.start.Locator;
 
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,22 +58,32 @@ public class SharedServiceData {
             ClassLoader classLoader = jeeClassLoaders.get(jeeContainer);
             if (classLoader == null) {
                 List<URL> urls = BootUtil.toURLs(gsLibOptional + jeeContainer);
-                classLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), CommonClassLoader.getInstance());
-                ClassLoader prevClassLoader = Thread.currentThread().getContextClassLoader();
-                Thread.currentThread().setContextClassLoader(classLoader);
-                try {
-                    if (classesToLoad != null) {
+                String name = "Gs" + capitalizeFirst(jeeContainer) + "Server";
+                classLoader = new CustomURLClassLoader(name, urls.toArray(new URL[urls.size()]), CommonClassLoader.getInstance());
+                if (classesToLoad != null) {
+                    ClassLoader prevClassLoader = Thread.currentThread().getContextClassLoader();
+                    Thread.currentThread().setContextClassLoader(classLoader);
+                    try {
                         for (String classToLoad : classesToLoad) {
                             classLoader.loadClass(classToLoad);
                         }
+                    } finally {
+                        Thread.currentThread().setContextClassLoader(prevClassLoader);
                     }
-                } finally {
-                    Thread.currentThread().setContextClassLoader(prevClassLoader);
                 }
+
                 jeeClassLoaders.put(jeeContainer, classLoader);
             }
             return classLoader;
         }
+    }
+
+    private static String capitalizeFirst(String s) {
+        if (s == null || s.isEmpty())
+            return s;
+        char first = s.charAt(0);
+        char firstUpper = Character.toUpperCase(first);
+        return firstUpper == first ? s : firstUpper + s.substring(1);
     }
 
     public static void putWebAppClassLoader(String key, ClassLoader webAppClassLoader) {
