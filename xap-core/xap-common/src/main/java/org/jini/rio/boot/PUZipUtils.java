@@ -102,31 +102,19 @@ public class PUZipUtils {
         conn.setFixedLengthStreamingMode((int) puFile.length());
         try {
             conn.connect();
-            OutputStream out = new BufferedOutputStream(conn.getOutputStream());
-            InputStream in = new BufferedInputStream(new FileInputStream(puFile));
-            try {
-                int byteCount = 0;
+            try (OutputStream out = new BufferedOutputStream(conn.getOutputStream());
+                 InputStream in = new BufferedInputStream(new FileInputStream(puFile))) {
                 int bytesRead = -1;
                 while ((bytesRead = in.read(buffer)) != -1) {
                     out.write(buffer, 0, bytesRead);
-                    byteCount += bytesRead;
-                }
-                out.flush();
-            } finally {
-                if (out != null) {
-                    out.close();
-                }
-                if (in != null) {
-                    in.close();
                 }
             }
 
             int responseCode = conn.getResponseCode();
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            try {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
                 String line;
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 while ((line = reader.readLine()) != null) {
                     sb.append(line);
                 }
@@ -134,9 +122,6 @@ public class PUZipUtils {
                 if (responseCode != 200 && responseCode != 201) {
                     throw new RuntimeException("Failed to upload file, response code [" + responseCode + "], response: " + sb.toString());
                 }
-
-            } finally {
-                reader.close();
             }
         } finally {
             conn.disconnect();
@@ -204,12 +189,12 @@ public class PUZipUtils {
                 }
                 StringBuilder sb = new StringBuilder();
                 try {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        sb.append(line);
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            sb.append(line);
+                        }
                     }
-                    reader.close();
                 } catch (Exception e) {
                     // ignore this exception, failed to read input
                 }
@@ -222,34 +207,19 @@ public class PUZipUtils {
         target.getParentFile().mkdirs();
 
         try {
-            InputStream in = new BufferedInputStream(conn.getInputStream());
-            OutputStream out = new FileOutputStream(target);
-            try {
-                int byteCount = 0;
+            try (InputStream in = new BufferedInputStream(conn.getInputStream());
+                 OutputStream out = new FileOutputStream(target)) {
                 byte[] buffer = new byte[4098];
                 int bytesRead = -1;
                 while ((bytesRead = in.read(buffer)) != -1) {
                     out.write(buffer, 0, bytesRead);
-                    byteCount += bytesRead;
-                }
-                out.flush();
-            } finally {
-                try {
-                    in.close();
-                } catch (IOException ex) {
-                    // ignore
-                }
-                try {
-                    out.close();
-                } catch (IOException ex) {
-                    // ignore
                 }
             }
             conn.disconnect();
 
-            RandomAccessFile ras = new RandomAccessFile(target, "rw");
-            ras.getFD().sync();
-            ras.close();
+            try (RandomAccessFile ras = new RandomAccessFile(target, "rw")) {
+                ras.getFD().sync();
+            }
         } catch (IOException e) {
             throw new DownloadProcessingUnitException("Failed to read processing unit [" + puName + "] from [" + url.toString() + "] into [" + target.getAbsolutePath() + "]", e);
         } finally {
@@ -267,50 +237,42 @@ public class PUZipUtils {
         }
         long totalSize = 0;
         final int bufferSize = 4098;
-        byte data[] = new byte[bufferSize];
-        ZipFile zipFile = new ZipFile(targetZip);
-        Enumeration<? extends ZipEntry> e = zipFile.entries();
-        while (e.hasMoreElements()) {
-            ZipEntry entry = e.nextElement();
-            if (entry.isDirectory()) {
-                File dir = new File(dirToExtract.getAbsolutePath() + "/" + entry.getName().replace('\\', '/'));
-                for (int i = 0; i < 5; i++) {
-                    dir.mkdirs();
-                }
-            } else {
-                BufferedInputStream is = new BufferedInputStream(zipFile.getInputStream(entry));
-                int count;
-                File file = new File(dirToExtract.getAbsolutePath() + "/" + entry.getName().replace('\\', '/'));
-                if (file.getParentFile() != null) {
-                    file.getParentFile().mkdirs();
-                }
-                if (logger.isLoggable(Level.FINEST)) {
-                    logger.finest("Extracting zip entry [" + entry.getName() + "] with size [" + entry.getSize() + "] to [" + file.getAbsolutePath() + "]");
-                }
-                FileOutputStream fos = new FileOutputStream(file);
-                BufferedOutputStream dest = new BufferedOutputStream(fos, bufferSize);
-                while ((count = is.read(data, 0, bufferSize)) != -1) {
-                    totalSize += count;
-                    dest.write(data, 0, count);
-                }
-                dest.flush();
-                dest.close();
-                is.close();
+        byte[] data = new byte[bufferSize];
+        try (ZipFile zipFile = new ZipFile(targetZip)) {
+            Enumeration<? extends ZipEntry> e = zipFile.entries();
+            while (e.hasMoreElements()) {
+                ZipEntry entry = e.nextElement();
+                if (entry.isDirectory()) {
+                    File dir = new File(dirToExtract.getAbsolutePath() + "/" + entry.getName().replace('\\', '/'));
+                    for (int i = 0; i < 5; i++) {
+                        dir.mkdirs();
+                    }
+                } else {
+                    File file = new File(dirToExtract.getAbsolutePath() + "/" + entry.getName().replace('\\', '/'));
+                    try (BufferedInputStream is = new BufferedInputStream(zipFile.getInputStream(entry))) {
+                        if (file.getParentFile() != null) {
+                            file.getParentFile().mkdirs();
+                        }
+                        if (logger.isLoggable(Level.FINEST)) {
+                            logger.finest("Extracting zip entry [" + entry.getName() + "] with size [" + entry.getSize() + "] to [" + file.getAbsolutePath() + "]");
+                        }
+                        FileOutputStream fos = new FileOutputStream(file);
+                        int count;
+                        try (BufferedOutputStream dest = new BufferedOutputStream(fos, bufferSize)) {
+                            while ((count = is.read(data, 0, bufferSize)) != -1) {
+                                totalSize += count;
+                                dest.write(data, 0, count);
+                            }
+                        }
+                    }
 
-                // sync the file to the file system
-                RandomAccessFile ras = new RandomAccessFile(file, "rw");
-                try {
-                    ras.getFD().sync();
-                } finally {
-                    try {
-                        ras.close();
-                    } catch (Exception e1) {
-                        // ignore
+                    // sync the file to the file system
+                    try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
+                        ras.getFD().sync();
                     }
                 }
             }
         }
-        zipFile.close();
         return totalSize;
     }
 
@@ -349,22 +311,21 @@ public class PUZipUtils {
             }
             //if we reached here, the File object f was not a directory
             //create a FileInputStream on top of f
-            FileInputStream fis = new FileInputStream(f);
-            // create a new zip entry
-            String path = f.getAbsolutePath().substring(baseDir2zip.length() + 1);
-            path = path.replace('\\', '/');
-            ZipEntry anEntry = new ZipEntry(path);
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.finest("Compressing zip entry [" + anEntry.getName() + "] with size [" + anEntry.getSize() + "] at [" + f.getAbsolutePath() + "]");
+            try (FileInputStream fis = new FileInputStream(f)) {
+                // create a new zip entry
+                String path = f.getAbsolutePath().substring(baseDir2zip.length() + 1);
+                path = path.replace('\\', '/');
+                ZipEntry anEntry = new ZipEntry(path);
+                if (logger.isLoggable(Level.FINEST)) {
+                    logger.finest("Compressing zip entry [" + anEntry.getName() + "] with size [" + anEntry.getSize() + "] at [" + f.getAbsolutePath() + "]");
+                }
+                //place the zip entry in the ZipOutputStream object
+                zos.putNextEntry(anEntry);
+                //now write the content of the file to the ZipOutputStream
+                while ((bytesIn = fis.read(readBuffer)) != -1) {
+                    zos.write(readBuffer, 0, bytesIn);
+                }
             }
-            //place the zip entry in the ZipOutputStream object
-            zos.putNextEntry(anEntry);
-            //now write the content of the file to the ZipOutputStream
-            while ((bytesIn = fis.read(readBuffer)) != -1) {
-                zos.write(readBuffer, 0, bytesIn);
-            }
-            //close the Stream
-            fis.close();
         }
     }
 }
