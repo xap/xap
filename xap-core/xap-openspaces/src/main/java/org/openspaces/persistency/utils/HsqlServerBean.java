@@ -29,6 +29,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Properties;
 
 import javax.sql.DataSource;
@@ -113,18 +114,12 @@ public class HsqlServerBean implements InitializingBean, DisposableBean {
     public void destroy() {
         log.info("HSQL Server Shutdown sequence initiated");
         if (dataSource != null) {
-            Connection con = null;
-            try {
-                con = dataSource.getConnection();
-                con.createStatement().execute("SHUTDOWN");
+            try (Connection con = dataSource.getConnection()) {
+                try (Statement statement = con.createStatement()) {
+                    statement.execute("SHUTDOWN");
+                }
             } catch (SQLException e) {
                 log.error("HSQL Server Shutdown failed: " + e.getMessage());
-            } finally {
-                try {
-                    if (con != null)
-                        con.close();
-                } catch (Exception ignore) {
-                }
             }
         } else {
             log.warn("HSQL ServerBean needs a dataSource property set to shutdown database safely.");
