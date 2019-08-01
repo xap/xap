@@ -43,9 +43,10 @@ public class ThreadLocalMarshaller {
             return null;
 
         OptimizedByteArrayInputStream inStream = new OptimizedByteArrayInputStream(buffer);
-        ObjectInputStream in = new ObjectInputStream(inStream);
-        Object retval = in.readObject();
-        in.close();
+        Object retval;
+        try (ObjectInputStream in = new ObjectInputStream(inStream)) {
+            retval = in.readObject();
+        }
 
         return retval;
     }
@@ -57,13 +58,10 @@ public class ThreadLocalMarshaller {
     public static byte[] objectToByteBuffer(Object obj) throws IOException {
         OptimizedByteArrayOutputStream outStream = cachedByteArrayOutputStream.get();
         outStream.reset();
-        ObjectOutputStream out = new ObjectOutputStream(outStream);
-        out.writeObject(obj);
-        out.flush();
-        byte[] result = outStream.toByteArray();
-        out.close();
-
-        return result;
+        try (ObjectOutputStream out = new ObjectOutputStream(outStream)) {
+            out.writeObject(obj);
+        }
+        return outStream.toByteArray();
     }
 
 }
