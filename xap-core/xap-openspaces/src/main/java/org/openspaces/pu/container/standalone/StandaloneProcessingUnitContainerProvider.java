@@ -186,85 +186,83 @@ public class StandaloneProcessingUnitContainerProvider extends ApplicationContex
             addJarsLocation(fileLocation, urls, "lib");
             addJarsLocation(fileLocation, sharedUrls, "shared-lib");
         } else {
-            JarFile jarFile;
-            try {
-                jarFile = new JarFile(fileLocation);
-            } catch (IOException e) {
-                throw new CannotCreateContainerException("Failed to open pu file [" + location + "]", e);
-            }
-            // add the root to the classpath
-            try {
-                urls.add(new URL("jar:" + fileLocation.toURL() + "!/"));
-            } catch (MalformedURLException e) {
-                throw new CannotCreateContainerException("Failed to add pu location [" + location + "] to classpath", e);
-            }
-            // add jars in lib and shared-lib to the classpath
-            for (Enumeration<JarEntry> entries = jarFile.entries(); entries.hasMoreElements(); ) {
-                JarEntry jarEntry = entries.nextElement();
-                if (isWithinDir(jarEntry, "lib") || isWithinDir(jarEntry, "shared-lib")) {
-                    // extract the jar into a temp location
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Adding jar [" + jarEntry.getName() + "] with pu location [" + location + "]");
-                    }
-                    File tempLocation = new File(System.getProperty("java.io.tmpdir") + "/openspaces");
-                    tempLocation.mkdirs();
-                    File tempJar;
-                    String tempJarName = jarEntry.getName();
-                    if (tempJarName.indexOf('/') != -1) {
-                        tempJarName = tempJarName.substring(tempJarName.lastIndexOf('/') + 1);
-                    }
-                    try {
-                        tempJar = File.createTempFile(tempJarName, ".jar", tempLocation);
-                    } catch (IOException e) {
-                        throw new CannotCreateContainerException("Failed to create temp jar at location ["
-                                + tempLocation + "] with name [" + tempJarName + "]", e);
-                    }
-                    tempJar.deleteOnExit();
-                    if (logger.isTraceEnabled()) {
-                        logger.trace("Extracting jar [" + jarEntry.getName() + "] to temporary jar ["
-                                + tempJar.getAbsolutePath() + "]");
-                    }
+            try (JarFile jarFile = new JarFile(fileLocation)) {
+                // add the root to the classpath
+                try {
+                    urls.add(new URL("jar:" + fileLocation.toURL() + "!/"));
+                } catch (MalformedURLException e) {
+                    throw new CannotCreateContainerException("Failed to add pu location [" + location + "] to classpath", e);
+                }
+                // add jars in lib and shared-lib to the classpath
+                for (Enumeration<JarEntry> entries = jarFile.entries(); entries.hasMoreElements(); ) {
+                    JarEntry jarEntry = entries.nextElement();
+                    if (isWithinDir(jarEntry, "lib") || isWithinDir(jarEntry, "shared-lib")) {
+                        // extract the jar into a temp location
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Adding jar [" + jarEntry.getName() + "] with pu location [" + location + "]");
+                        }
+                        File tempLocation = new File(System.getProperty("java.io.tmpdir") + "/openspaces");
+                        tempLocation.mkdirs();
+                        File tempJar;
+                        String tempJarName = jarEntry.getName();
+                        if (tempJarName.indexOf('/') != -1) {
+                            tempJarName = tempJarName.substring(tempJarName.lastIndexOf('/') + 1);
+                        }
+                        try {
+                            tempJar = File.createTempFile(tempJarName, ".jar", tempLocation);
+                        } catch (IOException e) {
+                            throw new CannotCreateContainerException("Failed to create temp jar at location ["
+                                    + tempLocation + "] with name [" + tempJarName + "]", e);
+                        }
+                        tempJar.deleteOnExit();
+                        if (logger.isTraceEnabled()) {
+                            logger.trace("Extracting jar [" + jarEntry.getName() + "] to temporary jar ["
+                                    + tempJar.getAbsolutePath() + "]");
+                        }
 
-                    FileOutputStream fos;
-                    try {
-                        fos = new FileOutputStream(tempJar);
-                    } catch (FileNotFoundException e) {
-                        throw new CannotCreateContainerException("Failed to find temp jar ["
-                                + tempJar.getAbsolutePath() + "]", e);
-                    }
-                    InputStream is = null;
-                    try {
-                        is = jarFile.getInputStream(jarEntry);
-                        FileCopyUtils.copy(is, fos);
-                    } catch (IOException e) {
-                        throw new CannotCreateContainerException("Failed to create temp jar ["
-                                + tempJar.getAbsolutePath() + "]");
-                    } finally {
-                        if (is != null) {
+                        FileOutputStream fos;
+                        try {
+                            fos = new FileOutputStream(tempJar);
+                        } catch (FileNotFoundException e) {
+                            throw new CannotCreateContainerException("Failed to find temp jar ["
+                                    + tempJar.getAbsolutePath() + "]", e);
+                        }
+                        InputStream is = null;
+                        try {
+                            is = jarFile.getInputStream(jarEntry);
+                            FileCopyUtils.copy(is, fos);
+                        } catch (IOException e) {
+                            throw new CannotCreateContainerException("Failed to create temp jar ["
+                                    + tempJar.getAbsolutePath() + "]");
+                        } finally {
+                            if (is != null) {
+                                try {
+                                    is.close();
+                                } catch (IOException e1) {
+                                    // do nothing
+                                }
+                            }
                             try {
-                                is.close();
+                                fos.close();
                             } catch (IOException e1) {
                                 // do nothing
                             }
                         }
-                        try {
-                            fos.close();
-                        } catch (IOException e1) {
-                            // do nothing
-                        }
-                    }
 
-                    try {
-                        if (isWithinDir(jarEntry, "lib")) {
-                            urls.add(tempJar.toURL());
-                        } else if (isWithinDir(jarEntry, "shared-lib")) {
-                            sharedUrls.add(tempJar.toURL());
+                        try {
+                            if (isWithinDir(jarEntry, "lib")) {
+                                urls.add(tempJar.toURL());
+                            } else if (isWithinDir(jarEntry, "shared-lib")) {
+                                sharedUrls.add(tempJar.toURL());
+                            }
+                        } catch (MalformedURLException e) {
+                            throw new CannotCreateContainerException("Failed to add pu entry [" + jarEntry.getName()
+                                    + "] with location [" + location + "]", e);
                         }
-                    } catch (MalformedURLException e) {
-                        throw new CannotCreateContainerException("Failed to add pu entry [" + jarEntry.getName()
-                                + "] with location [" + location + "]", e);
                     }
                 }
+            } catch (IOException e) {
+                throw new CannotCreateContainerException("Failed to open pu file [" + location + "]", e);
             }
         }
 
