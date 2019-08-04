@@ -15,10 +15,8 @@
  */
 package org.openspaces.pu.container.jee.jetty.session;
 
-import com.gigaspaces.internal.io.GSByteArrayInputStream;
-import com.gigaspaces.internal.io.GSByteArrayOutputStream;
+import com.gigaspaces.internal.io.IOUtils;
 import org.eclipse.jetty.server.session.SessionData;
-import org.eclipse.jetty.util.ClassLoadingObjectInputStream;
 
 import java.io.*;
 
@@ -52,13 +50,7 @@ public class SpaceSessionData extends SessionData implements Externalizable {
         out.writeUTF(_lastNode); //name of last node managing
         out.writeLong(_expiry);
         out.writeLong(_maxInactiveMs);
-
-        try (GSByteArrayOutputStream baos = new GSByteArrayOutputStream();
-             ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-            serializeAttributes(this, oos);
-            out.write(baos.getCount());
-            out.write(baos.getBuffer(), 0, baos.getCount());
-        }
+        IOUtils.writeMapStringObject(out, _attributes);
     }
 
     @Override
@@ -73,12 +65,6 @@ public class SpaceSessionData extends SessionData implements Externalizable {
         _lastNode = in.readUTF(); //last managing node
         _expiry = in.readLong();
         _maxInactiveMs = in.readLong();
-
-        byte[] buffer = new byte[in.read()];
-        in.readFully(buffer);
-        try (GSByteArrayInputStream bais = new GSByteArrayInputStream(buffer);
-             ClassLoadingObjectInputStream ois = new ClassLoadingObjectInputStream(bais)) {
-            deserializeAttributes(this, ois);
-        }
+        _attributes = IOUtils.readMapStringObject(in);
     }
 }
