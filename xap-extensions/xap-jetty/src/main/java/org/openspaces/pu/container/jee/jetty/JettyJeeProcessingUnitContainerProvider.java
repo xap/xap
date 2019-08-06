@@ -26,6 +26,8 @@ import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.session.NullSessionCacheFactory;
+import org.eclipse.jetty.server.session.SessionCacheFactory;
 import org.eclipse.jetty.util.log.JavaUtilLog;
 import org.eclipse.jetty.util.resource.FileResource;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -476,6 +478,8 @@ public class JettyJeeProcessingUnitContainerProvider extends JeeProcessingUnitCo
             }
         }
 
+        initSessionManagementIfNeeded(jettyHolder.getServer());
+
         try {
             jettyHolder.start();
         } catch (Exception e) {
@@ -491,6 +495,23 @@ public class JettyJeeProcessingUnitContainerProvider extends JeeProcessingUnitCo
         }
 
         return jettyHolder;
+    }
+
+    private void initSessionManagementIfNeeded(Server server) {
+        BeanLevelProperties beanLevelProperties = getBeanLevelProperties();
+        logger.info("beanLevelProperties: " + (beanLevelProperties != null ? beanLevelProperties.toString() : null));
+        String sessionSpaceUrl = beanLevelProperties.getContextProperties().getProperty(JettyWebApplicationContextListener.JETTY_SESSIONS_URL);
+        if (sessionSpaceUrl != null) {
+            SessionCacheFactory currScFactory = server.getBean(SessionCacheFactory.class);
+            if (currScFactory != null) {
+                logger.info("SessionCacheFactory preconfigured to " + currScFactory.getClass());
+            } else {
+                NullSessionCacheFactory scFactory = new NullSessionCacheFactory();
+                scFactory.setSaveOnCreate(true);
+                server.addBean(scFactory);
+                logger.info("SessionCacheFactory initialized to " + scFactory.getClass());
+            }
+        }
     }
 
     private void initJettyJmx(JettyHolder jettyHolder) {

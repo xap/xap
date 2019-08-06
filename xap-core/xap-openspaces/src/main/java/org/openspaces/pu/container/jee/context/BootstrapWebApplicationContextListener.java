@@ -105,7 +105,8 @@ public class BootstrapWebApplicationContextListener implements ServletContextLis
         servletContext.setAttribute(BOOTSTRAP_CONTEXT_KEY, true);
 
         logger.info("Booting OpenSpaces Web Application Support");
-        logger.info(ClassLoaderUtils.getCurrentClassPathString("Web Class Loader"));
+        if (logger.isDebugEnabled())
+            logger.debug(ClassLoaderUtils.getCurrentClassPathString("Web Class Loader"));
         final ProcessingUnitContainerConfig config = new ProcessingUnitContainerConfig();
 
         InputStream is = servletContext.getResourceAsStream(MARSHALLED_CLUSTER_INFO);
