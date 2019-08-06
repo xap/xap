@@ -28,6 +28,7 @@ import com.gigaspaces.internal.reflection.ProxyInvocationHandler;
 import com.gigaspaces.internal.reflection.ReflectionUtil;
 import com.gigaspaces.internal.reflection.standard.StandardMethod;
 import com.gigaspaces.internal.stubcache.StubId;
+import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.utils.concurrent.ContextClassLoaderCallable;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.internal.version.PlatformVersion;
@@ -200,7 +201,7 @@ public class DynamicSmartStub
 
         init();
 
-		/* cache the hashCode of DynamicSmartStub */
+        /* cache the hashCode of DynamicSmartStub */
         _hashCode = _remoteObjClassName.hashCode() ^ System.identityHashCode(localObj);
     }
 
@@ -240,11 +241,11 @@ public class DynamicSmartStub
             if (targetInkMethod != null)
                 return targetInkMethod;
 
-		 /* lazy init creates on demand */
+            /* lazy init creates on demand */
             if (_methodDescTable == null)
                 _methodDescTable = LRMIUtilities.getMappingMethodDescriptor(_localObj.getClass());
 
-		 /* lookup the direct method reference by method-description(String) */
+            /* lookup the direct method reference by method-description(String) */
             String methodDesc = LRMIUtilities.getMethodNameAndDescriptor(dynamicProxyInvMethod);
             targetInkMethod = _methodDescTable.get(methodDesc);
             if (targetInkMethod == null) {
@@ -330,18 +331,18 @@ public class DynamicSmartStub
         final boolean changeCL = orgThreadCL != _exporterThreadContextClassLoader;
 
         try {
-           /* set the exported contextClassLoader */
+            /* set the exported contextClassLoader */
             if (changeCL)
                 ClassLoaderHelper.setContextClassLoader(_exporterThreadContextClassLoader, true /*ignore security*/);
 
 
-		  /*
-			* the invoked method is not assignable from the class of localObject.
-			* the localObject was loaded by different ClassLoader than declaring class of
-			* dynamic-proxy method and can't be invoked directly by reflection.
-			*/
+            /*
+             * the invoked method is not assignable from the class of localObject.
+             * the localObject was loaded by different ClassLoader than declaring class of
+             * dynamic-proxy method and can't be invoked directly by reflection.
+             */
             if (invokeMethod.getDeclaringClass().isAssignableFrom(_localObj.getClass())) {
-			   /* make sure the invoke method is Accessible */
+                /* make sure the invoke method is Accessible */
                 if (!invokeMethod.isAccessible()) {
                     Security.doPrivileged(new PrivilegedAction<Object>() {
                         public Object run() {
@@ -362,13 +363,13 @@ public class DynamicSmartStub
                         "\nLocalObject ClassLoader: " + _localObj.getClass().getClassLoader() +
                         "\nExported ThreadClassLoader: " + _exporterThreadContextClassLoader);
 
-			/* convert the call to the classLoader of localObject object */
+            /* convert the call to the classLoader of localObject object */
             final IMethod refMethod = getReferenceMethod(invokeMethod);
             final Object[] clArgs = (Object[]) LRMIUtilities.convertToAssignableClassLoader(args, _localObj.getClass().getClassLoader());
 
             boolean async = refMethod.getAnnotation(AsyncRemoteCall.class) != null;
 
-           /* direct reference invoke on ref-object instance */
+            /* direct reference invoke on ref-object instance */
             Object returnValue = null;
             if (async) {
                 Future<Object> future = LRMIRuntime.getRuntime().getThreadPool().submit(new ContextClassLoaderCallable<Object>() {
@@ -390,7 +391,7 @@ public class DynamicSmartStub
             if (returnValue == null)
                 return null;
 
-			/* convert back the result to the original ClassLoader of declaring method class */
+            /* convert back the result to the original ClassLoader of declaring method class */
             return LRMIUtilities.convertToAssignableClassLoader(returnValue, invokeMethod.getDeclaringClass().getClassLoader());
         } finally {
             if (changeCL)
@@ -411,7 +412,7 @@ public class DynamicSmartStub
      **/
     public Object invoke(Object proxy, final IMethod method, Object[] args)
             throws Throwable {
-		 /* no remote call if the invoked method is Object.equals(), hashCode() or toString() */
+        /* no remote call if the invoked method is Object.equals(), hashCode() or toString() */
         Class<?> declaringClass = method.getDeclaringClass();
         if (declaringClass == Object.class) {
             if (method.getName().equals("hashCode"))
@@ -426,16 +427,16 @@ public class DynamicSmartStub
             throw new InternalError("Unexpected Object method dispatched: " + method);
         }
 
-	    /* handle special case of ILRMIProxy invocation */
+        /* handle special case of ILRMIProxy invocation */
         if (LRMI_PROXY_CLASS_NAME.equals(declaringClass.getName()))
             return invokeLRMIProxy(method, args);
 
 
-	    /* DynamicSmartStub exists out side of exported JVM, do remote method call invocation */
+        /* DynamicSmartStub exists out side of exported JVM, do remote method call invocation */
         if (_localObj == null)
             return invokeRemote(proxy, method, args);
 
-	    /* if not null DynamicSmartStub in local JVM, do direct method call on localObject */
+        /* if not null DynamicSmartStub in local JVM, do direct method call on localObject */
         return invokeDirect(method, args);
     }
 
@@ -468,7 +469,7 @@ public class DynamicSmartStub
         if (existingHandler != null)
             return existingHandler;
 
-		/* lock the ~cache to insure only one instance of InvocationHandler per RemoteObjectId */
+        /* lock the ~cache to insure only one instance of InvocationHandler per RemoteObjectId */
         synchronized (_remoteInvHandlerCache) {
             if (_proxyClosed)
                 DynamicSmartStub.throwProxyClosedExeption(_connectionURL);
@@ -477,10 +478,10 @@ public class DynamicSmartStub
             if (existingHandler != null)
                 return existingHandler;
 
-    		/* get the ~cache invocation handler by connectionURL */
+            /* get the ~cache invocation handler by connectionURL */
             MethodCachedInvocationHandler peerInvocationHandler = _remoteInvHandlerCache.get(_connectionURL);
 
-    		/* is invocation already cached */
+            /* is invocation already cached */
             if (peerInvocationHandler != null) {
                 peerInvocationHandler.incrementReference();
                 _remoteInvHandler = peerInvocationHandler;
@@ -488,12 +489,12 @@ public class DynamicSmartStub
             }
 
             try {
-				/* get initialize LRMIRuntime */
+                /* get initialize LRMIRuntime */
                 ClientPeerInvocationHandler clientInvocationHandler = LRMIRuntime.getRuntime().getClientInvocationHandler(_connectionURL, _config, _platformLogicalVersion);
                 RemoteMethodCache methodCache = LRMIUtilities.createRemoteMethodCache(_stubInterfaces, _methodMapping, _methodsMetadata);
                 _remoteInvHandler = new MethodCachedInvocationHandler(methodCache, clientInvocationHandler, _platformVersion, _platformLogicalVersion, _connectionURL);
 
-				/* ~cache */
+                /* ~cache */
                 _remoteInvHandlerCache.put(_connectionURL, _remoteInvHandler);
 
                 if (_logger.isLoggable(Level.FINE))
@@ -519,17 +520,17 @@ public class DynamicSmartStub
         if (_localObj != null) {
             /* must be under lock, in order to prevent export object in time the DynamicSmartStub being closing */
             synchronized (this) {
-              /* only if still not exported */
+                /* only if still not exported */
                 if (_connectionURL == null) {
                     ClassLoader orgCL = Thread.currentThread().getContextClassLoader();
                     try {
-                     /*
-                      * on binding this stub to the remote LRMI stack,
-                      * bind with CL of exported Thread which is creator of DynamicSmartStub.
-                      */
+                        /*
+                         * on binding this stub to the remote LRMI stack,
+                         * bind with CL of exported Thread which is creator of DynamicSmartStub.
+                         */
                         Thread.currentThread().setContextClassLoader(_exporterThreadContextClassLoader);
 
-                     /* bind to remote LRMI stack */
+                        /* bind to remote LRMI stack */
                         ServerPeer sp = LRMIRuntime.getRuntime().export(_localObj, _config);
 
                         _remoteObjectId = sp.getObjectId();
@@ -592,6 +593,7 @@ public class DynamicSmartStub
         _platformVersion = in.readUTF();
         _config = (ITransportConfig) in.readObject();
         _connectionURL = in.readUTF();
+        _connectionURL = resolveInternalOrExternal(_connectionURL);
         ConnectionUrlDescriptor connectionUrlDescriptor = ConnectionUrlDescriptor.fromUrl(_connectionURL);
         _remoteNetworkAddress = connectionUrlDescriptor.getSocketAddress();
         _remoteProcessId = connectionUrlDescriptor.getPid();
@@ -611,11 +613,32 @@ public class DynamicSmartStub
         if (_localObj == null && !LRMIRuntime.getRuntime().isUseNetworkInJVM()) {
             ObjectRegistry.Entry objectEntry = LRMIRuntime.getRuntime().getRegistryObject(_remoteObjectId);
             if (objectEntry != null) {
-              /* recover the localObject and original ClassLoader of exported thread */
+                /* recover the localObject and original ClassLoader of exported thread */
                 _localObj = objectEntry.getObject();
                 _exporterThreadContextClassLoader = objectEntry.getExportedThreadClassLoader();
             }
         }
+    }
+
+    private String resolveInternalOrExternal(String connectionURL) {
+        if(connectionURL == null)
+            return connectionURL;
+        String[] urls = connectionURL.split(";");
+        if(urls.length <= 1){
+            return connectionURL;
+        }
+        if(urls.length == 3){
+            String internalUrl = urls[0];
+            String externalUrl = urls[1];
+            String clusterId = urls[2];
+            String envClusterId = System.getenv("KUBERNETES_CLUSTER_ID");
+            boolean isKubernetesInternal = envClusterId != null && envClusterId.equals(clusterId);
+            if(isKubernetesInternal){
+                return internalUrl;
+            }
+            return externalUrl;
+        }
+        return null;
     }
 
     /**
@@ -634,7 +657,7 @@ public class DynamicSmartStub
     public static DynamicSmartStub extractDynamicSmartStubFrom(Object obj) {
         DynamicSmartStub dynStub = null;
 
-		/* get DynamicSmartStub from dynamic proxy */
+        /* get DynamicSmartStub from dynamic proxy */
         if (ReflectionUtil.isProxyClass(obj.getClass())) {
             Object ih = ReflectionUtil.getInvocationHandler(obj);
             if (ih instanceof DynamicSmartStub)
@@ -673,25 +696,25 @@ public class DynamicSmartStub
         if (obj == null)
             return false;
 
-		/* equals dynamic proxy instances */
+        /* equals dynamic proxy instances */
         if (this == obj)
             return true;
 
         DynamicSmartStub eqSt = extractDynamicSmartStubFrom(obj);
 
-		/* the object is not DynamicSmartStub */
+        /* the object is not DynamicSmartStub */
         if (eqSt == null)
             return false;
 
-		/* equals invocation handler instances */
+        /* equals invocation handler instances */
         if (eqSt == this)
             return true;
 
-		/* equals the local obj references if we still in local VM */
+        /* equals the local obj references if we still in local VM */
         if (_localObj != null && eqSt.getLocalObjImpl() != null)
             return _localObj == eqSt.getLocalObjImpl();
 
-		/* equals by remote objectId */
+        /* equals by remote objectId */
         return _remoteObjectId == eqSt._remoteObjectId;
     }
 
@@ -714,7 +737,7 @@ public class DynamicSmartStub
         _unexported = true;
 
         try {
-		 /* not null if _localObj was once exported to underlying transport protocol */
+            /* not null if _localObj was once exported to underlying transport protocol */
             if (_connectionURL != null) {
                 LRMIRuntime.getRuntime().unexport(_localObj, _config.getProtocolName(), true);
             }

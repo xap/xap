@@ -17,7 +17,11 @@ public class XapNetworkInfo {
     private final InetAddress publicHost;
     private String publicHostId;
     private boolean publicHostConfigured;
+    private final String kubernetesServiceHost;
 
+    private final String kubernetesClusterId;
+
+    private final boolean kubernetesServiceConfigured;
     public static XapNetworkInfo getInstance() {
         XapNetworkInfo snapshot = instance;
         if (snapshot != null)
@@ -47,6 +51,10 @@ public class XapNetworkInfo {
         } catch (UnknownHostException e) {
             throw new IllegalStateException("Failed to get network information", e);
         }
+
+        this.kubernetesServiceHost = System.getenv("XAP_KUBERNETES_HOST");
+        this.kubernetesClusterId = System.getenv("KUBERNETES_CLUSTER_ID");
+        this.kubernetesServiceConfigured = kubernetesServiceHost != null && kubernetesClusterId != null;
     }
 
     public String getHostId() {
@@ -69,5 +77,17 @@ public class XapNetworkInfo {
 
     public boolean isPublicHostConfigured(){
         return publicHostConfigured;
+    }
+
+    public String getKubernetesServiceHost() {
+        return kubernetesServiceHost;
+    }
+
+    public String getKubernetesClusterId() {
+        return kubernetesClusterId;
+    }
+
+    public boolean isKubernetesServiceConfigured() {
+        return kubernetesServiceConfigured;
     }
 }
