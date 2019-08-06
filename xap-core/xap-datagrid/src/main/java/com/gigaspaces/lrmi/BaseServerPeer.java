@@ -20,6 +20,8 @@ import com.gigaspaces.config.lrmi.ITransportConfig;
 import com.gigaspaces.internal.lrmi.ConnectionUrlDescriptor;
 import com.gigaspaces.lrmi.nio.PAdapter;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.XapNetworkInfo;
+import com.gigaspaces.start.kubernetes.KuberntesClusterInfo;
 
 import java.rmi.RemoteException;
 
@@ -101,7 +103,7 @@ public class BaseServerPeer
     }
 
     public String getConnectionURL() {
-        return new ConnectionUrlDescriptor(
+        String internalUrl = new ConnectionUrlDescriptor(
                 _protocolAdapter.getName(),
                 SystemInfo.singleton().network().getPublicHostId(),
                 _protocolAdapter.getPort(),
@@ -110,5 +112,21 @@ public class BaseServerPeer
                 _objectClassLoader,
                 LRMIRuntime.getRuntime().getID(),
                 _serviceDetails).toUrl();
+        KuberntesClusterInfo kuberntesClusterInfo = SystemInfo.singleton().kubernetes();
+        if(!kuberntesClusterInfo.isKubernetesServiceConfigured()) {
+            return internalUrl;
+        }
+        String externalUrl = new ConnectionUrlDescriptor(
+                _protocolAdapter.getName(),
+                kuberntesClusterInfo.getKubernetesServiceHost(),
+                _protocolAdapter.getPort(),
+                SystemInfo.singleton().os().processId(),
+                _objectId,
+                _objectClassLoader,
+                LRMIRuntime.getRuntime().getID(),
+                _serviceDetails).toUrl();
+        String clusterId = kuberntesClusterInfo.getKubernetesClusterId();
+
+        return internalUrl + ";" + externalUrl + ";" + clusterId;
     }
 }
