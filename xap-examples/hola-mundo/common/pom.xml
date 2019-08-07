@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.gigaspaces</groupId>
         <artifactId>hola-mundo-example</artifactId>
-        <version>14.5.0</version>
+        <version>14.5.0-patch-e-1</version>
     </parent>
 
     <build>
