@@ -1187,7 +1187,6 @@ ExpNode condition(AbstractDMLQuery query) :
 	     { 
 	        rowNum= new RowNumNode(Integer.parseInt(startIndex.image),Integer.parseInt(endIndex.image));
 	     }
-
 	)
 	{   if( query.getRownum() != null)
 			throw new ParseException("Can't define more than a single condition for rownum. To specify range use rownum(from,to)");			
@@ -1244,7 +1243,6 @@ ExpNode conditionNode(AbstractDMLQuery query,ColumnNode columnNode1) :
                 | <LIKE>        { expNode = new LikeNode();}
                 | <NOT> <LIKE>  { expNode = new NotLikeNode(); }
                 | <RLIKE>       { expNode = new RLikeNode();}
-
             ) 
             ( 
             	t = <QUESTIONMARK> { query.setPrepared(true); valueNode = new PreparedNode(null,++conditionIndex); } 
