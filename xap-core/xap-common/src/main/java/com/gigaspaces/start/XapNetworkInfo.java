@@ -54,7 +54,7 @@ public class XapNetworkInfo {
 
         this.kubernetesServiceHost = System.getenv("XAP_KUBERNETES_HOST");
         this.kubernetesClusterId = System.getenv("KUBERNETES_CLUSTER_ID");
-        this.kubernetesServiceConfigured = kubernetesServiceHost != null && kubernetesClusterId != null;
+        this.kubernetesServiceConfigured = validateString(kubernetesServiceHost) && validateString(kubernetesClusterId);
     }
 
     public String getHostId() {
@@ -89,5 +89,9 @@ public class XapNetworkInfo {
 
     public boolean isKubernetesServiceConfigured() {
         return kubernetesServiceConfigured;
+    }
+
+    private boolean validateString(String s){
+        return s != null && !s.isEmpty() && !s.equals("null");
     }
 }
