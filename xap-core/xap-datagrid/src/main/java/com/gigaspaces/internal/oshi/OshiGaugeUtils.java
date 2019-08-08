@@ -2,6 +2,7 @@ package com.gigaspaces.internal.oshi;
 
 import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.metrics.Gauge;
+
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.GlobalMemory;
@@ -12,7 +13,12 @@ public class OshiGaugeUtils {
     public final static SystemInfo oshiSystemInfo = OshiChecker.getSystemInfo();
     public final static CentralProcessor processor = oshiSystemInfo.getHardware().getProcessor();
     public final static GlobalMemory memory = oshiSystemInfo.getHardware().getMemory();
-    public final static OSProcess osProcess = oshiSystemInfo.getOperatingSystem().getProcess(oshiSystemInfo.getOperatingSystem().getProcessId());
+    public final static int pid = oshiSystemInfo.getOperatingSystem().getProcessId();
+    public final static OSProcess osProcess = oshiSystemInfo.getOperatingSystem().getProcess(pid);
+
+    public static long previousCpuTime;
+    public static long previousCpuTotal;
+    public static double previousCpuPerc;
 
     public static Gauge<Double> getCpuPercGauge() {
         return new Gauge<Double>() {
@@ -182,7 +188,28 @@ public class OshiGaugeUtils {
         return new Gauge<Double>() {
             @Override
             public Double getValue() throws Exception {
-                return osProcess.calculateCpuPercent();
+
+                OSProcess osProcessLocal = oshiSystemInfo.getOperatingSystem().getProcess(pid);
+                long currentCpuTime = System.currentTimeMillis();
+                long currentCpuTotal = osProcessLocal.getKernelTime() + osProcessLocal.getUserTime();
+
+                double cpuPerc = -1;
+
+                long timeDelta = currentCpuTime - previousCpuTime;
+                long totalDelta = currentCpuTotal - previousCpuTotal;
+
+                if( totalDelta == 0 || totalDelta > timeDelta ){
+                    cpuPerc = previousCpuPerc;
+                }
+                else if( timeDelta > 0 && totalDelta > 0 && totalDelta < timeDelta ) {
+                    cpuPerc = ((double) totalDelta) / timeDelta;
+                }
+
+                previousCpuTime = currentCpuTime;
+                previousCpuTotal = currentCpuTotal;
+                previousCpuPerc = cpuPerc;
+
+                return cpuPerc;
             }
         };
     }
