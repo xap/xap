@@ -42,6 +42,15 @@ public class JvmMemoryMetricFactory {
         };
     }
 
+    public Gauge<Double> createHeapUsedInPercentGauge() {
+        return new Gauge<Double>() {
+            @Override
+            public Double getValue() {
+                return (double)mxBean.getHeapMemoryUsage().getUsed()/mxBean.getHeapMemoryUsage().getMax();
+            }
+        };
+    }
+
     public Gauge<Long> createHeapCommittedInBytesGauge() {
         return new Gauge<Long>() {
             @Override

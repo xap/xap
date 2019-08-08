@@ -362,6 +362,7 @@ public class MetricManager implements Closeable {
 
         final JvmMemoryMetricFactory memoryFactory = new JvmMemoryMetricFactory();
         registrator.register(registrator.toPath("memory", "heap", "used-bytes"), memoryFactory.createHeapUsedInBytesGauge());
+        registrator.register(registrator.toPath("memory", "heap", "used-percent"), memoryFactory.createHeapUsedInPercentGauge());
         registrator.register(registrator.toPath("memory", "heap", "committed-bytes"), memoryFactory.createHeapCommittedInBytesGauge());
         registrator.register(registrator.toPath("memory", "non-heap", "used-bytes"), memoryFactory.createNonHeapUsedInBytesGauge());
         registrator.register(registrator.toPath("memory", "non-heap", "committed-bytes"), memoryFactory.createNonHeapCommittedInBytesGauge());
