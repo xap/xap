@@ -20,8 +20,7 @@ import com.gigaspaces.config.lrmi.ITransportConfig;
 import com.gigaspaces.internal.lrmi.ConnectionUrlDescriptor;
 import com.gigaspaces.lrmi.nio.PAdapter;
 import com.gigaspaces.start.SystemInfo;
-import com.gigaspaces.start.XapNetworkInfo;
-import com.gigaspaces.start.kubernetes.KuberntesClusterInfo;
+import com.gigaspaces.start.kubernetes.KubernetesClusterInfo;
 
 import java.rmi.RemoteException;
 
@@ -112,21 +111,26 @@ public class BaseServerPeer
                 _objectClassLoader,
                 LRMIRuntime.getRuntime().getID(),
                 _serviceDetails).toUrl();
-        KuberntesClusterInfo kuberntesClusterInfo = SystemInfo.singleton().kubernetes();
-        if(!kuberntesClusterInfo.isKubernetesServiceConfigured()) {
+
+        if(! SystemInfo.singleton().kubernetes().isKubernetesServiceConfigured()) {
             return internalUrl;
         }
-        String externalUrl = new ConnectionUrlDescriptor(
+        String externalUrl = getExternalURL();
+        String clusterId =  SystemInfo.singleton().kubernetes().getKubernetesClusterId();
+        return internalUrl + ";" + externalUrl + ";" + clusterId;
+    }
+
+    private String getExternalURL(){
+        KubernetesClusterInfo kubernetesClusterInfo = SystemInfo.singleton().kubernetes();
+        int externalPort = kubernetesClusterInfo.getKubernetesServicePort() != null ? Integer.valueOf(kubernetesClusterInfo.getKubernetesServicePort()) : _protocolAdapter.getPort();
+        return new ConnectionUrlDescriptor(
                 _protocolAdapter.getName(),
-                kuberntesClusterInfo.getKubernetesServiceHost(),
-                _protocolAdapter.getPort(),
+                kubernetesClusterInfo.getKubernetesServiceHost(),
+                externalPort,
                 SystemInfo.singleton().os().processId(),
                 _objectId,
                 _objectClassLoader,
                 LRMIRuntime.getRuntime().getID(),
                 _serviceDetails).toUrl();
-        String clusterId = kuberntesClusterInfo.getKubernetesClusterId();
-
-        return internalUrl + ";" + externalUrl + ";" + clusterId;
     }
 }
