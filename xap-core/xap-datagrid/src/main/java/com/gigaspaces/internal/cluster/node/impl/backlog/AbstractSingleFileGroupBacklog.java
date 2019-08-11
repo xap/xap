@@ -1362,6 +1362,14 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
                 return getWeightUnsafe();
             }
         });
+        metricRegister.register("size-percent", new SynchronizedGaugeDouble() {
+            @Override
+            protected Double getValueImpl() {
+                return (double)getWeightUnsafe()/
+                       _groupConfigHolder.getConfig().getBacklogConfig().getLimitedMemoryCapacity();
+            }
+        });
+
         metricRegister.register("memory-packets", new SynchronizedGauge() {
             @Override
             protected Long getValueImpl() {
@@ -1395,6 +1403,21 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         }
 
         protected abstract Long getValueImpl();
+    }
+
+    private abstract class SynchronizedGaugeDouble extends Gauge<Double> {
+
+        @Override
+        public Double getValue() throws Exception {
+            _rwLock.readLock().lock();
+            try {
+                return getValueImpl();
+            } finally {
+                _rwLock.readLock().unlock();
+            }
+        }
+
+        protected abstract Double getValueImpl();
     }
 
     public void close() {
