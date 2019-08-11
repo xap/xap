@@ -630,7 +630,7 @@ public class DynamicSmartStub
             String internalUrl = urls[0];
             String externalUrl = urls[1];
             String clusterId = urls[2];
-            String envClusterId = System.getenv("KUBERNETES_CLUSTER_ID");
+            String envClusterId = System.getenv("INTERNAL_K8S_CLUSTER_ID");
             boolean isKubernetesInternal = envClusterId != null && envClusterId.equals(clusterId);
             if(isKubernetesInternal){
                 return internalUrl;
