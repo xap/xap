@@ -1362,7 +1362,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
                 return getWeightUnsafe();
             }
         });
-        metricRegister.register("size-percent", new SynchronizedGaugeDouble() {
+        metricRegister.register("used-percent", new SynchronizedGaugeDouble() {
             @Override
             protected Double getValueImpl() {
                 return (double)getWeightUnsafe()/
