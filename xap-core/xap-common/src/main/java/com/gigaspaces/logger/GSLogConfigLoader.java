@@ -245,7 +245,7 @@ public class GSLogConfigLoader {
         }
     }
 
-    //locate "xap_logging.properties" file under GigaSpaces root
+    //locate logging config file under GigaSpaces home/config/log/
     private boolean loadGsLoggingPropertiesFileFromComGsHomePath() {
         return loadGsLoggingPropertiesFileFromFullPath(SystemInfo.singleton().getXapHome() + File.separator + CommonSystemProperties.GS_LOGGING_CONFIG_FILE_PATH);
     }
