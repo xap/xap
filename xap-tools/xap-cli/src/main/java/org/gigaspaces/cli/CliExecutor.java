@@ -47,7 +47,7 @@ public class CliExecutor {
         mainCommandLine.parseWithHandlers(new CustomRunner(), new DefaultExceptionHandler<>(), args);
     }
 
-    private static void executeShell(CommandLine mainCommandLine) {
+    private static void executeShell(CommandLine mainCommandLine, List<String> originalArgs) {
         System.out.println("Starting interactive shell...");
         mainCommandLine.addSubcommand("cls", ShellClearCommand.instance);
         mainCommandLine.addSubcommand("exit", ShellExitCommand.instance);
@@ -58,8 +58,7 @@ public class CliExecutor {
                 parser.setEscapeChars(null);
             // set up the completion
             shellReader = LineReaderBuilder.builder()
-                    .terminal(TerminalBuilder.builder().build())
-                    .completer(new PicocliJLineCompleter(mainCommandLine.getCommandSpec()))
+                    .terminal(TerminalBuilder.builder().build()).completer(new PicocliJLineCompleter(mainCommandLine.getCommandSpec()))
                     .parser(parser)
                     .build();
 
@@ -76,8 +75,13 @@ public class CliExecutor {
                     if (line != null && !line.isEmpty()) {
                         //String line = reader.readLine(prompt, null, (MaskingCallback) null, null);
                         ParsedLine pl = shellReader.getParser().parse(line, 0);
-                        String[] arguments = pl.words().toArray(new String[0]);
-                        execute(mainCommandLine, arguments);
+
+                        //unify original global options and current command line args from interactive shell
+                        List<String> unifiedArgs = new ArrayList<>(originalArgs.size());
+                        unifiedArgs.addAll(originalArgs);
+                        unifiedArgs.addAll(pl.words());
+
+                        execute(mainCommandLine, unifiedArgs.toArray(new String[0]));
                         System.out.println();
                     }
                 } catch (UserInterruptException e) {
@@ -128,6 +132,7 @@ public class CliExecutor {
         return message != null ? message : e.toString();
 
     }
+
     private static int getExitCode(Throwable e) {
         return e instanceof CliCommandException ? ((CliCommandException)e).getExitCode() : 1;
     }
@@ -154,15 +159,18 @@ public class CliExecutor {
         @Override
         protected List<Object> handle(ParseResult parseResult) throws ExecutionException {
             // Skip to last command:
-            while (parseResult.hasSubcommand())
+            while (parseResult.hasSubcommand()) {
                 parseResult = parseResult.subcommand();
+            }
+
+            List<String> originalArgs = parseResult.originalArgs();
 
             CommandLine commandLine = parseResult.commandSpec().commandLine();
             currentCommandLine = commandLine;
             Callable<Object> command = commandLine.getCommand();
             try {
                 if (commandLine == mainCommandLine) {
-                    executeShell(mainCommandLine);
+                    executeShell(mainCommandLine, originalArgs);
                 } else if (command instanceof SubCommandContainer) {
                     commandLine.usage(out());
                 } else {
