@@ -94,6 +94,21 @@ public class MetricManager implements Closeable {
         return false;
     }
 
+    public boolean isMetricReporterDefined( String metricReporterClassName ){
+        boolean retValue = false;
+        for( MetricSampler metricSampler : samplers.values() ){
+            Collection<MetricReporter> reporters = metricSampler.getReporters();
+            for( MetricReporter metricReporter : reporters ){
+                if( metricReporter.getClass().getName().equals( metricReporterClassName ) ){
+                    retValue = true;
+                    break;
+                }
+            }
+        }
+
+        return retValue;
+    }
+
     public static void reloadIfStarted() {
         MetricManager currInstance = instance;
         if (currInstance != null)

@@ -50,6 +50,7 @@ public class MetricSampler implements Closeable {
     private final ScheduledExecutorService executor;
     private final long samplingRate;
     private final int batchSize;
+
     private final Collection<MetricReporter> reporters;
     private final String name;
     private ScheduledFuture<?> future;
@@ -66,6 +67,10 @@ public class MetricSampler implements Closeable {
         this.executor = Executors.newSingleThreadScheduledExecutor(new GSThreadFactory("metrics-sampler-" + config.getName(), true));
         if (logger.isLoggable(Level.CONFIG))
             logger.log(Level.CONFIG, "Metric sampler created [sampleRate=" + samplingRate + "ms, batchSize=" + batchSize + "]");
+    }
+
+    Collection<MetricReporter> getReporters() {
+        return reporters;
     }
 
     private boolean shouldBeActive() {
