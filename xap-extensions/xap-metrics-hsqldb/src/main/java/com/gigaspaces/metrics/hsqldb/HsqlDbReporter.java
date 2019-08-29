@@ -233,40 +233,6 @@ public class HsqlDbReporter extends MetricReporter {
                 try {
                     createTable( con, realDbTableName, tableColumnsInfo );
                 }
-                /*catch( SQLSyntaxErrorException e ){
-                    String exceptionMessage = e.getMessage();
-                    _logger.info( ">>>@@@ while creating table " + realDbTableName + ", exceptionMessage=" + exceptionMessage );
-                    //check if such table already exists but probably with different columns
-                    if( exceptionMessage != null && exceptionMessage.contains( "object name already exists in statement" ) ){
-                        try {
-                            handleAddingMissingTableColumns( con, tags, value, realDbTableName );
-                        }
-                        catch( SQLSyntaxErrorException sqlExc ) {
-                            String addColumnExceptionMessage = sqlExc.getMessage();
-                            //such exception can be thrown when at the same time there is attempt to add column
-                            if (exceptionMessage == null ||
-                                !exceptionMessage.contains("object name already exists in statement" ) ) {
-                                if( _logger.isLoggable( Level.SEVERE ) ){
-                                    _logger.log( Level.SEVERE, sqlExc.toString(), sqlExc );
-                                }
-                            }
-                        }
-                        catch (SQLException sqlException) {
-                            if( _logger.isLoggable( Level.SEVERE ) ){
-                                _logger.log( Level.SEVERE, sqlException.toString(), sqlException );
-                            }
-                        }
-
-                        //report after adding column TODO: prevent loop
-                        //report( snapshot, tags, key, value);
-                    }
-                    else{
-                        if( _logger.isLoggable( Level.SEVERE ) ){
-                            _logger.log( Level.SEVERE, "Failed to create table [" +
-                                                       realDbTableName + "] due to:" + e.toString(), e );
-                        }
-                    }
-                }*/
                 catch (SQLException e) {
                     if( _logger.isLoggable( Level.WARNING ) ){
                         _logger.log( Level.WARNING, e.toString(), e );
@@ -428,6 +394,10 @@ public class HsqlDbReporter extends MetricReporter {
         strBuilder.append( getHSQLDBDataType( "VALUE", value ) );
         strBuilder.append( ')' );
 
+        if( _logger.isLoggable( Level.FINER ) ) {
+            _logger.finer("tables columns info=" +strBuilder);
+        }
+
         return strBuilder.toString();
     }
 
@@ -447,6 +417,11 @@ public class HsqlDbReporter extends MetricReporter {
         }
 
         retColumnsMap.put( "VALUE", getHSQLDBDataType( "VALUE", value ) );
+
+        if( _logger.isLoggable( Level.FINER ) ) {
+            _logger.finer("retColumnsMap=" + Arrays
+                .toString(retColumnsMap.entrySet().toArray(new Map.Entry[retColumnsMap.size()])));
+        }
 
         return retColumnsMap;
     }
@@ -506,6 +481,11 @@ public class HsqlDbReporter extends MetricReporter {
 
                 case "space_instance_id":
                     type = "VARCHAR(8)";
+                    break;
+                //in the case of ec2 instance host name can be long, like:
+                //ip-xxx-xxx-xxx-xxx.eu-west-1.compute.internal
+                case "host":
+                    type = "VARCHAR(80)";
                     break;
 
                 default:
