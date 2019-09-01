@@ -28,7 +28,6 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.util.PropertyPlaceholderHelper;
 
-import java.util.HashSet;
 import java.util.Properties;
 
 /**
@@ -149,8 +148,8 @@ public class ClusterInfoPropertyPlaceholderConfigurer extends PropertyPlaceholde
     }
 
     /**
-     * BeanDefinitionVisitor that resolves placeholders in String values, delegating to the
-     * <code>parseStringValue</code> method of the containing class.
+     * BeanDefinitionVisitor that resolves placeholders in String values, delegating to
+     * an instance of {@link PropertyPlaceholderHelper}.
      */
     private class PlaceholderResolvingBeanDefinitionVisitor extends BeanDefinitionVisitor {
 
@@ -159,7 +158,7 @@ public class ClusterInfoPropertyPlaceholderConfigurer extends PropertyPlaceholde
 
         public PlaceholderResolvingBeanDefinitionVisitor(Properties props) {
             this.props = props;
-            this.propertyPlaceholderHelper = new PropertyPlaceholderHelper("${", "}");
+            this.propertyPlaceholderHelper = new PropertyPlaceholderHelper(DEFAULT_PLACEHOLDER_PREFIX, DEFAULT_PLACEHOLDER_SUFFIX, DEFAULT_VALUE_SEPARATOR, true);
         }
 
         protected String resolveStringValue(String strVal) throws BeansException {
