@@ -1,5 +1,6 @@
 package com.gigaspaces.start;
 
+import com.gigaspaces.internal.utils.GsEnv;
 import org.jini.rio.boot.BootUtil;
 
 import java.net.InetAddress;
@@ -35,7 +36,7 @@ public class XapNetworkInfo {
             this.host = InetAddress.getByName(hostId);
 
             //apply public host if configured, otherwise same as bind address
-            publicHostId = System.getenv("XAP_PUBLIC_HOST");
+            publicHostId = GsEnv.get("PUBLIC_HOST");
             if (publicHostId == null) {
                 publicHostId = hostId;
                 publicHost = host;

@@ -2,6 +2,7 @@ package com.gigaspaces.start;
 
 import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.jvm.JavaUtils;
+import com.gigaspaces.internal.utils.GsEnv;
 
 import java.io.File;
 import java.util.Collection;
@@ -63,7 +64,7 @@ public class GsCommandFactory {
     public JavaCommandBuilder lus() {
         command.mainClass("com.gigaspaces.internal.lookup.LookupServiceFactory");
         appendXapOptions();
-        command.optionsFromEnv("XAP_LUS_OPTIONS");
+        command.optionsFromGsEnv("LUS_OPTIONS");
 
         command.classpath(SystemInfo.singleton().getXapHome());
         appendGsClasspath();
@@ -90,7 +91,7 @@ public class GsCommandFactory {
     public JavaCommandBuilder spaceInstance() {
         command.mainClass("org.openspaces.pu.container.integrated.IntegratedProcessingUnitContainer");
         appendXapOptions();
-        command.optionsFromEnv("XAP_SPACE_INSTANCE_OPTIONS");
+        command.optionsFromGsEnv("SPACE_INSTANCE_OPTIONS");
         preClasspath();
         command.classpathFromPath(locations().deploy(), "templates", "datagrid");
         appendGsClasspath();
@@ -134,8 +135,8 @@ public class GsCommandFactory {
     }
 
     protected void appendXapOptions() {
-        if (getSystemEnv("XAP_OPTIONS").isPresent()) {
-            command.optionsFromEnv("XAP_OPTIONS");
+        if (GsEnv.key("OPTIONS") != null) {
+            command.optionsFromGsEnv("OPTIONS");
         } else {
             final String vendor = JavaUtils.getVendor().toUpperCase();
             if (vendor.startsWith("ORACLE ")) {
@@ -154,10 +155,10 @@ public class GsCommandFactory {
             }
 
             command.systemProperty("com.gs.home", BootIOUtils.quoteIfContainsSpace(SystemInfo.singleton().getXapHome()));
-            command.systemProperty("java.util.logging.config.file", BootIOUtils.quoteIfContainsSpace(getSystemEnv("XAP_LOGS_CONFIG_FILE").orElseGet(this::defaultConfigPath)));
-            command.systemProperty("java.rmi.server.hostname", System.getenv("XAP_NIC_ADDRESS"));
+            command.systemProperty("java.util.logging.config.file", BootIOUtils.quoteIfContainsSpace(GsEnv.getOrElse("LOGS_CONFIG_FILE", this::defaultConfigPath)));
+            command.systemProperty("java.rmi.server.hostname", GsEnv.get("NIC_ADDRESS"));
             command.optionsFromEnv("EXT_JAVA_OPTIONS"); // Deprecated starting 14.5
-            command.optionsFromEnv("XAP_OPTIONS_EXT");
+            command.optionsFromGsEnv("OPTIONS_EXT");
         }
     }
 
@@ -167,22 +168,17 @@ public class GsCommandFactory {
         command.classpathFromPath(SystemInfo.singleton().getXapHome());
         command.classpathFromPath(locations().getLibRequired(),"*");
         command.classpathFromPath(locations().getLibOptional(), "pu-common", "*");
-        command.classpathFromEnv("XAP_CLASSPATH_EXT");
+        command.classpath(GsEnv.get("CLASSPATH_EXT"));
     }
 
     private String defaultConfigPath() {
         return locations().config() + File.separator + "log" + File.separator + "xap_logging.properties";
     }
 
-    protected static Optional<String> getSystemEnv(String name) {
-        String val = System.getenv(name);
-        return val != null ? Optional.of(val) : Optional.empty();
-    }
-
     protected void appendServiceOptions(JavaCommandBuilder command, String serviceType) {
-        String envVar = "XAP_" + serviceType.toUpperCase() + "_OPTIONS";
-        if (System.getenv().containsKey(envVar)) {
-            command.optionsFromEnv(envVar);
+        String envVarKey = GsEnv.key(serviceType.toUpperCase() + "_OPTIONS");
+        if (envVarKey != null) {
+            command.optionsFromEnv(envVarKey);
         } else {
             command.options(getDefaultOptions(serviceType));
         }

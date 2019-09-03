@@ -1,6 +1,7 @@
 package com.gigaspaces.logger;
 
 import com.gigaspaces.CommonSystemProperties;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.start.Locator;
 
 import java.io.File;
@@ -14,7 +15,7 @@ public class LoggerSystemInfo {
     private static String findXapHome() {
         String result = System.getProperty(CommonSystemProperties.GS_HOME);
         if (result == null)
-            result = System.getenv("XAP_HOME");
+            result = GsEnv.get("HOME");
         if (result == null)
             result = Locator.deriveDirectories().getProperty(Locator.GS_HOME);
         if (result == null)

@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.jvm;
 
 import com.gigaspaces.internal.io.BootIOUtils;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.RollingFileHandler;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
@@ -25,7 +26,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -36,9 +36,6 @@ import java.util.Map;
  */
 @com.gigaspaces.api.InternalApi
 public class JVMDetails implements Externalizable {
-
-    private static final String ENV_PREFIX = "XAP_";
-    private static final String OLD_ENV_PREFIX = "GIGASPACES_";
 
     private static final long serialVersionUID = -4083973634154614496L;
 
@@ -98,22 +95,8 @@ public class JVMDetails implements Externalizable {
         this.bootClassPath = bootClassPath;
         this.classPath = classPath;
         this.systemProperties = systemProperties;
-        this.environmentVariables = filterByPrefix(environmentVariables);
+        this.environmentVariables = GsEnv.filterByPrefix(environmentVariables);
         this.pid = pid;
-    }
-
-    private static Map<String, String> filterByPrefix(
-            Map<String, String> map) {
-
-        Map<String, String> result = new HashMap<String, String>();
-        for (Map.Entry<String, String> entry : map.entrySet()) {
-            String value = entry.getValue();
-            String key = entry.getKey();
-            if (key.startsWith(ENV_PREFIX) || key.startsWith(OLD_ENV_PREFIX)) {
-                result.put(key, value);
-            }
-        }
-        return result;
     }
 
     public boolean isNA() {
