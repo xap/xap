@@ -91,7 +91,6 @@ public class SpaceRegisterReplicationNotificationExecutor extends SpaceActionExe
                 false /* isFifo */);
 
         String uniqueName = requestInfo.viewStub.getMyEndpointDetails().getLookupName();
-        groupConfig.removeMember(uniqueName);
 
         NotificationReplicationChannelDataFilter notificationFilter = new NotificationReplicationChannelDataFilter(
                 space.getEngine().getCacheManager(),
@@ -119,7 +118,7 @@ public class SpaceRegisterReplicationNotificationExecutor extends SpaceActionExe
                 notificationMaxDisconnectionTime);
         config.setTag(requestInfo.notifyInfo.getTag()); //optional (may be null)
 
-        groupConfig.addMember(uniqueName, notificationFilter, memberBacklogLimitations, config, notificationsLifeCycle);
+        groupConfig.replaceMember(uniqueName, notificationFilter, memberBacklogLimitations, config, notificationsLifeCycle);
 
         responseInfo.spaceUID = space.getSpaceUuid();
 
