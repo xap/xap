@@ -58,7 +58,7 @@ public class TimedBlockingPolicy implements RejectedExecutionHandler {
 
     public TimedBlockingPolicy(long waitTime, String poolName, boolean warnOnRejection, int warnThreshold, Logger warnLogger) {
         this.waitTime = waitTime;
-        this.poolName = poolName;
+        this.poolName = poolName + "-pool";
         this.warnOnRejection = warnOnRejection;
         this.warnThreshold = warnThreshold;
         this.warnLogger = warnLogger;

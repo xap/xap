@@ -119,7 +119,7 @@ public class LRMIRuntime {
         _lrmiThreadPool = new LRMIThreadPoolExecutor(
                 config.getMinThreads(), config.getMaxThreads(),
                 config.getThreadPoolIdleTimeout(), config.getThreadsQueueSize(),
-                Long.MAX_VALUE, Thread.NORM_PRIORITY, "LRMI Connection", true, true);
+                Long.MAX_VALUE, Thread.NORM_PRIORITY, "LRMI-Connection", true, true);
         NIOConfiguration nioConfig = (NIOConfiguration) config;
         _livenessPriorityThreadPool = new LRMIThreadPoolExecutor(nioConfig.getSystemPriorityMinThreads(),
                 nioConfig.getSystemPriorityMaxThreads(),
@@ -127,7 +127,7 @@ public class LRMIRuntime {
                 config.getSystemPriorityQueueCapacity(),
                 Long.MAX_VALUE,
                 Thread.MAX_PRIORITY,
-                "LRMI Liveness Pool",
+                "LRMI-Liveness",
                 true, true);
         _monitoringPriorityThreadPool = new LRMIThreadPoolExecutor(nioConfig.getSystemPriorityMinThreads(),
                 nioConfig.getSystemPriorityMaxThreads(),
@@ -135,7 +135,7 @@ public class LRMIRuntime {
                 config.getSystemPriorityQueueCapacity(),
                 Long.MAX_VALUE,
                 Thread.NORM_PRIORITY,
-                "LRMI Monitoring Pool",
+                "LRMI-Monitoring",
                 true, true);
         _customThreadPool = new LRMIThreadPoolExecutor(nioConfig.getCustomMinThreads(),
                 nioConfig.getCustomMaxThreads(),
@@ -143,7 +143,7 @@ public class LRMIRuntime {
                 nioConfig.getCustomQueueCapacity(),
                 Long.MAX_VALUE,
                 Thread.NORM_PRIORITY,
-                "LRMI Custom Pool",
+                "LRMI-Custom",
                 true, true);
     }
 
