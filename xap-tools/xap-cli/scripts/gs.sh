@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 . `dirname $0`/setenv.sh
-GS_COMMAND="`$JAVACMD -cp "$XAP_HOME/lib/required/*" com.gigaspaces.start.GsCommandFactory cli` $*"
+GS_COMMAND="`$JAVACMD -cp "${GS_HOME}/lib/required/*" com.gigaspaces.start.GsCommandFactory cli` $*"
 if [[ $GS_COMMAND == Error:* ]]; then
     echo $GS_COMMAND
 else

@@ -39,7 +39,7 @@ read - ['Hello', 'World!']
 
 To connect to a *remote* data-grid, first use the `xap space run` script to launch a data-grid.
 
-From the ${XAP_HOME}/bin directory, run:
+From the ${GS_HOME}/bin directory, run:
 
 -  gs.(sh|bat) space run --lus myDataGrid
 
@@ -64,7 +64,7 @@ Each partition instance is loaded separately, as follows:
 1. Specify `--partitions=2` for two partitions
 2. Specify `--instances=1_1` or `--instances=2_1` for each partition instance
 
-From the ${XAP_HOME}/bin directory, run:
+From the ${GS_HOME}/bin directory, run:
 
 -  gs.(sh|bat) space run --lus --partitions=2 **--instances=1_1** myDataGrid
 -  gs.(sh|bat) space run --lus --partitions=2 **--instances=2_1** myDataGrid

@@ -148,7 +148,7 @@ Use Maven to compile and package the example (e.g. `mvn clean package`).
 
 This will create the processing unit jars that can be referenced by `xap pu run`
 
-From the ${XAP_HOME}/bin directory, run:
+From the ${GS_HOME}/bin directory, run:
 
 - gs.(sh|bat) pu run --lus ../examples/hola-mundo/translator/target/hola-mundo-translator.jar
 - gs.(sh|bat) pu run --lus ../examples/hola-mundo/feeder/target/hola-mundo-feeder.jar

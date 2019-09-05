@@ -44,8 +44,8 @@ import static com.gigaspaces.CommonSystemProperties.SYSTEM_TIME_PROVIDER;
 @com.gigaspaces.api.InternalApi
 public class SystemInfo {
 
-    public static final String XAP_LOOKUP_GROUPS = "com.gs.jini_lus.groups";
-    public static final String XAP_LOOKUP_LOCATORS = "com.gs.jini_lus.locators";
+    public static final String LOOKUP_GROUPS_SYS_PROP = "com.gs.jini_lus.groups";
+    public static final String LOOKUP_LOCATORS_SYS_PROP = "com.gs.jini_lus.locators";
 
     private static final SystemInfo instance = new SystemInfo();
 
@@ -229,8 +229,8 @@ public class SystemInfo {
         private LookupLocator[] locatorsArray;
 
         private XapLookup(XapManagerClusterInfo managerClusterInfo) {
-            setGroups(System.getProperty(XAP_LOOKUP_GROUPS, GsEnv.get("LOOKUP_GROUPS")));
-            String explicitLocators = System.getProperty(XAP_LOOKUP_LOCATORS, GsEnv.get("LOOKUP_LOCATORS"));
+            setGroups(System.getProperty(LOOKUP_GROUPS_SYS_PROP, GsEnv.get("LOOKUP_GROUPS")));
+            String explicitLocators = System.getProperty(LOOKUP_LOCATORS_SYS_PROP, GsEnv.get("LOOKUP_LOCATORS"));
             String managerLocators = toLocators(managerClusterInfo);
             if (!BootIOUtils.isEmpty(managerLocators) && !BootIOUtils.isEmpty(explicitLocators) && !managerLocators.equals(explicitLocators))
                 throw new IllegalStateException("Ambiguous locators: Manager locators: [" + managerLocators +"], explicit locators: [" + explicitLocators + "]");
@@ -275,7 +275,7 @@ public class SystemInfo {
             if (groups == null || groups.length() == 0)
                 groups = defaultGroups();
             this.groups = groups;
-            setSystemProperty(XAP_LOOKUP_GROUPS, groups);
+            setSystemProperty(LOOKUP_GROUPS_SYS_PROP, groups);
 
             List<String> groupsList = toList(groups, SEPARATOR);
             this.groupsArray = groupsList.toArray(new String[groupsList.size()]);
@@ -289,7 +289,7 @@ public class SystemInfo {
         public String setLocators(String locators) {
             String prevValue = this.locators;
             this.locators = locators;
-            setSystemProperty(XAP_LOOKUP_LOCATORS, locators);
+            setSystemProperty(LOOKUP_LOCATORS_SYS_PROP, locators);
 
             List<String> locatorsList = toList(locators, SEPARATOR);
             this.locatorsArray = new LookupLocator[locatorsList == null ? 0 : locatorsList.size()];

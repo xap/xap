@@ -66,9 +66,9 @@ public class SystemProperties extends CommonSystemProperties {
     public static final String SECURITY_DISABLE_TRANSACTION_AUTHENTICATION = "com.gs.security.disable-commit-abort-authentication";
 
     /* JINI */
-    public final static String JINI_LUS_GROUPS = SystemInfo.XAP_LOOKUP_GROUPS;
+    public final static String JINI_LUS_GROUPS = SystemInfo.LOOKUP_GROUPS_SYS_PROP;
 
-    public final static String JINI_LUS_LOCATORS = SystemInfo.XAP_LOOKUP_LOCATORS;
+    public final static String JINI_LUS_LOCATORS = SystemInfo.LOOKUP_LOCATORS_SYS_PROP;
     public final static String JINI_LUS_LOCATORS_DEFAULT = "";
 
     /* XML */
