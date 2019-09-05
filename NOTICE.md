@@ -8,7 +8,7 @@ GigaSpaces XAP dependencies can be categorized as follows:
 
 ## Mandatory Core Dependencies
 
-Located at XAP_HOME/lib/required
+Located at GS_HOME/lib/required
 
 ### Spring (under the Apache License, Version 2.0)
 
@@ -66,7 +66,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 ###	ASM (under "BSD-style" license)
 
-Provides reflections enhancements, essentially making XAP run faster. Located at XAP_HOME/lib/required/xap-asm.jar
+Provides reflections enhancements, essentially making XAP run faster. Located at GS_HOME/lib/required/xap-asm.jar
 
     http://asm.objectweb.org/doc/tutorial.html
     ASM - http://asm.objectweb.org/doc/tutorial.html
@@ -86,7 +86,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 ###	Trove (under GNU Lesser General Public License)
 
-Provides alternative collections framework which is more efficient is some scenarios (mostly for primitives), essentially making XAP run faster. Located at XAP_HOME/lib/required/xap-trove.jar
+Provides alternative collections framework which is more efficient is some scenarios (mostly for primitives), essentially making XAP run faster. Located at GS_HOME/lib/required/xap-trove.jar
 
     http://trove4j.sourceforge.net/
     http://trove4j.sourceforge.net/html/license.html
@@ -117,7 +117,7 @@ Copyright (c) 1999 CERN - European Organization for Nuclear Research. Permission
 
 ###	Sigar (under the Apache License, Version 2.0)
 
-Provides Operating system information and metrics which are not available out of the box with Java. Usee by XAP for enhanced monitoring capabilities. Located at XAP_HOME/lib/optional/sigar
+Provides Operating system information and metrics which are not available out of the box with Java. Usee by XAP for enhanced monitoring capabilities. Located at GS_HOME/lib/optional/sigar
 
     http://support.hyperic.com/display/SIGAR/Home
     http://support.hyperic.com/display/SIGAR/Home#Home-license
@@ -141,7 +141,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 ## Optional - JMS integration dependencies
 
-xap-jms extension provides JMS integration. Located at XAP_HOME/lib/optional/jms
+xap-jms extension provides JMS integration. Located at GS_HOME/lib/optional/jms
 
 ###	JMS (under Sun Public License Version 1.0)
 
@@ -156,7 +156,7 @@ developer or any contributor of the JMS software.
 
 ## Optional - JDBC integration dependencies
 
-Located at XAP_HOME/lib/optional/jdbc
+Located at GS_HOME/lib/optional/jdbc
 
 ###	HyperSonic SQL (based under BSD license)
 
@@ -208,8 +208,8 @@ http://code.google.com/p/h2database/source/checkout
 
 XAP provides integration with Jetty, mainly in the form of a web processing unit. Located at:
 
-* XAP_HOME/lib/optional/jetty
-* XAP_HOME/lib/optional/jetty-9
+* GS_HOME/lib/optional/jetty
+* GS_HOME/lib/optional/jetty-9
 
 ###	Jetty (under dual licensed under the Apache License 2.0 and Eclipse Public License 1.0)
 
@@ -233,7 +233,7 @@ The UnixCrypt.java code implements the one way cryptography used by Unix systems
 
 ## Optional - Spatial API dependencies
 
-XAP provides geospatial capabilities via integration with Lucene. Located at XAP_HOME/lib/optional/spatial
+XAP provides geospatial capabilities via integration with Lucene. Located at GS_HOME/lib/optional/spatial
 
 ###	Apache Lucene
 

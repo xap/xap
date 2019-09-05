@@ -163,7 +163,7 @@ public class GsCommandFactory {
     }
 
     protected void appendGsClasspath() {
-        // GS_JARS=$XAP_HOME/lib/platform/ext/*:$XAP_HOME:$XAP_HOME/lib/required/*:$XAP_HOME/lib/optional/pu-common/*:${XAP_CLASSPATH_EXT}
+        // GS_JARS=$GS_HOME/lib/platform/ext/*:$GS_HOME:$GS_HOME/lib/required/*:$GS_HOME/lib/optional/pu-common/*:${GS_CLASSPATH_EXT}
         command.classpathFromPath(locations().getLibPlatform(), "ext", "*");
         command.classpathFromPath(SystemInfo.singleton().getXapHome());
         command.classpathFromPath(locations().getLibRequired(),"*");
