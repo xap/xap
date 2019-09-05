@@ -7104,7 +7104,6 @@ public class SpaceEngine implements ISpaceModeListener {
         }
 
         final String uniqueName = viewStub.getMyEndpointDetails().getLookupName();
-        groupConfig.removeMember(uniqueName);
         IReplicationChannelDataFilter viewFilter = new ViewReplicationChannelDataFilter(_cacheManager, groupName,
                 queryPackets, getTemplateScanner().getRegexCache(), getTypeManager());
 
@@ -7118,7 +7117,7 @@ public class SpaceEngine implements ISpaceModeListener {
         AsyncChannelConfig config = new AsyncChannelConfig(batchSize, batchTimeout, batchSize, ReplicationMode.LOCAL_VIEW, localViewMaxDisconnectionTime);
         ViewDynamicSourceGroupMemberLifeCycle lifecycle = new ViewDynamicSourceGroupMemberLifeCycle(_localViewRegistrations, queryDescriptions,
                 viewStub.getMyEndpointDetails().getConnectionDetails());
-        groupConfig.addMember(uniqueName, viewFilter, memberBacklogLimitations, config, lifecycle);
+        groupConfig.replaceMember(uniqueName, viewFilter, memberBacklogLimitations, config, lifecycle);
     }
 
     public void unregisterLocalView(String viewStubHolderName) {

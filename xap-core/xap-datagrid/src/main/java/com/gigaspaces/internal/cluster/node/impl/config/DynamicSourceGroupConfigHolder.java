@@ -131,6 +131,16 @@ public class DynamicSourceGroupConfigHolder {
             lifeCycle.afterMemberRemoved(new MemberRemovedEvent(memberName));
     }
 
+    public synchronized void replaceMember(
+            String memberName,
+            IReplicationChannelDataFilter filter,
+            BacklogMemberLimitationConfig memberBacklogLimitations,
+            Object metadata,
+            DynamicSourceGroupMemberLifeCycle lifeCycle) {
+        removeMember(memberName);
+        addMember(memberName, filter, memberBacklogLimitations, metadata, lifeCycle);
+    }
+
     public synchronized void addMember(
             String memberName,
             IReplicationChannelDataFilter filter,
