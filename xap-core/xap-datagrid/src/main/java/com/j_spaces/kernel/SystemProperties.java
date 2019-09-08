@@ -458,6 +458,11 @@ public class SystemProperties extends CommonSystemProperties {
     /**
      * System variable for look&feel class definition
      */
+    public final static String UI_ENABLED = "com.gs.newwebui.enabled";
+
+    /**
+     * System variable for look&feel class definition
+     */
     public final static String LOOK_AND_FEEL_CLASS_NAME = "com.gs.ui.laf.classname";
 
     /**

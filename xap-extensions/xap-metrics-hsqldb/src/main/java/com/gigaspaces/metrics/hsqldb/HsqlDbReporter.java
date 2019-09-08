@@ -20,9 +20,6 @@ import com.gigaspaces.internal.utils.Singletons;
 import com.gigaspaces.metrics.MetricRegistrySnapshot;
 import com.gigaspaces.metrics.MetricReporter;
 import com.gigaspaces.metrics.MetricTagsSnapshot;
-import com.gigaspaces.start.SystemInfo;
-import com.gigaspaces.start.manager.XapManagerClusterInfo;
-import com.gigaspaces.start.manager.XapManagerConfig;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -60,30 +57,16 @@ public class HsqlDbReporter extends MetricReporter {
     public HsqlDbReporter(HsqlDBReporterFactory factory) {
         super(factory);
 
-        String dbName = factory.getDbName();
         String driverClassName = factory.getDriverClassName();
         String password = factory.getPassword();
-        int port = factory.getPort();
         String username = factory.getUsername();
-
-
-        XapManagerClusterInfo managerClusterInfo = SystemInfo.singleton().getManagerClusterInfo();
-        if( !managerClusterInfo.isEmpty() ) {
-            XapManagerConfig[] servers = managerClusterInfo.getServers();
-
-            if( servers.length > 0 ) {
-                String firstManagerHost = servers[0].getHost();
-                // EXAMPLE of url: "jdbc:hsqldb:hsql://localhost:9101/metricsdb"
-                final String url = "jdbc:hsqldb:hsql://" + firstManagerHost + ":" + port + "/" + dbName;
-                try {
-                    (new Thread(
-                        () -> con = createConnection(driverClassName, url, username, password)))
-                        .start();
-                } catch (Exception e) {
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE, e.toString(), e);
-                    }
-                }
+        String url = factory.getConnectionUrl();
+        try {
+            new Thread(() -> con = createConnection(driverClassName, url, username, password))
+                .start();
+        } catch (Exception e) {
+            if (_logger.isLoggable(Level.SEVERE)) {
+                _logger.log(Level.SEVERE, e.toString(), e);
             }
         }
     }
@@ -91,17 +74,16 @@ public class HsqlDbReporter extends MetricReporter {
     private Connection createConnection( String driverClassName, String url, String username, String password ) {
         Connection con = null;
         try {
-            Class.forName( driverClassName );
-            while( con == null ) {
+            _logger.fine("Loading " + driverClassName);
+            Class.forName(driverClassName);
+            while (con == null) {
                 try {
                     synchronized (_lock) {
-                        if( Singletons.get( hsqldDbConnectionKey ) == null ) {
+                        if ((con = (Connection) Singletons.get(hsqldDbConnectionKey)) == null) {
+                            _logger.fine("Connecting to " + url);
                             con = DriverManager.getConnection(url, username, password);
                             Singletons.putIfAbsent(hsqldDbConnectionKey, con);
                             _logger.info("Connection to [" + url + "] successfully created");
-                        }
-                        else{
-                            con = ( Connection ) Singletons.get( hsqldDbConnectionKey );
                         }
                     }
                 }

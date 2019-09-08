@@ -28,29 +28,25 @@ import java.util.Properties;
 public class HsqlDBReporterFactory extends MetricReporterFactory<MetricReporter> {
 
     public static final String DEFAULT_DRIVER_CLASS_NAME = "org.hsqldb.jdbc.JDBCDriver";
-    public static final int DEFAULT_HSQLDB_HTTP = 9101;
+    public static final String DEFAULT_PORT = "9101";
 
     private String dbName;
-
     private String username;
     private String password;
-    private int port;
+    private String host;
+    private String port;
     private String driverClassName;
 
     @Override
     public void load(Properties properties) {
         super.load(properties);
 
-        setDbName( properties.getProperty( "dbname" ) );
-        setDriverClassName( properties.getProperty("driverClassName", DEFAULT_DRIVER_CLASS_NAME ) );
-        setPort( getIntProperty(properties, "port", DEFAULT_HSQLDB_HTTP ) );
-        setUsername( properties.getProperty( "username" ) );
-        setPassword( properties.getProperty( "password" ) );
-
-    }
-
-    private static int getIntProperty(Properties properties, String key, int defaultValue) {
-        return properties.containsKey(key) ? Integer.parseInt(properties.getProperty(key)) : defaultValue;
+        setDbName(properties.getProperty("dbname"));
+        setDriverClassName(properties.getProperty("driverClassName", DEFAULT_DRIVER_CLASS_NAME));
+        setHost(properties.getProperty("host"));
+        setPort(properties.getProperty("port", DEFAULT_PORT));
+        setUsername(properties.getProperty("username"));
+        setPassword(properties.getProperty("password"));
     }
 
     @Override
@@ -58,11 +54,23 @@ public class HsqlDBReporterFactory extends MetricReporterFactory<MetricReporter>
         return new HsqlDbReporter(this);
     }
 
-    public int getPort() {
+    public String getConnectionUrl() {
+        return "jdbc:hsqldb:hsql://" + host + ":" + port + "/" + dbName;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public String getPort() {
         return port;
     }
 
-    public void setPort(int port) {
+    public void setPort(String port) {
         this.port = port;
     }
 
@@ -97,8 +105,4 @@ public class HsqlDBReporterFactory extends MetricReporterFactory<MetricReporter>
     public void setDbName(String dbName) {
         this.dbName = dbName;
     }
-
-/*    public Properties getServerProperties(){
-        return serverProperties;
-    }*/
 }

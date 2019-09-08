@@ -22,12 +22,16 @@ import com.gigaspaces.logger.Constants;
 import com.gigaspaces.metrics.reporters.ConsoleReporterFactory;
 import com.gigaspaces.metrics.reporters.FileReporterFactory;
 
+import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.manager.XapManagerClusterInfo;
+import com.j_spaces.kernel.SystemProperties;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -97,23 +101,23 @@ public class MetricManagerConfig {
         String name = element.getAttribute("name");
         String factoryClassName = element.getAttribute("factory-class");
 
-        MetricReporterFactory factory;
-        if (StringUtils.hasLength(factoryClassName)) {
-            factory = fromName(factoryClassName);
-        } else if (name.equals("influxdb"))
-            factory = fromName("com.gigaspaces.metrics.influxdb.InfluxDBReporterFactory");
-        else if (name.equals("hsqldb"))
-            factory = fromName("com.gigaspaces.metrics.hsqldb.HsqlDBReporterFactory");
-        else if (name.equals("console"))
-            factory = new ConsoleReporterFactory();
-        else if (name.equals("file"))
-            factory = new FileReporterFactory();
-        else
-            throw new IllegalArgumentException("Failed to create factory '" + name + "' without a custom class");
-
+        MetricReporterFactory factory = toFactory(name, factoryClassName);
         factory.setPathSeparator(this.separator);
         factory.load(XmlParser.parseProperties(element, "name", "value"));
         reportersFactories.put(name, factory);
+    }
+
+    private static MetricReporterFactory toFactory(String name, String factoryClassName) {
+        if (StringUtils.hasLength(factoryClassName))
+            return fromName(factoryClassName);
+
+        switch (name) {
+            case "influxdb": return fromName("com.gigaspaces.metrics.influxdb.InfluxDBReporterFactory");
+            case "hsqldb": return fromName("com.gigaspaces.metrics.hsqldb.HsqlDBReporterFactory");
+            case "console": return new ConsoleReporterFactory();
+            case "file": return new FileReporterFactory();
+            default: throw new IllegalArgumentException("Failed to create factory '" + name + "' without a custom class");
+        }
     }
 
     private static MetricReporterFactory fromName(String factoryClassName) {
@@ -156,5 +160,31 @@ public class MetricManagerConfig {
 
     public MetricPatternSet getPatternSet() {
         return patterns;
+    }
+
+    public void loadDefaults() {
+        if (!reportersFactories.containsKey("ui")) {
+            if (Boolean.parseBoolean(System.getProperty(SystemProperties.UI_ENABLED, "true"))) {
+                XapManagerClusterInfo managerClusterInfo = SystemInfo.singleton().getManagerClusterInfo();
+                if (managerClusterInfo.isEmpty()) {
+                    logger.fine("Skipping default metrics ui reporter - manager not configured");
+                } else {
+                    String firstHost = managerClusterInfo.getServers()[0].getHost();
+                    logger.fine("Creating default metrics ui reporter to first manager: " + firstHost);
+                    MetricReporterFactory factory = toFactory("hsqldb", null);
+                    Properties properties = new Properties();
+                    properties.setProperty("driverClassName", "org.hsqldb.jdbc.JDBCDriver");
+                    properties.setProperty("dbname", "metricsdb");
+                    properties.setProperty("username", "sa");
+                    properties.setProperty("password", "");
+                    properties.setProperty("host", firstHost);
+                    properties.setProperty("port", "9101");
+                    factory.load(properties);
+                    reportersFactories.put("ui", factory);
+                }
+            } else {
+                logger.fine("Skipping default metrics ui reporter - ui is disabled");
+            }
+        }
     }
 }

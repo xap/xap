@@ -157,6 +157,7 @@ public class MetricManager implements Closeable {
 
             // load config from xml:
             MetricManagerConfig config = MetricManagerConfig.loadFromXml(getConfigFilePath());
+            config.loadDefaults();
             this.patternSet = config.getPatternSet();
 
             // load new samplers:
