@@ -27,6 +27,7 @@ public class CsvReader {
     private final String metadataSeparator;
     private final Map<String, Parser> parsers;
     private final Supplier corruptedLineHandler;
+    private final boolean unquoteByDefault;
 
     public CsvReader() {
         this(new Builder());
@@ -37,6 +38,7 @@ public class CsvReader {
         this.metadataSeparator = builder.metadataSeparator;
         this.parsers = builder.parsers;
         this.corruptedLineHandler = builder.corruptedLineHandler;
+        this.unquoteByDefault = builder.unquoteByDefault;
     }
 
     private static String unquote(String s) {
@@ -91,6 +93,7 @@ public class CsvReader {
         private final Map<String, Parser> parsers = initDefaultParsers();
         private String valuesSeparator = ",";
         private String metadataSeparator = ":";
+        private boolean unquoteByDefault = true;
         private Supplier corruptedLineHandler;
 
         private static Map<String, Parser> initDefaultParsers() {
@@ -122,6 +125,11 @@ public class CsvReader {
             result.put("datetime", result.get(java.time.LocalDateTime.class.getName()));
 
             return result;
+        }
+
+        public Builder unquoteByDefault(boolean unquote){
+            this.unquoteByDefault=unquote;
+            return this;
         }
 
         public Builder valuesSeparator(String valuesSeparator) {
@@ -224,8 +232,10 @@ public class CsvReader {
         SpaceDocument toEntry(String[] values) {
             SpaceDocument result = new SpaceDocument(typeDescriptor.getTypeName());
             for (int i = 0; i < values.length; i++) {
-                if (!values[i].isEmpty())
-                    result.setProperty(properties[i].name, properties[i].parser.parser.apply(values[i]));
+                if (!values[i].isEmpty()){
+                     result.setProperty(properties[i].name, properties[i].parser.parser.apply(unquoteByDefault ? unquote(values[i]) : values[i]));
+                }
+
             }
             return result;
         }
@@ -252,7 +262,7 @@ public class CsvReader {
             Object[] allValues = new Object[typeInfo.getNumOfSpaceProperties()];
             for (int i = 0; i < values.length; i++) {
                 if (!values[i].isEmpty())
-                    allValues[properties[i].pos] = properties[i].parser.parser.apply(values[i]);
+                    allValues[properties[i].pos] = properties[i].parser.parser.apply(unquoteByDefault ? unquote(values[i]) : values[i]);
             }
             Object result = typeInfo.createInstance();
             typeInfo.setSpacePropertiesValues(result, allValues);
