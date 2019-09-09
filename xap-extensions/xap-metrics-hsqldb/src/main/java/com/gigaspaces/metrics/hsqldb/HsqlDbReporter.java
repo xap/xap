@@ -530,7 +530,7 @@ public class HsqlDbReporter extends MetricReporter {
         Statement statement = null;
         try {
             statement = con.createStatement();
-            final String sql = "CREATE TABLE " + tableName + " " + columnsInfo;
+            final String sql = "CREATE CACHED TABLE " + tableName + " " + columnsInfo;
             if (_logger.isLoggable(Level.FINE)) {
                 _logger.fine("Create [" + tableName + "] with sql query [" + sql + "]");
             }
