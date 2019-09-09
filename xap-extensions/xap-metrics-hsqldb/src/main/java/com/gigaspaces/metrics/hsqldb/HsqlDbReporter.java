@@ -241,7 +241,7 @@ public class HsqlDbReporter extends MetricReporter {
         }
         catch (SQLException e) {
             if( _logger.isLoggable( Level.SEVERE ) ){
-                _logger.log( Level.SEVERE, "Exception throw while inserting row [" + insertSQL + "] , " + e.toString(), e );
+                _logger.log( Level.SEVERE, "Exception thrown while inserting row [" + insertSQL + "] , " + e.toString(), e );
             }
         }
     }
