@@ -461,6 +461,12 @@ public class SystemProperties extends CommonSystemProperties {
     public final static String UI_ENABLED = "com.gs.newwebui.enabled";
 
     /**
+     * System variable for enabling recording of all metrics tables to hsqldb
+     */
+    public final static String
+        RECORDING_OF_ALL_METRICS_TO_HSQLDB_ENABLED = "com.gs.hsqldb.all-metrics-recording.enabled";
+
+    /**
      * System variable for look&feel class definition
      */
     public final static String LOOK_AND_FEEL_CLASS_NAME = "com.gs.ui.laf.classname";

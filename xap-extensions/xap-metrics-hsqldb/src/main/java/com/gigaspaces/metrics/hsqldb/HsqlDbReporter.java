@@ -20,6 +20,7 @@ import com.gigaspaces.internal.utils.Singletons;
 import com.gigaspaces.metrics.MetricRegistrySnapshot;
 import com.gigaspaces.metrics.MetricReporter;
 import com.gigaspaces.metrics.MetricTagsSnapshot;
+import com.j_spaces.kernel.SystemProperties;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -33,6 +34,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +47,7 @@ import java.util.logging.Logger;
  * @author Evgeny
  * @since 15.0
  */
-public class HsqlDbReporter extends MetricReporter {
+public class HsqlDbReporter extends MetricReporter implements HsqlDBMetricsUtils {
 
     private static final Logger _logger = Logger.getLogger( HsqlDbReporter.class.getName() );
     private Connection con = null;
@@ -53,6 +55,13 @@ public class HsqlDbReporter extends MetricReporter {
     private final static String hsqldDbConnectionKey = "HSQL_DB_CONNECTION";
 
     private static final Object _lock = new Object();
+
+    private final Set<String> recordedMetricsTablesSet = new HashSet<>( Arrays.asList( METRICS_TABLES ) );
+
+    //by default false
+    private final boolean isAllMetricsRecordedToHsqlDb =
+                        Boolean.getBoolean( SystemProperties.RECORDING_OF_ALL_METRICS_TO_HSQLDB_ENABLED);
+
 
     public HsqlDbReporter(HsqlDBReporterFactory factory) {
         super(factory);
@@ -128,120 +137,131 @@ public class HsqlDbReporter extends MetricReporter {
             return;
         }
 
-        final String dbTableName = key.toUpperCase();
-        final String realDbTableName = replaceInvalidTableNameCharacters(dbTableName );
+        if( isAllMetricsRecordedToHsqlDb || recordedMetricsTablesSet.contains( key ) ) {
 
-        Set<Map.Entry<String, Object>> tagEntries = tags.getTags().entrySet();
-        StringBuilder columns = new StringBuilder();
-        StringBuilder values = new StringBuilder();
-        Map<Integer,Object> insertRowQueryValues = new HashMap<>();
+            final String dbTableName = key.toUpperCase();
+            final String realDbTableName = replaceInvalidTableNameCharacters(dbTableName);
 
-        columns.append( "TIME" );
-        columns.append( ',' );
+            Set<Map.Entry<String, Object>> tagEntries = tags.getTags().entrySet();
+            StringBuilder columns = new StringBuilder();
+            StringBuilder values = new StringBuilder();
+            Map<Integer, Object> insertRowQueryValues = new HashMap<>();
 
-        values.append( '?' );
-        values.append( ',' );
+            columns.append("TIME");
+            columns.append(',');
 
-        insertRowQueryValues.put( 1, new Timestamp( snapshot.getTimestamp() ) );
+            values.append('?');
+            values.append(',');
 
-        int index = 2;//it's 2 since TIME as a first parameter just added
-        for( Map.Entry<String, Object> entry : tagEntries ){
-            String entryKey = entry.getKey();
-            Object entryValue = entry.getValue();
+            insertRowQueryValues.put(1, new Timestamp(snapshot.getTimestamp()));
 
-            if( _logger.isLoggable( Level.FINEST ) ) {
-                _logger.finest(
-                    ">>> KEY=" + entryKey + ", value class name:" + entryValue.getClass().getName()
-                    + ", value=" + entryValue);
-            }
+            int index = 2;//it's 2 since TIME as a first parameter just added
+            for (Map.Entry<String, Object> entry : tagEntries) {
+                String entryKey = entry.getKey();
+                Object entryValue = entry.getValue();
 
-            columns.append( entryKey );
-            columns.append( ',' );
-
-            values.append( '?' );//transformValue( entryValue ) );
-            values.append( ',' );
-
-            insertRowQueryValues.put( index, entryValue );
-
-            index++;
-        }
-
-        columns.append( "VALUE" );
-        values.append( '?' );
-        insertRowQueryValues.put( index, value );
-
-        final String insertSQL = "INSERT INTO " + realDbTableName + " (" + columns + ") VALUES (" + values + ")";
-
-        try {
-            PreparedStatement insertQueryPreparedStatement = _preparedStatements.get(insertSQL);
-            if( _logger.isLoggable( Level.FINER ) ) {
-                _logger.finer("insert row query before setting values [" + insertSQL + "], statement:" + insertQueryPreparedStatement);
-            }
-
-            if( insertQueryPreparedStatement == null ){
-                insertQueryPreparedStatement = con.prepareStatement( insertSQL );
-                //cache just created PreparedStatement if was not stored before
-                _preparedStatements.put( insertSQL, insertQueryPreparedStatement );
-            }
-
-            Set<Map.Entry<Integer, Object>> insertRowQueryEntries = insertRowQueryValues.entrySet();
-            for( Map.Entry<Integer, Object> entry : insertRowQueryEntries ){
-                Integer paramIndex = entry.getKey();
-                Object paramValue = entry.getValue();
-                populatePreparedStatementWithParameters(insertQueryPreparedStatement, paramIndex, paramValue );
-            }
-            if( _logger.isLoggable( Level.FINER ) ) {
-                _logger.finer(">>> Before insert [" + insertSQL + "]");
-            }
-
-            insertQueryPreparedStatement.executeUpdate();
-
-            if( _logger.isLoggable( Level.FINER ) ) {
-                _logger.finer(">>> AFTER insert [" + insertSQL + "]");
-            }
-        }
-        catch (SQLSyntaxErrorException sqlSyntaxErrorException){
-            String message = sqlSyntaxErrorException.getMessage();
-            if( _logger.isLoggable( Level.FINE ) ) {
-                _logger.fine(
-                    ">>>@@@ exception message=" + message + ", realDbTableName=" + realDbTableName);
-            }
-            //if such table does not exist
-            if( message != null && message.contains(
-                "user lacks privilege or object not found: " + realDbTableName ) ){
-                //create such (not found ) table
-                String tableColumnsInfo = createTableColumnsInfo(tags, value);
-
-                try {
-                    createTable( con, realDbTableName, tableColumnsInfo );
+                if (_logger.isLoggable(Level.FINEST)) {
+                    _logger.finest(
+                        ">>> KEY=" + entryKey + ", value class name:" + entryValue.getClass()
+                            .getName()
+                        + ", value=" + entryValue);
                 }
-                catch (SQLException e) {
-                    if( _logger.isLoggable( Level.WARNING ) ){
-                        _logger.log( Level.WARNING, e.toString(), e );
-                    }
-                    //probably create table failed since table was just created, then try to
-                    //call to this report method again, TODO: prevent loop
-                    //report( snapshot, tags, key, value);
-                }
-            }
-            //any column does not exist
-            else if( message != null &&
-                     message.contains( "user lacks privilege or object not found: " ) ){
 
-                try {
-                    handleAddingMissingTableColumns( con, tags, value, realDbTableName );
-                } catch (SQLException e) {
-                    if( _logger.isLoggable( Level.SEVERE ) ){
-                        _logger.log( Level.SEVERE,
-                                     "Failed to add missing columns to table [" +
-                                          realDbTableName + "] due to:" + e.toString(), e );
+                columns.append(entryKey);
+                columns.append(',');
+
+                values.append('?');//transformValue( entryValue ) );
+                values.append(',');
+
+                insertRowQueryValues.put(index, entryValue);
+
+                index++;
+            }
+
+            columns.append("VALUE");
+            values.append('?');
+            insertRowQueryValues.put(index, value);
+
+            final String
+                insertSQL =
+                "INSERT INTO " + realDbTableName + " (" + columns + ") VALUES (" + values + ")";
+
+            try {
+                PreparedStatement insertQueryPreparedStatement = _preparedStatements.get(insertSQL);
+                if (_logger.isLoggable(Level.FINER)) {
+                    _logger.finer(
+                        "insert row query before setting values [" + insertSQL + "], statement:"
+                        + insertQueryPreparedStatement);
+                }
+
+                if (insertQueryPreparedStatement == null) {
+                    insertQueryPreparedStatement = con.prepareStatement(insertSQL);
+                    //cache just created PreparedStatement if was not stored before
+                    _preparedStatements.put(insertSQL, insertQueryPreparedStatement);
+                }
+
+                Set<Map.Entry<Integer, Object>>
+                    insertRowQueryEntries =
+                    insertRowQueryValues.entrySet();
+                for (Map.Entry<Integer, Object> entry : insertRowQueryEntries) {
+                    Integer paramIndex = entry.getKey();
+                    Object paramValue = entry.getValue();
+                    populatePreparedStatementWithParameters(insertQueryPreparedStatement,
+                                                            paramIndex, paramValue);
+                }
+                if (_logger.isLoggable(Level.FINER)) {
+                    _logger.finer(">>> Before insert [" + insertSQL + "]");
+                }
+
+                insertQueryPreparedStatement.executeUpdate();
+
+                if (_logger.isLoggable(Level.FINER)) {
+                    _logger.finer(">>> AFTER insert [" + insertSQL + "]");
+                }
+            } catch (SQLSyntaxErrorException sqlSyntaxErrorException) {
+                String message = sqlSyntaxErrorException.getMessage();
+                if (_logger.isLoggable(Level.FINE)) {
+                    _logger.fine(
+                        ">>>@@@ exception message=" + message + ", realDbTableName="
+                        + realDbTableName);
+                }
+                //if such table does not exist
+                if (message != null && message.contains(
+                    "user lacks privilege or object not found: " + realDbTableName)) {
+                    //create such (not found ) table
+                    String tableColumnsInfo = createTableColumnsInfo(tags, value);
+
+                    try {
+                        createTable(con, realDbTableName, tableColumnsInfo);
+                    } catch (SQLException e) {
+                        if (_logger.isLoggable(Level.WARNING)) {
+                            _logger.log(Level.WARNING, e.toString(), e);
+                        }
+                        //probably create table failed since table was just created, then try to
+                        //call to this report method again, TODO: prevent loop
+                        //report( snapshot, tags, key, value);
                     }
                 }
-            }
-        }
-        catch (SQLException e) {
-            if( _logger.isLoggable( Level.SEVERE ) ){
-                _logger.log( Level.SEVERE, "Exception thrown while inserting row [" + insertSQL + "] , " + e.toString(), e );
+                //any column does not exist
+                else if (message != null &&
+                         message.contains("user lacks privilege or object not found: ")) {
+
+                    try {
+                        handleAddingMissingTableColumns(con, tags, value, realDbTableName);
+                    } catch (SQLException e) {
+                        if (_logger.isLoggable(Level.SEVERE)) {
+                            _logger.log(Level.SEVERE,
+                                        "Failed to add missing columns to table [" +
+                                        realDbTableName + "] due to:" + e.toString(), e);
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                if (_logger.isLoggable(Level.SEVERE)) {
+                    _logger.log(Level.SEVERE,
+                                "Exception thrown while inserting row [" + insertSQL + "] , " + e
+                                    .toString(), e);
+                }
             }
         }
     }
