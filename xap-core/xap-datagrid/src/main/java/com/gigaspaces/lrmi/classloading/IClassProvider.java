@@ -32,7 +32,7 @@ public interface IClassProvider extends Remote {
 
     byte[] getClassDefinition(long id, String className) throws RemoteException, ClassNotFoundException;
 
-    byte[] getResource(long id, String resourceName) throws RemoteException;
+    byte[] getResource(long id, String resourceName) throws RemoteException, ClassNotFoundException;
 
     long putClassLoader(ClassLoader classLoader) throws RemoteException;
 }
