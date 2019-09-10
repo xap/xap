@@ -52,7 +52,8 @@ public class DefaultClassProvider implements IClassProvider {
     public DefaultClassProvider(String identifier) {
         _identifier = identifier;
 
-        _enabled = Boolean.parseBoolean(System.getProperty(SystemProperties.LRMI_CLASSLOADING, "true")) && Boolean.parseBoolean(System.getProperty(SystemProperties.LRMI_CLASSLOADING_EXPORT, "true"));
+        _enabled = Boolean.parseBoolean(System.getProperty(SystemProperties.LRMI_CLASSLOADING, SystemProperties.LRMI_CLASSLOADING_DEFAULT))
+                && Boolean.parseBoolean(System.getProperty(SystemProperties.LRMI_CLASSLOADING_EXPORT, SystemProperties.LRMI_CLASSLOADING_EXPORT_DEFAULT));
 
         if (_enabled) {
             if (_logger.isLoggable(Level.FINE))
