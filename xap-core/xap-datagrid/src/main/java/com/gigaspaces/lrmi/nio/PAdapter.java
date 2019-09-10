@@ -31,7 +31,7 @@ import com.gigaspaces.lrmi.GenericExporter;
 import com.gigaspaces.lrmi.LRMIRuntime;
 import com.gigaspaces.lrmi.ProtocolAdapter;
 import com.gigaspaces.lrmi.ServerPeer;
-import com.gigaspaces.lrmi.classloading.DefaultClassProvider;
+import com.gigaspaces.lrmi.classloading.DefaultRemoteClassProvider;
 import com.gigaspaces.lrmi.classloading.IClassProvider;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientConversationRunner;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientHandler;
@@ -129,7 +129,7 @@ public class PAdapter implements ProtocolAdapter<CPeer> {
 
     private synchronized void initClassProvider() throws ExportException {
         if (_classProvider == null) {
-            DefaultClassProvider provider = new DefaultClassProvider(String.valueOf(LRMIRuntime.getRuntime().getID()));
+            DefaultRemoteClassProvider provider = new DefaultRemoteClassProvider(String.valueOf(LRMIRuntime.getRuntime().getID()));
             _classProvider = (IClassProvider) _exporter.export(provider, false);
         }
     }

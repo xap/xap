@@ -70,7 +70,8 @@ public class LRMIClassLoadersHolder {
     };
 
     static {
-        enabled = Boolean.parseBoolean(System.getProperty(SystemProperties.LRMI_CLASSLOADING, "true")) && Boolean.parseBoolean(System.getProperty(SystemProperties.LRMI_CLASSLOADING_IMPORT, "true"));
+        enabled = Boolean.parseBoolean(System.getProperty(SystemProperties.LRMI_CLASSLOADING, SystemProperties.LRMI_CLASSLOADING_DEFAULT))
+                && Boolean.parseBoolean(System.getProperty(SystemProperties.LRMI_CLASSLOADING_IMPORT, SystemProperties.LRMI_CLASSLOADING_IMPORT_DEFAULT));
 
         if (enabled) {
             serviceClassLoaderContextMap = new CopyOnUpdateMap<Long, ServiceClassLoaderContext>();

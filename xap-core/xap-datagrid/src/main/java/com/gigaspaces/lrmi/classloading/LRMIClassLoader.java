@@ -203,7 +203,7 @@ public class LRMIClassLoader extends URLClassLoader implements LoggableClassLoad
                 }
 
 
-            } catch (RemoteException e) {
+            } catch (RemoteException | ClassNotFoundException e) {
                 if (_logger.isLoggable(Level.FINE))
                     _logger.log(Level.FINE, this.toString() + " Exception caught while getting resource from remote class provider: " + resourceName, e);
             }
