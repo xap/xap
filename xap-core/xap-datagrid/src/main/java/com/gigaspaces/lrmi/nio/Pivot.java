@@ -27,6 +27,7 @@ import com.gigaspaces.internal.io.MarshalInputStream;
 import com.gigaspaces.internal.lrmi.LRMIInboundMonitoringDetailsImpl;
 import com.gigaspaces.internal.lrmi.LRMIServiceMonitoringDetailsImpl;
 import com.gigaspaces.internal.utils.concurrent.ContextClassLoaderRunnable;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.ILRMIService;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
@@ -40,10 +41,7 @@ import com.gigaspaces.lrmi.ObjectRegistry.Entry;
 import com.gigaspaces.lrmi.OperationPriority;
 import com.gigaspaces.lrmi.ProtocolAdapter;
 import com.gigaspaces.lrmi.ServerPeer;
-import com.gigaspaces.lrmi.classloading.ClassProviderRequest;
-import com.gigaspaces.lrmi.classloading.IClassProvider;
-import com.gigaspaces.lrmi.classloading.IRemoteClassProviderProvider;
-import com.gigaspaces.lrmi.classloading.LRMIRemoteClassLoaderIdentifier;
+import com.gigaspaces.lrmi.classloading.*;
 import com.gigaspaces.lrmi.classloading.protocol.lrmi.HandshakeRequest;
 import com.gigaspaces.lrmi.classloading.protocol.lrmi.LRMIConnection;
 import com.gigaspaces.lrmi.nio.ChannelEntry.State;
@@ -54,6 +52,7 @@ import com.gigaspaces.lrmi.nio.selector.handler.WriteSelectorThread;
 import com.gigaspaces.management.transport.ITransportConnection;
 import com.j_spaces.kernel.ClassLoaderHelper;
 
+import com.j_spaces.kernel.SystemProperties;
 import org.jini.rio.boot.LoggableClassLoader;
 
 import java.io.IOException;
@@ -67,12 +66,7 @@ import java.nio.channels.SocketChannel;
 import java.rmi.NoSuchObjectException;
 import java.rmi.Remote;
 import java.rmi.UnmarshalException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
@@ -111,22 +105,32 @@ public class Pivot {
     public final static class ServerRemoteClassProviderProvider implements IRemoteClassProviderProvider {
         private final ChannelEntry channel;
         private LRMIRemoteClassLoaderIdentifier _remoteClassLoaderIdentifier;
+        private IClassProvider _simpleClassProvider;
 
         public ServerRemoteClassProviderProvider(ChannelEntry channel) {
             this.channel = channel;
         }
 
         public synchronized IClassProvider getClassProvider() throws IOException, IOFilterException {
-            try {
-                ReplyPacket requestForClass = new ReplyPacket(new ClassProviderRequest(), (Exception) null);
-                channel._writer.writeReply(requestForClass);
-                RequestPacket response = channel._reader.readRequest(true);
+            if(isSimpleClassLoadingEnabled() && checkClientBackwardsCompatibility()){
+                _logger.fine("Simple remote classloading is enabled, using SimpleClassProvider");
+                if(_simpleClassProvider == null){
+                    _simpleClassProvider = new SimpleRemoteClassProvider(channel);
+                }
+                return _simpleClassProvider;
+            }
+            else{
+                try {
+                    ReplyPacket requestForClass = new ReplyPacket(new ClassProviderRequest(), (Exception) null);
+                    channel._writer.writeReply(requestForClass);
+                    RequestPacket response = channel._reader.readRequest(true);
 
-                return (IClassProvider) response.getRequestObject();
-            } catch (ClassNotFoundException e) {
-                final IOException exp = new IOException();
-                exp.initCause(e);
-                throw exp;
+                    return (IClassProvider) response.getRequestObject();
+                } catch (ClassNotFoundException e) {
+                    final IOException exp = new IOException();
+                    exp.initCause(e);
+                    throw exp;
+                }
             }
         }
 
@@ -138,6 +142,15 @@ public class Pivot {
             LRMIRemoteClassLoaderIdentifier result = _remoteClassLoaderIdentifier;
             _remoteClassLoaderIdentifier = remoteClassLoaderIdentifier;
             return result;
+        }
+
+        private boolean checkClientBackwardsCompatibility(){
+            PlatformLogicalVersion clientPlatformLogicalVersion = channel.getSourcePlatformLogicalVersion();
+            return clientPlatformLogicalVersion.greaterOrEquals(PlatformLogicalVersion.v15_0_0);
+        }
+
+        private boolean isSimpleClassLoadingEnabled(){
+            return Boolean.parseBoolean(System.getProperty(SystemProperties.LRMI_SIMPLE_CLASSLOADING, SystemProperties.LRMI_SIMPLE_CLASSLOADING_DEFAULT));
         }
     }
 

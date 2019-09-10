@@ -43,10 +43,7 @@ import com.gigaspaces.lrmi.LRMIRuntime;
 import com.gigaspaces.lrmi.LRMIUtilities;
 import com.gigaspaces.lrmi.OperationPriority;
 import com.gigaspaces.lrmi.ServerAddress;
-import com.gigaspaces.lrmi.classloading.ClassProviderRequest;
-import com.gigaspaces.lrmi.classloading.IClassProvider;
-import com.gigaspaces.lrmi.classloading.IRemoteClassProviderProvider;
-import com.gigaspaces.lrmi.classloading.LRMIRemoteClassLoaderIdentifier;
+import com.gigaspaces.lrmi.classloading.*;
 import com.gigaspaces.lrmi.classloading.protocol.lrmi.HandshakeRequest;
 import com.gigaspaces.lrmi.classloading.protocol.lrmi.LRMIConnection;
 import com.gigaspaces.lrmi.nio.async.AsyncContext;
@@ -700,21 +697,45 @@ public class CPeer extends BaseClientPeer {
             //Update stage to CLIENT_RECEIVE_REPLY, no new snapshot is required
             LRMIInvocationContext.updateContext(null, null, InvocationStage.CLIENT_RECEIVE_REPLY, null, null, false, null, null);
 
-            boolean hasMoreIntermidiateRequests = true;
+            boolean hasMoreIntermediateRequests = true;
             // Put the class loader id of the remote object in thread local in case a there's a need
             // to load a remote class, we will use the class loader of the exported object 
             LRMIRemoteClassLoaderIdentifier previousIdentifier = RemoteClassLoaderContext.set(_remoteClassLoaderIdentifier);
             try {
-                while (hasMoreIntermidiateRequests) {
+                while (hasMoreIntermediateRequests) {
                     // read response
                     _watchdogContext.watchResponse(monitoringId);
                     _reader.readReply(_replayPacket);
-                    if (_replayPacket.getResult() instanceof ClassProviderRequest) {
+                    Object result = _replayPacket.getResult();
+                    if (result instanceof ClassProviderRequest) {
                         _replayPacket.clear();
                         _watchdogContext.watchRequest(monitoringId);
                         _writer.writeRequest(new RequestPacket(getClassProvider()), false);
-                    } else
-                        hasMoreIntermidiateRequests = false;
+                    } else if(result instanceof ClassDefinitionRequest){
+                        ClassDefinitionRequest classDefinitionRequest = (ClassDefinitionRequest) result;
+                        IClassProvider provider = getClassProvider();
+                        byte[] definition = new byte[0];
+                        Exception exp = null;
+                        if(classDefinitionRequest.getFileType() == FileType.CLASS){
+                            try {
+                                definition = provider.getClassDefinition(classDefinitionRequest.getClassLoaderId(), classDefinitionRequest.getClassName());
+                            }catch (ClassNotFoundException e){
+                                exp = e;
+                            }
+                        }
+                        else if(classDefinitionRequest.getFileType() == FileType.RESOURCE){
+                            try {
+                                definition = provider.getResource(classDefinitionRequest.getClassLoaderId(),classDefinitionRequest.getResourceName());
+                            }catch (ClassNotFoundException e){
+                                exp = e;
+                            }
+                        }
+                        ClassDefinitionResponse classDefinitionResponse = new ClassDefinitionResponse(definition, exp);
+                        _writer.writeRequest(new RequestPacket(classDefinitionResponse));
+                    }
+                    else {
+                        hasMoreIntermediateRequests = false;
+                    }
                 }
 
                 // check for exception from server

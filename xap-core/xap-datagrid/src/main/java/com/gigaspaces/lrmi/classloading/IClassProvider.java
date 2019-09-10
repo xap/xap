@@ -26,13 +26,12 @@ import java.rmi.RemoteException;
  * @since 6.6
  */
 public interface IClassProvider extends Remote {
-
     //TODO expose different interface for local interaction and for remote interaction, remote invocation should
     //only call getClassDefinition and getResource
 
     byte[] getClassDefinition(long id, String className) throws RemoteException, ClassNotFoundException;
 
-    byte[] getResource(long id, String resourceName) throws RemoteException;
+    byte[] getResource(long id, String resourceName) throws RemoteException, ClassNotFoundException;
 
     long putClassLoader(ClassLoader classLoader) throws RemoteException;
 }
