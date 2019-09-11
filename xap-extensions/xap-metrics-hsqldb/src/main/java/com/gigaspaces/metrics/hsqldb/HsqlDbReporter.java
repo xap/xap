@@ -95,20 +95,7 @@ public class HsqlDbReporter extends MetricReporter {
                             con = DriverManager.getConnection(url, username, password);
                             Singletons.putIfAbsent(hsqldDbConnectionKey, con);
                             _logger.info("Connection to [" + url + "] successfully created");
-
-                            if( _logger.isLoggable( Level.FINE ) ){
-                                _logger.fine("Existing tables are:");
-                                Statement st = con.createStatement();
-                                ResultSet rs = st.executeQuery("SELECT * FROM INFORMATION_SCHEMA.SYSTEM_TABLES where TABLE_TYPE='TABLE'");
-                                StringBuilder strBuilder = new StringBuilder("\n");
-                                while( rs.next() ){
-                                    //TABLE_NAME, COLUMN_NAME, TYPE_NAME, COLUMN_SIZE
-                                    String table_name = rs.getString("TABLE_NAME");
-                                    strBuilder.append( table_name );
-                                    strBuilder.append( "\n" );
-                                }
-                                _logger.fine( strBuilder.toString() );
-                            }
+                            retrieveExistingTablesInfo( con );
                         }
                     }
                 }
@@ -135,6 +122,31 @@ public class HsqlDbReporter extends MetricReporter {
         return con;
     }
 
+    private void retrieveExistingTablesInfo( Connection con ) throws SQLException {
+
+        if( _logger.isLoggable( Level.FINER ) ){
+            _logger.finer("! Existing public tables are:");
+
+            DatabaseMetaData mtdt = con.getMetaData();
+            String catalog = con.getCatalog();
+            ResultSet rs = mtdt.getTables(catalog, "PUBLIC", "%", null);
+            try {
+                //ResultSetMetaData rsmd = rs.getMetaData();
+                StringBuilder strBuilder = new StringBuilder("\n");
+                while (rs.next()) {
+                    strBuilder.append(rs.getString( "TABLE_SCHEM" ));
+                    strBuilder.append(".");
+                    strBuilder.append(rs.getString( "TABLE_NAME" ));
+                    strBuilder.append("\n");
+                }
+                _logger.fine(strBuilder.toString());
+            }
+            finally{
+                rs.close();
+            }
+        }
+    }
+
     public void report(List<MetricRegistrySnapshot> snapshots) {
         super.report(snapshots);
         //flush();
@@ -145,8 +157,8 @@ public class HsqlDbReporter extends MetricReporter {
         // Save length before append:
        //String row1 = "insert into " + realDbTableName + " values('23','AABBAABB','Address','NY','AB',23500)";
 
-        if( _logger.isLoggable( Level.FINER ) ) {
-            _logger.finer("Report, con=" + con + ", key=" + key );
+        if( _logger.isLoggable( Level.FINEST ) ) {
+            _logger.finest("Report, con=" + con + ", key=" + key );
         }
 
         if( con == null ){
