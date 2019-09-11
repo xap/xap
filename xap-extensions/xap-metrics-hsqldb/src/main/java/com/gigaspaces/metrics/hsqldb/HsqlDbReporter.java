@@ -42,12 +42,13 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.gigaspaces.metrics.hsqldb.HsqlDBMetricsUtils.*;
 
 /**
  * @author Evgeny
  * @since 15.0
  */
-public class HsqlDbReporter extends MetricReporter implements HsqlDBMetricsUtils {
+public class HsqlDbReporter extends MetricReporter {
 
     private static final Logger _logger = Logger.getLogger( HsqlDbReporter.class.getName() );
     private Connection con = null;
@@ -56,7 +57,8 @@ public class HsqlDbReporter extends MetricReporter implements HsqlDBMetricsUtils
 
     private static final Object _lock = new Object();
 
-    private final Set<String> recordedMetricsTablesSet = new HashSet<>( Arrays.asList( METRICS_TABLES ) );
+    private final Set<String> recordedMetricsTablesSet =
+        new HashSet<>( Arrays.asList( METRICS_TABLES ) );
 
     //by default false
     private final boolean isAllMetricsRecordedToHsqlDb =
@@ -139,8 +141,7 @@ public class HsqlDbReporter extends MetricReporter implements HsqlDBMetricsUtils
 
         if( isAllMetricsRecordedToHsqlDb || recordedMetricsTablesSet.contains( key ) ) {
 
-            final String dbTableName = key.toUpperCase();
-            final String realDbTableName = replaceInvalidTableNameCharacters(dbTableName);
+            final String realDbTableName = createValidTableName(key );
 
             Set<Map.Entry<String, Object>> tagEntries = tags.getTags().entrySet();
             StringBuilder columns = new StringBuilder();
@@ -338,6 +339,7 @@ public class HsqlDbReporter extends MetricReporter implements HsqlDBMetricsUtils
                                 "ADDED new column [" + columnName + " " + columnType + "] to table "
                                 + realDbTableName);
                         }
+                        //createIndexOnTableAfterAddingColumn( statement, realDbTableName, columnName );
                     }
                     catch( SQLSyntaxErrorException sqlExc){
                         String exceptionMessage = sqlExc.getMessage();
@@ -525,13 +527,6 @@ public class HsqlDbReporter extends MetricReporter implements HsqlDBMetricsUtils
         return "VARCHAR(40)";
     }
 
-    private String replaceInvalidTableNameCharacters(String dbTableName) {
-        return dbTableName
-            .replace( '-', '_' )
-            .replace(':', '_')
-            .replace('.', '_');
-    }
-
     @Override
     public void close() {
         super.close();
@@ -550,7 +545,9 @@ public class HsqlDbReporter extends MetricReporter implements HsqlDBMetricsUtils
         Statement statement = null;
         try {
             statement = con.createStatement();
+
             final String sql = "CREATE CACHED TABLE " + tableName + " " + columnsInfo;
+
             if (_logger.isLoggable(Level.FINE)) {
                 _logger.fine("Create [" + tableName + "] with sql query [" + sql + "]");
             }
@@ -558,6 +555,7 @@ public class HsqlDbReporter extends MetricReporter implements HsqlDBMetricsUtils
             if (_logger.isLoggable(Level.FINE)) {
                 _logger.fine("Table [" + tableName + "] successfully created");
             }
+            createIndexOnTable( statement, tableName );
         }
         finally{
             if( statement != null ){
@@ -572,4 +570,58 @@ public class HsqlDbReporter extends MetricReporter implements HsqlDBMetricsUtils
             }
         }
     }
+
+    private void createIndexOnTable(Statement statement, String tableName) throws SQLException {
+        String sql = "CREATE INDEX gsindex_" + System.currentTimeMillis() + " ON " + tableName + " ( TIME ASC )";//SPACE_ACTIVE
+/*
+        if( tableName.equals( TABLE_NAME_JVM_MEMORY_HEAP_USED_BYTES ) ||
+            tableName.equals( TABLE_NAME_JVM_MEMORY_HEAP_USED_PERCENT ) ||
+            tableName.equals(TABLE_NAME_PROCESS_CPU_USED_PERCENT ) ||
+            tableName.equals( TABLE_NAME_SPACE_REPLICATION_REDO_LOG_USED_PERCENT ) ){
+            sql = "CREATE INDEX gsindex_" + System.currentTimeMillis() + " ON " + tableName + " ( TIME ASC )";//PU_INSTANCE_ID
+        }
+        //space operations throughput
+        else if( tableName.equals( TABLE_NAME_SPACE_OPERATIONS_EXECUTE_TP ) ||
+                 tableName.equals( TABLE_NAME_SPACE_OPERATIONS_READ_MULTIPLE_TP ) ||
+                 tableName.equals( TABLE_NAME_SPACE_OPERATIONS_READ_TP ) ||
+                 tableName.equals( TABLE_NAME_SPACE_OPERATIONS_TAKE_TP ) ||
+                 tableName.equals( TABLE_NAME_SPACE_OPERATIONS_TAKE_MULTIPLE_TP ) ||
+                 tableName.equals( TABLE_NAME_SPACE_OPERATIONS_WRITE_TP ) ){
+            sql = "CREATE INDEX gsindex_" + System.currentTimeMillis() + " ON " + tableName + " ( TIME ASC )";//SPACE_ACTIVE
+        }*/
+//        if( sql != null ){
+        if( _logger.isLoggable( Level.FINE ) ) {
+            _logger.fine(
+                "Creating index for table [" + tableName + "] by executing [" + sql + "]");
+        }
+        statement.executeUpdate(sql);
+        if( _logger.isLoggable( Level.FINE ) ) {
+            _logger.fine("Index successfully created");
+        }
+/*
+        }
+        else{
+            _logger.info( "Index was not created for table [" + tableName + "]" );
+        }
+*/
+    }
+/*
+    private void createIndexOnTableAfterAddingColumn(Statement statement, String tableName, String columnName ) throws SQLException {
+        String sql = null;
+
+        if( ( tableName.equals( TABLE_NAME_JVM_MEMORY_HEAP_USED_BYTES ) ||
+            tableName.equals( TABLE_NAME_JVM_MEMORY_HEAP_USED_PERCENT ) ||
+            tableName.equals(TABLE_NAME_PROCESS_CPU_USED_PERCENT ) ) &&
+            columnName.equals( "PU_INSTANCE_ID" ) ){
+            sql = "CREATE INDEX gsindex_" + System.currentTimeMillis() + " ON " + tableName + " ( PU_INSTANCE_ID )";//PU_INSTANCE_ID
+        }
+        if( sql != null ){
+            _logger.info( "Creating index for table [" + tableName + "] by executing [" + sql + "]" );
+            statement.executeUpdate(sql);
+            _logger.info( "Index successfully created" );
+        }
+        else{
+            _logger.info( "Index was not created for table [" + tableName + "]" );
+        }
+    }*/
 }
