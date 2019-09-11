@@ -95,6 +95,20 @@ public class HsqlDbReporter extends MetricReporter {
                             con = DriverManager.getConnection(url, username, password);
                             Singletons.putIfAbsent(hsqldDbConnectionKey, con);
                             _logger.info("Connection to [" + url + "] successfully created");
+
+                            if( _logger.isLoggable( Level.FINE ) ){
+                                _logger.fine("Existing tables are:");
+                                Statement st = con.createStatement();
+                                ResultSet rs = st.executeQuery("SELECT * FROM INFORMATION_SCHEMA.SYSTEM_TABLES where TABLE_TYPE='TABLE'");
+                                StringBuilder strBuilder = new StringBuilder("\n");
+                                while( rs.next() ){
+                                    //TABLE_NAME, COLUMN_NAME, TYPE_NAME, COLUMN_SIZE
+                                    String table_name = rs.getString("TABLE_NAME");
+                                    strBuilder.append( table_name );
+                                    strBuilder.append( "\n" );
+                                }
+                                _logger.fine( strBuilder.toString() );
+                            }
                         }
                     }
                 }
@@ -217,7 +231,7 @@ public class HsqlDbReporter extends MetricReporter {
                 insertQueryPreparedStatement.executeUpdate();
 
                 if (_logger.isLoggable(Level.FINER)) {
-                    _logger.finer(">>> AFTER insert [" + insertSQL + "]");
+                    _logger.finer(">>> After insert [" + insertSQL + "]");
                 }
             } catch (SQLSyntaxErrorException sqlSyntaxErrorException) {
                 String message = sqlSyntaxErrorException.getMessage();
