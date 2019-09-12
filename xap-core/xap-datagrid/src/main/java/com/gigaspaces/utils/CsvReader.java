@@ -9,6 +9,8 @@ import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.metadata.SpaceTypeDescriptorBuilder;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -23,6 +25,7 @@ import java.util.stream.Stream;
  */
 public class CsvReader {
 
+    private final Charset charset;
     private final String valuesSeparator;
     private final String metadataSeparator;
     private final Map<String, Parser> parsers;
@@ -33,6 +36,7 @@ public class CsvReader {
     }
 
     private CsvReader(Builder builder) {
+        this.charset = builder.charset;
         this.valuesSeparator = builder.valuesSeparator;
         this.metadataSeparator = builder.metadataSeparator;
         this.parsers = builder.parsers;
@@ -89,6 +93,7 @@ public class CsvReader {
 
     public static class Builder {
         private final Map<String, Parser> parsers = initDefaultParsers();
+        private Charset charset = StandardCharsets.UTF_8;
         private String valuesSeparator = ",";
         private String metadataSeparator = ":";
         private Supplier corruptedLineHandler;
@@ -124,6 +129,11 @@ public class CsvReader {
             return result;
         }
 
+        public Builder charset(Charset charset) {
+            this.charset = charset;
+            return this;
+        }
+
         public Builder valuesSeparator(String valuesSeparator) {
             this.valuesSeparator = valuesSeparator;
             return this;
@@ -153,7 +163,7 @@ public class CsvReader {
         protected PropertyMapper[] properties;
 
         public Stream<T> stream(Path path) throws IOException {
-            Stream<String> lines = Files.lines(path);
+            Stream<String> lines = Files.lines(path, charset);
             return stream(lines);
         }
 
