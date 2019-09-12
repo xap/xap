@@ -598,7 +598,7 @@ public class HsqlDbReporter extends MetricReporter {
     }
 
     private void createIndexOnTable(Statement statement, String tableName) throws SQLException {
-        String sql = "CREATE INDEX gsindex_" + System.currentTimeMillis() + " ON " + tableName + " ( TIME ASC )";//SPACE_ACTIVE
+        String sql = "CREATE INDEX gsindex_" + tableName + " ON " + tableName + " ( TIME ASC )";//SPACE_ACTIVE
 /*
         if( tableName.equals( TABLE_NAME_JVM_MEMORY_HEAP_USED_BYTES ) ||
             tableName.equals( TABLE_NAME_JVM_MEMORY_HEAP_USED_PERCENT ) ||
