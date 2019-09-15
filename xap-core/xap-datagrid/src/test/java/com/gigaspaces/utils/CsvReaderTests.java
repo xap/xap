@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -89,6 +90,33 @@ public class CsvReaderTests {
         } catch (IllegalStateException e) {
             Assert.assertEquals("Inconsistent values: expected 4, actual 3", e.getMessage());
         }
+    }
+
+    @Test
+    public void testCsvInconsistentValuesSkip() throws IOException {
+        Path path = getResourcePath("csv/person-inconsistent-values.csv");
+        List<Person> people = toList(CsvReader.builder()
+                .skipInvalidLines()
+                .build()
+                .read(path, Person.class));
+        Assert.assertEquals(1, people.size());
+        Assert.assertEquals(1, people.get(0).getId());
+        Assert.assertEquals("john", people.get(0).getName());
+    }
+
+    @Test
+    public void testCsvInconsistentValuesCustom() throws IOException {
+        Path path = getResourcePath("csv/person-inconsistent-values.csv");
+        List<Person> people = toList(CsvReader.builder()
+                .invalidLineParser((s, n) -> Optional.of((s + ",false").split(",", -1)))
+                .build()
+                .read(path, Person.class));
+        Assert.assertEquals(2, people.size());
+        Assert.assertEquals(1, people.get(0).getId());
+        Assert.assertEquals("john", people.get(0).getName());
+        Assert.assertEquals(2, people.get(1).getId());
+        Assert.assertEquals("jane", people.get(1).getName());
+        Assert.assertFalse(people.get(1).isNative());
     }
 
     @Test

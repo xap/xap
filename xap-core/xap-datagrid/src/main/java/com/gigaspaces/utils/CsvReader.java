@@ -13,10 +13,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -29,7 +29,7 @@ public class CsvReader {
     private final String valuesSeparator;
     private final String metadataSeparator;
     private final Map<String, Parser> parsers;
-    private final Supplier corruptedLineHandler;
+    private final BiFunction<String, Integer, Optional<String[]>> invalidLineParser;
 
     public CsvReader() {
         this(new Builder());
@@ -40,7 +40,7 @@ public class CsvReader {
         this.valuesSeparator = builder.valuesSeparator;
         this.metadataSeparator = builder.metadataSeparator;
         this.parsers = builder.parsers;
-        this.corruptedLineHandler = builder.corruptedLineHandler;
+        this.invalidLineParser = builder.invalidLineParser != null ? builder.invalidLineParser : this::defaultInvalidLineProcessor;
     }
 
     private static String unquote(String s) {
@@ -81,6 +81,15 @@ public class CsvReader {
         return parser;
     }
 
+    private String[] split(String s) {
+        return s.split(valuesSeparator, -1);
+    }
+
+    private Optional<String[]> defaultInvalidLineProcessor(String line, Integer expectedTokens) {
+        String[] values = split(line);
+        throw new IllegalStateException(String.format("Inconsistent values: expected %s, actual %s", expectedTokens, values.length));
+    }
+
     private static class Parser {
         private final Class<?> type;
         private final Function<String, Object> parser;
@@ -96,7 +105,7 @@ public class CsvReader {
         private Charset charset = StandardCharsets.UTF_8;
         private String valuesSeparator = ",";
         private String metadataSeparator = ":";
-        private Supplier corruptedLineHandler;
+        private BiFunction<String, Integer, Optional<String[]>> invalidLineParser;
 
         private static Map<String, Parser> initDefaultParsers() {
             Map<String, Parser> result = new HashMap<>();
@@ -144,8 +153,13 @@ public class CsvReader {
             return this;
         }
 
-        public Builder corruptedLineHandler(Supplier<Object> corruptedLineHandler) {
-            this.corruptedLineHandler = corruptedLineHandler;
+        public Builder skipInvalidLines() {
+            this.invalidLineParser = (s, i) -> Optional.empty();
+            return this;
+        }
+
+        public Builder invalidLineParser(BiFunction<String, Integer, Optional<String[]>> invalidLineParser) {
+            this.invalidLineParser = invalidLineParser;
             return this;
         }
 
@@ -160,7 +174,7 @@ public class CsvReader {
     }
 
     private abstract class Processor<T> {
-        protected PropertyMapper[] properties;
+        protected List<Column> columns;
 
         public Stream<T> stream(Path path) throws IOException {
             Stream<String> lines = Files.lines(path, charset);
@@ -168,9 +182,9 @@ public class CsvReader {
         }
 
         public Stream<T> stream(Stream<String> lines) {
-            return lines.map(line -> line.split(valuesSeparator, -1))
-                    .filter(this::filterHeader)
-                    .map(this::processEntry);
+            return lines.map(this::parseLine)
+                    .filter(Objects::nonNull)
+                    .map(this::toEntry);
         }
 
         public SpaceTypeDescriptorBuilder readSchema(Path path, String typeName) throws IOException {
@@ -178,36 +192,29 @@ public class CsvReader {
                 stream.findFirst();
             }
             SpaceTypeDescriptorBuilder typeDescriptorBuilder = new SpaceTypeDescriptorBuilder(typeName);
-            for (PropertyMapper property : properties)
-                typeDescriptorBuilder.addFixedProperty(property.name, property.parser.type);
+            for (Column column : columns)
+                typeDescriptorBuilder.addFixedProperty(column.name, column.parser.type);
             return typeDescriptorBuilder;
         }
 
-        private boolean filterHeader(String[] values) {
-            if (properties == null) {
-                properties = new PropertyMapper[values.length];
-                for (int i = 0; i < values.length; i++) {
-                    String[] tokens = unquote(values[i]).split(metadataSeparator);
-                    properties[i] = initProperty(i, tokens[0], tokens.length != 1 ? tokens[1] : null);
-                }
-                return false;
+        private String[] parseLine(String line) {
+            String[] values = split(line);
+            if (columns == null) {
+                columns = Arrays.stream(values).map(this::toColumn).collect(Collectors.toList());
+                return null;
+            } else if (columns.size() == values.length)
+                return values;
+            else {
+                return invalidLineParser.apply(line, columns.size()).orElse(null);
             }
-            return true;
         }
 
-        private T processEntry(String[] values) {
-            if (values.length != properties.length) {
-                if (corruptedLineHandler != null) {
-                    return (T) corruptedLineHandler.get();
-                } else {
-                    throw new IllegalStateException(String.format("Inconsistent values: expected %s, actual %s", properties.length, values.length));
-                }
-            }
-
-            return toEntry(values);
+        private Column toColumn(String s) {
+            String[] tokens = unquote(s).split(metadataSeparator);
+            return initColumn(tokens[0], tokens.length != 1 ? tokens[1] : null);
         }
 
-        abstract PropertyMapper initProperty(int i, String name, String typeName);
+        abstract Column initColumn(String name, String typeName);
 
         abstract T toEntry(String[] values);
     }
@@ -220,7 +227,7 @@ public class CsvReader {
         }
 
         @Override
-        protected PropertyMapper initProperty(int i, String name, String typeName) {
+        protected Column initColumn(String name, String typeName) {
             if (typeName == null) {
                 SpacePropertyDescriptor property = typeDescriptor.getFixedProperty(name);
                 if (property == null) {
@@ -228,14 +235,16 @@ public class CsvReader {
                 }
                 typeName = property.getTypeName();
             }
-            return new PropertyMapper(name, typeName, -1);
+            return new Column(name, typeName, -1);
         }
 
         SpaceDocument toEntry(String[] values) {
             SpaceDocument result = new SpaceDocument(typeDescriptor.getTypeName());
             for (int i = 0; i < values.length; i++) {
-                if (!values[i].isEmpty())
-                    result.setProperty(properties[i].name, properties[i].parser.parser.apply(values[i]));
+                if (!values[i].isEmpty()) {
+                    Column column = columns.get(i);
+                    result.setProperty(column.name, column.parser.parser.apply(values[i]));
+                }
             }
             return result;
         }
@@ -249,20 +258,22 @@ public class CsvReader {
         }
 
         @Override
-        protected PropertyMapper initProperty(int i, String name, String typeName) {
+        protected Column initColumn(String name, String typeName) {
             SpacePropertyInfo property = typeInfo.getProperty(name);
             if (property == null)
                 throw new IllegalArgumentException("No such property: " + name);
             if (typeName == null)
                 typeName = property.getTypeName();
-            return new PropertyMapper(property.getName(), typeName, typeInfo.indexOf(property));
+            return new Column(property.getName(), typeName, typeInfo.indexOf(property));
         }
 
         T toEntry(String[] values) {
             Object[] allValues = new Object[typeInfo.getNumOfSpaceProperties()];
             for (int i = 0; i < values.length; i++) {
-                if (!values[i].isEmpty())
-                    allValues[properties[i].pos] = properties[i].parser.parser.apply(values[i]);
+                if (!values[i].isEmpty()) {
+                    Column column = columns.get(i);
+                    allValues[column.pos] = column.parser.parser.apply(values[i]);
+                }
             }
             Object result = typeInfo.createInstance();
             typeInfo.setSpacePropertiesValues(result, allValues);
@@ -270,12 +281,12 @@ public class CsvReader {
         }
     }
 
-    private class PropertyMapper {
+    private class Column {
         private final String name;
         private final Parser parser;
         private final int pos;
 
-        private PropertyMapper(String name, String typeName, int pos) {
+        private Column(String name, String typeName, int pos) {
             this.name = name;
             this.parser = getParser(typeName);
             this.pos = pos;
