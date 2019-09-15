@@ -88,7 +88,7 @@ public class CsvReaderTests {
             toList(new CsvReader().read(path, Person.class));
             Assert.fail("Should have failed - inconsistent values");
         } catch (IllegalStateException e) {
-            Assert.assertEquals("Inconsistent values: expected 4, actual 3", e.getMessage());
+            Assert.assertEquals("Inconsistent values at line #3: expected 4, actual 3", e.getMessage());
         }
     }
 
@@ -108,7 +108,7 @@ public class CsvReaderTests {
     public void testCsvInconsistentValuesCustom() throws IOException {
         Path path = getResourcePath("csv/person-inconsistent-values.csv");
         List<Person> people = toList(CsvReader.builder()
-                .invalidLineParser((s, n) -> Optional.of((s + ",false").split(",", -1)))
+                .invalidLineParser(l -> Optional.of((l.getText() + ",false").split(",", -1)))
                 .build()
                 .read(path, Person.class));
         Assert.assertEquals(2, people.size());

@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.BiFunction;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,7 +29,7 @@ public class CsvReader {
     private final String valuesSeparator;
     private final String metadataSeparator;
     private final Map<String, Parser> parsers;
-    private final BiFunction<String, Integer, Optional<String[]>> invalidLineParser;
+    private final Function<Line, Optional<String[]>> invalidLineParser;
 
     public CsvReader() {
         this(new Builder());
@@ -40,7 +40,7 @@ public class CsvReader {
         this.valuesSeparator = builder.valuesSeparator;
         this.metadataSeparator = builder.metadataSeparator;
         this.parsers = builder.parsers;
-        this.invalidLineParser = builder.invalidLineParser != null ? builder.invalidLineParser : this::defaultInvalidLineProcessor;
+        this.invalidLineParser = builder.invalidLineParser;
     }
 
     private static String unquote(String s) {
@@ -81,15 +81,6 @@ public class CsvReader {
         return parser;
     }
 
-    private String[] split(String s) {
-        return s.split(valuesSeparator, -1);
-    }
-
-    private Optional<String[]> defaultInvalidLineProcessor(String line, Integer expectedTokens) {
-        String[] values = split(line);
-        throw new IllegalStateException(String.format("Inconsistent values: expected %s, actual %s", expectedTokens, values.length));
-    }
-
     private static class Parser {
         private final Class<?> type;
         private final Function<String, Object> parser;
@@ -105,7 +96,9 @@ public class CsvReader {
         private Charset charset = StandardCharsets.UTF_8;
         private String valuesSeparator = ",";
         private String metadataSeparator = ":";
-        private BiFunction<String, Integer, Optional<String[]>> invalidLineParser;
+        private Function<Line, Optional<String[]>> invalidLineParser = line -> {
+            throw new IllegalStateException(String.format("Inconsistent values at line #%s: expected %s, actual %s", line.getNum(), line.getNumOfColumns(), line.getNumOfValues()));
+        };
 
         private static Map<String, Parser> initDefaultParsers() {
             Map<String, Parser> result = new HashMap<>();
@@ -154,11 +147,11 @@ public class CsvReader {
         }
 
         public Builder skipInvalidLines() {
-            this.invalidLineParser = (s, i) -> Optional.empty();
+            this.invalidLineParser = (l -> Optional.empty());
             return this;
         }
 
-        public Builder invalidLineParser(BiFunction<String, Integer, Optional<String[]>> invalidLineParser) {
+        public Builder invalidLineParser(Function<Line, Optional<String[]>> invalidLineParser) {
             this.invalidLineParser = invalidLineParser;
             return this;
         }
@@ -175,6 +168,7 @@ public class CsvReader {
 
     private abstract class Processor<T> {
         protected List<Column> columns;
+        private final AtomicLong counter = new AtomicLong();
 
         public Stream<T> stream(Path path) throws IOException {
             Stream<String> lines = Files.lines(path, charset);
@@ -197,15 +191,20 @@ public class CsvReader {
             return typeDescriptorBuilder;
         }
 
-        private String[] parseLine(String line) {
-            String[] values = split(line);
+        private LineImpl parseLine(String text) {
+            long id = counter.incrementAndGet();
+            String[] values = text.split(valuesSeparator, -1);
             if (columns == null) {
                 columns = Arrays.stream(values).map(this::toColumn).collect(Collectors.toList());
                 return null;
-            } else if (columns.size() == values.length)
-                return values;
-            else {
-                return invalidLineParser.apply(line, columns.size()).orElse(null);
+            } else {
+                LineImpl line = new LineImpl(id, text, values, columns);
+                if (columns.size() != values.length) {
+                    line = invalidLineParser.apply(line)
+                            .map(newValues -> new LineImpl(id, text, newValues, columns))
+                            .orElse(null);
+                }
+                return line;
             }
         }
 
@@ -216,7 +215,7 @@ public class CsvReader {
 
         abstract Column initColumn(String name, String typeName);
 
-        abstract T toEntry(String[] values);
+        abstract T toEntry(LineImpl line);
     }
 
     private class DocumentProcessor extends Processor<SpaceDocument> {
@@ -238,8 +237,9 @@ public class CsvReader {
             return new Column(name, typeName, -1);
         }
 
-        SpaceDocument toEntry(String[] values) {
+        SpaceDocument toEntry(LineImpl line) {
             SpaceDocument result = new SpaceDocument(typeDescriptor.getTypeName());
+            String[] values = line.values;
             for (int i = 0; i < values.length; i++) {
                 if (!values[i].isEmpty()) {
                     Column column = columns.get(i);
@@ -267,7 +267,8 @@ public class CsvReader {
             return new Column(property.getName(), typeName, typeInfo.indexOf(property));
         }
 
-        T toEntry(String[] values) {
+        T toEntry(LineImpl line) {
+            String[] values = line.values;
             Object[] allValues = new Object[typeInfo.getNumOfSpaceProperties()];
             for (int i = 0; i < values.length; i++) {
                 if (!values[i].isEmpty()) {
@@ -278,6 +279,48 @@ public class CsvReader {
             Object result = typeInfo.createInstance();
             typeInfo.setSpacePropertiesValues(result, allValues);
             return (T) result;
+        }
+    }
+
+    public interface Line {
+        long getNum();
+        String getText();
+        int getNumOfValues();
+        int getNumOfColumns();
+    }
+
+    private static class LineImpl implements Line {
+
+        private final long num;
+        private final String text;
+        private final String[] values;
+        private final List<Column> columns;
+
+        private LineImpl(long num, String text, String[] values, List<Column> columns) {
+            this.num = num;
+            this.text = text;
+            this.values = values;
+            this.columns = columns;
+        }
+
+        @Override
+        public long getNum() {
+            return num;
+        }
+
+        @Override
+        public String getText() {
+            return text;
+        }
+
+        @Override
+        public int getNumOfValues() {
+            return values.length;
+        }
+
+        @Override
+        public int getNumOfColumns() {
+            return columns.size();
         }
     }
 
