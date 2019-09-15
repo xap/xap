@@ -153,14 +153,7 @@ public class SpaceEntryPacketIterator implements Iterator<IEntryPacket>, Closeab
     public void close() {
         if (!_closed) {
             _closed = true;
-           // _iteratorResult.close();
-            int i = 0;
-            if (_bufferIterator != null) {
-                while (_bufferIterator.hasNext()) {
-                    _bufferIterator.next();
-                    ++i;
-                }
-            }
+            _bufferIterator = null;
             _iteratorResult.close();
             _buffer.clear();
         }
