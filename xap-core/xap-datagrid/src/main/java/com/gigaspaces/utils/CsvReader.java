@@ -227,14 +227,24 @@ public class CsvReader {
 
         @Override
         protected Column initColumn(String name, String typeName) {
-            if (typeName == null) {
-                SpacePropertyDescriptor property = typeDescriptor.getFixedProperty(name);
-                if (property == null) {
-                    throw new IllegalStateException("No metadata for property " + name);
-                }
-                typeName = property.getTypeName();
+            SpacePropertyDescriptor property = getProperty(name);
+            if (property != null)
+                return new Column(property.getName(), typeName != null ? typeName : property.getTypeName(), -1);
+            if (typeName != null)
+                return new Column(name, typeName, -1);
+            throw new IllegalStateException("No metadata for property " + name);
+        }
+
+        private SpacePropertyDescriptor getProperty(String name) {
+            SpacePropertyDescriptor property = typeDescriptor.getFixedProperty(name);
+            if (property != null)
+                return property;
+            for (int i=0 ; i < typeDescriptor.getNumOfFixedProperties() ; i++) {
+                property = typeDescriptor.getFixedProperty(i);
+                if (property.getName().equalsIgnoreCase(name))
+                    return property;
             }
-            return new Column(name, typeName, -1);
+            return null;
         }
 
         SpaceDocument toEntry(LineImpl line) {
@@ -259,12 +269,19 @@ public class CsvReader {
 
         @Override
         protected Column initColumn(String name, String typeName) {
+            SpacePropertyInfo property = getProperty(name);
+            return new Column(property.getName(), typeName != null ? typeName : property.getTypeName(), typeInfo.indexOf(property));
+        }
+
+        private SpacePropertyInfo getProperty(String name) {
             SpacePropertyInfo property = typeInfo.getProperty(name);
-            if (property == null)
-                throw new IllegalArgumentException("No such property: " + name);
-            if (typeName == null)
-                typeName = property.getTypeName();
-            return new Column(property.getName(), typeName, typeInfo.indexOf(property));
+            if (property != null)
+                return property;
+            for (SpacePropertyInfo currProperty : typeInfo.getSpaceProperties())
+                if (currProperty.getName().equalsIgnoreCase(name))
+                    return currProperty;
+
+            throw new IllegalArgumentException("No such property: " + name);
         }
 
         T toEntry(LineImpl line) {

@@ -77,7 +77,7 @@ public class CsvReaderTests {
             toList(new CsvReader().read(path, typeName));
             Assert.fail("Should have failed - no metadata");
         } catch (IllegalStateException e) {
-            Assert.assertEquals("No metadata for property id", e.getMessage());
+            Assert.assertEquals("No metadata for property ID", e.getMessage());
         }
     }
 
