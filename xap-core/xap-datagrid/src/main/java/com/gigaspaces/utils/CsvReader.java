@@ -8,7 +8,7 @@ import com.gigaspaces.metadata.SpacePropertyDescriptor;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.metadata.SpaceTypeDescriptorBuilder;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -57,16 +57,24 @@ public class CsvReader {
         return new PojoProcessor<>(type).stream(path);
     }
 
-    public <T> Stream<T> read(Stream<String> lines, Class<T> type) throws IOException {
-        return new PojoProcessor<>(type).stream(lines);
+    public <T> Stream<T> read(InputStream input, Class<T> type) throws IOException {
+        return new PojoProcessor<>(type).stream(input);
     }
 
     public Stream<SpaceDocument> read(Path path, String typeName) throws IOException {
         return read(path, new SpaceTypeDescriptorBuilder(typeName).create());
     }
 
+    public Stream<SpaceDocument> read(InputStream input, String typeName) throws IOException {
+        return read(input, new SpaceTypeDescriptorBuilder(typeName).create());
+    }
+
     public Stream<SpaceDocument> read(Path path, SpaceTypeDescriptor typeDescriptor) throws IOException {
         return new DocumentProcessor(typeDescriptor).stream(path);
+    }
+
+    public Stream<SpaceDocument> read(InputStream input, SpaceTypeDescriptor typeDescriptor) throws IOException {
+        return new DocumentProcessor(typeDescriptor).stream(input);
     }
 
     public SpaceTypeDescriptorBuilder readSchema(Path path, String typeName) throws IOException {
@@ -175,7 +183,36 @@ public class CsvReader {
             return stream(lines);
         }
 
-        public Stream<T> stream(Stream<String> lines) {
+        public Stream<T> stream(InputStream input) {
+            return stream(wrap(input));
+        }
+
+        private Stream<String> wrap(InputStream inputStream) {
+            // Copied from Files.lines(path)
+            BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, charset.newDecoder()));
+            try {
+                return br.lines().onClose(() -> close(br));
+            } catch (Error|RuntimeException e) {
+                try {
+                    br.close();
+                } catch (IOException ex) {
+                    try {
+                        e.addSuppressed(ex);
+                    } catch (Throwable ignore) {}
+                }
+                throw e;
+            }
+        }
+
+        private void close(Closeable resource) {
+            try {
+                resource.close();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+
+        private Stream<T> stream(Stream<String> lines) {
             return lines.map(this::parseLine)
                     .filter(Objects::nonNull)
                     .map(this::toEntry);
