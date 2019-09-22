@@ -45,6 +45,10 @@ public class ConventionObjectParser {
                 return parser;
         }
 
+        AbstractParser parser = createMethodParserIfExists(clazz, "fromString", String.class);
+        if (parser != null)
+            return parser;
+
         return null;
     }
 

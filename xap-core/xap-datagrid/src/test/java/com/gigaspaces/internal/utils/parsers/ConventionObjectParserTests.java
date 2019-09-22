@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.sql.SQLException;
+import java.util.UUID;
 
 public class ConventionObjectParserTests {
     @Test
@@ -42,12 +43,20 @@ public class ConventionObjectParserTests {
         testParser(new Type8(1));
         // ctor(Object)
         testParser(new Type9(1));
+
+        testParserFromString(new TypeWithUuid());
     }
 
     private void testParser(Object obj) throws SQLException {
         final AbstractParser parser = ConventionObjectParser.getConventionParserIfAvailable(obj.getClass());
         Assert.assertNotNull(parser);
         Assert.assertEquals(obj, parser.parse("1"));
+    }
+
+    private void testParserFromString(TypeWithUuid obj) throws SQLException {
+        final AbstractParser parser = ConventionObjectParser.getConventionParserIfAvailable(obj.value.getClass());
+        Assert.assertNotNull(parser);
+        Assert.assertEquals(obj.value,(parser.parse(obj.value.toString())));
     }
 
     public static class Type1 {
@@ -200,6 +209,15 @@ public class ConventionObjectParserTests {
         @Override
         public boolean equals(Object obj) {
             return ((Type9) obj).value == value;
+        }
+    }
+
+    public static class TypeWithUuid {
+        private final UUID value;
+
+        public TypeWithUuid() {
+            UUID uuid = UUID.randomUUID();
+            this.value = uuid;
         }
     }
 }
