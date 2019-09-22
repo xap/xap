@@ -30,6 +30,7 @@ public class CsvReader {
     private final String metadataSeparator;
     private final Map<String, Parser> parsers;
     private final Function<Line, Optional<String[]>> invalidLineParser;
+    private final boolean removeQuotes;
 
     public CsvReader() {
         this(new Builder());
@@ -41,10 +42,11 @@ public class CsvReader {
         this.metadataSeparator = builder.metadataSeparator;
         this.parsers = builder.parsers;
         this.invalidLineParser = builder.invalidLineParser;
+        this.removeQuotes = builder.removeQuotes;
     }
 
-    private static String unquote(String s) {
-        if (s.startsWith("\"") && s.endsWith("\""))
+    private String unquote(String s) {
+        if (s.startsWith("\"") && s.endsWith("\"") && removeQuotes)
             s = s.substring(1, s.length() - 1);
         return s;
     }
@@ -104,6 +106,7 @@ public class CsvReader {
         private Charset charset = StandardCharsets.UTF_8;
         private String valuesSeparator = ",";
         private String metadataSeparator = ":";
+        private boolean removeQuotes = true;
         private Function<Line, Optional<String[]>> invalidLineParser = line -> {
             throw new IllegalStateException(String.format("Inconsistent values at line #%s: expected %s, actual %s", line.getNum(), line.getNumOfColumns(), line.getNumOfValues()));
         };
@@ -166,6 +169,11 @@ public class CsvReader {
 
         public Builder addParser(String typeName, Class<?> type, Function<String, Object> parser) {
             parsers.put(typeName, new Parser(type, parser));
+            return this;
+        }
+
+        public Builder removeQuotes(boolean removeQuotes){
+            this.removeQuotes = removeQuotes;
             return this;
         }
 
@@ -290,7 +298,7 @@ public class CsvReader {
             for (int i = 0; i < values.length; i++) {
                 if (!values[i].isEmpty()) {
                     Column column = columns.get(i);
-                    result.setProperty(column.name, column.parser.parser.apply(values[i]));
+                    result.setProperty(column.name, column.parser.parser.apply(unquote(values[i])));
                 }
             }
             return result;
@@ -327,7 +335,7 @@ public class CsvReader {
             for (int i = 0; i < values.length; i++) {
                 if (!values[i].isEmpty()) {
                     Column column = columns.get(i);
-                    allValues[column.pos] = column.parser.parser.apply(values[i]);
+                    allValues[column.pos] = column.parser.parser.apply(unquote(values[i]));
                 }
             }
             Object result = typeInfo.createInstance();
