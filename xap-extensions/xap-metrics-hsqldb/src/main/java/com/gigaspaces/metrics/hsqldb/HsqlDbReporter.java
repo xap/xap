@@ -93,6 +93,12 @@ public class HsqlDbReporter extends MetricReporter {
 
     @Override
     protected void report(MetricRegistrySnapshot snapshot, MetricTagsSnapshot tags, String key, Object value) {
+        final String tableName = getTableName(key);
+        if (tableName == null) {
+            _logger.debug("Report skipped - key was filtered out [timestamp={}, key={}]", snapshot.getTimestamp(), key);
+            return;
+        }
+
         Connection con = getOrCreateConnection();
         if (con == null) {
             _logger.warn("Report skipped - connection is not available yet [timestamp={}, key={}]", snapshot.getTimestamp(), key);
@@ -101,106 +107,108 @@ public class HsqlDbReporter extends MetricReporter {
 
         _logger.debug("Report, con={}, key={}", con, key);
 
-        if (systemFilterDisabled || SystemMetrics.valuesMap().containsKey(key)) {
+        Set<Map.Entry<String, Object>> tagEntries = tags.getTags().entrySet();
+        StringBuilder columns = new StringBuilder();
+        StringBuilder values = new StringBuilder();
+        Map<Integer, Object> insertRowQueryValues = new HashMap<>();
 
-            final String tableName = SystemMetrics.toTableName(key);
+        columns.append("TIME");
+        columns.append(',');
 
-            Set<Map.Entry<String, Object>> tagEntries = tags.getTags().entrySet();
-            StringBuilder columns = new StringBuilder();
-            StringBuilder values = new StringBuilder();
-            Map<Integer, Object> insertRowQueryValues = new HashMap<>();
+        values.append('?');
+        values.append(',');
 
-            columns.append("TIME");
+        insertRowQueryValues.put(1, new Timestamp(snapshot.getTimestamp()));
+
+        int index = 2;//it's 2 since TIME as a first parameter just added
+        for (Map.Entry<String, Object> entry : tagEntries) {
+            String entryKey = entry.getKey();
+            Object entryValue = entry.getValue();
+
+            _logger.debug("KEY={}, value class name: {}" + ", value={}",
+                    entryKey, entryValue.getClass().getName(), entryValue);
+
+            columns.append(entryKey);
             columns.append(',');
 
-            values.append('?');
+            values.append('?');//transformValue( entryValue ) );
             values.append(',');
 
-            insertRowQueryValues.put(1, new Timestamp(snapshot.getTimestamp()));
+            insertRowQueryValues.put(index, entryValue);
 
-            int index = 2;//it's 2 since TIME as a first parameter just added
-            for (Map.Entry<String, Object> entry : tagEntries) {
-                String entryKey = entry.getKey();
-                Object entryValue = entry.getValue();
-
-                _logger.debug("KEY={}, value class name: {}" + ", value={}",
-                        entryKey, entryValue.getClass().getName(), entryValue);
-
-                columns.append(entryKey);
-                columns.append(',');
-
-                values.append('?');//transformValue( entryValue ) );
-                values.append(',');
-
-                insertRowQueryValues.put(index, entryValue);
-
-                index++;
-            }
-
-            columns.append("VALUE");
-            values.append('?');
-            insertRowQueryValues.put(index, value);
-
-            final String
-                insertSQL =
-                "INSERT INTO " + tableName + " (" + columns + ") VALUES (" + values + ")";
-
-            try {
-                PreparedStatement insertQueryPreparedStatement = _preparedStatements.get(insertSQL);
-                _logger.debug("insert row query before setting values [{}], statement: {}", insertSQL, insertQueryPreparedStatement);
-
-                if (insertQueryPreparedStatement == null) {
-                    insertQueryPreparedStatement = con.prepareStatement(insertSQL);
-                    //cache just created PreparedStatement if was not stored before
-                    _preparedStatements.put(insertSQL, insertQueryPreparedStatement);
-                }
-
-                Set<Map.Entry<Integer, Object>>
-                    insertRowQueryEntries =
-                    insertRowQueryValues.entrySet();
-                for (Map.Entry<Integer, Object> entry : insertRowQueryEntries) {
-                    Integer paramIndex = entry.getKey();
-                    Object paramValue = entry.getValue();
-                    populatePreparedStatementWithParameters(insertQueryPreparedStatement,
-                                                            paramIndex, paramValue);
-                }
-                _logger.trace("Before insert [{}]", insertSQL);
-
-                insertQueryPreparedStatement.executeUpdate();
-
-                _logger.trace("After insert [{}]", insertSQL);
-            } catch (SQLSyntaxErrorException sqlSyntaxErrorException) {
-                String message = sqlSyntaxErrorException.getMessage();
-                _logger.debug("Report to {} failed: {}", tableName, message);
-                //if such table does not exist
-                if (message != null && message.contains(
-                    "user lacks privilege or object not found: " + tableName)) {
-                    //create such (not found ) table
-                    String tableColumnsInfo = createTableColumnsInfo(tags, value);
-
-                    try {
-                        createTable(con, tableName, tableColumnsInfo);
-                    } catch (SQLException e) {
-                        _logger.warn("Create table {} failed", tableName, e);
-                        //probably create table failed since table was just created, then try to
-                        //call to this report method again, TODO: prevent loop
-                        //report( snapshot, tags, key, value);
-                    }
-                }
-                //any column does not exist
-                else if (message != null &&
-                         message.contains("user lacks privilege or object not found: ")) {
-
-                    try {
-                        handleAddingMissingTableColumns(con, tags, value, tableName);
-                    } catch (SQLException e) {
-                        _logger.error("Failed to add missing columns to table [{}]", tableName, e);
-                    }
-                }
-            } catch (SQLException e) {
-                _logger.error("Failed to insert row [{}]", insertSQL, e);
-            }
+            index++;
         }
+
+        columns.append("VALUE");
+        values.append('?');
+        insertRowQueryValues.put(index, value);
+
+        final String
+            insertSQL =
+            "INSERT INTO " + tableName + " (" + columns + ") VALUES (" + values + ")";
+
+        try {
+            PreparedStatement insertQueryPreparedStatement = _preparedStatements.get(insertSQL);
+            _logger.debug("insert row query before setting values [{}], statement: {}", insertSQL, insertQueryPreparedStatement);
+
+            if (insertQueryPreparedStatement == null) {
+                insertQueryPreparedStatement = con.prepareStatement(insertSQL);
+                //cache just created PreparedStatement if was not stored before
+                _preparedStatements.put(insertSQL, insertQueryPreparedStatement);
+            }
+
+            Set<Map.Entry<Integer, Object>>
+                insertRowQueryEntries =
+                insertRowQueryValues.entrySet();
+            for (Map.Entry<Integer, Object> entry : insertRowQueryEntries) {
+                Integer paramIndex = entry.getKey();
+                Object paramValue = entry.getValue();
+                populatePreparedStatementWithParameters(insertQueryPreparedStatement,
+                                                        paramIndex, paramValue);
+            }
+            _logger.trace("Before insert [{}]", insertSQL);
+
+            insertQueryPreparedStatement.executeUpdate();
+
+            _logger.trace("After insert [{}]", insertSQL);
+        } catch (SQLSyntaxErrorException sqlSyntaxErrorException) {
+            String message = sqlSyntaxErrorException.getMessage();
+            _logger.debug("Report to {} failed: {}", tableName, message);
+            //if such table does not exist
+            if (message != null && message.contains(
+                "user lacks privilege or object not found: " + tableName)) {
+                //create such (not found ) table
+                String tableColumnsInfo = createTableColumnsInfo(tags, value);
+
+                try {
+                    createTable(con, tableName, tableColumnsInfo);
+                } catch (SQLException e) {
+                    _logger.warn("Create table {} failed", tableName, e);
+                    //probably create table failed since table was just created, then try to
+                    //call to this report method again, TODO: prevent loop
+                    //report( snapshot, tags, key, value);
+                }
+            }
+            //any column does not exist
+            else if (message != null &&
+                     message.contains("user lacks privilege or object not found: ")) {
+
+                try {
+                    handleAddingMissingTableColumns(con, tags, value, tableName);
+                } catch (SQLException e) {
+                    _logger.error("Failed to add missing columns to table [{}]", tableName, e);
+                }
+            }
+        } catch (SQLException e) {
+            _logger.error("Failed to insert row [{}]", insertSQL, e);
+        }
+    }
+
+    protected String getTableName(String key) {
+        SystemMetrics metric = SystemMetrics.valuesMap().get(key);
+        if (metric != null)
+            return metric.getTableName();
+        return systemFilterDisabled ? SystemMetrics.toTableName(key) : null;
     }
 
     private void handleAddingMissingTableColumns( Connection con, MetricTagsSnapshot tags, Object value, String realDbTableName )
