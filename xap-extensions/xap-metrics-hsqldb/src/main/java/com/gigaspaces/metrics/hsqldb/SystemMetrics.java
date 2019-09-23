@@ -15,6 +15,7 @@ public enum SystemMetrics {
     JVM_MEMORY_HEAP_USED_PERCENT("jvm_memory_heap_used-percent"),
     JVM_MEMORY_HEAP_USED_BYTES("jvm_memory_heap_used-bytes"),
     SPACE_REPLICATION_REDO_LOG_USED_PERCENT("space_replication_redo-log_used-percent"),
+    METRIC_NAME_SPACE_REPLICATION_REDO_LOG_SIZE("space_replication_redo-log_size"),
     SPACE_TP_WRITE("space_operations_write-tp"),
     SPACE_TP_READ("space_operations_read-tp"),
     SPACE_TP_READ_MULTIPLE("space_operations_read-multiple-tp"),
