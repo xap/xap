@@ -33,14 +33,7 @@ import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.gigaspaces.metrics.hsqldb.HsqlDBMetricsUtils.*;
 
@@ -51,8 +44,11 @@ import static com.gigaspaces.metrics.hsqldb.HsqlDBMetricsUtils.*;
 public class HsqlDbReporter extends MetricReporter {
 
     private static final Logger _logger = LoggerFactory.getLogger(HsqlDbReporter.class);
-    private Connection con = null;
-    private Map<String,PreparedStatement> _preparedStatements = new HashMap<>();
+
+    private final HsqlDBReporterFactory factory;
+    private final String url;
+    private Connection connection;
+    private final Map<String,PreparedStatement> _preparedStatements = new HashMap<>();
     private final static String hsqldDbConnectionKey = "HSQL_DB_CONNECTION";
 
     private static final Object _lock = new Object();
@@ -68,87 +64,70 @@ public class HsqlDbReporter extends MetricReporter {
     public HsqlDbReporter(HsqlDBReporterFactory factory) {
         super(factory);
 
-        String driverClassName = factory.getDriverClassName();
-        String password = factory.getPassword();
-        String username = factory.getUsername();
-        String url = factory.getConnectionUrl();
+        this.factory = factory;
+        this.url = factory.getConnectionUrl();
         try {
-            new Thread(() -> con = createConnection(driverClassName, url, username, password))
-                .start();
-        } catch (Exception e) {
-            _logger.error("Failed to connect to [{}]", url, e);
+            Class.forName(factory.getDriverClassName());
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException("Failed to load driver class " + factory.getDriverClassName(), e);
+        }
+
+        if (getOrCreateConnection() == null) {
+            _logger.warn("Connection is not available yet - will try to reconnect on first report");
         }
     }
 
-    private Connection createConnection( String driverClassName, String url, String username, String password ) {
-        Connection con = null;
+    private Connection getOrCreateConnection() {
+        if (connection != null)
+            return connection;
         try {
-            _logger.debug("Loading driver class {}", driverClassName);
-            Class.forName(driverClassName);
-            while (con == null) {
-                try {
-                    synchronized (_lock) {
-                        if ((con = (Connection) Singletons.get(hsqldDbConnectionKey)) == null) {
-                            _logger.debug("Connecting to [{}]", url);
-                            con = DriverManager.getConnection(url, username, password);
-                            Singletons.putIfAbsent(hsqldDbConnectionKey, con);
-                            _logger.info("Connected to [{}]", url);
-                            retrieveExistingTablesInfo( con );
-                        }
-                    }
+            synchronized (_lock) {
+                if (connection != null)
+                    return connection;
+                connection = (Connection) Singletons.get(hsqldDbConnectionKey);
+                if (connection != null)
+                    return connection;
+                _logger.debug("Connecting to [{}]", url);
+                Connection newConnection = DriverManager.getConnection(url, factory.getUsername(), factory.getPassword());
+                connection = (Connection) Singletons.putIfAbsent(hsqldDbConnectionKey, newConnection);
+                if (connection != newConnection) {
+                    _logger.debug("Closing temp connection");
+                    tryClose(newConnection);
                 }
-                catch( Exception e ){
-                    _logger.warn("Failed to connect to [{}]", url, e);
+                _logger.info("Connected to [{}]", url);
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(retrieveExistingTablesInfo(connection));
                 }
-                if( con == null ){
-                    try {
-                        Thread.sleep( 1 * 1000 );
-                    } catch (InterruptedException e) {
+                return connection;
+            }
+        } catch (SQLException e) {
+            _logger.warn("Failed to connect to [{}]", url, e);
+            return null;
+        }
+    }
 
-                    }
-                }
+    private static String retrieveExistingTablesInfo(Connection con) throws SQLException {
+        StringBuilder result = new StringBuilder("! Existing public tables are:");
+        try (ResultSet rs = con.getMetaData().getTables(con.getCatalog(), "PUBLIC", "%", null)) {
+            while (rs.next()) {
+                result.append(System.lineSeparator());
+                result.append(rs.getString("TABLE_SCHEM"));
+                result.append(".");
+                result.append(rs.getString("TABLE_NAME"));
             }
         }
-        catch (Exception e) {
-            _logger.error("Failed to connect to [{}]", url, e);
-        }
-
-        return con;
-    }
-
-    private void retrieveExistingTablesInfo( Connection con ) throws SQLException {
-        if (_logger.isDebugEnabled()) {
-            DatabaseMetaData mtdt = con.getMetaData();
-            String catalog = con.getCatalog();
-            try (ResultSet rs = mtdt.getTables(catalog, "PUBLIC", "%", null)) {
-                //ResultSetMetaData rsmd = rs.getMetaData();
-                StringBuilder strBuilder = new StringBuilder("! Existing public tables are:");
-                while (rs.next()) {
-                    strBuilder.append(System.lineSeparator());
-                    strBuilder.append(rs.getString("TABLE_SCHEM"));
-                    strBuilder.append(".");
-                    strBuilder.append(rs.getString("TABLE_NAME"));
-                }
-                _logger.debug(strBuilder.toString());
-            }
-        }
-    }
-
-    public void report(List<MetricRegistrySnapshot> snapshots) {
-        super.report(snapshots);
-        //flush();
+        return result.toString();
     }
 
     @Override
     protected void report(MetricRegistrySnapshot snapshot, MetricTagsSnapshot tags, String key, Object value) {
-        // Save length before append:
-       //String row1 = "insert into " + realDbTableName + " values('23','AABBAABB','Address','NY','AB',23500)";
-
-        _logger.debug("Report, con={}, key={}", con, key);
-
-        if( con == null ){
+        Connection con = getOrCreateConnection();
+        if (con == null) {
+            _logger.warn("Report skipped - connection is not available yet [timestamp={}, key={}]", snapshot.getTimestamp(), key);
             return;
         }
+
+        _logger.debug("Report, con={}, key={}", con, key);
 
         if( isAllMetricsRecordedToHsqlDb || recordedMetricsTablesSet.contains( key ) ) {
 
@@ -473,13 +452,17 @@ public class HsqlDbReporter extends MetricReporter {
 
     @Override
     public void close() {
+        if (connection != null) {
+            tryClose(connection);
+        }
         super.close();
-        if( con != null ) {
-            try {
-                con.close();
-            } catch (SQLException e) {
-                _logger.warn("Failed to close connection", e );
-            }
+    }
+
+    private static void tryClose(Connection connection) {
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            _logger.warn("Failed to close connection", e);
         }
     }
 
