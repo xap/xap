@@ -35,8 +35,6 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.*;
 
-import static com.gigaspaces.metrics.hsqldb.HsqlDBMetricsUtils.*;
-
 /**
  * @author Evgeny
  * @since 15.0
@@ -44,21 +42,14 @@ import static com.gigaspaces.metrics.hsqldb.HsqlDBMetricsUtils.*;
 public class HsqlDbReporter extends MetricReporter {
 
     private static final Logger _logger = LoggerFactory.getLogger(HsqlDbReporter.class);
+    private static final Object _lock = new Object();
+    private static final String hsqldDbConnectionKey = "HSQL_DB_CONNECTION";
+    private static final boolean systemFilterDisabled = Boolean.getBoolean(SystemProperties.RECORDING_OF_ALL_METRICS_TO_HSQLDB_ENABLED);
 
     private final HsqlDBReporterFactory factory;
     private final String url;
     private Connection connection;
     private final Map<String,PreparedStatement> _preparedStatements = new HashMap<>();
-    private final static String hsqldDbConnectionKey = "HSQL_DB_CONNECTION";
-
-    private static final Object _lock = new Object();
-
-    private final Set<String> recordedMetricsTablesSet =
-        new HashSet<>( Arrays.asList( METRICS_TABLES ) );
-
-    //by default false
-    private final boolean isAllMetricsRecordedToHsqlDb =
-                        Boolean.getBoolean( SystemProperties.RECORDING_OF_ALL_METRICS_TO_HSQLDB_ENABLED);
 
 
     public HsqlDbReporter(HsqlDBReporterFactory factory) {
@@ -129,9 +120,9 @@ public class HsqlDbReporter extends MetricReporter {
 
         _logger.debug("Report, con={}, key={}", con, key);
 
-        if( isAllMetricsRecordedToHsqlDb || recordedMetricsTablesSet.contains( key ) ) {
+        if (systemFilterDisabled || SystemMetrics.valuesMap().containsKey(key)) {
 
-            final String realDbTableName = createValidTableName(key );
+            final String tableName = SystemMetrics.toTableName(key);
 
             Set<Map.Entry<String, Object>> tagEntries = tags.getTags().entrySet();
             StringBuilder columns = new StringBuilder();
@@ -171,7 +162,7 @@ public class HsqlDbReporter extends MetricReporter {
 
             final String
                 insertSQL =
-                "INSERT INTO " + realDbTableName + " (" + columns + ") VALUES (" + values + ")";
+                "INSERT INTO " + tableName + " (" + columns + ") VALUES (" + values + ")";
 
             try {
                 PreparedStatement insertQueryPreparedStatement = _preparedStatements.get(insertSQL);
@@ -199,17 +190,17 @@ public class HsqlDbReporter extends MetricReporter {
                 _logger.trace("After insert [{}]", insertSQL);
             } catch (SQLSyntaxErrorException sqlSyntaxErrorException) {
                 String message = sqlSyntaxErrorException.getMessage();
-                _logger.debug("Report to {} failed: {}", realDbTableName, message);
+                _logger.debug("Report to {} failed: {}", tableName, message);
                 //if such table does not exist
                 if (message != null && message.contains(
-                    "user lacks privilege or object not found: " + realDbTableName)) {
+                    "user lacks privilege or object not found: " + tableName)) {
                     //create such (not found ) table
                     String tableColumnsInfo = createTableColumnsInfo(tags, value);
 
                     try {
-                        createTable(con, realDbTableName, tableColumnsInfo);
+                        createTable(con, tableName, tableColumnsInfo);
                     } catch (SQLException e) {
-                        _logger.warn("Create table {} failed", realDbTableName, e);
+                        _logger.warn("Create table {} failed", tableName, e);
                         //probably create table failed since table was just created, then try to
                         //call to this report method again, TODO: prevent loop
                         //report( snapshot, tags, key, value);
@@ -220,9 +211,9 @@ public class HsqlDbReporter extends MetricReporter {
                          message.contains("user lacks privilege or object not found: ")) {
 
                     try {
-                        handleAddingMissingTableColumns(con, tags, value, realDbTableName);
+                        handleAddingMissingTableColumns(con, tags, value, tableName);
                     } catch (SQLException e) {
-                        _logger.error("Failed to add missing columns to table [{}]", realDbTableName, e);
+                        _logger.error("Failed to add missing columns to table [{}]", tableName, e);
                     }
                 }
             } catch (SQLException e) {
