@@ -21,6 +21,8 @@ import com.gigaspaces.metrics.MetricRegistrySnapshot;
 import com.gigaspaces.metrics.MetricReporter;
 import com.gigaspaces.metrics.MetricTagsSnapshot;
 import com.j_spaces.kernel.SystemProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -39,8 +41,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static com.gigaspaces.metrics.hsqldb.HsqlDBMetricsUtils.*;
 
@@ -50,7 +50,7 @@ import static com.gigaspaces.metrics.hsqldb.HsqlDBMetricsUtils.*;
  */
 public class HsqlDbReporter extends MetricReporter {
 
-    private static final Logger _logger = Logger.getLogger( HsqlDbReporter.class.getName() );
+    private static final Logger _logger = LoggerFactory.getLogger(HsqlDbReporter.class);
     private Connection con = null;
     private Map<String,PreparedStatement> _preparedStatements = new HashMap<>();
     private final static String hsqldDbConnectionKey = "HSQL_DB_CONNECTION";
@@ -76,33 +76,29 @@ public class HsqlDbReporter extends MetricReporter {
             new Thread(() -> con = createConnection(driverClassName, url, username, password))
                 .start();
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.toString(), e);
-            }
+            _logger.error("Failed to connect to [{}]", url, e);
         }
     }
 
     private Connection createConnection( String driverClassName, String url, String username, String password ) {
         Connection con = null;
         try {
-            _logger.fine("Loading " + driverClassName);
+            _logger.debug("Loading driver class {}", driverClassName);
             Class.forName(driverClassName);
             while (con == null) {
                 try {
                     synchronized (_lock) {
                         if ((con = (Connection) Singletons.get(hsqldDbConnectionKey)) == null) {
-                            _logger.fine("Connecting to " + url);
+                            _logger.debug("Connecting to [{}]", url);
                             con = DriverManager.getConnection(url, username, password);
                             Singletons.putIfAbsent(hsqldDbConnectionKey, con);
-                            _logger.info("Connection to [" + url + "] successfully created");
+                            _logger.info("Connected to [{}]", url);
                             retrieveExistingTablesInfo( con );
                         }
                     }
                 }
                 catch( Exception e ){
-                    if( _logger.isLoggable( Level.WARNING ) ){
-                        _logger.log( Level.WARNING, e.toString() );
-                    }
+                    _logger.warn("Failed to connect to [{}]", url, e);
                 }
                 if( con == null ){
                     try {
@@ -114,35 +110,26 @@ public class HsqlDbReporter extends MetricReporter {
             }
         }
         catch (Exception e) {
-            if( _logger.isLoggable( Level.SEVERE ) ){
-                _logger.log( Level.SEVERE, e.toString(), e );
-            }
+            _logger.error("Failed to connect to [{}]", url, e);
         }
 
         return con;
     }
 
     private void retrieveExistingTablesInfo( Connection con ) throws SQLException {
-
-        if( _logger.isLoggable( Level.FINER ) ){
-            _logger.finer("! Existing public tables are:");
-
+        if (_logger.isDebugEnabled()) {
             DatabaseMetaData mtdt = con.getMetaData();
             String catalog = con.getCatalog();
-            ResultSet rs = mtdt.getTables(catalog, "PUBLIC", "%", null);
-            try {
+            try (ResultSet rs = mtdt.getTables(catalog, "PUBLIC", "%", null)) {
                 //ResultSetMetaData rsmd = rs.getMetaData();
-                StringBuilder strBuilder = new StringBuilder("\n");
+                StringBuilder strBuilder = new StringBuilder("! Existing public tables are:");
                 while (rs.next()) {
-                    strBuilder.append(rs.getString( "TABLE_SCHEM" ));
+                    strBuilder.append(System.lineSeparator());
+                    strBuilder.append(rs.getString("TABLE_SCHEM"));
                     strBuilder.append(".");
-                    strBuilder.append(rs.getString( "TABLE_NAME" ));
-                    strBuilder.append("\n");
+                    strBuilder.append(rs.getString("TABLE_NAME"));
                 }
-                _logger.fine(strBuilder.toString());
-            }
-            finally{
-                rs.close();
+                _logger.debug(strBuilder.toString());
             }
         }
     }
@@ -157,9 +144,7 @@ public class HsqlDbReporter extends MetricReporter {
         // Save length before append:
        //String row1 = "insert into " + realDbTableName + " values('23','AABBAABB','Address','NY','AB',23500)";
 
-        if( _logger.isLoggable( Level.FINEST ) ) {
-            _logger.finest("Report, con=" + con + ", key=" + key );
-        }
+        _logger.debug("Report, con={}, key={}", con, key);
 
         if( con == null ){
             return;
@@ -187,12 +172,8 @@ public class HsqlDbReporter extends MetricReporter {
                 String entryKey = entry.getKey();
                 Object entryValue = entry.getValue();
 
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.finest(
-                        ">>> KEY=" + entryKey + ", value class name:" + entryValue.getClass()
-                            .getName()
-                        + ", value=" + entryValue);
-                }
+                _logger.debug("KEY={}, value class name: {}" + ", value={}",
+                        entryKey, entryValue.getClass().getName(), entryValue);
 
                 columns.append(entryKey);
                 columns.append(',');
@@ -215,11 +196,7 @@ public class HsqlDbReporter extends MetricReporter {
 
             try {
                 PreparedStatement insertQueryPreparedStatement = _preparedStatements.get(insertSQL);
-                if (_logger.isLoggable(Level.FINER)) {
-                    _logger.finer(
-                        "insert row query before setting values [" + insertSQL + "], statement:"
-                        + insertQueryPreparedStatement);
-                }
+                _logger.debug("insert row query before setting values [{}], statement: {}", insertSQL, insertQueryPreparedStatement);
 
                 if (insertQueryPreparedStatement == null) {
                     insertQueryPreparedStatement = con.prepareStatement(insertSQL);
@@ -236,22 +213,14 @@ public class HsqlDbReporter extends MetricReporter {
                     populatePreparedStatementWithParameters(insertQueryPreparedStatement,
                                                             paramIndex, paramValue);
                 }
-                if (_logger.isLoggable(Level.FINER)) {
-                    _logger.finer(">>> Before insert [" + insertSQL + "]");
-                }
+                _logger.trace("Before insert [{}]", insertSQL);
 
                 insertQueryPreparedStatement.executeUpdate();
 
-                if (_logger.isLoggable(Level.FINER)) {
-                    _logger.finer(">>> After insert [" + insertSQL + "]");
-                }
+                _logger.trace("After insert [{}]", insertSQL);
             } catch (SQLSyntaxErrorException sqlSyntaxErrorException) {
                 String message = sqlSyntaxErrorException.getMessage();
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine(
-                        ">>>@@@ exception message=" + message + ", realDbTableName="
-                        + realDbTableName);
-                }
+                _logger.debug("Report to {} failed: {}", realDbTableName, message);
                 //if such table does not exist
                 if (message != null && message.contains(
                     "user lacks privilege or object not found: " + realDbTableName)) {
@@ -261,9 +230,7 @@ public class HsqlDbReporter extends MetricReporter {
                     try {
                         createTable(con, realDbTableName, tableColumnsInfo);
                     } catch (SQLException e) {
-                        if (_logger.isLoggable(Level.WARNING)) {
-                            _logger.log(Level.WARNING, e.toString(), e);
-                        }
+                        _logger.warn("Create table {} failed", realDbTableName, e);
                         //probably create table failed since table was just created, then try to
                         //call to this report method again, TODO: prevent loop
                         //report( snapshot, tags, key, value);
@@ -276,19 +243,11 @@ public class HsqlDbReporter extends MetricReporter {
                     try {
                         handleAddingMissingTableColumns(con, tags, value, realDbTableName);
                     } catch (SQLException e) {
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE,
-                                        "Failed to add missing columns to table [" +
-                                        realDbTableName + "] due to:" + e.toString(), e);
-                        }
+                        _logger.error("Failed to add missing columns to table [{}]", realDbTableName, e);
                     }
                 }
             } catch (SQLException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
-                                "Exception thrown while inserting row [" + insertSQL + "] , " + e
-                                    .toString(), e);
-                }
+                _logger.error("Failed to insert row [{}]", insertSQL, e);
             }
         }
     }
@@ -298,73 +257,44 @@ public class HsqlDbReporter extends MetricReporter {
 
             DatabaseMetaData dbm = con.getMetaData();
             ResultSet columnsResultSet = dbm.getColumns(null, null, realDbTableName, null);
-            if( _logger.isLoggable( Level.FINER ) ) {
-                _logger.finer("~~~ Existing table, name:" + realDbTableName + ", its columns:");
-            }
+            _logger.debug("Existing table {}, columns:", realDbTableName);
             List<String> existingTableColumns = new ArrayList<>();
             try {
                 while( columnsResultSet.next() ){
                     String columnName = null;
                     try {
                         columnName = columnsResultSet.getString("COLUMN_NAME");
-
-                        if( _logger.isLoggable( Level.FINER ) ) {
-                            _logger.finer("col name=" + columnName +
-                                         ", col type=" + columnsResultSet.getString("TYPE_NAME"));
-                        }
+                        _logger.debug("col name={}, col type={}", columnName, columnsResultSet.getString("TYPE_NAME"));
                         existingTableColumns.add( columnName.toUpperCase() );
                     } catch (SQLException e) {
-                        if( _logger.isLoggable( Level.SEVERE ) ){
-                            _logger.log( Level.SEVERE, e.toString(), e );
-                        }
+                        _logger.error("Failed to get column information", e);
                     }
                 }
             } catch (SQLException e) {
-                if( _logger.isLoggable( Level.SEVERE ) ){
-                    _logger.log( Level.SEVERE, e.toString(), e );
-                }
+                _logger.error("Failed to get column information", e);
             }
 
             Map<String, String> newTableColumnsMap = createTableColumnsMap(tags, value);
             Set<Map.Entry<String, String>> newTableColumnsEntries = newTableColumnsMap.entrySet();
 
-            if( _logger.isLoggable( Level.FINER ) ) {
-                _logger.finer("~~~ passed for create table parameters:" + Arrays
-                    .toString(newTableColumnsEntries
-                    .toArray(new Map.Entry[newTableColumnsEntries.size()])));
-            }
+            if (_logger.isDebugEnabled())
+                _logger.debug("Passed for create table parameters: {}", Arrays.toString(newTableColumnsEntries.toArray(new Map.Entry[0])));
 
             //String prevColumnName = null;
             for( Map.Entry<String, String> newTableColumnEntry : newTableColumnsEntries ){
                 String columnName = newTableColumnEntry.getKey().toUpperCase();
-                if( _logger.isLoggable( Level.FINEST ) ) {
-                    //check if already exists in existing table
-                    _logger.finest("> CONTAINS of " + columnName + " in list " +
-                                   Arrays.toString(existingTableColumns.toArray(
-                                       new String[existingTableColumns.size()])) +
-                                   ":" + existingTableColumns.contains(columnName));
-                }
-
+                //check if already exists in existing table
                 if( !existingTableColumns.contains( columnName ) ){
                     String columnType = newTableColumnEntry.getValue();
-                    if( _logger.isLoggable( Level.FINER ) ) {
-                        _logger.finer("Before adding new column [" + columnName + " " + columnType
-                                     + "] to table " + realDbTableName);
-                    }
+                    _logger.debug("Before adding new column [{} {}] to table {} ", columnName, columnType, realDbTableName);
                     //String columnLocation = prevColumnName == null ? " FIRST " : " AFTER " + prevColumnName;
                     String addColumnQuery = "ALTER TABLE " + realDbTableName + " ADD " + columnName + " " + columnType; /*+ columnLocation*/
-                    if( _logger.isLoggable( Level.FINER ) ) {
-                        _logger.finer("> addColumnQuery=" + addColumnQuery );
-                    }
+                    _logger.debug("addColumnQuery={}", addColumnQuery);
                     Statement statement = null;
                     try {
                         statement = con.createStatement();
                         statement.executeUpdate(addColumnQuery);
-                        if (_logger.isLoggable(Level.FINER)) {
-                            _logger.finer(
-                                "ADDED new column [" + columnName + " " + columnType + "] to table "
-                                + realDbTableName);
-                        }
+                        _logger.debug("Added new column [{} {}] to table {}", columnName, columnType, realDbTableName);
                         //createIndexOnTableAfterAddingColumn( statement, realDbTableName, columnName );
                     }
                     catch( SQLSyntaxErrorException sqlExc){
@@ -372,15 +302,11 @@ public class HsqlDbReporter extends MetricReporter {
                         //since sometimes at teh same times can be fet attempts to add the same column to the same table
                         if (exceptionMessage == null ||
                             !exceptionMessage.contains("object name already exists in statement" ) ) {
-                            if( _logger.isLoggable( Level.SEVERE ) ){
-                                _logger.log( Level.SEVERE, sqlExc.toString(), sqlExc );
-                            }
+                            _logger.error("Failed to execute add column query", sqlExc);
                         }
                     }
                     catch (SQLException e1) {
-                        if( _logger.isLoggable( Level.SEVERE ) ){
-                            _logger.log( Level.SEVERE, e1.toString(), e1 );
-                        }
+                        _logger.error("Failed to execute add column query", e1);
                     }
                     finally{
                         if( statement != null ){
@@ -388,9 +314,7 @@ public class HsqlDbReporter extends MetricReporter {
                                 statement.close();
                             }
                             catch (SQLException e){
-                                if( _logger.isLoggable( Level.WARNING ) ){
-                                    _logger.log( Level.WARNING, e.toString(), e );
-                                }
+                                _logger.warn("Failed to close statement", e );
                             }
                         }
                     }
@@ -424,9 +348,7 @@ public class HsqlDbReporter extends MetricReporter {
         strBuilder.append( getHSQLDBDataType( "VALUE", value ) );
         strBuilder.append( ')' );
 
-        if( _logger.isLoggable( Level.FINER ) ) {
-            _logger.finer("tables columns info=" +strBuilder);
-        }
+        _logger.debug("tables columns info={}", strBuilder);
 
         return strBuilder.toString();
     }
@@ -448,10 +370,8 @@ public class HsqlDbReporter extends MetricReporter {
 
         retColumnsMap.put( "VALUE", getHSQLDBDataType( "VALUE", value ) );
 
-        if( _logger.isLoggable( Level.FINER ) ) {
-            _logger.finer("retColumnsMap=" + Arrays
-                .toString(retColumnsMap.entrySet().toArray(new Map.Entry[retColumnsMap.size()])));
-        }
+        if (_logger.isDebugEnabled())
+            _logger.debug("retColumnsMap={}", Arrays.toString(retColumnsMap.entrySet().toArray(new Map.Entry[0])));
 
         return retColumnsMap;
     }
@@ -481,9 +401,7 @@ public class HsqlDbReporter extends MetricReporter {
             insertQueryPreparedStatement.setBoolean( paramIndex, ( Boolean )paramValue );
         }
         else{
-            _logger.warning( "@@@ Value [" + paramValue + "] of class [" +
-                             paramValue.getClass().getName() + "] "+
-                             "with index [" + paramIndex + "] was not set");
+            _logger.warn("Value [{}] of class [{}] with index [{}] was not set", paramValue, paramValue.getClass().getName(), paramIndex);
         }
     }
 
@@ -560,9 +478,7 @@ public class HsqlDbReporter extends MetricReporter {
             try {
                 con.close();
             } catch (SQLException e) {
-                if( _logger.isLoggable( Level.WARNING ) ){
-                    _logger.log( Level.WARNING, e.toString(), e );
-                }
+                _logger.warn("Failed to close connection", e );
             }
         }
     }
@@ -574,13 +490,9 @@ public class HsqlDbReporter extends MetricReporter {
 
             final String sql = "CREATE CACHED TABLE " + tableName + " " + columnsInfo;
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Create [" + tableName + "] with sql query [" + sql + "]");
-            }
+            _logger.debug("Create [{}] with sql query [{}]", tableName, sql);
             statement.executeUpdate(sql);
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Table [" + tableName + "] successfully created");
-            }
+            _logger.debug("Table [{}] successfully created", tableName);
             createIndexOnTable( statement, tableName );
         }
         finally{
@@ -589,9 +501,7 @@ public class HsqlDbReporter extends MetricReporter {
                     statement.close();
                 }
                 catch( SQLException e ){
-                    if( _logger.isLoggable( Level.WARNING ) ){
-                        _logger.log( Level.WARNING, e.toString(), e );
-                    }
+                    _logger.warn("Failed to close statement", e );
                 }
             }
         }
@@ -616,14 +526,9 @@ public class HsqlDbReporter extends MetricReporter {
             sql = "CREATE INDEX gsindex_" + System.currentTimeMillis() + " ON " + tableName + " ( TIME ASC )";//SPACE_ACTIVE
         }*/
 //        if( sql != null ){
-        if( _logger.isLoggable( Level.FINE ) ) {
-            _logger.fine(
-                "Creating index for table [" + tableName + "] by executing [" + sql + "]");
-        }
+        _logger.debug("Creating index for table [{}] by executing [{}]", tableName, sql);
         statement.executeUpdate(sql);
-        if( _logger.isLoggable( Level.FINE ) ) {
-            _logger.fine("Index successfully created");
-        }
+        _logger.debug("Index successfully created");
 /*
         }
         else{
