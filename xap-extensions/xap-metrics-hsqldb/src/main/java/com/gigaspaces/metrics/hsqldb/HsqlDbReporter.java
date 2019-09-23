@@ -16,7 +16,6 @@
 
 package com.gigaspaces.metrics.hsqldb;
 
-import com.gigaspaces.internal.utils.Singletons;
 import com.gigaspaces.metrics.MetricRegistrySnapshot;
 import com.gigaspaces.metrics.MetricReporter;
 import com.gigaspaces.metrics.MetricTagsSnapshot;
@@ -24,15 +23,7 @@ import com.j_spaces.kernel.SystemProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLSyntaxErrorException;
-import java.sql.Statement;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.*;
 
 /**
@@ -43,14 +34,12 @@ public class HsqlDbReporter extends MetricReporter {
 
     private static final Logger _logger = LoggerFactory.getLogger(HsqlDbReporter.class);
     private static final Object _lock = new Object();
-    private static final String hsqldDbConnectionKey = "HSQL_DB_CONNECTION";
     private static final boolean systemFilterDisabled = Boolean.getBoolean(SystemProperties.RECORDING_OF_ALL_METRICS_TO_HSQLDB_ENABLED);
 
     private final HsqlDBReporterFactory factory;
     private final String url;
     private Connection connection;
     private final Map<String,PreparedStatement> _preparedStatements = new HashMap<>();
-
 
     public HsqlDbReporter(HsqlDBReporterFactory factory) {
         super(factory);
@@ -69,32 +58,24 @@ public class HsqlDbReporter extends MetricReporter {
     }
 
     private Connection getOrCreateConnection() {
-        if (connection != null)
-            return connection;
-        try {
+        if (connection == null) {
             synchronized (_lock) {
-                if (connection != null)
-                    return connection;
-                connection = (Connection) Singletons.get(hsqldDbConnectionKey);
-                if (connection != null)
-                    return connection;
-                _logger.debug("Connecting to [{}]", url);
-                Connection newConnection = DriverManager.getConnection(url, factory.getUsername(), factory.getPassword());
-                connection = (Connection) Singletons.putIfAbsent(hsqldDbConnectionKey, newConnection);
-                if (connection != newConnection) {
-                    _logger.debug("Closing temp connection");
-                    tryClose(newConnection);
+                if (connection == null) {
+                    try {
+                        _logger.debug("Connecting to [{}]", url);
+                        connection = DriverManager.getConnection(url, factory.getUsername(), factory.getPassword());
+                        _logger.info("Connected to [{}]", url);
+                        if (_logger.isDebugEnabled())
+                            _logger.debug(retrieveExistingTablesInfo(connection));
+                    } catch (SQLTransientConnectionException e) {
+                        _logger.warn("Failed to connect to [{}]: {}", url, e.getMessage());
+                    } catch (SQLException e) {
+                        _logger.error("Failed to connect to [{}]", url, e);
+                    }
                 }
-                _logger.info("Connected to [{}]", url);
-                if (_logger.isDebugEnabled()) {
-                    _logger.debug(retrieveExistingTablesInfo(connection));
-                }
-                return connection;
             }
-        } catch (SQLException e) {
-            _logger.warn("Failed to connect to [{}]", url, e);
-            return null;
         }
+        return connection;
     }
 
     private static String retrieveExistingTablesInfo(Connection con) throws SQLException {
@@ -444,17 +425,13 @@ public class HsqlDbReporter extends MetricReporter {
     @Override
     public void close() {
         if (connection != null) {
-            tryClose(connection);
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                _logger.warn("Failed to close connection", e);
+            }
         }
         super.close();
-    }
-
-    private static void tryClose(Connection connection) {
-        try {
-            connection.close();
-        } catch (SQLException e) {
-            _logger.warn("Failed to close connection", e);
-        }
     }
 
     private void createTable( Connection con, String tableName, String columnsInfo ) throws SQLException {
