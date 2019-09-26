@@ -15,56 +15,185 @@
  */
 package org.openspaces.pu.container.jee.jetty.session;
 
-import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.annotation.pojo.SpaceId;
+import com.gigaspaces.annotation.pojo.SpaceIndex;
 import org.eclipse.jetty.server.session.SessionData;
 
-import java.io.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 /**
+ * Port of Jetty's SessionData class adapted for space.
  * @since 15.0.0
  * @author Niv Ingberg
  */
-public class SpaceSessionData extends SessionData implements Externalizable {
-    private static final long serialVersionUID = 1L;
+public class SpaceSessionData {
+    private String spaceId;
+    private String _id;
+    private String _contextPath;
+    private String _vhost;
+    private String _lastNode;
+    private long _expiry; //precalculated time of expiry in ms since epoch
+    private long _created;
+    private long _cookieSet;
+    private long _accessed;         // the time of the last access
+    private long _lastAccessed;     // the time of the last access excluding this one
+    private long _maxInactiveMs;
+    private Map<String,Object> _attributes;
 
-    /**
-     * Required for @{@link Externalizable}
-     */
     public SpaceSessionData() {
-        super(null, null, null, 0, 0, 0, 0);
     }
 
-    public SpaceSessionData(String id, String cpath, String vhost, long created, long accessed, long lastAccessed, long maxInactiveMs) {
-        super(id, cpath, vhost, created, accessed, lastAccessed, maxInactiveMs);
+    SpaceSessionData(String spaceId, SessionData sd) {
+        this(spaceId, sd.getId(), sd.getContextPath(), sd.getVhost(), sd.getCreated(), sd.getAccessed(), sd.getLastAccessed(), sd.getMaxInactiveMs(), sd.getAllAttributes());
     }
 
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeUTF(_id); //session id
-        out.writeUTF(_contextPath); //context path
-        out.writeUTF(_vhost); //first vhost
-        out.writeLong(_accessed);//accessTime
-        out.writeLong(_lastAccessed); //lastAccessTime
-        out.writeLong(_created); //time created
-        out.writeLong(_cookieSet);//time cookie was set
-        out.writeUTF(_lastNode); //name of last node managing
-        out.writeLong(_expiry);
-        out.writeLong(_maxInactiveMs);
-        IOUtils.writeMapStringObject(out, _attributes);
+    public SpaceSessionData(String spaceId, String id, String cpath, String vhost, long created, long accessed, long lastAccessed, long maxInactiveMs, Map<String,Object> attributes) {
+        this.spaceId = spaceId;
+        _id = id;
+        setContextPath(cpath);
+        setVhost(vhost);
+        _created = created;
+        _accessed = accessed;
+        _lastAccessed = lastAccessed;
+        _maxInactiveMs = maxInactiveMs;
+        setExpiry(calcExpiry(System.currentTimeMillis()));
+        _attributes = attributes;
     }
 
     @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        _id = in.readUTF();
-        _contextPath = in.readUTF();
-        _vhost = in.readUTF();
-        _accessed = in.readLong();//accessTime
-        _lastAccessed = in.readLong(); //lastAccessTime
-        _created = in.readLong(); //time created
-        _cookieSet = in.readLong();//time cookie was set
-        _lastNode = in.readUTF(); //last managing node
-        _expiry = in.readLong();
-        _maxInactiveMs = in.readLong();
-        _attributes = IOUtils.readMapStringObject(in);
+    public String toString() {
+        return "spaceId=" + spaceId +
+                ", id=" + _id +
+                ", contextpath=" + _contextPath +
+                ", vhost=" + _vhost +
+                ", accessed=" + _accessed +
+                ", lastaccessed=" + _lastAccessed +
+                ", created=" + _created +
+                ", cookieset=" + _cookieSet +
+                ", lastnode=" + _lastNode +
+                ", expiry=" + _expiry +
+                ", maxinactive=" + _maxInactiveMs;
+    }
+
+    public long calcExpiry (long time) {
+        return (getMaxInactiveMs() <= 0 ? 0 : (time + getMaxInactiveMs()));
+    }
+
+    public boolean isExpiredAt(long time) {
+        if (getMaxInactiveMs() <= 0)
+            return false; //never expires
+        return (getExpiry() <= time);
+    }
+
+
+    @SpaceId
+    public String getSpaceId() {
+        return spaceId;
+    }
+
+    public SessionData toSessionData() {
+        return new SessionData(_id, _contextPath, _vhost, _created, _accessed, _lastAccessed, _maxInactiveMs, _attributes);
+    }
+
+    public Set<String> getKeys() {
+        return _attributes.keySet();
+    }
+
+    public Map<String,Object> getAllAttributes() {
+        return Collections.unmodifiableMap(_attributes);
+    }
+
+    public Object getAttribute(String name) {
+        return _attributes.get(name);
+    }
+
+    public Object setAttribute (String name, Object value) {
+        Object old = (value==null?_attributes.remove(name):_attributes.put(name,value));
+        if (value == null && old == null)
+            return null; //if same as remove attribute but attribute was already removed, no change
+
+        return old;
+    }
+
+    public void putAllAttributes(Map<String,Object> attributes) {
+        _attributes.putAll(attributes);
+    }
+
+    public void clearAllAttributes() {
+        _attributes.clear();
+    }
+
+    @SpaceIndex
+    public String getId() {
+        return _id;
+    }
+    public void setId(String id) {
+        _id = id;
+    }
+
+    public String getContextPath() {
+        return _contextPath;
+    }
+
+    public void setContextPath(String contextPath) {
+        _contextPath = contextPath;
+    }
+
+    public String getVhost() {
+        return _vhost;
+    }
+    public void setVhost(String vhost) {
+        _vhost = vhost;
+    }
+
+    public String getLastNode() {
+        return _lastNode;
+    }
+    public void setLastNode(String lastNode) {
+        _lastNode = lastNode;
+    }
+
+    public long getExpiry() {
+        return _expiry;
+    }
+    public void setExpiry(long expiry) {
+        _expiry = expiry;
+    }
+
+    public long getCreated() {
+        return _created;
+    }
+    public void setCreated(long created) {
+        _created = created;
+    }
+
+    public long getCookieSet() {
+        return _cookieSet;
+    }
+    public void setCookieSet(long cookieSet) {
+        _cookieSet = cookieSet;
+    }
+
+    public long getAccessed() {
+        return _accessed;
+    }
+    public void setAccessed(long accessed) {
+        _accessed = accessed;
+    }
+
+    public long getLastAccessed() {
+        return _lastAccessed;
+    }
+    public void setLastAccessed(long lastAccessed) {
+        _lastAccessed = lastAccessed;
+    }
+
+    public long getMaxInactiveMs() {
+        return _maxInactiveMs;
+    }
+    public void setMaxInactiveMs(long maxInactive) {
+        _maxInactiveMs = maxInactive;
     }
 }
