@@ -92,6 +92,9 @@ public class SpaceSessionData {
     public String getSpaceId() {
         return spaceId;
     }
+    public void setSpaceId(String spaceId) {
+        this.spaceId = spaceId;
+    }
 
     public SessionData toSessionData() {
         return new SessionData(_id, _contextPath, _vhost, _created, _accessed, _lastAccessed, _maxInactiveMs, _attributes);
