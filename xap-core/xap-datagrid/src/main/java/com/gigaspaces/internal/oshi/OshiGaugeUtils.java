@@ -193,15 +193,12 @@ public class OshiGaugeUtils {
                 long currentCpuTime = System.currentTimeMillis();
                 long currentCpuTotal = osProcessLocal.getKernelTime() + osProcessLocal.getUserTime();
 
-                double cpuPerc = -1;
+                double cpuPerc = previousCpuPerc;
 
                 long timeDelta = currentCpuTime - previousCpuTime;
                 long totalDelta = currentCpuTotal - previousCpuTotal;
 
-                if( totalDelta == 0 || totalDelta > timeDelta ){
-                    cpuPerc = previousCpuPerc;
-                }
-                else if( timeDelta > 0 && totalDelta > 0 && totalDelta < timeDelta ) {
+                if( timeDelta > 0 && totalDelta > 0 && totalDelta < timeDelta ) {
                     cpuPerc = ((double) totalDelta) / timeDelta;
                 }
 
