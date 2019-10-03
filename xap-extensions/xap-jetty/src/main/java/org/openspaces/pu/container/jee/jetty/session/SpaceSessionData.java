@@ -104,8 +104,12 @@ public class SpaceSessionData {
         return _attributes.keySet();
     }
 
-    public Map<String,Object> getAllAttributes() {
-        return Collections.unmodifiableMap(_attributes);
+    public Map<String,Object> getAttributes() {
+        return _attributes;
+    }
+
+    public void setAttributes(Map<String, Object> attributes) {
+        this._attributes = _attributes;
     }
 
     public Object getAttribute(String name) {
@@ -118,14 +122,6 @@ public class SpaceSessionData {
             return null; //if same as remove attribute but attribute was already removed, no change
 
         return old;
-    }
-
-    public void putAllAttributes(Map<String,Object> attributes) {
-        _attributes.putAll(attributes);
-    }
-
-    public void clearAllAttributes() {
-        _attributes.clear();
     }
 
     @SpaceIndex
