@@ -19,7 +19,6 @@ import com.gigaspaces.annotation.pojo.SpaceId;
 import com.gigaspaces.annotation.pojo.SpaceIndex;
 import org.eclipse.jetty.server.session.SessionData;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,7 +46,8 @@ public class SpaceSessionData {
     }
 
     SpaceSessionData(String spaceId, SessionData sd) {
-        this(spaceId, sd.getId(), sd.getContextPath(), sd.getVhost(), sd.getCreated(), sd.getAccessed(), sd.getLastAccessed(), sd.getMaxInactiveMs(), sd.getAllAttributes());
+        this(spaceId, sd.getId(), sd.getContextPath(), sd.getVhost(), sd.getCreated(), sd.getAccessed(), sd.getLastAccessed(), sd.getMaxInactiveMs(),
+                new ConcurrentHashMap<>(sd.getAllAttributes()));
     }
 
     public SpaceSessionData(String spaceId, String id, String cpath, String vhost, long created, long accessed, long lastAccessed, long maxInactiveMs, Map<String,Object> attributes) {
