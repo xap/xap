@@ -22,6 +22,7 @@ import org.eclipse.jetty.server.session.SessionData;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Port of Jetty's SessionData class adapted for space.
@@ -59,7 +60,7 @@ public class SpaceSessionData {
         _lastAccessed = lastAccessed;
         _maxInactiveMs = maxInactiveMs;
         setExpiry(calcExpiry(System.currentTimeMillis()));
-        _attributes = attributes;
+        _attributes = attributes != null ? attributes : new ConcurrentHashMap<>();
     }
 
     @Override
