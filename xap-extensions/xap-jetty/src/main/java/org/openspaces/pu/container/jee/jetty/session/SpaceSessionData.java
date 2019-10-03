@@ -109,7 +109,7 @@ public class SpaceSessionData {
     }
 
     public void setAttributes(Map<String, Object> attributes) {
-        this._attributes = _attributes;
+        this._attributes = attributes;
     }
 
     public Object getAttribute(String name) {
