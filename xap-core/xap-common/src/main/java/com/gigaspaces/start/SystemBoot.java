@@ -41,10 +41,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.rmi.RMISecurityManager;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -373,6 +370,8 @@ public class SystemBoot {
         ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
         sb.append("Started shutdown at: ").append(new Date()).append("\n");
         synchronized (shutdownHooks) {
+            Collections.reverse(shutdownHooks); //perform reverse order shutdown
+
             sb.append("Calling [").append(shutdownHooks.size()).append("] ShutdownHooks...").append("\n");
             for (Thread shutdownHook : shutdownHooks) {
                 Future<?> future = null;
@@ -384,10 +383,13 @@ public class SystemBoot {
                     if (future != null) {
                         future.cancel(true);
                     }
-                    sb.append("> ShutdownHook.run() reported exception: ").append(e)
-                            .append("\n")
-                            .append(BootUtil.getStackTrace(e)).append("\n");
-                    // ignore
+                    if (e instanceof TimeoutException) {
+                        sb.append("> timeout waiting for shutdown hook of: ").append(shutdownHook.getName()).append("\n");
+                    } else {
+                        sb.append("> ShutdownHook.run() reported exception: ").append(e)
+                                .append("\n")
+                                .append(BootUtil.getStackTrace(e)).append("\n");
+                    }
                 }
             }
             shutdownHooks.clear();
