@@ -62,14 +62,14 @@ public class SpaceSessionDataStore extends AbstractSessionDataStore {
     @Override
     public void doStore(String id, SessionData data, long lastSaveTime) throws Exception {
         logger.debug("doStore(id={})", id);
-        gigaSpace.write(new SessionDataWrapper(toCacheKey(id), data), lease);
+        gigaSpace.write(new SpaceSessionData(toCacheKey(id), data), lease);
     }
 
     @Override
     public SessionData doLoad(String id) throws Exception {
         logger.debug("doLoad(id={})", id);
-        SessionDataWrapper spaceSessionData = gigaSpace.readById(query(id));
-        return spaceSessionData == null ? null : spaceSessionData.getSessionData();
+        SpaceSessionData spaceSessionData = gigaSpace.readById(query(id));
+        return spaceSessionData == null ? null : spaceSessionData.toSessionData();
     }
 
     @Override
@@ -109,8 +109,8 @@ public class SpaceSessionDataStore extends AbstractSessionDataStore {
     @Override
     public boolean exists(String id) throws Exception {
         logger.debug("exists(id={})", id);
-        int result = gigaSpace.count(new SQLQuery<>(SessionDataWrapper.class,
-                "id = ? AND (sessionData.expiry <= 0 OR sessionData.expiry > ?)",
+        int result = gigaSpace.count(new SQLQuery<>(SpaceSessionData.class,
+                "spaceId = ? AND (expiry <= 0 OR expiry > ?)",
                 toCacheKey(id),
                 System.currentTimeMillis()));
         return result != 0;
@@ -126,15 +126,15 @@ public class SpaceSessionDataStore extends AbstractSessionDataStore {
     @Override
     public SessionData newSessionData(String id, long created, long accessed, long lastAccessed, long maxInactiveMs) {
         logger.debug("newSessionData(id={})", id);
-        return new SpaceSessionData(id, _context.getCanonicalContextPath(), _context.getVhost(), created, accessed, lastAccessed, maxInactiveMs);
+        return new SessionData(id, _context.getCanonicalContextPath(), _context.getVhost(), created, accessed, lastAccessed, maxInactiveMs);
     }
 
     public void setLease(long lease) {
         this.lease = lease;
     }
 
-    protected IdQuery<SessionDataWrapper> query(String id) {
-        return new IdQuery<>(SessionDataWrapper.class, toCacheKey(id));
+    protected IdQuery<SpaceSessionData> query(String id) {
+        return new IdQuery<>(SpaceSessionData.class, toCacheKey(id));
     }
 
     private String toCacheKey(String id) {
