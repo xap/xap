@@ -18,7 +18,6 @@ package org.openspaces.pu.container.jee.jetty.session;
 import com.gigaspaces.async.AsyncResult;
 import com.gigaspaces.internal.io.IOUtils;
 import com.j_spaces.core.client.SQLQuery;
-import org.eclipse.jetty.server.session.SessionData;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.executor.DistributedTask;
 import org.openspaces.core.executor.TaskGigaSpace;
@@ -64,18 +63,18 @@ public class FindNonExpiredSessionsTask implements DistributedTask<HashSet<Strin
     public HashSet<String> execute() throws Exception {
         HashSet<String> result = new HashSet<>();
         // Get all collocated candidates (sessionData.id is indexed):
-        SessionDataWrapper[] sessions = gigaSpace.readMultiple(new SQLQuery<>(SessionDataWrapper.class,
-                "sessionData.id IN (?)", candidates));
+        SpaceSessionData[] sessions = gigaSpace.readMultiple(new SQLQuery<>(SpaceSessionData.class,
+                "id IN (?)", candidates));
         // Check if expired, collect non-expired:
-        for (SessionDataWrapper session : sessions) {
-            if (!isExpired(session.getSessionData()))
-                result.add(session.getSessionData().getId());
+        for (SpaceSessionData session : sessions) {
+            if (!isExpired(session))
+                result.add(session.getId());
         }
 
         return result;
     }
 
-    private boolean isExpired(SessionData session) {
+    private boolean isExpired(SpaceSessionData session) {
         if (session.getExpiry() <= 0)
             return false;
 
