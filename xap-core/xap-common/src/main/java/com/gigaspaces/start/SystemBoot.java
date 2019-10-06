@@ -40,6 +40,7 @@ import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.rmi.RMISecurityManager;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Level;
@@ -91,20 +92,82 @@ public class SystemBoot {
 
     static final String SERVICES_COMPONENT = COMPONENT + ".services";
 
-    static final List<Thread> shutdownHooks = new ArrayList<Thread>();
+    private static final SystemBootShutdownHook systemBootShutdownHook = new SystemBootShutdownHook();
 
-    public static void addShutdownHook(Thread shutdownHook) {
-        synchronized (shutdownHooks) {
+    private static class SystemBootShutdownHook extends Thread {
+
+        //holds shutdown hooks registered with SystemBoot
+        private final List<Thread> shutdownHooks = Collections.synchronizedList(new ArrayList<Thread>());
+
+        public boolean isEmpty() {
+            return shutdownHooks.isEmpty();
+        }
+
+        void addShutdownHook(Thread shutdownHook) {
             shutdownHooks.add(shutdownHook);
-            Runtime.getRuntime().addShutdownHook(shutdownHook);
+        }
+
+        @Override
+        public void run() {
+            processShutdownHooks();
+        }
+
+        // invoked by Runtime shutdown and may also be invoked explicitly by GSA shutdown command
+        private StringBuilder processShutdownHooks() {
+            final SimpleDateFormat msgf = new SimpleDateFormat("> HH:mm:ss,SSS - ");
+            final StringBuilder sb = new StringBuilder();
+            final ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
+            final long start = System.currentTimeMillis();
+            synchronized (shutdownHooks) {
+                //process shutdown hooks in reverse order (of registration)
+                Collections.reverse(shutdownHooks);
+
+                sb.append(msgf.format(new Date()))
+                        .append("Started shutdown with [")
+                        .append(shutdownHooks.size())
+                        .append("] registered shutdown hooks\n");
+
+                for (Thread shutdownHook : shutdownHooks) {
+                    Future<?> future = null;
+                    try {
+                        sb.append(msgf.format(new Date()))
+                                .append("> call shutdown hook [")
+                                .append(shutdownHook.getName())
+                                .append("]\n");
+                        future = singleThreadExecutor.submit(shutdownHook);
+                        future.get(10, TimeUnit.SECONDS);
+                    } catch (Exception e) {
+                        if (future != null) {
+                            future.cancel(true);
+                        }
+                        if (e instanceof TimeoutException) {
+                            sb.append(msgf.format(new Date()))
+                                    .append(">> Timeout waiting for shutdown hook to complete\n");
+                        } else {
+                            sb.append(msgf.format(new Date()))
+                                    .append(">> Caught Exception: ").append(e)
+                                    .append("\n")
+                                    .append(BootUtil.getStackTrace(e))
+                                    .append("\n");
+                        }
+                    }
+                }
+                //empty list after processing is done (still under lock)
+                shutdownHooks.clear();
+            }
+            singleThreadExecutor.shutdownNow();
+            final long elapsed = System.currentTimeMillis() - start;
+            sb.append(msgf.format(new Date())).append("Completed shutdown in [").append(elapsed).append(" ms]\n");
+            return sb;
         }
     }
 
-    @SuppressWarnings("unused")
-    public static void removeShutdownHook(Thread shutdownHook) {
-        synchronized (shutdownHooks) {
-            shutdownHooks.remove(shutdownHook);
-            Runtime.getRuntime().removeShutdownHook(shutdownHook);
+    public static void addShutdownHook(Thread shutdownHook) {
+        systemBootShutdownHook.addShutdownHook(shutdownHook);
+        if (systemBootShutdownHook.isEmpty()) {
+            // remove to avoid IllegalArgumentException If the specified hook has already been registered.
+            Runtime.getRuntime().removeShutdownHook(systemBootShutdownHook);
+            Runtime.getRuntime().addShutdownHook(systemBootShutdownHook);
         }
     }
 
@@ -348,55 +411,21 @@ public class SystemBoot {
 
         waitForStopCommand(mainThread, systemConfig);
         logger.info("Received stop command from GSA, exiting");
+        exitGracefully();
 
-        outStream.ignore = true;
-        errStream.ignore = true;
-        StringBuilder sb = processShutdownHooks();
-        outStream.ignore = false;
-        errStream.ignore = false;
-        System.out.println("Exiting... \n" + sb);
-        System.out.println("gsa-exit-done");
+        System.out.println("gsa-exit-done"); //this text is processed by GigaSpacesShutdownProcessHandler.isShutdownVerification
         System.out.flush();
-        try {
-            Thread.sleep(20);
-        } catch (InterruptedException e) {
-            // graceful sleep
-        }
+
+        gracefulSleep(20);
         System.exit(0);
     }
 
-    private static StringBuilder processShutdownHooks() {
-        final StringBuilder sb = new StringBuilder();
-        ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
-        sb.append("Started shutdown at: ").append(new Date()).append("\n");
-        synchronized (shutdownHooks) {
-            Collections.reverse(shutdownHooks); //perform reverse order shutdown
-
-            sb.append("Calling [").append(shutdownHooks.size()).append("] ShutdownHooks...").append("\n");
-            for (Thread shutdownHook : shutdownHooks) {
-                Future<?> future = null;
-                try {
-                    sb.append("> ShutdownHook called for: ").append(shutdownHook.getName()).append("\n");
-                    future = singleThreadExecutor.submit(shutdownHook);
-                    future.get(10, TimeUnit.SECONDS);
-                } catch (Exception e) {
-                    if (future != null) {
-                        future.cancel(true);
-                    }
-                    if (e instanceof TimeoutException) {
-                        sb.append("> timeout waiting for shutdown hook of: ").append(shutdownHook.getName()).append("\n");
-                    } else {
-                        sb.append("> ShutdownHook.run() reported exception: ").append(e)
-                                .append("\n")
-                                .append(BootUtil.getStackTrace(e)).append("\n");
-                    }
-                }
-            }
-            shutdownHooks.clear();
+    private static void gracefulSleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            // graceful sleep
         }
-        singleThreadExecutor.shutdownNow();
-        sb.append("Completed shutdown at: ").append(new Date()).append("\n");
-        return sb;
     }
 
     private static void waitForStopCommand(Thread mainThread, SystemConfig systemConfig) throws InterruptedException {
@@ -677,7 +706,10 @@ public class SystemBoot {
             if (ignore) {
                 return;
             }
-            stream.close();
+            //add for safety
+            if (this.stream != System.out && this.stream != System.err) {
+                this.stream.close();
+            }
         }
 
         @Override
@@ -924,24 +956,28 @@ public class SystemBoot {
                 gsaIsOut = true;
             }
             if (gsaIsOut) {
-                // no GSA, print on a different thread (so we won't lock when writing to console)
-                // and wait a bit for the output
-                Thread t = new Thread(new Runnable() {
-                    public void run() {
-                        logger.info("GSA parent missing, exiting");
-                    }
-                });
-                t.start();
-                try {
-                    t.join(1000);
-                } catch (InterruptedException e) {
-                    // ignore
-                }
-                // replace output stream, so the process won't get stuck when outputting and not reading from it
-                outStream.ignore = true;
-                errStream.ignore = true;
+                logger.info("GSA parent missing, exiting");
+                exitGracefully();
+                gracefulSleep(20);
                 System.exit(1);
             }
+        }
+    }
+
+    private static void exitGracefully() {
+        logger.info("Exit gracefully");
+
+        // replace output stream, so the process won't get stuck when outputting to stream when processing shutdown hooks
+        outStream.ignore = true;
+        errStream.ignore = true;
+
+        StringBuilder output = systemBootShutdownHook.processShutdownHooks();
+
+        outStream.ignore = false;
+        errStream.ignore = false;
+
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("Processed shutdown-hooks:\n" + output);
         }
     }
 
