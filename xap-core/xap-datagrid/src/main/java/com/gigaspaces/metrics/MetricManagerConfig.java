@@ -164,7 +164,7 @@ public class MetricManagerConfig {
 
     public void loadDefaults() {
         if (!reportersFactories.containsKey("ui")) {
-            if (Boolean.parseBoolean(System.getProperty(SystemProperties.UI_ENABLED, "true"))) {
+            if (Boolean.parseBoolean(System.getProperty(SystemProperties.UI_ENABLED, "false"))) {
                 XapManagerClusterInfo managerClusterInfo = SystemInfo.singleton().getManagerClusterInfo();
                 if (managerClusterInfo.isEmpty()) {
                     logger.fine("Skipping default metrics ui reporter - manager not configured");
