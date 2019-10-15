@@ -115,7 +115,7 @@ public class MetricManager implements Closeable {
             currInstance.reload();
     }
 
-    public MetricManager() {
+    private MetricManager() {
         logger.log(Level.FINE, "Starting Metric Manager...");
         this.defaultTags = initDefaultTags();
         reload();
