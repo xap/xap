@@ -289,32 +289,22 @@ public class SystemProperties extends CommonSystemProperties {
     public final static String LRMI_TCP_TRAFFIC_CLASS = "com.gs.transport_protocol.lrmi.tcp-traffic-class";
 
     /**
-     * Set to true in order to enable simple request/response remote class loading for all purposes, set to false to disable
-     * it. Defaults to false
-     */
-    public final static String LRMI_SIMPLE_CLASSLOADING = "com.gs.transport_protocol.lrmi.simple-classloading";
-    public final static String LRMI_SIMPLE_CLASSLOADING_DEFAULT = "false";
-
-    /**
      * Set to true in order to enable lrmi class loading for all purposes, set to false to disable
      * it. Defaults to true
      */
     public final static String LRMI_CLASSLOADING = "com.gs.transport_protocol.lrmi.classloading";
-    public final static String LRMI_CLASSLOADING_DEFAULT = "true";
 
     /**
      * Set to true in order to enable lrmi class loading for importing classes, set to false to
      * disable it. Defaults to true
      */
     public final static String LRMI_CLASSLOADING_IMPORT = LRMI_CLASSLOADING + ".import";
-    public final static String LRMI_CLASSLOADING_IMPORT_DEFAULT = "true";
 
     /**
      * Set to true in order to enable lrmi class loading for exporting classes, set to false to
      * disable it. Defaults to true
      */
     public final static String LRMI_CLASSLOADING_EXPORT = LRMI_CLASSLOADING + ".export";
-    public final static String LRMI_CLASSLOADING_EXPORT_DEFAULT = "true";
 
     public final static String LRMI_NETWORK_FILTER_FACTORY = "com.gs.lrmi.filter.factory";
 

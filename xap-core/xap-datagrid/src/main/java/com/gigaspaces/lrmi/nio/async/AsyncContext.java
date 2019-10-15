@@ -30,7 +30,9 @@ import com.gigaspaces.lrmi.LRMIInvocationContext.InvocationStage;
 import com.gigaspaces.lrmi.LRMIInvocationContext.ProxyWriteType;
 import com.gigaspaces.lrmi.LRMIInvocationTrace;
 import com.gigaspaces.lrmi.LRMIRuntime;
-import com.gigaspaces.lrmi.classloading.*;
+import com.gigaspaces.lrmi.classloading.ClassProviderRequest;
+import com.gigaspaces.lrmi.classloading.IRemoteClassProviderProvider;
+import com.gigaspaces.lrmi.classloading.LRMIRemoteClassLoaderIdentifier;
 import com.gigaspaces.lrmi.classloading.protocol.lrmi.LRMIConnection;
 import com.gigaspaces.lrmi.nio.CPeer;
 import com.gigaspaces.lrmi.nio.ClientPeerWatchedObjectsContext;
@@ -189,29 +191,7 @@ public class AsyncContext implements Context {
 
                             reuseBuffer = false;
                             setWriteInterest();
-                        } else if (replyPacket.getResult() instanceof ClassDefinitionRequest) {
-                            ClassDefinitionRequest classDefinitionRequest = (ClassDefinitionRequest) replyPacket.getResult();
-                            IClassProvider classProvider = cpeer.getClassProvider();
-                            byte[] definition = new byte[0];
-                            Exception exp = null;
-                            if(classDefinitionRequest.getFileType() == FileType.CLASS){
-                                try{
-                                    definition = classProvider.getClassDefinition(classDefinitionRequest.getClassLoaderId(), classDefinitionRequest.getClassName());
-                                }catch (ClassNotFoundException e){
-                                    exp = e;
-                                }
-                            }
-                            else if(classDefinitionRequest.getFileType() == FileType.RESOURCE){
-                                try{
-                                    definition = classProvider.getResource(classDefinitionRequest.getClassLoaderId(), classDefinitionRequest.getResourceName());
-                                }catch (ClassNotFoundException e){
-                                    exp = e;
-                                }
-                            }
-                            requestPacket = new RequestPacket(new ClassDefinitionResponse(definition, exp));
-                            reuseBuffer = false;
-                            setWriteInterest();
-                        }else {
+                        } else {
                             finishExecution(replyPacket, true);
                         }
                     } catch (ClassNotFoundException e) {
