@@ -18,6 +18,7 @@ package org.openspaces.launcher;
 
 import com.gigaspaces.admin.security.SecurityConstants;
 import com.gigaspaces.start.SystemInfo;
+import net.jini.discovery.CommonSystemParamOrEnvVariable;
 
 import java.util.Properties;
 
@@ -65,8 +66,8 @@ public class WebLauncherConfig {
         this.webuiHome = System.getProperty("com.gigaspaces.webui.path", SystemInfo.singleton().getXapHome() + "/tools/gs-webui");
         this.name = props.getProperty("name", System.getProperty("org.openspaces.launcher.name", "GS Web UI"));
         this.loggerName = props.getProperty("logger", System.getProperty("org.openspaces.launcher.logger", "org.openspaces.launcher"));
-        this.port = Integer.parseInt(props.getProperty("port", loadDefault("org.openspaces.launcher.port", "GS_WEBUI_PORT", "8099")));
-        this.hostAddress = props.getProperty("bind-address", loadDefault("org.openspaces.launcher.bind-address", "GS_BIND_ADDRESS", "0.0.0.0"));
+        this.port = CommonSystemParamOrEnvVariable.getIntFromEnv("org.openspaces.launcher.port", "WEBUI_PORT", 8099);
+        this.hostAddress = CommonSystemParamOrEnvVariable.getStringFromEnv("org.openspaces.launcher.bind-address", "BIND_ADDRESS", "0.0.0.0");
         this.warFilePath = props.getProperty("path", System.getProperty("org.openspaces.launcher.path", webuiHome));
         this.tempDirPath = props.getProperty("work", System.getProperty("org.openspaces.launcher.work", webuiHome + "/work"));
         this.sslKeyManagerPassword = props.getProperty(SecurityConstants.KEY_SSL_KEY_MANAGER_PASSWORD);
@@ -158,14 +159,5 @@ public class WebLauncherConfig {
 
     public String getLoggerName() {
         return loggerName;
-    }
-
-    private static String loadDefault(String sysPropName, String envVarName, String defaultValue) {
-        String result = System.getProperty(sysPropName);
-        if (result == null)
-            result = System.getenv(envVarName);
-        if (result == null)
-            result = defaultValue;
-        return result;
     }
 }

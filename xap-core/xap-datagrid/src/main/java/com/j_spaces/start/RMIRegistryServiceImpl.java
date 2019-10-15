@@ -22,6 +22,7 @@ import com.sun.jini.start.LifeCycle;
 import net.jini.config.Configuration;
 import net.jini.config.ConfigurationException;
 import net.jini.config.ConfigurationProvider;
+import net.jini.discovery.CommonSystemParamOrEnvVariable;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -57,8 +58,7 @@ public class RMIRegistryServiceImpl {
         final Configuration config = ConfigurationProvider.getInstance(
                 configArgs, getClass().getClassLoader());
 
-        registryPort = ((Integer) config.getEntry(COMPONENT, "registryPort", int.class,
-                new Integer(10098))).intValue();
+        registryPort = CommonSystemParamOrEnvVariable.getIntFromEnv(COMPONENT+".registryPort", "RMI_REGISTRY_PORT", 10098);
 
         LocateRegistry.createRegistry(registryPort);
         if (_logger.isLoggable(Level.INFO)) {

@@ -1,6 +1,7 @@
 package com.gigaspaces.start.manager;
 
 import com.gigaspaces.CommonSystemProperties;
+import net.jini.discovery.CommonSystemParamOrEnvVariable;
 
 import java.util.Map;
 import java.util.Properties;
@@ -11,7 +12,7 @@ public class XapManagerConfig {
     private final String host;
     private final Properties properties;
 
-    private static final String DEFAULT_REST = System.getProperty(CommonSystemProperties.MANAGER_REST_PORT, "8090");
+    private static final String DEFAULT_REST = CommonSystemParamOrEnvVariable.getStringFromEnv(CommonSystemProperties.MANAGER_REST_PORT, "MANAGER_REST_PORT", "8090");
     private static final boolean SSL_ENABLED = Boolean.getBoolean(CommonSystemProperties.MANAGER_REST_SSL_ENABLED);
 
     public XapManagerConfig(String host) {

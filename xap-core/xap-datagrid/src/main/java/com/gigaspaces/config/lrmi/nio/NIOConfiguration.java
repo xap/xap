@@ -22,6 +22,7 @@ import com.gigaspaces.lrmi.nio.PAdapter;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.kernel.SystemProperties;
 import com.j_spaces.kernel.TimeUnitProperty;
+import net.jini.discovery.CommonSystemParamOrEnvVariable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -348,7 +349,7 @@ public class NIOConfiguration implements ITransportConfig, Cloneable, Externaliz
      */
     public static NIOConfiguration create() {
         String bindHost = SystemInfo.singleton().network().getHostId();
-        String bindPort = System.getProperty("com.gs.transport_protocol.lrmi.bind-port", "0");
+        String bindPort = CommonSystemParamOrEnvVariable.getStringFromEnv("com.gs.transport_protocol.lrmi.bind-port", "LRMI_PORT", "0");
 
         int minThreads = Integer.parseInt(System.getProperty("com.gs.transport_protocol.lrmi.min-threads", "1"));
         int maxThreads = Integer.parseInt(System.getProperty("com.gs.transport_protocol.lrmi.max-threads", "128"));

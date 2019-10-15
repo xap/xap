@@ -37,7 +37,7 @@ public class Constants {
     /**
      * The port for both unicast and multicast boot requests.
      */
-    private static final int multicastDiscoveryPort = Integer.getInteger("com.gs.multicast.discoveryPort", 4174);
+    private static final int multicastDiscoveryPort = CommonSystemParamOrEnvVariable.getIntFromEnv("com.gs.multicast.discoveryPort", "MULTICAST_LOOKUP_PORT", 4174);
     /**
      * The port for both unicast and multicast boot requests.
      */

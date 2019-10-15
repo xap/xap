@@ -30,6 +30,7 @@ import net.jini.config.Configuration;
 import net.jini.config.ConfigurationException;
 import net.jini.config.ConfigurationProvider;
 
+import net.jini.discovery.CommonSystemParamOrEnvVariable;
 import org.jini.rio.boot.BootUtil;
 import org.jini.rio.boot.CommonClassLoader;
 import org.jini.rio.boot.RioServiceDescriptor;
@@ -515,7 +516,7 @@ public class SystemConfig {
             int httpPort = (Integer) config.getEntry(COMPONENT, "httpPort", int.class, 0);
 
             //override with sys. property -Dcom.gigaspaces.start.httpPort
-            httpPort = Integer.getInteger(COMPONENT + ".httpPort", httpPort);
+            httpPort = CommonSystemParamOrEnvVariable.getIntFromEnv(COMPONENT + ".httpPort","WEBSTER_HTTP_PORT", httpPort);
 
             int httpServerRetries = (Integer) config.getEntry(COMPONENT, "httpServerRetries",
                     Integer.class, DEFAULT_PORT_RETRIES);
