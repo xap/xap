@@ -1366,7 +1366,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
             @Override
             protected Double getValueImpl() {
                 return (double)getWeightUnsafe()/
-                       _groupConfigHolder.getConfig().getBacklogConfig().getLimitedMemoryCapacity();
+                       _groupConfigHolder.getConfig().getBacklogConfig().getLimitedTotalCapacity();
             }
         });
 

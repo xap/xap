@@ -80,6 +80,7 @@ public class BacklogConfig {
     private final Map<String, LimitReachedPolicy> _memberLimitDuringSynchronizationReachedPolicy = new HashMap<String, BacklogConfig.LimitReachedPolicy>();
 
     private int _limitedMemoryCapacity = (int) UNLIMITED;
+    private int _limitedTotalCapacity = (int) UNLIMITED;
     private SwapBacklogConfig _swapBacklogConfig = new SwapBacklogConfig();
 
     private String _policy;
@@ -216,6 +217,14 @@ public class BacklogConfig {
         _limitedMemoryCapacity = (int) UNLIMITED;
     }
 
+    public int getLimitedTotalCapacity() {
+        return _limitedTotalCapacity;
+    }
+
+    public void setLimitedTotalCapacity(int limitedTotalCapacity) {
+        this._limitedTotalCapacity = limitedTotalCapacity;
+    }
+
     public void setSwapBacklogConfig(SwapBacklogConfig swapBacklogConfig) {
         _swapBacklogConfig = swapBacklogConfig;
     }
@@ -261,6 +270,7 @@ public class BacklogConfig {
         _memberLimitDuringSynchronizationReachedPolicy.putAll(other._memberLimitDuringSynchronizationReachedPolicy);
 
         setLimitedMemoryCapacity(other.getLimitedMemoryCapacity());
+        setLimitedTotalCapacity(other.getLimitedTotalCapacity());
         setSwapBacklogConfig(other.getSwapBacklogConfig());
         setBackLogWeightPolicy(other._policy);
     }

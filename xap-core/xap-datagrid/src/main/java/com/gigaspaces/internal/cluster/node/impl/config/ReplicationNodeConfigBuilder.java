@@ -593,11 +593,13 @@ public class ReplicationNodeConfigBuilder {
                             + "'");
                 } else {
                     config.setLimitedMemoryCapacity((int) maxRedoLogMemoryCapacity);
+                    config.setLimitedTotalCapacity((int) replicationPolicy.getMaxRedoLogCapacity());
                 }
             } else {
                 // We only support int memory capacity, long is provided due to
                 // backwards
                 config.setLimitedMemoryCapacity((int) maxRedoLogMemoryCapacity);
+                config.setLimitedTotalCapacity((int) replicationPolicy.getMaxRedoLogCapacity());
             }
         }
 
