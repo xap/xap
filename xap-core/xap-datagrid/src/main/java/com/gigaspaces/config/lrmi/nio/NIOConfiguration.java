@@ -18,6 +18,7 @@
 package com.gigaspaces.config.lrmi.nio;
 
 import com.gigaspaces.config.lrmi.ITransportConfig;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.lrmi.nio.PAdapter;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.kernel.SystemProperties;
@@ -28,7 +29,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /**
@@ -348,7 +348,7 @@ public class NIOConfiguration implements ITransportConfig, Cloneable, Externaliz
      */
     public static NIOConfiguration create() {
         String bindHost = SystemInfo.singleton().network().getHostId();
-        String bindPort = System.getProperty("com.gs.transport_protocol.lrmi.bind-port", "0");
+        String bindPort = GsEnv.keyOrSystemProperty("LRMI_PORT", "com.gs.transport_protocol.lrmi.bind-port", "0");
 
         int minThreads = Integer.parseInt(System.getProperty("com.gs.transport_protocol.lrmi.min-threads", "1"));
         int maxThreads = Integer.parseInt(System.getProperty("com.gs.transport_protocol.lrmi.max-threads", "128"));

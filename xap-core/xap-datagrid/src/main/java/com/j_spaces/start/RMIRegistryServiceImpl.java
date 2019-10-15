@@ -16,6 +16,7 @@
 
 package com.j_spaces.start;
 
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.logger.Constants;
 import com.sun.jini.start.LifeCycle;
 

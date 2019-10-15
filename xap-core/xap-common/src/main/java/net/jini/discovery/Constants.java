@@ -18,6 +18,7 @@
 package net.jini.discovery;
 
 import com.gigaspaces.CommonSystemProperties;
+import com.gigaspaces.internal.utils.GsEnv;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -37,7 +38,7 @@ public class Constants {
     /**
      * The port for both unicast and multicast boot requests.
      */
-    private static final int multicastDiscoveryPort = Integer.getInteger("com.gs.multicast.discoveryPort", 4174);
+    private static final int multicastDiscoveryPort = GsEnv.keyOrSystemProperty("MULTICAST_LOOKUP_PORT", "com.gs.multicast.discoveryPort", 4174);
     /**
      * The port for both unicast and multicast boot requests.
      */

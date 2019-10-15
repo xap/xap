@@ -23,6 +23,7 @@ import com.gigaspaces.internal.services.RestServiceFactory;
 import com.gigaspaces.internal.services.ServiceFactory;
 import com.gigaspaces.internal.services.WebuiServiceFactory;
 import com.gigaspaces.internal.services.ZooKeeperServiceFactory;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.start.manager.XapManagerConfig;
 import com.sun.jini.start.ServiceDescriptor;
 
@@ -515,7 +516,7 @@ public class SystemConfig {
             int httpPort = (Integer) config.getEntry(COMPONENT, "httpPort", int.class, 0);
 
             //override with sys. property -Dcom.gigaspaces.start.httpPort
-            httpPort = Integer.getInteger(COMPONENT + ".httpPort", httpPort);
+            httpPort = GsEnv.keyOrSystemProperty("WEBSTER_HTTP_PORT", COMPONENT + ".httpPort", httpPort);
 
             int httpServerRetries = (Integer) config.getEntry(COMPONENT, "httpServerRetries",
                     Integer.class, DEFAULT_PORT_RETRIES);

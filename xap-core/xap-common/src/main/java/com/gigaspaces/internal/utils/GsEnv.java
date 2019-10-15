@@ -68,4 +68,18 @@ public class GsEnv {
         }
         return result;
     }
+
+    public static String keyOrSystemProperty(String key, String propertyKey, String defaultValue){
+        return getOrElse(key,() -> System.getProperty(propertyKey, defaultValue));
+
+    }
+
+    public static int keyOrSystemProperty(String key, String propertyKey, int defaultValue){
+        String result = keyOrSystemProperty(key, propertyKey, null);
+
+        return result != null ?
+                Integer.parseInt(result) :
+                defaultValue;
+    }
+
 }
