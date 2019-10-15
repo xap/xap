@@ -6,13 +6,17 @@ import com.gigaspaces.metrics.Gauge;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.GlobalMemory;
+import oshi.hardware.VirtualMemory;
 import oshi.software.os.OSProcess;
+
+import java.util.concurrent.TimeUnit;
 
 public class OshiGaugeUtils {
 
     public final static SystemInfo oshiSystemInfo = OshiChecker.getSystemInfo();
     public final static CentralProcessor processor = oshiSystemInfo.getHardware().getProcessor();
     public final static GlobalMemory memory = oshiSystemInfo.getHardware().getMemory();
+    public final static VirtualMemory virtualMemory = memory.getVirtualMemory();
     public final static int pid = oshiSystemInfo.getOperatingSystem().getProcessId();
     public final static OSProcess osProcess = oshiSystemInfo.getOperatingSystem().getProcess(pid);
 
@@ -22,9 +26,15 @@ public class OshiGaugeUtils {
 
     public static Gauge<Double> getCpuPercGauge() {
         return new Gauge<Double>() {
+            private long[] oldCpuTicks = processor.getSystemCpuLoadTicks();
+
             @Override
             public Double getValue() throws Exception {
-                return processor.getSystemCpuLoad()*100;
+                long[] newCpuTicks = processor.getSystemCpuLoadTicks();
+                double systemCpuLoadBetweenTicks = OshiUtils.getSystemCpuLoadBetweenTicks(oldCpuTicks,newCpuTicks);
+                oldCpuTicks = newCpuTicks;
+
+                return systemCpuLoadBetweenTicks;
             }
         };
     }
@@ -87,7 +97,7 @@ public class OshiGaugeUtils {
         return new Gauge<Long>() {
             @Override
             public Long getValue() throws Exception {
-                return memory.getSwapUsed();
+                return virtualMemory.getSwapUsed();
             }
         };
     }
@@ -96,8 +106,8 @@ public class OshiGaugeUtils {
         return new Gauge<Double>() {
             @Override
             public Double getValue() throws Exception {
-                return memory.getSwapTotal() != 0 ?
-                        (memory.getSwapUsed()/memory.getSwapTotal())*100d :
+                return virtualMemory.getSwapTotal() != 0 ?
+                        (virtualMemory.getSwapUsed()/virtualMemory.getSwapTotal())*100d :
                         Double.NaN;
             }
         };

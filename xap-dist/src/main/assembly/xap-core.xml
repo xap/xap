@@ -33,7 +33,6 @@
 			<outputDirectory>product/lib/optional/oshi</outputDirectory>
 			<includes>
 				<include>com.github.oshi:oshi-core</include>
-				<include>com.github.oshi:oshi-json</include>
 				<include>net.java.dev.jna:jna</include>
 				<include>net.java.dev.jna:jna-platform</include>
 			</includes>

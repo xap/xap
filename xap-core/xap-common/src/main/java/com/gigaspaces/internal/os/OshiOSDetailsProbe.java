@@ -5,6 +5,7 @@ import com.gigaspaces.start.SystemInfo;
 import oshi.hardware.GlobalMemory;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.hardware.NetworkIF;
+import oshi.hardware.VirtualMemory;
 import oshi.software.os.OSFileStore;
 import oshi.software.os.OperatingSystem;
 import oshi.util.FormatUtil;
@@ -31,13 +32,14 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
         HardwareAbstractionLayer hardwareAbstractionLayer = oshiSystemInfo.getHardware();
 
         GlobalMemory memory = hardwareAbstractionLayer.getMemory();
+        VirtualMemory virtualMemory = memory.getVirtualMemory();
 
         return new OSDetails(uid,
                 operatingSystem.getManufacturer(),
                 FormatUtil.formatBytes(operatingSystem.getBitness()),
                 operatingSystem.getVersion().getBuildNumber(),
                 hardwareAbstractionLayer.getProcessor().getLogicalProcessorCount(),
-                memory.getSwapTotal(),
+                virtualMemory.getSwapTotal(),
                 memory.getTotal(),
                 localHostName, localHostAddress,
                 getOSNetDetails(),
@@ -54,7 +56,7 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
 
         for (int index = 0; index < networkIFs.length; index++) {
             NetworkIF networkIF = networkIFs[index];
-            NetworkInterface netInterface = networkIF.getNetworkInterface();
+            NetworkInterface netInterface = networkIF.queryNetworkInterface();
 
             String addr = ParseUtil.byteArrayToHexString(netInterface.getHardwareAddress());
             String name = netInterface.getName();
@@ -76,7 +78,7 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
         OSDetails.OSNetInterfaceDetails[] interfacesList = new OSDetails.OSNetInterfaceDetails[networkIFs.length];
 
         for(int i=0;i<networkIFs.length;i++) {
-            NetworkInterface networkInterface = networkIFs[i].getNetworkInterface();
+            NetworkInterface networkInterface = networkIFs[i].queryNetworkInterface();
 
             byte[] hwAddress = networkInterface.getHardwareAddress();
             String hardwareAddressStr=translateByteArrayToHwAddress(hwAddress);

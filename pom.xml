@@ -8,9 +8,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sigar.version>1.6.5</sigar.version>
-        <oshi.version>3.13.1</oshi.version>
+        <oshi.version>4.0.0</oshi.version>
         <slf4j.version>1.7.26</slf4j.version>
-        <jna.version>5.3.1</jna.version>
+        <jna.version>5.4.0</jna.version>
         <spring.version>5.1.7.RELEASE</spring.version>
         <spring.security.version>5.1.5.RELEASE</spring.security.version>
         <junit.version>4.12</junit.version>
@@ -229,12 +229,6 @@
             <dependency>
                 <groupId>com.github.oshi</groupId>
                 <artifactId>oshi-core</artifactId>
-                <version>${oshi.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.github.oshi</groupId>
-                <artifactId>oshi-json</artifactId>
                 <version>${oshi.version}</version>
             </dependency>
 
