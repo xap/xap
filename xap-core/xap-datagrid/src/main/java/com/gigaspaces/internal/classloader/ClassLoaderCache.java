@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.classloader;
 
+import com.gigaspaces.internal.utils.collections.ConcurrentHashSet;
 import com.gigaspaces.internal.utils.collections.CopyOnUpdateMap;
 import com.gigaspaces.internal.utils.collections.SelfCleaningTable;
 import com.gigaspaces.internal.utils.collections.SelfCleaningTable.ICleanerListener;
@@ -24,10 +25,7 @@ import com.gigaspaces.time.SystemTime;
 import com.j_spaces.kernel.ClassLoaderHelper;
 
 import java.lang.ref.WeakReference;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,19 +48,19 @@ public class ClassLoaderCache
     private static class ClassLoaderContext {
 
         private final WeakReference<ClassLoader> _classLoaderRef;
-        private final CopyOnWriteArraySet<WeakReference<IClassLoaderCacheStateListener>> _specificListeners;
+        private final Set<WeakReference<IClassLoaderCacheStateListener>> _specificListeners;
         private volatile boolean _dispatchingRemoved;
         private final long _timeStamp;
         private final Represent _represents;
 
-        public ClassLoaderContext(ClassLoader classLoader, Represent represents) {
+        ClassLoaderContext(ClassLoader classLoader, Represent represents) {
             _represents = represents;
-            _classLoaderRef = new WeakReference<ClassLoader>(classLoader);
-            _specificListeners = new CopyOnWriteArraySet<WeakReference<IClassLoaderCacheStateListener>>();
+            _classLoaderRef = new WeakReference<>(classLoader);
+            _specificListeners = new ConcurrentHashSet<>();
             _timeStamp = SystemTime.timeMillis();
         }
 
-        public WeakReference<ClassLoader> getClassLoaderRef() {
+        private WeakReference<ClassLoader> getClassLoaderRef() {
             return _classLoaderRef;
         }
 
@@ -72,7 +70,7 @@ public class ClassLoaderCache
          * @return true if the listener is added and the class loader is not removed yet.
          */
         public boolean addListener(IClassLoaderCacheStateListener listener) {
-            _specificListeners.add(new WeakReference<IClassLoaderCacheStateListener>(listener));
+            _specificListeners.add(new WeakReference<>(listener));
             // If dispatchRemoved is already called, this class loader is being
             // removed.
             // The listener might get or may not the event of removal due to
@@ -82,21 +80,18 @@ public class ClassLoaderCache
         }
 
         public void removeListener(IClassLoaderCacheStateListener listener) {
-            for (WeakReference<IClassLoaderCacheStateListener> weakListener : _specificListeners) {
+            Iterator<WeakReference<IClassLoaderCacheStateListener>> iterator = _specificListeners.iterator();
+            while (iterator.hasNext()) {
+                WeakReference<IClassLoaderCacheStateListener> weakListener = iterator.next();
                 IClassLoaderCacheStateListener actualListener = weakListener.get();
-                if (actualListener == null) {
-                    _specificListeners.remove(weakListener);
-                    continue;
-                }
-                if (actualListener == listener) {
-                    _specificListeners.remove(weakListener);
-                    break;
+                if (actualListener == null
+                        || actualListener == listener) {
+                    iterator.remove();
                 }
             }
-
         }
 
-        public void dispatchRemoved(Long classLoaderKey, boolean explicit) {
+        void dispatchRemoved(Long classLoaderKey, boolean explicit) {
             // Mark dispatched true to protect from concurrent call to
             // addListener
             _dispatchingRemoved = true;
@@ -132,7 +127,7 @@ public class ClassLoaderCache
 
     private final CopyOnUpdateMap<Long, ClassLoaderContext> _classLoaders;
     private final SelfCleaningTable<ClassLoader, Long> _classLoaderToIdMap;
-    private final CopyOnWriteArraySet<WeakReference<IClassLoaderCacheStateListener>> _listeners;
+    private final Set<WeakReference<IClassLoaderCacheStateListener>> _listeners;
 
     private final AtomicLong _classLoaderKeyGenerator = new AtomicLong();
     private final Object _lock = new Object();
@@ -140,11 +135,11 @@ public class ClassLoaderCache
 
     protected ClassLoaderCache(long removedRelevantWindow) {
         _removedRelevantWindow = removedRelevantWindow;
-        _classLoaders = new CopyOnUpdateMap<Long, ClassLoaderContext>();
-        _classLoaderToIdMap = new SelfCleaningTable<ClassLoader, Long>("ClassLoaderCache",
+        _classLoaders = new CopyOnUpdateMap<>();
+        _classLoaderToIdMap = new SelfCleaningTable<>("ClassLoaderCache",
                 this,
                 new CopyOnUpdateMap());
-        _listeners = new CopyOnWriteArraySet<WeakReference<IClassLoaderCacheStateListener>>();
+        _listeners = new ConcurrentHashSet<>();
     }
 
     /**
@@ -200,8 +195,9 @@ public class ClassLoaderCache
             if (currentTime - entry.getValue().getTimeStamp() <= _removedRelevantWindow)
                 continue;
             if (entry.getValue().getRepresents() == Represent.REMOVED_EXPLICIT
-                    || entry.getValue().getRepresents() == Represent.REMOVED_IMPLICIT)
+                    || entry.getValue().getRepresents() == Represent.REMOVED_IMPLICIT) {
                 _classLoaders.remove(entry.getKey());
+            }
         }
     }
 
@@ -218,8 +214,9 @@ public class ClassLoaderCache
         WeakReference<ClassLoader> weakReference = classLoaderContext.getClassLoaderRef();
 
         ClassLoader classLoader = weakReference.get();
-        if (classLoader == null)
+        if (classLoader == null) {
             _classLoaders.remove(key);
+        }
         return classLoader;
     }
 
@@ -236,6 +233,7 @@ public class ClassLoaderCache
             ClassLoaderContext removedContext = _classLoaders.put(removedClassLoadedId,
                     new ClassLoaderContext(null,
                             Represent.REMOVED_EXPLICIT));
+            if (removedContext == null) return;
             // Already removed
             if (removedContext.getRepresents() == Represent.REMOVED_EXPLICIT
                     || removedContext.getRepresents() == Represent.REMOVED_IMPLICIT)
@@ -262,6 +260,7 @@ public class ClassLoaderCache
         ClassLoaderContext removedContext = _classLoaders.put(value,
                 new ClassLoaderContext(null,
                         Represent.REMOVED_IMPLICIT));
+        if (removedContext == null) return;
         // Already removed
         if (removedContext.getRepresents() == Represent.REMOVED_EXPLICIT
                 || removedContext.getRepresents() == Represent.REMOVED_IMPLICIT)
@@ -283,10 +282,10 @@ public class ClassLoaderCache
      */
     public void registerCacheStateListener(
             IClassLoaderCacheStateListener listener) {
-        WeakReference<IClassLoaderCacheStateListener> weakListener = new WeakReference<IClassLoaderCacheStateListener>(listener);
+        WeakReference<IClassLoaderCacheStateListener> weakListener = new WeakReference<>(listener);
         _listeners.add(weakListener);
-        Set<Long> alreadyRemovedExplicitListeners = new HashSet<Long>();
-        Set<Long> alreadyRemovedImplicitListeners = new HashSet<Long>();
+        Set<Long> alreadyRemovedExplicitListeners = new HashSet<>();
+        Set<Long> alreadyRemovedImplicitListeners = new HashSet<>();
         synchronized (_lock) {
             long currentTime = SystemTime.timeMillis();
             for (Map.Entry<Long, ClassLoaderContext> entry : _classLoaders.entrySet()) {
@@ -313,6 +312,7 @@ public class ClassLoaderCache
     private void dispatchRemovedHelper(IClassLoaderCacheStateListener listener,
                                        WeakReference<IClassLoaderCacheStateListener> weakListener,
                                        Set<Long> alreadyRemovedExplicitListeners, boolean explicit) {
+        boolean caughtException = false;
         for (Long removedClKey : alreadyRemovedExplicitListeners) {
             try {
                 listener.onClassLoaderRemoved(removedClKey, explicit);
@@ -323,8 +323,11 @@ public class ClassLoaderCache
                                     + removedClKey,
                             e);
                 // Ignore exceptions, continue dispatching events
-                _listeners.remove(weakListener);
+                caughtException = true;
             }
+        }
+        if (caughtException) {
+            _listeners.remove(weakListener);
         }
     }
 
@@ -349,10 +352,12 @@ public class ClassLoaderCache
 
     private void dispatchClassLoaderRemovedEvent(Long classLoaderKey,
                                                  ClassLoaderContext removedContext, boolean explicit) {
-        for (WeakReference<IClassLoaderCacheStateListener> weakListener : _listeners) {
+        Iterator<WeakReference<IClassLoaderCacheStateListener>> iterator = _listeners.iterator();
+        while (iterator.hasNext()) {
+            WeakReference<IClassLoaderCacheStateListener> weakListener = iterator.next();
             IClassLoaderCacheStateListener listener = weakListener.get();
             if (listener == null) {
-                _listeners.remove(weakListener);
+                iterator.remove();
                 continue;
             }
             try {
@@ -364,7 +369,7 @@ public class ClassLoaderCache
                                     + classLoaderKey,
                             e);
                 // Ignore exceptions, continue dispatching events
-                _listeners.remove(weakListener);
+                iterator.remove();
             }
         }
         // Dispatch event for the one who listens to this class loader change

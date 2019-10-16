@@ -222,6 +222,8 @@ public class RequestResponseTimeoutObserver extends RequestTimeoutObserver {
             replyPacket.readExternal(mis);
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException("Unexpected reply for watchdog monitoring request. " + e);
+        } finally {
+            mis.closeContext();
         }
 
         if (serviceVersion.lessThan(PlatformLogicalVersion.v9_6_0)) {
