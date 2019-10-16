@@ -105,10 +105,12 @@ public class HsqlDbReporter extends MetricReporter {
             } else if (message != null && message.contains("user lacks privilege or object not found: ")) {
                 addMissingColumns(con, tableName, tags);
             } else {
-                _logger.error("Failed to insert row [{}]", insertSQL, e);
+                _logger.error("Failed to insert row [{}] using values [{}] and value [{}]" , insertSQL, values,
+                              Arrays.toString( values.toArray( new Object[ values.size() ] ) ), value, e);
             }
         } catch (SQLException e) {
-            _logger.error("Failed to insert row [{}]", insertSQL, e);
+            _logger.error("Failed to insert row [{}] using values [{}] and value [{}]", insertSQL,
+                          Arrays.toString( values.toArray( new Object[ values.size() ] ) ), value, e);
         }
     }
 
