@@ -29,6 +29,7 @@ public class HsqlDBReporterFactory extends MetricReporterFactory<MetricReporter>
 
     public static final String DEFAULT_DRIVER_CLASS_NAME = "org.hsqldb.jdbc.JDBCDriver";
     public static final String DEFAULT_PORT = "9101";
+    public static final String DEFAULT_DBTYPE_STRING = "VARCHAR(100)";
 
     private String dbName;
     private String username;
@@ -36,6 +37,7 @@ public class HsqlDBReporterFactory extends MetricReporterFactory<MetricReporter>
     private String host;
     private String port;
     private String driverClassName;
+    private String dbTypeString;
 
     @Override
     public void load(Properties properties) {
@@ -47,6 +49,7 @@ public class HsqlDBReporterFactory extends MetricReporterFactory<MetricReporter>
         setPort(properties.getProperty("port", DEFAULT_PORT));
         setUsername(properties.getProperty("username"));
         setPassword(properties.getProperty("password"));
+        setDbTypeString(properties.getProperty("dbTypeString", DEFAULT_DBTYPE_STRING));
     }
 
     @Override
@@ -88,6 +91,14 @@ public class HsqlDBReporterFactory extends MetricReporterFactory<MetricReporter>
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getDbTypeString() {
+        return dbTypeString;
+    }
+
+    public void setDbTypeString(String dbTypeString) {
+        this.dbTypeString = dbTypeString;
     }
 
     public String getDriverClassName() {

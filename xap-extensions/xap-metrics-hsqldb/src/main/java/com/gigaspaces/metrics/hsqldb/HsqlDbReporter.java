@@ -38,6 +38,7 @@ public class HsqlDbReporter extends MetricReporter {
 
     private final HsqlDBReporterFactory factory;
     private final String url;
+    private final String dbTypeString;
     private Connection connection;
     private final Map<String,PreparedStatement> _preparedStatements = new HashMap<>();
 
@@ -46,6 +47,7 @@ public class HsqlDbReporter extends MetricReporter {
 
         this.factory = factory;
         this.url = factory.getConnectionUrl();
+        this.dbTypeString = factory.getDbTypeString();
         try {
             Class.forName(factory.getDriverClassName());
         } catch (ClassNotFoundException e) {
@@ -180,19 +182,9 @@ public class HsqlDbReporter extends MetricReporter {
         }
     }
 
-    private String getDbType(String name, Object value) {
+    private String getDbType(Object value) {
         if (value instanceof String) {
-            switch (name.toLowerCase()) {
-                case "pid": return "VARCHAR(10)";
-                case "process_name": return "VARCHAR(10)";
-                case "ip": return "VARCHAR(15)";
-                case "pu_instance_id": return "VARCHAR(10)";
-                case "space_instance_id": return "VARCHAR(8)";
-                //in the case of ec2 instance host name can be long, like:
-                //ip-xxx-xxx-xxx-xxx.eu-west-1.compute.internal
-                case "host": return "VARCHAR(80)";
-                default: return "VARCHAR(40)";
-            }
+            return dbTypeString;
         }
         if (value instanceof Timestamp) {
             return "TIMESTAMP";
@@ -220,7 +212,7 @@ public class HsqlDbReporter extends MetricReporter {
             return "NUMERIC";
         }
 
-        return "VARCHAR(40)";
+        return dbTypeString;
     }
 
     private void createTable(Connection con, String tableName, Object value, MetricTagsSnapshot tags) {
@@ -271,7 +263,7 @@ public class HsqlDbReporter extends MetricReporter {
         Map<String,String> missingColumns = new LinkedHashMap<>(); //preserve insertion order
         tags.getTags().forEach((name, value) -> {
             if (!existingColumns.contains(name.toUpperCase()))
-                missingColumns.put(name, getDbType(name, value));
+                missingColumns.put(name, getDbType(value));
         });
 
         _logger.debug("Missing columns: {}", missingColumns);
@@ -307,10 +299,10 @@ public class HsqlDbReporter extends MetricReporter {
         sb.append("TIME TIMESTAMP,");
 
         tags.getTags().forEach((columnName, columnValue) -> {
-            sb.append(columnName).append(' ').append(getDbType(columnName, columnValue)).append(',');
+            sb.append(columnName).append(' ').append(getDbType(columnValue)).append(',');
         });
 
-        sb.append("VALUE ").append(getDbType("VALUE", value));
+        sb.append("VALUE ").append(getDbType(value));
         sb.append(')');
 
         String result = sb.toString();
