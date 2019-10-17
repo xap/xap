@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import sun.net.util.IPAddressUtil;
 
 public class XapManagerClusterInfo {
     private static final Logger logger = Logger.getLogger(Constants.LOGGER_MANAGER);
@@ -116,7 +117,9 @@ public class XapManagerClusterInfo {
     private XapManagerConfig findManagerByHost(InetAddress currHost) {
         XapManagerConfig result = null;
         for (XapManagerConfig server : servers) {
-            if (server.getHost().equals(currHost.getHostName()) || server.getHost().equals(currHost.getHostAddress())){
+            if (server.getHost().equals(currHost.getHostName()) ||
+                    server.getHost().equals(currHost.getHostAddress()) ||
+                    Arrays.equals(tryParseIpv6(server.getHost()), currHost.getAddress())) {
                 result = server;
             }
         }
@@ -132,5 +135,12 @@ public class XapManagerClusterInfo {
                 logger.log(Level.CONFIG, "Current manager is " + result);
         }
         return result;
+    }
+
+    private static byte[] tryParseIpv6(String s) {
+        if (s.startsWith("[") && s.endsWith("]")) {
+            s = s.substring(1, s.length()-1);
+        }
+        return IPAddressUtil.textToNumericFormatV6(s);
     }
 }
