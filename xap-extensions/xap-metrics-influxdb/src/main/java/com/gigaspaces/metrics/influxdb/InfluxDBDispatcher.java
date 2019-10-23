@@ -16,11 +16,12 @@
 
 package com.gigaspaces.metrics.influxdb;
 
+import com.gigaspaces.logger.ActivityLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static com.gigaspaces.internal.utils.StringUtils.NEW_LINE;
 
@@ -30,32 +31,19 @@ import static com.gigaspaces.internal.utils.StringUtils.NEW_LINE;
  */
 public abstract class InfluxDBDispatcher implements Closeable {
 
-    private static final long THRESHOLD = 10;
-    protected final Logger logger = Logger.getLogger(this.getClass().getName());
-    private final AtomicLong failures = new AtomicLong();
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+    private final ActivityLogger activityLogger = new ActivityLogger.Builder("Report dispatch", logger)
+            .concurrent()
+            .reduceConsecutiveFailuresLogging(10, 100)
+            .build();
 
     public void send(String data) {
-        if (logger.isLoggable(Level.FINEST))
-            logger.finest("Sending the following data: " + NEW_LINE + data);
+        logger.debug("Sending the following data: {}{}", NEW_LINE, data);
         try {
             doSend(data);
-            final long consecutive = failures.get();
-            if (consecutive != 0)
-                logger.info("Report was sent successfully after " + consecutive + " consecutive failures");
-            failures.set(0);
+            activityLogger.success();
         } catch (IOException e) {
-            final long consecutive = failures.incrementAndGet();
-            if (consecutive <= THRESHOLD && logger.isLoggable(Level.WARNING)) {
-                String message;
-                if (consecutive < THRESHOLD)
-                    message = "Failed to send report (" + consecutive + " consecutive failures)" + NEW_LINE + data;
-                else
-                    message = "Failed to send report (" + consecutive + " consecutive failures - additional failures will be logged as FINEST until the problem is resolved)" + NEW_LINE + data;
-                logger.log(Level.WARNING, message, e);
-            } else {
-                if (logger.isLoggable(Level.FINEST))
-                    logger.log(Level.FINEST, "Failed to send report ( + " + consecutive + " consecutive failures)" + NEW_LINE + data, e);
-            }
+            activityLogger.fail(e, data);
         }
     }
 

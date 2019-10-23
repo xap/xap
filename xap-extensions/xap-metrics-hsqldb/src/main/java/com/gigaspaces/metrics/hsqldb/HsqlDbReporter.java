@@ -33,41 +33,26 @@ import java.util.*;
 public class HsqlDbReporter extends MetricReporter {
 
     private static final Logger _logger = LoggerFactory.getLogger(HsqlDbReporter.class);
-    private static final Object _lock = new Object();
     private static final boolean systemFilterDisabled = Boolean.getBoolean(SystemProperties.RECORDING_OF_ALL_METRICS_TO_HSQLDB_ENABLED);
 
-    private final HsqlDBReporterFactory factory;
-    private final String url;
+    private final SharedJdbcConnectionWrapper connectionWrapper;
     private final String dbTypeString;
-    private Connection connection;
     private final Map<String,PreparedStatement> _preparedStatements = new HashMap<>();
 
-    public HsqlDbReporter(HsqlDBReporterFactory factory) {
+    public HsqlDbReporter(HsqlDBReporterFactory factory, SharedJdbcConnectionWrapper connectionWrapper) {
         super(factory);
-
-        this.factory = factory;
-        this.url = factory.getConnectionUrl();
+        this.connectionWrapper = connectionWrapper;
         this.dbTypeString = factory.getDbTypeString();
         try {
             Class.forName(factory.getDriverClassName());
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException("Failed to load driver class " + factory.getDriverClassName(), e);
         }
-
-        if (getOrCreateConnection() == null) {
-            _logger.warn("Connection is not available yet - will try to reconnect on first report");
-        }
     }
 
     @Override
     public void close() {
-        if (connection != null) {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                _logger.warn("Failed to close connection", e);
-            }
-        }
+        this.connectionWrapper.close();
         super.close();
     }
 
@@ -79,9 +64,10 @@ public class HsqlDbReporter extends MetricReporter {
             return;
         }
 
-        Connection con = getOrCreateConnection();
+        Connection con = connectionWrapper.getOrCreateConnection();
         if (con == null) {
-            _logger.warn("Report skipped - connection is not available yet [timestamp={}, key={}]", snapshot.getTimestamp(), key);
+            if (!connectionWrapper.isSilent())
+                _logger.warn("Report skipped - connection is not available yet [timestamp={}, key={}]", snapshot.getTimestamp(), key);
             return;
         }
 
@@ -105,34 +91,13 @@ public class HsqlDbReporter extends MetricReporter {
             } else if (message != null && message.contains("user lacks privilege or object not found: ")) {
                 addMissingColumns(con, tableName, tags);
             } else {
-                _logger.error("Failed to insert row [{}] using values [{}] and value [{}]" , insertSQL, values,
-                              Arrays.toString( values.toArray( new Object[ values.size() ] ) ), value, e);
+                _logger.error("Failed to insert row [{}] using values [{}] and value [{}]" , insertSQL,
+                              Arrays.toString(values.toArray(new Object[0])), value, e);
             }
         } catch (SQLException e) {
             _logger.error("Failed to insert row [{}] using values [{}] and value [{}]", insertSQL,
-                          Arrays.toString( values.toArray( new Object[ values.size() ] ) ), value, e);
+                          Arrays.toString(values.toArray(new Object[0])), value, e);
         }
-    }
-
-    private Connection getOrCreateConnection() {
-        if (connection == null) {
-            synchronized (_lock) {
-                if (connection == null) {
-                    try {
-                        _logger.debug("Connecting to [{}]", url);
-                        connection = DriverManager.getConnection(url, factory.getUsername(), factory.getPassword());
-                        _logger.info("Connected to [{}]", url);
-                        if (_logger.isDebugEnabled())
-                            _logger.debug(retrieveExistingTablesInfo(connection));
-                    } catch (SQLTransientConnectionException e) {
-                        _logger.warn("Failed to connect to [{}]: {}", url, e.getMessage());
-                    } catch (SQLException e) {
-                        _logger.error("Failed to connect to [{}]", url, e);
-                    }
-                }
-            }
-        }
-        return connection;
     }
 
     private PreparedStatement getOrCreatePreparedStatement(String sql, Connection connection) throws SQLException {
@@ -142,19 +107,6 @@ public class HsqlDbReporter extends MetricReporter {
             _preparedStatements.put(sql, statement);
         }
         return statement;
-    }
-
-    private static String retrieveExistingTablesInfo(Connection con) throws SQLException {
-        StringBuilder result = new StringBuilder("! Existing public tables are:");
-        try (ResultSet rs = con.getMetaData().getTables(con.getCatalog(), "PUBLIC", "%", null)) {
-            while (rs.next()) {
-                result.append(System.lineSeparator());
-                result.append(rs.getString("TABLE_SCHEM"));
-                result.append(".");
-                result.append(rs.getString("TABLE_NAME"));
-            }
-        }
-        return result.toString();
     }
 
     private String getTableName(String key) {
@@ -300,9 +252,8 @@ public class HsqlDbReporter extends MetricReporter {
         sb.append("CREATE CACHED TABLE ").append(tableName).append(" (");
         sb.append("TIME TIMESTAMP,");
 
-        tags.getTags().forEach((columnName, columnValue) -> {
-            sb.append(columnName).append(' ').append(getDbType(columnValue)).append(',');
-        });
+        tags.getTags().forEach((columnName, columnValue) ->
+                sb.append(columnName).append(' ').append(getDbType(columnValue)).append(','));
 
         sb.append("VALUE ").append(getDbType(value));
         sb.append(')');

@@ -38,6 +38,7 @@ public class HsqlDBReporterFactory extends MetricReporterFactory<MetricReporter>
     private String port;
     private String driverClassName;
     private String dbTypeString;
+    private SharedJdbcConnectionWrapper connectionWrapper;
 
     @Override
     public void load(Properties properties) {
@@ -54,7 +55,14 @@ public class HsqlDBReporterFactory extends MetricReporterFactory<MetricReporter>
 
     @Override
     public MetricReporter create() {
-        return new HsqlDbReporter(this);
+        synchronized (this) {
+            if (connectionWrapper == null)
+                connectionWrapper = new SharedJdbcConnectionWrapper(this);
+            else
+                connectionWrapper.reuse();
+        }
+
+        return new HsqlDbReporter(this, connectionWrapper);
     }
 
     public String getConnectionUrl() {
