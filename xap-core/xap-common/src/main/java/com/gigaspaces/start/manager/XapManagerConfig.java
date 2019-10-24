@@ -12,7 +12,7 @@ public class XapManagerConfig {
     private final String host;
     private final Properties properties;
 
-    private static final String DEFAULT_REST = GsEnv.keyOrSystemProperty("MANAGER_REST_PORT", CommonSystemProperties.MANAGER_REST_PORT, "8090");
+    private static final String DEFAULT_REST = GsEnv.getOrSystemProperty("MANAGER_REST_PORT", CommonSystemProperties.MANAGER_REST_PORT, "8090");
     private static final boolean SSL_ENABLED = Boolean.getBoolean(CommonSystemProperties.MANAGER_REST_SSL_ENABLED);
 
     public XapManagerConfig(String host) {

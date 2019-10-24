@@ -348,7 +348,7 @@ public class NIOConfiguration implements ITransportConfig, Cloneable, Externaliz
      */
     public static NIOConfiguration create() {
         String bindHost = SystemInfo.singleton().network().getHostId();
-        String bindPort = GsEnv.keyOrSystemProperty("LRMI_PORT", "com.gs.transport_protocol.lrmi.bind-port", "0");
+        String bindPort = GsEnv.getOrSystemProperty("LRMI_PORT", "com.gs.transport_protocol.lrmi.bind-port", "0");
 
         int minThreads = Integer.parseInt(System.getProperty("com.gs.transport_protocol.lrmi.min-threads", "1"));
         int maxThreads = Integer.parseInt(System.getProperty("com.gs.transport_protocol.lrmi.max-threads", "128"));
