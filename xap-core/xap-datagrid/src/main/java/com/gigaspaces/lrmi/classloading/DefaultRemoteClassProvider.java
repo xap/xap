@@ -113,7 +113,8 @@ public class DefaultRemoteClassProvider implements IClassProvider {
     private byte[] getClassFromServiceClassLoaderContext(long id, String className){
         ClassLoader loader = LocalClassProvider.getClassLoaderById(id, getClass());
         if(loader == null) {
-            //TODO add log message
+            if (_logger.isLoggable(Level.FINE))
+                _logger.fine(toString() +  " unknown class loader id [" + id + "]");
             return null;
         }
         ServiceClassLoaderContext serviceClassLoaderContext = LRMIClassLoadersHolder.getServiceClassLoaderContext(loader);
@@ -135,7 +136,8 @@ public class DefaultRemoteClassProvider implements IClassProvider {
     private byte[] getResourceFromServiceClassLoaderContext(long id, String resourceName) {
         ClassLoader loader = LocalClassProvider.getClassLoaderById(id, getClass());
         if (loader == null) {
-            //TODO add log message
+            if (_logger.isLoggable(Level.FINE))
+                _logger.fine(toString() +  " unknown class loader id [" + id + "]");
             return null;
         }
         ServiceClassLoaderContext serviceClassLoaderContext = LRMIClassLoadersHolder.getServiceClassLoaderContext(loader);

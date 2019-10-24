@@ -29,11 +29,12 @@ import java.rmi.RemoteException;
 import java.util.logging.Level;
 
 /**
- * The default remote implementation used to retrieve class definition or resources from a remote
- * JVM.
+ * The local implementation used to retrieve class definition or resources
+ * In LRMI class loading, retrieval is invoked remotely by {@link DefaultRemoteClassProvider}
+ * In simple remote class loading, retrieval is invoked locally by {@link SimpleRemoteClassProvider}
  *
- * @author assafr
- * @since 6.6
+ * @author alon shoham
+ * @since 15.0
  */
 @com.gigaspaces.api.InternalApi
 public class LocalClassProvider {
