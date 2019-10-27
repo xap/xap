@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.classloader;
 
+import com.gigaspaces.internal.utils.collections.ConcurrentHashSet;
 import com.gigaspaces.internal.utils.collections.CopyOnUpdateMap;
 import com.gigaspaces.internal.utils.collections.SelfCleaningTable;
 import com.gigaspaces.internal.utils.collections.SelfCleaningTable.ICleanerListener;
@@ -55,7 +56,7 @@ public class ClassLoaderCache
         ClassLoaderContext(ClassLoader classLoader, Represent represents) {
             _represents = represents;
             _classLoaderRef = new WeakReference<>(classLoader);
-            _specificListeners = Collections.synchronizedSet(new HashSet<>());
+            _specificListeners = new ConcurrentHashSet<>();
             _timeStamp = SystemTime.timeMillis();
         }
 
@@ -138,7 +139,7 @@ public class ClassLoaderCache
         _classLoaderToIdMap = new SelfCleaningTable<>("ClassLoaderCache",
                 this,
                 new CopyOnUpdateMap());
-        _listeners = Collections.synchronizedSet(new HashSet<>());
+        _listeners = new ConcurrentHashSet<>();
     }
 
     /**
@@ -311,6 +312,7 @@ public class ClassLoaderCache
     private void dispatchRemovedHelper(IClassLoaderCacheStateListener listener,
                                        WeakReference<IClassLoaderCacheStateListener> weakListener,
                                        Set<Long> alreadyRemovedExplicitListeners, boolean explicit) {
+        boolean caughtException = false;
         for (Long removedClKey : alreadyRemovedExplicitListeners) {
             try {
                 listener.onClassLoaderRemoved(removedClKey, explicit);
@@ -321,8 +323,11 @@ public class ClassLoaderCache
                                     + removedClKey,
                             e);
                 // Ignore exceptions, continue dispatching events
-                _listeners.remove(weakListener);
+                caughtException = true;
             }
+        }
+        if (caughtException) {
+            _listeners.remove(weakListener);
         }
     }
 
