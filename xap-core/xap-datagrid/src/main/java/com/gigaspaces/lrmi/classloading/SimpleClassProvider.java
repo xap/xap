@@ -21,11 +21,11 @@ import java.util.logging.Level;
  * @author alon shoham
  * @since 15.0
  */
-public class SimpleRemoteClassProvider implements IClassProvider{
+public class SimpleClassProvider implements IClassProvider{
     private final static TraceableLogger _logger = TraceableLogger.getLogger(Constants.LOGGER_LRMI_CLASSLOADING);
     private final WeakReference<ChannelEntry> _channel;
 
-    public SimpleRemoteClassProvider(ChannelEntry channelEntry) {
+    public SimpleClassProvider(ChannelEntry channelEntry) {
         this._channel = new WeakReference<>(channelEntry);
     }
 

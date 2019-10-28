@@ -25,13 +25,12 @@ import com.j_spaces.kernel.ClassLoaderHelper;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.rmi.RemoteException;
 import java.util.logging.Level;
 
 /**
  * The local implementation used to retrieve class definition or resources
- * In LRMI class loading, retrieval is invoked remotely by {@link DefaultRemoteClassProvider}
- * In simple remote class loading, retrieval is invoked locally by {@link SimpleRemoteClassProvider}
+ * In LRMI class loading, retrieval is invoked remotely by {@link DefaultClassProvider}
+ * In simple remote class loading, retrieval is invoked locally by {@link SimpleClassProvider}
  *
  * @author alon shoham
  * @since 15.0

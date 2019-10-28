@@ -37,12 +37,12 @@ import java.util.logging.Level;
  * @since 6.6
  */
 @com.gigaspaces.api.InternalApi
-public class DefaultRemoteClassProvider implements IClassProvider {
+public class DefaultClassProvider implements IClassProvider {
     final private static TraceableLogger _logger = TraceableLogger.getLogger(Constants.LOGGER_LRMI_CLASSLOADING);
     private final String _identifier;
     final private boolean _enabled;
 
-    public DefaultRemoteClassProvider(String identifier) {
+    public DefaultClassProvider(String identifier) {
         _identifier = identifier;
         _enabled = Boolean.parseBoolean(System.getProperty(SystemProperties.LRMI_CLASSLOADING, SystemProperties.LRMI_CLASSLOADING_DEFAULT))
                 && Boolean.parseBoolean(System.getProperty(SystemProperties.LRMI_CLASSLOADING_EXPORT, SystemProperties.LRMI_CLASSLOADING_EXPORT_DEFAULT));

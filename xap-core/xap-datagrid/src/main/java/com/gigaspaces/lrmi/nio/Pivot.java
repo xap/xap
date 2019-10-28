@@ -115,7 +115,7 @@ public class Pivot {
             if(isSimpleClassLoadingEnabled() && checkClientBackwardsCompatibility()){
                 _logger.fine("Simple remote classloading is enabled, using SimpleClassProvider");
                 if(_simpleClassProvider == null){
-                    _simpleClassProvider = new SimpleRemoteClassProvider(channel);
+                    _simpleClassProvider = new SimpleClassProvider(channel);
                 }
                 return _simpleClassProvider;
             }
