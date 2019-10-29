@@ -450,6 +450,20 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                     }
                 }
             });
+            server.createContext("/probes/ready", new HttpHandler() {
+                @Override
+                public void handle(HttpExchange context) throws IOException {
+                    try {
+                        assertReady();
+                        httpResponse(context, 200, "OK");
+                        if (restLogger.isDebugEnabled())
+                            restLogger.debug("/probes/ready result: 200 (OK)");
+                    } catch (Exception e) {
+                        httpResponse(context, 503, e.getMessage());
+                        restLogger.warn("/probes/ready result: 503 (" + e.getMessage() + ")");
+                    }
+                }
+            });
             server.setExecutor(Executors.newSingleThreadExecutor(new GSThreadFactory("WEB", true)));
             server.start();
             restLogger.info("Started rest server at " + server.getAddress());
@@ -672,6 +686,13 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             throw new SpaceUnavailableException(getServiceName(), "Space [" + getServiceName() + "] is not available. Shutdown or other abort operation in process.");
         if (_spaceState.isStopped() || _engine == null)
             throw new SpaceStoppedException(getServiceName(), "Space [" + getServiceName() + "] is in stopped state.");
+    }
+
+    private void assertReady() throws Exception{
+        /** Checks that the space is ready. */
+        if(_spaceState.getState() != ISpaceState.STARTED){
+            throw new Exception("Space is NOT ready yet");
+        }
     }
 
     public void beforeTypeOperation(boolean isCheckForStandBy, SpaceContext sc, Privilege privilege, String className)
