@@ -20,7 +20,7 @@ public class KubernetesClusterInfo {
 
     private KubernetesClusterInfo() {
         this.kubernetesServiceHost = System.getenv("INTERNAL_K8S_SERVICE_HOST");
-        this.kubernetesServicePort = System.getenv("INTERNAL_K8S_SERVICE_PORT");
+        this.kubernetesServicePort = System.getenv("INTERNAL_K8S_SERVICE_LRMI_PORT");
         this.kubernetesClusterId = System.getenv("INTERNAL_K8S_CLUSTER_ID");
         this.kubernetesServiceConfigured = validateString(kubernetesServiceHost) && validateString(kubernetesClusterId);
     }
