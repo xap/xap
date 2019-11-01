@@ -36,6 +36,7 @@ import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -241,7 +242,7 @@ public class BootUtil {
     }
 
     public static List<URL> toURLs(String element) throws MalformedURLException {
-        return new ClasspathBuilder().append(element).toURLs();
+        return new ClasspathBuilder().append(Paths.get(element)).toURLs();
     }
 
     /**

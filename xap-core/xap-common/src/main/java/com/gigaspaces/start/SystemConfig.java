@@ -45,6 +45,7 @@ import java.net.BindException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -306,7 +307,7 @@ public class SystemConfig {
         ClasspathBuilder classpathBuilder = new ClasspathBuilder();
         try {
             String commonsLoggingJarFilename = findFilenameByPrefix(gsLibRequired, "spring-jcl-");
-            classpathBuilder.append(gsLibRequired + commonsLoggingJarFilename);
+            classpathBuilder.append(Paths.get(gsLibRequired, commonsLoggingJarFilename));
         } catch (FileNotFoundException e) {
             if (logger.isWarnEnabled()) {
                 logger.warn("Missing JAR file", e);
@@ -318,7 +319,7 @@ public class SystemConfig {
         }
 
         classpathBuilder.appendOptional("jee");// Different J2EE jars support
-        classpathBuilder.append(System.getProperty(Locator.GS_LIB_PLATFORM_EXT, gsLibPlatform + "ext")); // ext support
+        classpathBuilder.append(Paths.get(System.getProperty(Locator.GS_LIB_PLATFORM_EXT, gsLibPlatform + "ext"))); // ext support
         classpathBuilder.appendOptional("jms");
         classpathBuilder.appendOptional("metrics");
         classpathBuilder.appendOptional("spatial");
@@ -332,7 +333,7 @@ public class SystemConfig {
         classpathBuilder.appendPlatform("commons"); // Apache Commons libraries
         classpathBuilder.appendOptional("groovy");
         classpathBuilder.appendOptional("jruby");
-        classpathBuilder.append(System.getProperty("com.gs.pu.classloader.scala-lib-path", gsLibOptional + "scala/lib"));// Scala support
+        classpathBuilder.append(Paths.get(System.getProperty("com.gs.pu.classloader.scala-lib-path", gsLibOptional + "scala/lib")));// Scala support
         classpathBuilder.appendPlatform("zookeeper");
         classpathBuilder.appendPlatform("logger");
         classpathBuilder.appendOptional("oshi");
@@ -347,7 +348,7 @@ public class SystemConfig {
         // if we are use parent first, then we are working in shared lib mode, so we need to add openspaces and spring
         // otherwise, don't add openspaces and spring
         if (osInCommonClassLoader) {
-            classpathBuilder.append(gsLibRequired);
+            classpathBuilder.appendRequired();
             classpathBuilder.appendOptional("spring");
         }
 
@@ -646,7 +647,7 @@ public class SystemConfig {
             ClasspathBuilder classpath = new ClasspathBuilder();
             classpath.appendRequired(getLibRequiredFilter());
             classpath.appendOptional("spring");
-            classpath.append(Locator.getLibOptionalSecurity());
+            classpath.append(Paths.get(Locator.getLibOptionalSecurity()));
 
             String gsaClasspath =
                     (String) config.getEntry(COMPONENT + ".gsa",
@@ -689,7 +690,7 @@ public class SystemConfig {
             ClasspathBuilder classpath = new ClasspathBuilder();
             classpath.appendRequired(getLibRequiredFilter());
             classpath.appendOptional("spring");
-            classpath.append(Locator.getLibOptionalSecurity());
+            classpath.append(Paths.get(Locator.getLibOptionalSecurity()));
 
             String gscClasspath =
                     (String) config.getEntry(COMPONENT + ".gsc",
@@ -735,7 +736,7 @@ public class SystemConfig {
             ClasspathBuilder classpath = new ClasspathBuilder();
             classpath.appendRequired(getLibRequiredFilter());
             classpath.appendOptional("spring");
-            classpath.append(Locator.getLibOptionalSecurity());
+            classpath.append(Paths.get(Locator.getLibOptionalSecurity()));
             classpath.append(XapModules.ADMIN);
 
             String gsmClasspath =
@@ -785,7 +786,7 @@ public class SystemConfig {
             classpath.appendRequired(getLibRequiredFilter());
             classpath.appendPlatform("esm");
             classpath.appendOptional("spring");
-            classpath.append(Locator.getLibOptionalSecurity());
+            classpath.append(Paths.get(Locator.getLibOptionalSecurity()));
             classpath.append(XapModules.ADMIN);
 
             String esmClasspath =

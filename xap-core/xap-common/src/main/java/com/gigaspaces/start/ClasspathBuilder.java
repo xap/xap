@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,11 +40,11 @@ public class ClasspathBuilder {
     }
 
     public ClasspathBuilder appendRequired(FileFilter filter) {
-        return append(SystemInfo.singleton().locations().getLibRequired(), filter);
+        return append(Paths.get(SystemInfo.singleton().locations().getLibRequired()), filter);
     }
 
     public ClasspathBuilder appendPlatform(String path) {
-        return append(path(SystemInfo.singleton().locations().getLibPlatform(), path), null);
+        return append(Paths.get(SystemInfo.singleton().locations().getLibPlatform(), path), null);
     }
 
     public ClasspathBuilder appendOptional(String path) {
@@ -51,24 +52,24 @@ public class ClasspathBuilder {
     }
 
     public ClasspathBuilder appendOptional(String path, FileFilter filter) {
-        return append(path(SystemInfo.singleton().locations().getLibOptional(), path), filter);
+        return append(Paths.get(SystemInfo.singleton().locations().getLibOptional(), path), filter);
     }
 
     public ClasspathBuilder append(XapModules module) {
-        return append(Paths.get(SystemInfo.singleton().locations().lib()).resolve(module.getJarFilePath()).toString());
+        return append(Paths.get(SystemInfo.singleton().locations().lib()).resolve(module.getJarFilePath()));
     }
 
-    public ClasspathBuilder append(String path) {
+    public ClasspathBuilder append(Path path) {
         return append(path, null);
     }
 
-    public ClasspathBuilder append(String path, FileFilter filter) {
+    public ClasspathBuilder append(Path path, FileFilter filter) {
         return append(path, filter, true);
     }
 
-    public ClasspathBuilder append(String path, FileFilter filter, boolean archivesOnly) {
+    public ClasspathBuilder append(Path path, FileFilter filter, boolean archivesOnly) {
         filter = archivesOnly ? new JarFileFilter(filter) : filter;
-        File f = new File(path);
+        File f = path.toFile();
         if (f.isDirectory()) {
             final File[] files = BootIOUtils.listFiles(f, filter);
             for (File file : files)

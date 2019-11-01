@@ -31,6 +31,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -153,7 +154,7 @@ public abstract class JeeProcessingUnitContainerProvider extends ApplicationCont
     }
 
     protected Iterable<String> getWebAppClassLoaderClassPath() {
-        return new ClasspathBuilder().append(getJeeContainerJarPath(getJeeContainerType())).toFilesNames();
+        return new ClasspathBuilder().append(Paths.get(getJeeContainerJarPath(getJeeContainerType()))).toFilesNames();
     }
 
     protected ClassLoader getJeeClassLoader() throws Exception {
