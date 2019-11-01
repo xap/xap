@@ -314,7 +314,7 @@ public class SystemConfig {
         }
 
         for (XapModules module : XapModules.getByClassLoaderType(ClassLoaderType.COMMON)) {
-            classpathBuilder.append(gsLib + module.getJarFilePath());
+            classpathBuilder.append(module);
         }
 
         classpathBuilder.appendOptional("jee");// Different J2EE jars support
@@ -643,16 +643,16 @@ public class SystemConfig {
                         ServiceDescriptor.class,
                         null);
         if (svcDesc == null) {
-            StringBuilder defaultGSAClasspath = new StringBuilder();
-            addRequiredLibs(defaultGSAClasspath);
-            addOptionalSpringLibs(defaultGSAClasspath);
-            addOptionalSecurityLibs(defaultGSAClasspath);
+            ClasspathBuilder classpath = new ClasspathBuilder();
+            classpath.appendRequired(getLibRequiredFilter());
+            classpath.appendOptional("spring");
+            classpath.append(Locator.getLibOptionalSecurity());
 
             String gsaClasspath =
                     (String) config.getEntry(COMPONENT + ".gsa",
                             "classpath",
                             String.class,
-                            defaultGSAClasspath.toString());
+                            classpath.toString());
             String gsaCodebase = getDefaultCodebase();
 
             String configDir = rootDir + "config" + File.separator + "services" + File.separator;
@@ -686,16 +686,16 @@ public class SystemConfig {
                         ServiceDescriptor.class,
                         null);
         if (svcDesc == null) {
-            StringBuilder defaultGSCClasspath = new StringBuilder();
-            addRequiredLibs(defaultGSCClasspath);
-            addOptionalSpringLibs(defaultGSCClasspath);
-            addOptionalSecurityLibs(defaultGSCClasspath);
+            ClasspathBuilder classpath = new ClasspathBuilder();
+            classpath.appendRequired(getLibRequiredFilter());
+            classpath.appendOptional("spring");
+            classpath.append(Locator.getLibOptionalSecurity());
 
             String gscClasspath =
                     (String) config.getEntry(COMPONENT + ".gsc",
                             "classpath",
                             String.class,
-                            defaultGSCClasspath.toString());
+                            classpath.toString());
 
             logger.debug("GSC configuration Classpath is: " + gscClasspath);
             String gscCodebase = getDefaultCodebase();
@@ -732,18 +732,17 @@ public class SystemConfig {
                         null);
         if (svcDesc == null) {
             // adding openspaces to GSM since it needs to know the PUServiceBean (for FDH for example)
-            StringBuilder defaultGSMClasspath = new StringBuilder();
-
-            addRequiredLibs(defaultGSMClasspath);
-            addOptionalSpringLibs(defaultGSMClasspath);
-            addOptionalSecurityLibs(defaultGSMClasspath);
-            defaultGSMClasspath.append(gsLib + XapModules.ADMIN.getJarFilePath() + File.pathSeparator);
+            ClasspathBuilder classpath = new ClasspathBuilder();
+            classpath.appendRequired(getLibRequiredFilter());
+            classpath.appendOptional("spring");
+            classpath.append(Locator.getLibOptionalSecurity());
+            classpath.append(XapModules.ADMIN);
 
             String gsmClasspath =
                     (String) config.getEntry(COMPONENT + ".gsm",
                             "classpath",
                             String.class,
-                            defaultGSMClasspath.toString());
+                            classpath.toString());
             String gsmCodebase = getDefaultCodebase();
 
             String configDir = rootDir + "config" + File.separator + "services" + File.separator;
@@ -768,44 +767,9 @@ public class SystemConfig {
         return (svcDesc);
     }
 
-    /**
-     * add all jars under lib/required
-     */
-    private void addRequiredLibs(StringBuilder classpath) {
-        for (File f : BootIOUtils.listFiles(new File(gsLibRequired))) {
-            if (f.getName().contains(XapModules.DATA_GRID.getJarFileName()) ||
-                    f.getName().contains(XapModules.CORE_REFLECTIONS_ASM.getJarFileName())) {
-                continue;
-            }
-            classpath.append(f.getAbsolutePath()).append(File.pathSeparator);
-        }
-    }
-
-    /**
-     * add all jars under lib/optional/spring
-     */
-    private void addOptionalSpringLibs(StringBuilder classpath) {
-        addLibs(classpath, gsLibOptional + "spring");
-    }
-
-
-    private void addLibs(StringBuilder classpath, String path) {
-        File libDir = new File(path);
-        if (libDir.exists() && libDir.isDirectory()) {
-            for (File f : BootIOUtils.listFiles(libDir)) {
-                if (logger.isDebugEnabled())
-                    logger.debug("Adding " + f.getAbsolutePath() + " to ClassPath");
-                classpath.append(f.getAbsolutePath()).append(File.pathSeparator);
-            }
-        }
-    }
-
-
-    /**
-     * add all jars under lib/optional/security
-     */
-    private void addOptionalSecurityLibs(StringBuilder classpath) {
-        addLibs(classpath, Locator.getLibOptionalSecurity());
+    private static FileFilter getLibRequiredFilter() {
+        return f -> (!f.getName().equals(XapModules.DATA_GRID.getJarFileName()) &&
+                !f.getName().equals(XapModules.CORE_REFLECTIONS_ASM.getJarFileName()));
     }
 
     private ServiceDescriptor getESMServiceDescriptor()
@@ -817,21 +781,18 @@ public class SystemConfig {
                         ServiceDescriptor.class,
                         null);
         if (svcDesc == null) {
-            StringBuilder defaultESMClasspath = new StringBuilder();
-
-            addRequiredLibs(defaultESMClasspath);
-
-            appendLibPlatformToClasspath(defaultESMClasspath, "esm");
-
-            addOptionalSpringLibs(defaultESMClasspath);
-            addOptionalSecurityLibs(defaultESMClasspath);
-            defaultESMClasspath.append(gsLib + XapModules.ADMIN.getJarFilePath() + File.pathSeparator);
+            ClasspathBuilder classpath = new ClasspathBuilder();
+            classpath.appendRequired(getLibRequiredFilter());
+            classpath.appendPlatform("esm");
+            classpath.appendOptional("spring");
+            classpath.append(Locator.getLibOptionalSecurity());
+            classpath.append(XapModules.ADMIN);
 
             String esmClasspath =
                     (String) config.getEntry(COMPONENT + ".esm",
                             "classpath",
                             String.class,
-                            defaultESMClasspath.toString());
+                            classpath.toString());
             String esmCodebase = getDefaultCodebase();
 
             String configDir = rootDir + "config" + File.separator + "services" + File.separator;
@@ -854,16 +815,6 @@ public class SystemConfig {
                             confArgs);
         }
         return (svcDesc);
-    }
-
-    private void appendLibPlatformToClasspath(
-            final StringBuilder defaultESMClasspath, final String platformName) {
-        final File lib = new File(gsLibPlatform + "/" + platformName);
-        if (lib.exists() && lib.isDirectory()) {
-            for (File f : BootIOUtils.listFiles(lib)) {
-                defaultESMClasspath.append(f.getAbsolutePath()).append(File.pathSeparator);
-            }
-        }
     }
 
     /**

@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,14 +33,6 @@ import java.util.List;
 public class ClasspathBuilder {
 
     private final List<File> files = new ArrayList<File>();
-
-    public ClasspathBuilder appendLib(String path) {
-        return appendLib(path, null);
-    }
-
-    public ClasspathBuilder appendLib(String path, FileFilter filter) {
-        return append(path(SystemInfo.singleton().locations().lib(), path), filter);
-    }
 
     public ClasspathBuilder appendRequired() {
         return appendRequired(null);
@@ -59,6 +52,10 @@ public class ClasspathBuilder {
 
     public ClasspathBuilder appendOptional(String path, FileFilter filter) {
         return append(path(SystemInfo.singleton().locations().getLibOptional(), path), filter);
+    }
+
+    public ClasspathBuilder append(XapModules module) {
+        return append(Paths.get(SystemInfo.singleton().locations().lib()).resolve(module.getJarFilePath()).toString());
     }
 
     public ClasspathBuilder append(String path) {

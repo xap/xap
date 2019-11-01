@@ -16,6 +16,8 @@
 
 package com.gigaspaces.start;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -25,32 +27,32 @@ import java.util.Collection;
  */
 public enum XapModules {
     // System modules
-    CORE_COMMON("/required/xap-common", ClassLoaderType.SYSTEM),
+    CORE_COMMON("required/xap-common.jar", ClassLoaderType.SYSTEM),
     // Common Modules
-    DATA_GRID("/required/xap-datagrid", ClassLoaderType.COMMON),
-    CORE_REFLECTIONS_ASM("/required/xap-asm", ClassLoaderType.COMMON),
-    CORE_COLLECTIONS_TROVE("/required/xap-trove", ClassLoaderType.COMMON),
-    LICENSE("/required/xap-premium-common", ClassLoaderType.COMMON),
-    MAP("/optional/map/xap-map", ClassLoaderType.COMMON),
-    NEAR_CACHE("/optional/near-cache/xap-near-cache", ClassLoaderType.COMMON),
-    INTEROP("/optional/interop/xap-interop", ClassLoaderType.COMMON),
-    WAN("/optional/wan-gateway/xap-wan-gateway", ClassLoaderType.COMMON),
-    SERVICE_GRID("/platform/service-grid/xap-service-grid", ClassLoaderType.COMMON),
+    DATA_GRID("required/xap-datagrid.jar", ClassLoaderType.COMMON),
+    CORE_REFLECTIONS_ASM("required/xap-asm.jar", ClassLoaderType.COMMON),
+    CORE_COLLECTIONS_TROVE("required/xap-trove.jar", ClassLoaderType.COMMON),
+    LICENSE("required/xap-premium-common.jar", ClassLoaderType.COMMON),
+    MAP("optional/map/xap-map.jar", ClassLoaderType.COMMON),
+    NEAR_CACHE("optional/near-cache/xap-near-cache.jar", ClassLoaderType.COMMON),
+    INTEROP("optional/interop/xap-interop.jar", ClassLoaderType.COMMON),
+    WAN("optional/wan-gateway/xap-wan-gateway.jar", ClassLoaderType.COMMON),
+    SERVICE_GRID("platform/service-grid/xap-service-grid.jar", ClassLoaderType.COMMON),
     // Service modules
-    HIBERNATE_SPRING("/optional/hibernate/xap-hibernate-spring", ClassLoaderType.SERVICE),
-    JPA_SPRING("/optional/jpa/xap-jpa-spring", ClassLoaderType.SERVICE),
-    MAP_SPRING("/optional/map/xap-map-spring", ClassLoaderType.SERVICE),
-    NEAR_CACHE_SPRING("/optional/near-cache/xap-near-cache-spring", ClassLoaderType.SERVICE),
-    INTEROP_SPRING("/optional/interop/xap-interop-spring", ClassLoaderType.SERVICE),
-    WAN_SPRING("/optional/wan-gateway/xap-wan-gateway-spring", ClassLoaderType.SERVICE),
-    ADMIN("/platform/service-grid/xap-admin", ClassLoaderType.SERVICE);
+    HIBERNATE_SPRING("optional/hibernate/xap-hibernate-spring.jar", ClassLoaderType.SERVICE),
+    JPA_SPRING("optional/jpa/xap-jpa-spring.jar", ClassLoaderType.SERVICE),
+    MAP_SPRING("optional/map/xap-map-spring.jar", ClassLoaderType.SERVICE),
+    NEAR_CACHE_SPRING("optional/near-cache/xap-near-cache-spring.jar", ClassLoaderType.SERVICE),
+    INTEROP_SPRING("optional/interop/xap-interop-spring.jar", ClassLoaderType.SERVICE),
+    WAN_SPRING("optional/wan-gateway/xap-wan-gateway-spring.jar", ClassLoaderType.SERVICE),
+    ADMIN("platform/service-grid/xap-admin.jar", ClassLoaderType.SERVICE);
 
     private static final Collection<XapModules> REQUIRED_NON_SERVICE_CL_MODULES = initRequiredNonServiceModules();
 
     private static Collection<XapModules> initRequiredNonServiceModules() {
         ArrayList<XapModules> result = new ArrayList<XapModules>();
         for (XapModules module : XapModules.values()) {
-            if (module.getClassLoaderType() != ClassLoaderType.SERVICE && module.getJarFilePath().startsWith("/required/"))
+            if (module.getClassLoaderType() != ClassLoaderType.SERVICE && module.getJarFilePath().startsWith("required"))
                 result.add(module);
         }
         return result;
@@ -68,15 +70,14 @@ public enum XapModules {
 
     private final String artifactName;
     private final String jarFileName;
-    private final String jarFilePath;
+    private final Path jarFilePath;
     private final ClassLoaderType classLoaderType;
 
     XapModules(String path, ClassLoaderType classLoaderType) {
         this.classLoaderType = classLoaderType;
-        int pos = path.lastIndexOf('/');
-        this.artifactName = pos == -1 ? path : path.substring(pos + 1);
-        this.jarFileName = artifactName + ".jar";
-        this.jarFilePath = path + ".jar";
+        this.jarFilePath = Paths.get(path);
+        this.jarFileName = this.jarFilePath.getFileName().toString();
+        this.artifactName = this.jarFileName.substring(0, this.jarFileName.lastIndexOf('.'));
     }
 
     public String getArtifactName() {
@@ -87,7 +88,7 @@ public enum XapModules {
         return jarFileName;
     }
 
-    public String getJarFilePath() {
+    public Path getJarFilePath() {
         return jarFilePath;
     }
 

@@ -305,11 +305,11 @@ public class Locator {
 
     private static File findGsLib(String path, File location) {
         if (path.contains("platform/ui/xap-ui.jar"))
-            return new File(new File(location, ".."), "..");
-        if (path.contains("lib" + XapModules.DATA_GRID.getJarFilePath()))
-            return new File(location, "..");
-        if (path.contains("lib" + XapModules.CORE_COMMON.getJarFilePath()))
-            return new File(location, "..");
-        return new File(location, "..");
+            return location.getParentFile().getParentFile();
+        //if (path.contains("lib/" + XapModules.DATA_GRID.getJarFilePath()))
+        //    return location.getParentFile();
+        //if (path.contains("lib/" + XapModules.CORE_COMMON.getJarFilePath()))
+        //    return location.getParentFile();
+        return location.getParentFile();
     }
 }
