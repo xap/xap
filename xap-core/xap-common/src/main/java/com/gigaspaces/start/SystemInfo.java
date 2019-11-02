@@ -18,6 +18,7 @@ package com.gigaspaces.start;
 
 import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.internal.io.BootIOUtils;
+import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.logger.LoggerSystemInfo;
@@ -116,7 +117,7 @@ public class SystemInfo {
 
     public static class XapLocations {
         private final String xapNetHome;
-        private final String bin;
+        private final Path bin;
         private final Path config;
         private final Path lib;
         private final Path libRequired;
@@ -139,7 +140,7 @@ public class SystemInfo {
             if (xapHome.endsWith("/") || xapHome.endsWith("\\"))
                 xapHome = xapHome.substring(0, xapHome.length()-1);
             this.xapNetHome = System.getProperty("com.gs.xapnet.home");
-            this.bin = path((xapNetHome != null ? xapNetHome : xapHome), "bin");
+            this.bin = Paths.get((xapNetHome != null ? xapNetHome : xapHome), "bin");
             this.config = Paths.get(xapHome, "config");
             this.lib = fromSystemProperty("com.gigaspaces.lib", Paths.get(xapHome, "lib"));
             this.libRequired = fromSystemProperty("com.gigaspaces.lib.required", lib.resolve("required"));
@@ -209,8 +210,17 @@ public class SystemInfo {
             return base + File.separator + subdir;
         }
 
-        public String bin() {
+        public Path bin() {
             return bin;
+        }
+
+        public Path bin(String scriptName) {
+            String suffix;
+            if (xapNetHome != null)
+                suffix = ".exe";
+            else
+                suffix = (JavaUtils.isWindows() ? ".bat" : ".sh");
+            return bin.resolve(scriptName + suffix);
         }
 
         public Path lib() {
