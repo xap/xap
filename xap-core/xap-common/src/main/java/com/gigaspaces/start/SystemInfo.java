@@ -117,7 +117,7 @@ public class SystemInfo {
     public static class XapLocations {
         private final String xapNetHome;
         private final String bin;
-        private final String config;
+        private final Path config;
         private final Path lib;
         private final Path libRequired;
         private final Path libOptional;
@@ -140,7 +140,7 @@ public class SystemInfo {
                 xapHome = xapHome.substring(0, xapHome.length()-1);
             this.xapNetHome = System.getProperty("com.gs.xapnet.home");
             this.bin = path((xapNetHome != null ? xapNetHome : xapHome), "bin");
-            this.config = path(xapHome, "config");
+            this.config = Paths.get(xapHome, "config");
             this.lib = fromSystemProperty("com.gigaspaces.lib", Paths.get(xapHome, "lib"));
             this.libRequired = fromSystemProperty("com.gigaspaces.lib.required", lib.resolve("required"));
             this.libOptional = fromSystemProperty("com.gigaspaces.lib.opt", lib.resolve("optional"));
@@ -175,8 +175,12 @@ public class SystemInfo {
             }
         }
 
-        public String config() {
+        public Path config() {
             return config;
+        }
+
+        public Path config(String subdir) {
+            return config.resolve(subdir);
         }
 
         public String work() {

@@ -875,7 +875,7 @@ public class ResourceLoader {
      * @return result
      */
     public static String[] getClusterSchemas() {
-        File directory = new File(SystemInfo.singleton().locations().config() + File.separator + Constants.Schemas.SCHEMAS_FOLDER);
+        File directory = new File(SystemInfo.singleton().locations().config(Constants.Schemas.SCHEMAS_FOLDER).toString());
         return getClusterSchemas(directory);
     }
 

@@ -185,9 +185,7 @@ public class MetricManager implements Closeable {
     public static String getConfigFilePath() {
         String result = System.getProperty("com.gigaspaces.metrics.config");
         if (!StringUtils.hasLength(result)) {
-            result = SystemInfo.singleton().locations().config() + File.separator +
-                    "metrics" + File.separator +
-                    "metrics.xml";
+            result = SystemInfo.singleton().locations().config("metrics").resolve("metrics.xml").toString();
         }
         return result;
     }

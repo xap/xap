@@ -546,15 +546,9 @@ public class SystemConfig {
         String handlerCodebase = getDefaultCodebase();
         String handlerClasspath = "";
 
-        String configDir = locations.config() + File.separator + "services" + File.separator;
-        String reggieConfig = (String) config.getEntry(COMPONENT,
-                "reggieConfig",
-                String.class,
-                configDir +
-                        "services.config");
         String[] confArgs = new String[overrideArgs.length + 1];
         //confArgs[0] = configDir+"services.config";
-        confArgs[0] = reggieConfig;
+        confArgs[0] = getServiceConfig("reggieConfig");
         if (overrideArgs.length > 0) {
             for (int i = 1; i < confArgs.length; i++)
                 confArgs[i] = overrideArgs[i - 1];
@@ -566,6 +560,11 @@ public class SystemConfig {
                 confArgs));
     }
 
+    private String getServiceConfig(String name) throws ConfigurationException {
+        return (String) config.getEntry(COMPONENT, name, String.class,
+                locations.config("services").resolve("services.config").toString());
+    }
+
     private String getDefaultCodebase() throws UnknownHostException {
         return BootUtil.getCodebase(new String[]{XapModules.DATA_GRID.getJarFileName()}, getWebsterProtocol(), Integer.toString(getWebsterPort()));
     }
@@ -575,15 +574,9 @@ public class SystemConfig {
         String handlerCodebase = getDefaultCodebase();
         String handlerClasspath = "";
 
-        String configDir = locations.config() + File.separator + "services" + File.separator;
-        String mahaloConfig = (String) config.getEntry(COMPONENT,
-                "mahaloConfig",
-                String.class,
-                configDir +
-                        "services.config");
         String[] confArgs = new String[overrideArgs.length + 1];
         //confArgs[0] = configDir+"services.config";
-        confArgs[0] = mahaloConfig;
+        confArgs[0] = getServiceConfig("mahaloConfig");
         if (overrideArgs.length > 0) {
             for (int i = 1; i < confArgs.length; i++)
                 confArgs[i] = overrideArgs[i - 1];
@@ -643,15 +636,8 @@ public class SystemConfig {
                             classpath.toString());
             String gsaCodebase = getDefaultCodebase();
 
-            String configDir = locations.config() + File.separator + "services" + File.separator;
-            String gscConfig = (String) config.getEntry(COMPONENT,
-                    "gsaConfig",
-                    String.class,
-                    configDir +
-                            "services.config");
-
             String[] confArgs = new String[overrideArgs.length + 1];
-            confArgs[0] = gscConfig;
+            confArgs[0] = getServiceConfig("gsaConfig");
             if (overrideArgs.length > 0) {
                 for (int i = 1; i < confArgs.length; i++)
                     confArgs[i] = overrideArgs[i - 1];
@@ -688,15 +674,8 @@ public class SystemConfig {
             logger.debug("GSC configuration Classpath is: " + gscClasspath);
             String gscCodebase = getDefaultCodebase();
 
-            String configDir = locations.config() + File.separator + "services" + File.separator;
-            String gscConfig = (String) config.getEntry(COMPONENT,
-                    "gscConfig",
-                    String.class,
-                    configDir +
-                            "services.config");
-
             String[] confArgs = new String[overrideArgs.length + 1];
-            confArgs[0] = gscConfig;
+            confArgs[0] = getServiceConfig("gscConfig");
             if (overrideArgs.length > 0) {
                 for (int i = 1; i < confArgs.length; i++)
                     confArgs[i] = overrideArgs[i - 1];
@@ -733,15 +712,8 @@ public class SystemConfig {
                             classpath.toString());
             String gsmCodebase = getDefaultCodebase();
 
-            String configDir = locations.config() + File.separator + "services" + File.separator;
-            String gsmConfig = (String) config.getEntry(COMPONENT,
-                    "gsmConfig",
-                    String.class,
-                    configDir +
-                            "services.config");
-
             String[] confArgs = new String[overrideArgs.length + 1];
-            confArgs[0] = gsmConfig;
+            confArgs[0] = getServiceConfig("gsmConfig");
             if (overrideArgs.length > 0) {
                 for (int i = 1; i < confArgs.length; i++)
                     confArgs[i] = overrideArgs[i - 1];
@@ -783,15 +755,8 @@ public class SystemConfig {
                             classpath.toString());
             String esmCodebase = getDefaultCodebase();
 
-            String configDir = locations.config() + File.separator + "services" + File.separator;
-            String gsmConfig = (String) config.getEntry(COMPONENT,
-                    "esmConfig",
-                    String.class,
-                    configDir +
-                            "services.config");
-
             String[] confArgs = new String[overrideArgs.length + 1];
-            confArgs[0] = gsmConfig;
+            confArgs[0] = getServiceConfig("esmConfig");
             if (overrideArgs.length > 0) {
                 for (int i = 1; i < confArgs.length; i++)
                     confArgs[i] = overrideArgs[i - 1];
@@ -830,15 +795,8 @@ public class SystemConfig {
 
         String gsClasspath = "";
         String gsCodebase = getDefaultCodebase();
-        String configDir = locations.config() + File.separator + "services" + File.separator;
-        String gsConfig = (String) config.getEntry(COMPONENT,
-                "gsConfig",
-                String.class,
-                configDir +
-                        "services.config");
-
         String[] confArgs = new String[overrideArgs.length + 1];
-        confArgs[0] = gsConfig;
+        confArgs[0] = getServiceConfig("gsConfig");
 
         if (overrideArgs.length > 0) {
             for (int i = 1; i < confArgs.length; i++)

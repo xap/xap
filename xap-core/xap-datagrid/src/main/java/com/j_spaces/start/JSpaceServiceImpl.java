@@ -136,7 +136,7 @@ public class JSpaceServiceImpl extends AbstractService implements ProxyAccessor 
             }
 
             // TODO it's temporary, update the space XML if clustered
-            String spaceFileURL = SystemInfo.singleton().locations().config() + File.separator + _spaceName + ".xml";
+            String spaceFileURL = SystemInfo.singleton().locations().config(_spaceName + ".xml").toString();
             if (new File(spaceFileURL).exists()) {
                 ReplaceInFileUtils updateFile = new ReplaceInFileUtils(spaceFileURL);
                 updateFile.xmlReplace(Constants.Cluster.IS_CLUSTER_SPACE_PROP, _clusterConfigURL != null ? "true" : "false");
@@ -238,7 +238,7 @@ public class JSpaceServiceImpl extends AbstractService implements ProxyAccessor 
 
         // check if the config file exists and readable, otherwise thrown exception
         //Used for backward compatability.
-        String contConfFile = SystemInfo.singleton().locations().config() + java.io.File.separator + containerName + "-config.xml";
+        String contConfFile = SystemInfo.singleton().locations().config(containerName + "-config.xml").toString();
         File configFile = new File(contConfFile);
 
         //Go and find the container schema file if schema is requested AND

@@ -172,7 +172,7 @@ public class GsCommandFactory {
     }
 
     private String defaultConfigPath() {
-        return locations().config() + File.separator + "log" + File.separator + "xap_logging.properties";
+        return locations().config("log").resolve("xap_logging.properties").toString();
     }
 
     protected void appendServiceOptions(JavaCommandBuilder command, String serviceType) {
