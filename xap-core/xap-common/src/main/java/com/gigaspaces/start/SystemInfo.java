@@ -31,6 +31,8 @@ import net.jini.core.discovery.LookupLocator;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -116,15 +118,17 @@ public class SystemInfo {
         private final String xapNetHome;
         private final String bin;
         private final String config;
-        private final String lib;
-        private final String libRequired;
-        private final String libOptional;
-        private final String libOptionalSecurity;
-        private final String libPlatform;
+        private final Path lib;
+        private final Path libRequired;
+        private final Path libOptional;
+        private final Path libOptionalSecurity;
+        private final Path libPlatform;
+        private final Path libPlatformExt;
         private final String work;
         private final String deploy;
         private final String insightedge;
         private final String sparkHome;
+        private final String userProductHome;
 
         public String getSparkHome() {
             return sparkHome;
@@ -137,22 +141,28 @@ public class SystemInfo {
             this.xapNetHome = System.getProperty("com.gs.xapnet.home");
             this.bin = path((xapNetHome != null ? xapNetHome : xapHome), "bin");
             this.config = path(xapHome, "config");
-            this.lib = path(xapHome, "lib");
-            this.libRequired= path(lib, "required");
-            this.libOptional= path(lib, "optional");
-            this.libOptionalSecurity = initFromSystemProperty(Locator.GS_LIB_OPTIONAL_SECURITY, path(this.libOptional, "security"));
-            this.libPlatform= path(lib, "platform");
+            this.lib = fromSystemProperty("com.gigaspaces.lib", Paths.get(xapHome, "lib"));
+            this.libRequired = fromSystemProperty("com.gigaspaces.lib.required", lib.resolve("required"));
+            this.libOptional = fromSystemProperty("com.gigaspaces.lib.opt", lib.resolve("optional"));
+            this.libOptionalSecurity = fromSystemProperty("com.gigaspaces.lib.opt.security", libOptional.resolve("security"));
+            this.libPlatform = fromSystemProperty("com.gigaspaces.lib.platform", lib.resolve("platform"));
+            this.libPlatformExt = fromSystemProperty("com.gigaspaces.lib.platform.ext", libPlatform.resolve("ext"));
             this.work = initFromSystemProperty("com.gs.work", path(xapHome, "work"));
             this.deploy = initFromSystemProperty("com.gs.deploy", path(xapHome, "deploy"));
+            this.userProductHome = path(System.getProperty("user.home"), ".gigaspaces");
             this.insightedge = path(xapHome, "insightedge");
             this.sparkHome = getEnvVar("SPARK_HOME", path(insightedge, "spark"));
             System.setProperty("spark.home",sparkHome);
         }
 
-
         private static String getEnvVar(String key, String defaultValue) {
             final String result = System.getenv(key);
             return result != null ? result : defaultValue;
+        }
+
+        private static Path fromSystemProperty(String key, Path defaultValue) {
+            String result = System.getProperty(key);
+            return result != null ? Paths.get(result) : defaultValue;
         }
 
         private static String initFromSystemProperty(String key, String defaultValue) {
@@ -199,24 +209,48 @@ public class SystemInfo {
             return bin;
         }
 
-        public String lib() {
+        public Path lib() {
             return lib;
         }
 
-        public String getLibRequired() {
+        public Path lib(String subpath) {
+            return lib.resolve(subpath);
+        }
+
+        public Path lib(XapModules module) {
+            return lib.resolve(module.getJarFilePath());
+        }
+
+        public Path libRequired() {
             return libRequired;
         }
 
-        public String getLibOptional() {
+        public Path libOptional() {
             return libOptional;
         }
 
-        public String getLibPlatform() {
+        public Path libOptional(String subpath) {
+            return libOptional.resolve(subpath);
+        }
+
+        public Path libOptionalSecurity() {
+            return libOptionalSecurity;
+        }
+
+        public Path libPlatform() {
             return libPlatform;
         }
 
-        public String getLibOptionalSecurity() {
-            return libOptionalSecurity;
+        public Path libPlatform(String subpath) {
+            return libPlatform.resolve(subpath);
+        }
+
+        public Path libPlatformExt() {
+            return libPlatformExt;
+        }
+
+        public String getUserProductHome() {
+            return userProductHome;
         }
     }
 

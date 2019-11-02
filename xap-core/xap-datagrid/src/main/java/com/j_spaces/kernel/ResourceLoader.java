@@ -18,8 +18,8 @@
 package com.j_spaces.kernel;
 
 import com.gigaspaces.config.ConfigurationException;
+import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.io.XmlUtils;
-import com.gigaspaces.start.Locator;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.Constants.DCache;
@@ -101,7 +101,7 @@ public class ResourceLoader {
      * (e.g. if running in AppServer) if not found AND useOnlyClasspath == false (expensive
      * operation!) --> 2.2 if the resource was not found, instead of returning null, we attempt to
      * load it as a File IF it was passed as file format e.g. D:/gigaspaces/GenericJDBCProperties/HSQLProperties/jdbc.properties
-     * 3. If Uses the com.gigaspaces.start.Locator.derivePath(yyy.xml) that searches recursively
+     * 3. If Uses the com.gigaspaces.start.Locator.locate(yyy.xml) that searches recursively
      * under the GS, using root file system. Not the default.
      *
      * Some notes: In some scenarios, the ResourceLoader does not use the right class loader and
@@ -211,9 +211,9 @@ public class ResourceLoader {
 
 
             if (result == null && locatorBaseDir != null && createIfNotExists) {
-                String resourcePath = Locator.derivePath(locatorBaseDir, (onlyResourceName != null ? onlyResourceName : name));
+                File resourcePath = BootIOUtils.locate(locatorBaseDir, (onlyResourceName != null ? onlyResourceName : name));
                 if (resourcePath != null) {
-                    result = new File(resourcePath).toURI().toURL().openStream();
+                    result = resourcePath.toURI().toURL().openStream();
                 }
                 if (_logger.isLoggable(Level.FINE)) {
                     _logger.log(Level.FINE, "Load resource using Locator utility searching from < " + locatorBaseDir + " > base directory: \n [" + (onlyResourceName != null ? onlyResourceName : name) + "] Thread: [" + currentThread.getName()
@@ -242,7 +242,7 @@ public class ResourceLoader {
      * (e.g. if running in AppServer) if not found AND useOnlyClasspath == false (expensive
      * operation!) --> 2.2 if the resource was not found, instead of returning null, we attempt to
      * load it as a File IF it was passed as file format e.g. D:/gigaspaces/GenericJDBCProperties/HSQLProperties/jdbc.properties
-     * 3. Uses the com.gigaspaces.start.Locator.derivePath(yyy.xml) that searches recursively under
+     * 3. Uses the com.gigaspaces.start.Locator.locate(yyy.xml) that searches recursively under
      * the GS, using root file system. Not the default behavior
      *
      * Notes: In some scenarios, the ResourceLoader does not use the right class loader and returns

@@ -447,7 +447,7 @@ public class SystemBoot {
     private static void waitForStopCommand(Thread mainThread, SystemConfig systemConfig) throws InterruptedException {
         // Loop waiting for a connection and a valid command
         while (!mainThread.isInterrupted()) {
-            File workLocation = new File(System.getProperty("com.gs.work", systemConfig.getHomeDir() + "/work"));
+            File workLocation = new File(SystemInfo.singleton().locations().work());
             File file = new File(workLocation, "/gsa/gsa-" + AgentHelper.getGSAServiceID() + "-" + AgentHelper.getAgentId() + "-stop");
             if (file.exists()) {
                 file.deleteOnExit();

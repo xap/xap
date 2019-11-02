@@ -269,4 +269,35 @@ public class BootIOUtils {
             return false;
         }
     }
+
+    public static File locate(String baseDir, String fileName) {
+        if (baseDir.startsWith("$")) {
+            String sysProp = baseDir.substring(1);
+            baseDir = System.getProperty(sysProp);
+            if (baseDir == null)
+                throw new IllegalArgumentException("baseDir [" + sysProp + "] does not reference a valid System Property");
+        }
+        return locate(new File(baseDir), fileName);
+    }
+
+    public static File locate(File baseDir, String fileName) {
+        if (baseDir == null)
+            throw new IllegalArgumentException("baseDir is null");
+        if (fileName == null)
+            throw new IllegalArgumentException("subDirName is null");
+
+        File file = new File(baseDir, fileName);
+        if (file.exists())
+            return file;
+
+        for (File f : BootIOUtils.listFiles(baseDir)) {
+            if (f.isDirectory() && f.canRead()) {
+                file = locate(f, fileName);
+                if (file != null)
+                    return file;
+            }
+        }
+
+        return null;
+    }
 }

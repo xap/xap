@@ -1,5 +1,6 @@
 package com.gigaspaces.start;
 
+import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.internal.utils.GsEnv;
@@ -7,7 +8,6 @@ import com.gigaspaces.internal.utils.GsEnv;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Optional;
 
 /**
  * @author Niv Ingberg
@@ -52,7 +52,7 @@ public class GsCommandFactory {
         command.mainClass("org.gigaspaces.cli.commands.XapMainCommand");
         // Class path:
         command.classpathFromPath(SystemInfo.singleton().getXapHome(), "tools", "cli", "*");
-        command.classpathFromPath(SystemInfo.singleton().locations().getLibPlatform(), "blueprints", "*");
+        command.classpathFromPath(SystemInfo.singleton().locations().libPlatform("blueprints"));
         appendGsClasspath();
         // Options and system properties:
         appendXapOptions();
@@ -69,8 +69,8 @@ public class GsCommandFactory {
         command.classpath(SystemInfo.singleton().getXapHome());
         appendGsClasspath();
         //fix for GS-13546
-        command.classpathFromPath(locations().getLibPlatform(), "service-grid", "*");
-        command.classpathFromPath(locations().getLibPlatform(), "zookeeper", "*");
+        command.classpathFromPath(locations().libPlatform("service-grid"));
+        command.classpathFromPath(locations().libPlatform("zookeeper"));
 
         return command;
     }
@@ -81,8 +81,8 @@ public class GsCommandFactory {
         preClasspath();
         appendGsClasspath();
         //fix for GS-13546
-        command.classpathFromPath(locations().getLibPlatform(), "service-grid", "*");
-        command.classpathFromPath(locations().getLibPlatform(), "zookeeper", "*");
+        command.classpathFromPath(locations().libPlatform("service-grid"));
+        command.classpathFromPath(locations().libPlatform("zookeeper"));
         appendSpringClassPath();
         postClasspath();
         return command;
@@ -96,9 +96,9 @@ public class GsCommandFactory {
         command.classpathFromPath(locations().deploy(), "templates", "datagrid");
         appendGsClasspath();
         //fix for GS-13546
-        command.classpathFromPath(locations().getLibPlatform(), "service-grid", "*");
-//        command.classpathFromPath(locations().getLibPlatform(), "oshi", "*");
-        command.classpathFromPath(locations().getLibPlatform(), "zookeeper", "*");
+        command.classpathFromPath(locations().libPlatform("service-grid"));
+//        command.classpathFromPath(locations().libPlatform("oshi"));
+        command.classpathFromPath(locations().libPlatform("zookeeper"));
         postClasspath();
 
         return command;
@@ -117,16 +117,16 @@ public class GsCommandFactory {
     }
 
     protected void appendSpringClassPath() {
-        command.classpathFromPath(locations().getLibOptional(), "spring", "*");
-        command.classpathFromPath(locations().getLibOptional(), "security", "*");
+        command.classpathFromPath(locations().libOptional("spring"));
+        command.classpathFromPath(locations().libOptionalSecurity());
     }
 
     protected void appendSigarClassPath() {
-        command.classpathFromPath(locations().getLibOptional(), "sigar", "*");
+        command.classpathFromPath(locations().libOptional("sigar"));
     }
 
     protected void appendOshiClassPath() {
-        command.classpathFromPath(locations().getLibOptional(), "oshi", "*");
+        command.classpathFromPath(locations().libOptional("oshi"));
     }
 
     protected void appendMetricToolsClassPath() {
@@ -154,7 +154,7 @@ public class GsCommandFactory {
                 command.option("--add-modules=ALL-SYSTEM");
             }
 
-            command.systemProperty("com.gs.home", BootIOUtils.quoteIfContainsSpace(SystemInfo.singleton().getXapHome()));
+            command.systemProperty(CommonSystemProperties.GS_HOME, BootIOUtils.quoteIfContainsSpace(SystemInfo.singleton().getXapHome()));
             command.systemProperty("java.util.logging.config.file", BootIOUtils.quoteIfContainsSpace(GsEnv.getOrElse("LOGS_CONFIG_FILE", this::defaultConfigPath)));
             command.systemProperty("java.rmi.server.hostname", GsEnv.get("NIC_ADDRESS"));
             command.optionsFromEnv("EXT_JAVA_OPTIONS"); // Deprecated starting 14.5
@@ -164,10 +164,10 @@ public class GsCommandFactory {
 
     protected void appendGsClasspath() {
         // GS_JARS=$GS_HOME/lib/platform/ext/*:$GS_HOME:$GS_HOME/lib/required/*:$GS_HOME/lib/optional/pu-common/*:${GS_CLASSPATH_EXT}
-        command.classpathFromPath(locations().getLibPlatform(), "ext", "*");
+        command.classpathFromPath(locations().libPlatformExt());
         command.classpathFromPath(SystemInfo.singleton().getXapHome());
-        command.classpathFromPath(locations().getLibRequired(),"*");
-        command.classpathFromPath(locations().getLibOptional(), "pu-common", "*");
+        command.classpathFromPath(locations().libRequired());
+        command.classpathFromPath(locations().libOptional("pu-common"));
         command.classpath(GsEnv.get("CLASSPATH_EXT"));
     }
 

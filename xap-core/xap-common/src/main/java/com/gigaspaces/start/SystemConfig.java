@@ -45,6 +45,7 @@ import java.net.BindException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -76,11 +77,8 @@ public class SystemConfig {
     final private String[] configParms;
     private static String[] overrideArgs;
     private Webster webster;
-    private final String gsLib;
-    private final String gsLibRequired;
-    private final String gsLibPlatform;
-    private final String gsLibOptional;
-    private final String rootDir;
+    private final SystemInfo.XapLocations locations;
+
     private static final Logger logger = LoggerFactory.getLogger(COMPONENT);
 
     private List<URL> addedPlatformJars;
@@ -110,12 +108,7 @@ public class SystemConfig {
      * @throws net.jini.config.ConfigurationException If errors occur accessing the config
      */
     private SystemConfig(String[] confArgs) throws ConfigurationException {
-        Properties locationProps = Locator.deriveDirectories();
-        rootDir = Locator.getLocation(locationProps, Locator.GS_HOME);
-        gsLib = Locator.getLib(locationProps);
-        gsLibRequired = Locator.getLibRequired(locationProps);
-        gsLibPlatform = Locator.getLibPlatform(locationProps);
-        gsLibOptional = Locator.getLibOptional(locationProps);
+        locations = SystemInfo.singleton().locations();
 
         if (confArgs == null || confArgs.length == 0) {
             this.configArgs = new String[]{"-"};
@@ -248,10 +241,6 @@ public class SystemConfig {
         return (instance);
     }
 
-    public String getHomeDir() {
-        return rootDir;
-    }
-
     /**
      * Get the configuration parameters used to create this utility. If this utility was created
      * with no (or <code>null</code>) parameters, a zero-length String array will be returned
@@ -306,8 +295,8 @@ public class SystemConfig {
     private List<URL> getDefaultCommonClassLoaderClasspath() throws MalformedURLException {
         ClasspathBuilder classpathBuilder = new ClasspathBuilder();
         try {
-            String commonsLoggingJarFilename = findFilenameByPrefix(gsLibRequired, "spring-jcl-");
-            classpathBuilder.append(Paths.get(gsLibRequired, commonsLoggingJarFilename));
+            String commonsLoggingJarFilename = findFilenameByPrefix(locations.libRequired(), "spring-jcl-");
+            classpathBuilder.append(locations.libRequired().resolve(commonsLoggingJarFilename));
         } catch (FileNotFoundException e) {
             if (logger.isWarnEnabled()) {
                 logger.warn("Missing JAR file", e);
@@ -319,7 +308,7 @@ public class SystemConfig {
         }
 
         classpathBuilder.appendOptional("jee");// Different J2EE jars support
-        classpathBuilder.append(Paths.get(System.getProperty(Locator.GS_LIB_PLATFORM_EXT, gsLibPlatform + "ext"))); // ext support
+        classpathBuilder.append(locations.libPlatformExt()); // ext support
         classpathBuilder.appendOptional("jms");
         classpathBuilder.appendOptional("metrics");
         classpathBuilder.appendOptional("spatial");
@@ -333,7 +322,7 @@ public class SystemConfig {
         classpathBuilder.appendPlatform("commons"); // Apache Commons libraries
         classpathBuilder.appendOptional("groovy");
         classpathBuilder.appendOptional("jruby");
-        classpathBuilder.append(Paths.get(System.getProperty("com.gs.pu.classloader.scala-lib-path", gsLibOptional + "scala/lib")));// Scala support
+        classpathBuilder.append(Paths.get(System.getProperty("com.gs.pu.classloader.scala-lib-path", locations.libOptional("scala").resolve("lib").toString())));// Scala support
         classpathBuilder.appendPlatform("zookeeper");
         classpathBuilder.appendPlatform("logger");
         classpathBuilder.appendOptional("oshi");
@@ -400,9 +389,9 @@ public class SystemConfig {
         return (platformJARs);
     }
 
-    private static String findFilenameByPrefix(final String folderPath, final String prefix) throws FileNotFoundException {
+    private static String findFilenameByPrefix(final Path folderPath, final String prefix) throws FileNotFoundException {
 
-        final File folder = new File(folderPath);
+        final File folder = folderPath.toFile();
         if (!folder.isDirectory()) {
             throw new FileNotFoundException(folder + " is not a directory.");
         }
@@ -434,7 +423,6 @@ public class SystemConfig {
         Properties sysProps = new Properties();
         /* Set default system properties */
         sysProps.setProperty("java.protocol.handler.pkgs", "net.jini.url");
-        sysProps.setProperty(CommonSystemProperties.GS_HOME, rootDir);
         sysProps.setProperty("com.gs.localhost.name", getDefaultHostAddress());
         sysProps.setProperty(BASE_COMPONENT + ".grid.groups", groupNames);
 
@@ -487,13 +475,12 @@ public class SystemConfig {
     public Webster getWebster() throws BindException, ConfigurationException,
             UnknownHostException {
         if (webster == null) {
-            String deployRoot = System.getProperty("com.gs.deploy", rootDir + "deploy");
-            System.setProperty("com.gs.deploy", deployRoot);
+            String deployRoot = locations.deploy();
             File deployRootFile = new File(deployRoot);
             if (!deployRootFile.exists()) {
                 deployRootFile.mkdirs();
             }
-            String defaultRoots = gsLib + ";" + gsLibRequired + ";" + deployRoot;
+            String defaultRoots = locations.lib().toString() + ";" + locations.libRequired().toString() + ";" + deployRoot;
             String httpRoots = (String) config.getEntry(COMPONENT,
                     "httpRoots",
                     String.class,
@@ -559,7 +546,7 @@ public class SystemConfig {
         String handlerCodebase = getDefaultCodebase();
         String handlerClasspath = "";
 
-        String configDir = rootDir + "config" + File.separator + "services" + File.separator;
+        String configDir = locations.config() + File.separator + "services" + File.separator;
         String reggieConfig = (String) config.getEntry(COMPONENT,
                 "reggieConfig",
                 String.class,
@@ -588,7 +575,7 @@ public class SystemConfig {
         String handlerCodebase = getDefaultCodebase();
         String handlerClasspath = "";
 
-        String configDir = rootDir + "config" + File.separator + "services" + File.separator;
+        String configDir = locations.config() + File.separator + "services" + File.separator;
         String mahaloConfig = (String) config.getEntry(COMPONENT,
                 "mahaloConfig",
                 String.class,
@@ -647,7 +634,7 @@ public class SystemConfig {
             ClasspathBuilder classpath = new ClasspathBuilder();
             classpath.appendRequired(getLibRequiredFilter());
             classpath.appendOptional("spring");
-            classpath.append(Paths.get(Locator.getLibOptionalSecurity()));
+            classpath.append(SystemInfo.singleton().locations().libOptionalSecurity());
 
             String gsaClasspath =
                     (String) config.getEntry(COMPONENT + ".gsa",
@@ -656,7 +643,7 @@ public class SystemConfig {
                             classpath.toString());
             String gsaCodebase = getDefaultCodebase();
 
-            String configDir = rootDir + "config" + File.separator + "services" + File.separator;
+            String configDir = locations.config() + File.separator + "services" + File.separator;
             String gscConfig = (String) config.getEntry(COMPONENT,
                     "gsaConfig",
                     String.class,
@@ -690,7 +677,7 @@ public class SystemConfig {
             ClasspathBuilder classpath = new ClasspathBuilder();
             classpath.appendRequired(getLibRequiredFilter());
             classpath.appendOptional("spring");
-            classpath.append(Paths.get(Locator.getLibOptionalSecurity()));
+            classpath.append(SystemInfo.singleton().locations().libOptionalSecurity());
 
             String gscClasspath =
                     (String) config.getEntry(COMPONENT + ".gsc",
@@ -701,7 +688,7 @@ public class SystemConfig {
             logger.debug("GSC configuration Classpath is: " + gscClasspath);
             String gscCodebase = getDefaultCodebase();
 
-            String configDir = rootDir + "config" + File.separator + "services" + File.separator;
+            String configDir = locations.config() + File.separator + "services" + File.separator;
             String gscConfig = (String) config.getEntry(COMPONENT,
                     "gscConfig",
                     String.class,
@@ -736,7 +723,7 @@ public class SystemConfig {
             ClasspathBuilder classpath = new ClasspathBuilder();
             classpath.appendRequired(getLibRequiredFilter());
             classpath.appendOptional("spring");
-            classpath.append(Paths.get(Locator.getLibOptionalSecurity()));
+            classpath.append(SystemInfo.singleton().locations().libOptionalSecurity());
             classpath.append(XapModules.ADMIN);
 
             String gsmClasspath =
@@ -746,7 +733,7 @@ public class SystemConfig {
                             classpath.toString());
             String gsmCodebase = getDefaultCodebase();
 
-            String configDir = rootDir + "config" + File.separator + "services" + File.separator;
+            String configDir = locations.config() + File.separator + "services" + File.separator;
             String gsmConfig = (String) config.getEntry(COMPONENT,
                     "gsmConfig",
                     String.class,
@@ -786,7 +773,7 @@ public class SystemConfig {
             classpath.appendRequired(getLibRequiredFilter());
             classpath.appendPlatform("esm");
             classpath.appendOptional("spring");
-            classpath.append(Paths.get(Locator.getLibOptionalSecurity()));
+            classpath.append(SystemInfo.singleton().locations().libOptionalSecurity());
             classpath.append(XapModules.ADMIN);
 
             String esmClasspath =
@@ -796,7 +783,7 @@ public class SystemConfig {
                             classpath.toString());
             String esmCodebase = getDefaultCodebase();
 
-            String configDir = rootDir + "config" + File.separator + "services" + File.separator;
+            String configDir = locations.config() + File.separator + "services" + File.separator;
             String gsmConfig = (String) config.getEntry(COMPONENT,
                     "esmConfig",
                     String.class,
@@ -843,7 +830,7 @@ public class SystemConfig {
 
         String gsClasspath = "";
         String gsCodebase = getDefaultCodebase();
-        String configDir = rootDir + "config" + File.separator + "services" + File.separator;
+        String configDir = locations.config() + File.separator + "services" + File.separator;
         String gsConfig = (String) config.getEntry(COMPONENT,
                 "gsConfig",
                 String.class,

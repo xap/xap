@@ -37,7 +37,7 @@ public class NativeLibraryLoader {
     private static final String _defaultNativeLibPath;
 
     static {
-        _defaultNativeLibPath = SystemInfo.singleton().locations().lib() + File.separator + "platform" + File.separator + "native";
+        _defaultNativeLibPath = SystemInfo.singleton().locations().libPlatform("native").toString();
     }
 
     public static void loadNativeLibrary(String libraryName) {

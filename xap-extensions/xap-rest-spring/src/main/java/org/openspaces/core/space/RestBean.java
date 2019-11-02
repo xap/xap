@@ -186,7 +186,7 @@ public class RestBean implements InitializingBean, ClusterInfoAware, DisposableB
         filterHolder = new FilterHolder(RequestStatisticsFilter.class);
         webAppContext.addFilter(filterHolder, "/*", EnumSet.of(DispatcherType.INCLUDE, DispatcherType.REQUEST));
         webAppContext.setContextPath("/");
-        webAppContext.setWar(SystemInfo.singleton().locations().lib() + "/optional/rest/xap-rest.war");
+        webAppContext.setWar(SystemInfo.singleton().locations().libOptional("rest").resolve("xap-rest.war").toString());
         webAppContext.setInitParameter("port", port);
         webAppContext.setInitParameter("spaceName", ispaceName);
         if (igroups != null && !igroups.equalsIgnoreCase("null")) {

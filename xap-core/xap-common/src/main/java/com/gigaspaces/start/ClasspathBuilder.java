@@ -40,11 +40,11 @@ public class ClasspathBuilder {
     }
 
     public ClasspathBuilder appendRequired(FileFilter filter) {
-        return append(Paths.get(SystemInfo.singleton().locations().getLibRequired()), filter);
+        return append(SystemInfo.singleton().locations().libRequired(), filter);
     }
 
-    public ClasspathBuilder appendPlatform(String path) {
-        return append(Paths.get(SystemInfo.singleton().locations().getLibPlatform(), path), null);
+    public ClasspathBuilder appendPlatform(String path, String ... more) {
+        return append(SystemInfo.singleton().locations().libPlatform().resolve(Paths.get(path, more)));
     }
 
     public ClasspathBuilder appendOptional(String path) {
@@ -52,11 +52,11 @@ public class ClasspathBuilder {
     }
 
     public ClasspathBuilder appendOptional(String path, FileFilter filter) {
-        return append(Paths.get(SystemInfo.singleton().locations().getLibOptional(), path), filter);
+        return append(SystemInfo.singleton().locations().libOptional(path), filter);
     }
 
     public ClasspathBuilder append(XapModules module) {
-        return append(Paths.get(SystemInfo.singleton().locations().lib()).resolve(module.getJarFilePath()));
+        return append(SystemInfo.singleton().locations().lib(module));
     }
 
     public ClasspathBuilder append(Path path) {

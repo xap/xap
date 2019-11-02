@@ -74,6 +74,12 @@ public class JavaCommandBuilder {
         return classpath(String.join(File.separator, elements));
     }
 
+    public JavaCommandBuilder classpathFromPath(Path path) {
+        if (Files.isDirectory(path))
+            path = path.resolve("*");
+        return classpath(path.toString());
+    }
+
     public JavaCommandBuilder classpathFromEnv(String envVarName) {
         return classpath(env.get(envVarName));
     }

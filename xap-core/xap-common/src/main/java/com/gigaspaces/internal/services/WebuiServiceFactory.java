@@ -1,6 +1,7 @@
 package com.gigaspaces.internal.services;
 
 import com.gigaspaces.start.ClasspathBuilder;
+import com.gigaspaces.start.SystemInfo;
 
 public class WebuiServiceFactory extends ServiceFactory {
     @Override
@@ -18,7 +19,7 @@ public class WebuiServiceFactory extends ServiceFactory {
         classpath
                 // $GS_JARS
                 .appendRequired(ClasspathBuilder.startsWithFilter("xap-", "spring-", "commons-"))
-                .appendPlatform("ext")
+                .append(SystemInfo.singleton().locations().libPlatformExt())
                 .appendOptional("spring").appendOptional("security")        // $SPRING_JARS
                 .appendOptional("jetty").appendOptional("jetty/xap-jetty")
                 .appendOptional("interop")
