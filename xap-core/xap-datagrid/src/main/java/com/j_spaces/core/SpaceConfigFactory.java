@@ -523,27 +523,4 @@ public class SpaceConfigFactory {
         ps.close();
         fos.close();
     }
-
-    public static String createGenericDBName(String containerName, String spaceName) {
-        final String genericPersistPropertiesFolder = "GenericPersistProperties";
-
-        StringBuilder strBuffer = new StringBuilder(SystemInfo.singleton().getXapHome());
-        strBuffer.append(File.separator);
-        strBuffer.append(genericPersistPropertiesFolder);
-        strBuffer.append(File.separator);
-
-        strBuffer.append(containerName);
-        strBuffer.append('_');
-        strBuffer.append(spaceName);
-
-        strBuffer.append(File.separator);
-
-        strBuffer.append(containerName);
-        strBuffer.append('_');
-        strBuffer.append(spaceName);
-        strBuffer.append("DB.dbs");
-
-        return strBuffer.toString();
-    }
-
 }

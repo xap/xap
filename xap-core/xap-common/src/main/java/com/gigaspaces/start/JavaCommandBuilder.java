@@ -70,10 +70,6 @@ public class JavaCommandBuilder {
         return this;
     }
 
-    public JavaCommandBuilder classpathFromPath(String ... elements) {
-        return classpath(String.join(File.separator, elements));
-    }
-
     public JavaCommandBuilder classpathFromPath(Path path) {
         if (Files.isDirectory(path))
             path = path.resolve("*");

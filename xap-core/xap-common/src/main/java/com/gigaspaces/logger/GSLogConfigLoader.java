@@ -18,6 +18,7 @@ package com.gigaspaces.logger;
 
 import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -247,7 +248,7 @@ public class GSLogConfigLoader {
 
     //locate logging config file under GigaSpaces home/config/log/
     private boolean loadGsLoggingPropertiesFileFromComGsHomePath() {
-        return loadGsLoggingPropertiesFileFromFullPath(SystemInfo.singleton().getXapHome() + File.separator + CommonSystemProperties.GS_LOGGING_CONFIG_FILE_PATH);
+        return loadGsLoggingPropertiesFileFromFullPath(SystemLocations.singleton().home(CommonSystemProperties.GS_LOGGING_CONFIG_FILE_PATH).toString());
     }
 
     /*

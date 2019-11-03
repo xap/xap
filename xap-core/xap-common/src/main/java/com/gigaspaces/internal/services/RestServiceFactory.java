@@ -17,6 +17,7 @@ package com.gigaspaces.internal.services;
 
 import com.gigaspaces.start.ClasspathBuilder;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.gigaspaces.start.XapModules;
 
 /**
@@ -38,7 +39,7 @@ public class RestServiceFactory extends ServiceFactory {
     protected void initializeClasspath(ClasspathBuilder classpath) {
         classpath.append(XapModules.ADMIN)
                 .append(XapModules.SERVICE_GRID)
-                .append(SystemInfo.singleton().locations().libOptionalSecurity(), null, false)
+                .append(SystemLocations.singleton().libOptionalSecurity(), null, false)
                 .appendPlatform("scala")
                 // Required jars: spring-context-*, spring-beans-*, spring-core-*, spring-jcl-*, xap-datagrid, xap-asm, xap-trove
                 .appendRequired(ClasspathBuilder.startsWithFilter("slf4j-", "spring-", "xap-datagrid", "xap-openspaces", "xap-asm", "xap-trove", "xap-premium-common"))

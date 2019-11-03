@@ -33,6 +33,7 @@ import com.gigaspaces.internal.utils.ValidationUtils;
 import com.gigaspaces.logger.GSLogConfigLoader;
 import com.gigaspaces.security.service.SecurityResolver;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.Constants.QueryProcessorInfo;
 import com.j_spaces.core.admin.ContainerConfig;
@@ -571,7 +572,7 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
         if (confDir != null && confDir.canRead())
             m_configDirectory = confDir.getPath();
         else
-            m_configDirectory = SystemInfo.singleton().locations().config().toString();
+            m_configDirectory = SystemLocations.singleton().config().toString();
 
         /**
          * Fixed bug 26/06/06 Gershon - http://62.90.11.164:8080/browse/APP-90
@@ -596,7 +597,7 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
         //if such container configuration file still
         //does not exist then create it under [GS_HOME]/config folder
         else {
-            m_FileNameWithoutExtention = SystemInfo.singleton().locations().config(_containerName).toString();
+            m_FileNameWithoutExtention = SystemLocations.singleton().config(_containerName).toString();
         }
 
         synchronized (_lock) {
@@ -1827,7 +1828,7 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
             // m_containerConfig.updateModeEnabled = new
             // File(JProperties.getURL()).canRead();
             containerConfig.containerName = _containerName;
-            containerConfig.homeDir = SystemInfo.singleton().getXapHome();
+            containerConfig.homeDir = SystemLocations.singleton().home().toString();
             containerConfig.containerHostName = _hostname;
 
             containerConfig.setJndiEnabled(
@@ -1938,7 +1939,7 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                 }
 
                 // get schema folder path
-                String schemasDirPath = SystemInfo.singleton().locations().config(SCHEMAS_FOLDER).toString();
+                String schemasDirPath = SystemLocations.singleton().config(SCHEMAS_FOLDER).toString();
 
                 File schemasDir = new File(schemasDirPath);
                 String[] allSchemaFiles = schemasDir.list();

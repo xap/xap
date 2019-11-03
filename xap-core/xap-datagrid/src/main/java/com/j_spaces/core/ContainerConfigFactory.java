@@ -18,6 +18,7 @@ package com.j_spaces.core;
 
 import com.gigaspaces.internal.utils.ReplaceInFileUtils;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.core.admin.ContainerConfig;
 import com.j_spaces.kernel.ResourceLoader;
 
@@ -163,7 +164,7 @@ public class ContainerConfigFactory {
 
     public static String getContainerSchemaPathName(String containerName) {
         StringBuilder result = new StringBuilder();
-        result.append(SystemInfo.singleton().locations().config());
+        result.append(SystemLocations.singleton().config());
         result.append(File.separator);
         result.append(SCHEMAS_FOLDER);
         result.append(File.separator);

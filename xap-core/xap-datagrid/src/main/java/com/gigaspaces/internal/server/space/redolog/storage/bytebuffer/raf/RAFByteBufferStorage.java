@@ -20,6 +20,7 @@ import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ByteBuffe
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.IByteBufferStorage;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.IByteBufferStorageCursor;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -42,7 +43,7 @@ public class RAFByteBufferStorage
 
     public RAFByteBufferStorage(String fileName) throws ByteBufferStorageException {
         try {
-            File workLocation = new File(SystemInfo.singleton().locations().work());
+            File workLocation = SystemLocations.singleton().work().toFile();
             workLocation.mkdirs();
             File replicationDirName = new File("replication");
             File replicationDirPath = new File(workLocation, replicationDirName.getPath());

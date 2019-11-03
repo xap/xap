@@ -19,7 +19,7 @@ package org.openspaces.pu.container.jee;
 
 import com.gigaspaces.start.ClasspathBuilder;
 
-import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import org.jini.rio.boot.SharedServiceData;
 import org.openspaces.core.properties.BeanLevelProperties;
 import org.openspaces.pu.container.spi.ApplicationContextProcessingUnitContainerProvider;
@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -148,9 +147,8 @@ public abstract class JeeProcessingUnitContainerProvider extends ApplicationCont
 
     protected Iterable<String> getWebAppClassLoaderJars() {
         List<String> result = new ArrayList<String>();
-        SystemInfo.XapLocations locations = SystemInfo.singleton().locations();
-        result.add(System.getProperty("com.gs.pu-common", locations.libOptional("pu-common").toString()));
-        result.add(System.getProperty("com.gs.web-pu-common", locations.libOptional("web-pu-common").toString()));
+        result.add(System.getProperty("com.gs.pu-common", SystemLocations.singleton().libOptional("pu-common").toString()));
+        result.add(System.getProperty("com.gs.web-pu-common", SystemLocations.singleton().libOptional("web-pu-common").toString()));
         return result;
     }
 
@@ -174,7 +172,7 @@ public abstract class JeeProcessingUnitContainerProvider extends ApplicationCont
     }
 
     public static Path getJeeContainerJarPath(String jeeContainer) {
-        return SystemInfo.singleton().locations().libOptional(jeeContainer).resolve("xap-" + jeeContainer);
+        return SystemLocations.singleton().libOptional(jeeContainer).resolve("xap-" + jeeContainer);
     }
 
     public static String getJeeContainer(BeanLevelProperties properties) {

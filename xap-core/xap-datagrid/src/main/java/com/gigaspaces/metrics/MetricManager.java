@@ -43,6 +43,7 @@ import com.gigaspaces.metrics.factories.SigarProcessMetricFactory;
 import com.gigaspaces.metrics.factories.SigarSwapMetricFactory;
 import com.gigaspaces.start.SystemBoot;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.kernel.threadpool.DynamicThreadPoolExecutor;
 import com.sun.jini.thread.TaskManager;
 import org.hyperic.sigar.Sigar;
@@ -185,7 +186,7 @@ public class MetricManager implements Closeable {
     public static String getConfigFilePath() {
         String result = System.getProperty("com.gigaspaces.metrics.config");
         if (!StringUtils.hasLength(result)) {
-            result = SystemInfo.singleton().locations().config("metrics").resolve("metrics.xml").toString();
+            result = SystemLocations.singleton().config("metrics").resolve("metrics.xml").toString();
         }
         return result;
     }

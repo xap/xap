@@ -16,10 +16,9 @@
 
 package com.gigaspaces.internal.version;
 
-import com.gigaspaces.logger.LoggerSystemInfo;
 import com.gigaspaces.start.ProductType;
+import com.gigaspaces.start.SystemLocations;
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.logging.ErrorManager;
@@ -74,7 +73,7 @@ public class PlatformVersion {
     }
 
     private static boolean isInsightEdge() {
-        return new File(LoggerSystemInfo.xapHome + File.separator + "insightedge").exists();
+        return SystemLocations.singleton().home("insightedge").toFile().exists();
     }
 
     private static String initRevision(String tag, Properties shas) {

@@ -1,7 +1,7 @@
 package org.gigaspaces.blueprints;
 
 import com.gigaspaces.internal.version.PlatformVersion;
-import com.gigaspaces.logger.LoggerSystemInfo;
+import com.gigaspaces.start.SystemLocations;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -115,7 +115,7 @@ public class Blueprint {
         Map<String, Object> result = new HashMap<>();
         result.put("gs.path", (Function<String, String>) s -> s.replace('.', File.separatorChar));
         result.put("gs.version", PlatformVersion.getInstance().getId());
-        result.put("gs.home", LoggerSystemInfo.xapHome);
+        result.put("gs.home", SystemLocations.singleton().home().toString());
         return result;
     }
 

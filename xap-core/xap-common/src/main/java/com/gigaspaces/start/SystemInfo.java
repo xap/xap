@@ -16,12 +16,10 @@
 
 package com.gigaspaces.start;
 
-import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.internal.version.PlatformVersion;
-import com.gigaspaces.logger.LoggerSystemInfo;
 import com.gigaspaces.start.kubernetes.KubernetesClusterInfo;
 import com.gigaspaces.start.manager.XapManagerClusterInfo;
 import com.gigaspaces.start.manager.XapManagerConfig;
@@ -30,10 +28,7 @@ import com.gigaspaces.time.ITimeProvider;
 
 import net.jini.core.discovery.LookupLocator;
 
-import java.io.File;
 import java.net.MalformedURLException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -52,9 +47,6 @@ public class SystemInfo {
 
     private static final SystemInfo instance = new SystemInfo();
 
-    private final String xapHome;
-    private final String xapHomeFwdSlash;
-    private final XapLocations locations;
     private final XapLookup lookup;
     private final XapNetworkInfo network;
     private final XapOperatingSystem os;
@@ -67,28 +59,12 @@ public class SystemInfo {
     }
 
     private SystemInfo() {
-        this.xapHome = LoggerSystemInfo.xapHome;
-        this.xapHomeFwdSlash = new File(xapHome).toString().replace("\\", "/");
-        System.setProperty(CommonSystemProperties.GS_HOME + ".fwd-slash", xapHomeFwdSlash);
-        this.os = new XapOperatingSystem(LoggerSystemInfo.processId);
+        this.os = new XapOperatingSystem();
         this.network = XapNetworkInfo.getInstance();
-        this.locations = new XapLocations(xapHome);
         this.timeProvider = new XapTimeProvider();
         this.managerClusterInfo = new XapManagerClusterInfo(network.getPublicHost());
         this.kubernetesClusterInfo = KubernetesClusterInfo.getInstance();
         this.lookup = new XapLookup(managerClusterInfo);
-    }
-
-    public String getXapHome() {
-        return xapHome;
-    }
-
-    public String getXapHomeFwdSlash() {
-        return xapHomeFwdSlash;
-    }
-
-    public XapLocations locations() {
-        return locations;
     }
 
     public XapLookup lookup() {
@@ -113,159 +89,6 @@ public class SystemInfo {
 
     public XapTimeProvider timeProvider() {
         return timeProvider;
-    }
-
-    public static class XapLocations {
-        private final String xapNetHome;
-        private final Path bin;
-        private final Path config;
-        private final Path lib;
-        private final Path libRequired;
-        private final Path libOptional;
-        private final Path libOptionalSecurity;
-        private final Path libPlatform;
-        private final Path libPlatformExt;
-        private final String work;
-        private final String deploy;
-        private final String insightedge;
-        private final String sparkHome;
-        private final String userProductHome;
-
-        public String getSparkHome() {
-            return sparkHome;
-        }
-
-        private XapLocations(String xapHome) {
-            // Trim trailing separator if any:
-            if (xapHome.endsWith("/") || xapHome.endsWith("\\"))
-                xapHome = xapHome.substring(0, xapHome.length()-1);
-            this.xapNetHome = System.getProperty("com.gs.xapnet.home");
-            this.bin = Paths.get((xapNetHome != null ? xapNetHome : xapHome), "bin");
-            this.config = Paths.get(xapHome, "config");
-            this.lib = fromSystemProperty("com.gigaspaces.lib", Paths.get(xapHome, "lib"));
-            this.libRequired = fromSystemProperty("com.gigaspaces.lib.required", lib.resolve("required"));
-            this.libOptional = fromSystemProperty("com.gigaspaces.lib.opt", lib.resolve("optional"));
-            this.libOptionalSecurity = fromSystemProperty("com.gigaspaces.lib.opt.security", libOptional.resolve("security"));
-            this.libPlatform = fromSystemProperty("com.gigaspaces.lib.platform", lib.resolve("platform"));
-            this.libPlatformExt = fromSystemProperty("com.gigaspaces.lib.platform.ext", libPlatform.resolve("ext"));
-            this.work = initFromSystemProperty("com.gs.work", path(xapHome, "work"));
-            this.deploy = initFromSystemProperty("com.gs.deploy", path(xapHome, "deploy"));
-            this.userProductHome = path(System.getProperty("user.home"), ".gigaspaces");
-            this.insightedge = path(xapHome, "insightedge");
-            this.sparkHome = getEnvVar("SPARK_HOME", path(insightedge, "spark"));
-            System.setProperty("spark.home",sparkHome);
-        }
-
-        private static String getEnvVar(String key, String defaultValue) {
-            final String result = System.getenv(key);
-            return result != null ? result : defaultValue;
-        }
-
-        private static Path fromSystemProperty(String key, Path defaultValue) {
-            String result = System.getProperty(key);
-            return result != null ? Paths.get(result) : defaultValue;
-        }
-
-        private static String initFromSystemProperty(String key, String defaultValue) {
-            final String result = System.getProperty(key);
-            if (result != null) {
-                return result;
-            } else {
-                System.setProperty(key, defaultValue);
-                return defaultValue;
-            }
-        }
-
-        public Path config() {
-            return config;
-        }
-
-        public Path config(String subdir) {
-            return config.resolve(subdir);
-        }
-
-        public String work() {
-            return work;
-        }
-
-        public String restResources() {
-            return path( work, "RESTresources" );
-        }
-
-        public String restJettyTempFiles() {
-            return path( work, "rest-jetty" );
-        }
-
-        public String sparkRestApplications() {return path( work, "sparkRESTApplications" );}
-
-        public String deploy(){
-            return deploy;
-        }
-
-        public String xapNetHome() {
-            return xapNetHome;
-        }
-
-        private static String path(String base, String subdir) {
-            return base + File.separator + subdir;
-        }
-
-        public Path bin() {
-            return bin;
-        }
-
-        public Path bin(String scriptName) {
-            String suffix;
-            if (xapNetHome != null)
-                suffix = ".exe";
-            else
-                suffix = (JavaUtils.isWindows() ? ".bat" : ".sh");
-            return bin.resolve(scriptName + suffix);
-        }
-
-        public Path lib() {
-            return lib;
-        }
-
-        public Path lib(String subpath) {
-            return lib.resolve(subpath);
-        }
-
-        public Path lib(XapModules module) {
-            return lib.resolve(module.getJarFilePath());
-        }
-
-        public Path libRequired() {
-            return libRequired;
-        }
-
-        public Path libOptional() {
-            return libOptional;
-        }
-
-        public Path libOptional(String subpath) {
-            return libOptional.resolve(subpath);
-        }
-
-        public Path libOptionalSecurity() {
-            return libOptionalSecurity;
-        }
-
-        public Path libPlatform() {
-            return libPlatform;
-        }
-
-        public Path libPlatform(String subpath) {
-            return libPlatform.resolve(subpath);
-        }
-
-        public Path libPlatformExt() {
-            return libPlatformExt;
-        }
-
-        public String getUserProductHome() {
-            return userProductHome;
-        }
     }
 
     public static class XapLookup {
@@ -380,12 +203,8 @@ public class SystemInfo {
     }
 
     public static class XapOperatingSystem {
-        private final long processId;
-        private final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("win");
-
-        public XapOperatingSystem(long pid) {
-            this.processId = pid;
-        }
+        private final long processId = JavaUtils.findProcessId();
+        private final boolean isWindows = JavaUtils.isWindows();
 
         public long processId() {
             return processId;

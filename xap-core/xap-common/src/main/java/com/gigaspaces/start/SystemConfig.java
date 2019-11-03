@@ -77,7 +77,7 @@ public class SystemConfig {
     final private String[] configParms;
     private static String[] overrideArgs;
     private Webster webster;
-    private final SystemInfo.XapLocations locations;
+    private final SystemLocations locations;
 
     private static final Logger logger = LoggerFactory.getLogger(COMPONENT);
 
@@ -108,7 +108,7 @@ public class SystemConfig {
      * @throws net.jini.config.ConfigurationException If errors occur accessing the config
      */
     private SystemConfig(String[] confArgs) throws ConfigurationException {
-        locations = SystemInfo.singleton().locations();
+        locations = SystemLocations.singleton();
 
         if (confArgs == null || confArgs.length == 0) {
             this.configArgs = new String[]{"-"};
@@ -475,12 +475,11 @@ public class SystemConfig {
     public Webster getWebster() throws BindException, ConfigurationException,
             UnknownHostException {
         if (webster == null) {
-            String deployRoot = locations.deploy();
-            File deployRootFile = new File(deployRoot);
+            File deployRootFile = locations.deploy().toFile();
             if (!deployRootFile.exists()) {
                 deployRootFile.mkdirs();
             }
-            String defaultRoots = locations.lib().toString() + ";" + locations.libRequired().toString() + ";" + deployRoot;
+            String defaultRoots = locations.lib().toString() + ";" + locations.libRequired().toString() + ";" + deployRootFile.toString();
             String httpRoots = (String) config.getEntry(COMPONENT,
                     "httpRoots",
                     String.class,
@@ -627,7 +626,7 @@ public class SystemConfig {
             ClasspathBuilder classpath = new ClasspathBuilder();
             classpath.appendRequired(getLibRequiredFilter());
             classpath.appendOptional("spring");
-            classpath.append(SystemInfo.singleton().locations().libOptionalSecurity());
+            classpath.append(locations.libOptionalSecurity());
 
             String gsaClasspath =
                     (String) config.getEntry(COMPONENT + ".gsa",
@@ -663,7 +662,7 @@ public class SystemConfig {
             ClasspathBuilder classpath = new ClasspathBuilder();
             classpath.appendRequired(getLibRequiredFilter());
             classpath.appendOptional("spring");
-            classpath.append(SystemInfo.singleton().locations().libOptionalSecurity());
+            classpath.append(locations.libOptionalSecurity());
 
             String gscClasspath =
                     (String) config.getEntry(COMPONENT + ".gsc",
@@ -702,7 +701,7 @@ public class SystemConfig {
             ClasspathBuilder classpath = new ClasspathBuilder();
             classpath.appendRequired(getLibRequiredFilter());
             classpath.appendOptional("spring");
-            classpath.append(SystemInfo.singleton().locations().libOptionalSecurity());
+            classpath.append(locations.libOptionalSecurity());
             classpath.append(XapModules.ADMIN);
 
             String gsmClasspath =
@@ -745,7 +744,7 @@ public class SystemConfig {
             classpath.appendRequired(getLibRequiredFilter());
             classpath.appendPlatform("esm");
             classpath.appendOptional("spring");
-            classpath.append(SystemInfo.singleton().locations().libOptionalSecurity());
+            classpath.append(locations.libOptionalSecurity());
             classpath.append(XapModules.ADMIN);
 
             String esmClasspath =

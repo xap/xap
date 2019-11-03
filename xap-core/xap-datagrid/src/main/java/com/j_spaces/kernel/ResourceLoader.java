@@ -21,6 +21,7 @@ import com.gigaspaces.config.ConfigurationException;
 import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.io.XmlUtils;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.Constants.DCache;
 import com.j_spaces.core.cluster.ClusterXML;
@@ -875,7 +876,7 @@ public class ResourceLoader {
      * @return result
      */
     public static String[] getClusterSchemas() {
-        File directory = new File(SystemInfo.singleton().locations().config(Constants.Schemas.SCHEMAS_FOLDER).toString());
+        File directory = SystemLocations.singleton().config(Constants.Schemas.SCHEMAS_FOLDER).toFile();
         return getClusterSchemas(directory);
     }
 

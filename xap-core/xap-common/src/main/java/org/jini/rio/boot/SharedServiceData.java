@@ -17,6 +17,7 @@ package org.jini.rio.boot;
 
 import com.gigaspaces.classloader.CustomURLClassLoader;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -56,7 +57,7 @@ public class SharedServiceData {
         synchronized (jeeClassLoaders) {
             ClassLoader classLoader = jeeClassLoaders.get(jeeContainer);
             if (classLoader == null) {
-                List<URL> urls = BootUtil.toURLs(SystemInfo.singleton().locations().libOptional(jeeContainer).toString());
+                List<URL> urls = BootUtil.toURLs(SystemLocations.singleton().libOptional(jeeContainer).toString());
                 String name = "Gs" + capitalizeFirst(jeeContainer) + "Server";
                 classLoader = new CustomURLClassLoader(name, urls.toArray(new URL[urls.size()]), CommonClassLoader.getInstance());
                 if (classesToLoad != null) {

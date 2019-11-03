@@ -17,6 +17,7 @@
 package com.j_spaces.core;
 
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.kernel.JSpaceUtilities;
 
 import org.w3c.dom.Document;
@@ -84,7 +85,7 @@ public class ContainerXML {
 
     private static String getContainerConfigPathName(String containerName) {
         StringBuilder result = new StringBuilder();
-        result.append(SystemInfo.singleton().locations().config());
+        result.append(SystemLocations.singleton().config());
         result.append(File.separator);
         result.append(containerName);
         result.append(CONTAINER_CONFIG_FILE_SUFFIX);
