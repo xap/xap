@@ -25,7 +25,9 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * @author Niv Ingberg
@@ -98,6 +100,17 @@ public class ClasspathBuilder {
         for (File file : files)
             result.add(file.getAbsolutePath());
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return toString(toFilesNames());
+    }
+
+    public static String toString(Collection<String> paths) {
+        StringJoiner stringJoiner = new StringJoiner(File.pathSeparator);
+        paths.forEach(path -> stringJoiner.add(BootIOUtils.quoteIfContainsSpace(path)));
+        return stringJoiner.toString();
     }
 
     private static class JarFileFilter implements FileFilter {
