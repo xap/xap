@@ -104,13 +104,7 @@ public class ClasspathBuilder {
 
     @Override
     public String toString() {
-        return toString(toFilesNames());
-    }
-
-    public static String toString(Collection<String> paths) {
-        StringJoiner stringJoiner = new StringJoiner(File.pathSeparator);
-        paths.forEach(path -> stringJoiner.add(BootIOUtils.quoteIfContainsSpace(path)));
-        return stringJoiner.toString();
+        return String.join(File.pathSeparator, toFilesNames());
     }
 
     private static class JarFileFilter implements FileFilter {
