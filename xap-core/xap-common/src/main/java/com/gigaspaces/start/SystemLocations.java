@@ -5,8 +5,14 @@ import com.gigaspaces.api.InternalApi;
 import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.internal.utils.GsEnv;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Niv Ingberg
@@ -165,6 +171,14 @@ public class SystemLocations {
 
     public Path libRequired() {
         return libRequired;
+    }
+
+    public Collection<Path> libRequired(Predicate<Path> filter) {
+        try (Stream<Path> stream = Files.list(libRequired)) {
+            return stream.filter(filter).collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Path libOptional() {
