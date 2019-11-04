@@ -17,6 +17,8 @@
 
 package com.gigaspaces.logger;
 
+import com.gigaspaces.internal.jvm.JavaUtils;
+import com.gigaspaces.start.SystemLocations;
 import com.gigaspaces.start.XapNetworkInfo;
 
 import java.io.BufferedOutputStream;
@@ -430,11 +432,11 @@ public class RollingFileHandler extends StreamHandler {
                 return propertyValue;
             }
             if (propertyName.equals(HOMEDIR_PROP)) {
-                return LoggerSystemInfo.xapHome;
+                return SystemLocations.singleton().home().toString();
             } else if (propertyName.equals(HOST_PROP)) {
                 return XapNetworkInfo.getInstance().getHostId();
             } else if (propertyName.equals(PID_PROP)) {
-                return "" + LoggerSystemInfo.processId;
+                return "" + JavaUtils.findProcessId();
             } else if (propertyName.startsWith(DATE_PROP)) {
                 return getCurrDate(propertyName);
             } else {

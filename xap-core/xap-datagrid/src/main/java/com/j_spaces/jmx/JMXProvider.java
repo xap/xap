@@ -25,6 +25,7 @@ import com.gigaspaces.management.transport.TransportConstants;
 import com.gigaspaces.management.transport.TransportProtocolMonitor;
 import com.gigaspaces.management.transport.TransportProtocolMonitorMBean;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.IJSpaceContainer;
 import com.j_spaces.jmx.util.ObjectNameFactory;
@@ -71,13 +72,13 @@ import static com.j_spaces.core.Constants.Management.JMX_MBEAN_DESCRIPTORS_JAVAS
 public class JMXProvider {
     //TODO - later add a further check not to load from file system. Currently might not work in IDE only
     //if the src/resources is not in classpath causing to potential JMX crash. Hold this fix for now.
-    private static final URL contURL = ResourceLoader.getResourceURL(JMX_MBEAN_DESCRIPTORS_CONTAINER, SystemInfo.singleton().getXapHome());
+    private static final URL contURL = ResourceLoader.getResourceURL(JMX_MBEAN_DESCRIPTORS_CONTAINER, SystemLocations.singleton().home().toString());
     public static final String CONTAINER_MBEAN_DESCR_URL = (contURL != null ? contURL.toString() : null);
 
-    private static final URL spaceURL = ResourceLoader.getResourceURL(JMX_MBEAN_DESCRIPTORS_JAVASPACE, SystemInfo.singleton().getXapHome());
+    private static final URL spaceURL = ResourceLoader.getResourceURL(JMX_MBEAN_DESCRIPTORS_JAVASPACE, SystemLocations.singleton().home().toString());
     public static final String JSPACE_MBEAN_DESCR_URL = (spaceURL != null ? spaceURL.toString() : null);
 
-    private static final URL spaceExtURL = ResourceLoader.getResourceURL(JMX_MBEAN_DESCRIPTORS_JAVASPACE_EXT, SystemInfo.singleton().getXapHome());
+    private static final URL spaceExtURL = ResourceLoader.getResourceURL(JMX_MBEAN_DESCRIPTORS_JAVASPACE_EXT, SystemLocations.singleton().home().toString());
     public static final String JSPACE_EXT_MBEAN_DESCR_URL = (spaceExtURL != null ? spaceExtURL.toString() : null);
 
     public static final String DEFAULT_DOMAIN = "com.gigaspaces";

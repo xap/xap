@@ -1,13 +1,12 @@
 package org.gigaspaces.cli.commands;
 
-import com.gigaspaces.logger.LoggerSystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import org.gigaspaces.blueprints.Blueprint;
 import org.gigaspaces.blueprints.BlueprintRepository;
 import org.gigaspaces.cli.*;
 import picocli.CommandLine;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,7 +29,7 @@ public class BlueprintCommand extends CliCommand implements SubCommandContainer 
     private static BlueprintRepository defaultRepository;
     static BlueprintRepository getDefaultRepository() throws IOException {
         if (defaultRepository == null) {
-            defaultRepository = new BlueprintRepository(Paths.get(LoggerSystemInfo.xapHome, "config", "blueprints"));
+            defaultRepository = new BlueprintRepository(SystemLocations.singleton().config("blueprints"));
         }
         return defaultRepository;
     }

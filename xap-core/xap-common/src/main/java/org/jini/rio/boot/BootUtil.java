@@ -36,6 +36,7 @@ import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -241,7 +242,7 @@ public class BootUtil {
     }
 
     public static List<URL> toURLs(String element) throws MalformedURLException {
-        return new ClasspathBuilder().append(element).toURLs();
+        return new ClasspathBuilder().append(Paths.get(element)).toURLs();
     }
 
     /**
@@ -577,7 +578,7 @@ public class BootUtil {
      * (e.g. if running in AppServer) if not found AND useOnlyClasspath == false (expensive
      * operation!) --> 2.2 if the resource was not found, instead of returning null, we attempt to
      * load it as a File IF it was passed as file format e.g. D:/gigaspaces/GenericJDBCProperties/HSQLProperties/jdbc.properties
-     * 3. Uses the com.gigaspaces.start.Locator.derivePath(yyy.xml) that searches recursively under
+     * 3. Uses the com.gigaspaces.start.Locator.locate(yyy.xml) that searches recursively under
      * the GS, using root file system. Not the default behavior
      *
      * Notes: In some scenarios, the ResourceLoader does not use the right class loader and returns

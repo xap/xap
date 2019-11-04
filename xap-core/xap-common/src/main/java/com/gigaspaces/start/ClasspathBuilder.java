@@ -22,8 +22,12 @@ import java.io.File;
 import java.io.FileFilter;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * @author Niv Ingberg
@@ -33,24 +37,16 @@ public class ClasspathBuilder {
 
     private final List<File> files = new ArrayList<File>();
 
-    public ClasspathBuilder appendLib(String path) {
-        return appendLib(path, null);
-    }
-
-    public ClasspathBuilder appendLib(String path, FileFilter filter) {
-        return append(path(SystemInfo.singleton().locations().lib(), path), filter);
-    }
-
     public ClasspathBuilder appendRequired() {
         return appendRequired(null);
     }
 
     public ClasspathBuilder appendRequired(FileFilter filter) {
-        return append(SystemInfo.singleton().locations().getLibRequired(), filter);
+        return append(SystemLocations.singleton().libRequired(), filter);
     }
 
-    public ClasspathBuilder appendPlatform(String path) {
-        return append(path(SystemInfo.singleton().locations().getLibPlatform(), path), null);
+    public ClasspathBuilder appendPlatform(String path, String ... more) {
+        return append(SystemLocations.singleton().libPlatform().resolve(Paths.get(path, more)));
     }
 
     public ClasspathBuilder appendOptional(String path) {
@@ -58,20 +54,24 @@ public class ClasspathBuilder {
     }
 
     public ClasspathBuilder appendOptional(String path, FileFilter filter) {
-        return append(path(SystemInfo.singleton().locations().getLibOptional(), path), filter);
+        return append(SystemLocations.singleton().libOptional(path), filter);
     }
 
-    public ClasspathBuilder append(String path) {
+    public ClasspathBuilder append(XapModules module) {
+        return append(SystemLocations.singleton().lib(module));
+    }
+
+    public ClasspathBuilder append(Path path) {
         return append(path, null);
     }
 
-    public ClasspathBuilder append(String path, FileFilter filter) {
+    public ClasspathBuilder append(Path path, FileFilter filter) {
         return append(path, filter, true);
     }
 
-    public ClasspathBuilder append(String path, FileFilter filter, boolean archivesOnly) {
+    public ClasspathBuilder append(Path path, FileFilter filter, boolean archivesOnly) {
         filter = archivesOnly ? new JarFileFilter(filter) : filter;
-        File f = new File(path);
+        File f = path.toFile();
         if (f.isDirectory()) {
             final File[] files = BootIOUtils.listFiles(f, filter);
             for (File file : files)
@@ -100,6 +100,11 @@ public class ClasspathBuilder {
         for (File file : files)
             result.add(file.getAbsolutePath());
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return String.join(File.pathSeparator, toFilesNames());
     }
 
     private static class JarFileFilter implements FileFilter {

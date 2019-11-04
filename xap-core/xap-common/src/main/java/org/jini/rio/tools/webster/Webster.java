@@ -22,6 +22,7 @@ import com.gigaspaces.lrmi.nio.filters.BouncyCastleSelfSignedCertificate;
 import com.gigaspaces.lrmi.nio.filters.SelfSignedCertificate;
 import com.gigaspaces.start.SystemInfo;
 
+import com.gigaspaces.start.SystemLocations;
 import org.jini.rio.boot.PUZipUtils;
 import org.jini.rio.resources.resource.ThreadPool;
 
@@ -988,7 +989,7 @@ public class Webster implements Runnable {
                             if (!getFile.isDirectory()) {
                                 throw new IOException("Trying to package a file [" + getFile.getAbsolutePath() + "] that is not a directory");
                             }
-                            File tempLocation = new File(System.getProperty("com.gs.work", SystemInfo.singleton().getXapHome() + "/work/webster"));
+                            File tempLocation = new File(System.getProperty("com.gs.work", SystemLocations.singleton().work("webster").toString()));
                             tempLocation.mkdirs();
                             File packagedZip;
                             try {

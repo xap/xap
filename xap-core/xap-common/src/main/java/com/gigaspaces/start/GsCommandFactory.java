@@ -1,13 +1,12 @@
 package com.gigaspaces.start;
 
+import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.internal.utils.GsEnv;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Optional;
 
 /**
  * @author Niv Ingberg
@@ -51,8 +50,8 @@ public class GsCommandFactory {
     protected JavaCommandBuilder cli() {
         command.mainClass("org.gigaspaces.cli.commands.XapMainCommand");
         // Class path:
-        command.classpathFromPath(SystemInfo.singleton().getXapHome(), "tools", "cli", "*");
-        command.classpathFromPath(SystemInfo.singleton().locations().getLibPlatform(), "blueprints", "*");
+        command.classpathWithJars(locations().home("tools", "cli"));
+        command.classpathWithJars(locations().libPlatform("blueprints"));
         appendGsClasspath();
         // Options and system properties:
         appendXapOptions();
@@ -66,11 +65,11 @@ public class GsCommandFactory {
         appendXapOptions();
         command.optionsFromGsEnv("LUS_OPTIONS");
 
-        command.classpath(SystemInfo.singleton().getXapHome());
+        command.classpath(locations().home());
         appendGsClasspath();
         //fix for GS-13546
-        command.classpathFromPath(locations().getLibPlatform(), "service-grid", "*");
-        command.classpathFromPath(locations().getLibPlatform(), "zookeeper", "*");
+        command.classpathWithJars(locations().libPlatform("service-grid"));
+        command.classpathWithJars(locations().libPlatform("zookeeper"));
 
         return command;
     }
@@ -81,8 +80,8 @@ public class GsCommandFactory {
         preClasspath();
         appendGsClasspath();
         //fix for GS-13546
-        command.classpathFromPath(locations().getLibPlatform(), "service-grid", "*");
-        command.classpathFromPath(locations().getLibPlatform(), "zookeeper", "*");
+        command.classpathWithJars(locations().libPlatform("service-grid"));
+        command.classpathWithJars(locations().libPlatform("zookeeper"));
         appendSpringClassPath();
         postClasspath();
         return command;
@@ -93,19 +92,19 @@ public class GsCommandFactory {
         appendXapOptions();
         command.optionsFromGsEnv("SPACE_INSTANCE_OPTIONS");
         preClasspath();
-        command.classpathFromPath(locations().deploy(), "templates", "datagrid");
+        command.classpath(locations().deploy("templates").resolve("datagrid"));
         appendGsClasspath();
         //fix for GS-13546
-        command.classpathFromPath(locations().getLibPlatform(), "service-grid", "*");
-//        command.classpathFromPath(locations().getLibPlatform(), "oshi", "*");
-        command.classpathFromPath(locations().getLibPlatform(), "zookeeper", "*");
+        command.classpathWithJars(locations().libPlatform("service-grid"));
+//        command.classpathFromPath(locations().libPlatform("oshi"));
+        command.classpathWithJars(locations().libPlatform("zookeeper"));
         postClasspath();
 
         return command;
     }
 
-    protected SystemInfo.XapLocations locations() {
-        return SystemInfo.singleton().locations();
+    protected SystemLocations locations() {
+        return SystemLocations.singleton();
     }
 
     protected void preClasspath() {
@@ -117,16 +116,16 @@ public class GsCommandFactory {
     }
 
     protected void appendSpringClassPath() {
-        command.classpathFromPath(locations().getLibOptional(), "spring", "*");
-        command.classpathFromPath(locations().getLibOptional(), "security", "*");
+        command.classpathWithJars(locations().libOptional("spring"));
+        command.classpathWithJars(locations().libOptionalSecurity());
     }
 
     protected void appendSigarClassPath() {
-        command.classpathFromPath(locations().getLibOptional(), "sigar", "*");
+        command.classpathWithJars(locations().libOptional("sigar"));
     }
 
     protected void appendOshiClassPath() {
-        command.classpathFromPath(locations().getLibOptional(), "oshi", "*");
+        command.classpathWithJars(locations().libOptional("oshi"));
     }
 
     protected void appendMetricToolsClassPath() {
@@ -154,7 +153,7 @@ public class GsCommandFactory {
                 command.option("--add-modules=ALL-SYSTEM");
             }
 
-            command.systemProperty("com.gs.home", BootIOUtils.quoteIfContainsSpace(SystemInfo.singleton().getXapHome()));
+            command.systemProperty(CommonSystemProperties.GS_HOME, BootIOUtils.quoteIfContainsSpace(locations().home().toString()));
             command.systemProperty("java.util.logging.config.file", BootIOUtils.quoteIfContainsSpace(GsEnv.getOrElse("LOGS_CONFIG_FILE", this::defaultConfigPath)));
             command.systemProperty("java.rmi.server.hostname", GsEnv.get("NIC_ADDRESS"));
             command.optionsFromEnv("EXT_JAVA_OPTIONS"); // Deprecated starting 14.5
@@ -164,15 +163,15 @@ public class GsCommandFactory {
 
     protected void appendGsClasspath() {
         // GS_JARS=$GS_HOME/lib/platform/ext/*:$GS_HOME:$GS_HOME/lib/required/*:$GS_HOME/lib/optional/pu-common/*:${GS_CLASSPATH_EXT}
-        command.classpathFromPath(locations().getLibPlatform(), "ext", "*");
-        command.classpathFromPath(SystemInfo.singleton().getXapHome());
-        command.classpathFromPath(locations().getLibRequired(),"*");
-        command.classpathFromPath(locations().getLibOptional(), "pu-common", "*");
+        command.classpathWithJars(locations().libPlatformExt());
+        command.classpath(locations().home());
+        command.classpathWithJars(locations().libRequired());
+        command.classpathWithJars(locations().libOptional("pu-common"));
         command.classpath(GsEnv.get("CLASSPATH_EXT"));
     }
 
     private String defaultConfigPath() {
-        return locations().config() + File.separator + "log" + File.separator + "xap_logging.properties";
+        return locations().config("log").resolve("xap_logging.properties").toString();
     }
 
     protected void appendServiceOptions(JavaCommandBuilder command, String serviceType) {

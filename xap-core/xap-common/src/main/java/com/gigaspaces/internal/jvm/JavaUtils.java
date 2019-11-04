@@ -2,6 +2,8 @@ package com.gigaspaces.internal.jvm;
 
 import com.gigaspaces.api.InternalApi;
 
+import java.lang.management.ManagementFactory;
+
 @InternalApi
 public class JavaUtils {
     private static final String VENDOR = System.getProperty("java.vendor", "");
@@ -63,5 +65,18 @@ public class JavaUtils {
 
     public static String getVendor() {
         return VENDOR;
+    }
+
+
+    public static long findProcessId() {
+        String name = ManagementFactory.getRuntimeMXBean().getName();
+        int pos = name.indexOf('@');
+        if (pos < 1)
+            return -1;
+        try {
+            return Long.parseLong(name.substring(0, pos));
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 }

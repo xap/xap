@@ -17,7 +17,7 @@ package org.openspaces.scala.repl
 
 import java.io.{BufferedReader, File}
 
-import com.gigaspaces.start.SystemInfo
+import com.gigaspaces.start.{SystemInfo, SystemLocations}
 import org.openspaces.scala.util.{ImportReader, Utils}
 
 import scala.tools.nsc.interpreter._
@@ -117,7 +117,7 @@ class GigaSpacesScalaReplLoop(in0: Option[BufferedReader],
     }
   }
 
-  protected def getBaseDirectory = s"${SystemInfo.singleton().getXapHome()}/tools/scala/conf"
+  protected def getBaseDirectory = s"${SystemLocations.singleton.home("tools", "scala", "conf")}"
 
   private def isNewInitStyleUsed: Boolean = {
     val newInitStylePathProp = "org.os.scala.repl.newinitstyle"
@@ -125,7 +125,7 @@ class GigaSpacesScalaReplLoop(in0: Option[BufferedReader],
   }
 
   private def setInitScript() = {
-    val initCodePathDefault = s"${SystemInfo.singleton().getXapHome()}/tools/scala/conf/new-init-code.scala"
+    val initCodePathDefault = s"${SystemLocations.singleton.home("tools", "scala", "conf", "new-init-code.scala")}"
     val initCodePath = Properties.propOrElse(initCodePathProp, initCodePathDefault)
     val initFile = new File(initCodePath)
     if (initFile.isFile) {

@@ -447,8 +447,8 @@ public class SystemBoot {
     private static void waitForStopCommand(Thread mainThread, SystemConfig systemConfig) throws InterruptedException {
         // Loop waiting for a connection and a valid command
         while (!mainThread.isInterrupted()) {
-            File workLocation = new File(System.getProperty("com.gs.work", systemConfig.getHomeDir() + "/work"));
-            File file = new File(workLocation, "/gsa/gsa-" + AgentHelper.getGSAServiceID() + "-" + AgentHelper.getAgentId() + "-stop");
+            File workLocation = SystemLocations.singleton().work("gsa").toFile();
+            File file = new File(workLocation, "gsa-" + AgentHelper.getGSAServiceID() + "-" + AgentHelper.getAgentId() + "-stop");
             if (file.exists()) {
                 file.deleteOnExit();
                 // give it a few retries to delete the file
@@ -1010,7 +1010,7 @@ public class SystemBoot {
     }
 
     private static File findAgentFile(String gsaServiceID) {
-        File gsaLocation = new File(SystemInfo.singleton().locations().work(), "gsa");
+        File gsaLocation = SystemLocations.singleton().work("gsa").toFile();
         File[] files = gsaLocation.listFiles();
         if (files != null) {
             for (File file : files) {

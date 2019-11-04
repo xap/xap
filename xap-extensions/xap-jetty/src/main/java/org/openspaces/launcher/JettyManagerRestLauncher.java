@@ -4,6 +4,7 @@ import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.nio.filters.SelfSignedCertificate;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.gigaspaces.start.manager.XapManagerConfig;
 import com.j_spaces.kernel.SystemProperties;
 
@@ -41,8 +42,7 @@ public class JettyManagerRestLauncher implements Closeable {
     private AbstractXmlApplicationContext application;
     private Server server;
 
-    private final static File workLocation = new File(
-        SystemInfo.singleton().locations().restJettyTempFiles() );
+    private final static File workLocation = SystemLocations.singleton().work("rest-jetty").toFile();
 
     public static void main(String[] args) {
         final JettyManagerRestLauncher starter = new JettyManagerRestLauncher();
@@ -150,7 +150,7 @@ public class JettyManagerRestLauncher implements Closeable {
 
     private void initWebApps(Server server) {
         ContextHandlerCollection handler = new ContextHandlerCollection();
-        File webApps = new File(SystemInfo.singleton().locations().getLibPlatform() + "/manager/webapps");
+        File webApps = SystemLocations.singleton().libPlatform("manager").resolve("webapps").toFile();
         FilenameFilter warFilesFilter = new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {

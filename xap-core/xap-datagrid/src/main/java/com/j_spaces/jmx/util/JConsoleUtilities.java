@@ -17,6 +17,7 @@
 package com.j_spaces.jmx.util;
 
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.kernel.SystemProperties;
 
 import java.io.File;
@@ -32,7 +33,7 @@ public class JConsoleUtilities {
     private static final String JCONSOLE_PLUGIN_TOPTHREADS_FILE_PATH;
 
     static {
-        JCONSOLE_PLUGIN_TOPTHREADS_FILE_PATH = SystemInfo.singleton().locations().lib() + File.separator + "platform" + File.separator + "ui" + File.separator + "topthreads-1.0.0.jar";
+        JCONSOLE_PLUGIN_TOPTHREADS_FILE_PATH = SystemLocations.singleton().libPlatform("ui").resolve("topthreads-1.0.0.jar").toString();
     }
 
     /**

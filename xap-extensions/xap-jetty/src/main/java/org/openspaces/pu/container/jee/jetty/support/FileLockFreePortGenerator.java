@@ -16,8 +16,7 @@
 
 package org.openspaces.pu.container.jee.jetty.support;
 
-import com.gigaspaces.start.SystemInfo;
-
+import com.gigaspaces.start.SystemLocations;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -41,7 +40,7 @@ public class FileLockFreePortGenerator implements FreePortGenerator {
     private static final File portDirectory;
 
     static {
-        File jettyWork = new File(SystemInfo.singleton().locations().work() + "/jetty");
+        File jettyWork = SystemLocations.singleton().work("jetty").toFile();
         portDirectory = new File(jettyWork, "ports");
         portDirectory.mkdirs();
     }

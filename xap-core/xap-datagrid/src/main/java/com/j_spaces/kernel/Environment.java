@@ -17,6 +17,7 @@
 package com.j_spaces.kernel;
 
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.core.Constants;
 
 import java.io.File;
@@ -24,8 +25,7 @@ import java.io.File;
 @com.gigaspaces.api.InternalApi
 public class Environment {
     public static String createSchemasFolderIfNotExists() {
-        String schemasFolderPath = SystemInfo.singleton().locations().config() + File.separator +
-                File.separator + Constants.Schemas.SCHEMAS_FOLDER;
+        String schemasFolderPath = SystemLocations.singleton().config(Constants.Schemas.SCHEMAS_FOLDER).toString();
 
         //check if "schemas" or "config" folder exists, if not then create it
         File schemasFolder = new File(schemasFolderPath);

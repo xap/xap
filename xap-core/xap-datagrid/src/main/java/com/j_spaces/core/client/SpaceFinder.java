@@ -29,6 +29,7 @@ import com.gigaspaces.security.directory.CredentialsProvider;
 import com.gigaspaces.security.directory.CredentialsProviderHelper;
 import com.gigaspaces.security.directory.DefaultCredentialsProvider;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.JSpaceContainerImpl;
 import com.j_spaces.core.NoSuchNameException;
@@ -490,7 +491,7 @@ public class SpaceFinder {
 
         // check if the config file exists and readable, otherwise thrown exception
         //Used for backward compatability.
-        String contConfFile = SystemInfo.singleton().locations().config() + java.io.File.separator + containerName + "-config.xml";
+        String contConfFile = SystemLocations.singleton().config(containerName + "-config.xml").toString();
         File configFile = new File(contConfFile);
 
         //Go and find the container schema file if schema is requested AND

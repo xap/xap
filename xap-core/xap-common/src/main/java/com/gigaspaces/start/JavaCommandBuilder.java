@@ -61,17 +61,18 @@ public class JavaCommandBuilder {
         return this;
     }
 
-    public JavaCommandBuilder classpathFromPath(Path path, Predicate<Path> filter)  {
-        try (Stream<Path> stream = Files.list(path)) {
-            stream.filter(filter).forEach(p -> classpath(p.toString()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public JavaCommandBuilder classpath(Path path) {
+        return classpath(path.toString());
+    }
+
+    public JavaCommandBuilder classpath(Collection<Path> paths)  {
+        for (Path path : paths)
+            classpath(path);
         return this;
     }
 
-    public JavaCommandBuilder classpathFromPath(String ... elements) {
-        return classpath(String.join(File.separator, elements));
+    public JavaCommandBuilder classpathWithJars(Path path) {
+        return classpath(path.toString() + File.separator + "*");
     }
 
     public JavaCommandBuilder classpathFromEnv(String envVarName) {

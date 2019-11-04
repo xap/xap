@@ -45,6 +45,8 @@ import java.net.BindException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -75,11 +77,8 @@ public class SystemConfig {
     final private String[] configParms;
     private static String[] overrideArgs;
     private Webster webster;
-    private final String gsLib;
-    private final String gsLibRequired;
-    private final String gsLibPlatform;
-    private final String gsLibOptional;
-    private final String rootDir;
+    private final SystemLocations locations;
+
     private static final Logger logger = LoggerFactory.getLogger(COMPONENT);
 
     private List<URL> addedPlatformJars;
@@ -109,12 +108,7 @@ public class SystemConfig {
      * @throws net.jini.config.ConfigurationException If errors occur accessing the config
      */
     private SystemConfig(String[] confArgs) throws ConfigurationException {
-        Properties locationProps = Locator.deriveDirectories();
-        rootDir = Locator.getLocation(locationProps, Locator.GS_HOME);
-        gsLib = Locator.getLib(locationProps);
-        gsLibRequired = Locator.getLibRequired(locationProps);
-        gsLibPlatform = Locator.getLibPlatform(locationProps);
-        gsLibOptional = Locator.getLibOptional(locationProps);
+        locations = SystemLocations.singleton();
 
         if (confArgs == null || confArgs.length == 0) {
             this.configArgs = new String[]{"-"};
@@ -247,10 +241,6 @@ public class SystemConfig {
         return (instance);
     }
 
-    public String getHomeDir() {
-        return rootDir;
-    }
-
     /**
      * Get the configuration parameters used to create this utility. If this utility was created
      * with no (or <code>null</code>) parameters, a zero-length String array will be returned
@@ -305,8 +295,8 @@ public class SystemConfig {
     private List<URL> getDefaultCommonClassLoaderClasspath() throws MalformedURLException {
         ClasspathBuilder classpathBuilder = new ClasspathBuilder();
         try {
-            String commonsLoggingJarFilename = findFilenameByPrefix(gsLibRequired, "spring-jcl-");
-            classpathBuilder.append(gsLibRequired + commonsLoggingJarFilename);
+            String commonsLoggingJarFilename = findFilenameByPrefix(locations.libRequired(), "spring-jcl-");
+            classpathBuilder.append(locations.libRequired().resolve(commonsLoggingJarFilename));
         } catch (FileNotFoundException e) {
             if (logger.isWarnEnabled()) {
                 logger.warn("Missing JAR file", e);
@@ -314,11 +304,11 @@ public class SystemConfig {
         }
 
         for (XapModules module : XapModules.getByClassLoaderType(ClassLoaderType.COMMON)) {
-            classpathBuilder.append(gsLib + module.getJarFilePath());
+            classpathBuilder.append(module);
         }
 
         classpathBuilder.appendOptional("jee");// Different J2EE jars support
-        classpathBuilder.append(System.getProperty(Locator.GS_LIB_PLATFORM_EXT, gsLibPlatform + "ext")); // ext support
+        classpathBuilder.append(locations.libPlatformExt()); // ext support
         classpathBuilder.appendOptional("jms");
         classpathBuilder.appendOptional("metrics");
         classpathBuilder.appendOptional("spatial");
@@ -332,7 +322,7 @@ public class SystemConfig {
         classpathBuilder.appendPlatform("commons"); // Apache Commons libraries
         classpathBuilder.appendOptional("groovy");
         classpathBuilder.appendOptional("jruby");
-        classpathBuilder.append(System.getProperty("com.gs.pu.classloader.scala-lib-path", gsLibOptional + "scala/lib"));// Scala support
+        classpathBuilder.append(Paths.get(System.getProperty("com.gs.pu.classloader.scala-lib-path", locations.libOptional("scala").resolve("lib").toString())));// Scala support
         classpathBuilder.appendPlatform("zookeeper");
         classpathBuilder.appendPlatform("logger");
         classpathBuilder.appendOptional("oshi");
@@ -347,7 +337,7 @@ public class SystemConfig {
         // if we are use parent first, then we are working in shared lib mode, so we need to add openspaces and spring
         // otherwise, don't add openspaces and spring
         if (osInCommonClassLoader) {
-            classpathBuilder.append(gsLibRequired);
+            classpathBuilder.appendRequired();
             classpathBuilder.appendOptional("spring");
         }
 
@@ -399,9 +389,9 @@ public class SystemConfig {
         return (platformJARs);
     }
 
-    private static String findFilenameByPrefix(final String folderPath, final String prefix) throws FileNotFoundException {
+    private static String findFilenameByPrefix(final Path folderPath, final String prefix) throws FileNotFoundException {
 
-        final File folder = new File(folderPath);
+        final File folder = folderPath.toFile();
         if (!folder.isDirectory()) {
             throw new FileNotFoundException(folder + " is not a directory.");
         }
@@ -433,7 +423,6 @@ public class SystemConfig {
         Properties sysProps = new Properties();
         /* Set default system properties */
         sysProps.setProperty("java.protocol.handler.pkgs", "net.jini.url");
-        sysProps.setProperty(CommonSystemProperties.GS_HOME, rootDir);
         sysProps.setProperty("com.gs.localhost.name", getDefaultHostAddress());
         sysProps.setProperty(BASE_COMPONENT + ".grid.groups", groupNames);
 
@@ -486,13 +475,11 @@ public class SystemConfig {
     public Webster getWebster() throws BindException, ConfigurationException,
             UnknownHostException {
         if (webster == null) {
-            String deployRoot = System.getProperty("com.gs.deploy", rootDir + "deploy");
-            System.setProperty("com.gs.deploy", deployRoot);
-            File deployRootFile = new File(deployRoot);
+            File deployRootFile = locations.deploy().toFile();
             if (!deployRootFile.exists()) {
                 deployRootFile.mkdirs();
             }
-            String defaultRoots = gsLib + ";" + gsLibRequired + ";" + deployRoot;
+            String defaultRoots = locations.lib().toString() + ";" + locations.libRequired().toString() + ";" + deployRootFile.toString();
             String httpRoots = (String) config.getEntry(COMPONENT,
                     "httpRoots",
                     String.class,
@@ -558,15 +545,9 @@ public class SystemConfig {
         String handlerCodebase = getDefaultCodebase();
         String handlerClasspath = "";
 
-        String configDir = rootDir + "config" + File.separator + "services" + File.separator;
-        String reggieConfig = (String) config.getEntry(COMPONENT,
-                "reggieConfig",
-                String.class,
-                configDir +
-                        "services.config");
         String[] confArgs = new String[overrideArgs.length + 1];
         //confArgs[0] = configDir+"services.config";
-        confArgs[0] = reggieConfig;
+        confArgs[0] = getServiceConfig("reggieConfig");
         if (overrideArgs.length > 0) {
             for (int i = 1; i < confArgs.length; i++)
                 confArgs[i] = overrideArgs[i - 1];
@@ -578,6 +559,11 @@ public class SystemConfig {
                 confArgs));
     }
 
+    private String getServiceConfig(String name) throws ConfigurationException {
+        return (String) config.getEntry(COMPONENT, name, String.class,
+                locations.config("services").resolve("services.config").toString());
+    }
+
     private String getDefaultCodebase() throws UnknownHostException {
         return BootUtil.getCodebase(new String[]{XapModules.DATA_GRID.getJarFileName()}, getWebsterProtocol(), Integer.toString(getWebsterPort()));
     }
@@ -587,15 +573,9 @@ public class SystemConfig {
         String handlerCodebase = getDefaultCodebase();
         String handlerClasspath = "";
 
-        String configDir = rootDir + "config" + File.separator + "services" + File.separator;
-        String mahaloConfig = (String) config.getEntry(COMPONENT,
-                "mahaloConfig",
-                String.class,
-                configDir +
-                        "services.config");
         String[] confArgs = new String[overrideArgs.length + 1];
         //confArgs[0] = configDir+"services.config";
-        confArgs[0] = mahaloConfig;
+        confArgs[0] = getServiceConfig("mahaloConfig");
         if (overrideArgs.length > 0) {
             for (int i = 1; i < confArgs.length; i++)
                 confArgs[i] = overrideArgs[i - 1];
@@ -643,27 +623,20 @@ public class SystemConfig {
                         ServiceDescriptor.class,
                         null);
         if (svcDesc == null) {
-            StringBuilder defaultGSAClasspath = new StringBuilder();
-            addRequiredLibs(defaultGSAClasspath);
-            addOptionalSpringLibs(defaultGSAClasspath);
-            addOptionalSecurityLibs(defaultGSAClasspath);
+            ClasspathBuilder classpath = new ClasspathBuilder();
+            classpath.appendRequired(getLibRequiredFilter());
+            classpath.appendOptional("spring");
+            classpath.append(locations.libOptionalSecurity());
 
             String gsaClasspath =
                     (String) config.getEntry(COMPONENT + ".gsa",
                             "classpath",
                             String.class,
-                            defaultGSAClasspath.toString());
+                            classpath.toString());
             String gsaCodebase = getDefaultCodebase();
 
-            String configDir = rootDir + "config" + File.separator + "services" + File.separator;
-            String gscConfig = (String) config.getEntry(COMPONENT,
-                    "gsaConfig",
-                    String.class,
-                    configDir +
-                            "services.config");
-
             String[] confArgs = new String[overrideArgs.length + 1];
-            confArgs[0] = gscConfig;
+            confArgs[0] = getServiceConfig("gsaConfig");
             if (overrideArgs.length > 0) {
                 for (int i = 1; i < confArgs.length; i++)
                     confArgs[i] = overrideArgs[i - 1];
@@ -686,29 +659,22 @@ public class SystemConfig {
                         ServiceDescriptor.class,
                         null);
         if (svcDesc == null) {
-            StringBuilder defaultGSCClasspath = new StringBuilder();
-            addRequiredLibs(defaultGSCClasspath);
-            addOptionalSpringLibs(defaultGSCClasspath);
-            addOptionalSecurityLibs(defaultGSCClasspath);
+            ClasspathBuilder classpath = new ClasspathBuilder();
+            classpath.appendRequired(getLibRequiredFilter());
+            classpath.appendOptional("spring");
+            classpath.append(locations.libOptionalSecurity());
 
             String gscClasspath =
                     (String) config.getEntry(COMPONENT + ".gsc",
                             "classpath",
                             String.class,
-                            defaultGSCClasspath.toString());
+                            classpath.toString());
 
             logger.debug("GSC configuration Classpath is: " + gscClasspath);
             String gscCodebase = getDefaultCodebase();
 
-            String configDir = rootDir + "config" + File.separator + "services" + File.separator;
-            String gscConfig = (String) config.getEntry(COMPONENT,
-                    "gscConfig",
-                    String.class,
-                    configDir +
-                            "services.config");
-
             String[] confArgs = new String[overrideArgs.length + 1];
-            confArgs[0] = gscConfig;
+            confArgs[0] = getServiceConfig("gscConfig");
             if (overrideArgs.length > 0) {
                 for (int i = 1; i < confArgs.length; i++)
                     confArgs[i] = overrideArgs[i - 1];
@@ -732,29 +698,21 @@ public class SystemConfig {
                         null);
         if (svcDesc == null) {
             // adding openspaces to GSM since it needs to know the PUServiceBean (for FDH for example)
-            StringBuilder defaultGSMClasspath = new StringBuilder();
-
-            addRequiredLibs(defaultGSMClasspath);
-            addOptionalSpringLibs(defaultGSMClasspath);
-            addOptionalSecurityLibs(defaultGSMClasspath);
-            defaultGSMClasspath.append(gsLib + XapModules.ADMIN.getJarFilePath() + File.pathSeparator);
+            ClasspathBuilder classpath = new ClasspathBuilder();
+            classpath.appendRequired(getLibRequiredFilter());
+            classpath.appendOptional("spring");
+            classpath.append(locations.libOptionalSecurity());
+            classpath.append(XapModules.ADMIN);
 
             String gsmClasspath =
                     (String) config.getEntry(COMPONENT + ".gsm",
                             "classpath",
                             String.class,
-                            defaultGSMClasspath.toString());
+                            classpath.toString());
             String gsmCodebase = getDefaultCodebase();
 
-            String configDir = rootDir + "config" + File.separator + "services" + File.separator;
-            String gsmConfig = (String) config.getEntry(COMPONENT,
-                    "gsmConfig",
-                    String.class,
-                    configDir +
-                            "services.config");
-
             String[] confArgs = new String[overrideArgs.length + 1];
-            confArgs[0] = gsmConfig;
+            confArgs[0] = getServiceConfig("gsmConfig");
             if (overrideArgs.length > 0) {
                 for (int i = 1; i < confArgs.length; i++)
                     confArgs[i] = overrideArgs[i - 1];
@@ -768,44 +726,9 @@ public class SystemConfig {
         return (svcDesc);
     }
 
-    /**
-     * add all jars under lib/required
-     */
-    private void addRequiredLibs(StringBuilder classpath) {
-        for (File f : BootIOUtils.listFiles(new File(gsLibRequired))) {
-            if (f.getName().contains(XapModules.DATA_GRID.getJarFileName()) ||
-                    f.getName().contains(XapModules.CORE_REFLECTIONS_ASM.getJarFileName())) {
-                continue;
-            }
-            classpath.append(f.getAbsolutePath()).append(File.pathSeparator);
-        }
-    }
-
-    /**
-     * add all jars under lib/optional/spring
-     */
-    private void addOptionalSpringLibs(StringBuilder classpath) {
-        addLibs(classpath, gsLibOptional + "spring");
-    }
-
-
-    private void addLibs(StringBuilder classpath, String path) {
-        File libDir = new File(path);
-        if (libDir.exists() && libDir.isDirectory()) {
-            for (File f : BootIOUtils.listFiles(libDir)) {
-                if (logger.isDebugEnabled())
-                    logger.debug("Adding " + f.getAbsolutePath() + " to ClassPath");
-                classpath.append(f.getAbsolutePath()).append(File.pathSeparator);
-            }
-        }
-    }
-
-
-    /**
-     * add all jars under lib/optional/security
-     */
-    private void addOptionalSecurityLibs(StringBuilder classpath) {
-        addLibs(classpath, Locator.getLibOptionalSecurity());
+    private static FileFilter getLibRequiredFilter() {
+        return f -> (!f.getName().equals(XapModules.DATA_GRID.getJarFileName()) &&
+                !f.getName().equals(XapModules.CORE_REFLECTIONS_ASM.getJarFileName()));
     }
 
     private ServiceDescriptor getESMServiceDescriptor()
@@ -817,32 +740,22 @@ public class SystemConfig {
                         ServiceDescriptor.class,
                         null);
         if (svcDesc == null) {
-            StringBuilder defaultESMClasspath = new StringBuilder();
-
-            addRequiredLibs(defaultESMClasspath);
-
-            appendLibPlatformToClasspath(defaultESMClasspath, "esm");
-
-            addOptionalSpringLibs(defaultESMClasspath);
-            addOptionalSecurityLibs(defaultESMClasspath);
-            defaultESMClasspath.append(gsLib + XapModules.ADMIN.getJarFilePath() + File.pathSeparator);
+            ClasspathBuilder classpath = new ClasspathBuilder();
+            classpath.appendRequired(getLibRequiredFilter());
+            classpath.appendPlatform("esm");
+            classpath.appendOptional("spring");
+            classpath.append(locations.libOptionalSecurity());
+            classpath.append(XapModules.ADMIN);
 
             String esmClasspath =
                     (String) config.getEntry(COMPONENT + ".esm",
                             "classpath",
                             String.class,
-                            defaultESMClasspath.toString());
+                            classpath.toString());
             String esmCodebase = getDefaultCodebase();
 
-            String configDir = rootDir + "config" + File.separator + "services" + File.separator;
-            String gsmConfig = (String) config.getEntry(COMPONENT,
-                    "esmConfig",
-                    String.class,
-                    configDir +
-                            "services.config");
-
             String[] confArgs = new String[overrideArgs.length + 1];
-            confArgs[0] = gsmConfig;
+            confArgs[0] = getServiceConfig("esmConfig");
             if (overrideArgs.length > 0) {
                 for (int i = 1; i < confArgs.length; i++)
                     confArgs[i] = overrideArgs[i - 1];
@@ -854,16 +767,6 @@ public class SystemConfig {
                             confArgs);
         }
         return (svcDesc);
-    }
-
-    private void appendLibPlatformToClasspath(
-            final StringBuilder defaultESMClasspath, final String platformName) {
-        final File lib = new File(gsLibPlatform + "/" + platformName);
-        if (lib.exists() && lib.isDirectory()) {
-            for (File f : BootIOUtils.listFiles(lib)) {
-                defaultESMClasspath.append(f.getAbsolutePath()).append(File.pathSeparator);
-            }
-        }
     }
 
     /**
@@ -891,15 +794,8 @@ public class SystemConfig {
 
         String gsClasspath = "";
         String gsCodebase = getDefaultCodebase();
-        String configDir = rootDir + "config" + File.separator + "services" + File.separator;
-        String gsConfig = (String) config.getEntry(COMPONENT,
-                "gsConfig",
-                String.class,
-                configDir +
-                        "services.config");
-
         String[] confArgs = new String[overrideArgs.length + 1];
-        confArgs[0] = gsConfig;
+        confArgs[0] = getServiceConfig("gsConfig");
 
         if (overrideArgs.length > 0) {
             for (int i = 1; i < confArgs.length; i++)

@@ -20,6 +20,7 @@ import com.gigaspaces.internal.cluster.node.impl.processlog.multisourcesinglefil
 import com.gigaspaces.internal.server.space.SpaceConfigReader;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.Constants.Mirror;
 
@@ -62,7 +63,7 @@ final public class MirrorConfig {
                 Mirror.MIRROR_IMPORT_DIRECTORY_TAG, null);
         // if space property is a relative path, then its parent directory is work.
         if (importDirectory != null && !(new File(importDirectory)).isAbsolute()) {
-            importDirectory = (new File(SystemInfo.singleton().locations().work(), importDirectory)).getAbsolutePath();
+            importDirectory = SystemLocations.singleton().work(importDirectory).toAbsolutePath().toString();
         }
         _importDirectory = importDirectory;
 

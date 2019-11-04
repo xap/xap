@@ -18,6 +18,7 @@ package org.openspaces.core.space;
 
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.core.IJSpace;
 import net.jini.core.discovery.LookupLocator;
 import org.apache.commons.logging.Log;
@@ -28,9 +29,7 @@ import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;
 import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.jsp.JettyJspServlet;
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
-import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -49,8 +48,6 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
 import javax.servlet.DispatcherType;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -186,7 +183,7 @@ public class RestBean implements InitializingBean, ClusterInfoAware, DisposableB
         filterHolder = new FilterHolder(RequestStatisticsFilter.class);
         webAppContext.addFilter(filterHolder, "/*", EnumSet.of(DispatcherType.INCLUDE, DispatcherType.REQUEST));
         webAppContext.setContextPath("/");
-        webAppContext.setWar(SystemInfo.singleton().locations().lib() + "/optional/rest/xap-rest.war");
+        webAppContext.setWar(SystemLocations.singleton().libOptional("rest").resolve("xap-rest.war").toString());
         webAppContext.setInitParameter("port", port);
         webAppContext.setInitParameter("spaceName", ispaceName);
         if (igroups != null && !igroups.equalsIgnoreCase("null")) {

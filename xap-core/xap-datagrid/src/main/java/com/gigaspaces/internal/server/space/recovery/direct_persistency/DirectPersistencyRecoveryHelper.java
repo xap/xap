@@ -25,6 +25,7 @@ import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.core.Constants;
 import com.j_spaces.kernel.SystemProperties;
 
@@ -78,7 +79,7 @@ public class DirectPersistencyRecoveryHelper implements IStorageConsistency, ISp
                 } else {
                     String attributeStorePath = System.getProperty(Constants.StorageAdapter.DIRECT_PERSISTENCY_LAST_PRIMARY_STATE_PATH_PROP);
                     if (attributeStorePath == null)
-                        attributeStorePath = SystemInfo.singleton().locations().work() + File.separator + this.getClass().getSimpleName();
+                        attributeStorePath = SystemLocations.singleton().work(this.getClass().getSimpleName()).toString();
                     _attributeStore = new PropertiesFileAttributeStore(attributeStorePath);
                 }
             } else {

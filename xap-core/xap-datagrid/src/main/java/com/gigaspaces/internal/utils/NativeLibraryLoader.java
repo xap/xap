@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.utils;
 
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 
 import java.io.File;
 import java.util.HashSet;
@@ -37,7 +38,7 @@ public class NativeLibraryLoader {
     private static final String _defaultNativeLibPath;
 
     static {
-        _defaultNativeLibPath = SystemInfo.singleton().locations().lib() + File.separator + "platform" + File.separator + "native";
+        _defaultNativeLibPath = SystemLocations.singleton().libPlatform("native").toString();
     }
 
     public static void loadNativeLibrary(String libraryName) {

@@ -18,6 +18,7 @@ package com.gigaspaces.internal.utils;
 
 import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.kernel.SystemProperties;
 
 import org.jini.rio.boot.BootUtil;
@@ -77,7 +78,7 @@ public class XapRuntimeReporter {
     protected void appendGigaSpacesPlatformInfo() {
         SystemInfo systemInfo = SystemInfo.singleton();
         append(PlatformVersion.getOfficialVersion());
-        append("    Home: " + systemInfo.getXapHome());
+        append("    Home: " + SystemLocations.singleton().home());
         append("    Lookup Groups: " + systemInfo.lookup().groups());
         if (systemInfo.getManagerClusterInfo().isEmpty()) {
             String locators = systemInfo.lookup().locators();
