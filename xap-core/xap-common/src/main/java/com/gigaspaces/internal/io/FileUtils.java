@@ -80,4 +80,22 @@ public class FileUtils {
             stream.filter(filter).forEach(consumer);
         }
     }
+
+    public static class Filters {
+        public static Predicate<Path> nameEquals(String name) {
+            return p -> p.getFileName().toString().equals(name);
+        }
+
+        public static Predicate<Path> nameStartsWith(String prefix) {
+            return p -> p.getFileName().toString().equals(prefix);
+        }
+
+        public static Predicate<Path> nameEndsWith(String suffix) {
+            return p -> p.getFileName().toString().equals(suffix);
+        }
+
+        public static Predicate<Path> nameContains(String s) {
+            return p -> p.getFileName().toString().contains(s);
+        }
+    }
 }

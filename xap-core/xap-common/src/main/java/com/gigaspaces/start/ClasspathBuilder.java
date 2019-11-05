@@ -35,7 +35,7 @@ import java.util.function.Predicate;
 public class ClasspathBuilder {
 
     private static final SystemLocations locations = SystemLocations.singleton();
-    private static final Predicate<Path> jarsFilter = p -> p.getFileName().toString().toLowerCase().endsWith(".jar");
+    private static final Predicate<Path> jarsFilter = FileUtils.Filters.nameEndsWith(".jar");
 
     private final List<Path> files = new ArrayList<>();
 
@@ -67,6 +67,10 @@ public class ClasspathBuilder {
 
     public ClasspathBuilder appendOptionalJars(String subpath) {
         return appendJars(locations.libOptional(subpath));
+    }
+
+    public ClasspathBuilder appendOptionalJars(String subpath, Predicate<Path> filter) {
+        return appendJars(locations.libOptional(subpath), filter);
     }
 
     private ClasspathBuilder append(Path path, Predicate<Path> filter) {

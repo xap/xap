@@ -17,6 +17,7 @@
 package com.gigaspaces.start;
 
 import com.gigaspaces.CommonSystemProperties;
+import com.gigaspaces.internal.io.FileUtils;
 import com.gigaspaces.internal.jmx.JMXUtilities;
 import com.gigaspaces.internal.services.RestServiceFactory;
 import com.gigaspaces.internal.services.ServiceFactory;
@@ -312,7 +313,7 @@ public class SystemConfig {
         classpathBuilder.appendOptionalJars("metrics");
         classpathBuilder.appendOptionalJars("spatial");
         classpathBuilder.appendOptionalJars("full-text-search");
-        classpathBuilder.appendJars(SystemLocations.singleton().libOptional("jpa"), p -> !p.getFileName().toString().equals(XapModules.JPA_SPRING.getJarFileName()));
+        classpathBuilder.appendOptionalJars("jpa", FileUtils.Filters.nameStartsWith(XapModules.JPA_SPRING.getArtifactName()).negate());
         classpathBuilder.appendPlatformJars("commons"); // Apache Commons libraries
         classpathBuilder.appendOptionalJars("groovy");
         classpathBuilder.appendOptionalJars("jruby");
