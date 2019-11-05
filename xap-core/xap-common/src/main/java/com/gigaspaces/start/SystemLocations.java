@@ -34,7 +34,7 @@ public class SystemLocations {
     private final Path config;
     private final Path lib;
     private final Path libRequired;
-    private final Map<ClassLoaderType, Collection<Path>> libRequiredMap;
+    private volatile Map<ClassLoaderType, Collection<Path>> libRequiredMap;
     private final Path libOptional;
     private final Path libOptionalSecurity;
     private final Path libPlatform;
@@ -52,7 +52,6 @@ public class SystemLocations {
         this.config = home.resolve("config");
         this.lib = fromSystemProperty("com.gigaspaces.lib", home.resolve("lib"));
         this.libRequired = fromSystemProperty("com.gigaspaces.lib.required", lib.resolve("required"));
-        this.libRequiredMap = categorize(libRequired);
         this.libOptional = fromSystemProperty("com.gigaspaces.lib.opt", lib.resolve("optional"));
         this.libOptionalSecurity = fromSystemProperty("com.gigaspaces.lib.opt.security", libOptional.resolve("security"));
         this.libPlatform = fromSystemProperty("com.gigaspaces.lib.platform", lib.resolve("platform"));
@@ -221,7 +220,16 @@ public class SystemLocations {
     }
 
     public Collection<Path> libRequired(ClassLoaderType clType) {
-        return libRequiredMap.get(clType);
+        // Lazy implementation is required because SystemLocations is also used in non-product-structure scenarios (e.g. maven tests)
+        Map<ClassLoaderType, Collection<Path>> snapshot = libRequiredMap;
+        if (snapshot == null) {
+            synchronized (instance) {
+                if (libRequiredMap == null)
+                    libRequiredMap = categorize(libRequired);
+                snapshot = libRequiredMap;
+            }
+        }
+        return snapshot.get(clType);
     }
 
     public Path libOptional() {
