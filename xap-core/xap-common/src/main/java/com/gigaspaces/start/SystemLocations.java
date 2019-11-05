@@ -2,17 +2,17 @@ package com.gigaspaces.start;
 
 import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.api.InternalApi;
+import com.gigaspaces.internal.io.FileUtils;
 import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.internal.utils.GsEnv;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Niv Ingberg
@@ -34,6 +34,7 @@ public class SystemLocations {
     private final Path config;
     private final Path lib;
     private final Path libRequired;
+    private final Map<ClassLoaderType, Collection<Path>> libRequiredMap;
     private final Path libOptional;
     private final Path libOptionalSecurity;
     private final Path libPlatform;
@@ -51,6 +52,7 @@ public class SystemLocations {
         this.config = home.resolve("config");
         this.lib = fromSystemProperty("com.gigaspaces.lib", home.resolve("lib"));
         this.libRequired = fromSystemProperty("com.gigaspaces.lib.required", lib.resolve("required"));
+        this.libRequiredMap = categorize(libRequired);
         this.libOptional = fromSystemProperty("com.gigaspaces.lib.opt", lib.resolve("optional"));
         this.libOptionalSecurity = fromSystemProperty("com.gigaspaces.lib.opt.security", libOptional.resolve("security"));
         this.libPlatform = fromSystemProperty("com.gigaspaces.lib.platform", lib.resolve("platform"));
@@ -60,6 +62,51 @@ public class SystemLocations {
         this.userProductHome = Paths.get(System.getProperty("user.home"), ".gigaspaces");
         this.sparkHome = fromEnvVar("SPARK_HOME", home.resolve("insightedge").resolve("spark"));
         System.setProperty("spark.home", sparkHome.toString());
+    }
+
+    private static Map<ClassLoaderType, Collection<Path>> categorize(Path libRequired) {
+        Map<ClassLoaderType, Collection<Path>> result = new HashMap<>();
+        for (ClassLoaderType type : ClassLoaderType.values())
+            result.put(type, new ArrayList<>());
+
+        try {
+            FileUtils.forEach(libRequired, f -> result.get(getClassLoaderType(f)).add(f));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to categorize lib/required files", e);
+        }
+        return result;
+    }
+
+    private static ClassLoaderType getClassLoaderType(Path file) {
+        // NOTE: this code intentionally uses startsWith and not equals, because fileName may include version suffix.
+        final String fileName = file.getFileName().toString();
+
+        // If file is a built-in module, get its class loader type
+        for (XapModules module : XapModules.getRequiredModules()) {
+            if (fileName.startsWith(module.getArtifactName()))
+                return module.getClassLoaderType();
+        }
+
+        if (fileName.startsWith("xap-")) {
+            if (fileName.startsWith("xap-openspaces"))
+                return ClassLoaderType.SERVICE;
+            if (fileName.startsWith("xap-slf4j"))
+                return ClassLoaderType.SYSTEM;
+            // Sensible default, but should not happen (should warn, but we cannot use logs here...)
+            return ClassLoaderType.SYSTEM;
+        }
+
+        // Spring files are Service, except for spring-jcl which is system:
+        if (fileName.startsWith("spring-")) {
+            if (fileName.startsWith("spring-jcl-"))
+                return ClassLoaderType.SYSTEM;
+            return ClassLoaderType.SERVICE;
+        }
+
+        if (fileName.startsWith("com.springsource.org.aopalliance-"))
+            return ClassLoaderType.SERVICE;
+
+        return ClassLoaderType.SYSTEM;
     }
 
     private static Path initHome() {
@@ -173,12 +220,8 @@ public class SystemLocations {
         return libRequired;
     }
 
-    public Collection<Path> libRequired(Predicate<Path> filter) {
-        try (Stream<Path> stream = Files.list(libRequired)) {
-            return stream.filter(filter).collect(Collectors.toList());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public Collection<Path> libRequired(ClassLoaderType clType) {
+        return libRequiredMap.get(clType);
     }
 
     public Path libOptional() {

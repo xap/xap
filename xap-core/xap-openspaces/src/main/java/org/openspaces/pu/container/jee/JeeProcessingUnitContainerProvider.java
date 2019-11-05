@@ -153,7 +153,7 @@ public abstract class JeeProcessingUnitContainerProvider extends ApplicationCont
     }
 
     protected Iterable<String> getWebAppClassLoaderClassPath() {
-        return new ClasspathBuilder().append(getJeeContainerJarPath(getJeeContainerType())).toFilesNames();
+        return new ClasspathBuilder().appendJars(getJeeContainerJarPath(getJeeContainerType())).toFilesNames();
     }
 
     protected ClassLoader getJeeClassLoader() throws Exception {

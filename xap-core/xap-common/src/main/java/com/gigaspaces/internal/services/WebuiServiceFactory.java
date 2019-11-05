@@ -1,7 +1,7 @@
 package com.gigaspaces.internal.services;
 
+import com.gigaspaces.start.ClassLoaderType;
 import com.gigaspaces.start.ClasspathBuilder;
-import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.start.SystemLocations;
 
 public class WebuiServiceFactory extends ServiceFactory {
@@ -17,16 +17,18 @@ public class WebuiServiceFactory extends ServiceFactory {
 
     @Override
     protected void initializeClasspath(ClasspathBuilder classpath) {
+        SystemLocations locations = SystemLocations.singleton();
         classpath
                 // $GS_JARS
-                .appendRequired(ClasspathBuilder.startsWithFilter("xap-", "spring-", "commons-"))
-                .append(SystemLocations.singleton().libPlatformExt())
-                .appendOptional("spring").appendOptional("security")        // $SPRING_JARS
-                .appendOptional("jetty").appendOptional("jetty/xap-jetty")
-                .appendOptional("interop")
-                .appendOptional("memoryxtend/off-heap")
-                .appendOptional("memoryxtend/rocksdb")
-                .appendPlatform("commons")
-                .appendPlatform("service-grid");
+                .appendLibRequiredJars(ClassLoaderType.COMMON)
+                .appendLibRequiredJars(ClassLoaderType.SERVICE)
+                .appendJars(locations.libPlatformExt())
+                .appendOptionalJars("spring").appendJars(locations.libOptionalSecurity())        // $SPRING_JARS
+                .appendOptionalJars("jetty").appendOptionalJars("jetty/xap-jetty")
+                .appendOptionalJars("interop")
+                .appendOptionalJars("memoryxtend/off-heap")
+                .appendOptionalJars("memoryxtend/rocksdb")
+                .appendPlatformJars("commons")
+                .appendPlatformJars("service-grid");
     }
 }

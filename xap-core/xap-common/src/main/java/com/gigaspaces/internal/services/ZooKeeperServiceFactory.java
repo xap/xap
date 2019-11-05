@@ -1,5 +1,6 @@
 package com.gigaspaces.internal.services;
 
+import com.gigaspaces.start.ClassLoaderType;
 import com.gigaspaces.start.ClasspathBuilder;
 
 /**
@@ -19,10 +20,10 @@ public class ZooKeeperServiceFactory extends ServiceFactory {
 
     @Override
     protected void initializeClasspath(ClasspathBuilder classpath) {
-        classpath.appendPlatform("zookeeper")
-                .appendPlatform("service-grid")
-                // Required jars: spring-context-*, spring-beans-*, spring-core-*, spring-jcl-*, xap-datagrid, xap-asm, xap-trove
-                .appendRequired(ClasspathBuilder.startsWithFilter("slf4j-", "spring-", "xap-datagrid", "xap-openspaces", "xap-asm", "xap-trove"));
+        classpath.appendPlatformJars("zookeeper")
+                .appendPlatformJars("service-grid")
+                .appendLibRequiredJars(ClassLoaderType.COMMON)
+                .appendLibRequiredJars(ClassLoaderType.SERVICE);
 
     }
 }
