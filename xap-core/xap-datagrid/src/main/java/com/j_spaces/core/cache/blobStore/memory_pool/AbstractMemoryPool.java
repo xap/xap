@@ -23,6 +23,10 @@ public abstract class AbstractMemoryPool {
         return metricRegistrator.toPath("used-bytes", typeName);
     }
 
+    protected String percent() {
+        return metricRegistrator.toPath("used-percent");
+    }
+
     public long getThreshold() {
         return threshold;
     }

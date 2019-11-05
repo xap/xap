@@ -19,6 +19,7 @@
 package com.j_spaces.core.cache.blobStore.memory_pool;
 
 import com.gigaspaces.internal.utils.concurrent.UnsafeHolder;
+import com.gigaspaces.metrics.Gauge;
 import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.j_spaces.core.cache.blobStore.BlobStoreRefEntryCacheInfo;
@@ -55,6 +56,16 @@ public class OffHeapMemoryPool extends AbstractMemoryPool {
     public void initMetrics(MetricRegistrator metricRegistrator) {
         setMetricRegistrator(metricRegistrator);
         getMetricRegistrator().register(metricsPath("total"), totalCounter);
+        getMetricRegistrator().register(percent(), createPercentGauge());
+    }
+
+    private Gauge<Double> createPercentGauge() {
+        return new Gauge<Double>() {
+            @Override
+            public Double getValue() {
+                return threshold != 0 ? ( double )totalCounter.getCount()/threshold : 0;
+            }
+        };
     }
 
     @Override
