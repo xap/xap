@@ -21,7 +21,9 @@ public enum SystemMetrics {
     SPACE_TP_READ_MULTIPLE("space_operations_read-multiple-tp"),
     SPACE_TP_TAKE("space_operations_take-tp"),
     SPACE_TP_TAKE_MULTIPLE("space_operations_take-multiple-tp"),
-    SPACE_TP_EXECUTE("space_operations_execute-tp");
+    SPACE_TP_EXECUTE("space_operations_execute-tp"),
+    SPACE_BLOBSTORE_OFF_HEAP_USED_BYTES_TOTAL("space_blobstore_off-heap_used-bytes_total"),
+    SPACE_BLOBSTORE_OFF_HEAP_USED_PERCENT("space_blobstore_off-heap_used-percent");
 
     private final String metricName;
     private final String tableName;
