@@ -17,7 +17,6 @@
 package com.gigaspaces.start;
 
 import com.gigaspaces.CommonSystemProperties;
-import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.jmx.JMXUtilities;
 import com.gigaspaces.internal.services.RestServiceFactory;
 import com.gigaspaces.internal.services.ServiceFactory;
@@ -39,18 +38,16 @@ import org.jini.rio.tools.webster.Webster;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
 import java.net.BindException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.*;
+
 import org.slf4j.*;
 
 import javax.management.MBeanServer;
@@ -294,6 +291,7 @@ public class SystemConfig {
 
     private List<URL> getDefaultCommonClassLoaderClasspath() throws MalformedURLException {
         ClasspathBuilder classpathBuilder = new ClasspathBuilder();
+        /* "spring-jcl-" / "commons-logging" moved to system class loader.
         try {
             String commonsLoggingJarFilename = findFilenameByPrefix(locations.libRequired(), "spring-jcl-");
             classpathBuilder.append(locations.libRequired().resolve(commonsLoggingJarFilename));
@@ -302,43 +300,37 @@ public class SystemConfig {
                 logger.warn("Missing JAR file", e);
             }
         }
+         */
 
         for (XapModules module : XapModules.getByClassLoaderType(ClassLoaderType.COMMON)) {
-            classpathBuilder.append(module);
+            classpathBuilder.appendJar(module);
         }
 
-        classpathBuilder.appendOptional("jee");// Different J2EE jars support
-        classpathBuilder.append(locations.libPlatformExt()); // ext support
-        classpathBuilder.appendOptional("jms");
-        classpathBuilder.appendOptional("metrics");
-        classpathBuilder.appendOptional("spatial");
-        classpathBuilder.appendOptional("full-text-search");
-        classpathBuilder.appendOptional("jpa", new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                return !file.getName().equals(XapModules.JPA_SPRING.getJarFileName());
-            }
-        });
-        classpathBuilder.appendPlatform("commons"); // Apache Commons libraries
-        classpathBuilder.appendOptional("groovy");
-        classpathBuilder.appendOptional("jruby");
-        classpathBuilder.append(Paths.get(System.getProperty("com.gs.pu.classloader.scala-lib-path", locations.libOptional("scala").resolve("lib").toString())));// Scala support
-        classpathBuilder.appendPlatform("zookeeper");
-        classpathBuilder.appendPlatform("logger");
-        classpathBuilder.appendOptional("oshi");
+        classpathBuilder.appendOptionalJars("jee");// Different J2EE jars support
+        classpathBuilder.appendJars(locations.libPlatformExt()); // ext support
+        classpathBuilder.appendOptionalJars("jms");
+        classpathBuilder.appendOptionalJars("metrics");
+        classpathBuilder.appendOptionalJars("spatial");
+        classpathBuilder.appendOptionalJars("full-text-search");
+        classpathBuilder.appendJars(SystemLocations.singleton().libOptional("jpa"), p -> !p.getFileName().toString().equals(XapModules.JPA_SPRING.getJarFileName()));
+        classpathBuilder.appendPlatformJars("commons"); // Apache Commons libraries
+        classpathBuilder.appendOptionalJars("groovy");
+        classpathBuilder.appendOptionalJars("jruby");
+        classpathBuilder.appendJars(Paths.get(System.getProperty("com.gs.pu.classloader.scala-lib-path", locations.libOptional("scala").resolve("lib").toString())));// Scala support
+        classpathBuilder.appendPlatformJars("zookeeper");
         if(isJava11()){
-            classpathBuilder.appendPlatform("javax");
+            classpathBuilder.appendPlatformJars("javax");
         }
         //GS-13825 added hsql jar
-        classpathBuilder.appendOptional("jdbc");
+        classpathBuilder.appendOptionalJars("jdbc");
 
         // I don't expect anybody to use this feature, but its here just to be on the safe side
         boolean osInCommonClassLoader = Boolean.parseBoolean(System.getProperty("com.gs.pu.classloader.os-in-common-classloader", "false"));
         // if we are use parent first, then we are working in shared lib mode, so we need to add openspaces and spring
         // otherwise, don't add openspaces and spring
         if (osInCommonClassLoader) {
-            classpathBuilder.appendRequired();
-            classpathBuilder.appendOptional("spring");
+            classpathBuilder.appendLibRequiredJars(ClassLoaderType.SERVICE);
+            classpathBuilder.appendOptionalJars("spring");
         }
 
         return classpathBuilder.toURLs();
@@ -387,22 +379,6 @@ public class SystemConfig {
             logger.debug("platform JARs\n" + buffer.toString());
         }
         return (platformJARs);
-    }
-
-    private static String findFilenameByPrefix(final Path folderPath, final String prefix) throws FileNotFoundException {
-
-        final File folder = folderPath.toFile();
-        if (!folder.isDirectory()) {
-            throw new FileNotFoundException(folder + " is not a directory.");
-        }
-
-        final File[] files = BootIOUtils.listFiles(folder, file -> file.getName().startsWith(prefix));
-
-        if (files.length != 1) {
-            throw new FileNotFoundException("Folder " + folderPath + " should contain exactly one jar that starts with " + prefix);
-        }
-
-        return files[0].getName();
     }
 
     /**
@@ -624,9 +600,9 @@ public class SystemConfig {
                         null);
         if (svcDesc == null) {
             ClasspathBuilder classpath = new ClasspathBuilder();
-            classpath.appendRequired(getLibRequiredFilter());
-            classpath.appendOptional("spring");
-            classpath.append(locations.libOptionalSecurity());
+            classpath.appendLibRequiredJars(ClassLoaderType.SERVICE);
+            classpath.appendOptionalJars("spring");
+            classpath.appendJars(locations.libOptionalSecurity());
 
             String gsaClasspath =
                     (String) config.getEntry(COMPONENT + ".gsa",
@@ -660,9 +636,9 @@ public class SystemConfig {
                         null);
         if (svcDesc == null) {
             ClasspathBuilder classpath = new ClasspathBuilder();
-            classpath.appendRequired(getLibRequiredFilter());
-            classpath.appendOptional("spring");
-            classpath.append(locations.libOptionalSecurity());
+            classpath.appendLibRequiredJars(ClassLoaderType.SERVICE);
+            classpath.appendOptionalJars("spring");
+            classpath.appendJars(locations.libOptionalSecurity());
 
             String gscClasspath =
                     (String) config.getEntry(COMPONENT + ".gsc",
@@ -699,10 +675,10 @@ public class SystemConfig {
         if (svcDesc == null) {
             // adding openspaces to GSM since it needs to know the PUServiceBean (for FDH for example)
             ClasspathBuilder classpath = new ClasspathBuilder();
-            classpath.appendRequired(getLibRequiredFilter());
-            classpath.appendOptional("spring");
-            classpath.append(locations.libOptionalSecurity());
-            classpath.append(XapModules.ADMIN);
+            classpath.appendLibRequiredJars(ClassLoaderType.SERVICE);
+            classpath.appendOptionalJars("spring");
+            classpath.appendJars(locations.libOptionalSecurity());
+            classpath.appendJar(XapModules.ADMIN);
 
             String gsmClasspath =
                     (String) config.getEntry(COMPONENT + ".gsm",
@@ -726,11 +702,6 @@ public class SystemConfig {
         return (svcDesc);
     }
 
-    private static FileFilter getLibRequiredFilter() {
-        return f -> (!f.getName().equals(XapModules.DATA_GRID.getJarFileName()) &&
-                !f.getName().equals(XapModules.CORE_REFLECTIONS_ASM.getJarFileName()));
-    }
-
     private ServiceDescriptor getESMServiceDescriptor()
             throws UnknownHostException, BindException, ConfigurationException {
 
@@ -741,11 +712,11 @@ public class SystemConfig {
                         null);
         if (svcDesc == null) {
             ClasspathBuilder classpath = new ClasspathBuilder();
-            classpath.appendRequired(getLibRequiredFilter());
-            classpath.appendPlatform("esm");
-            classpath.appendOptional("spring");
-            classpath.append(locations.libOptionalSecurity());
-            classpath.append(XapModules.ADMIN);
+            classpath.appendLibRequiredJars(ClassLoaderType.SERVICE);
+            classpath.appendPlatformJars("esm");
+            classpath.appendOptionalJars("spring");
+            classpath.appendJars(locations.libOptionalSecurity());
+            classpath.appendJar(XapModules.ADMIN);
 
             String esmClasspath =
                     (String) config.getEntry(COMPONENT + ".esm",

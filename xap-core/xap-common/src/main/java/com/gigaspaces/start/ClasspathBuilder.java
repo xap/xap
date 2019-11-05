@@ -16,18 +16,17 @@
 
 package com.gigaspaces.start;
 
-import com.gigaspaces.internal.io.BootIOUtils;
+import com.gigaspaces.internal.io.FileUtils;
 
 import java.io.File;
-import java.io.FileFilter;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.StringJoiner;
+import java.util.function.Predicate;
 
 /**
  * @author Niv Ingberg
@@ -35,110 +34,76 @@ import java.util.StringJoiner;
 @com.gigaspaces.api.InternalApi
 public class ClasspathBuilder {
 
-    private final List<File> files = new ArrayList<File>();
+    private static final SystemLocations locations = SystemLocations.singleton();
+    private static final Predicate<Path> jarsFilter = p -> p.getFileName().toString().toLowerCase().endsWith(".jar");
 
-    public ClasspathBuilder appendRequired() {
-        return appendRequired(null);
+    private final List<Path> files = new ArrayList<>();
+
+    public ClasspathBuilder appendAny(Path path) {
+        return append(path, p -> true);
     }
 
-    public ClasspathBuilder appendRequired(FileFilter filter) {
-        return append(SystemLocations.singleton().libRequired(), filter);
+    public ClasspathBuilder appendJars(Path path) {
+        return append(path, jarsFilter);
     }
 
-    public ClasspathBuilder appendPlatform(String path, String ... more) {
-        return append(SystemLocations.singleton().libPlatform().resolve(Paths.get(path, more)));
+    public ClasspathBuilder appendJars(Path path, Predicate<Path> filter) {
+        return append(path, jarsFilter.and(filter));
     }
 
-    public ClasspathBuilder appendOptional(String path) {
-        return appendOptional(path, null);
+    public ClasspathBuilder appendJar(XapModules module) {
+        return appendJars(locations.lib(module));
     }
 
-    public ClasspathBuilder appendOptional(String path, FileFilter filter) {
-        return append(SystemLocations.singleton().libOptional(path), filter);
+    public ClasspathBuilder appendLibRequiredJars(ClassLoaderType clType) {
+        for (Path path : locations.libRequired(clType))
+            appendJars(path);
+        return this;
     }
 
-    public ClasspathBuilder append(XapModules module) {
-        return append(SystemLocations.singleton().lib(module));
+    public ClasspathBuilder appendPlatformJars(String subpath) {
+        return appendJars(locations.libPlatform(subpath));
     }
 
-    public ClasspathBuilder append(Path path) {
-        return append(path, null);
+    public ClasspathBuilder appendOptionalJars(String subpath) {
+        return appendJars(locations.libOptional(subpath));
     }
 
-    public ClasspathBuilder append(Path path, FileFilter filter) {
-        return append(path, filter, true);
-    }
-
-    public ClasspathBuilder append(Path path, FileFilter filter, boolean archivesOnly) {
-        filter = archivesOnly ? new JarFileFilter(filter) : filter;
-        File f = path.toFile();
-        if (f.isDirectory()) {
-            final File[] files = BootIOUtils.listFiles(f, filter);
-            for (File file : files)
-                this.files.add(file);
+    private ClasspathBuilder append(Path path, Predicate<Path> filter) {
+        if (Files.isDirectory(path)) {
+            try {
+                FileUtils.forEach(path, filter, files::add);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to append files from " + path, e);
+            }
         } else {
-            if (filter == null || filter.accept(f))
-                files.add(f);
+            if (filter.test(path))
+                files.add(path);
         }
         return this;
     }
 
     public List<URL> toURLs() throws MalformedURLException {
-        List<URL> result = new ArrayList<URL>();
-        for (File file : files)
-            result.add(file.toURI().toURL());
+        List<URL> result = new ArrayList<>();
+        for (Path path : files)
+            result.add(path.toFile().toURI().toURL());
         return result;
     }
 
     public URL[] toURLsArray() throws MalformedURLException {
         List<URL> urls = toURLs();
-        return urls.toArray(new URL[urls.size()]);
+        return urls.toArray(new URL[0]);
     }
 
     public List<String> toFilesNames() {
-        List<String> result = new ArrayList<String>();
-        for (File file : files)
-            result.add(file.getAbsolutePath());
+        List<String> result = new ArrayList<>();
+        for (Path path : files)
+            result.add(path.toAbsolutePath().toString());
         return result;
     }
 
     @Override
     public String toString() {
         return String.join(File.pathSeparator, toFilesNames());
-    }
-
-    private static class JarFileFilter implements FileFilter {
-
-        private final FileFilter secondaryFilter;
-
-        private JarFileFilter(FileFilter secondaryFilter) {
-            this.secondaryFilter = secondaryFilter;
-        }
-
-        @Override
-        public boolean accept(File pathname) {
-            String filename = pathname.getName().toLowerCase();
-            if (filename.endsWith(".jar") || filename.endsWith(".zip")) {
-                return secondaryFilter != null ? secondaryFilter.accept(pathname) : true;
-            } else {
-                return false;
-            }
-        }
-    }
-
-    private static String path(String base, String subdir) {
-        return base + File.separator + subdir;
-    }
-
-    public static FileFilter startsWithFilter(final String... prefix) {
-        return new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                for (String p : prefix)
-                    if (file.getName().startsWith(p))
-                        return true;
-                return false;
-            }
-        };
     }
 }

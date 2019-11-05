@@ -15,10 +15,7 @@
  */
 package com.gigaspaces.internal.services;
 
-import com.gigaspaces.start.ClasspathBuilder;
-import com.gigaspaces.start.SystemInfo;
-import com.gigaspaces.start.SystemLocations;
-import com.gigaspaces.start.XapModules;
+import com.gigaspaces.start.*;
 
 /**
  * @author Niv Ingberg
@@ -37,17 +34,17 @@ public class RestServiceFactory extends ServiceFactory {
 
     @Override
     protected void initializeClasspath(ClasspathBuilder classpath) {
-        classpath.append(XapModules.ADMIN)
-                .append(XapModules.SERVICE_GRID)
-                .append(SystemLocations.singleton().libOptionalSecurity(), null, false)
-                .appendPlatform("scala")
-                // Required jars: spring-context-*, spring-beans-*, spring-core-*, spring-jcl-*, xap-datagrid, xap-asm, xap-trove
-                .appendRequired(ClasspathBuilder.startsWithFilter("slf4j-", "spring-", "xap-datagrid", "xap-openspaces", "xap-asm", "xap-trove", "xap-premium-common"))
-                .appendOptional("jetty")
-                .appendOptional("jetty/xap-jetty")
-                .appendOptional("jackson")
-                .appendOptional("metrics")
-                .appendOptional("jdbc");
+        classpath.appendJar(XapModules.ADMIN)
+                .appendJar(XapModules.SERVICE_GRID)
+                .appendAny(SystemLocations.singleton().libOptionalSecurity())
+                .appendPlatformJars("scala")
+                .appendLibRequiredJars(ClassLoaderType.COMMON)
+                .appendLibRequiredJars(ClassLoaderType.SERVICE)
+                .appendOptionalJars("jetty")
+                .appendOptionalJars("jetty/xap-jetty")
+                .appendOptionalJars("jackson")
+                .appendOptionalJars("metrics")
+                .appendOptionalJars("jdbc");
 
     }
 }

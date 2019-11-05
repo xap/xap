@@ -18,10 +18,14 @@ package com.gigaspaces.internal.io;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Niv Ingberg
@@ -53,13 +57,27 @@ public class FileUtils {
         return fileOrDirectory.delete();
     }
 
-    public static void copyFile(File sourceFile, File destFile) throws IOException {
-        try (FileInputStream fileInputStream = new FileInputStream(sourceFile);
-             FileChannel sourceChannel = fileInputStream.getChannel();
-             FileOutputStream fileOutputStream = new FileOutputStream(destFile);
-             FileChannel destChannel = fileOutputStream.getChannel()) {
+    public static Collection<Path> list(Path p) throws IOException {
+        try (Stream<Path> stream = Files.list(p)) {
+            return stream.collect(Collectors.toList());
+        }
+    }
 
-            destChannel.transferFrom(sourceChannel, 0, sourceChannel.size());
+    public static Collection<Path> list(Path p, Predicate<Path> filter) throws IOException {
+        try (Stream<Path> stream = Files.list(p)) {
+            return stream.filter(filter).collect(Collectors.toList());
+        }
+    }
+
+    public static void forEach(Path p, Consumer<Path> consumer) throws IOException {
+        try (Stream<Path> stream = Files.list(p)) {
+            stream.forEach(consumer);
+        }
+    }
+
+    public static void forEach(Path p, Predicate<Path> filter, Consumer<Path> consumer) throws IOException {
+        try (Stream<Path> stream = Files.list(p)) {
+            stream.filter(filter).forEach(consumer);
         }
     }
 }

@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Niv Ingberg
@@ -47,37 +48,18 @@ public enum XapModules {
     WAN_SPRING("optional/wan-gateway/xap-wan-gateway-spring.jar", ClassLoaderType.SERVICE),
     ADMIN("platform/service-grid/xap-admin.jar", ClassLoaderType.SERVICE);
 
-    private static final Collection<XapModules> REQUIRED_NON_SERVICE_CL_MODULES = initRequiredNonServiceModules();
-
-    private static Collection<XapModules> initRequiredNonServiceModules() {
-        ArrayList<XapModules> result = new ArrayList<XapModules>();
-        for (XapModules module : XapModules.values()) {
-            if (module.getClassLoaderType() != ClassLoaderType.SERVICE && module.getJarFilePath().startsWith("required"))
-                result.add(module);
-        }
-        return result;
-    }
-
-    public static Collection<XapModules> getByClassLoaderType(ClassLoaderType classLoaderType) {
-        ArrayList<XapModules> result = new ArrayList<XapModules>();
-        for (XapModules module : XapModules.values()) {
-            if (module.getClassLoaderType().equals(classLoaderType))
-                result.add(module);
-        }
-
-        return result;
-    }
-
     private final String artifactName;
     private final String jarFileName;
     private final Path jarFilePath;
     private final ClassLoaderType classLoaderType;
+    private final boolean required;
 
     XapModules(String path, ClassLoaderType classLoaderType) {
         this.classLoaderType = classLoaderType;
         this.jarFilePath = Paths.get(path);
         this.jarFileName = this.jarFilePath.getFileName().toString();
         this.artifactName = this.jarFileName.substring(0, this.jarFileName.lastIndexOf('.'));
+        this.required = path.startsWith("required/");
     }
 
     public String getArtifactName() {
@@ -96,13 +78,32 @@ public enum XapModules {
         return classLoaderType;
     }
 
-    public static boolean isRequiredCommonOrBoot(String filename) {
-        // NOTE: this code intentionally uses startsWith and not equals,
-        // because when maven is used filename includes version info.
-        for (XapModules module : REQUIRED_NON_SERVICE_CL_MODULES) {
-            if (filename.startsWith(module.artifactName))
-                return true;
+    public boolean isRequired() {
+        return required;
+    }
+
+    public static Collection<XapModules> getByClassLoaderType(ClassLoaderType classLoaderType) {
+        ArrayList<XapModules> result = new ArrayList<>();
+        for (XapModules module : XapModules.values()) {
+            if (module.classLoaderType.equals(classLoaderType))
+                result.add(module);
         }
-        return false;
+
+        return result;
+    }
+
+    private static final Collection<XapModules> requiredModules = initRequiredModules();
+
+    public static Collection<XapModules> getRequiredModules() {
+        return requiredModules;
+    }
+
+    private static Collection<XapModules> initRequiredModules() {
+        List<XapModules> result = new ArrayList<>();
+        for (XapModules module : values())
+            if (module.isRequired())
+                result.add(module);
+
+        return result;
     }
 }
