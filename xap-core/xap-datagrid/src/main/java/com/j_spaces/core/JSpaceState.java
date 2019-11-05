@@ -161,4 +161,8 @@ public class JSpaceState implements ISpaceState, Serializable {
     public boolean isStopped() {
         return state == STOPPED;
     }
+
+    public boolean isStarted() {
+        return state == STARTED;
+    }
 }

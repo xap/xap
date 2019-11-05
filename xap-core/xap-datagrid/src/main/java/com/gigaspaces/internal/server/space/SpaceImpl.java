@@ -690,7 +690,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     private void assertReady() throws Exception{
         /** Checks that the space is ready. */
-        if(_spaceState.getState() != ISpaceState.STARTED){
+        if(!_spaceState.isStarted()){
             throw new Exception("Space is NOT ready yet");
         }
     }
