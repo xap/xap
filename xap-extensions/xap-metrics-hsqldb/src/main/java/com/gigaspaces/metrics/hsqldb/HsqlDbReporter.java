@@ -56,6 +56,19 @@ public class HsqlDbReporter extends MetricReporter {
         super.close();
     }
 
+
+    @Override
+    public void report(List<MetricRegistrySnapshot> snapshots) {
+        Connection con = connectionWrapper.getOrCreateConnection();
+        if (con == null) {
+            if (!connectionWrapper.isSilent())
+                _logger.warn("Report skipped - connection is not available yet");
+            return;
+        }
+
+        super.report(snapshots);
+    }
+
     @Override
     protected void report(MetricRegistrySnapshot snapshot, MetricTagsSnapshot tags, String key, Object value) {
         final String tableName = getTableName(key);
@@ -94,10 +107,19 @@ public class HsqlDbReporter extends MetricReporter {
                 _logger.error("Failed to insert row [{}] using values [{}] and value [{}]" , insertSQL,
                               Arrays.toString(values.toArray(new Object[0])), value, e);
             }
+        } catch (SQLTransientConnectionException e){
+            _logger.warn("Failed to insert row [{}] using values [{}] and value [{}], resetting connection...", insertSQL,
+                    Arrays.toString(values.toArray(new Object[0])), value, e);
+           handleConnectionError(con);
         } catch (SQLException e) {
             _logger.error("Failed to insert row [{}] using values [{}] and value [{}]", insertSQL,
                           Arrays.toString(values.toArray(new Object[0])), value, e);
         }
+    }
+
+    private void handleConnectionError(Connection connection) {
+        connectionWrapper.resetConnection(connection);
+        _preparedStatements.clear();
     }
 
     private PreparedStatement getOrCreatePreparedStatement(String sql, Connection connection) throws SQLException {

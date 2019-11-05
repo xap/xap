@@ -77,6 +77,21 @@ public class SharedJdbcConnectionWrapper implements Closeable {
         return connection;
     }
 
+    public void resetConnection(Connection conn) {
+        if (conn == connection) {
+            synchronized (connectionLock) {
+                if (conn == connection) {
+                    try {
+                        connection.close();
+                    } catch (SQLException e) {
+                        logger.warn("Failed closing connection", e);
+                    }
+                    connection = null;
+                }
+            }
+        }
+    }
+
     public boolean isSilent() {
         return connectionLogger.isInitialTimerActive();
     }
