@@ -41,6 +41,10 @@ public class GSThreadFactory implements ThreadFactory {
         this.daemonThreads = daemonThreads;
     }
 
+    public static GSThreadFactory daemon(String name) {
+        return new GSThreadFactory(name, true);
+    }
+
     public Thread newThread(Runnable r) {
         GSThread t = threadsName != null ? new GSThread(r, threadsName) : new GSThread(r);
         t.setDaemon(daemonThreads);
