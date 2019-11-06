@@ -35,7 +35,7 @@ import java.util.function.Predicate;
 public class ClasspathBuilder {
 
     private static final SystemLocations locations = SystemLocations.singleton();
-    private static final Predicate<Path> jarsFilter = FileUtils.Filters.nameEndsWith(".jar");
+    private static final Predicate<Path> jarsFilter = FileUtils.Filters.jarFiles();
 
     private final List<Path> files = new ArrayList<>();
 

@@ -97,5 +97,9 @@ public class FileUtils {
         public static Predicate<Path> nameContains(String s) {
             return p -> p.getFileName().toString().contains(s);
         }
+
+        public static Predicate<Path> jarFiles() {
+            return nameEndsWith(".jar");
+        }
     }
 }
