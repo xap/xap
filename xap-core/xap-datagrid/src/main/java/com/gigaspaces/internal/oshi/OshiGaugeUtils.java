@@ -9,8 +9,6 @@ import oshi.hardware.GlobalMemory;
 import oshi.hardware.VirtualMemory;
 import oshi.software.os.OSProcess;
 
-import java.util.concurrent.TimeUnit;
-
 public class OshiGaugeUtils {
 
     public final static SystemInfo oshiSystemInfo = OshiChecker.getSystemInfo();
@@ -33,8 +31,7 @@ public class OshiGaugeUtils {
                 long[] newCpuTicks = processor.getSystemCpuLoadTicks();
                 double systemCpuLoadBetweenTicks = OshiUtils.getSystemCpuLoadBetweenTicks(oldCpuTicks,newCpuTicks);
                 oldCpuTicks = newCpuTicks;
-
-                return systemCpuLoadBetweenTicks;
+                return systemCpuLoadBetweenTicks*100d;
             }
         };
     }
