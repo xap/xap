@@ -48,7 +48,7 @@ public class SystemLocations {
         this.home = initHome();
         this.homeFwdSlash = initHomeFwdSlash(home);
         this.xapNetHome = fromSystemProperty("com.gs.xapnet.home", null);
-        this.bin = xapNetHome != null ? xapNetHome : home.resolve("bin");
+        this.bin = xapNetHome != null ? xapNetHome.resolve("bin") : home.resolve("bin");
         this.config = home.resolve("config");
         this.lib = fromSystemProperty("com.gigaspaces.lib", home.resolve("lib"));
         this.libRequired = fromSystemProperty("com.gigaspaces.lib.required", lib.resolve("required"));
