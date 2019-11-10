@@ -480,7 +480,7 @@ public class SystemConfig {
             int httpPort = (Integer) config.getEntry(COMPONENT, "httpPort", int.class, 0);
 
             //override with sys. property -Dcom.gigaspaces.start.httpPort
-            httpPort = GsEnv.getOrSystemProperty("WEBSTER_HTTP_PORT", COMPONENT + ".httpPort", httpPort);
+            httpPort = GsEnv.getSystemPropertyOrEnv("WEBSTER_HTTP_PORT", COMPONENT + ".httpPort", httpPort);
 
             int httpServerRetries = (Integer) config.getEntry(COMPONENT, "httpServerRetries",
                     Integer.class, DEFAULT_PORT_RETRIES);

@@ -69,12 +69,15 @@ public class GsEnv {
         return result;
     }
 
-    public static String getOrSystemProperty(String key, String propertyKey, String defaultValue){
-        return getOrElse(key,() -> System.getProperty(propertyKey, defaultValue));
+    public static String getSystemPropertyOrEnv(String key, String propertyKey, String defaultValue){
+        String result = System.getProperty(propertyKey);
+        return result != null ?
+                result :
+                get(key,defaultValue);
     }
 
-    public static int getOrSystemProperty(String key, String propertyKey, int defaultValue){
-        String result = getOrSystemProperty(key, propertyKey, null);
+    public static int getSystemPropertyOrEnv(String key, String propertyKey, int defaultValue){
+        String result = getSystemPropertyOrEnv(key, propertyKey, null);
 
         return result != null ?
                 Integer.parseInt(result) :

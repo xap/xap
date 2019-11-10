@@ -66,8 +66,8 @@ public class WebLauncherConfig {
         this.webuiHome = System.getProperty("com.gigaspaces.webui.path", SystemLocations.singleton().home("tools", "gs-webui").toString());
         this.name = props.getProperty("name", System.getProperty("org.openspaces.launcher.name", "GS Web UI"));
         this.loggerName = props.getProperty("logger", System.getProperty("org.openspaces.launcher.logger", "org.openspaces.launcher"));
-        this.port = GsEnv.getOrSystemProperty("WEBUI_PORT", "org.openspaces.launcher.port", 8099);
-        this.hostAddress = GsEnv.getOrSystemProperty("BIND_ADDRESS", "org.openspaces.launcher.bind-address", "0.0.0.0");
+        this.port = GsEnv.getSystemPropertyOrEnv("WEBUI_PORT", "org.openspaces.launcher.port", 8099);
+        this.hostAddress = GsEnv.getSystemPropertyOrEnv("BIND_ADDRESS", "org.openspaces.launcher.bind-address", "0.0.0.0");
         this.warFilePath = props.getProperty("path", System.getProperty("org.openspaces.launcher.path", webuiHome));
         this.tempDirPath = props.getProperty("work", System.getProperty("org.openspaces.launcher.work", webuiHome + "/work"));
         this.sslKeyManagerPassword = props.getProperty(SecurityConstants.KEY_SSL_KEY_MANAGER_PASSWORD);
