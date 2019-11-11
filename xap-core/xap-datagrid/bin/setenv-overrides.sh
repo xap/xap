@@ -1,18 +1,17 @@
+## *******************************************************************************************************
+## * Use this script to override default GigaSpaces settings using environment variables.                *
+## * For more information see https://docs.gigaspaces.com/15.0/started/common-environment-variables.html *
+## *******************************************************************************************************
 
-## **********************************************************************************************************
-##  Use this script to override default settings in the setenv.sh script.                                   *
-##  The setenv script is used to initialize common environment to GigaSpaces XAP Server.                    *
-##  The setenv script calls this script to allow overriding those settings easily.                          *
-##  For more information see https://docs.gigaspaces.com/15.0/started/common-environment-variables.html     *
-## **********************************************************************************************************
-
-## Here are some environment variables which are commonly modified:
-## export JAVA_HOME=...
-## export GS_LOOKUP_GROUPS=...
-## export GS_LOOKUP_LOCATORS=...
-## export GS_MANAGER_SERVERS=...
-## export GS_NIC_ADDRESS=...
-## export GS_PUBLIC_HOST=...
-## export GS_OPTIONS_EXT=...
-## export GS_CLASSPATH_EXT=...
-## export GS_LIBRARY_PATH_EXT=...
+## The directory in which Java is installed
+# export JAVA_HOME=
+## Extra java options and system properties to be used by GigaSpaces
+# export GS_OPTIONS_EXT=
+## Extra classpath to be used by GigaSpaces
+# export GS_CLASSPATH_EXT=
+## The network interface card / host name / host address that will be used by GigaSpaces (defaults to hostname)
+# export GS_NIC_ADDRESS=
+## Lookup groups used for multicast discovery (defaults to version identifier)
+# export GS_LOOKUP_GROUPS=
+## Lookup locators used for unicast discovery
+# export GS_LOOKUP_LOCATORS=
