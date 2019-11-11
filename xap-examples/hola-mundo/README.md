@@ -146,7 +146,7 @@ Each partition instance can configured as follows:
 
 Use Maven to compile and package the example (e.g. `mvn clean package`).
 
-This will create the processing unit jars that can be referenced by `xap pu run`
+This will create the processing unit jars that can be referenced by `gs.(sh|bat) pu run`
 
 From the ${GS_HOME}/bin directory, run:
 
