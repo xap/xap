@@ -37,7 +37,7 @@ read - ['Hello', 'World!']
 
 ## Running the Example - Remote
 
-To connect to a *remote* data-grid, first use the `xap space run` script to launch a data-grid.
+To connect to a *remote* data-grid, first use the `gs.(sh|bat) space run` script to launch a data-grid.
 
 From the ${GS_HOME}/bin directory, run:
 
@@ -45,7 +45,8 @@ From the ${GS_HOME}/bin directory, run:
 
 Import Maven `examples/hello-world/pom.xml` into your IDE of choice as a maven project.
 Launch the `HelloWorld` main (arguments: `-name` myDataGrid `-mode` remote)
-> use `myDataGrid` same as the argument passed to `xap space run`
+
+This will connect your  client to your remote data-grid followed by write and read of Message entities.
 
 ### output
 ```
@@ -57,6 +58,12 @@ read - ['Hello', 'World!']
 
 ![helloworld-1r](images/remote.png)
 
+## Stopping the data grid
+
+Before deploying a new data grid we need to stop the previous one.
+
+`ctrl+c`
+
 ## Running the Example - Remote (with 2 partitions)
 
 Each partition instance is loaded separately, as follows:
@@ -64,7 +71,7 @@ Each partition instance is loaded separately, as follows:
 1. Specify `--partitions=2` for two partitions
 2. Specify `--instances=1_1` or `--instances=2_1` for each partition instance
 
-From the ${GS_HOME}/bin directory, run:
+From the ${GS_HOME}/bin directory, run (in 2 seperate terminals):
 
 -  gs.(sh|bat) space run --lus --partitions=2 **--instances=1_1** myDataGrid
 -  gs.(sh|bat) space run --lus --partitions=2 **--instances=2_1** myDataGrid
