@@ -23,6 +23,7 @@ import java.util.stream.Stream;
  * @author Niv Ingberg
  * @since 14.5
  */
+
 public class CsvReader {
 
     private final Charset charset;
