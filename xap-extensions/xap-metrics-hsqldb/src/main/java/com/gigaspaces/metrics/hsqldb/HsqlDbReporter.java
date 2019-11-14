@@ -107,7 +107,7 @@ public class HsqlDbReporter extends MetricReporter {
                 _logger.error("Failed to insert row [{}] using values [{}] and value [{}]" , insertSQL,
                               Arrays.toString(values.toArray(new Object[0])), value, e);
             }
-        } catch (SQLTransientConnectionException e){
+        } catch (SQLTransientConnectionException | SQLNonTransientConnectionException e){
             _logger.warn("Failed to insert row [{}] using values [{}] and value [{}], resetting connection...", insertSQL,
                     Arrays.toString(values.toArray(new Object[0])), value, e);
            handleConnectionError(con);
