@@ -3,6 +3,7 @@ package com.gigaspaces.internal.utils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class GsEnv {
@@ -69,19 +70,74 @@ public class GsEnv {
         return result;
     }
 
-    public static String getSystemPropertyOrEnv(String key, String propertyKey, String defaultValue){
-        String result = System.getProperty(propertyKey);
-        return result != null ?
-                result :
-                get(key,defaultValue);
+    public static GsEnvProperty<String> property(String systemProperty) {
+        return property(systemProperty, toEnvKey(systemProperty));
     }
 
-    public static int getSystemPropertyOrEnv(String key, String propertyKey, int defaultValue){
-        String result = getSystemPropertyOrEnv(key, propertyKey, null);
-
-        return result != null ?
-                Integer.parseInt(result) :
-                defaultValue;
+    public static GsEnvProperty<String> property(String systemProperty, String envKey) {
+        return new GsEnvProperty<>(systemProperty, envKey, s -> s);
     }
 
+    public static GsEnvProperty<Integer> propertyInt(String systemProperty) {
+        return propertyInt(systemProperty, toEnvKey(systemProperty));
+    }
+
+    public static GsEnvProperty<Integer> propertyInt(String systemProperty, String envKey) {
+        return new GsEnvProperty<>(systemProperty, envKey, Integer::parseInt);
+    }
+
+    private static String toEnvKey(String key) {
+        final String[] prefixes = new String[] {"com.gs.", "com.gigaspaces."};
+        for (String prefix : prefixes) {
+            if (key.startsWith(prefix)) {
+                key = key.substring(prefix.length());
+                break;
+            }
+        }
+        return key.toUpperCase().replace('.', '_').replace('-', '_');
+    }
+
+    public static class GsEnvProperty<T> {
+        private final String sysProp;
+        private final String envKey;
+        private final Function<String, T> parser;
+        private T defaultValue;
+
+        private GsEnvProperty(String sysProp, String envKey, Function<String, T> parser) {
+            this.sysProp = sysProp;
+            this.envKey = envKey;
+            this.parser = parser;
+        }
+
+        public GsEnvProperty<T> withDefault(T defaultValue) {
+            this.defaultValue = defaultValue;
+            return this;
+        }
+
+        public String name() {
+            return sysProp;
+        }
+
+        public T get() {
+            return get(defaultValue);
+        }
+
+        public T get(T defaultValue) {
+            String result = System.getProperty(sysProp);
+            if (result == null)
+                result = GsEnv.get(envKey);
+            return result != null ? parser.apply(result) : defaultValue;
+        }
+
+        public void set(T value) {
+            if (value != null)
+                System.setProperty(sysProp, value.toString());
+            else
+                clear();
+        }
+
+        public void clear() {
+            System.clearProperty(sysProp);
+        }
+    }
 }
