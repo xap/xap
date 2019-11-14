@@ -258,11 +258,17 @@ public class HsqlDbReporter extends MetricReporter {
             columns.add(k);
             parameters.add("?");
             values.add(v);
+            if( v == null ){
+                _logger.warn( "Null [{}] value using while inserting row into table {}", k, tableName );
+            }
         });
 
         columns.add("VALUE");
         parameters.add("?");
         values.add(value);
+        if( value == null ) {
+            _logger.warn("Null VALUE using while inserting row into table {}", tableName);
+        }
 
         String result = "INSERT INTO " + tableName + " (" + columns + ") VALUES (" + parameters + ")";
         _logger.debug("Generated insert query: {}", result);
