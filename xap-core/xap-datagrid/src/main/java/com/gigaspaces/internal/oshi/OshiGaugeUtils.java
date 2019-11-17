@@ -8,6 +8,7 @@ import oshi.hardware.CentralProcessor;
 import oshi.hardware.GlobalMemory;
 import oshi.hardware.VirtualMemory;
 import oshi.software.os.OSProcess;
+import oshi.software.os.OperatingSystem;
 
 public class OshiGaugeUtils {
 
@@ -15,12 +16,9 @@ public class OshiGaugeUtils {
     public final static CentralProcessor processor = oshiSystemInfo.getHardware().getProcessor();
     public final static GlobalMemory memory = oshiSystemInfo.getHardware().getMemory();
     public final static VirtualMemory virtualMemory = memory.getVirtualMemory();
-    public final static int pid = oshiSystemInfo.getOperatingSystem().getProcessId();
-    public final static OSProcess osProcess = oshiSystemInfo.getOperatingSystem().getProcess(pid);
-
-    public static long previousCpuTime;
-    public static long previousCpuTotal;
-    public static double previousCpuPerc;
+    public final static OperatingSystem operatingSystem = oshiSystemInfo.getOperatingSystem();
+    public final static int pid = operatingSystem.getProcessId();
+    public final static OSProcess osProcess = operatingSystem.getProcess(pid);
 
     public static Gauge<Double> getCpuPercGauge() {
         return new Gauge<Double>() {
@@ -192,11 +190,17 @@ public class OshiGaugeUtils {
     }
 
     public static Gauge<Double> createProcessUsedCpuInPercentGauge() {
+
         return new Gauge<Double>() {
+
+            public long previousCpuTime;
+            public long previousCpuTotal;
+            public double previousCpuPerc;
+
             @Override
             public Double getValue() throws Exception {
 
-                OSProcess osProcessLocal = oshiSystemInfo.getOperatingSystem().getProcess(pid);
+                OSProcess osProcessLocal = operatingSystem.getProcess(pid);
                 long currentCpuTime = System.currentTimeMillis();
                 long currentCpuTotal = osProcessLocal.getKernelTime() + osProcessLocal.getUserTime();
 
@@ -205,8 +209,8 @@ public class OshiGaugeUtils {
                 long timeDelta = currentCpuTime - previousCpuTime;
                 long totalDelta = currentCpuTotal - previousCpuTotal;
 
-                if( timeDelta > 0 && totalDelta > 0 && totalDelta < timeDelta ) {
-                    cpuPerc = ((double) totalDelta) / timeDelta;
+                if( timeDelta > 0 && totalDelta >= 0 ) {
+                    cpuPerc = Math.min ( ((double) totalDelta) / timeDelta, 1.0 );
                 }
 
                 previousCpuTime = currentCpuTime;
@@ -217,5 +221,4 @@ public class OshiGaugeUtils {
             }
         };
     }
-
 }
