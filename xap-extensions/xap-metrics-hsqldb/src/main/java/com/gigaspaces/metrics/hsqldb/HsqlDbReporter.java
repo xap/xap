@@ -195,7 +195,7 @@ public class HsqlDbReporter extends MetricReporter {
         try (Statement statement = con.createStatement()) {
             String sqlCreateTable = generateCreateTableQuery(tableName, value, tags);
             statement.executeUpdate(sqlCreateTable);
-            _logger.info("Table [{}] successfully created", tableName);
+            _logger.debug("Table [{}] successfully created", tableName);
 
             String sqlCreateIndex = generateCreateIndexQuery(tableName);
             statement.executeUpdate(sqlCreateIndex);
