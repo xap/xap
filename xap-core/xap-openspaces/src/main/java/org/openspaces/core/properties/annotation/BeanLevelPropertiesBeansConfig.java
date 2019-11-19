@@ -23,26 +23,43 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.PropertiesPropertySource;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 
 /**
  * @author Niv Ingberg
  * @since 15.0
  */
 @Configuration
-@PropertySource("classpath:service.properties")
+@PropertySource(value = "classpath:service.properties", ignoreResourceNotFound = true)
 public class BeanLevelPropertiesBeansConfig {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+    private static final Logger logger = LoggerFactory.getLogger(BeanLevelPropertiesBeansConfig.class);
 
     @BeanLevelPropertiesContext
     private BeanLevelProperties beanLevelProperties;
 
+    @Resource
+    private Environment environment;
+
+    @PostConstruct
+    public void initialize() {
+        logger.info("*** initialize");
+        if (beanLevelProperties == null) {
+            logger.info("beanLevelProperties is null");
+        } else if (environment instanceof ConfigurableEnvironment) {
+            ((ConfigurableEnvironment)environment).getPropertySources()
+                    .addFirst(new PropertiesPropertySource("beanLevelProperties", beanLevelProperties.getContextProperties()));
+            ((ConfigurableEnvironment) environment).getPropertySources().iterator().forEachRemaining(ps -> logger.info("propertySource: " + ps.getName()));
+        }
+    }
+
     @Bean("internal-propertySourcesPlaceholderConfigurer")
-    PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+    static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
         logger.info("*** propertySourcesPlaceholderConfigurer");
-        PropertySourcesPlaceholderConfigurer result = new PropertySourcesPlaceholderConfigurer();
-        result.setLocalOverride(true);
-        if (beanLevelProperties != null)
-            result.setProperties(beanLevelProperties.getContextProperties());
-        return result;
+        return new PropertySourcesPlaceholderConfigurer();
     }
 }

@@ -35,7 +35,7 @@ import javax.annotation.Resource;
  */
 @Configuration
 public abstract class AbstractSpaceBeansConfig {
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final String spaceFactoryBeanName = "space";
     private final String gigaSpaceFactoryBeanName = "gigaSpace";
     private final String transactionManagerBeanName = "txn-manager";

@@ -17,11 +17,14 @@
 package org.jini.rio.boot;
 
 import com.gigaspaces.classloader.CustomURLClassLoader;
+import com.gigaspaces.start.ClasspathBuilder;
 import net.jini.loader.ClassAnnotation;
 
 import java.lang.reflect.Field;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -115,6 +118,14 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
         }
 
         searchPath = searchList.toArray(new URL[searchList.size()]);
+    }
+
+    public void addURLs(ClasspathBuilder classpathBuilder) {
+        try {
+            addURLs(classpathBuilder.toURLs());
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Failed to add jars: " + classpathBuilder.toFilesNames(), e);
+        }
     }
 
     public synchronized void setLibPath(List<URL> urls) {
@@ -265,5 +276,15 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
 
     public void initCodeChangeClassLoadersManager(boolean supportCodeChange, int maxClassLoaders) {
         codeChangeClassLoadersManager = new CodeChangeClassLoadersManager(this, supportCodeChange, maxClassLoaders);
+    }
+
+    public static boolean appendIfContext(Supplier<ClasspathBuilder> classpathBuilderSupplier) {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader instanceof ServiceClassLoader) {
+            ((ServiceClassLoader) classLoader).addURLs(classpathBuilderSupplier.get());
+            return true;
+        } else {
+            return false;
+        }
     }
 }
