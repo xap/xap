@@ -173,5 +173,10 @@ public abstract class BlobStoreStorageHandler {
      */
     public void close() {
     }
+
+    public void assertPersistentSupported(){
+        throw new IllegalStateException(this.getClass().getSimpleName()+" does not support persistent=true ");
+    }
+
 }
 

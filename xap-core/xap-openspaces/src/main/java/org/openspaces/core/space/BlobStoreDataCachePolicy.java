@@ -118,6 +118,9 @@ public class BlobStoreDataCachePolicy implements CachePolicy {
         }
 
         if (blobStoreHandler != null) {
+            if(persistent){
+                blobStoreHandler.assertPersistentSupported();
+            }
             props.put(Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP, blobStoreHandler);
         } else {
             throw new BlobStoreException("blobStoreHandler attribute in Blobstore space must be configured");
