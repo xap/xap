@@ -6,7 +6,7 @@
 	   http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
     <!-- Note: description is used to infer processing unit type -->
-    <description>GigaSpaces Stateful Processing Unit</description>
+    <description>pu-type=stateful</description>
     <!-- Enable Spring annotation support -->
     <context:annotation-config/>
     <!-- Bootstrap service configuration -->

@@ -604,6 +604,16 @@ public abstract class StringUtils {
         return buf.toString();
     }
 
+    public static String extract(String s, String prefix, String suffix) {
+        final int beginIndex = s.indexOf(prefix);
+        if (beginIndex == -1)
+            return null;
+        final int endIndex = s.indexOf(suffix, beginIndex + prefix.length());
+        if (endIndex == -1)
+            return null;
+        return s.substring(beginIndex + prefix.length(), endIndex);
+    }
+
     public static Long parseStringAsBytes(String property) {
         return BootIOUtils.parseStringAsBytes(property);
     }
