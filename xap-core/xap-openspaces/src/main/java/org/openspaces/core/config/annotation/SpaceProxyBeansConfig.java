@@ -25,14 +25,12 @@ import org.openspaces.core.space.SpaceProxyFactoryBean;
 public class SpaceProxyBeansConfig extends AbstractSpaceBeansConfig {
     @Override
     protected AbstractSpaceFactoryBean createSpaceFactoryBean() {
-        logger.info("*** spaceFactoryBean spaceName={}", getSpaceName());
         SpaceProxyFactoryBean factoryBean = new SpaceProxyFactoryBean();
         configure(factoryBean);
         return factoryBean;
     }
 
     protected void configure(SpaceProxyFactoryBean factoryBean) {
-        logger.info("*** configure(SpaceProxyFactoryBean)");
         factoryBean.setSpaceName(getSpaceName());
     }
 }

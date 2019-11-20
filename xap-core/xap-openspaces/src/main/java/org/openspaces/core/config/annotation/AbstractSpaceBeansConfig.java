@@ -19,8 +19,6 @@ import com.j_spaces.core.IJSpace;
 import org.openspaces.core.GigaSpaceFactoryBean;
 import org.openspaces.core.space.AbstractSpaceFactoryBean;
 import org.openspaces.core.transaction.manager.DistributedJiniTransactionManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -36,7 +34,6 @@ import javax.annotation.Resource;
  */
 @Configuration
 public abstract class AbstractSpaceBeansConfig {
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final String spaceFactoryBeanName = "space";
     private final String gigaSpaceFactoryBeanName = "gigaSpace";
     private final String transactionManagerBeanName = "txn-manager";
@@ -55,7 +52,6 @@ public abstract class AbstractSpaceBeansConfig {
 
     @Bean(spaceFactoryBeanName)
     AbstractSpaceFactoryBean spaceFactoryBean() {
-        logger.info("*** spaceFactoryBean spaceName={}", getSpaceName());
         return createSpaceFactoryBean();
     }
 
@@ -63,14 +59,12 @@ public abstract class AbstractSpaceBeansConfig {
 
     @Bean(gigaSpaceFactoryBeanName)
     GigaSpaceFactoryBean gigaSpaceFactoryBean() {
-        logger.info("*** gigaSpaceFactoryBean spaceName={}", getSpaceName());
         GigaSpaceFactoryBean factoryBean = new GigaSpaceFactoryBean();
         configure(factoryBean);
         return factoryBean;
     }
 
     protected void configure(GigaSpaceFactoryBean factoryBean) {
-        logger.info("*** configure(GigaSpaceFactoryBean)");
         factoryBean.setSpace(applicationContext.getBean(spaceFactoryBeanName, IJSpace.class));
         if (transactional)
             factoryBean.setTransactionManager(applicationContext.getBean(transactionManagerBeanName, PlatformTransactionManager.class));
@@ -80,14 +74,12 @@ public abstract class AbstractSpaceBeansConfig {
     PlatformTransactionManager transactionManagerBean() {
         if (!transactional)
             return null;
-        logger.info("*** transactionManagerBean");
         DistributedJiniTransactionManager transactionManager = new DistributedJiniTransactionManager();
         configure(transactionManager);
         return transactionManager;
     }
 
     protected void configure(DistributedJiniTransactionManager transactionManager) {
-        logger.info("*** configure(DistributedJiniTransactionManager)");
     }
 
     protected String getSpaceName() {

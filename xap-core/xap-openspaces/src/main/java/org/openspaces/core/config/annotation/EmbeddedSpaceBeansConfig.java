@@ -49,14 +49,12 @@ public class EmbeddedSpaceBeansConfig extends AbstractSpaceBeansConfig {
 
     @Override
     protected AbstractSpaceFactoryBean createSpaceFactoryBean() {
-        logger.info("*** createSpaceFactoryBean spaceName={}", getSpaceName());
         EmbeddedSpaceFactoryBean factoryBean = new EmbeddedSpaceFactoryBean();
         configure(factoryBean);
         return factoryBean;
     }
 
     protected void configure(EmbeddedSpaceFactoryBean factoryBean) {
-        logger.info("*** configure(EmbeddedSpaceFactoryBean)");
         factoryBean.setSpaceName(getSpaceName());
         if (secured)
             factoryBean.setSecured(secured);

@@ -17,8 +17,6 @@ package org.openspaces.core.properties.annotation;
 
 import org.openspaces.core.properties.BeanLevelProperties;
 import org.openspaces.core.properties.BeanLevelPropertiesContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -37,7 +35,6 @@ import javax.annotation.Resource;
 @Configuration
 @PropertySource(value = "classpath:service.properties", ignoreResourceNotFound = true)
 public class BeanLevelPropertiesBeansConfig {
-    private static final Logger logger = LoggerFactory.getLogger(BeanLevelPropertiesBeansConfig.class);
 
     @BeanLevelPropertiesContext
     private BeanLevelProperties beanLevelProperties;
@@ -47,19 +44,14 @@ public class BeanLevelPropertiesBeansConfig {
 
     @PostConstruct
     public void initialize() {
-        logger.info("*** initialize");
-        if (beanLevelProperties == null) {
-            logger.info("beanLevelProperties is null");
-        } else if (environment instanceof ConfigurableEnvironment) {
+        if (beanLevelProperties != null && environment instanceof ConfigurableEnvironment) {
             ((ConfigurableEnvironment)environment).getPropertySources()
                     .addFirst(new PropertiesPropertySource("beanLevelProperties", beanLevelProperties.getContextProperties()));
-            ((ConfigurableEnvironment) environment).getPropertySources().iterator().forEachRemaining(ps -> logger.info("propertySource: " + ps.getName()));
         }
     }
 
     @Bean("internal-propertySourcesPlaceholderConfigurer")
     static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
-        logger.info("*** propertySourcesPlaceholderConfigurer");
         return new PropertySourcesPlaceholderConfigurer();
     }
 }
