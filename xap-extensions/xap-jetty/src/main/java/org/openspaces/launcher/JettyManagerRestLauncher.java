@@ -12,7 +12,6 @@ import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.server.handler.MovedContextHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.webapp.WebInfConfiguration;
@@ -158,9 +157,7 @@ public class JettyManagerRestLauncher implements Closeable {
             }
         };
 
-        WebAppContext defaultWebApp = null;
         File[] warFiles = webApps.listFiles(warFilesFilter);
-        sortDesc(warFiles);
 
         boolean isWorkLocationExist = workLocation.exists();
         if( !isWorkLocationExist ){
@@ -169,12 +166,10 @@ public class JettyManagerRestLauncher implements Closeable {
 
         for (File file : warFiles) {
             WebAppContext webApp = new WebAppContext();
-            webApp.setContextPath("/" + file.getName().replace(".war", ""));
+            webApp.setContextPath(getContextPath(file));
             webApp.setWar(file.getAbsolutePath());
             webApp.setThrowUnavailableOnStartupException(true);
             handler.addHandler(webApp);
-            if (defaultWebApp == null)
-                defaultWebApp = webApp;
 
             String webAppTmpDir = WebInfConfiguration.getCanonicalNameForWebAppTmpDir(webApp);
             try {
@@ -187,17 +182,13 @@ public class JettyManagerRestLauncher implements Closeable {
             }
         }
 
-        if (defaultWebApp != null) {
-            MovedContextHandler redirectHandler = new MovedContextHandler();
-            redirectHandler.setContextPath("/");
-            redirectHandler.setNewContextURL(defaultWebApp.getContextPath());
-            redirectHandler.setPermanent(true);
-            redirectHandler.setDiscardPathInfo(true);
-            redirectHandler.setDiscardQuery(true);
-            handler.addHandler(redirectHandler);
-        }
-
         server.setHandler(handler);
+    }
+
+    private String getContextPath(File file) {
+        return file.getName().equals("ui.war")
+                ? "/"
+                : "/" + file.getName().replace(".war", "");
     }
 
     private SslContextFactory createSslContextFactoryIfNeeded()
