@@ -5,6 +5,8 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 	   http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
+    <!-- Note: description is used to infer processing unit type -->
+    <description>GigaSpaces Stateful Processing Unit</description>
     <!-- Enable Spring annotation support -->
     <context:annotation-config/>
     <!-- Bootstrap service configuration -->
