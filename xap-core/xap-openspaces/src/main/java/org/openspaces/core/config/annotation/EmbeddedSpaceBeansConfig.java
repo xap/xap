@@ -85,7 +85,7 @@ public class EmbeddedSpaceBeansConfig extends AbstractSpaceBeansConfig {
                             .newInstance();
                     configurer.configure(factoryBean, propertyResolver);
                 } catch (ReflectiveOperationException e) {
-                    throw new RuntimeException("Failed to configure space using " + configurerClassName);
+                    throw new RuntimeException("Failed to configure space using " + configurerClassName, e);
                 }
             }
         }
