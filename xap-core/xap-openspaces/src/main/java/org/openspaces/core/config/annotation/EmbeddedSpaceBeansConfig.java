@@ -49,7 +49,7 @@ public class EmbeddedSpaceBeansConfig extends AbstractSpaceBeansConfig {
 
     @Override
     protected AbstractSpaceFactoryBean createSpaceFactoryBean() {
-        logger.info("*** createSpaceFactoryBean spaceName={}", spaceName);
+        logger.info("*** createSpaceFactoryBean spaceName={}", getSpaceName());
         EmbeddedSpaceFactoryBean factoryBean = new EmbeddedSpaceFactoryBean();
         configure(factoryBean);
         return factoryBean;
@@ -57,9 +57,11 @@ public class EmbeddedSpaceBeansConfig extends AbstractSpaceBeansConfig {
 
     protected void configure(EmbeddedSpaceFactoryBean factoryBean) {
         logger.info("*** configure(EmbeddedSpaceFactoryBean)");
-        factoryBean.setSpaceName(spaceName);
-        factoryBean.setSecured(secured);
-        factoryBean.setMirrored(mirrored);
+        factoryBean.setSpaceName(getSpaceName());
+        if (secured)
+            factoryBean.setSecured(secured);
+        if (mirrored)
+            factoryBean.setMirrored(mirrored);
         for (CustomConfigurer customConfigurer : customConfigurers) {
             customConfigurer.configureIfNeeded(factoryBean, environment);
         }

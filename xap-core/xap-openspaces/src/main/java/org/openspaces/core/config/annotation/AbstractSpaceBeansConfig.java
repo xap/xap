@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.annotation.Resource;
@@ -43,15 +44,18 @@ public abstract class AbstractSpaceBeansConfig {
     @Resource
     private ApplicationContext applicationContext;
 
-    @Value("${space.name}")
-    protected String spaceName;
+    @Resource
+    private Environment environment;
+
+    //@Value("${space.name}")
+    private String spaceName;
 
     @Value("${space.transactional:false}")
     private boolean transactional;
 
     @Bean(spaceFactoryBeanName)
     AbstractSpaceFactoryBean spaceFactoryBean() {
-        logger.info("*** spaceFactoryBean spaceName={}", spaceName);
+        logger.info("*** spaceFactoryBean spaceName={}", getSpaceName());
         return createSpaceFactoryBean();
     }
 
@@ -59,7 +63,7 @@ public abstract class AbstractSpaceBeansConfig {
 
     @Bean(gigaSpaceFactoryBeanName)
     GigaSpaceFactoryBean gigaSpaceFactoryBean() {
-        logger.info("*** gigaSpaceFactoryBean spaceName={}", spaceName);
+        logger.info("*** gigaSpaceFactoryBean spaceName={}", getSpaceName());
         GigaSpaceFactoryBean factoryBean = new GigaSpaceFactoryBean();
         configure(factoryBean);
         return factoryBean;
@@ -84,5 +88,14 @@ public abstract class AbstractSpaceBeansConfig {
 
     protected void configure(DistributedJiniTransactionManager transactionManager) {
         logger.info("*** configure(DistributedJiniTransactionManager)");
+    }
+
+    protected String getSpaceName() {
+        if (spaceName == null) {
+            spaceName = environment.containsProperty("space.name")
+                    ? environment.getProperty("space.name")
+                    : environment.getProperty("dataGridName");
+        }
+        return spaceName;
     }
 }
