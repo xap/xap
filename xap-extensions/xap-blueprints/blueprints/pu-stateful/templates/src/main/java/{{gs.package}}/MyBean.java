@@ -23,16 +23,12 @@ public class MyBean {
     @Value("${space.name}") // Injected by Spring
     private String spaceName;
 
-    @Resource
-    private ApplicationContext applicationContext;
-
     private String id;
 
     @PostConstruct
     public void initialize() {
         id = gigaSpace.getSpaceName() + "[" + (clusterInfo != null ? clusterInfo.getSuffix() : "non-clustered") + "]";
         logger.info("Initialized {}", id);
-        logger.info("spaceName={}, beans={}", spaceName, Arrays.toString(applicationContext.getBeanDefinitionNames()));
         // NOTE: This method is called for both primary and backup instances.
         // If you wish to do something for primaries only, see @SpaceStatusChanged
     }
