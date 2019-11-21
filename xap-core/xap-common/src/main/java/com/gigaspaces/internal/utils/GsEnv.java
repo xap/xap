@@ -1,5 +1,7 @@
 package com.gigaspaces.internal.utils;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -86,6 +88,14 @@ public class GsEnv {
         return new GsEnvProperty<>(systemProperty, envKey, Integer::parseInt);
     }
 
+    public static GsEnvProperty<Path> propertyPath(String systemProperty) {
+        return propertyPath(systemProperty, toEnvKey(systemProperty));
+    }
+
+    public static GsEnvProperty<Path> propertyPath(String systemProperty, String envKey) {
+        return new GsEnvProperty<>(systemProperty, envKey, Paths::get);
+    }
+
     private static String toEnvKey(String key) {
         final String[] prefixes = new String[] {"com.gs.", "com.gigaspaces."};
         for (String prefix : prefixes) {
@@ -127,6 +137,12 @@ public class GsEnv {
             if (result == null)
                 result = GsEnv.get(envKey);
             return result != null ? parser.apply(result) : defaultValue;
+        }
+
+        public T getAndInit(T defaultValue) {
+            T result = get(defaultValue);
+            set(result);
+            return defaultValue;
         }
 
         public void set(T value) {

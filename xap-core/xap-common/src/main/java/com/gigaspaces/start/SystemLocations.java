@@ -47,17 +47,17 @@ public class SystemLocations {
     private SystemLocations() {
         this.home = initHome();
         this.homeFwdSlash = initHomeFwdSlash(home);
-        this.xapNetHome = fromSystemProperty("com.gs.xapnet.home", null);
+        this.xapNetHome = GsEnv.propertyPath("com.gs.xapnet.home").get();
         this.bin = xapNetHome != null ? xapNetHome.resolve("bin") : home.resolve("bin");
         this.config = home.resolve("config");
-        this.lib = fromSystemProperty("com.gigaspaces.lib", home.resolve("lib"));
-        this.libRequired = fromSystemProperty("com.gigaspaces.lib.required", lib.resolve("required"));
-        this.libOptional = fromSystemProperty("com.gigaspaces.lib.opt", lib.resolve("optional"));
-        this.libOptionalSecurity = fromSystemProperty("com.gigaspaces.lib.opt.security", libOptional.resolve("security"));
-        this.libPlatform = fromSystemProperty("com.gigaspaces.lib.platform", lib.resolve("platform"));
-        this.libPlatformExt = fromSystemProperty("com.gigaspaces.lib.platform.ext", libPlatform.resolve("ext"));
-        this.work = fromSystemProperty("com.gs.work", home.resolve("work"), true);
-        this.deploy = fromSystemProperty("com.gs.deploy", home.resolve("deploy"), true);
+        this.lib = GsEnv.propertyPath("com.gigaspaces.lib").get(home.resolve("lib"));
+        this.libRequired = GsEnv.propertyPath("com.gigaspaces.lib.required").get(lib.resolve("required"));
+        this.libOptional = GsEnv.propertyPath("com.gigaspaces.lib.opt").get(lib.resolve("optional"));
+        this.libOptionalSecurity = GsEnv.propertyPath("com.gigaspaces.lib.opt.security").get(libOptional.resolve("security"));
+        this.libPlatform = GsEnv.propertyPath("com.gigaspaces.lib.platform").get(lib.resolve("platform"));
+        this.libPlatformExt = GsEnv.propertyPath("com.gigaspaces.lib.platform.ext").get(libPlatform.resolve("ext"));
+        this.work = GsEnv.propertyPath("com.gs.work").getAndInit(home.resolve("work"));
+        this.deploy = GsEnv.propertyPath("com.gs.deploy").getAndInit(home.resolve("deploy"));
         this.userProductHome = Paths.get(System.getProperty("user.home"), ".gigaspaces");
         this.sparkHome = fromEnvVar("SPARK_HOME", home.resolve("insightedge").resolve("spark"));
         System.setProperty("spark.home", sparkHome.toString());
@@ -127,19 +127,6 @@ public class SystemLocations {
     private static Path fromEnvVar(String key, Path defaultValue) {
         final String result = System.getenv(key);
         return result != null ? Paths.get(result) : defaultValue;
-    }
-
-    private static Path fromSystemProperty(String key, Path defaultValue) {
-        return fromSystemProperty(key, defaultValue, false);
-    }
-
-    private static Path fromSystemProperty(String key, Path defaultValue, boolean initSystemProperty) {
-        String result = System.getProperty(key);
-        if (result != null)
-            return Paths.get(result);
-        if (initSystemProperty)
-            System.setProperty(key, defaultValue.toString());
-        return defaultValue;
     }
 
     public Path home() {
