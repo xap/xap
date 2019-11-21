@@ -3,5 +3,6 @@ maven.artifactId=my-pu-stateful-xml
 maven.version=0.1
 java.version=1.8
 junit.version=4.12
+slf4j.version=1.7.26
 gs.package={{#gs.path}}{{maven.groupId}}{{/gs.path}}
 spaceName=demo
