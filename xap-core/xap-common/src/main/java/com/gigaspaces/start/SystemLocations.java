@@ -39,6 +39,7 @@ public class SystemLocations {
     private final Path libOptionalSecurity;
     private final Path libPlatform;
     private final Path libPlatformExt;
+    private final Path logs;
     private final Path work;
     private final Path deploy;
     private final Path sparkHome;
@@ -56,6 +57,7 @@ public class SystemLocations {
         this.libOptionalSecurity = GsEnv.propertyPath("com.gigaspaces.lib.opt.security").get(libOptional.resolve("security"));
         this.libPlatform = GsEnv.propertyPath("com.gigaspaces.lib.platform").get(lib.resolve("platform"));
         this.libPlatformExt = GsEnv.propertyPath("com.gigaspaces.lib.platform.ext").get(libPlatform.resolve("ext"));
+        this.logs = GsEnv.propertyPath("com.gs.logs").get(home.resolve("logs"));
         this.work = GsEnv.propertyPath("com.gs.work").getAndInit(home.resolve("work"));
         this.deploy = GsEnv.propertyPath("com.gs.deploy").getAndInit(home.resolve("deploy"));
         this.userProductHome = Paths.get(System.getProperty("user.home"), ".gigaspaces");
@@ -151,6 +153,10 @@ public class SystemLocations {
 
     public Path config(String subdir) {
         return config.resolve(subdir);
+    }
+
+    public Path logs() {
+        return logs;
     }
 
     public Path work() {

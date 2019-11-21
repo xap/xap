@@ -26,10 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.logging.ErrorManager;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
@@ -151,11 +148,12 @@ public class RollingFileHandler extends StreamHandler {
      */
     protected final String FILENAME_PATTTERN_PLACEHOLDER_PREFIX = HANDLER_PROP_PREFIX + FILENAME_PATTERN_PROP + ".";
     protected static final String HOMEDIR_PROP = "homedir";
+    protected static final String LOGSDIR_PROP = "gs.logs";
     protected static final String HOST_PROP = "host";
     protected static final String PID_PROP = "pid";
     protected static final String SERVICE_PROP = "service";
     protected static final String DATE_PROP = "date";
-
+    private static final Set<String> PATH_PROPERTIES = new HashSet<>(Arrays.asList(HOMEDIR_PROP, LOGSDIR_PROP));
 
     /* Match any property between {..} braces. */
     private static final Pattern FILE_PATTERN_PROPERTY_MATCHER = Pattern.compile("\\{([^\\{]*)\\}");
@@ -405,7 +403,7 @@ public class RollingFileHandler extends StreamHandler {
                         new RuntimeException(), ErrorManager.FORMAT_FAILURE);
 
             } else {
-                if (!propertyName.equals(HOMEDIR_PROP)) {
+                if (!PATH_PROPERTIES.contains(propertyName)) {
                     propertyValue = removeIllegalFileCharacters(propertyValue);
                 }
                 filename = filename.substring(0, matcher.start()) + propertyValue + filename.substring(matcher.end());
@@ -433,6 +431,8 @@ public class RollingFileHandler extends StreamHandler {
             }
             if (propertyName.equals(HOMEDIR_PROP)) {
                 return SystemLocations.singleton().home().toString();
+            } else if (propertyName.equals(LOGSDIR_PROP)) {
+                return SystemLocations.singleton().logs().toString();
             } else if (propertyName.equals(HOST_PROP)) {
                 return XapNetworkInfo.getInstance().getHostId();
             } else if (propertyName.equals(PID_PROP)) {
