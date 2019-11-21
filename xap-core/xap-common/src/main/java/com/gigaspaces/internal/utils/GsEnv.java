@@ -142,7 +142,7 @@ public class GsEnv {
         public T getAndInit(T defaultValue) {
             T result = get(defaultValue);
             set(result);
-            return defaultValue;
+            return result;
         }
 
         public void set(T value) {
