@@ -1,1 +1,1 @@
-description=GigaSpaces Stateful Processing Unit (XML)
+description=Stateful Processing Unit (XML)

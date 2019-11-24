@@ -1,1 +1,1 @@
-description=GigaSpaces Stateful Processing Unit
+description=Stateful Processing Unit

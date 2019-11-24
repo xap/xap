@@ -91,8 +91,10 @@ public class BlueprintGenerateCommand extends CliCommand {
     private static Blueprint readBlueprint(LineReader interactiveReader) throws CliCommandException, IOException {
         System.out.println("List of available blueprints: ");
         AtomicInteger counter = new AtomicInteger();
-        KeyValueFormatter formatter = KeyValueFormatter.builder().build();
         BlueprintRepository repository = BlueprintCommand.getDefaultRepository();
+        AtomicInteger maxLength = new AtomicInteger();
+        repository.getBlueprints().forEach(b -> maxLength.set(Math.max(maxLength.get(), b.getName().length())));
+        KeyValueFormatter formatter = KeyValueFormatter.builder().width(maxLength.get() + 6).build();
         repository.getBlueprints().forEach(b -> formatter.append("[" + counter.incrementAndGet() + "] " + b.getName(), b.getDescription()));
         System.out.print(formatter.get());
         int defaultBlueprint = repository.indexOf("client").orElse(0) + 1;
