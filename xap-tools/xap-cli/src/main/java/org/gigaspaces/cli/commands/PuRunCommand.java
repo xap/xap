@@ -36,7 +36,7 @@ public class PuRunCommand extends AbstractRunCommand {
     @Option(names = {"--properties" }, description = "Location of context level properties file")
     File propertiesFilePath;
     // Context properties
-    @Option(names = {"--property" }, description = "Context properties (for example: --property=k1=v1 --property=k2=v2)")
+    @Option(names = {"-p", "--property" }, description = "Context properties (for example: -p k1=v1 -p k2=v2)")
     Map<String, String> properties;
 
     @Override
