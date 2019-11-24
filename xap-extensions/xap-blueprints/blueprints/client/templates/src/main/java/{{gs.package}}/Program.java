@@ -8,7 +8,7 @@ public class Program {
         GigaSpace gigaSpace = getOrCreateSpace(args.length == 0 ? null : args[0]);
         System.out.println("Connected to space " + gigaSpace.getName());
 
-        // ... (your code goes here)
+        // Your code goes here, for example:
         System.out.println("Entries in space: " + gigaSpace.count(null));
 
         System.out.println("Program completed successfully");

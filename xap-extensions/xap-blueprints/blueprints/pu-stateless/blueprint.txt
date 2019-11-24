@@ -1,0 +1,1 @@
+description=GigaSpaces Stateless Processing Unit

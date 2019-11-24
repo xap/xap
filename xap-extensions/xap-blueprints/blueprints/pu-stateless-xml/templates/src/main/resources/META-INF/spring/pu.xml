@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:os-core="http://www.openspaces.org/schema/core"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+	   http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.openspaces.org/schema/core http://www.openspaces.org/schema/core/openspaces-core.xsd">
+    
+
+	<!-- Enable Spring component scanning for the specified path -->
+	<context:component-scan base-package="{{maven.groupId}}" />
+	
+	<!-- Enable GigaSpaces annotation support -->
+	<os-core:annotation-support/>
+
+	<!-- Spring property configurer which allows us to use system properties (such as user.name). -->
+    <bean id="propertiesConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="properties">
+            <props>
+                <prop key="spaceName">{{spaceName}}</prop>
+            </props>
+        </property>
+    </bean>
+
+    <!-- Defines a space proxy-->
+    <os-core:space-proxy id="space" space-name="${spaceName}"/>
+
+    <!-- Defines a gigaSpace for the space proxy-->
+	<os-core:giga-space id="gigaSpace" space="space" tx-manager="transactionManager" />
+
+	<!-- Defines a transaction manager -->
+	<os-core:distributed-tx-manager id="transactionManager" />
+</beans>
