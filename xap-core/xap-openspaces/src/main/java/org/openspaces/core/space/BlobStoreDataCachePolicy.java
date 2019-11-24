@@ -111,25 +111,28 @@ public class BlobStoreDataCachePolicy implements CachePolicy {
         _logger.info("Blob Store Cache size [ " + blobStoreCacheSize + " ]");
 
 
-        if (persistent != null) {
-            props.put(Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_PERSISTENT_PROP, String.valueOf(persistent));
-        } else {
-            throw new BlobStoreException("persistent attribute in Blobstore space must be configured");
-        }
-
-        if (blobStoreHandler != null) {
-            if(persistent){
-                blobStoreHandler.assertPersistentSupported();
-            }
-            props.put(Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP, blobStoreHandler);
-        } else {
+        if (blobStoreHandler == null) {
             throw new BlobStoreException("blobStoreHandler attribute in Blobstore space must be configured");
         }
+        props.put(Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP, blobStoreHandler);
+
+        props.put(Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_PERSISTENT_PROP, String.valueOf(calcPersistent(persistent, blobStoreHandler.isPersistent())));
 
         if (sqlQueryList.size() > 0)
             props.put(Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_CACHE_FILTER_QUERIES_PROP, sqlQueryList);
 
         return props;
+    }
+
+    private static boolean calcPersistent(Boolean policyPersistent, Boolean handlerPersistent) {
+        if (policyPersistent == null) {
+            if (handlerPersistent == null)
+                throw new BlobStoreException("policyPersistent attribute in Blobstore space must be configured");
+            return handlerPersistent;
+        }
+        if (handlerPersistent != null && handlerPersistent != policyPersistent)
+            throw new IllegalStateException("Ambiguous blobstore persistence - policy persistence=" + policyPersistent + ", handler persistence=" + handlerPersistent);
+        return policyPersistent;
     }
 
     private void assertPropPositive(String propName, long propValue) {

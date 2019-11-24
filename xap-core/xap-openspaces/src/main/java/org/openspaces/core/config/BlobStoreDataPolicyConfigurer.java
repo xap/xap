@@ -76,8 +76,6 @@ public class BlobStoreDataPolicyConfigurer {
             policy.setCacheEntriesPercentage(cacheEntriesPercentage);
         if (persistent != null) {
             policy.setPersistent(persistent);
-        } else {
-            throw new BlobStoreException("persistent attribute in Blobstore space must be configured");
         }
         if (blobStoreHandler != null) {
             policy.setBlobStoreHandler(blobStoreHandler);
