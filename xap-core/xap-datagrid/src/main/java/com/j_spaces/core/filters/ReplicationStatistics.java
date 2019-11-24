@@ -85,6 +85,9 @@ public class ReplicationStatistics
         private long _externalStorageSpaceUsed;
         private Map<String, ReplicationTargetInfo> _replicationTargetsInfo;
 
+        private long _memoryRedoLogSize;
+        private long _externalStorageRedoLogSize;
+
         // For externalizable
         public OutgoingReplication() {
 
@@ -113,6 +116,8 @@ public class ReplicationStatistics
 
             _replicationTargetsInfo = redoLogStatistics.getReplicationTargetsInfo();
 
+            _memoryRedoLogSize = redoLogStatistics.getMemoryPacketsWeight();
+            _externalStorageRedoLogSize = redoLogStatistics.getExternalStoragePacketsWeight();
 
         }
 
@@ -167,6 +172,20 @@ public class ReplicationStatistics
          */
         public long getRedoLogExternalStorageSpaceUsed() {
             return _externalStorageSpaceUsed;
+        }
+
+        /**
+         * @return number of packets held in memory
+         */
+        public long getMemoryRedoLogSize() {
+            return _memoryRedoLogSize;
+        }
+
+        /**
+         * @return total weight of packets held in external storage
+         */
+        public long getExternalStorageRedoLogSize() {
+            return _externalStorageRedoLogSize;
         }
 
         @Override
@@ -225,6 +244,10 @@ public class ReplicationStatistics
             if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v12_1_0)){
                 _replicationTargetsInfo = (Map<String, ReplicationTargetInfo>) in.readObject();
             }
+            if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_0_0)){
+                _memoryRedoLogSize = in.readLong();
+                _externalStorageRedoLogSize = in.readLong();
+            }
         }
 
         public void writeExternal(ObjectOutput out) throws IOException {
@@ -238,6 +261,10 @@ public class ReplicationStatistics
             out.writeLong(_externalStorageSpaceUsed);
             if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v12_1_0)){
                 out.writeObject(_replicationTargetsInfo);
+            }
+            if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_0_0)){
+                out.writeLong(_memoryRedoLogSize);
+                out.writeLong(_externalStorageRedoLogSize);
             }
         }
 

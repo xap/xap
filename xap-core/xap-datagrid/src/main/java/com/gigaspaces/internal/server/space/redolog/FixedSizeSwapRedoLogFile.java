@@ -251,6 +251,16 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
         return _externalStorage.getExternalPacketsCount();
     }
 
+    @Override
+    public long getMemoryPacketsWeight() {
+        return _memoryRedoLogFile.getMemoryPacketsWeight() + _externalStorage.getMemoryPacketsWeight();
+    }
+
+    @Override
+    public long getExternalStoragePacketsWeight() {
+        return _externalStorage.getExternalStoragePacketsWeight();
+    }
+
     public long getMemoryPacketsCount() {
         return _memoryRedoLogFile.getMemoryPacketsCount() + _externalStorage.getMemoryPacketsCount();
     }

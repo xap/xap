@@ -180,6 +180,16 @@ public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedP
         return _buffer.size() + _storage.getMemoryPacketsCount();
     }
 
+    @Override
+    public long getMemoryPacketsWeight() {
+        return _bufferWeight + _storage.getMemoryPacketsWeight();
+    }
+
+    @Override
+    public long getExternalStoragePacketsWeight() {
+        return _storage.getExternalStoragePacketsWeight();
+    }
+
     public StorageReadOnlyIterator<T> readOnlyIterator()
             throws StorageException {
         return new CacheReadOnlyIterator(_storage.readOnlyIterator());

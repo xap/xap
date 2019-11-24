@@ -30,7 +30,7 @@ import java.util.Map;
 public class RedoLogStatistics
         implements IRedoLogStatistics {
 
-    public static final IRedoLogStatistics EMPTY_STATISTICS = new RedoLogStatistics(-1, -1, 0, 0, 0, 0,null);
+    public static final IRedoLogStatistics EMPTY_STATISTICS = new RedoLogStatistics(-1, -1, 0, 0, 0, 0, 0, 0, null);
     private final long _lastKeyInRedoLog;
     private final long _firstKeyInRedoLog;
 
@@ -39,12 +39,15 @@ public class RedoLogStatistics
     private final long _externalStoragePacketsCount;
     private final long _externalStorageSpaceUsed;
 
+    private final long _memorySize;
+    private final long _externalStorageSize;
+
     private final Map<String, ReplicationTargetInfo> _replicationTargetsInfo;
 
     public RedoLogStatistics(long lastKeyInRedoLog, long firstKeyInRedoLog,
                              long size, long memoryPacketsCount,
                              long externalStoragePacketsCount, long externalStorageSpaceUsed,
-                             Map<String, ReplicationTargetInfo> targetsInfo) {
+                             long memorySize, long externalStorageSize, Map<String, ReplicationTargetInfo> targetsInfo) {
         super();
         _lastKeyInRedoLog = lastKeyInRedoLog;
         _firstKeyInRedoLog = firstKeyInRedoLog;
@@ -52,12 +55,24 @@ public class RedoLogStatistics
         _memoryPacketsCount = memoryPacketsCount;
         _externalStoragePacketsCount = externalStoragePacketsCount;
         _externalStorageSpaceUsed = externalStorageSpaceUsed;
+        _memorySize = memorySize;
+        _externalStorageSize = externalStorageSize;
         _replicationTargetsInfo = targetsInfo;
     }
 
 
     public long getExternalStoragePacketsCount() {
         return _externalStoragePacketsCount;
+    }
+
+    @Override
+    public long getMemoryPacketsWeight() {
+        return _memorySize;
+    }
+
+    @Override
+    public long getExternalStoragePacketsWeight() {
+        return _externalStorageSize;
     }
 
     public long getExternalStorageSpaceUsed() {

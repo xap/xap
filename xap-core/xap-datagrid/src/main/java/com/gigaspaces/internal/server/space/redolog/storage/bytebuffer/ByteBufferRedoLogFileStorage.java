@@ -498,6 +498,16 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
         return 0; //no packets held in memory at this layer
     }
 
+    @Override
+    public long getMemoryPacketsWeight() {
+        return 0 ;//no packets held in memory at this layer
+    }
+
+    @Override
+    public long getExternalStoragePacketsWeight() {
+        return _weight;
+    }
+
     public synchronized void close() {
         for (StorageSegment segment : _segments)
             segment.delete();

@@ -74,6 +74,16 @@ public class MemoryRedoLogFile<T extends IReplicationOrderedPacket> implements I
         return 0; //Memory only redo log file
     }
 
+    @Override
+    public long getMemoryPacketsWeight() {
+        return getWeight();
+    }
+
+    @Override
+    public long getExternalStoragePacketsWeight() {
+        return 0;//Memory only redo log file
+    }
+
     public long getMemoryPacketsCount() {
         return size();
     }

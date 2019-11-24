@@ -43,4 +43,13 @@ public interface IRedoLogFileStatistics {
      */
     long getExternalStoragePacketsCount();
 
+    /**
+     * @return total weight of packets held in memory
+     */
+    long getMemoryPacketsWeight();
+
+    /**
+     * @return total weight of packets held in external storage
+     */
+    long getExternalStoragePacketsWeight();
 }

@@ -1327,6 +1327,8 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
                     getBacklogFile().getMemoryPacketsCount(),
                     getBacklogFile().getExternalStoragePacketsCount(),
                     getBacklogFile().getExternalStorageSpaceUsed(),
+                    getBacklogFile().getMemoryPacketsWeight(),
+                    getBacklogFile().getExternalStoragePacketsWeight(),
                     generateInfotForMemberMap());
         } finally {
             _rwLock.readLock().unlock();
