@@ -63,8 +63,7 @@ import org.springframework.dao.DataAccessException;
 import java.io.PrintWriter;
 import java.rmi.RemoteException;
 import java.text.MessageFormat;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Base class for most space factory beans responsible for creating/finding {@link IJSpace}
@@ -116,6 +115,8 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
     private MemberAliveIndicator memberAliveIndicator;
 
     private SecurityConfig securityConfig;
+
+    private List<ServiceDetails> serviceDetailsList = new ArrayList<>();
 
     /**
      * Sets if the space should register for primary backup (mode) notifications. Default behavior
@@ -225,6 +226,7 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
         }
 
         memberAliveIndicator = new SpaceMemberAliveIndicator(space, enableMemberAliveIndicator);
+        serviceDetailsList.add(new SpaceServiceDetails(beanName, space));
     }
 
     /**
@@ -432,7 +434,11 @@ public abstract class AbstractSpaceFactoryBean implements BeanNameAware, Initial
     }
 
     public ServiceDetails[] getServicesDetails() {
-        return new ServiceDetails[]{new SpaceServiceDetails(beanName, space)};
+        return serviceDetailsList.toArray(new ServiceDetails[0]);
+    }
+
+    public void addServiceDetails(ServiceDetailsProvider serviceDetailsProvider) {
+        Collections.addAll(this.serviceDetailsList, serviceDetailsProvider.getServicesDetails());
     }
 
     public String getName() {
