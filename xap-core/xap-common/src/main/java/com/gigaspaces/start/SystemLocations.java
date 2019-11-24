@@ -73,6 +73,7 @@ public class SystemLocations {
         try {
             FileUtils.forEach(libRequired, FileUtils.Filters.jarFiles(), f -> result.get(getClassLoaderType(f)).add(f));
         } catch (IOException e) {
+            e.printStackTrace();
             throw new RuntimeException("Failed to categorize lib/required files", e);
         }
         return result;
