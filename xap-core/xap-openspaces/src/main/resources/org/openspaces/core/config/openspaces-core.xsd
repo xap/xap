@@ -144,10 +144,10 @@
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>
-        <xsd:attribute name="persistent" type="xsd:boolean" use="required">
+        <xsd:attribute name="persistent" type="xsd:boolean" use="optional">
             <xsd:annotation>
                 <xsd:documentation>
-                    Indicates if this blobstore implementation is persistent or transient
+                    Deprecated - persistent should be set on the blob-store-handler instead.
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>
