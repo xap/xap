@@ -48,7 +48,7 @@ import java.util.regex.Pattern;
  * <tt>homedir</tt>, <tt>host</tt>, <tt>pid</tt> and <tt>date</tt>. Each placeholder is identified
  * by a set of curly brackets <code>{..}</code>. It may also be a placeholder for a custom defined
  * property. <blockquote>Configuration: <code>com.gigaspaces.logger.RollingFileHandler.filename-pattern
- * = {homedir}/logs/{date,yyyy-MM-dd~HH.mm}-gigaspaces-{service}-{host}-{pid}.log</code></blockquote>
+ * = {gs.logs}/logs/{date,yyyy-MM-dd~HH.mm}-gigaspaces-{service}-{host}-{pid}.log</code></blockquote>
  * <p/> A place holder value is that of an overriding system property. If no override was specified,
  * and the property is one of the predefined properties (i.e. homedir, host, pid, date), its value
  * is evaluated by the handler implementation. If the place holder is of a custom property, and no
@@ -169,7 +169,7 @@ public class RollingFileHandler extends StreamHandler {
      * Configuration Defaults
      */
     protected static final String DATE_PATTERN_DEFAULT = "yyyy-MM-dd~HH.mm";
-    protected static final String FILENAME_PATTERN_DEFAULT = "{homedir}/logs/{date," + DATE_PATTERN_DEFAULT + "}-gigaspaces-{service}-{host}-{pid}.log";
+    protected static final String FILENAME_PATTERN_DEFAULT = "{gs.logs}/logs/{date," + DATE_PATTERN_DEFAULT + "}-gigaspaces-{service}-{host}-{pid}.log";
     protected static final int SIZE_ROLLING_POLICY_DEFAULT = 2000000; //2MB
     protected static final String TIME_ROLLING_POLICY_DEFAULT = "daily";
     protected static final String FILE_APPEND_DEFAULT = "false";
