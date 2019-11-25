@@ -127,7 +127,7 @@ public class BlobStoreDataCachePolicy implements CachePolicy {
     private static boolean calcPersistent(Boolean policyPersistent, Boolean handlerPersistent) {
         if (policyPersistent == null) {
             if (handlerPersistent == null)
-                throw new BlobStoreException("policyPersistent attribute in Blobstore space must be configured");
+                throw new BlobStoreException("persistent attribute in Blobstore space must be configured");
             return handlerPersistent;
         }
         if (handlerPersistent != null && handlerPersistent != policyPersistent)
