@@ -16,6 +16,7 @@
 package org.openspaces.config;
 
 import org.openspaces.core.config.annotation.CoreAnnotationsBeansConfig;
+import org.openspaces.core.config.annotation.EventsAnnotationsBeansConfig;
 import org.openspaces.core.properties.annotation.BeanLevelPropertiesBeansConfig;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -25,6 +26,6 @@ import org.springframework.context.annotation.Import;
  * @since 15.0
  */
 @Configuration
-@Import({BeanLevelPropertiesBeansConfig.class, CoreAnnotationsBeansConfig.class})
+@Import({BeanLevelPropertiesBeansConfig.class, CoreAnnotationsBeansConfig.class, EventsAnnotationsBeansConfig.class})
 public class DefaultServiceConfig {
 }
