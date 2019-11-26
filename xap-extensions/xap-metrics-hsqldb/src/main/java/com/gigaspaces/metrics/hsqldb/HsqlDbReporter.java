@@ -258,6 +258,9 @@ public class HsqlDbReporter extends MetricReporter {
             columns.add(k);
             parameters.add("?");
             values.add(v);
+            if( k == null ){
+                _logger.warn( "Null column name using while inserting row into table {}", tableName );
+            }
             if( v == null ){
                 _logger.warn( "Null [{}] value using while inserting row into table {}", k, tableName );
             }
