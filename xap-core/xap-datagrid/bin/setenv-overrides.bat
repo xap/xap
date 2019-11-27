@@ -1,7 +1,7 @@
 @echo off
 rem #*******************************************************************************************************
 rem # Use this script to override default GigaSpaces settings using environment variables.
-rem # For more information see https://docs.gigaspaces.com/15.0/started/common-environment-variables.html
+rem # For more information see https://docs.gigaspaces.com/15.2/started/common-environment-variables.html
 rem #
 rem # Common variables:
 rem # -----------------

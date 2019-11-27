@@ -28,7 +28,7 @@ import java.io.FileWriter;
         "    @|bold   $ ./gs.sh completion --target <path to>/bash_completion.d/gs.completion|@",
         "",
         "For additional OS specific instructions and considerations refer to:",
-        "https://docs.gigaspaces.com/15.0/admin/tools-cli.html#AutocompleteFunctionality",
+        "https://docs.gigaspaces.com/15.2/admin/tools-cli.html#AutocompleteFunctionality",
         ""
 })
 public class CompletionCommand extends CliCommand {
