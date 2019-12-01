@@ -35,17 +35,19 @@ public class ReplicationUtils {
             if (split.length < 2)
                 throw new IllegalArgumentException("Illegal space name '" + lookupName + "', should be space_name_container:space_name.");
             if (split[1].contains("LocalView")) {
-                int indexOfUnderScore = split[1].lastIndexOf("_");
-                int indexOfDashAfterUnderscore = split[1].substring(indexOfUnderScore).indexOf("-") + indexOfUnderScore;
-                return "LocalView" + split[1].substring(indexOfUnderScore, indexOfDashAfterUnderscore);
+                String lastSection = split[split.length -1];
+                int indexOfUnderScore = lastSection.lastIndexOf("_");
+                int indexOfDashAfterUnderscore = lastSection.substring(indexOfUnderScore).indexOf("-") + indexOfUnderScore;
+                return "LocalView" + lastSection.substring(indexOfUnderScore, indexOfDashAfterUnderscore);
             }
 
             return split[0].replace("_container", "");
         }
         if (split.length > 1 && split[1].contains("NotifyDur")) {
-            int indexOfUnderScore = split[2].lastIndexOf("_");
-            int indexOfDashAfterUnderscore = split[2].substring(indexOfUnderScore).indexOf("-") + indexOfUnderScore;
-            return "NotifyDur" + split[2].substring(indexOfUnderScore, indexOfDashAfterUnderscore);
+            String lastSection = split[split.length -1];
+            int indexOfUnderScore = lastSection.lastIndexOf("_");
+            int indexOfDashAfterUnderscore = lastSection.substring(indexOfUnderScore).indexOf("-") + indexOfUnderScore;
+            return "NotifyDur" + lastSection.substring(indexOfUnderScore, indexOfDashAfterUnderscore);
         }
         return lookupName;
     }
