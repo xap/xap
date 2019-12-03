@@ -104,16 +104,24 @@ public class HsqlDbReporter extends MetricReporter {
             } else if (message != null && message.contains("user lacks privilege or object not found: ")) {
                 addMissingColumns(con, tableName, tags);
             } else {
-                _logger.error("Failed to insert row [{}] using values [{}] and value [{}]" , insertSQL,
-                              Arrays.toString(values.toArray(new Object[0])), value, e);
+                _logger.error("Failed to insert row [{}] using values [{}]" , insertSQL,
+                              Arrays.toString(values.toArray(new Object[0])), e);
             }
         } catch (SQLTransientConnectionException | SQLNonTransientConnectionException e){
-            _logger.warn("Failed to insert row [{}] using values [{}] and value [{}], resetting connection...", insertSQL,
-                    Arrays.toString(values.toArray(new Object[0])), value, e);
+            _logger.warn("Failed to insert row [{}] using values [{}], resetting connection...", insertSQL,
+                    Arrays.toString(values.toArray(new Object[0])), e);
            handleConnectionError(con);
         } catch (SQLException e) {
-            _logger.error("Failed to insert row [{}] using values [{}] and value [{}]", insertSQL,
-                          Arrays.toString(values.toArray(new Object[0])), value, e);
+            //internal hsqldb exception, in later versions becomes General error
+            if( e.toString().contains( "NullPointerException" ) ) {
+                _logger.info("Failed to insert row [{}] using values [{}] due to SQLException", insertSQL,
+                           Arrays.toString(values.toArray(new Object[0])) );
+            }
+            else {
+                _logger
+                    .error("Failed to insert row [{}] using values [{}]", insertSQL,
+                           Arrays.toString(values.toArray(new Object[0])), e);
+            }
         }
     }
 
