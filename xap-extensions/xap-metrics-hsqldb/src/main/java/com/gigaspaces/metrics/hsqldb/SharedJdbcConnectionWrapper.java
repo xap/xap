@@ -1,6 +1,7 @@
 package com.gigaspaces.metrics.hsqldb;
 
 import com.gigaspaces.logger.ActivityLogger;
+import com.j_spaces.kernel.JSpaceUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,12 +63,14 @@ public class SharedJdbcConnectionWrapper implements Closeable {
     public Connection getOrCreateConnection() {
         if (connection == null) {
             synchronized (connectionLock) {
+                long startTime = System.currentTimeMillis();
                 if (connection == null) {
                     try {
                         logger.debug("Connecting to [{}]", url);
                         connection = DriverManager.getConnection(url, factory.getUsername(), factory.getPassword());
                         connectionLogger.success();
-                        logger.info("Connected to [{}]", url);
+                        logger.info("~~~~~~Connected to [{}] time elpased: {}ms", url, System.currentTimeMillis() - startTime);
+                        logger.info("~~~~~~Calling stack trace: {}", JSpaceUtilities.getCallStackTraces(10));
                     } catch (SQLException e) {
                         connectionLogger.fail(e, () -> "[url=" + url + "]");
                     }
