@@ -302,7 +302,7 @@
     <parent>
         <artifactId>xap</artifactId>
         <groupId>org.gigaspaces</groupId>
-        <version>15.2.0-SNAPSHOT</version>
+        <version>15.2.0-m2-sat-3</version>
         <relativePath>../../</relativePath>
     </parent>
     <repositories>
