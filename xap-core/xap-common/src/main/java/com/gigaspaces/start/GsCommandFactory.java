@@ -13,6 +13,7 @@ import java.util.Collections;
  * @since 14.2
  */
 public class GsCommandFactory {
+    public final static String DEFAULT_GSC_MEMORY = "512m";
     protected final JavaCommandBuilder command = new JavaCommandBuilder();
     protected String[] args;
 
