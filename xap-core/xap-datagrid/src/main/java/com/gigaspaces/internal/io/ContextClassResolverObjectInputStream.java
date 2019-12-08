@@ -39,4 +39,14 @@ public class ContextClassResolverObjectInputStream extends ObjectInputStream {
         String name = classDesc.getName();
         return ClassLoaderHelper.loadClass(name);
     }
+
+    public static class Factory implements ObjectInputStreamFactory {
+
+        public static Factory instance = new Factory();
+
+        @Override
+        public ObjectInputStream create(InputStream is) throws IOException {
+            return new ContextClassResolverObjectInputStream(is);
+        }
+    }
 }

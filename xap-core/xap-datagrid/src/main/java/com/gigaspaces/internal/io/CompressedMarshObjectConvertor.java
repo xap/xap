@@ -60,6 +60,8 @@ public class CompressedMarshObjectConvertor
     private ZipInputStream _zi;
     private ObjectInputStream _oi;
 
+    private final ObjectInputStreamFactory objectInputStreamFactory;
+
     static private CompressedMarshObjectConvertorFactory _factory = null;
 
     // logger
@@ -74,15 +76,21 @@ public class CompressedMarshObjectConvertor
     }
 
 
-    public CompressedMarshObjectConvertor(int level) {
-        this(level, null);
-    }
-
     /**
      * @param level the compression level (0-9), The default setting is DEFAULT_COMPRESSION.
      * @throws IllegalArgumentException if the compression level is invalid
      */
-    public CompressedMarshObjectConvertor(int level, ISmartLengthBasedCacheCallback cacheCallback) {
+    public CompressedMarshObjectConvertor(int level) {
+        this(level, null);
+    }
+
+    public CompressedMarshObjectConvertor(int level, IMemoryAwareResourcePool resourcePool) {
+        this(level, resourcePool, ObjectInputStreamFactory.Default.instance);
+    }
+
+    public CompressedMarshObjectConvertor(int level, IMemoryAwareResourcePool resourcePool, ObjectInputStreamFactory objectInputStreamFactory) {
+        this.objectInputStreamFactory = objectInputStreamFactory;
+        ISmartLengthBasedCacheCallback cacheCallback = resourcePool == null ? null : SmartLengthBasedCache.toCacheCallback(resourcePool);
         _byteArrayCache = createSerializationByteArrayCache(cacheCallback);
         _level = level;
         try {
@@ -193,9 +201,8 @@ public class CompressedMarshObjectConvertor
         return new ObjectOutputStream(is);
     }
 
-    protected ObjectInputStream getObjectInputStream(InputStream is)
-            throws IOException {
-        return new ObjectInputStream(is);
+    protected ObjectInputStream getObjectInputStream(InputStream is) throws IOException {
+        return objectInputStreamFactory.create(is);
     }
 
     @Override
@@ -210,16 +217,14 @@ public class CompressedMarshObjectConvertor
         return _factory;
     }
 
-    protected static class CompressedMarshObjectConvertorFactory
-            implements IMemoryAwareResourceFactory<CompressedMarshObjectConvertor> {
+    protected static class CompressedMarshObjectConvertorFactory implements IMemoryAwareResourceFactory<CompressedMarshObjectConvertor> {
         public CompressedMarshObjectConvertor allocate() {
-            return new CompressedMarshObjectConvertor(9);
+            return allocate(null);
         }
 
         @Override
-        public CompressedMarshObjectConvertor allocate(
-                IMemoryAwareResourcePool resourcePool) {
-            return new CompressedMarshObjectConvertor(9, SmartLengthBasedCache.toCacheCallback(resourcePool));
+        public CompressedMarshObjectConvertor allocate(IMemoryAwareResourcePool resourcePool) {
+            return new CompressedMarshObjectConvertor(9, resourcePool);
         }
     }
 

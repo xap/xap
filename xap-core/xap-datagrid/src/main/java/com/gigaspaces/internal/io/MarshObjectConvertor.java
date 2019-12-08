@@ -52,6 +52,7 @@ public class MarshObjectConvertor
     private ObjectInputStream _oi;
 
     static private MarshObjectConvertorFactory _factory = null;
+    private final ObjectInputStreamFactory objectInputStreamFactory;
 
     // logger
     final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
@@ -72,10 +73,13 @@ public class MarshObjectConvertor
         this(null);
     }
 
-    /**
-     *
-     */
-    public MarshObjectConvertor(ISmartLengthBasedCacheCallback cacheCallback) {
+    public MarshObjectConvertor(IMemoryAwareResourcePool resourcePool) {
+        this(resourcePool, ObjectInputStreamFactory.Default.instance);
+    }
+
+    public MarshObjectConvertor(IMemoryAwareResourcePool resourcePool, ObjectInputStreamFactory objectInputStreamFactory) {
+        ISmartLengthBasedCacheCallback cacheCallback = resourcePool == null ? null : SmartLengthBasedCache.toCacheCallback(resourcePool);
+        this.objectInputStreamFactory = objectInputStreamFactory;
         _byteArrayCache = createSerializationByteArrayCache(cacheCallback);
         try {
             _bao = new GSByteArrayOutputStream();
@@ -173,9 +177,8 @@ public class MarshObjectConvertor
     /**
      * Wrap given InputStream with ObjectInputStream
      */
-    protected ObjectInputStream getObjectInputStream(InputStream is)
-            throws IOException {
-        return new ObjectInputStream(is);
+    protected ObjectInputStream getObjectInputStream(InputStream is) throws IOException {
+        return objectInputStreamFactory.create(is);
     }
 
     /**
@@ -205,13 +208,12 @@ public class MarshObjectConvertor
             implements IMemoryAwareResourceFactory<MarshObjectConvertor> {
 
         public MarshObjectConvertor allocate() {
-            return new MarshObjectConvertor();
+            return allocate(null);
         }
 
         @Override
-        public MarshObjectConvertor allocate(
-                final IMemoryAwareResourcePool resourcePool) {
-            return new MarshObjectConvertor(SmartLengthBasedCache.toCacheCallback(resourcePool));
+        public MarshObjectConvertor allocate(IMemoryAwareResourcePool resourcePool) {
+            return new MarshObjectConvertor(resourcePool);
         }
     }
 
