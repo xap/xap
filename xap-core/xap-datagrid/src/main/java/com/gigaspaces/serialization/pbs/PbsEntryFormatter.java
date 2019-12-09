@@ -197,7 +197,12 @@ public class PbsEntryFormatter {
             String name = input.readString();
             String typeName = input.readString();
             byte dotNetStorageType = input.readByte();
-            properties[i] = new PropertyInfo(name, typeName, null, SpaceDocumentSupport.DEFAULT, StorageType.OBJECT, dotNetStorageType);
+            properties[i] = PropertyInfo.builder(name)
+                    .type(typeName)
+                    .documentSupport(SpaceDocumentSupport.DEFAULT)
+                    .storageType(StorageType.OBJECT)
+                    .dotNetStorageType(dotNetStorageType)
+                    .build();
         }
         return properties;
     }

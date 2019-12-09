@@ -93,7 +93,11 @@ public class TypeDescFactory {
         for (int i = 0; i < properties.length; i++) {
             final SpacePropertyInfo property = typeInfo.getProperty(i);
             StorageType storageType = property.getStorageType();
-            properties[i] = new PropertyInfo(property.getName(), property.getType(), property.getDocumentSupport(), storageType);
+            properties[i] = PropertyInfo.builder(property.getName())
+                    .type(property.getType())
+                    .documentSupport(property.getDocumentSupport())
+                    .storageType(storageType)
+                    .build();
         }
         final Map<String, SpaceIndex> indexes = new HashMap<String, SpaceIndex>(typeInfo.getIndexes());
         String fifoGroupingName = typeInfo.getFifoGroupingName();
@@ -143,8 +147,11 @@ public class TypeDescFactory {
         for (int i = 0; i < length; i++) {
             fieldsNames[i] = fields[i].getName();
             fieldsTypes[i] = fields[i].getType().getName();
-            properties[i] = new PropertyInfo(fields[i].getName(), fields[i].getType(),
-                    SpaceDocumentSupport.DEFAULT, StorageType.DEFAULT);
+            properties[i] = PropertyInfo.builder(fields[i].getName())
+                    .type(fields[i].getType())
+                    .documentSupport(SpaceDocumentSupport.DEFAULT)
+                    .storageType(StorageType.DEFAULT)
+                    .build();
             properties[i].setDefaultStorageType(_storageType);
         }
         final String defaultPropertyName = getEntryIndices(realClass, fieldsNames, fieldsTypes, fieldsIndexes);
@@ -252,7 +259,11 @@ public class TypeDescFactory {
         final PropertyInfo[] properties = new PropertyInfo[fieldsNames.length];
         final Map<String, SpaceIndex> indexes = new HashMap<String, SpaceIndex>();
         for (int i = 0; i < properties.length; i++) {
-            properties[i] = new PropertyInfo(fieldsNames[i], fieldsTypes[i], SpaceDocumentSupport.DEFAULT, StorageType.DEFAULT);
+            properties[i] = PropertyInfo.builder(fieldsNames[i])
+                    .type(fieldsTypes[i])
+                    .documentSupport(SpaceDocumentSupport.DEFAULT)
+                    .storageType(StorageType.DEFAULT)
+                    .build();
             properties[i].setDefaultStorageType(_storageType);
             if (indices[i] != null && indices[i].isIndexed()) {
                 SpaceIndex index = new SpacePropertyIndex(fieldsNames[i], indices[i], false, i);
@@ -286,7 +297,11 @@ public class TypeDescFactory {
         final PropertyInfo[] properties = new PropertyInfo[fieldsNames.length];
         final Map<String, SpaceIndex> indexes = new HashMap<String, SpaceIndex>();
         for (int i = 0; i < properties.length; i++) {
-            properties[i] = new PropertyInfo(fieldsNames[i], fieldsTypes[i], SpaceDocumentSupport.DEFAULT, StorageType.OBJECT);
+            properties[i] = PropertyInfo.builder(fieldsNames[i])
+                    .type(fieldsTypes[i])
+                    .documentSupport(SpaceDocumentSupport.DEFAULT)
+                    .storageType(StorageType.OBJECT)
+                    .build();
             if (fieldsIndexes[i] != SpaceIndexType.NONE) {
                 boolean isUnique = fieldsNames[i].equals(idPropertyName) && !idAutoGenerate;
                 SpaceIndex index = new SpacePropertyIndex(fieldsNames[i], fieldsIndexes[i], isUnique, i);

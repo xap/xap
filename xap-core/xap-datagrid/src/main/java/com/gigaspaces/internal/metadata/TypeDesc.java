@@ -708,9 +708,9 @@ public class TypeDesc implements ITypeDesc {
         else if (version.greaterOrEquals(PlatformLogicalVersion.v10_1_0))
             readExternalV10_1(in, version, swap);
         else if (version.greaterOrEquals(PlatformLogicalVersion.v10_0_0))
-            readExternalV10_0(in);
+            readExternalV10_0(in, version);
         else
-            readExternalV9_0_2(in);
+            readExternalV9_0_2(in, version);
     }
 
     private void readExternalV10_1(ObjectInput in, PlatformLogicalVersion version, boolean swap) throws IOException, ClassNotFoundException {
@@ -720,20 +720,8 @@ public class TypeDesc implements ITypeDesc {
         int numOfProperties = in.readInt();
         if (numOfProperties >= 0) {
             _fixedProperties = new PropertyInfo[numOfProperties];
-            for (int i = 0; i < numOfProperties; i++) {
-                String name = IOUtils.readString(in);
-                String typeName = IOUtils.readString(in);
-                Class<?> type = IOUtils.readObject(in);
-                // Removed in 8.0.4: primitive is calculated from typename.
-                //boolean isPrimitive = in.readBoolean();
-                // New in 8.0.1: read SpaceDocumentSupport code
-                SpaceDocumentSupport documentSupport = SpaceDocumentSupportHelper.fromCode(in.readByte());
-                // New in 9.0.0: read storage type code
-                StorageType storageType = StorageType.fromCode(in.readInt());
-                // Changed in 8.0.4: read dotnet storage type as code instead of object.
-                byte dotnetStorageType = in.readByte();
-                _fixedProperties[i] = new PropertyInfo(name, typeName, type, documentSupport, storageType, dotnetStorageType);
-            }
+            for (int i = 0; i < numOfProperties; i++)
+                _fixedProperties[i] = PropertyInfo.deserialize(in, version);
         }
         _idPropertyName = IOUtils.readString(in);
         _autoGenerateId = in.readBoolean();
@@ -793,20 +781,8 @@ public class TypeDesc implements ITypeDesc {
         int numOfProperties = in.readInt();
         if (numOfProperties >= 0) {
             _fixedProperties = new PropertyInfo[numOfProperties];
-            for (int i = 0; i < numOfProperties; i++) {
-                String name = IOUtils.readString(in);
-                String typeName = IOUtils.readString(in);
-                Class<?> type = IOUtils.readObject(in);
-                // Removed in 8.0.4: primitive is calculated from typename.
-                //boolean isPrimitive = in.readBoolean();
-                // New in 8.0.1: read SpaceDocumentSupport code
-                SpaceDocumentSupport documentSupport = SpaceDocumentSupportHelper.fromCode(in.readByte());
-                // New in 9.0.0: read storage type code
-                StorageType storageType = StorageType.fromCode(in.readInt());
-                // Changed in 8.0.4: read dotnet storage type as code instead of object.
-                byte dotnetStorageType = in.readByte();
-                _fixedProperties[i] = new PropertyInfo(name, typeName, type, documentSupport, storageType, dotnetStorageType);
-            }
+            for (int i = 0; i < numOfProperties; i++)
+                _fixedProperties[i] = PropertyInfo.deserialize(in, version);
         }
         _idPropertyName = IOUtils.readString(in);
         _autoGenerateId = in.readBoolean();
@@ -876,27 +852,15 @@ public class TypeDesc implements ITypeDesc {
         queryExtensionsInfo = (TypeQueryExtensions) objectInputStream.readObject();
     }
 
-    private void readExternalV10_0(ObjectInput in) throws IOException, ClassNotFoundException {
+    private void readExternalV10_0(ObjectInput in, PlatformLogicalVersion version) throws IOException, ClassNotFoundException {
         _typeName = IOUtils.readString(in);
         _codeBase = IOUtils.readString(in);
         _superTypesNames = IOUtils.readStringArray(in);
         int numOfProperties = in.readInt();
         if (numOfProperties >= 0) {
             _fixedProperties = new PropertyInfo[numOfProperties];
-            for (int i = 0; i < numOfProperties; i++) {
-                String name = IOUtils.readString(in);
-                String typeName = IOUtils.readString(in);
-                Class<?> type = IOUtils.readObject(in);
-                // Removed in 8.0.4: primitive is calculated from typename.
-                //boolean isPrimitive = in.readBoolean();
-                // New in 8.0.1: read SpaceDocumentSupport code
-                SpaceDocumentSupport documentSupport = SpaceDocumentSupportHelper.fromCode(in.readByte());
-                // New in 9.0.0: read storage type code
-                StorageType storageType = StorageType.fromCode(in.readInt());
-                // Changed in 8.0.4: read dotnet storage type as code instead of object.
-                byte dotnetStorageType = in.readByte();
-                _fixedProperties[i] = new PropertyInfo(name, typeName, type, documentSupport, storageType, dotnetStorageType);
-            }
+            for (int i = 0; i < numOfProperties; i++)
+                _fixedProperties[i] = PropertyInfo.deserialize(in, version);
         }
         _idPropertyName = IOUtils.readString(in);
         _autoGenerateId = in.readBoolean();
@@ -941,27 +905,15 @@ public class TypeDesc implements ITypeDesc {
         initializeV9_0_0();
     }
 
-    private void readExternalV9_0_2(ObjectInput in) throws IOException, ClassNotFoundException {
+    private void readExternalV9_0_2(ObjectInput in, PlatformLogicalVersion version) throws IOException, ClassNotFoundException {
         _typeName = IOUtils.readString(in);
         _codeBase = IOUtils.readString(in);
         _superTypesNames = IOUtils.readStringArray(in);
         int numOfProperties = in.readInt();
         if (numOfProperties >= 0) {
             _fixedProperties = new PropertyInfo[numOfProperties];
-            for (int i = 0; i < numOfProperties; i++) {
-                String name = IOUtils.readString(in);
-                String typeName = IOUtils.readString(in);
-                Class<?> type = IOUtils.readObject(in);
-                // Removed in 8.0.4: primitive is calculated from typename.
-                //boolean isPrimitive = in.readBoolean();
-                // New in 8.0.1: read SpaceDocumentSupport code
-                SpaceDocumentSupport documentSupport = SpaceDocumentSupportHelper.fromCode(in.readByte());
-                // New in 9.0.0: read storage type code
-                StorageType storageType = StorageType.fromCode(in.readInt());
-                // Changed in 8.0.4: read dotnet storage type as code instead of object.
-                byte dotnetStorageType = in.readByte();
-                _fixedProperties[i] = new PropertyInfo(name, typeName, type, documentSupport, storageType, dotnetStorageType);
-            }
+            for (int i = 0; i < numOfProperties; i++)
+                _fixedProperties[i] = PropertyInfo.deserialize(in, version);
         }
         _idPropertyName = IOUtils.readString(in);
         _autoGenerateId = in.readBoolean();
@@ -1158,9 +1110,9 @@ public class TypeDesc implements ITypeDesc {
         else if (version.greaterOrEquals(PlatformLogicalVersion.v10_1_0))
             writeExternalV10_1(out, version, swap);
         else if (version.greaterOrEquals(PlatformLogicalVersion.v10_0_0))
-            writeExternalV10_0(out);
+            writeExternalV10_0(out, version);
         else
-            writeExternalV9_0_2(out);
+            writeExternalV9_0_2(out, version);
     }
 
     private void writeExternalV11_0_0(ObjectOutput out, PlatformLogicalVersion version, boolean swap) throws IOException {
@@ -1170,18 +1122,7 @@ public class TypeDesc implements ITypeDesc {
         int numOfProperties = _fixedProperties == null ? -1 : _fixedProperties.length;
         out.writeInt(numOfProperties);
         for (int i = 0; i < numOfProperties; i++) {
-            PropertyInfo property = _fixedProperties[i];
-            IOUtils.writeString(out, property.getName());
-            IOUtils.writeString(out, property.getTypeName());
-            IOUtils.writeObject(out, property.getType());
-            // Removed in 8.0.4: primitive is calculated from typename.
-            //out.writeBoolean(property.isPrimitive());
-            // New in 8.0.1: write SpaceDocumentSupport code.
-            out.writeByte(SpaceDocumentSupportHelper.toCode(property.getDocumentSupport()));
-            // New in 9.0.0: write storage type as code.
-            out.writeInt(property.getStorageType().getCode());
-            // Changed in 8.0.4: write dotnet storage type as code instead of object
-            out.writeByte(property.getDotnetStorageType());
+            _fixedProperties[i].serialize(out, version);
         }
         IOUtils.writeString(out, _idPropertyName);
         out.writeBoolean(_autoGenerateId);
@@ -1235,18 +1176,7 @@ public class TypeDesc implements ITypeDesc {
         int numOfProperties = _fixedProperties == null ? -1 : _fixedProperties.length;
         out.writeInt(numOfProperties);
         for (int i = 0; i < numOfProperties; i++) {
-            PropertyInfo property = _fixedProperties[i];
-            IOUtils.writeString(out, property.getName());
-            IOUtils.writeString(out, property.getTypeName());
-            IOUtils.writeObject(out, property.getType());
-            // Removed in 8.0.4: primitive is calculated from typename.
-            //out.writeBoolean(property.isPrimitive());
-            // New in 8.0.1: write SpaceDocumentSupport code.
-            out.writeByte(SpaceDocumentSupportHelper.toCode(property.getDocumentSupport()));
-            // New in 9.0.0: write storage type as code.
-            out.writeInt(property.getStorageType().getCode());
-            // Changed in 8.0.4: write dotnet storage type as code instead of object
-            out.writeByte(property.getDotnetStorageType());
+            _fixedProperties[i].serialize(out, version);
         }
         IOUtils.writeString(out, _idPropertyName);
         out.writeBoolean(_autoGenerateId);
@@ -1292,26 +1222,14 @@ public class TypeDesc implements ITypeDesc {
 
     }
 
-    private void writeExternalV10_0(ObjectOutput out) throws IOException {
+    private void writeExternalV10_0(ObjectOutput out, PlatformLogicalVersion version) throws IOException {
         IOUtils.writeString(out, _typeName);
         IOUtils.writeString(out, _codeBase);
         IOUtils.writeStringArray(out, _superTypesNames);
         int numOfProperties = _fixedProperties == null ? -1 : _fixedProperties.length;
         out.writeInt(numOfProperties);
-        for (int i = 0; i < numOfProperties; i++) {
-            PropertyInfo property = _fixedProperties[i];
-            IOUtils.writeString(out, property.getName());
-            IOUtils.writeString(out, property.getTypeName());
-            IOUtils.writeObject(out, property.getType());
-            // Removed in 8.0.4: primitive is calculated from typename.
-            //out.writeBoolean(property.isPrimitive());
-            // New in 8.0.1: write SpaceDocumentSupport code.
-            out.writeByte(SpaceDocumentSupportHelper.toCode(property.getDocumentSupport()));
-            // New in 9.0.0: write storage type as code.
-            out.writeInt(property.getStorageType().getCode());
-            // Changed in 8.0.4: write dotnet storage type as code instead of object
-            out.writeByte(property.getDotnetStorageType());
-        }
+        for (int i = 0; i < numOfProperties; i++)
+            _fixedProperties[i].serialize(out, version);
         IOUtils.writeString(out, _idPropertyName);
         out.writeBoolean(_autoGenerateId);
         IOUtils.writeString(out, _defaultPropertyName);
@@ -1346,26 +1264,14 @@ public class TypeDesc implements ITypeDesc {
                 IOUtils.writeObject(out, entry.getValue());
     }
 
-    private void writeExternalV9_0_2(ObjectOutput out) throws IOException {
+    private void writeExternalV9_0_2(ObjectOutput out, PlatformLogicalVersion version) throws IOException {
         IOUtils.writeString(out, _typeName);
         IOUtils.writeString(out, _codeBase);
         IOUtils.writeStringArray(out, _superTypesNames);
         int numOfProperties = _fixedProperties == null ? -1 : _fixedProperties.length;
         out.writeInt(numOfProperties);
-        for (int i = 0; i < numOfProperties; i++) {
-            PropertyInfo property = _fixedProperties[i];
-            IOUtils.writeString(out, property.getName());
-            IOUtils.writeString(out, property.getTypeName());
-            IOUtils.writeObject(out, property.getType());
-            // Removed in 8.0.4: primitive is calculated from typename.
-            //out.writeBoolean(property.isPrimitive());
-            // New in 8.0.1: write SpaceDocumentSupport code.
-            out.writeByte(SpaceDocumentSupportHelper.toCode(property.getDocumentSupport()));
-            // New in 9.0.0: write storage type as code.
-            out.writeInt(property.getStorageType().getCode());
-            // Changed in 8.0.4: write dotnet storage type as code instead of object
-            out.writeByte(property.getDotnetStorageType());
-        }
+        for (int i = 0; i < numOfProperties; i++)
+            _fixedProperties[i].serialize(out, version);
         IOUtils.writeString(out, _idPropertyName);
         out.writeBoolean(_autoGenerateId);
         IOUtils.writeString(out, _defaultPropertyName);
