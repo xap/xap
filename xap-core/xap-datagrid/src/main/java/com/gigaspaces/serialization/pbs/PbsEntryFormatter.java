@@ -199,7 +199,6 @@ public class PbsEntryFormatter {
             byte dotNetStorageType = input.readByte();
             properties[i] = PropertyInfo.builder(name)
                     .type(typeName)
-                    .documentSupport(SpaceDocumentSupport.DEFAULT)
                     .storageType(StorageType.OBJECT)
                     .dotNetStorageType(dotNetStorageType)
                     .build();
