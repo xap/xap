@@ -46,6 +46,11 @@ public class CompressedPropertyStorageAdapter implements PropertyStorageAdapter 
     }
 
     @Override
+    public String getName() {
+        return "Compressed";
+    }
+
+    @Override
     public Object toSpace(Object value) throws IOException {
         return serializer.serialize(value);
     }

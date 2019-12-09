@@ -32,12 +32,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PropertyStorageAdapterRegistry {
     private static final PropertyStorageAdapterRegistry instance = new PropertyStorageAdapterRegistry();
 
-    // TODO: Concurrency.
     private final Map<Class<? extends PropertyStorageAdapter>, PropertyStorageAdapter> map = new ConcurrentHashMap<>();
 
     private PropertyStorageAdapterRegistry() {
-        addIfAbsent(BinaryPropertyStorageAdapter.class);
-        addIfAbsent(CompressedPropertyStorageAdapter.class);
+        getOrCreate(BinaryPropertyStorageAdapter.class);
+        getOrCreate(CompressedPropertyStorageAdapter.class);
     }
 
     public static PropertyStorageAdapterRegistry getInstance() {
@@ -48,7 +47,7 @@ public class PropertyStorageAdapterRegistry {
         return map.get(key);
     }
 
-    public PropertyStorageAdapter addIfAbsent(Class<? extends PropertyStorageAdapter> key) {
+    public PropertyStorageAdapter getOrCreate(Class<? extends PropertyStorageAdapter> key) {
         if (!map.containsKey(key)) {
             synchronized (map) {
                 if (!map.containsKey(key)) {

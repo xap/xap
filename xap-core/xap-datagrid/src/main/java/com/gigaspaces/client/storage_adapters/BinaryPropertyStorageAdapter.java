@@ -36,6 +36,11 @@ public class BinaryPropertyStorageAdapter implements PropertyStorageAdapter {
     private final PooledObjectSerializer<MarshObjectConvertor> serializer = new PooledObjectSerializer<>(new Factory());
 
     @Override
+    public String getName() {
+        return "Binary";
+    }
+
+    @Override
     public Object toSpace(Object value) throws IOException {
         return serializer.serialize(value);
     }

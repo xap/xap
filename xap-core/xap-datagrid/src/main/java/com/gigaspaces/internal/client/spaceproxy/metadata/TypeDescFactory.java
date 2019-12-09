@@ -92,11 +92,11 @@ public class TypeDescFactory {
         final PropertyInfo[] properties = new PropertyInfo[typeInfo.getNumOfSpaceProperties()];
         for (int i = 0; i < properties.length; i++) {
             final SpacePropertyInfo property = typeInfo.getProperty(i);
-            StorageType storageType = property.getStorageType();
             properties[i] = PropertyInfo.builder(property.getName())
                     .type(property.getType())
                     .documentSupport(property.getDocumentSupport())
-                    .storageType(storageType)
+                    .storageType(property.getStorageType())
+                    .storageAdapter(property.getStorageAdapterClass())
                     .build();
         }
         final Map<String, SpaceIndex> indexes = new HashMap<String, SpaceIndex>(typeInfo.getIndexes());

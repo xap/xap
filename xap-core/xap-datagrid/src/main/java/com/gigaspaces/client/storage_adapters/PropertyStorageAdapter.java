@@ -25,6 +25,7 @@ import java.io.IOException;
  * @since 15.2
  */
 public interface PropertyStorageAdapter {
+    String getName();
     Object toSpace(Object value) throws IOException;
     Object fromSpace(Object value) throws IOException, ClassNotFoundException;
 }
