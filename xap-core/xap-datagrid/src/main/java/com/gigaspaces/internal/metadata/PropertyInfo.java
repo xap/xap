@@ -20,6 +20,7 @@ import com.gigaspaces.internal.client.utils.SerializationUtil;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.utils.ClassUtils;
 import com.gigaspaces.internal.utils.ReflectionUtils;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.metadata.SpaceDocumentSupport;
 import com.gigaspaces.metadata.SpacePropertyDescriptor;
 import com.gigaspaces.metadata.StorageType;
@@ -58,15 +59,11 @@ public class PropertyInfo implements SpacePropertyDescriptor, Externalizable {
     public PropertyInfo() {
     }
 
-    public PropertyInfo(String name, String typeName, SpaceDocumentSupport documentSupport, StorageType storageType) {
-        this(name, typeName, null, documentSupport, storageType, DotNetStorageType.NULL);
+    private PropertyInfo(Builder builder) {
+        this(builder.name, builder.typeName, builder.type, builder.documentSupport, builder.storageType, builder.dotnetStorageType);
     }
 
-    public PropertyInfo(String name, Class<?> type, SpaceDocumentSupport documentSupport, StorageType storageType) {
-        this(name, type.getName(), type, documentSupport, storageType, DotNetStorageType.NULL);
-    }
-
-    public PropertyInfo(String name, String typeName, Class<?> type, SpaceDocumentSupport documentSupport, StorageType storageType, byte dotNetStorageType) {
+    protected PropertyInfo(String name, String typeName, Class<?> type, SpaceDocumentSupport documentSupport, StorageType storageType, byte dotNetStorageType) {
         this._name = name;
         this._typeName = typeName;
         this._type = (type == null) ? getTypeFromName(typeName) : type;
@@ -177,5 +174,82 @@ public class PropertyInfo implements SpacePropertyDescriptor, Externalizable {
 
     public boolean isCommonJavaType() {
         return ReflectionUtils.isCommonJavaType(_typeName);
+    }
+
+    public static Builder builder(String name) {
+        return new Builder(name);
+    }
+
+    void serialize(ObjectOutput out, PlatformLogicalVersion version) throws IOException {
+        IOUtils.writeString(out, _name);
+        IOUtils.writeString(out, _typeName);
+        IOUtils.writeObject(out, _type);
+        // Removed in 8.0.4: primitive is calculated from typename.
+        //out.writeBoolean(property.isPrimitive());
+        // New in 8.0.1: write SpaceDocumentSupport code.
+        out.writeByte(SpaceDocumentSupportHelper.toCode(_documentSupport));
+        // New in 9.0.0: write storage type as code.
+        out.writeInt(_storageType.getCode());
+        // Changed in 8.0.4: write dotnet storage type as code instead of object
+        out.writeByte(_dotnetStorageType);
+    }
+
+    static PropertyInfo deserialize(ObjectInput in, PlatformLogicalVersion version) throws IOException, ClassNotFoundException {
+        Builder builder = new Builder(IOUtils.readString(in));
+        builder.typeName = IOUtils.readString(in);
+        builder.type = IOUtils.readObject(in);
+        // Removed in 8.0.4: primitive is calculated from typename.
+        //boolean isPrimitive = in.readBoolean();
+        // New in 8.0.1: read SpaceDocumentSupport code
+        builder.documentSupport = SpaceDocumentSupportHelper.fromCode(in.readByte());
+        // New in 9.0.0: read storage type code
+        builder.storageType = StorageType.fromCode(in.readInt());
+        // Changed in 8.0.4: read dotnet storage type as code instead of object.
+        builder.dotnetStorageType = in.readByte();
+        return builder.build();
+    }
+
+    public static class Builder {
+        private final String name;
+        private Class<?> type;
+        private String typeName;
+        private SpaceDocumentSupport documentSupport;
+        private StorageType storageType;
+        private byte dotnetStorageType = DotNetStorageType.NULL;
+
+        public Builder(String name) {
+            this.name = name;
+        }
+
+        public PropertyInfo build() {
+            return new PropertyInfo(this);
+        }
+
+        public Builder type(Class<?> type) {
+            this.type = type;
+            this.typeName = type.getName();
+            return this;
+        }
+
+        public Builder type(String typeName) {
+            this.type = null;
+            this.typeName = typeName;
+            return this;
+        }
+
+        public Builder documentSupport(SpaceDocumentSupport documentSupport) {
+            this.documentSupport = documentSupport;
+            return this;
+        }
+
+        public Builder storageType(StorageType storageType) {
+            this.storageType = storageType;
+            return this;
+        }
+
+        public Builder dotNetStorageType(byte dotnetStorageType) {
+            this.dotnetStorageType = dotnetStorageType;
+            return this;
+        }
     }
 }

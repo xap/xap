@@ -130,7 +130,11 @@ public class SpaceValueGettersTests {
         String[] superClasses = null;
         PropertyInfo[] properties = new PropertyInfo[propertyNames.length];
         for (int i = 0; i < properties.length; i++) {
-            properties[i] = new PropertyInfo(propertyNames[i], "", SpaceDocumentSupport.DEFAULT, StorageType.OBJECT);
+            properties[i] = PropertyInfo.builder(propertyNames[i])
+                    .type("")
+                    .documentSupport(SpaceDocumentSupport.DEFAULT)
+                    .storageType(StorageType.OBJECT)
+                    .build();
         }
         boolean supportsDynamicProperties = false;
         boolean isSystemType = false;

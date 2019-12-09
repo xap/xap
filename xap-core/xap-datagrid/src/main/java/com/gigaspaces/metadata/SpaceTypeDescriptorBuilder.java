@@ -319,7 +319,11 @@ public class SpaceTypeDescriptorBuilder {
         if (storageType == null)
             throw new IllegalArgumentException("Argument cannot be null - 'storageType'.");
 
-        return addFixedProperty(new PropertyInfo(propertyName, propertyType, documentSupport, storageType));
+        return addFixedProperty(PropertyInfo.builder(propertyName)
+                .type(propertyType)
+                .documentSupport(documentSupport)
+                .storageType(storageType)
+                .build());
     }
 
     /**
@@ -349,7 +353,11 @@ public class SpaceTypeDescriptorBuilder {
         StorageType fixedStorageType = storageType;
         if (storageType == StorageType.DEFAULT)
             fixedStorageType = _storageType;
-        return addFixedProperty(new PropertyInfo(propertyName, propertyTypeName, documentSupport, fixedStorageType));
+        return addFixedProperty(PropertyInfo.builder(propertyName)
+                .type(propertyTypeName)
+                .documentSupport(documentSupport)
+                .storageType(fixedStorageType)
+                .build());
     }
 
     /**
