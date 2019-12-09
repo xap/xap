@@ -314,16 +314,8 @@ public class SpaceTypeDescriptorBuilder {
             throw new IllegalArgumentException("Argument cannot be null - 'propertyName'.");
         if (propertyType == null)
             throw new IllegalArgumentException("Argument cannot be null - 'propertyType'.");
-        if (documentSupport == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'documentSupport'.");
-        if (storageType == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'storageType'.");
 
-        return addFixedProperty(PropertyInfo.builder(propertyName)
-                .type(propertyType)
-                .documentSupport(documentSupport)
-                .storageType(storageType)
-                .build());
+        return addFixedProperty(PropertyInfo.builder(propertyName).type(propertyType), documentSupport, storageType);
     }
 
     /**
@@ -345,29 +337,25 @@ public class SpaceTypeDescriptorBuilder {
             throw new IllegalArgumentException("Argument cannot be null - 'propertyName'.");
         if (propertyTypeName == null)
             throw new IllegalArgumentException("Argument cannot be null - 'propertyTypeName'.");
-        if (documentSupport == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'documentSupport'.");
-        if (storageType == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'storageType'.");
-
         StorageType fixedStorageType = storageType;
         if (storageType == StorageType.DEFAULT)
             fixedStorageType = _storageType;
-        return addFixedProperty(PropertyInfo.builder(propertyName)
-                .type(propertyTypeName)
-                .documentSupport(documentSupport)
-                .storageType(fixedStorageType)
-                .build());
+        return addFixedProperty(PropertyInfo.builder(propertyName).type(propertyTypeName), documentSupport, fixedStorageType);
     }
 
     /**
      * Adds a property to the fixed properties set.
-     *
-     * @param property Property to add.
      */
-    private SpaceTypeDescriptorBuilder addFixedProperty(SpacePropertyDescriptor property) {
-        if (property == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'property'.");
+    private SpaceTypeDescriptorBuilder addFixedProperty(PropertyInfo.Builder builder, SpaceDocumentSupport documentSupport,
+                                                        StorageType storageType) {
+        if (documentSupport == null)
+            throw new IllegalArgumentException("Argument cannot be null - 'documentSupport'.");
+        builder.documentSupport(documentSupport);
+        if (storageType == null)
+            throw new IllegalArgumentException("Argument cannot be null - 'storageType'.");
+        builder.storageType(storageType);
+
+        SpacePropertyDescriptor property = builder.build();
         // Validate property is not a duplicate:
         if (_fixedProperties.containsKey(property.getName()))
             throw new IllegalArgumentException("Cannot add fixed property '" + property.getName() + "' - a property with the same name is already defined.");
