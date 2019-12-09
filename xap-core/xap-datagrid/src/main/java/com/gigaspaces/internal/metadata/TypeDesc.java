@@ -960,10 +960,6 @@ public class TypeDesc implements ITypeDesc {
     private void initializeV9_0_0() {
         _typeSimpleName = StringUtils.getSuffix(_typeName, ".");
         _idPropertyPos = indexOfProperty(_fixedProperties, _idPropertyName);
-        if (_idPropertyPos != NO_SUCH_PROPERTY) {
-            // This is required only for pre-8.0 backwards compatibility - see initializeV71.
-            _fixedProperties[_idPropertyPos] = new IdentifierInfo(_fixedProperties[_idPropertyPos], _autoGenerateId);
-        }
         // map properties names to positions:
         _fixedPropertiesMap = new HashMap<String, Integer>();
         for (int i = 0; i < _fixedProperties.length; i++)
