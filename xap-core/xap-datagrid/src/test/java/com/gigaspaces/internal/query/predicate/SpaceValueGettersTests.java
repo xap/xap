@@ -132,7 +132,6 @@ public class SpaceValueGettersTests {
         for (int i = 0; i < properties.length; i++) {
             properties[i] = PropertyInfo.builder(propertyNames[i])
                     .type("")
-                    .documentSupport(SpaceDocumentSupport.DEFAULT)
                     .storageType(StorageType.OBJECT)
                     .build();
         }

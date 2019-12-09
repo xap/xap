@@ -178,8 +178,8 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         private final String name;
         private Class<?> type;
         private String typeName;
-        private SpaceDocumentSupport documentSupport;
-        private StorageType storageType;
+        private SpaceDocumentSupport documentSupport = SpaceDocumentSupport.DEFAULT;
+        private StorageType storageType = StorageType.DEFAULT;
         private byte dotnetStorageType = DotNetStorageType.NULL;
 
         public Builder(String name) {

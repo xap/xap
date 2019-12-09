@@ -147,11 +147,7 @@ public class TypeDescFactory {
         for (int i = 0; i < length; i++) {
             fieldsNames[i] = fields[i].getName();
             fieldsTypes[i] = fields[i].getType().getName();
-            properties[i] = PropertyInfo.builder(fields[i].getName())
-                    .type(fields[i].getType())
-                    .documentSupport(SpaceDocumentSupport.DEFAULT)
-                    .storageType(StorageType.DEFAULT)
-                    .build();
+            properties[i] = PropertyInfo.builder(fields[i].getName()).type(fields[i].getType()).build();
             properties[i].setDefaultStorageType(_storageType);
         }
         final String defaultPropertyName = getEntryIndices(realClass, fieldsNames, fieldsTypes, fieldsIndexes);
@@ -259,11 +255,7 @@ public class TypeDescFactory {
         final PropertyInfo[] properties = new PropertyInfo[fieldsNames.length];
         final Map<String, SpaceIndex> indexes = new HashMap<String, SpaceIndex>();
         for (int i = 0; i < properties.length; i++) {
-            properties[i] = PropertyInfo.builder(fieldsNames[i])
-                    .type(fieldsTypes[i])
-                    .documentSupport(SpaceDocumentSupport.DEFAULT)
-                    .storageType(StorageType.DEFAULT)
-                    .build();
+            properties[i] = PropertyInfo.builder(fieldsNames[i]).type(fieldsTypes[i]).build();
             properties[i].setDefaultStorageType(_storageType);
             if (indices[i] != null && indices[i].isIndexed()) {
                 SpaceIndex index = new SpacePropertyIndex(fieldsNames[i], indices[i], false, i);
@@ -299,7 +291,6 @@ public class TypeDescFactory {
         for (int i = 0; i < properties.length; i++) {
             properties[i] = PropertyInfo.builder(fieldsNames[i])
                     .type(fieldsTypes[i])
-                    .documentSupport(SpaceDocumentSupport.DEFAULT)
                     .storageType(StorageType.OBJECT)
                     .build();
             if (fieldsIndexes[i] != SpaceIndexType.NONE) {
