@@ -18,6 +18,7 @@
 package com.gigaspaces.metadata;
 
 import com.gigaspaces.annotation.pojo.FifoSupport;
+import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.metadata.DotNetStorageType;
 import com.gigaspaces.internal.metadata.EntryType;
@@ -191,10 +192,7 @@ public class SpaceTypeDescriptorBuilder {
      * @param documentWrapperClass The document wrapper class for this type.
      */
     public SpaceTypeDescriptorBuilder documentWrapperClass(Class<? extends SpaceDocument> documentWrapperClass) {
-        if (documentWrapperClass == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'documentWrapperClass'.");
-
-        _documentWrapperClass = documentWrapperClass;
+        _documentWrapperClass = assertNotNull(documentWrapperClass, "documentWrapperClass");
         return this;
     }
 
@@ -204,9 +202,7 @@ public class SpaceTypeDescriptorBuilder {
      * @param fifoSupport Desired FIFO support.
      */
     public SpaceTypeDescriptorBuilder fifoSupport(FifoSupport fifoSupport) {
-        if (fifoSupport == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'fifoSupport'.");
-        this._fifoSupport = fifoSupport;
+        this._fifoSupport = assertNotNull(fifoSupport, "fifoSupport");
         return this;
     }
 
@@ -223,7 +219,7 @@ public class SpaceTypeDescriptorBuilder {
     /**
      * Sets whether for this type blobstore data is enabled when cache policy is set for blobstore.
      *
-     * @param true if this type blobstore data is enabled, false otherwise.
+     * @param blobstoreEnabled true if this type blobstore data is enabled, false otherwise.
      */
     public SpaceTypeDescriptorBuilder setBlobstoreEnabled(boolean blobstoreEnabled) {
         this._blobstoreEnabled = blobstoreEnabled;
@@ -257,15 +253,13 @@ public class SpaceTypeDescriptorBuilder {
      * Sets type's storage type
      */
     public SpaceTypeDescriptorBuilder storageType(StorageType storageType) {
-        if (storageType == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'storageType'.");
+        assertNotNull(storageType, "storageType");
         if (this._storageType != null && this._storageType != StorageType.DEFAULT && this._storageType != storageType)
             throw new IllegalStateException("Cannot set storage type to '" + storageType
                     + "' - it was already set to '" + _storageType + "'.");
         this._storageType = storageType;
         return this;
     }
-
 
     /**
      * Adds a property to the fixed properties set.
@@ -274,7 +268,7 @@ public class SpaceTypeDescriptorBuilder {
      * @param propertyType Type of property.
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType) {
-        return addFixedProperty(propertyName, propertyType, SpaceDocumentSupport.DEFAULT, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyType), SpaceDocumentSupport.DEFAULT, StorageType.DEFAULT);
     }
 
     /**
@@ -285,7 +279,7 @@ public class SpaceTypeDescriptorBuilder {
      * @param documentSupport Document support of property.
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, SpaceDocumentSupport documentSupport) {
-        return addFixedProperty(propertyName, propertyType, documentSupport, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyType), documentSupport, StorageType.DEFAULT);
     }
 
     /**
@@ -297,7 +291,19 @@ public class SpaceTypeDescriptorBuilder {
      * @since 9.0.0
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, StorageType storageType) {
-        return addFixedProperty(propertyName, propertyType, SpaceDocumentSupport.DEFAULT, storageType);
+        return addFixedProperty(property(propertyName, propertyType), SpaceDocumentSupport.DEFAULT, storageType);
+    }
+
+    /**
+     * Adds a property to the fixed properties set.
+     *
+     * @param propertyName Name of property.
+     * @param propertyType Type of property.
+     * @param propertyStorageAdapter  PropertyStorageAdapter class
+     * @since 15.2.0
+     */
+    public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, Class<? extends PropertyStorageAdapter> propertyStorageAdapter) {
+        return addFixedProperty(property(propertyName, propertyType).storageAdapter(propertyStorageAdapter), SpaceDocumentSupport.DEFAULT, StorageType.DEFAULT);
     }
 
     /**
@@ -310,12 +316,25 @@ public class SpaceTypeDescriptorBuilder {
      * @since 9.0.0
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, SpaceDocumentSupport documentSupport, StorageType storageType) {
-        if (propertyName == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'propertyName'.");
-        if (propertyType == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'propertyType'.");
+        return addFixedProperty(property(propertyName, propertyType), documentSupport, storageType);
+    }
 
-        return addFixedProperty(PropertyInfo.builder(propertyName).type(propertyType), documentSupport, storageType);
+    /**
+     * Adds a property to the fixed properties set.
+     *
+     * @param propertyName    Name of property.
+     * @param propertyType    Type of property.
+     * @param documentSupport Document support of property.
+     * @param propertyStorageAdapter  PropertyStorageAdapter class
+     * @since 9.0.0
+     */
+    public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, SpaceDocumentSupport documentSupport, Class<? extends PropertyStorageAdapter> propertyStorageAdapter) {
+        return addFixedProperty(property(propertyName, propertyType).storageAdapter(propertyStorageAdapter), documentSupport, StorageType.DEFAULT);
+    }
+
+    private static PropertyInfo.Builder property(String propertyName, Class<?> propertyType) {
+        return PropertyInfo.builder(assertNotNull(propertyName, "propertyName"))
+                .type(assertNotNull(propertyType, "propertyType"));
     }
 
     /**
@@ -325,35 +344,42 @@ public class SpaceTypeDescriptorBuilder {
      * @param propertyTypeName Name of type of property.
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName) {
-        return addFixedProperty(propertyName, propertyTypeName, SpaceDocumentSupport.DEFAULT, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyTypeName), SpaceDocumentSupport.DEFAULT, withTypeDefault(StorageType.DEFAULT));
     }
 
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName, SpaceDocumentSupport documentSupport) {
-        return addFixedProperty(propertyName, propertyTypeName, documentSupport, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyTypeName), documentSupport, withTypeDefault(StorageType.DEFAULT));
     }
 
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName, SpaceDocumentSupport documentSupport, StorageType storageType) {
-        if (propertyName == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'propertyName'.");
-        if (propertyTypeName == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'propertyTypeName'.");
-        StorageType fixedStorageType = storageType;
-        if (storageType == StorageType.DEFAULT)
-            fixedStorageType = _storageType;
-        return addFixedProperty(PropertyInfo.builder(propertyName).type(propertyTypeName), documentSupport, fixedStorageType);
+        return addFixedProperty(property(propertyName, propertyTypeName), documentSupport, withTypeDefault(storageType));
+    }
+
+    public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName, SpaceDocumentSupport documentSupport, Class<? extends PropertyStorageAdapter> propertyStorageAdapter) {
+        return addFixedProperty(property(propertyName, propertyTypeName).storageAdapter(propertyStorageAdapter), documentSupport, withTypeDefault(StorageType.DEFAULT));
+    }
+
+    private StorageType withTypeDefault(StorageType storageType) {
+        return storageType == StorageType.DEFAULT ? _storageType : storageType;
+    }
+
+    private static PropertyInfo.Builder property(String propertyName, String propertyTypeName) {
+        return PropertyInfo.builder(assertNotNull(propertyName, "propertyName"))
+                .type(assertNotNull(propertyTypeName, "propertyTypeName"));
+    }
+
+    private static <T> T assertNotNull(T obj, String name) {
+        if (obj == null)
+            throw new IllegalArgumentException("Argument cannot be null - '" + name + "'.");
+        return obj;
     }
 
     /**
      * Adds a property to the fixed properties set.
      */
-    private SpaceTypeDescriptorBuilder addFixedProperty(PropertyInfo.Builder builder, SpaceDocumentSupport documentSupport,
-                                                        StorageType storageType) {
-        if (documentSupport == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'documentSupport'.");
-        builder.documentSupport(documentSupport);
-        if (storageType == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'storageType'.");
-        builder.storageType(storageType);
+    private SpaceTypeDescriptorBuilder addFixedProperty(PropertyInfo.Builder builder, SpaceDocumentSupport documentSupport, StorageType storageType) {
+        builder.documentSupport(assertNotNull(documentSupport, "documentSupport"));
+        builder.storageType(assertNotNull(storageType, "storageType"));
 
         SpacePropertyDescriptor property = builder.build();
         // Validate property is not a duplicate:
@@ -397,18 +423,13 @@ public class SpaceTypeDescriptorBuilder {
      * @param indexType      Type of index.
      */
     public SpaceTypeDescriptorBuilder idProperty(String idPropertyName, boolean autoGenerateId, SpaceIndexType indexType) {
-        // Validate:
-        if (idPropertyName == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'idPropertyName'.");
-        if (indexType == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'indexType'.");
         // Validate id not already set:
         if (_idPropertyName != null)
             throw new IllegalStateException("Cannot set id property to '" + idPropertyName + "' - it was already set to '" + _idPropertyName + "'.");
 
-        this._idPropertyName = idPropertyName;
+        this._idPropertyName = assertNotNull(idPropertyName, "idPropertyName");
         this._idAutoGenerate = autoGenerateId;
-        addIndexIfNotExists(idPropertyName, indexType);
+        addIndexIfNotExists(idPropertyName, assertNotNull(indexType, "indexType"));
         return this;
     }
 
@@ -428,17 +449,12 @@ public class SpaceTypeDescriptorBuilder {
      * @param indexType           Routing property index type.
      */
     public SpaceTypeDescriptorBuilder routingProperty(String routingPropertyName, SpaceIndexType indexType) {
-        // Validate:
-        if (routingPropertyName == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'routingPropertyName'.");
-        if (indexType == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'indexType'.");
         // Validate id not already set:
         if (_routingPropertyName != null)
             throw new IllegalStateException("Cannot set routing property to '" + routingPropertyName + "' - it was already set to '" + _routingPropertyName + "'.");
 
-        this._routingPropertyName = routingPropertyName;
-        addIndexIfNotExists(routingPropertyName, indexType);
+        this._routingPropertyName = assertNotNull(routingPropertyName, "routingPropertyName");
+        addIndexIfNotExists(routingPropertyName, assertNotNull(indexType, "indexType"));
         return this;
     }
 
@@ -450,8 +466,7 @@ public class SpaceTypeDescriptorBuilder {
      */
     public SpaceTypeDescriptorBuilder fifoGroupingProperty(String fifoGroupingPropertyPath) {
         // Validate:
-        if (fifoGroupingPropertyPath == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'fifoGroupingPropertyPath'.");
+        assertNotNull(fifoGroupingPropertyPath, "fifoGroupingPropertyPath");
 
         // Validate fifo grouping not already set:
         if (_fifoGroupingPropertyPath != null)
@@ -491,8 +506,7 @@ public class SpaceTypeDescriptorBuilder {
      */
     public SpaceTypeDescriptorBuilder addFifoGroupingIndex(String fifoGroupingIndexPath) {
         // Validate:
-        if (fifoGroupingIndexPath == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'fifoGroupingIndexPath'.");
+        assertNotNull(fifoGroupingIndexPath, "fifoGroupingIndexPath");
 
         // validate fifo grouping not on collection
         validateNoCollectionPath(fifoGroupingIndexPath);
@@ -547,7 +561,7 @@ public class SpaceTypeDescriptorBuilder {
     /**
      * Adds an index of the specified type for the specified path.
      *
-     * @param path      Path to index
+     * @param paths     Paths to index
      * @param indexType Type of index.
      */
     @Deprecated
@@ -560,8 +574,7 @@ public class SpaceTypeDescriptorBuilder {
     /**
      * Adds an index of the specified type for the specified path.
      *
-     * @param path      Path to index
-     * @param indexType Type of index.
+     * @param paths     Paths to index
      */
     public SpaceTypeDescriptorBuilder addCompoundIndex(String[] paths) {
         return addCompoundIndex(paths, SpaceIndexType.EQUAL, false);
@@ -570,7 +583,7 @@ public class SpaceTypeDescriptorBuilder {
     /**
      * Adds an index of the specified type for the specified path.
      *
-     * @param path      Path to index
+     * @param paths     Paths to index
      * @param indexType Type of index.
      * @param unique    is it a unique index
      */
@@ -584,8 +597,7 @@ public class SpaceTypeDescriptorBuilder {
     /**
      * Adds an index of the specified type for the specified path.
      *
-     * @param path      Path to index
-     * @param indexType Type of index.
+     * @param paths     Paths to index
      * @param unique    is it a unique index
      */
     public SpaceTypeDescriptorBuilder addCompoundIndex(String[] paths, boolean unique) {
@@ -599,8 +611,7 @@ public class SpaceTypeDescriptorBuilder {
      */
     public SpaceTypeDescriptorBuilder addIndex(SpaceIndex index) {
         // Validate:
-        if (index == null)
-            throw new IllegalArgumentException("Argument cannot be null - 'index'.");
+        assertNotNull(index, "index");
         // Validate index is not a duplicate:
         if (_indexes.containsKey(index.getName()))
             throw new IllegalArgumentException("Cannot add index '" + index.getName() + "' - an index with the same name is already defined.");
@@ -652,7 +663,7 @@ public class SpaceTypeDescriptorBuilder {
      * Adds a QueryExtension information for the specified path
      *
      * @param path                     Path to decorate
-     * @param queryExtensionInfo       Query Extension encapsulating mapping info
+     * @param pathInfo                 Query Extension encapsulating mapping info
      */
     public SpaceTypeDescriptorBuilder addQueryExtensionInfo(String path, QueryExtensionPathInfo pathInfo) {
         createQueryExtensionInfoIfNeeded();

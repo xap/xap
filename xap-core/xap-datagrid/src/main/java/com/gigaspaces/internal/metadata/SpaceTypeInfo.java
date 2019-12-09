@@ -16,25 +16,10 @@
 
 package com.gigaspaces.internal.metadata;
 
-import com.gigaspaces.annotation.pojo.CompoundSpaceIndex;
-import com.gigaspaces.annotation.pojo.CompoundSpaceIndexes;
-import com.gigaspaces.annotation.pojo.FifoSupport;
-import com.gigaspaces.annotation.pojo.SpaceClass;
+import com.gigaspaces.annotation.pojo.*;
 import com.gigaspaces.annotation.pojo.SpaceClass.IncludeProperties;
-import com.gigaspaces.annotation.pojo.SpaceClassConstructor;
-import com.gigaspaces.annotation.pojo.SpaceDynamicProperties;
-import com.gigaspaces.annotation.pojo.SpaceExclude;
-import com.gigaspaces.annotation.pojo.SpaceFifoGroupingIndex;
-import com.gigaspaces.annotation.pojo.SpaceFifoGroupingProperty;
-import com.gigaspaces.annotation.pojo.SpaceId;
-import com.gigaspaces.annotation.pojo.SpaceLeaseExpiration;
-import com.gigaspaces.annotation.pojo.SpacePersist;
-import com.gigaspaces.annotation.pojo.SpaceProperty;
 import com.gigaspaces.annotation.pojo.SpaceProperty.IndexType;
-import com.gigaspaces.annotation.pojo.SpaceRouting;
-import com.gigaspaces.annotation.pojo.SpaceSequenceNumber;
-import com.gigaspaces.annotation.pojo.SpaceStorageType;
-import com.gigaspaces.annotation.pojo.SpaceVersion;
+import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
 import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.io.XmlUtils;
@@ -623,6 +608,8 @@ public class SpaceTypeInfo implements Externalizable {
 
                 property.setStorageType(XmlUtils.getAttributeEnum(propertyNode, "storage-type", StorageType.class, StorageType.DEFAULT, true));
 
+                property.setStorageAdapterClass(parseClass(XmlUtils.getAttribute(propertyNode, "property-storage-adapter")));
+
                 property.setDocumentSupport(XmlUtils.getAttributeEnum(propertyNode, "document-support", SpaceDocumentSupport.class, SpaceDocumentSupport.DEFAULT));
 
                 // parse property indexes
@@ -708,6 +695,14 @@ public class SpaceTypeInfo implements Externalizable {
         }
 
         return true;
+    }
+
+    private static <T> Class<T> parseClass(String className) {
+        try {
+            return className == null ? null : (Class<T>) Class.forName(className);
+        } catch (ClassNotFoundException e) {
+            throw new SpaceMetadataException("Failed to load class: " + className, e);
+        }
     }
 
     private void addPropertyIndex(String name, com.gigaspaces.annotation.pojo.SpaceIndex annotation, InitContext initContext) {
@@ -895,6 +890,12 @@ public class SpaceTypeInfo implements Externalizable {
                 initContext.explicitlyIncluded.add(property);
             }
             // else it will set to OBJECT storage type only if the property is a space property.
+
+            SpacePropertyStorageAdapter storageAdapterAnnotation = getter.getAnnotation(SpacePropertyStorageAdapter.class);
+            if (storageAdapterAnnotation != null) {
+                property.setStorageAdapterClass(storageAdapterAnnotation.value());
+                initContext.explicitlyIncluded.add(property);
+            }
 
             SpaceId idAnnotation = getter.getAnnotation(SpaceId.class);
             if (idAnnotation != null) {
@@ -1185,6 +1186,11 @@ public class SpaceTypeInfo implements Externalizable {
                     property.setStorageType(superProperty.getStorageType());
                 else if (superProperty.getStorageType() != null && superProperty.getStorageType() != property.getStorageType())
                     throw new SpaceMetadataValidationException(_type, property, "Cannot declare storage type different from the storage type declared in the super class.");
+                // Copy storage adapter from super:
+                if (property.getStorageAdapterClass() == null)
+                    property.setStorageAdapterClass(superProperty.getStorageAdapterClass());
+                else if (superProperty.getStorageAdapterClass() != null && superProperty.getStorageAdapterClass() != property.getStorageAdapterClass())
+                    throw new SpaceMetadataValidationException(_type, property, "Cannot declare storage adapter class different from the super class definition.");
 
                 if (property.getDocumentSupport() == null || property.getDocumentSupport() == SpaceDocumentSupport.DEFAULT)
                     property.setDocumentSupport(superProperty.getDocumentSupport());

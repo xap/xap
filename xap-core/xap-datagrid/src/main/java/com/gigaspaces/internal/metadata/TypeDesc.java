@@ -24,7 +24,6 @@ import com.gigaspaces.internal.utils.ReflectionUtils;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
-import com.gigaspaces.metadata.SpaceDocumentSupport;
 import com.gigaspaces.metadata.SpaceMetadataException;
 import com.gigaspaces.metadata.SpaceMetadataValidationException;
 import com.gigaspaces.metadata.StorageType;
@@ -1011,11 +1010,8 @@ public class TypeDesc implements ITypeDesc {
 
     private boolean initializeAllPropertiesObjectStorageType() {
         // initialize _isAllPropertiesObjectStorageType
-        for (int i = 0; i < _fixedProperties.length; i++) {
-            StorageType storageType = _fixedProperties[i].getStorageType();
-            if (storageType == StorageType.DEFAULT)
-                throw new IllegalStateException("StorageType should not be default at this point");
-            if (storageType != StorageType.OBJECT)
+        for (PropertyInfo property : _fixedProperties) {
+            if (property.getStorageAdapter() != null)
                 return false;
         }
         return true;

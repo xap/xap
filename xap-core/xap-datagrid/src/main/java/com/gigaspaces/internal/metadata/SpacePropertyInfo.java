@@ -16,6 +16,8 @@
 
 package com.gigaspaces.internal.metadata;
 
+import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
+import com.gigaspaces.client.storage_adapters.internal.PropertyStorageAdapterRegistry;
 import com.gigaspaces.internal.metadata.converter.ConversionException;
 import com.gigaspaces.internal.metadata.pojo.PojoPropertyInfo;
 import com.gigaspaces.internal.reflection.IField;
@@ -51,6 +53,7 @@ public class SpacePropertyInfo implements SpacePropertyDescriptor, Comparable<Sp
     private int _level;
     private Primitive _nullValue;
     private StorageType _storageType;
+    private Class<? extends PropertyStorageAdapter> _storageAdapterClass;
     private SpaceDocumentSupport _documentSupport;
 
     public SpacePropertyInfo(PojoPropertyInfo property) {
@@ -132,8 +135,21 @@ public class SpacePropertyInfo implements SpacePropertyDescriptor, Comparable<Sp
         return _storageType;
     }
 
+    @Override
+    public String getStorageAdapterName() {
+        return _storageAdapterClass == null ? "" : PropertyStorageAdapterRegistry.getInstance().getOrCreate(_storageAdapterClass).getName();
+    }
+
     public void setStorageType(StorageType storageType) {
         this._storageType = storageType;
+    }
+
+    public Class<? extends PropertyStorageAdapter> getStorageAdapterClass() {
+        return _storageAdapterClass;
+    }
+
+    public void setStorageAdapterClass(Class<? extends PropertyStorageAdapter> storageAdapterClass) {
+        this._storageAdapterClass = storageAdapterClass;
     }
 
     @Override

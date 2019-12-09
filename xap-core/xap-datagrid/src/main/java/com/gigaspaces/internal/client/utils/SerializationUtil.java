@@ -16,8 +16,6 @@
 
 package com.gigaspaces.internal.client.utils;
 
-import com.gigaspaces.client.storage_adapters.BinaryPropertyStorageAdapter;
-import com.gigaspaces.client.storage_adapters.CompressedPropertyStorageAdapter;
 import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
 import com.gigaspaces.client.storage_adapters.internal.PropertyStorageAdapterRegistry;
 import com.gigaspaces.metadata.StorageType;
@@ -32,8 +30,8 @@ import java.io.IOException;
  */
 @com.gigaspaces.api.InternalApi
 public class SerializationUtil {
-    private static final PropertyStorageAdapter binaryAdapter = PropertyStorageAdapterRegistry.getInstance().get(BinaryPropertyStorageAdapter.class);
-    private static final PropertyStorageAdapter compressedAdapter = PropertyStorageAdapterRegistry.getInstance().get(CompressedPropertyStorageAdapter.class);
+    private static final PropertyStorageAdapter binaryAdapter = PropertyStorageAdapterRegistry.getInstance().get(StorageType.BINARY.getStorageAdapterClass());
+    private static final PropertyStorageAdapter compressedAdapter = PropertyStorageAdapterRegistry.getInstance().get(StorageType.COMPRESSED.getStorageAdapterClass());
 
     public static Object serializeFieldValue(Object value, StorageType storageType) throws IOException {
         if (value == null)
