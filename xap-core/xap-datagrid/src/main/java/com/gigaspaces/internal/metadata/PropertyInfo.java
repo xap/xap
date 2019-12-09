@@ -60,20 +60,16 @@ public class PropertyInfo implements SpacePropertyDescriptor, Externalizable {
     }
 
     private PropertyInfo(Builder builder) {
-        this(builder.name, builder.typeName, builder.type, builder.documentSupport, builder.storageType, builder.dotnetStorageType);
-    }
-
-    protected PropertyInfo(String name, String typeName, Class<?> type, SpaceDocumentSupport documentSupport, StorageType storageType, byte dotNetStorageType) {
-        this._name = name;
-        this._typeName = typeName;
-        this._type = (type == null) ? getTypeFromName(typeName) : type;
-        this._primitive = ReflectionUtils.isPrimitive(typeName);
+        this._name = builder.name;
+        this._typeName = builder.typeName;
+        this._type = (builder.type == null) ? getTypeFromName(_typeName) : builder.type;
+        this._primitive = ReflectionUtils.isPrimitive(_typeName);
         this._spacePrimitive = ReflectionUtils.isSpacePrimitive(_typeName);
-        this._documentSupport = documentSupport != SpaceDocumentSupport.DEFAULT
-                ? documentSupport
+        this._documentSupport = builder.documentSupport != SpaceDocumentSupport.DEFAULT
+                ? builder.documentSupport
                 : SpaceDocumentSupportHelper.getDefaultDocumentSupport(_type);
-        this._storageType = storageType;
-        this._dotnetStorageType = dotNetStorageType;
+        this._storageType = builder.storageType;
+        this._dotnetStorageType = builder.dotnetStorageType;
     }
 
     @Override
