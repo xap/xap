@@ -26,7 +26,6 @@ import com.gigaspaces.metadata.SpacePropertyDescriptor;
 import com.gigaspaces.metadata.StorageType;
 import com.j_spaces.kernel.ClassLoaderHelper;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -35,29 +34,19 @@ import java.io.ObjectOutput;
  * Represents an entry property.
  *
  * @author Niv Ingberg
- * @since 7.0 NOTE: Starting 8.0 this class is not serialized - Externalizable code is maintained
- * for backwards compatibility only.
+ * @since 7.0 NOTE: Starting 8.0 this class is not serialized
  */
 @com.gigaspaces.api.InternalApi
-public class PropertyInfo implements SpacePropertyDescriptor, Externalizable {
-    // serialVersionUID should never be changed.
-    private static final long serialVersionUID = 1L;
+public class PropertyInfo implements SpacePropertyDescriptor{
 
-    private String _name;
-    private String _typeName;
-    private boolean _primitive;
-    private boolean _spacePrimitive;
-    private boolean _comparable;
-    private Class<?> _type;
-    private SpaceDocumentSupport _documentSupport;
+    private final String _name;
+    private final String _typeName;
+    private final boolean _primitive;
+    private final boolean _spacePrimitive;
+    private final Class<?> _type;
+    private final SpaceDocumentSupport _documentSupport;
     private StorageType _storageType;
-    private byte _dotnetStorageType;
-
-    /**
-     * Default constructor for Externalizable.
-     */
-    public PropertyInfo() {
-    }
+    private final byte _dotnetStorageType;
 
     private PropertyInfo(Builder builder) {
         this._name = builder.name;
@@ -135,26 +124,6 @@ public class PropertyInfo implements SpacePropertyDescriptor, Externalizable {
         if (_spacePrimitive)
             return value;
         return SerializationUtil.deSerializeFieldValue(value, _storageType);
-    }
-
-    @Override
-    public void readExternal(ObjectInput in)
-            throws IOException, ClassNotFoundException {
-        _name = IOUtils.readString(in);
-        _typeName = IOUtils.readString(in);
-        _spacePrimitive = in.readBoolean();
-        _comparable = in.readBoolean();
-        _type = getTypeFromName(_typeName);
-        _documentSupport = SpaceDocumentSupport.DEFAULT;
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out)
-            throws IOException {
-        IOUtils.writeString(out, _name);
-        IOUtils.writeString(out, _typeName);
-        out.writeBoolean(_spacePrimitive);
-        out.writeBoolean(_comparable);
     }
 
     private static Class<?> getTypeFromName(String typeName) {
