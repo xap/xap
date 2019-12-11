@@ -17,6 +17,7 @@
 package com.gigaspaces.client.storage_adapters;
 
 import com.gigaspaces.api.ExperimentalApi;
+import com.gigaspaces.internal.io.MarshObject;
 import com.gigaspaces.internal.io.PooledObjectConverter;
 
 import java.io.IOException;
@@ -47,5 +48,17 @@ public interface PropertyStorageAdapter {
 
     default Object unzip(byte[] data) throws IOException, ClassNotFoundException {
         return PooledObjectConverter.unzip(data);
+    }
+
+    default BinaryWrapper wrap(byte[] data) {
+        return new MarshObject(data, hashCode(data));
+    }
+
+    default int hashCode(byte[] data) {
+        return MarshObject.hashCode(data);
+    }
+
+    default byte[] unwrap(BinaryWrapper wrapper) {
+        return wrapper.getBytes();
     }
 }
