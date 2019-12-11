@@ -396,6 +396,10 @@ public class SystemProperties extends CommonSystemProperties {
 
     public final static String STORAGE_TYPE_SERIALIZATION_ZIP_COMPRESSION_LEVEL = "com.gs.client.storage-type-serialization.zip.compression-level";
 
+    public static final String CIPHER_KEY_SYSTEM_PROPERTY = "com.gs.property-storage-type.cipher.key";
+    public static final String CIPHER_IV_LENGTH_SYSTEM_PROPERTY = "com.gs.property-storage-type.cipher.iv-length";
+    public static final String CIPHER_TAG_LENGTH_SYSTEM_PROPERTY = "com.gs.property-storage-type.cipher.tag-length";
+
 
     //    -Dcom.gigaspaces.lrmi.nio.filters.SSLFilterFactory
     //    -Dcom.gs.lrmi.filter.security.keystore=keystore.ks
