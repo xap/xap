@@ -17,8 +17,8 @@
 package com.gigaspaces.client.storage_adapters.internal;
 
 import com.gigaspaces.api.InternalApi;
-import com.gigaspaces.client.storage_adapters.BinaryPropertyStorageAdapter;
-import com.gigaspaces.client.storage_adapters.CompressedPropertyStorageAdapter;
+import com.gigaspaces.client.storage_adapters.BinaryAdapter;
+import com.gigaspaces.client.storage_adapters.ZipAdapter;
 import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
 
 import java.util.Map;
@@ -35,8 +35,8 @@ public class PropertyStorageAdapterRegistry {
     private final Map<Class<? extends PropertyStorageAdapter>, PropertyStorageAdapter> map = new ConcurrentHashMap<>();
 
     private PropertyStorageAdapterRegistry() {
-        getOrCreate(BinaryPropertyStorageAdapter.class);
-        getOrCreate(CompressedPropertyStorageAdapter.class);
+        getOrCreate(BinaryAdapter.class);
+        getOrCreate(ZipAdapter.class);
     }
 
     public static PropertyStorageAdapterRegistry getInstance() {

@@ -81,7 +81,7 @@ public class ClientUIDHandler {
         boolean validate;
         if (_serUID) {
             try {
-                basicName = new String(mc.getMarshObject(name).getBytes(), "ISO-8859-1");
+                basicName = new String(mc.toBinary(name), "ISO-8859-1");
                 validate = false;
             } catch (IOException e) {
                 throw new RuntimeException(e);

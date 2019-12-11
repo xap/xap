@@ -43,9 +43,7 @@ import java.util.zip.ZipOutputStream;
  * @since 4.1
  */
 @com.gigaspaces.api.InternalApi
-public class CompressedMarshObjectConvertor
-        extends Resource
-        implements MarshObjectConvertorResource {
+public class CompressedMarshObjectConvertor extends Resource implements MarshObjectConvertorResource {
     private int zipEntryCounter = 0;
     private static final int MAX_ENTRIES = 100;
 
@@ -103,50 +101,13 @@ public class CompressedMarshObjectConvertor
             _bai = new GSByteArrayInputStream(new byte[0]);
             _zi = new ZipInputStream(_bai);
 
-            getObject(getMarshObjectInternal("", true)); // remove header from
+            fromBinary(serializeToByteArray("")); // remove header from
             // in/out
         } catch (Exception e) {
             if (_logger.isLoggable(Level.SEVERE)) {
                 _logger.log(Level.SEVERE, e.getMessage(), e);
             }
         }
-    }
-
-    private MarshObject getMarshObjectInternal(Object o, boolean init) throws IOException {
-        byte[] bc;
-
-        if (init) {
-            bc = serializeToByteArray(o);
-        } else {
-            _bao.setBuffer(_byteArrayCache.get());
-            _bao.reset();
-            // check for next time
-            if (++zipEntryCounter < MAX_ENTRIES) {
-                _zo.putNextEntry(new ZipEntry(Integer.toString(zipEntryCounter)));
-                _oo.reset();
-            } else // open new zip OutputStream for next time
-            {
-                zipEntryCounter = 0;
-                _zo = new ZipOutputStream(_bao);
-                _zo.setLevel(_level);
-                _zo.putNextEntry(new ZipEntry(Integer.toString(zipEntryCounter)));
-                _oo = getObjectOutputStream(_zo);
-
-                // remove ObjectOutputStream header from zip stream
-                _zo.closeEntry();
-                _bao.reset();
-
-                _zo.putNextEntry(new ZipEntry(Integer.toString(++zipEntryCounter)));
-                _oo.reset();
-            }
-
-            bc = serializeToByteArray(o);
-            _byteArrayCache.notifyUsedSize(bc.length);
-            _bao.setBuffer(DUMMY_BUFFER);
-        }
-
-
-        return new CompressedMarshObject(bc);
     }
 
     protected byte[] serializeToByteArray(Object o) throws IOException {
@@ -157,29 +118,40 @@ public class CompressedMarshObjectConvertor
         return _bao.toByteArray();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see
-     * com.j_spaces.kernel.lrmi.IMarshObjectConvertor#getMarshObject(java.lang
-     * .Object)
-     */
-    public MarshObject getMarshObject(Object o) throws IOException {
-        return getMarshObjectInternal(o, false);
+    @Override
+    public byte[] toBinary(Object o) throws IOException {
+        _bao.setBuffer(_byteArrayCache.get());
+        _bao.reset();
+        // check for next time
+        if (++zipEntryCounter < MAX_ENTRIES) {
+            _zo.putNextEntry(new ZipEntry(Integer.toString(zipEntryCounter)));
+            _oo.reset();
+        } else // open new zip OutputStream for next time
+        {
+            zipEntryCounter = 0;
+            _zo = new ZipOutputStream(_bao);
+            _zo.setLevel(_level);
+            _zo.putNextEntry(new ZipEntry(Integer.toString(zipEntryCounter)));
+            _oo = getObjectOutputStream(_zo);
 
+            // remove ObjectOutputStream header from zip stream
+            _zo.closeEntry();
+            _bao.reset();
+
+            _zo.putNextEntry(new ZipEntry(Integer.toString(++zipEntryCounter)));
+            _oo.reset();
+        }
+
+        byte[] bc = serializeToByteArray(o);
+        _byteArrayCache.notifyUsedSize(bc.length);
+        _bao.setBuffer(DUMMY_BUFFER);
+
+        return bc;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see
-     * com.j_spaces.kernel.lrmi.IMarshObjectConvertor#getObject(com.j_spaces
-     * .kernel.lrmi.MarshObject)
-     */
-    public Object getObject(MarshObject marsh) throws IOException,
-            ClassNotFoundException {
-        if (!(marsh instanceof CompressedMarshObject))
-            throw new IOException("Can decompress only CompressedMarshObject");
-
-        _bai.setBuffer(marsh.getBytes());
+    @Override
+    public Object fromBinary(byte[] data) throws IOException, ClassNotFoundException {
+        _bai.setBuffer(data);
         _zi.getNextEntry();
 
         if (_oi == null) {
@@ -232,5 +204,4 @@ public class CompressedMarshObjectConvertor
     public long getUsedMemory() {
         return _byteArrayCache.getLength();
     }
-
 }

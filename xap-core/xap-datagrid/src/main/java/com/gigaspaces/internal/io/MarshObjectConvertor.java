@@ -32,7 +32,6 @@ import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 /**
  * Notice! this implementation is not Thread safe and should be use in conjuction with {@link
  * com.j_spaces.kernel.pool.ResourcePool} only.
@@ -41,9 +40,7 @@ import java.util.logging.Logger;
  * @since 4.1
  */
 @com.gigaspaces.api.InternalApi
-public class MarshObjectConvertor
-        extends Resource
-        implements MarshObjectConvertorResource {
+public class MarshObjectConvertor extends Resource implements MarshObjectConvertorResource {
     private GSByteArrayOutputStream _bao;
     private final SmartByteArrayCache _byteArrayCache;
     private ObjectOutputStream _oo;
@@ -88,7 +85,7 @@ public class MarshObjectConvertor
             _bai = new GSByteArrayInputStream(new byte[0]);
 
             try {
-                getObject(getMarshObjectInternal("", true));
+                fromBinary(serializeToByteArray(""));
             } catch (ClassNotFoundException e) {
                 if (_logger.isLoggable(Level.SEVERE)) {
                     _logger.log(Level.SEVERE, e.getMessage(), e);
@@ -101,37 +98,20 @@ public class MarshObjectConvertor
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see
-     * com.j_spaces.kernel.lrmi.IMarshObjectConvertor#getMarshObject(java.lang
-     * .Object)
-     */
-    public MarshObject getMarshObject(Object o) throws IOException {
-        return getMarshObjectInternal(o, false);
-    }
+    @Override
+    public byte[] toBinary(Object o) throws IOException {
+        // We need to reset state and pass this indication to the
+        // deserializing stream
+        _bao.setBuffer(_byteArrayCache.get());
+        _oo.reset();
 
-    private MarshObject getMarshObjectInternal(Object o, boolean init)
-            throws IOException {
-        byte[] bc;
+        byte[] bc = serializeToByteArray(o);
 
-        if (init) {
-            bc = serializeToByteArray(o);
-        } else {
-            // We need to reset state and pass this indication to the
-            // deserializing stream
-            _bao.setBuffer(_byteArrayCache.get());
-            _oo.reset();
+        _byteArrayCache.notifyUsedSize(bc.length);
+        _bao.setBuffer(DUMMY_BUFFER);
+        _oo.reset();
 
-            bc = serializeToByteArray(o);
-
-            _byteArrayCache.notifyUsedSize(bc.length);
-            _bao.setBuffer(DUMMY_BUFFER);
-            _oo.reset();
-        }
-
-        MarshObject marObj = new MarshObject(bc);
-        return marObj;
+        return bc;
     }
 
     protected byte[] serializeToByteArray(Object o) throws IOException {
@@ -141,23 +121,9 @@ public class MarshObjectConvertor
         return _bao.toByteArray();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see
-     * com.j_spaces.kernel.lrmi.IMarshObjectConvertor#getObject(com.j_spaces
-     * .kernel.lrmi.MarshObject)
-     */
-    public Object getObject(MarshObject marsh) throws IOException,
-            ClassNotFoundException {
-        return getObject(marsh.getBytes());
-    }
-
-    /*
-    * 
-    */
-    public Object getObject(byte[] bytes) throws IOException,
-            ClassNotFoundException {
-        _bai.setBuffer(bytes);
+    @Override
+    public Object fromBinary(byte[] data) throws IOException, ClassNotFoundException {
+        _bai.setBuffer(data);
 
         if (_oi == null) {
             _oi = getObjectInputStream(_bai);
@@ -221,5 +187,4 @@ public class MarshObjectConvertor
     public long getUsedMemory() {
         return _byteArrayCache.getLength();
     }
-
 }

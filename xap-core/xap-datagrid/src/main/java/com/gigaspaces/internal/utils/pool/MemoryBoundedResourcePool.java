@@ -21,7 +21,6 @@ import com.j_spaces.kernel.pool.ResourcePool;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-
 /**
  * An extension of the {@link ResourcePool} which has memory boundaries, and it will not pool new
  * resources if the memory boundaries have reached.
@@ -73,5 +72,4 @@ public class MemoryBoundedResourcePool<T extends IMemoryAwareResource> extends R
         //not accurate, since lock is not held but good enough, if we obtain lock we risk in future deadlocks since this code is called by a listener
         return (CalculateUsedMemory() + length) >= _poolMemoryBounds;
     }
-
 }
