@@ -17,8 +17,8 @@
 
 package com.gigaspaces.metadata;
 
-import com.gigaspaces.client.storage_adapters.BinaryPropertyStorageAdapter;
-import com.gigaspaces.client.storage_adapters.CompressedPropertyStorageAdapter;
+import com.gigaspaces.client.storage_adapters.BinaryAdapter;
+import com.gigaspaces.client.storage_adapters.ZipAdapter;
 import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
 
 /**
@@ -28,8 +28,8 @@ import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
 public enum StorageType {
     DEFAULT(null),
     OBJECT(null),
-    BINARY(BinaryPropertyStorageAdapter.class),
-    COMPRESSED(CompressedPropertyStorageAdapter.class);
+    BINARY(BinaryAdapter.class),
+    COMPRESSED(ZipAdapter.class);
 
     private final Class<? extends PropertyStorageAdapter> storageAdapterClass;
 

@@ -840,8 +840,7 @@ public class GSSessionImpl
         CompressedMarshObjectConvertor cv = null;
         try {
             cv = _compressedConvertorPool.getResource();
-            MarshObject cmo = cv.getMarshObject(objToCompress);
-            return cmo;
+            return new MarshObject(cv.toBinary(objToCompress));
         } finally {
             if (cv != null) {
                 _compressedConvertorPool.freeResource(cv);
@@ -861,7 +860,7 @@ public class GSSessionImpl
         Object obj = null;
         try {
             cv = _compressedConvertorPool.getResource();
-            obj = cv.getObject(objToDecompress);
+            obj = cv.fromBinary(objToDecompress.getBytes());
         } finally {
             if (cv != null)
                 _compressedConvertorPool.freeResource(cv);

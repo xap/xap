@@ -16,6 +16,9 @@
 
 package com.gigaspaces.client.storage_adapters;
 
+import com.gigaspaces.api.ExperimentalApi;
+import com.gigaspaces.internal.io.PooledObjectConverter;
+
 import java.io.IOException;
 
 /**
@@ -24,8 +27,25 @@ import java.io.IOException;
  * @author Niv Ingberg
  * @since 15.2
  */
+@ExperimentalApi
 public interface PropertyStorageAdapter {
     String getName();
     Object toSpace(Object value) throws IOException;
     Object fromSpace(Object value) throws IOException, ClassNotFoundException;
+
+    default byte[] serialize(Object value) throws IOException {
+        return PooledObjectConverter.serialize(value);
+    }
+
+    default Object deserialize(byte[] data) throws IOException, ClassNotFoundException {
+        return PooledObjectConverter.deserialize(data);
+    }
+
+    default byte[] zip(Object value) throws IOException {
+        return PooledObjectConverter.zip(value);
+    }
+
+    default Object unzip(byte[] data) throws IOException, ClassNotFoundException {
+        return PooledObjectConverter.unzip(data);
+    }
 }

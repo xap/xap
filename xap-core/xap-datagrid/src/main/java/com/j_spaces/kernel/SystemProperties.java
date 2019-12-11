@@ -389,17 +389,13 @@ public class SystemProperties extends CommonSystemProperties {
      */
     public final static String STORAGE_TYPE_SERIALIZATION_MAX_POOL_MEMORY_SIZE = "com.gs.client.storage-type-serialization.cache.max-pool-memory-size";
 
-    public final static int STORAGE_TYPE_SERIALIZATION_MAX_POOL_MEMORY_SIZE_DEFAULT = 256 * 1024 * 1024; //256megabytes
-
     /**
      * Set the maximum pool number of buffers that may be cached for storage type serialization
      */
     public final static String STORAGE_TYPE_SERIALIZATION_MAX_POOL_RESOURCE_COUNT_SIZE = "com.gs.client.storage-type-serialization.cache.max-pool-resource-count";
 
-    /**
-     * Default value for {@link #STORAGE_TYPE_SERIALIZATION_MAX_POOL_RESOURCE_COUNT_SIZE}
-     */
-    public final static int STORAGE_TYPE_SERIALIZATION_MAX_POOL_RESOURCE_COUNT_SIZE_DEFAULT = 100;
+    public final static String STORAGE_TYPE_SERIALIZATION_ZIP_COMPRESSION_LEVEL = "com.gs.client.storage-type-serialization.zip.compression-level";
+
 
     //    -Dcom.gigaspaces.lrmi.nio.filters.SSLFilterFactory
     //    -Dcom.gs.lrmi.filter.security.keystore=keystore.ks

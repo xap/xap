@@ -26,19 +26,6 @@ import java.io.IOException;
  * @since 4.1
  */
 public interface IMarshObjectConvertor {
-    /**
-     * Convert Object to MarshObject
-     *
-     * @param o Original object
-     * @return MarshObject of the original Object
-     */
-    public MarshObject getMarshObject(Object o) throws IOException;
-
-    /**
-     * Convert MarshObject to Object
-     *
-     * @param marsh MarshObject to convert
-     * @return original object
-     */
-    public Object getObject(MarshObject marsh) throws IOException, ClassNotFoundException;
+    byte[] toBinary(Object o) throws IOException;
+    Object fromBinary(byte[] data) throws IOException, ClassNotFoundException;
 }

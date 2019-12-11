@@ -16,12 +16,8 @@
 
 package com.gigaspaces.client.storage_adapters;
 
-import com.gigaspaces.client.storage_adapters.internal.PooledObjectSerializer;
-import com.gigaspaces.internal.io.ContextClassResolverObjectInputStream;
+import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.io.MarshObject;
-import com.gigaspaces.internal.io.MarshObjectConvertor;
-import com.gigaspaces.internal.utils.pool.IMemoryAwareResourceFactory;
-import com.gigaspaces.internal.utils.pool.IMemoryAwareResourcePool;
 
 import java.io.IOException;
 
@@ -31,9 +27,8 @@ import java.io.IOException;
  * @author Niv Ingberg
  * @since 15.2
  */
-public class BinaryPropertyStorageAdapter implements PropertyStorageAdapter {
-
-    private final PooledObjectSerializer<MarshObjectConvertor> serializer = new PooledObjectSerializer<>(new Factory());
+@ExperimentalApi
+public class BinaryAdapter implements PropertyStorageAdapter {
 
     @Override
     public String getName() {
@@ -42,22 +37,11 @@ public class BinaryPropertyStorageAdapter implements PropertyStorageAdapter {
 
     @Override
     public Object toSpace(Object value) throws IOException {
-        return serializer.serialize(value);
+        return new MarshObject(serialize(value));
     }
 
     @Override
     public Object fromSpace(Object value) throws IOException, ClassNotFoundException {
-        return serializer.deserialize((MarshObject) value);
-    }
-
-    private static class Factory implements IMemoryAwareResourceFactory<MarshObjectConvertor> {
-        public MarshObjectConvertor allocate() {
-            return allocate(null);
-        }
-
-        @Override
-        public MarshObjectConvertor allocate(IMemoryAwareResourcePool resourcePool) {
-            return new MarshObjectConvertor(resourcePool, ContextClassResolverObjectInputStream.Factory.instance);
-        }
+        return deserialize(((MarshObject) value).getBytes());
     }
 }

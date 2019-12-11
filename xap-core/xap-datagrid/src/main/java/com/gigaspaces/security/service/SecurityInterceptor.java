@@ -158,7 +158,7 @@ public class SecurityInterceptor {
         try {
             Authentication authentication = securityManager.authenticate(userDetails);
             MarshObjectConvertor marshObjectConvertor = new MarshObjectConvertor(); //not thread safe
-            MarshObject marshObject = marshObjectConvertor.getMarshObject(userDetails);
+            MarshObject marshObject = new MarshObject(marshObjectConvertor.toBinary(userDetails));
             AuthenticationToken authenticationToken = new AuthenticationToken(SessionId.generateIdentifier());
             AuthenticationToken cachedAuthenticationToken = marshedCache.putIfAbsent(marshObject, authenticationToken);
             if (cachedAuthenticationToken != null) {
