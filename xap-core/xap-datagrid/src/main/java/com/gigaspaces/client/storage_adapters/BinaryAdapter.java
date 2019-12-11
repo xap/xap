@@ -41,6 +41,6 @@ public class BinaryAdapter implements PropertyStorageAdapter {
 
     @Override
     public Object fromSpace(Object value) throws IOException, ClassNotFoundException {
-        return deserialize(unwrap((BinaryWrapper) value));
+        return deserialize(unwrap(value));
     }
 }

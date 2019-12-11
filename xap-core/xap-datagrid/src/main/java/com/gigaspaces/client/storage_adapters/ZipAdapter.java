@@ -42,11 +42,11 @@ public class ZipAdapter implements PropertyStorageAdapter {
 
     @Override
     public Object fromSpace(Object value) throws IOException, ClassNotFoundException {
-        return unzip(unwrap((BinaryWrapper) value));
+        return unzip(unwrap(value));
     }
 
     @Override
-    public BinaryWrapper wrap(byte[] data) {
+    public BinaryWrapper wrapBinary(byte[] data) {
         return new CompressedMarshObject(data);
     }
 }
