@@ -21,6 +21,7 @@ import com.gigaspaces.internal.io.MarshObject;
 import com.gigaspaces.internal.io.PooledObjectConverter;
 
 import java.io.IOException;
+import java.util.Base64;
 
 /**
  * Interface for adapting space properties values before storing them in space or after retrieving them.
@@ -50,15 +51,35 @@ public interface PropertyStorageAdapter {
         return PooledObjectConverter.unzip(data);
     }
 
-    default BinaryWrapper wrap(byte[] data) {
-        return new MarshObject(data, hashCode(data));
+    default Object wrap(byte[] data) {
+        return useBase64Wrapper()
+                ? base64Encode(data)
+                : wrapBinary(data);
+    }
+
+    default byte[] unwrap(Object spaceValue) {
+        return useBase64Wrapper()
+                ? base64Decode((String) spaceValue)
+                : ((BinaryWrapper) spaceValue).getBytes();
+    }
+
+    default BinaryWrapper wrapBinary(byte[] bytes) {
+        return new MarshObject(bytes, hashCode(bytes));
     }
 
     default int hashCode(byte[] data) {
         return MarshObject.hashCode(data);
     }
 
-    default byte[] unwrap(BinaryWrapper wrapper) {
-        return wrapper.getBytes();
+    default String base64Encode(byte[] bytes) {
+        return Base64.getEncoder().encodeToString(bytes);
+    }
+
+    default byte[] base64Decode(String s) {
+        return Base64.getDecoder().decode(s);
+    }
+
+    default boolean useBase64Wrapper() {
+        return false;
     }
 }
