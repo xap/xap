@@ -16,31 +16,12 @@
 
 package com.gigaspaces.client.storage_adapters;
 
-import com.gigaspaces.api.ExperimentalApi;
-
-import java.io.IOException;
-
 /**
- * Adapter for serializing properties using standard serialization and storing them in space in binary form.
+ * Interface wrapping a binary payload to be stored in space.
  *
  * @author Niv Ingberg
  * @since 15.2
  */
-@ExperimentalApi
-public class BinaryAdapter implements PropertyStorageAdapter {
-
-    @Override
-    public String getName() {
-        return "Binary";
-    }
-
-    @Override
-    public Object toSpace(Object value) throws IOException {
-        return wrap(serialize(value));
-    }
-
-    @Override
-    public Object fromSpace(Object value) throws IOException, ClassNotFoundException {
-        return deserialize(unwrap((BinaryWrapper) value));
-    }
+public interface BinaryWrapper {
+    byte[] getBytes();
 }

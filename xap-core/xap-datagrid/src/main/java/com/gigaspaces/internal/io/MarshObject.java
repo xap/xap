@@ -16,6 +16,8 @@
 
 package com.gigaspaces.internal.io;
 
+import com.gigaspaces.client.storage_adapters.BinaryWrapper;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -31,7 +33,7 @@ import java.util.Arrays;
  * @since 4.0
  */
 @com.gigaspaces.api.InternalApi
-public class MarshObject implements Externalizable {
+public class MarshObject implements BinaryWrapper, Externalizable {
     private static final long serialVersionUID = 1L;
     private static final int NULL_HASHCODE = 13;
 
@@ -42,10 +44,15 @@ public class MarshObject implements Externalizable {
     }
 
     public MarshObject(byte[] bytes) {
-        _bytes = bytes;
-        _hashCode = bytes != null ? computeHash(bytes) : NULL_HASHCODE;
+        this(bytes, bytes != null ? hashCode(bytes) : NULL_HASHCODE);
     }
 
+    public MarshObject(byte[] bytes, int hashCode) {
+        _bytes = bytes;
+        _hashCode = hashCode;
+    }
+
+    @Override
     public byte[] getBytes() {
         return _bytes;
     }
@@ -64,7 +71,7 @@ public class MarshObject implements Externalizable {
         return _hashCode;
     }
 
-    private static int computeHash(byte[] bytes) {
+    public static int hashCode(byte[] bytes) {
         int h = 0;
         for (byte b : bytes)
             h = 31 * h + b;

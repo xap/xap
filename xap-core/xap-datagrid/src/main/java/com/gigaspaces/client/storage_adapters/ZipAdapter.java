@@ -18,7 +18,6 @@ package com.gigaspaces.client.storage_adapters;
 
 import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.io.CompressedMarshObject;
-import com.gigaspaces.internal.io.MarshObject;
 
 import java.io.IOException;
 
@@ -38,11 +37,16 @@ public class ZipAdapter implements PropertyStorageAdapter {
 
     @Override
     public Object toSpace(Object value) throws IOException {
-        return new CompressedMarshObject(zip(value));
+        return wrap(zip(value));
     }
 
     @Override
     public Object fromSpace(Object value) throws IOException, ClassNotFoundException {
-        return unzip(((MarshObject) value).getBytes());
+        return unzip(unwrap((BinaryWrapper) value));
+    }
+
+    @Override
+    public BinaryWrapper wrap(byte[] data) {
+        return new CompressedMarshObject(data);
     }
 }
