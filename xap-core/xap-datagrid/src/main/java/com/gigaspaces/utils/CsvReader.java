@@ -9,10 +9,13 @@ import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.metadata.SpaceTypeDescriptorBuilder;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.DateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
@@ -105,7 +108,7 @@ public class CsvReader {
     public static class Builder {
         private final Map<String, Parser> parsers = initDefaultParsers();
         private Charset charset = StandardCharsets.UTF_8;
-        private String valuesSeparator = ",";
+        private String valuesSeparator = ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
         private String metadataSeparator = ":";
         private boolean removeQuotes = true;
         private Function<Line, Optional<String[]>> invalidLineParser = line -> {
@@ -131,10 +134,14 @@ public class CsvReader {
             result.put(double.class.getName(), new Parser(double.class, Double::parseDouble));
             result.put(Double.class.getName(), new Parser(Double.class, Double::parseDouble));
             result.put(char.class.getName(), new Parser(char.class, s -> s.charAt(0)));
+            result.put(BigDecimal.class.getName(), new Parser(BigDecimal.class, s -> new BigDecimal(s)));
             result.put(Character.class.getName(), new Parser(Character.class, s -> s.charAt(0)));
             result.put(java.time.LocalDate.class.getName(), new Parser(java.time.LocalDate.class, java.time.LocalDate::parse));
             result.put(java.time.LocalTime.class.getName(), new Parser(java.time.LocalTime.class, java.time.LocalTime::parse));
             result.put(java.time.LocalDateTime.class.getName(), new Parser(java.time.LocalDateTime.class, java.time.LocalDateTime::parse));
+            result.put(java.sql.Date.class.getCanonicalName(), new Parser(java.sql.Date.class, s -> java.sql.Date.valueOf(java.time.LocalDate.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd")))));
+            result.put(java.sql.Timestamp.class.getCanonicalName(), new Parser(java.sql.Timestamp.class, s -> java.sql.Timestamp.valueOf(java.time.LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))));
+            result.put(java.sql.Time.class.getCanonicalName(), new Parser(java.sql.Time.class, s -> java.sql.Time.valueOf(java.time.LocalTime.parse(s))));
             result.put("string", result.get(String.class.getName()));
             result.put("date", result.get(java.time.LocalDate.class.getName()));
             result.put("time", result.get(java.time.LocalTime.class.getName()));
