@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.io;
 
+import com.gigaspaces.internal.utils.ReflectionUtils;
 import com.gigaspaces.internal.utils.pool.IMemoryAwareResourceFactory;
 import com.gigaspaces.internal.utils.pool.IMemoryAwareResourcePool;
 import com.gigaspaces.logger.Constants;
@@ -28,6 +29,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -46,6 +48,7 @@ import java.util.zip.ZipOutputStream;
 public class CompressedMarshObjectConvertor extends Resource implements MarshObjectConvertorResource {
     private int zipEntryCounter = 0;
     private static final int MAX_ENTRIES = 100;
+    private boolean _idempotent;
 
     private int _level;
 
@@ -83,19 +86,20 @@ public class CompressedMarshObjectConvertor extends Resource implements MarshObj
     }
 
     public CompressedMarshObjectConvertor(int level, IMemoryAwareResourcePool resourcePool) {
-        this(level, resourcePool, ObjectInputStreamFactory.Default.instance);
+        this(level, resourcePool, ObjectInputStreamFactory.Default.instance, false);
     }
 
-    public CompressedMarshObjectConvertor(int level, IMemoryAwareResourcePool resourcePool, ObjectInputStreamFactory objectInputStreamFactory) {
+    public CompressedMarshObjectConvertor(int level, IMemoryAwareResourcePool resourcePool, ObjectInputStreamFactory objectInputStreamFactory, boolean idempotent) {
         this.objectInputStreamFactory = objectInputStreamFactory;
         ISmartLengthBasedCacheCallback cacheCallback = resourcePool == null ? null : SmartLengthBasedCache.toCacheCallback(resourcePool);
         _byteArrayCache = createSerializationByteArrayCache(cacheCallback);
         _level = level;
+        this._idempotent = idempotent;
         try {
             _bao = new GSByteArrayOutputStream();
-            _zo = new ZipOutputStream(_bao);
+            _zo = createZipOutputStream(_bao);
             _zo.setLevel(_level);
-            _zo.putNextEntry(new ZipEntry(Integer.toString(zipEntryCounter++)));
+            _zo.putNextEntry(createZipEntry(_idempotent ? 0 : zipEntryCounter++));
             _oo = getObjectOutputStream(_zo);
 
             _bai = new GSByteArrayInputStream(new byte[0]);
@@ -123,22 +127,25 @@ public class CompressedMarshObjectConvertor extends Resource implements MarshObj
         _bao.setBuffer(_byteArrayCache.get());
         _bao.reset();
         // check for next time
-        if (++zipEntryCounter < MAX_ENTRIES) {
-            _zo.putNextEntry(new ZipEntry(Integer.toString(zipEntryCounter)));
+        if (_idempotent) {
+            _zo.putNextEntry(createZipEntry(0));
+            _oo.reset();
+        } else if (++zipEntryCounter < MAX_ENTRIES) {
+            _zo.putNextEntry(createZipEntry(zipEntryCounter));
             _oo.reset();
         } else // open new zip OutputStream for next time
         {
             zipEntryCounter = 0;
-            _zo = new ZipOutputStream(_bao);
+            _zo = createZipOutputStream(_bao);
             _zo.setLevel(_level);
-            _zo.putNextEntry(new ZipEntry(Integer.toString(zipEntryCounter)));
+            _zo.putNextEntry(createZipEntry(zipEntryCounter));
             _oo = getObjectOutputStream(_zo);
 
             // remove ObjectOutputStream header from zip stream
             _zo.closeEntry();
             _bao.reset();
 
-            _zo.putNextEntry(new ZipEntry(Integer.toString(++zipEntryCounter)));
+            _zo.putNextEntry(createZipEntry(++zipEntryCounter));
             _oo.reset();
         }
 
@@ -203,5 +210,40 @@ public class CompressedMarshObjectConvertor extends Resource implements MarshObj
     @Override
     public long getUsedMemory() {
         return _byteArrayCache.getLength();
+    }
+
+    private ZipOutputStream createZipOutputStream(OutputStream out) {
+        return _idempotent ? new IdempotentZipOutputStream(out) : new ZipOutputStream(out);
+    }
+
+    private ZipEntry createZipEntry(int id) {
+        String s = id == 0 ? "0" : Integer.toString(id);
+        ZipEntry result = new ZipEntry(s);
+        if (_idempotent)
+            result.setTime(0);
+        return result;
+    }
+
+    /**
+     * Workaround: Create a reusable zip output stream by using reflection to override the duplicate entries protection.
+     */
+    private static class IdempotentZipOutputStream extends ZipOutputStream {
+        private IdempotentZipOutputStream(OutputStream out) {
+            super(out);
+            try {
+                ReflectionUtils.setField(this, "names", new DummyHashSet<>());
+            } catch (IllegalAccessException e) {
+                throw new IllegalStateException("Failed to create idempotent zip output stream");
+            }
+        }
+
+        private static class DummyHashSet<E> extends HashSet<E> {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public boolean add(E e) {
+                return true;
+            }
+        }
     }
 }

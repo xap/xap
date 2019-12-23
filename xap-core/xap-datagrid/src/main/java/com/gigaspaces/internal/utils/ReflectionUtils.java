@@ -135,6 +135,15 @@ public abstract class ReflectionUtils {
         }
     }
 
+    public static void setField(Object target, String fieldName, Object value) throws IllegalAccessException {
+        setField(target, getDeclaredField(target.getClass(), fieldName), value);
+    }
+
+    public static void setField(Object target, Field field, Object value) throws IllegalAccessException {
+        makeAccessible(field);
+        field.set(target, value);
+    }
+
     /**
      * Gets the declared field named 'fieldName' from the 'type' class. If 'type' does not declare
      * such field, tries to get to get this field from 'type' parent class. This procedure continues

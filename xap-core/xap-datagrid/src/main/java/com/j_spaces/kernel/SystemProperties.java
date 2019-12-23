@@ -396,6 +396,8 @@ public class SystemProperties extends CommonSystemProperties {
 
     public final static String STORAGE_TYPE_SERIALIZATION_ZIP_COMPRESSION_LEVEL = "com.gs.client.storage-type-serialization.zip.compression-level";
 
+    public final static String STORAGE_TYPE_SERIALIZATION_ZIP_IDEMPOTENT = "com.gs.client.storage-type-serialization.zip.idempotent";
+
     public static final String CIPHER_KEY_SYSTEM_PROPERTY = "com.gs.property-storage-type.cipher.key";
     public static final String CIPHER_IV_LENGTH_SYSTEM_PROPERTY = "com.gs.property-storage-type.cipher.iv-length";
     public static final String CIPHER_TAG_LENGTH_SYSTEM_PROPERTY = "com.gs.property-storage-type.cipher.tag-length";
@@ -842,5 +844,10 @@ public class SystemProperties extends CommonSystemProperties {
 
     public static String setSystemProperty(String key, String value) {
         return value != null ? System.setProperty(key, value) : System.clearProperty(key);
+    }
+
+    public static boolean getBoolean(String name, boolean defaultValue) {
+        String property = System.getProperty(name);
+        return property == null ? defaultValue : Boolean.parseBoolean(property);
     }
 }

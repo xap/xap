@@ -34,6 +34,7 @@ public class PooledObjectConverter {
     private static final int maxResources = Integer.getInteger(SystemProperties.STORAGE_TYPE_SERIALIZATION_MAX_POOL_RESOURCE_COUNT_SIZE, 100);
     private static final int poolMemoryBounds = Integer.getInteger(SystemProperties.STORAGE_TYPE_SERIALIZATION_MAX_POOL_MEMORY_SIZE, 256 * 1024 * 1024);
     private static final int zipCompressionLevel = Integer.getInteger(SystemProperties.STORAGE_TYPE_SERIALIZATION_ZIP_COMPRESSION_LEVEL, 9);
+    private static final boolean zipIdempotent = SystemProperties.getBoolean(SystemProperties.STORAGE_TYPE_SERIALIZATION_ZIP_IDEMPOTENT, true);
 
     private static MemoryBoundedResourcePool<MarshObjectConvertor> binaryConverterPool = new BinaryFactory().toConverterPool();
     private static MemoryBoundedResourcePool<CompressedMarshObjectConvertor> zipConverterPool = new ZipFactory().toConverterPool();
@@ -96,7 +97,7 @@ public class PooledObjectConverter {
 
         @Override
         public CompressedMarshObjectConvertor allocate(IMemoryAwareResourcePool resourcePool) {
-            return new CompressedMarshObjectConvertor(zipCompressionLevel, resourcePool, ContextClassResolverObjectInputStream.Factory.instance);
+            return new CompressedMarshObjectConvertor(zipCompressionLevel, resourcePool, ContextClassResolverObjectInputStream.Factory.instance, zipIdempotent);
         }
 
         private MemoryBoundedResourcePool<CompressedMarshObjectConvertor> toConverterPool() {
