@@ -176,6 +176,10 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         out.writeInt(_storageType.getCode());
         // Changed in 8.0.4: write dotnet storage type as code instead of object
         out.writeByte(_dotnetStorageType);
+        // New in 15.2.0: property storage adapter
+        if (version.greaterOrEquals(PlatformLogicalVersion.v15_2_0)) {
+            IOUtils.writeString(out, _storageAdapter != null ? _storageAdapter.getClass().getName() : null);
+        }
     }
 
     static PropertyInfo deserialize(ObjectInput in, PlatformLogicalVersion version) throws IOException, ClassNotFoundException {
@@ -190,6 +194,12 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         builder.storageType = StorageType.fromCode(in.readInt());
         // Changed in 8.0.4: read dotnet storage type as code instead of object.
         builder.dotnetStorageType = in.readByte();
+        // New in 15.2.0: property storage adapter
+        if (version.greaterOrEquals(PlatformLogicalVersion.v15_2_0)) {
+            String storageAdapterClassName = IOUtils.readString(in);
+            if (storageAdapterClassName != null)
+                builder.storageAdapter(ClassLoaderHelper.loadClass(storageAdapterClassName));
+        }
         return builder.build();
     }
 

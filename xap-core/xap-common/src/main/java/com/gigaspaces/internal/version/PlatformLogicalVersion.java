@@ -253,6 +253,7 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
     /* Starting 14.5 build numbers are no longer used. */
     public static final PlatformLogicalVersion v14_5_0 = fromVersion(14, 5, 0);
     public static final PlatformLogicalVersion v15_0_0 = fromVersion(15, 0, 0);
+    public static final PlatformLogicalVersion v15_2_0 = fromVersion(15, 2, 0);
     //DOCUMENT BACKWARD BREAKING CHANGES, EACH CHANGE IN A LINE
     //GS-XXXX: Short backward breaking description and classes
     //GS-7725: Partial update replication
