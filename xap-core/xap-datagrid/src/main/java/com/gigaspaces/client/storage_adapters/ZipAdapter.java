@@ -32,7 +32,7 @@ public class ZipAdapter implements PropertyStorageAdapter {
 
     @Override
     public String getName() {
-        return "Zip";
+        return "Zip" + (useBase64Wrapper() ? "-base64" : "");
     }
 
     @Override

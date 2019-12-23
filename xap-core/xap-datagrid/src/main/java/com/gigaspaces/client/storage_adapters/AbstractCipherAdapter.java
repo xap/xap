@@ -43,7 +43,7 @@ public abstract class AbstractCipherAdapter implements PropertyStorageAdapter {
 
     @Override
     public String getName() {
-        return transformation;
+        return transformation + (useBase64Wrapper() ? "-base64" : "");
     }
 
     @Override

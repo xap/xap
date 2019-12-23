@@ -31,7 +31,7 @@ public class BinaryAdapter implements PropertyStorageAdapter {
 
     @Override
     public String getName() {
-        return "Binary";
+        return "Binary" + (useBase64Wrapper() ? "-base64" : "");
     }
 
     @Override
