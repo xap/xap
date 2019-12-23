@@ -67,7 +67,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
     private void initStorageType(StorageType storageType) {
         this._storageType = storageType;
         if (storageType.getStorageAdapterClass() != null && !_spacePrimitive) {
-            if (_storageAdapter != null)
+            if (_storageAdapter != null && !_storageAdapter.getClass().equals(storageType.getStorageAdapterClass()))
                 throw new IllegalStateException("Ambiguous storage settings: storageAdapterClass=" + _storageAdapter.getClass() + ", storageType=" + storageType);
             initStorageAdapter(storageType.getStorageAdapterClass());
         }
