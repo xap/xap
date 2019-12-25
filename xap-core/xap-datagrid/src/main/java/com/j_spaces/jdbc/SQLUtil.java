@@ -20,6 +20,7 @@ package com.j_spaces.jdbc;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.ITypeIntrospector;
+import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.utils.ObjectConverter;
 import com.gigaspaces.metadata.SpaceMetadataException;
@@ -71,10 +72,24 @@ public class SQLUtil {
                 return new Clob((String) obj);
             if (type.getName().equals(Blob.class.getName()))
                 return new Blob((byte[]) obj);
-            return obj;
+            return applyStorageAdapterIfNeeded(typeDesc, propertyName, obj);
         }
 
-        return ObjectConverter.convert(obj, type);
+        Object result =  ObjectConverter.convert(obj, type);
+        return applyStorageAdapterIfNeeded(typeDesc, propertyName, result);
+    }
+
+    private static Object applyStorageAdapterIfNeeded(ITypeDesc typeDesc, String propertyName, Object obj) throws SQLException {
+        if (typeDesc.isAllPropertiesObjectStorageType())
+            return obj;
+        PropertyInfo property = (PropertyInfo) typeDesc.getFixedProperty(propertyName);
+        if (property == null || property.getStorageAdapter() == null)
+            return obj;
+        try {
+            return property.getStorageAdapter().toSpace(obj);
+        } catch (IOException e) {
+            throw new SQLException("Failed to apply property storage adapter on value", e);
+        }
     }
 
     private static Class<?> getPropertyType(ITypeDesc typeDesc, String propertyName)
