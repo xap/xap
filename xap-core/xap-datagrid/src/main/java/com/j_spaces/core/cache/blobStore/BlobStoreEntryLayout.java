@@ -21,18 +21,18 @@
  */
 package com.j_spaces.core.cache.blobStore;
 
+import com.gigaspaces.client.storage_adapters.BinaryWrapper;
+import com.gigaspaces.internal.io.CompressedMarshObject;
 import com.gigaspaces.internal.io.IOArrayException;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.io.MarshObject;
-import com.gigaspaces.internal.metadata.EntryType;
-import com.gigaspaces.internal.metadata.EntryTypeDesc;
+import com.gigaspaces.internal.metadata.*;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.metadata.ServerTypeDesc;
 import com.gigaspaces.internal.server.storage.EntryDataType;
 import com.gigaspaces.internal.server.storage.FlatEntryData;
 import com.gigaspaces.internal.server.storage.ITransactionalEntryData;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
-import com.gigaspaces.metadata.StorageType;
 import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.blobStore.sadapter.BlobStoreStorageAdapterClassInfo;
@@ -76,7 +76,7 @@ public class BlobStoreEntryLayout implements Externalizable {
     private long _expirationTime;
     private Object[] _fieldsValues;
     private Map<String, Object> _dynamicProperties;
-    static final Map<Class<?>, Serializer> types = new HashMap<Class<?>, Serializer>();
+    private static final Map<Class<?>, Serializer> types = initSerializers();
 
     //++++++++++++++++++++++  temp field not serialized +++++++++++++++++++++++++++
     private transient long _dynamicIndexesRelatedIndicators;
@@ -204,18 +204,19 @@ public class BlobStoreEntryLayout implements Externalizable {
     private void writeObjectToStream(Object obj, ObjectOutput out, IServerTypeDesc typeDesc, int arrayPosition) throws IOException {
         if (_phantom || obj == null)
             return;
-        boolean isObject = (typeDesc.getTypeDesc().getFixedProperty(arrayPosition).getStorageType() == StorageType.OBJECT) ||
-                (typeDesc.getTypeDesc().getFixedProperty(arrayPosition).getStorageType() == StorageType.DEFAULT && typeDesc.getTypeDesc().getStorageType() == StorageType.OBJECT);
-        boolean isMarshaled = !isObject ? (typeDesc.getTypeDesc().getFixedProperty(arrayPosition).getStorageType() == StorageType.BINARY) ||
-                (typeDesc.getTypeDesc().getFixedProperty(arrayPosition).getStorageType() == StorageType.DEFAULT && typeDesc.getTypeDesc().getStorageType() == StorageType.BINARY) : false;
-
-        Class clazz = isObject ? typeDesc.getTypeDesc().getFixedProperty(arrayPosition).getType() :
-                (isMarshaled ? MarshObject.class : null);
-        Serializer serializer = (clazz != null && typeDesc.getTypeDesc().getObjectType() != EntryType.EXTERNAL_ENTRY) ? types.get(clazz) : null;
+        Serializer serializer = getPropertySerializer(typeDesc, arrayPosition);
         if (serializer != null)
             serializer.write(obj, out);
         else
             out.writeObject(obj);
+    }
+
+    private static Serializer getPropertySerializer(IServerTypeDesc typeDesc, int propertyPos) {
+        if (typeDesc.getTypeDesc().getObjectType() == EntryType.EXTERNAL_ENTRY)
+            return null;
+        PropertyInfo property = typeDesc.getTypeDesc().getFixedProperty(propertyPos);
+        Class clazz = property.getStorageAdapter() != null ? property.getStorageAdapter().getStorageClass() : property.getType();
+        return clazz != null ? types.get(clazz) : null;
     }
 
     public void setUid(String _m_Uid) {
@@ -254,14 +255,7 @@ public class BlobStoreEntryLayout implements Externalizable {
     }
 
     private Object readObjectFromStream(ObjectInput in, IServerTypeDesc typeDesc, int arrayPosition) throws IOException, ClassNotFoundException {
-        boolean isObject = (typeDesc.getTypeDesc().getFixedProperty(arrayPosition).getStorageType() == StorageType.OBJECT) ||
-                (typeDesc.getTypeDesc().getFixedProperty(arrayPosition).getStorageType() == StorageType.DEFAULT && typeDesc.getTypeDesc().getStorageType() == StorageType.OBJECT);
-        boolean isMarshaled = !isObject ? (typeDesc.getTypeDesc().getFixedProperty(arrayPosition).getStorageType() == StorageType.BINARY) ||
-                (typeDesc.getTypeDesc().getFixedProperty(arrayPosition).getStorageType() == StorageType.DEFAULT && typeDesc.getTypeDesc().getStorageType() == StorageType.BINARY) : false;
-
-        Class clazz = isObject ? typeDesc.getTypeDesc().getFixedProperty(arrayPosition).getType() :
-                (isMarshaled ? MarshObject.class : null);
-        Serializer serializer = (clazz != null && typeDesc.getTypeDesc().getObjectType() != EntryType.EXTERNAL_ENTRY) ? types.get(clazz) : null;
+        Serializer serializer = getPropertySerializer(typeDesc, arrayPosition);
         if (serializer != null)
             return serializer.read(in);
         else
@@ -672,12 +666,13 @@ public class BlobStoreEntryLayout implements Externalizable {
 
 
     public interface Serializer {
-        abstract void write(Object object, ObjectOutput out) throws IOException;
+        void write(Object object, ObjectOutput out) throws IOException;
 
-        abstract Object read(ObjectInput in) throws IOException, ClassNotFoundException;
+        Object read(ObjectInput in) throws IOException, ClassNotFoundException;
     }
 
-    static {
+    private static Map<Class<?>, Serializer> initSerializers() {
+        Map<Class<?>, Serializer> types = new HashMap<>();
         types.put(int.class, new Serializer() {
             @Override
             public void write(Object object, ObjectOutput out) throws IOException {
@@ -857,7 +852,7 @@ public class BlobStoreEntryLayout implements Externalizable {
         types.put(MarshObject.class, new Serializer() {
             @Override
             public void write(Object object, ObjectOutput out) throws IOException {
-                byte[] data = ((MarshObject) object).getBytes();
+                byte[] data = ((BinaryWrapper) object).getBytes();
                 out.writeInt(data.length);
                 if (data.length > 0) {
                     out.write(data);
@@ -874,6 +869,28 @@ public class BlobStoreEntryLayout implements Externalizable {
                 return new MarshObject(data);
             }
         });
+        // Use Marsh object serializer as default for BinaryWrapper interface
+        types.put(BinaryWrapper.class, types.get(MarshObject.class));
+        types.put(CompressedMarshObject.class, new Serializer() {
+            @Override
+            public void write(Object object, ObjectOutput out) throws IOException {
+                byte[] data = ((BinaryWrapper) object).getBytes();
+                out.writeInt(data.length);
+                if (data.length > 0) {
+                    out.write(data);
+//                	out.flush();
+                }
+            }
+
+            @Override
+            public Object read(ObjectInput in) throws IOException {
+                byte[] data = new byte[in.readInt()];
+                if (data.length > 0) {
+                    in.readFully(data);
+                }
+                return new CompressedMarshObject(data);
+            }
+        });
+        return types;
     }
 }
-

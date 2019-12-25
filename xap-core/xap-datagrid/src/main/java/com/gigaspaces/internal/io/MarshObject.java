@@ -44,12 +44,8 @@ public class MarshObject implements BinaryWrapper, Externalizable {
     }
 
     public MarshObject(byte[] bytes) {
-        this(bytes, bytes != null ? hashCode(bytes) : NULL_HASHCODE);
-    }
-
-    public MarshObject(byte[] bytes, int hashCode) {
         _bytes = bytes;
-        _hashCode = hashCode;
+        _hashCode = bytes != null ? hashCode(bytes) : NULL_HASHCODE;
     }
 
     @Override

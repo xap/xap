@@ -35,6 +35,10 @@ public interface PropertyStorageAdapter {
     Object toSpace(Object value) throws IOException;
     Object fromSpace(Object value) throws IOException, ClassNotFoundException;
 
+    default Class<?> getStorageClass() {
+        return useBase64Wrapper() ? String.class : null;
+    }
+
     default byte[] serialize(Object value) throws IOException {
         return PooledObjectConverter.serialize(value);
     }
@@ -64,11 +68,7 @@ public interface PropertyStorageAdapter {
     }
 
     default BinaryWrapper wrapBinary(byte[] bytes) {
-        return new MarshObject(bytes, hashCode(bytes));
-    }
-
-    default int hashCode(byte[] data) {
-        return MarshObject.hashCode(data);
+        return new MarshObject(bytes);
     }
 
     default String base64Encode(byte[] bytes) {

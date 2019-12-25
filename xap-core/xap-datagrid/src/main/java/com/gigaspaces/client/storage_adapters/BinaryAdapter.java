@@ -35,6 +35,11 @@ public class BinaryAdapter implements PropertyStorageAdapter {
     }
 
     @Override
+    public Class<?> getStorageClass() {
+        return useBase64Wrapper() ? String.class : BinaryWrapper.class;
+    }
+
+    @Override
     public Object toSpace(Object value) throws IOException {
         return wrap(serialize(value));
     }
