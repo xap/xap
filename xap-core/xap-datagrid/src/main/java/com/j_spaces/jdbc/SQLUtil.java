@@ -85,6 +85,9 @@ public class SQLUtil {
         PropertyInfo property = (PropertyInfo) typeDesc.getFixedProperty(propertyName);
         if (property == null || property.getStorageAdapter() == null)
             return obj;
+        // Preserve backwards behaviour for properties with storage type:
+        if (property.getStorageType().getStorageAdapterClass() != null)
+            return obj;
         try {
             return property.getStorageAdapter().toSpace(obj);
         } catch (IOException e) {
