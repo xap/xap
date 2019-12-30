@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.gigaspaces</groupId>
         <artifactId>xap-scala-parent</artifactId>
-        <version>15.2.0-SNAPSHOT</version>
+        <version>15.2.0-m5-mon-8</version>
         <relativePath>..</relativePath>
     </parent>
 
