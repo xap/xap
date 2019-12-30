@@ -48,6 +48,18 @@
             <groupId>org.hyperic</groupId>
             <artifactId>sigar</artifactId>
         </dependency>
+
+        <!-- Optional dependencies -->
+
+        <!-- GigaSpaces uses an internal lightweight yaml parser. If SnakeYaml is included, it will be used instead. -->
+        <dependency>
+            <groupId>org.snakeyaml</groupId>
+            <artifactId>snakeyaml-engine</artifactId>
+            <version>2.0</version>
+            <scope>provided</scope>
+            <optional>true</optional>
+        </dependency>
+
         <!--
          Bouncy Castle - completely optional, only needed when:
        - you generate a temporary self-signed certificate using SelfSignedCertificate, and

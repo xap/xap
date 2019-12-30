@@ -1,0 +1,53 @@
+# This is a comment followed by an empty line. Both should be ignored.
+
+# Common scalar types
+val-empty:
+val-bool:    true
+val-int:     42
+val-float:   3.14
+val-string:  foo
+
+val-array:
+  - one
+  - two
+  - three
+
+val-nested:
+  enabled: false
+  level: 1
+  value: foo
+  nested-2:
+    foo: bar
+    level: 2
+  properties:
+    - key1=value1
+    - key2
+    - key3=value3
+  map:
+    - key: one
+      value: 1
+    - key: two
+      value: 2
+    - key: three
+      value:
+        - 1
+        - 2
+        - 3
+  port: 1234
+
+# Quoted values
+string-empty:        ""
+string-empty-single: ''
+string-space:        " "
+string-bool:         "true"
+string-int:          '42'
+string-float:        "3.14"
+
+# Comments
+# This line is ignored
+val-1: foo # Everything after # is ignored
+val-2: "foo # bar" # If # is in quotes it's not ignored.
+val-3: 'foo # bar' # If # is in single quotes it's not ignored.
+val-4: "foo '# bar" # Check single-quote in double-quote.
+val-5: 'foo "# bar' # Check double-quote in single-quote.
+val-6: foo \# bar # If # is escaped with \ its ignored.
