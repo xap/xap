@@ -1,10 +1,9 @@
 package com.gigaspaces.internal.utils.yaml;
 
 import com.gigaspaces.api.InternalApi;
+import com.gigaspaces.internal.io.BootIOUtils;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -20,9 +19,9 @@ import java.util.stream.Stream;
 @InternalApi
 public class GsLightYamlParser implements YamlParser {
     @Override
-    public Map<String, Object> parse(Path path) throws IOException {
+    public Map<String, Object> parse(InputStream inputStream) throws IOException {
         Context context = new Context();
-        try (Stream<String> lines = Files.lines(path)) {
+        try (Stream<String> lines = BootIOUtils.lines(inputStream)) {
             lines.map(context::stripComment).forEach(context::processLine);
         }
         return context.latestNode.findRoot().generateValuesTree();

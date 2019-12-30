@@ -6,8 +6,6 @@ import org.snakeyaml.engine.v2.api.LoadSettings;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
 
 /**
@@ -21,9 +19,7 @@ public class GsSnakeYamlWrapper implements YamlParser {
     private final LoadSettings settings = LoadSettings.builder().build();
 
     @Override
-    public Map<String, Object> parse(Path path) throws IOException {
-        try (InputStream inputStream = Files.newInputStream(path)) {
-            return (Map<String, Object>) new Load(settings).loadFromInputStream(inputStream);
-        }
+    public Map<String, Object> parse(InputStream inputStream) throws IOException {
+        return (Map<String, Object>) new Load(settings).loadFromInputStream(inputStream);
     }
 }

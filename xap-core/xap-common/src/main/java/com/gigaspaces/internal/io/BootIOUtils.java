@@ -17,18 +17,16 @@
 
 package com.gigaspaces.internal.io;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BooleanSupplier;
+import java.util.stream.Stream;
 
 /**
  * This class provides a set of static utility methods used for I/O manipulations. (writing/reading
@@ -300,4 +298,37 @@ public class BootIOUtils {
 
         return null;
     }
+
+
+    public static Stream<String> lines(InputStream inputStream) {
+        return lines(inputStream, StandardCharsets.UTF_8);
+    }
+
+    public static Stream<String> lines(InputStream inputStream, Charset charset) {
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, charset));
+
+        try {
+            return br.lines().onClose(asUncheckedRunnable(br));
+        } catch (Error|RuntimeException e) {
+            try {
+                br.close();
+            } catch (IOException ex) {
+                try {
+                    e.addSuppressed(ex);
+                } catch (Throwable ignore) {}
+            }
+            throw e;
+        }
+    }
+
+    public static Runnable asUncheckedRunnable(Closeable c) {
+        return () -> {
+            try {
+                c.close();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        };
+    }
+
 }

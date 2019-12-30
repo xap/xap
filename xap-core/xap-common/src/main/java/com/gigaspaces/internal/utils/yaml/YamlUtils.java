@@ -2,6 +2,8 @@ package com.gigaspaces.internal.utils.yaml;
 
 import com.gigaspaces.api.InternalApi;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -14,6 +16,11 @@ import java.util.Properties;
  */
 @InternalApi
 public class YamlUtils {
+
+    public static Map<String, Object> parse(Path path) throws IOException {
+        return YamlParserFactory.create().parse(path);
+    }
+
     public static Properties toProperties(Map<String, Object> yaml) {
         Properties result = new Properties();
         toProperties(result, yaml, "");
