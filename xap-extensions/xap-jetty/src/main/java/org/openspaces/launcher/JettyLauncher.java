@@ -32,6 +32,8 @@ import org.eclipse.jetty.util.security.Password;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
 
+import javax.servlet.http.HttpSessionEvent;
+import javax.servlet.http.HttpSessionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -95,6 +97,18 @@ public class JettyLauncher extends WebLauncher {
 
         // GS-10830 - change default setSessionCookie (in order to change "JSESSIONID")
         webAppContext.getSessionHandler().setSessionCookie(SessionHandler.__DefaultSessionCookie + "_GigaSpaces_" + UUID.randomUUID());
+
+        webAppContext.getSessionHandler().addEventListener( new HttpSessionListener() {
+            @Override
+            public void sessionCreated(HttpSessionEvent httpSessionEvent) {
+                logger.debug( "session created:"  + httpSessionEvent.getSession().getId());
+            }
+
+            @Override
+            public void sessionDestroyed(HttpSessionEvent httpSessionEvent) {
+                logger.debug( "session destroyed:" + httpSessionEvent.getSession().getId());
+            }
+        } );
 
         server.setHandler(webAppContext);
 
