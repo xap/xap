@@ -17,23 +17,26 @@ package org.openspaces.core.properties.annotation;
 
 import org.openspaces.core.properties.BeanLevelProperties;
 import org.openspaces.core.properties.BeanLevelPropertiesContext;
+import org.openspaces.pu.container.support.BeanLevelPropertiesParser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.core.io.ClassPathResource;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
 /**
  * @author Niv Ingberg
  * @since 15.0
  */
 @Configuration
-@PropertySource(value = "classpath:service.properties", ignoreResourceNotFound = true)
 public class BeanLevelPropertiesBeansConfig {
 
     @BeanLevelPropertiesContext
@@ -45,9 +48,26 @@ public class BeanLevelPropertiesBeansConfig {
     @PostConstruct
     public void initialize() {
         if (beanLevelProperties != null && environment instanceof ConfigurableEnvironment) {
-            ((ConfigurableEnvironment)environment).getPropertySources()
-                    .addFirst(new PropertiesPropertySource("beanLevelProperties", beanLevelProperties.getContextProperties()));
+            MutablePropertySources propertySources = ((ConfigurableEnvironment) environment).getPropertySources();
+            propertySources.addFirst(new PropertiesPropertySource("beanLevelProperties", beanLevelProperties.getContextProperties()));
+            ClassPathResource resource = findExistingResource("gs-service-config.yaml", "service.properties");
+            if (resource != null) {
+                try {
+                    propertySources.addLast(new PropertiesPropertySource(resource.getFilename(), BeanLevelPropertiesParser.loadProperties(resource)));
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
         }
+    }
+
+    private static ClassPathResource findExistingResource(String ... paths) {
+        for (String path : paths) {
+            ClassPathResource resource = new ClassPathResource(path);
+            if (resource.exists())
+                return resource;
+        }
+        return null;
     }
 
     @Bean("internal-propertySourcesPlaceholderConfigurer")

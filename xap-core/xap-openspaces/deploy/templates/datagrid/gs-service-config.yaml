@@ -1,0 +1,23 @@
+dataGridName: dataGrid
+
+space:
+  # MemoryXTend settings
+  mx:
+    cache-entries-percentage:
+    avg-object-size:
+    # MemoryXTend Off-heap settings
+    off-heap:
+      enabled:
+      threshold:
+    # MemoryXTend RocksDB settings
+    rocksdb:
+      enabled:
+      persistent:
+      main-path:
+      mapping-dir:
+      paths:
+      block-size-kb:
+      cache-size-mb:
+      central-storage:
+      fsync:
+      off-heap-cache-memory-threshold:

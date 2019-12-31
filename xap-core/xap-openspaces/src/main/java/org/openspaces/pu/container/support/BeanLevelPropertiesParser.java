@@ -17,6 +17,7 @@
 
 package org.openspaces.pu.container.support;
 
+import com.gigaspaces.internal.io.BootIOUtils;
 import org.openspaces.core.properties.BeanLevelProperties;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.FileSystemResource;
@@ -89,9 +90,9 @@ public abstract class BeanLevelPropertiesParser {
             } else {
                 throw new IllegalArgumentException("-properties can accept only one or two values, not more and not less");
             }
-            Properties props = new Properties();
+            Properties props;
             if (properties.startsWith(EMBEDDED_PROPERTIES_PREFIX)) {
-                loadParams(properties, props);
+                props = loadParams(properties);
             } else {
                 Resource resource = new DefaultResourceLoader() {
                     // override the default load from the classpath to load from the file system
@@ -101,11 +102,9 @@ public abstract class BeanLevelPropertiesParser {
                     }
                 }.getResource(properties);
                 try {
-                    is = resource.getInputStream();
-                    props.load(is);
-                    is.close();
+                    props = loadProperties(resource);
                 } catch (IOException e) {
-                    throw new IllegalArgumentException("Failed to load resource [" + properties + "] " + e.getMessage());
+                    throw new IllegalArgumentException("Failed to load resource [" + properties + "] " + e.getMessage(), e);
                 }
             }
             if (name == null) {
@@ -120,6 +119,18 @@ public abstract class BeanLevelPropertiesParser {
         }
         return beanLevelProperties;
 
+    }
+
+    public static Properties loadProperties(Resource resource) throws IOException {
+        try (InputStream stream = resource.getInputStream()) {
+            return BootIOUtils.loadProperties(stream, resource.getFilename());
+        }
+    }
+
+    private static Properties loadParams(String properties) {
+        Properties result = new Properties();
+        loadParams(properties, result);
+        return result;
     }
 
     public static void loadParams(String properties, Map props) {
