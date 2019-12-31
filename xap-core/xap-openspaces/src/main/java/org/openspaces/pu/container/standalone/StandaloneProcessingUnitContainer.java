@@ -143,7 +143,6 @@ public class StandaloneProcessingUnitContainer extends ApplicationContextProcess
                 }
             }
         } catch (Exception e) {
-            printUsage();
             e.printStackTrace(System.err);
             System.exit(1);
         }
