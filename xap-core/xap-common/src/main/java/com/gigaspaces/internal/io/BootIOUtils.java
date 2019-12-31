@@ -17,14 +17,20 @@
 
 package com.gigaspaces.internal.io;
 
+import com.gigaspaces.internal.utils.yaml.YamlParserFactory;
+import com.gigaspaces.internal.utils.yaml.YamlUtils;
+
 import java.io.*;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
@@ -331,4 +337,25 @@ public class BootIOUtils {
         };
     }
 
+    public static boolean isYaml(String path) {
+        return path.endsWith(".yaml") || path.endsWith(".yml");
+    }
+
+    public static Properties loadProperties(Path path) throws IOException {
+        try (InputStream stream = Files.newInputStream(path)) {
+            return loadProperties(stream, path.toString());
+        }
+    }
+
+    public static Properties loadProperties(InputStream stream, String name) throws IOException {
+        return isYaml(name)
+                ? YamlUtils.toProperties(YamlParserFactory.create().parse(stream))
+                : loadProperties(stream);
+    }
+
+    public static Properties loadProperties(InputStream stream) throws IOException {
+        Properties result = new Properties();
+        result.load(stream);
+        return result;
+    }
 }
