@@ -58,7 +58,7 @@ public class PuRunCommand extends AbstractRunCommand {
                 .systemProperty(CommonSystemProperties.START_EMBEDDED_LOOKUP, "false");
         command.arg("-path").arg(path.getPath());
         if (propertiesFilePath != null)
-            command.arg("-properties").arg("file://" + propertiesFilePath.getPath());
+            command.arg("-properties").arg(propertiesFilePath.getPath());
         if (properties != null && !properties.isEmpty())
             command.arg("-properties").arg("embed://" + join(properties));
         if (id != 0) {
