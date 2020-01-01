@@ -398,9 +398,14 @@ public class SystemProperties extends CommonSystemProperties {
 
     public final static String STORAGE_TYPE_SERIALIZATION_ZIP_IDEMPOTENT = "com.gs.client.storage-type-serialization.zip.idempotent";
 
-    public static final String CIPHER_KEY_SYSTEM_PROPERTY = "com.gs.property-storage-type.cipher.key";
-    public static final String CIPHER_IV_LENGTH_SYSTEM_PROPERTY = "com.gs.property-storage-type.cipher.iv-length";
-    public static final String CIPHER_TAG_LENGTH_SYSTEM_PROPERTY = "com.gs.property-storage-type.cipher.tag-length";
+    public static final String AES_PASSPHRASE = "com.gs.property-storage.aes.passphrase";
+    public static final String AES_KEY_LENGTH = "com.gs.property-storage.aes.key-length";
+    public static final String AES_MAC_ALGORITHM = "com.gs.property-storage.aes.mac.algorithm";
+    public static final String AES_MAC_KEY_LENGTH = "com.gs.property-storage.aes.mac.key-length";
+    public static final String AES_GCM_TAG_LENGTH = "com.gs.property-storage.aes.gcm.tag-length";
+    public static final String AES_GCM_IV_LENGTH = "com.gs.property-storage.aes.gcm.iv-length";
+    public static final String AES_CBC_IV_LENGTH = "com.gs.property-storage.aes.cbc.iv-length";
+    public static final String AES_CBC_PADDING = "com.gs.property-storage.aes.cbc.padding";
 
 
     //    -Dcom.gigaspaces.lrmi.nio.filters.SSLFilterFactory
