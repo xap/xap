@@ -66,7 +66,7 @@ public abstract class AbstractAesAdapter implements PropertyStorageAdapter {
         try {
             return wrap(encrypt(serialize(value)));
         } catch (GeneralSecurityException e) {
-            throw new IOException("Failed to encrypt", e);
+            throw new IOException("Failed to encrypt property: " + e.getMessage(), e);
         }
     }
 
@@ -75,17 +75,17 @@ public abstract class AbstractAesAdapter implements PropertyStorageAdapter {
         try {
             return deserialize(decrypt(unwrap(value)));
         } catch (GeneralSecurityException e) {
-            throw new IOException("Failed to decrypt", e);
+            throw new IOException("Failed to decrypt property: " + e.getMessage(), e);
         }
     }
 
     /**
      * Returns the pass phrase which is used to generate the encryption key and mac key.
      */
-    protected byte[] getPassPhrase() {
+    protected byte[] getPassPhrase() throws GeneralSecurityException {
         String key = GsEnv.property(SystemProperties.AES_PASSPHRASE).get();
         if (key == null)
-            throw new IllegalStateException("Passphrase must be provided using the " + SystemProperties.AES_PASSPHRASE +" system property");
+            throw new GeneralSecurityException("Passphrase must be provided using the " + SystemProperties.AES_PASSPHRASE +" system property");
         return key.getBytes();
     }
 

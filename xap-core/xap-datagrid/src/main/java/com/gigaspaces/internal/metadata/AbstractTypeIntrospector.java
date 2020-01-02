@@ -179,22 +179,18 @@ public abstract class AbstractTypeIntrospector<T> implements ITypeIntrospector<T
         }
     }
 
-    private Object[] deserializeValues(Object[] values) {
+    private Object[] deserializeValues(Object[] values) throws IOException, ClassNotFoundException {
         if (values == null)
             return null;
         if (_typeDesc.isAllPropertiesObjectStorageType())
             return values;
 
-        try {
-            final Object[] clonedValues = new Object[values.length];
-            System.arraycopy(values, 0, clonedValues, 0, values.length);
-            for (int i = 0; i < values.length; i++)
-                clonedValues[i] = _typeDesc.getFixedProperty(i).afterDeserialize(values[i]);
+        final Object[] clonedValues = new Object[values.length];
+        System.arraycopy(values, 0, clonedValues, 0, values.length);
+        for (int i = 0; i < values.length; i++)
+            clonedValues[i] = _typeDesc.getFixedProperty(i).afterDeserialize(values[i]);
 
-            return clonedValues;
-        } catch (Exception e) {
-            throw new ConversionException(e);
-        }
+        return clonedValues;
     }
 
 
