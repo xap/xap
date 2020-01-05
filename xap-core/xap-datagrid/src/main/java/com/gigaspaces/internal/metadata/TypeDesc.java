@@ -198,8 +198,6 @@ public class TypeDesc implements ITypeDesc {
             throw new IllegalStateException("Cannot declare fifo grouping index without a fifo grouping property");
         for (PropertyInfo property : _fixedProperties) {
             String propertyName = property.getName();
-            if (property.getStorageType() == StorageType.DEFAULT)
-                property.setDefaultStorageType(this._storageType);
 
             // validate SpaceId, SpaceRouting and SpcaeFifoGrouping (property and indexes) with OBJECT storage type
             if (propertyName.equals(_idPropertyName))
@@ -239,8 +237,12 @@ public class TypeDesc implements ITypeDesc {
     }
 
     private void assertObjectStorageType(PropertyInfo property, String errMsg) {
-        if (property.getStorageType() != StorageType.OBJECT)
-            throw new SpaceMetadataValidationException(_typeName, property, errMsg + " cannot be used with storage type " + property.getStorageType());
+        if (property.getStorageType() != StorageType.OBJECT) {
+            if (property.getStorageType() == StorageType.DEFAULT)
+                property.setDefaultStorageType(StorageType.OBJECT);
+            else
+                throw new SpaceMetadataValidationException(_typeName, property, errMsg + " cannot be used with storage type " + property.getStorageType());
+        }
     }
 
     private boolean isSameProperty(String indexName, String propertyName) {
