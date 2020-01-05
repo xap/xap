@@ -37,7 +37,7 @@ import java.util.Random;
  * @author Niv Ingberg
  * @since 15.2
  */
-public abstract class AbstractAesAdapter implements PropertyStorageAdapter {
+public abstract class AbstractAesAdapter extends PropertyStorageAdapter {
     protected static final byte[] EMPTY = new byte[0];
 
     private final Random secureRandom = initSecureRandom();
@@ -64,7 +64,7 @@ public abstract class AbstractAesAdapter implements PropertyStorageAdapter {
     @Override
     public Object toSpace(Object value) throws IOException {
         try {
-            return wrap(encrypt(serialize(value)));
+            return wrapBinary(encrypt(serialize(value)));
         } catch (GeneralSecurityException e) {
             throw new IOException("Failed to encrypt property: " + e.getMessage(), e);
         }
@@ -73,7 +73,7 @@ public abstract class AbstractAesAdapter implements PropertyStorageAdapter {
     @Override
     public Object fromSpace(Object value) throws IOException, ClassNotFoundException {
         try {
-            return deserialize(decrypt(unwrap(value)));
+            return deserialize(decrypt(unwrapBinary(value)));
         } catch (GeneralSecurityException e) {
             throw new IOException("Failed to decrypt property: " + e.getMessage(), e);
         }

@@ -16,8 +16,6 @@
 
 package com.gigaspaces.client.storage_adapters;
 
-import com.gigaspaces.api.ExperimentalApi;
-
 import java.io.IOException;
 
 /**
@@ -26,8 +24,7 @@ import java.io.IOException;
  * @author Niv Ingberg
  * @since 15.2
  */
-@ExperimentalApi
-public class BinaryAdapter implements PropertyStorageAdapter {
+public class BinaryAdapter extends PropertyStorageAdapter {
 
     @Override
     public String getName() {
@@ -41,11 +38,11 @@ public class BinaryAdapter implements PropertyStorageAdapter {
 
     @Override
     public Object toSpace(Object value) throws IOException {
-        return wrap(serialize(value));
+        return wrapBinary(serialize(value));
     }
 
     @Override
     public Object fromSpace(Object value) throws IOException, ClassNotFoundException {
-        return deserialize(unwrap(value));
+        return deserialize(unwrapBinary(value));
     }
 }
