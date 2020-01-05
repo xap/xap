@@ -62,6 +62,22 @@ public abstract class PropertyStorageAdapter {
     }
 
     /**
+     * Indicates whether equality matching is supported. Defaults to false. Storage adapters who support equality should
+     * override this to true.
+     */
+    public boolean supportsEqualsMatching() {
+        return false;
+    }
+
+    /**
+     * Indicates whether ordered matching is supported. Defaults to false. Storage adapters who support order should
+     * override this to true.
+     */
+    public boolean supportsOrderedMatching() {
+        return false;
+    }
+
+    /**
      * Determines if binary content should be stored in the space as a string in base64 encoding. Defaults to false.
      */
     public boolean useBase64Wrapper() {

@@ -363,11 +363,14 @@ public abstract class AbstractEntryPacket extends AbstractExternalizable impleme
         for (int i = 0; i < properties.length; i++) {
             PropertyInfo property = properties[i];
             StorageType storageType = property.getStorageType();
-            if (storageType != StorageType.OBJECT) {
+            if (storageType != StorageType.OBJECT || !property.supportsEqualsMatching()) {
                 Object fieldValue = getFieldValue(i);
-                if (fieldValue != null)
-                    throw new IllegalArgumentException("[" + property.getName() + "] Cannot match property that have storage type other than "
-                            + StorageType.OBJECT + " storage type" + " (current storage type is " + storageType + ").");
+                if (fieldValue != null) {
+                    String errorMessage = storageType != StorageType.OBJECT
+                            ? "storage type other than " + StorageType.OBJECT + " storage type (current storage type is " + storageType + ")."
+                            : "storage adapter does not support matching [" + property.getStorageAdapterName() + "]";
+                    throw new IllegalArgumentException("[" + property.getName() + "] Cannot match property - " + errorMessage);
+                }
             }
         }
     }

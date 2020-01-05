@@ -38,6 +38,10 @@ public class ZipAdapter extends PropertyStorageAdapter {
         return useBase64Wrapper() ? String.class : CompressedMarshObject.class;
     }
 
+    @Override
+    public boolean supportsEqualsMatching() {
+        return true;
+    }
 
     @Override
     public Object toSpace(Object value) throws IOException {

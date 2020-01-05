@@ -120,6 +120,14 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         return _storageAdapter;
     }
 
+    public boolean supportsEqualsMatching() {
+        return _storageAdapter == null || _storageAdapter.supportsEqualsMatching();
+    }
+
+    public boolean supportsOrderedMatching() {
+        return _storageAdapter == null || _storageAdapter.supportsOrderedMatching();
+    }
+
     public byte getDotnetStorageType() {
         return _dotnetStorageType;
     }

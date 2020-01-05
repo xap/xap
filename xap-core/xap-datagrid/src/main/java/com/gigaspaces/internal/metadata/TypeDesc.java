@@ -198,40 +198,49 @@ public class TypeDesc implements ITypeDesc {
             throw new IllegalStateException("Cannot declare fifo grouping index without a fifo grouping property");
         for (PropertyInfo property : _fixedProperties) {
             String propertyName = property.getName();
+            if (property.getStorageType() == StorageType.DEFAULT)
+                property.setDefaultStorageType(StorageType.OBJECT);
+
             // validate SpaceId, SpaceRouting and SpcaeFifoGrouping (property and indexes) with OBJECT storage type
             if (propertyName.equals(_idPropertyName))
-                updateAndValidateObjectStorageType(property, "SpaceId and storage type other than " + StorageType.OBJECT
-                        + " cannot be used for the same property.");
+                assertSupportsMatching(property, "SpaceId");
             if (propertyName.equals(_routingPropertyName))
-                updateAndValidateObjectStorageType(property, "SpaceRouting and storage type other than " + StorageType.OBJECT
-                        + " cannot be used for the same property.");
+                assertSupportsMatching(property, "SpaceRouting");
             if (_fifoGroupingName != null && isSameProperty(_fifoGroupingName, propertyName))
-                updateAndValidateObjectStorageType(property, "SpaceFifoGroupingProperty and storage type other than " + StorageType.OBJECT
-                        + " cannot be used for the same property.");
+                assertSupportsMatching(property, "SpaceFifoGroupingProperty");
             for (String fifoGroupingIndexPath : _fifoGroupingIndexes)
                 if (isSameProperty(fifoGroupingIndexPath, propertyName))
-                    updateAndValidateObjectStorageType(property, "SpaceFifoGroupingIndex and storage type other than " + StorageType.OBJECT
-                            + " cannot be used for the same property.");
+                    assertSupportsMatching(property, "SpaceFifoGroupingIndex");
             // validate primitives with storage type
             if (ReflectionUtils.isSpacePrimitive(property.getType().getName()))
-                updateAndValidateObjectStorageType(property, "Primitive property type- cannot declare storage type other than " + StorageType.OBJECT);
+                assertObjectStorageType(property, "Primitive property type " + property.getType().getName());
             // validate indexes with storage type 
             for (String indexName : _indexes.keySet()) {
                 SpaceIndexType indexType = _indexes.get(indexName).getIndexType();
-                if (indexType != null && indexType != SpaceIndexType.NONE && isSameProperty(indexName, propertyName))
-                    updateAndValidateObjectStorageType(property, "Space index with type = " + indexType
-                            + " (not " + SpaceIndexType.NONE + ") and storage type with type = " + property.getStorageType()
-                            + " (not StorageType." + StorageType.OBJECT + ")" + " cannot be used for the same property.");
+                if (indexType != null && indexType != SpaceIndexType.NONE && isSameProperty(indexName, propertyName)) {
+                    assertSupportsMatching(property, "Space index with type = " + indexType);
+                    if (indexType.isOrdered()) {
+                        assertSupportsOrder(property, "Space index with type = " + indexType);
+                    }
+                }
             }
         }
     }
 
-    private void updateAndValidateObjectStorageType(PropertyInfo property, String errMsg) {
-        StorageType storageType = property.getStorageType();
-        if (storageType == StorageType.DEFAULT)
-            property.setDefaultStorageType(StorageType.OBJECT);
-        else if (storageType != StorageType.OBJECT)
-            throw new SpaceMetadataValidationException(_typeName, property, errMsg);
+    private void assertSupportsMatching(PropertyInfo property, String errMsg) {
+        assertObjectStorageType(property, errMsg);
+        if (!property.supportsEqualsMatching())
+            throw new SpaceMetadataValidationException(_typeName, property, errMsg + " cannot be used with storage adapter which does not support matching: " + property.getStorageAdapterName());
+    }
+
+    private void assertSupportsOrder(PropertyInfo property, String errMsg) {
+        if (!property.supportsOrderedMatching())
+            throw new SpaceMetadataValidationException(_typeName, property, errMsg + " cannot be used with storage adapter which does not support order: " + property.getStorageAdapterName());
+    }
+
+    private void assertObjectStorageType(PropertyInfo property, String errMsg) {
+        if (property.getStorageType() != StorageType.OBJECT)
+            throw new SpaceMetadataValidationException(_typeName, property, errMsg + " cannot be used with storage type " + property.getStorageType());
     }
 
     private boolean isSameProperty(String indexName, String propertyName) {

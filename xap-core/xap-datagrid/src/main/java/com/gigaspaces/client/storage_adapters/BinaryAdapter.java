@@ -37,6 +37,11 @@ public class BinaryAdapter extends PropertyStorageAdapter {
     }
 
     @Override
+    public boolean supportsEqualsMatching() {
+        return true;
+    }
+
+    @Override
     public Object toSpace(Object value) throws IOException {
         return wrapBinary(serialize(value));
     }
