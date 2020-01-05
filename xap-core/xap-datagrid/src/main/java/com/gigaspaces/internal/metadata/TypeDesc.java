@@ -199,7 +199,7 @@ public class TypeDesc implements ITypeDesc {
         for (PropertyInfo property : _fixedProperties) {
             String propertyName = property.getName();
             if (property.getStorageType() == StorageType.DEFAULT)
-                property.setDefaultStorageType(StorageType.OBJECT);
+                property.setDefaultStorageType(this._storageType);
 
             // validate SpaceId, SpaceRouting and SpcaeFifoGrouping (property and indexes) with OBJECT storage type
             if (propertyName.equals(_idPropertyName))
