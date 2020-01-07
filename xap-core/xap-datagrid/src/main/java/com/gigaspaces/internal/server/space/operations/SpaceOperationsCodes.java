@@ -22,7 +22,7 @@ package com.gigaspaces.internal.server.space.operations;
  */
 @com.gigaspaces.api.InternalApi
 public class SpaceOperationsCodes {
-    public static final int NUM_OF_OPERATIONS = 23;
+    public static final int NUM_OF_OPERATIONS = 25;
 
     public static final int EXECUTE_TASK = 0;
     public static final int ABORT_TRANSACTION = 1;
@@ -48,6 +48,9 @@ public class SpaceOperationsCodes {
     public static final int UNREGISTER_LOCAL_VIEW = 19;
     // Since 10.0
     public static final int AGGREGATE_ENTRIES = 20;
+    // Since 15.2.0
+    public static final int GET_BATCH_FOR_ITERATOR = 21;
+    public static final int CLOSE_SERVER_ITERATOR = 22 ;
 
     private SpaceOperationsCodes() {
     }

@@ -50,14 +50,14 @@ public class PostponedAsyncOperationsQueue {
         this._logger = Logger.getLogger(Constants.LOGGER_SPACEPROXY_ROUTER + '.' + name);
     }
 
-    public void enqueue(final AsyncOperationExecutor<?> execotor) {
+    public void enqueue(final AsyncOperationExecutor<?> executor) {
         try {
             _threadPoolExecutor.execute(new Runnable() {
 
                 @Override
                 public void run() {
                     try {
-                        execotor.executeAsync();
+                        executor.executeAsync();
                     } catch (Exception e) {
                         if (_logger.isLoggable(Level.WARNING))
                             _logger.log(Level.WARNING, "Unexpected exception caught in PostponedAsyncOperationsHandler", e);

@@ -504,7 +504,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
         }
 
         if (res != null && res instanceof IEntryCacheInfo)
-            _entries = new ScanSingleListIterator((IStoredList) res, _templateHolder.isFifoTemplate());
+            _entries = new ScanSingleListIterator((IStoredList) res, _templateHolder.isFifoTemplate(), _templateHolder.isServerIterator());
         else
             _entries = (IScanListIterator) res;
     }

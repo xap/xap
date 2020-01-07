@@ -18,30 +18,42 @@ package com.gigaspaces.client.iterator;
 
 import com.gigaspaces.client.ReadModifiers;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.client.SQLQuery;
 
 import net.jini.core.transaction.Transaction;
 
 import java.io.Closeable;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static com.j_spaces.kernel.SystemProperties.SPACE_ITERATOR_IMPLEMENTATION;
+import static com.j_spaces.kernel.SystemProperties.SPACE_ITERATOR_IMPLEMENTATION_DEFAULT;
 
 /**
  * @author Niv Ingberg
  * @since 10.1
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceIterator<T> implements Iterator<T>, Iterable<T>, Closeable {
+public class SpaceIterator<T> implements Iterator<T>, Iterable<T>, Closeable { //TODO discuss how expose not internal API
+    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_GSITERATOR);
+    private final boolean useServerBasedImpl = Boolean.parseBoolean(System.getProperty(SPACE_ITERATOR_IMPLEMENTATION, SPACE_ITERATOR_IMPLEMENTATION_DEFAULT));
     public static int getDefaultBatchSize() {
         return 100;
     }
 
-    private final SpaceEntryPacketIterator iterator;
+    private final IEntryPacketIterator iterator;
 
     public SpaceIterator(ISpaceProxy spaceProxy, Object query, Transaction txn, int batchSize, ReadModifiers modifiers) {
         if (query instanceof SQLQuery && ((SQLQuery)query).getExplainPlan() != null) {
             throw new UnsupportedOperationException("Sql explain plan does not support space iterator");
         }
-            this.iterator = new SpaceEntryPacketIterator(spaceProxy, query, txn, batchSize, modifiers.getCode());
+        if(_logger.isLoggable(Level.INFO)) {
+            String side = useServerBasedImpl ? "server" : "client";
+            _logger.info("Space Iterator is using " +  side + " based implementation");
+        }
+        this.iterator = useServerBasedImpl ? new ServerBasedEntryPacketIterator(spaceProxy, query, batchSize, modifiers.getCode()) : new SpaceEntryPacketIterator(spaceProxy, query, txn, batchSize, modifiers.getCode());
     }
 
     @Override

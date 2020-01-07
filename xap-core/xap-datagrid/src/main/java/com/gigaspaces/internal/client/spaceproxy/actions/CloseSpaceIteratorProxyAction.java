@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package com.gigaspaces.client.iterator;
+package com.gigaspaces.internal.client.spaceproxy.actions;
+
+import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+
+import java.rmi.RemoteException;
+import java.util.UUID;
 
 /**
- * @author Niv Ingberg
- * @since 10.1
+ * @author Alon Shoham
+ * @since 15.2.0
  */
-public interface SpaceIteratorConsumer<T> {
-    void accept(T entry);
+public abstract class CloseSpaceIteratorProxyAction<TSpaceProxy extends ISpaceProxy> {
+    public abstract void closeSpaceIterator(TSpaceProxy spaceProxy, UUID uuid)
+            throws RemoteException, InterruptedException;
 }
