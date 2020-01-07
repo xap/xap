@@ -26,11 +26,13 @@ import com.gigaspaces.client.WriteMultipleException.IWriteResult;
 import com.gigaspaces.events.NotifyActionType;
 import com.gigaspaces.events.NotifyInfo;
 import com.gigaspaces.executor.SpaceTask;
+import com.gigaspaces.internal.client.SpaceIteratorBatchResult;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.ReadTakeEntriesUidsResult;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.ReadTakeByIdsProxyActionInfo;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.ReadTakeProxyActionInfo;
 import com.gigaspaces.internal.client.spaceproxy.actions.AbstractSpaceProxyActionManager;
+import com.gigaspaces.internal.client.spaceproxy.operations.CloseIteratorSpaceOperationResult;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.metadata.index.AddTypeIndexesResult;
@@ -60,6 +62,7 @@ import net.jini.space.JavaSpace;
 
 import java.rmi.MarshalledObject;
 import java.rmi.RemoteException;
+import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -595,5 +598,15 @@ public abstract class AbstractSpaceProxy implements ISpaceProxy {
 
     public boolean isLocalViewContainer() {
         return false;
+    }
+
+    @Override
+    public SpaceIteratorBatchResult getBatchForIterator(Object template, int limit, int modifiers, UUID uuid, boolean firstTime) throws TransactionException, UnusableEntryException, RemoteException{
+        return _actionManager.getNextBatchFromServerIterator(template, limit, modifiers, uuid, firstTime);
+    }
+
+    @Override
+    public void closeSpaceIterator(UUID uuid) throws RemoteException, InterruptedException {
+        _actionManager.closeServerIterator(uuid);
     }
 }

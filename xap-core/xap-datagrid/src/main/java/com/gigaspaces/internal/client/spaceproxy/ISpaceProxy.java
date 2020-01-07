@@ -23,10 +23,12 @@ import com.gigaspaces.client.ChangeResult;
 import com.gigaspaces.client.ChangeSet;
 import com.gigaspaces.events.NotifyInfo;
 import com.gigaspaces.executor.SpaceTask;
+import com.gigaspaces.internal.client.SpaceIteratorBatchResult;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.ReadTakeEntriesUidsResult;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.ReadTakeByIdsProxyActionInfo;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.ReadTakeProxyActionInfo;
+import com.gigaspaces.internal.client.spaceproxy.operations.CloseIteratorSpaceOperationResult;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.metadata.index.AddTypeIndexesResult;
@@ -48,6 +50,7 @@ import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
 
 import java.rmi.RemoteException;
+import java.util.UUID;
 import java.util.concurrent.Future;
 
 /**
@@ -266,4 +269,9 @@ public interface ISpaceProxy extends IJSpace, ActionMaker, SecuredService, IDotn
     <T> Future<ChangeResult<T>> asyncChange(Object template, ChangeSet changeSet, Transaction txn, long timeout, ChangeModifiers modifiers, AsyncFutureListener<ChangeResult<T>> listener) throws RemoteException;
 
     AggregationResult aggregate(Object template, AggregationSet aggregationSet, Transaction txn, int readModifiers) throws RemoteException, TransactionException, InterruptedException;
+
+    SpaceIteratorBatchResult getBatchForIterator(Object template, int limit, int modifiers, UUID uuid, boolean firstTime)
+            throws TransactionException, UnusableEntryException, RemoteException;
+
+    void closeSpaceIterator(UUID uuid) throws RemoteException, InterruptedException;
 }

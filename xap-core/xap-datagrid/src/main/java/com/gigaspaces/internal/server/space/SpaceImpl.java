@@ -81,6 +81,8 @@ import com.gigaspaces.internal.remoting.RemoteOperationResult;
 import com.gigaspaces.admin.demote.DemoteFailedException;
 import com.gigaspaces.internal.server.space.demote.DemoteHandler;
 import com.gigaspaces.internal.server.space.executors.SpaceActionExecutor;
+import com.gigaspaces.internal.server.space.iterator.ServerIteratorInfo;
+import com.gigaspaces.internal.server.space.iterator.ServerIteratorRequestInfo;
 import com.gigaspaces.internal.server.space.operations.SpaceOperationsExecutor;
 import com.gigaspaces.internal.server.space.operations.WriteEntriesResult;
 import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
@@ -268,17 +270,7 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.*;
@@ -2258,6 +2250,17 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         return res;
     }
 
+    public AnswerHolder getNextBatchFromServerIterator(ITemplatePacket template,
+                                                        SpaceContext sc, int modifiers, ServerIteratorRequestInfo serverIteratorRequestInfo)
+            throws TransactionException, UnusableEntryException, UnknownTypeException, RemoteException, InterruptedException {
+        BatchQueryOperationContext operationContext = new ReadMultipleContext(template, serverIteratorRequestInfo.getBatchSize(), serverIteratorRequestInfo.getBatchSize());
+        return _engine.readMultiple(template, null,0,false,false, sc, false, modifiers, operationContext, null, serverIteratorRequestInfo);
+    }
+
+    public void closeServerIterator(UUID uuid){
+        _engine.closeServerIterator(uuid);
+    }
+
     public IEntryPacket[] readMultiple(ITemplatePacket template, Transaction txn, boolean take,
                                        int maxEntries, SpaceContext sc, boolean returnOnlyUid, int modifiers)
             throws TransactionException, UnusableEntryException, UnknownTypeException, RemoteException {
@@ -2282,7 +2285,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
             }
             ah = _engine.readMultiple(template, txn, timeout, isIfExist,
-                 take, sc, returnOnlyUid, modifiers, operationContext, null /*aggregatorContext*/);
+                 take, sc, returnOnlyUid, modifiers, operationContext, null /*aggregatorContext*/, null);
             if (ah == null)
                  return null;
             if (ah.getException() != null) {

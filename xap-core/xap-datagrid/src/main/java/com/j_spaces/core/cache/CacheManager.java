@@ -4096,8 +4096,9 @@ public class CacheManager extends AbstractCacheManager
             return context.getChosenIntersectedList(true/*final*/);
         if (res != null && !res.isMultiObjectCollection())
             return res.getObjectFromHead();
-        return res != null ? new ScanSingleListIterator(res, (template.isFifoTemplate() ||
-                (context.isInMemoryRecovery()  && (typeData.getFifoGroupingIndex()!=null  || typeData.isFifoSupport()))))  : null;
+        boolean fifoScan = template.isFifoTemplate() ||
+                (context.isInMemoryRecovery()  && (typeData.getFifoGroupingIndex()!=null  || typeData.isFifoSupport()));
+        return res != null ? new ScanSingleListIterator(res, fifoScan, template.isServerIterator()) : null;
     }
 
 
@@ -4673,7 +4674,7 @@ public class CacheManager extends AbstractCacheManager
             return context.getChosenIntersectedList(true/*final*/);
         if (chosen != null && (chosen instanceof IEntryCacheInfo))
             return (IEntryCacheInfo) chosen;
-        return (chosen instanceof IStoredList) ? new ScanSingleListIterator((IStoredList) chosen, template.isFifoTemplate()) :
+        return (chosen instanceof IStoredList) ? new ScanSingleListIterator((IStoredList) chosen, template.isFifoTemplate(), template.isServerIterator()) :
                 (IScanListIterator<IEntryCacheInfo>) chosen;
     }
 

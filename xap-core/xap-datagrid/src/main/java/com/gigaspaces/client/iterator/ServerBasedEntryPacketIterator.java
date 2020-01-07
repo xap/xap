@@ -17,50 +17,38 @@
 
 package com.gigaspaces.client.iterator;
 
-import com.gigaspaces.SpaceRuntimeException;
-import com.gigaspaces.client.iterator.internal.SpaceIteratorAggregator;
-import com.gigaspaces.client.iterator.internal.SpaceIteratorResult;
-import com.gigaspaces.internal.client.QueryResultTypeInternal;
+import com.gigaspaces.client.iterator.server_based.SpaceIteratorBatchResultsManager;
+import com.gigaspaces.internal.client.SpaceIteratorBatchResult;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ObjectType;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.logger.Constants;
-import com.gigaspaces.query.aggregators.AggregationSet;
-import com.j_spaces.core.UidQueryPacket;
 import com.j_spaces.jdbc.builder.SQLQueryTemplatePacket;
 
-import net.jini.core.entry.UnusableEntryException;
-import net.jini.core.transaction.Transaction;
-import net.jini.core.transaction.TransactionException;
-
-import java.rmi.RemoteException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * @author Niv Ingberg
- * @since 10.1
+ * @author Alon Shoham
+ * @since 15.2
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceEntryPacketIterator implements IEntryPacketIterator {
+public class ServerBasedEntryPacketIterator implements IEntryPacketIterator {
     private static final Logger _logger = Logger.getLogger(Constants.LOGGER_GSITERATOR);
-
     private final ISpaceProxy _spaceProxy;
-    private final Transaction _txn;
-    private final int _batchSize;
-    private final int _readModifiers;
+    private final long _timeout;
     private final ITemplatePacket _queryPacket;
-    private final QueryResultTypeInternal _queryResultType;
-    private final SpaceIteratorResult _iteratorResult;
     private final List<IEntryPacket> _buffer;
     private Iterator<IEntryPacket> _bufferIterator;
     private boolean _closed;
+    private SpaceIteratorBatchResultsManager _spaceIteratorBatchResultsManager;
 
-    public SpaceEntryPacketIterator(ISpaceProxy spaceProxy, Object query, Transaction txn, int batchSize, int modifiers) {
+    public ServerBasedEntryPacketIterator(ISpaceProxy spaceProxy, Object query, int batchSize, int modifiers) {
         if (spaceProxy == null)
             throw new IllegalArgumentException("space argument must not be null.");
         if (query == null)
@@ -70,16 +58,11 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
 
         if (_logger.isLoggable(Level.FINE))
             _logger.log(Level.FINE, "SpaceIterator initialized with batchSize=" + batchSize);
-
         this._spaceProxy = spaceProxy;
-        this._txn = txn;
-        this._batchSize = batchSize;
-        this._readModifiers = modifiers;
+        this._timeout = _spaceProxy.getDirectProxy().getProxyRouter().getConfig().getActiveServerLookupTimeout();
         this._queryPacket = toTemplatePacket(query);
-        this._queryResultType = _queryPacket.getQueryResultType();
-        this._iteratorResult = initialize();
-        this._bufferIterator = _iteratorResult.getEntries().iterator();
-        this._buffer = new LinkedList<IEntryPacket>();
+        this._buffer = new LinkedList<>();
+        this._spaceIteratorBatchResultsManager = new SpaceIteratorBatchResultsManager(_spaceProxy, batchSize, modifiers, _queryPacket);
     }
 
     private ITemplatePacket toTemplatePacket(Object template) {
@@ -97,34 +80,30 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
     @Override
     public boolean hasNext() {
         if (_closed) {
-            _logger.log(Level.FINER, "hasNext() returned false - iterator is closed");
+            _logger.log(Level.FINER, "hasNext() returned false - iterator is closed.");
             return false;
         }
-
-        boolean result;
         // If null, we either reached end of iterator or this is the first time.
-        if (_bufferIterator == null)
+        if (_bufferIterator == null) {
             _bufferIterator = getNextBatch();
-
-        // If still null, there's no pending entries:
-        if (_bufferIterator == null)
-            result = false;
-        else {
-            // otherwise, we use the iterator's hasNext method.
-            if (_bufferIterator.hasNext())
-                result = true;
-            else {
-                // Reset and call recursively:
-                _bufferIterator = null;
-                result = hasNext();
+            // If still null, there's no pending entries:
+            if (_bufferIterator == null) {
+                if (_logger.isLoggable(Level.FINER))
+                    _logger.log(Level.FINER, "hasNext() returned false.");
+                return false;
             }
         }
-
+        // otherwise, we use the iterator's hasNext method.
+        boolean result;
+        if (_bufferIterator.hasNext())
+            result = true;
+        else {
+            // Reset and call recursively:
+            _bufferIterator = null;
+            result = hasNext();
+        }
         if (_logger.isLoggable(Level.FINER))
             _logger.log(Level.FINER, "hasNext() returned " + result);
-
-        if (!result)
-            close();
         return result;
     }
 
@@ -135,7 +114,7 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
             _logger.log(Level.FINER, "next() returned " + (entryPacket == null ? "null" : "object with uid=" + entryPacket.getUID()));
         return entryPacket;
     }
-    @Override
+
     public Object nextEntry() {
         IEntryPacket entryPacket = next();
         return entryPacket != null
@@ -156,62 +135,31 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
                 while (_bufferIterator.hasNext())
                     _bufferIterator.next();
             }
-            _iteratorResult.close();
             _buffer.clear();
+            _spaceIteratorBatchResultsManager.close();
         }
-    }
-
-    private SpaceIteratorResult initialize() {
-        final AggregationSet aggregationSet = new AggregationSet().add(new SpaceIteratorAggregator()
-                .setBatchSize(_batchSize));
-        final SpaceIteratorResult result;
-
-        try {
-            result = (SpaceIteratorResult) _spaceProxy.aggregate(_queryPacket, aggregationSet, _txn, _readModifiers).get(0);
-        } catch (RemoteException e) {
-            throw new SpaceRuntimeException("Failed to initialize iterator", e);
-        } catch (TransactionException e) {
-            throw new SpaceRuntimeException("Failed to initialize iterator", e);
-        } catch (InterruptedException e) {
-            throw new SpaceRuntimeException("Failed to initialize iterator", e);
-        }
-
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "initialize found " + result.size() + " matching entries.");
-
-        return result;
     }
 
     private Iterator<IEntryPacket> getNextBatch() {
         _buffer.clear();
-        UidQueryPacket template = _iteratorResult.buildQueryPacket(_batchSize, _queryResultType);
-        if (template == null)
-            return null;
-
-        template.setProjectionTemplate(_queryPacket.getProjectionTemplate());
-        Iterator<IEntryPacket> result = null;
         try {
-            Object[] entries = _spaceProxy.readMultiple(template, _txn, template.getMultipleUIDs().length, _readModifiers);
-            _buffer.clear();
+            Object[] entries =  _spaceIteratorBatchResultsManager.getNextBatch(_timeout);
+            if(entries == null)
+                return null;
+            if (_logger.isLoggable(Level.FINE))
+                _logger.log(Level.FINE, "getNextBatch returns with a buffer of " + entries.length + " entries.");
             for (Object entry : entries)
                 _buffer.add((IEntryPacket) entry);
-            result = _buffer.iterator();
-        } catch (RemoteException e) {
-            processNextBatchFailure(e);
-        } catch (UnusableEntryException e) {
-            processNextBatchFailure(e);
-        } catch (TransactionException e) {
+            return _buffer.iterator();
+        } catch (InterruptedException | TimeoutException e) {
             processNextBatchFailure(e);
         }
-
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "getNextBatch returns with a buffer of " + _buffer.size() + " entries.");
-
-        return result;
+        return null;
     }
 
     private void processNextBatchFailure(Exception e) {
         if (_logger.isLoggable(Level.SEVERE))
-            _logger.log(Level.SEVERE, "Failed to build iterator data", e);
+            _logger.log(Level.SEVERE, "Failed to get next data batch for iterator.", e);
+
     }
 }
