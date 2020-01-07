@@ -168,7 +168,6 @@ public class GsCommandFactory {
         command.classpath(locations().home());
         command.classpathWithJars(locations().libRequired());
         command.classpathWithJars(locations().libOptional("pu-common"));
-        command.classpathWithJars(locations().home("tools", "nomad", "lib"));
         command.classpath(GsEnv.get("CLASSPATH_EXT"));
     }
 
