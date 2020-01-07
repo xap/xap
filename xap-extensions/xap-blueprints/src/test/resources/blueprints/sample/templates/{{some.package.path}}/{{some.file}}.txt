@@ -1,1 +1,0 @@
-{{some.package}} and {{some.file}}

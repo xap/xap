@@ -10,6 +10,6 @@
     <!-- Enable Spring annotation support -->
     <context:annotation-config/>
     <!-- Bootstrap service configuration -->
-    <bean class="{{maven.groupId}}.ServiceConfig" />
+    <bean class="{{project.groupId}}.ServiceConfig" />
 
 </beans>

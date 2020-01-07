@@ -1,0 +1,1 @@
+{{project.groupId}} and {{project.some-file}}

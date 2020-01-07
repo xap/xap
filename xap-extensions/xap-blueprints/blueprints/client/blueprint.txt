@@ -1,1 +1,0 @@
-description=Client application for GigaSpaces Data Grid

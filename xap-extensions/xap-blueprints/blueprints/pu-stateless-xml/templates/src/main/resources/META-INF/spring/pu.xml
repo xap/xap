@@ -9,7 +9,7 @@
     
 
 	<!-- Enable Spring component scanning for the specified path -->
-	<context:component-scan base-package="{{maven.groupId}}" />
+	<context:component-scan base-package="{{project.groupId}}" />
 	
 	<!-- Enable GigaSpaces annotation support -->
 	<os-core:annotation-support/>
@@ -18,13 +18,13 @@
     <bean id="propertiesConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="properties">
             <props>
-                <prop key="spaceName">{{spaceName}}</prop>
+                <prop key="space.name">{{space.name}}</prop>
             </props>
         </property>
     </bean>
 
     <!-- Defines a space proxy-->
-    <os-core:space-proxy id="space" space-name="${spaceName}"/>
+    <os-core:space-proxy id="space" space-name="${space.name}"/>
 
     <!-- Defines a gigaSpace for the space proxy-->
 	<os-core:giga-space id="gigaSpace" space="space" tx-manager="transactionManager" />

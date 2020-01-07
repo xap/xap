@@ -1,0 +1,5 @@
+foo: Hello
+bar: World
+project:
+  groupId: com.acme
+  some-file: some-file

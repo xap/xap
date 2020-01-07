@@ -10,7 +10,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -29,27 +28,23 @@ public class TemplateUtils {
         return evaluate(BootIOUtils.readAsString(BootIOUtils.getResourcePath(resourceName)), scope);
     }
 
-    public static void evaluate(Path src, Path dst, Map<String, Object> context) throws IOException {
-        if (Files.isDirectory(src)) {
-            Files.createDirectories(dst);
-        } else {
-            try (FileReader reader = new FileReader(src.toFile())) {
-                try (FileWriter writer = new FileWriter(dst.toFile())) {
-                    mf.compile(reader, "temp.name").execute(writer, context);
-                }
-            }
-            if(!JavaUtils.isWindows()) {
-                Files.setPosixFilePermissions(dst, Files.getPosixFilePermissions(src));
-            }
-        }
-    }
-
-    public static void evaluateTree(Path src, Path dst, Map<String, Object> context) throws IOException {
+    public static void evaluateTree(Path src, Path dst, Object scope) throws IOException {
         try (Stream<Path> tree = Files.walk(src)) {
             tree.forEach(p -> {
                 try {
-                    Path target = evaluatePath(dst.resolve(src.relativize(p)), context);
-                    evaluate(p, target, context);
+                    Path target = evaluatePath(dst.resolve(src.relativize(p)), scope);
+                    if (Files.isDirectory(p)) {
+                        Files.createDirectories(target);
+                    } else {
+                        try (Reader reader = Files.newBufferedReader(p)) {
+                            try (Writer writer = Files.newBufferedWriter(target)) {
+                                mf.compile(reader, "temp.name").execute(writer, scope);
+                            }
+                        }
+                        if(!JavaUtils.isWindows()) {
+                            Files.setPosixFilePermissions(target, Files.getPosixFilePermissions(p));
+                        }
+                    }
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -59,8 +54,8 @@ public class TemplateUtils {
         }
     }
 
-    private static Path evaluatePath(Path path, Map<String, Object> properties) {
+    private static Path evaluatePath(Path path, Object scope) {
         String s = path.toString();
-        return s.contains("{{") ? Paths.get(evaluate(s, properties)) : path;
+        return s.contains("{{") ? Paths.get(evaluate(s, scope)) : path;
     }
 }

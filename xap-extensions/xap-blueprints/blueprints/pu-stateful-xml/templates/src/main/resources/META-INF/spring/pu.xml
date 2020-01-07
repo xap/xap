@@ -9,7 +9,7 @@
     
 
 	<!-- Enable Spring component scanning for the specified path -->
-	<context:component-scan base-package="{{maven.groupId}}" />
+	<context:component-scan base-package="{{project.groupId}}" />
 	
 	<!-- Enable GigaSpaces annotation support -->
 	<os-core:annotation-support/>
@@ -18,13 +18,13 @@
     <bean id="propertiesConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="properties">
             <props>
-                <prop key="spaceName">{{spaceName}}</prop>
+                <prop key="space.name">{{space.name}}</prop>
             </props>
         </property>
     </bean>
 
     <!-- Defines an embedded space -->
-    <os-core:embedded-space id="space" space-name="${spaceName}">
+    <os-core:embedded-space id="space" space-name="${space.name}">
 		<!-- Optional: additionan space configuration goes here -->
     </os-core:embedded-space>
 	

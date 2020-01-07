@@ -1,2 +1,2 @@
 space:
-  name: {{spaceName}}
+  name: {{space.name}}

@@ -1,5 +1,0 @@
-foo=Hello
-bar=World
-some.package=com.acme
-some.package.path={{#gs.path}}{{some.package}}{{/gs.path}}
-some.file=some-file

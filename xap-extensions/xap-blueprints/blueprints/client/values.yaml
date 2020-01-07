@@ -1,0 +1,6 @@
+project:
+  groupId: com.mycompany.app
+  artifactId: my-datagrid-client
+  version: 0.1
+java.version: 1.8
+junit.version: 4.12

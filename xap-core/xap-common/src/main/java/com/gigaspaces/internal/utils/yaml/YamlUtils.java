@@ -4,9 +4,7 @@ import com.gigaspaces.api.InternalApi;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * Yaml utilities
@@ -24,6 +22,12 @@ public class YamlUtils {
     public static Properties toProperties(Map<String, Object> yaml) {
         Properties result = new Properties();
         toProperties(result, yaml, "");
+        return result;
+    }
+
+    public static Map<String, String> toMap(Map<String, Object> yaml) {
+        Map<String, String> result = new HashMap<>();
+        toProperties(yaml).forEach((k, v) -> result.put((String)k, (String)v));
         return result;
     }
 

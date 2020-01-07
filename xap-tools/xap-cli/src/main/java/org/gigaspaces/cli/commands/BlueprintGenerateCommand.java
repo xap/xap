@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -30,7 +29,7 @@ public class BlueprintGenerateCommand extends CliCommand {
     private Path target;
 
     @Option(names = {"--set" }, description = "Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)", split = ",")
-    private Map<String, Object> properties;
+    private Map<String, String> properties;
 
     @Option(names = {"-i", "--interactive" }, description = "Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
     private Boolean interactive;
@@ -39,7 +38,7 @@ public class BlueprintGenerateCommand extends CliCommand {
     protected void execute() throws Exception {
         Blueprint blueprint = BlueprintCommand.getBlueprint(this.name);
         Path target = assertNotExists(this.target);
-        Map<String, Object> properties = this.properties != null ? this.properties : new HashMap<>();
+        Map<String, String> properties = this.properties != null ? this.properties : new HashMap<>();
 
         final LineReader interactiveReader = initInteractive(blueprint, properties);
         if (interactiveReader == null) {
@@ -68,7 +67,7 @@ public class BlueprintGenerateCommand extends CliCommand {
         }
     }
 
-    private LineReader initInteractive(Blueprint blueprint, Map<String, Object> properties) throws IOException {
+    private LineReader initInteractive(Blueprint blueprint, Map<String, String> properties) throws IOException {
         String interactiveCause;
         if (interactive != null) {
             interactiveCause = this.interactive ? "interactive option was enabled" : null;
@@ -111,7 +110,7 @@ public class BlueprintGenerateCommand extends CliCommand {
         return assertNotExists(result);
     }
 
-    private static void readProperties(LineReader interactiveReader, Map<String, Object> commandProperties, Map<String, String> blueprintProperties) {
+    private static void readProperties(LineReader interactiveReader, Map<String, String> commandProperties, Map<String, String> blueprintProperties) {
         long missing = blueprintProperties.keySet().stream().filter(k -> !commandProperties.containsKey(k)).count();
         if (missing > 0 && readBoolean(interactiveReader,
                 "There are " + missing + " additional properties in this blueprint - would you like to set them?", false)) {
