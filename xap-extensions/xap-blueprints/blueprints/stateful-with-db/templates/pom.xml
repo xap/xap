@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>{{maven.groupId}}</groupId>
+    <artifactId>{{maven.artifactId}}</artifactId>
+    <version>{{maven.version}}</version>
+    <packaging>pom</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>{{java.version}}</maven.compiler.source>
+        <maven.compiler.target>{{java.version}}</maven.compiler.target>
+        <gs.version>{{gs.version}}</gs.version>
+        <hibernate.version>{{hibernate.version}}</hibernate.version>
+        <db.driver.groupId>{{db.driver.groupId}}</db.driver.groupId>
+        <db.driver.artifactId>{{db.driver.artifactId}}</db.driver.artifactId>
+        <db.driver.version>{{db.driver.version}}</db.driver.version>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>org.openspaces</id>
+            <url>http://maven-repository.openspaces.org</url>
+        </repository>
+    </repositories>
+
+    <modules>
+        <module>{{maven.artifactId}}-model</module>
+        <module>{{maven.artifactId}}-space</module>
+        <module>{{maven.artifactId}}-mirror</module>
+    </modules>
+
+</project>

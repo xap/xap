@@ -1,0 +1,9 @@
+space:
+  name: {{space.name}}
+db:
+  driver: {{db.driver.class}}
+  url: {{db.url}}
+  username: {{db.username}}
+  password: {{db.password}}
+hibernate:
+  dialect: {{hibernate.dialect}}
