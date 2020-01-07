@@ -26,6 +26,7 @@ import com.gigaspaces.internal.server.space.BatchQueryOperationContext;
 import com.gigaspaces.internal.server.space.FifoSearch;
 import com.gigaspaces.internal.server.space.MatchResult;
 import com.gigaspaces.internal.server.space.MultipleIdsContext;
+import com.gigaspaces.internal.server.space.iterator.ServerIteratorInfo;
 import com.gigaspaces.internal.transport.AbstractProjectionTemplate;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.lrmi.nio.IResponseContext;
@@ -273,5 +274,9 @@ public interface ITemplateHolder extends ISpaceItem, IEntryHolder {
 
     boolean isSqlQuery();
 
+    boolean isServerIterator();
 
+    ServerIteratorInfo getServerIteratorInfo();
+
+    void setServerIteratorInfo(ServerIteratorInfo serverIteratorInfo);
 }

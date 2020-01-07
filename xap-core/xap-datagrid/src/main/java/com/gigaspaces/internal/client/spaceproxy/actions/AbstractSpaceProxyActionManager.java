@@ -25,17 +25,9 @@ import com.gigaspaces.client.ClearException;
 import com.gigaspaces.executor.SpaceTask;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.ReadTakeEntriesUidsResult;
+import com.gigaspaces.internal.client.SpaceIteratorBatchResult;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
-import com.gigaspaces.internal.client.spaceproxy.actioninfo.AggregateProxyActionInfo;
-import com.gigaspaces.internal.client.spaceproxy.actioninfo.ChangeProxyActionInfo;
-import com.gigaspaces.internal.client.spaceproxy.actioninfo.CountClearProxyActionInfo;
-import com.gigaspaces.internal.client.spaceproxy.actioninfo.ReadTakeAsyncProxyActionInfo;
-import com.gigaspaces.internal.client.spaceproxy.actioninfo.ReadTakeByIdsProxyActionInfo;
-import com.gigaspaces.internal.client.spaceproxy.actioninfo.ReadTakeMultipleProxyActionInfo;
-import com.gigaspaces.internal.client.spaceproxy.actioninfo.ReadTakeProxyActionInfo;
-import com.gigaspaces.internal.client.spaceproxy.actioninfo.SnapshotProxyActionInfo;
-import com.gigaspaces.internal.client.spaceproxy.actioninfo.WriteMultipleProxyActionInfo;
-import com.gigaspaces.internal.client.spaceproxy.actioninfo.WriteProxyActionInfo;
+import com.gigaspaces.internal.client.spaceproxy.actioninfo.*;
 import com.gigaspaces.internal.client.spaceproxy.executors.TypeDescriptorActionsProxyExecutor;
 import com.gigaspaces.internal.client.spaceproxy.operations.ReadTakeEntriesUidsSpaceOperationRequest;
 import com.gigaspaces.internal.metadata.ITypeDesc;
@@ -52,16 +44,15 @@ import com.j_spaces.core.DropClassException;
 import com.j_spaces.core.LeaseContext;
 import com.j_spaces.core.SpaceHealthStatus;
 import com.j_spaces.core.client.Modifiers;
-import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.core.exception.internal.InterruptedSpaceException;
 import com.j_spaces.core.exception.internal.ProxyInternalSpaceException;
 import com.j_spaces.kernel.JSpaceUtilities;
-
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
 
 import java.rmi.RemoteException;
+import java.util.UUID;
 import java.util.concurrent.Future;
 
 /**
@@ -82,6 +73,7 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
     private final ReadTakeEntriesUidsProxyAction<TSpaceProxy> _readTakeEntriesUidsAction;
     private final ChangeProxyAction<TSpaceProxy> _changeAction;
     private final AggregateProxyAction<TSpaceProxy> _aggregationAction;
+    private final GetBatchForIteratorProxyAction<TSpaceProxy> _getBatchForIteratorAction;
 
     protected AbstractSpaceProxyActionManager(TSpaceProxy spaceProxy) {
         _spaceProxy = spaceProxy;
@@ -96,6 +88,7 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
         _writeAction = createWriteProxyAction();
         _changeAction = createChangeProxyAction();
         _aggregationAction = createAggregateAction();
+        _getBatchForIteratorAction = createGetBatchForIteratorAction();
     }
 
     public ITypeDesc getTypeDescriptor(String typeName) throws RemoteException {
@@ -177,6 +170,12 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
         ReadTakeProxyActionInfo actionInfo = new ReadTakeProxyActionInfo(
                 _spaceProxy, uid, txn, modifiers, resultType, returnPacket, false, false);
         return read(actionInfo);
+    }
+
+    public SpaceIteratorBatchResult getNextBatchFromServerIterator(Object template, int limit, int modifiers, UUID uuid, boolean firstTime)
+            throws RemoteException, UnusableEntryException, TransactionException {
+        GetBatchForIteratorProxyActionInfo actionInfo = new GetBatchForIteratorProxyActionInfo(_spaceProxy,template, limit, modifiers, uuid, firstTime);
+        return _getBatchForIteratorAction.getNextBatch(_spaceProxy,actionInfo);
     }
 
     public Object read(ReadTakeProxyActionInfo actionInfo)
@@ -443,6 +442,8 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
     protected abstract ChangeProxyAction<TSpaceProxy> createChangeProxyAction();
 
     protected abstract AggregateProxyAction<TSpaceProxy> createAggregateAction();
+
+    protected abstract GetBatchForIteratorProxyAction<TSpaceProxy> createGetBatchForIteratorAction();
 
     private ProxyInternalSpaceException processInternalException(Exception e) {
         return JSpaceUtilities.createProxyInternalSpaceException(e);

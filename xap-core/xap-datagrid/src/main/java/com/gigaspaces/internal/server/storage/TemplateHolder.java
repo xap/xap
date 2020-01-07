@@ -29,6 +29,7 @@ import com.gigaspaces.internal.server.space.BatchQueryOperationContext;
 import com.gigaspaces.internal.server.space.FifoSearch;
 import com.gigaspaces.internal.server.space.MatchResult;
 import com.gigaspaces.internal.server.space.MultipleIdsContext;
+import com.gigaspaces.internal.server.space.iterator.ServerIteratorInfo;
 import com.gigaspaces.internal.transport.AbstractProjectionTemplate;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
@@ -149,6 +150,7 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
     //all the query values are indexes- used in blob store (count) optimizations
     private final boolean _allValuesIndexSqlQuery;
     private SingleExplainPlan _singleExplainPlan = null;
+    private ServerIteratorInfo _serverIteratorInfo;
 
 
     public TemplateHolder(IServerTypeDesc typeDesc, ITemplatePacket packet, String uid,
@@ -1148,6 +1150,21 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
     @Override
     public boolean isSqlQuery() {
         return (getCustomQuery() != null || getExtendedMatchCodes() != null);
+    }
+
+    @Override
+    public boolean isServerIterator(){
+        return isReadMultiple() && getServerIteratorInfo() != null;
+    }
+
+    @Override
+    public ServerIteratorInfo getServerIteratorInfo(){
+        return _serverIteratorInfo;
+    }
+
+    @Override
+    public void setServerIteratorInfo(ServerIteratorInfo serverIteratorInfo) {
+        this._serverIteratorInfo = serverIteratorInfo;
     }
 
     //+++++++++++++ ILockObject methods

@@ -81,6 +81,8 @@ import com.gigaspaces.internal.remoting.RemoteOperationResult;
 import com.gigaspaces.admin.demote.DemoteFailedException;
 import com.gigaspaces.internal.server.space.demote.DemoteHandler;
 import com.gigaspaces.internal.server.space.executors.SpaceActionExecutor;
+import com.gigaspaces.internal.server.space.iterator.ServerIteratorInfo;
+import com.gigaspaces.internal.server.space.iterator.ServerIteratorRequestInfo;
 import com.gigaspaces.internal.server.space.operations.SpaceOperationsExecutor;
 import com.gigaspaces.internal.server.space.operations.WriteEntriesResult;
 import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
@@ -2258,6 +2260,13 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         return res;
     }
 
+    public AnswerHolder getNextBatchFromServerIterator(ITemplatePacket template,
+                                                        SpaceContext sc, int modifiers, ServerIteratorRequestInfo serverIteratorRequestInfo)
+            throws TransactionException, UnusableEntryException, UnknownTypeException, RemoteException, InterruptedException {
+        BatchQueryOperationContext operationContext = new ReadMultipleContext(template, serverIteratorRequestInfo.getBatchSize(), serverIteratorRequestInfo.getBatchSize());
+        return _engine.readMultiple(template, null,0,false,false, sc, false, modifiers, operationContext, null, serverIteratorRequestInfo);
+    }
+
     public IEntryPacket[] readMultiple(ITemplatePacket template, Transaction txn, boolean take,
                                        int maxEntries, SpaceContext sc, boolean returnOnlyUid, int modifiers)
             throws TransactionException, UnusableEntryException, UnknownTypeException, RemoteException {
@@ -2282,7 +2291,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
             }
             ah = _engine.readMultiple(template, txn, timeout, isIfExist,
-                 take, sc, returnOnlyUid, modifiers, operationContext, null /*aggregatorContext*/);
+                 take, sc, returnOnlyUid, modifiers, operationContext, null /*aggregatorContext*/, null);
             if (ah == null)
                  return null;
             if (ah.getException() != null) {

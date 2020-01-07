@@ -71,6 +71,10 @@ import com.gigaspaces.internal.server.metadata.AddTypeDescResult;
 import com.gigaspaces.internal.server.metadata.AddTypeDescResultType;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.events.SpaceDataEventManager;
+import com.gigaspaces.internal.server.space.iterator.ServerIteratorInfo;
+import com.gigaspaces.internal.server.space.iterator.ServerIteratorManager;
+import com.gigaspaces.internal.server.space.iterator.ServerIteratorRequestInfo;
+import com.gigaspaces.internal.server.space.iterator.ServerIteratorStatus;
 import com.gigaspaces.internal.server.space.metadata.ServerTypeDesc;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.space.operations.WriteEntriesResult;
@@ -196,6 +200,7 @@ public class SpaceEngine implements ISpaceModeListener {
     private final FifoGroupsHandler _fifoGroupsHandler;
     private LeaseManager _leaseManager;
     private MemoryManager _memoryManager;
+    private ServerIteratorManager _serverIteratorManager = new ServerIteratorManager();
 
     /*--------- Working Groups ---------*/
     private final WorkingGroup<BusPacket<Processor>> _processorWG;
@@ -1854,7 +1859,7 @@ public class SpaceEngine implements ISpaceModeListener {
     public AnswerHolder readMultiple(ITemplatePacket template, Transaction txn, long timeout, boolean ifExists,
                                      boolean take, SpaceContext sc, boolean returnOnlyUid, int operationModifiers,
                                      BatchQueryOperationContext batchOperationContext,
-                                     List<SpaceEntriesAggregator> aggregators)
+                                     List<SpaceEntriesAggregator> aggregators, ServerIteratorRequestInfo serverIteratorRequestInfo)
             throws TransactionException, UnusableEntryException, UnknownTypeException, RemoteException, InterruptedException {
         monitorMemoryUsage(false);
         if (Modifiers.contains(operationModifiers, Modifiers.EXPLAIN_PLAN)) {
@@ -1910,7 +1915,14 @@ public class SpaceEngine implements ISpaceModeListener {
                 uid, LeaseManager.toAbsoluteTime(timeout, startTime) /* expiration time*/,
                 txnEntry, startTime, templateOperation, respContext, returnOnlyUid,
                 operationModifiers, isFifoOperation);
-
+        ServerIteratorInfo serverIteratorInfo = null;
+        if(serverIteratorRequestInfo != null) {
+            //check status
+            // if exists find info if not create one
+            serverIteratorInfo = _serverIteratorManager.getOrCreateServerIteratorInfo(serverIteratorRequestInfo);
+        }
+        if(serverIteratorInfo != null)
+            tHolder.setServerIteratorInfo(serverIteratorInfo);
         tHolder.setAnswerHolder(new AnswerHolder());
         tHolder.setNonBlockingRead(isNonBlockingReadForOperation(tHolder));
         tHolder.setID(template.getID());
@@ -2084,7 +2096,8 @@ public class SpaceEngine implements ISpaceModeListener {
                         false,/*returnOnlyUid*/
                         operationModifiers,
                         batchOperationContext,
-                        null /* aggregatorContext*/);
+                        null /* aggregatorContext*/,
+                        null);
                 if (ah.getException() != null) {
                     Exception retex = ah.getException();
                     if (retex instanceof RuntimeException)
@@ -3593,7 +3606,7 @@ public class SpaceEngine implements ISpaceModeListener {
         final IServerTypeDesc serverTypeDesc = _typeManager.getServerTypeDesc(template.getClassName());
         if (template.isChangeById() && !serverTypeDesc.getTypeName().equals(template.getServerTypeDesc().getTypeName()))
             return null;  //in-place-update by id no inheritance
-        IScanListIterator<IEntryCacheInfo> toScan = _cacheManager.getMatchingMemoryEntriesForScanning(context, typeDesc, template, serverTypeDesc);
+        IScanListIterator<IEntryCacheInfo> toScan = template.isServerIterator() ? getServerIterator(context, typeDesc, template, serverTypeDesc) : _cacheManager.getMatchingMemoryEntriesForScanning(context, typeDesc, template, serverTypeDesc);
 
         if (toScan == null)
             return null;
@@ -4029,7 +4042,7 @@ public class SpaceEngine implements ISpaceModeListener {
         final IServerTypeDesc serverTypeDesc = _typeManager.getServerTypeDesc(template.getClassName());
         if (template.isChangeById() && !serverTypeDesc.getTypeName().equals(template.getServerTypeDesc().getTypeName()))
             return;  //in-place-update by id no inheritance
-        IScanListIterator<IEntryCacheInfo> toScan = _cacheManager.getMatchingMemoryEntriesForScanning(context, entryTypeDesc, template, serverTypeDesc);
+        IScanListIterator<IEntryCacheInfo> toScan = template.isServerIterator() ? getServerIterator(context, entryTypeDesc, template, serverTypeDesc) : _cacheManager.getMatchingMemoryEntriesForScanning(context, entryTypeDesc, template, serverTypeDesc);
         if (toScan == null)
             return;
 
@@ -4043,6 +4056,21 @@ public class SpaceEngine implements ISpaceModeListener {
                     template,
                     toScan,
                     makeWaitForInfo, entryTypeDesc);
+    }
+
+    private IScanListIterator<IEntryCacheInfo> getServerIterator(Context context, IServerTypeDesc entryTypeDesc, ITemplateHolder template, IServerTypeDesc serverTypeDesc) {
+        ServerIteratorInfo serverIteratorInfo = template.getServerIteratorInfo();
+        if(serverIteratorInfo == null)
+            return null;
+        if(!serverIteratorInfo.isActive()){
+            serverIteratorInfo.setScanListIterator(_cacheManager.getMatchingMemoryEntriesForScanning(context, entryTypeDesc, template, serverTypeDesc));
+            serverIteratorInfo.setStatus(ServerIteratorStatus.ACTIVE);
+        }
+        if(serverIteratorInfo.isExpired()){
+            //TODO throw exception here + handle logic
+            return null;
+        }
+        return serverIteratorInfo.getScanListIterator();
     }
 
 
@@ -6188,7 +6216,8 @@ public class SpaceEngine implements ISpaceModeListener {
                 false, /*returnOnlyUid*/
                 readModifiers,
                 batchContext,
-                aggregators);
+                aggregators,
+                null);
 
         if (ah != null && ah.getException() != null) {
             throw ah.getException();

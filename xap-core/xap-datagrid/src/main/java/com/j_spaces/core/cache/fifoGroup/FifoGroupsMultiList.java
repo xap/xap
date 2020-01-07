@@ -50,7 +50,7 @@ public class FifoGroupsMultiList<T>
     private final ITemplateHolder _template;
 
     public FifoGroupsMultiList(MultiStoredList<T> curMultiList, TypeData typeData, HashMap<Object, TypeDataIndex> fifoGroupIndexResultsUsedInFifoGroupScan, ITemplateHolder template) {
-        super(curMultiList.getAllLists(), true);
+        super(curMultiList.getAllLists(), true, template.isServerIterator());
         _typeData = typeData;
         _fifoGroupIndexResultsUsedInFifoGroupScan = fifoGroupIndexResultsUsedInFifoGroupScan;
         _template = template;
