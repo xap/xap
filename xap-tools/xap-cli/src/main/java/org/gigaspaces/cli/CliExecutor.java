@@ -41,6 +41,7 @@ public class CliExecutor {
         try {
             org.fusesource.jansi.AnsiConsole.systemInstall();
             mainCommandLine = toCommandLine(mainCommand);
+            mainCommandLine.setCaseInsensitiveEnumValuesAllowed(true);
             execute(mainCommandLine, args, false);
             exitCode = 0;
         } catch (Exception e) {

@@ -113,6 +113,18 @@ public class PlatformVersion {
         return properties;
     }
 
+    public static String getProductDownloadUrl(String productType, String productVersion){
+        return "http://gigaspaces-releases-eu.s3.amazonaws.com/" + productType + "/" + extractPrefix(productVersion,"-") + "/" + getProductZipName(productType,productVersion);
+    }
+
+    private static String getProductZipName(String productType, String productVersion) {
+        return "gigaspaces-" + productType + "-enterprise-" + productVersion + ".zip";
+    }
+
+    public static String getProductFolderName(String productType, String productVersion) {
+        return "gigaspaces-" + productType + "-enterprise-" + productVersion;
+    }
+
     public ProductType getProductType() {
         return productType;
     }
