@@ -1,5 +1,6 @@
 package org.gigaspaces.blueprints;
 
+import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.jvm.JavaUtils;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
@@ -18,11 +19,14 @@ import java.util.stream.Stream;
  */
 public class TemplateUtils {
     private static final MustacheFactory mf = new DefaultMustacheFactory();
-    private static final String IOEXCEPTION_WRAPPER = "IOException wrapper";
 
-    public static String evaluate(String text, Map<String, Object> context) {
+    public static String evaluate(String text, Object scope) {
         Mustache m = mf.compile(new StringReader(text), "temp.name");
-        return m.execute(new StringWriter(), context).toString();
+        return m.execute(new StringWriter(), scope).toString();
+    }
+
+    public static String evaluateResource(String resourceName, Object scope) throws IOException {
+        return evaluate(BootIOUtils.readAsString(BootIOUtils.getResourcePath(resourceName)), scope);
     }
 
     public static void evaluate(Path src, Path dst, Map<String, Object> context) throws IOException {
@@ -47,13 +51,11 @@ public class TemplateUtils {
                     Path target = evaluatePath(dst.resolve(src.relativize(p)), context);
                     evaluate(p, target, context);
                 } catch (IOException e) {
-                    throw new RuntimeException(IOEXCEPTION_WRAPPER, e);
+                    throw new UncheckedIOException(e);
                 }
             });
-        } catch (RuntimeException e) {
-            if (e.getMessage().equals(IOEXCEPTION_WRAPPER))
-                throw (IOException) e.getCause();
-            throw e;
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
         }
     }
 

@@ -23,10 +23,13 @@ import com.gigaspaces.internal.utils.yaml.YamlUtils;
 import java.io.*;
 import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -357,5 +360,26 @@ public class BootIOUtils {
         Properties result = new Properties();
         result.load(stream);
         return result;
+    }
+
+    public static Path getResourcePath(String resource) throws IOException {
+        return getResourcePath(resource, Thread.currentThread().getContextClassLoader());
+    }
+
+    public static Path getResourcePath(String resource, Class<?> context) throws IOException {
+        return getResourcePath(resource, context.getClassLoader());
+    }
+
+    public static Path getResourcePath(String resource, ClassLoader classLoader) throws IOException {
+        URL url = classLoader != null ? classLoader.getResource(resource) : ClassLoader.getSystemResource(resource);
+        try {
+            return Paths.get(url.toURI());
+        } catch (URISyntaxException e) {
+            throw new IOException(e);
+        }
+    }
+
+    public static String readAsString(Path path) throws IOException {
+        return new String(Files.readAllBytes(path));
     }
 }
