@@ -38,6 +38,7 @@ public class RestServiceFactory extends ServiceFactory {
                 .appendJar(XapModules.SERVICE_GRID)
                 .appendAny(SystemLocations.singleton().libOptionalSecurity())
                 .appendPlatformJars("scala")
+                .appendPlatformJars("blueprints")
                 .appendLibRequiredJars(ClassLoaderType.COMMON)
                 .appendLibRequiredJars(ClassLoaderType.SERVICE)
                 .appendOptionalJars("jetty")

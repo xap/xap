@@ -1,6 +1,7 @@
 package org.gigaspaces.cli.commands;
 
 import org.gigaspaces.blueprints.BlueprintRepository;
+import org.gigaspaces.blueprints.BlueprintUtils;
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.CliCommandException;
 import org.gigaspaces.blueprints.Blueprint;
@@ -45,14 +46,14 @@ public class BlueprintGenerateCommand extends CliCommand {
             if (blueprint == null)
                 throw CliCommandException.userError("Blueprint name was not provided and interactive mode is off");
             if (target == null) {
-                target = getDefaultTarget(blueprint);
+                target = BlueprintUtils.getDefaultTarget(blueprint);
                 System.out.println("Target not specified - auto-selected " + target);
             }
         } else {
             if (blueprint == null)
                 blueprint = readBlueprint(interactiveReader);
             if (target == null)
-                target = readTarget(interactiveReader, getDefaultTarget(blueprint));
+                target = readTarget(interactiveReader, BlueprintUtils.getDefaultTarget(blueprint));
             readProperties(interactiveReader, properties, blueprint.getValues());
         }
 
@@ -90,7 +91,7 @@ public class BlueprintGenerateCommand extends CliCommand {
     private static Blueprint readBlueprint(LineReader interactiveReader) throws CliCommandException, IOException {
         System.out.println("List of available blueprints: ");
         AtomicInteger counter = new AtomicInteger();
-        BlueprintRepository repository = BlueprintCommand.getDefaultRepository();
+        BlueprintRepository repository = BlueprintUtils.getDefaultRepository();
         AtomicInteger maxLength = new AtomicInteger();
         repository.getBlueprints().forEach(b -> maxLength.set(Math.max(maxLength.get(), b.getName().length())));
         KeyValueFormatter formatter = KeyValueFormatter.builder().width(maxLength.get() + 6).build();
@@ -142,15 +143,6 @@ public class BlueprintGenerateCommand extends CliCommand {
             default:
                 return false;
         }
-    }
-
-    private static Path getDefaultTarget(Blueprint blueprint){
-        String name = "my-" + blueprint.getName();
-        int suffix = 1;
-        Path path;
-        for (path = Paths.get(name) ; Files.exists(path); path = Paths.get(name + suffix++));
-        return path;
-
     }
 
     private static Path assertNotExists(Path path) throws CliCommandException {

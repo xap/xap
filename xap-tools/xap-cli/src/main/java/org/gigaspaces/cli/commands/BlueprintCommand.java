@@ -3,6 +3,7 @@ package org.gigaspaces.cli.commands;
 import com.gigaspaces.start.SystemLocations;
 import org.gigaspaces.blueprints.Blueprint;
 import org.gigaspaces.blueprints.BlueprintRepository;
+import org.gigaspaces.blueprints.BlueprintUtils;
 import org.gigaspaces.cli.*;
 import picocli.CommandLine;
 
@@ -26,26 +27,15 @@ public class BlueprintCommand extends CliCommand implements SubCommandContainer 
                 .add(new BlueprintGenerateCommand());
     }
 
-    private static BlueprintRepository defaultRepository;
-    static BlueprintRepository getDefaultRepository() throws IOException {
-        if (defaultRepository == null) {
-            defaultRepository = new BlueprintRepository(SystemLocations.singleton().config("blueprints"));
-        }
-        return defaultRepository;
-    }
-
     static Blueprint getBlueprint(String name) throws IOException, CliCommandException {
-        if (name == null || name.length() == 0)
-            return null;
-        BlueprintRepository repository = getDefaultRepository();
-        Blueprint blueprint = repository.get(name);
+        Blueprint blueprint = BlueprintUtils.getBlueprint(name);
         if (blueprint == null)
-            throw CliCommandException.userError("Unknown blueprint: " + name + ". Available blueprints: " + repository.getNames());
+            throw CliCommandException.userError("Unknown blueprint: " + name + ". Available blueprints: " + BlueprintUtils.getDefaultRepository().getNames());
         return blueprint;
     }
 
     static Blueprint getBlueprint(int id) throws IOException {
-        return getDefaultRepository().get(id);
+        return BlueprintUtils.getBlueprint(id);
     }
 
     public static class BlueprintCompletionCandidates extends ArrayList<String> {
@@ -57,7 +47,7 @@ public class BlueprintCommand extends CliCommand implements SubCommandContainer 
 
         private static Collection<String> getNames() {
             try {
-                return getDefaultRepository().getNames();
+                return BlueprintUtils.getDefaultRepository().getNames();
             } catch (Exception e) {
                 System.out.println("Warning: failed to get blueprints for autocomplete - " + e.getMessage());
                 return Collections.emptyList();
