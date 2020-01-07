@@ -1,4 +1,4 @@
-package {{maven.groupId}}.model;
+package {{project.groupId}}.model;
 
 import com.gigaspaces.annotation.pojo.*;
 import javax.persistence.*;

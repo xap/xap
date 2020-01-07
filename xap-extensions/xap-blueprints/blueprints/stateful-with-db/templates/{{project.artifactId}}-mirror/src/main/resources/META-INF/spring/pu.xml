@@ -19,7 +19,7 @@
 
     <bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
         <property name="dataSource" ref="dataSource"/>
-        <property name="packagesToScan" value="{{maven.groupId}}.model"/>
+        <property name="packagesToScan" value="{{project.groupId}}.model"/>
         <property name="hibernateProperties">
             <props>
                 <prop key="hibernate.dialect">${hibernate.dialect}</prop>
@@ -29,19 +29,12 @@
         </property>
     </bean>
 
-    <bean id="hibernateSpaceDataSource" class="org.openspaces.persistency.hibernate.DefaultHibernateSpaceDataSourceFactoryBean">
+    <bean id="hibernateSpaceSynchronizationEndpoint" class="org.openspaces.persistency.hibernate.DefaultHibernateSpaceSynchronizationEndpointFactoryBean">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
 
-    <os-core:embedded-space id="space" space-name="${space.name}" schema="persistent" mirrored="true" space-data-source="hibernateSpaceDataSource">
-        <os-core:properties>
-            <props>
-                <!-- Use ALL IN CACHE - Read Only from the database-->
-                <prop key="space-config.engine.cache_policy">1</prop>
-                <prop key="space-config.external-data-source.usage">read-only</prop>
-                <prop key="cluster-config.cache-loader.external-data-source">true</prop>
-                <prop key="cluster-config.cache-loader.central-data-source">true</prop>
-            </props>
-        </os-core:properties>
-    </os-core:embedded-space>
+    <os-core:mirror id="mirror" url="/./mirror-service" space-sync-endpoint="hibernateSpaceSynchronizationEndpoint" operation-grouping="group-by-space-transaction">
+        <os-core:source-space name="${space.name}" partitions="${partitions}" backups="${backups}"/>
+    </os-core:mirror>
+
 </beans>

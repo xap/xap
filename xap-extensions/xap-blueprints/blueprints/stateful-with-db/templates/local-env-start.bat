@@ -1,3 +1,3 @@
 @echo off
-call {{maven.artifactId}}-settings.bat
-call ..\bin\gs host run-agent --auto --gsc=%{{maven.artifactId}}_GSC%
+call {{project.artifactId}}-settings.bat
+call ..\gs host run-agent --auto --gsc=%{{project.artifactId}}_GSC%

@@ -1,1 +1,0 @@
-description=Stateful and mirror processing units configured to interact with a database.

@@ -1,5 +1,4 @@
 @echo off
-call {{maven.artifactId}}-settings.bat
-call ..\bin\gs pu undeploy {{maven.artifactId}}-space
-call ..\bin\gs pu undeploy {{maven.artifactId}}-mirror
+call ..\gs pu undeploy {{project.artifactId}}-space
+call ..\gs pu undeploy {{project.artifactId}}-mirror
 pause

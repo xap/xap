@@ -2,12 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>{{maven.artifactId}}-model</artifactId>
+    <artifactId>{{project.artifactId}}-model</artifactId>
 
     <parent>
-        <artifactId>{{maven.artifactId}}</artifactId>
-        <groupId>{{maven.groupId}}</groupId>
-        <version>{{maven.version}}</version>
+        <artifactId>{{project.artifactId}}</artifactId>
+        <groupId>{{project.groupId}}</groupId>
+        <version>{{project.version}}</version>
         <relativePath>..</relativePath>
     </parent>
 

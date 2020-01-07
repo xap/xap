@@ -2,9 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>{{maven.groupId}}</groupId>
-    <artifactId>{{maven.artifactId}}</artifactId>
-    <version>{{maven.version}}</version>
+    <groupId>{{project.groupId}}</groupId>
+    <artifactId>{{project.artifactId}}</artifactId>
+    <version>{{project.version}}</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -26,9 +26,9 @@
     </repositories>
 
     <modules>
-        <module>{{maven.artifactId}}-model</module>
-        <module>{{maven.artifactId}}-space</module>
-        <module>{{maven.artifactId}}-mirror</module>
+        <module>{{project.artifactId}}-model</module>
+        <module>{{project.artifactId}}-space</module>
+        <module>{{project.artifactId}}-mirror</module>
     </modules>
 
 </project>

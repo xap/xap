@@ -1,2 +1,2 @@
 @echo off
-call ..\bin\gs host kill-agent
+call ..\gs host kill-agent

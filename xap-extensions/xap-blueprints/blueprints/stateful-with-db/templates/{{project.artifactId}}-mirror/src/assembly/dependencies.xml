@@ -9,7 +9,7 @@
         <dependencySet>
             <useTransitiveDependencies>false</useTransitiveDependencies>
             <includes>
-                <include>{{maven.groupId}}:{{maven.artifactId}}-model</include>
+                <include>{{project.groupId}}:{{project.artifactId}}-model</include>
             </includes>
         </dependencySet>
         <!-- transitive dependencies -->
