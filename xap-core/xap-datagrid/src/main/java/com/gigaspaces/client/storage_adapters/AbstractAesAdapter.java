@@ -81,6 +81,9 @@ public abstract class AbstractAesAdapter extends PropertyStorageAdapter {
 
     /**
      * Returns the pass phrase which is used to generate the encryption key and mac key.
+     * Note: The default implementation loads the pass phrase from system property, which
+     * is not considered a secured location for secrets. It's highly recommended to override
+     * this method and load the pass phrase from a secure location of your choice.
      */
     protected byte[] getPassPhrase() throws GeneralSecurityException {
         String key = GsEnv.property(SystemProperties.AES_PASSPHRASE).get();
