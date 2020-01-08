@@ -2,7 +2,7 @@
 echo Undeploying processing units...
 call undeploy.bat
 
-echo TODO: Stop relevant GSCs.
+echo TODO: Stop kill GSCs with zones {{project.artifactId}}-space, {{project.artifactId}}-mirror
 
 echo Stopping HSQL DB...
 call demo-db\shutdown.bat

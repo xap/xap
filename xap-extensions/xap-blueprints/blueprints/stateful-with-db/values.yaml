@@ -22,3 +22,12 @@ db:
 hibernate:
   version: 5.2.18.Final
   dialect: org.hibernate.dialect.HSQLDialect
+
+topology:
+  partitions: 1
+  ha: true
+resources:
+  space:
+    memory: 512m
+  mirror:
+    memory: 256m
