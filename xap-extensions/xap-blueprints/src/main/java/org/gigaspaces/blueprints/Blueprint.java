@@ -83,7 +83,7 @@ public class Blueprint {
     }
 
     private Map<String, String> merge(Map<String, String> overrides) throws IOException {
-        Map<String, String> merged = new HashMap<>(getValues());
+        Map<String, String> merged = new LinkedHashMap<>(getValues());
         if (overrides != null)
             merged.putAll(overrides);
         merged.putIfAbsent("gs.version", PlatformVersion.getInstance().getId());
