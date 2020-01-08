@@ -1,14 +1,18 @@
 project:
   groupId: com.mycompany.app
-  artifactId: acme
+  artifactId: my-app
   version: 0.1
 java.version: 1.8
+
+# Space settings
 space:
   name: demo
+
 # Database and hibernate settings
 db:
-  url: jdbc:hsqldb:hsql://localhost:9101/dbName
-  username: ""
+  name: demo-db
+  url: jdbc:hsqldb:hsql://localhost/demo-db
+  user: sa
   password: ""
   driver:
     class: org.hsqldb.jdbc.JDBCDriver

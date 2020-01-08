@@ -3,7 +3,7 @@ space:
 db:
   driver: {{db.driver.class}}
   url: {{db.url}}
-  username: {{db.username}}
+  user: {{db.user}}
   password: {{db.password}}
 hibernate:
   dialect: {{hibernate.dialect}}
