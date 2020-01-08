@@ -21,34 +21,33 @@ public class YamlUtils {
 
     public static Properties toProperties(Map<String, Object> yaml) {
         Properties result = new Properties();
-        toProperties(result, yaml, "");
+        toMap(yaml).forEach(result::setProperty);
         return result;
     }
 
     public static Map<String, String> toMap(Map<String, Object> yaml) {
-        Map<String, String> result = new HashMap<>();
-        toProperties(yaml).forEach((k, v) -> result.put((String)k, (String)v));
+        Map<String, String> result = new LinkedHashMap<>();
+        toMap(result, yaml, "");
         return result;
     }
 
-    private static void toProperties(Properties properties, Map<String, Object> yaml, String prefix) {
+    private static void toMap(Map<String, String> properties, Map<String, Object> yaml, String prefix) {
         yaml.forEach((key, value) -> {
             if (value instanceof Map) {
-                toProperties(properties, (Map) value, prefix + key + ".");
+                toMap(properties, (Map) value, prefix + key + ".");
             } else if (value instanceof List) {
                 List list = (List) value;
                 for (int i = 0; i < list.size(); i++) {
                     Object listItem = list.get(i);
                     if (listItem instanceof Map) {
-                        toProperties(properties, (Map) listItem, prefix + key + "[" + i + "].");
+                        toMap(properties, (Map) listItem, prefix + key + "[" + i + "].");
                     } else {
-                        properties.setProperty(prefix + key + "[" + i + "]", listItem.toString());
+                        properties.put(prefix + key + "[" + i + "]", listItem.toString());
                     }
                 }
             } else if (value != null) {
-                properties.setProperty(prefix + key,  value.toString());
+                properties.put(prefix + key,  value.toString());
             }
         });
     }
-
 }
