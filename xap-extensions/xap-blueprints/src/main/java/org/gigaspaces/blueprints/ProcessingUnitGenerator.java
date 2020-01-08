@@ -22,7 +22,7 @@ public class ProcessingUnitGenerator {
         Blueprint blueprint = BlueprintUtils.getBlueprint(name);
 
         Path workDir = SystemLocations.singleton().work();
-        Path target = Files.createTempDirectory(workDir,getDefaultTarget(blueprint).toString());
+        Path target = getDefaultTarget(blueprint , Files.createTempDirectory(workDir,"blueprint-temp"));
 
         logger.info("************************* Target Path: "+target.toString());
 
@@ -33,6 +33,7 @@ public class ProcessingUnitGenerator {
         pack(target, zipFilePath);
         logger.info("************************* zipFile exist: "+zipFile.exists());
         logger.info("************************* zipFile2 exist: "+zipFilePath.toFile().exists());
+
 
     }
 

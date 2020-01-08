@@ -30,11 +30,15 @@ public class BlueprintUtils {
     }
 
     public static Path getDefaultTarget(Blueprint blueprint){
+        return getDefaultTarget(blueprint,null);
+    }
+
+    public static Path getDefaultTarget(Blueprint blueprint,Path targetPath){
         String name = "my-" + blueprint.getName();
+        String pathName = targetPath == null ? name : targetPath.toString().concat("/"+name);
         int suffix = 1;
         Path path;
-        for (path = Paths.get(name) ; Files.exists(path); path = Paths.get(name + suffix++));
+        for (path = Paths.get(pathName) ; Files.exists(path); path = Paths.get(pathName + suffix++));
         return path;
-
     }
 }
