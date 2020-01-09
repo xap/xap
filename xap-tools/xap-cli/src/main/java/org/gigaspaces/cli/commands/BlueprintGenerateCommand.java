@@ -1,7 +1,6 @@
 package org.gigaspaces.cli.commands;
 
 import org.gigaspaces.blueprints.BlueprintRepository;
-import org.gigaspaces.blueprints.BlueprintUtils;
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.CliCommandException;
 import org.gigaspaces.blueprints.Blueprint;
@@ -46,14 +45,14 @@ public class BlueprintGenerateCommand extends CliCommand {
             if (blueprint == null)
                 throw CliCommandException.userError("Blueprint name was not provided and interactive mode is off");
             if (target == null) {
-                target = BlueprintUtils.getDefaultTarget(blueprint);
+                target = blueprint.getDefaultTarget();
                 System.out.println("Target not specified - auto-selected " + target);
             }
         } else {
             if (blueprint == null)
                 blueprint = readBlueprint(interactiveReader);
             if (target == null)
-                target = readTarget(interactiveReader, BlueprintUtils.getDefaultTarget(blueprint));
+                target = readTarget(interactiveReader, blueprint.getDefaultTarget());
             readProperties(interactiveReader, properties, blueprint.getValues());
         }
 
@@ -91,7 +90,7 @@ public class BlueprintGenerateCommand extends CliCommand {
     private static Blueprint readBlueprint(LineReader interactiveReader) throws CliCommandException, IOException {
         System.out.println("List of available blueprints: ");
         AtomicInteger counter = new AtomicInteger();
-        BlueprintRepository repository = BlueprintUtils.getDefaultRepository();
+        BlueprintRepository repository = BlueprintRepository.getDefault();
         AtomicInteger maxLength = new AtomicInteger();
         repository.getBlueprints().forEach(b -> maxLength.set(Math.max(maxLength.get(), b.getName().length())));
         KeyValueFormatter formatter = KeyValueFormatter.builder().width(maxLength.get() + 6).build();
@@ -101,7 +100,7 @@ public class BlueprintGenerateCommand extends CliCommand {
         String input = readString(interactiveReader,"Select a blueprint by name or number", defaultBlueprint);
         Optional<Integer> code = isEmpty(input) ? Optional.of(defaultBlueprint) : tryParse(input);
         return code.isPresent()
-                ? BlueprintCommand.getBlueprint(code.get() - 1)
+                ? BlueprintRepository.getDefault().get(code.get() - 1)
                 : BlueprintCommand.getBlueprint(input);
     }
 

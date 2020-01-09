@@ -1,7 +1,6 @@
 package org.gigaspaces.cli.commands;
 
 import org.gigaspaces.blueprints.BlueprintRepository;
-import org.gigaspaces.blueprints.BlueprintUtils;
 import org.gigaspaces.cli.CliCommand;
 import org.gigaspaces.cli.commands.utils.KeyValueFormatter;
 import picocli.CommandLine;
@@ -10,7 +9,7 @@ import picocli.CommandLine;
 public class BlueprintListCommand extends CliCommand {
     @Override
     protected void execute() throws Exception {
-        BlueprintRepository repository = BlueprintUtils.getDefaultRepository();
+        BlueprintRepository repository = BlueprintRepository.getDefault();
         System.out.println("Available blueprints:");
         System.out.println("---------------------");
         KeyValueFormatter formatter = KeyValueFormatter.builder().build();

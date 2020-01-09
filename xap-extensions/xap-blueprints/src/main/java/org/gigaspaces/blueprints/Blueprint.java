@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -69,6 +70,14 @@ public class Blueprint {
             values = YamlUtils.toMap(YamlUtils.parse(valuesPath));
         }
         return values;
+    }
+
+    public Path getDefaultTarget(){
+        String name = "my-" + getName();
+        int suffix = 1;
+        Path path;
+        for (path = Paths.get(name) ; Files.exists(path); path = Paths.get(name + suffix++));
+        return path;
     }
 
     public void generate(Path target) throws IOException {

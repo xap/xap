@@ -1,5 +1,7 @@
 package org.gigaspaces.blueprints;
 
+import com.gigaspaces.start.SystemLocations;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,6 +12,15 @@ import java.util.*;
  * @since 14.5
  */
 public class BlueprintRepository {
+
+    private static BlueprintRepository defaultRepository;
+
+    public static BlueprintRepository getDefault() throws IOException {
+        if (defaultRepository == null) {
+            defaultRepository = new BlueprintRepository(SystemLocations.singleton().config("blueprints"));
+        }
+        return defaultRepository;
+    }
 
     private final Map<String, Blueprint> blueprints;
 
