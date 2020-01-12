@@ -4,6 +4,7 @@ import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.start.GsCommandFactory;
 import org.gigaspaces.cli.CliCommandException;
 import com.gigaspaces.start.JavaCommandBuilder;
+import org.gigaspaces.cli.ContinuousCommand;
 import org.gigaspaces.cli.commands.utils.XapCliUtils;
 
 import picocli.CommandLine.Command;
@@ -17,7 +18,7 @@ import java.util.*;
  * @author Rotem Herzberg
  */
 @Command(name = "run", header = "Run a standalone Space")
-public class SpaceRunCommand extends AbstractRunCommand {
+public class SpaceRunCommand extends AbstractRunCommand implements ContinuousCommand {
 
     @Parameters(index = "0", description = "Name of Space to run")
     public String name;
@@ -32,13 +33,14 @@ public class SpaceRunCommand extends AbstractRunCommand {
     public boolean lus;
 
     @Override
-    protected void execute() throws Exception {
+    public void validate() throws CliCommandException {
         validateOptions(partitions, ha, instances);
-        List<ProcessBuilder> processBuilders = toProcessBuilders();
-        if (instances != null && !instances.isEmpty()) {
-            throw CliCommandException.userError("Invalid instances: " + instances.toString());
-        }
-        XapCliUtils.executeProcesses(processBuilders);
+    }
+
+    @Override
+    protected void execute() throws Exception {
+        validate();
+        XapCliUtils.executeProcesses(toProcessBuilders());
     }
 
     public List<ProcessBuilder> toProcessBuilders() {

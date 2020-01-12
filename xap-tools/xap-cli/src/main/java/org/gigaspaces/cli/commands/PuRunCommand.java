@@ -4,6 +4,7 @@ import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.start.GsCommandFactory;
 import org.gigaspaces.cli.CliCommandException;
 import com.gigaspaces.start.JavaCommandBuilder;
+import org.gigaspaces.cli.ContinuousCommand;
 import org.gigaspaces.cli.commands.utils.XapCliUtils;
 
 import picocli.CommandLine.Command;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
  * @author Rotem Herzberg
  */
 @Command(name="run", header = "Run a standalone Processing Unit")
-public class PuRunCommand extends AbstractRunCommand {
+public class PuRunCommand extends AbstractRunCommand implements ContinuousCommand {
 
     @Parameters(index = "0", description = "Relative/absolute path of a Processing Unit directory or archive file")
     File path;
@@ -40,16 +41,16 @@ public class PuRunCommand extends AbstractRunCommand {
     Map<String, String> properties;
 
     @Override
-    protected void execute() throws Exception {
+    public void validate() throws CliCommandException {
         validateOptions(partitions, ha, instances);
         if (!path.exists())
             throw CliCommandException.userError("File not found: " + path);
+    }
 
-        final List<ProcessBuilder> processBuilders = toProcessBuilders(instances, partitions, ha, lus);
-        if (instances != null && !instances.isEmpty()) {
-            throw CliCommandException.userError("Invalid instances: " + instances.toString());
-        }
-        XapCliUtils.executeProcesses(processBuilders);
+    @Override
+    protected void execute() throws Exception {
+        validate();
+        XapCliUtils.executeProcesses(toProcessBuilders(instances, partitions, ha, lus));
     }
 
     @Override

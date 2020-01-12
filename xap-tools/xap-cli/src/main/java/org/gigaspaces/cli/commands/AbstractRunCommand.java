@@ -23,6 +23,17 @@ public abstract class AbstractRunCommand extends CliCommand {
         } else if (partitions < 0) {
             throw CliCommandException.userError("Illegal argument: '--partitions="+partitions+"' must be positive");
         }
+        if (instances != null) {
+            List<String> copy = new ArrayList<>(instances);
+            for (int id = 1; id < partitions+1; id++) {
+                copy.remove(id + "_" + 1);
+                if (ha)
+                    copy.remove(id + "_" + 2);
+            }
+            if (!copy.isEmpty()) {
+                throw CliCommandException.userError("Invalid instances: " + copy.toString());
+            }
+        }
     }
 
     protected static ProcessBuilder buildStartLookupServiceCommand() {

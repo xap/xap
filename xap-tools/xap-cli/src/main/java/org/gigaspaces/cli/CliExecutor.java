@@ -3,6 +3,7 @@ package org.gigaspaces.cli;
 import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.logger.Constants;
 
+import com.gigaspaces.start.SystemLocations;
 import org.jline.reader.*;
 import org.jline.reader.impl.DefaultParser;
 import org.jline.reader.impl.LineReaderImpl;
@@ -12,6 +13,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.*;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
@@ -21,6 +23,9 @@ public class CliExecutor {
     private static CommandLine mainCommandLine;
     private static CommandLine currentCommandLine;
     private static LineReader shellReader;
+    private static TriState supportsSeparateShellExec = TriState.NOT_SET;
+
+    private enum TriState {NOT_SET, YES, NO}
 
     public static CommandLine getMainCommand() {
         return mainCommandLine;
@@ -35,7 +40,7 @@ public class CliExecutor {
         try {
             org.fusesource.jansi.AnsiConsole.systemInstall();
             mainCommandLine = toCommandLine(mainCommand);
-            execute(mainCommandLine, args);
+            execute(mainCommandLine, args, false);
             exitCode = 0;
         } catch (Exception e) {
             exitCode = handleException(e);
@@ -43,8 +48,8 @@ public class CliExecutor {
         System.exit(exitCode);
     }
 
-    private static void execute(CommandLine mainCommandLine, String[] args) {
-        mainCommandLine.parseWithHandlers(new CustomRunner(), new DefaultExceptionHandler<>(), args);
+    private static void execute(CommandLine mainCommandLine, String[] args, boolean interactive) {
+        mainCommandLine.parseWithHandlers(new CustomRunner(interactive), new DefaultExceptionHandler<>(), args);
     }
 
     private static void executeShell(CommandLine mainCommandLine, List<String> originalArgs) {
@@ -80,8 +85,7 @@ public class CliExecutor {
                         List<String> unifiedArgs = new ArrayList<>(originalArgs.size());
                         unifiedArgs.addAll(originalArgs);
                         unifiedArgs.addAll(pl.words());
-
-                        execute(mainCommandLine, unifiedArgs.toArray(new String[0]));
+                        execute(mainCommandLine, unifiedArgs.toArray(new String[0]), true);
                         System.out.println();
                     }
                 } catch (UserInterruptException e) {
@@ -156,6 +160,12 @@ public class CliExecutor {
 
     private static class CustomRunner extends RunLast {
 
+        private final boolean interactive;
+
+        private CustomRunner(boolean interactive) {
+            this.interactive = interactive;
+        }
+
         @Override
         protected List<Object> handle(ParseResult parseResult) throws ExecutionException {
             // Skip to last command:
@@ -174,7 +184,15 @@ public class CliExecutor {
                 } else if (command instanceof SubCommandContainer) {
                     commandLine.usage(out());
                 } else {
-                    command.call();
+                    boolean separateShell = interactive && command instanceof ContinuousCommand && isSeparateShellSupported();
+                    if (separateShell) {
+                        ContinuousCommand continuousCommand = (ContinuousCommand) command;
+                        continuousCommand.validate();
+                        System.out.println("Executing command in a separate shell window.");
+                        executeSeparateShell(originalArgs);
+                    } else {
+                        command.call();
+                    }
                 }
             } catch (ParameterException | ExecutionException ex) {
                 throw ex;
@@ -184,6 +202,47 @@ public class CliExecutor {
 
             return Collections.emptyList();
         }
+    }
+
+    private static boolean isSeparateShellSupported() {
+        if (supportsSeparateShellExec == TriState.NOT_SET) {
+            if (JavaUtils.isWindows())
+                supportsSeparateShellExec = TriState.YES;
+            else {
+                supportsSeparateShellExec = execute(new ProcessBuilder("xterm", "-help"))
+                        .map(exitCode -> exitCode == 0 ? TriState.YES : TriState.NO).orElse(TriState.NO);
+            }
+        }
+        return supportsSeparateShellExec == TriState.YES;
+    }
+
+    private static Optional<Integer> execute(ProcessBuilder processBuilder) {
+        try {
+            return Optional.of(processBuilder.start().waitFor());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return Optional.empty();
+        } catch (IOException e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Linux - assumes xterm is installed.
+     * Windows - use 'start' command. (start is internal, hence the first "cmd /c". In addition, start does not terminate
+     *           after batch execution, hence the latter "cmd /c")
+     */
+    private static void executeSeparateShell(List<String> args) throws IOException {
+        Path script = SystemLocations.singleton().bin("gs");
+        String title = script.getFileName().toString() + " " + String.join(" ", args);
+        String[] shellArgs = JavaUtils.isWindows()
+                ? new String[] {"cmd.exe", "/c", "start", "\"" + title + "\"", "cmd.exe", "/c"}
+                : new String[] {"xterm", "-title", "\"" + title + "\"", "-e"};
+        ProcessBuilder processBuilder = new ProcessBuilder(shellArgs);
+        processBuilder.command().add(script.toString());
+        processBuilder.command().addAll(args);
+        processBuilder.directory(script.getParent().toFile());
+        processBuilder.start();
     }
 
     /**
