@@ -28,8 +28,8 @@ public class ProcessingUnitGenerator {
         logger.info("************************* workDir Path: "+workDir.toString());
 
         blueprint.generate(target, updatedProperties(blueprint.getValues(),properties));
-        File zipFile = new File(target.toString());
-        PUZipUtils.zip(target.toFile(), zipFile);
+        File zipFile = new File(target.toString()+".zip");
+        PUZipUtils.zip(workDir.toFile(), zipFile);
 
         logger.info("************************* zipFile exist: "+zipFile.exists());
     }
