@@ -25,16 +25,13 @@ public class ProcessingUnitGenerator {
         Path target = getDefaultTarget(blueprint , Files.createTempDirectory(workDir,"blueprint-temp"));
 
         logger.info("************************* Target Path: "+target.toString());
+        logger.info("************************* workDir Path: "+workDir.toString());
 
         blueprint.generate(target, updatedProperties(blueprint.getValues(),properties));
-        File zipFile = new File(workDir.toString() + "zipFile.zip");
+        File zipFile = new File(target.toString());
         PUZipUtils.zip(target.toFile(), zipFile);
-        Path zipFilePath = Files.createFile(Paths.get(workDir.toString() + "zipFile2.zip"));
-        pack(target, zipFilePath);
+
         logger.info("************************* zipFile exist: "+zipFile.exists());
-        logger.info("************************* zipFile2 exist: "+zipFilePath.toFile().exists());
-
-
     }
 
     private static Map<String, String> updatedProperties(Map<String, String> defaultProperties, Map<String, String> properties) {
@@ -46,24 +43,5 @@ public class ProcessingUnitGenerator {
         });
 
         return properties;
-    }
-
-    public static void pack(Path sourceDirPath, Path zipFilePath) throws IOException {
-
-        try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-
-            Files.walk(sourceDirPath)
-                    .filter(path -> !Files.isDirectory(path))
-                    .forEach(path -> {
-                        ZipEntry zipEntry = new ZipEntry(sourceDirPath.relativize(path).toString());
-                        try {
-                            zs.putNextEntry(zipEntry);
-                            Files.copy(path, zs);
-                            zs.closeEntry();
-                        } catch (IOException e) {
-                            System.err.println(e);
-                        }
-                    });
-        }
     }
 }
