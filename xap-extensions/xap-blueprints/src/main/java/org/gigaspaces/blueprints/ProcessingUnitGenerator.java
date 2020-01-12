@@ -22,14 +22,15 @@ public class ProcessingUnitGenerator {
         Blueprint blueprint = BlueprintUtils.getBlueprint(name);
 
         Path workDir = SystemLocations.singleton().work();
-        Path target = getDefaultTarget(blueprint , Files.createTempDirectory(workDir,"blueprint-temp"));
+        Path tempDirectory = Files.createTempDirectory(workDir, "blueprint-temp");
+        Path target = getDefaultTarget(blueprint , tempDirectory);
 
         logger.info("************************* Target Path: "+target.toString());
         logger.info("************************* workDir Path: "+workDir.toString());
 
         blueprint.generate(target, updatedProperties(blueprint.getValues(),properties));
         File zipFile = new File(target.toString()+".zip");
-        PUZipUtils.zip(workDir.toFile(), zipFile);
+        PUZipUtils.zip(tempDirectory.toFile(), zipFile);
 
         logger.info("************************* zipFile exist: "+zipFile.exists());
     }
