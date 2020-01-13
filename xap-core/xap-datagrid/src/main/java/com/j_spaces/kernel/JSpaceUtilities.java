@@ -32,16 +32,8 @@ import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.SpaceOperations;
 import com.j_spaces.core.admin.IRemoteJSpaceAdmin;
 import com.j_spaces.core.admin.SpaceRuntimeInfo;
-import com.j_spaces.core.client.ExternalEntry;
-import com.j_spaces.core.client.ReadModifiers;
-import com.j_spaces.core.client.SpaceURL;
-import com.j_spaces.core.client.TransactionInfo;
-import com.j_spaces.core.client.UnderTxnLockedObject;
-import com.j_spaces.core.cluster.ClusterMemberInfo;
-import com.j_spaces.core.cluster.ClusterPolicy;
-import com.j_spaces.core.cluster.ClusterXML;
-import com.j_spaces.core.cluster.FailOverPolicy;
-import com.j_spaces.core.cluster.ReplicationPolicy;
+import com.j_spaces.core.client.*;
+import com.j_spaces.core.cluster.*;
 import com.j_spaces.core.exception.ClusterConfigurationException;
 import com.j_spaces.core.exception.internal.EngineInternalSpaceException;
 import com.j_spaces.core.exception.internal.LeaseInternalSpaceException;
@@ -49,62 +41,37 @@ import com.j_spaces.core.exception.internal.ProxyInternalSpaceException;
 import com.j_spaces.core.exception.internal.ReplicationInternalSpaceException;
 import com.j_spaces.kernel.log.JProperties;
 import com.j_spaces.lookup.entry.ClusterName;
-
 import net.jini.admin.JoinAdmin;
 import net.jini.core.discovery.LookupLocator;
 import net.jini.core.entry.Entry;
 import net.jini.core.lookup.ServiceID;
 import net.jini.core.lookup.ServiceItem;
 import net.jini.core.transaction.server.TransactionConstants;
-import net.jini.discovery.LookupDiscovery;
 import net.jini.discovery.LookupGroups;
 import net.jini.id.ReferentUuid;
 import net.jini.id.Uuid;
 import net.jini.lookup.entry.Name;
 import net.jini.space.InternalSpaceException;
-
 import org.jini.rio.boot.BootUtil;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Text;
+import org.w3c.dom.*;
 import org.xml.sax.SAXException;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.rmi.RemoteException;
-import java.text.NumberFormat;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
+import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.rmi.RemoteException;
+import java.text.NumberFormat;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import static com.j_spaces.core.Constants.LookupManager.ALL_GROUP;
-import static com.j_spaces.core.Constants.LookupManager.NONE_GROUP;
-import static com.j_spaces.core.Constants.LookupManager.PUBLIC;
-import static com.j_spaces.core.Constants.LookupManager.PUBLIC_GROUP;
+import static com.j_spaces.core.Constants.LookupManager.*;
 
 /**
  * JSpaceUtility class provides useful GigaSpaces utility functions.
@@ -1550,5 +1517,23 @@ public class JSpaceUtilities {
 
     public static Set<String> getSpaceSchemas() {
         return ALL_SPACE_SCHEMAS;
+    }
+
+    public static synchronized void loadLibraryToClasspath(File jarFile) throws Exception
+    {
+        if( jarFile.exists() ) {
+            URLClassLoader currentClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+            URL url = jarFile.toURI().toURL();
+            //Disallow if already loaded
+            for (URL it : Arrays.asList(currentClassLoader.getURLs())) {
+                if (it.equals(url)) {
+                    return;
+                }
+            }
+            java.lang.reflect.Method method = java.net.URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+            //allows public access
+            method.setAccessible(true);
+            method.invoke(currentClassLoader, new URL[]{url});
+        }
     }
 }
