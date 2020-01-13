@@ -54,6 +54,20 @@ public interface ICollection<T> {
      */
     public abstract IStoredListIterator<T> establishListScan(boolean random_scan);
 
+
+    /**
+     * establish a scan position. if random scan is supported we select a random position; otherwise
+     * we return the first resource by scanning from head to tail.
+     *
+     * @param random_scan <code>true</code> enable random scan; <code>false</code> start from head.
+     * @param alternatingThread <code>true</code> the result iter many be used by a not-same thread
+     * @return a  Holder for this scan. This Resource should be released if scan ended prematurely.
+     */
+    public default IStoredListIterator<T> establishListScan(boolean random_scan, boolean alternatingThread)
+    {
+        throw new RuntimeException("invalid usage: should be used only for concurrent SL");
+    }
+
     /**
      * Returns the next element in the scan order. Calling this method until it returns null, will
      * return each element as part of the <code>SLHolder</code>s <tt>subject</tt>.

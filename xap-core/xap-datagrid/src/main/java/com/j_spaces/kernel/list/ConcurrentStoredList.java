@@ -276,37 +276,57 @@ public class ConcurrentStoredList<T>
      */
     @Override
     public IStoredListIterator<T> establishListScan(boolean randomScan) {
+        return establishListScan(randomScan, false);
+    }
+
+    /**
+     * establish a scan position. we select a random segment to start from
+     */
+    @Override
+    public IStoredListIterator<T> establishListScan(boolean randomScan, boolean alternatingThread) {
         if (!randomScan &&  getNumSegments() > 1 && ! isSupportsFifoPerSegment() )
             throw new RuntimeException("establishListScan non-random scans not supported");
 
-        SegmentedListIterator<T> slh = _SLHolderPool.get();
+        SegmentedListIterator<T> slh = null;
+        if (!alternatingThread)
+            slh = _SLHolderPool.get();
+        else
+            slh = new SegmentedListIterator(alternatingThread);
 
         SegmentedListIterator<T> res = establishPos(slh, randomScan);
 
-        if (res == null)
+        if (res == null && !slh.isAlternatingThread())
             slh.release();
 
         return res;
     }
 
+
     /**
      * establish a scan position- select a segment
      */
     private SegmentedListIterator<T> establishPos(SegmentedListIterator<T> res, boolean randomScan) {
-        int startSegment = drawSegmentNumber(false /*add*/);
-        res.setStartSegment((short) startSegment);
-        res._scanLimit = size() * 5;
-        res._randomScan = (randomScan && getNumSegments() == 1);
+        try {
+            int startSegment = drawSegmentNumber(false /*add*/);
+            res.setStartSegment((short) startSegment);
+            res._scanLimit = size() * 5;
+            res._randomScan = (randomScan && getNumSegments() == 1);
 
-        for (int seg = startSegment, i = 0; i < getNumSegments(); i++, seg++) {
-            if (seg == getNumSegments())
-                seg = 0;
-            res.setCurrentSegment((short) seg);
-            StoredListChainSegment<T> segment = getSegment(seg);
-            if (segment.establishIterScanPos(res))
-                return res;
+            for (int seg = startSegment, i = 0; i < getNumSegments(); i++, seg++) {
+                if (seg == getNumSegments())
+                    seg = 0;
+                res.setCurrentSegment((short) seg);
+                StoredListChainSegment<T> segment = getSegment(seg);
+                if (segment.establishIterScanPos(res))
+                    return res;
+            }
+            return null; //all empty
         }
-        return null; //all empty
+        finally
+        {
+            if (res._alternatingThread)
+                res._alternatingThreadBarrier = true; //barrier
+        }
     }
 
     /**
@@ -314,6 +334,12 @@ public class ConcurrentStoredList<T>
      */
     @Override
     public IStoredListIterator<T> next(IStoredListIterator<T> slh) {
+        if (((SegmentedListIterator)slh).isAlternatingThread())
+        //a dummy check just to go thru volatile barrier
+        {
+            if (!((SegmentedListIterator)slh).isAlternatingThreadBarrier())
+                throw new RuntimeException("internal error alternating thread");
+        }
         IStoredListIterator<T> slnext = nextPos((SegmentedListIterator<T>) slh);
 
         if (slnext == null)
@@ -393,13 +419,14 @@ public class ConcurrentStoredList<T>
     public void freeSLHolder(IStoredListIterator<T> slh) {
         if (slh != null) {
             SegmentedListIterator<T> si = (SegmentedListIterator<T>) slh;
-            slh.release();
+            if (!si.isAlternatingThread())
+                slh.release();
         }
     }
 
     private static class SegmentedListIteratorFactory implements PoolFactory<SegmentedListIterator> {
         public SegmentedListIterator create() {
-            return new SegmentedListIterator();
+            return new SegmentedListIterator(false);
         }
     }
 
@@ -415,6 +442,8 @@ public class ConcurrentStoredList<T>
         boolean _randomScan;
         private short _startSegment;  // first segment in the scan
         private short _currentSegment; // current segment in the scan
+        private final boolean _alternatingThread;
+        private volatile boolean _alternatingThreadBarrier; //pass thru volatile
 
         //PER SEGMENT VARS
         int _scanLimit;   //per segment
@@ -423,7 +452,10 @@ public class ConcurrentStoredList<T>
         StoredListChainSegment.ConcurrentSLObjectInfo<T> _curElement;
         boolean _headToTail;
 
-        public SegmentedListIterator() {
+        public SegmentedListIterator(boolean alternatingThread) {
+            _alternatingThread = alternatingThread;
+            if (_alternatingThread)
+                _alternatingThreadBarrier = true;
         }
 
         @Override
@@ -476,6 +508,23 @@ public class ConcurrentStoredList<T>
          */
         public T getSubject() {
             return _curElement != null ? _curElement.getSubject() : null;
+        }
+
+        public boolean isAlternatingThread()
+        {
+            return _alternatingThread;
+        }
+        public boolean isAlternatingThreadBarrier()
+        {
+            return _alternatingThreadBarrier;
+        }
+
+        @Override
+        public void release()
+        {
+            if (_alternatingThread)
+                return;
+            super.release();
         }
 
     }
