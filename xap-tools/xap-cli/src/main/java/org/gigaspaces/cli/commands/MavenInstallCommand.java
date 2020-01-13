@@ -1,5 +1,6 @@
 package org.gigaspaces.cli.commands;
 
+import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.start.SystemLocations;
 import org.gigaspaces.cli.CliCommand;
@@ -79,7 +80,7 @@ public class MavenInstallCommand extends CliCommand {
                 System.out.printf("Installation of GigaSpaces Maven artifacts completed (artifacts=%s, duration=%.2fs)%n",
                         artifacts.size(), duration);
             } finally {
-                deleteRecursive(target);
+                BootIOUtils.deleteRecursive(target);
             }
         }
     }
@@ -203,14 +204,4 @@ public class MavenInstallCommand extends CliCommand {
         }
     }
 
-    private static void deleteRecursive(Path path) throws IOException {
-        Files.walk(path).sorted(Comparator.reverseOrder())
-                .forEach(p -> {
-                    try {
-                        Files.delete(p);
-                    } catch (IOException e) {
-                        throw new RuntimeException("Failed to delete " + p, e);
-                    }
-                });
-    }
 }

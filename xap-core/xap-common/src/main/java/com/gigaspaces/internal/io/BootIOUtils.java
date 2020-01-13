@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -381,5 +382,20 @@ public class BootIOUtils {
 
     public static String readAsString(Path path) throws IOException {
         return new String(Files.readAllBytes(path));
+    }
+
+    public static void deleteRecursive(Path path) throws IOException {
+        try {
+            Files.walk(path).sorted(Comparator.reverseOrder())
+                    .forEach(p -> {
+                        try {
+                            Files.delete(p);
+                        } catch (IOException e) {
+                            throw new UncheckedIOException("Failed to delete " + p, e);
+                        }
+                    });
+        }catch (UncheckedIOException e){
+            throw e.getCause();
+        }
     }
 }
