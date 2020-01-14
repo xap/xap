@@ -1518,22 +1518,4 @@ public class JSpaceUtilities {
     public static Set<String> getSpaceSchemas() {
         return ALL_SPACE_SCHEMAS;
     }
-
-    public static synchronized void loadLibraryToClasspath(File jarFile) throws Exception
-    {
-        if( jarFile.exists() ) {
-            URLClassLoader currentClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
-            URL url = jarFile.toURI().toURL();
-            //Disallow if already loaded
-            for (URL it : Arrays.asList(currentClassLoader.getURLs())) {
-                if (it.equals(url)) {
-                    return;
-                }
-            }
-            java.lang.reflect.Method method = java.net.URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
-            //allows public access
-            method.setAccessible(true);
-            method.invoke(currentClassLoader, new URL[]{url});
-        }
-    }
 }
