@@ -157,6 +157,10 @@ public class DatabaseMetaDataReader implements Closeable {
             this.url = url;
         }
 
+        public DatabaseMetaDataReader build() throws SQLException {
+            return new DatabaseMetaDataReader(this);
+        }
+
         public Builder properties(Properties properties) {
             this.properties.putAll(properties);
             return this;
