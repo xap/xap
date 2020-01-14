@@ -47,7 +47,7 @@ public class DatabaseMetaDataReader implements Closeable {
         this.connection = builder.driver != null
                 ? builder.driver.connect(builder.url, builder.properties)
                 : DriverManager.getConnection(builder.url, builder.properties);
-        this.metaData = connection.getMetaData();
+        this.metaData = connection != null ? connection.getMetaData() : null;
         this.driverClassLoader = builder.driverClassLoader;
     }
 
@@ -184,6 +184,10 @@ public class DatabaseMetaDataReader implements Closeable {
         public Builder driver(Driver driver) {
             this.driver = driver;
             return this;
+        }
+
+        public Builder driver(String driverClass) throws ReflectiveOperationException, IOException  {
+            return driver(driverClass, Collections.EMPTY_LIST);
         }
 
         public Builder driver(String driverClass, Path driverClasspath) throws ReflectiveOperationException, IOException  {
