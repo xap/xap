@@ -16,8 +16,15 @@
 
 package com.gigaspaces.utils.jdbc;
 
+import com.gigaspaces.classloader.CustomURLClassLoader;
+import com.gigaspaces.start.ClasspathBuilder;
+
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.sql.*;
 import java.util.*;
 
@@ -30,22 +37,22 @@ import java.util.*;
 public class DatabaseMetaDataReader implements Closeable {
     private final Connection connection;
     private final DatabaseMetaData metaData;
-
-    public DatabaseMetaDataReader(String url) throws SQLException {
-        this(DriverManager.getConnection(url));
-    }
+    private final URLClassLoader driverClassLoader;
 
     public DatabaseMetaDataReader(String url, Properties properties) throws SQLException {
-        this(DriverManager.getConnection(url, properties));
+        this(builder(url).properties(properties));
     }
 
-    public DatabaseMetaDataReader(String url, String user, String password) throws SQLException {
-        this(DriverManager.getConnection(url, user, password));
-    }
-
-    private DatabaseMetaDataReader(Connection connection) throws SQLException {
-        this.connection = connection;
+    private DatabaseMetaDataReader(Builder builder) throws SQLException {
+        this.connection = builder.driver != null
+                ? builder.driver.connect(builder.url, builder.properties)
+                : DriverManager.getConnection(builder.url, builder.properties);
         this.metaData = connection.getMetaData();
+        this.driverClassLoader = builder.driverClassLoader;
+    }
+
+    public static Builder builder(String url) {
+        return new Builder(url);
     }
 
     @Override
@@ -54,6 +61,9 @@ public class DatabaseMetaDataReader implements Closeable {
             this.connection.close();
         } catch (SQLException e) {
             throw new IOException("Failed to close connection", e);
+        }
+        if (driverClassLoader != null) {
+            driverClassLoader.close();
         }
     }
 
@@ -134,5 +144,61 @@ public class DatabaseMetaDataReader implements Closeable {
             }
         }
         return new ArrayList<>(result.values());
+    }
+
+    public static class Builder {
+
+        private final String url;
+        private final Properties properties = new Properties();
+        private Driver driver;
+        private URLClassLoader driverClassLoader;
+
+        public Builder(String url) {
+            this.url = url;
+        }
+
+        public Builder properties(Properties properties) {
+            this.properties.putAll(properties);
+            return this;
+        }
+
+        public Builder property(String key, String value) {
+            this.properties.setProperty(key, value);
+            return this;
+        }
+
+        public Builder credentials(String user, String password) {
+            if (user != null) {
+                properties.setProperty("user", user);
+            }
+            if (password != null) {
+                properties.setProperty("password", password);
+            }
+            return this;
+        }
+
+        public Builder driver(Driver driver) {
+            this.driver = driver;
+            return this;
+        }
+
+        public Builder driver(String driverClass, Path driverClasspath) throws ReflectiveOperationException, IOException  {
+            return driver(driverClass, Collections.singleton(driverClasspath));
+        }
+
+        public Builder driver(String driverClass, Collection<Path> driverClasspath) throws ReflectiveOperationException, IOException {
+            ClasspathBuilder cpBuilder = new ClasspathBuilder();
+            for (Path path : driverClasspath) {
+                cpBuilder.appendJars(path);
+            }
+            try {
+                URL[] classpath = cpBuilder.toURLsArray();
+                this.driverClassLoader = new CustomURLClassLoader("cl-jdbc-" + driverClass, classpath, Thread.currentThread().getContextClassLoader());
+            } catch (MalformedURLException e) {
+                throw new IOException("Failed to create classpath from " + driverClasspath);
+            }
+            this.driver = driverClassLoader.loadClass(driverClass).asSubclass(Driver.class).newInstance();
+            return this;
+        }
     }
 }
