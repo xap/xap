@@ -399,6 +399,7 @@ public class SystemProperties extends CommonSystemProperties {
     public final static String STORAGE_TYPE_SERIALIZATION_ZIP_IDEMPOTENT = "com.gs.client.storage-type-serialization.zip.idempotent";
 
     public static final String AES_PASSPHRASE = "com.gs.property-storage.aes.passphrase";
+    public static final String AES_PASSPHRASE_PATH = "com.gs.property-storage.aes.passphrase-path";
     public static final String AES_KEY_LENGTH = "com.gs.property-storage.aes.key-length";
     public static final String AES_MAC_ALGORITHM = "com.gs.property-storage.aes.mac.algorithm";
     public static final String AES_MAC_KEY_LENGTH = "com.gs.property-storage.aes.mac.key-length";

@@ -26,6 +26,8 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.*;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Objects;
@@ -86,10 +88,21 @@ public abstract class AbstractAesAdapter extends PropertyStorageAdapter {
      * this method and load the pass phrase from a secure location of your choice.
      */
     protected byte[] getPassPhrase() throws GeneralSecurityException {
+        Path path = GsEnv.propertyPath(SystemProperties.AES_PASSPHRASE_PATH).get();
+        if (path != null) {
+            try {
+                return Files.readAllBytes(path);
+            } catch (IOException e) {
+                throw new GeneralSecurityException("Failed to read passphrase from " + path, e);
+            }
+        }
+
         String key = GsEnv.property(SystemProperties.AES_PASSPHRASE).get();
-        if (key == null)
-            throw new GeneralSecurityException("Passphrase must be provided using the " + SystemProperties.AES_PASSPHRASE +" system property");
-        return key.getBytes();
+        if (key != null) {
+            return key.getBytes();
+        }
+        throw new GeneralSecurityException("Passphrase must be provided using the " + SystemProperties.AES_PASSPHRASE +
+                " or " + SystemProperties.AES_PASSPHRASE_PATH + " system property");
     }
 
     protected Random getSecureRandom() {
