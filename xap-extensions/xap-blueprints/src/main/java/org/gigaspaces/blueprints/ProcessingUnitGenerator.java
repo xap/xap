@@ -21,10 +21,10 @@ public class ProcessingUnitGenerator {
         Path target = blueprintDir.resolve(name);
 
         blueprint.generate(target, properties);
-        Path zipFile = blueprintDir.resolve(target.getFileName()+".zip");
+        Path zipFile = tempDirectory.resolve(target.getFileName()+".zip");
 
         PUZipUtils.zip(blueprintDir.toFile(), zipFile.toFile());
-        logger.info("************************* Target Path: "+target.toString());
+        logger.info("Target Path: "+target.toString());
 
         return zipFile.toFile();
     }
