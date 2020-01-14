@@ -199,12 +199,19 @@ public class DatabaseMetaDataReader implements Closeable {
             for (Path path : driverClasspath) {
                 cpBuilder.appendJars(path);
             }
+
             try {
-                URL[] classpath = cpBuilder.toURLsArray();
-                this.driverClassLoader = new CustomURLClassLoader("cl-jdbc-" + driverClass, classpath, Thread.currentThread().getContextClassLoader());
+                driver( driverClass, cpBuilder.toURLsArray() );
             } catch (MalformedURLException e) {
                 throw new IOException("Failed to create classpath from " + driverClasspath);
             }
+
+            return this;
+        }
+
+        public Builder driver(String driverClass, URL[] classpath) throws ReflectiveOperationException {
+
+            this.driverClassLoader = new CustomURLClassLoader("cl-jdbc-" + driverClass, classpath, Thread.currentThread().getContextClassLoader());
             this.driver = driverClassLoader.loadClass(driverClass).asSubclass(Driver.class).newInstance();
             return this;
         }
