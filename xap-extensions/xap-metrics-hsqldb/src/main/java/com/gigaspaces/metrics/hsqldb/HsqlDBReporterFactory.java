@@ -29,7 +29,7 @@ public class HsqlDBReporterFactory extends MetricReporterFactory<MetricReporter>
 
     public static final String DEFAULT_DRIVER_CLASS_NAME = "org.hsqldb.jdbc.JDBCDriver";
     public static final String DEFAULT_PORT = "9101";
-    public static final String DEFAULT_DBTYPE_STRING = "VARCHAR(100)";
+    public static final String DEFAULT_DBTYPE_STRING = "VARCHAR(300)";
 
     private String dbName;
     private String username;
