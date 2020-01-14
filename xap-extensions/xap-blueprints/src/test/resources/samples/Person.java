@@ -6,6 +6,7 @@ package com.gigaspaces.demo;
 public class Person {
     private int id;
     private String name;
+    private long auto-generate;
 
     public Person() {
     }
@@ -22,5 +23,13 @@ public class Person {
     }
     public void setname(String name) {
         this.name = name;
+    }
+
+    @SpaceId(autoGenerate=true)
+    public long getauto-generate() {
+        return auto-generate;
+    }
+    public void setauto-generate(long auto-generate) {
+        this.auto-generate = auto-generate;
     }
 }

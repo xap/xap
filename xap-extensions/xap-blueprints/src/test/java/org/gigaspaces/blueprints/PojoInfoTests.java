@@ -14,8 +14,10 @@ public class PojoInfoTests {
         String actual = new PojoInfo("Person", "com.gigaspaces.demo")
                 .addProperty("id", int.class)
                 .addProperty("name", String.class)
+                .addPropertyWithAutoGenerate("auto-generate", long.class)
                 .generate();
-
+        System.out.println(actual);
         Assert.assertEquals(expected, actual);
     }
+
 }

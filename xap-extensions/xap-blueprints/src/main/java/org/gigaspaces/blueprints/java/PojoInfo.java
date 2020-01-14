@@ -52,10 +52,23 @@ public class PojoInfo {
     }
 
     public PojoInfo addProperty(String name, Class<?> type) {
-        properties.add(new PojoInfo.PropertyInfo(name, type));
+        addPropertyImpl(name, type);
+        return this;
+    }
+
+    private PropertyInfo addPropertyImpl(String name, Class<?> type) {
+        PropertyInfo propertyInfo = new PropertyInfo(name, type);
+        properties.add(propertyInfo);
         Package typePackage = type.getPackage();
         if (typePackage != null && !typePackage.getName().equals("java.lang"))
             imports.add(typePackage.getName() + ".*");
+        return propertyInfo;
+
+    }
+
+    public PojoInfo addPropertyWithAutoGenerate(String name, Class<?> type) {
+        PropertyInfo propertyInfo = addPropertyImpl(name, type);
+        propertyInfo.annotations.add("@SpaceId(autoGenerate=true)");
         return this;
     }
 
