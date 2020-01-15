@@ -42,18 +42,12 @@ public class MultiStoredList<T>
     private final boolean _fifoScan;
     private int _posInMultlist = -1;
     private Set _uniqueLists;
-    private final boolean _alternatingThread;
-    private volatile boolean _alternatingThreadBarrier; //pass thru volatile
 
     public MultiStoredList() {
         this(null, false);
     }
 
     public MultiStoredList(List<IObjectsList> multiList, boolean fifoScan) {
-        this(multiList, fifoScan,false);
-    }
-
-    public MultiStoredList(List<IObjectsList> multiList, boolean fifoScan,boolean alternatingThread) {
         if (multiList == null)
             _multiList = new LinkedList<IObjectsList>();
         else {
@@ -71,9 +65,6 @@ public class MultiStoredList<T>
             _multiList = multiList;
         }
         _fifoScan = fifoScan;
-        _alternatingThread = alternatingThread;
-        if (_alternatingThread)
-            _alternatingThreadBarrier = true; //volatile barrier
     }
 
     public void add(IObjectsList l) {
@@ -88,19 +79,10 @@ public class MultiStoredList<T>
 
         if (_uniqueLists.add(l))
             _multiList.add(l);
-
-        if (_alternatingThread)
-            _alternatingThreadBarrier = true; //volatile barrier
     }
 
 
     public boolean hasNext() {
-        if (_alternatingThread)
-        //a dummy check just to go thru volatile barrier
-        {
-            if (!_alternatingThreadBarrier)
-                throw new RuntimeException("internal error alternating thread");
-        }
         try {
             while (true) {
                 if (_current == null && _posInMultlist >= _multiList.size() - 1) {
@@ -112,6 +94,7 @@ public class MultiStoredList<T>
                 if (_posInMultlist < _multiList.size() - 1) {
                     IObjectsList current = _multiList.get(++_posInMultlist);
                     _current = prepareListIterator(current);
+//	      	  _current = (!current.isIterator()) ? new ScanSingleListIterator((IStoredList<T>) current, _fifoScan) :(IScanListIterator<T>) current;  
                 }
             }
         } catch (SAException ex) {
@@ -160,7 +143,7 @@ public class MultiStoredList<T>
     }
 
     protected IScanListIterator<T> prepareListIterator(IObjectsList list) {
-        return (!list.isIterator()) ? new ScanSingleListIterator((IStoredList<T>) list, _fifoScan,_alternatingThread) : (IScanListIterator<T>) list;
+        return (!list.isIterator()) ? new ScanSingleListIterator((IStoredList<T>) list, _fifoScan) : (IScanListIterator<T>) list;
 
     }
 

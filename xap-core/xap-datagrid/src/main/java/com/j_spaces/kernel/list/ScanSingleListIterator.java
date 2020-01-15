@@ -47,31 +47,15 @@ public class ScanSingleListIterator<T>
 
     private final boolean _fifoScan;
 
-    private final boolean _alternatingThread;
-    private volatile boolean _alternatingThreadBarrier; //pass thru volatile
-
     public ScanSingleListIterator(IStoredList<T> list, boolean fifoScan) {
-        this(list,fifoScan,false);
-    }
-    public ScanSingleListIterator(IStoredList<T> list, boolean fifoScan,boolean alternatingThread) {
         _list = list;
         _fifoScan = fifoScan;
-        _alternatingThread = alternatingThread;
-        if (_alternatingThread)
-            _alternatingThreadBarrier = true;
-
     }
 
     /*
      * @see java.util.Iterator#hasNext()
      */
     public boolean hasNext() {
-        if (_alternatingThread)
-        //a dummy check just to go thru volatile barrier
-        {
-            if (!_alternatingThreadBarrier)
-                throw new RuntimeException("internal error alternating thread");
-        }
         if (_gotFirst && _singleObjectResult)
             return false;
         if (!_gotFirst) {
@@ -80,7 +64,7 @@ public class ScanSingleListIterator<T>
                     _singleObjectResult = true;
                     _nextObj = _list.getObjectFromHead();
                 } else {
-                    _pos = _list.establishListScan(!_fifoScan,_alternatingThread);
+                    _pos = _list.establishListScan(!_fifoScan);
                     _nextObj = getNext();
                 }
             } else {
