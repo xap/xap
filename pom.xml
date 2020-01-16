@@ -90,10 +90,6 @@
                 <checksumPolicy>warn</checksumPolicy>
             </snapshots>
         </repository>
-        <repository>
-            <id>com.springsource.repository.bundles.external</id>
-            <url>http://repository.springsource.com/maven/bundles/external</url>
-        </repository>
     </repositories>
 
     <dependencyManagement>
