@@ -11,11 +11,16 @@
     </properties>
 
     <repositories>
-	    <repository>
-	      <id>org.openspaces</id>
-	      <url>http://maven-repository.openspaces.org</url>
-	    </repository>
-	</repositories>
+        <repository>
+            <id>com.springsource.repository.bundles.external</id>
+            <url>http://repository.springsource.com/maven/bundles/external</url>
+        </repository>
+        <repository>
+            <id>repository.jboss.org-public</id>
+            <name>JBoss.org Maven repository</name>
+            <url>https://repository.jboss.org/nexus/content/groups/public</url>
+        </repository>
+    </repositories>
 
     <modules>
         <module>common</module>
