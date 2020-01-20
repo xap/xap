@@ -20,6 +20,8 @@ package com.j_spaces.kernel.list;
 import com.j_spaces.kernel.IStoredList;
 import com.j_spaces.kernel.IStoredListIterator;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * TODO	add Javadoc
  *
@@ -47,36 +49,63 @@ public class ScanSingleListIterator<T>
 
     private final boolean _fifoScan;
 
+    private final boolean _alternatingThread;
+    private final AtomicInteger _alternatingThreadBarrier; //pass thru volatile
+
     public ScanSingleListIterator(IStoredList<T> list, boolean fifoScan) {
+        this(list,fifoScan,false);
+    }
+    public ScanSingleListIterator(IStoredList<T> list, boolean fifoScan,boolean alternatingThread) {
         _list = list;
         _fifoScan = fifoScan;
+        _alternatingThread = alternatingThread;
+        if (_alternatingThread) {
+            _alternatingThreadBarrier = new AtomicInteger(0);
+            _alternatingThreadBarrier.incrementAndGet(); //set to 1 bypass jvm optimizations
+        }
+        else
+            _alternatingThreadBarrier = null;
+
     }
 
     /*
      * @see java.util.Iterator#hasNext()
      */
     public boolean hasNext() {
-        if (_gotFirst && _singleObjectResult)
-            return false;
-        if (!_gotFirst) {
-            if (_list.isMultiObjectCollection()) {
-                if (_list.optimizeScanForSingleObject()) {
-                    _singleObjectResult = true;
-                    _nextObj = _list.getObjectFromHead();
+        //a dummy check just to go thru volatile barrier
+        if (_alternatingThreadBarrier != null && _alternatingThreadBarrier.get() == 0)
+             throw new RuntimeException("internal error alternating thread");
+        try {
+            if (_gotFirst && _singleObjectResult)
+                return false;
+            if (!_gotFirst) {
+                if (_list.isMultiObjectCollection()) {
+                    if (_list.optimizeScanForSingleObject()) {
+                        _singleObjectResult = true;
+                        _nextObj = _list.getObjectFromHead();
+                    } else {
+                        if (_alternatingThread)
+                            _pos = _list.establishListScan(!_fifoScan, _alternatingThread);
+                        else
+                            _pos = _list.establishListScan(!_fifoScan);
+                        _nextObj = getNext();
+                    }
                 } else {
-                    _pos = _list.establishListScan(!_fifoScan);
-                    _nextObj = getNext();
+                    _singleObjectResult = true;
+                    _nextObj = (T) _list;
                 }
+                _gotFirst = true;
             } else {
-                _singleObjectResult = true;
-                _nextObj = (T) _list;
+                _pos = _list.next(_pos);
+                _nextObj = getNext();
             }
-            _gotFirst = true;
-        } else {
-            _pos = _list.next(_pos);
-            _nextObj = getNext();
+            return _nextObj != null;
         }
-        return _nextObj != null;
+        finally
+        {
+            if (_alternatingThreadBarrier != null )
+                _alternatingThreadBarrier.incrementAndGet(); //set to 1 bypass jvm optimizations
+        }
     }
 
     /**
@@ -84,15 +113,24 @@ public class ScanSingleListIterator<T>
      * deletion, so they need to be skipped.
      */
     private T getNext() {
-        while (_pos != null) {
-            T nextObj = _pos.getSubject();
-            if (nextObj != null)
-                return nextObj;
+        if (_alternatingThreadBarrier != null && _alternatingThreadBarrier.get() == 0) //barrier
+            //a dummy check just to go thru volatile barrier
+            throw new RuntimeException("internal error alternating thread");
+        try {
+            while (_pos != null) {
+                T nextObj = _pos.getSubject();
+                if (nextObj != null)
+                    return nextObj;
 
-            _pos = _list.next(_pos);
+                _pos = _list.next(_pos);
+            }
+            return null;
         }
-
-        return null;
+        finally
+        {
+            if (_alternatingThreadBarrier != null )
+                _alternatingThreadBarrier.incrementAndGet(); //set to 1 bypass jvm optimizations
+        }
     }
 
     /*

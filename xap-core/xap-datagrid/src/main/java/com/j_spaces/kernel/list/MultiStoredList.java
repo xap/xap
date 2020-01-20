@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -42,12 +43,18 @@ public class MultiStoredList<T>
     private final boolean _fifoScan;
     private int _posInMultlist = -1;
     private Set _uniqueLists;
+    private final boolean _alternatingThread;
+    private final AtomicInteger _alternatingThreadBarrier; //pass thru volatile
 
     public MultiStoredList() {
         this(null, false);
     }
 
     public MultiStoredList(List<IObjectsList> multiList, boolean fifoScan) {
+        this(multiList, fifoScan,false);
+    }
+
+    public MultiStoredList(List<IObjectsList> multiList, boolean fifoScan,boolean alternatingThread) {
         if (multiList == null)
             _multiList = new LinkedList<IObjectsList>();
         else {
@@ -65,24 +72,44 @@ public class MultiStoredList<T>
             _multiList = multiList;
         }
         _fifoScan = fifoScan;
+        _alternatingThread = alternatingThread;
+        if (_alternatingThread) {
+            _alternatingThreadBarrier = new AtomicInteger(0);
+            _alternatingThreadBarrier.incrementAndGet(); //set to 1 bypass jvm optimizations
+        }
+        else
+            _alternatingThreadBarrier = null;
     }
 
     public void add(IObjectsList l) {
-        if (l == null)
-            return;
-        if (_uniqueLists ==null)
-        {
-            _uniqueLists = new HashSet();
-            if (!_multiList.isEmpty())
-                _uniqueLists.addAll(_multiList);
-        }
+        if (_alternatingThreadBarrier != null && _alternatingThreadBarrier.get() == 0)
+            throw new RuntimeException("internal error alternating thread");
+        try {
+            if (l == null)
+                return;
+            if (_uniqueLists ==null)
+            {
+                _uniqueLists = new HashSet();
+                if (!_multiList.isEmpty())
+                    _uniqueLists.addAll(_multiList);
+            }
 
-        if (_uniqueLists.add(l))
-            _multiList.add(l);
+            if (_uniqueLists.add(l))
+                _multiList.add(l);
+
+        }
+        finally
+        {
+            if (_alternatingThreadBarrier != null )
+                _alternatingThreadBarrier.incrementAndGet(); //set to 1 bypass jvm optimizations
+        }
     }
 
 
     public boolean hasNext() {
+        if (_alternatingThreadBarrier != null && _alternatingThreadBarrier.get() == 0)
+            //a dummy check just to go thru volatile barrier
+            throw new RuntimeException("internal error alternating thread");
         try {
             while (true) {
                 if (_current == null && _posInMultlist >= _multiList.size() - 1) {
@@ -94,22 +121,35 @@ public class MultiStoredList<T>
                 if (_posInMultlist < _multiList.size() - 1) {
                     IObjectsList current = _multiList.get(++_posInMultlist);
                     _current = prepareListIterator(current);
-//	      	  _current = (!current.isIterator()) ? new ScanSingleListIterator((IStoredList<T>) current, _fifoScan) :(IScanListIterator<T>) current;  
                 }
             }
         } catch (SAException ex) {
+            return false;
         } //never happens
-        return false;
+        finally
+        {
+            if (_alternatingThreadBarrier != null )
+                _alternatingThreadBarrier.incrementAndGet(); //set to 1 bypass jvm optimizations
+        }
     }
 
 
     public T next() {
+        if (_alternatingThreadBarrier != null && _alternatingThreadBarrier.get() == 0)
+            //a dummy check just to go thru volatile barrier
+            throw new RuntimeException("internal error alternating thread");
         T res = null;
         try {
             res = _current.next();
+            return res;
         } catch (SAException ex) {
+            return res;
         } //never happens
-        return res;
+        finally
+        {
+            if (_alternatingThreadBarrier != null )
+                _alternatingThreadBarrier.incrementAndGet(); //set to 1 bypass jvm optimizations
+        }
     }
 
     public void remove() {
@@ -143,7 +183,15 @@ public class MultiStoredList<T>
     }
 
     protected IScanListIterator<T> prepareListIterator(IObjectsList list) {
-        return (!list.isIterator()) ? new ScanSingleListIterator((IStoredList<T>) list, _fifoScan) : (IScanListIterator<T>) list;
+        if (!list.isIterator())
+        {
+            if (_alternatingThread)
+                return new ScanSingleListIterator((IStoredList<T>) list, _fifoScan,true);
+            else
+                return new ScanSingleListIterator((IStoredList<T>) list, _fifoScan);
+        }
+        else
+            return (IScanListIterator<T>) list;
 
     }
 
