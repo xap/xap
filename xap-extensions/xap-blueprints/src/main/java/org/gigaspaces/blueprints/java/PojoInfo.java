@@ -47,6 +47,16 @@ public class PojoInfo {
         return this;
     }
 
+    public PojoInfo addImport(String imported) {
+        this.imports.add(imported);
+        return this;
+    }
+
+    public PojoInfo addWarning(String warning) {
+        this.warnings.add(warning);
+        return this;
+    }
+
     public List<PropertyInfo> getProperties() {
         return properties;
     }
