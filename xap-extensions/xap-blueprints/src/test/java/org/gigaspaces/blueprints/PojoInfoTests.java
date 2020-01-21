@@ -11,11 +11,12 @@ public class PojoInfoTests {
     @Test
     public void testFoo() throws IOException {
         String expected = BootIOUtils.readAsString(BootIOUtils.getResourcePath("samples/Person.java"));
-        String actual = new PojoInfo("Person", "com.gigaspaces.demo")
-                .addProperty("id", int.class)
-                .addProperty("name", String.class)
-                .addPropertyWithAutoGenerate("auto-generate", long.class)
-                .generate();
+        PojoInfo personPojoInfo = new PojoInfo("Person", "com.gigaspaces.demo");
+        personPojoInfo.addProperty("id", int.class);
+        personPojoInfo.addProperty("name", String.class);
+        personPojoInfo.addPropertyWithAutoGenerate("auto-generate", long.class);
+
+        String actual = personPojoInfo.generate();
         System.out.println(actual);
         Assert.assertEquals(expected, actual);
     }

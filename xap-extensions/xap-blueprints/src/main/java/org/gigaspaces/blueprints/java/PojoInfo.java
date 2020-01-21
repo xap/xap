@@ -51,9 +51,8 @@ public class PojoInfo {
         return properties;
     }
 
-    public PojoInfo addProperty(String name, Class<?> type) {
-        addPropertyImpl(name, type);
-        return this;
+    public PropertyInfo addProperty(String name, Class<?> type) {
+        return addPropertyImpl(name, type);
     }
 
     private PropertyInfo addPropertyImpl(String name, Class<?> type) {

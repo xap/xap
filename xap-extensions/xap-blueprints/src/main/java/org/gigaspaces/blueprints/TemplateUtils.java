@@ -24,8 +24,12 @@ public class TemplateUtils {
         return m.execute(new StringWriter(), scope).toString();
     }
 
+/*    public static String evaluateResource(String resourceName, Object scope) throws IOException {
+        return evaluate(BootIOUtils.readAsString( BootIOUtils.getResourceAsStream(resourceName)), scope);
+    }*/
+
     public static String evaluateResource(String resourceName, Object scope) throws IOException {
-        return evaluate(BootIOUtils.readAsString(BootIOUtils.getResourcePath(resourceName)), scope);
+        return evaluate(BootIOUtils.readAsString( BootIOUtils.getResourceAsStream( resourceName ) ), scope );
     }
 
     public static void evaluateTree(Path src, Path dst, Object scope) throws IOException {

@@ -367,10 +367,6 @@ public class BootIOUtils {
         return getResourcePath(resource, Thread.currentThread().getContextClassLoader());
     }
 
-    public static Path getResourcePath(String resource, Class<?> context) throws IOException {
-        return getResourcePath(resource, context.getClassLoader());
-    }
-
     public static Path getResourcePath(String resource, ClassLoader classLoader) throws IOException {
         URL url = classLoader != null ? classLoader.getResource(resource) : ClassLoader.getSystemResource(resource);
         try {
@@ -380,9 +376,30 @@ public class BootIOUtils {
         }
     }
 
+    public static InputStream getResourceAsStream(String resource) {
+        return getResourceAsStream(resource, Thread.currentThread().getContextClassLoader());
+    }
+
+    public static InputStream getResourceAsStream(String resource, ClassLoader classLoader) {
+        return classLoader != null ? classLoader.getResourceAsStream(resource) : ClassLoader.getSystemResourceAsStream(resource);
+    }
+
     public static String readAsString(Path path) throws IOException {
         return new String(Files.readAllBytes(path));
     }
+
+    public static String readAsString(InputStream is) throws IOException {
+        BufferedReader input = new BufferedReader( new InputStreamReader( is ) );
+        String line;
+        StringBuilder content = new StringBuilder();
+        while ((line = input.readLine()) != null) {
+            content.append( line );
+            content.append( '\n' );
+        }
+        input.close();
+        return content.toString();
+    }
+
 
     public static void deleteRecursive(Path path) throws IOException {
         try {
