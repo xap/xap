@@ -61,5 +61,23 @@ public interface IScanListIterator<T>
      */
     boolean isAlreadyMatched();
 
+    /**
+     * does this iter contain multiple lists
+     */
+    default boolean isMultiListsIterator()
+    {
+        return false;
+    }
+
+    /**
+     * create a shallow copy ready for alternating thread usage
+     * @return a new shallow copyed IScanListIterator ready for alternating thread usage
+     * NOTE!! should be called before first hasNext() call
+     */
+    default IScanListIterator createCopyForAlternatingThread()
+    {
+        throw new RuntimeException("internal error-invalid usage");
+    }
+
 
 }

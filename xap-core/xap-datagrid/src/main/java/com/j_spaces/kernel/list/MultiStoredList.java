@@ -203,6 +203,33 @@ public class MultiStoredList<T>
         return _multiList;
     }
 
+    /**
+     * does this iter contain multiple lists
+     */
+    @Override
+    public boolean isMultiListsIterator()
+    {
+        return true;
+    }
+
+    /**
+     * create a shallow copy ready for alternating thread usage
+     * @return a new shallow copyed IScanListIterator ready for alternating thread usage
+     * NOTE!! should be called before first hasNext() call
+     */
+    @Override
+    public MultiStoredList createCopyForAlternatingThread()
+    // NOTE!! should be called before first hasNext() call
+    {
+        if (_alternatingThread)
+            throw new RuntimeException("internal error-original multilist is already set for alternate thread");
+        MultiStoredList newIter = new MultiStoredList(_multiList, _fifoScan,true);
+        newIter._uniqueLists = _uniqueLists;
+        newIter._alternatingThreadBarrier.incrementAndGet();
+        return newIter;
+    }
+
+
     @Override
     public int hashCode()
     {//NOTE- meanningfull only when all lists have been added to the MultiSL

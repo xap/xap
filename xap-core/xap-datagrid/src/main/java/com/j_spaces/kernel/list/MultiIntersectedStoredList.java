@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -64,38 +65,59 @@ public class MultiIntersectedStoredList<T>
     private final boolean _falsePositiveFilterOnly;
     private final Context _context;
     private Set _uniqueLists;
+    private final boolean _alternatingThread;
+    private final AtomicInteger _alternatingThreadBarrier; //pass thru volatile
 
 
     public MultiIntersectedStoredList(Context context, IObjectsList list, boolean fifoScan, IObjectsList allElementslist, boolean falsePositiveFilterOnly) {
+        this(context,  list,  fifoScan,  allElementslist, falsePositiveFilterOnly,false);
+    }
+    public MultiIntersectedStoredList(Context context, IObjectsList list, boolean fifoScan, IObjectsList allElementslist, boolean falsePositiveFilterOnly,boolean alternatingThread) {
         _fifoScan = fifoScan;
         _allElementslist = allElementslist;
         _shortest = list != allElementslist ? list : null;
         _falsePositiveFilterOnly = falsePositiveFilterOnly;
         _context = context;
+        _alternatingThread = alternatingThread;
+        if (_alternatingThread) {
+            _alternatingThreadBarrier = new AtomicInteger(0);
+            _alternatingThreadBarrier.incrementAndGet(); //set to 1 bypass jvm optimizations
+        }
+        else
+            _alternatingThreadBarrier = null;
     }
 
 
     public void add(IObjectsList list, boolean shortest) {
-        if (list == null || list == _allElementslist || (list == _shortest))
-            return;
-        boolean duplicate = isDuplicate(list);
-        if (duplicate && !shortest)
-            return;  //already in
-        boolean added = true;
+        if (_alternatingThreadBarrier != null && _alternatingThreadBarrier.get() == 0)
+            throw new RuntimeException("internal error alternating thread");
         try {
-            if (shortest) {
-                if (_shortest != null) {
-                    added = addToOtherLists(_shortest);
-                    if(duplicate){
-                        _otherLists.remove(list);
+            if (list == null || list == _allElementslist || (list == _shortest))
+                return;
+            boolean duplicate = isDuplicate(list);
+            if (duplicate && !shortest)
+                return;  //already in
+            boolean added = true;
+            try {
+                if (shortest) {
+                    if (_shortest != null) {
+                        added = addToOtherLists(_shortest);
+                        if(duplicate){
+                            _otherLists.remove(list);
+                        }
                     }
-                }
-                _shortest = list;
-            } else
-                added = addToOtherLists(list);
-        } finally {
-            if (added && !duplicate)
-                _uniqueLists.add(list);
+                    _shortest = list;
+                } else
+                    added = addToOtherLists(list);
+            } finally {
+                if (added && !duplicate)
+                    _uniqueLists.add(list);
+            }
+        }
+        finally
+        {
+            if (_alternatingThreadBarrier != null )
+                _alternatingThreadBarrier.incrementAndGet(); //set to 1 bypass jvm optimizations
         }
     }
 
@@ -123,24 +145,34 @@ public class MultiIntersectedStoredList<T>
 
     @Override
     public boolean hasNext() {
+        if (_alternatingThreadBarrier != null && _alternatingThreadBarrier.get() == 0)
+            //a dummy check just to go thru volatile barrier
+            throw new RuntimeException("internal error alternating thread");
         try {
-            if (_terminated)
-                return false;
-
-            if (!_started) {//intersect
-                _started = true;
-                prepareForListsIntersection();
+            try {
                 if (_terminated)
-                    return false;  //nothing to return
-                _current = prepareListIterator(_shortest);
-            }
-            if (_current != null && _current.hasNext())
-                return true;
-            _current = null;
+                    return false;
+
+                if (!_started) {//intersect
+                    _started = true;
+                    prepareForListsIntersection();
+                    if (_terminated)
+                        return false;  //nothing to return
+                    _current = prepareListIterator(_shortest);
+                }
+                if (_current != null && _current.hasNext())
+                    return true;
+                _current = null;
+                return false;
+            } catch (SAException ex) {
+            } //never happens
             return false;
-        } catch (SAException ex) {
-        } //never happens
-        return false;
+        }
+        finally
+        {
+            if (_alternatingThreadBarrier != null )
+                _alternatingThreadBarrier.incrementAndGet(); //set to 1 bypass jvm optimizations
+        }
     }
 
 
@@ -232,13 +264,23 @@ public class MultiIntersectedStoredList<T>
 
     @Override
     public T next() {
-        T res = null;
+        if (_alternatingThreadBarrier != null && _alternatingThreadBarrier.get() == 0)
+            //a dummy check just to go thru volatile barrier
+            throw new RuntimeException("internal error alternating thread");
         try {
-            if (!_terminated)
-                res = getNext();
-        } catch (SAException ex) {
-        } //never happens
-        return res;
+            T res = null;
+            try {
+                if (!_terminated)
+                    res = getNext();
+            } catch (SAException ex) {
+            } //never happens
+            return res;
+    }
+    finally
+    {
+        if (_alternatingThreadBarrier != null )
+            _alternatingThreadBarrier.incrementAndGet(); //set to 1 bypass jvm optimizations
+    }
     }
 
     private T getNext() throws SAException {
@@ -310,4 +352,32 @@ public class MultiIntersectedStoredList<T>
         return _otherLists != null ? _otherLists.size() + 1 : 1;
     }
 
+    /**
+     * does this iter contain multiple lists
+     */
+    @Override
+    public boolean isMultiListsIterator()
+    {
+        return true;
+    }
+
+    /**
+     * create a shallow copy ready for alternating thread usage
+     * @return a new shallow copyed IScanListIterator ready for alternating thread usage
+     * NOTE!! should be called before first hasNext() call
+     *
+     */
+    @Override
+    public MultiIntersectedStoredList createCopyForAlternatingThread()
+    /* NOTE!! should be called before first hasNext() call*/
+    {
+        if (_alternatingThread)
+            throw new RuntimeException("internal error-original multiIntersectedlist is already set for alternate thread");
+        MultiIntersectedStoredList newIter = new MultiIntersectedStoredList(_context,  _shortest, _fifoScan,  _allElementslist, _falsePositiveFilterOnly,true);
+        newIter._shortest = _shortest;
+        newIter._uniqueLists = _uniqueLists;
+        newIter._otherLists = _otherLists;
+        newIter._alternatingThreadBarrier.incrementAndGet();
+        return newIter;
+    }
 }
