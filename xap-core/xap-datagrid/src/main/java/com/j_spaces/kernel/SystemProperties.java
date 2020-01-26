@@ -774,6 +774,8 @@ public class SystemProperties extends CommonSystemProperties {
 
     public static final String QUERY_PROCESSOR_CLUSTER_LOOKUP_TIMEOUT = "com.gs.queryProcessor.cluster-lookup-timeout";
 
+    public static final String GRESHAM_DEBUG_PATCH = "com.gs.gresham.debug.id";
+
     private static final Map<String, String> defaultValues = initDefaultValues();
 
     private static Map<String, String> initDefaultValues() {

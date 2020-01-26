@@ -22,6 +22,7 @@ import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.metadata.InactiveTypeDesc;
 import com.gigaspaces.metrics.LongCounter;
 
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -87,6 +88,22 @@ public class ServerTypeDesc implements IServerTypeDesc {
     @Override
     public String toString() {
         return "ServerTypeDesc(" + _typeId + ", " + _typeName + ")";
+    }
+
+
+    public String fullToString() {
+        return "ServerTypeDesc{" + "\n" +
+                "_typeId=" + _typeId + "\n" +
+                ", _typeName='" + _typeName + '\'' + "\n" +
+                ", _isRootType=" + _isRootType + "\n" +
+                ", _superTypes=" + Arrays.toString(_superTypes) + "\n" +
+                ", _serverTypeDescCode=" + _serverTypeDescCode + "\n" +
+                ", _typeDesc=" + _typeDesc + "\n" +
+                ", _inactive=" + _inactive + "\n" +
+                ", _subTypes=" + Arrays.toString(_subTypes) + "\n" +
+                ", _assignableTypes=" + Arrays.toString(_assignableTypes) + "\n" +
+                ", _maybeOutdated=" + _maybeOutdated + "\n" +
+                '}';
     }
 
     public int getTypeId() {

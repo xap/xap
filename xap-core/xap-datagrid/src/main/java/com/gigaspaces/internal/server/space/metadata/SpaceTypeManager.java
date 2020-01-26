@@ -46,12 +46,7 @@ import net.jini.core.entry.Entry;
 import net.jini.core.entry.UnusableEntryException;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -109,6 +104,11 @@ public class SpaceTypeManager {
 
     public ITypeDesc[] addIndexes(String typeName, SpaceIndex[] newIndexes) {
         synchronized (_typeDescLock) {
+            String uid = System.getProperty(SystemProperties.GRESHAM_DEBUG_PATCH, "na");
+            if(!uid.equals("na")) {
+                Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+                logger.severe("[DEBUG-PATCH]:  Adding indexes "+ Arrays.toString(newIndexes) +" to type "+typeName);
+            }
             // Validate type is registered in server:
             IServerTypeDesc typeDesc = _typeMap.get(typeName);
             if (typeDesc == null)
