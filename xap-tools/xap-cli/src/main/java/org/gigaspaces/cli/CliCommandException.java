@@ -1,8 +1,10 @@
 package org.gigaspaces.cli;
 
 public class CliCommandException extends Exception {
-    private int exitCode = 1;
-    private boolean userError = false;
+    public static final int CODE_GENERAL_ERROR = 1;
+    public static final int CODE_INVALID_INPUT = 2;
+
+    private int exitCode = CODE_GENERAL_ERROR;
 
     public CliCommandException(String msg) {
         super(msg);
@@ -13,7 +15,7 @@ public class CliCommandException extends Exception {
     }
 
     public static CliCommandException userError(String message) {
-        return new CliCommandException(message).userError();
+        return new CliCommandException(message).exitCode(CODE_INVALID_INPUT);
     }
 
     public int getExitCode() {
@@ -25,13 +27,7 @@ public class CliCommandException extends Exception {
         return this;
     }
 
-
     public boolean isUserError() {
-        return userError;
-    }
-
-    public CliCommandException userError() {
-        this.userError = true;
-        return this;
+        return exitCode == CODE_INVALID_INPUT;
     }
 }
