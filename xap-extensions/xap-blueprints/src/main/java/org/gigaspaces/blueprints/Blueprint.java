@@ -88,7 +88,7 @@ public class Blueprint {
         if (Files.exists(target))
             throw new IllegalArgumentException("Target already exists: " + target);
 
-        TemplateUtils.evaluateTree(content, target, merge(valuesOverrides));
+        TemplateUtils.evaluateTree(content, target, tryParse( merge(valuesOverrides)));
     }
 
     private Map<String, String> merge(Map<String, String> overrides) throws IOException {
@@ -104,4 +104,19 @@ public class Blueprint {
         }
         return merged;
     }
+
+    private static Map<String, Object> tryParse(Map<String, String> map) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        map.forEach((k, v) -> result.put(k, tryParse(v)));
+        return result;
+    }
+
+    private static Object tryParse(String s) {
+        if (Boolean.FALSE.toString().equals(s))
+            return Boolean.FALSE;
+        if (Boolean.TRUE.toString().equals(s))
+            return Boolean.TRUE;
+        return s;
+    }
+
 }

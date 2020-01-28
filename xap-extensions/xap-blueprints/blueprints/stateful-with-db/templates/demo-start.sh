@@ -5,8 +5,10 @@ if [ ! -e target ]; then
     ./build.sh
 fi
 
+{{#db.demo.enabled}}
 echo "Starting HSQL DB..."
 xterm -e ./demo-db/run.sh &
+{{/db.demo.enabled}}
 
 echo "Creating container for mirror processing unit..."
 ../gs.sh container create --zone={{project.artifactId}}-mirror --memory={{resources.mirror.memory}} localhost

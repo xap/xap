@@ -4,7 +4,9 @@ echo "Undeploying processing units..."
 
 echo "TODO: Stop kill GSCs with zones {{project.artifactId}}-space, {{project.artifactId}}-mirror"
 
+{{#db.demo.enabled}}
 echo "Stopping HSQL DB..."
 ./demo-db/shutdown.sh
+{{/db.demo.enabled}}
 
 echo "Demo stop completed"

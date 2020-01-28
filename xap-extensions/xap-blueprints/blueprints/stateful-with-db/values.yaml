@@ -19,6 +19,9 @@ db:
     groupId: org.hsqldb
     artifactId: hsqldb
     version: 2.3.2
+  demo:
+    enabled: true
+
 hibernate:
   version: 5.2.18.Final
   dialect: org.hibernate.dialect.HSQLDialect
