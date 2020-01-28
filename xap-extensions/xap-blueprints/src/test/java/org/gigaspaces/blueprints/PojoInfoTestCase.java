@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-public class PojoInfoTests {
+public class PojoInfoTestCase {
     @Test
     public void testFoo() throws IOException {
         String expected = BootIOUtils.readAsString(BootIOUtils.getResourcePath("samples/Person.java"));

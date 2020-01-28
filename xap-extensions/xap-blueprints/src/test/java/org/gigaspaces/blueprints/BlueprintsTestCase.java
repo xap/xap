@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.*;
 
-public class BlueprintsTests {
+public class BlueprintsTestCase {
     @Test
     public void testInvalidHome() throws IOException {
         String invalidPath = "no-such-path";
