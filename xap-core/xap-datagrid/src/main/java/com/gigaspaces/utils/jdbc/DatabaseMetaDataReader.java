@@ -47,7 +47,10 @@ public class DatabaseMetaDataReader implements Closeable {
         this.connection = builder.driver != null
                 ? builder.driver.connect(builder.url, builder.properties)
                 : DriverManager.getConnection(builder.url, builder.properties);
-        this.metaData = connection != null ? connection.getMetaData() : null;
+        if (this.connection == null) {
+            throw new SQLException("Connection to the database failed");
+        }
+        this.metaData =  connection.getMetaData() ;
         this.driverClassLoader = builder.driverClassLoader;
     }
 
