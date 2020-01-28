@@ -2,7 +2,8 @@
 echo "Undeploying processing units..."
 ./undeploy.sh
 
-echo "TODO: Stop kill GSCs with zones {{project.artifactId}}-space, {{project.artifactId}}-mirror"
+echo "Killing GSCs with zones {{project.artifactId}}-space, {{project.artifactId}}-mirror"
+../gs.sh container kill --zones={{project.artifactId}}-space,{{project.artifactId}}-mirror
 
 {{#db.demo.enabled}}
 echo "Stopping HSQL DB..."
