@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 . ./{{project.artifactId}}-env.sh
-if [ ! -e target ]; then
-    echo "Building processing units..."
-    ./build.sh
-fi
+
+echo "Building processing units..."
+./build.sh
 
 {{#db.demo.enabled}}
 echo "Starting HSQL DB..."

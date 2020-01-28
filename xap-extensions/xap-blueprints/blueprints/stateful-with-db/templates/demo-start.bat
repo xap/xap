@@ -1,9 +1,8 @@
 @echo off
 call {{project.artifactId}}-env.bat
-if not exist target (
-	echo Building processing units...
-	call build.bat
-)
+
+echo Building processing units...
+call build.bat
 
 {{#db.demo.enabled}}
 echo Starting HSQL DB...
