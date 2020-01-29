@@ -49,7 +49,8 @@ import java.util.StringTokenizer;
  * @author kimchy
  */
 public abstract class BeanLevelPropertiesParser {
-
+    final public static String KEY_PROPERTY = "property";
+    final public static String KEY_PROPERTIES = "properties";
     final public static String EMBEDDED_PROPERTIES_PREFIX = "embed://";
 
     final public static String DEFAULT_CONTEXT_PROPERTIES_LOCATION = "META-INF/spring/pu.properties";
@@ -76,49 +77,41 @@ public abstract class BeanLevelPropertiesParser {
         }
 
         for (CommandLineParser.Parameter param : params) {
-            if (!param.getName().equalsIgnoreCase("properties")) {
+            if (!param.getName().equalsIgnoreCase(KEY_PROPERTIES) && !param.getName().equalsIgnoreCase(KEY_PROPERTY)) {
                 continue;
             }
 
-            String name = null;
-            String properties;
             if (param.getArguments().length == 1) {
-                properties = param.getArguments()[0];
+                loadProperties(param.getName(), param.getArguments()[0], beanLevelProperties.getContextProperties());
             } else if (param.getArguments().length == 2) {
-                name = param.getArguments()[0];
-                properties = param.getArguments()[1];
+                loadProperties(param.getName(), param.getArguments()[1], beanLevelProperties.getBeanProperties(param.getArguments()[0]));
             } else {
-                throw new IllegalArgumentException("-properties can accept only one or two values, not more and not less");
-            }
-            Properties props;
-            if (properties.startsWith(EMBEDDED_PROPERTIES_PREFIX)) {
-                props = loadParams(properties);
-            } else {
-                Resource resource = new DefaultResourceLoader() {
-                    // override the default load from the classpath to load from the file system
-                    @Override
-                    protected Resource getResourceByPath(String path) {
-                        return new FileSystemResource(path);
-                    }
-                }.getResource(properties);
-                try {
-                    props = loadProperties(resource);
-                } catch (IOException e) {
-                    throw new IllegalArgumentException("Failed to load resource [" + properties + "] " + e.getMessage(), e);
-                }
-            }
-            if (name == null) {
-                beanLevelProperties.getContextProperties().putAll(props);
-            } else {
-                if (beanLevelProperties.hasBeanProperties(name)) {
-                    beanLevelProperties.getBeanProperties(name).putAll(props);
-                } else {
-                    beanLevelProperties.setBeanProperties(name, props);
-                }
+                throw new IllegalArgumentException("-" + param.getName() + " can accept only one or two values, not more and not less");
             }
         }
         return beanLevelProperties;
+    }
 
+    private static void loadProperties(String name, String value, Properties properties) {
+        if (name.equalsIgnoreCase(KEY_PROPERTY)) {
+            addProperty(properties, value);
+        } else if (value.startsWith(EMBEDDED_PROPERTIES_PREFIX)) {
+            loadParams(value, properties);
+        } else {
+            Resource resource = new DefaultResourceLoader() {
+                // override the default load from the classpath to load from the file system
+                @Override
+                protected Resource getResourceByPath(String path) {
+                    return new FileSystemResource(path);
+                }
+            }.getResource(value);
+            try {
+                properties.putAll(loadProperties(resource));
+            } catch (IOException e) {
+                throw new IllegalArgumentException("Failed to load resource [" + value + "] " + e.getMessage(), e);
+            }
+
+        }
     }
 
     public static Properties loadProperties(Resource resource) throws IOException {
@@ -127,23 +120,20 @@ public abstract class BeanLevelPropertiesParser {
         }
     }
 
-    private static Properties loadParams(String properties) {
-        Properties result = new Properties();
-        loadParams(properties, result);
-        return result;
-    }
-
     public static void loadParams(String properties, Map props) {
         properties = properties.substring(EMBEDDED_PROPERTIES_PREFIX.length());
         StringTokenizer tokenizer = new StringTokenizer(properties, ";");
         while (tokenizer.hasMoreTokens()) {
-            String property = tokenizer.nextToken();
-            int equalsIndex = property.indexOf('=');
-            if (equalsIndex == -1) {
-                props.put(property, "");
-            } else {
-                props.put(property.substring(0, equalsIndex), property.substring(equalsIndex + 1));
-            }
+            addProperty(props, tokenizer.nextToken());
+        }
+    }
+
+    private static void addProperty(Map props, String property) {
+        int equalsIndex = property.indexOf('=');
+        if (equalsIndex == -1) {
+            props.put(property, "");
+        } else {
+            props.put(property.substring(0, equalsIndex), property.substring(equalsIndex + 1));
         }
     }
 }

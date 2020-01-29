@@ -61,7 +61,7 @@ public class PuRunCommand extends AbstractRunCommand implements ContinuousComman
         if (propertiesFilePath != null)
             command.arg("-properties").arg(propertiesFilePath.getPath());
         if (properties != null && !properties.isEmpty())
-            command.arg("-properties").arg("embed://" + join(properties));
+            properties.forEach((k, v) -> command.arg("-property").arg(k + "=" + v));
         if (id != 0) {
             command.arg("-cluster")
                     .arg("schema=partitioned")
@@ -71,11 +71,5 @@ public class PuRunCommand extends AbstractRunCommand implements ContinuousComman
         }
 
         return toProcessBuilder(command, "processing unit");
-    }
-
-    private static String join(Map<String, String> properties) {
-        return properties.entrySet().stream()
-                .map(p -> p.getKey() + "=" + p.getValue())
-                .collect(Collectors.joining(";"));
     }
 }
