@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-echo "Undeploying processing units..."
+echo "Undeploying services (processing units)..."
 ./undeploy.sh
 
 echo "Killing GSCs with zones {{project.artifactId}}-space, {{project.artifactId}}-mirror"

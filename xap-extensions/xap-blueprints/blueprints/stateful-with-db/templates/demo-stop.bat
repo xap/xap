@@ -1,5 +1,5 @@
 @echo off
-echo Undeploying processing units...
+echo Undeploying services (processing units)...
 call undeploy.bat
 
 echo Killing GSCs with zones {{project.artifactId}}-space, {{project.artifactId}}-mirror
