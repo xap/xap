@@ -1,19 +1,17 @@
 ## Getting Started
-This package contains the script ( demo-start sh/bat ) that automatically builds and deploys both Mirror 
-and Space. The Space is configured to initially load data from the configured data source, for exploring 
-functionality of InsightEdge and build applications on top of it.
+This package contains a script (demo-start sh/bat) that automatically builds and deploys GigaSpaces with both a Mirror and a Space. The Space is configured to initially load data from the configured data source, so you can explore the functionality of the GigaSpaces product and build applications on top of it.
   
-In order to properly run scripts of this blueprint, the contents of this zip file must be extracted under 
-<GigaSpaces home>/bin directory.
+In order to properly run scripts of this blueprint, the contents of this zip file must be extracted under <GigaSpaces home>/bin directory.
 
 ### Prerequisite for running locally
-Have a running GigaSpaces Manager, for example:
+You must run a GigaSpaces Manager, for example:
 gs-agent --manager-local
 
 ### Running demo-start (sh/bat)
-This script will perform the following:
-1. Run a local HSQLDB (if blueprint was not generated from UI)
-2. Start a container and deploy the Mirror Processing Unit
-3. Start containers and deploy Space Processing Units
+This script does the following:
 
-Open the GigaSpaces Ops Manager to view the deployed Services and Data.
+1. Runs a local HSQLDB (if the blueprint was not generated from GigaSpaces Ops Manager)
+2. Starts a container and deploys the Mirror service (Processing Unit).
+3. Starts containers and deploys the Space services (Processing Units).
+
+Open GigaSpaces Ops Manager to view the deployed services and data.
