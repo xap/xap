@@ -2,7 +2,7 @@ space:
   name: {{space.name}}
 db:
   driver: {{db.driver.class}}
-  url: {{db.url}}
+  url: {{{db.url}}}
   user: {{db.user}}
   password: {{db.password}}
 hibernate:
