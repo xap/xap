@@ -32,4 +32,9 @@ public class Person {
     public void setauto-generate(long auto-generate) {
         this.auto-generate = auto-generate;
     }
+
+    @SpaceInitialLoadQuery
+    public String initialLoadQuery() {
+        return "rowNum < 1000";
+    }
 }

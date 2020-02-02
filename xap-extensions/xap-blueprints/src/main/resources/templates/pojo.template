@@ -34,4 +34,11 @@ public class {{className}} {
         this.{{fieldName}} = {{fieldName}};
     }
 {{/properties}}
+
+{{^initialLoadQuery.isEmpty}}
+    @SpaceInitialLoadQuery
+    public String initialLoadQuery() {
+        return "{{{initialLoadQuery}}}";
+    }
+{{/initialLoadQuery.isEmpty}}
 }

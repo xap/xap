@@ -8,6 +8,7 @@ import java.util.*;
 public class PojoInfo {
     private final String className;
     private final String packageName;
+    private String initialLoadQuery;
     private final Set<String> imports = new LinkedHashSet<>();
     private final Set<String> warnings = new LinkedHashSet<>();
     private final Set<String> annotations = new LinkedHashSet<>();
@@ -16,6 +17,7 @@ public class PojoInfo {
     public PojoInfo(String className, String packageName) {
         this.className = className;
         this.packageName = packageName;
+        this.initialLoadQuery="";
     }
 
     public String generate() throws IOException {
@@ -57,6 +59,10 @@ public class PojoInfo {
         return this;
     }
 
+    public String getInitialLoadQuery() {
+        return initialLoadQuery;
+    }
+
     public List<PropertyInfo> getProperties() {
         return properties;
     }
@@ -80,6 +86,12 @@ public class PojoInfo {
         propertyInfo.annotations.add("@SpaceId(autoGenerate=true)");
         return this;
     }
+
+
+    public void addInitialLoadQuery(String initialLoadQuery) {
+        this.initialLoadQuery = initialLoadQuery;
+    }
+
 
     public static class PropertyInfo {
         private final String name;
