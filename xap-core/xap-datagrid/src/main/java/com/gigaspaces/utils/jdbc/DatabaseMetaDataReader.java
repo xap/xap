@@ -75,7 +75,11 @@ public class DatabaseMetaDataReader implements Closeable {
     }
 
     public List<TableInfo> getTables() throws SQLException {
-        return getTables(new TableQuery());
+        return getTables(getDefaultTableQuery());
+    }
+
+    private TableQuery getDefaultTableQuery() throws SQLException {
+        return new TableQuery().setCatalog(connection.getCatalog()).setSchemaPattern(connection.getSchema());
     }
 
     public List<TableInfo> getTables(TableQuery query) throws SQLException {
@@ -87,7 +91,7 @@ public class DatabaseMetaDataReader implements Closeable {
     }
 
     public List<TableId> getTablesIds() throws SQLException {
-        return getTablesIds(new TableQuery());
+        return getTablesIds(getDefaultTableQuery());
     }
 
     public List<TableId> getTablesIds(TableQuery query) throws SQLException {
