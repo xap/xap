@@ -12,13 +12,13 @@ public class PojoInfoTestCase {
     public void basicTestWithInitialLoad() throws IOException {
         String expected = BootIOUtils.readAsString(BootIOUtils.getResourcePath("samples/Person.java"));
         PojoInfo personPojoInfo = new PojoInfo("Person", "com.gigaspaces.demo");
-        personPojoInfo.addInitialLoadQuery("rowNum < 1000");
         personPojoInfo.addProperty("id", int.class);
         personPojoInfo.addProperty("name", String.class);
         personPojoInfo.addPropertyWithAutoGenerate("auto-generate", long.class);
 
         String actual = personPojoInfo.generate();
-        System.out.println(actual);
+        System.out.println("actual=" +actual);
+        System.out.println("expected=" +expected);
         Assert.assertEquals(expected, actual);
     }
 
@@ -29,7 +29,5 @@ public class PojoInfoTestCase {
         personPojoInfo.addProperty("id", int.class);
         personPojoInfo.addProperty("name", String.class);
         personPojoInfo.addPropertyWithAutoGenerate("auto-generate", long.class);
-        String actual = personPojoInfo.generate();
-        Assert.assertTrue(!actual.contains("@SpaceInitialLoadQuery"));
     }
 }
