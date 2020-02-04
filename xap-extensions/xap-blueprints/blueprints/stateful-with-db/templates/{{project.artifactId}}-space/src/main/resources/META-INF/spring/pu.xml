@@ -32,12 +32,7 @@
     <bean id="hibernateSpaceDataSource" class="org.openspaces.persistency.hibernate.DefaultHibernateSpaceDataSourceFactoryBean">
         <property name="sessionFactory" ref="sessionFactory"/>
         <property name="initialLoadChunkSize" value="2000"/>
-        <property name="initialLoadQueryScanningBasePackages">
-        <!-- If absent or empty, the system will not search for initial load query methods -->
-        <list>
-            <value>{{project.groupId}}.model</value>
-        </list>
-        </property>
+        <property name="limitResults" value="${hibernate.limitResults:-1}"/>
     </bean>
 
     <os-core:embedded-space id="space" space-name="${space.name}" schema="persistent" mirrored="true" space-data-source="hibernateSpaceDataSource">

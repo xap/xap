@@ -7,3 +7,4 @@ db:
   password: {{db.password}}
 hibernate:
   dialect: {{hibernate.dialect}}
+  limitResults: {{hibernate.limitResults}}
