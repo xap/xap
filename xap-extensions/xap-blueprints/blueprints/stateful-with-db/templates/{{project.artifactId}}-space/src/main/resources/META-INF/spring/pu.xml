@@ -32,7 +32,9 @@
     <bean id="hibernateSpaceDataSource" class="org.openspaces.persistency.hibernate.DefaultHibernateSpaceDataSourceFactoryBean">
         <property name="sessionFactory" ref="sessionFactory"/>
         <property name="initialLoadChunkSize" value="2000"/>
+        {{#hibernate.limitResults.enabled}}
         <property name="limitResults" value="${hibernate.limitResults:-1}"/>
+        {{/hibernate.limitResults.enabled}}
     </bean>
 
     <os-core:embedded-space id="space" space-name="${space.name}" schema="persistent" mirrored="true" space-data-source="hibernateSpaceDataSource">
