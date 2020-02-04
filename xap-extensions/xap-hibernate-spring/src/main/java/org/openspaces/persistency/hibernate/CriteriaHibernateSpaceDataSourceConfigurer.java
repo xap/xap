@@ -56,6 +56,8 @@ public class CriteriaHibernateSpaceDataSourceConfigurer {
 
     protected ClusterInfo clusterInfo;
 
+    protected int limitResults = -1;
+
     /**
      * Injects the Hibernate SessionFactory to be used with this data source.
      */
@@ -171,6 +173,11 @@ public class CriteriaHibernateSpaceDataSourceConfigurer {
         return this;
     }
 
+    public CriteriaHibernateSpaceDataSourceConfigurer limitResults(int limitResults) {
+        this.limitResults = limitResults;
+        return this;
+    }
+
     /**
      * Feature switch for initial load entries augmentation (creation of partition-specific query
      * for entries). Defaults to <code>true</code>.
@@ -187,7 +194,7 @@ public class CriteriaHibernateSpaceDataSourceConfigurer {
         return new CriteriaHibernateSpaceDataSource(sessionFactory,
                 managedEntries, fetchSize, performOrderById, initialLoadEntries, initialLoadThreadPoolSize,
                 initialLoadChunkSize, useScrollableResultSet, initialLoadQueryScanningBasePackages,
-                augmentInitialLoadEntries, clusterInfo);
+                augmentInitialLoadEntries, clusterInfo, limitResults);
     }
 
 }

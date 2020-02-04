@@ -148,6 +148,10 @@ public class CriteriaHibernateSpaceDataSourceFactoryBean implements FactoryBean<
         dataSourceConfigurer.clusterInfo(clusterInfo);
     }
 
+    public void setLimitResults(int limitResults) {
+        dataSourceConfigurer.limitResults(limitResults);
+    }
+
     /**
      * Feature switch for initial load entries augmentation (creation of partition-specific query
      * for entries). Defaults to <code>true</code>.

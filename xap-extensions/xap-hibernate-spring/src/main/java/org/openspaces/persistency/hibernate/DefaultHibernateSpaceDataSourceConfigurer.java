@@ -56,6 +56,8 @@ public class DefaultHibernateSpaceDataSourceConfigurer {
 
     protected ClusterInfo clusterInfo = null;
 
+    protected int limitResults = -1;
+
     /**
      * Injects the Hibernate SessionFactory to be used with this data source.
      */
@@ -170,6 +172,11 @@ public class DefaultHibernateSpaceDataSourceConfigurer {
         return this;
     }
 
+    public DefaultHibernateSpaceDataSourceConfigurer limitResults(int limitResults) {
+        this.limitResults = limitResults;
+        return this;
+    }
+
     /**
      * Feature switch for initial load entries augmentation (creation of partition-specific query
      * for entries) Defaults to <code>true</code>.
@@ -186,7 +193,7 @@ public class DefaultHibernateSpaceDataSourceConfigurer {
         return new DefaultHibernateSpaceDataSource(sessionFactory,
                 managedEntries, fetchSize, performOrderById, initialLoadEntries, initialLoadThreadPoolSize,
                 initialLoadChunkSize, useScrollableResultSet, initialLoadQueryScanningBasePackages, augmentInitialLoadEntries,
-                clusterInfo);
+                clusterInfo,limitResults);
     }
 
 }

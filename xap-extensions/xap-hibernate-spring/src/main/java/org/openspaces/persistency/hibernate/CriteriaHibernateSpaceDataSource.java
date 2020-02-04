@@ -45,10 +45,10 @@ public class CriteriaHibernateSpaceDataSource extends DefaultHibernateSpaceDataS
     public CriteriaHibernateSpaceDataSource(SessionFactory sessionFactory, Set<String> managedEntries, int fetchSize,
                                             boolean performOrderById, String[] initialLoadEntries, int initialLoadThreadPoolSize,
                                             int initialLoadChunkSize, boolean useScrollableResultSet, String[] initialLoadQueryScanningBasePackages,
-                                            boolean augmentInitialLoadEntries, ClusterInfo clusterInfo) {
+                                            boolean augmentInitialLoadEntries, ClusterInfo clusterInfo, int limitResults) {
         super(sessionFactory, managedEntries, fetchSize, performOrderById, initialLoadEntries,
                 initialLoadThreadPoolSize, initialLoadChunkSize, useScrollableResultSet, initialLoadQueryScanningBasePackages,
-                augmentInitialLoadEntries, clusterInfo);
+                augmentInitialLoadEntries, clusterInfo, limitResults);
     }
 
     /* (non-Javadoc)

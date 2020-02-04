@@ -78,6 +78,8 @@ public abstract class AbstractHibernateExternalDataSource implements ManagedData
 
     private boolean useScrollableResultSet = true;
 
+    private int limitResults = -1;
+
     /**
      * Injects the Hibernate SessionFactory to be used with this external data source.
      */

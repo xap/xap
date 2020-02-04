@@ -59,6 +59,8 @@ public class DefaultListQueryDataIterator implements DataIterator {
 
     private Iterator iterator;
 
+    protected int limitResults = -1;
+
     public DefaultListQueryDataIterator(SQLQuery sqlQuery, SessionFactory sessionFactory) {
         this.sqlQuery = sqlQuery;
         this.entityName = null;
@@ -68,6 +70,16 @@ public class DefaultListQueryDataIterator implements DataIterator {
         this.size = -1;
     }
 
+    public DefaultListQueryDataIterator(SQLQuery sqlQuery, SessionFactory sessionFactory, int limitResults) {
+        this.sqlQuery = sqlQuery;
+        this.entityName = null;
+        this.dataSourceSQLQuery = null;
+        this.sessionFactory = sessionFactory;
+        this.from = -1;
+        this.size = -1;
+        this.limitResults = limitResults;
+    }
+
     public DefaultListQueryDataIterator(String entityName, SessionFactory sessionFactory) {
         this.entityName = entityName;
         this.sqlQuery = null;
@@ -75,6 +87,16 @@ public class DefaultListQueryDataIterator implements DataIterator {
         this.sessionFactory = sessionFactory;
         this.from = -1;
         this.size = -1;
+    }
+
+    public DefaultListQueryDataIterator(String entityName, SessionFactory sessionFactory, int limitResults) {
+        this.entityName = entityName;
+        this.sqlQuery = null;
+        this.dataSourceSQLQuery = null;
+        this.sessionFactory = sessionFactory;
+        this.from = -1;
+        this.size = -1;
+        this.limitResults = limitResults;
     }
 
     public DefaultListQueryDataIterator(DataSourceSQLQuery dataSourceSQLQuery, SessionFactory sessionFactory) {
@@ -156,6 +178,8 @@ public class DefaultListQueryDataIterator implements DataIterator {
             if (from >= 0) {
                 criteria.setFirstResult(from);
                 criteria.setMaxResults(size);
+            } else if(limitResults > 0){
+                criteria.setMaxResults(limitResults);
             }
             return criteria.list().iterator();
         } catch (HibernateException e) {
@@ -169,6 +193,8 @@ public class DefaultListQueryDataIterator implements DataIterator {
             if (from >= 0) {
                 query.setFirstResult(from);
                 query.setMaxResults(size);
+            } else if(limitResults > 0){
+                query.setMaxResults(limitResults);
             }
             return query.list().iterator();
         } catch (HibernateException e) {
@@ -182,6 +208,8 @@ public class DefaultListQueryDataIterator implements DataIterator {
             if (from >= 0) {
                 query.setFirstResult(from);
                 query.setMaxResults(size);
+            } else if(limitResults > 0){
+                query.setMaxResults(limitResults);
             }
             return query.list().iterator();
         } catch (HibernateException e) {

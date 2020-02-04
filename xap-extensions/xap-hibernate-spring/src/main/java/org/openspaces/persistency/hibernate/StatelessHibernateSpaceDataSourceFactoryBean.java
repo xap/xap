@@ -134,6 +134,10 @@ public class StatelessHibernateSpaceDataSourceFactoryBean implements FactoryBean
         dataSourceConfigurer.useScrollableResultSet(useScrollableResultSet);
     }
 
+    public void setLimitResults(int limitResults) {
+        dataSourceConfigurer.limitResults(limitResults);
+    }
+
     /**
      * @see StatelessHibernateSpaceDataSourceConfigurer#initialLoadQueryScanningBasePackages(String[])
      */

@@ -134,6 +134,10 @@ public class DefaultHibernateSpaceDataSourceFactoryBean implements FactoryBean<D
         dataSourceConfigurer.useScrollableResultSet(useScrollableResultSet);
     }
 
+    public void setLimitResults(int limitResults) {
+        dataSourceConfigurer.limitResults(limitResults);
+    }
+
     /**
      * @see DefaultHibernateSpaceDataSourceConfigurer#initialLoadQueryScanningBasePackages(String[])
      */

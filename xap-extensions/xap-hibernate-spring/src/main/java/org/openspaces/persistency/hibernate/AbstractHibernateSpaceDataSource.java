@@ -60,6 +60,7 @@ public abstract class AbstractHibernateSpaceDataSource extends ManagedEntriesSpa
     private final boolean useScrollableResultSet;
     private final ManagedEntitiesContainer sessionManager;
     private final SessionFactory sessionFactory;
+    private final int limitResults;
     private final Map<String, SpaceTypeDescriptor> initialLoadEntriesTypeDescs = new HashMap<String, SpaceTypeDescriptor>();
     private Set<String> managedTypes;
 
@@ -69,10 +70,11 @@ public abstract class AbstractHibernateSpaceDataSource extends ManagedEntriesSpa
                                             boolean useScrollableResultSet,
                                             String[] initialLoadQueryScanningBasePackages,
                                             boolean augmentInitialLoadEntries,
-                                            ClusterInfo clusterInfo) {
+                                            ClusterInfo clusterInfo, int limitResults) {
         this.sessionFactory = sessionFactory;
         this.fetchSize = fetchSize;
         this.performOrderById = performOrderById;
+        this.limitResults = limitResults;
         this.initialLoadEntries.addAll(createInitialLoadEntries(initialLoadEntries, sessionFactory));
         this.initialLoadThreadPoolSize = initialLoadThreadPoolSize;
         this.initialLoadChunkSize = initialLoadChunkSize;
@@ -148,6 +150,10 @@ public abstract class AbstractHibernateSpaceDataSource extends ManagedEntriesSpa
 
     protected boolean isPerformOrderById() {
         return performOrderById;
+    }
+
+    public int getLimitResults() {
+        return limitResults;
     }
 
     /**
