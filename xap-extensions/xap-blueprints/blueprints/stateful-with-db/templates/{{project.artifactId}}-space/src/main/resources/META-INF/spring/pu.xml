@@ -13,8 +13,14 @@
     <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
         <property name="driverClassName" value="${db.driver}"/>
         <property name="url" value="${db.url}"/>
+        {{#db.user.provided}}
         <property name="username" value="${db.user:}"/>
         <property name="password" value="${db.password:}"/>
+        {{/db.user.provided}}
+        {{^db.user.provided}}
+        <property name="username"><null/></property>
+        <property name="password"><null/></property>
+        {{/db.user.provided}}
     </bean>
 
     <bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
