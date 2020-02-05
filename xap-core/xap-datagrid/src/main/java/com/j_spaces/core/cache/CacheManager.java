@@ -210,7 +210,7 @@ public class CacheManager extends AbstractCacheManager
     private BlobStoreMemoryMonitor _blobStoreMemoryMonitor;
     private IBlobStoreCacheHandler _blobStoreInternalCache;
     private final boolean _persistentBlobStore;
-    private final boolean _useBlobStoreBulks;
+    private final boolean _useBlobStoreBulks = false;
     private final boolean _optimizedBlobStoreClear;
     private final IStorageConsistency _blobStoreRecoveryHelper;
     private final boolean _enableSyncListForBlobStore;
@@ -291,7 +291,7 @@ public class CacheManager extends AbstractCacheManager
             _logger.info(Constants.CacheManager.CACHE_MANAGER_FORCE_ID_INDEX_PROP + " was set to " + _forceSpaceIdIndexIfEqual);
 
         if (isBlobStoreCachePolicy()) {
-            _useBlobStoreBulks = Boolean.parseBoolean(System.getProperty(FULL_CACHE_MANAGER_USE_BLOBSTORE_BULKS_PROP, isSyncHybrid() ? "false" : "true"));
+//            _useBlobStoreBulks = Boolean.parseBoolean(System.getProperty(FULL_CACHE_MANAGER_USE_BLOBSTORE_BULKS_PROP, isSyncHybrid() ? "false" : "true"));
             _logger.info("useBlobStoreBulks=" + _useBlobStoreBulks);
             _optimizedBlobStoreClear = Boolean.parseBoolean(System.getProperty(CACHE_MANAGER_USE_BLOBSTORE_CLEAR_OPTIMIZATION_PROP, "true"));
 
@@ -303,7 +303,7 @@ public class CacheManager extends AbstractCacheManager
                     && Boolean.parseBoolean(System.getProperty(SystemProperties.REPLICATION_USE_BACKUP_BLOBSTORE_BULKS, SystemProperties.REPLICATION_USE_BACKUP_BLOBSTORE_BULKS_DEFAULT));
             _logger.info("useBlobStoreReplicationBackupBulk=" + _useBlobStoreReplicationBackupBulk);
         } else {
-            _useBlobStoreBulks = false;
+//            _useBlobStoreBulks = false;
             _optimizedBlobStoreClear = false;
             _enableSyncListForBlobStore = false;
             _useBlobStorePrefetch = false;

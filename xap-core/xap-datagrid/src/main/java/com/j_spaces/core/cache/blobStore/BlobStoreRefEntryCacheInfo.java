@@ -64,6 +64,7 @@ import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.IObjectInfo;
 import com.j_spaces.kernel.IStoredList;
 import com.j_spaces.kernel.IStoredListIterator;
+import com.j_spaces.kernel.SystemProperties;
 import com.j_spaces.kernel.locks.ILockObject;
 
 import java.io.IOException;
@@ -115,6 +116,8 @@ public class BlobStoreRefEntryCacheInfo
     private static final byte STATUS_MATCH_FILTER = ((byte) 1) << 5;
     private static final byte STATUS_UNMATCH_FILTER = ~STATUS_MATCH_FILTER;
 
+    private static final Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+
 
     //is not null when entry is loaded. if null entry is not deleted. Its not null as long as the entry
     // is pinned- locked or under xtn including waiting-for != null
@@ -160,6 +163,16 @@ public class BlobStoreRefEntryCacheInfo
         if (!recoveredFromblobStore)
             setDirty_impl(true, false/*set_indexes*/, null);
         _serverTypeDescCode = eh.getServerTypeDesc().getServerTypeDescCode();
+
+        String uid = System.getProperty(SystemProperties.GRESHAM_DEBUG_PATCH, "na");
+        boolean trace = _m_Uid.equals(uid);
+        if(trace){
+            logger.severe("[DEBUG-PATCH]:  creating RefEntryCacheInfo, " +
+                    "objectId = "+this+", " +
+                    "typeName = "+((BlobStoreEntryHolder) eh).getTypeName()+", " +
+                    "serverTypeDescCode = "+_serverTypeDescCode+", " +
+                    "ServerTypeDesc._codesRepo.get = "+ServerTypeDesc._codesRepo.get(_serverTypeDescCode));
+        }
     }
 
     public BlobStoreRefEntryCacheInfo(IEntryHolder eh) {
@@ -546,7 +559,7 @@ public class BlobStoreRefEntryCacheInfo
                 BlobStoreEntryLayout ole = new BlobStoreEntryLayout();
                 if (onlyIndexesPart && cacheManager.hasBlobStoreOffHeapCache()) {
                     try {
-                        ole.readIndexValuesBytes(cacheManager, _serverTypeDescCode, cacheManager.getBlobStoreStorageHandler().getOffHeapCache().get(getOffHeapAddress()));
+                        ole.readIndexValuesBytes(cacheManager, _serverTypeDescCode, cacheManager.getBlobStoreStorageHandler().getOffHeapCache().get(getOffHeapAddress()), this);
                         ole.setBlobStoreVersion(_blobStoreVersion);
                         ole.setOnlyIndexesPart(true);
                         ole.setUid(_m_Uid);

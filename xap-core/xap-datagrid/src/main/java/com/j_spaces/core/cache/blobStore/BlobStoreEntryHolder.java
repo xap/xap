@@ -26,6 +26,7 @@ package com.j_spaces.core.cache.blobStore;
 
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.embeddedSyncList.EntryHolderEmbeddedSyncOpInfo;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
+import com.gigaspaces.internal.server.space.metadata.ServerTypeDesc;
 import com.gigaspaces.internal.server.storage.EntryHolder;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITransactionalEntryData;
@@ -33,7 +34,10 @@ import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.CacheOperationReason;
 import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.context.Context;
+import com.j_spaces.kernel.SystemProperties;
 import com.j_spaces.kernel.locks.ILockObject;
+
+import java.util.logging.Logger;
 
 @com.gigaspaces.api.InternalApi
 public class BlobStoreEntryHolder extends EntryHolder implements IBlobStoreEntryHolder {
@@ -53,6 +57,7 @@ public class BlobStoreEntryHolder extends EntryHolder implements IBlobStoreEntry
 
     private final boolean _optimizedEntry;
     private byte _entryTypeCode;
+    private static final Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
 
     public BlobStoreEntryHolder(IServerTypeDesc typeDesc, String uid, long scn,
                                 boolean isTransient, ITransactionalEntryData entryData, boolean optimizedEntry) {
@@ -61,6 +66,15 @@ public class BlobStoreEntryHolder extends EntryHolder implements IBlobStoreEntry
         _typeName = typeDesc.getTypeName();
         _entryTypeCode = entryData.getEntryTypeDesc().getEntryType().getTypeCode();
         _optimizedEntry = optimizedEntry;
+        String traceUid = System.getProperty(SystemProperties.GRESHAM_DEBUG_PATCH, "na");
+        boolean trace = uid.equals(traceUid);
+        if(trace){
+            logger.severe("[DEBUG-PATCH]:  creating EntryHolder, " +
+                    "typeName = "+_typeName+", " +
+                    "serverTypeDescCode = "+typeDesc.getServerTypeDescCode()+", " +
+                    "ServerTypeDesc._codesRepo.get = "+ ServerTypeDesc._codesRepo.get(typeDesc.getServerTypeDescCode()));
+        }
+
     }
 
     public BlobStoreEntryHolder(IEntryHolder other) {
