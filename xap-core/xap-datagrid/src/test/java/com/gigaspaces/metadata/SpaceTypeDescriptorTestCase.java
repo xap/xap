@@ -1006,7 +1006,7 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         // Test implicit id is created when no id is set:
         SpaceTypeDescriptor typeDesc = new SpaceTypeDescriptorBuilder("foo").create();
         Assert.assertEquals("numOfSpaceProperties", 1, typeDesc.getNumOfFixedProperties());
-        assertPropertyInfo(typeDesc, 0, "_spaceId", Object.class);
+        assertPropertyInfo(typeDesc, 0, "_spaceId", String.class);
         assertIdProperty(typeDesc, "_spaceId", true);
         assertRoutingProperty(typeDesc, "_spaceId");
         assertNumOfIndexes(typeDesc, 0);

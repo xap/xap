@@ -785,8 +785,13 @@ public class SpaceTypeDescriptorBuilder {
             }
         }
 
-        if (_idPropertyName != null && !isFixedProperty(_idPropertyName))
-            addFixedProperty(_idPropertyName, Object.class);
+        if (_idPropertyName != null && !isFixedProperty(_idPropertyName)) {
+            if (_idAutoGenerate) {
+                addFixedProperty(_idPropertyName, String.class);
+            } else {
+                addFixedProperty(_idPropertyName, Object.class);
+            }
+        }
 
         if (_routingPropertyName == null) {
             if (_superTypeDescriptor != null)
