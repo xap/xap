@@ -1,7 +1,7 @@
 package org.gigaspaces.cli;
 
 import com.gigaspaces.internal.jvm.JavaUtils;
-import com.gigaspaces.logger.Constants;
+import com.gigaspaces.internal.utils.GsEnv;
 
 import com.gigaspaces.start.SystemLocations;
 import org.jline.reader.*;
@@ -13,10 +13,11 @@ import picocli.CommandLine;
 import picocli.CommandLine.*;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.logging.Level;
 
 public class CliExecutor {
 
@@ -119,11 +120,13 @@ public class CliExecutor {
         boolean userError = e instanceof CliCommandException && ((CliCommandException) e).isUserError();
         System.err.println();
         if (userError) {
-            System.err.println(formatAnsi("@|bold,fg(yellow) " + getMessage(e) + "|@"));
+            System.err.println(formatAnsi("@|bold,fg(yellow) " + toString(e, false) + "|@"));
         } else {
-            System.err.println(formatAnsi("@|bold,fg(red) [ERROR] " + getMessage(e) + "|@"));
-            if (!CliCommand.LOGGER.isLoggable(Level.FINE)) {
-                System.err.println(formatAnsi("@|bold - Configure " + Constants.LOGGER_CLI + " log level for verbosity|@"));
+            String envVarKey = "CLI_VERBOSE";
+            boolean verbose = Boolean.parseBoolean(GsEnv.get(envVarKey, "false"));
+            System.err.println(formatAnsi("@|bold,fg(red) [ERROR] " + toString(e, verbose) + "|@"));
+            if (!verbose) {
+                System.err.println(formatAnsi("@|bold - For additional information set the " + GsEnv.keyOrDefault(envVarKey) + " environment variable to true.|@"));
             }
         }
         System.err.println();
@@ -131,10 +134,14 @@ public class CliExecutor {
         return getExitCode(e);
     }
 
-    private static String getMessage(Throwable e) {
+    private static String toString(Throwable e, boolean verbose) {
+        if (verbose) {
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            return sw.toString();
+        }
         String message = e.getLocalizedMessage();
         return message != null ? message : e.toString();
-
     }
 
     private static int getExitCode(Throwable e) {

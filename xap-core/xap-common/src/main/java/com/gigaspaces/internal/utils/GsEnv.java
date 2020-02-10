@@ -18,6 +18,11 @@ public class GsEnv {
         return key(suffix, env);
     }
 
+    public static String keyOrDefault(String suffix) {
+        String key = key(suffix);
+        return key != null ? key : GS_ENV_PREFIX + suffix;
+    }
+
     public static String key(String suffix, Map<String, String> env) {
         String gsKey = GS_ENV_PREFIX + suffix;
         if (env.containsKey(gsKey))
@@ -26,11 +31,6 @@ public class GsEnv {
         if (env.containsKey(xapKey))
             return xapKey;
         return null;
-    }
-
-    public static String keyOrElse(String suffix, String defaultKey) {
-        String key = key(suffix);
-        return key != null ? key : defaultKey;
     }
 
     public static String get(String suffix) {
