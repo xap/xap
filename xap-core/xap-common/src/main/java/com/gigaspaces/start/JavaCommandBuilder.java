@@ -21,7 +21,7 @@ public class JavaCommandBuilder {
     private final Map<String, String> systemProperties = new LinkedHashMap<>();
     private final Collection<String> options = new LinkedHashSet<>();
     private String mainClass;
-    private final Collection<String> arguments = new LinkedHashSet<>();
+    private final Collection<String> arguments = new ArrayList<>();
     private final Collection<String> classpath = new LinkedHashSet<>();
 
     public List<String> build() {

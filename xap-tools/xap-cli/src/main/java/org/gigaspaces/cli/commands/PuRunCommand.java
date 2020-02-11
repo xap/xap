@@ -13,7 +13,6 @@ import picocli.CommandLine.Parameters;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @since 12.3
@@ -23,11 +22,11 @@ import java.util.stream.Collectors;
 public class PuRunCommand extends AbstractRunCommand implements ContinuousCommand {
 
     @Parameters(index = "0", description = "Relative/absolute path of a Processing Unit directory or archive file")
-    File path;
+    protected File path;
     @Option(names = {"--partitions" }, description = "Specify the number of partitions for the Processing Unit")
-    int partitions;
+    protected int partitions;
     @Option(names = {"--ha" }, description = "High availability (add one backup per partition)")
-    boolean ha;
+    protected boolean ha;
     @Option(names = {"--instances" }, split = ",", description = "Specify one or more instances to run (for example: --instances=1_1,1_2). "
                                                                     + "If no instances are specified, runs all instances.")
     List<String> instances;
@@ -35,10 +34,10 @@ public class PuRunCommand extends AbstractRunCommand implements ContinuousComman
     boolean lus;
 
     @Option(names = {"--properties" }, description = "Location of context level properties file")
-    File propertiesFilePath;
+    protected File propertiesFilePath;
     // Context properties
     @Option(names = {"-p", "--property" }, description = "Context properties (for example: -p k1=v1 -p k2=v2)")
-    Map<String, String> properties;
+    protected Map<String, String> properties;
 
     @Override
     public void validate() throws CliCommandException {

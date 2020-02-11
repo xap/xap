@@ -96,7 +96,10 @@ public abstract class BeanLevelPropertiesParser {
         if (name.equalsIgnoreCase(KEY_PROPERTY)) {
             addProperty(properties, value);
         } else if (value.startsWith(EMBEDDED_PROPERTIES_PREFIX)) {
-            loadParams(value, properties);
+            StringTokenizer tokenizer = new StringTokenizer(value.substring(EMBEDDED_PROPERTIES_PREFIX.length()), ";");
+            while (tokenizer.hasMoreTokens()) {
+                addProperty(properties, tokenizer.nextToken());
+            }
         } else {
             Resource resource = new DefaultResourceLoader() {
                 // override the default load from the classpath to load from the file system
@@ -120,20 +123,12 @@ public abstract class BeanLevelPropertiesParser {
         }
     }
 
-    public static void loadParams(String properties, Map props) {
-        properties = properties.substring(EMBEDDED_PROPERTIES_PREFIX.length());
-        StringTokenizer tokenizer = new StringTokenizer(properties, ";");
-        while (tokenizer.hasMoreTokens()) {
-            addProperty(props, tokenizer.nextToken());
-        }
-    }
-
-    private static void addProperty(Map props, String property) {
-        int equalsIndex = property.indexOf('=');
+    private static void addProperty(Properties properties, String s) {
+        int equalsIndex = s.indexOf('=');
         if (equalsIndex == -1) {
-            props.put(property, "");
+            properties.put(s, "");
         } else {
-            props.put(property.substring(0, equalsIndex), property.substring(equalsIndex + 1));
+            properties.put(s.substring(0, equalsIndex), s.substring(equalsIndex + 1));
         }
     }
 }
