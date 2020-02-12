@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello World Example</title>
+    <style>
+    div.container {
+        width: 880px;
+        border: 1px solid gray;
+        padding: 1em;
+    }
+    </style>
+</head>
+<body><div class="container"><h1>Hello World Example</h1><p>This example has two counter parts: client and server. The client, a simple main called HelloWorld.java updates a data-grid with "Hello" and "World!" data entities and then reads them back. The <code>HelloWorld</code> main accepts the following arguments: <code>-name</code> {data-grid name} <code>-mode</code> {embedded,remote}</p><h2>Message.java</h2><p>A Plain Old Java Object (POJO) is the entity behind the updates to the data-grid. It consists of getters and setters for the 'msg' field, and a <code>@SpaceId</code> for uniqueness (similar to a Map key).</p><h3>Annotations</h3><p>Additional annotations may be applied - here are a couple:</p>
+<ul>
+  <li>A <code>@SpaceRouting</code> annotation can be applied to any field to allow routing to partition instances. If not specified, <code>@SpaceId</code> will act as the routing field.</li>
+  <li>A <code>@SpaceIndex</code> annotation can be applied to any field to allow indexing. <code>@SpaceId</code> is by default indexed.</li>
+</ul><h2>HelloWorld.java</h2><p>This main class acts as the client. It can either start a single data-grid instance (embedded) in it's JVM, or connect to an existing (remote) data-grid (by it's name).</p><h2>Running the Example - Embedded</h2><p>Import Maven <code>examples/hello-world/pom.xml</code> into your IDE of choice as a maven project. Launch the <code>HelloWorld</code> main (arguments: <code>-name</code> myDataGrid <code>-mode</code> embedded)</p><p>This will start an embedded data-grid followed by write and read of Message entities.</p><h3>output</h3><p><code>
+Created embedded data-grid: myDataGrid
+write - &#39;Hello&#39;
+write - &#39;World!&#39;
+read - [&#39;Hello&#39;, &#39;World!&#39;]
+</code></p><p><img src="images/embedded.png" alt="helloworld-1" /></p><h2>Running the Example - Remote</h2><p>To connect to a <em>remote</em> data-grid, first use the <code>gs.(sh|bat) space run</code> script to launch a data-grid.</p><p>From the ${GS_HOME}/bin directory, run:</p>
+<ul>
+  <li>gs.(sh|bat) space run --lus myDataGrid</li>
+</ul><p>Import Maven <code>examples/hello-world/pom.xml</code> into your IDE of choice as a maven project. Launch the <code>HelloWorld</code> main (arguments: <code>-name</code> myDataGrid <code>-mode</code> remote)</p><p>This will connect your client to your remote data-grid followed by write and read of Message entities.</p><h3>output</h3><p><code>
+Connected to remote data-grid: myDataGrid
+write - &#39;Hello&#39;
+write - &#39;World!&#39;
+read - [&#39;Hello&#39;, &#39;World!&#39;]
+</code></p><p><img src="images/remote.png" alt="helloworld-1r" /></p><h2>Stopping the data grid</h2><p>Before deploying a new data grid we need to stop the previous one.</p><p><code>ctrl+c</code></p><h2>Running the Example - Remote (with 2 partitions)</h2><p>Each partition instance is loaded separately, as follows:</p>
+<ol>
+  <li>Specify <code>--partitions=2</code> for two partitions</li>
+  <li>Specify <code>--instances=1_1</code> or <code>--instances=2_1</code> for each partition instance</li>
+</ol><p>From the ${GS_HOME}/bin directory, run (in 2 seperate terminals):</p>
+<ul>
+  <li>gs.(sh|bat) space run --lus --partitions=2 <strong>--instances=1_1</strong> myDataGrid</li>
+  <li>gs.(sh|bat) space run --lus --partitions=2 <strong>--instances=2_1</strong> myDataGrid</li>
+</ul><p>This will simulate a data-grid of 2 partitioned instances (without backups).</p><p>Import Maven <code>examples/hello-world/pom.xml</code> into your IDE of choice as a maven project. Launch the <code>HelloWorld</code> main (arguments: <code>-name</code> myDataGrid <code>-mode</code> remote)</p><h3>output</h3><p><code>
+Connected to remote data-grid: myDataGrid
+write - &#39;Hello&#39;
+write - &#39;World!&#39;
+read - [&#39;Hello&#39;, &#39;World!&#39;]
+</code></p><p><img src="images/partitioned.png" alt="helloworld-2" /></p><h2>Running the Example - Remote (with backups for each partition)</h2><p>Each partition instance can be assigned a backup, as follows:</p>
+<ol>
+  <li>Specify <code>--partitions=2</code> for two partitions, <code>--ha</code> for high availability meaning a single backup for each partition.</li>
+  <li>Specify <code>--instances=1_1</code> to load primary of partition id=1, <code>--instances=1_2</code> to load the backup instance of partition id=1</li>
+</ol><p><strong>First partition:</strong></p>
+<ul>
+  <li>gs.(sh|bat) space run --lus --partitions=2 --ha <strong>--instances=1_1</strong> myDataGrid</li>
+  <li>gs.(sh|bat) space run --lus --partitions=2 --ha <strong>--instances=1_2</strong> myDataGrid</li>
+</ul><p><strong>Second partition:</strong></p>
+<ul>
+  <li>gs.(sh|bat) space run --lus --partitions=2 --ha <strong>--instances=2_1</strong> myDataGrid</li>
+  <li>gs.(sh|bat) space run --lus --partitions=2 --ha <strong>--instances=2_2</strong> myDataGrid</li>
+</ul><p>The Example should be run in the same manner as before - Launch the <code>HelloWorld</code> (arguments: <code>-name</code> myDataGrid <code>-mode</code> remote).</p><h3>output</h3><p><code>
+Connected to remote data-grid: myDataGrid
+write - &#39;Hello&#39;
+write - &#39;World!&#39;
+read - [&#39;Hello&#39;, &#39;World!&#39;]
+</code></p><p><img src="images/partitioned-with-backup.png" alt="helloworld-3" /></p></div></body></html>

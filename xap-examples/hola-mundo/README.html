@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hola Mundo Example</title>
+	<style>
+    div.container {
+        width: 880px;
+        border: 1px solid gray;
+        padding: 1em;
+    }
+    img {
+        max-width: 880px;
+    }
+    </style>
+</head>
+<body><div class="container"><h1>Hola Mundo Example</h1><p>This example builds on the simple <code>hello-world</code> example by presenting Processing Unit concepts. Please make sure to first familiarize yourself with the <code>hello-world</code> example.</p><p>This example consists of two processing units, one called <code>translator</code> and the other <code>feeder</code>. A <code>processing unit</code> is a Spring based unit of packaging. There are two types - stateless and stateful.</p>
+<ul>
+  <li>A <code>stateless processing unit</code> is a unit of work consisting of business logic.</li>
+  <li>A <code>stateful processing unit</code> has an embedded data-grid instance running inside, with collocated business logic.</li>
+</ul><h2>Translator Processing Unit</h2><p>The translator processing unit loads an embedded data-grid instance, and holds an English-to-Spanish dictionary. The translator is responsible to process incoming "phrases" in English and translate them to Spanish.</p><h2>Phrase.java</h2><p><code>Phrase.java</code> found under <code>common</code> module is a common class used by both <code>feeder</code> and <code>translator</code>. It is a Plain Old Java Object (POJO) and is the entity behind the updates to the data-grid. It consists of getters and setters for the <code>englishPhrase</code> and <code>spanishPhrase</code> as the translation fields. The <code>@SpaceId</code> on the <code>englishPhrase</code> is for uniqueness (similar to a Map key).</p><h2>Feeder Processing Unit</h2><p>The feeder processing unit has a <code>PhraseFeeder.java</code> bean that writes "Hello" and "World!" as english phrases, and reads the processed (translated) entities back.</p><h2>@EventDriven + @Polling</h2><p>The <code>EnglishToSpanishTranslator</code> bean (part of the translator module), serves as a listener on the data in the data-grid. This is specified by <code>@EventDriven</code> and <code>@Polling</code> annotations on the class.</p><p>The <code>SQLQuery&lt;Phrase&gt; untranslated()</code> method defines the template of the data to listen to, specified by <code>@EventTemplate</code> annotation.</p><p>The <code>Phrase translate(Phrase phrase)</code> method defines the processing to be done on the data, specified by <code>@SpaceDataEvent</code>.</p><p>When an entity of type <code>Phrase</code> is written to the data-grid, the polling mechanism polls for matching phrases (with a null spanishPhrase). A match is removed from the data-grid, invoking the <code>translate</code> method with the matching Phrase. The translated Phrase returned by this method is re-written to the data-grid (behind the scenes).</p><h2>Processing Unit XML - pu.xml</h2><p>The pu.xml is a Spring context XML configuration of the processing unit.</p>
+<ul>
+  <li><p>The <code>translator/src/main/resources/META-INF/spring/pu.xml</code> - configures an embedded data-grid, the translator bean, and declares annotation support.</p></li>
+  <li><p>The <code>feeder/src/main/resources/META-INF/spring/pu.xml</code> - configures the connection to the remote data-grid used by the feeder bean.</p></li>
+</ul><h2>Running the example from the IDE</h2><p>Import Maven <code>examples/hola-mundo/pom.xml</code> into your IDE of choice as a new maven project.</p><p><strong>note:</strong> this section refers to IntelliJ IDE, but eclipse users can mimic the configuration settings</p><p>The <code>runConfigurations</code> folder consists of IntelliJ runtime configurations, which need to be copied to the <code>.idea/runConfigurations</code> directory under the IDE project structure (<code>.idea</code> is a hidden directory). In IntelliJ, these configurations will appear in the "Edit Configurations..." section.</p><p>A configuration consists of a Main class to run, and a module classpath to use. The main class uses <code>org.openspaces.pu.container.integrated.IntegratedProcessingUnitContainer</code> - a built in container used to run a Processing Unit.</p><h3>Running with a single data-grid (1 instance)</h3>
+<ul>
+  <li><p>Run the translator (run configuration) -  This will start an embedded data-grid, with a translator bean</p></li>
+  <li><p>Run the feeder (run configuration) -  This will write "Hello" and "World!" and read the translated Phrase entities.</p></li>
+</ul><h4>output (feeder)</h4><p><code>
+write - &#39;Hello&#39;
+write - &#39;World!&#39;
+read - [&#39;Hola&#39;, &#39;Mundo!&#39;]
+</code></p><h4>output (translator)</h4><p><code>
+translated - Hello to Hola
+translated - World! to Mundo!
+</code></p><p><img src="images/embedded.png" alt="holla-mundo-single" /></p><h3>Running with a partitioned data-grid (2 instances)</h3><p>Edit the run configuration of the translator, and add to the <code>Program Arguments</code> the following: <code>-cluster schema=partitioned total_members=2,0</code></p><p>This will configure the translator to start 2 data-grid partitioned instances (in the same JVM). The "Hello" phrase will be written to one partition, and "World!" phrase will be written to the other. The translator translation bean is active on each partition, translating matching phrases.</p><h4>output (feeder)</h4><p><code>
+write - &#39;Hello&#39;
+write - &#39;World!&#39;
+read - [&#39;Hola&#39;, &#39;Mundo!&#39;]
+</code></p><h4>output (of the two translators)</h4><p><code>
+translated - Hello to Hola
+translated - World! to Mundo!
+</code></p><p><img src="images/partitioned.png" alt="holla-mundo-partition2" /></p><p>To simulate this better, each instance can be loaded separately (two JVMs)</p>
+<ul>
+  <li>First instance (id=1) : <code>-cluster schema=partitioned total_members=2,0 id=1</code></li>
+  <li>Second instance (id=2) : <code>-cluster schema=partitioned total_members=2,0 id=2</code></li>
+</ul><h4>output (of first translator)</h4><p><code>
+translated - Hello to Hola
+</code></p><h4>output (of second translator)</h4><p><code>
+translated - World! to Mundo!
+</code></p><h3>Running with a partitioned data-grid (with backups for each partition)</h3><p>You can specify <code>total_members=2,1</code> for two partitions, each with a single backup and specify <code>backup_id=1</code> to load the backup instance.</p><p>Each partition instance can configured as follows:</p>
+<pre><code> first partition:         -cluster schema=partitioned total_members=2,1 id=1
+ first partition backup:  -cluster schema=partitioned total_members=2,1 id=1 backup_id=1
+ second partition:        -cluster schema=partitioned total_members=2,1 id=2
+ second partition backup: -cluster schema=partitioned total_members=2,1 id=2 backup_id=1
+</code></pre><h2>Running the example from the command line</h2><p>Use Maven to compile and package the example (e.g. <code>mvn clean package</code>).</p><p>This will create the processing unit jars that can be referenced by <code>gs.(sh|bat) pu run</code></p><p>From the ${GS_HOME}/bin directory, run:</p>
+<ul>
+  <li>gs.(sh|bat) pu run --lus ../examples/hola-mundo/translator/target/hola-mundo-translator.jar</li>
+  <li>gs.(sh|bat) pu run --lus ../examples/hola-mundo/feeder/target/hola-mundo-feeder.jar</li>
+</ul><p>This will run the translator (as a single data-grid) and the feeder.</p><p>To start a partitioned translator (data-grid of 2 partitions), add the --partitions arguments:</p>
+<ul>
+  <li>gs.(sh|bat) pu run --lus --partitions=2 ../examples/hola-mundo/translator/target/hola-mundo-translator.jar</li>
+</ul></div></body></html>
