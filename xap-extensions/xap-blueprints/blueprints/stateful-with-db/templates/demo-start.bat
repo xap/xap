@@ -1,7 +1,7 @@
 @echo off
 call {{project.artifactId}}-env.bat
 
-echo Building servicess (processing units)...
+echo Building services (processing units)...
 call build.bat
 
 {{#db.demo.enabled}}
