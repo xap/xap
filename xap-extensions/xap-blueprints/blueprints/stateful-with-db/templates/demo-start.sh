@@ -5,8 +5,9 @@ echo "Building services (processing units)..."
 ./build.sh
 
 {{#db.demo.enabled}}
-echo "Starting HSQL DB..."
-xterm -e ./demo-db/run.sh &
+./demo-db/run.sh &> hsqldb.out &
+HSQL_PID=$!
+echo "Started HSQL DB [pid = $HSQL_PID , log = $(pwd)/hsqldb.out]"
 {{/db.demo.enabled}}
 
 echo "Creating container for mirror service (processing unit)..."
