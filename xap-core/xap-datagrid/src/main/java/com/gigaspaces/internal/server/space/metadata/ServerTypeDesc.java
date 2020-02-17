@@ -26,12 +26,11 @@ import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
 @com.gigaspaces.api.InternalApi
 public class ServerTypeDesc implements IServerTypeDesc {
     private static final AtomicInteger  _codesGen = new AtomicInteger();
-    public static final ConcurrentMap<Short,IServerTypeDesc> _codesRepo = new ConcurrentHashMap<Short, IServerTypeDesc>();
+    private static final ConcurrentMap<Short,IServerTypeDesc> _codesRepo = new ConcurrentHashMap<Short, IServerTypeDesc>();
 
     private final int _typeId;
     private final String _typeName;
@@ -48,17 +47,15 @@ public class ServerTypeDesc implements IServerTypeDesc {
 
     private volatile boolean _maybeOutdated;
 
-    private static final Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
-
     public ServerTypeDesc(int typeId, String typeName) {
         this(typeId, typeName, null, null);
     }
 
     public ServerTypeDesc(int typeId, String typeName, ITypeDesc typeDesc, IServerTypeDesc superType) {
-        this(typeId, typeName, typeDesc,  superType, null);
+        this(typeId, typeName, typeDesc,  superType, null, new LongCounter());
     }
 
-    private ServerTypeDesc(int typeId, String typeName, ITypeDesc typeDesc, IServerTypeDesc superType,Short code) {
+    private ServerTypeDesc(int typeId, String typeName, ITypeDesc typeDesc, IServerTypeDesc superType,Short code, LongCounter offHeapTypeCounter) {
         this._typeId = typeId;
         this._typeName = typeName;
         this._isRootType = typeName.equals(ROOT_TYPE_NAME);
@@ -73,12 +70,9 @@ public class ServerTypeDesc implements IServerTypeDesc {
 
         if (superType != null)
             superType.addSubType(this);
-        if (code == null) {
+        if (code == null)
+        {
             Integer c = _codesGen.incrementAndGet();
-            if(c > Short.MAX_VALUE){
-                logger.severe("[DEBUG-PATCH]:  Generated code = "+c+", Reached max allowed number of types, typeName = "+typeName+",  typeDesc = "+ this._typeDesc);
-                throw new IllegalStateException("type map key has reached Short.MAX_VALUE, cannot create more ServerTypeDec instances");
-            }
             code = c.shortValue();
             _codesRepo.put(code,this);
         }
@@ -168,7 +162,7 @@ public class ServerTypeDesc implements IServerTypeDesc {
 
     public IServerTypeDesc createCopy(IServerTypeDesc superType) {
         // Create a copy of this type with the new super type:
-        ServerTypeDesc copy = new ServerTypeDesc(this._typeId, this._typeName, this._typeDesc, superType, this._serverTypeDescCode);
+        ServerTypeDesc copy = new ServerTypeDesc(this._typeId, this._typeName, this._typeDesc, superType);
         copy._inactive = this._inactive;
         IServerTypeDesc oldServerTypeDesc = _codesRepo.put(this._serverTypeDescCode, copy);
         if(oldServerTypeDesc != null){

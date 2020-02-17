@@ -117,16 +117,6 @@ public class BlobStoreEntryLayout implements Externalizable {
             _phantom = eh.getEmbeddedSyncOpInfo().isPhantom();
             _partOfMultipleUidsInfo = eh.getEmbeddedSyncOpInfo().isPartOfMultipleUidsInfo();
         }
-
-        String uid = System.getProperty(SystemProperties.GRESHAM_DEBUG_PATCH, "na");
-        boolean trace = _m_Uid.equals(uid);
-        if(trace){
-            logger.severe("[DEBUG-PATCH]:  creating EntryLayout, " +
-                    "refEntryCacheInfo objectId = "+eh.getBlobStoreResidentPart()+", " +
-                    "typeName = "+ eh.getTypeName()+", " +
-                    "serverTypeDescCode = "+eh.getServerTypeDesc()+", " +
-                    "ServerTypeDesc._codesRepo.get = "+ServerTypeDesc._codesRepo.get(eh.getServerTypeDesc()));
-        }
     }
 
     public BlobStoreEntryLayout() {
@@ -624,14 +614,14 @@ public class BlobStoreEntryLayout implements Externalizable {
         if(cacheManager.isPersistentBlobStore()){
             readExternalPersistentBlobStore(in, cacheManager, fromInitialLoad, onlyIndexedPart);
         } else {
-            readExternalOffHeap(cacheManager, offHeapInfo.getTypeName(), in,false, offHeapInfo);
+            readExternalOffHeap(cacheManager, offHeapInfo.getTypeName(), in,false);
         }
     }
 
-    public void readIndexValuesBytes(CacheManager cacheManager, short serverTypeDescCode, byte[] bytes, IBlobStoreOffHeapInfo offHeapInfo) throws IOException, ClassNotFoundException {
+    public void readIndexValuesBytes(CacheManager cacheManager, short serverTypeDescCode, byte[] bytes) throws IOException, ClassNotFoundException {
         ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes));
 
-        readExternalOffHeap(cacheManager, ServerTypeDesc.getByServerTypeDescCode(serverTypeDescCode).getTypeName(), in, true, offHeapInfo);
+        readExternalOffHeap(cacheManager, ServerTypeDesc.getByServerTypeDescCode(serverTypeDescCode).getTypeName(), in, true);
         in.close();
     }
 
@@ -723,14 +713,12 @@ public class BlobStoreEntryLayout implements Externalizable {
         _onlyIndexesPart = onlyIndexedPart;
     }
 
-    private void readExternalOffHeap(CacheManager cacheManager, String typeName, ObjectInput in, boolean onlyIndexesPart, IBlobStoreOffHeapInfo offHeapInfo) throws IOException, ClassNotFoundException {
+    private void readExternalOffHeap(CacheManager cacheManager, String typeName, ObjectInput in, boolean onlyIndexesPart) throws IOException, ClassNotFoundException {
         _m_Uid = in.readUTF();
         String uid = System.getProperty(SystemProperties.GRESHAM_DEBUG_PATCH, "na");
         boolean trace = getUid().equals(uid);
         if(trace){
-            logger.severe("[DEBUG-PATCH]:  Starting deserialization of object with stream UID "+uid);
-            BlobStoreRefEntryCacheInfo ref = (BlobStoreRefEntryCacheInfo) offHeapInfo;
-            logger.severe("[DEBUG-PATCH]:  BlobStoreRefEntryCacheInfo object id = "+ref+", UID in memory is: "+ ref.getUID());
+            logger.severe("[DEBUG-PATCH]:  Starting deserialization of object with uid "+uid);
         }
         byte flags = in.readByte();
         if(trace) {
