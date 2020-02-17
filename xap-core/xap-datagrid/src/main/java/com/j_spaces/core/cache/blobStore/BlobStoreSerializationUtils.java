@@ -33,7 +33,6 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.logging.Logger;
 
 
 /**
@@ -45,8 +44,6 @@ public class BlobStoreSerializationUtils {
     private final static ThreadLocal<ByteArrayOutputStream> threadLocal = new ThreadLocal<ByteArrayOutputStream>();
 
     private final CacheManager _cacheManager;
-
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
 
     public BlobStoreSerializationUtils(CacheManager _cacheManager) {
         this._cacheManager = _cacheManager;
@@ -107,7 +104,6 @@ public class BlobStoreSerializationUtils {
             throw new IllegalArgumentException("The InputStream must not be null");
         }
         ObjectInputStream in = null;
-        BlobStoreEntryLayout el = null;
         try {
             // stream closed in the finally
             in = new ClassLoaderAwareInputStream(inputStream);
@@ -115,7 +111,7 @@ public class BlobStoreSerializationUtils {
                 return (Serializable) in.readObject();
             }
             {//BlobStoreObjectType.DATA
-                el = new BlobStoreEntryLayout();
+                BlobStoreEntryLayout el = new BlobStoreEntryLayout();
                 el.readExternal(in, _cacheManager, initialLoad, onlyIndexedPart, offHeapInfo);
                 return el;
             }
@@ -125,8 +121,6 @@ public class BlobStoreSerializationUtils {
         } catch (ClassNotFoundException ex) {
             throw new BlobStoreException(ex);
         } catch (IOException ex) {
-            _logger.severe("[DEBUG-PATCH]:  Caught IOException while trying to deserialize Object of type "+offHeapInfo.getTypeName()
-                    +" , Space Id = "+(el == null ? "null" : el.getUid()));
             throw new BlobStoreException(ex);
         } finally {
             try {

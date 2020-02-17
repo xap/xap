@@ -36,10 +36,8 @@ import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.blobStore.sadapter.BlobStoreStorageAdapterClassInfo;
 import com.j_spaces.core.cache.blobStore.sadapter.IBlobStoreStorageAdapter;
-import com.j_spaces.kernel.SystemProperties;
 
 import java.io.*;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -83,8 +81,6 @@ public class BlobStoreEntryLayout implements Externalizable {
     //++++++++++++++++++++++  temp field not serialized +++++++++++++++++++++++++++
     private transient long _dynamicIndexesRelatedIndicators;
     private transient int _dynamicIndexesRelatedLength;
-
-    private static final Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
 
     public BlobStoreEntryLayout(BlobStoreEntryHolder eh, boolean recoverable) {
         if (eh.getEntryData().getEntryDataType() != EntryDataType.FLAT)
@@ -177,11 +173,6 @@ public class BlobStoreEntryLayout implements Externalizable {
 
     private void writeObjectArray(ObjectOutput out, Object[] array, IServerTypeDesc typeDesc, boolean isIndexesPart, boolean[] fixed_indexes)
             throws IOException {
-        String uid = System.getProperty(SystemProperties.GRESHAM_DEBUG_PATCH, "na");
-        boolean trace = getUid().equals(uid);
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]:  writing object array = "+ Arrays.toString(array)+", fixed_indexes = "+Arrays.toString(fixed_indexes));
-        }
         if (array == null)
             out.writeInt(-1);
         else {
@@ -199,17 +190,10 @@ public class BlobStoreEntryLayout implements Externalizable {
                             if (!_phantom && array[j] != null && fixed_indexes[j] == isIndexesPart)
                                 noNullIndicators |= (1 << (j % 7));
                         }
-                        if(trace) {
-                            logger.severe("[DEBUG-PATCH]:  writing noNullIndicators = "+ (byte) noNullIndicators);
-                        }
                         out.writeByte(noNullIndicators);
                     }
-                    if (fixed_indexes[i] == isIndexesPart) {
-                        if (trace) {
-                            logger.severe("[DEBUG-PATCH]:  writing array[" + i + "] = " + array[i]);
-                        }
+                    if (fixed_indexes[i] == isIndexesPart)
                         writeObjectToStream(array[i], out, typeDesc, i);
-                    }
                 }
             } catch (IOException e) {
                 throw new IOArrayException(i, "Failed to serialize item #" + i, e);
@@ -228,21 +212,10 @@ public class BlobStoreEntryLayout implements Externalizable {
         Class clazz = isObject ? typeDesc.getTypeDesc().getFixedProperty(arrayPosition).getType() :
                 (isMarshaled ? MarshObject.class : null);
         Serializer serializer = (clazz != null && typeDesc.getTypeDesc().getObjectType() != EntryType.EXTERNAL_ENTRY) ? types.get(clazz) : null;
-
-        String uid = System.getProperty(SystemProperties.GRESHAM_DEBUG_PATCH, "na");
-        boolean trace = getUid().equals(uid);
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]:  using serializer "+(serializer != null ? serializer.getName() : " out.writeObject" ));
-        }
-
         if (serializer != null)
             serializer.write(obj, out);
         else
             out.writeObject(obj);
-    }
-
-    public String getUid() {
-        return _m_Uid;
     }
 
     public void setUid(String _m_Uid) {
@@ -260,32 +233,18 @@ public class BlobStoreEntryLayout implements Externalizable {
     private Object[] readObjectArray(ObjectInput in, IServerTypeDesc typeDesc, Object[] current)
             throws IOException, ClassNotFoundException {
         final int length = in.readInt();
-        if (length < 0) {
+        if (length < 0)
             return current;
-        }
-        String uid = System.getProperty(SystemProperties.GRESHAM_DEBUG_PATCH, "na");
-        boolean trace = getUid().equals(uid);
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]:  reading object array of length "+length);
-        }
 
         Object[] array = current == null ? new Object[length] : current;
         int i = 0;
         try {
             int noNullIndicators = 0;
             for (; i < length; i++) {
-                if (i % 7 == 0) {  //get the non null indicators
+                if (i % 7 == 0)  //get the non null indicators
                     noNullIndicators = in.readByte();
-                    if (trace) {
-                        logger.severe("[DEBUG-PATCH]: noNullIndicators = " + noNullIndicators);
-                    }
-                }
-                if ((noNullIndicators & (1 << (i % 7))) != 0) {
+                if ((noNullIndicators & (1 << (i % 7))) != 0)
                     array[i] = readObjectFromStream(in, typeDesc, i);
-                    if(trace) {
-                        logger.severe("[DEBUG-PATCH]: read object array["+i+"] = "+array[i]);
-                    }
-                }
             }
         } catch (IOException e) {
             throw new IOArrayException(i, "Failed to deserialize item #" + i, e);
@@ -303,11 +262,6 @@ public class BlobStoreEntryLayout implements Externalizable {
         Class clazz = isObject ? typeDesc.getTypeDesc().getFixedProperty(arrayPosition).getType() :
                 (isMarshaled ? MarshObject.class : null);
         Serializer serializer = (clazz != null && typeDesc.getTypeDesc().getObjectType() != EntryType.EXTERNAL_ENTRY) ? types.get(clazz) : null;
-        String uid = System.getProperty(SystemProperties.GRESHAM_DEBUG_PATCH, "na");
-        boolean trace = getUid().equals(uid);
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]:  using deserializer "+(serializer != null ? serializer.getName() : " in.readObject" ));
-        }
         if (serializer != null)
             return serializer.read(in);
         else
@@ -319,11 +273,6 @@ public class BlobStoreEntryLayout implements Externalizable {
         if (map == null || _phantom) {
             out.writeInt(-1);
             return;
-        }
-        String uid = System.getProperty(SystemProperties.GRESHAM_DEBUG_PATCH, "na");
-        boolean trace = getUid().equals(uid);
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]:  writing MapStringObject = "+ map+", indexesIndicators = "+indexesIndicators);
         }
         int length = 0;
         int overall = 0;
@@ -338,9 +287,6 @@ public class BlobStoreEntryLayout implements Externalizable {
                 overall++;
             }
             _dynamicIndexesRelatedLength = length;
-            if(trace) {
-                logger.severe("[DEBUG-PATCH]: _dynamicIndexesRelatedLength = "+ _dynamicIndexesRelatedLength);
-            }
         } else
             length = map.size() - _dynamicIndexesRelatedLength;
 
@@ -351,17 +297,11 @@ public class BlobStoreEntryLayout implements Externalizable {
         for (Entry<String, Object> entry : map.entrySet()) {
             if (overall < 63) {
                 if (((_dynamicIndexesRelatedIndicators & (1L << overall)) != 0L) == isIndexesPart) {
-                    if(trace) {
-                        logger.severe("[DEBUG-PATCH]: writing dynamic property "+entry.getKey()+" = "+entry.getValue());
-                    }
                     out.writeUTF(entry.getKey());
                     out.writeObject(entry.getValue());
                 }
             } else {
                 if (indexesIndicators.contains(entry.getKey()) == isIndexesPart) {
-                    if(trace) {
-                        logger.severe("[DEBUG-PATCH]: writing dynamic property "+entry.getKey()+" = "+entry.getValue());
-                    }
                     out.writeUTF(entry.getKey());
                     out.writeObject(entry.getValue());
                 }
@@ -373,28 +313,15 @@ public class BlobStoreEntryLayout implements Externalizable {
     private Map<String, Object> readMapStringObject(ObjectInput in, Map<String, Object> current)
             throws IOException, ClassNotFoundException {
         Map<String, Object> map = current;
-        String uid = System.getProperty(SystemProperties.GRESHAM_DEBUG_PATCH, "na");
-        boolean trace = getUid().equals(uid);
 
         int length = in.readInt();
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]:  reading MapStringObject , length = "+length);
-        }
         if (length >= 0) {
             if (map == null)
                 map = new HashMap<String, Object>(length);
             for (int i = 0; i < length; i++) {
-                if(trace) {
-                    String key = in.readUTF();
-                    logger.severe("[DEBUG-PATCH]:  key = "+key);
-                    Object value = in.readObject();
-                    logger.severe("[DEBUG-PATCH]:  value = "+value);
-                    map.put(key, value);
-                } else {
-                    String key = in.readUTF();
-                    Object value = in.readObject();
-                    map.put(key, value);
-                }
+                String key = in.readUTF();
+                Object value = in.readObject();
+                map.put(key, value);
             }
         }
 
@@ -497,28 +424,12 @@ public class BlobStoreEntryLayout implements Externalizable {
     }
 
     private void writeExternalOffHeap(CacheManager cacheManager, ObjectOutput out, boolean onlyIndexesPart) throws IOException {
-        out.writeUTF(_m_Uid);
-        String uid = System.getProperty(SystemProperties.GRESHAM_DEBUG_PATCH, "na");
-        boolean trace = getUid().equals(uid);
-        if(trace){
-            logger.severe("[DEBUG-PATCH]:  Starting serialization of object with uid "+uid);
-            logger.severe("[DEBUG-PATCH]:  This BSEntryLayout: "+this.toString());
-        }
         byte flags = buildFlags();
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]:  flags = " + flags);
-        }
         out.writeByte(flags);
 
         byte embeddedSyncInfoFlags = buildEmbeddedSyncInfoFlags();
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]:  embeddedSyncInfoFlags = " + embeddedSyncInfoFlags);
-        }
         out.writeByte(embeddedSyncInfoFlags);
         if ((embeddedSyncInfoFlags & FLAG_CONTAINS_EMBEDDED_SYNC_INFO) == FLAG_CONTAINS_EMBEDDED_SYNC_INFO) {
-            if(trace) {
-                logger.severe("[DEBUG-PATCH]: writing sync list info");
-            }
             out.writeLong(_generationId);
             out.writeLong(_sequenceId);
         }
@@ -526,23 +437,14 @@ public class BlobStoreEntryLayout implements Externalizable {
         out.writeByte(_entryTypeCode);
         out.writeLong(_scn);
         if ((flags & FLAG_ORDER) == FLAG_ORDER) {
-            if(trace) {
-                logger.severe("[DEBUG-PATCH]: writing _order");
-            }
             out.writeInt(_order);
         }
 
         if ((flags & FLAG_VERSIONID) == FLAG_VERSIONID) {
-            if(trace) {
-                logger.severe("[DEBUG-PATCH]:  writing _versionID");
-            }
             out.writeInt(_versionID);
         }
 
         if ((flags & FLAG_EXPIRATION) == FLAG_EXPIRATION) {
-            if(trace) {
-                logger.severe("[DEBUG-PATCH]:  writing _expirationTime");
-            }
             out.writeLong(_expirationTime);
         }
 
@@ -552,54 +454,29 @@ public class BlobStoreEntryLayout implements Externalizable {
 
 
         IServerTypeDesc typeDesc = cacheManager.getEngine().getTypeManager().getServerTypeDesc(_typeName);
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]: typeDesc = " + ((ServerTypeDesc) typeDesc).fullToString());
-        }
         BlobStoreStorageAdapterClassInfo ci = ((IBlobStoreStorageAdapter) cacheManager.getStorageAdapter()).getBlobStoreStorageAdapterClassInfo(_typeName);
         if (ci != null) {
-            if(trace){
-                logger.severe("[DEBUG-PATCH]: classInfo = "+ci.toString());
-            }
             fixed_indices = ci.getIndexesRelatedFixedProperties();
             dynamic_indices = ci.getIndexesRelatedDynamicProperties();
             indexesStoredVersion = ci.getStoredVersion();
         } else {//can happen when a typw was added and the SA intoroduceType call didnt occur yet
             TypeData typeData = cacheManager.getTypeData(typeDesc);
-            if(trace){
-                logger.severe("[DEBUG-PATCH]:  typeData = "+typeData.fullToString());
-            }
             fixed_indices = typeData.getIndexesRelatedFixedProperties();
             dynamic_indices = typeData.getIndexesRelatedDynamicProperties();
             //note- version is set to 0 which is first one
         }
-
-        if(trace){
-          logger.severe("[DEBUG-PATCH]: indexesStoredVersion = "+indexesStoredVersion);
-        }
         out.writeShort(indexesStoredVersion);
 
         //indexes-related
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]:  writing indexed properties");
-        }
         writeObjectArray(out, _fieldsValues, typeDesc, true /*indexes*/, fixed_indices);
 
         if ((flags & FLAG_DYNAMIC_PROPERTIES) == FLAG_DYNAMIC_PROPERTIES) {
-            if(trace) {
-                logger.severe("[DEBUG-PATCH]:  writing dynamic indexed properties");
-            }
             writeMapStringObject(out, _dynamicProperties, true /*indexes*/, dynamic_indices);
         }
 
         if(!onlyIndexesPart){
-            if(trace) {
-                logger.severe("[DEBUG-PATCH]:  writing non-indexed properties");
-            }
             writeObjectArray(out, _fieldsValues, typeDesc, false, fixed_indices);
             if ((flags & FLAG_DYNAMIC_PROPERTIES) == FLAG_DYNAMIC_PROPERTIES) {
-                if(trace){
-                logger.severe("[DEBUG-PATCH]:  writing dynamic indexed properties");
-                }
                 writeMapStringObject(out, _dynamicProperties, false /*indexes*/, dynamic_indices);
             }
         }
@@ -714,93 +591,42 @@ public class BlobStoreEntryLayout implements Externalizable {
     }
 
     private void readExternalOffHeap(CacheManager cacheManager, String typeName, ObjectInput in, boolean onlyIndexesPart) throws IOException, ClassNotFoundException {
-        _m_Uid = in.readUTF();
-        String uid = System.getProperty(SystemProperties.GRESHAM_DEBUG_PATCH, "na");
-        boolean trace = getUid().equals(uid);
-        if(trace){
-            logger.severe("[DEBUG-PATCH]:  Starting deserialization of object with uid "+uid);
-        }
         byte flags = in.readByte();
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]:  flags = " + flags);
-        }
+
         byte embeddedSyncInfoFlags = in.readByte();
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]:  embeddedSyncInfoFlags = " + embeddedSyncInfoFlags);
-        }
         if ((embeddedSyncInfoFlags & FLAG_CONTAINS_EMBEDDED_SYNC_INFO) == FLAG_CONTAINS_EMBEDDED_SYNC_INFO) {
             _generationId = in.readLong();
             _sequenceId = in.readLong();
-            if(trace) {
-                logger.severe("[DEBUG-PATCH]: _generationId = "+_generationId);
-                logger.severe("[DEBUG-PATCH]: _sequenceId = "+_sequenceId);
-            }
         }
 
         _entryTypeCode = in.readByte();
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]: _entryTypeCode = "+_entryTypeCode);
-        }
         _scn = in.readLong();
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]: _scn = "+_scn);
-        }
-
         _transient = (flags & FLAG_TRANSIENT) == FLAG_TRANSIENT;
-        if ((flags & FLAG_ORDER) == FLAG_ORDER) {
+        if ((flags & FLAG_ORDER) == FLAG_ORDER)
             _order = in.readInt();
-            if(trace) {
-                logger.severe("[DEBUG-PATCH]: _order = " + _order);
-            }
-        }
 
         if ((flags & FLAG_VERSIONID) == FLAG_VERSIONID)
             _versionID = in.readInt();
         else
             _versionID = 1;
 
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]: _versionID = "+_versionID);
-        }
-
         if ((flags & FLAG_EXPIRATION) == FLAG_EXPIRATION)
             _expirationTime = in.readLong();
         else
             _expirationTime = Long.MAX_VALUE;
 
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]: _expirationTime = "+_expirationTime);
-        }
-
         short indexesStoredVersion = in.readShort();
         _typeName = typeName;
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]: _typeName = "+_typeName);
-        }
         IServerTypeDesc typeDesc = cacheManager.getEngine().getTypeManager().getServerTypeDesc(_typeName);
-        if(trace) {
-            logger.severe("[DEBUG-PATCH]: typeDesc = " + ((ServerTypeDesc) typeDesc).fullToString());
-            logger.severe("[DEBUG-PATCH]: reading indexed properties");
-        }
+
         _fieldsValues = readObjectArray(in, typeDesc, _fieldsValues);
-        if ((flags & FLAG_DYNAMIC_PROPERTIES) == FLAG_DYNAMIC_PROPERTIES) {
-            if(trace) {
-                logger.severe("[DEBUG-PATCH]: reading dynamic indexed properties");
-            }
+        if ((flags & FLAG_DYNAMIC_PROPERTIES) == FLAG_DYNAMIC_PROPERTIES)
             _dynamicProperties = readMapStringObject(in, _dynamicProperties);
-        }
 
         if(!onlyIndexesPart){
-            if(trace) {
-                logger.severe("[DEBUG-PATCH]: reading non-indexed properties");
-            }
             _fieldsValues = readObjectArray(in, typeDesc, _fieldsValues);
-            if ((flags & FLAG_DYNAMIC_PROPERTIES) == FLAG_DYNAMIC_PROPERTIES) {
-                if(trace) {
-                    logger.severe("[DEBUG-PATCH]: reading non-indexed dynamic properties");
-                }
+            if ((flags & FLAG_DYNAMIC_PROPERTIES) == FLAG_DYNAMIC_PROPERTIES)
                 _dynamicProperties = readMapStringObject(in, _dynamicProperties);
-            }
         }
     }
 
@@ -847,33 +673,8 @@ public class BlobStoreEntryLayout implements Externalizable {
         return flags;
     }
 
-    @Override
-    public String toString() {
-        return "BlobStoreEntryLayout{" + "\n" +
-                "_recoverable=" + _recoverable + "\n" +
-                ", _onlyIndexesPart=" + _onlyIndexesPart + "\n" +
-                ", _m_Uid='" + _m_Uid + '\'' + "\n" +
-                ", _generationId=" + _generationId + "\n" +
-                ", _sequenceId=" + _sequenceId + "\n" +
-                ", _phantom=" + _phantom + "\n" +
-                ", _partOfMultipleUidsInfo=" + _partOfMultipleUidsInfo + "\n" +
-                ", _blobStoreVersion=" + _blobStoreVersion + "\n" +
-                ", _typeName='" + _typeName + '\'' + "\n" +
-                ", _entryTypeCode=" + _entryTypeCode + "\n" +
-                ", _scn=" + _scn + "\n" +
-                ", _transient=" + _transient + "\n" +
-                ", _order=" + _order + "\n" +
-                ", _versionID=" + _versionID + "\n" +
-                ", _expirationTime=" + _expirationTime + "\n" +
-                ", _fieldsValues=" + Arrays.toString(_fieldsValues) + "\n" +
-                ", _dynamicProperties=" + _dynamicProperties + "\n" +
-                ", _dynamicIndexesRelatedIndicators=" + _dynamicIndexesRelatedIndicators + "\n" +
-                ", _dynamicIndexesRelatedLength=" + _dynamicIndexesRelatedLength + "\n" +
-                '}';
-    }
 
     public interface Serializer {
-        abstract String getName();
         abstract void write(Object object, ObjectOutput out) throws IOException;
 
         abstract Object read(ObjectInput in) throws IOException, ClassNotFoundException;
@@ -881,12 +682,6 @@ public class BlobStoreEntryLayout implements Externalizable {
 
     static {
         types.put(int.class, new Serializer() {
-
-            @Override
-            public String getName() {
-                return "int";
-            }
-
             @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 out.writeInt((Integer) object);
@@ -899,11 +694,6 @@ public class BlobStoreEntryLayout implements Externalizable {
         });
         types.put(long.class, new Serializer() {
             @Override
-            public String getName() {
-                return "long";
-            }
-
-            @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 out.writeLong((Long) object);
             }
@@ -914,11 +704,6 @@ public class BlobStoreEntryLayout implements Externalizable {
             }
         });
         types.put(float.class, new Serializer() {
-            @Override
-            public String getName() {
-                return "float";
-            }
-
             @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 out.writeFloat((Float) object);
@@ -931,10 +716,6 @@ public class BlobStoreEntryLayout implements Externalizable {
         });
         types.put(boolean.class, new Serializer() {
             @Override
-            public String getName() {
-                return "boolean";
-            }
-            @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 out.writeBoolean((Boolean) object);
             }
@@ -945,11 +726,6 @@ public class BlobStoreEntryLayout implements Externalizable {
             }
         });
         types.put(char.class, new Serializer() {
-
-            @Override
-            public String getName() {
-                return "char";
-            }
             @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 out.writeChar((Character) object);
@@ -962,11 +738,6 @@ public class BlobStoreEntryLayout implements Externalizable {
         });
         types.put(short.class, new Serializer() {
             @Override
-            public String getName() {
-                return "short";
-            }
-
-            @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 out.writeShort((Short) object);
             }
@@ -977,11 +748,6 @@ public class BlobStoreEntryLayout implements Externalizable {
             }
         });
         types.put(double.class, new Serializer() {
-            @Override
-            public String getName() {
-                return "double";
-            }
-
             @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 out.writeDouble((Double) object);
@@ -994,11 +760,6 @@ public class BlobStoreEntryLayout implements Externalizable {
         });
         types.put(Integer.class, new Serializer() {
             @Override
-            public String getName() {
-                return "Integer";
-            }
-
-            @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 out.writeInt((Integer) object);
             }
@@ -1009,11 +770,6 @@ public class BlobStoreEntryLayout implements Externalizable {
             }
         });
         types.put(Long.class, new Serializer() {
-            @Override
-            public String getName() {
-                return "Long";
-            }
-
             @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 out.writeLong((Long) object);
@@ -1026,11 +782,6 @@ public class BlobStoreEntryLayout implements Externalizable {
         });
         types.put(Float.class, new Serializer() {
             @Override
-            public String getName() {
-                return "Float";
-            }
-
-            @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 out.writeFloat((Float) object);
             }
@@ -1041,11 +792,6 @@ public class BlobStoreEntryLayout implements Externalizable {
             }
         });
         types.put(Boolean.class, new Serializer() {
-            @Override
-            public String getName() {
-                return "Boolean";
-            }
-
             @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 out.writeBoolean((Boolean) object);
@@ -1058,11 +804,6 @@ public class BlobStoreEntryLayout implements Externalizable {
         });
         types.put(Character.class, new Serializer() {
             @Override
-            public String getName() {
-                return "Character";
-            }
-
-            @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 out.writeChar((Character) object);
             }
@@ -1073,11 +814,6 @@ public class BlobStoreEntryLayout implements Externalizable {
             }
         });
         types.put(Short.class, new Serializer() {
-            @Override
-            public String getName() {
-                return "Short";
-            }
-
             @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 out.writeShort((Short) object);
@@ -1090,11 +826,6 @@ public class BlobStoreEntryLayout implements Externalizable {
         });
         types.put(Double.class, new Serializer() {
             @Override
-            public String getName() {
-                return "Double";
-            }
-
-            @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 out.writeDouble((Double) object);
             }
@@ -1105,11 +836,6 @@ public class BlobStoreEntryLayout implements Externalizable {
             }
         });
         types.put(String.class, new Serializer() {
-            @Override
-            public String getName() {
-                return "String";
-            }
-
             @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 String input = (String) object;
@@ -1132,11 +858,6 @@ public class BlobStoreEntryLayout implements Externalizable {
             }
         });
         types.put(MarshObject.class, new Serializer() {
-            @Override
-            public String getName() {
-                return "MarshObject";
-            }
-
             @Override
             public void write(Object object, ObjectOutput out) throws IOException {
                 byte[] data = ((MarshObject) object).getBytes();

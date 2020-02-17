@@ -21,7 +21,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Arrays;
 import java.util.HashSet;
 
 /**
@@ -100,12 +99,5 @@ public class BlobStoreStorageAdapterClassInfo implements Externalizable {
         out.writeShort(_storedVersion);
     }
 
-    @Override
-    public String toString() {
-        return "BlobStoreStorageAdapterClassInfo{" + "\n" +
-                "_indexesRelatedFixedProperties=" + Arrays.toString(_indexesRelatedFixedProperties) + "\n" +
-                ", _indexesRelatedDynamicProperties=" + _indexesRelatedDynamicProperties + "\n" +
-                ", _storedVersion=" + _storedVersion + "\n" +
-                '}';
-    }
+
 }
