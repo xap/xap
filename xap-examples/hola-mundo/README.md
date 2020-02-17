@@ -62,7 +62,7 @@ The `runConfigurations` folder consists of IntelliJ runtime configurations, whic
 to the `.idea/runConfigurations` directory under the IDE project structure (`.idea` is a hidden directory). 
 In IntelliJ, these configurations will appear in the "Edit Configurations..." section.
 
-A configuration consists of a Main class to run, and a module classpath to use.
+A configuration consists of a PlaneCmd class to run, and a module classpath to use.
 The main class uses `org.openspaces.pu.container.integrated.IntegratedProcessingUnitContainer` - a 
 built in container used to run a Processing Unit.
 
