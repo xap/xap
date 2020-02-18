@@ -26,10 +26,13 @@ import com.j_spaces.core.IJSpace;
 
 import org.openspaces.core.exception.ExceptionTranslator;
 import org.openspaces.core.space.SpaceConfigurer;
+import org.openspaces.core.space.UrlSpaceConfigurer;
 import org.openspaces.core.transaction.TransactionProvider;
 import org.springframework.core.Constants;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
+
+import java.nio.file.Path;
 
 /**
  * A simple programmatic configurer for {@link org.openspaces.core.GigaSpace} instance wrapping the
@@ -74,6 +77,7 @@ public class GigaSpaceConfigurer {
     private ClearModifiers defaultClearModifiers;
     private CountModifiers defaultCountModifiers;
     private ChangeModifiers defaultChangeModifiers;
+    private Path tracerProperties;
 
     /**
      * Constructs a new configurer based on the Space.
@@ -390,5 +394,14 @@ public class GigaSpaceConfigurer {
 
     protected DefaultGigaSpace initialize() {
         return new DefaultGigaSpace(this);
+    }
+
+    public GigaSpaceConfigurer loadTracer(Path propertiesFile) {
+        this.tracerProperties = propertiesFile;
+        return this;
+    }
+
+    public Path getTracerProperties() {
+        return tracerProperties;
     }
 }

@@ -17,6 +17,18 @@
 			<useTransitiveDependencies/>
 			<useTransitiveFiltering/>
 		</dependencySet>
+		<dependencySet>
+			<useProjectArtifact>false</useProjectArtifact>
+			<outputDirectory>product/lib/required</outputDirectory>
+			<includes>
+				<include>io.opentracing.brave:brave-opentracing</include>
+				<include>io.opentracing:opentracing-util</include>
+				<include>io.zipkin.reporter2:zipkin-sender-okhttp3</include>
+			</includes>
+			<useProjectAttachments>true</useProjectAttachments>
+			<useTransitiveDependencies>true</useTransitiveDependencies>
+			<useTransitiveFiltering>true</useTransitiveFiltering>
+		</dependencySet>
 
 		<dependencySet>
 			<useProjectArtifact>false</useProjectArtifact>
@@ -136,6 +148,17 @@
 		<fileSet>
 			<directory>${project.basedir}/../xap-extensions/xap-blueprints/blueprints</directory>
 			<outputDirectory>product/config/blueprints</outputDirectory>
+		</fileSet>
+
+
+		<fileSet>
+			<directory>${project.basedir}/../xap-core/xap-datagrid/config</directory>
+			<outputDirectory>product/config</outputDirectory>
+			<includes>
+				<include>cache.properties</include>
+				<include>mirror.properties</include>
+				<include>tracer/*</include>
+			</includes>
 		</fileSet>
 
     </fileSets>
