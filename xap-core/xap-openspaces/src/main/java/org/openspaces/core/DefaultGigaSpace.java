@@ -93,6 +93,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -193,7 +194,7 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
         }
 
         try {
-            tracerEnabled = configureGlobalTracer(tracerProperties, "GigaSpaces-Proxy");
+            tracerEnabled = configureGlobalTracer(tracerProperties, "GigaSpaces-Proxy-"+ UUID.randomUUID().toString());
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Failed to initialize tracer");
