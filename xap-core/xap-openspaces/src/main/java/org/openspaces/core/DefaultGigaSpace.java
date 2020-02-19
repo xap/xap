@@ -184,9 +184,12 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
         Path tracerProperties = configurer.getTracerProperties();
         if (tracerProperties == null) {
             tracerProperties = GsEnv.propertyPath("com.gs.tracer_properties").get();
+            System.out.println("Trying to read from env var / sys prop: " + tracerProperties.toAbsolutePath().toString());
         }
         if (tracerProperties == null) {
             tracerProperties = SystemLocations.singleton().config().resolve("tracer").resolve("tracer_config.properties");
+            System.out.println("Trying to read from config file: " + tracerProperties.toAbsolutePath().toString());
+
         }
 
         try {
