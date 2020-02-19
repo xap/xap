@@ -190,13 +190,13 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
         }
 
         try {
-            tracerEnabled = configureGlobalTracer(loadConfig(tracerProperties), "GigaSpaces-Proxy");
+            tracerEnabled = configureGlobalTracer(tracerProperties, "GigaSpaces-Proxy");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private Properties loadConfig(Path path) throws IOException {
+    private static Properties loadConfig(Path path) throws IOException {
         FileInputStream fs = new FileInputStream(path.toFile());
         Properties config = new Properties();
         config.load(fs);
@@ -204,7 +204,11 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
         return config;
     }
 
-    private boolean configureGlobalTracer(Properties config, String componentName) {
+    public static boolean configureGlobalTracer(Path propertiesFile, String componentName) throws IOException {
+        if (GlobalTracer.isRegistered()) return true; // Skip initializing new tracer
+
+        Properties config = loadConfig(propertiesFile);
+
         String tracerName = config.getProperty("tracer");
         Tracer tracer = null;
         if ("zipkin".equals(tracerName)) {
