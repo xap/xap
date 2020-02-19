@@ -184,11 +184,11 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
         Path tracerProperties = configurer.getTracerProperties();
         if (tracerProperties == null) {
             tracerProperties = GsEnv.propertyPath("com.gs.tracer_properties").get();
-            System.out.println("Trying to read from env var / sys prop: " + tracerProperties.toAbsolutePath().toString());
+            System.out.println("Trying to read from env var / sys prop: " + tracerProperties);
         }
         if (tracerProperties == null) {
             tracerProperties = SystemLocations.singleton().config().resolve("tracer").resolve("tracer_config.properties");
-            System.out.println("Trying to read from config file: " + tracerProperties.toAbsolutePath().toString());
+            System.out.println("Trying to read from config file: " + tracerProperties);
 
         }
 
@@ -196,6 +196,7 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
             tracerEnabled = configureGlobalTracer(tracerProperties, "GigaSpaces-Proxy");
         } catch (IOException e) {
             e.printStackTrace();
+            System.out.println("Failed to initialize tracer");
         }
     }
 
