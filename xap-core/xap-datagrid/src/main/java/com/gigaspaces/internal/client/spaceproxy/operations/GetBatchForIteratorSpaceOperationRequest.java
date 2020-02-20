@@ -57,15 +57,8 @@ public class GetBatchForIteratorSpaceOperationRequest extends SpaceOperationRequ
     private boolean _firstTime; //use it with client disconnection + expiration
     private int _modifiers;
     private int _batchSize;
-
-    private transient int _resultEntriesCount = 0;
-    private transient int _finalResultMaxBatchSize;
-    private transient List<IEntryPacket[]> _entries;
-    private transient List<Throwable> _exceptions;
     private transient int _totalNumberOfMatchesEntries;
     private transient Object _query;
-    private transient Map<IEntryPacket[], Integer> replicationLevels;
-    private transient List<ReplicationLevel> levels = null;
     private transient ExplainPlanImpl explainPlan;
 
     /**
@@ -79,7 +72,6 @@ public class GetBatchForIteratorSpaceOperationRequest extends SpaceOperationRequ
         this._templatePacket = templatePacket;
         this._modifiers = modifiers;
         this._batchSize = maxResults;
-        this._finalResultMaxBatchSize = maxResults;
         this._query = query;
         this.explainPlan = ExplainPlanImpl.fromQueryPacket(query);
         this._iteratorId = iteratorId;
@@ -113,23 +105,9 @@ public class GetBatchForIteratorSpaceOperationRequest extends SpaceOperationRequ
 
     public SpaceIteratorBatchResult getFinalResult()
             throws RemoteException, TransactionException, UnusableEntryException {
-        GetBatchForIteratorSpaceOperationResult result;
-        if (_entries == null && _exceptions == null) {
-            result = getRemoteOperationResult();
-            _totalNumberOfMatchesEntries = getRemoteOperationResult().getNumOfEntriesMatched();
-        } else {
-            final int resultsCount = Math.min(_resultEntriesCount, _finalResultMaxBatchSize);
-            final IEntryPacket[] entries = new IEntryPacket[resultsCount];
-            if (_entries != null) {
-                int index = 0;
-                for (IEntryPacket[] entry : _entries)
-                    index = accumulateResult(entry, entries, index);
-            }
-            result = new GetBatchForIteratorSpaceOperationResult(entries);
-            if (_exceptions != null && entries.length < _finalResultMaxBatchSize && ReadModifiers.isThrowPartialFailure(_modifiers))
-                result.setExecutionException(createPartialExecutionException(entries));
-        }
+        GetBatchForIteratorSpaceOperationResult result = getRemoteOperationResult();
         result.processExecutionException();
+        _totalNumberOfMatchesEntries = result.getNumOfEntriesMatched();
         if (_totalNumberOfMatchesEntries > 0
                 && _devLogger.isLoggable(Level.FINEST)) {
             _devLogger.finest(_totalNumberOfMatchesEntries
@@ -139,18 +117,6 @@ public class GetBatchForIteratorSpaceOperationRequest extends SpaceOperationRequ
         }
         return new SpaceIteratorBatchResult(result.getEntryPackets(), result.getPartitionId(), result.getExecutionException(), _firstTime, _iteratorId);
     }
-
-    private BatchQueryException createPartialExecutionException(IEntryPacket[] entries) {
-        return new ReadMultipleException(entries, _exceptions);
-    }
-
-    private int accumulateResult(IEntryPacket[] entryPackets,
-                                 final IEntryPacket[] entries, int index) {
-        for (int i = 0; i < entryPackets.length && index < entries.length; i++)
-            entries[index++] = entryPackets[i];
-        return index;
-    }
-
 
     @Override
     public Object getPartitionedClusterRoutingValue(PartitionedClusterRemoteOperationRouter router) {
@@ -186,25 +152,21 @@ public class GetBatchForIteratorSpaceOperationRequest extends SpaceOperationRequ
         return "getBatchForSpaceIterator";
     }
 
-    private static final short FLAG_BATCH_SIZE = 1;
-    private static final short FLAG_MODIFIERS = 1 << 1;
+    private static final short FLAG_MODIFIERS = 1;
 
     private static final int DEFAULT_MODIFIERS = ReadModifiers.REPEATABLE_READ;
-    private static final int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
 
     @Override
     public void writeExternal(ObjectOutput out)
             throws IOException {
         super.writeExternal(out);
-
         final short flags = buildFlags();
         out.writeShort(flags);
         IOUtils.writeObject(out, _templatePacket);
         IOUtils.writeUUID(out, _iteratorId);
         out.writeBoolean(_firstTime);
+        out.writeInt(_batchSize);
         if (flags != 0) {
-            if (_batchSize != DEFAULT_BATCH_SIZE)
-                out.writeInt(_batchSize);
             if (_modifiers != DEFAULT_MODIFIERS)
                 out.writeInt(_modifiers);
         }
@@ -214,24 +176,20 @@ public class GetBatchForIteratorSpaceOperationRequest extends SpaceOperationRequ
     public void readExternal(ObjectInput in)
             throws IOException, ClassNotFoundException {
         super.readExternal(in);
-
         final short flags = in.readShort();
         _templatePacket = IOUtils.readObject(in);
         _iteratorId = IOUtils.readUUID(in);
         _firstTime = in.readBoolean();
+        _batchSize = in.readInt();
         if (flags != 0) {
-            _batchSize = (flags & FLAG_BATCH_SIZE) != 0 ? in.readInt() : DEFAULT_BATCH_SIZE;
             _modifiers = (flags & FLAG_MODIFIERS) != 0 ? in.readInt() : DEFAULT_MODIFIERS;
         } else {
             _modifiers = DEFAULT_MODIFIERS;
-            _batchSize = DEFAULT_BATCH_SIZE;
         }
     }
 
     private short buildFlags() {
         short flags = 0;
-        if (_batchSize != DEFAULT_BATCH_SIZE)
-            flags |= FLAG_BATCH_SIZE;
         if (_modifiers != DEFAULT_MODIFIERS)
             flags |= FLAG_MODIFIERS;
         return flags;
@@ -251,10 +209,6 @@ public class GetBatchForIteratorSpaceOperationRequest extends SpaceOperationRequ
     @Override
     public int getPreciseDistributionGroupingCode() {
         throw new UnsupportedOperationException();
-    }
-
-    public List<ReplicationLevel> getLevels() {
-        return levels;
     }
 
 

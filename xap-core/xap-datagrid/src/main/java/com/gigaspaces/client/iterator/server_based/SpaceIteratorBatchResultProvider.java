@@ -5,10 +5,8 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterUtils;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.logger.Constants;
-import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.TransactionException;
 
-import java.io.Closeable;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.UUID;
@@ -36,6 +34,8 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
     private final ITemplatePacket _queryPacket;
     private final UUID _uuid;
     private final int _numberOfPartitions;
+    private final transient SpaceIteratorBatchResultListener _spaceIteratorBatchResultListener;
+    private transient SinglePartitionGetBatchForIteratorSpaceTask _singlePartitionGetBatchForIteratorSpaceTask;
 
     public SpaceIteratorBatchResultProvider(ISpaceProxy spaceProxy, int batchSize, int readModifiers, ITemplatePacket queryPacket, UUID uuid){
         this._spaceProxy = spaceProxy;
@@ -43,9 +43,11 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
         this._readModifiers = readModifiers;
         this._queryPacket = queryPacket;
         this._uuid = uuid;
-        this._queue = new LinkedBlockingQueue<>();
         this._numberOfPartitions = _spaceProxy.getDirectProxy().getSpaceClusterInfo().getNumberOfPartitions();
+        this._queue = new LinkedBlockingQueue<>(getInitialNumberOfActivePartitions());
         initBatchTask();
+        this._spaceIteratorBatchResultListener = new SpaceIteratorBatchResultListener(this);
+        this._singlePartitionGetBatchForIteratorSpaceTask = new SinglePartitionGetBatchForIteratorSpaceTask(this);
     }
 
     private void initBatchTask() {
@@ -89,7 +91,7 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
 
     public void triggerSinglePartitionBatchTask(int partitionId, boolean firstTime) {
         try {
-            _spaceProxy.execute(new SinglePartitionGetBatchForIteratorSpaceTask(this, firstTime), partitionId, null, new SpaceIteratorBatchResultListener(this));
+            _spaceProxy.execute(_singlePartitionGetBatchForIteratorSpaceTask.setFirstTime(firstTime), partitionId, null, _spaceIteratorBatchResultListener);
         } catch (TransactionException e) {
             e.printStackTrace();
         } catch (RemoteException e) {

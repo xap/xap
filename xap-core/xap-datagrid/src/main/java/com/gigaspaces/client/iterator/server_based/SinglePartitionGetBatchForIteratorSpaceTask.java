@@ -12,11 +12,19 @@ import net.jini.core.transaction.Transaction;
 @com.gigaspaces.api.InternalApi
 public class SinglePartitionGetBatchForIteratorSpaceTask implements SpaceTask<SpaceIteratorBatchResult> {
     private final SpaceIteratorBatchResultProvider _spaceIteratorBatchResultProvider;
-    private final boolean _firstTime;
+    private boolean _firstTime;
 
-    SinglePartitionGetBatchForIteratorSpaceTask(SpaceIteratorBatchResultProvider spaceIteratorBatchResultProvider, boolean firstTime) {
-        _spaceIteratorBatchResultProvider = spaceIteratorBatchResultProvider;
-        _firstTime = firstTime;
+    public SinglePartitionGetBatchForIteratorSpaceTask(SpaceIteratorBatchResultProvider _spaceIteratorBatchResultProvider) {
+        this._spaceIteratorBatchResultProvider = _spaceIteratorBatchResultProvider;
+    }
+
+    public boolean isFirstTime() {
+        return _firstTime;
+    }
+
+    public SinglePartitionGetBatchForIteratorSpaceTask setFirstTime(boolean firstTime) {
+        this._firstTime = firstTime;
+        return this;
     }
 
     @Override

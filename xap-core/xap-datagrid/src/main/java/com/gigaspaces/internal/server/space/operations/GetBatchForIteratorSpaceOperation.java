@@ -41,11 +41,9 @@ public class GetBatchForIteratorSpaceOperation extends AbstractSpaceOperation<Ge
 
         AnswerHolder answerHolder = space.getNextBatchFromServerIterator(request.getTemplatePacket(),
                 request.getSpaceContext(), request.getModifiers(), new ServerIteratorRequestInfo(request.getIteratorId(), request.getLease(), request.getBatchSize(), request.isFirstTime()));
-        // TODO go over code to see if redundant
         final IEntryPacket[] entryPackets = answerHolder != null ? answerHolder.getEntryPackets() : null;
         result.setEntryPackets(entryPackets);
         if (answerHolder != null) {
-            result.setSyncReplicationLevel(answerHolder.getSyncRelplicationLevel());
             if (Modifiers.contains(request.getModifiers(), Modifiers.LOG_SCANNED_ENTRIES_COUNT))
                 result.setNumOfEntriesMatched(answerHolder.getNumOfEntriesMatched());
             if (answerHolder.getExplainPlan() != null) {
