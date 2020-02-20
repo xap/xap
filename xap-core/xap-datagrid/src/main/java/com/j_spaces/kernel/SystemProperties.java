@@ -300,7 +300,7 @@ public class SystemProperties extends CommonSystemProperties {
      * it. Defaults to false
      */
     public final static String SPACE_ITERATOR_IMPLEMENTATION = "com.gs.iterator.server-based-implementation-enabled";
-    public final static String SPACE_ITERATOR_IMPLEMENTATION_DEFAULT = "true";
+    public final static String SPACE_ITERATOR_IMPLEMENTATION_DEFAULT = "false";
 
     /**
      * Set to true in order to enable lrmi class loading for all purposes, set to false to disable
