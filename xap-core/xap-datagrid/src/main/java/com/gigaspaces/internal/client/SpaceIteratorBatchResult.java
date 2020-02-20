@@ -16,9 +16,10 @@
 
 package com.gigaspaces.internal.client;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterUtils;
 
-import java.io.Serializable;
+import java.io.*;
 import java.util.UUID;
 
 /**
@@ -26,13 +27,15 @@ import java.util.UUID;
  * @since 15.2.0
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceIteratorBatchResult implements Serializable {
+public class SpaceIteratorBatchResult implements Externalizable {
+    private static final short FLAG_ENTRY_PACKETS = 1 << 0;
+    private static final short FLAG_EXCEPTION = 1 << 1;
     private Object[] _entries;
     private Exception _exception;
     private Integer _partitionId;
-    private boolean _finished;
     private boolean _firstTime;
     private UUID _uuid;
+    private transient boolean _finished;
 
     public SpaceIteratorBatchResult() {
     }
@@ -46,7 +49,6 @@ public class SpaceIteratorBatchResult implements Serializable {
     }
 
     public Object[] getEntries(){return _entries;}
-
 
     public Integer getPartitionId(){return _partitionId;}
 
@@ -88,5 +90,43 @@ public class SpaceIteratorBatchResult implements Serializable {
                 ", _exception=" + _exception +
                 ", _firstTime=" + _firstTime +
                 '}';
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        final short flags = buildFlags();
+        out.writeShort(flags);
+        if (flags != 0) {
+            if(_entries != null )
+                IOUtils.writeObjectArray(out, _entries);
+            if (_exception != null)
+                IOUtils.writeObject(out, _exception);
+        }
+        out.writeInt(_partitionId);
+        out.writeBoolean(_firstTime);
+        IOUtils.writeUUID(out, _uuid);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        short flags = in.readShort();
+        if (flags != 0) {
+            if ((flags & FLAG_ENTRY_PACKETS) != 0)
+                this._entries = IOUtils.readObjectArray(in);
+            if ((flags & FLAG_EXCEPTION) != 0)
+                this._exception = IOUtils.readObject(in);
+        }
+        this._partitionId = in.readInt();
+        this._firstTime = in.readBoolean();
+        this._uuid = IOUtils.readUUID(in);
+    }
+
+    private short buildFlags() {
+        short flags = 0;
+        if (_entries != null)
+            flags |= FLAG_ENTRY_PACKETS;
+        if (_exception != null)
+            flags |= FLAG_EXCEPTION;
+        return flags;
     }
 }

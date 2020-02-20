@@ -38,7 +38,6 @@ public class GetBatchForIteratorSpaceOperationResult extends SpaceOperationResul
 
     private IEntryPacket[] _entryPackets;
     private int _numOfEntriesMatched;
-    private int syncReplicationLevel;
     private transient Integer _partitionId;
 
     /**
@@ -76,14 +75,6 @@ public class GetBatchForIteratorSpaceOperationResult extends SpaceOperationResul
         onUnexpectedException(executionException);
     }
 
-    public int getSyncReplicationLevel() {
-        return syncReplicationLevel;
-    }
-
-    public void setSyncReplicationLevel(int syncReplicationLevel) {
-        this.syncReplicationLevel = syncReplicationLevel;
-    }
-
     public IEntryPacket[] getEntryPackets() {
         return _entryPackets;
     }
@@ -110,7 +101,6 @@ public class GetBatchForIteratorSpaceOperationResult extends SpaceOperationResul
 
     private static final short FLAG_ENTRY_PACKETS = 1 << 0;
     private static final short FLAG_NUM_OF_ENTRIES_MATCHED = 1 << 1;
-    private static final short FLAG_SYNC_REPLICATION_LEVEL = 1 << 2;
 
 
     @Override
@@ -125,9 +115,6 @@ public class GetBatchForIteratorSpaceOperationResult extends SpaceOperationResul
             }
             if (_numOfEntriesMatched > 0) {
                 out.writeInt(_numOfEntriesMatched);
-            }
-            if (0 < syncReplicationLevel) {
-                out.writeInt(syncReplicationLevel);
             }
         }
     }
@@ -144,7 +131,6 @@ public class GetBatchForIteratorSpaceOperationResult extends SpaceOperationResul
             if ((flags & FLAG_NUM_OF_ENTRIES_MATCHED) != 0) {
                 this._numOfEntriesMatched = in.readInt();
             }
-            this.syncReplicationLevel = ((flags & FLAG_SYNC_REPLICATION_LEVEL) != 0) ? in.readInt() : 0;
         }
     }
 
@@ -157,9 +143,6 @@ public class GetBatchForIteratorSpaceOperationResult extends SpaceOperationResul
         }
         if (_numOfEntriesMatched > 0) {
             flags |= FLAG_NUM_OF_ENTRIES_MATCHED;
-        }
-        if (0 < syncReplicationLevel) {
-            flags |= FLAG_SYNC_REPLICATION_LEVEL;
         }
 
         return flags;

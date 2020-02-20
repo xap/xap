@@ -63,6 +63,7 @@ public class ServerBasedEntryPacketIterator implements IEntryPacketIterator {
         this._queryPacket = toTemplatePacket(query);
         this._buffer = new LinkedList<>();
         this._spaceIteratorBatchResultsManager = new SpaceIteratorBatchResultsManager(_spaceProxy, batchSize, modifiers, _queryPacket);
+        this._bufferIterator = getNextBatch();
     }
 
     private ITemplatePacket toTemplatePacket(Object template) {
