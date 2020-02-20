@@ -18,13 +18,14 @@ package org.openspaces.textsearch;
 
 import com.gigaspaces.SpaceRuntimeException;
 import com.gigaspaces.internal.io.FileUtils;
+import com.gigaspaces.internal.query.IQueryIndexScanner;
+import com.gigaspaces.internal.query.RelationIndexScanner;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.query.extension.QueryExtensionEntryIterator;
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtensions;
 import com.gigaspaces.server.SpaceServerEntry;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -36,13 +37,11 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -205,6 +204,10 @@ public class LuceneTextSearchQueryExtensionManager extends QueryExtensionManager
             _logger.log(Level.FINE, "query [typeName=" + typeName + ", path=" + path + ", operation=" + operationName + ", operand=" + operand + "]");
 
         final Query query = createQuery(typeName, path, operationName, operand);
+        return searchByQuery(typeName, query);
+    }
+
+    private QueryExtensionEntryIterator searchByQuery(String typeName, Query query) {
         final LuceneTextSearchTypeIndex luceneHolder = _luceneHolderMap.get(typeName);
         try {
             // Flush
@@ -217,6 +220,19 @@ public class LuceneTextSearchQueryExtensionManager extends QueryExtensionManager
         } catch (IOException e) {
             throw new SpaceRuntimeException("Failed to scan index", e);
         }
+    }
+
+    @Override
+    public QueryExtensionEntryIterator queryByIndex(String typeName, List<IQueryIndexScanner> queries) {
+        BooleanQuery.Builder booleanQueryBuilder = new BooleanQuery.Builder();
+        for (IQueryIndexScanner queryIndexScanner : queries) {
+            RelationIndexScanner relationIndexScanner = (RelationIndexScanner) queryIndexScanner;
+            Query query = createQuery(relationIndexScanner.getTypeName(), relationIndexScanner.getPath(), relationIndexScanner.getRelation(), relationIndexScanner.getSubject());
+            booleanQueryBuilder.add(query, BooleanClause.Occur.MUST); //TODO for OR query -use- BooleanClause.Occur.SHOULD
+        }
+        BooleanQuery query = booleanQueryBuilder.build();
+        return searchByQuery(typeName, query);
+
     }
 
     protected Query createQuery(String typeName, String path, String operationName, Object operand) {

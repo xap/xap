@@ -58,6 +58,26 @@ public class RelationIndexScanner extends AbstractQueryIndex {
         this.subject = subject;
     }
 
+    public String getTypeName() {
+        return typeName;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public String getRelation() {
+        return relation;
+    }
+
+    public Object getSubject() {
+        return subject;
+    }
+
     @Override
     public IObjectsList getIndexedEntriesByType(Context context, TypeData typeData,
                                                 ITemplateHolder template, int latestIndexToConsider) {

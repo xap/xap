@@ -27,7 +27,6 @@ import com.j_spaces.sadapter.datasource.DefaultSQLQueryBuilder;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -51,7 +50,7 @@ public class CompoundAndCustomQuery extends AbstractCompundCustomQuery {
     }
 
     public CompoundAndCustomQuery(List<ICustomQuery> subQueries) {
-        this._subQueries = subQueries;
+        super(subQueries);
     }
 
     @Override

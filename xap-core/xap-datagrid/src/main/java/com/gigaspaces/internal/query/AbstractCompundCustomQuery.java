@@ -45,6 +45,10 @@ public abstract class AbstractCompundCustomQuery extends AbstractCustomQuery {
     public AbstractCompundCustomQuery() {
     }
 
+    protected AbstractCompundCustomQuery(List<ICustomQuery> subQueries) {
+        this._subQueries = subQueries;
+    }
+
     public List<ICustomQuery> get_subQueries() {
         return _subQueries;
     }

@@ -43,7 +43,7 @@ public class CompoundOrCustomQuery extends AbstractCompundCustomQuery {
     }
 
     public CompoundOrCustomQuery(List<ICustomQuery> subQueries) {
-        this._subQueries = subQueries;
+        super(subQueries);
     }
 
 

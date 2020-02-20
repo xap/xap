@@ -18,12 +18,12 @@ package org.openspaces.spatial.spi;
 
 import com.gigaspaces.SpaceRuntimeException;
 import com.gigaspaces.internal.io.FileUtils;
+import com.gigaspaces.internal.query.IQueryIndexScanner;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.query.extension.QueryExtensionEntryIterator;
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.server.SpaceServerEntry;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
@@ -43,6 +43,7 @@ import org.openspaces.spatial.spatial4j.Spatial4jShapeProvider;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -153,6 +154,11 @@ public class LuceneSpatialQueryExtensionManager extends QueryExtensionManager {
         } catch (IOException e) {
             throw new SpaceRuntimeException("Failed to scan index", e);
         }
+    }
+
+    @Override
+    public QueryExtensionEntryIterator queryByIndex(String typeName, List<IQueryIndexScanner> queries) {
+        throw new UnsupportedOperationException("no support for multiple spatial query push down");
     }
 
     @Override

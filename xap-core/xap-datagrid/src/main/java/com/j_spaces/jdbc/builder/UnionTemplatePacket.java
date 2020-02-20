@@ -18,11 +18,7 @@ package com.j_spaces.jdbc.builder;
 
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.query.CompoundAndIndexScanner;
-import com.gigaspaces.internal.query.CompoundOrCustomQuery;
-import com.gigaspaces.internal.query.CompoundOrIndexScanner;
-import com.gigaspaces.internal.query.ICustomQuery;
-import com.gigaspaces.internal.query.IQueryIndexScanner;
+import com.gigaspaces.internal.query.*;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.jdbc.JoinedEntry;
 import com.j_spaces.jdbc.query.QueryTableData;
@@ -218,7 +214,7 @@ public class UnionTemplatePacket extends QueryTemplatePacket {
             // add the custom index only if all the sub queries are indexes,
             // otherwise don't use indexes at all since all the entries need to be scanned anyway
             if (indexScanner.getIndexScanners().size() == subQueries.size())
-                orQuery.addCustomIndex(indexScanner);
+                orQuery.addCustomIndex(indexScanner); //TODO support CombinedOrCustomQuery
             setCustomQuery(orQuery);
         }
         _preparedForSpace = true;
