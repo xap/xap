@@ -16,8 +16,7 @@
 
 package com.gigaspaces.internal.extension;
 
-import com.gigaspaces.logger.LogHelper;
-
+import com.gigaspaces.logger.LogUtils;
 import org.jini.rio.boot.LoggableClassLoader;
 
 import java.io.IOException;
@@ -47,7 +46,7 @@ public class XapExtensionActivator {
         final Map<URL, Properties> xapProperties = loadManifestsEntryAttributes(classLoader, "xap");
         final Set<String> extensions = loadSet(xapProperties, key, ",");
         activate(classLoader, extensions);
-        LogHelper.logDuration(logger, Level.FINE, startTime, "Finished scanning for extensions in class loader " + toString(classLoader));
+        LogUtils.logDuration(logger, Level.FINE, startTime, "Finished scanning for extensions in class loader " + toString(classLoader));
     }
 
     private static void activate(ClassLoader classLoader, Set<String> extensions) {

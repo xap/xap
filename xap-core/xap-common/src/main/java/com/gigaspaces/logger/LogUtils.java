@@ -17,10 +17,33 @@
  */
 package com.gigaspaces.logger;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 @com.gigaspaces.api.InternalApi
 public class LogUtils {
 
     public static String format(Class sourceClass, String sourceMethod, String msg, Object ... params) {
         return sourceClass.getName() + "#" + sourceMethod + ": " + String.format(msg, params);
+    }
+
+    static String getStackTrace(Throwable t) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        t.printStackTrace(pw);
+        pw.flush();
+
+        return sw.toString();
+    }
+
+    public static long getCurrTimeIfNeeded(Logger logger, Level level) {
+        return logger.isLoggable(level) ? System.currentTimeMillis() : 0;
+    }
+
+    public static void logDuration(Logger logger, Level level, long startTime, String message) {
+        final long duration = System.currentTimeMillis() - startTime;
+        logger.log(level, message + " [Duration = " + duration + "ms]");
     }
 }

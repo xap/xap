@@ -18,8 +18,6 @@ package com.gigaspaces.logger;
 
 import com.gigaspaces.CommonSystemProperties;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.text.MessageFormat;
 import java.util.Date;
 import java.util.logging.Level;
@@ -94,7 +92,7 @@ public class LogHelper {
         String dateTimeAsString = messageFormat.format(new Object[]{new Date()});
         String stackTrace = "";
         if (t != null) {
-            stackTrace = "; Caught: " + t + "\n" + getStackTrace(t);
+            stackTrace = "; Caught: " + t + "\n" + LogUtils.getStackTrace(t);
         }
         String msg = dateTimeAsString + " " + level + " [" + logName + "] - " + message + stackTrace;
 
@@ -105,21 +103,4 @@ public class LogHelper {
         }
     }
 
-    private static String getStackTrace(Throwable t) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        t.printStackTrace(pw);
-        pw.flush();
-
-        return sw.toString();
-    }
-
-    public static long getCurrTimeIfNeeded(Logger logger, Level level) {
-        return logger.isLoggable(level) ? System.currentTimeMillis() : 0;
-    }
-
-    public static void logDuration(Logger logger, Level level, long startTime, String message) {
-        final long duration = System.currentTimeMillis() - startTime;
-        logger.log(level, message + " [Duration = " + duration + "ms]");
-    }
 }
