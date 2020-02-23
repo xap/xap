@@ -18,7 +18,6 @@
 package com.sun.jini.reggie;
 
 import com.sun.jini.action.GetBooleanAction;
-import com.sun.jini.logging.Levels;
 import com.sun.jini.proxy.MarshalledWrapper;
 
 import net.jini.core.lookup.ServiceID;
@@ -65,7 +64,7 @@ public class Item implements Serializable, Cloneable {
             b = (Boolean) Security.doPrivileged(new GetBooleanAction(
                     "com.sun.jini.reggie.enableImplToStubReplacement"));
         } catch (SecurityException e) {
-            logger.log(Levels.HANDLED, "failed to read system property", e);
+            logger.log(Level.FINE, "failed to read system property", e);
             b = Boolean.FALSE;
         }
         enableImplToStubReplacement = b.booleanValue();

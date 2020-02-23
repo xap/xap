@@ -17,7 +17,6 @@
  */
 package com.sun.jini.mahalo.log;
 
-import com.sun.jini.logging.Levels;
 import com.sun.jini.mahalo.TxnManager;
 
 import net.jini.admin.Administrable;
@@ -370,13 +369,13 @@ public class MultiLogManager
                             }
                         }
                     } catch (LogException le) {
-                        if (persistenceLogger.isLoggable(Levels.HANDLED)) {
-                            persistenceLogger.log(Levels.HANDLED,
+                        if (persistenceLogger.isLoggable(Level.FINE)) {
+                            persistenceLogger.log(Level.FINE,
                                     "Unable to recover log state", le);
                         }
                     } catch (java.util.NoSuchElementException nsee) {
-                        if (persistenceLogger.isLoggable(Levels.HANDLED)) {
-                            persistenceLogger.log(Levels.HANDLED,
+                        if (persistenceLogger.isLoggable(Level.FINE)) {
+                            persistenceLogger.log(Level.FINE,
                                     "Problem enumerating internal log state", nsee);
                         }
                     }

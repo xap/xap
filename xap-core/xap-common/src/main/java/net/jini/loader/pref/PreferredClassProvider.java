@@ -19,7 +19,6 @@
 package net.jini.loader.pref;
 
 import com.sun.jini.action.GetPropertyAction;
-import com.sun.jini.logging.Levels;
 import com.sun.jini.logging.LogUtil;
 
 import net.jini.loader.ClassAnnotation;
@@ -176,7 +175,7 @@ import java.util.logging.Logger;
  *
  * <tr> <td> {@link Level#FINE FINE} <td> class loading failures
  *
- * <tr> <td> {@link Levels#HANDLED HANDLED} <td> exceptions caught during class loading operations
+ * <tr> <td> {@link Level#FINE HANDLED} <td> exceptions caught during class loading operations
  *
  * <tr> <td> {@link Level#FINE FINE} <td> invocations of {@link #loadClass loadClass} and {@link
  * #loadProxyClass loadProxyClass}
@@ -598,8 +597,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
 		 * Presumably the original security exception is
 		 * preferable to throw, but log both exceptions.
 		 */
-                if (logger.isLoggable(Levels.HANDLED)) {
-                    LogUtil.logThrow(logger, Levels.HANDLED,
+                if (logger.isLoggable(Level.FINE)) {
+                    LogUtil.logThrow(logger, Level.FINE,
                             PreferredClassProvider.class, "loadClass",
                             "class \"{0}\" not found " +
                                     "via thread context class loader " +
@@ -1048,8 +1047,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
 		 * Presumably the original security exception is
 		 * preferable to throw, but log both exceptions.
 		 */
-                if (logger.isLoggable(Levels.HANDLED)) {
-                    logger.log(Levels.HANDLED,
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.log(Level.FINE,
                             "proxy class resolution failed " +
                                     "(access to codebase loader denied)", e);
                 }

@@ -19,7 +19,6 @@
 package com.sun.jini.discovery;
 
 import com.sun.jini.collection.WeakIdentityMap;
-import com.sun.jini.logging.Levels;
 import com.sun.jini.resource.Service;
 
 import net.jini.core.constraint.InvocationConstraints;
@@ -395,7 +394,7 @@ class DiscoveryV2 extends Discovery {
                 if (e instanceof UnsupportedConstraintException ||
                         e instanceof SecurityException) {
                     ex = e;
-                    logger.log(Levels.HANDLED, "constraint check failed", e);
+                    logger.log(Level.FINE, "constraint check failed", e);
                 } else {
                     throw (RuntimeException) e;
                 }
@@ -503,7 +502,7 @@ class DiscoveryV2 extends Discovery {
                     uds = s;
                     break;
                 } catch (Exception e) {
-                    logger.log(Levels.HANDLED, "constraint check failed", e);
+                    logger.log(Level.FINE, "constraint check failed", e);
                 }
             }
         }

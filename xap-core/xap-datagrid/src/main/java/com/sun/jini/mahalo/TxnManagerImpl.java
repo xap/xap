@@ -29,7 +29,6 @@ import com.sun.jini.landlord.LeasePeriodPolicy.Result;
 import com.sun.jini.landlord.LeasedResource;
 import com.sun.jini.landlord.LocalLandlord;
 import com.sun.jini.landlord.SystemTimeFixedLeasePeriodPolicy;
-import com.sun.jini.logging.Levels;
 import com.sun.jini.mahalo.log.ClientLog;
 import com.sun.jini.mahalo.log.LogException;
 import com.sun.jini.mahalo.log.LogManager;
@@ -487,8 +486,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
             try {
                 loginContext.logout();
             } catch (LoginException le) {
-                if (initLogger.isLoggable(Levels.HANDLED)) {
-                    initLogger.log(Levels.HANDLED, "Trouble logging out", le);
+                if (initLogger.isLoggable(Level.FINE)) {
+                    initLogger.log(Level.FINE, "Trouble logging out", le);
                 }
             }
             throw e.getException();
@@ -1822,8 +1821,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
                      * object has already been unregistered --
                      * ignore in either case.
                      */
-                    if (destroyLogger.isLoggable(Levels.HANDLED)) {
-                        destroyLogger.log(Levels.HANDLED,
+                    if (destroyLogger.isLoggable(Level.FINE)) {
+                        destroyLogger.log(Level.FINE,
                                 "Trouble unregistering object -- ignoring.", e);
                     }
                 }
@@ -1855,8 +1854,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
                     try {
                         sleep(1000);
                     } catch (InterruptedException ie) {
-                        if (destroyLogger.isLoggable(Levels.HANDLED)) {
-                            destroyLogger.log(Levels.HANDLED,
+                        if (destroyLogger.isLoggable(Level.FINE)) {
+                            destroyLogger.log(Level.FINE,
                                     "problem unexporting nicely", ie);
                         }
                         break; //fall through to forced unexport
@@ -1885,8 +1884,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
             try {
                 joinStateManager.destroy();
             } catch (Exception t) {
-                if (destroyLogger.isLoggable(Levels.HANDLED)) {
-                    destroyLogger.log(Levels.HANDLED,
+                if (destroyLogger.isLoggable(Level.FINE)) {
+                    destroyLogger.log(Level.FINE,
                             "Problem destroying JoinStateManager", t);
                 }
             }
@@ -1906,8 +1905,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
             try {
                 settleThread.join();
             } catch (InterruptedException ie) {
-                if (destroyLogger.isLoggable(Levels.HANDLED)) {
-                    destroyLogger.log(Levels.HANDLED,
+                if (destroyLogger.isLoggable(Level.FINE)) {
+                    destroyLogger.log(Level.FINE,
                             "Problem stopping settleThread", ie);
                 }
             }
@@ -1945,8 +1944,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
                     com.sun.jini.system.FileSystem.destroy(
                             new File(persistenceDirectory), true);
                 } catch (IOException e) {
-                    if (destroyLogger.isLoggable(Levels.HANDLED)) {
-                        destroyLogger.log(Levels.HANDLED,
+                    if (destroyLogger.isLoggable(Level.FINE)) {
+                        destroyLogger.log(Level.FINE,
                                 "Problem destroying persistence directory", e);
                     }
                 }
@@ -1959,13 +1958,13 @@ public class TxnManagerImpl /*extends RemoteServer*/
                 try {
                     Activatable.inactive(activationID);
                 } catch (RemoteException e) { // ignore
-                    if (destroyLogger.isLoggable(Levels.HANDLED)) {
-                        destroyLogger.log(Levels.HANDLED,
+                    if (destroyLogger.isLoggable(Level.FINE)) {
+                        destroyLogger.log(Level.FINE,
                                 "Problem inactivating service", e);
                     }
                 } catch (ActivationException e) { // ignore
-                    if (destroyLogger.isLoggable(Levels.HANDLED)) {
-                        destroyLogger.log(Levels.HANDLED,
+                    if (destroyLogger.isLoggable(Level.FINE)) {
+                        destroyLogger.log(Level.FINE,
                                 "Problem inactivating service", e);
                     }
                 }
@@ -1987,8 +1986,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
                     }
                     loginContext.logout();
                 } catch (Exception e) {
-                    if (destroyLogger.isLoggable(Levels.HANDLED)) {
-                        destroyLogger.log(Levels.HANDLED,
+                    if (destroyLogger.isLoggable(Level.FINE)) {
+                        destroyLogger.log(Level.FINE,
                                 "Exception while logging out",
                                 e);
                     }
@@ -2199,8 +2198,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
                 }
                 exporter.unexport(true);
             } catch (Throwable t) {
-                if (initLogger.isLoggable(Levels.HANDLED)) {
-                    initLogger.log(Levels.HANDLED, "Trouble unexporting service", t);
+                if (initLogger.isLoggable(Level.FINE)) {
+                    initLogger.log(Level.FINE, "Trouble unexporting service", t);
                 }
             }
         }
@@ -2220,8 +2219,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
                     settlerWakeupMgr.cancelAll();
                 }
             } catch (Throwable t) {
-                if (initLogger.isLoggable(Levels.HANDLED)) {
-                    initLogger.log(Levels.HANDLED,
+                if (initLogger.isLoggable(Level.FINE)) {
+                    initLogger.log(Level.FINE,
                             "Trouble terminating settlerpool", t);
                 }
             }
@@ -2242,8 +2241,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
                     taskWakeupMgr.cancelAll();
                 }
             } catch (Throwable t) {
-                if (initLogger.isLoggable(Levels.HANDLED)) {
-                    initLogger.log(Levels.HANDLED,
+                if (initLogger.isLoggable(Level.FINE)) {
+                    initLogger.log(Level.FINE,
                             "Trouble terminating taskpool", t);
                 }
             }
@@ -2256,8 +2255,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
             try {
                 settleThread.interrupt();
             } catch (Throwable t) {
-                if (initLogger.isLoggable(Levels.HANDLED)) {
-                    initLogger.log(Levels.HANDLED,
+                if (initLogger.isLoggable(Level.FINE)) {
+                    initLogger.log(Level.FINE,
                             "Trouble terminating settleThread", t);
                 }
             }
@@ -2279,8 +2278,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
                 joinStateManager.stop();
             }
         } catch (Exception t) {
-            if (initLogger.isLoggable(Levels.HANDLED)) {
-                initLogger.log(Levels.HANDLED,
+            if (initLogger.isLoggable(Level.FINE)) {
+                initLogger.log(Level.FINE,
                         "Problem destroying JoinStateManager", t);
             }
         }

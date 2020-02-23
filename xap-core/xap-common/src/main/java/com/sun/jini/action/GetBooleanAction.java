@@ -18,13 +18,13 @@
 
 package com.sun.jini.action;
 
-import com.sun.jini.logging.Levels;
 import com.sun.jini.logging.LogUtil;
 
 import net.jini.security.Security;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -86,8 +86,8 @@ public class GetBooleanAction implements PrivilegedAction {
         try {
             return Boolean.getBoolean(theProp) ? Boolean.TRUE : Boolean.FALSE;
         } catch (SecurityException e) {
-            if (logger.isLoggable(Levels.HANDLED)) {
-                LogUtil.logThrow(logger, Levels.HANDLED,
+            if (logger.isLoggable(Level.FINE)) {
+                LogUtil.logThrow(logger, Level.FINE,
                         GetBooleanAction.class, "run",
                         "security exception reading \"{0}\", returning false",
                         new Object[]{theProp}, e);

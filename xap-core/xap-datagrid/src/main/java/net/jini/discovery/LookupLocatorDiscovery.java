@@ -26,7 +26,6 @@ import com.sun.jini.discovery.Discovery;
 import com.sun.jini.discovery.DiscoveryConstraints;
 import com.sun.jini.discovery.UnicastResponse;
 import com.sun.jini.discovery.internal.MultiIPDiscovery;
-import com.sun.jini.logging.Levels;
 import com.sun.jini.thread.RetryTask;
 import com.sun.jini.thread.TaskManager;
 import com.sun.jini.thread.WakeupManager;
@@ -151,7 +150,7 @@ import java.util.logging.Logger;
  * <tr> <td>{@link java.util.logging.Level#INFO INFO}</td> <td> when any exception occurs in a task
  * or thread, while attempting unicast discovery of a given locator </td> </tr> <tr> <td>{@link
  * java.util.logging.Level#INFO INFO}</td> <td>when any exception occurs while attempting to prepare
- * a proxy</td> </tr> <tr> <td>{@link com.sun.jini.logging.Levels#HANDLED HANDLED}</td> <td> when an
+ * a proxy</td> </tr> <tr> <td>{@link java.util.logging.Level#FINE FINE}</td> <td> when an
  * exception is handled during unicast discovery. </td> </tr> <tr> <td>{@link
  * java.util.logging.Level#FINEST FINEST}</td> <td>whenever any thread or task is started</td> </tr>
  * <p/> <tr> <td>{@link java.util.logging.Level#FINEST FINEST}</td> <td> whenever any thread (except
@@ -529,8 +528,7 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                 protected void singleResponseException(Exception e,
                                                        InetAddress addr,
                                                        int port) {
-                    logger.log(
-                            Levels.HANDLED,
+                    logger.log(Level.FINE,
                             "Exception occurred during unicast discovery " +
                                     addr + ":" + port, e);
                 }

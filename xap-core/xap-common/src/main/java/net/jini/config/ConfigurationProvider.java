@@ -18,8 +18,6 @@
 
 package net.jini.config;
 
-import com.sun.jini.logging.Levels;
-
 import net.jini.security.Security;
 
 import java.io.BufferedReader;

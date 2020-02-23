@@ -29,7 +29,6 @@ import com.sun.jini.discovery.MulticastAnnouncement;
 import com.sun.jini.discovery.MulticastRequest;
 import com.sun.jini.discovery.UnicastResponse;
 import com.sun.jini.discovery.internal.MultiIPDiscovery;
-import com.sun.jini.logging.Levels;
 import com.sun.jini.logging.LogUtil;
 import com.sun.jini.thread.TaskManager;
 import com.sun.jini.thread.WakeupManager;
@@ -390,19 +389,19 @@ import java.util.logging.Logger;
  * <code>UnknownHostException</code> occurs while determining the <code>multicastRequestHost</code>,
  * but the caller does not have permissions to retrieve the local host name. The original
  * <code>UnknownHostException</code> with the host name information is logged </td> <tr> <td>{@link
- * com.sun.jini.logging.Levels#HANDLED HANDLED}</td> <td> when this utility is configured to use all
+ * com.sun.jini.logging.Level#FINE FINE}</td> <td> when this utility is configured to use all
  * network interfaces enabled in the system, if one of those interfaces is bad or not configured for
  * multicast, or if a runtime exception occurs while either sending multicast requests, or while
  * configuring one of the interfaces to receive multicast announcements, that fact will be logged at
- * this level </td> </tr> <tr> <td>{@link com.sun.jini.logging.Levels#HANDLED HANDLED}</td> <td>
+ * this level </td> </tr> <tr> <td>{@link com.sun.jini.logging.Level#FINE FINE}</td> <td>
  * when any exception occurs while attempting to unmarshal an incoming multicast announcement </td>
- * </tr> <tr> <td>{@link com.sun.jini.logging.Levels#HANDLED HANDLED}</td> <td> when an
+ * </tr> <tr> <td>{@link com.sun.jini.logging.Level#FINE FINE}</td> <td> when an
  * <code>UnsupportedConstraintException</code> occurs while marshalling an outgoing multicast
  * request, indicating that the provider that threw the exception will not be used for encoding that
- * request </td> </tr> <tr> <td>{@link com.sun.jini.logging.Levels#HANDLED HANDLED}</td> <td> when
+ * request </td> </tr> <tr> <td>{@link com.sun.jini.logging.Level#FINE FINE}</td> <td> when
  * an <code>IOException</code> occurs upon attempting to close the socket after the thread that
  * listens for multicast responses is asked to terminate </td> </tr> <tr> <td>{@link
- * com.sun.jini.logging.Levels#HANDLED HANDLED}</td> <td> when an exception is handled during
+ * com.sun.jini.logging.Level#FINE FINE}</td> <td> when an exception is handled during
  * unicast discovery </td> </tr> <tr> <td>{@link java.util.logging.Level#FINE FINE}</td> <td> when
  * this utility is configured to use all network interfaces enabled in the system, with respect to
  * any such interface, if failure is encountered upon the initial attempt to set the interface or
@@ -771,9 +770,9 @@ public class LookupDiscovery implements DiscoveryManagement,
                                 retryNics = new ArrayList(nics.length);
                             }//endif
                             retryNics.add(nics[i]);
-                            if (logger.isLoggable(Levels.HANDLED)) {
+                            if (logger.isLoggable(Level.FINE)) {
                                 LogRecord logRec =
-                                        new LogRecord(Levels.HANDLED,
+                                        new LogRecord(Level.FINE,
                                                 "network interface "
                                                         + "is bad or not configured "
                                                         + "for multicast: {0}");
@@ -1028,7 +1027,7 @@ public class LookupDiscovery implements DiscoveryManagement,
             try {
                 serv.close();
             } catch (IOException e) {//ignore
-                logger.log(Levels.HANDLED,
+                logger.log(Level.FINE,
                         "IOException while attempting a socket close",
                         e);
             }
@@ -1284,7 +1283,7 @@ public class LookupDiscovery implements DiscoveryManagement,
                 ann = decodeMulticastAnnouncement(datagram);
             } catch (Exception e) {
                 if (!(e instanceof InterruptedIOException)) {
-                    logger.log(Levels.HANDLED,
+                    logger.log(Level.FINE,
                             "exception decoding multicast announcement", e);
                 }
                 return;
@@ -1336,7 +1335,7 @@ public class LookupDiscovery implements DiscoveryManagement,
                     ann.checkConstraints();
                 } catch (Exception e) {
                     if (!(e instanceof InterruptedIOException)) {
-                        logger.log(Levels.HANDLED,
+                        logger.log(Level.FINE,
                                 "exception decoding multicast announcement", e);
                     }
                     return;
@@ -1514,8 +1513,7 @@ public class LookupDiscovery implements DiscoveryManagement,
                         protected void singleResponseException(Exception e,
                                                                InetAddress addr,
                                                                int port) {
-                            logger.log(
-                                    Levels.HANDLED,
+                            logger.log(Level.FINE,
                                     "Exception occurred during unicast discovery " +
                                             addr + ":" + port, e);
                         }
@@ -1540,13 +1538,13 @@ public class LookupDiscovery implements DiscoveryManagement,
                     maybeSendEvent(response, null);
                 }//endif
             } catch (InterruptedIOException e) {
-                logger.log(Levels.HANDLED,
+                logger.log(Level.FINE,
                         "exception occurred during unicast discovery",
                         e);
             } catch (Throwable e) {
                 if (((req instanceof Socket) ||
                         (req instanceof LookupLocator)) &&
-                        logger.isLoggable(Levels.HANDLED)) {
+                        logger.isLoggable(Level.FINE)) {
                     String logmsg =
                             "exception occurred during unicast discovery to " +
                                     "{0}:{1,number,#} with constraints {2}";
@@ -1949,9 +1947,9 @@ public class LookupDiscovery implements DiscoveryManagement,
                     } catch (InterruptedIOException e) {
                         throw e;//to signal a graceful exit
                     } catch (IOException e) {
-                        if (logger.isLoggable(Levels.HANDLED)) {
+                        if (logger.isLoggable(Level.FINE)) {
                             LogRecord logRec =
-                                    new LogRecord(Levels.HANDLED,
+                                    new LogRecord(Level.FINE,
                                             "network interface is "
                                                     + "bad or not configured for "
                                                     + "multicast: {0}");
@@ -1960,9 +1958,9 @@ public class LookupDiscovery implements DiscoveryManagement,
                             logger.log(logRec);
                         }//endif
                     } catch (Exception e) {
-                        if (logger.isLoggable(Levels.HANDLED)) {
+                        if (logger.isLoggable(Level.FINE)) {
                             LogRecord logRec =
-                                    new LogRecord(Levels.HANDLED, "exception while "
+                                    new LogRecord(Level.FINE, "exception while "
                                             + "sending packet through network "
                                             + "interface: {0}");
                             logRec.setParameters(new Object[]{nics[i]});
@@ -2935,7 +2933,7 @@ public class LookupDiscovery implements DiscoveryManagement,
             } catch (Exception e) {
                 logger.log(
                         (e instanceof UnsupportedConstraintException) ?
-                                Levels.HANDLED : Level.INFO,
+                                Level.FINE : Level.INFO,
                         "exception encoding multicast request", e);
             }
         }

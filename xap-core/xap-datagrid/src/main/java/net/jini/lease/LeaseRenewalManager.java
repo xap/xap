@@ -21,8 +21,6 @@ package net.jini.lease;
 import com.gigaspaces.time.SystemTime;
 import com.sun.jini.config.Config;
 import com.sun.jini.constants.ThrowableConstants;
-import com.sun.jini.logging.Levels;
-import com.sun.jini.logging.LogManager;
 import com.sun.jini.proxy.ConstrainableProxyUtil;
 import com.sun.jini.thread.TaskManager;
 
@@ -147,16 +145,13 @@ import java.util.logging.Logger;
  * <tr> <td> {@link Level#FINE FINE} <td> Lease renewal failure events, or leases that expire
  * before reaching the desired expiration time
  *
- * <tr> <td> {@link Levels#HANDLED HANDLED} <td> Lease renewal attempts that produce indefinite
+ * <tr> <td> {@link Level#FINE HANDLED} <td> Lease renewal attempts that produce indefinite
  * exceptions
  *
  * <tr> <td> {@link Level#FINE FINE} <td> Adding and removing leases, lease renewal attempts, and
  * desired lease expiration events
  *
  * </table> <p>
- *
- * For a way of using the <code>FAILED</code> and <code>HANDLED</code> logging levels in standard
- * logging configuration files, see the {@link LogManager} class.
  *
  * <a name="algorithm"> <p><b><font size="+1">The renewal algorithm</font></b><p> </a> The time at
  * which a lease is scheduled for renewal is based on the expiration time of the lease, possibly
@@ -1334,9 +1329,9 @@ public class LeaseRenewalManager {
                 if (cat == ThrowableConstants.INDEFINITE) {
                     e.delayRenew();
                     leases.put(e, e);
-                    if (logger.isLoggable(Levels.HANDLED)) {
+                    if (logger.isLoggable(Level.FINE)) {
                         logThrow(
-                                Levels.HANDLED, "renewAll",
+                                Level.FINE, "renewAll",
                                 "Indefinite exception while renewing lease {0}",
                                 new Object[]{e.lease}, e.ex);
                     }

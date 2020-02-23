@@ -20,7 +20,6 @@ package net.jini.lookup;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.exception.internal.InterruptedSpaceException;
 import com.sun.jini.config.Config;
-import com.sun.jini.logging.Levels;
 import com.sun.jini.lookup.entry.LookupAttributes;
 import com.sun.jini.proxy.BasicProxyTrustVerifier;
 import com.sun.jini.thread.TaskManager;
@@ -395,10 +394,10 @@ import java.util.logging.Logger;
  * <code>IllegalStateException</code> occurs while discarding a lookup service proxy after logging a
  * failure that has occurred in one of the tasks executed by this utility </td> </tr> <tr>
  * <td>{@link java.util.logging.Level#INFO INFO}</td> <td>upon failure of the lease renewal
- * process</td> </tr> <tr> <td>{@link com.sun.jini.logging.Levels#HANDLED HANDLED}</td> <td> when an
+ * process</td> </tr> <tr> <td>{@link com.sun.jini.logging.Level#FINE FINE}</td> <td> when an
  * exception occurs because a remote call to a lookup service has been interrupted as a result of
- * the termination of a cache </td> </tr> <tr> <td>{@link com.sun.jini.logging.Levels#HANDLED
- * HANDLED}</td> <td> when a "gap" is encountered in an event sequence from a lookup service </td>
+ * the termination of a cache </td> </tr> <tr> <td>{@link com.sun.jini.logging.Level#FINE
+ * FINE}</td> <td> when a "gap" is encountered in an event sequence from a lookup service </td>
  * </tr> <tr> <td>{@link java.util.logging.Level#FINER FINER}</td> <td>upon failure of the lease
  * cancellation process</td> </tr> <tr> <td>{@link java.util.logging.Level#FINEST FINEST}</td>
  * <td>whenever any task is started</td> </tr> <tr> <td>{@link java.util.logging.Level#FINEST
@@ -408,9 +407,7 @@ import java.util.logging.Logger;
  * terminated</td> </tr> <tr> <td>{@link java.util.logging.Level#FINEST FINEST}</td> <td>whenever a
  * proxy is prepared</td> </tr> <tr> <td>{@link java.util.logging.Level#FINEST FINEST}</td> <td>
  * when an exception (that is, <code>IllegalStateException</code>) occurs while unexporting a
- * cache's remote event listener while the cache is being terminated </td> </tr> </table> <p> See
- * the {@link com.sun.jini.logging.LogManager} class for one way to use the logging level {@link
- * com.sun.jini.logging.Levels#HANDLED HANDLED} in standard logging configuration files. <p>
+ * cache's remote event listener while the cache is being terminated </td> </tr> </table> <p> <p>
  * @see net.jini.discovery.DiscoveryManagement
  * @see net.jini.lookup.LookupCache
  * @see net.jini.lookup.ServiceDiscoveryListener
@@ -1849,7 +1846,7 @@ public class ServiceDiscoveryManager {
                             (lookupCacheClassLoader, reg, sid, item, transition, taskSeqN++);
                 } else {//gap in event sequence, request snapshot
                     t = new LookupTask(lookupCacheClassLoader, reg, taskSeqN++);
-                    if (logger.isLoggable(Levels.HANDLED)) {
+                    if (logger.isLoggable(Level.FINE)) {
                         String msg = "notifyServiceMap - GAP in event sequence "
                                 + "[serviceRegistrar={0}], "
                                 + "[serviceItem={1}, "
@@ -1865,7 +1862,7 @@ public class ServiceDiscoveryManager {
                                 new Long(eventID),
                                 new Long(prevSeqNo),
                                 new Long(seqNo)};
-                        logger.log(Levels.HANDLED, msg, params);
+                        logger.log(Level.FINE, msg, params);
                     }//endif
                 }//endif
                 cacheTaskMgr.add(t);
@@ -3378,7 +3375,7 @@ public class ServiceDiscoveryManager {
         boolean discardProxy = true;
         synchronized (this) {
             if (bTerminated || cacheTerminated) {
-                logLevel = Levels.HANDLED;
+                logLevel = Level.FINE;
                 discardProxy = false;
             }//endif
         }//end sync(this)

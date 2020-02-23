@@ -58,7 +58,7 @@ import java.util.Collection;
  * format ID list due to length; discovery format providers that are unusable or have conflicting
  * discovery format IDs
  *
- * <tr> <td> {@link com.sun.jini.logging.Levels#HANDLED HANDLED} <td> Constraint check failures
+ * <tr> <td> {@link java.util.logging.Level#FINE FINE} <td> Constraint check failures
  * encountered during the unicast discovery handshake when determining a suitable discovery format
  * to use
  *

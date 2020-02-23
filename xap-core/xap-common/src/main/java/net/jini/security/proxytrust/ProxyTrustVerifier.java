@@ -18,8 +18,6 @@
 
 package net.jini.security.proxytrust;
 
-import com.sun.jini.logging.Levels;
-
 import net.jini.core.constraint.MethodConstraints;
 import net.jini.core.constraint.RemoteMethodControl;
 import net.jini.io.MarshalInputStream;
@@ -64,7 +62,7 @@ import java.util.logging.Logger;
  * summary="Describes what is logged by ProxyTrustVerifier to the trust logger at various logging
  * levels" border=1 cellpadding=5> <tr> <th>Level</th> <th>Description</th> </tr> <tr> <td>{@link
  * Level#FINE FINE}</td> <td>no verifier is obtained from a {@link ProxyTrustIterator}</td>
- * </tr> <tr> <td>{@link Levels#HANDLED HANDLED}</td> <td><code>RemoteException</code> being passed
+ * </tr> <tr> <td>{@link Level#FINE HANDLED}</td> <td><code>RemoteException</code> being passed
  * to {@link ProxyTrustIterator#setException ProxyTrustIterator.setException}</td> </tr> <tr>
  * <td>{@link Level#FINE FINE}</td> <td>{@link ProxyTrust#getProxyVerifier
  * ProxyTrust.getProxyVerifier} remote call returns a trust verifier</td> </tr> <tr> <td>{@link
@@ -313,7 +311,7 @@ public class ProxyTrustVerifier implements TrustVerifier {
             } catch (RemoteException e) {
                 lastEx = e;
                 if (obj instanceof ProxyTrust) {
-                    logger.log(Levels.HANDLED,
+                    logger.log(Level.FINE,
                             "setting ProxyTrustIterator exception", e);
                     restrictedSetException(iter, e, rsc);
                 }

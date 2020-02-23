@@ -20,7 +20,6 @@ package com.sun.jini.mahalo;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.kernel.SystemProperties;
 import com.sun.jini.config.Config;
-import com.sun.jini.logging.Levels;
 import com.sun.jini.reliableLog.LogHandler;
 import com.sun.jini.reliableLog.ReliableLog;
 
@@ -335,14 +334,14 @@ class JoinStateManager extends LogHandler {
                         prepared.add(recoveredLookupLocatorPreparer.
                                 prepareProxy(locators[i]));
                     } catch (Throwable t) {
-                        if (initlogger.isLoggable(Levels.HANDLED)) {
-                            initlogger.log(Levels.HANDLED,
+                        if (initlogger.isLoggable(Level.FINE)) {
+                            initlogger.log(Level.FINE,
                                     "Exception re-preparing LookupLocator: {0}. "
                                             + "Dropping locator.",
                                     locators[i]);
                         }
-                        if (initlogger.isLoggable(Levels.HANDLED)) {
-                            initlogger.log(Levels.HANDLED,
+                        if (initlogger.isLoggable(Level.FINE)) {
+                            initlogger.log(Level.FINE,
                                     "Preparer exception: ", t);
                         }
                     }
@@ -779,13 +778,13 @@ class JoinStateManager extends LogHandler {
                 MarshalledObject mo = (MarshalledObject) in.readObject();
                 entries.add(mo.get());
             } catch (IOException e) {
-                if (initlogger.isLoggable(Levels.HANDLED)) {
-                    initlogger.log(Levels.HANDLED,
+                if (initlogger.isLoggable(Level.FINE)) {
+                    initlogger.log(Level.FINE,
                             "Exception getting service attribute ... skipping", e);
                 }
             } catch (ClassNotFoundException e) {
-                if (initlogger.isLoggable(Levels.HANDLED)) {
-                    initlogger.log(Levels.HANDLED,
+                if (initlogger.isLoggable(Level.FINE)) {
+                    initlogger.log(Level.FINE,
                             "Exception getting service attribute ... skipping", e);
                 }
             }

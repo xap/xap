@@ -17,7 +17,6 @@
  */
 package com.sun.jini.mahalo;
 
-import com.sun.jini.logging.Levels;
 import com.sun.jini.thread.RetryTask;
 import com.sun.jini.thread.TaskManager;
 import com.sun.jini.thread.WakeupManager;
@@ -128,8 +127,8 @@ public class SettlerTask extends RetryTask implements TransactionConstants {
             }
 //TODO -ignore?	    
         } catch (TransactionException te) {
-            if (transactionsLogger.isLoggable(Levels.HANDLED)) {
-                transactionsLogger.log(Levels.HANDLED,
+            if (transactionsLogger.isLoggable(Level.FINE)) {
+                transactionsLogger.log(Level.FINE,
                         "Unable to settle recovered transaction", te);
             }
 //TODO -ignore?	    

@@ -18,9 +18,6 @@
 
 package net.jini.url.httpmd;
 
-import com.sun.jini.logging.Levels;
-import com.sun.jini.logging.LogManager;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
@@ -103,9 +100,6 @@ import java.util.logging.Logger;
  * <tr> <td> {@link Level#FINE FINE} <td> URL input stream detects an incorrect message digest
  *
  * </table> <p>
- *
- * See the {@link LogManager} class for one way to use the <code>FAILED</code> logging level in
- * standard logging configuration files.
  */
 @com.gigaspaces.api.InternalApi
 public class Handler extends URLStreamHandler {

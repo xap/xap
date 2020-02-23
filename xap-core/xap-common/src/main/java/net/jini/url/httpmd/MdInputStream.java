@@ -18,8 +18,6 @@
 
 package net.jini.url.httpmd;
 
-import com.sun.jini.logging.Levels;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;

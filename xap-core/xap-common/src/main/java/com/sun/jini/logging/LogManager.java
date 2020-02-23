@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 
 /**
  * Defines a {@link java.util.logging.LogManager} that insures that the {@link Level#FINE
- * Levels.FAILED} and {@link Levels#HANDLED Levels.HANDLED} fields, instances of {@link Level}, have
+ * Levels.FAILED} and {@link Level#FINE Level.FINE} fields, instances of {@link Level}, have
  * been initialized, and that can periodically check for changes to the logging configuration file
  * and force it to be reread.  Use this class as the value of the <code>java.util.logging.manager</code>
  * system property to permit specifying the symbolic names for the <code>FAILED</code> and
@@ -67,8 +67,6 @@ public class LogManager extends java.util.logging.LogManager {
      * Creates an instance of this class.
      */
     public LogManager() {
-    /* Refer to the levels to make sure that they are defined */
-        Levels.HANDLED.toString();
     }
 
     /**

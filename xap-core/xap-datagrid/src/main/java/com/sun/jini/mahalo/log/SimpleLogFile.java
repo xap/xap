@@ -17,7 +17,6 @@
  */
 package com.sun.jini.mahalo.log;
 
-import com.sun.jini.logging.Levels;
 import com.sun.jini.mahalo.TxnManager;
 import com.sun.jini.mahalo.log.MultiLogManager.LogRemovalManager;
 
@@ -325,8 +324,8 @@ public class SimpleLogFile implements Log {
                 out.close(); // calls outfile.close()
             }
         } catch (IOException ioe) { // just log it
-            if (persistenceLogger.isLoggable(Levels.HANDLED)) {
-                persistenceLogger.log(Levels.HANDLED,
+            if (persistenceLogger.isLoggable(Level.FINE)) {
+                persistenceLogger.log(Level.FINE,
                         "Problem closing log file", ioe);
             }
         }
@@ -338,8 +337,8 @@ public class SimpleLogFile implements Log {
                         "Deleting log file for: {0}", new Long(cookie));
             }
             if (!fl.delete()) {
-                if (persistenceLogger.isLoggable(Levels.HANDLED)) {
-                    persistenceLogger.log(Levels.HANDLED,
+                if (persistenceLogger.isLoggable(Level.FINE)) {
+                    persistenceLogger.log(Level.FINE,
                             "Could not delete log file");
                 }
             }
@@ -399,8 +398,8 @@ public class SimpleLogFile implements Log {
                     } else { //TBD - ignore?
                         update = false;
                         done = true; // bad log ... skip it
-                        if (persistenceLogger.isLoggable(Levels.HANDLED)) {
-                            persistenceLogger.log(Levels.HANDLED,
+                        if (persistenceLogger.isLoggable(Level.FINE)) {
+                            persistenceLogger.log(Level.FINE,
                                     "Log for cookie {0} contained a null "
                                             + "record object", new Long(cookie));
                         }
@@ -450,8 +449,8 @@ public class SimpleLogFile implements Log {
             try {
                 if (in != null) in.close(); // calls fin.close()
             } catch (IOException ioe) {
-                if (persistenceLogger.isLoggable(Levels.HANDLED)) {
-                    persistenceLogger.log(Levels.HANDLED,
+                if (persistenceLogger.isLoggable(Level.FINE)) {
+                    persistenceLogger.log(Level.FINE,
                             "Problem closing recovered log file", ioe);
                 }
             }

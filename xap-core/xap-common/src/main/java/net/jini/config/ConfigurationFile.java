@@ -18,8 +18,6 @@
 
 package net.jini.config;
 
-import com.sun.jini.logging.Levels;
-
 import net.jini.export.Exporter;
 import net.jini.security.ProxyPreparer;
 import net.jini.security.Security;

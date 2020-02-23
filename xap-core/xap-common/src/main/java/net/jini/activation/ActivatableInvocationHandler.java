@@ -19,7 +19,6 @@
 package net.jini.activation;
 
 import com.sun.jini.action.GetBooleanAction;
-import com.sun.jini.logging.Levels;
 
 import net.jini.constraint.BasicMethodConstraints;
 import net.jini.core.constraint.InvocationConstraints;
@@ -104,7 +103,7 @@ import java.util.logging.Logger;
  *
  * <tr> <td> {@link Level#FINE FINE} <td> exception thrown activating the object
  *
- * <tr> <td> {@link Levels#HANDLED HANDLED} <td> exception caught in attempt to communicate a remote
+ * <tr> <td> {@link Level#FINE HANDLED} <td> exception caught in attempt to communicate a remote
  * call
  *
  * </table>
@@ -526,9 +525,9 @@ public final class ActivatableInvocationHandler
         }
 
         for (int retries = MAX_RETRIES; --retries >= 0; ) {
-            if (logger.isLoggable(Levels.HANDLED)) {
+            if (logger.isLoggable(Level.FINE)) {
                 if (failure != null) {
-                    logThrow(Levels.HANDLED, "outbound call",
+                    logThrow(Level.FINE, "outbound call",
                             "invokeRemoteMethod",
                             method, failure.exception);
                 }

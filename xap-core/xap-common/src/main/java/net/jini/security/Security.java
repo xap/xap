@@ -19,7 +19,6 @@
 package net.jini.security;
 
 import com.sun.jini.collection.WeakIdentityMap;
-import com.sun.jini.logging.Levels;
 import com.sun.jini.resource.Service;
 
 import net.jini.security.policy.DynamicPolicy;
@@ -78,7 +77,7 @@ import javax.security.auth.SubjectDomainCombiner;
  * Level#FINE FINE}</td> <td><code>verifyObjectTrust</code> throws a
  * <code>SecurityException</code> because no trust verifier trusts the specified object</td> </tr>
  * <tr> <td>{@link Level#FINE FINE}</td> <td><code>TrustVerifier.Context.isTrustedObject</code>
- * throws an exception</td> </tr> <tr> <td>{@link Levels#HANDLED HANDLED}</td> <td>trust verifier
+ * throws an exception</td> </tr> <tr> <td>{@link Level#FINE HANDLED}</td> <td>trust verifier
  * throws a <code>RemoteException</code> or a <code>SecurityException</code></td> </tr> <tr>
  * <td>{@link Level#FINE FINE}</td> <td>trust verifier returns <code>true</code></td> </tr> <tr>
  * <td>{@link Level#FINE FINE}</td> <td>creation of cached trust verifiers</td> </tr> <tr>
@@ -786,9 +785,8 @@ public final class Security {
                 } catch (Exception e) {
                     boolean rethrow = (e instanceof RuntimeException &&
                             !(e instanceof SecurityException));
-                    Level level = rethrow ? Level.FINE : Levels.HANDLED;
-                    if (trustLogger.isLoggable(level)) {
-                        logThrow(trustLogger, level,
+                    if (trustLogger.isLoggable(Level.FINE)) {
+                        logThrow(trustLogger, Level.FINE,
                                 this.getClass().getName(),
                                 "isTrustedObject",
                                 "{0} checking {1} throws",

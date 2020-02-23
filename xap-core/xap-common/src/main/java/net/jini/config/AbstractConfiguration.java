@@ -18,8 +18,6 @@
 
 package net.jini.config;
 
-import com.sun.jini.logging.Levels;
-
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;

@@ -18,13 +18,13 @@
 
 package com.sun.jini.action;
 
-import com.sun.jini.logging.Levels;
 import com.sun.jini.logging.LogUtil;
 
 import net.jini.security.Security;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -101,8 +101,8 @@ public class GetPropertyAction implements PrivilegedAction {
                 return value;
             }
         } catch (SecurityException e) {
-            if (logger.isLoggable(Levels.HANDLED)) {
-                LogUtil.logThrow(logger, Levels.HANDLED,
+            if (logger.isLoggable(Level.FINE)) {
+                LogUtil.logThrow(logger, Level.FINE,
                         GetPropertyAction.class, "run",
                         "security exception reading \"{0}\", returning {1}",
                         new Object[]{theProp, defaultVal}, e);

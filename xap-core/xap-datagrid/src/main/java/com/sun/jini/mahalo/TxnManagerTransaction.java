@@ -26,7 +26,6 @@ import com.gigaspaces.time.SystemTime;
 import com.sun.jini.constants.TimeConstants;
 import com.sun.jini.constants.TxnConstants;
 import com.sun.jini.landlord.LeasedResource;
-import com.sun.jini.logging.Levels;
 import com.sun.jini.mahalo.log.ClientLog;
 import com.sun.jini.mahalo.log.LogException;
 import com.sun.jini.mahalo.log.LogManager;
@@ -1527,23 +1526,23 @@ class TxnManagerTransaction
             str.abort(timeout);
         } catch (RemoteException re) {
             //abort must have happened, so ignore
-            if (transactionsLogger.isLoggable(Levels.HANDLED)) {
-                transactionsLogger.log(Levels.HANDLED,
+            if (transactionsLogger.isLoggable(Level.FINE)) {
+                transactionsLogger.log(Level.FINE,
                         "Trouble aborting  transaction", re);
             }
         } catch (TimeoutExpiredException te) {
             //Swallow this because we really only
             //care about a scheduling a SettlerTask
-            if (transactionsLogger.isLoggable(Levels.HANDLED)) {
-                transactionsLogger.log(Levels.HANDLED,
+            if (transactionsLogger.isLoggable(Level.FINE)) {
+                transactionsLogger.log(Level.FINE,
                         "Trouble aborting  transaction", te);
             }
         } catch (TransactionException bte) {
             //If abort has problems, swallow
             //it because the abort must have
             //happened
-            if (transactionsLogger.isLoggable(Levels.HANDLED)) {
-                transactionsLogger.log(Levels.HANDLED,
+            if (transactionsLogger.isLoggable(Level.FINE)) {
+                transactionsLogger.log(Level.FINE,
                         "Trouble aborting  transaction", bte);
             }
         }

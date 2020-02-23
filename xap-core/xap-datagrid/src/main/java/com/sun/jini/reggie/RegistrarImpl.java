@@ -29,7 +29,6 @@ import com.sun.jini.discovery.EncodeIterator;
 import com.sun.jini.discovery.MulticastAnnouncement;
 import com.sun.jini.discovery.MulticastRequest;
 import com.sun.jini.discovery.UnicastResponse;
-import com.sun.jini.logging.Levels;
 import com.sun.jini.lookup.entry.BasicServiceType;
 import com.sun.jini.proxy.MarshalledWrapper;
 import com.sun.jini.reliableLog.LogHandler;
@@ -2016,8 +2015,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 switch (ThrowableConstants.retryable(e)) {
                     case ThrowableConstants.BAD_OBJECT:
                         if (e instanceof Error) {
-                            logger.log(
-                                    Levels.HANDLED, "exception sending event", e);
+                            logger.log(Level.FINE, "exception sending event", e);
                             throw (Error) e;
                         }
                     case ThrowableConstants.BAD_INVOCATION:
@@ -2029,13 +2027,11 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                         try {
                             cancelEventLease(reg.eventID, reg.leaseID);
                         } catch (UnknownLeaseException ee) {
-                            logger.log(
-                                    Levels.HANDLED,
+                            logger.log(Level.FINE,
                                     "exception canceling event lease",
                                     e);
                         } catch (RemoteException ee) {
-                            logger.log(
-                                    Levels.HANDLED,
+                            logger.log(Level.FINE,
                                     "The server has been shutdown",
                                     e);
                         }
@@ -2091,9 +2087,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                         multicastRequestSubjectChecker, true);
             } catch (Exception e) {
                 if (!(e instanceof InterruptedIOException) &&
-                        logger.isLoggable(Levels.HANDLED)) {
-                    logThrow(
-                            Levels.HANDLED,
+                        logger.isLoggable(Level.FINE)) {
+                    logThrow(Level.FINE,
                             getClass().getName(),
                             "run",
                             "exception decoding multicast request from {0}:{1}",
@@ -2111,9 +2106,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                     req.checkConstraints();
                 } catch (Exception e) {
                     if (!(e instanceof InterruptedIOException) &&
-                            logger.isLoggable(Levels.HANDLED)) {
-                        logThrow(
-                                Levels.HANDLED,
+                            logger.isLoggable(Level.FINE)) {
+                        logThrow(Level.FINE,
                                 getClass().getName(),
                                 "run",
                                 "exception decoding multicast request from {0}:{1}",
@@ -2218,8 +2212,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                                 new InetSocketAddress(addr[i], port), timeout);
                         return;
                     } catch (Exception e) {
-                        if (logger.isLoggable(Levels.HANDLED)) {
-                            logThrow(Levels.HANDLED, getClass().getName(),
+                        if (logger.isLoggable(Level.FINE)) {
+                            logThrow(Level.FINE, getClass().getName(),
                                     "run", "exception responding to {0}:{1}",
                                     new Object[]{addr[i], new Integer(port)}
                                     , e);
@@ -2265,7 +2259,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 try {
                     s.close();
                 } catch (IOException e) {
-                    logger.log(Levels.HANDLED, "exception closing socket", e);
+                    logger.log(Level.FINE, "exception closing socket", e);
                 }
             }
         }
@@ -2295,9 +2289,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             try {
                 respond(socket);
             } catch (Exception e) {
-                if (logger.isLoggable(Levels.HANDLED)) {
-                    logThrow(
-                            Levels.HANDLED,
+                if (logger.isLoggable(Level.FINE)) {
+                    logThrow(Level.FINE,
                             getClass().getName(),
                             "run",
                             "exception handling unicast discovery from {0}:{1}",
@@ -2453,8 +2446,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                         sleep(sleepTime);
                         now = System.currentTimeMillis();
                     } catch (InterruptedException e) {
-                        logger.log(
-                                Levels.HANDLED, "exception during unexport wait", e);
+                        logger.log(Level.FINE, "exception during unexport wait", e);
                     }
                 }
             }
@@ -2550,7 +2542,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             socket = new MulticastSocket(Constants.getDiscoveryPort());
             if (multicastInterfaces != null) {
                 Level failureLogLevel = multicastInterfacesSpecified ?
-                        Level.WARNING : Levels.HANDLED;
+                        Level.WARNING : Level.FINE;
                 for (int i = 0; i < multicastInterfaces.length; i++) {
                     NetworkInterface nic = multicastInterfaces[i];
                     try {
@@ -2639,7 +2631,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                     if (hasBeenInterrupted()) {
                         break;
                     }
-                    logger.log(Levels.HANDLED,
+                    logger.log(Level.FINE,
                             "exception receiving multicast request", e);
                 }
             }
@@ -2710,8 +2702,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 try {
                     listen = new ServerSocket(Constants.getDiscoveryPort());
                 } catch (IOException e) {
-                    logger.log(
-                            Levels.HANDLED, "failed to bind to default port", e);
+                    logger.log(Level.FINE, "failed to bind to default port", e);
                 }
             }
             if (listen == null) {
@@ -2729,8 +2720,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                         try {
                             socket.close();
                         } catch (IOException e) {
-                            logger.log(
-                                    Levels.HANDLED, "exception closing socket", e);
+                            logger.log(Level.FINE, "exception closing socket", e);
                         }
                         break;
                     }
@@ -2738,16 +2728,14 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 } catch (InterruptedIOException e) {
                     break;
                 } catch (Exception e) {
-                    logger.log(
-                            Levels.HANDLED, "exception listening on socket", e);
+                    logger.log(Level.FINE, "exception listening on socket", e);
                 }
 		/* if we fail in any way, just forget about it */
             }
             try {
                 listen.close();
             } catch (IOException e) {
-                logger.log(
-                        Levels.HANDLED, "exception closing server socket", e);
+                logger.log(Level.FINE, "exception closing server socket", e);
             }
         }
 
@@ -2852,7 +2840,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                     } catch (Exception e) {
                         logger.log((e instanceof
                                         UnsupportedConstraintException)
-                                        ? Levels.HANDLED : Level.INFO,
+                                        ? Level.FINE : Level.INFO,
                                 "exception encoding multicast"
                                         + " announcement", e);
                     }
@@ -2876,7 +2864,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 throws InterruptedIOException {
             if (multicastInterfaces != null) {
                 Level failureLogLevel = multicastInterfacesSpecified ?
-                        Level.WARNING : Levels.HANDLED;
+                        Level.WARNING : Level.FINE;
                 for (int i = 0; i < multicastInterfaces.length; i++) {
                     send(packets, multicastInterfaces[i], failureLogLevel);
                 }
@@ -3702,7 +3690,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 try {
                     activationSystem.unregisterObject(activationID);
                 } catch (ActivationException e) {
-                    logger.log(Levels.HANDLED,
+                    logger.log(Level.FINE,
                             "exception unregistering activation ID", e);
                 } catch (RemoteException e) {
                     logger.log(Level.WARNING,
@@ -4571,8 +4559,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                     socket.setKeepAlive(true);
                 }
             } catch (SocketException e) {
-                if (logger.isLoggable(Levels.HANDLED))
-                    logger.log(Levels.HANDLED,
+                if (logger.isLoggable(Level.FINE))
+                    logger.log(Level.FINE,
                             "problem setting socket options", e);
             }
             socket.setSoTimeout(
@@ -4593,7 +4581,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             try {
                 socket.close();
             } catch (IOException e) {
-                logger.log(Levels.HANDLED, "exception closing socket", e);
+                logger.log(Level.FINE, "exception closing socket", e);
             }
         }
     }

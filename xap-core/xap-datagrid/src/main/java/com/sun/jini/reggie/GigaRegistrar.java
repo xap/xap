@@ -62,7 +62,6 @@ import com.sun.jini.discovery.EncodeIterator;
 import com.sun.jini.discovery.MulticastAnnouncement;
 import com.sun.jini.discovery.MulticastRequest;
 import com.sun.jini.discovery.UnicastResponse;
-import com.sun.jini.logging.Levels;
 import com.sun.jini.lookup.entry.BasicServiceType;
 import com.sun.jini.proxy.MarshalledWrapper;
 import com.sun.jini.start.LifeCycle;
@@ -1479,8 +1478,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 switch (ThrowableConstants.retryable(e)) {
                     case ThrowableConstants.BAD_OBJECT:
                         if (e instanceof Error) {
-                            logger.log(
-                                    Levels.HANDLED, "Exception sending event to [" + reg.listener + "], serviceID [" + theEvent.getServiceID() + "], eventID [" + reg.eventID + "], " + reg.tmpl, e);
+                            logger.log(Level.FINE, "Exception sending event to [" + reg.listener + "], serviceID [" + theEvent.getServiceID() + "], eventID [" + reg.eventID + "], " + reg.tmpl, e);
                             throw (Error) e;
                         }
                     case ThrowableConstants.BAD_INVOCATION:
@@ -1488,19 +1486,17 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     /* If the listener throws UnknownEvent or some other
                      * definite exception, we can cancel the lease.
                      */
-                        if (logger.isLoggable(Levels.HANDLED)) {
-                            logger.log(Levels.HANDLED, "Exception sending event to [" + reg.listener + "], ServiceID [" + theEvent.getServiceID() + "], eventID [" + reg.eventID + "], " + reg.tmpl + " canceling lease [" + reg.leaseID + "]", e);
+                        if (logger.isLoggable(Level.FINE)) {
+                            logger.log(Level.FINE, "Exception sending event to [" + reg.listener + "], ServiceID [" + theEvent.getServiceID() + "], eventID [" + reg.eventID + "], " + reg.tmpl + " canceling lease [" + reg.leaseID + "]", e);
                         }
                         try {
                             cancelEventLease(reg.eventID, reg.leaseID);
                         } catch (UnknownLeaseException ee) {
-                            logger.log(
-                                    Levels.HANDLED,
+                            logger.log(Level.FINE,
                                     "Exception canceling event lease",
                                     e);
                         } catch (RemoteException ee) {
-                            logger.log(
-                                    Levels.HANDLED,
+                            logger.log(Level.FINE,
                                     "The server has been shutdown",
                                     e);
                         }
@@ -1564,9 +1560,9 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                         multicastRequestSubjectChecker, true);
             } catch (Exception e) {
                 if (!(e instanceof InterruptedIOException) &&
-                        logger.isLoggable(Levels.HANDLED)) {
+                        logger.isLoggable(Level.FINE)) {
                     logThrow(
-                            Levels.HANDLED,
+                            Level.FINE,
                             getClass().getName(),
                             "run",
                             "exception decoding multicast request from {0}:{1}",
@@ -1584,9 +1580,9 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     req.checkConstraints();
                 } catch (Exception e) {
                     if (!(e instanceof InterruptedIOException) &&
-                            logger.isLoggable(Levels.HANDLED)) {
+                            logger.isLoggable(Level.FINE)) {
                         logThrow(
-                                Levels.HANDLED,
+                                Level.FINE,
                                 getClass().getName(),
                                 "run",
                                 "exception decoding multicast request from {0}:{1}",
@@ -1692,8 +1688,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                                 new InetSocketAddress(anAddr, port), timeout);
                         return;
                     } catch (Exception e) {
-                        if (logger.isLoggable(Levels.HANDLED)) {
-                            logThrow(Levels.HANDLED, getClass().getName(),
+                        if (logger.isLoggable(Level.FINE)) {
+                            logThrow(Level.FINE, getClass().getName(),
                                     "run", "exception responding to {0}:{1}",
                                     new Object[]{anAddr, port}
                                     , e);
@@ -1739,7 +1735,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 try {
                     s.close();
                 } catch (IOException e) {
-                    logger.log(Levels.HANDLED, "exception closing socket", e);
+                    logger.log(Level.FINE, "exception closing socket", e);
                 }
             }
         }
@@ -1777,9 +1773,9 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     logger.log(Level.FINEST, "Unicast task [" + System.identityHashCode(this) + "] executed, took [" + took + "ms]");
                 }
             } catch (Exception e) {
-                if (logger.isLoggable(Levels.HANDLED)) {
+                if (logger.isLoggable(Level.FINE)) {
                     logThrow(
-                            Levels.HANDLED,
+                            Level.FINE,
                             getClass().getName(),
                             "run",
                             "exception handling unicast discovery from {0}:{1}",
@@ -2010,8 +2006,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     Thread.sleep(sleepTime);
                     now = SystemTime.timeMillis();
                 } catch (InterruptedException e) {
-                    logger.log(
-                            Levels.HANDLED, "exception during unexport wait", e);
+                    logger.log(Level.FINE, "exception during unexport wait", e);
                 }
             }
         }
@@ -2098,7 +2093,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             if (multicastInterfaces != null) {
                 final long startTime = LogHelper.getCurrTimeIfNeeded(logger, Level.FINE);
                 Level failureLogLevel = multicastInterfacesSpecified ?
-                        Level.WARNING : Levels.HANDLED;
+                        Level.WARNING : Level.FINE;
                 for (NetworkInterface nic : multicastInterfaces) {
                     try {
                         final long nicStartTime = LogHelper.getCurrTimeIfNeeded(logger, Level.FINEST);
@@ -2182,7 +2177,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     if (hasBeenInterrupted()) {
                         break;
                     }
-                    logger.log(Levels.HANDLED,
+                    logger.log(Level.FINE,
                             "exception receiving multicast request", e);
                 }
             }
@@ -2262,8 +2257,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 try {
                     listen = new ServerSocket(Constants.getDiscoveryPort(), backlog, host);
                 } catch (IOException e) {
-                    logger.log(
-                            Levels.HANDLED, "failed to bind to default port", e);
+                    logger.log(Level.FINE, "failed to bind to default port", e);
                 }
             }
             if (listen == null) {
@@ -2281,8 +2275,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                         try {
                             socket.close();
                         } catch (IOException e) {
-                            logger.log(
-                                    Levels.HANDLED, "exception closing socket", e);
+                            logger.log(Level.FINE, "exception closing socket", e);
                         }
                         break;
                     }
@@ -2303,16 +2296,14 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 } catch (InterruptedIOException e) {
                     break;
                 } catch (Exception e) {
-                    logger.log(
-                            Levels.HANDLED, "exception listening on socket", e);
+                    logger.log(Level.FINE, "exception listening on socket", e);
                 }
                 /* if we fail in any way, just forget about it */
             }
             try {
                 listen.close();
             } catch (IOException e) {
-                logger.log(
-                        Levels.HANDLED, "exception closing server socket", e);
+                logger.log(Level.FINE, "exception closing server socket", e);
             }
         }
 
@@ -2420,7 +2411,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     } catch (Exception e) {
                         logger.log((e instanceof
                                         UnsupportedConstraintException)
-                                        ? Levels.HANDLED : Level.INFO,
+                                        ? Level.FINE : Level.INFO,
                                 "exception encoding multicast"
                                         + " announcement", e);
                     }
@@ -2443,7 +2434,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         private void send(DatagramPacket[] packets) throws InterruptedIOException {
             if (multicastInterfaces != null) {
                 Level failureLogLevel = multicastInterfacesSpecified ?
-                        Level.WARNING : Levels.HANDLED;
+                        Level.WARNING : Level.FINE;
                 long startTime = LogHelper.getCurrTimeIfNeeded(logger, Level.FINE);
                 for (NetworkInterface multicastInterface : multicastInterfaces)
                     send(packets, multicastInterface, failureLogLevel);
@@ -4757,8 +4748,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     socket.setKeepAlive(true);
                 }
             } catch (SocketException e) {
-                if (logger.isLoggable(Levels.HANDLED))
-                    logger.log(Levels.HANDLED,
+                if (logger.isLoggable(Level.FINE))
+                    logger.log(Level.FINE,
                             "problem setting socket options", e);
             }
             socket.setSoTimeout(
@@ -4779,7 +4770,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             try {
                 socket.close();
             } catch (IOException e) {
-                logger.log(Levels.HANDLED, "exception closing socket", e);
+                logger.log(Level.FINE, "exception closing socket", e);
             }
         }
     }
