@@ -2128,7 +2128,7 @@ public class ConfigurationFile extends AbstractConfiguration {
             }
         }
         if (logger.isLoggable(Level.FINE)) {
-            logThrow("getEntryType",
+            throwing("getEntryType",
                     "{0}, component {1}, name {2}: throws",
                     new Object[]{this, component, name}, configEx);
         }

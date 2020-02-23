@@ -18,6 +18,7 @@
 
 package net.jini.security;
 
+import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.collection.WeakIdentityMap;
 import com.sun.jini.resource.Service;
 
@@ -47,7 +48,6 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.WeakHashMap;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import javax.security.auth.Subject;
@@ -185,10 +185,8 @@ public final class Security {
         SecurityException e = new SecurityException(
                 "object is not trusted: " + obj);
         if (trustLogger.isLoggable(Level.FINE)) {
-            logThrow(trustLogger, Level.FINE,
-                    Security.class.getName(), "verifyObjectTrust",
-                    "no verifier trusts {0}",
-                    new Object[]{obj}, e);
+            LogUtils.throwing(trustLogger, Security.class, "verifyObjectTrust", e,
+                    "no verifier trusts {0}", obj);
         }
         throw e;
     }
@@ -250,31 +248,12 @@ public final class Security {
                     new SecurityException("URL does not provide integrity: " +
                             urls[i]);
             if (integrityLogger.isLoggable(Level.FINE)) {
-                logThrow(integrityLogger, Level.FINE,
-                        Security.class.getName(), "verifyCodebaseIntegrity",
-                        "no verifier verifies {0}", new Object[]{urls[i]}, e);
+                LogUtils.throwing(integrityLogger,
+                        Security.class, "verifyCodebaseIntegrity", e,
+                        "no verifier verifies {0}", urls[i]);
             }
             throw e;
         }
-    }
-
-    /**
-     * Log a throw.
-     */
-    private static void logThrow(Logger logger,
-                                 Level level,
-                                 String clazz,
-                                 String method,
-                                 String msg,
-                                 Object[] args,
-                                 Throwable t) {
-        LogRecord lr = new LogRecord(level, msg);
-        lr.setLoggerName(logger.getName());
-        lr.setSourceClassName(clazz);
-        lr.setSourceMethodName(method);
-        lr.setParameters(args);
-        lr.setThrown(t);
-        logger.log(lr);
     }
 
     /**
@@ -786,12 +765,8 @@ public final class Security {
                     boolean rethrow = (e instanceof RuntimeException &&
                             !(e instanceof SecurityException));
                     if (trustLogger.isLoggable(Level.FINE)) {
-                        logThrow(trustLogger, Level.FINE,
-                                this.getClass().getName(),
-                                "isTrustedObject",
-                                "{0} checking {1} throws",
-                                new Object[]{verifiers[i], obj},
-                                e);
+                        LogUtils.throwing(trustLogger, this.getClass(), "isTrustedObject", e,
+                                "{0} checking {1} throws", verifiers[i], obj);
                     }
                     if (rethrow) {
                         throw (RuntimeException) e;
@@ -801,10 +776,8 @@ public final class Security {
             }
             if (ex != null) {
                 if (trustLogger.isLoggable(Level.FINE)) {
-                    logThrow(trustLogger, Level.FINE,
-                            this.getClass().getName(), "isTrustedObject",
-                            "checking {0} throws",
-                            new Object[]{obj}, ex);
+                    LogUtils.throwing(trustLogger, this.getClass(), "isTrustedObject", ex,
+                            "checking {0} throws", obj);
                 }
                 if (ex instanceof RemoteException) {
                     throw (RemoteException) ex;

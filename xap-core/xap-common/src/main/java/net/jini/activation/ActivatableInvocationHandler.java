@@ -18,6 +18,7 @@
 
 package net.jini.activation;
 
+import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.action.GetBooleanAction;
 
 import net.jini.constraint.BasicMethodConstraints;
@@ -55,7 +56,6 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**
@@ -527,9 +527,7 @@ public final class ActivatableInvocationHandler
         for (int retries = MAX_RETRIES; --retries >= 0; ) {
             if (logger.isLoggable(Level.FINE)) {
                 if (failure != null) {
-                    logThrow(Level.FINE, "outbound call",
-                            "invokeRemoteMethod",
-                            method, failure.exception);
+                    LogUtils.throwing(logger, this.getClass(), "invokeRemoteMethod", failure.exception, format("outbound call", method));
                 }
             }
 
@@ -582,28 +580,13 @@ public final class ActivatableInvocationHandler
         }
 
         if (logger.isLoggable(Level.FINE)) {
-            logThrow(Level.FINE, "outbound call", "invokeRemoteMethod",
-                    method, failure.exception);
+            LogUtils.throwing(logger, this.getClass(), "invokeRemoteMethod", failure.exception, format("outbound call", method));
         }
         throw failure.exception;
     }
 
-    /**
-     * Log the throw of an outbound remote call.
-     */
-    private void logThrow(Level level,
-                          String logRecordText,
-                          String sourceMethodName,
-                          Method method,
-                          Throwable t) {
-        LogRecord lr = new LogRecord(level, logRecordText + " {0}.{1} throws");
-        lr.setLoggerName(logger.getName());
-        lr.setSourceClassName(this.getClass().getName());
-        lr.setSourceMethodName(sourceMethodName);
-        lr.setParameters(new Object[]{method.getDeclaringClass().getName(),
-                method.getName()});
-        lr.setThrown(t);
-        logger.log(lr);
+    private static String format(String text, Method method) {
+        return text + " " + method.getDeclaringClass().getName() + "." + method.getName() + " throws";
     }
 
     /**
@@ -911,8 +894,7 @@ public final class ActivatableInvocationHandler
             activate0(force, proxy);
         } catch (Exception e) {
             if (logger.isLoggable(Level.FINE)) {
-                logThrow(Level.FINE, "activating object for call",
-                        "activate", method, e);
+                LogUtils.throwing(logger, this.getClass(), "activate", e, format("activating object for call", method));
             }
             throw e;
         }

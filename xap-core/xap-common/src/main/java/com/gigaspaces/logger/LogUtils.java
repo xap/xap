@@ -19,15 +19,13 @@ package com.gigaspaces.logger;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 @com.gigaspaces.api.InternalApi
 public class LogUtils {
-
-    public static String format(Class sourceClass, String sourceMethod, String msg, Object ... params) {
-        return sourceClass.getName() + "#" + sourceMethod + ": " + String.format(msg, params);
-    }
 
     static String getStackTrace(Throwable t) {
         StringWriter sw = new StringWriter();
@@ -48,8 +46,22 @@ public class LogUtils {
     }
 
     public static void throwing(Logger logger, Class<?> sourceClass, String sourceMethod, Throwable thrown) {
-        if (logger.isLoggable(Level.FINER))
-            logger.throwing(sourceClass.getName(), sourceMethod, thrown);
+        if (logger.isLoggable(Level.FINE)) {
+            String message = sourceClass.getName() + "#" + sourceMethod;
+            logger.log(Level.FINE, message, thrown);
+        }
+    }
+
+    public static void throwing(Logger logger, Class<?> sourceClass, String sourceMethod, Throwable thrown,
+                                String format, Object ... params) {
+        if (logger.isLoggable(Level.FINE)) {
+            String message = sourceClass.getName() + "#" + sourceMethod + ": " + format(format, params);
+            logger.log(Level.FINE, message, thrown);
+        }
+    }
+
+    private static String format(String format, Object ... params) {
+        return params == null || params.length == 0 ? format : java.text.MessageFormat.format(format, params);
     }
 
     public static void entering(Logger logger, Class<?> sourceClass, String sourceMethod) {
@@ -91,5 +103,4 @@ public class LogUtils {
         if (logger.isLoggable(Level.FINER))
             logger.exiting(sourceClass.getName(), sourceMethod, args);
     }
-
 }

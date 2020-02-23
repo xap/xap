@@ -18,9 +18,10 @@
 
 package net.jini.config;
 
+import com.gigaspaces.logger.LogUtils;
+
 import java.util.Arrays;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**
@@ -372,28 +373,11 @@ public abstract class AbstractConfiguration implements Configuration {
                     e);
         }
         if (logger.isLoggable(Level.FINE)) {
-            logThrow("getEntry",
-                    "{0}, component {1}, name {2}" +
-                            "{3,choice,0#|1#, data {4}}: throws",
-                    new Object[]{
-                            this, component, name,
-                            new Double(data == NO_DATA ? 0 : 1), data},
-                    configEx);
+            LogUtils.throwing(logger, this.getClass(), "getEntry", configEx,
+                    "{0}, component {1}, name {2}{3,choice,0#|1#, data {4}}: throws",
+                    this, component, name, new Double(data == NO_DATA ? 0 : 1), data);
         }
         throw configEx;
-    }
-
-    /**
-     * Logs a throw
-     */
-    void logThrow(String method, String msg, Object[] msgParams, Throwable t) {
-        LogRecord r = new LogRecord(Level.FINE, msg);
-        r.setLoggerName(logger.getName());
-        r.setSourceClassName(this.getClass().getName());
-        r.setSourceMethodName(method);
-        r.setParameters(msgParams);
-        r.setThrown(t);
-        logger.log(r);
     }
 
     /**

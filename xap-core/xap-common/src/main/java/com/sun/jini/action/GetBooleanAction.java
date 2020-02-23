@@ -87,9 +87,8 @@ public class GetBooleanAction implements PrivilegedAction {
             return Boolean.getBoolean(theProp) ? Boolean.TRUE : Boolean.FALSE;
         } catch (SecurityException e) {
             if (logger.isLoggable(Level.FINE)) {
-                String message = LogUtils.format(GetBooleanAction.class, "run",
+                LogUtils.throwing(logger, GetBooleanAction.class, "run", e,
                         "security exception reading \"{0}\", returning false", theProp);
-                logger.log(Level.FINE, message, e);
             }
             return Boolean.FALSE;
         }

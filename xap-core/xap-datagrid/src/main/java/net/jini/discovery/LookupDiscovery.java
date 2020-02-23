@@ -1545,21 +1545,16 @@ public class LookupDiscovery implements DiscoveryManagement,
                 if (((req instanceof Socket) ||
                         (req instanceof LookupLocator)) &&
                         logger.isLoggable(Level.FINE)) {
-                    String logmsg =
-                            "exception occurred during unicast discovery to " +
-                                    "{0}:{1,number,#} with constraints {2}";
-                    String methodName = "run";
+                    String format = this.getClass().getName() + "#run: exception occurred during unicast discovery to {0}:{1,number,#} with constraints {2}";
+                    String message;
                     if (req instanceof Socket) {
                         Socket sock = (Socket) req;
-                        String message = LogUtils.format(this.getClass(), methodName, logmsg,
-                                sock.getInetAddress().getHostName(), new Integer(sock.getPort()), rawUnicastDiscoveryConstraints);
-                        logger.log(Level.INFO, message, e);
+                        message = java.text.MessageFormat.format(format, sock.getInetAddress().getHostName(), sock.getPort(), rawUnicastDiscoveryConstraints);
                     } else {
                         LookupLocator loc = (LookupLocator) req;
-                        String message = LogUtils.format(this.getClass(), methodName, logmsg,
-                                loc.getHost(), new Integer(loc.getPort()), rawUnicastDiscoveryConstraints);
-                        logger.log(Level.INFO, message, e);
+                        message = java.text.MessageFormat.format(format, loc.getHost(), loc.getPort(), rawUnicastDiscoveryConstraints);
                     }
+                    logger.log(Level.INFO, message, e);
                 } else {
                     logger.log(Level.INFO, "exception occurred during unicast discovery - request: " + req, e);
                 }

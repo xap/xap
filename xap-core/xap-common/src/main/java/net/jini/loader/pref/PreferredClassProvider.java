@@ -529,9 +529,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                                     " (could not determine preferred setting;" +
                                     " original codebase: \"" + codebase + "\")", e);
                     if (logger.isLoggable(Level.FINE)) {
-                        String message = LogUtils.format(PreferredClassProvider.class, "loadClass",
+                        LogUtils.throwing(logger, PreferredClassProvider.class, "loadClass", cnfe,
                                 "class \"{0}\" not found, could not obtain preferred value", name);
-                        logger.log(Level.FINE, message, cnfe);
                     }
                     throw cnfe;
                 }
@@ -582,9 +581,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                         new ClassNotFoundException(e.getMessage() +
                                 " (no security manager: codebase loader disabled)", e);
                 if (logger.isLoggable(Level.FINE)) {
-                    String message = LogUtils.format(PreferredClassProvider.class, "loadClass",
+                    LogUtils.throwing(logger, PreferredClassProvider.class, "loadClass", cnfe,
                             "class \"{0}\" not found via thread context class loader (no security manager)", name);
-                    logger.log(Level.FINE, message, cnfe);
                 }
                 throw cnfe;
             } else if (secEx != null) {
@@ -593,24 +591,21 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
 		 * preferable to throw, but log both exceptions.
 		 */
                 if (logger.isLoggable(Level.FINE)) {
-                    String message = LogUtils.format(PreferredClassProvider.class, "loadClass",
+                    LogUtils.throwing(logger, PreferredClassProvider.class, "loadClass", e,
                             "class \"{0}\" not found via thread context class loader (access to codebase loader denied)", name);
-                    logger.log(Level.FINE, message, e);
                 }
                 ClassNotFoundException cnfe =
                         new ClassNotFoundException(e.getMessage() +
                                 " (access to codebase loader denied)", secEx);
                 if (logger.isLoggable(Level.FINE)) {
-                    String message = LogUtils.format(PreferredClassProvider.class, "loadClass",
+                    LogUtils.throwing(logger, PreferredClassProvider.class, "loadClass", cnfe,
                             "class \"{0}\" not found via thread context class loader (access to codebase loader denied)", name);
-                    logger.log(Level.FINE, message, cnfe);
                 }
                 throw cnfe;
             } else {
                 if (logger.isLoggable(Level.FINE)) {
-                    String message = LogUtils.format(PreferredClassProvider.class,
-                            "loadClass", "class \"{0}\" not found via codebase loader", name);
-                    logger.log(Level.FINE, message, e);
+                    LogUtils.throwing(logger, PreferredClassProvider.class, "loadClass", e,
+                            "class \"{0}\" not found via codebase loader", name);
                 }
                 throw e;
             }
@@ -1155,9 +1150,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                                 " (could not determine preferred setting;" +
                                 " original codebase: \"" + codebase + "\")", e);
                 if (logger.isLoggable(Level.FINE)) {
-                    String message = LogUtils.format(PreferredClassProvider.class, "loadProxyClass",
+                    LogUtils.throwing(logger, PreferredClassProvider.class, "loadProxyClass", cnfe,
                             "class \"{0}\" not found, could not obtain preferred value", interfaceNames[p]);
-                    logger.log(Level.FINE, message, cnfe);
                 }
                 throw cnfe;
             }

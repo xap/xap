@@ -102,10 +102,8 @@ public class GetPropertyAction implements PrivilegedAction {
             }
         } catch (SecurityException e) {
             if (logger.isLoggable(Level.FINE)) {
-                String message = LogUtils.format(GetPropertyAction.class, "run",
-                        "security exception reading \"{0}\", returning {1}",
-                        theProp, defaultVal);
-                logger.log(Level.FINE, message, e);
+                LogUtils.throwing(logger, GetPropertyAction.class, "run", e,
+                        "security exception reading \"{0}\", returning {1}", theProp, defaultVal);
             }
         }
         return defaultVal;
