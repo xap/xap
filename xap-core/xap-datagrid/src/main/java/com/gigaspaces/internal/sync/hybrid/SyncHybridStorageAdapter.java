@@ -12,6 +12,7 @@ import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.sync.SynchronizationStorageAdapter;
+import com.gigaspaces.logger.LogUtils;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.gigaspaces.sync.SpaceSynchronizationEndpoint;
 import com.j_spaces.core.SpaceOperations;
@@ -277,7 +278,7 @@ public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStor
                 break;
         }
         if (logger.isLoggable(Level.FINER)) {
-            logger.throwing(getClass().getName(), "failed to execute " + operationType + " operation on " + exceptionOrigin, ex);
+            LogUtils.throwing(logger, getClass(), "failed to execute " + operationType + " operation on " + exceptionOrigin, ex);
         }
         throw new SyncHybridSAException(ex, context.getSyncHybridOperationDetails(), exceptionOrigin);
     }

@@ -17,6 +17,7 @@
  */
 package com.sun.jini.mahalo.log;
 
+import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.mahalo.TxnManager;
 import com.sun.jini.mahalo.log.MultiLogManager.LogRemovalManager;
 
@@ -65,14 +66,12 @@ public class TransientLogFile implements Log {
      */
     public TransientLogFile(long id, LogRemovalManager lrm) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TransientLogFile.class.getName(),
-                    "TransientLogFile", new Object[]{new Long(id), lrm});
+            LogUtils.entering(operationsLogger, TransientLogFile.class,"TransientLogFile", new Object[]{new Long(id), lrm});
         }
         cookie = id;
         logMgr = lrm;
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TransientLogFile.class.getName(),
-                    "TransientLogFile");
+            LogUtils.exiting(operationsLogger, TransientLogFile.class, "TransientLogFile");
         }
     }
 
@@ -94,16 +93,14 @@ public class TransientLogFile implements Log {
      */
     public void write(LogRecord rec) throws LogException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TransientLogFile.class.getName(),
-                    "write", rec);
+            LogUtils.entering(operationsLogger, TransientLogFile.class, "write", rec);
         }
         if (persistenceLogger.isLoggable(Level.FINEST)) {
             persistenceLogger.log(Level.FINEST,
                     "(ignored) write called for cookie: {0}", new Long(cookie));
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TransientLogFile.class.getName(),
-                    "write");
+            LogUtils.exiting(operationsLogger, TransientLogFile.class, "write");
         }
     }
 
@@ -112,8 +109,7 @@ public class TransientLogFile implements Log {
      */
     public void invalidate() throws LogException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TransientLogFile.class.getName(),
-                    "invalidate");
+            LogUtils.entering(operationsLogger, TransientLogFile.class, "invalidate");
         }
 
         if (persistenceLogger.isLoggable(Level.FINEST)) {
@@ -123,8 +119,7 @@ public class TransientLogFile implements Log {
         logMgr.release(cookie);
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TransientLogFile.class.getName(),
-                    "invalidate");
+            LogUtils.exiting(operationsLogger, TransientLogFile.class, "invalidate");
         }
     }
 
@@ -136,16 +131,14 @@ public class TransientLogFile implements Log {
      */
     public void recover(LogRecovery client) throws LogException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(MultiLogManager.class.getName(),
-                    "recover", client);
+            LogUtils.entering(operationsLogger, MultiLogManager.class, "recover", client);
         }
         if (persistenceLogger.isLoggable(Level.FINEST)) {
             persistenceLogger.log(Level.FINEST,
                     "(ignored) Recovering for: {0}", new Long(cookie));
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(MultiLogManager.class.getName(),
-                    "recover");
+            LogUtils.exiting(operationsLogger, MultiLogManager.class, "recover");
         }
     }
 }

@@ -17,6 +17,7 @@
  */
 package com.sun.jini.mahalo;
 
+import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.mahalo.log.CannotRecoverException;
 
 import java.util.logging.Level;
@@ -67,8 +68,7 @@ class ParticipantModRecord implements TxnLogRecord {
     public void recover(TxnManagerTransaction tmt)
             throws CannotRecoverException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(ParticipantModRecord.class.getName(),
-                    "recover", tmt);
+            LogUtils.entering(operationsLogger, ParticipantModRecord.class, "recover", tmt);
         }
         if (tmt == null)
             throw new NullPointerException("ParticipantModRecord: recover: " +
@@ -80,8 +80,7 @@ class ParticipantModRecord implements TxnLogRecord {
             tmt.modifyTxnState(ABORTED);
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(ParticipantModRecord.class.getName(),
-                    "recover");
+            LogUtils.exiting(operationsLogger, ParticipantModRecord.class, "recover");
         }
     }
 }

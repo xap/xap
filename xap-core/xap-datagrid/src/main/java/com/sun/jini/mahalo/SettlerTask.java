@@ -17,6 +17,7 @@
  */
 package com.sun.jini.mahalo;
 
+import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.thread.RetryTask;
 import com.sun.jini.thread.TaskManager;
 import com.sun.jini.thread.WakeupManager;
@@ -86,8 +87,7 @@ public class SettlerTask extends RetryTask implements TransactionConstants {
 
     public boolean tryOnce() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(SettlerTask.class.getName(),
-                    "tryOnce");
+            LogUtils.entering(operationsLogger, SettlerTask.class, "tryOnce");
         }
         try {
             if (attempt >= maxtries)
@@ -135,8 +135,7 @@ public class SettlerTask extends RetryTask implements TransactionConstants {
         } catch (RemoteException re) {
             //try again
             if (operationsLogger.isLoggable(Level.FINER)) {
-                operationsLogger.exiting(SettlerTask.class.getName(),
-                        "tryOnce", Boolean.valueOf(false));
+                LogUtils.exiting(operationsLogger, SettlerTask.class,"tryOnce", Boolean.valueOf(false));
             }
             return false;
         }
@@ -148,8 +147,7 @@ public class SettlerTask extends RetryTask implements TransactionConstants {
         }
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(SettlerTask.class.getName(),
-                    "tryOnce", Boolean.valueOf(true));
+            LogUtils.exiting(operationsLogger, SettlerTask.class, "tryOnce", Boolean.valueOf(true));
         }
 
         return true;

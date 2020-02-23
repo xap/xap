@@ -21,6 +21,7 @@ import com.gigaspaces.client.transaction.xa.GSServerTransaction;
 import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
 import com.gigaspaces.internal.utils.concurrent.UncheckedAtomicIntegerFieldUpdater;
+import com.gigaspaces.logger.LogUtils;
 import com.gigaspaces.lrmi.ILRMIProxy;
 import com.gigaspaces.time.SystemTime;
 import com.sun.jini.constants.TimeConstants;
@@ -335,8 +336,7 @@ class TxnManagerTransaction
     synchronized void add(ParticipantHandle handle)
             throws InternalManagerException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TxnManagerTransaction.class.getName(),
-                    "add", handle);
+            LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "add", handle);
         }
 
         if (handle == null)
@@ -361,8 +361,7 @@ class TxnManagerTransaction
                     "add: " + e.getMessage());
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TxnManagerTransaction.class.getName(),
-                    "add");
+            LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "add");
         }
     }
 
@@ -375,8 +374,7 @@ class TxnManagerTransaction
      */
     synchronized void modifyParticipant(ParticipantHandle handle, int state) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TxnManagerTransaction.class.getName(),
-                    "modifyParticipant", new Object[]{handle, new Integer(state)});
+            LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "modifyParticipant", new Object[]{handle, new Integer(state)});
         }
         ParticipantHandle ph = null;
 
@@ -391,8 +389,7 @@ class TxnManagerTransaction
 
         if (ph == null) {
             if (operationsLogger.isLoggable(Level.FINER)) {
-                operationsLogger.exiting(
-                        TxnManagerTransaction.class.getName(),
+                LogUtils.exiting(operationsLogger, TxnManagerTransaction.class,
                         "modifyParticipant");
             }
 //TODO - ignore??	    
@@ -401,8 +398,7 @@ class TxnManagerTransaction
 
         ph.setPrepState(state);
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TxnManagerTransaction.class.getName(),
-                    "modifyParticipant");
+            LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "modifyParticipant");
         }
     }
 
@@ -416,8 +412,7 @@ class TxnManagerTransaction
      */
     boolean modifyTxnState(int state) {
         if (finer_op_logger) {
-            operationsLogger.entering(TxnManagerTransaction.class.getName(),
-                    "modifyTxnState", new Integer(state));
+            LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "modifyTxnState", new Integer(state));
         }
         if (state != ACTIVE && state != VOTING && state != COMMITTED && state != ABORTED) {
             if (state != PREPARED || _externalXid == null) {
@@ -439,8 +434,7 @@ class TxnManagerTransaction
         }
 
         if (finer_op_logger) {
-            operationsLogger.exiting(TxnManagerTransaction.class.getName(),
-                    "modifyTxnState", Boolean.valueOf(result));
+            LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "modifyTxnState", Boolean.valueOf(result));
         }
         return result;
     }
@@ -458,8 +452,7 @@ class TxnManagerTransaction
             throws CannotJoinException, CrashCountException, RemoteException {
 
         if (finer_op_logger) {
-            operationsLogger.entering(TxnManagerTransaction.class.getName(),
-                    "join", new Object[]{part, new Long(crashCount)});
+            LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "join", new Object[]{part, new Long(crashCount)});
         }
         //if the lease has expired, or the state is not
         //amenable there is no need to continue
@@ -528,8 +521,7 @@ class TxnManagerTransaction
             throw re;
         }
         if (finer_op_logger) {
-            operationsLogger.exiting(TxnManagerTransaction.class.getName(),
-                    "join");
+            LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "join");
         }
     }
 
@@ -553,8 +545,7 @@ class TxnManagerTransaction
             throws RemoteException {
 
         if (finer_op_logger) {
-            operationsLogger.entering(TxnManagerTransaction.class.getName(),
-                    "disjoin", part);
+            LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "disjoin", part);
         }
         //if the lease has expired, or the state is not
         //amenable there is no need to continue
@@ -645,8 +636,7 @@ class TxnManagerTransaction
             throws CannotCommitException, TimeoutExpiredException, RemoteException {
 
         if (finer_op_logger) {
-            operationsLogger.entering(TxnManagerTransaction.class.getName(),
-                    "commit", new Long(waitFor));
+            LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "commit", new Long(waitFor));
         }
         if (prepareOnly && waitFor != Long.MAX_VALUE)
             throw new UnsupportedOperationException();
@@ -1075,8 +1065,7 @@ class TxnManagerTransaction
             throw new CannotCommitException("Unable to log [ID=" + +getTransaction().id + "]");
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TxnManagerTransaction.class.getName(),
-                    "commit");
+            LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "commit");
         }
         return COMMITTED;
     }
@@ -1267,8 +1256,7 @@ class TxnManagerTransaction
     void abort(long waitFor)
             throws CannotAbortException, TimeoutExpiredException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TxnManagerTransaction.class.getName(),
-                    "abort", new Long(waitFor));
+            LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "abort", new Long(waitFor));
         }
         boolean use_light_abort = false;
         if (waitFor == Long.MAX_VALUE) {
@@ -1417,8 +1405,7 @@ class TxnManagerTransaction
             throw new CannotAbortException("Unable to log");
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TxnManagerTransaction.class.getName(),
-                    "abort");
+            LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "abort");
         }
     }
 
@@ -1468,12 +1455,12 @@ class TxnManagerTransaction
 
     public long getExpiration() {
         if (finer_op_logger) {
-            operationsLogger.entering(TxnManagerTransaction.class.getName(),
+            LogUtils.entering(operationsLogger, TxnManagerTransaction.class,
                     "getExpiration");
         }
         synchronized (leaseLock) {
             if (finer_op_logger) {
-                operationsLogger.exiting(TxnManagerTransaction.class.getName(),
+                LogUtils.exiting(operationsLogger, TxnManagerTransaction.class,
                         "getExpiration", new Date(expires));
             }
             return expires;
@@ -1487,14 +1474,12 @@ class TxnManagerTransaction
 
     public void setExpiration(long newExpiration) {
         if (finer_op_logger) {
-            operationsLogger.entering(TxnManagerTransaction.class.getName(),
-                    "setExpiration", new Date(newExpiration));
+            LogUtils.entering(operationsLogger, TxnManagerTransaction.class,"setExpiration", new Date(newExpiration));
         }
         synchronized (leaseLock) {
             setExpirationUnsafe(newExpiration);
             if (finer_op_logger) {
-                operationsLogger.exiting(TxnManagerTransaction.class.getName(),
-                        "setExpiration");
+                LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "setExpiration");
             }
         }
     }
@@ -1507,11 +1492,10 @@ class TxnManagerTransaction
 
     public Uuid getCookie() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TxnManagerTransaction.class.getName(),
-                    "getCookie");
+            LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "getCookie");
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TxnManagerTransaction.class.getName(),
+            LogUtils.exiting(operationsLogger, TxnManagerTransaction.class,
                     "getCookie", uuid);
         }
         return uuid;
@@ -1519,7 +1503,7 @@ class TxnManagerTransaction
 
     private void doAbort(long timeout) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TxnManagerTransaction.class.getName(),
+            LogUtils.entering(operationsLogger, TxnManagerTransaction.class,
                     "doAbort", new Long(timeout));
         }
         try {
@@ -1547,15 +1531,14 @@ class TxnManagerTransaction
             }
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TxnManagerTransaction.class.getName(),
-                    "doAbort");
+            LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "doAbort");
         }
 
     }
 
     synchronized boolean ensureCurrent() {
         if (finer_op_logger) {
-            operationsLogger.entering(TxnManagerTransaction.class.getName(),
+            LogUtils.entering(operationsLogger, TxnManagerTransaction.class,
                     "ensureCurrent");
         }
         long useby = getExpiration();
@@ -1568,7 +1551,7 @@ class TxnManagerTransaction
         if (useby > cur)
             result = true;
         if (finer_op_logger) {
-            operationsLogger.exiting(TxnManagerTransaction.class.getName(),
+            LogUtils.exiting(operationsLogger, TxnManagerTransaction.class,
                     "ensureCurrent", Boolean.valueOf(result));
         }
         return result;
@@ -1598,8 +1581,7 @@ class TxnManagerTransaction
             }
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TxnManagerTransaction.class.getName(),
-                    "parthandles");
+            LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "parthandles");
         }
         return vect == null ? null : vect.toArray(new ParticipantHandle[vect.size()]);
     }
@@ -1607,8 +1589,7 @@ class TxnManagerTransaction
 
     private String getParticipantInfo() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TxnManagerTransaction.class.getName(),
-                    "getParticipantInfo");
+            LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "getParticipantInfo");
         }
         ParticipantHandle[] phs = parthandles();
 
@@ -1637,8 +1618,7 @@ class TxnManagerTransaction
     void restoreTransientState(ProxyPreparer preparer)
             throws RemoteException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TxnManagerTransaction.class.getName(),
-                    "restoreTransientState");
+            LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "restoreTransientState");
         }
 
         ParticipantHandle[] phs = parthandles();
@@ -1664,8 +1644,7 @@ class TxnManagerTransaction
         }
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TxnManagerTransaction.class.getName(),
-                    "restoreTransientState");
+            LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "restoreTransientState");
         }
     }
 

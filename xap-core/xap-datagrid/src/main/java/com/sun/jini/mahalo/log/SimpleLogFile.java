@@ -17,6 +17,7 @@
  */
 package com.sun.jini.mahalo.log;
 
+import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.mahalo.TxnManager;
 import com.sun.jini.mahalo.log.MultiLogManager.LogRemovalManager;
 
@@ -193,8 +194,7 @@ public class SimpleLogFile implements Log {
      */
     private void init(String name, long cookie, LogRemovalManager logMgr) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(SimpleLogFile.class.getName(),
-                    "init", new Object[]{name, new Long(cookie), logMgr});
+            LogUtils.entering(operationsLogger, SimpleLogFile.class, "init", new Object[]{name, new Long(cookie), logMgr});
         }
         if (name == null)
             throw new IllegalArgumentException("SimpleLogFile: null name");
@@ -207,8 +207,7 @@ public class SimpleLogFile implements Log {
         this.cookie = cookie;
         this.logMgr = logMgr;
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(SimpleLogFile.class.getName(),
-                    "init");
+            LogUtils.exiting(operationsLogger, SimpleLogFile.class, "init");
         }
     }
 
@@ -230,8 +229,7 @@ public class SimpleLogFile implements Log {
      */
     public synchronized void write(LogRecord rec) throws LogException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(SimpleLogFile.class.getName(),
-                    "write", rec);
+            LogUtils.entering(operationsLogger, SimpleLogFile.class, "write", rec);
         }
         try {
             if (!valid)
@@ -287,8 +285,7 @@ public class SimpleLogFile implements Log {
 // TODO - assertion error? ... should not happen
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(SimpleLogFile.class.getName(),
-                    "write", rec);
+            LogUtils.exiting(operationsLogger, SimpleLogFile.class, "write", rec);
         }
     }
 
@@ -298,8 +295,7 @@ public class SimpleLogFile implements Log {
     public synchronized void invalidate() throws LogException {
         // No short circuit check because we allow repeat calls
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(MultiLogManager.class.getName(),
-                    "invalidate");
+            LogUtils.entering(operationsLogger, MultiLogManager.class, "invalidate");
         }
 
         if (persistenceLogger.isLoggable(Level.FINEST)) {
@@ -351,8 +347,7 @@ public class SimpleLogFile implements Log {
                     + "cannot delete log file.");
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(MultiLogManager.class.getName(),
-                    "invalidate");
+            LogUtils.exiting(operationsLogger, MultiLogManager.class, "invalidate");
         }
     }
 
@@ -364,8 +359,7 @@ public class SimpleLogFile implements Log {
      */
     public synchronized void recover(LogRecovery client) throws LogException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(MultiLogManager.class.getName(),
-                    "recover", client);
+            LogUtils.entering(operationsLogger, MultiLogManager.class, "recover", client);
         }
         if (!valid)
             throw new InvalidatedLogException("Cannot recover from " +
@@ -457,8 +451,7 @@ public class SimpleLogFile implements Log {
             readonly = false;
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(MultiLogManager.class.getName(),
-                    "recover");
+            LogUtils.exiting(operationsLogger, MultiLogManager.class,"recover");
         }
     }
     // TBD - add a toString() method for debugging purposes

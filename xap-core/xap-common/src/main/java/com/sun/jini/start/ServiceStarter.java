@@ -17,6 +17,7 @@
  */
 package com.sun.jini.start;
 
+import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.action.GetIntegerAction;
 import com.sun.jini.config.Config;
 
@@ -199,8 +200,7 @@ public class ServiceStarter {
             final ServiceDescriptor[] descs, final Configuration config,
             final LoginContext loginContext)
             throws Exception {
-        logger.entering(ServiceStarter.class.getName(),
-                "createWithLogin", new Object[]{descs, config, loginContext});
+        LogUtils.entering(logger, ServiceStarter.class, "createWithLogin", new Object[]{descs, config, loginContext});
         loginContext.login();
         Result[] results = null;
         try {
@@ -222,8 +222,7 @@ public class ServiceStarter {
                 logger.log(Level.FINE, "service.logout.exception", le);
             }
         }
-        logger.exiting(ServiceStarter.class.getName(),
-                "createWithLogin", results);
+        LogUtils.exiting(logger, ServiceStarter.class, "createWithLogin", results);
         return results;
     }
 
@@ -245,8 +244,7 @@ public class ServiceStarter {
     private static Result[] create(final ServiceDescriptor[] descs,
                                    final Configuration config)
             throws Exception {
-        logger.entering(ServiceStarter.class.getName(), "create",
-                new Object[]{descs, config});
+        LogUtils.entering(logger, ServiceStarter.class, "create", new Object[]{descs, config});
         ArrayList proxies = new ArrayList();
 
         Object result = null;
@@ -267,7 +265,7 @@ public class ServiceStarter {
             }
         }
 
-        logger.exiting(ServiceStarter.class.getName(), "create", proxies);
+        LogUtils.exiting(logger, ServiceStarter.class, "create", proxies);
         return (Result[]) proxies.toArray(new Result[proxies.size()]);
     }
 
@@ -329,8 +327,7 @@ public class ServiceStarter {
      * <code>Result[]</code>. This prevents the transient services from getting garbage collected.
      */
     private static void maintainNonActivatableReferences(Result[] results) {
-        logger.entering(ServiceStarter.class.getName(),
-                "maintainNonActivatableReferences", (Object[]) results);
+        LogUtils.entering(logger, ServiceStarter.class, "maintainNonActivatableReferences", results);
         if (results.length == 0)
             return;
         transient_service_refs = new ArrayList();
@@ -345,8 +342,7 @@ public class ServiceStarter {
             }
         }
 //TODO - kick off daemon thread to maintain refs via LifeCycle object	
-        logger.exiting(ServiceStarter.class.getName(),
-                "maintainNonActivatableReferences");
+        LogUtils.exiting(logger, ServiceStarter.class,"maintainNonActivatableReferences");
         return;
     }
 
@@ -355,8 +351,7 @@ public class ServiceStarter {
      * exception or that was null.
      */
     private static void checkResultFailures(Result[] results) {
-        logger.entering(ServiceStarter.class.getName(),
-                "checkResultFailures", (Object[]) results);
+        LogUtils.entering(logger, ServiceStarter.class, "checkResultFailures", results);
         if (results.length == 0)
             return;
         for (int i = 0; i < results.length; i++) {
@@ -373,8 +368,7 @@ public class ServiceStarter {
                         "service.creation.null", new Integer(i));
             }
         }
-        logger.exiting(ServiceStarter.class.getName(),
-                "checkResultFailures");
+        LogUtils.exiting(logger, ServiceStarter.class, "checkResultFailures");
     }
 
 
@@ -397,8 +391,7 @@ public class ServiceStarter {
      */
     public static void main(String[] args) {
         try {
-            logger.entering(ServiceStarter.class.getName(),
-                    "main", (Object[]) args);
+            LogUtils.entering(logger, ServiceStarter.class,"main", args);
             Configuration config = ConfigurationProvider.getInstance(args);
             ServiceDescriptor[] descs = (ServiceDescriptor[])
                     config.getEntry(START_PACKAGE, "serviceDescriptors",
@@ -422,8 +415,7 @@ public class ServiceStarter {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "service.creation.exception", e);
         }
-        logger.exiting(ServiceStarter.class.getName(),
-                "main");
+        LogUtils.exiting(logger, ServiceStarter.class, "main");
     }
 
 }//end class ServiceStarter

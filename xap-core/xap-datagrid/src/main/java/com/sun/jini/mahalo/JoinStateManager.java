@@ -17,6 +17,7 @@
  */
 package com.sun.jini.mahalo;
 
+import com.gigaspaces.logger.LogUtils;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.kernel.SystemProperties;
 import com.sun.jini.config.Config;
@@ -123,25 +124,21 @@ class JoinStateManager extends LogHandler {
     JoinStateManager(String logPath) throws IOException {
         super();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "JoinStateManager", logPath);
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "JoinStateManager", logPath);
         }
         this.log = (logPath == null) ? null : new ReliableLog(logPath, this);
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "JoinStateManager");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "JoinStateManager");
         }
     }
 
     void recover() throws IOException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "recover");
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "recover");
         }
         if (log != null) log.recover();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "recover");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "recover");
         }
     }
 
@@ -202,10 +199,8 @@ class JoinStateManager extends LogHandler {
                       ServiceID serviceID, Entry[] baseAttributes)
             throws IOException, ConfigurationException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "startManager",
-                    new Object[]{config, service, serviceID,
-                            Arrays.asList(baseAttributes)});
+            LogUtils.entering(operationsLogger, JoinStateManager.class,"startManager",
+                    new Object[]{config, service, serviceID, Arrays.asList(baseAttributes)});
         }
         if (serviceID == null || serviceUuid == null)
             throw new AssertionError(
@@ -377,34 +372,29 @@ class JoinStateManager extends LogHandler {
         }
         update();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "startManager");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "startManager");
         }
     }
 
     public void setServiceUuid(Uuid serviceUuid) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "setServiceUuid", serviceUuid);
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "setServiceUuid", serviceUuid);
         }
         if (serviceUuid == null)
             throw new NullPointerException("serviceUuid can't be null");
         this.serviceUuid = serviceUuid;
         // Can't update until mgr & dm are started.
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "setServiceUuid");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "setServiceUuid");
         }
     }
 
     public Uuid getServiceUuid() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "getServiceUuid");
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "getServiceUuid");
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "getServiceUuid", serviceUuid);
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "getServiceUuid", serviceUuid);
         }
         return serviceUuid;
     }
@@ -414,8 +404,7 @@ class JoinStateManager extends LogHandler {
      */
     public void stop() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "stop");
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "stop");
         }
         // Unregister with lookup
 
@@ -427,22 +416,19 @@ class JoinStateManager extends LogHandler {
         if (dm != null)
             dm.terminate();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "stop");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "stop");
         }
     }
 
     public void destroy() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "destroy");
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "destroy");
         }
         stop();
         if (log != null)
             log.deletePersistentStore();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "destroy");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "destroy");
         }
     }
 
@@ -462,12 +448,10 @@ class JoinStateManager extends LogHandler {
      */
     public Entry[] getLookupAttributes() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "getLookupAttributes");
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "getLookupAttributes");
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "getLookupAttributes");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "getLookupAttributes");
         }
         return mgr.getAttributes();
     }
@@ -481,14 +465,13 @@ class JoinStateManager extends LogHandler {
      */
     public void addLookupAttributes(Entry[] attrSets) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
+            LogUtils.entering(operationsLogger, JoinStateManager.class,
                     "addLookupAttributes");
         }
         mgr.addAttributes(attrSets, true);
         update();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "addLookupAttributes");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "addLookupAttributes");
         }
     }
 
@@ -505,14 +488,13 @@ class JoinStateManager extends LogHandler {
     public void modifyLookupAttributes(Entry[] attrSetTemplates,
                                        Entry[] attrSets) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
+            LogUtils.entering(operationsLogger, JoinStateManager.class,
                     "modifyLookupAttributes");
         }
         mgr.modifyAttributes(attrSetTemplates, attrSets, true);
         update();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "modifyLookupAttributes");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "modifyLookupAttributes");
         }
     }
 
@@ -526,12 +508,10 @@ class JoinStateManager extends LogHandler {
      */
     public String[] getLookupGroups() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "getLookupGroups");
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "getLookupGroups");
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "getLookupGroups");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "getLookupGroups");
         }
         return ((DiscoveryGroupManagement) dm).getGroups();
     }
@@ -546,8 +526,7 @@ class JoinStateManager extends LogHandler {
      */
     public void addLookupGroups(String[] groups) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "addLookupGroups");
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "addLookupGroups");
         }
         try {
             ((DiscoveryGroupManagement) dm).addGroups(groups);
@@ -556,8 +535,7 @@ class JoinStateManager extends LogHandler {
         }
         update();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "addLookupGroups");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "addLookupGroups");
         }
     }
 
@@ -571,14 +549,12 @@ class JoinStateManager extends LogHandler {
      */
     public void removeLookupGroups(String[] groups) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "removeLookupGroups");
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "removeLookupGroups");
         }
         ((DiscoveryGroupManagement) dm).removeGroups(groups);
         update();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "removeLookupGroups");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "removeLookupGroups");
         }
     }
 
@@ -593,8 +569,7 @@ class JoinStateManager extends LogHandler {
      */
     public void setLookupGroups(String[] groups) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "setLookupGroups");
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "setLookupGroups");
         }
         try {
             ((DiscoveryGroupManagement) dm).setGroups(groups);
@@ -603,8 +578,7 @@ class JoinStateManager extends LogHandler {
         }
         update();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "setLookupGroups");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "setLookupGroups");
         }
     }
 
@@ -616,12 +590,10 @@ class JoinStateManager extends LogHandler {
      */
     public LookupLocator[] getLookupLocators() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "getLookupLocators");
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "getLookupLocators");
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "getLookupLocators");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "getLookupLocators");
         }
         return ((DiscoveryLocatorManagement) dm).getLocators();
     }
@@ -637,15 +609,13 @@ class JoinStateManager extends LogHandler {
     public void addLookupLocators(LookupLocator[] locators)
             throws RemoteException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "addLookupLocators");
+            LogUtils.entering(operationsLogger, JoinStateManager.class,"addLookupLocators");
         }
         prepareLocators(locators);
         ((DiscoveryLocatorManagement) dm).addLocators(locators);
         update();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "addLookupLocators");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "addLookupLocators");
         }
     }
 
@@ -660,15 +630,13 @@ class JoinStateManager extends LogHandler {
     public void removeLookupLocators(LookupLocator[] locators)
             throws RemoteException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "removeLookupLocators");
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "removeLookupLocators");
         }
         prepareLocators(locators);
         ((DiscoveryLocatorManagement) dm).removeLocators(locators);
         update();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "removeLookupLocators");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "removeLookupLocators");
         }
     }
 
@@ -684,15 +652,13 @@ class JoinStateManager extends LogHandler {
     public void setLookupLocators(LookupLocator[] locators)
             throws RemoteException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "setLookupLocators");
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "setLookupLocators");
         }
         prepareLocators(locators);
         ((DiscoveryLocatorManagement) dm).setLocators(locators);
         update();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "setLookupLocators");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "setLookupLocators");
         }
     }
 
@@ -708,16 +674,14 @@ class JoinStateManager extends LogHandler {
     private void prepareLocators(LookupLocator[] locators)
             throws RemoteException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(JoinStateManager.class.getName(),
-                    "prepareLocators");
+            LogUtils.entering(operationsLogger, JoinStateManager.class, "prepareLocators");
         }
         for (int i = 0; i < locators.length; i++) {
             locators[i] = (LookupLocator) lookupLocatorPreparer.prepareProxy(
                     locators[i]);
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(JoinStateManager.class.getName(),
-                    "prepareLocators");
+            LogUtils.exiting(operationsLogger, JoinStateManager.class, "prepareLocators");
         }
     }
 

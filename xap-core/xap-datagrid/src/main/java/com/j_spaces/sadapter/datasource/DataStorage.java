@@ -25,6 +25,7 @@ import com.gigaspaces.datasource.DataProvider;
 import com.gigaspaces.datasource.DataSourceException;
 import com.gigaspaces.datasource.ManagedDataSource;
 import com.gigaspaces.datasource.SQLDataProvider;
+import com.gigaspaces.logger.LogUtils;
 import com.j_spaces.core.client.SQLQuery;
 
 import java.util.List;
@@ -152,16 +153,12 @@ public class DataStorage<T>
      */
     public T read(T template) throws DataSourceException {
         if (_logger.isLoggable(Level.FINER))
-            _logger.entering(DataStorage.class.getName(),
-                    "DataProvider#read",
-                    template);
+            LogUtils.entering(_logger, DataStorage.class,"DataProvider#read", template);
 
         T result = _saDataProvider.read(template);
 
         if (_logger.isLoggable(Level.FINER))
-            _logger.exiting(DataStorage.class.getName(),
-                    "DataProvider#read",
-                    result);
+            LogUtils.exiting(_logger, DataStorage.class,"DataProvider#read", result);
 
         return result;
     }
@@ -172,16 +169,12 @@ public class DataStorage<T>
     public DataIterator<T> iterator(T template)
             throws DataSourceException {
         if (_logger.isLoggable(Level.FINER))
-            _logger.entering(DataStorage.class.getName(),
-                    "DataProvider#iterator",
-                    template);
+            LogUtils.entering(_logger, DataStorage.class, "DataProvider#iterator", template);
 
         DataIterator<T> iter = _saDataProvider.iterator(template);
 
         if (_logger.isLoggable(Level.FINER))
-            _logger.exiting(DataStorage.class.getName(),
-                    "DataProvider#iterator",
-                    iter);
+            LogUtils.exiting(_logger, DataStorage.class, "DataProvider#iterator", iter);
 
         return iter;
     }
@@ -192,16 +185,12 @@ public class DataStorage<T>
     public DataIterator<T> iterator(SQLQuery<T> query)
             throws DataSourceException {
         if (_logger.isLoggable(Level.FINER))
-            _logger.entering(DataStorage.class.getName(),
-                    "SQLDataProvider#iterator",
-                    query);
+            LogUtils.entering(_logger, DataStorage.class, "SQLDataProvider#iterator", query);
 
         DataIterator<T> iter = _saSQLDataProvider.iterator(query);
 
         if (_logger.isLoggable(Level.FINER))
-            _logger.exiting(DataStorage.class.getName(),
-                    "SQLDataProvider#iterator",
-                    iter);
+            LogUtils.exiting(_logger, DataStorage.class, "SQLDataProvider#iterator", iter);
 
         return iter;
     }
@@ -211,9 +200,7 @@ public class DataStorage<T>
      */
     public void remove(T object) throws DataSourceException {
         if (_logger.isLoggable(Level.FINER))
-            _logger.entering(DataStorage.class.getName(),
-                    "DataPersister#remove",
-                    object);
+            LogUtils.entering(_logger, DataStorage.class,"DataPersister#remove", object);
 
         _saDataPersister.remove(object);
 
@@ -224,9 +211,7 @@ public class DataStorage<T>
      */
     public void update(T object) throws DataSourceException {
         if (_logger.isLoggable(Level.FINER))
-            _logger.entering(DataStorage.class.getName(),
-                    "DataPersister#update",
-                    object);
+            LogUtils.entering(_logger, DataStorage.class, "DataPersister#update", object);
 
         _saDataPersister.update(object);
 
@@ -237,9 +222,7 @@ public class DataStorage<T>
      */
     public void write(T object) throws DataSourceException {
         if (_logger.isLoggable(Level.FINER))
-            _logger.entering(DataStorage.class.getName(),
-                    "DataPersister#write",
-                    object);
+            LogUtils.entering(_logger, DataStorage.class, "DataPersister#write", object);
 
         _saDataPersister.write(object);
     }
@@ -250,9 +233,7 @@ public class DataStorage<T>
     public void writeBatch(List<T> objects)
             throws DataSourceException {
         if (_logger.isLoggable(Level.FINER))
-            _logger.entering(DataStorage.class.getName(),
-                    "DataPersister#writeBatch",
-                    objects);
+            LogUtils.entering(_logger, DataStorage.class, "DataPersister#writeBatch", objects);
 
         _saDataPersister.writeBatch(objects);
     }
@@ -264,9 +245,7 @@ public class DataStorage<T>
     public void executeBulk(List<BulkItem> bulk)
             throws DataSourceException {
         if (_logger.isLoggable(Level.FINER))
-            _logger.entering(DataStorage.class.getName(),
-                    "BulkDataPersister#executeBulk",
-                    bulk);
+            LogUtils.entering(_logger, DataStorage.class, "BulkDataPersister#executeBulk", bulk);
 
         _saBulkDataPersister.executeBulk(bulk);
     }
@@ -278,9 +257,7 @@ public class DataStorage<T>
             throws DataSourceException {
 
         if (_logger.isLoggable(Level.FINER))
-            _logger.entering(DataStorage.class.getName(),
-                    "ManagedDataSource#init",
-                    configuration);
+            LogUtils.entering(_logger, DataStorage.class,"ManagedDataSource#init", configuration);
 
         _saManagedDataSource.init(configuration);
     }
@@ -290,8 +267,7 @@ public class DataStorage<T>
      */
     public void shutdown() throws DataSourceException {
         if (_logger.isLoggable(Level.FINER))
-            _logger.entering(DataStorage.class.getName(),
-                    "ManagedDataSource#shutdown");
+            LogUtils.entering(_logger, DataStorage.class, "ManagedDataSource#shutdown");
 
         _saManagedDataSource.shutdown();
 
@@ -314,14 +290,12 @@ public class DataStorage<T>
      */
     public DataIterator<T> initialLoad() throws DataSourceException {
         if (_logger.isLoggable(Level.FINER))
-            _logger.entering(DataStorage.class.getName(),
-                    "ManagedDataSource#initialLoad");
+            LogUtils.entering(_logger, DataStorage.class, "ManagedDataSource#initialLoad");
 
         DataIterator<T> iter = _saManagedDataSource.initialLoad();
 
         if (_logger.isLoggable(Level.FINER))
-            _logger.exiting(DataStorage.class.getName(),
-                    "ManagedDataSource#initialLoad");
+            LogUtils.exiting(_logger, DataStorage.class, "ManagedDataSource#initialLoad");
 
         return iter;
     }

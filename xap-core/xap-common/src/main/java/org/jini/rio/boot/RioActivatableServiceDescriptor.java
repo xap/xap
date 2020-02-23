@@ -16,6 +16,7 @@
  */
 package org.jini.rio.boot;
 
+import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.action.GetIntegerAction;
 import com.sun.jini.config.Config;
 import com.sun.jini.start.ClassLoaderUtil;
@@ -260,9 +261,7 @@ public class RioActivatableServiceDescriptor extends RioServiceDescriptor {
      * service instance.
      */
     public Object create(Configuration config) throws Exception {
-        logger.entering(RioActivatableServiceDescriptor.class.getName(),
-                "create",
-                new Object[]{config});
+        LogUtils.entering(logger, RioActivatableServiceDescriptor.class, "create", config);
         if (config == null) {
             throw new NullPointerException("Configuration argument cannot be null");
         }        
@@ -357,9 +356,7 @@ public class RioActivatableServiceDescriptor extends RioServiceDescriptor {
                 throw new RuntimeException("Unexpected Exception", e);
         }
         created = new Created(gid, aid, proxy);
-        logger.exiting(RioActivatableServiceDescriptor.class.getName(),
-                "create",
-                created);
+        LogUtils.exiting(logger, RioActivatableServiceDescriptor.class, "create", created);
         return created;
     }
 

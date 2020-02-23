@@ -46,4 +46,50 @@ public class LogUtils {
         final long duration = System.currentTimeMillis() - startTime;
         logger.log(level, message + " [Duration = " + duration + "ms]");
     }
+
+    public static void throwing(Logger logger, Class<?> sourceClass, String sourceMethod, Throwable thrown) {
+        if (logger.isLoggable(Level.FINER))
+            logger.throwing(sourceClass.getName(), sourceMethod, thrown);
+    }
+
+    public static void entering(Logger logger, Class<?> sourceClass, String sourceMethod) {
+        if (logger.isLoggable(Level.FINER))
+            logger.entering(sourceClass.getName(), sourceMethod);
+    }
+
+    public static void entering(Logger logger, Class<?> sourceClass, String sourceMethod, Object arg) {
+        if (logger.isLoggable(Level.FINER))
+            logger.entering(sourceClass.getName(), sourceMethod, arg);
+    }
+
+    public static void entering(Logger logger, Class<?> sourceClass, String sourceMethod, Object[] args) {
+        if (logger.isLoggable(Level.FINER))
+            logger.entering(sourceClass.getName(), sourceMethod, args);
+    }
+
+    public static void entering(Logger logger, String sourceClass, String sourceMethod, Object[] args) {
+        if (logger.isLoggable(Level.FINER))
+            logger.entering(sourceClass, sourceMethod, args);
+    }
+
+    public static void exiting(Logger logger, Class<?> sourceClass, String sourceMethod) {
+        if (logger.isLoggable(Level.FINER))
+            logger.exiting(sourceClass.getName(), sourceMethod);
+    }
+
+    public static void exiting(Logger logger, Class<?> sourceClass, String sourceMethod, Object arg) {
+        if (logger.isLoggable(Level.FINER))
+            logger.exiting(sourceClass.getName(), sourceMethod, arg);
+    }
+
+    public static void exiting(Logger logger, String sourceClass, String sourceMethod, Object arg) {
+        if (logger.isLoggable(Level.FINER))
+            logger.exiting(sourceClass, sourceMethod, arg);
+    }
+
+    public static void exiting(Logger logger, Class<?> sourceClass, String sourceMethod, Object[] args) {
+        if (logger.isLoggable(Level.FINER))
+            logger.exiting(sourceClass.getName(), sourceMethod, args);
+    }
+
 }

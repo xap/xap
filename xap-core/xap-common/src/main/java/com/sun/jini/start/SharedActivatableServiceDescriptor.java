@@ -17,6 +17,7 @@
  */
 package com.sun.jini.start;
 
+import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.config.Config;
 
 import net.jini.config.Configuration;
@@ -452,8 +453,7 @@ public class SharedActivatableServiceDescriptor
      * @throws java.lang.Exception Thrown if there was any problem creating the object.
      */
     public Object create(Configuration config) throws Exception {
-        logger.entering(SharedActivatableServiceDescriptor.class.getName(),
-                "create", new Object[]{config});
+        LogUtils.entering(logger, SharedActivatableServiceDescriptor.class,"create", config);
 
         if (config == null) {
             throw new NullPointerException(
@@ -550,8 +550,7 @@ public class SharedActivatableServiceDescriptor
                 throw new RuntimeException("Unexpected Exception", e);
         }
         created = new Created(gid, aid, proxy);
-        logger.exiting(SharedActivatableServiceDescriptor.class.getName(),
-                "create", created);
+        LogUtils.exiting(logger, SharedActivatableServiceDescriptor.class,"create", created);
         return created;
     }
 

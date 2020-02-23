@@ -17,6 +17,7 @@
  */
 package com.sun.jini.mahalo;
 
+import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.thread.RetryTask;
 import com.sun.jini.thread.TaskManager;
 import com.sun.jini.thread.WakeupManager;
@@ -68,8 +69,7 @@ public class ParticipantTask extends RetryTask {
 
     public boolean tryOnce() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(ParticipantTask.class.getName(),
-                    "tryOnce");
+            LogUtils.entering(operationsLogger, ParticipantTask.class, "tryOnce");
         }
 
         boolean result = false;
@@ -83,8 +83,7 @@ public class ParticipantTask extends RetryTask {
             je.printStackTrace();
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(ParticipantTask.class.getName(),
-                    "tryOnce", Boolean.valueOf(result));
+            LogUtils.exiting(operationsLogger, ParticipantTask.class, "tryOnce", Boolean.valueOf(result));
         }
 
         return result;

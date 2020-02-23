@@ -17,6 +17,7 @@
  */
 package com.sun.jini.start;
 
+import com.gigaspaces.logger.LogUtils;
 import net.jini.config.Configuration;
 
 import java.io.BufferedInputStream;
@@ -299,8 +300,7 @@ public class SharedActivationGroupDescriptor
      * system group instance.
      */
     public Object create(Configuration config) throws Exception {
-        logger.entering(SharedActivationGroupDescriptor.class.getName(),
-                "create", new Object[]{config});
+        LogUtils.entering(logger, SharedActivationGroupDescriptor.class,"create", config);
 
         if (config == null) {
             throw new NullPointerException(
@@ -342,8 +342,7 @@ public class SharedActivationGroupDescriptor
                 throw new RuntimeException("Unexpected Exception", e);
         }
 
-        logger.exiting(SharedActivationGroupDescriptor.class.getName(),
-                "create", gid);
+        LogUtils.exiting(logger, SharedActivationGroupDescriptor.class, "create", gid);
         return gid;
     }
 

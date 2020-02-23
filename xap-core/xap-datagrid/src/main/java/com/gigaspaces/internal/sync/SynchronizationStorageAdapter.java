@@ -39,6 +39,7 @@ import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridOperationDetails;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.logger.LogUtils;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.gigaspaces.sync.*;
@@ -133,7 +134,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
             initializeSharedModeIteratorIfNecessary();
         } catch (Exception e) {
             if (_logger.isLoggable(Level.FINER))
-                _logger.throwing(getClass().getName(), "Initialize", e);
+                LogUtils.throwing(_logger, getClass(), "Initialize", e);
             throw new SAException(e);
         }
     }
@@ -211,7 +212,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
                 }
             } catch (Exception e) {
                 if (_logger.isLoggable(Level.FINER))
-                    _logger.throwing(getClass().getName(), "Initial Metadata Load", e);
+                    LogUtils.throwing(_logger, getClass(), "Initial Metadata Load", e);
                 throw new SAException(e);
             }
         }
@@ -233,7 +234,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
             return cacheAdapterIterator;
         } catch (Exception e) {
             if (_logger.isLoggable(Level.FINER))
-                _logger.throwing(getClass().getName(), "Initial Load", e);
+                LogUtils.throwing(_logger, getClass(), "Initial Load", e);
             throw new SAException(e);
         }
     }
@@ -252,7 +253,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
             _syncEndpoint.onOperationsBatchSynchronization(new OperationsDataBatchImpl(operation, _spaceName));
         } catch (Throwable t) {
             if (_logger.isLoggable(Level.FINER))
-                _logger.throwing(getClass().getName(), "Insert Entry", t);
+                LogUtils.throwing(_logger, getClass(), "Insert Entry", t);
 
             throw new SAException(t);
         }
@@ -303,7 +304,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
             _syncEndpoint.onOperationsBatchSynchronization(new OperationsDataBatchImpl(operation, _spaceName));
         } catch (Throwable t) {
             if (_logger.isLoggable(Level.FINER))
-                _logger.throwing(getClass().getName(), "Remove Entry", t);
+                LogUtils.throwing(_logger, getClass(), "Remove Entry", t);
 
             throw new SAException(t);
         }
@@ -366,7 +367,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
             }
         } catch (Throwable t) {
             if (_logger.isLoggable(Level.FINER))
-                _logger.throwing(getClass().getName(), "Prepare", t);
+                LogUtils.throwing(_logger, getClass(), "Prepare", t);
             throw new SAException(t);
         }
     }
@@ -414,7 +415,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
             return results;
         } catch (Exception e) {
             if (_logger.isLoggable(Level.FINER))
-                _logger.throwing(getClass().getName(), "Get Entries", e);
+                LogUtils.throwing(_logger, getClass(), "Get Entries", e);
             throw new SAException(e);
         }
     }
@@ -454,7 +455,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
             return holder;
         } catch (Exception e) {
             if (_logger.isLoggable(Level.FINER))
-                _logger.throwing(getClass().getName(), "Get Entry", e);
+                LogUtils.throwing(_logger, getClass(), "Get Entry", e);
             //could be: UnusableEntryException, UnknownTypeException or other
             throw new SAException(e);
         }
@@ -515,7 +516,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
             return cacheAdapterIterator;
         } catch (Throwable t) {
             if (_logger.isLoggable(Level.FINER))
-                _logger.throwing(SynchronizationStorageAdapter.class.getName(), "Entries Iterator", t);
+                LogUtils.throwing(_logger, SynchronizationStorageAdapter.class, "Entries Iterator", t);
 
             throw new SAException(t);
         }

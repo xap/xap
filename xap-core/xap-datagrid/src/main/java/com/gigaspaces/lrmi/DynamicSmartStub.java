@@ -32,6 +32,7 @@ import com.gigaspaces.internal.utils.concurrent.ContextClassLoaderCallable;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.logger.Constants;
+import com.gigaspaces.logger.LogUtils;
 import com.gigaspaces.lrmi.nio.async.FutureContext;
 import com.gigaspaces.lrmi.nio.async.IFuture;
 import com.gigaspaces.start.SystemInfo;
@@ -278,12 +279,12 @@ public class DynamicSmartStub
             throws Throwable {
         try {
             if (_logger.isLoggable(Level.FINEST))
-                _logger.entering("DynamicSmartStub - " + targetObject.getClass().getName(), invokeMethod.getName(), args);
+                LogUtils.entering(_logger, "DynamicSmartStub - " + targetObject.getClass().getName(), invokeMethod.getName(), args);
 
             Object resultInv = invokeMethod.invoke(targetObject, args);
 
             if (_logger.isLoggable(Level.FINEST))
-                _logger.exiting("DynamicSmartStub - " + targetObject.getClass().getName(), invokeMethod.getName(), resultInv);
+                LogUtils.exiting(_logger, "DynamicSmartStub - " + targetObject.getClass().getName(), invokeMethod.getName(), resultInv);
 
             return resultInv;
 

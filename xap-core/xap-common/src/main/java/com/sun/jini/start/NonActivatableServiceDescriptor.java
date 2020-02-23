@@ -17,6 +17,7 @@
  */
 package com.sun.jini.start;
 
+import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.config.Config;
 
 import net.jini.config.Configuration;
@@ -456,8 +457,7 @@ public class NonActivatableServiceDescriptor
      * @throws java.lang.Exception Thrown if there was any problem creating the object.
      */
     public Object create(Configuration config) throws Exception {
-        logger.entering(NonActivatableServiceDescriptor.class.getName(),
-                "create", new Object[]{config});
+        LogUtils.entering(logger, NonActivatableServiceDescriptor.class, "create", config);
         if (config == null) {
             throw new NullPointerException(
                     "Configuration argument cannot be null");
@@ -586,8 +586,7 @@ public class NonActivatableServiceDescriptor
             proxy = servicePreparer.prepareProxy(proxy);
         }
         Created created = new Created(impl, proxy);
-        logger.exiting(NonActivatableServiceDescriptor.class.getName(),
-                "create", created);
+        LogUtils.exiting(logger, NonActivatableServiceDescriptor.class,"create", created);
         return created;
     }
 

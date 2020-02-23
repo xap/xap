@@ -17,6 +17,7 @@
  */
 package com.sun.jini.mahalo;
 
+import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.landlord.ConstrainableLandlordLease;
 import com.sun.jini.landlord.Landlord;
 import com.sun.jini.landlord.LandlordProxyVerifier;
@@ -90,8 +91,7 @@ final class ProxyVerifier implements TrustVerifier, Serializable {
     public boolean isTrustedObject(Object obj, TrustVerifier.Context ctx)
             throws RemoteException {
         if (logger.isLoggable(Level.FINER)) {
-            logger.entering(ProxyVerifier.class.getName(), "isTrustedObject",
-                    new Object[]{obj, ctx});
+            LogUtils.entering(logger, ProxyVerifier.class, "isTrustedObject", new Object[]{obj, ctx});
         }
         if (obj == null || ctx == null) {
             throw new NullPointerException("Arguments must not be null");
@@ -132,8 +132,7 @@ final class ProxyVerifier implements TrustVerifier, Serializable {
                 (TrustEquivalence) serverProxy.setConstraints(mc);
         boolean result = trusted.checkTrustEquivalence(otherServerProxy);
         if (logger.isLoggable(Level.FINER)) {
-            logger.exiting(ProxyVerifier.class.getName(), "isTrustedObject",
-                    Boolean.valueOf(result));
+            LogUtils.exiting(logger, ProxyVerifier.class, "isTrustedObject", Boolean.valueOf(result));
         }
         return result;
     }

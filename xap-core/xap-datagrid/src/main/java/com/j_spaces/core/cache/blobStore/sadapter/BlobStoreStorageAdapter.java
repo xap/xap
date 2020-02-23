@@ -24,6 +24,7 @@ import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.gigaspaces.logger.LogUtils;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.gigaspaces.server.blobstore.BlobStoreBulkOperationRequest;
 import com.gigaspaces.server.blobstore.BlobStoreBulkOperationResult;
@@ -138,7 +139,7 @@ public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStora
             }
         } catch (Exception e) {
             if (_logger.isLoggable(Level.FINER))
-                _logger.throwing(getClass().getName(), "Initial Metadata Load", e);
+                LogUtils.throwing(_logger, getClass(), "Initial Metadata Load", e);
             throw new SAException(e);
         } finally {
             metadataIterator.close();

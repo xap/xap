@@ -19,6 +19,7 @@ package com.sun.jini.mahalo;
 
 import com.gigaspaces.internal.client.spaceproxy.operations.PrepareAndCommitTransactionSpaceOperationRequest;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
+import com.gigaspaces.logger.LogUtils;
 import com.j_spaces.core.OperationID;
 import com.sun.jini.mahalo.log.ClientLog;
 import com.sun.jini.thread.TaskManager;
@@ -141,8 +142,7 @@ public class PrepareAndCommitJob extends Job implements TransactionConstants {
      */
     Object doWork(TaskManager.Task who, Object param) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(PrepareAndCommitJob.class.getName(),
-                    "doWork", new Object[]{who, param});
+            LogUtils.entering(operationsLogger, PrepareAndCommitJob.class, "doWork", new Object[]{who, param});
         }
 
         Integer res = null;
@@ -163,8 +163,7 @@ public class PrepareAndCommitJob extends Job implements TransactionConstants {
                 case ABORTED:
                 case PREPARED:
                     if (operationsLogger.isLoggable(Level.FINER)) {
-                        operationsLogger.exiting(
-                                PrepareAndCommitJob.class.getName(),
+                        LogUtils.exiting(operationsLogger, PrepareAndCommitJob.class,
                                 "doWork", new Integer(vote));
                     }
                     res = vote;
@@ -184,17 +183,14 @@ public class PrepareAndCommitJob extends Job implements TransactionConstants {
             try {
                 if (!_directCall && attempt(who) > maxtries) {
                     if (operationsLogger.isLoggable(Level.FINER)) {
-                        operationsLogger.exiting(
-                                PrepareAndCommitJob.class.getName(),
-                                "doWork", new Integer(ABORTED));
+                        LogUtils.exiting(operationsLogger, PrepareAndCommitJob.class, "doWork", new Integer(ABORTED));
                     }
                     res = ABORTED;
                     return res;
                 }
             } catch (JobException je) {
                 if (operationsLogger.isLoggable(Level.FINER)) {
-                    operationsLogger.exiting(PrepareAndCommitJob.class.getName(),
-                            "doWork", null);
+                    LogUtils.exiting(operationsLogger, PrepareAndCommitJob.class,"doWork", null);
                 }
                 return null;
             }
@@ -204,8 +200,7 @@ public class PrepareAndCommitJob extends Job implements TransactionConstants {
             //must be an error unpacking, so retry later
             if (par == null) {
                 if (operationsLogger.isLoggable(Level.FINER)) {
-                    operationsLogger.exiting(PrepareAndCommitJob.class.getName(),
-                            "doWork", null);
+                    LogUtils.exiting(operationsLogger, PrepareAndCommitJob.class, "doWork", null);
                 }
                 return null;
             }
@@ -262,16 +257,14 @@ public class PrepareAndCommitJob extends Job implements TransactionConstants {
                     //TODO - ignore?
                 }
                 if (operationsLogger.isLoggable(Level.FINER)) {
-                    operationsLogger.exiting(PrepareAndCommitJob.class.getName(),
-                            "doWork", response);
+                    LogUtils.exiting(operationsLogger, PrepareAndCommitJob.class,"doWork", response);
                 }
                 res = response;
                 return res;
             }
 
             if (operationsLogger.isLoggable(Level.FINER)) {
-                operationsLogger.exiting(PrepareAndCommitJob.class.getName(),
-                        "doWork", null);
+                LogUtils.exiting(operationsLogger, PrepareAndCommitJob.class, "doWork", null);
             }
 
             return null;
@@ -336,8 +329,7 @@ public class PrepareAndCommitJob extends Job implements TransactionConstants {
      */
     Object computeResult() throws JobException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(PrepareAndCommitJob.class.getName(),
-                    "computeResult");
+            LogUtils.entering(operationsLogger, PrepareAndCommitJob.class, "computeResult");
         }
         try {
             if (!isCompleted(0))
@@ -354,8 +346,7 @@ public class PrepareAndCommitJob extends Job implements TransactionConstants {
 
         Integer result = new Integer(prepstate);
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(PrepareAndCommitJob.class.getName(),
-                    "computeResult", result);
+            LogUtils.exiting(operationsLogger, PrepareAndCommitJob.class,"computeResult", result);
         }
         return result;
     }

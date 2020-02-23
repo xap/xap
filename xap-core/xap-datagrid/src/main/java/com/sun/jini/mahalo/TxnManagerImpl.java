@@ -18,6 +18,7 @@
 package com.sun.jini.mahalo;
 
 import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
+import com.gigaspaces.logger.LogUtils;
 import com.gigaspaces.time.SystemTime;
 import com.sun.jini.config.Config;
 import com.sun.jini.landlord.Landlord;
@@ -374,9 +375,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
     TxnManagerImpl(String[] args, LifeCycle lc, boolean persistent, boolean lookupRegister)
             throws Exception {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "TxnManagerImpl",
-                    new Object[]{
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "TxnManagerImpl", new Object[]{
                             Arrays.asList(args), lc, Boolean.valueOf(persistent)});
         }
         lifeCycle = lc;
@@ -394,8 +393,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             initFailed(e);
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "TxnManagerImpl");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "TxnManagerImpl");
         }
         finer_par_logger = participantLogger.isLoggable(Level.FINER);
         finest_par_logger = participantLogger.isLoggable(Level.FINEST);
@@ -414,8 +412,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
     TxnManagerImpl(ActivationID activationID, MarshalledObject data)
             throws Exception {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "TxnManagerImpl",
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "TxnManagerImpl",
                     new Object[]{activationID, data});
         }
         this.activationID = activationID;
@@ -427,8 +424,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
             initFailed(e);
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "TxnManagerImpl");
+            LogUtils.exiting(operationsLogger,
+                    TxnManagerImpl.class, "TxnManagerImpl");
         }
         finer_par_logger = participantLogger.isLoggable(Level.FINER);
         finest_par_logger = participantLogger.isLoggable(Level.FINEST);
@@ -444,8 +441,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
     private void init(String[] configArgs)
             throws Exception {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TxnManagerImpl.class.getName(), "init",
-                    (Object[]) configArgs);
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "init", configArgs);
         }
         final Configuration config =
                 ConfigurationProvider.getInstance(
@@ -458,16 +454,14 @@ public class TxnManagerImpl /*extends RemoteServer*/
             doInit(config);
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "init");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "init");
         }
     }
 
     private void doInitWithLogin(final Configuration config,
                                  LoginContext loginContext) throws Exception {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TxnManagerImpl.class.getName(),
-                    "doInitWithLogin",
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "doInitWithLogin",
                     new Object[]{config, loginContext});
         }
         loginContext.login();
@@ -493,8 +487,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             throw e.getException();
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TxnManagerImpl.class.getName(),
-                    "doInitWithLogin");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "doInitWithLogin");
         }
 
     }
@@ -502,8 +495,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
     private void doInit(Configuration config) throws Exception {
         final long startTime = System.currentTimeMillis();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "doInit", config);
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "doInit", config);
         }
         // Get activatable settings, if activated
         if (activationID != null) {
@@ -737,7 +729,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         } catch (LogException le) {
             RemoteException re =
                     new RemoteException("Problem recovering state");
-            initLogger.throwing(TxnManagerImpl.class.getName(), "doInit", re);
+            LogUtils.throwing(initLogger, TxnManagerImpl.class, "doInit", re);
             throw re;
         }
 
@@ -773,8 +765,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         readyState.ready();
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "doInit");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "doInit");
         }
     }
 
@@ -791,14 +782,10 @@ public class TxnManagerImpl /*extends RemoteServer*/
             throws LeaseDeniedException {
         if (finer_op_logger) {
             if (externalXid == null)
-                operationsLogger.entering(
-                        TxnManagerImpl.class.getName(), "create",
-                        new Long(lease));
+                LogUtils.entering(operationsLogger, TxnManagerImpl.class, "create", new Long(lease));
             else {
                 String create_xid = "create xid=" + externalXid.toString();
-                operationsLogger.entering(
-                        TxnManagerImpl.class.getName(), create_xid,
-                        new Long(lease));
+                LogUtils.entering(operationsLogger, TxnManagerImpl.class, create_xid, new Long(lease));
             }
         }
         if (!readyState.isReady())
@@ -862,8 +849,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         TransactionManager.Created tmp =
                 new TransactionManager.Created(tid, txnmgrlease);
         if (finer_op_logger) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "create", tmp);
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "create", tmp);
         }
         //Remove landlord stub to reduce network traffic, the stub will be reattached at the proxy that requested
         //this transaction
@@ -958,8 +944,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             }
         }
         if (finer_op_logger) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "join",
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "join",
                     new Object[]{id, part, new Long(crashCount)});
         }
 
@@ -990,8 +975,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
 
         if (finer_op_logger) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "join");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "join");
         }
     }
 
@@ -1014,9 +998,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
     disJoin_impl(Object id, TransactionParticipant part)
             throws UnknownTransactionException, RemoteException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "disJoin",
-                    new Object[]{id, part});
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "disJoin", new Object[]{id, part});
         }
 
         TransactionParticipant preparedTarget = part;
@@ -1034,8 +1016,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         // txntr.join does expiration check
         boolean res = txntr.disJoin(preparedTarget);
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "disJoin");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "disJoin");
         }
         return res;
     }
@@ -1049,9 +1030,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
     public int prepare(Object xid)
             throws CannotCommitException, UnknownTransactionException, RemoteException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "prepare-xid",
-                    xid);
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "prepare-xid", xid);
         }
         TxnManagerTransaction txntr = _txns.get(xid);
 
@@ -1071,9 +1050,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
     public int getState(Object id)
             throws UnknownTransactionException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "getState",
-                    new Object[]{id});
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "getState", id);
         }
         readyState.check();
 
@@ -1098,9 +1075,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             throw new UnknownTransactionException("unknown transaction");
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "getState",
-                    new Integer(state));
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "getState", new Integer(state));
         }
         return state;
     }
@@ -1132,9 +1107,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             TimeoutExpiredException, RemoteException {
         //!! No early return when not synchronous
         if (finer_op_logger) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "commit",
-                    new Object[]{id, new Long(waitFor)});
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "commit", new Object[]{id, new Long(waitFor)});
         }
         if (!readyState.isReady())
             readyState.check();
@@ -1160,8 +1133,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
                     "Committed transaction id {0}", id);
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "commit");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "commit");
         }
     }
 
@@ -1169,9 +1141,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             throws UnknownTransactionException, CannotCommitException,
             RemoteException {
         if (finer_op_logger) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "commit-xid",
-                    new Object[]{xid.toString(), new Long(0)});
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "commit-xid", new Object[]{xid.toString(), new Long(0)});
         }
         try {
             commit_impl(xid, 0);
@@ -1186,8 +1156,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             throws UnknownTransactionException, CannotCommitException,
             TimeoutExpiredException, RemoteException {
         if (finer_op_logger) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "commit-xid",
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "commit-xid",
                     new Object[]{xid.toString(), new Long(waitFor)});
         }
         commit_impl(xid, waitFor);
@@ -1197,9 +1166,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
     public void abort(long id)
             throws UnknownTransactionException, CannotAbortException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "abort",
-                    new Object[]{new Long(id)});
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "abort", id);
         }
         readyState.check();
         try {
@@ -1209,8 +1176,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             //schedule a settler task
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "abort");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "abort");
         }
     }
 
@@ -1225,9 +1191,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             throws UnknownTransactionException, CannotAbortException,
             TimeoutExpiredException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "abort",
-                    new Object[]{id, new Long(waitFor)});
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "abort", new Object[]{id, new Long(waitFor)});
         }
         readyState.check();
 
@@ -1265,8 +1229,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
                     "aborted transaction id {0}", id);
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "abort");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "abort");
         }
     }
 
@@ -1275,8 +1238,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             throws UnknownTransactionException, CannotAbortException,
             RemoteException {
         if (finer_op_logger) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "abort-xid",
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "abort-xid",
                     new Object[]{xid.toString(), new Long(0)});
         }
         try {
@@ -1291,8 +1253,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             throws UnknownTransactionException, CannotAbortException,
             TimeoutExpiredException, RemoteException {
         if (finer_op_logger) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "abort-xid",
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "abort-xid",
                     new Object[]{xid.toString(), new Long(waitFor)});
         }
         abort_impl(xid, waitFor);
@@ -1312,16 +1273,14 @@ public class TxnManagerImpl /*extends RemoteServer*/
      */
     public void recover(long cookie, LogRecord rec) throws LogException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "recover",
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "recover",
                     new Object[]{new Long(cookie), rec});
         }
         TxnManagerTransaction tmt = enterTMT(cookie);
         TxnLogRecord trec = (TxnLogRecord) rec;
         trec.recover(tmt);
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "recover");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "recover");
         }
     }
 
@@ -1333,16 +1292,14 @@ public class TxnManagerImpl /*extends RemoteServer*/
      */
     public synchronized void noteUnsettledTxn(Object tid) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TxnManagerImpl.class.getName(),
-                    "noteUnsettledTxn", new Object[]{tid});
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "noteUnsettledTxn", tid);
         }
         unsettledtxns.add(tid);
 
         notifyAll();
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TxnManagerImpl.class.getName(),
-                    "noteUnsettledTxn");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "noteUnsettledTxn");
         }
     }
 
@@ -1350,8 +1307,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         ClientLog log = null;
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TxnManagerImpl.class.getName(),
-                    "settleTxns");
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "settleTxns");
         }
         if (transactionsLogger.isLoggable(Level.FINEST)) {
             transactionsLogger.log(Level.FINEST,
@@ -1468,7 +1424,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             throws UnknownLeaseException, LeaseDeniedException {
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TxnManagerImpl.class.getName(), "renew",
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "renew",
                     new Object[]{uuid, new Long(extension)});
         }
         readyState.check();
@@ -1499,9 +1455,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             txntr.setExpiration(r.expiration);
             expMgr.renewed(txntr);
             if (operationsLogger.isLoggable(Level.FINER)) {
-                operationsLogger.exiting(
-                        TxnManagerImpl.class.getName(), "renew",
-                        new Object[]{new Long(r.duration)});
+                LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "renew", new Object[]{new Long(r.duration)});
             }
 
             txntr.renew(extension);
@@ -1521,9 +1475,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
     public void cancel(Uuid uuid) throws UnknownLeaseException {
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "cancel",
-                    new Object[]{uuid});
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "cancel", uuid);
         }
         readyState.check();
 
@@ -1569,8 +1521,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         }
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "cancel");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "cancel");
         }
     }
 
@@ -1585,16 +1536,14 @@ public class TxnManagerImpl /*extends RemoteServer*/
      */
     public Landlord.RenewResults renewAll(Uuid[] cookies, long[] extensions) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "renewAll");
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "renewAll");
         }
         readyState.check();
 
         Landlord.RenewResults results =
                 LandlordUtil.renewAll(this, cookies, extensions);
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "renewAll");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "renewAll");
         }
         return results;
     }
@@ -1610,15 +1559,13 @@ public class TxnManagerImpl /*extends RemoteServer*/
      */
     public Map cancelAll(Uuid[] cookies) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "cancelAll");
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "cancelAll");
         }
         readyState.check();
 
         Map results = LandlordUtil.cancelAll(this, cookies);
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "cancelAll");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "cancelAll");
         }
         return results;
     }
@@ -1635,8 +1582,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
     static long nextID__() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "nextID");
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "nextID");
         }
 
 
@@ -1650,8 +1596,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             } while (id == 0);                // skip flag value
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TxnManagerImpl.class.getName(), "nextID",
-                    new Long(id));
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "nextID", new Long(id));
         }
         return id;
     }
@@ -1660,14 +1605,11 @@ public class TxnManagerImpl /*extends RemoteServer*/
     private ServerTransaction serverTransaction(Transaction baseTr)
             throws UnknownTransactionException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(),
-                    "serverTransaction", baseTr);
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "serverTransaction", baseTr);
         }
         try {
             if (operationsLogger.isLoggable(Level.FINER)) {
-                operationsLogger.exiting(TxnManagerImpl.class.getName(),
-                        "serverTransaction", baseTr);
+                LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "serverTransaction", baseTr);
             }
             return (ServerTransaction) baseTr;
         } catch (ClassCastException e) {
@@ -1691,8 +1633,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
     private TxnManagerTransaction enterTMT(long cookie) {
         Long key = new Long(cookie);
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(TxnManagerImpl.class.getName(),
-                    "enterTMT", key);
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "enterTMT", key);
         }
         TxnManagerTransaction tmt =
                 _txns.get(key);
@@ -1712,8 +1653,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         _txns.put(key, tmt);
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TxnManagerImpl.class.getName(),
-                    "enterTMT", tmt);
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "enterTMT", tmt);
         }
         return tmt;
     }
@@ -1756,15 +1696,13 @@ public class TxnManagerImpl /*extends RemoteServer*/
      */
     public synchronized void destroy() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "destroy");
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "destroy");
         }
         readyState.check();
 
         (new DestroyThread()).start();
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "destroy");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "destroy");
         }
     }
 
@@ -1790,8 +1728,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
         public void run() {
             if (operationsLogger.isLoggable(Level.FINER)) {
-                operationsLogger.entering(
-                        DestroyThread.class.getName(), "run");
+                LogUtils.entering(operationsLogger, DestroyThread.class, "run");
             }
 
             Exception failed = null;
@@ -1996,8 +1933,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             readyState.shutdown();
 
             if (operationsLogger.isLoggable(Level.FINER)) {
-                operationsLogger.exiting(
-                        DestroyThread.class.getName(), "run");
+                LogUtils.exiting(operationsLogger, DestroyThread.class, "run");
             }
         }
     }
@@ -2007,14 +1943,12 @@ public class TxnManagerImpl /*extends RemoteServer*/
      */
     public Object getAdmin() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "getAdmin");
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "getAdmin");
         }
         readyState.check();
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "getAdmin", txnMgrAdminProxy);
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "getAdmin", txnMgrAdminProxy);
         }
         return txnMgrAdminProxy;
     }
@@ -2122,12 +2056,10 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
     public Object getProxy() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "getProxy");
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "getProxy");
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "getProxy", serverStub);
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "getProxy", serverStub);
         }
         return serverStub;
     }
@@ -2139,15 +2071,12 @@ public class TxnManagerImpl /*extends RemoteServer*/
     /* inherit javadoc */
     public Object getServiceProxy() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "getServiceProxy");
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "getServiceProxy");
         }
         readyState.check();
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "getServiceProxy",
-                    txnMgrProxy);
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "getServiceProxy", txnMgrProxy);
         }
         return txnMgrProxy;
     }
@@ -2160,15 +2089,13 @@ public class TxnManagerImpl /*extends RemoteServer*/
      */
     protected void initFailed(Throwable e) throws Exception {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "initFailed");
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "initFailed");
         }
         if (initLogger.isLoggable(Level.SEVERE)) {
             initLogger.log(Level.SEVERE, "Mahalo failed to initialize", e);
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "initFailed");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "initFailed");
         }
         if (e instanceof Exception) {
             throw (Exception) e;
@@ -2187,8 +2114,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
      */
     private void cleanup() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(
-                    TxnManagerImpl.class.getName(), "cleanup");
+            LogUtils.entering(operationsLogger, TxnManagerImpl.class, "cleanup");
         }
 //TODO - add custom logic
         if (serverStub != null) { // implies that exporter != null
@@ -2285,8 +2211,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         }
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(
-                    TxnManagerImpl.class.getName(), "cleanup");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "cleanup");
         }
     }
 
@@ -2295,8 +2220,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
     //////////////////////////////////////////
     public TrustVerifier getProxyVerifier() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(TxnManagerImpl.class.getName(),
-                    "getProxyVerifier");
+            LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "getProxyVerifier");
         }
         readyState.check();
 
@@ -2305,8 +2229,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             throw new UnsupportedOperationException();
         } else {
             if (operationsLogger.isLoggable(Level.FINER)) {
-                operationsLogger.exiting(TxnManagerImpl.class.getName(),
-                        "getProxyVerifier");
+                LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "getProxyVerifier");
             }
             return new ProxyVerifier(serverStub, topUuid);
         }

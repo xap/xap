@@ -17,6 +17,7 @@
  */
 package com.sun.jini.mahalo.log;
 
+import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.mahalo.TxnManager;
 
 import net.jini.admin.Administrable;
@@ -83,13 +84,11 @@ public class MultiLogManager
             new FilenameFilter() {
                 public boolean accept(File dir, String name) {
                     if (operationsLogger.isLoggable(Level.FINER)) {
-                        operationsLogger.entering(FilenameFilter.class.getName(),
-                                "accept", new Object[]{dir, name});
+                        LogUtils.entering(operationsLogger, FilenameFilter.class, "accept", new Object[]{dir, name});
                     }
                     final boolean isLog = name.startsWith(LOG_FILE);
                     if (operationsLogger.isLoggable(Level.FINER)) {
-                        operationsLogger.exiting(FilenameFilter.class.getName(),
-                                "accept", Boolean.valueOf(isLog));
+                        LogUtils.exiting(operationsLogger, FilenameFilter.class, "accept", Boolean.valueOf(isLog));
                     }
                     return isLog;
                 }
@@ -167,8 +166,7 @@ public class MultiLogManager
     // javadoc inherited from supertype
     public ClientLog logFor(long cookie) throws LogException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(MultiLogManager.class.getName(),
-                    "logFor", new Long(cookie));
+            LogUtils.entering(operationsLogger, MultiLogManager.class,"logFor", new Long(cookie));
         }
         ClientLog cl = null;
         Long key = new Long(cookie);
@@ -210,8 +208,7 @@ public class MultiLogManager
         }
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(MultiLogManager.class.getName(),
-                    "logFor", cl);
+            LogUtils.exiting(operationsLogger, MultiLogManager.class, "logFor", cl);
         }
         return cl;
     }
@@ -219,8 +216,7 @@ public class MultiLogManager
     // javadoc inherited from supertype
     private void release(long cookie) {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(MultiLogManager.class.getName(),
-                    "release", new Long(cookie));
+            LogUtils.entering(operationsLogger, MultiLogManager.class, "release", new Long(cookie));
         }
         Object prev = null;
         synchronized (logByIDLock) {
@@ -247,8 +243,7 @@ public class MultiLogManager
         }
 
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(MultiLogManager.class.getName(),
-                    "release");
+            LogUtils.exiting(operationsLogger, MultiLogManager.class, "release");
         }
     }
 
@@ -257,8 +252,7 @@ public class MultiLogManager
      */
     public void recover() throws LogException {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(MultiLogManager.class.getName(),
-                    "recover");
+            LogUtils.entering(operationsLogger, MultiLogManager.class, "recover");
         }
         // Short-circuit for non-persistent mode
         if (directory == null) return;
@@ -307,8 +301,7 @@ public class MultiLogManager
             }
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(MultiLogManager.class.getName(),
-                    "recover");
+            LogUtils.exiting(operationsLogger, MultiLogManager.class, "recover");
         }
     }
 
@@ -319,12 +312,10 @@ public class MultiLogManager
     public Object getAdmin() {
         // TBD - pass capability object instead?
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(MultiLogManager.class.getName(),
-                    "getAdmin");
+            LogUtils.entering(operationsLogger, MultiLogManager.class, "getAdmin");
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(MultiLogManager.class.getName(),
-                    "getAdmin", this);
+            LogUtils.exiting(operationsLogger, MultiLogManager.class,"getAdmin", this);
         }
         return (MultiLogManagerAdmin) this;
     }
@@ -338,8 +329,7 @@ public class MultiLogManager
      */
     public void destroy() {
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.entering(MultiLogManager.class.getName(),
-                    "destroy");
+            LogUtils.entering(operationsLogger, MultiLogManager.class, "destroy");
         }
 
         // TBD - Set destroy flag? used by logFor()/release()
@@ -385,8 +375,7 @@ public class MultiLogManager
             }
         }
         if (operationsLogger.isLoggable(Level.FINER)) {
-            operationsLogger.exiting(MultiLogManager.class.getName(),
-                    "destroy");
+            LogUtils.exiting(operationsLogger, MultiLogManager.class, "destroy");
         }
     }
 }

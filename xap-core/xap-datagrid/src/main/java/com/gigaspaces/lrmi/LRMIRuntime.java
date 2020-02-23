@@ -27,6 +27,7 @@ import com.gigaspaces.internal.reflection.ReflectionUtil;
 import com.gigaspaces.internal.stubcache.StubCache;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.Constants;
+import com.gigaspaces.logger.LogUtils;
 import com.gigaspaces.lrmi.ProtocolAdapter.Side;
 import com.gigaspaces.lrmi.nio.Pivot;
 import com.gigaspaces.lrmi.nio.async.LRMIThreadPoolExecutor;
@@ -435,13 +436,13 @@ public class LRMIRuntime {
                 ClassLoaderHelper.setContextClassLoader(orEntry.getExportedThreadClassLoader(), true /*ignore security*/);
 
             if (_logger.isLoggable(Level.FINER))
-                _logger.entering("LRMIRuntime - " + targetObject.getClass().getName() + "#" + objectId, method.getName(), args);
+                LogUtils.entering(_logger, "LRMIRuntime - " + targetObject.getClass().getName() + "#" + objectId, method.getName(), args);
 
             //noinspection unchecked
             Object resultInv = method.invoke(targetObject, args);
 
             if (_logger.isLoggable(Level.FINER))
-                _logger.exiting("LRMIRuntime - " + targetObject.getClass().getName() + "#" + objectId, method.getName(), resultInv);
+                LogUtils.exiting(_logger, "LRMIRuntime - " + targetObject.getClass().getName() + "#" + objectId, method.getName(), resultInv);
 
             return resultInv;
         } catch (IllegalArgumentException ex) {

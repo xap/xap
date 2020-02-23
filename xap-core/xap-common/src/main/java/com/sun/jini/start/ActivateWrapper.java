@@ -18,6 +18,7 @@
 
 package com.sun.jini.start;
 
+import com.gigaspaces.logger.LogUtils;
 import net.jini.export.ProxyAccessor;
 import net.jini.id.Uuid;
 import net.jini.id.UuidFactory;
@@ -339,8 +340,8 @@ public class ActivateWrapper implements Remote, Serializable {
     public ActivateWrapper(ActivationID id, MarshalledObject data)
             throws Exception {
         try {
-            logger.entering(ActivateWrapper.class.getName(),
-                    "ActivateWrapper", new Object[]{id, data});
+            LogUtils.entering(logger, ActivateWrapper.class, "ActivateWrapper",
+                    new Object[]{id, data});
 
             ActivateDesc desc = (ActivateDesc) data.get();
             logger.log(Level.FINEST, "ActivateDesc: {0}", desc);
@@ -357,8 +358,7 @@ public class ActivateWrapper implements Remote, Serializable {
                         ccl);
                 logger.log(Level.FINEST, "Created ExportClassLoader: {0}", cl);
             } catch (Exception e) {
-                logger.throwing(ActivateWrapper.class.getName(),
-                        "ActivateWrapper", e);
+                LogUtils.throwing(logger, ActivateWrapper.class, "ActivateWrapper", e);
                 throw e;
             }
 
@@ -426,12 +426,10 @@ public class ActivateWrapper implements Remote, Serializable {
                         ccl);
             }
         } catch (Exception e) {
-            logger.throwing(ActivateWrapper.class.getName(),
-                    "ActivateWrapper", e);
+            LogUtils.throwing(logger, ActivateWrapper.class, "ActivateWrapper", e);
             throw e;
         }
-        logger.exiting(ActivateWrapper.class.getName(),
-                "ActivateWrapper");
+        LogUtils.exiting(logger, ActivateWrapper.class,"ActivateWrapper");
     }
 
 
@@ -466,8 +464,8 @@ public class ActivateWrapper implements Remote, Serializable {
                                         boolean restart,
                                         ActivationSystem sys)
             throws ActivationException, RemoteException {
-        logger.entering(ActivateWrapper.class.getName(),
-                "register", new Object[]{gid, desc, Boolean.valueOf(restart), sys});
+        LogUtils.entering(logger, ActivateWrapper.class, "register",
+                new Object[]{gid, desc, Boolean.valueOf(restart), sys});
 
         MarshalledObject data;
         try {
@@ -475,8 +473,7 @@ public class ActivateWrapper implements Remote, Serializable {
         } catch (Exception e) {
             MarshalException me =
                     new MarshalException("marshalling ActivateDesc", e);
-            logger.throwing(ActivateWrapper.class.getName(),
-                    "register", me);
+            LogUtils.throwing(logger, ActivateWrapper.class, "register", me);
             throw me;
         }
 
@@ -492,8 +489,7 @@ public class ActivateWrapper implements Remote, Serializable {
 
         ActivationID aid = sys.registerObject(adesc);
 
-        logger.exiting(ActivateWrapper.class.getName(),
-                "register", aid);
+        LogUtils.exiting(logger, ActivateWrapper.class, "register", aid);
         return aid;
     }
 
@@ -501,8 +497,7 @@ public class ActivateWrapper implements Remote, Serializable {
      * Checks that all the provided <code>URL</code>s have permission to use the given policy.
      */
     private static void checkPolicyPermission(String policy, URL[] urls) {
-        logger.entering(ActivateWrapper.class.getName(),
-                "checkPolicyPermission", new Object[]{policy, urlsToPath(urls)});
+        LogUtils.entering(logger, ActivateWrapper.class, "checkPolicyPermission", new Object[]{policy, urlsToPath(urls)});
         // Create desired permission object
         Permission perm = new SharedActivationPolicyPermission(policy);
         Certificate[] certs = null;
@@ -521,13 +516,11 @@ public class ActivateWrapper implements Remote, Serializable {
                 SecurityException se = new SecurityException(
                         "ProtectionDomain " + pd
                                 + " does not have required permission: " + perm);
-                logger.throwing(ActivateWrapper.class.getName(),
-                        "checkPolicyPermission", se);
+                LogUtils.throwing(logger, ActivateWrapper.class, "checkPolicyPermission", se);
                 throw se;
             }
         }
-        logger.exiting(ActivateWrapper.class.getName(),
-                "checkPolicyPermission");
+        LogUtils.exiting(logger, ActivateWrapper.class,"checkPolicyPermission");
     }
 
     /**
