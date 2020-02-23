@@ -174,7 +174,7 @@ import java.util.logging.Logger;
  *
  * <tr> <th> Level <th> Description
  *
- * <tr> <td> {@link Levels#FAILED FAILED} <td> class loading failures
+ * <tr> <td> {@link Level#FINE FINE} <td> class loading failures
  *
  * <tr> <td> {@link Levels#HANDLED HANDLED} <td> exceptions caught during class loading operations
  *
@@ -529,8 +529,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                             new ClassNotFoundException(name +
                                     " (could not determine preferred setting;" +
                                     " original codebase: \"" + codebase + "\")", e);
-                    if (logger.isLoggable(Levels.FAILED)) {
-                        LogUtil.logThrow(logger, Levels.FAILED,
+                    if (logger.isLoggable(Level.FINE)) {
+                        LogUtil.logThrow(logger, Level.FINE,
                                 PreferredClassProvider.class, "loadClass",
                                 "class \"{0}\" not found, " +
                                         "could not obtain preferred value",
@@ -584,8 +584,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                 ClassNotFoundException cnfe =
                         new ClassNotFoundException(e.getMessage() +
                                 " (no security manager: codebase loader disabled)", e);
-                if (logger.isLoggable(Levels.FAILED)) {
-                    LogUtil.logThrow(logger, Levels.FAILED,
+                if (logger.isLoggable(Level.FINE)) {
+                    LogUtil.logThrow(logger, Level.FINE,
                             PreferredClassProvider.class, "loadClass",
                             "class \"{0}\" not found " +
                                     "via thread context class loader " +
@@ -609,8 +609,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                 ClassNotFoundException cnfe =
                         new ClassNotFoundException(e.getMessage() +
                                 " (access to codebase loader denied)", secEx);
-                if (logger.isLoggable(Levels.FAILED)) {
-                    LogUtil.logThrow(logger, Levels.FAILED,
+                if (logger.isLoggable(Level.FINE)) {
+                    LogUtil.logThrow(logger, Level.FINE,
                             PreferredClassProvider.class, "loadClass",
                             "class \"{0}\" not found " +
                                     "via thread context class loader " +
@@ -619,8 +619,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                 }
                 throw cnfe;
             } else {
-                if (logger.isLoggable(Levels.FAILED)) {
-                    LogUtil.logThrow(logger, Levels.FAILED,
+                if (logger.isLoggable(Level.FINE)) {
+                    LogUtil.logThrow(logger, Level.FINE,
                             PreferredClassProvider.class, "loadClass",
                             "class \"{0}\" not found via codebase loader",
                             new Object[]{name}, e);
@@ -1001,8 +1001,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                 } catch (IllegalArgumentException e) {
                     ClassNotFoundException cnfe = new ClassNotFoundException(
                             "dynamic proxy class creation failed", e);
-                    if (logger.isLoggable(Levels.FAILED)) {
-                        logger.log(Levels.FAILED,
+                    if (logger.isLoggable(Level.FINE)) {
+                        logger.log(Level.FINE,
                                 "dynamic proxy class creation failed", e);
                     }
                     throw cnfe;
@@ -1037,8 +1037,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                 ClassNotFoundException cnfe =
                         new ClassNotFoundException(e.getMessage() +
                                 " (no security manager: codebase loader disabled)", e);
-                if (logger.isLoggable(Levels.FAILED)) {
-                    logger.log(Levels.FAILED,
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.log(Level.FINE,
                             "proxy class resolution failed (no security manager)",
                             cnfe);
                 }
@@ -1056,15 +1056,15 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                 ClassNotFoundException cnfe =
                         new ClassNotFoundException(e.getMessage() +
                                 " (access to codebase loader denied)", secEx);
-                if (logger.isLoggable(Levels.FAILED)) {
-                    logger.log(Levels.FAILED,
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.log(Level.FINE,
                             "proxy class resolution failed " +
                                     "(access to codebase loader denied)", cnfe);
                 }
                 throw cnfe;
             } else {
-                if (logger.isLoggable(Levels.FAILED)) {
-                    logger.log(Levels.FAILED,
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.log(Level.FINE,
                             "proxy class resolution failed", e);
                 }
                 throw e;
@@ -1072,8 +1072,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
         } catch (IllegalArgumentException e) {
             ClassNotFoundException cnfe = new ClassNotFoundException(
                     "dynamic proxy class creation failed", e);
-            if (logger.isLoggable(Levels.FAILED)) {
-                logger.log(Levels.FAILED,
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE,
                         "dynamic proxy class creation failed", e);
             }
             throw cnfe;
@@ -1167,8 +1167,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                         new ClassNotFoundException(interfaceNames[p] +
                                 " (could not determine preferred setting;" +
                                 " original codebase: \"" + codebase + "\")", e);
-                if (logger.isLoggable(Levels.FAILED)) {
-                    LogUtil.logThrow(logger, Levels.FAILED,
+                if (logger.isLoggable(Level.FINE)) {
+                    LogUtil.logThrow(logger, Level.FINE,
                             PreferredClassProvider.class, "loadProxyClass",
                             "class \"{0}\" not found, " +
                                     "could not obtain preferred value",

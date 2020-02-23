@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.security.MessageDigest;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -128,7 +129,7 @@ class MdInputStream extends InputStream {
         if (failed != null) {
             WrongMessageDigestException exception =
                     new WrongMessageDigestException(failed);
-            logger.log(Levels.FAILED, "Incorrect message digest", exception);
+            logger.log(Level.FINE, "Incorrect message digest", exception);
             throw exception;
         }
     }

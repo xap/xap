@@ -33,16 +33,6 @@ import java.util.logging.Level;
 public class Levels {
 
     /**
-     * <code>FAILED</code> is a message level indicating that a facility has experienced a failure
-     * that it will reflect to its caller. <p>
-     *
-     * <code>FAILED</code> messages are intended to provide users with information about failures
-     * produced by internal components in order to assist with debugging problems in systems with
-     * multiple components. This level is initialized to <code>600</code>.
-     */
-    public static final Level FAILED = new LevelData("FAILED", 600, null);
-
-    /**
      * <code>HANDLED</code> is a message level indicating that a facility has detected a failure
      * that it will take steps to handle without reflecting the failure to its caller. <p>
      *

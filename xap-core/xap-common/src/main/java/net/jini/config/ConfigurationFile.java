@@ -332,7 +332,7 @@ import java.util.logging.Logger;
  *
  * <tr> <td> {@link Level#INFO INFO} <td> problems adding new prohibited methods
  *
- * <tr> <td> {@link Levels#FAILED FAILED} <td> problems getting entries, including getting entries
+ * <tr> <td> {@link Level#FINE FINE} <td> problems getting entries, including getting entries
  * that are not found
  *
  * <tr> <td> {@link Level#FINE FINE} <td> returning default values
@@ -2100,9 +2100,8 @@ public class ConfigurationFile extends AbstractConfiguration {
         }
         Entry entry = (Entry) entries.get(component + '.' + name);
         if (entry == null || entry.isPrivate) {
-            if (logger.isLoggable(Levels.FAILED)) {
-                logger.log(
-                        Levels.FAILED,
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE,
                         "entry for component {0}, name {1} not found in {2}",
                         new Object[]{component, name, this});
             }
@@ -2130,7 +2129,7 @@ public class ConfigurationFile extends AbstractConfiguration {
                 configEx = ce;
             }
         }
-        if (logger.isLoggable(Levels.FAILED)) {
+        if (logger.isLoggable(Level.FINE)) {
             logThrow("getEntryType",
                     "{0}, component {1}, name {2}: throws",
                     new Object[]{this, component, name}, configEx);

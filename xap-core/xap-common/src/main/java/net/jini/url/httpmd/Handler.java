@@ -100,7 +100,7 @@ import java.util.logging.Logger;
  *
  * <tr> <th scope="col"> Level <th scope="col"> Description
  *
- * <tr> <td> {@link Levels#FAILED FAILED} <td> URL input stream detects an incorrect message digest
+ * <tr> <td> {@link Level#FINE FINE} <td> URL input stream detects an incorrect message digest
  *
  * </table> <p>
  *

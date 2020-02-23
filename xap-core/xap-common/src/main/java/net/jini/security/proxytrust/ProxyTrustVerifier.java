@@ -63,7 +63,7 @@ import java.util.logging.Logger;
  * <code>net.jini.security.trust</code> to log information at the following levels: <table
  * summary="Describes what is logged by ProxyTrustVerifier to the trust logger at various logging
  * levels" border=1 cellpadding=5> <tr> <th>Level</th> <th>Description</th> </tr> <tr> <td>{@link
- * Levels#FAILED FAILED}</td> <td>no verifier is obtained from a {@link ProxyTrustIterator}</td>
+ * Level#FINE FINE}</td> <td>no verifier is obtained from a {@link ProxyTrustIterator}</td>
  * </tr> <tr> <td>{@link Levels#HANDLED HANDLED}</td> <td><code>RemoteException</code> being passed
  * to {@link ProxyTrustIterator#setException ProxyTrustIterator.setException}</td> </tr> <tr>
  * <td>{@link Level#FINE FINE}</td> <td>{@link ProxyTrust#getProxyVerifier
@@ -322,7 +322,7 @@ public class ProxyTrustVerifier implements TrustVerifier {
         if (lastEx != null) {
             throw lastEx;
         }
-        logger.log(Levels.FAILED,
+        logger.log(Level.FINE,
                 "no verifier obtained from ProxyTrustIterator");
         return null;
     }

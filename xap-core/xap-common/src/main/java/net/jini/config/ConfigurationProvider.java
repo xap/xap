@@ -34,6 +34,7 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Enumeration;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -77,7 +78,7 @@ import java.util.logging.Logger;
  *
  * <tr> <th scope="col"> Level <th scope="col"> Description
  *
- * <tr> <td> {@link Levels#FAILED FAILED} <td> problems getting a configuration
+ * <tr> <td> {@link Level#FINE FINE} <td> problems getting a configuration
  *
  * </table>
  */
@@ -218,7 +219,7 @@ public class ConfigurationProvider {
                     "problem accessing provider resources", e);
         }
         if (configEx != null) {
-            logger.log(Levels.FAILED, "getting configuration provider throws",
+            logger.log(Level.FINE, "getting configuration provider throws",
                     configEx);
             throw configEx;
         }
@@ -290,7 +291,7 @@ public class ConfigurationProvider {
             configEx = new ConfigurationException(
                     "problem with provider class", e);
         }
-        logger.log(Levels.FAILED, "getting configuration throws", configEx);
+        logger.log(Level.FINE, "getting configuration throws", configEx);
         throw configEx;
     }
 

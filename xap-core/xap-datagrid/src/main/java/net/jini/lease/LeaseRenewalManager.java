@@ -144,7 +144,7 @@ import java.util.logging.Logger;
  *
  * <tr> <th scope="col"> Level <th scope="col"> Description
  *
- * <tr> <td> {@link Levels#FAILED FAILED} <td> Lease renewal failure events, or leases that expire
+ * <tr> <td> {@link Level#FINE FINE} <td> Lease renewal failure events, or leases that expire
  * before reaching the desired expiration time
  *
  * <tr> <td> {@link Levels#HANDLED HANDLED} <td> Lease renewal attempts that produce indefinite
@@ -1239,7 +1239,7 @@ public class LeaseRenewalManager {
                     "Reached desired expiration for lease {0}",
                     e.lease);
         } else {
-            logger.log(Levels.FAILED,
+            logger.log(Level.FINE,
                     "Lease {0} expired before reaching desired expiration", e.lease);
         }
     }
@@ -1341,8 +1341,8 @@ public class LeaseRenewalManager {
                                 new Object[]{e.lease}, e.ex);
                     }
                 } else {
-                    if (logger.isLoggable(Levels.FAILED)) {
-                        logThrow(Levels.FAILED, "renewAll",
+                    if (logger.isLoggable(Level.FINE)) {
+                        logThrow(Level.FINE, "renewAll",
                                 "Lease renewal failed for lease {0}",
                                 new Object[]{e.lease}, e.ex);
                     }

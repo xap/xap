@@ -42,7 +42,7 @@ import java.util.logging.Logger;
  *
  * <tr> <th scope="col"> Level <th scope="col"> Description
  *
- * <tr> <td> {@link Levels#FAILED FAILED} <td> problems getting entries, including getting entries
+ * <tr> <td> {@link Level#FINE FINE} <td> problems getting entries, including getting entries
  * that are not found
  *
  * <tr> <td> {@link Level#FINE FINE} <td> returning default values

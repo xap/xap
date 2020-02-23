@@ -386,7 +386,7 @@ import java.util.logging.Logger;
  * java.util.logging.Level#CONFIG CONFIG}</td> <td> when the <code>multicastInterfaces</code> entry
  * is excluded from the configuration, multicast packets will be sent and received through all
  * interfaces in the system, and those interfaces will be logged at this level </td> </tr> <tr>
- * <td>{@link com.sun.jini.logging.Levels#FAILED FAILED}</td> <td> when an
+ * <td>{@link com.sun.jini.logging.Level#FINE FINE}</td> <td> when an
  * <code>UnknownHostException</code> occurs while determining the <code>multicastRequestHost</code>,
  * but the caller does not have permissions to retrieve the local host name. The original
  * <code>UnknownHostException</code> with the host name information is logged </td> <tr> <td>{@link

@@ -99,10 +99,10 @@ import java.util.logging.Logger;
  *
  * <tr> <th> Level <th> Description
  *
- * <tr> <td> {@link Levels#FAILED FAILED} <td> exception thrown from final attempt to communicate a
+ * <tr> <td> {@link Level#FINE FINE} <td> exception thrown from final attempt to communicate a
  * remote call
  *
- * <tr> <td> {@link Levels#FAILED FAILED} <td> exception thrown activating the object
+ * <tr> <td> {@link Level#FINE FINE} <td> exception thrown activating the object
  *
  * <tr> <td> {@link Levels#HANDLED HANDLED} <td> exception caught in attempt to communicate a remote
  * call
@@ -582,8 +582,8 @@ public final class ActivatableInvocationHandler
             }
         }
 
-        if (logger.isLoggable(Levels.FAILED)) {
-            logThrow(Levels.FAILED, "outbound call", "invokeRemoteMethod",
+        if (logger.isLoggable(Level.FINE)) {
+            logThrow(Level.FINE, "outbound call", "invokeRemoteMethod",
                     method, failure.exception);
         }
         throw failure.exception;
@@ -911,8 +911,8 @@ public final class ActivatableInvocationHandler
         try {
             activate0(force, proxy);
         } catch (Exception e) {
-            if (logger.isLoggable(Levels.FAILED)) {
-                logThrow(Levels.FAILED, "activating object for call",
+            if (logger.isLoggable(Level.FINE)) {
+                logThrow(Level.FINE, "activating object for call",
                         "activate", method, e);
             }
             throw e;

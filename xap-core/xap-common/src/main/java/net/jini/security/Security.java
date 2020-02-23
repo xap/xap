@@ -63,7 +63,7 @@ import javax.security.auth.SubjectDomainCombiner;
  * <code>net.jini.security.integrity</code> to log information at the following levels: <table
  * summary="Describes what is logged by Security to the integrity logger at various logging levels"
  * border=1 cellpadding=5> <tr> <th>Level</th> <th>Description</th> </tr> <tr> <td>{@link
- * Levels#FAILED FAILED}</td> <td><code>verifyCodebaseIntegrity</code> throws a
+ * Level#FINE FINE}</td> <td><code>verifyCodebaseIntegrity</code> throws a
  * <code>SecurityException</code> because no integrity verifier verifies a URL</td> </tr> <tr>
  * <td>{@link Level#FINE FINE}</td> <td>integrity verifier returns <code>true</code></td> </tr> <tr>
  * <td>{@link Level#FINE FINE}</td> <td>creation of cached integrity verifiers</td> </tr> </table>
@@ -75,9 +75,9 @@ import javax.security.auth.SubjectDomainCombiner;
  * <code>net.jini.security.trust</code> to log information at the following levels: <table
  * summary="Describes what is logged by Security to the trust logger at various logging levels"
  * border=1 cellpadding=5> <tr> <th>Level</th> <th>Description</th> </tr> <tr> <td>{@link
- * Levels#FAILED FAILED}</td> <td><code>verifyObjectTrust</code> throws a
+ * Level#FINE FINE}</td> <td><code>verifyObjectTrust</code> throws a
  * <code>SecurityException</code> because no trust verifier trusts the specified object</td> </tr>
- * <tr> <td>{@link Levels#FAILED FAILED}</td> <td><code>TrustVerifier.Context.isTrustedObject</code>
+ * <tr> <td>{@link Level#FINE FINE}</td> <td><code>TrustVerifier.Context.isTrustedObject</code>
  * throws an exception</td> </tr> <tr> <td>{@link Levels#HANDLED HANDLED}</td> <td>trust verifier
  * throws a <code>RemoteException</code> or a <code>SecurityException</code></td> </tr> <tr>
  * <td>{@link Level#FINE FINE}</td> <td>trust verifier returns <code>true</code></td> </tr> <tr>
@@ -185,8 +185,8 @@ public final class Security {
         }
         SecurityException e = new SecurityException(
                 "object is not trusted: " + obj);
-        if (trustLogger.isLoggable(Levels.FAILED)) {
-            logThrow(trustLogger, Levels.FAILED,
+        if (trustLogger.isLoggable(Level.FINE)) {
+            logThrow(trustLogger, Level.FINE,
                     Security.class.getName(), "verifyObjectTrust",
                     "no verifier trusts {0}",
                     new Object[]{obj}, e);
@@ -250,8 +250,8 @@ public final class Security {
             SecurityException e =
                     new SecurityException("URL does not provide integrity: " +
                             urls[i]);
-            if (integrityLogger.isLoggable(Levels.FAILED)) {
-                logThrow(integrityLogger, Levels.FAILED,
+            if (integrityLogger.isLoggable(Level.FINE)) {
+                logThrow(integrityLogger, Level.FINE,
                         Security.class.getName(), "verifyCodebaseIntegrity",
                         "no verifier verifies {0}", new Object[]{urls[i]}, e);
             }
@@ -786,7 +786,7 @@ public final class Security {
                 } catch (Exception e) {
                     boolean rethrow = (e instanceof RuntimeException &&
                             !(e instanceof SecurityException));
-                    Level level = rethrow ? Levels.FAILED : Levels.HANDLED;
+                    Level level = rethrow ? Level.FINE : Levels.HANDLED;
                     if (trustLogger.isLoggable(level)) {
                         logThrow(trustLogger, level,
                                 this.getClass().getName(),
@@ -802,8 +802,8 @@ public final class Security {
                 }
             }
             if (ex != null) {
-                if (trustLogger.isLoggable(Levels.FAILED)) {
-                    logThrow(trustLogger, Levels.FAILED,
+                if (trustLogger.isLoggable(Level.FINE)) {
+                    logThrow(trustLogger, Level.FINE,
                             this.getClass().getName(), "isTrustedObject",
                             "checking {0} throws",
                             new Object[]{obj}, ex);

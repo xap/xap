@@ -50,7 +50,7 @@ import java.util.logging.Logger;
  *
  * <tr> <th scope="col"> Level <th scope="col"> Description
  *
- * <tr> <td> {@link Levels#FAILED FAILED} <td> problems getting entries, including getting entries
+ * <tr> <td> {@link Level#FINE FINE} <td> problems getting entries, including getting entries
  * that are not found
  *
  * <tr> <td> {@link Level#FINE FINE} <td> returning default values
@@ -350,8 +350,8 @@ public abstract class AbstractConfiguration implements Configuration {
             return result;
         } catch (NoSuchEntryException e) {
             if (defaultValue == NO_DEFAULT) {
-                if (logger.isLoggable(Levels.FAILED)) {
-                    logger.log(Levels.FAILED,
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.log(Level.FINE,
                             "{0}, component {1}, name {2}: entry not found",
                             new Object[]{this, component, name});
                 }
@@ -373,7 +373,7 @@ public abstract class AbstractConfiguration implements Configuration {
                             ", name " + name,
                     e);
         }
-        if (logger.isLoggable(Levels.FAILED)) {
+        if (logger.isLoggable(Level.FINE)) {
             logThrow("getEntry",
                     "{0}, component {1}, name {2}" +
                             "{3,choice,0#|1#, data {4}}: throws",
@@ -389,7 +389,7 @@ public abstract class AbstractConfiguration implements Configuration {
      * Logs a throw
      */
     void logThrow(String method, String msg, Object[] msgParams, Throwable t) {
-        LogRecord r = new LogRecord(Levels.FAILED, msg);
+        LogRecord r = new LogRecord(Level.FINE, msg);
         r.setLoggerName(logger.getName());
         r.setSourceClassName(this.getClass().getName());
         r.setSourceMethodName(method);
