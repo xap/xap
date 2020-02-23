@@ -8,6 +8,8 @@
     <!--
         Spring property configurer which allows us to use system properties (such as user.name).
     -->
+    <bean id="tracer" class="com.gigaspaces.tracing.ZipkinTracerBean" />
+
     <bean id="propertiesConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"/>
 
     <!--

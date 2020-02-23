@@ -18,6 +18,11 @@
             <version>15.2.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.gigaspaces</groupId>
+            <artifactId>xap-reporter</artifactId>
+            <version>15.2.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>

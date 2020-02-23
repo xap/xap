@@ -17,27 +17,9 @@
 
 package org.openspaces.core;
 
-import brave.Tracing;
-import brave.opentracing.BraveTracer;
 import com.gigaspaces.admin.quiesce.QuiesceToken;
-import com.gigaspaces.async.AsyncFuture;
-import com.gigaspaces.async.AsyncFutureListener;
-import com.gigaspaces.async.AsyncResultFilter;
-import com.gigaspaces.async.AsyncResultsReducer;
-import com.gigaspaces.async.FutureFactory;
-import com.gigaspaces.client.ChangeModifiers;
-import com.gigaspaces.client.ChangeResult;
-import com.gigaspaces.client.ChangeSet;
-import com.gigaspaces.client.ClearModifiers;
-import com.gigaspaces.client.CountModifiers;
-import com.gigaspaces.client.IsolationLevelModifiers;
-import com.gigaspaces.client.ReadByIdsResult;
-import com.gigaspaces.client.ReadByIdsResultImpl;
-import com.gigaspaces.client.ReadModifiers;
-import com.gigaspaces.client.TakeByIdsResult;
-import com.gigaspaces.client.TakeByIdsResultImpl;
-import com.gigaspaces.client.TakeModifiers;
-import com.gigaspaces.client.WriteModifiers;
+import com.gigaspaces.async.*;
+import com.gigaspaces.client.*;
 import com.gigaspaces.client.iterator.SpaceIterator;
 import com.gigaspaces.events.DataEventSession;
 import com.gigaspaces.events.DataEventSessionFactory;
@@ -57,12 +39,10 @@ import com.gigaspaces.query.aggregators.AggregationSet;
 import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.LeaseContext;
-
 import io.opentracing.Scope;
 import io.opentracing.Tracer;
 import io.opentracing.util.GlobalTracer;
 import net.jini.core.transaction.Transaction;
-
 import org.openspaces.core.exception.DefaultExceptionTranslator;
 import org.openspaces.core.exception.ExceptionTranslator;
 import org.openspaces.core.executor.DistributedTask;
@@ -81,16 +61,11 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.util.Assert;
-import zipkin2.Span;
-import zipkin2.reporter.AsyncReporter;
-import zipkin2.reporter.Reporter;
-import zipkin2.reporter.okhttp3.OkHttpSender;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Properties;
 import java.util.UUID;
@@ -147,7 +122,6 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
     final private ExecutorMetaDataProvider executorMetaDataProvider = new ExecutorMetaDataProvider();
 
     private DefaultGigaSpace clusteredGigaSpace;
-    private boolean tracerEnabled;
 
     /**
      * Constructs a new DefaultGigaSpace implementation.
@@ -181,57 +155,8 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
         setDefaultClearModifiers(configurer.getDefaultClearModifiers());
         setDefaultChangeModifiers(configurer.getDefaultChangeModifiers());
 
-
-        Path tracerProperties = configurer.getTracerProperties();
-        if (tracerProperties == null) {
-            tracerProperties = GsEnv.propertyPath("com.gs.tracer_properties").get();
-            System.out.println("Trying to read from env var / sys prop: " + tracerProperties);
-        }
-        if (tracerProperties == null) {
-            tracerProperties = SystemLocations.singleton().config().resolve("tracer").resolve("tracer_config.properties");
-            System.out.println("Trying to read from config file: " + tracerProperties);
-
-        }
-
-        try {
-            tracerEnabled = configureGlobalTracer(tracerProperties, "GigaSpaces-Proxy-"+ UUID.randomUUID().toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Failed to initialize tracer");
-        }
     }
 
-    private static Properties loadConfig(Path path) throws IOException {
-        FileInputStream fs = new FileInputStream(path.toFile());
-        Properties config = new Properties();
-        config.load(fs);
-        fs.close();
-        return config;
-    }
-
-    public static boolean configureGlobalTracer(Path propertiesFile, String componentName) throws IOException {
-        if (GlobalTracer.isRegistered()) return true; // Skip initializing new tracer
-
-        Properties config = loadConfig(propertiesFile);
-
-        String tracerName = config.getProperty("tracer");
-        Tracer tracer = null;
-        if ("zipkin".equals(tracerName)) {
-            OkHttpSender sender = OkHttpSender.create(
-                    "http://" +
-                            config.getProperty("zipkin.reporter_host") + ":" +
-                            config.getProperty("zipkin.reporter_port") + "/api/v2/spans");
-            Reporter<Span> reporter = AsyncReporter.builder(sender).build();
-            tracer = BraveTracer.create(Tracing.newBuilder()
-                    .localServiceName(componentName)
-                    .spanReporter(reporter)
-                    .build());
-        } else {
-            return false;
-        }
-        GlobalTracer.registerIfAbsent(tracer);
-        return true;
-    }
 
     private DefaultGigaSpace(IJSpace space, DefaultGigaSpace other) {
         this.space = (ISpaceProxy) space;
@@ -750,7 +675,7 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
 
 
     public <T> T wrap(String name, Callable<T> c) throws Exception {
-        if (tracerEnabled) {
+        if (GlobalTracer.isRegistered()) {
 
             Tracer tracer = GlobalTracer.get();
             io.opentracing.Span span = tracer.buildSpan(name).start();
