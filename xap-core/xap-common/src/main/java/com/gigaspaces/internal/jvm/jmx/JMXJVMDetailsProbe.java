@@ -18,6 +18,7 @@ package com.gigaspaces.internal.jvm.jmx;
 
 import com.gigaspaces.internal.jvm.JVMDetails;
 import com.gigaspaces.internal.jvm.JVMDetailsProbe;
+import com.gigaspaces.internal.jvm.JavaUtils;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -54,7 +55,7 @@ public class JMXJVMDetailsProbe implements JVMDetailsProbe {
     }
 
     public JVMDetails probeDetails() {
-        return new JVMDetails(uid, runtimeMXBean.getVmName(), System.getProperty("java.version"), System.getProperty("java.vendor"),
+        return new JVMDetails(uid, runtimeMXBean.getVmName(), JavaUtils.getVersion(), JavaUtils.getVendor(),
                 runtimeMXBean.getStartTime(),
                 memoryMXBean.getHeapMemoryUsage().getInit(), memoryMXBean.getHeapMemoryUsage().getMax(),
                 memoryMXBean.getNonHeapMemoryUsage().getInit(), memoryMXBean.getNonHeapMemoryUsage().getMax(),

@@ -55,11 +55,6 @@ public class ExecutorUtils {
     final static private Log _logger = LogFactory.getLog(ExecutorUtils.class);
 
     /**
-     * Resolve to 1.5 by equality ; otherwise 1.4
-     */
-    public final static double JDK_VERSION = Double.parseDouble(System.getProperty("java.version").substring(0, 3));
-
-    /**
      * avoid construction
      */
     private ExecutorUtils() {

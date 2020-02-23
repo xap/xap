@@ -7,7 +7,8 @@ import java.lang.management.ManagementFactory;
 @InternalApi
 public class JavaUtils {
     private static final String VENDOR = System.getProperty("java.vendor", "");
-    private static final int JAVA_VERSION_MAJOR = parseJavaMajorVersion();
+    private static final String VERSION = System.getProperty("java.version", "");
+    private static final int JAVA_VERSION_MAJOR = parseJavaMajorVersion(VERSION);
     private static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("win");
     private static final boolean isOsx = System.getProperty("os.name").toLowerCase().startsWith("mac os x");
 
@@ -17,8 +18,7 @@ public class JavaUtils {
      * Older versions format is 1.MAJOR.suffix
      * For example: 1.8.144, 1.7, etc.
      */
-    private static int parseJavaMajorVersion() {
-        String version = System.getProperty("java.version");
+    private static int parseJavaMajorVersion(String version) {
         // Remove "1." if exists (versions before 9):
         if (version.startsWith("1."))
             version = version.substring(2);
@@ -27,6 +27,10 @@ public class JavaUtils {
         if (pos != -1)
             version = version.substring(0, pos);
         return Integer.parseInt(version);
+    }
+
+    public static String getVersion() {
+        return VERSION;
     }
 
     public static int getMajorJavaVersion() {

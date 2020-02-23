@@ -19,6 +19,7 @@ package com.gigaspaces.start;
 import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.internal.io.FileUtils;
 import com.gigaspaces.internal.jmx.JMXUtilities;
+import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.internal.services.RestServiceFactory;
 import com.gigaspaces.internal.services.ServiceFactory;
 import com.gigaspaces.internal.services.WebuiServiceFactory;
@@ -319,7 +320,7 @@ public class SystemConfig {
         classpathBuilder.appendOptionalJars("jruby");
         classpathBuilder.appendJars(Paths.get(System.getProperty("com.gs.pu.classloader.scala-lib-path", locations.libOptional("scala").resolve("lib").toString())));// Scala support
         classpathBuilder.appendPlatformJars("zookeeper");
-        if(isJava11()){
+        if(JavaUtils.greaterOrEquals(11)){
             classpathBuilder.appendPlatformJars("javax");
         }
         //GS-13825 added hsql jar
@@ -797,16 +798,6 @@ public class SystemConfig {
         return (hostAddress);
     }
 
-    private static boolean isJava11(){
-        String javaVersion = System.getProperty("java.version");
-
-        if(javaVersion == null) return false;
-
-        String majorVersion = javaVersion.substring(0,javaVersion.indexOf("."));
-
-        return majorVersion.equals("11");
-    }
-
     /**
      * Initialize RMI Registry and JMX Platform MBeanServer
      */
@@ -897,7 +888,7 @@ public class SystemConfig {
                                     "[duration=" + BootUtil.formatDuration(duration) +
                                     ", url=" + jmxServiceURL + "]");
                     } else {
-                        logger.info("Unable to acquire JMX Platform MBeanServer, running with Java version " + System.getProperty("java.version"));
+                        logger.info("Unable to acquire JMX Platform MBeanServer, running with Java version " + JavaUtils.getVersion());
                     }
                 }
             }
@@ -921,7 +912,7 @@ public class SystemConfig {
                     System.setProperty(CommonSystemProperties.JMX_SERVICE_URL, jmxServiceURL);
                     System.setProperty(CommonSystemProperties.JMX_PUBLIC_SERVICE_URL, jmxServicePublicURL);
                 } else {
-                    logger.info("Unable to acquire JMX Platform MBeanServer, running with Java version " + System.getProperty("java.version"));
+                    logger.info("Unable to acquire JMX Platform MBeanServer, running with Java version " + JavaUtils.getVersion());
                 }
             }
             return (mbs);

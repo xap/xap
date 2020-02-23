@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.utils;
 
+import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.start.SystemLocations;
@@ -95,7 +96,7 @@ public class XapRuntimeReporter {
 
     protected void appendJavaDetails() {
         append("Java:");
-        append("    Java Runtime: " + System.getProperty("java.runtime.name") + " " + System.getProperty("java.runtime.version") + " (" + System.getProperty("java.vendor") + ")");
+        append("    Java Runtime: " + System.getProperty("java.runtime.name") + " " + System.getProperty("java.runtime.version") + " (" + JavaUtils.getVendor() + ")");
         append("    Java VM: " + System.getProperty("java.vm.name") + " " + System.getProperty("java.vm.version") + " (" + System.getProperty("java.vm.vendor") + ")");
         append("    Java Home: " + System.getProperty("java.home"));
 

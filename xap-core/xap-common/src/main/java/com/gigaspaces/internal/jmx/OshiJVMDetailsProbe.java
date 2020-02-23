@@ -2,6 +2,7 @@ package com.gigaspaces.internal.jmx;
 
 import com.gigaspaces.internal.jvm.JVMDetails;
 import com.gigaspaces.internal.jvm.JVMDetailsProbe;
+import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.internal.oshi.OshiChecker;
 import oshi.SystemInfo;
 import oshi.software.os.OperatingSystem;
@@ -30,8 +31,8 @@ public class OshiJVMDetailsProbe  implements JVMDetailsProbe {
 
     public JVMDetails probeDetails() {
         return new JVMDetails(uid, runtimeMXBean.getVmName(),
-                System.getProperty("java.version"),
-                System.getProperty("java.vendor"),
+                JavaUtils.getVersion(),
+                JavaUtils.getVendor(),
                 runtimeMXBean.getStartTime(),
                 memoryMXBean.getHeapMemoryUsage().getInit(),
                 memoryMXBean.getHeapMemoryUsage().getMax(),
