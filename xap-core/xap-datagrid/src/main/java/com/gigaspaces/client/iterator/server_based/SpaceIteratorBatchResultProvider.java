@@ -45,9 +45,9 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
         this._uuid = uuid;
         this._numberOfPartitions = _spaceProxy.getDirectProxy().getSpaceClusterInfo().getNumberOfPartitions();
         this._queue = new LinkedBlockingQueue<>(getInitialNumberOfActivePartitions());
-        initBatchTask();
         this._spaceIteratorBatchResultListener = new SpaceIteratorBatchResultListener(this);
         this._singlePartitionGetBatchForIteratorSpaceTask = new SinglePartitionGetBatchForIteratorSpaceTask(this);
+        initBatchTask();
     }
 
     private void initBatchTask() {
