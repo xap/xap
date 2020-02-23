@@ -29,7 +29,7 @@ import com.sun.jini.discovery.MulticastAnnouncement;
 import com.sun.jini.discovery.MulticastRequest;
 import com.sun.jini.discovery.UnicastResponse;
 import com.sun.jini.discovery.internal.MultiIPDiscovery;
-import com.sun.jini.logging.LogUtil;
+import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.thread.TaskManager;
 import com.sun.jini.thread.WakeupManager;
 import com.sun.jini.thread.WakeupManager.Ticket;
@@ -1551,30 +1551,14 @@ public class LookupDiscovery implements DiscoveryManagement,
                     String methodName = "run";
                     if (req instanceof Socket) {
                         Socket sock = (Socket) req;
-                        LogUtil.logThrow(logger,
-                                Level.INFO,
-                                this.getClass(),
-                                methodName,
-                                logmsg,
-                                new Object[]{
-                                        sock.getInetAddress().getHostName(),
-                                        new Integer(sock.getPort()),
-                                        rawUnicastDiscoveryConstraints
-                                },
-                                e);
+                        String message = LogUtils.format(this.getClass(), methodName, logmsg,
+                                sock.getInetAddress().getHostName(), new Integer(sock.getPort()), rawUnicastDiscoveryConstraints);
+                        logger.log(Level.INFO, message, e);
                     } else {
                         LookupLocator loc = (LookupLocator) req;
-                        LogUtil.logThrow(logger,
-                                Level.INFO,
-                                this.getClass(),
-                                methodName,
-                                logmsg,
-                                new Object[]{
-                                        loc.getHost(),
-                                        new Integer(loc.getPort()),
-                                        rawUnicastDiscoveryConstraints
-                                },
-                                e);
+                        String message = LogUtils.format(this.getClass(), methodName, logmsg,
+                                loc.getHost(), new Integer(loc.getPort()), rawUnicastDiscoveryConstraints);
+                        logger.log(Level.INFO, message, e);
                     }
                 } else {
                     logger.log(Level.INFO, "exception occurred during unicast discovery - request: " + req, e);

@@ -18,7 +18,7 @@
 
 package com.sun.jini.action;
 
-import com.sun.jini.logging.LogUtil;
+import com.gigaspaces.logger.LogUtils;
 
 import net.jini.security.Security;
 
@@ -124,10 +124,10 @@ public class GetIntegerAction implements PrivilegedAction {
             }
         } catch (SecurityException e) {
             if (logger.isLoggable(Level.FINE)) {
-                LogUtil.logThrow(logger, Level.FINE,
-                        GetIntegerAction.class, "run",
+                String message = LogUtils.format(GetIntegerAction.class, "run",
                         "security exception reading \"{0}\", returning {1}",
-                        new Object[]{theProp, defaultValue()}, e);
+                        theProp, defaultValue());
+                logger.log(Level.FINE, message, e);
             }
         }
         return defaultValue();
