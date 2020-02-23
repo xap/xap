@@ -298,7 +298,11 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
 
     private CompoundAndCustomQuery buildCompoundAndCustomQuery(List<ICustomQuery> customQueries, List<IQueryIndexScanner> queryIndexes) {
 
-        boolean allRelationIndexScanner = queryIndexes.parallelStream().allMatch(q -> q instanceof RelationIndexScanner);
+        final boolean enable = Boolean.parseBoolean(System.getProperty("com.gs.13953.enabled", "true"));
+        if (!enable) {
+            System.out.println("-----> com.gs.13953.enabled=false <------");
+        }
+        final boolean allRelationIndexScanner = enable && queryIndexes.parallelStream().allMatch(q -> q instanceof RelationIndexScanner);
         if (allRelationIndexScanner) {
             CompoundAndCustomQuery customQuery = new CompoundAndCustomQuery(Collections.emptyList());
             CombinedRelationIndexScanner combinedRelationIndexScanner = new CombinedRelationIndexScanner(queryIndexes);
