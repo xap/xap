@@ -293,7 +293,7 @@ public class ConcurrentStoredList<T>
         else
             slh = new SegmentedListIterator(alternatingThread);
 
-        SegmentedListIterator<T> res = establishPos(slh, randomScan);
+        SegmentedListIterator<T> res = establishPos(slh, randomScan, alternatingThread);
 
         if (res == null && !slh.isAlternatingThread())
             slh.release();
@@ -305,10 +305,10 @@ public class ConcurrentStoredList<T>
     /**
      * establish a scan position- select a segment
      */
-    private SegmentedListIterator<T> establishPos(SegmentedListIterator<T> res, boolean randomScan) {
+    private SegmentedListIterator<T> establishPos(SegmentedListIterator<T> res, boolean randomScan, boolean alternatingThread) {
         int startSegment = drawSegmentNumber(false /*add*/);
         res.setStartSegment((short) startSegment);
-        res._scanLimit = size() * 5;
+        res._scanLimit = alternatingThread ? Integer.MAX_VALUE : (size() * 5);
         res._randomScan = (randomScan && getNumSegments() == 1);
 
         for (int seg = startSegment, i = 0; i < getNumSegments(); i++, seg++) {
