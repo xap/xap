@@ -137,7 +137,7 @@ public class SimpleLockStoredList<T> extends AbstractStoredList<T> {
 
             random_scan = m_Support_Random_Scans && random_scan && (m_BasicOccupied != null);
 
-            int scanLimit = Math.max(m_Size, SCAN_LIMIT);
+            int scanLimit = res.isAlternatingThread()? Integer.MAX_VALUE : Math.max(m_Size, SCAN_LIMIT);
 
             ObjectInfo<T> oi = null;
             if (!random_scan || m_Size == 1) {

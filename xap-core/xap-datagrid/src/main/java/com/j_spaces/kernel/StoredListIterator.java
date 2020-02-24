@@ -48,9 +48,13 @@ final public class StoredListIterator<T>
     private boolean _tryFwdScan; // tail to head (lifo),true = in fwd direction, valid in random scan
     private boolean _backward;  //true - from head to tail (fifo)
     private int _scanLimit; //avoid perpetual scan situation
-
+    private final boolean _alternatingThread;
 
     public StoredListIterator() {
+        this(false);
+    }
+    public StoredListIterator(boolean alternatingThread) {
+        _alternatingThread = alternatingThread;
     }
 
     @Override
@@ -146,5 +150,18 @@ final public class StoredListIterator<T>
     public int getScanLimit() {
         return _scanLimit;
     }
+
+    public boolean isAlternatingThread()
+    {
+        return _alternatingThread;
+    }
+
+    @Override
+    public void release() {
+        if (_alternatingThread)
+            return;
+        super.release();
+    }
+
 
 }

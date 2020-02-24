@@ -80,13 +80,23 @@ public abstract class AbstractStoredList<T>
     /**
      * establish a scan position. if random scanning supported we select a random position
      */
+    @Override
     public StoredListIterator<T> establishListScan(boolean random_scan) {
+        return establishListScan(random_scan,false/*alternatingThread*/);
+    }
+    @Override
+    public StoredListIterator<T> establishListScan(boolean random_scan,boolean alternatingThread) {
         if (isEmpty())
             return null;
-        StoredListIterator<T> slh = _SLHolderPool.get();
+        StoredListIterator<T> slh = null;
+        if (!alternatingThread)
+            slh = _SLHolderPool.get();
+        else
+            slh = new StoredListIterator(true);
 
         if (!iterate(random_scan, slh)) {
-            slh.release();
+            if (!alternatingThread)
+                slh.release();
             return null;
         }
 
