@@ -16,11 +16,9 @@ import java.util.List;
 @com.gigaspaces.api.InternalApi
 public class GetBatchForIteratorDistributedSpaceTask implements DistributedSpaceTask<SpaceIteratorBatchResult, SpaceIteratorBatchResult>, AsyncResultFilter<SpaceIteratorBatchResult> {
     private final SpaceIteratorBatchResultProvider _spaceIteratorBatchResultProvider;
-    private final boolean _firstTime;
 
-    GetBatchForIteratorDistributedSpaceTask(SpaceIteratorBatchResultProvider spaceIteratorBatchResultProvider, boolean firstTime) {
+    GetBatchForIteratorDistributedSpaceTask(SpaceIteratorBatchResultProvider spaceIteratorBatchResultProvider) {
         _spaceIteratorBatchResultProvider = spaceIteratorBatchResultProvider;
-        _firstTime = firstTime;
     }
 
     /*
@@ -43,6 +41,6 @@ public class GetBatchForIteratorDistributedSpaceTask implements DistributedSpace
 
     @Override
     public SpaceIteratorBatchResult execute(IJSpace space, Transaction tx) throws Exception {
-        return space.getDirectProxy().getBatchForIterator(_spaceIteratorBatchResultProvider.getQueryPacket(), _spaceIteratorBatchResultProvider.getBatchSize(), _spaceIteratorBatchResultProvider.getReadModifiers(), _spaceIteratorBatchResultProvider.getUuid(), _firstTime);
+        return space.getDirectProxy().getBatchForIterator(_spaceIteratorBatchResultProvider.getQueryPacket(), _spaceIteratorBatchResultProvider.getBatchSize(),0, _spaceIteratorBatchResultProvider.getReadModifiers(), _spaceIteratorBatchResultProvider.getUuid());
     }
 }

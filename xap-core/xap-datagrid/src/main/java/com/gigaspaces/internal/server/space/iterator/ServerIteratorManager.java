@@ -1,6 +1,7 @@
 package com.gigaspaces.internal.server.space.iterator;
 
 import com.gigaspaces.logger.Constants;
+import com.j_spaces.core.ServerIteratorAnswerHolder;
 
 import java.util.Map;
 import java.util.UUID;
@@ -16,24 +17,26 @@ public class ServerIteratorManager {
         _logger = Logger.getLogger(Constants.LOGGER__SERVER_GSITERATOR);
     }
 
-    public ServerIteratorInfo getOrCreateServerIteratorInfo(ServerIteratorRequestInfo serverIteratorRequestInfo){
+    public ServerIteratorInfo getOrCreateServerIteratorInfo(ServerIteratorRequestInfo serverIteratorRequestInfo) throws IllegalStateException{
         UUID uuid = serverIteratorRequestInfo.getUuid();
         boolean containsUuid = serverIteratorInfoMap.containsKey(uuid);
         boolean firstTime = serverIteratorRequestInfo.isFirstTime();
-        if(containsUuid && !firstTime) {
+        boolean createNew = !containsUuid && firstTime;
+        boolean foundActive = containsUuid && !firstTime;
+        if(createNew){
+            ServerIteratorInfo result = new ServerIteratorInfo(serverIteratorRequestInfo.getUuid(), serverIteratorRequestInfo.getBatchSize(), serverIteratorRequestInfo.getLease());
+            serverIteratorInfoMap.put(uuid, result);
+            if(_logger.isLoggable(Level.FINE))
+                _logger.fine("Space iterator " + uuid + " was created in server");
+            return result;
+        }
+        if(foundActive) {
             return serverIteratorInfoMap.get(uuid);
         }
         if(containsUuid && firstTime) {
             throw new IllegalStateException("Space iterator " + uuid + " was already created in server");
         }
-        if(!containsUuid && !firstTime){
-            throw new IllegalStateException("Space iterator " + uuid + " is not found in server");
-        } //TODO simplify condition flow
-        ServerIteratorInfo result = new ServerIteratorInfo(serverIteratorRequestInfo.getUuid(), serverIteratorRequestInfo.getBatchSize(), serverIteratorRequestInfo.getLease());
-        serverIteratorInfoMap.put(uuid, result);
-        if(_logger.isLoggable(Level.FINE))
-            _logger.fine("Space iterator " + uuid + " was created in server");
-        return result;
+        throw new IllegalStateException("Requesting batch number " + serverIteratorRequestInfo.getRequestedBatchNumber() + " for space iterator " + uuid + " , which was not found in server");
     }
 
     public void closeServerIterator(UUID uuid){

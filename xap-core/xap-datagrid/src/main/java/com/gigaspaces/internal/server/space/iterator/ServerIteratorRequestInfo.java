@@ -3,16 +3,16 @@ package com.gigaspaces.internal.server.space.iterator;
 import java.util.UUID;
 
 public class ServerIteratorRequestInfo {
-    final private UUID uuid;
-    final private long lease;
-    final private int batchSize;
-    final private boolean firstTime;
+    private final UUID uuid;
+    private final long lease;
+    private final int batchSize;
+    private final int requestedBatchNumber;
 
-    public ServerIteratorRequestInfo(UUID uuid, long lease, int batchSize, boolean firstTime) {
+    public ServerIteratorRequestInfo(UUID uuid, long lease, int batchSize, int requestedBatchNumber) {
         this.uuid = uuid;
         this.lease = lease;
         this.batchSize = batchSize;
-        this.firstTime = firstTime;
+        this.requestedBatchNumber = requestedBatchNumber;
     }
 
     public UUID getUuid() {
@@ -27,7 +27,11 @@ public class ServerIteratorRequestInfo {
         return batchSize;
     }
 
+    public int getRequestedBatchNumber() {
+        return requestedBatchNumber;
+    }
+
     public boolean isFirstTime() {
-        return firstTime;
+        return requestedBatchNumber == 0;
     }
 }

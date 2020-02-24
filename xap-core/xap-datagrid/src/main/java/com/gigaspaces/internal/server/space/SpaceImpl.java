@@ -136,10 +136,7 @@ import com.gigaspaces.server.space.suspend.SuspendType;
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.time.SystemTime;
 import com.gigaspaces.utils.Pair;
-import com.j_spaces.core.AbstractIdsQueryPacket;
-import com.j_spaces.core.AnswerHolder;
-import com.j_spaces.core.AnswerPacket;
-import com.j_spaces.core.Constants;
+import com.j_spaces.core.*;
 import com.j_spaces.core.Constants.CacheManager;
 import com.j_spaces.core.Constants.Cluster;
 import com.j_spaces.core.Constants.DCache;
@@ -152,31 +149,6 @@ import com.j_spaces.core.Constants.QueryProcessorInfo;
 import com.j_spaces.core.Constants.Schemas;
 import com.j_spaces.core.Constants.SpaceProxy;
 import com.j_spaces.core.Constants.StorageAdapter;
-import com.j_spaces.core.CreateException;
-import com.j_spaces.core.DropClassException;
-import com.j_spaces.core.ExtendedAnswerHolder;
-import com.j_spaces.core.IJSpace;
-import com.j_spaces.core.IJSpaceContainer;
-import com.j_spaces.core.ISpaceState;
-import com.j_spaces.core.IStubHandler;
-import com.j_spaces.core.JSpaceAttributes;
-import com.j_spaces.core.JSpaceContainerImpl;
-import com.j_spaces.core.JSpaceState;
-import com.j_spaces.core.LeaseContext;
-import com.j_spaces.core.LeaseInitializer;
-import com.j_spaces.core.LeaseManager;
-import com.j_spaces.core.OperationID;
-import com.j_spaces.core.SpaceConfigFactory;
-import com.j_spaces.core.SpaceContext;
-import com.j_spaces.core.SpaceContextHelper;
-import com.j_spaces.core.SpaceCopyStatus;
-import com.j_spaces.core.SpaceCopyStatusImpl;
-import com.j_spaces.core.SpaceHealthStatus;
-import com.j_spaces.core.SpaceRecoveryException;
-import com.j_spaces.core.UnknownTypeException;
-import com.j_spaces.core.UnknownTypesException;
-import com.j_spaces.core.UpdateOrWriteContext;
-import com.j_spaces.core.XtnEntry;
 import com.j_spaces.core.admin.*;
 import com.j_spaces.core.client.BasicTypeInfo;
 import com.j_spaces.core.client.EntryAlreadyInSpaceException;
@@ -2250,11 +2222,11 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         return res;
     }
 
-    public AnswerHolder getNextBatchFromServerIterator(ITemplatePacket template,
-                                                        SpaceContext sc, int modifiers, ServerIteratorRequestInfo serverIteratorRequestInfo)
+    public ServerIteratorAnswerHolder getNextBatchFromServerIterator(ITemplatePacket template,
+                                                                     SpaceContext sc, int modifiers, ServerIteratorRequestInfo serverIteratorRequestInfo)
             throws TransactionException, UnusableEntryException, UnknownTypeException, RemoteException, InterruptedException {
         BatchQueryOperationContext operationContext = new ReadMultipleContext(template, serverIteratorRequestInfo.getBatchSize(), serverIteratorRequestInfo.getBatchSize());
-        return _engine.readMultiple(template, null,0,false,false, sc, false, modifiers, operationContext, null, serverIteratorRequestInfo);
+        return (ServerIteratorAnswerHolder) _engine.readMultiple(template, null,0,false,false, sc, false, modifiers, operationContext, null, serverIteratorRequestInfo);
     }
 
     public void closeServerIterator(UUID uuid){

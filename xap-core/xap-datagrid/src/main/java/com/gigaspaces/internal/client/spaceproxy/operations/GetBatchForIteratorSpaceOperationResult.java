@@ -18,8 +18,6 @@ package com.gigaspaces.internal.client.spaceproxy.operations;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.utils.Textualizer;
-import com.gigaspaces.internal.version.PlatformLogicalVersion;
-import com.gigaspaces.lrmi.LRMIInvocationContext;
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.TransactionException;
 
@@ -38,6 +36,7 @@ public class GetBatchForIteratorSpaceOperationResult extends SpaceOperationResul
 
     private IEntryPacket[] _entryPackets;
     private int _numOfEntriesMatched;
+    private int _batchNumber;
     private transient Integer _partitionId;
 
     /**
@@ -99,6 +98,14 @@ public class GetBatchForIteratorSpaceOperationResult extends SpaceOperationResul
         this._partitionId = partitionId;
     }
 
+    public int getBatchNumber() {
+        return _batchNumber;
+    }
+
+    public void setBatchNumber(int batchNumber) {
+        this._batchNumber = batchNumber;
+    }
+
     private static final short FLAG_ENTRY_PACKETS = 1 << 0;
     private static final short FLAG_NUM_OF_ENTRIES_MATCHED = 1 << 1;
 
@@ -116,6 +123,7 @@ public class GetBatchForIteratorSpaceOperationResult extends SpaceOperationResul
             if (_numOfEntriesMatched > 0) {
                 out.writeInt(_numOfEntriesMatched);
             }
+            out.writeInt(_batchNumber);
         }
     }
 
@@ -131,6 +139,7 @@ public class GetBatchForIteratorSpaceOperationResult extends SpaceOperationResul
             if ((flags & FLAG_NUM_OF_ENTRIES_MATCHED) != 0) {
                 this._numOfEntriesMatched = in.readInt();
             }
+            this._batchNumber = in.readInt();
         }
     }
 

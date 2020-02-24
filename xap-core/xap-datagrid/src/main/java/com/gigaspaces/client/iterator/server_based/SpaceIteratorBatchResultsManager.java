@@ -66,6 +66,7 @@ public class SpaceIteratorBatchResultsManager {
                 return null;
             }
         }
+        //TODO verify sensible batch numbers before consumption
         SpaceIteratorBatchResult spaceIteratorBatchResult = _spaceIteratorBatchResultProvider.consumeBatch(timeout);
         if (spaceIteratorBatchResult == null)
             throw new TimeoutException("Did not find any batch for iterator " + _spaceIteratorBatchResultProvider.getUuid() + " under " + timeout + " milliseconds");
@@ -82,7 +83,7 @@ public class SpaceIteratorBatchResultsManager {
             spaceIteratorBatchResult.setFinished(true);
             deactivatePartition(spaceIteratorBatchResult);
         } else {
-            _spaceIteratorBatchResultProvider.triggerSinglePartitionBatchTask(spaceIteratorBatchResult.getPartitionId(), false);
+            _spaceIteratorBatchResultProvider.triggerSinglePartitionBatchTask(spaceIteratorBatchResult.getPartitionId(), spaceIteratorBatchResult.getBatchNumber() + 1);
         }
         return spaceIteratorBatchResult.getEntries();
     }

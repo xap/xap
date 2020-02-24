@@ -270,7 +270,7 @@ public interface ISpaceProxy extends IJSpace, ActionMaker, SecuredService, IDotn
 
     AggregationResult aggregate(Object template, AggregationSet aggregationSet, Transaction txn, int readModifiers) throws RemoteException, TransactionException, InterruptedException;
 
-    SpaceIteratorBatchResult getBatchForIterator(Object template, int limit, int modifiers, UUID uuid, boolean firstTime)
+    SpaceIteratorBatchResult getBatchForIterator(Object template, int batchSize, int batchNumber, int modifiers, UUID uuid)
             throws TransactionException, UnusableEntryException, RemoteException;
 
     void closeSpaceIterator(UUID uuid) throws RemoteException, InterruptedException;

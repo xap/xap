@@ -1881,6 +1881,7 @@ public class SpaceEngine implements ISpaceModeListener {
 
         // Check if FIFO:
         boolean isFifoOperation = template.isFifo() || ReadModifiers.isFifo(operationModifiers);
+        boolean isServerIteratorRequest = serverIteratorRequestInfo != null;
         // Validate FIFO:
         if (isFifoOperation && !typeDesc.isFifoSupported())
             throw new InvalidFifoTemplateException(template.getTypeName());
@@ -1915,13 +1916,21 @@ public class SpaceEngine implements ISpaceModeListener {
                 uid, LeaseManager.toAbsoluteTime(timeout, startTime) /* expiration time*/,
                 txnEntry, startTime, templateOperation, respContext, returnOnlyUid,
                 operationModifiers, isFifoOperation);
-        ServerIteratorInfo serverIteratorInfo = null;
-        if(serverIteratorRequestInfo != null) {
-            // if exists find info if not create one
-            serverIteratorInfo = _serverIteratorManager.getOrCreateServerIteratorInfo(serverIteratorRequestInfo);
+        if(isServerIteratorRequest) {
+            ServerIteratorInfo serverIteratorInfo = _serverIteratorManager.getOrCreateServerIteratorInfo(serverIteratorRequestInfo);
+            if(_logger.isLoggable(Level.FINE))
+                _logger.fine("Iterator " + serverIteratorRequestInfo.getUuid() + " requested batch " + serverIteratorRequestInfo.getRequestedBatchNumber() + ", stored batch " + serverIteratorInfo.getStoredBatchNumber());
+            if(serverIteratorInfo.isBatchRetrialRequest(serverIteratorRequestInfo)){
+                ServerIteratorAnswerHolder serverIteratorAnswerHolder = new ServerIteratorAnswerHolder(serverIteratorRequestInfo.getRequestedBatchNumber());
+                serverIteratorAnswerHolder.setEntryPackets(serverIteratorInfo.getStoredEntryPacketsBatch());
+                return serverIteratorAnswerHolder;
+            }
             tHolder.setServerIteratorInfo(serverIteratorInfo);
+            tHolder.setAnswerHolder(new ServerIteratorAnswerHolder(serverIteratorRequestInfo.getRequestedBatchNumber()));
         }
-        tHolder.setAnswerHolder(new AnswerHolder());
+        else {
+            tHolder.setAnswerHolder(new AnswerHolder());
+        }
         tHolder.setNonBlockingRead(isNonBlockingReadForOperation(tHolder));
         tHolder.setID(template.getID());
         tHolder.setBatchOperationContext(batchOperationContext);
@@ -1978,6 +1987,9 @@ public class SpaceEngine implements ISpaceModeListener {
 
         if (answerSetByThisThread) {
             tHolder.getAnswerHolder().setNumOfEntriesMatched(numOfEntriesMatched);
+            if(isServerIteratorRequest) {
+                updateServerIteratorAnswerHolder(tHolder);
+            }
             return tHolder.getAnswerHolder();
         }
 
@@ -1987,7 +1999,16 @@ public class SpaceEngine implements ISpaceModeListener {
         } else
             prepareBlockingModeAnswer(tHolder, true);
 
+        if(isServerIteratorRequest) {
+            updateServerIteratorAnswerHolder(tHolder);
+        }
         return tHolder.getAnswerHolder();
+    }
+
+    private void updateServerIteratorAnswerHolder(ITemplateHolder templateHolder){
+        ServerIteratorInfo serverIteratorInfo = templateHolder.getServerIteratorInfo();
+        ServerIteratorAnswerHolder serverIteratorAnswerHolder = (ServerIteratorAnswerHolder) templateHolder.getAnswerHolder();
+        serverIteratorInfo.setStoredEntryPacketsBatch(serverIteratorAnswerHolder.getEntryPackets()).setStoredBatchNumber(serverIteratorAnswerHolder.getBatchNumber());
     }
 
 

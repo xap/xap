@@ -12,24 +12,16 @@ import net.jini.core.transaction.Transaction;
 @com.gigaspaces.api.InternalApi
 public class SinglePartitionGetBatchForIteratorSpaceTask implements SpaceTask<SpaceIteratorBatchResult> {
     private final SpaceIteratorBatchResultProvider _spaceIteratorBatchResultProvider;
-    private boolean _firstTime;
+    private final int _batchNumber;
 
-    public SinglePartitionGetBatchForIteratorSpaceTask(SpaceIteratorBatchResultProvider _spaceIteratorBatchResultProvider) {
+    public SinglePartitionGetBatchForIteratorSpaceTask(SpaceIteratorBatchResultProvider _spaceIteratorBatchResultProvider, int batchNumber) {
         this._spaceIteratorBatchResultProvider = _spaceIteratorBatchResultProvider;
-    }
-
-    public boolean isFirstTime() {
-        return _firstTime;
-    }
-
-    public SinglePartitionGetBatchForIteratorSpaceTask setFirstTime(boolean firstTime) {
-        this._firstTime = firstTime;
-        return this;
+        this._batchNumber = batchNumber;
     }
 
     @Override
     public SpaceIteratorBatchResult execute(IJSpace space, Transaction tx) throws Exception {
-        return space.getDirectProxy().getBatchForIterator(_spaceIteratorBatchResultProvider.getQueryPacket(), _spaceIteratorBatchResultProvider.getBatchSize(), _spaceIteratorBatchResultProvider.getReadModifiers(), _spaceIteratorBatchResultProvider.getUuid(), _firstTime);
+        return space.getDirectProxy().getBatchForIterator(_spaceIteratorBatchResultProvider.getQueryPacket(), _spaceIteratorBatchResultProvider.getBatchSize(), _batchNumber, _spaceIteratorBatchResultProvider.getReadModifiers(), _spaceIteratorBatchResultProvider.getUuid());
     }
 
 }

@@ -29,7 +29,6 @@ import com.gigaspaces.internal.client.SpaceIteratorBatchResult;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.*;
 import com.gigaspaces.internal.client.spaceproxy.executors.TypeDescriptorActionsProxyExecutor;
-import com.gigaspaces.internal.client.spaceproxy.operations.CloseIteratorSpaceOperationResult;
 import com.gigaspaces.internal.client.spaceproxy.operations.ReadTakeEntriesUidsSpaceOperationRequest;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.space.actions.GetTypeDescriptorActionInfo;
@@ -175,9 +174,9 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
         return read(actionInfo);
     }
 
-    public SpaceIteratorBatchResult getNextBatchFromServerIterator(Object template, int limit, int modifiers, UUID uuid, boolean firstTime)
+    public SpaceIteratorBatchResult getNextBatchFromServerIterator(Object template, int batchSize, int batchNumber, int modifiers, UUID uuid)
             throws RemoteException, UnusableEntryException, TransactionException {
-        GetBatchForIteratorProxyActionInfo actionInfo = new GetBatchForIteratorProxyActionInfo(_spaceProxy,template, limit, modifiers, uuid, firstTime);
+        GetBatchForIteratorProxyActionInfo actionInfo = new GetBatchForIteratorProxyActionInfo(_spaceProxy,template, batchSize, batchNumber, modifiers, uuid);
         return _getBatchForIteratorAction.getNextBatch(_spaceProxy,actionInfo);
     }
 

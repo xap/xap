@@ -23,7 +23,7 @@ import com.gigaspaces.internal.server.space.iterator.ServerIteratorRequestInfo;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.lrmi.nio.IResponseContext;
 import com.gigaspaces.lrmi.nio.ResponseContext;
-import com.j_spaces.core.AnswerHolder;
+import com.j_spaces.core.ServerIteratorAnswerHolder;
 import com.j_spaces.core.client.Modifiers;
 
 /**
@@ -39,10 +39,11 @@ public class GetBatchForIteratorSpaceOperation extends AbstractSpaceOperation<Ge
         if (respContext != null)
             respContext.setInvokedFromNewRouter(true);
 
-        AnswerHolder answerHolder = space.getNextBatchFromServerIterator(request.getTemplatePacket(),
-                request.getSpaceContext(), request.getModifiers(), new ServerIteratorRequestInfo(request.getIteratorId(), request.getLease(), request.getBatchSize(), request.isFirstTime()));
+        ServerIteratorAnswerHolder answerHolder = space.getNextBatchFromServerIterator(request.getTemplatePacket(),
+                request.getSpaceContext(), request.getModifiers(), new ServerIteratorRequestInfo(request.getIteratorId(), request.getLease(), request.getBatchSize(), request.getBatchNumber()));
         final IEntryPacket[] entryPackets = answerHolder != null ? answerHolder.getEntryPackets() : null;
         result.setEntryPackets(entryPackets);
+        result.setBatchNumber(answerHolder.getBatchNumber());
         if (answerHolder != null) {
             if (Modifiers.contains(request.getModifiers(), Modifiers.LOG_SCANNED_ENTRIES_COUNT))
                 result.setNumOfEntriesMatched(answerHolder.getNumOfEntriesMatched());

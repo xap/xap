@@ -54,9 +54,9 @@ public class GetBatchForIteratorSpaceOperationRequest extends SpaceOperationRequ
 
     private ITemplatePacket _templatePacket;
     private UUID _iteratorId;
-    private boolean _firstTime; //use it with client disconnection + expiration
     private int _modifiers;
     private int _batchSize;
+    private int _batchNumber;
     private transient int _totalNumberOfMatchesEntries;
     private transient Object _query;
     private transient ExplainPlanImpl explainPlan;
@@ -68,14 +68,14 @@ public class GetBatchForIteratorSpaceOperationRequest extends SpaceOperationRequ
     }
 
     public GetBatchForIteratorSpaceOperationRequest(
-            ITemplatePacket templatePacket, int modifiers, int maxResults, Object query, UUID iteratorId, boolean firstTime) {
+            ITemplatePacket templatePacket, int modifiers, int batchSize, int batchNumber, Object query, UUID iteratorId) {
         this._templatePacket = templatePacket;
         this._modifiers = modifiers;
-        this._batchSize = maxResults;
+        this._batchSize = batchSize;
+        this._batchNumber = batchNumber;
         this._query = query;
         this.explainPlan = ExplainPlanImpl.fromQueryPacket(query);
         this._iteratorId = iteratorId;
-        this._firstTime = firstTime;
     }
 
     @Override
@@ -83,9 +83,9 @@ public class GetBatchForIteratorSpaceOperationRequest extends SpaceOperationRequ
         super.toText(textualizer);
         textualizer.append("template", _templatePacket);
         textualizer.append("batchSize", _batchSize);
+        textualizer.append("batchNumber", _batchNumber);
         textualizer.append("modifiers", _modifiers); //TODO fail unsupported read modifiers
         textualizer.append("iteratorId", _iteratorId);
-        textualizer.append("firstTime", _firstTime);
     }
 
     @Override
@@ -115,7 +115,7 @@ public class GetBatchForIteratorSpaceOperationRequest extends SpaceOperationRequ
                     + " get next batch from server iterator operation of query "
                     + QueryUtils.getQueryDescription(_query));
         }
-        return new SpaceIteratorBatchResult(result.getEntryPackets(), result.getPartitionId(), result.getExecutionException(), _firstTime, _iteratorId);
+        return new SpaceIteratorBatchResult(result.getEntryPackets(), result.getPartitionId(), result.getExecutionException(), result.getBatchNumber(), _iteratorId);
     }
 
     @Override
@@ -164,8 +164,8 @@ public class GetBatchForIteratorSpaceOperationRequest extends SpaceOperationRequ
         out.writeShort(flags);
         IOUtils.writeObject(out, _templatePacket);
         IOUtils.writeUUID(out, _iteratorId);
-        out.writeBoolean(_firstTime);
         out.writeInt(_batchSize);
+        out.writeInt(_batchNumber);
         if (flags != 0) {
             if (_modifiers != DEFAULT_MODIFIERS)
                 out.writeInt(_modifiers);
@@ -179,8 +179,8 @@ public class GetBatchForIteratorSpaceOperationRequest extends SpaceOperationRequ
         final short flags = in.readShort();
         _templatePacket = IOUtils.readObject(in);
         _iteratorId = IOUtils.readUUID(in);
-        _firstTime = in.readBoolean();
         _batchSize = in.readInt();
+        _batchNumber = in.readInt();
         if (flags != 0) {
             _modifiers = (flags & FLAG_MODIFIERS) != 0 ? in.readInt() : DEFAULT_MODIFIERS;
         } else {
@@ -232,6 +232,10 @@ public class GetBatchForIteratorSpaceOperationRequest extends SpaceOperationRequ
     }
 
     public boolean isFirstTime() {
-        return _firstTime;
+        return _batchNumber == 0;
+    }
+
+    public int getBatchNumber() {
+        return _batchNumber;
     }
 }

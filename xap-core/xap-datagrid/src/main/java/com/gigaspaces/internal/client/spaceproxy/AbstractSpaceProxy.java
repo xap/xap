@@ -601,8 +601,8 @@ public abstract class AbstractSpaceProxy implements ISpaceProxy {
     }
 
     @Override
-    public SpaceIteratorBatchResult getBatchForIterator(Object template, int limit, int modifiers, UUID uuid, boolean firstTime) throws TransactionException, UnusableEntryException, RemoteException{
-        return _actionManager.getNextBatchFromServerIterator(template, limit, modifiers, uuid, firstTime);
+    public SpaceIteratorBatchResult getBatchForIterator(Object template, int batchSize, int batchNumber, int modifiers, UUID uuid) throws TransactionException, UnusableEntryException, RemoteException{
+        return _actionManager.getNextBatchFromServerIterator(template, batchSize, batchNumber, modifiers, uuid);
     }
 
     @Override

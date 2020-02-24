@@ -35,7 +35,7 @@ public class SpaceProxyImplGetBatchForIteratorAction extends GetBatchForIterator
             throws RemoteException, TransactionException, UnusableEntryException {
         SpaceIteratorBatchResult results = null;
         try {
-            final GetBatchForIteratorSpaceOperationRequest request = new GetBatchForIteratorSpaceOperationRequest(actionInfo.queryPacket, actionInfo.modifiers, actionInfo.batchSize, actionInfo.getQuery(), actionInfo.uuid, actionInfo.firstTime);
+            final GetBatchForIteratorSpaceOperationRequest request = new GetBatchForIteratorSpaceOperationRequest(actionInfo.queryPacket, actionInfo.modifiers, actionInfo.batchSize, actionInfo.batchNumber, actionInfo.getQuery(), actionInfo.uuid);
             spaceProxy.getProxyRouter().execute(request);
             results = request.getFinalResult();
         } catch (InterruptedException e) {

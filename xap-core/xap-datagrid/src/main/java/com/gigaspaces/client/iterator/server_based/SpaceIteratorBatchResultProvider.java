@@ -35,7 +35,6 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
     private final UUID _uuid;
     private final int _numberOfPartitions;
     private final transient SpaceIteratorBatchResultListener _spaceIteratorBatchResultListener;
-    private transient SinglePartitionGetBatchForIteratorSpaceTask _singlePartitionGetBatchForIteratorSpaceTask;
 
     public SpaceIteratorBatchResultProvider(ISpaceProxy spaceProxy, int batchSize, int readModifiers, ITemplatePacket queryPacket, UUID uuid){
         this._spaceProxy = spaceProxy;
@@ -46,7 +45,6 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
         this._numberOfPartitions = _spaceProxy.getDirectProxy().getSpaceClusterInfo().getNumberOfPartitions();
         this._queue = new LinkedBlockingQueue<>(getInitialNumberOfActivePartitions());
         this._spaceIteratorBatchResultListener = new SpaceIteratorBatchResultListener(this);
-        this._singlePartitionGetBatchForIteratorSpaceTask = new SinglePartitionGetBatchForIteratorSpaceTask(this);
         initBatchTask();
     }
 
@@ -54,13 +52,13 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
         if(_numberOfPartitions == 0){
             if(_logger.isLoggable(Level.FINE))
                 _logger.fine("Initializing space iterator batch task in embedded space.");
-            triggerSinglePartitionBatchTask(PartitionedClusterUtils.NO_PARTITION, true);
+            triggerSinglePartitionBatchTask(PartitionedClusterUtils.NO_PARTITION, 0);
             return;
         }
         if(_queryPacket.getRoutingFieldValue() != null){
             if(_logger.isLoggable(Level.FINE))
                 _logger.fine("Initializing space iterator batch task with routing " + _queryPacket.getRoutingFieldValue());
-            triggerSinglePartitionBatchTask(PartitionedClusterUtils.getPartitionId(_queryPacket.getRoutingFieldValue(), _numberOfPartitions), true);
+            triggerSinglePartitionBatchTask(PartitionedClusterUtils.getPartitionId(_queryPacket.getRoutingFieldValue(), _numberOfPartitions), 0);
             return;
         }
         try {
@@ -89,9 +87,11 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
         return _queue.poll(timeout, TimeUnit.MILLISECONDS);
     }
 
-    public void triggerSinglePartitionBatchTask(int partitionId, boolean firstTime) {
+    public void triggerSinglePartitionBatchTask(int partitionId, int batchNumber) {
         try {
-            _spaceProxy.execute(_singlePartitionGetBatchForIteratorSpaceTask.setFirstTime(firstTime), partitionId, null, _spaceIteratorBatchResultListener);
+            if(_logger.isLoggable(Level.FINE))
+                _logger.fine("Triggering task for space iterator " + _uuid + " in partition " + partitionId + " fetch batchNumber " + batchNumber);
+            _spaceProxy.execute(new SinglePartitionGetBatchForIteratorSpaceTask(this, batchNumber), partitionId, null, _spaceIteratorBatchResultListener);
         } catch (TransactionException e) {
             e.printStackTrace();
         } catch (RemoteException e) {
@@ -102,7 +102,7 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
     On init, task is triggered to start iterator in all servers
      */
     private void triggerBatchTaskInAllPartitions() throws RemoteException, TransactionException {
-        _spaceProxy.execute(new GetBatchForIteratorDistributedSpaceTask(this, true), null, null, null);
+        _spaceProxy.execute(new GetBatchForIteratorDistributedSpaceTask(this), null, null, null);
     }
 
     public void close() {

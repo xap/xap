@@ -31,22 +31,21 @@ import java.util.UUID;
  */
 @com.gigaspaces.api.InternalApi
 public class GetBatchForIteratorProxyActionInfo extends QueryProxyActionInfo {
-    public final int batchSize;
     public final UUID uuid;
-    public boolean firstTime;
+    public final int batchSize;
+    public final int batchNumber;
 
-    public GetBatchForIteratorProxyActionInfo(ISpaceProxy spaceProxy, Object template, int maxEntries, int modifiers, UUID uuid, boolean firstTime) {
+    public GetBatchForIteratorProxyActionInfo(ISpaceProxy spaceProxy, Object template, int batchSize, int batchNumber, int modifiers, UUID uuid) {
         super(spaceProxy, template, null, modifiers, false);
-
         try {
             // If query is a uids query, the maximum number of results is also limited by the uids length:
             if (queryPacket.getMultipleUIDs() != null) {
-                this.batchSize = Math.min(maxEntries, queryPacket.getMultipleUIDs().length);
+                this.batchSize = Math.min(batchSize, queryPacket.getMultipleUIDs().length);
             } else {
-                this.batchSize = maxEntries;
+                this.batchSize = batchSize;
             }
+            this.batchNumber = batchNumber;
             this.uuid = uuid;
-            this.firstTime = firstTime;
             if (ReadModifiers.isFifoGroupingPoll(modifiers))
                 verifyFifoGroupsCallParams(false);
 

@@ -32,19 +32,19 @@ public class SpaceIteratorBatchResult implements Externalizable {
     private static final short FLAG_EXCEPTION = 1 << 1;
     private Object[] _entries;
     private Exception _exception;
-    private Integer _partitionId;
-    private boolean _firstTime;
+    private int _partitionId;
+    private int _batchNumber;
     private UUID _uuid;
     private transient boolean _finished;
 
     public SpaceIteratorBatchResult() {
     }
 
-    public SpaceIteratorBatchResult(Object[] entries, Integer partitionId, Exception exception, boolean firstTime, UUID uuid) {
+    public SpaceIteratorBatchResult(Object[] entries, Integer partitionId, Exception exception, int batchNumber, UUID uuid) {
         this._entries = entries;
         this._partitionId = partitionId != null ? partitionId : PartitionedClusterUtils.NO_PARTITION;
         this._exception = exception;
-        this._firstTime = firstTime;
+        this._batchNumber = batchNumber;
         this._uuid = uuid;
     }
 
@@ -57,11 +57,7 @@ public class SpaceIteratorBatchResult implements Externalizable {
     }
 
     public boolean isFirstTime() {
-        return _firstTime;
-    }
-
-    public void setFirstTime(boolean firstTime) {
-        this._firstTime = firstTime;
+        return _batchNumber == 0;
     }
 
     public void setFinished(boolean finished) {
@@ -80,6 +76,10 @@ public class SpaceIteratorBatchResult implements Externalizable {
         return !isFinished();
     }
 
+    public int getBatchNumber() {
+        return _batchNumber;
+    }
+
     @Override
     public String toString() {
         return "IteratorBatchResult{" +
@@ -88,7 +88,7 @@ public class SpaceIteratorBatchResult implements Externalizable {
                 ", _partitionId=" + _partitionId +
                 ", _finished=" + _finished +
                 ", _exception=" + _exception +
-                ", _firstTime=" + _firstTime +
+                ", _batchNumber=" + _batchNumber +
                 '}';
     }
 
@@ -103,7 +103,7 @@ public class SpaceIteratorBatchResult implements Externalizable {
                 IOUtils.writeObject(out, _exception);
         }
         out.writeInt(_partitionId);
-        out.writeBoolean(_firstTime);
+        out.writeInt(_batchNumber);
         IOUtils.writeUUID(out, _uuid);
     }
 
@@ -117,7 +117,7 @@ public class SpaceIteratorBatchResult implements Externalizable {
                 this._exception = IOUtils.readObject(in);
         }
         this._partitionId = in.readInt();
-        this._firstTime = in.readBoolean();
+        this._batchNumber = in.readInt();
         this._uuid = IOUtils.readUUID(in);
     }
 
