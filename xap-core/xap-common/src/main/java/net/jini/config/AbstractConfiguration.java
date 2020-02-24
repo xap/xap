@@ -357,9 +357,7 @@ public abstract class AbstractConfiguration implements Configuration {
                 throw e;
             } else {
                 if (logger.isLoggable(Level.FINE)) {
-                    logger.log(
-                            Level.FINE,
-                            "{0}, component {1}, name {2}: returns default {3}",
+                    logger.log(Level.FINE, "{0}, component {1}, name {2}: returns default {3}",
                             new Object[]{this, component, name, defaultValue});
                 }
                 return defaultValue;

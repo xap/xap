@@ -421,8 +421,7 @@ public class ConfigurationFile extends AbstractConfiguration {
                 }
             }
         } catch (IOException e) {
-            logger.log(
-                    Level.INFO, "Problem reading prohibited methods resource", e);
+            logger.log(Level.INFO, "Problem reading prohibited methods resource", e);
         } finally {
             if (in != null) {
                 try {

@@ -322,9 +322,7 @@ public class BootUtil {
                     locatorList.add(lookupLocator);
                 } catch (MalformedURLException ex) {
                     if (LOGGER.isLoggable(Level.WARNING)) {
-                        LOGGER.log(
-                                Level.WARNING,
-                                "Failed to parse list of LookupLocator URLs: " + locatorURL + " - " + ex.toString(), ex
+                        LOGGER.log(Level.WARNING, "Failed to parse list of LookupLocator URLs: " + locatorURL + " - " + ex.toString(), ex
                         );
                     }
                 }
