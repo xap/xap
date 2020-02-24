@@ -18,6 +18,7 @@
 
 package net.jini.config;
 
+import com.gigaspaces.logger.LogUtils;
 import net.jini.export.Exporter;
 import net.jini.security.ProxyPreparer;
 import net.jini.security.Security;
@@ -2128,9 +2129,10 @@ public class ConfigurationFile extends AbstractConfiguration {
             }
         }
         if (logger.isLoggable(Level.FINE)) {
-            throwing("getEntryType",
-                    "{0}, component {1}, name {2}: throws",
-                    new Object[]{this, component, name}, configEx);
+            String message = LogUtils.format(this.getClass(), "getEntryType",
+                    "{0}, component {1}, name {2}: throws", this, component, name);
+            logger.log(Level.FINE, message, configEx);
+
         }
         throw configEx;
     }
