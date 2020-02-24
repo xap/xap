@@ -2091,15 +2091,15 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             requestAddr = Constants.getRequestAddress();
             socket = new MulticastSocket(Constants.getDiscoveryPort());
             if (multicastInterfaces != null) {
-                final long startTime = LogUtils.getCurrTimeIfNeeded(logger, Level.FINE);
+                final long startTime = LogUtils.getCurrTimeIfDebugEnabled(logger);
                 Level failureLogLevel = multicastInterfacesSpecified ?
                         Level.WARNING : Level.FINE;
                 for (NetworkInterface nic : multicastInterfaces) {
                     try {
-                        final long nicStartTime = LogUtils.getCurrTimeIfNeeded(logger, Level.FINEST);
+                        final long nicStartTime = LogUtils.getCurrTimeIfTraceEnabled(logger);
                         socket.setNetworkInterface(nic);
                         if (logger.isLoggable(Level.FINEST))
-                            LogUtils.logDuration(logger, Level.FINEST, nicStartTime, "MulticastThread() - setNetworkInterface() for nic " + nic);
+                            logger.log(Level.FINEST, LogUtils.formatDuration(nicStartTime, "MulticastThread() - setNetworkInterface() for nic " + nic));
                         socket.joinGroup(requestAddr);
                     } catch (IOException e) {
                         failedInterfaces.add(nic);
@@ -2108,7 +2108,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     }
                 }
                 if (logger.isLoggable(Level.FINE))
-                    LogUtils.logDuration(logger, Level.FINE, startTime, "MulticastThread() processed " + multicastInterfaces.length + " network interfaces");
+                    logger.log(Level.FINE, LogUtils.formatDuration(startTime, "MulticastThread() processed " + multicastInterfaces.length + " network interfaces"));
             } else {
                 try {
                     socket.joinGroup(requestAddr);
@@ -2204,7 +2204,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 logger.log(level, "retryFailedInterfaces() will attempt to enable " + failedInterfaces.size() + " interfaces...");
             for (Iterator<NetworkInterface> i = failedInterfaces.iterator(); i.hasNext(); ) {
                 NetworkInterface nic = i.next();
-                long startTime = LogUtils.getCurrTimeIfNeeded(logger, level);
+                long startTime = logger.isLoggable(level) ? System.currentTimeMillis() : 0;
                 try {
                     if (nic != null)
                         socket.setNetworkInterface(nic);
@@ -2212,13 +2212,13 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     i.remove();
                     if (logger.isLoggable(level)) {
                         String message = nic == null ? "Enabled default interface" : "Enabled " + nic;
-                        LogUtils.logDuration(logger, level, startTime, message);
+                        logger.log(level, LogUtils.formatDuration(startTime, message));
                     }
                 } catch (IOException e) {
                     // keep nic in failedInterfaces
                     if (logger.isLoggable(level)) {
                         String message = nic == null ? "Failed to enabled default interface" : "Failed to enabled " + nic;
-                        LogUtils.logDuration(logger, level, startTime, message);
+                        logger.log(level, LogUtils.formatDuration(startTime, message));
                     }
                 }
             }
@@ -2435,11 +2435,11 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             if (multicastInterfaces != null) {
                 Level failureLogLevel = multicastInterfacesSpecified ?
                         Level.WARNING : Level.FINE;
-                long startTime = LogUtils.getCurrTimeIfNeeded(logger, Level.FINE);
+                long startTime = LogUtils.getCurrTimeIfDebugEnabled(logger);
                 for (NetworkInterface multicastInterface : multicastInterfaces)
                     send(packets, multicastInterface, failureLogLevel);
                 if (logger.isLoggable(Level.FINE))
-                    LogUtils.logDuration(logger, Level.FINE, startTime, Thread.currentThread().getName() + ".send()");
+                    logger.log(Level.FINE, LogUtils.formatDuration(startTime, Thread.currentThread().getName() + ".send()"));
             } else {
                 send(packets, null, Level.WARNING);
             }
@@ -2452,11 +2452,11 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          */
         private void send(DatagramPacket[] packets, NetworkInterface nic, Level failureLogLevel) throws InterruptedIOException {
             if (nic != null) {
-                long startTime = LogUtils.getCurrTimeIfNeeded(logger, Level.FINEST);
+                long startTime = LogUtils.getCurrTimeIfTraceEnabled(logger);
                 try {
                     socket.setNetworkInterface(nic);
                     if (logger.isLoggable(Level.FINEST))
-                        LogUtils.logDuration(logger, Level.FINEST, startTime, "send() - setNetworkInterface() for nic " + nic);
+                        logger.log(Level.FINEST, LogUtils.formatDuration(startTime, "send() - setNetworkInterface() for nic " + nic));
                 } catch (SocketException e) {
                     if (logger.isLoggable(failureLogLevel)) {
                         logThrow(
@@ -2468,7 +2468,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                                 e);
                     }
                     if (logger.isLoggable(Level.FINEST))
-                        LogUtils.logDuration(logger, Level.FINEST, startTime, "send() - setNetworkInterface() failed for nic " + nic);
+                        logger.log(Level.FINEST, LogUtils.formatDuration(startTime, "send() - setNetworkInterface() failed for nic " + nic));
                     return;
                 }
             }

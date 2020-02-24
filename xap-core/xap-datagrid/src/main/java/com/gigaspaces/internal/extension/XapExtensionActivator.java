@@ -46,7 +46,8 @@ public class XapExtensionActivator {
         final Map<URL, Properties> xapProperties = loadManifestsEntryAttributes(classLoader, "xap");
         final Set<String> extensions = loadSet(xapProperties, key, ",");
         activate(classLoader, extensions);
-        LogUtils.logDuration(logger, Level.FINE, startTime, "Finished scanning for extensions in class loader " + toString(classLoader));
+        if (logger.isLoggable(Level.FINE))
+            logger.log(Level.FINE, LogUtils.formatDuration(startTime, "Finished scanning for extensions in class loader " + toString(classLoader)));
     }
 
     private static void activate(ClassLoader classLoader, Set<String> extensions) {

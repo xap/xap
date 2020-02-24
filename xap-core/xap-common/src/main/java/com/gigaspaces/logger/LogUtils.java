@@ -35,13 +35,18 @@ public class LogUtils {
         return sw.toString();
     }
 
-    public static long getCurrTimeIfNeeded(Logger logger, Level level) {
-        return logger.isLoggable(level) ? System.currentTimeMillis() : 0;
+    public static long getCurrTimeIfDebugEnabled(Logger logger) {
+        return logger.isLoggable(Level.FINE) ? System.currentTimeMillis() : 0;
     }
 
-    public static void logDuration(Logger logger, Level level, long startTime, String message) {
+    public static long getCurrTimeIfTraceEnabled(Logger logger) {
+        return logger.isLoggable(Level.FINEST) ? System.currentTimeMillis() : 0;
+    }
+
+
+    public static String formatDuration(long startTime, String message) {
         final long duration = System.currentTimeMillis() - startTime;
-        logger.log(level, message + " [Duration = " + duration + "ms]");
+        return message + " [Duration = " + duration + "ms]";
     }
 
     public static String format(Class<?> sourceClass, String sourceMethod, String format, Object ... params) {
