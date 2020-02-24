@@ -17,6 +17,7 @@
  */
 package net.jini.lookup;
 
+import com.gigaspaces.logger.LogUtils;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.exception.internal.InterruptedSpaceException;
 import com.sun.jini.config.Config;
@@ -671,7 +672,7 @@ public class ServiceDiscoveryManager {
 
         /* When lease renewal fails, we discard the proxy  */
         public void notify(LeaseRenewalEvent e) {
-            fail(e.getException(), proxy, this.getClass().getName(), "notify",
+            fail(e.getException(), proxy, this.getClass(), "notify",
                     "failure occurred while renewing an event lease", false);
         }
     }//end class ServiceDiscoveryManager.LeaseListenerImpl
@@ -764,7 +765,7 @@ public class ServiceDiscoveryManager {
                         cacheTerminated = bCacheTerminated;
                     }//end sync
                     ServiceDiscoveryManager.this.fail
-                            (e, reg.proxy, this.getClass().getName(), "run",
+                            (e, reg.proxy, this.getClass(), "run",
                                     "Exception occurred while attempting to register "
                                             + "with the lookup service event mechanism",
                                     cacheTerminated);
@@ -813,7 +814,7 @@ public class ServiceDiscoveryManager {
                         cacheTerminated = bCacheTerminated;
                     }//end sync
                     ServiceDiscoveryManager.this.fail
-                            (e, proxy, this.getClass().getName(), "run",
+                            (e, proxy, this.getClass(), "run",
                                     "Exception occurred during call to lookup",
                                     cacheTerminated);
                     return;
@@ -3367,7 +3368,7 @@ public class ServiceDiscoveryManager {
      */
     private void fail(Throwable e,
                       ServiceRegistrar proxy,
-                      String sourceClass,
+                      Class<?> sourceClass,
                       String sourceMethod,
                       String msg,
                       boolean cacheTerminated) {
@@ -3380,17 +3381,14 @@ public class ServiceDiscoveryManager {
             }//endif
         }//end sync(this)
         if ((e != null) && (logger.isLoggable(logLevel))) {
-            logger.logp(logLevel, sourceClass, sourceMethod, msg, e);
+            logger.log(logLevel, LogUtils.format(sourceClass, sourceMethod, msg), e);
         }//endif
         try {
             if (discardProxy) discard(proxy);
         } catch (IllegalStateException e1) {
             if (logger.isLoggable(logLevel)) {
-                logger.logp(logLevel,
-                        sourceClass,
-                        sourceMethod,
-                        "failure discarding lookup service proxy, "
-                                + "discovery manager already terminated",
+                logger.log(logLevel, LogUtils.format(sourceClass, sourceMethod,
+                        "failure discarding lookup service proxy, discovery manager already terminated"),
                         e1);
             }//endif
         }

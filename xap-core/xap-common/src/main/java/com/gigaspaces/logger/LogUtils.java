@@ -19,9 +19,7 @@ package com.gigaspaces.logger;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.Method;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 @com.gigaspaces.api.InternalApi
@@ -45,23 +43,26 @@ public class LogUtils {
         logger.log(level, message + " [Duration = " + duration + "ms]");
     }
 
+    public static String format(Class<?> sourceClass, String sourceMethod, String format, Object ... params) {
+        if (format == null || format.isEmpty())
+            return sourceClass.getName() + "#" + sourceMethod;
+        if (params == null || params.length == 0)
+            return sourceClass.getName() + "#" + sourceMethod + ": " + format;
+        else
+            return sourceClass.getName() + "#" + sourceMethod + ": " + java.text.MessageFormat.format(format, params);
+    }
+
     public static void throwing(Logger logger, Class<?> sourceClass, String sourceMethod, Throwable thrown) {
         if (logger.isLoggable(Level.FINE)) {
-            String message = sourceClass.getName() + "#" + sourceMethod;
-            logger.log(Level.FINE, message, thrown);
+            logger.log(Level.FINE, format(sourceClass, sourceMethod, null), thrown);
         }
     }
 
     public static void throwing(Logger logger, Class<?> sourceClass, String sourceMethod, Throwable thrown,
                                 String format, Object ... params) {
         if (logger.isLoggable(Level.FINE)) {
-            String message = sourceClass.getName() + "#" + sourceMethod + ": " + format(format, params);
-            logger.log(Level.FINE, message, thrown);
+            logger.log(Level.FINE, format(sourceClass, sourceMethod, format, params), thrown);
         }
-    }
-
-    private static String format(String format, Object ... params) {
-        return params == null || params.length == 0 ? format : java.text.MessageFormat.format(format, params);
     }
 
     public static void entering(Logger logger, Class<?> sourceClass, String sourceMethod) {

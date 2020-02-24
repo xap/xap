@@ -1210,11 +1210,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
             if (!Modifier.isPublic(cl.getModifiers())) {
                 ClassLoader current = getClassLoader(cl);
                 if (logger.isLoggable(Level.FINEST)) {
-                    logger.logp(Level.FINEST,
-                            PreferredClassProvider.class.getName(),
-                            "loadProxyClass",
-                            "non-public interface \"{0}\" defined by {1}",
-                            new Object[]{interfaces[i], current});
+                    logger.log(Level.FINEST, LogUtils.format(PreferredClassProvider.class, "loadProxyClass",
+                            "non-public interface \"{0}\" defined by {1}", interfaces[i], current));
                 }
                 if (!useNonpublic[0]) {
                     nonpublic = current;

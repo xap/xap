@@ -305,10 +305,8 @@ public final class Security {
                 }
             });
             if (integrityLogger.isLoggable(Level.FINE)) {
-                integrityLogger.logp(Level.FINE, Security.class.getName(),
-                        "verifyCodebaseIntegrity",
-                        "integrity verifiers {0}",
-                        new Object[]{list});
+                integrityLogger.log(Level.FINE, LogUtils.format(Security.class, "verifyCodebaseIntegrity",
+                        "integrity verifiers {0}", list));
             }
             verifiers = (IntegrityVerifier[]) list.toArray(
                     new IntegrityVerifier[list.size()]);
@@ -731,9 +729,8 @@ public final class Security {
                     }
                 });
                 if (trustLogger.isLoggable(Level.FINE)) {
-                    trustLogger.logp(Level.FINE, Security.class.getName(),
-                            "verifyObjectTrust",
-                            "trust verifiers {0}", list);
+                    trustLogger.log(Level.FINE, LogUtils.format(Security.class, "verifyObjectTrust",
+                            "trust verifiers {0}", list));
                 }
                 verifiers = (TrustVerifier[]) list.toArray(
                         new TrustVerifier[list.size()]);
