@@ -19,6 +19,7 @@ package com.gigaspaces.logger;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.StringJoiner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,7 +55,7 @@ public class LogUtils {
 
     public static void throwing(Logger logger, Class<?> sourceClass, String sourceMethod, Throwable thrown) {
         if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, format(sourceClass, sourceMethod, null), thrown);
+            logger.log(Level.FINE, action("throw", sourceClass.getName(), sourceMethod), thrown);
         }
     }
 
@@ -67,41 +68,53 @@ public class LogUtils {
 
     public static void entering(Logger logger, Class<?> sourceClass, String sourceMethod) {
         if (logger.isLoggable(Level.FINER))
-            logger.entering(sourceClass.getName(), sourceMethod);
+            logger.log(Level.FINER, action("enter", sourceClass.getName(), sourceMethod));
     }
 
     public static void entering(Logger logger, Class<?> sourceClass, String sourceMethod, Object arg) {
         if (logger.isLoggable(Level.FINER))
-            logger.entering(sourceClass.getName(), sourceMethod, arg);
+            logger.log(Level.FINER, action("enter", sourceClass.getName(), sourceMethod, arg));
     }
 
     public static void entering(Logger logger, Class<?> sourceClass, String sourceMethod, Object[] args) {
         if (logger.isLoggable(Level.FINER))
-            logger.entering(sourceClass.getName(), sourceMethod, args);
+            logger.log(Level.FINER, action("enter", sourceClass.getName(), sourceMethod, args));
     }
 
     public static void entering(Logger logger, String sourceClass, String sourceMethod, Object[] args) {
         if (logger.isLoggable(Level.FINER))
-            logger.entering(sourceClass, sourceMethod, args);
+            logger.log(Level.FINER, action("enter", sourceClass, sourceMethod, args));
     }
 
     public static void exiting(Logger logger, Class<?> sourceClass, String sourceMethod) {
         if (logger.isLoggable(Level.FINER))
-            logger.exiting(sourceClass.getName(), sourceMethod);
+            logger.log(Level.FINER, action("exit", sourceClass.getName(), sourceMethod));
     }
 
     public static void exiting(Logger logger, Class<?> sourceClass, String sourceMethod, Object arg) {
         if (logger.isLoggable(Level.FINER))
-            logger.exiting(sourceClass.getName(), sourceMethod, arg);
+            logger.log(Level.FINER, action("exit", sourceClass.getName(), sourceMethod, arg));
     }
 
     public static void exiting(Logger logger, String sourceClass, String sourceMethod, Object arg) {
         if (logger.isLoggable(Level.FINER))
-            logger.exiting(sourceClass, sourceMethod, arg);
+            logger.log(Level.FINER, action("exit", sourceClass, sourceMethod, arg));
     }
 
     public static void exiting(Logger logger, Class<?> sourceClass, String sourceMethod, Object[] args) {
         if (logger.isLoggable(Level.FINER))
-            logger.exiting(sourceClass.getName(), sourceMethod, args);
+            logger.log(Level.FINER, action("exit", sourceClass.getName(), sourceMethod, args));
+    }
+
+    private static String action(String action, String sourceClass, String sourceMethod, Object ... params) {
+        if (params == null || params.length == 0)
+            return sourceClass + "#" + sourceMethod + ": " + action;
+        if (params.length == 1)
+            return sourceClass + "#" + sourceMethod + ": " + action + " with (" + params[0] + ")";
+        StringJoiner sj = new StringJoiner(", ", sourceClass + "#" + sourceMethod + ": " + action + " with (", ")");
+        for (Object param : params) {
+            sj.add(String.valueOf(param));
+        }
+        return sj.toString();
     }
 }
