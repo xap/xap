@@ -3,7 +3,6 @@ package com.gigaspaces.internal.oshi;
 import com.gigaspaces.CommonSystemProperties;
 import oshi.SystemInfo;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class OshiChecker {
@@ -13,20 +12,30 @@ public class OshiChecker {
 
     private static SystemInfo initSystemInfo() {
         String enabledProperty = System.getProperty(CommonSystemProperties.OSHI_ENABLED, "");
-        boolean enabled = enabledProperty.isEmpty() || Boolean.parseBoolean(enabledProperty);
+        boolean isImplicit = enabledProperty.isEmpty();
+        boolean enabled = isImplicit || Boolean.parseBoolean(enabledProperty);
         if (!enabled) {
             logger.info("Oshi is disabled");
             return null;
         }
 
-        logger.log(enabledProperty.isEmpty() ? Level.FINE : Level.INFO, "Oshi is enabled");
+        if (isImplicit)
+            logger.fine("Oshi is enabled");
+        else
+            logger.info("Oshi is enabled");
 
         try {
             SystemInfo systemInfo = new SystemInfo();
-            logger.log(enabledProperty.isEmpty() ? Level.FINE : Level.INFO, "Oshi is available");
+            if (isImplicit)
+                logger.fine("Oshi is available");
+            else
+                logger.info("Oshi is available");
             return systemInfo;
         } catch (Throwable t) {
-            logger.log(enabledProperty.isEmpty() ? Level.FINE : Level.WARNING, "Oshi is not available: " + t.toString());
+            if (isImplicit)
+                logger.fine("Oshi is not available: " + t.toString());
+            else
+                logger.warning("Oshi is not available: " + t.toString());
             return null;
         }
     }
