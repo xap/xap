@@ -717,13 +717,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                             (RemoteEventListener) preparer.prepareProxy(listener);
                 } catch (Exception e) {
                     if (logger.isLoggable(Level.WARNING)) {
-                        logThrow(
-                                Level.WARNING,
-                                getClass().getName(),
-                                "prepareListener",
-                                "failed to prepare event listener {0}",
-                                new Object[]{listener},
-                                e);
+                        LogUtils.throwing(LogLevel.WARNING, logger, getClass(), "prepareListener", e,
+                                "failed to prepare event listener {0}", listener);
                     }
                     listener = null;
                 }
@@ -2090,14 +2085,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             } catch (Exception e) {
                 if (!(e instanceof InterruptedIOException) &&
                         logger.isLoggable(Level.FINE)) {
-                    logThrow(Level.FINE,
-                            getClass().getName(),
-                            "run",
-                            "exception decoding multicast request from {0}:{1}",
-                            new Object[]{
-                                    datagram.getAddress(),
-                                    new Integer(datagram.getPort())},
-                            e);
+                    LogUtils.throwing(logger, getClass(), "run", e,
+                            "exception decoding multicast request from {0}:{1}", datagram.getAddress(), datagram.getPort());
                 }
                 return;
             }
@@ -2109,14 +2098,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 } catch (Exception e) {
                     if (!(e instanceof InterruptedIOException) &&
                             logger.isLoggable(Level.FINE)) {
-                        logThrow(Level.FINE,
-                                getClass().getName(),
-                                "run",
-                                "exception decoding multicast request from {0}:{1}",
-                                new Object[]{
-                                        datagram.getAddress(),
-                                        new Integer(datagram.getPort())},
-                                e);
+                        LogUtils.throwing(logger, getClass(), "run", e, "exception decoding multicast request from {0}:{1}",
+                                datagram.getAddress(), datagram.getPort());
                     }
                     return;
                 }
@@ -2182,14 +2165,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                         addr = new InetAddress[]{};
                 } catch (UnknownHostException e) {
                     if (logger.isLoggable(Level.INFO)) {
-                        logThrow(
-                                Level.INFO,
-                                getClass().getName(),
-                                "run",
-                                "failed to resolve host {0};"
-                                        + " connection will still be attempted",
-                                new Object[]{host},
-                                e);
+                        LogUtils.throwing(LogLevel.INFO, logger, getClass(), "run", e,
+                                "failed to resolve host {0}; connection will still be attempted", host);
                     }
                 }
                 long deadline = DiscoveryConstraints.process(
@@ -2215,10 +2192,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                         return;
                     } catch (Exception e) {
                         if (logger.isLoggable(Level.FINE)) {
-                            logThrow(Level.FINE, getClass().getName(),
-                                    "run", "exception responding to {0}:{1}",
-                                    new Object[]{addr[i], new Integer(port)}
-                                    , e);
+                            LogUtils.throwing(logger, getClass(), "run", e, "exception responding to {0}:{1}", addr[i], port);
                         }
                     }
                     timeLeft = deadline - System.currentTimeMillis();
@@ -2230,13 +2204,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 }
             } catch (Exception e) {
                 if (logger.isLoggable(Level.INFO)) {
-                    logThrow(
-                            Level.INFO,
-                            getClass().getName(),
-                            "run",
-                            "failed to respond to {0} on port {1}",
-                            new Object[]{Arrays.asList(addr), new Integer(port)},
-                            e);
+                    LogUtils.throwing(LogLevel.INFO, logger, getClass(), "run", e, "failed to respond to {0} on port {1}", Arrays.asList(addr), port);
                 }
             }
         }
@@ -2292,15 +2260,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 respond(socket);
             } catch (Exception e) {
                 if (logger.isLoggable(Level.FINE)) {
-                    logThrow(Level.FINE,
-                            getClass().getName(),
-                            "run",
-                            "exception handling unicast discovery from {0}:{1}",
-                            new Object[]{
-                                    socket.getInetAddress(),
-                                    new Integer(socket.getPort())}
-                            ,
-                            e);
+                    LogUtils.throwing(logger, getClass(), "run", e,
+                            "exception handling unicast discovery from {0}:{1}", socket.getInetAddress(), socket.getPort());
                 }
             }
         }
@@ -4094,36 +4055,12 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                     }
                 }
                 if (logger.isLoggable(Level.WARNING)) {
-                    logThrow(
-                            Level.WARNING,
-                            RegistrarImpl.class.getName(),
-                            "prepareLocators",
-                            "failed to prepare lookup locator {0}",
-                            new Object[]{locators[i]},
-                            e);
+                    LogUtils.throwing(LogLevel.WARNING, logger, RegistrarImpl.class, "prepareLocators", e,
+                            "failed to prepare lookup locator {0}", locators[i]);
                 }
             }
         }
         return (LookupLocator[]) l.toArray(new LookupLocator[l.size()]);
-    }
-
-    /**
-     * Logs a thrown exception.
-     */
-    private static void logThrow(Level level,
-                                 String className,
-                                 String methodName,
-                                 String message,
-                                 Object[] args,
-                                 Throwable thrown) {
-        java.util.logging.LogRecord lr =
-                new java.util.logging.LogRecord(level, message);
-        lr.setLoggerName(logger.getName());
-        lr.setSourceClassName(className);
-        lr.setSourceMethodName(methodName);
-        lr.setParameters(args);
-        lr.setThrown(thrown);
-        logger.log(lr);
     }
 
     /**

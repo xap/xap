@@ -772,14 +772,7 @@ public class LookupDiscovery implements DiscoveryManagement,
                             }//endif
                             retryNics.add(nics[i]);
                             if (logger.isLoggable(Level.FINE)) {
-                                LogRecord logRec =
-                                        new LogRecord(Level.FINE,
-                                                "network interface "
-                                                        + "is bad or not configured "
-                                                        + "for multicast: {0}");
-                                logRec.setParameters(new Object[]{nics[i]});
-                                logRec.setThrown(e);
-                                logger.log(logRec);
+                                logger.log(Level.FINE, "network interface is bad or not configured for multicast: " + nics[i], e);
                             }//endif
                         }
                     }//end loop
@@ -799,14 +792,7 @@ public class LookupDiscovery implements DiscoveryManagement,
                             }//endif
                             retryNics.add(nics[i]);
                             if (logger.isLoggable(Level.SEVERE)) {
-                                LogRecord logRec =
-                                        new LogRecord(Level.SEVERE,
-                                                "network interface is bad or "
-                                                        + "not configured for "
-                                                        + "multicast: {0}");
-                                logRec.setParameters(new Object[]{nics[i]});
-                                logRec.setThrown(e);
-                                logger.log(logRec);
+                                logger.log(Level.SEVERE, "network interface is bad or not configured for multicast: " + nics[i], e);
                             }//endif
                         }
                     }//end loop
@@ -1928,24 +1914,11 @@ public class LookupDiscovery implements DiscoveryManagement,
                         throw e;//to signal a graceful exit
                     } catch (IOException e) {
                         if (logger.isLoggable(Level.FINE)) {
-                            LogRecord logRec =
-                                    new LogRecord(Level.FINE,
-                                            "network interface is "
-                                                    + "bad or not configured for "
-                                                    + "multicast: {0}");
-                            logRec.setParameters(new Object[]{nics[i]});
-                            logRec.setThrown(e);
-                            logger.log(logRec);
+                            logger.log(Level.FINE, "network interface is bad or not configured for multicast: " + nics[i], e);
                         }//endif
                     } catch (Exception e) {
                         if (logger.isLoggable(Level.FINE)) {
-                            LogRecord logRec =
-                                    new LogRecord(Level.FINE, "exception while "
-                                            + "sending packet through network "
-                                            + "interface: {0}");
-                            logRec.setParameters(new Object[]{nics[i]});
-                            logRec.setThrown(e);
-                            logger.log(logRec);
+                            logger.log(Level.FINE, "exception while sending packet through network interface: " + nics[i], e);
                         }//endif
                     }
                 }//end loop
@@ -1963,23 +1936,11 @@ public class LookupDiscovery implements DiscoveryManagement,
                         throw e;//to signal a graceful exit
                     } catch (IOException e) {
                         if (logger.isLoggable(Level.SEVERE)) {
-                            LogRecord logRec =
-                                    new LogRecord(Level.SEVERE, "network interface "
-                                            + "is bad or not configured for "
-                                            + "multicast: {0}");
-                            logRec.setParameters(new Object[]{nics[i]});
-                            logRec.setThrown(e);
-                            logger.log(logRec);
+                            logger.log(Level.SEVERE, "network interface is bad or not configured for multicast: " + nics[i], e);
                         }//endif
                     } catch (Exception e) {
                         if (logger.isLoggable(Level.SEVERE)) {
-                            LogRecord logRec =
-                                    new LogRecord(Level.SEVERE, "exception while "
-                                            + "sending packet through network "
-                                            + "interface: {0}");
-                            logRec.setParameters(new Object[]{nics[i]});
-                            logRec.setThrown(e);
-                            logger.log(logRec);
+                            logger.log(Level.SEVERE, "exception while sending packet through network interface: " + nics[i], e);
                         }//endif
                     }
                 }//end loop

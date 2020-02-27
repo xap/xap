@@ -18,6 +18,7 @@
 
 package net.jini.lease;
 
+import com.gigaspaces.logger.LogUtils;
 import com.gigaspaces.time.SystemTime;
 import com.sun.jini.config.Config;
 import com.sun.jini.constants.ThrowableConstants;
@@ -42,7 +43,6 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**
@@ -1240,29 +1240,6 @@ public class LeaseRenewalManager {
     }
 
     /**
-     * Logs a throw. Use this method to log a throw when the log message needs parameters.
-     *
-     * @param level        the log level
-     * @param sourceMethod name of the method where throw occurred
-     * @param msg          log message
-     * @param params       log message parameters
-     * @param e            exception thrown
-     */
-    private static void logThrow(Level level,
-                                 String sourceMethod,
-                                 String msg,
-                                 Object[] params,
-                                 Throwable e) {
-        LogRecord r = new LogRecord(level, msg);
-        r.setLoggerName(logger.getName());
-        r.setSourceClassName(LeaseRenewalManager.class.getName());
-        r.setSourceMethodName(sourceMethod);
-        r.setParameters(params);
-        r.setThrown(e);
-        logger.log(r);
-    }
-
-    /**
      * Renew all of the leases (if multiple, all can be batched)
      */
     private void renewAll(List<Entry> bList, long now) {
@@ -1330,16 +1307,11 @@ public class LeaseRenewalManager {
                     e.delayRenew();
                     leases.put(e, e);
                     if (logger.isLoggable(Level.FINE)) {
-                        logThrow(
-                                Level.FINE, "renewAll",
-                                "Indefinite exception while renewing lease {0}",
-                                new Object[]{e.lease}, e.ex);
+                        LogUtils.throwing(logger, LeaseRenewalManager.class, "renewAll", e.ex, "Indefinite exception while renewing lease {0}", e.lease);
                     }
                 } else {
                     if (logger.isLoggable(Level.FINE)) {
-                        logThrow(Level.FINE, "renewAll",
-                                "Lease renewal failed for lease {0}",
-                                new Object[]{e.lease}, e.ex);
+                        LogUtils.throwing(logger, LeaseRenewalManager.class, "renewAll", e.ex, "Lease renewal failed for lease {0}", e.lease);
                     }
                     if (e.listener != null) {
 			/*
