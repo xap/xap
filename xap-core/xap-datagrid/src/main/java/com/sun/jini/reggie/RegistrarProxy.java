@@ -17,6 +17,7 @@
  */
 package com.sun.jini.reggie;
 
+import com.gigaspaces.logger.LogLevel;
 import com.sun.jini.proxy.MarshalledWrapper;
 
 import net.jini.admin.Administrable;
@@ -107,8 +108,7 @@ class RegistrarProxy
             throws RemoteException {
         Item item = new Item(srvItem);
         if (item.serviceID != null) {
-            Util.checkRegistrantServiceID(
-                    item.serviceID, logger, Level.WARNING);
+            Util.checkRegistrantServiceID(item.serviceID, logger, LogLevel.WARNING);
         }
         return getServer().register(item, leaseDuration);
     }

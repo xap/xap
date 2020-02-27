@@ -4849,7 +4849,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             if (reg != null)
                 deleteService(reg, now);
         }
-        Util.checkRegistrantServiceID(nitem.serviceID, logger, Level.FINE);
+        Util.checkRegistrantServiceID(nitem.serviceID, logger, LogLevel.DEBUG);
         SvcReg reg = new SvcReg(nitem, newLeaseID(), now + leaseDuration);
         addService(reg);
         generateEvents(null, nitem, now);

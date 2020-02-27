@@ -65,7 +65,7 @@ public class BlobstorePrimaryBackupSpaceReplicationEntryEventHandler
     public void afterConsumption(IReplicationInContext context, boolean successful, long lastProcessedKey) {
         if (_engine.getReplicationNode().getBlobStoreReplicationBulkConsumeHelper() != null) {
             _engine.getReplicationNode().getBlobStoreReplicationBulkConsumeHelper().flushBulk(lastProcessedKey);
-            logFlushAfterConsumption(context, successful, lastProcessedKey, Level.FINE);
+            logFlushAfterConsumption(context, successful, lastProcessedKey);
         }
     }
 
@@ -84,16 +84,15 @@ public class BlobstorePrimaryBackupSpaceReplicationEntryEventHandler
         ReplicationBlobstoreBulkContext replicationBlobstoreBulkContext = context.getReplicationBlobstoreBulkContext();
         BlobStoreReplicationBulkConsumeHelper blobStoreReplicationBulkConsumeHelper = _engine.getReplicationNode().getBlobStoreReplicationBulkConsumeHelper();
         if (replicationBlobstoreBulkContext != null && blobStoreReplicationBulkConsumeHelper != null) {
-            Level logLevel = Level.FINEST;
             if (replicationBlobstoreBulkContext.isPartOfBlobstoreBulk()) {
                 // store blobstore bulk info if not exists to be used for bulking
                 if (!replicationBlobstoreBulkContext.shouldFlush()) {
-                    logProcessingBulk(context, logLevel);
+                    logProcessingBulk(context);
                     blobStoreReplicationBulkConsumeHelper.prepareForBulking(take);
                 }
                 // if a new bulk id arrived
                 else {
-                    logNewBulkArrived(context, logLevel);
+                    logNewBulkArrived(context);
                     // flush the previous bulk if exists
                     blobStoreReplicationBulkConsumeHelper.flushBulk(context.getLastProcessedKey());
                     // prepare new bulk info because a new bulk id arrived
@@ -102,45 +101,45 @@ public class BlobstorePrimaryBackupSpaceReplicationEntryEventHandler
             }
             // non bulk entry arrived, flush the previous bulk if exists
             else {
-                logNonBulkEntryArrived(context, logLevel);
+                logNonBulkEntryArrived(context);
                 blobStoreReplicationBulkConsumeHelper.flushBulk(context.getLastProcessedKey());
             }
         }
     }
 
-    private void logNewBulkArrived(IReplicationInContext context, Level level) {
+    private void logNewBulkArrived(IReplicationInContext context) {
         Logger contextLogger = context.getContextLogger();
         int bulkId = context.getReplicationBlobstoreBulkContext().getBulkId();
-        if (contextLogger != null && contextLogger.isLoggable(level)) {
-            contextLogger.log(level, LOG_PREFIX + " an entry which is a part of a new blobstore bulk with id [" + bulkId + "] arrived," +
+        if (contextLogger != null && contextLogger.isLoggable(Level.FINEST)) {
+            contextLogger.log(Level.FINEST, LOG_PREFIX + " an entry which is a part of a new blobstore bulk with id [" + bulkId + "] arrived," +
                     " will flush the previous bulk, packetkey=" + context.getLastProcessedKey());
         }
     }
 
-    private void logNonBulkEntryArrived(IReplicationInContext context, Level level) {
+    private void logNonBulkEntryArrived(IReplicationInContext context) {
         Logger contextLogger = context.getContextLogger();
-        if (contextLogger != null && contextLogger.isLoggable(level)) {
-            contextLogger.log(level, LOG_PREFIX + " an entry which is not part of a blobstore bulk arrived, " +
+        if (contextLogger != null && contextLogger.isLoggable(Level.FINEST)) {
+            contextLogger.log(Level.FINEST, LOG_PREFIX + " an entry which is not part of a blobstore bulk arrived, " +
                     "will flush the previous bulk, packetKey=" + context.getLastProcessedKey());
         }
     }
 
-    private void logProcessingBulk(IReplicationInContext context, Level level) {
+    private void logProcessingBulk(IReplicationInContext context) {
         Logger contextLogger = context.getContextLogger();
         int bulkId = context.getReplicationBlobstoreBulkContext().getBulkId();
-        if (contextLogger != null && contextLogger.isLoggable(level)) {
-            contextLogger.log(level, LOG_PREFIX + " processing replication blobstore bulk with id [" + bulkId + "], packetKey=" + context.getLastProcessedKey());
+        if (contextLogger != null && contextLogger.isLoggable(Level.FINEST)) {
+            contextLogger.log(Level.FINEST, LOG_PREFIX + " processing replication blobstore bulk with id [" + bulkId + "], packetKey=" + context.getLastProcessedKey());
         }
     }
 
-    private void logFlushAfterConsumption(IReplicationInContext context, boolean successful, long lastProcessedKey, Level level) {
-        if (context.getContextLogger() != null && context.getContextLogger().isLoggable(level)) {
+    private void logFlushAfterConsumption(IReplicationInContext context, boolean successful, long lastProcessedKey) {
+        if (context.getContextLogger() != null && context.getContextLogger().isLoggable(Level.FINE)) {
             int bulkId = 0;
             if (context.getReplicationBlobstoreBulkContext() != null) {
                 bulkId = context.getReplicationBlobstoreBulkContext().getBulkId();
             }
             String bulkIdStr = Integer.toString(bulkId).equals("0") ? "none" : Integer.toString(bulkId);
-            context.getContextLogger().log(level, LOG_PREFIX + " flushed the bulk [" + bulkIdStr + "] after consumption," +
+            context.getContextLogger().log(Level.FINE, LOG_PREFIX + " flushed the bulk [" + bulkIdStr + "] after consumption," +
                     " successful? [" + successful + "], last flushed key=" + lastProcessedKey + ", thread=" + Thread.currentThread().getName());
         }
     }

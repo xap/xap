@@ -32,6 +32,7 @@ import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.server.storage.NotifyTemplateHolder;
+import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.lrmi.nio.IResponseContext;
 import com.gigaspaces.lrmi.nio.ReplyPacket;
 import com.gigaspaces.lrmi.nio.ResponseContext;
@@ -825,16 +826,16 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
                 /* do nothing, because performTemplateOnEntrySA notified Receiver */
             }
         } catch (Exception ex) {
-            Level level = Level.SEVERE;
+            LogLevel level = LogLevel.SEVERE;
             if (ex instanceof ProtectiveModeException)
-                level = Level.FINER;
+                level = LogLevel.DEBUG;
             else if (ex instanceof ChangeInternalException) {
                 ex = ((ChangeInternalException) ex).getInternalException();
-                level = Level.FINER;
+                level = LogLevel.DEBUG;
             }
             // Log internal error...
-            if (_logger.isLoggable(level)) {
-                _logger.log(level, "Error handling read/take/change.", ex);
+            if (level.isEnabled(_logger)) {
+                level.log(_logger, "Error handling read/take/change.", ex);
             }
 
             if (templateLock == null)
@@ -1046,16 +1047,16 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
   			/* do nothing, because performTemplateOnEntrySA notified Receiver */
             }
         } catch (Exception ex) {
-            Level level = Level.SEVERE;
+            LogLevel level = LogLevel.SEVERE;
             if (ex instanceof ProtectiveModeException)
-                level = Level.FINER;
+                level = LogLevel.DEBUG;
             else if (ex instanceof ChangeInternalException) {
                 ex = ((ChangeInternalException) ex).getInternalException();
-                level = Level.FINER;
+                level = LogLevel.DEBUG;
             }
             // Log internal error...
-            if (_logger.isLoggable(level)) {
-                _logger.log(level, "Error handling read/take/change.", ex);
+            if (level.isEnabled(_logger)) {
+                level.log(_logger, "Error handling read/take/change.", ex);
             }
 
             if (templateLock == null)
@@ -1425,17 +1426,17 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
 
 
     private void after_xtn_activity_error(Context context, ITemplateHolder template, Exception ex, boolean afterCommit) {
-        Level level = Level.SEVERE;
+        LogLevel level = LogLevel.SEVERE;
         if (ex instanceof ProtectiveModeException)
-            level = Level.FINER;
+            level = LogLevel.DEBUG;
         else if (ex instanceof ChangeInternalException) {
             ex = ((ChangeInternalException) ex).getInternalException();
-            level = Level.FINER;
+            level = LogLevel.DEBUG;
         }
         String op = afterCommit ? "commit" : "rollback";
         // Log internal error...
-        if (_logger.isLoggable(level)) {
-            _logger.log(level, "Error handling post " + op, ex);
+        if (level.isEnabled(_logger)) {
+            level.log(_logger, "Error handling post " + op, ex);
         }
 
         Object templateLock = getTemplateLockObject(template);
@@ -2320,18 +2321,18 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
                 }
             }
         } catch (Exception ex) {
-            Level level = Level.SEVERE;
+            LogLevel level = LogLevel.SEVERE;
             if (ex instanceof ProtectiveModeException)
-                level = Level.FINER;
+                level = LogLevel.DEBUG;
             else if (ex instanceof ChangeInternalException) {
                 ex = ((ChangeInternalException) ex).getInternalException();
-                level = Level.FINER;
+                level = LogLevel.DEBUG;
             } else if (ex instanceof BatchQueryException) {
-                level = Level.FINEST;
+                level = LogLevel.TRACE;
             }
             // Log internal error...
-            if (_logger.isLoggable(level)) {
-                _logger.log(level, "Error handling read/take/change. multiple", ex);
+            if (level.isEnabled(_logger)) {
+                level.log(_logger, "Error handling read/take/change. multiple", ex);
             }
 
             if (templateLock == null)
@@ -2577,16 +2578,16 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
     			/* do nothing, because performTemplateOnEntrySA notified Receiver */
             }
         } catch (Exception ex) {
-            Level level = Level.SEVERE;
+            LogLevel level = LogLevel.SEVERE;
             if (ex instanceof ProtectiveModeException)
-                level = Level.FINER;
+                level = LogLevel.DEBUG;
             else if (ex instanceof ChangeInternalException) {
                 ex = ((ChangeInternalException) ex).getInternalException();
-                level = Level.FINER;
+                level = LogLevel.DEBUG;
             }
             // Log internal error...
-            if (_logger.isLoggable(level)) {
-                _logger.log(level, "Error handling read/take/change.", ex);
+            if (level.isEnabled(_logger)) {
+                level.log(_logger, "Error handling read/take/change.", ex);
             }
 
             if (templateLock == null)

@@ -17,6 +17,7 @@
  */
 package net.jini.lookup;
 
+import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.time.SystemTime;
 import com.sun.jini.constants.ThrowableConstants;
 import com.sun.jini.lookup.entry.LookupAttributes;
@@ -570,7 +571,7 @@ public class JoinManager {
                 proxyReg.fail(e);
                 return true;//don't try again
             }//endif
-            log(Level.FINER, "JoinManager - failure, will retry later", e);
+            log(LogLevel.DEBUG, "JoinManager - failure, will retry later", e);
             return false;//try this task again later
         }//end stopTrying
     }//end class ProxyRegTask
@@ -643,9 +644,9 @@ public class JoinManager {
          */
         @Override
         protected void internalRun() throws Exception {
-            log(Level.FINEST, "JoinManager - RegisterTask started");
+            log("JoinManager - RegisterTask started");
             proxyReg.register(regAttrs);
-            log(Level.FINEST, "JoinManager - RegisterTask completed");
+            log("JoinManager - RegisterTask completed");
         }//end run
 
     }//end class RegisterTask
@@ -686,13 +687,13 @@ public class JoinManager {
          */
         @Override
         protected void internalRun() throws Exception {
-            log(Level.FINEST, "JoinManager - LeaseExpireNotifyTask started");
+            log("JoinManager - LeaseExpireNotifyTask started");
             boolean tryIt = false;
             synchronized (joinSet) {
                 tryIt = joinSet.contains(proxyReg);
             }//end sync(joinSet)
             if (tryIt) proxyReg.register(regAttrs);
-            log(Level.FINEST, "JoinManager - LeaseExpireNotifyTask completed");
+            log("JoinManager - LeaseExpireNotifyTask completed");
         }//end run
 
     }//end class LeaseExpireNotifyTask
@@ -745,7 +746,7 @@ public class JoinManager {
          */
         @Override
         protected void internalRun() {
-            log(Level.FINEST, "JoinManager --> DiscardProxyTask started");
+            log("JoinManager --> DiscardProxyTask started");
             if (proxyReg != null) {
                 try {
                     proxyReg.registeredLatch.await(10, TimeUnit.SECONDS);
@@ -758,7 +759,7 @@ public class JoinManager {
                     } catch (Exception e) { /*ignore*/ }
                 }
             }//endif
-            log(Level.FINEST, "JoinManager - DiscardProxyTask completed");
+            log("JoinManager - DiscardProxyTask completed");
         }//end run
 
     }//end class DiscardProxyTask
@@ -796,10 +797,10 @@ public class JoinManager {
          * method is typically overridden by sub-classes of this class.
          */
         protected void doAttributes(ProxyReg proxyReg) throws Exception {
-            log(Level.FINEST, "JoinManager - AddAttributesTask started");
+            log("JoinManager - AddAttributesTask started");
             try {
                 if (logger.isLoggable(Level.FINEST)) {
-                    log(Level.FINEST, "add attributes [" + Arrays.toString(attrSets) + "] to lus-id [" + proxyReg.proxy.getServiceID() + "]");
+                    log("add attributes [" + Arrays.toString(attrSets) + "] to lus-id [" + proxyReg.proxy.getServiceID() + "]");
                 }
                 proxyReg.addAttributes(attrSets);
             } finally {
@@ -807,7 +808,7 @@ public class JoinManager {
                     latch.countDown();
                 }
             }
-            log(Level.FINEST, "JoinManager - AddAttributesTask completed");
+            log("JoinManager - AddAttributesTask completed");
         }//end AddAttributesTask.doAttributes
 
         /**
@@ -846,7 +847,7 @@ public class JoinManager {
          */
         @Override
         protected void doAttributes(ProxyReg proxyReg) throws Exception {
-            log(Level.FINEST, "JoinManager - SetAttributesTask started");
+            log("JoinManager - SetAttributesTask started");
             try {
                 proxyReg.setAttributes(attrSets);
             } finally {
@@ -854,7 +855,7 @@ public class JoinManager {
                     latch.countDown();
                 }
             }
-            log(Level.FINEST, "JoinManager - SetAttributesTask completed");
+            log("JoinManager - SetAttributesTask completed");
         }//end SetAttributesTask.doAttributes
 
     }//end class SetAttributesTask
@@ -892,7 +893,7 @@ public class JoinManager {
          */
         @Override
         protected void doAttributes(ProxyReg proxyReg) throws Exception {
-            log(Level.FINEST, "JoinManager - ModifyAttributesTask started");
+            log("JoinManager - ModifyAttributesTask started");
             try {
                 proxyReg.modifyAttributes(attrSetTemplates, attrSets);
             } finally {
@@ -900,7 +901,7 @@ public class JoinManager {
                     latch.countDown();
                 }
             }
-            log(Level.FINEST, "JoinManager - ModifyAttributesTask completed");
+            log("JoinManager - ModifyAttributesTask completed");
         }//end ModifyAttributesTask.doAttributes
 
     }//end class ModifyAttributesTask
@@ -1102,23 +1103,18 @@ public class JoinManager {
                     tmpSrvcRegistration =
                             (ServiceRegistration) registrationPreparer.prepareProxy
                                     (tmpSrvcRegistration);
-                    log(Level.FINEST, "JoinManager - ServiceRegistration proxy prepared");
+                    log("JoinManager - ServiceRegistration proxy prepared");
                 } catch (Exception e) {
-                    log(Level.WARNING,
-                            "failure during preparation of "
-                                    + "ServiceRegistration proxy",
-                            e);
+                    log(LogLevel.WARNING, "failure during preparation of ServiceRegistration proxy", e);
                     throw e; //rethrow the exception since proxy may be unusable
                 }
 				/* Retrieve and prepare the proxy to the service lease */
                 try {
                     serviceLease =
                             (Lease) serviceLeasePreparer.prepareProxy(tmpSrvcRegistration.getLease());
-                    log(Level.FINEST, "JoinManager - service lease proxy prepared");
+                    log("JoinManager - service lease proxy prepared");
                 } catch (Exception e) {
-                    log(Level.WARNING,
-                            "failure during preparation of service lease proxy",
-                            e);
+                    log(LogLevel.WARNING, "failure during preparation of service lease proxy", e);
                     throw e; //rethrow the exception since proxy may be unusable
                 }
                 leaseRenewalMgr.renewUntil(serviceLease, Lease.FOREVER,
@@ -1202,14 +1198,11 @@ public class JoinManager {
                     return;
                 }
                 // move this from INFO to FINE since this happens also on graceful shutdown of reggie
-                log(Level.FINE, "Discarding failed LUS [" + proxy + "]", e);
+                log(LogLevel.DEBUG, "Discarding failed LUS [" + proxy + "]", e);
                 try {
                     discMgr.discard(proxy);
                 } catch (IllegalStateException e1) {
-                    log(Level.FINEST,
-                            "JoinManager - cannot discard lookup, "
-                                    + "discovery manager already terminated",
-                            e1);
+                    log(LogLevel.TRACE, "JoinManager - cannot discard lookup, discovery manager already terminated", e1);
                 }
             }//end sync(this)
         }//end ProxyReg.fail
@@ -1250,14 +1243,11 @@ public class JoinManager {
                         proxys[i]
                                 = (ServiceRegistrar) registrarPreparer.prepareProxy
                                 (proxys[i]);
-                        log(Level.FINEST, "JoinManager - discovered "
+                        log("JoinManager - discovered "
                                         + "lookup service proxy prepared: {0}",
                                 proxys[i]);
                     } catch (Exception e1) {
-                        log(Level.INFO,
-                                "failure preparing discovered "
-                                        + "ServiceRegistrar proxy",
-                                e1);
+                        log(LogLevel.INFO, "failure preparing discovered ServiceRegistrar proxy", e1);
                         discMgr.discard(proxys[i]);
                         continue;
                     }
@@ -1901,7 +1891,7 @@ public class JoinManager {
                 latch = latchFactory.create(joinSet.size());
             }
             if (logger.isLoggable(Level.FINEST)) {
-                log(Level.FINEST, "add attributes to [" + joinSet.size() + "] lookup services");
+                log("add attributes to [" + joinSet.size() + "] lookup services");
             }
             for (int i = 0; i < joinSet.size(); i++) {
                 ProxyReg proxyReg = joinSet.get(i);
@@ -2143,7 +2133,7 @@ public class JoinManager {
             try {
                 leaseRenewalMgr.cancel(proxy.serviceLease);
             } catch (Exception e) {
-                log(Level.FINE, "Failed to cancel lease", e);
+                log(LogLevel.DEBUG, "Failed to cancel lease", e);
             } finally {
                 proxy.serviceLease = null;
             }
@@ -2443,21 +2433,21 @@ public class JoinManager {
     }//end replaceRegistrationDo
 
     // log methods used to prepend the initial service id (if exists) to each log message
-    private void log(Level level, String message) {
-        if (logger.isLoggable(level)) {
-            logger.log(level, messageWithID(message));
+    private void log(String message) {
+        if (logger.isLoggable(Level.FINEST)) {
+            logger.log(Level.FINEST, messageWithID(message));
         }
     }
 
-    private void log(Level level, String message, Throwable t) {
-        if (logger.isLoggable(level)) {
-            logger.log(level, messageWithID(message), t);
+    private void log(LogLevel level, String message, Throwable t) {
+        if (level.isEnabled(logger)) {
+            level.log(logger, messageWithID(message), t);
         }
     }
 
-    private void log(Level level, String message, Object param) {
-        if (logger.isLoggable(level)) {
-            logger.log(level, messageWithID(message), param);
+    private void log(String message, Object param) {
+        if (logger.isLoggable(Level.FINEST)) {
+            logger.log(Level.FINEST, messageWithID(message), param);
         }
     }
 

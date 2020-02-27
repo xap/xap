@@ -5064,7 +5064,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             if (reg != null)
                 deleteService(null, reg, now);
         }
-        Util.checkRegistrantServiceID(nitem.serviceID, logger, Level.FINE);
+        Util.checkRegistrantServiceID(nitem.serviceID, logger, LogLevel.DEBUG);
         SvcReg reg = new SvcReg(nitem, newLeaseID(), now, now + leaseDuration);
         addService(reg);
         generateEvents(null, nitem, now);

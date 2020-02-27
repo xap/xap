@@ -438,10 +438,8 @@ public class GlobalOrderTargetProcessLog
 
         rethrowAsClosedIfNeeded(error);
 
-        Level level = getLogLevel(error);
-
-        if (_specificLogger.isLoggable(level))
-            _specificLogger.log(level, "error while processing incoming replication", error);
+        if (_specificLogger.isLoggable(Level.FINER))
+            _specificLogger.log(Level.FINER, "error while processing incoming replication", error);
 
         GlobalOrderProcessResult result = new GlobalOrderProcessResult(error,
                 calcLastProcessedkey());

@@ -62,7 +62,7 @@ public class BlobstoreReplicationPacketDataConsumer extends ReplicationPacketDat
     }
 
     private void handleBulkEntryArrived(IReplicationInContext context, AbstractReplicationPacketSingleEntryData singleEntryData) {
-        logBulkEntryArrived(context, singleEntryData, Level.FINEST);
+        logBulkEntryArrived(context, singleEntryData);
         if (!initReplicationBulkContextIfNeeded(context, singleEntryData.getBlobstoreBulkId())) {
             // continue processing the previous bulk or a new bulk arrived
             context.getReplicationBlobstoreBulkContext().setBulkReplicationInfo(singleEntryData.getBlobstoreBulkId());
@@ -71,7 +71,7 @@ public class BlobstoreReplicationPacketDataConsumer extends ReplicationPacketDat
 
     private void handleNonBulkEntryArrived(IReplicationInContext context, IExecutableReplicationPacketData singleEntryData) {
         // previous operation was part of a bulk, flush it and mark it to be cleared later
-        logNonBulkEntryArrived(context, singleEntryData, Level.FINEST);
+        logNonBulkEntryArrived(context, singleEntryData);
         initReplicationBulkContextIfNeeded(context, 0);
         context.getReplicationBlobstoreBulkContext().nonBulkArrived();
     }
@@ -85,36 +85,36 @@ public class BlobstoreReplicationPacketDataConsumer extends ReplicationPacketDat
         return false;
     }
 
-    private void logNonBulkEntryArrived(IReplicationInContext context, IExecutableReplicationPacketData singleEntryData, Level level) {
+    private void logNonBulkEntryArrived(IReplicationInContext context, IExecutableReplicationPacketData singleEntryData) {
         Logger contextLogger = context.getContextLogger();
         ReplicationBlobstoreBulkContext replicationBlobstoreBulkContext = context.getReplicationBlobstoreBulkContext();
-        if (contextLogger != null && contextLogger.isLoggable(level)) {
+        if (contextLogger != null && contextLogger.isLoggable(Level.FINEST)) {
             String uid = "multiUid";
             if (singleEntryData.isSingleEntryData()) {
                 uid = singleEntryData.getSingleEntryData().getUid();
             }
             if (replicationBlobstoreBulkContext != null) {
-                contextLogger.log(level, LOG_PREFIX + " handling incoming non blobstore bulk entry with uid [" + uid + "]," +
+                contextLogger.log(Level.FINEST, LOG_PREFIX + " handling incoming non blobstore bulk entry with uid [" + uid + "]," +
                         " will ask to flush the previous bulk with id [" + replicationBlobstoreBulkContext.getBulkId() + "], " +
                         "thread=" + Thread.currentThread().getName() + ", packetKey=" + context.getLastProcessedKey());
             } else {
-                contextLogger.log(level, LOG_PREFIX + " handling incoming non blobstore bulk entry with uid [" + uid + "]," +
+                contextLogger.log(Level.FINEST, LOG_PREFIX + " handling incoming non blobstore bulk entry with uid [" + uid + "]," +
                         " the previous entry was not a part of a blobstore bulk, thread=" + Thread.currentThread().getName()
                         + ", packetKey=" + context.getLastProcessedKey());
             }
         }
     }
 
-    private void logBulkEntryArrived(IReplicationInContext context, AbstractReplicationPacketSingleEntryData singleEntryData, Level level) {
+    private void logBulkEntryArrived(IReplicationInContext context, AbstractReplicationPacketSingleEntryData singleEntryData) {
         Logger contextLogger = context.getContextLogger();
         ReplicationBlobstoreBulkContext bulkContext = context.getReplicationBlobstoreBulkContext();
-        if (contextLogger != null && contextLogger.isLoggable(level)) {
+        if (contextLogger != null && contextLogger.isLoggable(Level.FINEST)) {
             if (bulkContext == null) {
-                contextLogger.log(level, LOG_PREFIX + " handling first incoming blobstore bulk with id [" + singleEntryData.getBlobstoreBulkId() + "]" +
+                contextLogger.log(Level.FINEST, LOG_PREFIX + " handling first incoming blobstore bulk with id [" + singleEntryData.getBlobstoreBulkId() + "]" +
                         ", entry uid=" + singleEntryData.getUid() + ", operation type=" + singleEntryData.getOperationType() +
                         ", thread=" + Thread.currentThread().getName() + ", packetKey=" + context.getLastProcessedKey());
             } else {
-                contextLogger.log(level, LOG_PREFIX + " handling incoming ongoing blobstore bulk with id [" + singleEntryData.getBlobstoreBulkId() + "]" +
+                contextLogger.log(Level.FINEST, LOG_PREFIX + " handling incoming ongoing blobstore bulk with id [" + singleEntryData.getBlobstoreBulkId() + "]" +
                         ", entry uid=" + singleEntryData.getUid() + ", operation type=" + singleEntryData.getOperationType() +
                         ", thread=" + Thread.currentThread().getName() + ", packetKey=" + context.getLastProcessedKey());
             }

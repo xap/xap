@@ -17,10 +17,10 @@
  */
 package com.sun.jini.reggie;
 
+import com.gigaspaces.logger.LogLevel;
 import net.jini.core.lookup.ServiceID;
 
 import java.lang.reflect.Method;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -46,21 +46,15 @@ class Util {
      * specification, logging a message to the provided logger at the specified logging level if it
      * doesn't.
      */
-    static void checkRegistrantServiceID(ServiceID serviceID,
-                                         Logger logger,
-                                         Level level) {
-        if (logger.isLoggable(level)) {
-            int variant =
-                    (int) (serviceID.getLeastSignificantBits() >> 62) & 0x3;
+    static void checkRegistrantServiceID(ServiceID serviceID, Logger logger, LogLevel level) {
+        if (level.isEnabled(logger)) {
+            int variant = (int) (serviceID.getLeastSignificantBits() >> 62) & 0x3;
             if (variant != 2) {
-                logger.log(level, "{0} has invalid variant {1}",
-                        new Object[]{serviceID, new Integer(variant)});
+                level.log(logger, "{0} has invalid variant {1}", serviceID, variant);
             }
-            int version =
-                    (int) (serviceID.getMostSignificantBits() >> 12) & 0xF;
+            int version = (int) (serviceID.getMostSignificantBits() >> 12) & 0xF;
             if (!(version == 1 || version == 4)) {
-                logger.log(level, "{0} has invalid version {1}",
-                        new Object[]{serviceID, new Integer(version)});
+                level.log(logger, "{0} has invalid version {1}", serviceID, version);
             }
         }
     }

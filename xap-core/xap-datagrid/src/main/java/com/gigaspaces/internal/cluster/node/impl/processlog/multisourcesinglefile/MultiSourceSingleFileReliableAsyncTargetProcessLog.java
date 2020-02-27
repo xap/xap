@@ -274,10 +274,8 @@ public class MultiSourceSingleFileReliableAsyncTargetProcessLog extends Abstract
             } catch (ClosedResourceException e) {
                 throw e;
             } catch (Throwable t) {
-                Level level = getLogLevel(t);
-
-                if (_specificLogger.isLoggable(level))
-                    _specificLogger.log(level, "error while processing incoming replication", t);
+                if (_specificLogger.isLoggable(Level.FINER))
+                    _specificLogger.log(Level.FINER, "error while processing incoming replication", t);
 
                 clearStateAfterException();
 
@@ -868,10 +866,8 @@ public class MultiSourceSingleFileReliableAsyncTargetProcessLog extends Abstract
             } catch (ClosedResourceException e) {
                 throw e;
             } catch (Throwable t) {
-                Level level = getLogLevel(t);
-
-                if (_specificLogger.isLoggable(level))
-                    _specificLogger.log(level, "error while processing incoming idle state data replication", t);
+                if (_specificLogger.isLoggable(Level.FINER))
+                    _specificLogger.log(Level.FINER, "error while processing incoming idle state data replication", t);
 
                 clearStateAfterException();
 

@@ -121,10 +121,8 @@ public class GlobalOrderBatchConsumeTargetProcessLog
             } catch (ClosedResourceException e) {
                 throw e;
             } catch (Throwable t) {
-                Level level = getLogLevel(t);
-
-                if (_specificLogger.isLoggable(level))
-                    _specificLogger.log(level, "error while processing incoming replication", t);
+                if (_specificLogger.isLoggable(Level.FINER))
+                    _specificLogger.log(Level.FINER, "error while processing incoming replication", t);
 
                 // Exception thrown from exception handler meaning it can not
                 // handle this exception

@@ -99,12 +99,6 @@ public abstract class AbstractSingleFileTargetProcessLog {
         return dumpState();
     }
 
-    protected Level getLogLevel(Throwable error) {
-        if (error instanceof SpaceUnavailableException)
-            return Level.FINER;
-        return Level.FINER;
-    }
-
     public abstract String dumpState();
 
     public static void throwIfRepetitiveError(IDataConsumeResult prevResult,
