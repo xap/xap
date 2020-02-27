@@ -19,6 +19,7 @@ package com.gigaspaces.metrics.hsqldb;
 import com.gigaspaces.metrics.MetricRegistrySnapshot;
 import com.gigaspaces.metrics.MetricReporter;
 import com.gigaspaces.metrics.MetricTagsSnapshot;
+import com.gigaspaces.metrics.hsqldb.dynamicTables.DataTypeReadCountMetrics;
 import com.j_spaces.kernel.SystemProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,10 +72,20 @@ public class HsqlDbReporter extends MetricReporter {
 
     @Override
     protected void report(MetricRegistrySnapshot snapshot, MetricTagsSnapshot tags, String key, Object value) {
-        final String tableName = getTableName(key);
+        String tableName = getTableName(key);
+
         if (tableName == null) {
-            _logger.debug("Report skipped - key was filtered out [timestamp={}, key={}]", snapshot.getTimestamp(), key);
-            return;
+
+            if( key.startsWith( DataTypeReadCountMetrics.METRIC_PREFIX ) ){
+                SystemMetrics systemMetrics = SystemMetricsManager.addDynamicSystemTable(key);
+                if( systemMetrics != null ) {
+                    tableName = systemMetrics.getTableName();
+                }
+            }
+            else {
+                _logger.debug("Report skipped - key was filtered out [timestamp={}, key={}]", snapshot.getTimestamp(), key);
+                return;
+            }
         }
 
         Connection con = connectionWrapper.getOrCreateConnection();
@@ -140,10 +151,11 @@ public class HsqlDbReporter extends MetricReporter {
     }
 
     private String getTableName(String key) {
-        SystemMetrics metric = SystemMetrics.valuesMap().get(key);
-        if (metric != null)
-            return metric.getTableName();
-        return systemFilterDisabled ? SystemMetrics.toTableName(key) : null;
+        SystemMetrics systemMetrics = SystemMetricsManager.getSystemMetricTables().get(key);
+        if( systemMetrics != null ){
+            return systemMetrics.getTableName();
+        }
+        return systemFilterDisabled ? PredefinedSystemMetrics.toTableName(key) : null;
     }
 
     private void setParameter(PreparedStatement statement, Integer index, Object value) throws SQLException {

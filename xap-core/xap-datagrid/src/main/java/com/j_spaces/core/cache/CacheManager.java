@@ -108,6 +108,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -5454,6 +5455,15 @@ public class CacheManager extends AbstractCacheManager
                     return getNumberOfNotifyTemplates(typeName, true);
                 }
             });
+            registrator.register(registrator.toPath("data", "read-count", metricTypeName), new Gauge<Long>() {
+                @Override
+                public Long getValue() throws Exception {
+                    SpaceImpl spaceImpl = getEngine().getSpaceImpl();
+                    LongAdder objectTypeReadCounts = spaceImpl.getObjectTypeReadCounts(typeName);
+                    return objectTypeReadCounts == null ? 0 : objectTypeReadCounts.longValue();
+                }
+            });
+
             if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && isBlobStoreCachePolicy()) {
                 if (getBlobStoreStorageHandler().getOffHeapCache() != null)
                     getBlobStoreStorageHandler().getOffHeapCache().register(typeName, typeDescCode);
@@ -5467,6 +5477,7 @@ public class CacheManager extends AbstractCacheManager
             final MetricRegistrator registrator = _engine.getMetricRegistrator();
             registrator.unregisterByPrefix(registrator.toPath("data", "entries", metricTypeName));
             registrator.unregisterByPrefix(registrator.toPath("data", "notify-templates", metricTypeName));
+            registrator.unregisterByPrefix(registrator.toPath("data", "read-count", metricTypeName));
             if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && isBlobStoreCachePolicy()) {
                 short typeDescCode = _typeManager.getServerTypeDesc(typeName).getServerTypeDescCode();
                 if (getBlobStoreStorageHandler().getOffHeapCache() != null) {

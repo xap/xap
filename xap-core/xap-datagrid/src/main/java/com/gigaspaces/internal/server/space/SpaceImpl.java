@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.server.space;
 
+import com.gigaspaces.admin.demote.DemoteFailedException;
 import com.gigaspaces.admin.quiesce.DefaultQuiesceToken;
 import com.gigaspaces.admin.quiesce.QuiesceException;
 import com.gigaspaces.admin.quiesce.QuiesceState;
@@ -27,19 +28,8 @@ import com.gigaspaces.client.WriteMultipleException;
 import com.gigaspaces.client.protective.ProtectiveModeException;
 import com.gigaspaces.client.transaction.xa.GSServerTransaction;
 import com.gigaspaces.cluster.ClusterFailureDetector;
-import com.gigaspaces.cluster.activeelection.ElectionInProcessException;
-import com.gigaspaces.cluster.activeelection.ISpaceComponentsHandler;
-import com.gigaspaces.cluster.activeelection.ISpaceModeListener;
-import com.gigaspaces.cluster.activeelection.InactiveSpaceException;
 import com.gigaspaces.cluster.activeelection.LeaderSelector;
-import com.gigaspaces.cluster.activeelection.LeaderSelectorHandler;
-import com.gigaspaces.cluster.activeelection.LeaderSelectorHandlerConfig;
-import com.gigaspaces.cluster.activeelection.LusBasedSelectorHandler;
-import com.gigaspaces.cluster.activeelection.PrimarySpaceModeListeners;
-import com.gigaspaces.cluster.activeelection.SpaceComponentManager;
-import com.gigaspaces.cluster.activeelection.SpaceComponentsInitializeException;
-import com.gigaspaces.cluster.activeelection.SpaceInitializationIndicator;
-import com.gigaspaces.cluster.activeelection.SpaceMode;
+import com.gigaspaces.cluster.activeelection.*;
 import com.gigaspaces.cluster.activeelection.core.ActiveElectionException;
 import com.gigaspaces.cluster.replication.ConsistencyLevelViolationException;
 import com.gigaspaces.events.GSEventRegistration;
@@ -78,10 +68,8 @@ import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
-import com.gigaspaces.admin.demote.DemoteFailedException;
 import com.gigaspaces.internal.server.space.demote.DemoteHandler;
 import com.gigaspaces.internal.server.space.executors.SpaceActionExecutor;
-import com.gigaspaces.internal.server.space.iterator.ServerIteratorInfo;
 import com.gigaspaces.internal.server.space.iterator.ServerIteratorRequestInfo;
 import com.gigaspaces.internal.server.space.operations.SpaceOperationsExecutor;
 import com.gigaspaces.internal.server.space.operations.WriteEntriesResult;
@@ -103,19 +91,9 @@ import com.gigaspaces.internal.utils.ReplaceInFileUtils;
 import com.gigaspaces.internal.utils.concurrent.GSThreadFactory;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.internal.version.PlatformVersion;
-import com.gigaspaces.lrmi.ILRMIProxy;
-import com.gigaspaces.lrmi.LRMIMethodMetadata;
-import com.gigaspaces.lrmi.LRMIMonitoringDetails;
-import com.gigaspaces.lrmi.LRMIRuntime;
-import com.gigaspaces.lrmi.OperationPriority;
-import com.gigaspaces.lrmi.TransportProtocolHelper;
+import com.gigaspaces.lrmi.*;
 import com.gigaspaces.lrmi.classloading.LRMIClassLoadersHolder;
-import com.gigaspaces.lrmi.nio.AbstractResponseContext;
-import com.gigaspaces.lrmi.nio.DefaultResponseHandler;
-import com.gigaspaces.lrmi.nio.IResponseContext;
-import com.gigaspaces.lrmi.nio.IResponseHandler;
-import com.gigaspaces.lrmi.nio.ReplyPacket;
-import com.gigaspaces.lrmi.nio.ResponseContext;
+import com.gigaspaces.lrmi.nio.*;
 import com.gigaspaces.lrmi.nio.async.IFuture;
 import com.gigaspaces.lrmi.nio.async.LRMIFuture;
 import com.gigaspaces.lrmi.nio.info.NIODetails;
@@ -137,48 +115,16 @@ import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.time.SystemTime;
 import com.gigaspaces.utils.Pair;
 import com.j_spaces.core.*;
-import com.j_spaces.core.Constants.CacheManager;
-import com.j_spaces.core.Constants.Cluster;
-import com.j_spaces.core.Constants.DCache;
-import com.j_spaces.core.Constants.DataAdapter;
-import com.j_spaces.core.Constants.Engine;
-import com.j_spaces.core.Constants.Filter;
 import com.j_spaces.core.Constants.LookupManager;
-import com.j_spaces.core.Constants.Mirror;
-import com.j_spaces.core.Constants.QueryProcessorInfo;
-import com.j_spaces.core.Constants.Schemas;
-import com.j_spaces.core.Constants.SpaceProxy;
-import com.j_spaces.core.Constants.StorageAdapter;
+import com.j_spaces.core.LeaseManager;
+import com.j_spaces.core.Constants.*;
 import com.j_spaces.core.admin.*;
-import com.j_spaces.core.client.BasicTypeInfo;
-import com.j_spaces.core.client.EntryAlreadyInSpaceException;
-import com.j_spaces.core.client.EntryNotInSpaceException;
-import com.j_spaces.core.client.FinderException;
-import com.j_spaces.core.client.IJSpaceProxyListener;
-import com.j_spaces.core.client.Modifiers;
-import com.j_spaces.core.client.SpaceFinder;
-import com.j_spaces.core.client.SpaceSettings;
-import com.j_spaces.core.client.SpaceURL;
-import com.j_spaces.core.client.SpaceURLParser;
-import com.j_spaces.core.client.TransactionInfo;
-import com.j_spaces.core.client.UnderTxnLockedObject;
-import com.j_spaces.core.client.UpdateModifiers;
+import com.j_spaces.core.client.*;
 import com.j_spaces.core.cluster.ClusterPolicy;
 import com.j_spaces.core.cluster.ClusterXML;
 import com.j_spaces.core.cluster.startup.ReplicationStartupManager;
-import com.j_spaces.core.exception.SpaceAlreadyStartedException;
-import com.j_spaces.core.exception.SpaceAlreadyStoppedException;
-import com.j_spaces.core.exception.SpaceCleanedException;
-import com.j_spaces.core.exception.SpaceStoppedException;
-import com.j_spaces.core.exception.SpaceUnavailableException;
-import com.j_spaces.core.exception.StatisticsNotAvailable;
-import com.j_spaces.core.filters.FilterOperationCodes;
-import com.j_spaces.core.filters.FiltersInfo;
-import com.j_spaces.core.filters.ISpaceFilter;
-import com.j_spaces.core.filters.JSpaceStatistics;
-import com.j_spaces.core.filters.RuntimeStatisticsHolder;
-import com.j_spaces.core.filters.StatisticsContext;
-import com.j_spaces.core.filters.StatisticsHolder;
+import com.j_spaces.core.exception.*;
+import com.j_spaces.core.filters.*;
 import com.j_spaces.core.server.processor.UpdateOrWriteBusPacket;
 import com.j_spaces.core.service.AbstractService;
 import com.j_spaces.core.service.Service;
@@ -191,16 +137,11 @@ import com.j_spaces.kernel.ResourceLoader;
 import com.j_spaces.kernel.SystemProperties;
 import com.j_spaces.kernel.log.JProperties;
 import com.j_spaces.kernel.weaklistener.WeakDiscoveryListener;
-import com.j_spaces.lookup.entry.ClusterGroup;
-import com.j_spaces.lookup.entry.ClusterName;
-import com.j_spaces.lookup.entry.ContainerName;
-import com.j_spaces.lookup.entry.HostName;
-import com.j_spaces.lookup.entry.State;
+import com.j_spaces.lookup.entry.*;
 import com.j_spaces.sadapter.datasource.DataAdaptorIterator;
 import com.j_spaces.worker.WorkerManager;
 import com.sun.jini.mahalo.ExtendedPrepareResult;
 import com.sun.jini.start.LifeCycle;
-
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -213,11 +154,7 @@ import net.jini.core.lookup.ServiceTemplate;
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
 import net.jini.core.transaction.UnknownTransactionException;
-import net.jini.core.transaction.server.ServerTransaction;
-import net.jini.core.transaction.server.TransactionConstants;
-import net.jini.core.transaction.server.TransactionManager;
-import net.jini.core.transaction.server.TransactionParticipant;
-import net.jini.core.transaction.server.TransactionParticipantDataImpl;
+import net.jini.core.transaction.server.*;
 import net.jini.discovery.DiscoveryEvent;
 import net.jini.discovery.DiscoveryListener;
 import net.jini.discovery.LookupDiscoveryManager;
@@ -227,17 +164,16 @@ import net.jini.lookup.ServiceDiscoveryEvent;
 import net.jini.lookup.ServiceDiscoveryListener;
 import net.jini.lookup.entry.Name;
 import net.jini.lookup.entry.ServiceInfo;
-
 import org.jini.rio.boot.CodeChangeClassLoadersManager;
 import org.jini.rio.boot.ServiceClassLoader;
 import org.jini.rio.boot.SpaceInstanceRemoteClassLoaderInfo;
 import org.jini.rio.boot.SupportCodeChangeAnnotationContainer;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Text;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.*;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
@@ -245,22 +181,13 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.slf4j.*;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import java.util.concurrent.atomic.LongAdder;
 
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_BLOB_STORE;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_PROP;
 import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER_CLASS_NAME;
-import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_INTERVAL_DEFAULT;
-import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_INTERVAL_PROP;
-import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_RECENT_DELETES_DEFAULT;
-import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_RECENT_DELETES_PROP;
-import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_RECENT_UPDATES_DEFAULT;
-import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_RECENT_UPDATES_PROP;
-import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_STALE_REPLICAS_DEFAULT;
-import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_STALE_REPLICAS_PROP;
+import static com.j_spaces.core.Constants.LeaseManager.*;
+
 
 @com.gigaspaces.api.InternalApi
 public class SpaceImpl extends AbstractService implements IRemoteSpace, IInternalRemoteJSpaceAdmin, DiscoveryListener,
@@ -318,6 +245,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private SpaceComponentManager _componentManager;
     private RecoveryManager _recoveryManager;
     private QueryProcessor _qp;
+    //key is data type name, value is current read count per type
+    private Map<String,LongAdder> objectTypeReadCounts = new ConcurrentHashMap<>();
 
     private volatile ClusterFailureDetector _clusterFailureDetector;
 
@@ -2169,6 +2098,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             if (answerPacket != null && answerPacket.m_EntryPacket != null)
                 applyEntryPacketOutFilter(answerPacket.m_EntryPacket, modifiers, template.getProjectionTemplate());
 
+            updateObjectTypeReadCounts( answerHolder, template);
+
             return answerHolder;
         } catch (RuntimeException e) {
             throw logException(e);
@@ -2258,6 +2189,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             }
             ah = _engine.readMultiple(template, txn, timeout, isIfExist,
                  take, sc, returnOnlyUid, modifiers, operationContext, null /*aggregatorContext*/, null);
+
+            updateObjectTypeReadCounts( ah, template);
+
             if (ah == null)
                  return null;
             if (ah.getException() != null) {
@@ -2303,6 +2237,26 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         }
     }
 
+    private void updateObjectTypeReadCounts(AnswerHolder answerHolder, ITemplatePacket template) {
+
+        String typeName = template.getTypeName();
+        if( typeName != null ){
+            LongAdder currentReadCount = objectTypeReadCounts.get( typeName );
+            if( currentReadCount == null ){
+                currentReadCount = new LongAdder();
+                LongAdder prev = objectTypeReadCounts.putIfAbsent(typeName, currentReadCount);
+                if (prev != null) {
+                    currentReadCount = prev;
+                }
+            }
+
+            currentReadCount.add( answerHolder._numOfEntriesMatched );
+        }
+    }
+
+    public LongAdder getObjectTypeReadCounts( String typeName ) {
+        return objectTypeReadCounts.getOrDefault( typeName, null );
+    }
 
     public static void applyEntryPacketOutFilter(IEntryPacket entryPacket, int modifiers, AbstractProjectionTemplate projectionTemplate) {
         if (projectionTemplate != null)
