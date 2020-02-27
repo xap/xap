@@ -21,6 +21,7 @@ import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.transport.TemplatePacketFactory;
+import com.gigaspaces.logger.LogLevel;
 import com.j_spaces.core.ExtendedAnswerHolder;
 import com.j_spaces.core.UnknownTypeException;
 import com.j_spaces.core.UpdateOrWriteContext;
@@ -67,7 +68,7 @@ public class ActiveActiveSpaceReplicationEntryEventHandler extends AbstractSpace
                 _exceptionHandler.handleEntryVersionConflictOnUpdate(context.getContextLogger(),
                         entryPacket,
                         ex,
-                        Level.INFO);
+                        LogLevel.INFO);
                 entryPacket.setVersion(0);
             } else {
                 throw ex;

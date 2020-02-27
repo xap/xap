@@ -24,6 +24,7 @@ import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
+import com.gigaspaces.logger.LogLevel;
 import com.j_spaces.core.AnswerPacket;
 import com.j_spaces.core.ExtendedAnswerHolder;
 import com.j_spaces.core.OperationID;
@@ -87,7 +88,7 @@ public class PrimaryBackupSpaceReplicationEntryEventHandler
                 _exceptionHandler.handleEntryVersionConflictOnUpdate(context.getContextLogger(),
                         entryPacket,
                         ex,
-                        Level.INFO);
+                        LogLevel.INFO);
                 updateModifiers |= Modifiers.OVERRIDE_VERSION; // if its a
                 // backup-
                 // override the
@@ -97,7 +98,7 @@ public class PrimaryBackupSpaceReplicationEntryEventHandler
                 _exceptionHandler.handleEntryVersionConflictOnUpdate(context.getContextLogger(),
                         entryPacket,
                         ex,
-                        Level.INFO);
+                        LogLevel.INFO);
                 entryPacket.setVersion(0);
             } else {
                 throw ex;

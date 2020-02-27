@@ -37,6 +37,7 @@ import com.gigaspaces.internal.utils.concurrent.AsyncCallable;
 import com.gigaspaces.internal.utils.concurrent.IAsyncHandler;
 import com.gigaspaces.internal.utils.concurrent.IAsyncHandlerProvider;
 import com.gigaspaces.internal.utils.concurrent.IAsyncHandlerProvider.CycleResult;
+import com.gigaspaces.logger.LogLevel;
 import com.j_spaces.core.filters.ReplicationStatistics.ReplicationMode;
 import com.j_spaces.core.filters.ReplicationStatistics.ReplicationOperatingMode;
 import com.j_spaces.kernel.JSpaceUtilities;
@@ -240,9 +241,9 @@ public class SyncReplicationSourceChannel
             moveToAsyncIfNeeded(unexpectedError);
             throw unexpectedError;
         } catch (ReplicationException e) {
-            Level logLevel = getExceptionLogLevel(JSpaceUtilities.getRootCauseException(e));
-            if (_specificLogger.isLoggable(logLevel)) {
-                _specificLogger.log(logLevel,
+            LogLevel logLevel = getExceptionLogLevel(JSpaceUtilities.getRootCauseException(e));
+            if (logLevel.isEnabled(_specificLogger)) {
+                logLevel.log(_specificLogger,
                         "Error in replication while replicating ["
                                 + ReplicationLogUtils.packetsToLogString(context)
                                 + "]",
@@ -253,11 +254,11 @@ public class SyncReplicationSourceChannel
         return 0;
     }
 
-    private Level getExceptionLogLevel(Throwable rootCauseException) {
+    private LogLevel getExceptionLogLevel(Throwable rootCauseException) {
         if (rootCauseException instanceof ReplicationConsumeTimeoutException)
-            return Level.WARNING;
+            return LogLevel.WARNING;
 
-        return Level.SEVERE;
+        return LogLevel.SEVERE;
     }
 
     /**

@@ -19,6 +19,7 @@ package com.gigaspaces.internal.cluster.node.impl.handlers;
 import com.gigaspaces.internal.cluster.node.IReplicationInContext;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
+import com.gigaspaces.logger.LogLevel;
 import com.j_spaces.core.client.EntryNotInSpaceException;
 import com.j_spaces.core.client.EntryVersionConflictException;
 import com.j_spaces.core.cluster.ClusterXML;
@@ -56,7 +57,7 @@ public class ReplicationInExceptionHandler {
                     TAKE,
                     entryPacket.getTypeName(),
                     entryPacket.getUID(),
-                    Level.SEVERE,
+                    LogLevel.SEVERE,
                     "Entry is locked by another transaction.");
         }
     }
@@ -68,8 +69,8 @@ public class ReplicationInExceptionHandler {
             return;
 
         /** failed to consume */
-        Level level = getDefaultExceptionLevel();
-        if (context.getContextLogger() != null && context.getContextLogger().isLoggable(level)) {
+        LogLevel level = getDefaultExceptionLevel();
+        if (context.getContextLogger() != null && level.isEnabled(context.getContextLogger())) {
             logMessage(context.getContextLogger(),
                     WRITE,
                     entryPacket.getTypeName(),
@@ -81,8 +82,8 @@ public class ReplicationInExceptionHandler {
 
     public void handleEntryNotInSpaceOnTake(Logger logger,
                                             IEntryPacket entryPacket) {
-        Level logLevel = getDefaultExceptionLevel();
-        if (logger != null && logger.isLoggable(logLevel) && !(_isCentralDB && !entryPacket.isTransient())) {
+        LogLevel logLevel = getDefaultExceptionLevel();
+        if (logger != null && logLevel.isEnabled(logger) && !(_isCentralDB && !entryPacket.isTransient())) {
             logMessage(logger,
                     TAKE,
                     entryPacket.getTypeName(),
@@ -97,7 +98,7 @@ public class ReplicationInExceptionHandler {
                         TAKE,
                         entryPacket.getTypeName(),
                         entryPacket.getUID(),
-                        Level.FINE,
+                        LogLevel.DEBUG,
                         "Entry not in space");
 
         }
@@ -105,8 +106,8 @@ public class ReplicationInExceptionHandler {
 
     public void handleEntryVersionConflictOnTake(Logger logger,
                                                  IEntryPacket entryPacket, EntryVersionConflictException ex) {
-        Level logLevel = getDefaultExceptionLevel();
-        if (logger != null && logger.isLoggable(logLevel)) {
+        LogLevel logLevel = getDefaultExceptionLevel();
+        if (logger != null && logLevel.isEnabled(logger)) {
             logMessage(logger,
                     TAKE,
                     entryPacket.getTypeName(),
@@ -142,14 +143,14 @@ public class ReplicationInExceptionHandler {
         if (_isCentralDB && !entryPacket.isTransient())
             return;
         if (logger != null && logger.isLoggable(Level.SEVERE)) {
-            logMessage(logger, UPDATE, entryPacket.getTypeName(), entryPacket.getUID(), Level.SEVERE, "Entry is locked by another transaction.");
+            logMessage(logger, UPDATE, entryPacket.getTypeName(), entryPacket.getUID(), LogLevel.SEVERE, "Entry is locked by another transaction.");
         }
     }
 
     public void handleEntryLockedByTransactionOnChange(Logger logger,
                                                        ITemplatePacket entryPacket) {
         if (logger != null && logger.isLoggable(Level.SEVERE)) {
-            logMessage(logger, CHANGE, entryPacket.getTypeName(), entryPacket.getUID(), Level.SEVERE, "Entry is locked by another transaction.");
+            logMessage(logger, CHANGE, entryPacket.getTypeName(), entryPacket.getUID(), LogLevel.SEVERE, "Entry is locked by another transaction.");
         }
     }
 
@@ -166,9 +167,9 @@ public class ReplicationInExceptionHandler {
     }
 
     public void handleEntryVersionConflictOnUpdate(Logger logger,
-                                                   IEntryPacket entryPacket, EntryVersionConflictException ex, Level logLevel) {
+                                                   IEntryPacket entryPacket, EntryVersionConflictException ex, LogLevel logLevel) {
 
-        if (logger != null && logger.isLoggable(logLevel)) {
+        if (logger != null && logLevel.isEnabled(logger)) {
             logMessage(logger,
                     UPDATE,
                     entryPacket.getTypeName(),
@@ -184,8 +185,8 @@ public class ReplicationInExceptionHandler {
 
     public void handleEntryVersionConflictOnChange(Logger logger,
                                                    ITemplatePacket entryPacket, EntryVersionConflictException ex,
-                                                   Level logLevel) {
-        if (logger != null && logger.isLoggable(logLevel)) {
+                                                   LogLevel logLevel) {
+        if (logger != null && logLevel.isEnabled(logger)) {
             logMessage(logger,
                     CHANGE,
                     entryPacket.getTypeName(),
@@ -203,8 +204,8 @@ public class ReplicationInExceptionHandler {
     public void handleEntryNotInSpaceOnUpdate(Logger logger,
                                               IEntryPacket entryPacket, EntryNotInSpaceException ex) {
 
-        Level logLevel = getDefaultExceptionLevel();
-        if (logger != null && logger.isLoggable(logLevel)) {
+        LogLevel logLevel = getDefaultExceptionLevel();
+        if (logger != null && logLevel.isEnabled(logger)) {
             logMessage(logger,
                     UPDATE,
                     entryPacket.getTypeName(),
@@ -217,8 +218,8 @@ public class ReplicationInExceptionHandler {
     }
 
     public void handleEntryNotInSpaceOnChange(Logger logger, ITemplatePacket entryPacket) {
-        Level logLevel = getDefaultExceptionLevel();
-        if (logger != null && logger.isLoggable(logLevel)) {
+        LogLevel logLevel = getDefaultExceptionLevel();
+        if (logger != null && logLevel.isEnabled(logger)) {
             logMessage(logger,
                     CHANGE,
                     entryPacket.getTypeName(),
@@ -229,14 +230,14 @@ public class ReplicationInExceptionHandler {
     }
 
 
-    protected Level getDefaultExceptionLevel() {
-        return Level.SEVERE;
+    protected LogLevel getDefaultExceptionLevel() {
+        return LogLevel.SEVERE;
     }
 
 
     protected void logMessage(Logger logger, String operation,
-                              String className, String uid, Level logLevel, String symptom) {
-        logger.log(logLevel,
+                              String className, String uid, LogLevel logLevel, String symptom) {
+        logLevel.log(logger,
                 "Replication detected conflicting "
                         + operation
                         + " operation on entry - "

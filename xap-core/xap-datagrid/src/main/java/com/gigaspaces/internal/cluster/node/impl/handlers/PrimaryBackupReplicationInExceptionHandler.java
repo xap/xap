@@ -16,7 +16,7 @@
 
 package com.gigaspaces.internal.cluster.node.impl.handlers;
 
-import java.util.logging.Level;
+import com.gigaspaces.logger.LogLevel;
 
 @com.gigaspaces.api.InternalApi
 public class PrimaryBackupReplicationInExceptionHandler extends ReplicationInExceptionHandler {
@@ -25,8 +25,8 @@ public class PrimaryBackupReplicationInExceptionHandler extends ReplicationInExc
         super(spaceName, isCentralDB);
     }
 
-    public Level getDefaultExceptionLevel() {
-        return Level.WARNING;
+    public LogLevel getDefaultExceptionLevel() {
+        return LogLevel.WARNING;
     }
 
 

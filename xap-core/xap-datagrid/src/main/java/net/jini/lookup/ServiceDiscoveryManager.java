@@ -17,6 +17,7 @@
  */
 package net.jini.lookup;
 
+import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.logger.LogUtils;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.exception.internal.InterruptedSpaceException;
@@ -3372,22 +3373,22 @@ public class ServiceDiscoveryManager {
                       String sourceMethod,
                       String msg,
                       boolean cacheTerminated) {
-        Level logLevel = Level.INFO;
+        LogLevel logLevel = LogLevel.INFO;
         boolean discardProxy = true;
         synchronized (this) {
             if (bTerminated || cacheTerminated) {
-                logLevel = Level.FINE;
+                logLevel = LogLevel.DEBUG;
                 discardProxy = false;
             }//endif
         }//end sync(this)
-        if ((e != null) && (logger.isLoggable(logLevel))) {
-            logger.log(logLevel, LogUtils.format(sourceClass, sourceMethod, msg), e);
+        if ((e != null) && (logLevel.isEnabled(logger))) {
+            logLevel.log(logger, LogUtils.format(sourceClass, sourceMethod, msg), e);
         }//endif
         try {
             if (discardProxy) discard(proxy);
         } catch (IllegalStateException e1) {
-            if (logger.isLoggable(logLevel)) {
-                logger.log(logLevel, LogUtils.format(sourceClass, sourceMethod,
+            if (logLevel.isEnabled(logger)) {
+                logLevel.log(logger, LogUtils.format(sourceClass, sourceMethod,
                         "failure discarding lookup service proxy, discovery manager already terminated"),
                         e1);
             }//endif

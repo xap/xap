@@ -20,6 +20,7 @@ import com.gigaspaces.config.lrmi.ITransportConfig;
 import com.gigaspaces.config.lrmi.nio.NIOConfiguration;
 import com.gigaspaces.internal.utils.concurrent.GSThread;
 import com.gigaspaces.logger.Constants;
+import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.lrmi.ConnectionResource;
 import com.j_spaces.core.service.ServiceConfigLoader;
 import com.j_spaces.kernel.SystemProperties;
@@ -357,15 +358,15 @@ public class Watchdog extends GSThread {
 
                 if (_logger.isLoggable(Level.FINE)) {
                     //log request timeouts as FINE, listening as FINER, idle as FINEST
-                    Level logLevel = Level.FINEST;
+                    LogLevel logLevel = LogLevel.TRACE;
                     if (Group.REQUEST_GROUP.name().equals(_name) ||
                             Group.RESPONSE_GROUP.name().equals(_name)) {
-                        logLevel = Level.FINE;
+                        logLevel = LogLevel.DEBUG;
                     } else if (Group.IDLE_GROUP.name().equals(_name)) {
-                        logLevel = Level.FINEST;
+                        logLevel = LogLevel.TRACE;
                     }
 
-                    _logger.log(logLevel, _name + " - " + (t - time) * _waitInterval
+                    logLevel.log(_logger, _name + " - " + (t - time) * _waitInterval
                             + " Timeout occurred, max allowed = " + _timeout);
                 }
 

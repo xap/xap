@@ -25,6 +25,7 @@ import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.transport.TemplatePacketFactory;
+import com.gigaspaces.logger.LogLevel;
 import com.j_spaces.core.AnswerHolder;
 import com.j_spaces.core.AnswerPacket;
 import com.j_spaces.core.ExtendedAnswerHolder;
@@ -228,7 +229,7 @@ public abstract class AbstractSpaceReplicationEntryEventHandler
                     _exceptionHandler.handleEntryVersionConflictOnChange(context.getContextLogger(),
                             template,
                             (EntryVersionConflictException) exception,
-                            Level.INFO);
+                            LogLevel.INFO);
                     template.setVersion(0);
 
                     return _engine.change(template,
