@@ -165,10 +165,7 @@ class JoinStateManager extends LogHandler {
                     locatorList.add(lookupLocator);
                 } catch (MalformedURLException ex) {
                     if (initlogger.isLoggable(Level.WARNING)) {
-                        initlogger.log(
-                                Level.WARNING,
-                                "Failed to parse list of LookupLocator URLs: " + locatorURL + " - " + ex.toString(), ex
-                        );
+                        initlogger.log(Level.WARNING, "Failed to parse list of LookupLocator URLs: " + locatorURL + " - " + ex.toString(), ex);
                     }
                 }
             }//end of while()
