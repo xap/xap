@@ -29,6 +29,7 @@ import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceConfigReader;
 import com.gigaspaces.internal.server.space.SpaceInstanceConfig;
 import com.gigaspaces.internal.transport.ITransportPacket;
+import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.metadata.SpaceMetadataException;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
@@ -333,9 +334,9 @@ public class SpaceTypeManager {
         if (_logger.isLoggable(Level.FINE)) {
             _logger.log(Level.FINE, "Created ServerTypeDesc for type [" + typeName + "]." + getClientAddressAddition());
             if (_logger.isLoggable(Level.FINEST))
-                logTypeMap(localTypeMap, Level.FINEST);
+                logTypeMap(localTypeMap);
             else if (_logger.isLoggable(Level.FINER))
-                logServerTypeDesc(serverTypeDesc, Level.FINER);
+                logServerTypeDesc(serverTypeDesc, LogLevel.DEBUG);
         }
 
         // Notify listeners on new type:
@@ -355,9 +356,9 @@ public class SpaceTypeManager {
         if (_logger.isLoggable(Level.FINE)) {
             _logger.log(Level.FINE, "Activated ServerTypeDesc [" + typeName + "]." + getClientAddressAddition());
             if (_logger.isLoggable(Level.FINEST))
-                logTypeMap(localTypeMap, Level.FINEST);
+                logTypeMap(localTypeMap);
             else if (_logger.isLoggable(Level.FINER))
-                logServerTypeDesc(serverTypeDesc, Level.FINER);
+                logServerTypeDesc(serverTypeDesc, LogLevel.DEBUG);
         }
 
         // Notify listeners on activated type:
@@ -583,7 +584,7 @@ public class SpaceTypeManager {
         return serverTypeDesc.isActive() && serverTypeDesc.isFifoSupported();
     }
 
-    private static void logServerTypeDesc(IServerTypeDesc serverTypeDesc, Level level) {
+    private static void logServerTypeDesc(IServerTypeDesc serverTypeDesc, LogLevel level) {
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("Type name: [%s]%s%n", serverTypeDesc.getTypeName(), getClientAddressAddition()));
         sb.append(String.format("IsActive: %s%n", serverTypeDesc.isActive()));
@@ -607,12 +608,12 @@ public class SpaceTypeManager {
             sb.append(String.format("Checksum: %d.%n", typeDesc.getChecksum()));
         }
 
-        _logger.log(level, sb.toString());
+        level.log(_logger, sb.toString());
     }
 
-    private static void logTypeMap(Map<String, IServerTypeDesc> typeMap, Level level) {
+    private static void logTypeMap(Map<String, IServerTypeDesc> typeMap) {
         for (IServerTypeDesc typeDesc : typeMap.values())
-            logServerTypeDesc(typeDesc, level);
+            logServerTypeDesc(typeDesc, LogLevel.TRACE);
     }
 
     private static void logEnter(String methodName, String argName, Object argValue) {
