@@ -32,6 +32,7 @@ import com.gigaspaces.internal.reflection.ReflectionUtil;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.Constants;
+import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.lrmi.BaseClientPeer;
 import com.gigaspaces.lrmi.ConnectionPool;
 import com.gigaspaces.lrmi.DynamicSmartStub;
@@ -801,10 +802,10 @@ public class CPeer extends BaseClientPeer {
 
             String exMsg = "LRMI transport protocol over NIO connection [" + getConnectionURL() + "] caught unexpected exception: " + ex.toString();
 
-            Level logLevel = ex instanceof RuntimeException ? Level.SEVERE : Level.FINE;
+            LogLevel logLevel = ex instanceof RuntimeException ? LogLevel.SEVERE : LogLevel.DEBUG;
 
-            if (_logger.isLoggable(logLevel))
-                _logger.log(logLevel, exMsg, ex);
+            if (logLevel.isEnabled(_logger))
+                logLevel.log(_logger, exMsg, ex);
 
             // broken connection
             disconnect();

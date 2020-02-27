@@ -24,6 +24,7 @@ import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.logger.LogLevel;
 import com.j_spaces.core.LeaseManager;
 import com.j_spaces.core.ObjectTypes;
 import com.j_spaces.core.OperationID;
@@ -142,10 +143,10 @@ public class SpaceReplicationEntryLeaseEventHandler implements
             if (getConflictingOperationPolicy().isOverride())
                 return;
 
-            Level logLevel = getLeaseManager().isSlaveLeaseManagerForEntries() ? Level.FINE : Level.WARNING;
+            LogLevel logLevel = getLeaseManager().isSlaveLeaseManagerForEntries() ? LogLevel.DEBUG : LogLevel.WARNING;
 
-            if (context.getContextLogger().isLoggable(logLevel)) {
-                context.getContextLogger().log(logLevel, "Replicator: " + ex.getClass().getName() +
+            if (logLevel.isEnabled(context.getContextLogger())) {
+                logLevel.log(context.getContextLogger(), "Replicator: " + ex.getClass().getName() +
                         ". Failed to expire Entry lease: " + typeName
                         + " UID: " + uid
                         + " ObjectType: " + ObjectTypes.ENTRY

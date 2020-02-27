@@ -16,6 +16,7 @@
 
 package com.gigaspaces.security.service;
 
+import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.security.SecurityException;
 import com.gigaspaces.security.audit.SecurityAudit;
 
@@ -71,7 +72,7 @@ public class SecurityAuditFactory {
             return securityAuditClass.newInstance();
 
         } catch (Exception e) {
-            logger.log(isDefault ? Level.FINE : Level.SEVERE, "Failed to create an instance of SecurityAudit class", e);
+            (isDefault ? LogLevel.DEBUG : LogLevel.SEVERE).log(logger, "Failed to create an instance of SecurityAudit class", e);
             if (!isDefault) {
                 throw new SecurityException("Failed to create Security Audit", e);
             }

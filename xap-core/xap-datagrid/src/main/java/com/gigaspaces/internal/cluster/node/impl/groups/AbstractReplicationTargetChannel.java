@@ -37,6 +37,7 @@ import com.gigaspaces.internal.cluster.node.impl.router.IConnectivityCheckListen
 import com.gigaspaces.internal.cluster.node.impl.router.IReplicationMonitoredConnection;
 import com.gigaspaces.internal.cluster.node.impl.router.ReplicationEndpointDetails;
 import com.gigaspaces.internal.utils.StringUtils;
+import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.cluster.IReplicationFilterEntry;
 import com.j_spaces.core.filters.ReplicationStatistics.ReplicationMode;
@@ -279,8 +280,8 @@ public abstract class AbstractReplicationTargetChannel
             String msg = "Channel established " + getConnectionDescription();
 
             logEventInHistory(msg);
-            Level logLevel = requiresHighLevelLogging() || _wasEverActive ? Level.INFO : Level.FINE;
-            _specificLogger.log(logLevel, msg);
+            LogLevel logLevel = requiresHighLevelLogging() || _wasEverActive ? LogLevel.INFO : LogLevel.DEBUG;
+            logLevel.log(_specificLogger, msg);
 
             _wasEverActive = true;
 
@@ -388,8 +389,8 @@ public abstract class AbstractReplicationTargetChannel
 
             String msg = "Channel reestablished connection to source " + getConnectionDescription();
             logEventInHistory(msg);
-            Level logLevel = requiresHighLevelLogging() || _wasEverActive ? Level.INFO : Level.FINE;
-            _specificLogger.log(logLevel, msg);
+            LogLevel logLevel = requiresHighLevelLogging() || _wasEverActive ? LogLevel.INFO : LogLevel.DEBUG;
+            logLevel.log(_specificLogger, msg);
 
             if (_groupStateListener != null)
                 _groupStateListener.onTargetChannelConnected(_groupName, getSourceLookupName(), getSourceUniqueId());

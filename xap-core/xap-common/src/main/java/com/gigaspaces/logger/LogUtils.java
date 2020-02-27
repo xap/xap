@@ -26,6 +26,9 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class LogUtils {
 
+    private void foo() {
+        LogLevel.INFO.isEnabled(null);
+    }
     static String getStackTrace(Throwable t) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
@@ -68,6 +71,13 @@ public class LogUtils {
                                 String format, Object ... params) {
         if (logger.isLoggable(Level.FINE)) {
             logger.log(Level.FINE, format(sourceClass, sourceMethod, format, params), thrown);
+        }
+    }
+
+    public static void throwing(LogLevel level, Logger logger, Class<?> sourceClass, String sourceMethod, Throwable thrown,
+                                String format, Object ... params) {
+        if (level.isEnabled(logger)) {
+            level.log(logger, format(sourceClass, sourceMethod, format, params), thrown);
         }
     }
 

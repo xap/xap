@@ -63,6 +63,7 @@ import com.gigaspaces.internal.utils.concurrent.SegmentedAtomicInteger;
 import com.gigaspaces.internal.utils.threadlocal.PoolFactory;
 import com.gigaspaces.internal.utils.threadlocal.ThreadLocalPool;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.management.transport.ConnectionEndpointDetails;
 import com.gigaspaces.metrics.Gauge;
 import com.gigaspaces.metrics.MetricRegistrator;
@@ -310,7 +311,7 @@ public abstract class AbstractReplicationSourceChannel
             _inconsistentDuringHandshakeStateReason = null;
             _inconsistentDuringHandshakeStateIteration = 0;
 
-            Level logLevel = requiresHighLevelLogging() ? Level.INFO : Level.FINE;
+            LogLevel logLevel = requiresHighLevelLogging() ? LogLevel.INFO : LogLevel.DEBUG;
             logConnectionStateChange(prevState, ChannelState.CONNECTED, logLevel);
 
             handleHandshakeResponse(handshakeContext);
@@ -388,7 +389,7 @@ public abstract class AbstractReplicationSourceChannel
         _channelState = ChannelState.ACTIVE;
         onActiveImpl();
 
-        Level logLevel = (requiresHighLevelLogging() || _wasEverActive) ? Level.INFO : Level.FINE;
+        LogLevel logLevel = (requiresHighLevelLogging() || _wasEverActive) ? LogLevel.INFO : LogLevel.DEBUG;
         logConnectionStateChange(prevState, ChannelState.ACTIVE, logLevel);
 
         _wasEverActive = true;
@@ -428,7 +429,7 @@ public abstract class AbstractReplicationSourceChannel
 
         stopIterativeHandshakeProcess();
 
-        Level logLevel = (requiresHighLevelLogging() || _wasEverActive) ? Level.INFO : Level.FINE;
+        LogLevel logLevel = (requiresHighLevelLogging() || _wasEverActive) ? LogLevel.INFO : LogLevel.DEBUG;
         logConnectionStateChange(prevState, ChannelState.DISCONNECTED, logLevel);
         onDisconnectedImpl();
     }
@@ -478,9 +479,9 @@ public abstract class AbstractReplicationSourceChannel
         getConnection().close();
         _closed = true;
 
-        Level logLevel = requiresHighLevelLogging() ? Level.INFO : Level.FINE;
-        if (_specificLogger.isLoggable(logLevel))
-            _specificLogger.log(logLevel, "Channel is closed " + getConnectionDescription());
+        LogLevel logLevel = requiresHighLevelLogging() ? LogLevel.INFO : LogLevel.DEBUG;
+        if (logLevel.isEnabled(_specificLogger))
+            logLevel.log(_specificLogger, "Channel is closed " + getConnectionDescription());
         _specificLogger.finer("Closed");
     }
 
@@ -1073,14 +1074,14 @@ public abstract class AbstractReplicationSourceChannel
         _groupBacklog.setPendingError(getMemberName(), error, replicatedPacket);
     }
 
-    private void logConnectionStateChange(ChannelState oldState, ChannelState newState, Level logLevel) {
+    private void logConnectionStateChange(ChannelState oldState, ChannelState newState, LogLevel logLevel) {
         String msg = oldState != newState
                 ? "Channel state changed from " + oldState + " to " + newState
                 : "Channel state is " + newState;
         msg += " " + getConnectionDescription();
         logEventInHistory(msg);
-        if (_specificLogger.isLoggable(logLevel))
-            _specificLogger.log(logLevel, msg);
+        if (logLevel.isEnabled(_specificLogger))
+            logLevel.log(_specificLogger, msg);
     }
 
     private String getConnectionDescription() {

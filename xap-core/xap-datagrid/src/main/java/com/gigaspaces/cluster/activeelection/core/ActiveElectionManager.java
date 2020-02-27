@@ -31,6 +31,7 @@ import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPe
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryException;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.logger.Constants;
+import com.gigaspaces.logger.LogLevel;
 import com.j_spaces.core.admin.IInternalRemoteJSpaceAdmin;
 import com.j_spaces.core.admin.StatisticsAdmin;
 import com.j_spaces.core.filters.ReplicationStatistics;
@@ -390,7 +391,8 @@ public class ActiveElectionManager {
         ServiceItem[] srvMatch = _namingService.lookup(srvTmpl, 1, null /* filter */);
         if (srvMatch == null || srvMatch.length == 0) {
             if (_logger.isLoggable(Level.INFO)) {
-                _logger.log((retryCount <= 10 ? Level.WARNING : Level.INFO),
+                LogLevel logLevel = retryCount <= 10 ? LogLevel.WARNING : LogLevel.INFO;
+                logLevel.log(_logger,
                         "Waiting [" + _config.getYieldTime() + " ms] for [" + State.PENDING + "] state registration on " + _namingService.getName()
                                 + " {remaining retries=" + retryCount + ", registrars=" + _namingService.getNumberOfRegistrars() + "}");
             }

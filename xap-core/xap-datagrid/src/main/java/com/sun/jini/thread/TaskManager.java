@@ -17,6 +17,8 @@
  */
 package com.sun.jini.thread;
 
+import com.gigaspaces.logger.LogLevel;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -195,9 +197,8 @@ public class TaskManager {
                 th.start();
             } catch (Throwable tt) {
                 try {
-                    logger.log(threads.isEmpty() ?
-                                    Level.SEVERE : Level.WARNING,
-                            "thread creation exception", tt);
+                    LogLevel level = threads.isEmpty() ? LogLevel.SEVERE : LogLevel.WARNING;
+                    level.log(logger, "thread creation exception", tt);
                 } catch (Throwable ttt) {
                 }
                 break;

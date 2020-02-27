@@ -26,6 +26,7 @@ import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.logger.Constants;
+import com.gigaspaces.logger.LogLevel;
 import com.j_spaces.core.LeaseManager;
 import com.j_spaces.core.ObjectTypes;
 import com.j_spaces.core.OperationID;
@@ -112,9 +113,9 @@ public class SpaceReplicationTemplateEventHandler implements
             if (getConflictingOperationPolicy().isOverride())
                 return;
 
-            Level logLevel = getLeaseManager().isSlaveLeaseManagerForNotifyTemplates() ? Level.FINE : Level.WARNING;
-            if (_logger.isLoggable(logLevel)) {
-                _logger.log(logLevel, "Replicator: " + ex.getClass().getName() +
+            LogLevel logLevel = getLeaseManager().isSlaveLeaseManagerForNotifyTemplates() ? LogLevel.DEBUG : LogLevel.WARNING;
+            if (logLevel.isEnabled(_logger)) {
+                logLevel.log(_logger, "Replicator: " + ex.getClass().getName() +
                         ". Failed to expire NotifyTemplate lease: " + className +
                         " UID: " + uid +
                         " ObjectType: " + ObjectTypes.NOTIFY_TEMPLATE +

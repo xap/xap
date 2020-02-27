@@ -18,6 +18,7 @@
 package net.jini.discovery;
 
 import com.gigaspaces.internal.utils.concurrent.GSThread;
+import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.time.SystemTime;
 import com.sun.jini.config.Config;
@@ -2910,10 +2911,8 @@ public class LookupDiscovery implements DiscoveryManagement,
             try {
                 packets.addAll(Arrays.asList(ei.next()));
             } catch (Exception e) {
-                logger.log(
-                        (e instanceof UnsupportedConstraintException) ?
-                                Level.FINE : Level.INFO,
-                        "exception encoding multicast request", e);
+                LogLevel level = (e instanceof UnsupportedConstraintException) ? LogLevel.DEBUG : LogLevel.INFO;
+                level.log(logger, "exception encoding multicast request", e);
             }
         }
         if (packets.isEmpty()) {

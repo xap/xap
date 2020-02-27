@@ -89,6 +89,7 @@ import com.gigaspaces.internal.sync.hybrid.SyncHybridTransactionException;
 import com.gigaspaces.internal.transport.*;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.utils.collections.IAddOnlySet;
+import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.lrmi.LRMIRuntime;
 import com.gigaspaces.lrmi.TransportProtocolHelper;
 import com.gigaspaces.lrmi.nio.IResponseContext;
@@ -6358,10 +6359,10 @@ public class SpaceEngine implements ISpaceModeListener {
         if(!_spaceImpl.isPrimary()){
             ((ReplicationNode) _replicationManager.getReplicationNode()).getReplicaHandler().clearFifoBatchesHandler();
         }
-        Level level = result.isSuccessful() ? Level.INFO : Level.WARNING;
+        LogLevel level = result.isSuccessful() ? LogLevel.INFO : LogLevel.WARNING;
         Throwable error = result.isSuccessful() ? null : result.getFailureReason();
-        if (_logger.isLoggable(level))
-            _logger.log(level, result.getStringDescription(sourceRemoteUrl.getMemberName(), sourceRemoteUrl.toString(), _fullSpaceName, spaceSyncOperation, SystemTime.timeMillis() - recoveryStartTime), error);
+        if (level.isEnabled(_logger))
+            level.log(_logger, result.getStringDescription(sourceRemoteUrl.getMemberName(), sourceRemoteUrl.toString(), _fullSpaceName, spaceSyncOperation, SystemTime.timeMillis() - recoveryStartTime), error);
     }
 
     public String generateGroupName() {

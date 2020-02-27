@@ -32,6 +32,7 @@ import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.log.LogEntries;
 import com.gigaspaces.log.LogEntryMatcher;
 import com.gigaspaces.log.LogProcessType;
+import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.logger.LogUtils;
 import com.gigaspaces.lrmi.ILRMIProxy;
 import com.gigaspaces.lrmi.LRMIMonitoringDetails;
@@ -2092,8 +2093,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             socket = new MulticastSocket(Constants.getDiscoveryPort());
             if (multicastInterfaces != null) {
                 final long startTime = LogUtils.getCurrTimeIfDebugEnabled(logger);
-                Level failureLogLevel = multicastInterfacesSpecified ?
-                        Level.WARNING : Level.FINE;
+                LogLevel failureLogLevel = multicastInterfacesSpecified ?
+                        LogLevel.WARNING : LogLevel.DEBUG;
                 for (NetworkInterface nic : multicastInterfaces) {
                     try {
                         final long nicStartTime = LogUtils.getCurrTimeIfTraceEnabled(logger);
@@ -2103,8 +2104,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                         socket.joinGroup(requestAddr);
                     } catch (IOException e) {
                         failedInterfaces.add(nic);
-                        if (logger.isLoggable(failureLogLevel))
-                            logThrow(failureLogLevel, getClass().getName(), "<init>", "exception enabling {0}", new Object[]{nic}, e);
+                        if (failureLogLevel.isEnabled(logger))
+                            LogUtils.throwing(failureLogLevel, logger, getClass(), "<init>", e, "exception enabling {0}", nic);
                     }
                 }
                 if (logger.isLoggable(Level.FINE))
@@ -2199,26 +2200,26 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          * network interface.
          */
         private void retryFailedInterfaces() {
-            final Level level = multicastInterfacesSpecified ? Level.INFO : Level.FINE;
-            if (logger.isLoggable(level))
-                logger.log(level, "retryFailedInterfaces() will attempt to enable " + failedInterfaces.size() + " interfaces...");
+            final LogLevel level = multicastInterfacesSpecified ? LogLevel.INFO : LogLevel.DEBUG;
+            if (level.isEnabled(logger))
+                level.log(logger, "retryFailedInterfaces() will attempt to enable " + failedInterfaces.size() + " interfaces...");
             for (Iterator<NetworkInterface> i = failedInterfaces.iterator(); i.hasNext(); ) {
                 NetworkInterface nic = i.next();
-                long startTime = logger.isLoggable(level) ? System.currentTimeMillis() : 0;
+                long startTime = level.isEnabled(logger) ? System.currentTimeMillis() : 0;
                 try {
                     if (nic != null)
                         socket.setNetworkInterface(nic);
                     socket.joinGroup(requestAddr);
                     i.remove();
-                    if (logger.isLoggable(level)) {
+                    if (level.isEnabled(logger)) {
                         String message = nic == null ? "Enabled default interface" : "Enabled " + nic;
-                        logger.log(level, LogUtils.formatDuration(startTime, message));
+                        level.log(logger, LogUtils.formatDuration(startTime, message));
                     }
                 } catch (IOException e) {
                     // keep nic in failedInterfaces
-                    if (logger.isLoggable(level)) {
+                    if (level.isEnabled(logger)) {
                         String message = nic == null ? "Failed to enabled default interface" : "Failed to enabled " + nic;
-                        logger.log(level, LogUtils.formatDuration(startTime, message));
+                        level.log(logger, LogUtils.formatDuration(startTime, message));
                     }
                 }
             }
@@ -2409,11 +2410,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     try {
                         packets.addAll(Arrays.asList(ei.next()));
                     } catch (Exception e) {
-                        logger.log((e instanceof
-                                        UnsupportedConstraintException)
-                                        ? Level.FINE : Level.INFO,
-                                "exception encoding multicast"
-                                        + " announcement", e);
+                        LogLevel logLevel = e instanceof UnsupportedConstraintException ? LogLevel.DEBUG : LogLevel.INFO;
+                        logLevel.log(logger, "exception encoding multicast announcement", e);
                     }
                 }
                 lastLocator = myLocator;
@@ -2433,15 +2431,14 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          */
         private void send(DatagramPacket[] packets) throws InterruptedIOException {
             if (multicastInterfaces != null) {
-                Level failureLogLevel = multicastInterfacesSpecified ?
-                        Level.WARNING : Level.FINE;
+                LogLevel failureLogLevel = multicastInterfacesSpecified ? LogLevel.WARNING : LogLevel.DEBUG;
                 long startTime = LogUtils.getCurrTimeIfDebugEnabled(logger);
                 for (NetworkInterface multicastInterface : multicastInterfaces)
                     send(packets, multicastInterface, failureLogLevel);
                 if (logger.isLoggable(Level.FINE))
                     logger.log(Level.FINE, LogUtils.formatDuration(startTime, Thread.currentThread().getName() + ".send()"));
             } else {
-                send(packets, null, Level.WARNING);
+                send(packets, null, LogLevel.WARNING);
             }
         }
 
@@ -2450,7 +2447,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          * failures at the given logging level.  If the specified network interface is null, then
          * the default interface is used.
          */
-        private void send(DatagramPacket[] packets, NetworkInterface nic, Level failureLogLevel) throws InterruptedIOException {
+        private void send(DatagramPacket[] packets, NetworkInterface nic, LogLevel failureLogLevel) throws InterruptedIOException {
             if (nic != null) {
                 long startTime = LogUtils.getCurrTimeIfTraceEnabled(logger);
                 try {
@@ -2458,14 +2455,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     if (logger.isLoggable(Level.FINEST))
                         logger.log(Level.FINEST, LogUtils.formatDuration(startTime, "send() - setNetworkInterface() for nic " + nic));
                 } catch (SocketException e) {
-                    if (logger.isLoggable(failureLogLevel)) {
-                        logThrow(
-                                failureLogLevel,
-                                getClass().getName(),
-                                "send",
-                                "exception setting {0}",
-                                new Object[]{nic},
-                                e);
+                    if (failureLogLevel.isEnabled(logger)) {
+                        LogUtils.throwing(failureLogLevel, logger, getClass(), "send", e, "exception setting {0}", nic);
                     }
                     if (logger.isLoggable(Level.FINEST))
                         logger.log(Level.FINEST, LogUtils.formatDuration(startTime, "send() - setNetworkInterface() failed for nic " + nic));
@@ -2479,20 +2470,11 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     throw e;
                 } catch (IOException e) {
                     if (nic != null) {
-                        if (logger.isLoggable(failureLogLevel)) {
-                            logThrow(
-                                    failureLogLevel,
-                                    getClass().getName(),
-                                    "send",
-                                    "exception sending packet on {0}",
-                                    new Object[]{nic},
-                                    e);
+                        if (failureLogLevel.isEnabled(logger)) {
+                            LogUtils.throwing(failureLogLevel, logger, getClass(), "send", e, "exception sending packet on {0}", nic);
                         }
                     } else {
-                        logger.log(
-                                failureLogLevel,
-                                "exception sending packet on default interface",
-                                e);
+                        failureLogLevel.log(logger, "exception sending packet on default interface", e);
                     }
                 }
             }
