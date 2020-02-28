@@ -95,23 +95,23 @@ public class XapManagerClusterInfo {
 
     private static XapManagerConfig parse(String s) {
         XapManagerConfig result = XapManagerConfig.parse(s);
-        if (logger.isLoggable(Level.CONFIG))
-            logger.log(Level.CONFIG, "Parse XapManagerConfig " + result);
+        if (logger.isLoggable(Level.FINE))
+            logger.log(Level.FINE, "Parse XapManagerConfig " + result);
         return result;
     }
 
     private static String get(String sysProp, String envVarSuffix) {
         String result = System.getProperty(sysProp);
         if (result != null) {
-            if (logger.isLoggable(Level.CONFIG))
-                logger.log(Level.CONFIG, "Loaded config from system property " + sysProp + "=" + result);
+            if (logger.isLoggable(Level.FINE))
+                logger.log(Level.FINE, "Loaded config from system property " + sysProp + "=" + result);
             return result;
         }
         String envVar = GsEnv.key(envVarSuffix);
         if (envVar != null) {
             result = System.getenv(envVar);
-            if (logger.isLoggable(Level.CONFIG))
-                logger.log(Level.CONFIG, "Loaded config from environment variable " + envVar + "=" + result);
+            if (logger.isLoggable(Level.FINE))
+                logger.log(Level.FINE, "Loaded config from environment variable " + envVar + "=" + result);
             return result;
         }
         return null;
@@ -131,11 +131,11 @@ public class XapManagerClusterInfo {
                 result = servers[0];
             }
         }
-        if (logger.isLoggable(Level.CONFIG)) {
+        if (logger.isLoggable(Level.FINE)) {
             if (result == null)
-                logger.log(Level.CONFIG, "Current host [" + currHost +"] is not part of configured managers");
+                logger.log(Level.FINE, "Current host [" + currHost +"] is not part of configured managers");
             else
-                logger.log(Level.CONFIG, "Current manager is " + result);
+                logger.log(Level.FINE, "Current manager is " + result);
         }
         return result;
     }

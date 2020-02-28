@@ -36,8 +36,8 @@ public class RuntimeInfo {
 
     public static void logRuntimeInfo(Logger logger, String prefix) {
         if (logger.isLoggable(Level.INFO)) {
-            if (logger.isLoggable(Level.CONFIG))
-                logger.log(Level.CONFIG, prefix + getEnvironmentInfoIfFirstTime(true));
+            if (logger.isLoggable(Level.FINE))
+                logger.log(Level.FINE, prefix + getEnvironmentInfoIfFirstTime(true));
             else
                 logger.log(Level.INFO, prefix + getEnvironmentInfoIfFirstTime(false));
         }

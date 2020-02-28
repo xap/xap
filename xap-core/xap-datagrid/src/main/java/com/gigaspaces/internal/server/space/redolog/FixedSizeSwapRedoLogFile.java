@@ -67,8 +67,8 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
         this._fetchBatchCapacity = config.getFetchBatchSize();
         this._combinedMemoryMaxCapacity = config.getCombinedMemoryMaxCapacity();
 
-        if (_logger.isLoggable(Level.CONFIG)) {
-            _logger.config("FixedSizeSwapRedoLogFile created:"
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.fine("FixedSizeSwapRedoLogFile created:"
                     + "\n\tmemoryMaxPackets = " + _memoryMaxCapacity
                     + "\n\tfetchBatchSize = " + _fetchBatchCapacity);
         }

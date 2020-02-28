@@ -503,44 +503,44 @@ public class TxnManagerImpl /*extends RemoteServer*/
                     (ProxyPreparer) Config.getNonNullEntry(config,
                             TxnManager.MAHALO, "activationSystemPreparer",
                             ProxyPreparer.class, new BasicProxyPreparer());
-            if (initLogger.isLoggable(Level.CONFIG)) {
-                initLogger.log(Level.CONFIG, "activationSystemPreparer: {0}",
+            if (initLogger.isLoggable(Level.FINE)) {
+                initLogger.log(Level.FINE, "activationSystemPreparer: {0}",
                         activationSystemPreparer);
             }
             activationSystem =
                     (ActivationSystem) activationSystemPreparer.prepareProxy(
                             ActivationGroup.getSystem());
-            if (initLogger.isLoggable(Level.CONFIG)) {
-                initLogger.log(Level.CONFIG, "Prepared activation system is: {0}",
+            if (initLogger.isLoggable(Level.FINE)) {
+                initLogger.log(Level.FINE, "Prepared activation system is: {0}",
                         activationSystem);
             }
             ProxyPreparer activationIdPreparer =
                     (ProxyPreparer) Config.getNonNullEntry(config,
                             TxnManager.MAHALO, "activationIdPreparer",
                             ProxyPreparer.class, new BasicProxyPreparer());
-            if (initLogger.isLoggable(Level.CONFIG)) {
-                initLogger.log(Level.CONFIG, "activationIdPreparer: {0}",
+            if (initLogger.isLoggable(Level.FINE)) {
+                initLogger.log(Level.FINE, "activationIdPreparer: {0}",
                         activationIdPreparer);
             }
             activationID = (ActivationID) activationIdPreparer.prepareProxy(
                     activationID);
-            if (initLogger.isLoggable(Level.CONFIG)) {
-                initLogger.log(Level.CONFIG, "Prepared activationID is: {0}",
+            if (initLogger.isLoggable(Level.FINE)) {
+                initLogger.log(Level.FINE, "Prepared activationID is: {0}",
                         activationID);
             }
             activationPrepared = true;
             exporter = (Exporter) Config.getNonNullEntry(config,
                     TxnManager.MAHALO, "serverExporter", Exporter.class);
             exporter = new ActivationExporter(activationID, exporter);
-            if (initLogger.isLoggable(Level.CONFIG)) {
-                initLogger.log(Level.CONFIG,
+            if (initLogger.isLoggable(Level.FINE)) {
+                initLogger.log(Level.FINE,
                         "Activatable service exporter is: {0}", exporter);
             }
         } else {
             exporter = (Exporter) Config.getNonNullEntry(config,
                     TxnManager.MAHALO, "serverExporter", Exporter.class);
-            if (initLogger.isLoggable(Level.CONFIG)) {
-                initLogger.log(Level.CONFIG,
+            if (initLogger.isLoggable(Level.FINE)) {
+                initLogger.log(Level.FINE,
                         "Non-activatable service exporter is: {0}", exporter);
             }
         }
@@ -549,16 +549,16 @@ public class TxnManagerImpl /*extends RemoteServer*/
                 (ProxyPreparer) Config.getNonNullEntry(config,
                         TxnManager.MAHALO, "recoveredParticipantPreparer",
                         ProxyPreparer.class, new BasicProxyPreparer());
-        if (initLogger.isLoggable(Level.CONFIG)) {
-            initLogger.log(Level.CONFIG, "Recovered participant preparer is: {0}",
+        if (initLogger.isLoggable(Level.FINE)) {
+            initLogger.log(Level.FINE, "Recovered participant preparer is: {0}",
                     recoveredParticipantPreparer);
         }
         if (persistent) {
             participantPreparer = (ProxyPreparer) Config.getNonNullEntry(config,
                     TxnManager.MAHALO, "participantPreparer", ProxyPreparer.class,
                     new BasicProxyPreparer());
-            if (initLogger.isLoggable(Level.CONFIG)) {
-                initLogger.log(Level.CONFIG, "Participant preparer is: {0}",
+            if (initLogger.isLoggable(Level.FINE)) {
+                initLogger.log(Level.FINE, "Participant preparer is: {0}",
                         participantPreparer);
             }
         }
@@ -567,8 +567,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
                 config, TxnManager.MAHALO, "leasePeriodPolicy",
                 LeasePeriodPolicy.class,
                 new SystemTimeFixedLeasePeriodPolicy(3 * HOURS, 1 * HOURS));
-        if (initLogger.isLoggable(Level.CONFIG)) {
-            initLogger.log(Level.CONFIG, "leasePeriodPolicy is: {0}",
+        if (initLogger.isLoggable(Level.FINE)) {
+            initLogger.log(Level.FINE, "leasePeriodPolicy is: {0}",
                     txnLeasePeriodPolicy);
         }
 
@@ -576,8 +576,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
             persistenceDirectory =
                     (String) Config.getNonNullEntry(config,
                             TxnManager.MAHALO, "persistenceDirectory", String.class);
-            if (initLogger.isLoggable(Level.CONFIG)) {
-                initLogger.log(Level.CONFIG, "Persistence directory is: {0}",
+            if (initLogger.isLoggable(Level.FINE)) {
+                initLogger.log(Level.FINE, "Persistence directory is: {0}",
                         persistenceDirectory);
             }
         } else { // just for insurance

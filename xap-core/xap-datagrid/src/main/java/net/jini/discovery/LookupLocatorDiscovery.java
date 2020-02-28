@@ -1641,8 +1641,8 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                             "com.gigaspaces.unicast.ping, " +
                             "ignoring");
                 }
-                if (logger.isLoggable(Level.CONFIG))
-                    logger.log(Level.CONFIG,
+                if (logger.isLoggable(Level.FINE))
+                    logger.log(Level.FINE,
                             "Set unicast ping to [" + invocationDelay + "]");
             }
             LookupLocator locator = proxy.getLocator();

@@ -371,18 +371,18 @@ import java.util.logging.Logger;
  * is encountered upon the initial attempt to set the interface or join the desired multicast group,
  * the interface will be periodically retried, and successful recovery will be logged at this level
  * </td> </tr> <tr> <td>{@link java.util.logging.Level#INFO INFO}</td> <td>when any exception occurs
- * while attempting to prepare a proxy</td> </tr> <tr> <td>{@link java.util.logging.Level#CONFIG
- * CONFIG}</td> <td> when the <code>multicastInterfaces</code> entry is configured to be
+ * while attempting to prepare a proxy</td> </tr> <tr> <td>{@link java.util.logging.Level#FINE
+ * FINE}</td> <td> when the <code>multicastInterfaces</code> entry is configured to be
  * <code>null</code>, multicast packets will be sent and received through the default network
  * interface assigned by the system, and that fact will be logged at this level </td> </tr> <tr>
- * <td>{@link java.util.logging.Level#CONFIG CONFIG}</td> <td> when the
+ * <td>{@link java.util.logging.Level#FINE FINE}</td> <td> when the
  * <code>multicastInterfaces</code> entry is configured to be a zero length array, multicast
  * discovery will be disabled, and and that fact will be logged at this level </td> </tr> <tr>
- * <td>{@link java.util.logging.Level#CONFIG CONFIG}</td> <td> when the
+ * <td>{@link java.util.logging.Level#FINE FINE}</td> <td> when the
  * <code>multicastInterfaces</code> entry contains a specific list of network interfaces, multicast
  * packets will be sent and received through only the network interfaces contained in that list, and
  * those interfaces will be logged at this level </td> </tr> <tr> <td>{@link
- * java.util.logging.Level#CONFIG CONFIG}</td> <td> when the <code>multicastInterfaces</code> entry
+ * java.util.logging.Level#FINE FINE}</td> <td> when the <code>multicastInterfaces</code> entry
  * is excluded from the configuration, multicast packets will be sent and received through all
  * interfaces in the system, and those interfaces will be logged at this level </td> </tr> <tr>
  * <td>{@link com.sun.jini.logging.Level#FINE FINE}</td> <td> when an
@@ -2717,19 +2717,19 @@ public class LookupDiscovery implements DiscoveryManagement,
                             NetworkInterface[].class);
             if (!Constants.isMulticastEnabled()) {
                 nicsToUse = NICS_USE_NONE;
-                logger.config("LookupDiscovery - MULTICAST DISABLED");
+                logger.fine("LookupDiscovery - MULTICAST DISABLED");
             } else if (nics == null) {
                 nicsToUse = NICS_USE_SYS;
-                logger.config("LookupDiscovery - using system default network "
+                logger.fine("LookupDiscovery - using system default network "
                         + "interface for multicast");
             } else {//(nics != null)
                 if (nics.length == 0) {
                     nicsToUse = NICS_USE_NONE;
-                    logger.config("LookupDiscovery - MULTICAST DISABLED");
+                    logger.fine("LookupDiscovery - MULTICAST DISABLED");
                 } else {//(nics.length > 0), use the given specific list
                     nicsToUse = NICS_USE_LIST;
-                    if (logger.isLoggable(Level.CONFIG)) {
-                        logger.log(Level.CONFIG,
+                    if (logger.isLoggable(Level.FINE)) {
+                        logger.log(Level.FINE,
                                 "LookupDiscovery - multicast network "
                                         + "interface(s): {0}", Arrays.asList(nics));
                     }//endif
@@ -2738,7 +2738,7 @@ public class LookupDiscovery implements DiscoveryManagement,
         } catch (NoSuchEntryException e) {// no config item, use default - all or none if disabled
             if (!Constants.isMulticastEnabled()) {
                 nicsToUse = NICS_USE_NONE;
-                logger.config("LookupDiscovery - MULTICAST DISABLED");
+                logger.fine("LookupDiscovery - MULTICAST DISABLED");
             } else {
                 String multicastInterface = System.getProperty("net.jini.discovery.LookupDiscovery.multicastInterface");
                 if (multicastInterface != null) {
@@ -2754,8 +2754,8 @@ public class LookupDiscovery implements DiscoveryManagement,
                 } else {
                     nics = BootUtil.getNetworkInterfaces();
                     nicsToUse = NICS_USE_ALL;
-                    if (logger.isLoggable(Level.CONFIG)) {
-                        logger.log(Level.CONFIG, "LookupDiscovery - multicast network interface(s): {0}", Arrays.toString(nics));
+                    if (logger.isLoggable(Level.FINE)) {
+                        logger.log(Level.FINE, "LookupDiscovery - multicast network interface(s): {0}", Arrays.toString(nics));
                     }//endif
                 }
             }
@@ -2803,8 +2803,8 @@ public class LookupDiscovery implements DiscoveryManagement,
                 0,
                 Long.MAX_VALUE);
 
-        if (logger.isLoggable(Level.CONFIG)) {
-            logger.config(
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine(
                     "\n\nConfiguration settings for [com.gs.multicast] :" +
                             "\n .enabled= " + Constants.isMulticastEnabled() +
                             "\n .ttl= " + Constants.getTtl() +

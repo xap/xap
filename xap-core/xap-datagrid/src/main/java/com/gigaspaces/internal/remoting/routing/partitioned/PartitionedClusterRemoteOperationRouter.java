@@ -64,8 +64,8 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
         for (int i = 0; i < _roundRobinPreciseIndexes.length; i++)
             _roundRobinPreciseIndexes[i] = new CyclicAtomicInteger(getNumOfPartitions() - 1);
 
-        if (_logger.isLoggable(Level.CONFIG))
-            _logger.log(Level.CONFIG, "Initialized partitioned cluster router - number of partitions = " + partitions.length);
+        if (_logger.isLoggable(Level.FINE))
+            _logger.log(Level.FINE, "Initialized partitioned cluster router - number of partitions = " + partitions.length);
     }
 
     public int getNumOfPartitions() {

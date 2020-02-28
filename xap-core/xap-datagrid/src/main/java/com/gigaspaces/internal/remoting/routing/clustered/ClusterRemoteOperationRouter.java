@@ -47,8 +47,8 @@ public class ClusterRemoteOperationRouter extends AbstractRemoteOperationRouter 
         super(cluster.getName());
         this._cluster = cluster;
         this._postponedAsyncOperationsQueue = posponedAsyncOperationsQueue;
-        if (_logger.isLoggable(Level.CONFIG))
-            _logger.log(Level.CONFIG, "Initialized clustered router" + _cluster.getPartitionDesc() + " - members=" + _cluster.getMembersNames());
+        if (_logger.isLoggable(Level.FINE))
+            _logger.log(Level.FINE, "Initialized clustered router" + _cluster.getPartitionDesc() + " - members=" + _cluster.getMembersNames());
     }
 
     @Override

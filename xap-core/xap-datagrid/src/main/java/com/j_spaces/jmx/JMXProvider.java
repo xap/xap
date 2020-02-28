@@ -152,8 +152,8 @@ public class JMXProvider {
                         try {
                             jmxConn.start();
 
-                            if (_logger.isLoggable(Level.CONFIG)) {
-                                _logger.config("\nNew JMXConnectorServer was successfully registered" +
+                            if (_logger.isLoggable(Level.FINE)) {
+                                _logger.fine("\nNew JMXConnectorServer was successfully registered" +
                                         " into the MBeanServer using service url: "
                                         + "\n" + jmxServiceURL + "\n");
                             }
@@ -161,8 +161,8 @@ public class JMXProvider {
                             String message = JSpaceUtilities.getCauseExceptionMessageFromHierarchy(
                                     ioe, NameAlreadyBoundException.class);
                             if (message != null) {
-                                if (_logger.isLoggable(Level.CONFIG)) {
-                                    _logger.config("\nUsing an already registered JMXConnectorServer " +
+                                if (_logger.isLoggable(Level.FINE)) {
+                                    _logger.fine("\nUsing an already registered JMXConnectorServer " +
                                             "with service url:\n" + jmxServiceURL + "\n");
                                 }
                             } else if (_logger.isLoggable(Level.WARNING)) {
@@ -208,8 +208,8 @@ public class JMXProvider {
             ObjectName objName = ObjectNameFactory.buildObjectName(DEFAULT_DOMAIN, mbean.getType(), containerName);
             m_MBeansRepository.put(containerName, mBeanServer.registerMBean(mbean, objName));
         } catch (InstanceAlreadyExistsException e) {
-            if (_logger.isLoggable(Level.CONFIG)) {
-                _logger.config("Container MBean is already registered for <" +
+            if (_logger.isLoggable(Level.FINE)) {
+                _logger.fine("Container MBean is already registered for <" +
                         containerName + ">");
             }
         } catch (Exception ex) {
@@ -219,8 +219,8 @@ public class JMXProvider {
             }
         }
 
-        if (_logger.isLoggable(Level.CONFIG)) {
-            _logger.config("\nContainer <" + containerName + "> MBean was registered successfully.\n");
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.fine("\nContainer <" + containerName + "> MBean was registered successfully.\n");
         }
     }
 
@@ -239,8 +239,8 @@ public class JMXProvider {
             try {
                 mBeanServer.registerMBean(transportConnectionsInfoMBean, objName);
             } catch (InstanceAlreadyExistsException e) {
-                if (_logger.isLoggable(Level.CONFIG)) {
-                    _logger.config(alreadyRegistredTransportMBeanMessage + containerName + ">");
+                if (_logger.isLoggable(Level.FINE)) {
+                    _logger.fine(alreadyRegistredTransportMBeanMessage + containerName + ">");
                 }
             } catch (NotCompliantMBeanException e) {
                 if (_logger.isLoggable(Level.WARNING)) {
@@ -254,13 +254,13 @@ public class JMXProvider {
                 }
             }
 
-            if (_logger.isLoggable(Level.CONFIG)) {
-                _logger.config(
+            if (_logger.isLoggable(Level.FINE)) {
+                _logger.fine(
                         successfulTransportMBeanRegistrationMessage + containerName + ">");
             }
         } else {
-            if (_logger.isLoggable(Level.CONFIG)) {
-                _logger.config(alreadyRegistredTransportMBeanMessage);
+            if (_logger.isLoggable(Level.FINE)) {
+                _logger.fine(alreadyRegistredTransportMBeanMessage);
             }
         }
     }
@@ -297,8 +297,8 @@ public class JMXProvider {
                 }
             }
 
-            if (_logger.isLoggable(Level.CONFIG)) {
-                _logger.config(
+            if (_logger.isLoggable(Level.FINE)) {
+                _logger.fine(
                         successfulTransportMBeanRegistrationMessage + containerName + ">");
             }
         }
@@ -342,8 +342,8 @@ public class JMXProvider {
             if (objInst != null) {
                 getMBeanServer(containerName).unregisterMBean(objInst.getObjectName());
 
-                if (_logger.isLoggable(Level.CONFIG)) {
-                    _logger.config("Container <" + containerName + "> MBean was unregistered successfully.");
+                if (_logger.isLoggable(Level.FINE)) {
+                    _logger.fine("Container <" + containerName + "> MBean was unregistered successfully.");
                 }
             }
         } catch (Exception ex) {
@@ -382,12 +382,12 @@ public class JMXProvider {
 
             m_MBeansRepository.put(spaceImpl.getServiceName() + "Ext", mBeanServer.registerMBean(mbeanExt, objNameExt));
 
-            if (_logger.isLoggable(Level.CONFIG)) {
-                _logger.config("\nSpace <" + spaceImpl.getServiceName() + "> MBean was registered successfully.\n");
+            if (_logger.isLoggable(Level.FINE)) {
+                _logger.fine("\nSpace <" + spaceImpl.getServiceName() + "> MBean was registered successfully.\n");
             }
         } catch (InstanceAlreadyExistsException e) {
-            if (_logger.isLoggable(Level.CONFIG)) {
-                _logger.config("Space MBean is already registered for <" + spaceImpl.getServiceName() + ">");
+            if (_logger.isLoggable(Level.FINE)) {
+                _logger.fine("Space MBean is already registered for <" + spaceImpl.getServiceName() + ">");
             }
         } catch (Exception ex) {
             if (_logger.isLoggable(Level.WARNING)) {
@@ -416,8 +416,8 @@ public class JMXProvider {
                 m_MBeanServer.unregisterMBean(objInst.getObjectName());
             }
 
-            if (_logger.isLoggable(Level.CONFIG)) {
-                _logger.config("Space <" + containerName + ":" +
+            if (_logger.isLoggable(Level.FINE)) {
+                _logger.fine("Space <" + containerName + ":" +
                         spaceName + "> MBean was unregister successfully.");
             }
         } catch (Exception ex) {

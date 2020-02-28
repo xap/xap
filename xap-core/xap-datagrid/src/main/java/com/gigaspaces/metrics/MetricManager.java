@@ -266,8 +266,8 @@ public class MetricManager implements Closeable {
     }
 
     private MetricReporter createReporter(String name, MetricReporterFactory reporterFactory) {
-        if (logger.isLoggable(Level.CONFIG))
-            logger.log(Level.CONFIG, "Loading metric reporter factory " + name);
+        if (logger.isLoggable(Level.FINE))
+            logger.log(Level.FINE, "Loading metric reporter factory " + name);
 
         try {
             return reporterFactory.create();

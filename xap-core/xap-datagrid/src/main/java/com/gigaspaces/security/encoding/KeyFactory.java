@@ -131,8 +131,8 @@ public class KeyFactory {
                 }
             }
 
-            if (logger.isLoggable(Level.CONFIG)) {
-                logger.config("Security key [" + resourceName + "] located in classpath");
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("Security key [" + resourceName + "] located in classpath");
             }
 
             try (ObjectInputStream in = new ObjectInputStream(inputStream)) {

@@ -52,8 +52,8 @@ public class JSpaceStatistics implements ISpaceFilter {
 
     public void init(IJSpace space, String filterId, String url, int priority) {
         SpaceImpl spaceImpl = space.getDirectProxy().getSpaceImplIfEmbedded();
-        if (_logger.isLoggable(Level.CONFIG))
-            _logger.log(Level.CONFIG, "Initializing Space statistics Filter of " + spaceImpl.getNodeName() + " [priority=" + priority + "]");
+        if (_logger.isLoggable(Level.FINE))
+            _logger.log(Level.FINE, "Initializing Space statistics Filter of " + spaceImpl.getNodeName() + " [priority=" + priority + "]");
 
         _period = Constants.Statistics.DEFAULT_PERIOD;
         Runnable averageCalculator = new Runnable() {

@@ -693,16 +693,16 @@ public class ResourceLoader {
 
             schemaInputStream = getResourceStream(defaultSchemaFileName);
             if (schemaInputStream != null) {
-                if (_logger.isLoggable(Level.CONFIG)) {
+                if (_logger.isLoggable(Level.FINE)) {
                     URL urlToLoad = getResourceURL(schemaFilePath);
                     if (urlToLoad != null) {
-                        _logger.config("Could not find the container schema file at: "
+                        _logger.fine("Could not find the container schema file at: "
                                 + urlToLoad
                                 + ".\nInstead, loaded the default container schema < "
                                 + defaultSchemaFileName
                                 + " > for the container configuration.");
                     } else {
-                        _logger.config("Could not find the container schema: "
+                        _logger.fine("Could not find the container schema: "
                                 + schemaFilePath
                                 + ".\nInstead, loaded the default container schema < "
                                 + defaultSchemaFileName

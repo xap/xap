@@ -143,8 +143,8 @@ public class PAdapter implements ProtocolAdapter<CPeer> {
         _exporter = (GenericExporter) ServiceConfigLoader.getExporter();
         initClassProvider();
 
-        if (_logger.isLoggable(Level.CONFIG))
-            _logger.config(config.toString());
+        if (_logger.isLoggable(Level.FINE))
+            _logger.fine(config.toString());
 
         try {
             // creates Pivot on specified according to nioConfig

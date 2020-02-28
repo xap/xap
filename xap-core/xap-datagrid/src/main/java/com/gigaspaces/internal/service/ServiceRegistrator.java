@@ -167,7 +167,7 @@ public class ServiceRegistrator {
             Long renewalDuration = ((Long) config.getEntry("net.jini.lookup.JoinManager", "maxLeaseDuration", long.class));
             Long roundTripTime = ((Long) config.getEntry("net.jini.lease.LeaseRenewalManager", "roundTripTime", long.class));
             if (roundTripTime != null && renewalDuration != null)
-                _logger.log(Level.CONFIG, "The Space JoinManager leasing configuration values are: roundTripTime:" + roundTripTime + " maxLeaseDuration:" + renewalDuration);
+                _logger.log(Level.FINE, "The Space JoinManager leasing configuration values are: roundTripTime:" + roundTripTime + " maxLeaseDuration:" + renewalDuration);
         }
         return config;
     }

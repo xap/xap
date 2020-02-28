@@ -52,8 +52,8 @@ public class EmbeddedRemoteOperationRouter extends AbstractRemoteOperationRouter
         this._executor = memberProxy.getExecutor();
         this._asyncExecutor = asyncExecutor;
 
-        if (_logger.isLoggable(Level.CONFIG))
-            _logger.log(Level.CONFIG, "Initialized embedded router" + getPartitionDesc() + " - member=[" + memberProxy.getName() + "]");
+        if (_logger.isLoggable(Level.FINE))
+            _logger.log(Level.FINE, "Initialized embedded router" + getPartitionDesc() + " - member=[" + memberProxy.getName() + "]");
     }
 
     public RemoteOperationsExecutor getExecutor() {

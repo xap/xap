@@ -107,8 +107,8 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
         this._writerBuffer = ByteBuffer.allocate(config.getWriterBufferSize());
         this._packetSerializer = new PacketSerializer<T>(config.getPacketStreamSerializer());
 
-        if (_logger.isLoggable(Level.CONFIG)) {
-            _logger.config("ByteBufferRedoLogFileStorage created:"
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.fine("ByteBufferRedoLogFileStorage created:"
                     + "\n\tmaxWriteBufferSize = " + (config.getWriterMaxBufferSize() / 1024) + "kb"
                     + "\n\tmaxSwapSize = " + (config.getMaxSwapSize() == -1 ? "UNLIMITED" : (_maxSwapSize / (1024 * 1024)) + "mb")
                     + "\n\tmaxSizePerSegment = " + (config.getMaxSizePerSegment() / (1024 * 1024)) + "mb"

@@ -93,8 +93,8 @@ public class TransactionHandler {
         _engine = engine;
         clean_unused_xtns_interval = configReader.getIntSpaceProperty(LM_EXPIRATION_TIME_UNUSED_TXN_PROP, String.valueOf(LM_EXPIRATION_TIME_UNUSED_TXN_DEFAULT));
         Logger logger = CacheManager.getCacheLogger();
-        if (logger.isLoggable(Level.CONFIG))
-            logger.config("TransactionHandler BASIC_TIME_FOR_PREPARED_XTN=" + BASIC_TIME_FOR_PREPARED_XTN + " EXTENTION_TIME_FOR_PREPARED_XTN-" + EXTENTION_TIME_FOR_PREPARED_XTN);
+        if (logger.isLoggable(Level.FINE))
+            logger.fine("TransactionHandler BASIC_TIME_FOR_PREPARED_XTN=" + BASIC_TIME_FOR_PREPARED_XTN + " EXTENTION_TIME_FOR_PREPARED_XTN-" + EXTENTION_TIME_FOR_PREPARED_XTN);
     }
 
     /**

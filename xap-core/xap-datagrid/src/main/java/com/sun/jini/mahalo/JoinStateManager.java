@@ -210,8 +210,8 @@ class JoinStateManager extends LogHandler {
                 (ProxyPreparer) Config.getNonNullEntry(config,
                         TxnManager.MAHALO, "lookupLocatorPreparer",
                         ProxyPreparer.class, defaultPreparer);
-        if (initlogger.isLoggable(Level.CONFIG)) {
-            initlogger.log(Level.CONFIG, "lookupLocatorPreparer: {0}",
+        if (initlogger.isLoggable(Level.FINE)) {
+            initlogger.log(Level.FINE, "lookupLocatorPreparer: {0}",
                     lookupLocatorPreparer);
         }
 //TODO - defer creation of default LDM
@@ -220,8 +220,8 @@ class JoinStateManager extends LogHandler {
                         "discoveryManager", DiscoveryManagement.class,
                         new LookupDiscoveryManager(
                                 LookupGroups.none(), null, null, config));
-        if (initlogger.isLoggable(Level.CONFIG)) {
-            initlogger.log(Level.CONFIG, "discoveryManager: {0}", dm);
+        if (initlogger.isLoggable(Level.FINE)) {
+            initlogger.log(Level.FINE, "discoveryManager: {0}", dm);
         }
 
         if (dm instanceof DiscoveryGroupManagement) {
@@ -267,8 +267,8 @@ class JoinStateManager extends LogHandler {
                     config.getEntry(TxnManager.MAHALO,
                             "initialLookupGroups", String[].class,
                             BootUtil.toArray(SystemInfo.singleton().lookup().groups()));
-            if (initlogger.isLoggable(Level.CONFIG)) {
-                initlogger.log(Level.CONFIG, "Obtaining initial groups: {0}",
+            if (initlogger.isLoggable(Level.FINE)) {
+                initlogger.log(Level.FINE, "Obtaining initial groups: {0}",
                         (groups == null ?
                                 Arrays.asList(new String[]{"<ALL_GROUPS>"}) :
                                 Arrays.asList(groups)));
@@ -277,15 +277,15 @@ class JoinStateManager extends LogHandler {
                     Config.getNonNullEntry(config, TxnManager.MAHALO,
                             "initialLookupLocators", LookupLocator[].class,
                             toLookupLocators(System.getProperty(SystemProperties.JINI_LUS_LOCATORS, "")));
-            if (initlogger.isLoggable(Level.CONFIG)) {
-                initlogger.log(Level.CONFIG, "Obtaining initial locators: {0}",
+            if (initlogger.isLoggable(Level.FINE)) {
+                initlogger.log(Level.FINE, "Obtaining initial locators: {0}",
                         Arrays.asList(locators));
             }
             final Entry[] cAttrs = (Entry[])
                     Config.getNonNullEntry(config, TxnManager.MAHALO,
                             "initialLookupAttributes", Entry[].class, new Entry[0]);
-            if (initlogger.isLoggable(Level.CONFIG)) {
-                initlogger.log(Level.CONFIG, "Obtaining initial attributes: {0}",
+            if (initlogger.isLoggable(Level.FINE)) {
+                initlogger.log(Level.FINE, "Obtaining initial attributes: {0}",
                         Arrays.asList(cAttrs));
             }
             if (cAttrs.length == 0) {
@@ -316,8 +316,8 @@ class JoinStateManager extends LogHandler {
                                 TxnManager.MAHALO,
                                 "recoveredLookupLocatorPreparer", ProxyPreparer.class,
                                 defaultPreparer);
-                if (initlogger.isLoggable(Level.CONFIG)) {
-                    initlogger.log(Level.CONFIG, "recoveredLookupLocatorPreparer: {0}",
+                if (initlogger.isLoggable(Level.FINE)) {
+                    initlogger.log(Level.FINE, "recoveredLookupLocatorPreparer: {0}",
                             recoveredLookupLocatorPreparer);
                 }
                 final List prepared = new java.util.LinkedList();

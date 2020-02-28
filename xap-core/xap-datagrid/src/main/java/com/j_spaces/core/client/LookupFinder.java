@@ -126,8 +126,8 @@ public class LookupFinder {
             }
 
             if (result != null) {
-                if (_logger.isLoggable(Level.CONFIG)) {
-                    _logger.config(generateReport(result, serviceName, serviceID, serviceClass, serviceAttributes,
+                if (_logger.isLoggable(Level.FINE)) {
+                    _logger.fine(generateReport(result, serviceName, serviceID, serviceClass, serviceAttributes,
                             lookupLocators, lookupGroups, timeout, sdm));
                 }
 
@@ -136,8 +136,8 @@ public class LookupFinder {
 
             String report = generateReport(null, serviceName, serviceID, serviceClass, serviceAttributes,
                     lookupLocators, lookupGroups, timeout, sdm);
-            if (_logger.isLoggable(Level.CONFIG))
-                _logger.config(report);
+            if (_logger.isLoggable(Level.FINE))
+                _logger.fine(report);
 
             throw new FinderException(report, exception);
         } finally {

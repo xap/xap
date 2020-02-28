@@ -3198,8 +3198,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 throw new RuntimeException(e.toString());
             }
             lookupGroups = dgm.getGroups();
-            if (logger.isLoggable(Level.CONFIG)) {
-                logger.log(Level.CONFIG, "added lookup groups {0}", new Object[]{Arrays.asList(groups)});
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE, "added lookup groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             lookupGroupsRWL.writeLock().unlock();
@@ -3228,8 +3228,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             DiscoveryGroupManagement dgm = (DiscoveryGroupManagement) discoer;
             dgm.removeGroups(groups);
             lookupGroups = dgm.getGroups();
-            if (logger.isLoggable(Level.CONFIG)) {
-                logger.log(Level.CONFIG, "removed lookup groups {0}", new Object[]{Arrays.asList(groups)});
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE, "removed lookup groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             lookupGroupsRWL.writeLock().unlock();
@@ -3261,8 +3261,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 throw new RuntimeException(e.toString());
             }
             lookupGroups = dgm.getGroups();
-            if (logger.isLoggable(Level.CONFIG)) {
-                logger.log(Level.CONFIG, "set lookup groups {0}", new Object[]{
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE, "set lookup groups {0}", new Object[]{
                                 (groups != null) ? Arrays.asList(groups) : null});
             }
         } finally {
@@ -3320,8 +3320,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     (DiscoveryLocatorManagement) discoer;
             dlm.addLocators(locators);
             lookupLocators = dlm.getLocators();
-            if (logger.isLoggable(Level.CONFIG)) {
-                logger.log(Level.CONFIG, "added lookup locators {0}", new Object[]{Arrays.asList(locators)});
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE, "added lookup locators {0}", new Object[]{Arrays.asList(locators)});
             }
         } finally {
             lookupLocatorsRWL.writeLock().unlock();
@@ -3353,8 +3353,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     (DiscoveryLocatorManagement) discoer;
             dlm.removeLocators(locators);
             lookupLocators = dlm.getLocators();
-            if (logger.isLoggable(Level.CONFIG)) {
-                logger.log(Level.CONFIG, "removed lookup locators {0}", new Object[]{Arrays.asList(locators)});
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE, "removed lookup locators {0}", new Object[]{Arrays.asList(locators)});
             }
         } finally {
             lookupLocatorsRWL.writeLock().unlock();
@@ -3386,8 +3386,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     (DiscoveryLocatorManagement) discoer;
             dlm.setLocators(locators);
             lookupLocators = dlm.getLocators();
-            if (logger.isLoggable(Level.CONFIG)) {
-                logger.log(Level.CONFIG, "set lookup locators {0}", new Object[]{Arrays.asList(locators)});
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE, "set lookup locators {0}", new Object[]{Arrays.asList(locators)});
             }
         } finally {
             lookupLocatorsRWL.writeLock().unlock();
@@ -3421,8 +3421,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     announcer.notify();
                 }
             }
-            if (logger.isLoggable(Level.CONFIG)) {
-                logger.log(Level.CONFIG, "added member groups {0}", new Object[]{Arrays.asList(groups)});
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE, "added member groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             memberGroupRWL.writeLock().unlock();
@@ -3458,8 +3458,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     announcer.notify();
                 }
             }
-            if (logger.isLoggable(Level.CONFIG)) {
-                logger.log(Level.CONFIG, "removed member groups {0}", new Object[]{Arrays.asList(groups)});
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE, "removed member groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             memberGroupRWL.writeLock().unlock();
@@ -3515,8 +3515,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     announcer.notify();
                 }
             }
-            if (logger.isLoggable(Level.CONFIG)) {
-                logger.log(Level.CONFIG, "set member groups {0}", new Object[]{Arrays.asList(groups)});
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE, "set member groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             memberGroupRWL.writeLock().unlock();
@@ -3594,8 +3594,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     announcer.notify();
                 }
             }
-            if (logger.isLoggable(Level.CONFIG)) {
-                logger.log(Level.CONFIG, "changed unicast discovery port to {0}", new Object[]{unicaster.port});
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE, "changed unicast discovery port to {0}", new Object[]{unicaster.port});
             }
         } finally {
             unicastPortRWL.writeLock().unlock();
@@ -4782,15 +4782,15 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             multicastInterfacesSpecified = false;
         }
         if (multicastInterfaces == null) {
-            logger.config("using system default interface for multicast");
+            logger.fine("using system default interface for multicast");
         } else if (multicastInterfaces.length == 0) {
             if (multicastInterfacesSpecified) {
-                logger.config("multicast disabled");
+                logger.fine("multicast disabled");
             } else {
                 logger.severe("no network interfaces detected");
             }
-        } else if (logger.isLoggable(Level.CONFIG)) {
-            logger.log(Level.CONFIG, "multicasting on interfaces {0}",
+        } else if (logger.isLoggable(Level.FINE)) {
+            logger.log(Level.FINE, "multicasting on interfaces {0}",
                     new Object[]{Arrays.asList(multicastInterfaces)});
         }
 

@@ -53,8 +53,8 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
     public BufferedRedoLogFileStorageDecorator(int bufferSize, IRedoLogFileStorage storage) {
         this._bufferCapacity = bufferSize;
         this._storage = storage;
-        if (_logger.isLoggable(Level.CONFIG)) {
-            _logger.config("BufferedRedoLogFileStorageDecorator created:"
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.fine("BufferedRedoLogFileStorageDecorator created:"
                     + "\n\tbufferSize = " + _bufferCapacity);
         }
         _bufferWeight = 0;

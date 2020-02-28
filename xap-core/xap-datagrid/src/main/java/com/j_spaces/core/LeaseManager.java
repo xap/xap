@@ -211,8 +211,8 @@ public class LeaseManager {
     }
 
     private void logConfiguration() {
-        if (_logger.isLoggable(Level.CONFIG)) {
-            _logger.config("Lease Manager Reaper will periodically reap expired content of:\n\t"
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.fine("Lease Manager Reaper will periodically reap expired content of:\n\t"
                     + "Entries/templates - every "
                     + _expirationTimeInterval
                     + " ms\n\t"

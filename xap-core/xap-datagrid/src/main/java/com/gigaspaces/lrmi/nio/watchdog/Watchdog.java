@@ -147,8 +147,8 @@ public class Watchdog extends GSThread {
                 MIN_RESOLUTION,
                 MAX_RESOLUTION);
 
-        if (_logger.isLoggable(Level.CONFIG)) {
-            _logger.config("Running watchdog with listening timeout="
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.fine("Running watchdog with listening timeout="
                     + listeningTimeout + "sec,request timeout=" + requestTimeout
                     + " millis,idle connection timeout=" + idleConnectionTimeout
                     + " millis, retries=" + idleConnectionRetries

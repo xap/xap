@@ -78,8 +78,8 @@ public class SpaceProxyRouter {
         this._config = new SpaceRemoteOperationsExecutorsClusterConfig(properties);
         if (_clusterInfo.isPartitioned() && _config.getLoadBalancerType() == SpaceProxyLoadBalancerType.ROUND_ROBIN)
             throw new IllegalStateException("Cannot use round robin load balancing with a partitioned space.");
-        if (_logger.isLoggable(Level.CONFIG)) {
-            _logger.log(Level.CONFIG, "Initializing space proxy router - [" +
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.log(Level.FINE, "Initializing space proxy router - [" +
                     "Active server lookup timeout=" + _config.getActiveServerLookupTimeout() +
                     ", Active server lookup sampling interval=" + _config.getActiveServerLookupSamplingInterval() +
                     ", Thread pool size=" + _config.getThreadPoolSize() +

@@ -65,8 +65,8 @@ public class MetricSampler implements Closeable {
         this.batchSize = config.getBatchSize();
         this.reporters = reporters;
         this.executor = Executors.newSingleThreadScheduledExecutor(new GSThreadFactory("metrics-sampler-" + config.getName(), true));
-        if (logger.isLoggable(Level.CONFIG))
-            logger.log(Level.CONFIG, "Metric sampler created [sampleRate=" + samplingRate + "ms, batchSize=" + batchSize + "]");
+        if (logger.isLoggable(Level.FINE))
+            logger.log(Level.FINE, "Metric sampler created [sampleRate=" + samplingRate + "ms, batchSize=" + batchSize + "]");
     }
 
     Collection<MetricReporter> getReporters() {
@@ -127,8 +127,8 @@ public class MetricSampler implements Closeable {
             synchronized (lock) {
                 if (!isActive() && shouldBeActive()) {
                     future = executor.scheduleAtFixedRate(new Sampler(), 0, samplingRate, TimeUnit.MILLISECONDS);
-                    if (logger.isLoggable(Level.CONFIG))
-                        logger.log(Level.CONFIG, "Started metric sampler [sample-rate=" + samplingRate + "ms]");
+                    if (logger.isLoggable(Level.FINE))
+                        logger.log(Level.FINE, "Started metric sampler [sample-rate=" + samplingRate + "ms]");
                 }
             }
         }

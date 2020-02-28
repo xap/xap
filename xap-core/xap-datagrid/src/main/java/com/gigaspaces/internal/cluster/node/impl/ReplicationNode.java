@@ -181,8 +181,8 @@ public class ReplicationNode
         _name = name;
         this.metricRegister = metricRegister.extend(MetricConstants.REPLICATION_METRIC_NAME);
 
-        if (_logger.isLoggable(Level.CONFIG))
-            _logger.config(getLogPrefix()
+        if (_logger.isLoggable(Level.FINE))
+            _logger.fine(getLogPrefix()
                     + "creating replication node with config:"
                     + StringUtils.NEW_LINE + replicationNodeConfig
                     + StringUtils.NEW_LINE + "builder:" + StringUtils.NEW_LINE

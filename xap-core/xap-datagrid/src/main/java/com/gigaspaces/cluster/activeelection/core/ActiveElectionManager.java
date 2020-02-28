@@ -300,8 +300,8 @@ public class ActiveElectionManager {
         this.splitBrainRecoveryHolder = splitBrainRecoveryHolder;
         this.recoveryIndicator = recoveryIndicator;
 
-        if (_logger.isLoggable(Level.CONFIG)) {
-            _logger.config("Initialized with: " +
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.fine("Initialized with: " +
                     "\n\t\t ServiceTemplate: " + participantSrvTemplate +
                     "\n\t\t NamingService: " + namingSrv.getName() +
                     "\n\t\t ActiveElectionListener: " + activeElectionListener +

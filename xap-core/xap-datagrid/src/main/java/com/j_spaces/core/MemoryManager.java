@@ -219,18 +219,18 @@ public class MemoryManager implements Closeable {
             _memoryUsageSyncEvictionLevel = 100;
         }
 
-        if (_logger.isLoggable(Level.CONFIG)) {
+        if (_logger.isLoggable(Level.FINE)) {
             if (_enabled) {
-                _logger.config("Memory manager is enabled [" +
+                _logger.fine("Memory manager is enabled [" +
                         "high_watermark=" + _memoryUsageHighLevel + "%, " +
                         "low_watermark=" + _memoryUsageLowLevel + "%, " +
                         "write_only_block=" + _memoryWriteOnlyBlock + "%, " +
                         "write_only_check=" + _memoryWriteOnlyCheck + "%, " +
                         "retry_count=" + _memoryRetryCount + "]");
             } else if (_restartOnFailover)
-                _logger.config("Memory manager is disabled, but will be activated if this instance becomes primary");
+                _logger.fine("Memory manager is disabled, but will be activated if this instance becomes primary");
             else
-                _logger.config("Memory manager is disabled");
+                _logger.fine("Memory manager is disabled");
         }
 
         start();
@@ -259,7 +259,7 @@ public class MemoryManager implements Closeable {
                 heapDump.setMaxHeaps(Integer.getInteger(SystemProperties.MAX_HEAPS_ON_MEMORY_SHORTAGE, 1));
                 heapDump.setQuietPeriod(Long.getLong(SystemProperties.HEAPS_ON_MEMORY_SHORTAGE_QUIET_PERIOD, 1));
                 mbs.registerMBean(heapDump, name);
-                _logger.config("Register HeapDumpMBean " + name);
+                _logger.fine("Register HeapDumpMBean " + name);
             }
         }catch(Exception e){
             _logger.log(Level.WARNING, "failed to start HeapDumpMBean" +  e);

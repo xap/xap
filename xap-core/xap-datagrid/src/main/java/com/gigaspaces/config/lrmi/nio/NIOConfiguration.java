@@ -420,8 +420,8 @@ public class NIOConfiguration implements ITransportConfig, Cloneable, Externaliz
                 protocolValidationEnabled
         );
 
-        if (logger.isLoggable(Level.CONFIG)) {
-            logger.config(String.valueOf(nioConfiguration));
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine(String.valueOf(nioConfiguration));
         }
         return nioConfiguration;
     }

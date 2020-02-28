@@ -69,8 +69,8 @@ public class BatchLeaseRenewalManager implements EventLeaseRenewalManager {
         _lock = new Object();
         _renewalTask = new BatchLeaseRenewalTask();
         _leases = new ConcurrentHashMap<SpaceLease, LeaseListener>();
-        if (_logger.isLoggable(Level.CONFIG))
-            _logger.log(Level.CONFIG, "BatchLeaseRenewalManager initialized (" +
+        if (_logger.isLoggable(Level.FINE))
+            _logger.log(Level.FINE, "BatchLeaseRenewalManager initialized (" +
                     "renewDuration=" + _renewDuration + ", " +
                     "renewInterval=" + _renewInterval + ")");
         if (_renewInterval > _renewDuration)

@@ -149,7 +149,7 @@ public class GSLogConfigLoader {
         boolean loadedExt = loadGsExtLoggingPropertiesFileFromClasspath();
 
         if (!loaded && !loadedExt && _loggerConfig) {
-            LogHelper.println(COM_GS_LOGGING, Level.CONFIG, "Not using any logging configuration file");
+            LogHelper.println(COM_GS_LOGGING, Level.FINE, "Not using any logging configuration file");
         }
     }
 
@@ -173,7 +173,7 @@ public class GSLogConfigLoader {
                 _props.load(in);
 
                 if (_loggerConfig) {
-                    LogHelper.println(COM_GS_LOGGING, Level.CONFIG, "Loaded logging configuration file from: " + logConfigFile.getAbsolutePath());
+                    LogHelper.println(COM_GS_LOGGING, Level.FINE, "Loaded logging configuration file from: " + logConfigFile.getAbsolutePath());
                 }
                 return true; //stop trying, configuration loaded
             } else {
@@ -181,7 +181,7 @@ public class GSLogConfigLoader {
             }
         } catch (Exception e) {
             if (_loggerConfig) {
-                LogHelper.println(COM_GS_LOGGING, Level.CONFIG, "Failed to load logging configuration file from: " + logConfigFile.getAbsolutePath(), e);
+                LogHelper.println(COM_GS_LOGGING, Level.FINE, "Failed to load logging configuration file from: " + logConfigFile.getAbsolutePath(), e);
             }
             return true; //stop trying, configuration failed
         } finally {
@@ -223,7 +223,7 @@ public class GSLogConfigLoader {
 
                 if (_loggerConfig) {
                     File f = new File(classLoader.getResource(fileName).getFile());
-                    LogHelper.println(COM_GS_LOGGING, Level.CONFIG, "Loaded logging configuration file from: " + f.getAbsolutePath());
+                    LogHelper.println(COM_GS_LOGGING, Level.FINE, "Loaded logging configuration file from: " + f.getAbsolutePath());
                 }
                 return true; //stop trying, configuration loaded
             } else {
@@ -231,7 +231,7 @@ public class GSLogConfigLoader {
             }
         } catch (IOException e) {
             if (_loggerConfig) {
-                LogHelper.println(COM_GS_LOGGING, Level.CONFIG, "Failed to load configuration file [" + fileName + "] from classpath", e);
+                LogHelper.println(COM_GS_LOGGING, Level.FINE, "Failed to load configuration file [" + fileName + "] from classpath", e);
             }
 
             return true; //stop trying, failed to read configuration
@@ -262,7 +262,7 @@ public class GSLogConfigLoader {
             if (newValue != null) {
                 Object prevVal = _props.put(key, newValue);
                 if (_loggerConfig) {
-                    LogHelper.println(COM_GS_LOGGING, Level.CONFIG, "override: " + key + "=" + newValue
+                    LogHelper.println(COM_GS_LOGGING, Level.FINE, "override: " + key + "=" + newValue
                             + (prevVal != null ? " (was " + prevVal + ")" : ""));
                 }
             }

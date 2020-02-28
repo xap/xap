@@ -117,8 +117,8 @@ final public class MirrorConfig {
                         "\t" + Mirror.MIRROR_DISTRIBUTED_TRANSACTION_WAIT_FOR_OPERATIONS + "=" + waitForOperationsBeforePartialCommit +
                         "\t" + Mirror.MIRROR_DISTRIBUTED_TRANSACTION_MONITOR_PENDING_OPERATIONS_MEMORY + "=" + monitorPendingOperationsMemory;
 
-        if (_logger.isLoggable(Level.CONFIG)) {
-            _logger.config(configLogMessage);
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.fine(configLogMessage);
         }
     }
 

@@ -93,9 +93,9 @@ public class DataStorage<T>
             _saManagedDataSource = null;
 
 
-        if (_logger.isLoggable(Level.CONFIG)) {
+        if (_logger.isLoggable(Level.FINE)) {
 
-            _logger.config("\n\t Space Data Storage <" + store + "> Loaded"
+            _logger.fine("\n\t Space Data Storage <" + store + "> Loaded"
                     + "\n\t\t " + DataProvider.class.getSimpleName() + "              : " + (isDataProvider() ? "Implemented" : "-")
                     + "\n\t\t " + DataPersister.class.getSimpleName() + "             : " + (isDataPersister() ? "Implemented" : "-")
                     + "\n\t\t " + BulkDataPersister.class.getSimpleName() + "         : " + (isBulkDataPersister() ? "Implemented" : "-")

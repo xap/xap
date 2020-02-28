@@ -52,9 +52,9 @@ import java.util.logging.Logger;
  * different logging levels"> <caption halign="center" valign="top"><b><code>
  * com.sun.jini.logging.LogManager</code></b></caption> <tr><th scope="col">Level<th
  * scope="col">Description <tr><td>{@link Level#WARNING WARNING}<td>if an exception occurs while
- * rereading the logging configuration file <tr><td>{@link Level#CONFIG CONFIG}<td>each time the
- * logging configuration file is successfully reread <tr><td>{@link Level#CONFIG
- * CONFIG}<td>termination of probes because interval is less than or equal to zero </table>
+ * rereading the logging configuration file <tr><td>{@link Level#FINE FINE}<td>each time the
+ * logging configuration file is successfully reread <tr><td>{@link Level#FINE
+ * FINE}<td>termination of probes because interval is less than or equal to zero </table>
  *
  * @author Sun Microsystems, Inc.
  * @since 2.0
@@ -152,7 +152,7 @@ public class LogManager extends java.util.logging.LogManager {
                         try {
                             readConfiguration();
                             interval = getInterval();
-                            logger.log(Level.CONFIG,
+                            logger.log(Level.FINE,
                                     "logging config file reread complete," +
                                             " new interval is {0}",
                                     new Long(interval));
@@ -172,7 +172,7 @@ public class LogManager extends java.util.logging.LogManager {
                 synchronized (LogManager.this) {
                     probe = null;
                 }
-                logger.config("logging config file probe terminating");
+                logger.fine("logging config file probe terminating");
             }
         }
     }

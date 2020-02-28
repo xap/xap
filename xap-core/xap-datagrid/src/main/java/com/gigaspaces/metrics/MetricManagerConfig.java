@@ -80,18 +80,18 @@ public class MetricManagerConfig {
 
         if (file.exists()) {
             if (file.canRead()) {
-                if (logger.isLoggable(Level.CONFIG)) {
-                    logger.log(Level.CONFIG, "Loading metrics configuration from " + file.getAbsolutePath());
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.log(Level.FINE, "Loading metrics configuration from " + file.getAbsolutePath());
                 }
                 config.loadXml(fileName);
             } else {
-                if (logger.isLoggable(Level.CONFIG)) {
-                    logger.log(Level.CONFIG, "Unable to read metrics configuration from " + file.getAbsolutePath());
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.log(Level.FINE, "Unable to read metrics configuration from " + file.getAbsolutePath());
                 }
             }
         } else {
-            if (logger.isLoggable(Level.CONFIG)) {
-                logger.log(Level.CONFIG, "Metrics configuration file " + file.getAbsolutePath() + " does not exist");
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE, "Metrics configuration file " + file.getAbsolutePath() + " does not exist");
             }
         }
         return config;

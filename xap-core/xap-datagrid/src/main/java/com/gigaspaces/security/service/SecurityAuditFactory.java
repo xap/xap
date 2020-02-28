@@ -55,10 +55,10 @@ public class SecurityAuditFactory {
      * @throws SecurityException if failed to create the security audit.
      */
     public static SecurityAudit createSecurityAudit(Properties securityProperties) throws SecurityException {
-        if (logger.isLoggable(Level.CONFIG)) {
+        if (logger.isLoggable(Level.FINE)) {
             String property = securityProperties.getProperty(SECURITY_AUDIT_CLASS_PROPERTY_KEY);
             if (property != null) {
-                logger.config("Security security-audit class: " + property);
+                logger.fine("Security security-audit class: " + property);
             }
         }
 

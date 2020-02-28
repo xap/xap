@@ -59,7 +59,7 @@ public class MultiplexDataEventListener implements ManagedRemoteEventListener, B
                 logger.log(Level.WARNING, "Failed to close event registration " + regInfo.getEventRegistration() + " skipping more " + remains + " registrations");
                 break;
             } catch (Exception ex) {
-                logger.log(Level.CONFIG, "Failed to close event registration ", ex);
+                logger.log(Level.FINE, "Failed to close event registration ", ex);
             }
         }
 

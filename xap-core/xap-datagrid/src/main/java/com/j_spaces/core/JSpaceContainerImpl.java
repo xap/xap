@@ -1355,8 +1355,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
             throw new CreateException("Failed to create cluster policy", ex);
         }
 
-        if (_logger.isLoggable(Level.CONFIG)) {
-            _logger.log(Level.CONFIG, clusterPolicy.toString());
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.log(Level.FINE, clusterPolicy.toString());
         }
 
         return clusterPolicy;
@@ -2175,16 +2175,16 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
 
                     String jmxServiceURL = JMXUtilities.createJMXUrl(_rmiHostAndPort);
                     System.setProperty(CommonSystemProperties.JMX_SERVICE_URL, jmxServiceURL);
-                    if (_logger.isLoggable(Level.CONFIG))
-                        _logger.config("Created RMIRegistry on: < " + _rmiHostAndPort + " >");
+                    if (_logger.isLoggable(Level.FINE))
+                        _logger.fine("Created RMIRegistry on: < " + _rmiHostAndPort + " >");
                 } else {
-                    if (_logger.isLoggable(Level.CONFIG))
-                        _logger.config("Using an already running RMIRegistry on: < " + _rmiHostAndPort + " >");
+                    if (_logger.isLoggable(Level.FINE))
+                        _logger.fine("Using an already running RMIRegistry on: < " + _rmiHostAndPort + " >");
                 }
 
             } catch (RemoteException ex) {
-                if (_logger.isLoggable(Level.CONFIG)) {
-                    _logger.config("RMIRegistry did not start on: < " + _rmiHostAndPort + " >. It might be already running.");
+                if (_logger.isLoggable(Level.FINE)) {
+                    _logger.fine("RMIRegistry did not start on: < " + _rmiHostAndPort + " >. It might be already running.");
                 }
                 // in case the rmi-registry is already running, we do nothing
             }

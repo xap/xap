@@ -64,10 +64,10 @@ public class SecurityFactory {
             if (securityProperties == null) {
                 securityProperties = new Properties();
             }
-            if (logger.isLoggable(Level.CONFIG)) {
+            if (logger.isLoggable(Level.FINE)) {
                 String property = securityProperties.getProperty(SecurityManager.SECURITY_MANAGER_CLASS_PROPERTY_KEY);
                 if (property != null) {
-                    logger.config("Security security-manager class: " + property);
+                    logger.fine("Security security-manager class: " + property);
                 }
             }
             String classname = securityProperties.getProperty(SecurityManager.SECURITY_MANAGER_CLASS_PROPERTY_KEY,
@@ -132,13 +132,13 @@ public class SecurityFactory {
             resourceStream = SecurityFactory.findSecurityProperties(fullName);
             if (resourceStream == null) {
                 resourceStream = SecurityFactory.findSecurityProperties(securityPropertyFile);
-                if (logger.isLoggable(Level.CONFIG))
-                    logger.log(Level.CONFIG, "found security properties file by matching the component name [ " + fullName + " ]");
+                if (logger.isLoggable(Level.FINE))
+                    logger.log(Level.FINE, "found security properties file by matching the component name [ " + fullName + " ]");
             }
         } else {
             resourceStream = SecurityFactory.findSecurityProperties(securityPropertyFile);
-            if (logger.isLoggable(Level.CONFIG))
-                logger.log(Level.CONFIG, "found security property by matching the sys-prop provided name[ " + securityPropertyFile + " ]");
+            if (logger.isLoggable(Level.FINE))
+                logger.log(Level.FINE, "found security property by matching the sys-prop provided name[ " + securityPropertyFile + " ]");
         }
         if (resourceStream != null) {
             try {
@@ -208,8 +208,8 @@ public class SecurityFactory {
             }
         }
 
-        if (resourceAsStream != null && logger.isLoggable(Level.CONFIG)) {
-            logger.config("Security properties file: " + resourceName);
+        if (resourceAsStream != null && logger.isLoggable(Level.FINE)) {
+            logger.fine("Security properties file: " + resourceName);
         }
 
         return resourceAsStream;

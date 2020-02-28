@@ -54,8 +54,8 @@ public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedP
         this._bufferCapacity = bufferSize;
         this._storage = storage;
 
-        if (_logger.isLoggable(Level.CONFIG)) {
-            _logger.config("CacheLastRedoLogFileStorageDecorator created:"
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.fine("CacheLastRedoLogFileStorageDecorator created:"
                     + "\n\tbufferSize = " + _bufferCapacity);
         }
         _bufferWeight = 0;

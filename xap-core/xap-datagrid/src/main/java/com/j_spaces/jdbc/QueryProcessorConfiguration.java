@@ -94,8 +94,8 @@ public class QueryProcessorConfiguration {
         // set properties from override properties file
         configure(localProps);
 
-        if (_logger.isLoggable(Level.CONFIG)) {
-            _logger.config("\n QueryProcessor configuration:\n\t"
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.fine("\n QueryProcessor configuration:\n\t"
                     + "parserCaseSensitivity=" + _parserCaseSensitivity + "\n\t"
                     + "writeLease=" + _writeLease + "\n" + "\t"
                     + "readLease=" + _readLease + "\n" + "\t"

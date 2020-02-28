@@ -38,8 +38,8 @@ public class InfluxDBHttpDispatcher extends InfluxDBDispatcher {
 
     public InfluxDBHttpDispatcher(InfluxDBReporterFactory factory) {
         this.url = toUrl("write", factory);
-        if (logger.isLoggable(Level.CONFIG))
-            logger.log(Level.CONFIG, "InfluxDBHttpDispatcher created [url=" + url + "]");
+        if (logger.isLoggable(Level.FINE))
+            logger.log(Level.FINE, "InfluxDBHttpDispatcher created [url=" + url + "]");
     }
 
     public URL getUrl() {
