@@ -16,25 +16,11 @@
 
 package com.gigaspaces.internal.extension;
 
-import com.gigaspaces.internal.client.spaceproxy.executors.AddTypeIndexesTask;
-import com.gigaspaces.internal.client.spaceproxy.executors.GetTypeDescriptorTask;
-import com.gigaspaces.internal.client.spaceproxy.executors.RegisterReplicationLocalViewTask;
-import com.gigaspaces.internal.client.spaceproxy.executors.RegisterReplicationNotificationTask;
-import com.gigaspaces.internal.client.spaceproxy.executors.RegisterTypeDescriptorTask;
-import com.gigaspaces.internal.client.spaceproxy.executors.SystemTask;
-import com.gigaspaces.internal.client.spaceproxy.executors.UnregisterReplicationLocalViewTask;
-import com.gigaspaces.internal.client.spaceproxy.executors.UnregisterReplicationNotificationTask;
+import com.gigaspaces.internal.client.spaceproxy.executors.*;
 import com.gigaspaces.internal.cluster.node.impl.ReplicationUtils;
 import com.gigaspaces.internal.cluster.node.impl.config.ReplicationNodeConfigBuilder;
 import com.gigaspaces.internal.cluster.node.impl.router.ReplicationRouterBuilderFactory;
-import com.gigaspaces.internal.server.space.executors.SpaceActionExecutor;
-import com.gigaspaces.internal.server.space.executors.SpaceAddTypeIndexesExecutor;
-import com.gigaspaces.internal.server.space.executors.SpaceGetTypeDescriptorExecutor;
-import com.gigaspaces.internal.server.space.executors.SpaceRegisterReplicationLocalViewExecutor;
-import com.gigaspaces.internal.server.space.executors.SpaceRegisterReplicationNotificationExecutor;
-import com.gigaspaces.internal.server.space.executors.SpaceRegisterTypeDescriptorExecutor;
-import com.gigaspaces.internal.server.space.executors.SpaceUnregisterReplicationLocalViewExecutor;
-import com.gigaspaces.internal.server.space.executors.SpaceUnregisterReplicationNotificationExecutor;
+import com.gigaspaces.internal.server.space.executors.*;
 import com.gigaspaces.internal.utils.XapRuntimeReporter;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.j_spaces.core.client.SpaceFinderListener;
@@ -77,6 +63,8 @@ public class XapExtensions {
         registerSystemTaskExecutor(UnregisterReplicationLocalViewTask.class, new SpaceUnregisterReplicationLocalViewExecutor());
         registerSystemTaskExecutor(RegisterReplicationNotificationTask.class, new SpaceRegisterReplicationNotificationExecutor());
         registerSystemTaskExecutor(UnregisterReplicationNotificationTask.class, new SpaceUnregisterReplicationNotificationExecutor());
+        registerSystemTaskExecutor(GetBatchForIteratorDistributedSpaceTask.class, new SpaceGetBatchForIteratorExecutor());
+        registerSystemTaskExecutor(SinglePartitionGetBatchForIteratorSpaceTask.class, new SpaceGetBatchForIteratorExecutor());
     }
 
     public ReplicationRouterBuilderFactory getReplicationRouterBuilderFactory() {

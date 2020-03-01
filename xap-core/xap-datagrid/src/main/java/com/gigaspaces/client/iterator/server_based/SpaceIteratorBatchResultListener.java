@@ -18,9 +18,6 @@ public class SpaceIteratorBatchResultListener implements AsyncFutureListener<Spa
 
     @Override
     public void onResult(AsyncResult<SpaceIteratorBatchResult> result) {
-        if(result.getException() == null && result.getResult() != null) {
-            //TODO add log message here
-            _spaceIteratorBatchResultProvider.addBatchResult(result.getResult());
-        }
+        _spaceIteratorBatchResultProvider.addBatchResult(result);
     }
 }

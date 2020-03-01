@@ -885,6 +885,11 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         return _clusterInfo.getPartitionOfMember(getServiceName()) + 1 ;
     }
 
+
+    public int getPartitionId() {
+        return _clusterInfo.getPartitionOfMember(getServiceName()) ;
+    }
+
     /**
      * this class handles the special case of retires due to update/write failures. if case of an
      * EntryNotInSpaceException exception the thread is being prepared for a new call to

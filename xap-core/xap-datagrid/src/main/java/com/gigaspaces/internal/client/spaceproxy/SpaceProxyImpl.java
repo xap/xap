@@ -727,7 +727,4 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
         SpaceContext spaceContext = getSecurityManager().acquireContext(remoteJSpace, credentialsProvider);
         remoteJSpace.demote(maxSuspendTime, timeUnit, spaceContext);
     }
-
-
-
 }

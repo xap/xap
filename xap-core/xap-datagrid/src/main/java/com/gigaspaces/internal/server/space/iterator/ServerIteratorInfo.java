@@ -1,11 +1,10 @@
 package com.gigaspaces.internal.server.space.iterator;
 
-import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.j_spaces.core.GetBatchForIteratorException;
 import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.kernel.list.IScanListIterator;
 
-import java.util.Arrays;
 import java.util.UUID;
 
 public class ServerIteratorInfo {
@@ -111,9 +110,10 @@ public class ServerIteratorInfo {
             return false;
         }
         int requestedBatchNumber = serverIteratorRequestInfo.getRequestedBatchNumber();
-        if(Math.abs(requestedBatchNumber - storedBatchNumber) > 1 || requestedBatchNumber < storedBatchNumber){
-            throw new IllegalStateException("Illegal space iterator batch request - request for batch " + requestedBatchNumber + " stored batch number is " + storedBatchNumber);
-        }
+//        if(Math.abs(requestedBatchNumber - storedBatchNumber) > 1 || requestedBatchNumber < storedBatchNumber){
+//            //TODO impeove messages
+//            throw new GetBatchForIteratorException("Illegal batch request, requested batch number is " + requestedBatchNumber + ", stored batch number is " + storedBatchNumber);
+//        }
         return requestedBatchNumber == storedBatchNumber;
     }
 

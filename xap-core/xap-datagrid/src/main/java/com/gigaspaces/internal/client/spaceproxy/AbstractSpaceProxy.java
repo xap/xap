@@ -32,7 +32,6 @@ import com.gigaspaces.internal.client.ReadTakeEntriesUidsResult;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.ReadTakeByIdsProxyActionInfo;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.ReadTakeProxyActionInfo;
 import com.gigaspaces.internal.client.spaceproxy.actions.AbstractSpaceProxyActionManager;
-import com.gigaspaces.internal.client.spaceproxy.operations.CloseIteratorSpaceOperationResult;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.metadata.index.AddTypeIndexesResult;
@@ -41,6 +40,7 @@ import com.gigaspaces.query.ISpaceQuery;
 import com.gigaspaces.query.aggregators.AggregationResult;
 import com.gigaspaces.query.aggregators.AggregationSet;
 import com.j_spaces.core.DropClassException;
+import com.j_spaces.core.GetBatchForIteratorException;
 import com.j_spaces.core.LeaseContext;
 import com.j_spaces.core.SpaceHealthStatus;
 import com.j_spaces.core.client.EntryAlreadyInSpaceException;
@@ -598,11 +598,6 @@ public abstract class AbstractSpaceProxy implements ISpaceProxy {
 
     public boolean isLocalViewContainer() {
         return false;
-    }
-
-    @Override
-    public SpaceIteratorBatchResult getBatchForIterator(Object template, int batchSize, int batchNumber, int modifiers, UUID uuid) throws TransactionException, UnusableEntryException, RemoteException{
-        return _actionManager.getNextBatchFromServerIterator(template, batchSize, batchNumber, modifiers, uuid);
     }
 
     @Override

@@ -16,9 +16,11 @@
 
 package com.gigaspaces.internal.server.space.operations;
 
+import com.gigaspaces.internal.client.spaceproxy.executors.SystemTask;
 import com.gigaspaces.internal.client.spaceproxy.operations.ExecuteTaskSpaceOperationRequest;
 import com.gigaspaces.internal.client.spaceproxy.operations.ExecuteTaskSpaceOperationResult;
 import com.gigaspaces.internal.server.space.SpaceImpl;
+import com.gigaspaces.security.authorities.SpaceAuthority;
 
 /**
  * @author Niv Ingberg
