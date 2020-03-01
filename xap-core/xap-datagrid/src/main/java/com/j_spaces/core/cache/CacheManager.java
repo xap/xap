@@ -30,6 +30,7 @@ import com.gigaspaces.internal.cluster.node.impl.directPersistency.ioImpl.Direct
 import com.gigaspaces.internal.cluster.node.impl.groups.IReplicationChannelDataFilter;
 import com.gigaspaces.internal.cluster.node.impl.notification.NotificationReplicationChannelDataFilter;
 import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.internal.query.CompoundAndCustomQuery;
 import com.gigaspaces.internal.query.ICustomQuery;
 import com.gigaspaces.internal.query.IQueryIndexScanner;
 import com.gigaspaces.internal.query.explainplan.*;
@@ -97,6 +98,7 @@ import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.core.sadapter.SelectType;
 import com.j_spaces.core.server.processor.RemoveWaitingForInfoSABusPacket;
 import com.j_spaces.jdbc.SQLFunctions;
+import com.j_spaces.jdbc.builder.range.RelationRange;
 import com.j_spaces.kernel.ClassLoaderHelper;
 import com.j_spaces.kernel.*;
 import com.j_spaces.kernel.list.*;
@@ -268,7 +270,7 @@ public class CacheManager extends AbstractCacheManager
 //+++++++++++++++++ TEMP FOR QA
         String oh = System.getProperty("com.gs.OffHeapData");
         if (!_blobStoreForQa)
-            _blobStoreForQa = (oh == null || _engine.isLocalCache()) ? false : Boolean.parseBoolean(oh);
+            _blobStoreForQa = (oh != null && !_engine.isLocalCache()) && Boolean.parseBoolean(oh);
         if (_blobStoreForQa && !isSyncHybrid()) {
             persistentBlobStore = true;
         }
@@ -1296,7 +1298,7 @@ public class CacheManager extends AbstractCacheManager
     }
 
     public boolean removeFromRecentUpdatesIfNeeded(IEntryHolder entry) {
-        return useRecentUpdatesForPinning() ? _recentUpdatesRespository.removeFromRecentUpdates(entry) : false;
+        return useRecentUpdatesForPinning() && _recentUpdatesRespository.removeFromRecentUpdates(entry);
     }
 
     public Iterator<RecentUpdatesRepository.RecentUpdateInfo> getRecentUpdatesIterator() {
@@ -3330,7 +3332,7 @@ public class CacheManager extends AbstractCacheManager
     /**
      * INITIALLOAD INFO.
      */
-    public static enum InitialLoadOrigin {
+    public enum InitialLoadOrigin {
         NON, FROM_NON_BLOBSTORE, FROM_BLOBSTORE
     }
 
@@ -3849,7 +3851,7 @@ public class CacheManager extends AbstractCacheManager
      * usage of recent deletes.
      */
     public enum RecentDeleteCodes {
-        NONE, INSERT_DUMMY, REMOVE_DUMMY;
+        NONE, INSERT_DUMMY, REMOVE_DUMMY
     }
 
 
@@ -4399,7 +4401,9 @@ public class CacheManager extends AbstractCacheManager
 
         final ICustomQuery customQuery = template.getCustomQuery();
         boolean indexUsed = false;
+        int numberOfCustomIndexes = 0;
         if (customQuery != null && customQuery.getCustomIndexes() != null) {
+            numberOfCustomIndexes = customQuery.getCustomIndexes().size();
             for (IQueryIndexScanner index : customQuery.getCustomIndexes()) {
                 // Get entries in space that match the indexed value in the query (a.k.a potential match list):
                 IObjectsList result = index.getIndexedEntriesByType(context, entryType, template, latestIndexToConsider);
@@ -4466,9 +4470,22 @@ public class CacheManager extends AbstractCacheManager
             }
         }
 
+        //if single index and is a lucene index
+        if (indexUsed && numberOfCustomIndexes == 1
+                && resultOIS instanceof QueryExtensionIndexEntryIteratorWrapper
+                && customQuery instanceof CompoundAndCustomQuery) {
+            //Remove already traversed paths
+            String indexName = customQuery.getCustomIndexes().get(0).getIndexName();
+            List<String> indexNames = Arrays.asList(indexName.split("&"));
+            ((CompoundAndCustomQuery) customQuery).get_subQueries().removeIf(
+                    subQuery -> indexNames.contains(((RelationRange) subQuery).getIndexScanner().getIndexName()));
+            return resultOIS;
+        }
+
         if (resultSL == null || (resultSL.size() > MIN_SIZE_TO_PERFORM_EXPLICIT_PROPERTIES_INDEX_SCAN_
                 && uidsSize > MIN_SIZE_TO_PERFORM_EXPLICIT_PROPERTIES_INDEX_SCAN_)
                 || (entryType.isBlobStoreClass() && resultSL != null && resultSL.size() > 0)) {
+
             final TypeDataIndex[] indexes = entryType.getIndexes();
             for (TypeDataIndex<Object> index : indexes) {
                 int pos = index.getPos();
@@ -4557,7 +4574,7 @@ public class CacheManager extends AbstractCacheManager
                         indexUsed = true;
                         if (resultOIS == null || entryType.isBlobStoreClass()) {
                             final Object rangeValue = template.getRangeValue(pos);
-                            final boolean isInclusive = rangeValue == null ? false : template.getRangeInclusion(pos);
+                            final boolean isInclusive = rangeValue != null && template.getRangeInclusion(pos);
                             //range limit passed- query with "up to" range
                             //NOTE! - currently we support only range "up-to" inclusive
                             IScanListIterator<IEntryCacheInfo> originalOIS = resultOIS;
@@ -5189,7 +5206,7 @@ public class CacheManager extends AbstractCacheManager
      */
     public boolean isFromFifoClass(IServerTypeDesc typeDesc) {
         TypeData type = _typeDataMap.get(typeDesc);
-        return type != null ? type.isFifoSupport() : false;
+        return type != null && type.isFifoSupport();
     }
 
 //	void debug()

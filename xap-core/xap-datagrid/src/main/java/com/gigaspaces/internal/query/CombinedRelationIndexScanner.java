@@ -11,6 +11,7 @@ import com.j_spaces.kernel.list.IObjectsList;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CombinedRelationIndexScanner extends AbstractQueryIndex {
@@ -23,7 +24,16 @@ public class CombinedRelationIndexScanner extends AbstractQueryIndex {
     }
 
     public CombinedRelationIndexScanner(List<IQueryIndexScanner> queryIndexes) {
+        super(String.join("&", toIndexNames(queryIndexes)));
         this.relationIndexScannerList = queryIndexes;
+    }
+
+    private static List<String> toIndexNames(List<IQueryIndexScanner> queryIndexes) {
+        List<String> result = new ArrayList<>();
+        for (IQueryIndexScanner queryIndex : queryIndexes) {
+            result.add(queryIndex.getIndexName());
+        }
+        return result;
     }
 
     @Override
