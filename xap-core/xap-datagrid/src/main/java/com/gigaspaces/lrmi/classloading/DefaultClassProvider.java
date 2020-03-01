@@ -27,7 +27,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.rmi.RemoteException;
-import java.util.logging.Level;
 
 /**
  * The default remote implementation used to retrieve class definition or resources from a remote
@@ -48,16 +47,16 @@ public class DefaultClassProvider implements IClassProvider {
                 && Boolean.parseBoolean(System.getProperty(SystemProperties.LRMI_CLASSLOADING_EXPORT, SystemProperties.LRMI_CLASSLOADING_EXPORT_DEFAULT));
 
         if (_enabled) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine(toString() + " LRMI class exporting enabled");
+            if (_logger.isDebugEnabled())
+                _logger.debug(toString() + " LRMI class exporting enabled");
         } else {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine(toString() + " LRMI class exporting disabled");
+            if (_logger.isDebugEnabled())
+                _logger.debug(toString() + " LRMI class exporting disabled");
         }
 
         if (_enabled) {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest(toString() + " class provider initialized");
+            if (_logger.isTraceEnabled())
+                _logger.trace(toString() + " class provider initialized");
         }
     }
 
@@ -73,8 +72,8 @@ public class DefaultClassProvider implements IClassProvider {
         }  catch(ClassNotFoundException e){
             //do nothing here
         }
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest(toString() +  "  class definition [" + className + "] not found at class loader id " + id + ", trying lrmi class loaders that belong to the specified class loader");
+        if (_logger.isTraceEnabled())
+            _logger.trace(toString() +  "  class definition [" + className + "] not found at class loader id " + id + ", trying lrmi class loaders that belong to the specified class loader");
         result = getClassFromServiceClassLoaderContext(id,className);
         if (result != null) {
             return result;
@@ -94,8 +93,8 @@ public class DefaultClassProvider implements IClassProvider {
         }  catch(ClassNotFoundException e){
             //do nothing here
         }
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.finest(toString() +  "  resource [" + resourceName + "] not found at class loader id " + id + ", trying lrmi class loaders that belong to the specified class loader");
+        if (_logger.isTraceEnabled()) {
+            _logger.trace(toString() +  "  resource [" + resourceName + "] not found at class loader id " + id + ", trying lrmi class loaders that belong to the specified class loader");
         }
         result = getResourceFromServiceClassLoaderContext(id, resourceName);
         if (result != null) {
@@ -113,8 +112,8 @@ public class DefaultClassProvider implements IClassProvider {
     private byte[] getClassFromServiceClassLoaderContext(long id, String className){
         ClassLoader loader = LocalClassProvider.getClassLoaderById(id, getClass());
         if(loader == null) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine(toString() +  " unknown class loader id [" + id + "]");
+            if (_logger.isDebugEnabled())
+                _logger.debug(toString() +  " unknown class loader id [" + id + "]");
             return null;
         }
         ServiceClassLoaderContext serviceClassLoaderContext = LRMIClassLoadersHolder.getServiceClassLoaderContext(loader);
@@ -122,22 +121,22 @@ public class DefaultClassProvider implements IClassProvider {
             byte[] classBytes = serviceClassLoaderContext.getClassBytes(className);
 
             if (classBytes != null) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine(toString() +  "  class definition [" + className + "] found at LRMIClassLoaders descendants of class loader id " + id);
+                if (_logger.isDebugEnabled())
+                    _logger.debug(toString() +  "  class definition [" + className + "] found at LRMIClassLoaders descendants of class loader id " + id);
                 return classBytes;
             }
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine(toString() +  "  could not locate required class [" + className + "] at the specified class loader [" + id + "]");
-        } else if (_logger.isLoggable(Level.FINE))
-            _logger.fine(toString() +  "  could not locate required class [" + className + "], no service context class loader exists for the specified class loader id [" + id + "]");
+            if (_logger.isDebugEnabled())
+                _logger.debug(toString() +  "  could not locate required class [" + className + "] at the specified class loader [" + id + "]");
+        } else if (_logger.isDebugEnabled())
+            _logger.debug(toString() +  "  could not locate required class [" + className + "], no service context class loader exists for the specified class loader id [" + id + "]");
         return null;
     }
 
     private byte[] getResourceFromServiceClassLoaderContext(long id, String resourceName) {
         ClassLoader loader = LocalClassProvider.getClassLoaderById(id, getClass());
         if (loader == null) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine(toString() +  " unknown class loader id [" + id + "]");
+            if (_logger.isDebugEnabled())
+                _logger.debug(toString() +  " unknown class loader id [" + id + "]");
             return null;
         }
         ServiceClassLoaderContext serviceClassLoaderContext = LRMIClassLoadersHolder.getServiceClassLoaderContext(loader);
@@ -145,14 +144,14 @@ public class DefaultClassProvider implements IClassProvider {
             byte[] classBytes = serviceClassLoaderContext.getClassBytes(resourceName);
 
             if (classBytes != null) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine(toString() +  "  resource [" + resourceName + "] found at LRMIClassLoader's descendant of class loader id " + id);
+                if (_logger.isDebugEnabled())
+                    _logger.debug(toString() +  "  resource [" + resourceName + "] found at LRMIClassLoader's descendant of class loader id " + id);
                 return classBytes;
             }
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine(toString() +  "  could not locate required resource [" + resourceName + "] at the specified class loader [" + id);
-        } else if (_logger.isLoggable(Level.FINE))
-            _logger.fine(toString() +  " could not locate required resource [" + resourceName + "], no service context class loader exists for the specified class loader id [" + id + "]");
+            if (_logger.isDebugEnabled())
+                _logger.debug(toString() +  "  could not locate required resource [" + resourceName + "] at the specified class loader [" + id);
+        } else if (_logger.isDebugEnabled())
+            _logger.debug(toString() +  " could not locate required resource [" + resourceName + "], no service context class loader exists for the specified class loader id [" + id + "]");
         return null;
     }
 

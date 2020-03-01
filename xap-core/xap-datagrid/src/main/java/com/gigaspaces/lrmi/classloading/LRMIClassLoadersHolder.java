@@ -32,7 +32,6 @@ import org.jini.rio.boot.AdditionalClassProviderFactory;
 import org.jini.rio.boot.IAdditionalClassProvider;
 
 import java.io.IOException;
-import java.util.logging.Level;
 
 /**
  * acts as a classloader delegator to an IClassProvider based classloader that loads class
@@ -86,11 +85,11 @@ public class LRMIClassLoadersHolder {
                 }
             });
 
-            if (_logger.isLoggable(Level.FINE))
+            if (_logger.isDebugEnabled())
                 logFine("LRMI class loading enabled");
         } else {
             serviceClassLoaderContextMap = null;
-            if (_logger.isLoggable(Level.FINE))
+            if (_logger.isDebugEnabled())
                 logFine("LRMI class loading disabled");
         }
     }
@@ -114,18 +113,18 @@ public class LRMIClassLoadersHolder {
                     throw new ClassNotFoundException("LRMI class loading is disabled. Class [" + className + "] not loaded");
                 }
 
-                if (_logger.isLoggable(Level.FINE))
+                if (_logger.isDebugEnabled())
                     logFine("Trying to get class loader for class: " + className + ", context class loader is " + ClassLoaderHelper.getClassLoaderLogName(ClassLoaderHelper.getContextClassLoader()));
 
                 LRMIClassLoader cl = getClassLoader(className);
 
                 if (cl == null) {
                     try {
-                        if (_logger.isLoggable(Level.FINEST))
+                        if (_logger.isTraceEnabled())
                             logFinest("no previously created LRMIClassLoader found for class: " + className + " creating new one");
                         cl = createClassLoader(className);
 
-                        if (_logger.isLoggable(Level.FINE))
+                        if (_logger.isDebugEnabled())
                             logFine("trying to load " + className + " using classloader: " + cl);
                         return Class.forName(className, true, cl);
                     } catch (LRMIClassLoaderCreationException e) {
@@ -133,9 +132,9 @@ public class LRMIClassLoadersHolder {
                     }
                 }
 
-                if (_logger.isLoggable(Level.FINEST))
+                if (_logger.isTraceEnabled())
                     logFinest("Found previously created LRMIClassLoader for class: " + className + " using classloader: " + cl);
-                if (_logger.isLoggable(Level.FINE))
+                if (_logger.isDebugEnabled())
                     logFine("trying to load " + className + " using classloader: " + cl);
                 return Class.forName(className, true, cl);
             }
@@ -178,7 +177,7 @@ public class LRMIClassLoadersHolder {
             throw new LRMIClassLoaderCreationException("attempt to create a LRMIClassLoader when there is no context class loader");
         ServiceClassLoaderContext serviceClassLoaderContext = getServiceClassLoaderContext();
         if (serviceClassLoaderContext == null) {
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logFinest("creating service class loader context [" + ClassLoaderHelper.getClassLoaderLogName(contextClassLoader) + "]");
 
             serviceClassLoaderContext = new ServiceClassLoaderContext(ClassLoaderHelper.getClassLoaderLogName(contextClassLoader));
@@ -196,21 +195,21 @@ public class LRMIClassLoadersHolder {
             LRMIClassLoader cl = serviceClassLoaderContext.getClassLoaderByRemoteId(identifier);
 
             if (cl != null) {
-                if (_logger.isLoggable(Level.FINEST))
+                if (_logger.isTraceEnabled())
                     logFinest("current target has already associated LRMIClassLoader, using it");
                 return cl;
             }
 
             //Need to create new LRMIClassLoader
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logFinest("retrieving remote class provider [" + identifier.getRemoteLrmiRuntimeId() + "]");
             IClassProvider classProvider = LRMIConnection.getClassProvider();
             if (classProvider == null) {
-                if (_logger.isLoggable(Level.FINE))
+                if (_logger.isDebugEnabled())
                     logFine("could not get LRMIClassLoader for remote class loader [" + identifier.toString() + "]");
                 throw new LRMIClassLoaderCreationException("could not get LRMIClassLoader for remote class loader [" + identifier.toString() + "]");
             }
-            if (_logger.isLoggable(Level.FINE))
+            if (_logger.isDebugEnabled())
                 logFine("creating new LRMIClassLoader connected to remote class loader [" + identifier.toString() + "]");
 
             cl = new LRMIClassLoader(classProvider, contextClassLoader, serviceClassLoaderContext, identifier.getRemoteLrmiRuntimeId(), identifier.getRemoteClassLoaderId());
@@ -235,9 +234,8 @@ public class LRMIClassLoadersHolder {
     protected static void logWarningOnExceptionCreatingLRMIClassLoader(
             String className, LRMIRemoteClassLoaderIdentifier identifier,
             Exception e) {
-        if (_logger.isLoggable(Level.WARNING))
-            _logger.log(Level.WARNING,
-                    "Failed creating an LRMIClassLoader ["
+        if (_logger.isWarnEnabled())
+            _logger.warn("Failed creating an LRMIClassLoader ["
                             + identifier
                             + "] to client ["
                             + LRMIInvocationContext.getEndpointAddress()
@@ -279,11 +277,11 @@ public class LRMIClassLoadersHolder {
         ServiceClassLoaderContext serviceClassLoaderContext = getServiceClassLoaderContext();
 
         if (serviceClassLoaderContext != null) {
-            if (_logger.isLoggable(Level.FINE))
+            if (_logger.isDebugEnabled())
                 logFine("dropping all classes from service class loader context [" + serviceClassLoaderContext + "]");
             serviceClassLoaderContext.clear();
         } else {
-            if (_logger.isLoggable(Level.FINE))
+            if (_logger.isDebugEnabled())
                 logFine("drop all classes: context class loader [" + ClassLoaderHelper.getClassLoaderLogName(Thread.currentThread().getContextClassLoader()) + "] has no service context, skipping dropping all classes");
         }
     }
@@ -291,17 +289,17 @@ public class LRMIClassLoadersHolder {
     public synchronized static void dropClass(String className) {
         if (!enabled)
             return;
-        if (_logger.isLoggable(Level.FINE))
+        if (_logger.isDebugEnabled())
             logFine("dropping class " + className);
 
         ServiceClassLoaderContext serviceClassLoaderContext = getServiceClassLoaderContext();
 
         if (serviceClassLoaderContext != null) {
-            if (_logger.isLoggable(Level.FINE))
+            if (_logger.isDebugEnabled())
                 logFine("dropping class [ " + className + "] from service class loader context [" + serviceClassLoaderContext + "]");
             serviceClassLoaderContext.removeClass(className);
         } else {
-            if (_logger.isLoggable(Level.FINE))
+            if (_logger.isDebugEnabled())
                 logFine("drop class [ " + className + "]: context class loader [" + ClassLoaderHelper.getClassLoaderLogName(Thread.currentThread().getContextClassLoader()) + "] has no service context, skipping dropping class");
         }
     }
@@ -319,15 +317,15 @@ public class LRMIClassLoadersHolder {
     }
 
     private static void logFinest(String message) {
-        _logger.finest("LRMIClassLoadersHolder [" + LRMIRuntime.getRuntime().getID() + "]: " + message);
+        _logger.trace("LRMIClassLoadersHolder [" + LRMIRuntime.getRuntime().getID() + "]: " + message);
     }
 
     private static void logFine(String message) {
-        _logger.fine("LRMIClassLoadersHolder [" + LRMIRuntime.getRuntime().getID() + "]: " + message);
+        _logger.debug("LRMIClassLoadersHolder [" + LRMIRuntime.getRuntime().getID() + "]: " + message);
     }
 
     public synchronized static ServiceClassLoaderContext getServiceClassLoaderContext(ClassLoader classLoader) {
-        if (_logger.isLoggable(Level.FINEST))
+        if (_logger.isTraceEnabled())
             logFinest("getting service class loader context of class loader " + ClassLoaderHelper.getClassLoaderLogName(classLoader));
 
         Long classLoaderKey = ClassLoaderCache.getCache().getClassLoaderKey(classLoader);

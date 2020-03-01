@@ -31,8 +31,7 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 @com.gigaspaces.api.InternalApi
-public class TraceableLogger
-        extends Logger {
+public class TraceableLogger {
     private static final int DEFAULT_TRACE_LENGTH = 100;
     private static final int OFF_VALUE = Level.OFF.intValue();
     private static final Comparator<LogRecord> comperator = new Comparator<LogRecord>() {
@@ -53,6 +52,7 @@ public class TraceableLogger
     private final int _traceLoggingLevel;
     private final int _traceLength;
 
+    private final CustomLogger _customLogger;
     private final Logger _logger;
     private final String[] _associatedLoggers;
     private final boolean _hasAssociatedLogOn;
@@ -73,14 +73,14 @@ public class TraceableLogger
 
     //Not meant to be instantiated from outside
     private TraceableLogger(String name, Logger logger, String... associatedLoggers) {
-        super(name, null);
+        _customLogger = new CustomLogger(name);
         _logger = logger;
         _associatedLoggers = associatedLoggers;
         //Get trace logging level
         Level traceLevel = getDefaultTraceLevel(name);
         traceLevel = Level.parse(System.getProperty(name + ".level", traceLevel.getName()));
         if (traceLevel.intValue() != OFF_VALUE)
-            this.setLevel(traceLevel);
+            _customLogger.setLevel(traceLevel);
 
         _traceLoggingLevel = traceLevel.intValue();
         //Get trace length
@@ -152,28 +152,6 @@ public class TraceableLogger
         while (iterator.hasNext()) {
             if (iterator.next().getValue().get() == null)
                 iterator.remove();
-        }
-    }
-
-    @Override
-    public void log(LogRecord record) {
-        _logger.log(record);
-
-        if (record.getLevel().intValue() < _traceLoggingLevel || _traceLoggingLevel == OFF_VALUE)
-            return;
-
-        Integer threadTraceIndex = _threadLocalTraceIndex.get();
-        //Log at thread local trace
-        if (_threadLocalTraceEnabled) {
-            _threadTrace.get()[(threadTraceIndex % _traceLength)] = record;
-            _threadLocalTraceIndex.set(threadTraceIndex + 1);
-        }
-        //Log at global trace
-        acquireAccess();
-        try {
-            _globalTrace[_globalTraceIndex.getAndIncrement() % _traceLength] = record;
-        } finally {
-            releaseAccess();
         }
     }
 
@@ -289,4 +267,75 @@ public class TraceableLogger
         return DEFAULT_TRACE_LENGTH;
     }
 
+    public boolean isErrorEnabled() {
+        return _customLogger.isLoggable(Level.SEVERE);
+    }
+
+    public void error(String msg) {
+        _customLogger.log(Level.SEVERE, msg);
+    }
+
+    public void error(String msg, Throwable e) {
+        _customLogger.log(Level.SEVERE, msg, e);
+    }
+
+    public boolean isWarnEnabled() {
+        return _customLogger.isLoggable(Level.WARNING);
+    }
+
+    public void warn(String msg) {
+        _customLogger.log(Level.WARNING, msg);
+    }
+
+    public void warn(String msg, Throwable e) {
+        _customLogger.log(Level.WARNING, msg, e);
+    }
+
+    public boolean isDebugEnabled() {
+        return _customLogger.isLoggable(Level.FINE);
+    }
+
+    public void debug(String msg) {
+        _customLogger.log(Level.FINE, msg);
+    }
+
+    public void debug(String msg, Throwable e) {
+        _customLogger.log(Level.FINE, msg, e);
+    }
+
+    public boolean isTraceEnabled() {
+        return _customLogger.isLoggable(Level.FINEST);
+    }
+
+    public void trace(String msg) {
+        _customLogger.log(Level.FINEST, msg);
+    }
+
+    private class CustomLogger extends Logger {
+        CustomLogger(String name)         {
+            super(name, null);
+        }
+
+        @Override
+        public void log(LogRecord record) {
+            _logger.log(record);
+
+            if (record.getLevel().intValue() < _traceLoggingLevel || _traceLoggingLevel == OFF_VALUE)
+                return;
+
+            Integer threadTraceIndex = _threadLocalTraceIndex.get();
+            //Log at thread local trace
+            if (_threadLocalTraceEnabled) {
+                _threadTrace.get()[(threadTraceIndex % _traceLength)] = record;
+                _threadLocalTraceIndex.set(threadTraceIndex + 1);
+            }
+            //Log at global trace
+            acquireAccess();
+            try {
+                _globalTrace[_globalTraceIndex.getAndIncrement() % _traceLength] = record;
+            } finally {
+                releaseAccess();
+            }
+        }
+    }
 }

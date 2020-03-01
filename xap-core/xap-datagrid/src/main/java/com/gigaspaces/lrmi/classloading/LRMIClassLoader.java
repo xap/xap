@@ -31,7 +31,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.rmi.ConnectException;
 import java.rmi.RemoteException;
-import java.util.logging.Level;
 
 /**
  * Acts as a local class loader that is connected to a remote class loader using LRMI to load new
@@ -64,60 +63,60 @@ public class LRMIClassLoader extends URLClassLoader implements LoggableClassLoad
     protected Class<?> findClass(String className) throws ClassNotFoundException {
         synchronized (_serviceClassLoaderContext) {
             try {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine(this.toString() + " trying to find class: " + className);
+                if (_logger.isDebugEnabled())
+                    _logger.debug(this.toString() + " trying to find class: " + className);
 
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest(this.toString() + " trying to find class locally: " + className);
+                if (_logger.isTraceEnabled())
+                    _logger.trace(this.toString() + " trying to find class locally: " + className);
 
                 Class<?> loadedClass = findLoadedClass(className);
                 if (loadedClass != null) {
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.fine(this.toString() + " class found locally: " + className);
+                    if (_logger.isDebugEnabled())
+                        _logger.debug(this.toString() + " class found locally: " + className);
                     return loadedClass;
                 }
 
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest(this.toString() + " failed previous attempt, trying to find class at the service context class loaders: " + className);
+                if (_logger.isTraceEnabled())
+                    _logger.trace(this.toString() + " failed previous attempt, trying to find class at the service context class loaders: " + className);
                 LRMIClassLoader brotherClassLoader = _serviceClassLoaderContext.getClassLoaderByClassName(className);
                 if (brotherClassLoader != null) {
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.fine(this.toString() + " class found at the service context class loader [" + brotherClassLoader + "]: " + className);
+                    if (_logger.isDebugEnabled())
+                        _logger.debug(this.toString() + " class found at the service context class loader [" + brotherClassLoader + "]: " + className);
                     return brotherClassLoader.findClass(className);
                 }
 
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest(this.toString() + " failed previous attempt, trying to retrieve class remotely using the class provider class: " + className);
+                if (_logger.isTraceEnabled())
+                    _logger.trace(this.toString() + " failed previous attempt, trying to retrieve class remotely using the class provider class: " + className);
 
                 byte[] definition;
                 try {
                     definition = _remoteClassProvider.getClassDefinition(_remoteClassLoaderId, className);
                 } catch (ConnectException e) {
-                    _logger.finest(this.toString() + " failed to retrieve class ["+className+"] remotely from ["+_remoteClassProvider+"] with _remoteClassLoaderId ["+_remoteClassLoaderId+"] due to connection exception");
+                    _logger.trace(this.toString() + " failed to retrieve class ["+className+"] remotely from ["+_remoteClassProvider+"] with _remoteClassLoaderId ["+_remoteClassLoaderId+"] due to connection exception");
                     definition = loadBytesFromCurrentConnection(className);
                 }
                 catch (ClassNotFoundException e){
-                    _logger.finest(this.toString() + " failed to retrieve class ["+className+"] remotely from ["+_remoteClassProvider+"] with _remoteClassLoaderId ["+_remoteClassLoaderId+"] due to class not found exception");
+                    _logger.trace(this.toString() + " failed to retrieve class ["+className+"] remotely from ["+_remoteClassProvider+"] with _remoteClassLoaderId ["+_remoteClassLoaderId+"] due to class not found exception");
                     definition = loadBytesFromCurrentConnection(className);
                 }
                 if (definition == null) {
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.fine(this.toString() + " failed to get class definition from its remote class provider: " + className);
+                    if (_logger.isDebugEnabled())
+                        _logger.debug(this.toString() + " failed to get class definition from its remote class provider: " + className);
                     throw new ClassNotFoundException("class " + className + " not found");
                 }
 
 
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine(this.toString() + " class found remotely using the class provider class: " + className);
+                if (_logger.isDebugEnabled())
+                    _logger.debug(this.toString() + " class found remotely using the class provider class: " + className);
 
                 return defineClass(className, definition);
             } catch (RemoteException e) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, this.toString() + " exception caught while retrieving class definition from remote class provider: " + className, e);
+                if (_logger.isDebugEnabled())
+                    _logger.debug(this.toString() + " exception caught while retrieving class definition from remote class provider: " + className, e);
                 throw new ClassNotFoundException("class " + className + " not found", e);
             } catch (ClassNotFoundException e) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, this.toString() + " ClassNotFoundException caught while retrieving class definition from remote class provider: " + className, e);
+                if (_logger.isDebugEnabled())
+                    _logger.debug(this.toString() + " ClassNotFoundException caught while retrieving class definition from remote class provider: " + className, e);
                 throw e;
             }
         }
@@ -128,15 +127,15 @@ public class LRMIClassLoader extends URLClassLoader implements LoggableClassLoad
             if (!FAIL_TO_CURRENT_CONNECTION_CLASS_LOADER) {
                 return null;
             }
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine(this.toString() + " attempting to load class: " + className + " from current connection remote class provider");
+            if (_logger.isDebugEnabled())
+                _logger.debug(this.toString() + " attempting to load class: " + className + " from current connection remote class provider");
             IRemoteClassProviderProvider classProviderProvider = LRMIConnection.getClassProviderProvider();
             LRMIRemoteClassLoaderIdentifier id = classProviderProvider.getRemoteClassLoaderIdentifier();
             IClassProvider classProvider = classProviderProvider.getClassProvider();
             return classProvider.getClassDefinition(id.getRemoteClassLoaderId(), className);
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine(this.toString() + " failed to get class definition from current remote class provider: " + className);
+            if (_logger.isDebugEnabled())
+                _logger.debug(this.toString() + " failed to get class definition from current remote class provider: " + className);
         }
         return null;
     }
@@ -146,8 +145,8 @@ public class LRMIClassLoader extends URLClassLoader implements LoggableClassLoad
      */
     private Class<?> defineClass(String className, byte[] definition)
             throws ClassFormatError {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine(this.toString() + " defining class: " + className);
+        if (_logger.isDebugEnabled())
+            _logger.debug(this.toString() + " defining class: " + className);
 
         try {
             Class<?> defineClass = defineClass(className, definition, 0, definition.length);
@@ -155,14 +154,14 @@ public class LRMIClassLoader extends URLClassLoader implements LoggableClassLoad
             if (previousClassLoader != null)
                 throw new IllegalStateException("Class: " + className + " is already loaded in this service by LRMIClassLoader " + previousClassLoader);
 
-            if(_logger.isLoggable(Level.FINEST)){
-                _logger.finest("Defined class ["+className+"], it's class-loader hierarchy is "
+            if(_logger.isTraceEnabled()){
+                _logger.trace("Defined class ["+className+"], it's class-loader hierarchy is "
                         + ClassLoaderUtility.getClassLoaderHierarchy(defineClass.getClassLoader()));
             }
             return defineClass;
         } catch (ClassFormatError e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, this.toString() + " class format error caught while defining class: " + className, e);
+            if (_logger.isErrorEnabled())
+                _logger.error(this.toString() + " class format error caught while defining class: " + className, e);
             throw e;
         }
 
@@ -172,40 +171,40 @@ public class LRMIClassLoader extends URLClassLoader implements LoggableClassLoad
     public InputStream getResourceAsStream(String resourceName) {
         synchronized (_serviceClassLoaderContext) {
             try {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine(this.toString() + " trying to get resource as stream from service context: " + resourceName);
+                if (_logger.isDebugEnabled())
+                    _logger.debug(this.toString() + " trying to get resource as stream from service context: " + resourceName);
                 byte[] resource = _serviceClassLoaderContext.getClassBytes(resourceName);
                 if (resource == null) {
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.fine(this.toString() + " failed previous attempt, trying to get resource remotely from class provider class: " + resourceName);
+                    if (_logger.isDebugEnabled())
+                        _logger.debug(this.toString() + " failed previous attempt, trying to get resource remotely from class provider class: " + resourceName);
                     resource = _remoteClassProvider.getResource(_remoteClassLoaderId, resourceName);
                     if (resource != null) {
-                        if (_logger.isLoggable(Level.FINE))
-                            _logger.fine(this.toString() + " resource stream found at service context: " + resourceName);
+                        if (_logger.isDebugEnabled())
+                            _logger.debug(this.toString() + " resource stream found at service context: " + resourceName);
                         _serviceClassLoaderContext.storeClassBytes(resourceName, resource);
                     }
                 }
 
                 if (resource != null) {
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.fine(this.toString() + " resource stream found locally: " + resourceName);
+                    if (_logger.isDebugEnabled())
+                        _logger.debug(this.toString() + " resource stream found locally: " + resourceName);
                     return new ByteArrayInputStream(resource);
                 }
                 resource = loadResourceFromCurrentConnection(resourceName);
                 if (resource != null) {
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.fine(this.toString() + " resource stream found using current lrmi connection: " + resourceName);
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug(this.toString() + " resource stream found using current lrmi connection: " + resourceName);
                     }
                     _serviceClassLoaderContext.storeClassBytes(resourceName, resource);
                     return new ByteArrayInputStream(resource);
-                } else if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine(this.toString() + " Failed getting resource from remote class provider: " + resourceName);
+                } else if (_logger.isDebugEnabled()) {
+                    _logger.debug(this.toString() + " Failed getting resource from remote class provider: " + resourceName);
                 }
 
 
             } catch (RemoteException | ClassNotFoundException e) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, this.toString() + " Exception caught while getting resource from remote class provider: " + resourceName, e);
+                if (_logger.isDebugEnabled())
+                    _logger.debug(this.toString() + " Exception caught while getting resource from remote class provider: " + resourceName, e);
             }
             return null;
         }
@@ -216,15 +215,15 @@ public class LRMIClassLoader extends URLClassLoader implements LoggableClassLoad
             if (!FAIL_TO_CURRENT_CONNECTION_CLASS_LOADER) {
                 return null;
             }
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine(this.toString() + " attempting to load resource: " + resourceName + " from current connection remote class provider");
+            if (_logger.isDebugEnabled())
+                _logger.debug(this.toString() + " attempting to load resource: " + resourceName + " from current connection remote class provider");
             IRemoteClassProviderProvider classProviderProvider = LRMIConnection.getClassProviderProvider();
             LRMIRemoteClassLoaderIdentifier id = classProviderProvider.getRemoteClassLoaderIdentifier();
             IClassProvider classProvider = classProviderProvider.getClassProvider();
             return classProvider.getResource(id.getRemoteClassLoaderId(), resourceName);
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine(this.toString() + " failed to get resource definition from current remote class provider: " + resourceName);
+            if (_logger.isDebugEnabled())
+                _logger.debug(this.toString() + " failed to get resource definition from current remote class provider: " + resourceName);
         }
         return null;
 
@@ -254,7 +253,7 @@ public class LRMIClassLoader extends URLClassLoader implements LoggableClassLoad
                 break;
             } catch (Throwable t) {
                 //We are not sure if findLoadedClass is thread safe, use this hack to retry if an exception is thrown
-                _logger.log(Level.WARNING, this.toString() + " Failed to find loaded class [" +
+                _logger.warn(this.toString() + " Failed to find loaded class [" +
                         className + "] attempt = " + i, t);
             }
         }

@@ -703,13 +703,13 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                 boolean firstIteration = true;
                 while (true) {
                     position = reader.getPosition();
-                    if (_traceableLogger.isLoggable(Level.FINEST))
-                        _traceableLogger.finest("start index integrity iteration [" + packetCount + "], position=" + position + " segment index [" + segmentIndex + "] in segment packet index [" + packetInSegment + "] unindexed length [" + unindexedLength + "]");
+                    if (_traceableLogger.isTraceEnabled())
+                        _traceableLogger.trace("start index integrity iteration [" + packetCount + "], position=" + position + " segment index [" + segmentIndex + "] in segment packet index [" + packetInSegment + "] unindexed length [" + unindexedLength + "]");
                     //Validate index integrity
                     if (!firstIteration && unindexedLength >= _maxScanLength) {
                         long indexPos = currentSegment.getIndexPosition(packetInSegment);
-                        if (_traceableLogger.isLoggable(Level.FINEST))
-                            _traceableLogger.finest("index position=" + indexPos + " reader position=" + position);
+                        if (_traceableLogger.isTraceEnabled())
+                            _traceableLogger.trace("index position=" + indexPos + " reader position=" + position);
                         if (indexPos != reader.getPosition())
                             throw new ByteBufferStorageCompromisedException("Error while checking index integrity, segment index [" + segmentIndex + "]" +
                                     " packet index [" + packetCount + "] in segment packet index [" + packetInSegment + "] expected index [" + reader.getPosition() + "] actual [" + indexPos + "]");
@@ -718,22 +718,22 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                     }
                     firstIteration = false;
                     int length = reader.readInt();
-                    if (_traceableLogger.isLoggable(Level.FINEST))
-                        _traceableLogger.finest("next packet length=" + length);
+                    if (_traceableLogger.isTraceEnabled())
+                        _traceableLogger.trace("next packet length=" + length);
                     //End of redo log file
                     if (length == END_OF_PACKETS_MARKER) {
-                        if (_traceableLogger.isLoggable(Level.FINEST))
-                            _traceableLogger.finest("reached end of packets marker");
+                        if (_traceableLogger.isTraceEnabled())
+                            _traceableLogger.trace("reached end of packets marker");
                         break;
                     }
                     if (length == END_OF_SEGMENT_MARKER) {
-                        if (_traceableLogger.isLoggable(Level.FINEST))
-                            _traceableLogger.finest("reached end of segment marker");
+                        if (_traceableLogger.isTraceEnabled())
+                            _traceableLogger.trace("reached end of segment marker");
                         //No double release on exception
                         SegmentCursor tempReader = reader;
                         reader = null;
-                        if (_traceableLogger.isLoggable(Level.FINEST))
-                            _traceableLogger.finest("releasing reader");
+                        if (_traceableLogger.isTraceEnabled())
+                            _traceableLogger.trace("releasing reader");
                         tempReader.release();
                         //Move to next segment
                         currentSegment = _segments.get(++segmentIndex);
@@ -742,16 +742,16 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                         position = 0;
                         packetInSegment = 0;
                         unindexedLength = 0;
-                        if (_traceableLogger.isLoggable(Level.FINEST))
-                            _traceableLogger.finest("moved to next segment");
+                        if (_traceableLogger.isTraceEnabled())
+                            _traceableLogger.trace("moved to next segment");
                         continue;
                     }
 
                     byte[] packetBuffer = new byte[length];
                     reader.readBytes(packetBuffer, 0, length);
                     //Deserialize packet to check stream not corrupted
-                    if (_traceableLogger.isLoggable(Level.FINEST))
-                        _traceableLogger.finest("deserializing packet");
+                    if (_traceableLogger.isTraceEnabled())
+                        _traceableLogger.trace("deserializing packet");
                     T deserializePacket = _packetSerializer.deserializePacket(packetBuffer);
                     if (deserializePacket == null)
                         throw new ByteBufferStorageCompromisedException("Error while checking data integrity, packet at index " + packetCount + " is null");
@@ -760,8 +760,8 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                     packetInSegment++;
                     unindexedLength += reader.getPosition() - position;
                 }
-                if (_traceableLogger.isLoggable(Level.FINEST))
-                    _traceableLogger.finest("done index integrity check, releasing last reader");
+                if (_traceableLogger.isTraceEnabled())
+                    _traceableLogger.trace("done index integrity check, releasing last reader");
                 //Release last reader, upon exception make sure we do not release it twice
                 SegmentCursor tempReader = reader;
                 reader = null;
@@ -780,15 +780,15 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                 throw new ByteBufferStorageCompromisedException("Error while checking data integrity, reached packet index " + packetCount, e);
             }
 
-            if (_traceableLogger.isLoggable(Level.FINEST))
-                _traceableLogger.finest("validating size integrity, expected size=" + packetCount + " known size=" + _size);
+            if (_traceableLogger.isTraceEnabled())
+                _traceableLogger.trace("validating size integrity, expected size=" + packetCount + " known size=" + _size);
 
             //Validate size integrity
             if (packetCount != _size)
                 throw new ByteBufferStorageCompromisedException("Calculated size [" + packetCount + "] does not match kept size [" + _size + "]");
 
-            if (_traceableLogger.isLoggable(Level.FINEST))
-                _traceableLogger.finest("perform one entire scan using iterator");
+            if (_traceableLogger.isTraceEnabled())
+                _traceableLogger.trace("perform one entire scan using iterator");
             StorageReadOnlyIterator<T> iterator = null;
             int count = 0;
             //Perform one entire scan using iterator
@@ -798,17 +798,17 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                 while (iterator.hasNext()) {
                     if (iterator.next() == null)
                         throw new ByteBufferStorageCompromisedException("Error while checking full iteration indexes, at packet index " + count + " iterator returned null packet");
-                    if (_traceableLogger.isLoggable(Level.FINEST))
-                        _traceableLogger.finest("iteration count " + count);
+                    if (_traceableLogger.isTraceEnabled())
+                        _traceableLogger.trace("iteration count " + count);
                     count++;
                 }
-                if (_traceableLogger.isLoggable(Level.FINEST))
-                    _traceableLogger.finest("done iterator integrity check, closing iterator");
+                if (_traceableLogger.isTraceEnabled())
+                    _traceableLogger.trace("done iterator integrity check, closing iterator");
                 StorageReadOnlyIterator<T> tempIterator = iterator;
                 iterator = null;
                 tempIterator.close();
-                if (_traceableLogger.isLoggable(Level.FINEST))
-                    _traceableLogger.finest("validating iterator size integrity, expected size=" + count + " known size=" + _size);
+                if (_traceableLogger.isTraceEnabled())
+                    _traceableLogger.trace("validating iterator size integrity, expected size=" + count + " known size=" + _size);
                 //Validate size integrity
                 if (count != _size)
                     throw new ByteBufferStorageCompromisedException("Full iteration size [" + packetCount + "] does not match kept size [" + _size + "]");
@@ -826,8 +826,8 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                 throw new ByteBufferStorageCompromisedException("Error while checking full iteration integrity, at packet index " + count, e);
             }
 
-            if (_traceableLogger.isLoggable(Level.FINEST))
-                _traceableLogger.finest("validating fetch iterator by index integrity");
+            if (_traceableLogger.isTraceEnabled())
+                _traceableLogger.trace("validating fetch iterator by index integrity");
             //Validate indexes integrity
             iterator = null;
             int i = 0;
@@ -839,8 +839,8 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                     T packet = iterator.next();
                     if (packet == null)
                         throw new ByteBufferStorageCompromisedException("Error while validating indexes, at packet index " + i + " iterator returned null packet");
-                    if (_traceableLogger.isLoggable(Level.FINEST))
-                        _traceableLogger.finest("validated fetch iterator by index [" + i + "] integrity done, closing iterator");
+                    if (_traceableLogger.isTraceEnabled())
+                        _traceableLogger.trace("validated fetch iterator by index [" + i + "] integrity done, closing iterator");
                     //Avoid double close on exception
                     StorageReadOnlyIterator<T> tempIterator = iterator;
                     iterator = null;
@@ -860,14 +860,14 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
             }
         } catch (ByteBufferStorageCompromisedException e) {
             logGeneralStatusOnError();
-            if (_traceableLogger.isLoggable(Level.FINEST))
-                _traceableLogger.finest(e.getMessage());
+            if (_traceableLogger.isTraceEnabled())
+                _traceableLogger.trace(e.getMessage());
             _traceableLogger.showThreadTrace();
             throw e;
         } catch (Exception e) {
             logGeneralStatusOnError();
-            if (_traceableLogger.isLoggable(Level.FINEST))
-                _traceableLogger.finest(e.getMessage());
+            if (_traceableLogger.isTraceEnabled())
+                _traceableLogger.trace(e.getMessage());
             _traceableLogger.showThreadTrace();
             throw new ByteBufferStorageCompromisedException(e);
         } finally {

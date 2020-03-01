@@ -25,7 +25,6 @@ import com.j_spaces.kernel.ClassLoaderHelper;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Level;
 
 /**
  * The local implementation used to retrieve class definition or resources
@@ -43,16 +42,16 @@ public class LocalClassProvider {
 
     public static byte[] getClassDefinitionLocally(long id, String className, Class<? extends IClassProvider> iClassProviderClass) throws ClassNotFoundException {
         try {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("LocalClassProvider retrieving class definition [" + className + "] from class loader id " + id);
+            if (_logger.isDebugEnabled())
+                _logger.debug("LocalClassProvider retrieving class definition [" + className + "] from class loader id " + id);
             ClassLoader loader = getClassLoaderInternal(id, iClassProviderClass);
             if (loader == null)
                 throw new ClassNotFoundException("LocalClassProvider unknown class loader id [" + id + "]");
             String resourceName = className.replace('.', '/').concat(".class");
             InputStream stream = loader.getResourceAsStream(resourceName);
             if (stream != null) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine("LocalClassProvider class definition [" + className + "] found at class loader id " + id);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("LocalClassProvider class definition [" + className + "] found at class loader id " + id);
                 return toByteArray(stream);
             }
             throw new ClassNotFoundException("LocalClassProvider could not locate required class [" + className + "] at the specified class loader [" + id + "]");
@@ -67,39 +66,39 @@ public class LocalClassProvider {
 
     public static byte[] getResourceLocally(long id, String resourceName, Class<? extends IClassProvider> iClassProviderClass) throws ClassNotFoundException {
         try {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("LocalClassProvider retrieving resource [" + resourceName + "] class loader id " + id);
+            if (_logger.isDebugEnabled())
+                _logger.debug("LocalClassProvider retrieving resource [" + resourceName + "] class loader id " + id);
             ClassLoader loader = getClassLoaderInternal(id, iClassProviderClass);
             if (loader == null)
                 throw new ClassNotFoundException("LocalClassProvider unknown class loader id [" + id + "]");
             InputStream stream = loader.getResourceAsStream(resourceName);
             if (stream != null) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine("LocalClassProvider resource [" + resourceName + "] found at class loader id " + id);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("LocalClassProvider resource [" + resourceName + "] found at class loader id " + id);
                 return toByteArray(stream);
             }
 
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("LocalClassProvider resource [" + resourceName + "] not found at class loader id " + id + ", trying lrmi class loaders that belong to the specified class loader");
+            if (_logger.isTraceEnabled())
+                _logger.trace("LocalClassProvider resource [" + resourceName + "] not found at class loader id " + id + ", trying lrmi class loaders that belong to the specified class loader");
 
             ServiceClassLoaderContext serviceClassLoaderContext = LRMIClassLoadersHolder.getServiceClassLoaderContext(loader);
             if (serviceClassLoaderContext != null) {
                 byte[] classBytes = serviceClassLoaderContext.getClassBytes(resourceName);
 
                 if (classBytes != null) {
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.fine("LocalClassProvider resource [" + resourceName + "] found at LRMIClassLoader's descendant of class loader id " + id);
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("LocalClassProvider resource [" + resourceName + "] found at LRMIClassLoader's descendant of class loader id " + id);
                     return classBytes;
                 }
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine("LocalClassProvider could not locate required resource [" + resourceName + "] at the specified class loader [" + id);
-            } else if (_logger.isLoggable(Level.FINE))
-                _logger.fine("LocalClassProvider could not locate required resource [" + resourceName + "], no service context class loader exists for the specified class loader id [" + id + "]");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("LocalClassProvider could not locate required resource [" + resourceName + "] at the specified class loader [" + id);
+            } else if (_logger.isDebugEnabled())
+                _logger.debug("LocalClassProvider could not locate required resource [" + resourceName + "], no service context class loader exists for the specified class loader id [" + id + "]");
 
             return null;
         } catch (IOException e) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "LocalClassProvider caught exception while locating resource [" + resourceName + "] at the specified class loader [" + id + "]", e);
+            if (_logger.isDebugEnabled())
+                _logger.debug("LocalClassProvider caught exception while locating resource [" + resourceName + "] at the specified class loader [" + id + "]", e);
             return null;
         }
     }
@@ -113,21 +112,21 @@ public class LocalClassProvider {
     
     private static ClassLoader getClassLoaderInternal(long id, Class<? extends IClassProvider> iClassProviderClass) {
         if (id == NULL_CLASS_LOADER_MARKER) {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("LocalClassProvider using " + iClassProviderClass.getName() + " class loading class loader as the class loader");
+            if (_logger.isTraceEnabled())
+                _logger.trace("LocalClassProvider using " + iClassProviderClass.getName() + " class loading class loader as the class loader");
             return iClassProviderClass.getClassLoader();
         }
         ClassLoader classLoader = ClassLoaderCache.getCache().getClassLoader(id);
         if (classLoader != null)
             return classLoader;
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("LocalClassProvider found no class loader with id [" + id + "], using context class loader instead");
+        if (_logger.isTraceEnabled())
+            _logger.trace("LocalClassProvider found no class loader with id [" + id + "], using context class loader instead");
         ClassLoader contextClassLoader = ClassLoaderHelper.getContextClassLoader();
         if (contextClassLoader != null) {
             return contextClassLoader;
         }
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("LocalClassProvider found no context class loader, using default class loader");
+        if (_logger.isTraceEnabled())
+            _logger.trace("LocalClassProvider found no context class loader, using default class loader");
         return ReflectionUtil.class.getClassLoader();
     }
 

@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.rmi.RemoteException;
-import java.util.logging.Level;
 
 /**
  * A simple, non LRMI, implementation of IClassProvider.
@@ -39,8 +38,8 @@ public class SimpleClassProvider implements IClassProvider{
         }  catch(ClassNotFoundException e){
             //do nothing here
         }
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("SimpleRemoteClassProvider failed to find class [" + className + "] definition locally from class loader id " + id + ". Trying remotely");
+        if (_logger.isDebugEnabled())
+            _logger.debug("SimpleRemoteClassProvider failed to find class [" + className + "] definition locally from class loader id " + id + ". Trying remotely");
         ChannelEntry channel = _channel.get();
         if(channel == null){
             throw new ClassNotFoundException("Failed to retrieve remote class definition of " + className + " from the specified class loader [" + id + "], channel is closed");
@@ -71,8 +70,8 @@ public class SimpleClassProvider implements IClassProvider{
         }  catch(ClassNotFoundException e){
             //do nothing here
         }
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("SimpleRemoteClassProvider failed to find resource [" + resourceName + "] locally from class loader id " + id + ". Trying remotely");
+        if (_logger.isDebugEnabled())
+            _logger.debug("SimpleRemoteClassProvider failed to find resource [" + resourceName + "] locally from class loader id " + id + ". Trying remotely");
         ChannelEntry channel = _channel.get();
         if(channel == null){
             throw new ClassNotFoundException("Failed to retrieve remote resource definition of " + resourceName + " from the specified class loader [" + id + "], because channel is closed");

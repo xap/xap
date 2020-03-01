@@ -22,8 +22,6 @@ import com.gigaspaces.logger.TraceableLogger;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
-import java.util.logging.Level;
-
 
 /**
  * Holds the {@link LRMIClassLoader}s that associate to a specific service class loader
@@ -74,8 +72,8 @@ public class ServiceClassLoaderContext {
             }
             LRMIClassLoader loader = lrmiClassLoaderRef.get();
             if (loader == null) {
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest("LRMIClassLoader of class: " + className + " had no strong reference and was weakly removed");
+                if (_logger.isTraceEnabled())
+                    _logger.trace("LRMIClassLoader of class: " + className + " had no strong reference and was weakly removed");
                 //GS-7326: once there's no strong reference to the class loader that loaded this class
                 //we should remove the stored class bytes to avoid getting to the protective code
                 //exception that check that the same class is not loaded twice for the same service class
@@ -98,8 +96,8 @@ public class ServiceClassLoaderContext {
                 return null;
             LRMIClassLoader loader = lrmiClassLoaderRef.get();
             if (loader == null) {
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest("LRMIClassLoader connected to: " + identifier + " had no strong reference and was weakly removed");
+                if (_logger.isTraceEnabled())
+                    _logger.trace("LRMIClassLoader connected to: " + identifier + " had no strong reference and was weakly removed");
                 _classLoaderByRemoteId.remove(identifier);
             }
 
@@ -136,19 +134,19 @@ public class ServiceClassLoaderContext {
                 LRMIClassLoader previousLRMIClassLoader = previousClassLoaderRef.get();
                 if (previousLRMIClassLoader != null)
                     return previousLRMIClassLoader;
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest("previous LRMIClassLoader of class: " + className + " had no strong reference and was weakly removed");
+                if (_logger.isTraceEnabled())
+                    _logger.trace("previous LRMIClassLoader of class: " + className + " had no strong reference and was weakly removed");
             }
 
             WeakReference<LRMIClassLoader> lrmiClassLoaderRef = new WeakReference<LRMIClassLoader>(lrmiClassLoader);
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("Associating class: " + className + " to class loader " + lrmiClassLoader);
+            if (_logger.isTraceEnabled())
+                _logger.trace("Associating class: " + className + " to class loader " + lrmiClassLoader);
             _classLoaderByName.put(className, lrmiClassLoaderRef);
             try {
                 storeClassBytes(className, definition);
             } catch (RuntimeException e) {
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest("error occurred while storing class bytes of class: " + className + " in " + this + ", removing class loader " + lrmiClassLoader + " association");
+                if (_logger.isTraceEnabled())
+                    _logger.trace("error occurred while storing class bytes of class: " + className + " in " + this + ", removing class loader " + lrmiClassLoader + " association");
                 _classLoaderByName.remove(className);
                 throw e;
             }
@@ -172,25 +170,25 @@ public class ServiceClassLoaderContext {
         synchronized (_stateLock) {
             if (_classBytesByName.containsKey(className)) {
                 String msg = toString() + ": attempting to add class bytes for class name " + className + " which already has mapped class bytes";
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.severe(msg);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(msg);
                     _logger.showGlobalTrace();
                 }
                 if (_disableDuplicateLoadProtection)
-                    _logger.warning(toString() + ": duplicate remote class loading protection is disabled, exception ignored");
+                    _logger.warn(toString() + ": duplicate remote class loading protection is disabled, exception ignored");
                 else
                     throw new IllegalArgumentException(msg);
             }
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("Storing class bytes of class: " + className + " in " + this);
+            if (_logger.isTraceEnabled())
+                _logger.trace("Storing class bytes of class: " + className + " in " + this);
             _classBytesByName.put(className, definition);
         }
     }
 
     public void removeClass(String className) {
         synchronized (_stateLock) {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("Removing class: " + className + " from " + this);
+            if (_logger.isTraceEnabled())
+                _logger.trace("Removing class: " + className + " from " + this);
             _classBytesByName.remove(className);
             _classLoaderByName.remove(className);
         }
@@ -203,8 +201,8 @@ public class ServiceClassLoaderContext {
 
     public void clear() {
         synchronized (_stateLock) {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("Clearing " + this);
+            if (_logger.isTraceEnabled())
+                _logger.trace("Clearing " + this);
             _classBytesByName.clear();
             _classLoaderByName.clear();
             _classLoaderByRemoteId.clear();
