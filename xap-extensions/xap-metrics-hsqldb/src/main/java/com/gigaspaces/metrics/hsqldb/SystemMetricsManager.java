@@ -32,7 +32,7 @@ public class SystemMetricsManager {
 
     public static SystemMetrics addDynamicSystemTable(String metricName) {
         SystemMetrics retValue = null;
-        if( systemMetricTables.containsKey( metricName ) ) {
+        if( !systemMetricTables.containsKey( metricName ) ) {
             retValue = new SystemMetrics(metricName);
             systemMetricTables.put(metricName, retValue);
             dynamicSystemMetricTables.put(metricName, retValue);
