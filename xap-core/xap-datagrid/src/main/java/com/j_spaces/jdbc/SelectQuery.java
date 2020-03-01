@@ -766,8 +766,8 @@ public class SelectQuery extends AbstractDMLQuery {
                 commonJavaType = ReflectionUtils.isCommonJavaType(type) || type.isEnum();
             }
             catch( Exception e ){
-                if( _logger.isLoggable( Level.SEVERE ) ){
-                    _logger.log( Level.SEVERE, "Failed verifying common Java type for [" + columnPath + "]", e );
+                if( _logger.isLoggable(Level.SEVERE)){
+                    _logger.log(Level.SEVERE, "Failed verifying common Java type for [" + columnPath + "]", e );
                 }
             }
         }

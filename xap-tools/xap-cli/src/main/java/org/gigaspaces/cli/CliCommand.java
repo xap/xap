@@ -37,9 +37,9 @@ public abstract class CliCommand implements Callable<Object> {
         } catch (Exception e) {
             if (LOGGER.isLoggable(Level.FINEST)) {
                 final String stackTrace = BootUtil.getStackTrace(e);
-                LOGGER.log( Level.FINEST, "Execution of [" + this.getClass()+"] threw an exception.\nStack trace: "+stackTrace, e);
-            } else if(LOGGER.isLoggable(Level.FINE )) {
-                LOGGER.log( Level.FINE, "Execution of [" + this.getClass()+"] threw an exception.", e);
+                LOGGER.log(Level.FINEST, "Execution of [" + this.getClass()+"] threw an exception.\nStack trace: "+stackTrace, e);
+            } else if(LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.log(Level.FINE, "Execution of [" + this.getClass()+"] threw an exception.", e);
             }
             throw e;
         }

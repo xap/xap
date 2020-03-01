@@ -280,7 +280,7 @@ public class JMXProvider {
             try {
                 mBeanServer.registerMBean(localTimeMBean, objName);
             } catch (InstanceAlreadyExistsException e) {
-                /*                if( _logger.isLoggable( Level.CONFIG ))
+                /*                if( _logger.isLoggable(Level.CONFIG))
                 {
                     _logger.config( alreadyRegistredTransportMBeanMessage + containerName + ">"  );
                 }
@@ -442,12 +442,12 @@ public class JMXProvider {
 			}
 			catch( Exception e )
 			{
-				if( _logger.isLoggable( Level.WARNING ))
+				if( _logger.isLoggable(Level.WARNING))
 				{
-					_logger.log( Level.WARNING, "Failed to stop JMX Connector.", e );
+					_logger.log(Level.WARNING, "Failed to stop JMX Connector.", e );
 				}
 			}
-			if( _logger.isLoggable( Level.CONFIG ))
+			if( _logger.isLoggable(Level.CONFIG))
 			{
 				_logger.config( "JMX Connector was successfully stopped." );
 			}

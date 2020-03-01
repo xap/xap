@@ -175,7 +175,7 @@ public class GSDirectPersistencyLusWaiter extends Thread {
 
             /*if ( !( service instanceof ReferentUuid ) )
             {
-                if( _logger.isLoggable( Level.WARNING ) )
+                if( _logger.isLoggable(Level.WARNING) )
                     _logger.warning( service + " is not implements [" + ReferentUuid.class.getName() + "] interface. " +
                             "			  In this case the service must provide the consistent equals() implementation." );
             }

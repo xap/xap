@@ -834,9 +834,9 @@ public class GSMessageConsumerImpl
 //					}
 //					catch (TransactionCreateException e1)
 //					{
-//						if( _logger.isLoggable( Level.SEVERE ))
+//						if( _logger.isLoggable(Level.SEVERE))
 //						{
-//							_logger.log( Level.SEVERE,
+//							_logger.log(Level.SEVERE,
 //									toString2()+"receive(): Failed to renew transaction."+e1.orig);
 //						}
 //						// TODO: how do we handle failure to create a new

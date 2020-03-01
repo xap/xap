@@ -1168,7 +1168,7 @@ public class GSSessionImpl
     boolean cancel(Transaction tx) throws IllegalStateException {
 //		ensureOpen();
 //
-//		if( _logger.isLoggable( Level.FINE ))
+//		if( _logger.isLoggable(Level.FINE))
 //		{
 //			_logger.fine( "GSSessionImpl.cancel(): " + toString() );
 //		}
@@ -1363,9 +1363,9 @@ public class GSSessionImpl
 //				}
 //				catch (EntryAlreadyInSpaceException entryInSpaceException)
 //				{
-//					if( _logger.isLoggable( Level.FINE ))
+//					if( _logger.isLoggable(Level.FINE))
 //					{
-//						_logger.log( Level.FINE, "EntryAlreadyInSpaceException inside GSSession.deny(): "
+//						_logger.log(Level.FINE, "EntryAlreadyInSpaceException inside GSSession.deny(): "
 //								+ entryInSpaceException.toString() );
 //					}
 //					//										   JMSException e = new
@@ -1376,9 +1376,9 @@ public class GSSessionImpl
 //				}
 //				catch (TransactionException te)
 //				{
-//					if( _logger.isLoggable( Level.FINE ))
+//					if( _logger.isLoggable(Level.FINE))
 //					{
-//						_logger.log( Level.FINE, "TransactionException inside GSSession.deny(): ", te );
+//						_logger.log(Level.FINE, "TransactionException inside GSSession.deny(): ", te );
 //					}
 //					//				   JMSException e = new JMSException("TransactionException :
 //					// "+ te.toString());
@@ -1387,9 +1387,9 @@ public class GSSessionImpl
 //				}
 //				catch (RemoteException re)
 //				{
-//					if( _logger.isLoggable( Level.FINE ))
+//					if( _logger.isLoggable(Level.FINE))
 //					{
-//						_logger.log( Level.FINE, "RemoteException inside GSSession.deny(): ", re );
+//						_logger.log(Level.FINE, "RemoteException inside GSSession.deny(): ", re );
 //					}
 //					//				   JMSException e = new JMSException("RemoteException : "
 //					// +re.toString());
@@ -1398,9 +1398,9 @@ public class GSSessionImpl
 //				}
 //				catch (JMSException e)
 //				{
-//					if( _logger.isLoggable( Level.FINE ))
+//					if( _logger.isLoggable(Level.FINE))
 //					{
-//						_logger.log( Level.FINE, "JMSException inside GSSession.deny(): ", e );
+//						_logger.log(Level.FINE, "JMSException inside GSSession.deny(): ", e );
 //					}
 //				}//end of try/catch
 //			}//end of while
@@ -1416,7 +1416,7 @@ public class GSSessionImpl
 
 //	public boolean cancel( Transaction tx) throws IllegalStateException{
 //
-//		if( _logger.isLoggable( Level.FINE ))
+//		if( _logger.isLoggable(Level.FINE))
 //		{
 //			_logger.fine( "GSSessionImpl.rollback() ... " + toString() );
 //		}
@@ -1489,9 +1489,9 @@ public class GSSessionImpl
 //			// The transaction is not known to the transaction manager.
 //			// Therefore rolling back won't do us good.
 //			String text = "Internal error during local transaction commit: "+_tx;
-//			if( _logger.isLoggable( Level.SEVERE ))
+//			if( _logger.isLoggable(Level.SEVERE))
 //			{
-//				_logger.log( Level.SEVERE, text, e );
+//				_logger.log(Level.SEVERE, text, e );
 //			}
 //			JMSException jmse = new JMSException(text);
 //			jmse.setLinkedException(e);
@@ -1500,9 +1500,9 @@ public class GSSessionImpl
 //		catch (CannotCommitException e)
 //		{
 //			String text = "Internal error during local transaction commit: "+_tx;
-//			if( _logger.isLoggable( Level.SEVERE ))
+//			if( _logger.isLoggable(Level.SEVERE))
 //			{
-//				_logger.log( Level.SEVERE, text, e );
+//				_logger.log(Level.SEVERE, text, e );
 //			}
 //			JMSException jmse = new JMSException(text);
 //			jmse.setLinkedException(e);
@@ -1511,9 +1511,9 @@ public class GSSessionImpl
 //		catch (RemoteException e)
 //		{
 //			String text = "Internal error during local transaction commit: "+_tx;
-//			if( _logger.isLoggable( Level.SEVERE ))
+//			if( _logger.isLoggable(Level.SEVERE))
 //			{
-//				_logger.log( Level.SEVERE, text, e );
+//				_logger.log(Level.SEVERE, text, e );
 //			}
 //			JMSException jmse = new JMSException(text);
 //			jmse.setLinkedException(e);
@@ -1551,9 +1551,9 @@ public class GSSessionImpl
 //			// The transaction is not known to the transaction manager.
 //			// Therefore rolling back won't do us good.
 //			String text = "Internal error during local transaction abort: "+_tx;
-//			if( _logger.isLoggable( Level.SEVERE ))
+//			if( _logger.isLoggable(Level.SEVERE))
 //			{
-//				_logger.log( Level.SEVERE, text, e );
+//				_logger.log(Level.SEVERE, text, e );
 //			}
 //			JMSException jmse = new JMSException(text);
 //			jmse.setLinkedException(e);
@@ -1562,9 +1562,9 @@ public class GSSessionImpl
 //		catch (CannotAbortException e)
 //		{
 //			String text = "Internal error during local transaction abort: "+_tx;
-//			if( _logger.isLoggable( Level.SEVERE ))
+//			if( _logger.isLoggable(Level.SEVERE))
 //			{
-//				_logger.log( Level.SEVERE, text, e );
+//				_logger.log(Level.SEVERE, text, e );
 //			}
 //			JMSException jmse = new JMSException(text);
 //			jmse.setLinkedException(e);
@@ -1573,9 +1573,9 @@ public class GSSessionImpl
 //		catch (RemoteException e)
 //		{
 //			String text = "Internal error during local transaction abort: "+_tx;
-//			if( _logger.isLoggable( Level.SEVERE ))
+//			if( _logger.isLoggable(Level.SEVERE))
 //			{
-//				_logger.log( Level.SEVERE, text, e );
+//				_logger.log(Level.SEVERE, text, e );
 //			}
 //			JMSException jmse = new JMSException(text);
 //			jmse.setLinkedException(e);
@@ -2001,13 +2001,13 @@ public class GSSessionImpl
 //				catch (InterruptedException e)
 //				{
 //					// TODO Auto-generated catch block
-//					if( _logger.isLoggable( Level.SEVERE ))
+//					if( _logger.isLoggable(Level.SEVERE))
 //					{
-//						_logger.log( Level.SEVERE, e.toString(), e );
+//						_logger.log(Level.SEVERE, e.toString(), e );
 //					}
 //				}
 //				curTX.commit();
-//				if( _logger.isLoggable( Level.FINE ))
+//				if( _logger.isLoggable(Level.FINE))
 //				{
 //					_logger.fine("GSSessionImpl.removeExternalEntryFromSpace() After clear() + After tx.commit()	TX:  "
 //							+ ((ServerTransaction) curTX).id
@@ -2031,9 +2031,9 @@ public class GSSessionImpl
 //			// entryInSpaceException.toString());
 //			//				e.setLinkedException( entryInSpaceException);
 //			//				throw e;
-//			if( _logger.isLoggable( Level.FINE ))
+//			if( _logger.isLoggable(Level.FINE))
 //			{
-//				_logger.log( Level.FINE, "GSSessionImpl.removeExternalEntryFromSpace() EntryAlreadyInSpaceException:  "
+//				_logger.log(Level.FINE, "GSSessionImpl.removeExternalEntryFromSpace() EntryAlreadyInSpaceException:  "
 //						+ entryInSpaceException.toString(), entryInSpaceException );
 //			}
 //		}
@@ -2048,9 +2048,9 @@ public class GSSessionImpl
 //		{
 //			if (uue instanceof EntryNotInSpaceException)
 //			{
-//				if( _logger.isLoggable( Level.FINE ))
+//				if( _logger.isLoggable(Level.FINE))
 //				{
-//					_logger.log( Level.FINE, "GSSessionImpl.removeExternalEntryFromSpace(): The Entry "
+//					_logger.log(Level.FINE, "GSSessionImpl.removeExternalEntryFromSpace(): The Entry "
 //							+ ((EntryNotInSpaceException) uue).getUID()
 //							+ " No Longer In Space " + uue.getCause(), uue );
 //				}
@@ -2070,9 +2070,9 @@ public class GSSessionImpl
 //			// GSSessionImpl.removeExternalEntryFromSpace()"+re.toString());
 //			//				 e.setLinkedException( re);
 //			//				 throw e;
-//			if( _logger.isLoggable( Level.FINE ))
+//			if( _logger.isLoggable(Level.FINE))
 //			{
-//				_logger.log( Level.FINE, "GSSessionImpl.removeExternalEntryFromSpace() RemoteException:  "
+//				_logger.log(Level.FINE, "GSSessionImpl.removeExternalEntryFromSpace() RemoteException:  "
 //						+ re.toString(), re );
 //			}
 //		}
@@ -2479,7 +2479,7 @@ public class GSSessionImpl
 //    	ensureOpen();
 //        synchronized(this)
 //        {
-//        	if( _logger.isLoggable( Level.FINE ))
+//        	if( _logger.isLoggable(Level.FINE))
 //			{
 //				_logger.fine( "GSSessionImpl.unsubscribe(): unsubscribe from: "
 //	                + subscriptionName + " || " + toString() );
@@ -2581,9 +2581,9 @@ public class GSSessionImpl
 //        }
 //        catch (TransactionException te)
 //        {
-//        	if( _logger.isLoggable( Level.FINE ))
+//        	if( _logger.isLoggable(Level.FINE))
 //			{
-//				_logger.log( Level.FINE, "TransactionException inside GSTopicSessionImpl.unsubscribeFromTopic(): "
+//				_logger.log(Level.FINE, "TransactionException inside GSTopicSessionImpl.unsubscribeFromTopic(): "
 //                            + te.toString(), te );
 //			}
 //            JMSException e = new JMSException("TransactionException : "
@@ -2593,9 +2593,9 @@ public class GSSessionImpl
 //        }
 //        catch (RemoteException re)
 //        {
-//        	if( _logger.isLoggable( Level.FINE ))
+//        	if( _logger.isLoggable(Level.FINE))
 //			{
-//				_logger.log( Level.FINE, "RemoteException inside GSTopicSessionImpl.unsubscribeFromTopic(): "
+//				_logger.log(Level.FINE, "RemoteException inside GSTopicSessionImpl.unsubscribeFromTopic(): "
 //                            + re.toString(), re );
 //			}
 //            JMSException e = new JMSException("RemoteException : "
@@ -2607,9 +2607,9 @@ public class GSSessionImpl
 //        {
 //            if (uue instanceof EntryNotInSpaceException)
 //            {
-//            	if( _logger.isLoggable( Level.FINE ))
+//            	if( _logger.isLoggable(Level.FINE))
 //				{
-//					_logger.log( Level.FINE, "GSTopicSessionImpl.unsubscribeFromTopic(): The Entry "
+//					_logger.log(Level.FINE, "GSTopicSessionImpl.unsubscribeFromTopic(): The Entry "
 //                                + ((EntryNotInSpaceException) uue).getUID()
 //                                + " No Longer In Space " + uue.getCause(), uue);
 //
@@ -2645,15 +2645,15 @@ public class GSSessionImpl
 //    	}
 //    	if (m_consumers.size() > 0)
 //		{
-//			if( _logger.isLoggable( Level.SEVERE ))
+//			if( _logger.isLoggable(Level.SEVERE))
 //			{
 //				_logger.severe( "GSSession.addConsumer(): Sessions support only one consumer: " + toString() );
 //			}
 //			throw new JMSException("Sessions support only one consumer.");
 //		}
-//    	if( _logger.isLoggable( Level.FINEST ))
+//    	if( _logger.isLoggable(Level.FINEST))
 //		{
-//			_logger.log( Level.FINEST, "GSTopicSessionImpl.createDurableSubscriber(Topic, String, String, boolean)");
+//			_logger.log(Level.FINEST, "GSTopicSessionImpl.createDurableSubscriber(Topic, String, String, boolean)");
 //		}
 //        GSTopicSubscriberImpl durableSubscriber;
 //        synchronized(this)
@@ -2721,7 +2721,7 @@ public class GSSessionImpl
 //	            durbleSubscriberDetails.put(GSJMSAdmin.DUR_SUB_TOPIC_NAME, topicName);
 //	            durbleSubscriberDetails.put(GSJMSAdmin.DUR_SUB_SUBSCRIPTION_NAME,
 //	                    name);
-//	            if( _logger.isLoggable( Level.FINE ))
+//	            if( _logger.isLoggable(Level.FINE))
 //				{
 //					_logger.fine( "GSTopicSessionImpl.createDurableSubscriber(): "
 //					              + "updating jms-config.xml about newly subscribed DurableSubscriber details." );
@@ -2747,13 +2747,13 @@ public class GSSessionImpl
 //	                    "_cons_", false);
 //	            nextConsumerId();//we still increment the m_consumers counter after
 //	            // using the durable client details
-//	            if( _logger.isLoggable( Level.FINE ))
+//	            if( _logger.isLoggable(Level.FINE))
 //				{
 //					_logger.fine( "GSTopicSessionImpl.createDurableSubscriber(): "
 //					              + "loading existing subscribed DurableSubscriber details from jms-config.xml file." );
 //				}
 //	        }
-//	        if( _logger.isLoggable( Level.FINE ))
+//	        if( _logger.isLoggable(Level.FINE))
 //			{
 //				_logger.fine( "GSTopicSessionImpl.createDurableSubscriber(): || sessionID:"
 //	                        + getSessionID() + " || consumerID: " + consumerID
@@ -2766,7 +2766,7 @@ public class GSSessionImpl
 //	        m_durableNames.add(name);
 //           if( !(topic instanceof GSTopicImpl) )
 //           {
-//        	   if( _logger.isLoggable( Level.FINE ))
+//        	   if( _logger.isLoggable(Level.FINE))
 //        	   {
 //        		   _logger.fine( "GSTopicSessionImpl.createTopicSession(): "
 //        		                 + "Invalid JMS Topic of type: " + topic.getClass().getName() );
@@ -2789,9 +2789,9 @@ public class GSSessionImpl
             throws JMSException {
         ensureOpen();
         throw new JMSException("This version of JMS does not support durable subscribers.");
-//    	if( _logger.isLoggable( Level.FINEST ))
+//    	if( _logger.isLoggable(Level.FINEST))
 //		{
-//			_logger.log( Level.FINEST, "GSTopicSessionImpl.createDurableSubscriber(Topic, String)");
+//			_logger.log(Level.FINEST, "GSTopicSessionImpl.createDurableSubscriber(Topic, String)");
 //		}
 //        return this.createDurableSubscriber(topic, name, null, false);
     }
@@ -2808,9 +2808,9 @@ public class GSSessionImpl
 //    protected void removeSubscriber(GSTopicSubscriberImpl subscriber)
 //    	throws JMSException
 //    {
-//    	if( _logger.isLoggable( Level.FINEST ))
+//    	if( _logger.isLoggable(Level.FINEST))
 //		{
-//    		_logger.log( Level.FINEST, "GSTopicSessionImpl.removeSubscriber(GSTopicSubscriberImpl)");
+//    		_logger.log(Level.FINEST, "GSTopicSessionImpl.removeSubscriber(GSTopicSubscriberImpl)");
 //		}
 //        if (!isClosed())
 //        {

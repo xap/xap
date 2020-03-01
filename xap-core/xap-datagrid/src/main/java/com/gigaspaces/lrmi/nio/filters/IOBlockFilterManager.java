@@ -52,8 +52,7 @@ public class IOBlockFilterManager implements IOFilterManager {
         try {
             _filterFactory = loadFilterFactoryFromSystemProperty();
         } catch (ClassNotFoundException e) {
-            Logger.getLogger(Constants.LOGGER_LRMI_FILTERS)
-                    .log(Level.SEVERE,
+            Logger.getLogger(Constants.LOGGER_LRMI_FILTERS).log(Level.SEVERE,
                             "Error while creating LRMI filter factory, make sure the filter class is available in the classpath" +
                                     " (lib/ext for service grid components, or the same classpath of the classloader that loaded " +
                                     XapModules.DATA_GRID.getJarFileName() + " for remote clients): "

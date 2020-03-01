@@ -5194,7 +5194,7 @@ public class CacheManager extends AbstractCacheManager
 
 //	void debug()
 //	{
-//		if( _logger.isLoggable( Level.INFO ))
+//		if( _logger.isLoggable(Level.INFO))
 //		{
 //			_logger.info("Cache Manager Entries: ");
 //

@@ -87,7 +87,7 @@ public class SessionFactoryBuilder {
         String namingStrategyClass = config.getProperty(HIBERNATE_NAMING_STRATEGY);
 
         if (namingStrategyClass != null) {
-            _logger.log( Level.WARNING, "Definition of naming strategy [" +
+            _logger.log(Level.WARNING, "Definition of naming strategy [" +
                              HIBERNATE_NAMING_STRATEGY + "] found, it's unsupported " +
                              "since hibernate 5.x used, please use instead either [" +
                              HIBERNATE_IMPLICIT_NAMING_STRATEGY  + "] or [" +

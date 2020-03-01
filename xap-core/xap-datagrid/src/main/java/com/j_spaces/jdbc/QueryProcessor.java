@@ -192,7 +192,7 @@ public class QueryProcessor implements IQueryProcessor {
     public static synchronized void setDefaultConfig(QueryProcessorConfiguration defaultConfig) {
         if (QueryProcessor.defaultConfig == null){
             QueryProcessor.defaultConfig = defaultConfig;
-            if( _logger.isLoggable( Level.FINE ) ) {
+            if( _logger.isLoggable(Level.FINE)) {
                 _logger.fine("~~~INITIALIZING of QueryProcessor.defaultConfig" +
                              ", DateTimeFormat=" + defaultConfig.getDateTimeFormat() +
                              ", DateFormat=" + defaultConfig.getDateFormat() +

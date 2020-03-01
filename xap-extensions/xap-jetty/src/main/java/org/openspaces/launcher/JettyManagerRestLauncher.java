@@ -176,7 +176,7 @@ public class JettyManagerRestLauncher implements Closeable {
                 File tmpDir = File.createTempFile( webAppTmpDir, ".dir", workLocation );
                 webApp.setTempDirectory( tmpDir );
             } catch (IOException e) {
-                if( logger.isLoggable( Level.SEVERE ) ) {
+                if( logger.isLoggable(Level.SEVERE) ) {
                     logger.log(Level.SEVERE, e.toString(), e);
                 }
             }
