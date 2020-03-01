@@ -40,10 +40,8 @@ import static com.j_spaces.kernel.SystemProperties.LRMI_NETWORK_FILTER_UNWRAP_BU
 
 @com.gigaspaces.api.InternalApi
 public class IOBlockFilterContainer {
-    private static final Logger logger = Logger
-            .getLogger(IOBlockFilterContainer.class.getName());
-    private static final Logger _contextLogger = Logger
-            .getLogger(Constants.LOGGER_LRMI_CONTEXT);
+    private static final Logger logger = Logger.getLogger(IOBlockFilterContainer.class.getName());
+    private static final Logger _contextLogger = Logger.getLogger(Constants.LOGGER_LRMI_CONTEXT);
 
     public static final byte MESSAGE_SUFFIX = 0;
     public static final byte PREFIX_PART = 1;

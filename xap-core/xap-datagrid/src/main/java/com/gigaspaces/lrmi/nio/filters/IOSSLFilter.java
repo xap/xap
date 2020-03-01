@@ -39,8 +39,7 @@ import javax.net.ssl.SSLException;
 
 public class IOSSLFilter implements IOBlockFilter {
 
-    private static final Logger logger = Logger
-            .getLogger(IOBlockFilterContainer.class.getName());
+    private static final Logger logger = Logger.getLogger(IOBlockFilterContainer.class.getName());
     private final SSLEngine _sslEngine;
     private final SSLContext _sslContext;
     private final String _uid;

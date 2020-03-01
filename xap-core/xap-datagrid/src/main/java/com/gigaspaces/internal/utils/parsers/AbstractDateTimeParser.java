@@ -37,7 +37,7 @@ public abstract class AbstractDateTimeParser extends AbstractParser {
     protected AbstractDateTimeParser(String desc, String pattern) {
         this._desc = desc;
         this._pattern = pattern;
-        if( _logger.isLoggable(Level.FINE ) ) {
+        if( _logger.isLoggable(Level.FINE) ) {
             _logger.fine("> AbstractDateTimeParser desc=" + desc + ", pattern=" + _pattern);
         }
     }
