@@ -303,7 +303,7 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
                 && queryIndexes.parallelStream().allMatch(q -> q instanceof RelationIndexScanner);
 
         if (allRelationIndexScanner) {
-            CompoundAndCustomQuery customQuery = new CompoundAndCustomQuery(Collections.emptyList());
+            CompoundAndCustomQuery customQuery = new CompoundAndCustomQuery(customQueries);
             CombinedRelationIndexScanner combinedRelationIndexScanner = new CombinedRelationIndexScanner(queryIndexes);
             List<IQueryIndexScanner> combinedQueryIndexes = new ArrayList<IQueryIndexScanner>(1);
             combinedQueryIndexes.add(combinedRelationIndexScanner);
