@@ -3,6 +3,7 @@ package com.gigaspaces.metrics.hsqldb;
 import com.gigaspaces.api.InternalApi;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @since 15.2
@@ -10,8 +11,7 @@ import java.util.*;
 @InternalApi
 public class SystemMetricsManager {
 
-    private static Map<String, SystemMetrics> systemMetricTables = new HashMap<>();
-    private static Map<String, SystemMetrics> dynamicSystemMetricTables = new HashMap<>();
+    private static Map<String, SystemMetrics> systemMetricTables = new ConcurrentHashMap<>();
 
     static{
         Arrays.stream( PredefinedSystemMetrics.values() ).forEach(m ->
@@ -22,10 +22,6 @@ public class SystemMetricsManager {
         return systemMetricTables.values();
     }
 
-    public static Collection<SystemMetrics> getDynamicSystemMetricTables() {
-        return dynamicSystemMetricTables.values();
-    }
-
     public static SystemMetrics getSystemMetric( String key ) {
         return systemMetricTables.get( key );
     }
@@ -34,8 +30,7 @@ public class SystemMetricsManager {
         SystemMetrics retValue = null;
         if( !systemMetricTables.containsKey( metricName ) ) {
             retValue = new SystemMetrics(metricName);
-            systemMetricTables.put(metricName, retValue);
-            dynamicSystemMetricTables.put(metricName, retValue);
+            systemMetricTables.putIfAbsent(metricName, retValue);
         }
         return retValue;
     }
