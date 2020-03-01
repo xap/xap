@@ -1,12 +1,8 @@
 package com.gigaspaces.metrics.hsqldb;
 
 import com.gigaspaces.api.InternalApi;
-import com.gigaspaces.metrics.hsqldb.dynamicTables.DataTypeReadCountMetrics;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @since 15.2
@@ -15,27 +11,32 @@ import java.util.Map;
 public class SystemMetricsManager {
 
     private static Map<String, SystemMetrics> systemMetricTables = new HashMap<>();
+    private static Map<String, SystemMetrics> dynamicSystemMetricTables = new HashMap<>();
 
     static{
         Arrays.stream( PredefinedSystemMetrics.values() ).forEach(m ->
                 systemMetricTables.put( m.getMetricName(), new SystemMetrics( m.getMetricName() ) )  );
     }
 
-    public static Map<String, SystemMetrics> getSystemMetricTables() {
-        return Collections.unmodifiableMap( systemMetricTables );
+    public static Collection<SystemMetrics> getSystemMetricTables() {
+        return systemMetricTables.values();
+    }
+
+    public static Collection<SystemMetrics> getDynamicSystemMetricTables() {
+        return dynamicSystemMetricTables.values();
+    }
+
+    public static SystemMetrics getSystemMetric( String key ) {
+        return systemMetricTables.get( key );
     }
 
     public static SystemMetrics addDynamicSystemTable(String metricName) {
         SystemMetrics retValue = null;
-        if (metricName.startsWith(DataTypeReadCountMetrics.METRIC_PREFIX)) {
-            retValue = new DataTypeReadCountMetrics(metricName);
+        if( systemMetricTables.containsKey( metricName ) ) {
+            retValue = new SystemMetrics(metricName);
+            systemMetricTables.put(metricName, retValue);
+            dynamicSystemMetricTables.put(metricName, retValue);
         }
-
-        if( retValue == null ){
-            return null;
-        }
-
-        systemMetricTables.put(metricName, retValue);
         return retValue;
     }
 }

@@ -19,7 +19,6 @@ package com.gigaspaces.metrics.hsqldb;
 import com.gigaspaces.metrics.MetricRegistrySnapshot;
 import com.gigaspaces.metrics.MetricReporter;
 import com.gigaspaces.metrics.MetricTagsSnapshot;
-import com.gigaspaces.metrics.hsqldb.dynamicTables.DataTypeReadCountMetrics;
 import com.j_spaces.kernel.SystemProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +75,7 @@ public class HsqlDbReporter extends MetricReporter {
 
         if (tableName == null) {
 
-            if( key.startsWith( DataTypeReadCountMetrics.METRIC_PREFIX ) ){
+            if( key.startsWith( DynamicSystemMetrics.READ_COUNT_PER_TYPE_METRIC_PREFIX ) ){
                 SystemMetrics systemMetrics = SystemMetricsManager.addDynamicSystemTable(key);
                 if( systemMetrics != null ) {
                     tableName = systemMetrics.getTableName();
@@ -151,7 +150,7 @@ public class HsqlDbReporter extends MetricReporter {
     }
 
     private String getTableName(String key) {
-        SystemMetrics systemMetrics = SystemMetricsManager.getSystemMetricTables().get(key);
+        SystemMetrics systemMetrics = SystemMetricsManager.getSystemMetric(key);
         if( systemMetrics != null ){
             return systemMetrics.getTableName();
         }
