@@ -19,6 +19,7 @@ package com.gigaspaces.lrmi.nio.watchdog;
 
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.logger.Constants;
+import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.lrmi.ConnectionResource;
 import com.gigaspaces.lrmi.LRMIUtilities;
 import com.gigaspaces.lrmi.nio.CPeer;
@@ -160,8 +161,8 @@ public class RequestTimeoutObserver
         return localAddress;
     }
 
-    protected Level getCloseConnectionLoggingLevel() {
-        return Level.FINE;
+    protected LogLevel getCloseConnectionLoggingLevel() {
+        return LogLevel.DEBUG;
     }
 
     /**
@@ -196,11 +197,11 @@ public class RequestTimeoutObserver
                 watched.setException(e);
 
                 // this call is not idempotent so we store the value.
-                Level closeConnectionLoggingLevel = getCloseConnectionLoggingLevel();
+                LogLevel closeConnectionLoggingLevel = getCloseConnectionLoggingLevel();
 
-                if (_logger.isLoggable(closeConnectionLoggingLevel)) {
+                if (closeConnectionLoggingLevel.isEnabled(_logger)) {
                     String invalidConnectionMessage = getInvalidConnectionMessage(serverAddress, watched.getSocket(), watched);
-                    _logger.log(closeConnectionLoggingLevel, invalidConnectionMessage + "[" + e + "]", e);
+                    closeConnectionLoggingLevel.log(_logger, invalidConnectionMessage + "[" + e + "]", e);
                 }
 
                 // Close the socket

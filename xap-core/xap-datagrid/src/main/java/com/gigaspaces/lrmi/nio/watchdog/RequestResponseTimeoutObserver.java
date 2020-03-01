@@ -19,6 +19,7 @@ package com.gigaspaces.lrmi.nio.watchdog;
 import com.gigaspaces.internal.io.GSByteArrayInputStream;
 import com.gigaspaces.internal.io.MarshalInputStream;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.lrmi.ConnectionResource;
 import com.gigaspaces.lrmi.nio.CPeer;
 import com.gigaspaces.lrmi.nio.ChannelEntry;
@@ -136,16 +137,16 @@ public class RequestResponseTimeoutObserver extends RequestTimeoutObserver {
     }
 
     @Override
-    protected Level getCloseConnectionLoggingLevel() {
+    protected LogLevel getCloseConnectionLoggingLevel() {
         if (DISABLE_RESPONSE_WATCH)
             return super.getCloseConnectionLoggingLevel();
 
-        Level result = Level.FINE;
+        LogLevel result = LogLevel.DEBUG;
         long timeMillis = SystemTime.timeMillis();
         // not the first time and less than 1 minute since last time 
         if (_lastDisconnectionTimestamp > 0 &&
                 timeMillis < _lastDisconnectionTimestamp + TimeUnit.MINUTES.toMillis(1)) {
-            result = Level.WARNING;
+            result = LogLevel.WARNING;
         }
         _lastDisconnectionTimestamp = timeMillis;
         return result;
