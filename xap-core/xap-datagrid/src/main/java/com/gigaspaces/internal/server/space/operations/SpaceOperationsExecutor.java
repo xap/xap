@@ -55,7 +55,6 @@ public class SpaceOperationsExecutor {
         this._operations[SpaceOperationsCodes.REGISTER_LOCAL_VIEW] = new RegisterLocalViewSpaceOperation();
         this._operations[SpaceOperationsCodes.UNREGISTER_LOCAL_VIEW] = new UnregisterLocalViewSpaceOperation();
         this._operations[SpaceOperationsCodes.AGGREGATE_ENTRIES] = new AggregateEntriesSpaceOperation();
-        this._operations[SpaceOperationsCodes.GET_BATCH_FOR_ITERATOR] = new GetBatchForIteratorSpaceOperation();
         this._operations[SpaceOperationsCodes.CLOSE_SERVER_ITERATOR] = new CloseIteratorSpaceOperation();
     }
 

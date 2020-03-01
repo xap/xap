@@ -18,6 +18,8 @@ package com.gigaspaces.internal.client;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterUtils;
+import com.gigaspaces.internal.space.responses.AbstractSpaceResponseInfo;
+import com.j_spaces.core.GetBatchForIteratorException;
 
 import java.io.*;
 import java.util.UUID;
@@ -27,7 +29,8 @@ import java.util.UUID;
  * @since 15.2.0
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceIteratorBatchResult implements Externalizable {
+public class SpaceIteratorBatchResult extends AbstractSpaceResponseInfo {
+    public static final int NO_BATCH_NUMBER = -1;
     private static final short FLAG_ENTRY_PACKETS = 1 << 0;
     private static final short FLAG_EXCEPTION = 1 << 1;
     private Object[] _entries;
@@ -35,15 +38,21 @@ public class SpaceIteratorBatchResult implements Externalizable {
     private int _partitionId;
     private int _batchNumber;
     private UUID _uuid;
-    private transient boolean _finished;
 
     public SpaceIteratorBatchResult() {
     }
 
-    public SpaceIteratorBatchResult(Object[] entries, Integer partitionId, Exception exception, int batchNumber, UUID uuid) {
+    public SpaceIteratorBatchResult(Exception exception, UUID uuid) {
+        this._entries = new Object[0];
+        this._exception = exception;
+        this._partitionId = exception instanceof GetBatchForIteratorException ? ((GetBatchForIteratorException) exception).getPartitionId() : PartitionedClusterUtils.NO_PARTITION;
+        this._batchNumber = exception instanceof GetBatchForIteratorException ? ((GetBatchForIteratorException) exception).getBatchNumber() : NO_BATCH_NUMBER;
+        this._uuid = uuid;
+    }
+
+    public SpaceIteratorBatchResult(Object[] entries, Integer partitionId, int batchNumber, UUID uuid) {
         this._entries = entries;
         this._partitionId = partitionId != null ? partitionId : PartitionedClusterUtils.NO_PARTITION;
-        this._exception = exception;
         this._batchNumber = batchNumber;
         this._uuid = uuid;
     }
@@ -56,24 +65,8 @@ public class SpaceIteratorBatchResult implements Externalizable {
         return _exception;
     }
 
-    public boolean isFirstTime() {
-        return _batchNumber == 0;
-    }
-
-    public void setFinished(boolean finished) {
-        this._finished = finished;
-    }
-
-    public boolean isFinished(){
-        return _finished; // see if able to simplify here
-    }
-
     public boolean isFailed(){
         return _exception != null;
-    }
-
-    public boolean isWaiting(){
-        return !isFinished();
     }
 
     public int getBatchNumber() {
@@ -86,7 +79,6 @@ public class SpaceIteratorBatchResult implements Externalizable {
                 "_uuid=" + _uuid +
                 ", num_of_entries=" + _entries.length +
                 ", _partitionId=" + _partitionId +
-                ", _finished=" + _finished +
                 ", _exception=" + _exception +
                 ", _batchNumber=" + _batchNumber +
                 '}';
@@ -128,5 +120,9 @@ public class SpaceIteratorBatchResult implements Externalizable {
         if (_exception != null)
             flags |= FLAG_EXCEPTION;
         return flags;
+    }
+
+    public UUID getUuid() {
+        return _uuid;
     }
 }

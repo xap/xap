@@ -28,7 +28,6 @@ import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.ReadTakeEntriesUidsResult;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.ReadTakeByIdsProxyActionInfo;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.ReadTakeProxyActionInfo;
-import com.gigaspaces.internal.client.spaceproxy.operations.CloseIteratorSpaceOperationResult;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.metadata.index.AddTypeIndexesResult;
@@ -37,10 +36,7 @@ import com.gigaspaces.query.aggregators.AggregationResult;
 import com.gigaspaces.query.aggregators.AggregationSet;
 import com.gigaspaces.security.service.SecuredService;
 import com.gigaspaces.serialization.pbs.IDotnetProxyAssociated;
-import com.j_spaces.core.IJSpace;
-import com.j_spaces.core.LeaseContext;
-import com.j_spaces.core.OperationID;
-import com.j_spaces.core.SpaceHealthStatus;
+import com.j_spaces.core.*;
 import com.j_spaces.core.client.ActionListener;
 import com.j_spaces.core.client.ActionMaker;
 import com.j_spaces.core.client.ReadModifiers;
@@ -269,9 +265,6 @@ public interface ISpaceProxy extends IJSpace, ActionMaker, SecuredService, IDotn
     <T> Future<ChangeResult<T>> asyncChange(Object template, ChangeSet changeSet, Transaction txn, long timeout, ChangeModifiers modifiers, AsyncFutureListener<ChangeResult<T>> listener) throws RemoteException;
 
     AggregationResult aggregate(Object template, AggregationSet aggregationSet, Transaction txn, int readModifiers) throws RemoteException, TransactionException, InterruptedException;
-
-    SpaceIteratorBatchResult getBatchForIterator(Object template, int batchSize, int batchNumber, int modifiers, UUID uuid)
-            throws TransactionException, UnusableEntryException, RemoteException;
 
     void closeSpaceIterator(UUID uuid) throws RemoteException, InterruptedException;
 }

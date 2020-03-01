@@ -18,18 +18,17 @@
 package com.gigaspaces.client.iterator;
 
 import com.gigaspaces.client.iterator.server_based.SpaceIteratorBatchResultsManager;
-import com.gigaspaces.internal.client.SpaceIteratorBatchResult;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ObjectType;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.logger.Constants;
+import com.gigaspaces.client.iterator.server_based.SpaceIteratorException;
 import com.j_spaces.jdbc.builder.SQLQueryTemplatePacket;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -141,7 +140,7 @@ public class ServerBasedEntryPacketIterator implements IEntryPacketIterator {
         }
     }
 
-    private Iterator<IEntryPacket> getNextBatch() {
+    private Iterator<IEntryPacket> getNextBatch() throws SpaceIteratorException {
         _buffer.clear();
         try {
             Object[] entries =  _spaceIteratorBatchResultsManager.getNextBatch(_timeout);
@@ -152,7 +151,7 @@ public class ServerBasedEntryPacketIterator implements IEntryPacketIterator {
             for (Object entry : entries)
                 _buffer.add((IEntryPacket) entry);
             return _buffer.iterator();
-        } catch (InterruptedException | TimeoutException e) {
+        } catch (InterruptedException e) {
             processNextBatchFailure(e);
         }
         return null;

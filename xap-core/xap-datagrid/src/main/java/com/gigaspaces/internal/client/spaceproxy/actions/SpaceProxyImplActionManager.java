@@ -82,11 +82,6 @@ public class SpaceProxyImplActionManager extends AbstractSpaceProxyActionManager
     }
 
     @Override
-    protected GetBatchForIteratorProxyAction<SpaceProxyImpl> createGetBatchForIteratorAction() {
-        return new SpaceProxyImplGetBatchForIteratorAction();
-    }
-
-    @Override
     protected CloseSpaceIteratorProxyAction<SpaceProxyImpl> createCloseSpaceIteratorAction() {
         return new SpaceProxyImplCloseSpaceIteratorAction();
     }

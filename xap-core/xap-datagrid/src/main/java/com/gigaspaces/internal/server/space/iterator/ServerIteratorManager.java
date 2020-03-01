@@ -1,7 +1,7 @@
 package com.gigaspaces.internal.server.space.iterator;
 
 import com.gigaspaces.logger.Constants;
-import com.j_spaces.core.ServerIteratorAnswerHolder;
+import com.j_spaces.core.GetBatchForIteratorException;
 
 import java.util.Map;
 import java.util.UUID;
@@ -17,7 +17,7 @@ public class ServerIteratorManager {
         _logger = Logger.getLogger(Constants.LOGGER__SERVER_GSITERATOR);
     }
 
-    public ServerIteratorInfo getOrCreateServerIteratorInfo(ServerIteratorRequestInfo serverIteratorRequestInfo) throws IllegalStateException{
+    public ServerIteratorInfo getOrCreateServerIteratorInfo(ServerIteratorRequestInfo serverIteratorRequestInfo) throws GetBatchForIteratorException {
         UUID uuid = serverIteratorRequestInfo.getUuid();
         boolean containsUuid = serverIteratorInfoMap.containsKey(uuid);
         boolean firstTime = serverIteratorRequestInfo.isFirstTime();
@@ -34,9 +34,9 @@ public class ServerIteratorManager {
             return serverIteratorInfoMap.get(uuid);
         }
         if(containsUuid && firstTime) {
-            throw new IllegalStateException("Space iterator " + uuid + " was already created in server");
+            throw new GetBatchForIteratorException("Space iterator " + uuid + " was already created in space");
         }
-        throw new IllegalStateException("Requesting batch number " + serverIteratorRequestInfo.getRequestedBatchNumber() + " for space iterator " + uuid + " , which was not found in server");
+        throw new GetBatchForIteratorException("Space iterator " + uuid + " was not found in space");
     }
 
     public void closeServerIterator(UUID uuid){

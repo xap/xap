@@ -41,6 +41,7 @@ import com.gigaspaces.query.ISpaceQuery;
 import com.gigaspaces.query.aggregators.AggregationResult;
 import com.gigaspaces.query.aggregators.AggregationSet;
 import com.j_spaces.core.DropClassException;
+import com.j_spaces.core.GetBatchForIteratorException;
 import com.j_spaces.core.LeaseContext;
 import com.j_spaces.core.SpaceHealthStatus;
 import com.j_spaces.core.client.Modifiers;
@@ -73,7 +74,6 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
     private final ReadTakeEntriesUidsProxyAction<TSpaceProxy> _readTakeEntriesUidsAction;
     private final ChangeProxyAction<TSpaceProxy> _changeAction;
     private final AggregateProxyAction<TSpaceProxy> _aggregationAction;
-    private final GetBatchForIteratorProxyAction<TSpaceProxy> _getBatchForIteratorAction;
     private final CloseSpaceIteratorProxyAction<TSpaceProxy> _closeSpaceIteratorAction;
 
     protected AbstractSpaceProxyActionManager(TSpaceProxy spaceProxy) {
@@ -89,7 +89,6 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
         _writeAction = createWriteProxyAction();
         _changeAction = createChangeProxyAction();
         _aggregationAction = createAggregateAction();
-        _getBatchForIteratorAction = createGetBatchForIteratorAction();
         _closeSpaceIteratorAction = createCloseSpaceIteratorAction();
     }
 
@@ -172,12 +171,6 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
         ReadTakeProxyActionInfo actionInfo = new ReadTakeProxyActionInfo(
                 _spaceProxy, uid, txn, modifiers, resultType, returnPacket, false, false);
         return read(actionInfo);
-    }
-
-    public SpaceIteratorBatchResult getNextBatchFromServerIterator(Object template, int batchSize, int batchNumber, int modifiers, UUID uuid)
-            throws RemoteException, UnusableEntryException, TransactionException {
-        GetBatchForIteratorProxyActionInfo actionInfo = new GetBatchForIteratorProxyActionInfo(_spaceProxy,template, batchSize, batchNumber, modifiers, uuid);
-        return _getBatchForIteratorAction.getNextBatch(_spaceProxy,actionInfo);
     }
 
     public void closeServerIterator(UUID uuid) throws RemoteException, InterruptedException {
@@ -448,8 +441,6 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
     protected abstract ChangeProxyAction<TSpaceProxy> createChangeProxyAction();
 
     protected abstract AggregateProxyAction<TSpaceProxy> createAggregateAction();
-
-    protected abstract GetBatchForIteratorProxyAction<TSpaceProxy> createGetBatchForIteratorAction();
 
     protected abstract CloseSpaceIteratorProxyAction<TSpaceProxy> createCloseSpaceIteratorAction();
 
