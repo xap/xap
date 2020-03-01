@@ -504,7 +504,7 @@ public class NonActivatableServiceDescriptor
 	    logger.log(Level.FINEST, "Created ExportClassLoader: {0}", 
 		newClassLoader);
         } catch (IOException ioe) {
-            logger.log(Level.SEVERE, "classloader.problem", 
+            logger.log(Level.SEVERE, "Could not create class loader with classpath={0} and codebase={1}",
 	        new Object[] {getImportCodebase(), getExportCodebase()});
             throw ioe;
         } 

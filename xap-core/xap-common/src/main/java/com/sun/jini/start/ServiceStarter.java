@@ -33,7 +33,6 @@ import java.rmi.activation.ActivationSystem;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
-import java.util.MissingResourceException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -109,27 +108,7 @@ public class ServiceStarter {
     /**
      * Configure logger
      */
-    static /*final*/ Logger logger = null;
-
-    static {
-        try {
-            logger =
-                    Logger.getLogger(
-                            START_PACKAGE + ".service.starter",
-                            START_PACKAGE + ".resources.service");
-        } catch (Exception e) {
-            logger =
-                    Logger.getLogger(START_PACKAGE + ".service.starter");
-            if (e instanceof MissingResourceException) {
-                logger.info("Could not load logger's ResourceBundle: "
-                        + e);
-            } else if (e instanceof IllegalArgumentException) {
-                logger.info("Logger exists and uses another resource bundle: "
-                        + e);
-            }
-            logger.info("Defaulting to existing logger");
-        }
-    }
+    static final Logger logger = Logger.getLogger(START_PACKAGE + ".service.starter");
 
     /**
      * Array of strong references to transient services
@@ -357,15 +336,15 @@ public class ServiceStarter {
         for (int i = 0; i < results.length; i++) {
             if (results[i].exception != null) {
                 logger.log(Level.WARNING,
-                        "service.creation.unknown",
+                        "Exception creating service.",
                         results[i].exception);
                 logger.log(Level.WARNING,
-                        "service.creation.unknown.detail",
+                        "Associated service descriptor [{0}]: {1}",
                         new Object[]{new Integer(i),
                                 results[i].descriptor});
             } else if (results[i].descriptor == null) {
                 logger.log(Level.WARNING,
-                        "service.creation.null", new Integer(i));
+                        "Service descriptor [{0}] was null.", new Integer(i));
             }
         }
         LogUtils.exiting(logger, ServiceStarter.class, "checkResultFailures");
@@ -397,7 +376,7 @@ public class ServiceStarter {
                     config.getEntry(START_PACKAGE, "serviceDescriptors",
                             ServiceDescriptor[].class, null);
             if (descs == null || descs.length == 0) {
-                logger.warning("service.config.empty");
+                logger.warning("Configuration file does not contain any service descriptor entries.");
                 return;
             }
             LoginContext loginContext = (LoginContext)
@@ -411,9 +390,9 @@ public class ServiceStarter {
             checkResultFailures(results);
             maintainNonActivatableReferences(results);
         } catch (ConfigurationException cex) {
-            logger.log(Level.SEVERE, "service.config.exception", cex);
+            logger.log(Level.SEVERE, "Problem reading configuration file.", cex);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "service.creation.exception", e);
+            logger.log(Level.SEVERE, "Problem creating service.", e);
         }
         LogUtils.exiting(logger, ServiceStarter.class, "main");
     }

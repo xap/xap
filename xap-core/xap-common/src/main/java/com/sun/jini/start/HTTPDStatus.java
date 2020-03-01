@@ -70,7 +70,7 @@ public class HTTPDStatus {
      */
     public static void httpdWarning(String codebase) {
         if (codebase == null) {
-            logger.log(Level.WARNING, "httpserver.warning",
+            logger.log(Level.WARNING, "Problem accessing desired URL[{0}]: {1}.",
                     new Object[]{codebase, "Codebase is null"});
             return;
         }
@@ -85,19 +85,19 @@ public class HTTPDStatus {
                 //Skip file check for directories
                 if (fileName == null ||
                         fileName.endsWith("/")) {
-                    logger.log(Level.FINEST, "httpserver.skipping", url);
+                    logger.log(Level.FINEST, "Skipping file check for: {0}", url);
                 } else {
                     try {
                         drainStream(u.openStream());
                     } catch (Exception ioe) {
-                        logger.log(Level.WARNING, "httpserver.warning",
+                        logger.log(Level.WARNING, "Problem accessing desired URL[{0}]: {1}.",
                                 new Object[]{url, ioe.toString()});
-                        logger.log(Level.FINEST, "httpserver.exception", ioe);
+                        logger.log(Level.FINEST, "Associated exception:", ioe);
                     }
                 }
             } catch (MalformedURLException e) {
-                logger.log(Level.WARNING, "httpserver.unknownprotocol", url);
-                logger.log(Level.FINEST, "httpserver.exception", e);
+                logger.log(Level.WARNING, "Unknown protocol for URL: {0} may cause problems", url);
+                logger.log(Level.FINEST, "Associated exception:", e);
             }
         }
         return;
