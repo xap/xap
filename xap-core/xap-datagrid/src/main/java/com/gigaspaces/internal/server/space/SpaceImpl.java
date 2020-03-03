@@ -182,6 +182,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.logging.Level;
 
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_BLOB_STORE;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_PROP;
@@ -2492,10 +2493,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
         try {
             final ServerTransaction transaction = createServerTransaction(mgr, id, numOfParticipants);
-            if (supportsTwoPhaseReplication && _operationLogger.isLoggable(java.util.logging.Level.FINEST))
+            if (supportsTwoPhaseReplication && _operationLogger.isLoggable(Level.FINEST))
                 _operationLogger.finest("preparing transaction [" + _engine.createTransactionDetailsString(transaction, null) + "]");
             final int prepareResult = _engine.prepare(mgr, transaction, false /*singleParticipant*/, supportsTwoPhaseReplication, null /*OperationID*/);
-            if (supportsTwoPhaseReplication && _operationLogger.isLoggable(java.util.logging.Level.FINEST))
+            if (supportsTwoPhaseReplication && _operationLogger.isLoggable(Level.FINEST))
                 _operationLogger.finest("prepared transaction [" + _engine.createTransactionDetailsString(transaction, null) + "] result=" + prepareResult);
 
             return prepareResult;
