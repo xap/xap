@@ -359,8 +359,8 @@ public class RollingFileHandler extends StreamHandler {
         File file = null;
         try {
             file = acquireUniqueFile(filename);
-            if (isDebuggable(Level.FINE)) {
-                LogHelper.println("com.gigaspaces.logger", Level.FINE, "Log file: " + file.getAbsolutePath());
+            if (isDebuggable(Level.CONFIG)) {
+                LogHelper.println("com.gigaspaces.logger", Level.CONFIG, "Log file: " + file.getAbsolutePath());
             }
             FileOutputStream fout = new FileOutputStream(file, append);
             BufferedOutputStream bout = new BufferedOutputStream(fout);

@@ -456,8 +456,8 @@ public class JSpaceUtilities {
                 if (firstNode != null) {
                     String oldNodeValue = firstNode.getNodeValue().trim();
                     firstNode.setNodeValue(newValue);
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE,
+                    if (_logger.isLoggable(Level.INFO)) {
+                        _logger.log(Level.INFO,
                                 "Override the cluster config using the xpath expression <"
                                         + xpath
                                         + "> passed through the custom properties.\n\tOld value: <"
