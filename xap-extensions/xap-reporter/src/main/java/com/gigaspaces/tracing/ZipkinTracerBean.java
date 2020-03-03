@@ -20,10 +20,16 @@ public class ZipkinTracerBean implements InitializingBean, DisposableBean {
     private Tracing tracing;
     private BraveTracer tracer;
     private Thread thread;
-    private boolean consulPlugin = false;
+    private boolean consulPlugin = true;
+    private String serviceName;
 
     public ZipkinTracerBean() {
         if (GlobalTracer.isRegistered()) throw new IllegalArgumentException("GlobalTracer already exists");
+    }
+
+    public ZipkinTracerBean(String serviceName) {
+        this();
+        this.serviceName = serviceName;
     }
 
     @Override
@@ -32,9 +38,10 @@ public class ZipkinTracerBean implements InitializingBean, DisposableBean {
                 "http://zipkin.service.consul:9411/api/v2/spans");
         reporter = AsyncReporter.builder(sender).build();
         tracing = Tracing.newBuilder()
-                .localServiceName("GigaSpaces-Tracer")
+                .localServiceName(serviceName)
                 .spanReporter(reporter)
                 .build();
+        tracing.setNoop(true);
         tracer = BraveTracer.create(tracing);
         GlobalTracer.registerIfAbsent(tracer);
 
@@ -47,14 +54,16 @@ public class ZipkinTracerBean implements InitializingBean, DisposableBean {
                 public void run() {
                     while (!Thread.currentThread().isInterrupted()) {
                         Response<GetValue> kvClient = client.getKVValue("gigaspaces/tracing");
-                        System.out.println("Tracing value: " + kvClient.getValue().getDecodedValue());
-                        boolean tracingIsOn = Boolean.parseBoolean(kvClient.getValue().getDecodedValue());
-                        if (tracingIsOn && tracing.isNoop()) {
-                            System.out.println("Tracing was set to on...");
-                            tracing.setNoop(false);
-                        } else if (!tracingIsOn && !tracing.isNoop()) {
-                            System.out.println("Tracing was set to off...");
-                            tracing.setNoop(true);
+                        if (kvClient.getValue() != null) {
+                            System.out.println("Tracing value: " + kvClient.getValue().getDecodedValue());
+                            boolean tracingIsOn = Boolean.parseBoolean(kvClient.getValue().getDecodedValue());
+                            if (tracingIsOn && tracing.isNoop()) {
+                                System.out.println("Tracing was set to on...");
+                                tracing.setNoop(false);
+                            } else if (!tracingIsOn && !tracing.isNoop()) {
+                                System.out.println("Tracing was set to off...");
+                                tracing.setNoop(true);
+                            }
                         }
                         try {
                             TimeUnit.SECONDS.sleep(10);
