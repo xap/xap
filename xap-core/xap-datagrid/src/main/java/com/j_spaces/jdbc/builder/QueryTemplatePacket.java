@@ -297,23 +297,9 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
     }
 
     private CompoundAndCustomQuery buildCompoundAndCustomQuery(List<ICustomQuery> customQueries, List<IQueryIndexScanner> queryIndexes) {
-
-        final boolean allRelationIndexScanner = queryIndexes.size() > 1
-                && Boolean.parseBoolean(System.getProperty("com.gs.13953.enabled", "true"))
-                && queryIndexes.parallelStream().allMatch(q -> q instanceof RelationIndexScanner);
-
-        if (allRelationIndexScanner) {
-            CompoundAndCustomQuery customQuery = new CompoundAndCustomQuery(customQueries);
-            CombinedRelationIndexScanner combinedRelationIndexScanner = new CombinedRelationIndexScanner(queryIndexes);
-            List<IQueryIndexScanner> combinedQueryIndexes = new ArrayList<IQueryIndexScanner>(1);
-            combinedQueryIndexes.add(combinedRelationIndexScanner);
-            customQuery.getCustomIndexes().addAll(combinedQueryIndexes);
-            return customQuery;
-        } else {
             CompoundAndCustomQuery customQuery = new CompoundAndCustomQuery(customQueries);
             customQuery.getCustomIndexes().addAll(queryIndexes);
             return customQuery;
-        }
     }
 
     private boolean isRangeIndexed(Range range) {

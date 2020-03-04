@@ -109,5 +109,8 @@ public class QueryExtensionIndexEntryIteratorWrapper implements IScanListIterato
         return true;
     }
 
-
+    @Override
+    public boolean isExtensionIndex() {
+        return true;
+    }
 }

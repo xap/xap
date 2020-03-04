@@ -30,7 +30,7 @@ import com.gigaspaces.internal.cluster.node.impl.directPersistency.ioImpl.Direct
 import com.gigaspaces.internal.cluster.node.impl.groups.IReplicationChannelDataFilter;
 import com.gigaspaces.internal.cluster.node.impl.notification.NotificationReplicationChannelDataFilter;
 import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.query.CompoundAndCustomQuery;
+import com.gigaspaces.internal.query.AbstractCompundCustomQuery;
 import com.gigaspaces.internal.query.ICustomQuery;
 import com.gigaspaces.internal.query.IQueryIndexScanner;
 import com.gigaspaces.internal.query.explainplan.*;
@@ -229,6 +229,8 @@ public class CacheManager extends AbstractCacheManager
 
 
     public static final int MIN_SIZE_TO_PERFORM_EXPLICIT_PROPERTIES_INDEX_SCAN_ = 5;
+
+    public static final boolean GS_13953_ENABLED = Boolean.parseBoolean(System.getProperty("com.gs.13953.enabled", "true"));
 
     public CacheManager(SpaceConfigReader configReader, ClusterPolicy clusterPolicy,
                         SpaceTypeManager typeManager, IReplicationNode replicationNode,
@@ -4471,13 +4473,13 @@ public class CacheManager extends AbstractCacheManager
         }
 
         //if single index and is a lucene index
-        if (indexUsed && numberOfCustomIndexes == 1
-                && resultOIS instanceof QueryExtensionIndexEntryIteratorWrapper
-                && customQuery instanceof CompoundAndCustomQuery) {
+        if (GS_13953_ENABLED && indexUsed && numberOfCustomIndexes == 1
+                && resultOIS != null && resultOIS.isExtensionIndex()
+                && customQuery instanceof AbstractCompundCustomQuery) {
             //Remove already traversed paths
             String indexName = customQuery.getCustomIndexes().get(0).getIndexName();
             List<String> indexNames = Arrays.asList(indexName.split("&"));
-            ((CompoundAndCustomQuery) customQuery).get_subQueries().removeIf(
+            ((AbstractCompundCustomQuery) customQuery).get_subQueries().removeIf(
                     subQuery -> indexNames.contains(((RelationRange) subQuery).getIndexScanner().getIndexName()));
             return resultOIS;
         }

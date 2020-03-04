@@ -70,6 +70,11 @@ public interface IScanListIterator<T>
     }
 
     /**
+     * @return true if this iterator is QueryExtensionIndexEntryIteratorWrapper
+     */
+    default boolean isExtensionIndex() { return false; }
+
+    /**
      * create a shallow copy ready for alternating thread usage
      * @return a new shallow copyed IScanListIterator ready for alternating thread usage
      * NOTE!! should be called before first hasNext() call
