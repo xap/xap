@@ -21,6 +21,7 @@ public class ZipkinTracerBean implements InitializingBean, DisposableBean {
     private BraveTracer tracer;
     private Thread thread;
     private boolean consulPlugin = true;
+    private boolean startActive = false;
     private String serviceName;
 
     public ZipkinTracerBean() {
@@ -30,6 +31,11 @@ public class ZipkinTracerBean implements InitializingBean, DisposableBean {
     public ZipkinTracerBean(String serviceName) {
         this();
         this.serviceName = serviceName;
+    }
+
+    public ZipkinTracerBean(String serviceName, boolean startActive) {
+        this(serviceName);
+        this.startActive = startActive;
     }
 
     @Override
