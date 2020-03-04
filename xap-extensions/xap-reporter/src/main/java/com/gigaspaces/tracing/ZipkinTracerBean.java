@@ -47,7 +47,10 @@ public class ZipkinTracerBean implements InitializingBean, DisposableBean {
                 .localServiceName(serviceName)
                 .spanReporter(reporter)
                 .build();
-        tracing.setNoop(true);
+        if (!startActive) {
+            tracing.setNoop(true);
+        }
+
         tracer = BraveTracer.create(tracing);
         GlobalTracer.registerIfAbsent(tracer);
 
