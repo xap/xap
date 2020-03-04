@@ -17,6 +17,7 @@
 
 package com.gigaspaces.query.aggregators;
 
+import com.gigaspaces.client.iterator.internal.SpaceIteratorAggregator;
 import com.gigaspaces.internal.query.RawEntryConverter;
 
 import java.util.HashMap;
@@ -45,6 +46,7 @@ public class AggregationInternalUtils {
         result.add(MaxEntryAggregator.class);
         result.add(MinValueAggregator.class);
         result.add(MinEntryAggregator.class);
+        result.add(SpaceIteratorAggregator.class);
         return result;
     }
 
