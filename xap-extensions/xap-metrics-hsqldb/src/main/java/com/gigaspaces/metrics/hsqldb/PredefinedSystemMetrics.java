@@ -22,7 +22,8 @@ public enum PredefinedSystemMetrics {
     SPACE_BLOBSTORE_OFF_HEAP_USED_PERCENT("space_blobstore_off-heap_used-percent"),
     SPACE_OPERATIONS_READ_TOTAL("space_operations_read-total"),
     SPACE_OPERATIONS_READ_MULTIPLE_TOTAL("space_operations_read-multiple-total"),
-    SPACE_BLOBSTORE_CACHE_HIT_PERCENT("space_blobstore_cache-hit-percent");
+    SPACE_BLOBSTORE_CACHE_HIT_PERCENT("space_blobstore_cache-hit-percent"),
+    SPACE_DATA_READ_COUNT( "space_data_read-count" );
 
     private final String metricName;
     private final String tableName;

@@ -5455,14 +5455,17 @@ public class CacheManager extends AbstractCacheManager
                     return getNumberOfNotifyTemplates(typeName, true);
                 }
             });
-            registrator.register(registrator.toPath("data", "read-count", metricTypeName), new Gauge<Long>() {
-                @Override
-                public Long getValue() throws Exception {
-                    SpaceImpl spaceImpl = getEngine().getSpaceImpl();
-                    LongAdder objectTypeReadCounts = spaceImpl.getObjectTypeReadCounts(typeName);
-                    return objectTypeReadCounts == null ? 0 : objectTypeReadCounts.longValue();
-                }
-            });
+
+            if( !typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) ) {
+                _engine.getDataTypeReadCountMetricRegistrator(typeName).register(registrator.toPath("data", "read-count"), new Gauge<Long>() {
+                    @Override
+                    public Long getValue() throws Exception {
+                        SpaceImpl spaceImpl = getEngine().getSpaceImpl();
+                        LongAdder objectTypeReadCounts = spaceImpl.getObjectTypeReadCounts(typeName);
+                        return objectTypeReadCounts == null ? 0 : objectTypeReadCounts.longValue();
+                    }
+                });
+            }
 
             if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && isBlobStoreCachePolicy()) {
                 if (getBlobStoreStorageHandler().getOffHeapCache() != null)

@@ -148,6 +148,7 @@ import net.jini.space.JavaSpace;
 import javax.transaction.xa.Xid;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -186,6 +187,8 @@ public class SpaceEngine implements ISpaceModeListener {
     private final LocalViewRegistrations _localViewRegistrations;
     private final MetricManager _metricManager;
     private final MetricRegistrator _metricRegistrator;
+    private final Map<String,MetricRegistrator> _dataTypesMetricRegistrators = new ConcurrentHashMap<>();
+
     // Components which depend only on spaceImpl and configuration
     private final SpaceConfigReader _configReader;
     private final SpaceUidFactory _uidFactory;
@@ -401,7 +404,19 @@ public class SpaceEngine implements ISpaceModeListener {
         }
     }
 
+    private MetricRegistrator createDataTypeSpaceRegistrator(final SpaceImpl spaceImpl, String dataTypeName) {
+
+        Map<String, String> dataTypeTags = new HashMap<>(1);
+        dataTypeTags.put( "data_type_name", dataTypeName );
+
+        return createSpaceRegistrator( spaceImpl, dataTypeTags );
+    }
+
     private MetricRegistrator createSpaceRegistrator(final SpaceImpl spaceImpl) {
+        return createSpaceRegistrator(spaceImpl, Collections.emptyMap() );
+    }
+
+    private MetricRegistrator createSpaceRegistrator(final SpaceImpl spaceImpl, Map<String, String> additionalTags ) {
         // Create space tags:
         final String prefix = "metrics.";
         final Map<String, String> tags = new HashMap<String, String>();
@@ -412,6 +427,7 @@ public class SpaceEngine implements ISpaceModeListener {
         }
         tags.put("space_name", spaceImpl.getName());
         tags.put("space_instance_id", spaceImpl.getInstanceId());
+        tags.putAll( additionalTags );
         // Create space dynamic tags:
         Map<String, DynamicMetricTag> dynamicTags = new HashMap<String, DynamicMetricTag>();
         dynamicTags.put("space_active", new DynamicMetricTag() {
@@ -3516,6 +3532,14 @@ public class SpaceEngine implements ISpaceModeListener {
 
         if (_metricManager != null)
             _metricManager.close();
+
+        if( !_dataTypesMetricRegistrators.isEmpty() ){
+            for( MetricRegistrator metricRegistrator : _dataTypesMetricRegistrators.values() ){
+                metricRegistrator.clear();
+            }
+        }
+
+        _dataTypesMetricRegistrators.clear();
     }
 
 
@@ -7136,6 +7160,20 @@ public class SpaceEngine implements ISpaceModeListener {
 
     public MetricRegistrator getMetricRegistrator() {
         return _metricRegistrator;
+    }
+
+    public MetricRegistrator getDataTypeReadCountMetricRegistrator( String dataTypeName ) {
+
+        MetricRegistrator metricRegistrator = _dataTypesMetricRegistrators.get( dataTypeName );
+        _logger.info( "metric registrator for type:" + dataTypeName + " is " + metricRegistrator );
+        if( metricRegistrator == null ){
+
+            _logger.info( "create data type metric registrator for type:" + dataTypeName );
+            metricRegistrator = createDataTypeSpaceRegistrator( _spaceImpl, dataTypeName );
+            _dataTypesMetricRegistrators.put( dataTypeName, metricRegistrator );
+        }
+
+        return metricRegistrator;
     }
 
     public void registerLocalView(ITemplatePacket[] queryPackets, Collection<SpaceQueryDetails> queryDescriptions,

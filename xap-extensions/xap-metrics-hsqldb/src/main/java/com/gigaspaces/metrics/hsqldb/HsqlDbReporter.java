@@ -72,19 +72,9 @@ public class HsqlDbReporter extends MetricReporter {
     @Override
     protected void report(MetricRegistrySnapshot snapshot, MetricTagsSnapshot tags, String key, Object value) {
         String tableName = getTableName(key);
-
         if (tableName == null) {
-
-            if( key.startsWith( DynamicSystemMetrics.READ_COUNT_PER_TYPE_METRIC_PREFIX ) ){
-                SystemMetrics systemMetrics = SystemMetricsManager.addDynamicSystemTable(key);
-                if( systemMetrics != null ) {
-                    tableName = systemMetrics.getTableName();
-                }
-            }
-            else {
-                _logger.debug("Report skipped - key was filtered out [timestamp={}, key={}]", snapshot.getTimestamp(), key);
-                return;
-            }
+            _logger.debug("Report skipped - key was filtered out [timestamp={}, key={}]", snapshot.getTimestamp(), key);
+            return;
         }
 
         Connection con = connectionWrapper.getOrCreateConnection();
