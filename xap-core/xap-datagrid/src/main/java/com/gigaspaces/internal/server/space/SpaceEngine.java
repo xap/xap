@@ -7165,10 +7165,8 @@ public class SpaceEngine implements ISpaceModeListener {
     public MetricRegistrator getDataTypeReadCountMetricRegistrator( String dataTypeName ) {
 
         MetricRegistrator metricRegistrator = _dataTypesMetricRegistrators.get( dataTypeName );
-        _logger.info( "metric registrator for type:" + dataTypeName + " is " + metricRegistrator );
         if( metricRegistrator == null ){
 
-            _logger.info( "create data type metric registrator for type:" + dataTypeName );
             metricRegistrator = createDataTypeSpaceRegistrator( _spaceImpl, dataTypeName );
             _dataTypesMetricRegistrators.put( dataTypeName, metricRegistrator );
         }
