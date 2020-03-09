@@ -7166,9 +7166,9 @@ public class SpaceEngine implements ISpaceModeListener {
 
         MetricRegistrator metricRegistrator = _dataTypesMetricRegistrators.get( dataTypeName );
         if( metricRegistrator == null ){
-
-            metricRegistrator = createDataTypeSpaceRegistrator( _spaceImpl, dataTypeName );
-            _dataTypesMetricRegistrators.put( dataTypeName, metricRegistrator );
+            MetricRegistrator newMetricRegistrator = createDataTypeSpaceRegistrator( _spaceImpl, dataTypeName );
+            MetricRegistrator existingMetricRegistrator = _dataTypesMetricRegistrators.putIfAbsent(dataTypeName, newMetricRegistrator);
+            metricRegistrator = existingMetricRegistrator != null ? existingMetricRegistrator : newMetricRegistrator;
         }
 
         return metricRegistrator;
