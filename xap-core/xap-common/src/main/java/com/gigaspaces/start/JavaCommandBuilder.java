@@ -4,18 +4,15 @@ import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.utils.GsEnv;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 /**
  * @author Niv Ingberg
  * @since 14.0
  */
 public class JavaCommandBuilder {
+
     private final Map<String, String> env = System.getenv();
     private String javaExecutable;
     private final Map<String, String> systemProperties = new LinkedHashMap<>();
@@ -98,7 +95,7 @@ public class JavaCommandBuilder {
     public JavaCommandBuilder optionsFromEnv(String envVarName) {
         String s = env.get(envVarName);
         if (!isEmpty(s)) {
-            for (String option : s.split(" ")) {
+            for (String option : s.split(" (?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)")) {
                 option(option);
             }
         }
@@ -108,7 +105,7 @@ public class JavaCommandBuilder {
     public JavaCommandBuilder optionsFromGsEnv(String envVarSuffix) {
         String s = GsEnv.get(envVarSuffix);
         if (!isEmpty(s)) {
-            for (String option : s.split(" ")) {
+            for (String option : s.split(" (?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)")) {
                 option(option);
             }
         }
