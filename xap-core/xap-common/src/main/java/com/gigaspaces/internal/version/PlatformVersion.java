@@ -18,6 +18,7 @@ package com.gigaspaces.internal.version;
 
 import com.gigaspaces.start.ProductType;
 import com.gigaspaces.start.SystemLocations;
+import com.gigaspaces.start.manager.ProductionEnvironment;
 
 import java.io.InputStream;
 import java.util.Properties;
@@ -40,6 +41,7 @@ public class PlatformVersion {
     private final ProductType productType;
     private final String patchId;
     private final int patchNumber;
+    private final ProductionEnvironment productionEnvironment;
 
     public PlatformVersion(Properties properties) {
         this.id = properties.getProperty("gs.build-name");
@@ -60,6 +62,12 @@ public class PlatformVersion {
         spVersion = Byte.parseByte(versionTokens[2]);
 
         productHelpUrl = "https://docs.gigaspaces.com/" + majorVersion + "." + minorVersion;
+        productionEnvironment = getProductionEnvironment();
+    }
+
+    private static ProductionEnvironment getProductionEnvironment(){
+        String productionEnv = System.getenv("PRODUCTION_ENVIRONMENT");
+        return productionEnv == null ? ProductionEnvironment.ServiceGrid : ProductionEnvironment.valueOf(productionEnv);
     }
 
     private static String extractPrefix(String s, String separator) {
