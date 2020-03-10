@@ -180,7 +180,7 @@ public class MultiIntersectedStoredList<T>
         if (_shortest == null)
             throw new RuntimeException("shortest list is null !!!!!!!");
 
-        if (_otherLists != null && _otherLists.contains(_shortest))
+        if (_otherLists != null)
             _otherLists.remove(_shortest);
         if (_otherLists == null || _otherLists.isEmpty())
             return;
@@ -322,11 +322,6 @@ public class MultiIntersectedStoredList<T>
     @Override
     public int getAlreadyMatchedFixedPropertyIndexPos() {
         return -1;
-    }
-
-    @Override
-    public String getAlreadyMatchedIndexPath() {
-        return null;
     }
 
     @Override

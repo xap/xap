@@ -80,10 +80,4 @@ public class FifoGroupsMultiList<T>
             ((IFifoGroupIterator) sl).nextGroup();
 
     }
-
-
-    @Override
-    public String getAlreadyMatchedIndexPath() {
-        return null;
-    }
 }

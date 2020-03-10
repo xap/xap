@@ -53,7 +53,7 @@ public interface IScanListIterator<T>
      */
     int getAlreadyMatchedFixedPropertyIndexPos();
 
-    String getAlreadyMatchedIndexPath();
+    default String getAlreadyMatchedIndexPath() { return null; }
 
     /**
      * is the entry returned already matched against the searching template currently is true if the

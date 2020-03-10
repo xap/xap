@@ -31,6 +31,7 @@ public class QueryExtensionIndexEntryIteratorWrapper implements IScanListIterato
     private final QueryExtensionEntryIterator iterator;
     private IEntryCacheInfo _nextEntry;
     private boolean _finished;
+    private String alreadyMatchedIndexPath;
 
     public QueryExtensionIndexEntryIteratorWrapper(QueryExtensionIndexManagerWrapper manager, QueryExtensionEntryIterator iterator) {
         this.manager = manager;
@@ -91,8 +92,12 @@ public class QueryExtensionIndexEntryIteratorWrapper implements IScanListIterato
 
     @Override
     public String getAlreadyMatchedIndexPath() {
-        return null;
+        return alreadyMatchedIndexPath;
         //return iterator == null ? null : iterator.getPrematchedPath();
+    }
+
+    public void setAlreadyMatchedIndexPath(String alreadyMatchedIndexPath) {
+        this.alreadyMatchedIndexPath = alreadyMatchedIndexPath;
     }
 
     /**

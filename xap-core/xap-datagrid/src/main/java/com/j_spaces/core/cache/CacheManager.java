@@ -30,7 +30,6 @@ import com.gigaspaces.internal.cluster.node.impl.directPersistency.ioImpl.Direct
 import com.gigaspaces.internal.cluster.node.impl.groups.IReplicationChannelDataFilter;
 import com.gigaspaces.internal.cluster.node.impl.notification.NotificationReplicationChannelDataFilter;
 import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.query.AbstractCompundCustomQuery;
 import com.gigaspaces.internal.query.ICustomQuery;
 import com.gigaspaces.internal.query.IQueryIndexScanner;
 import com.gigaspaces.internal.query.explainplan.*;
@@ -98,7 +97,6 @@ import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.core.sadapter.SelectType;
 import com.j_spaces.core.server.processor.RemoveWaitingForInfoSABusPacket;
 import com.j_spaces.jdbc.SQLFunctions;
-import com.j_spaces.jdbc.builder.range.RelationRange;
 import com.j_spaces.kernel.ClassLoaderHelper;
 import com.j_spaces.kernel.*;
 import com.j_spaces.kernel.list.*;
@@ -4474,13 +4472,10 @@ public class CacheManager extends AbstractCacheManager
 
         //if single index and is a lucene index
         if (GS_13953_ENABLED && indexUsed && numberOfCustomIndexes == 1
-                && resultOIS != null && resultOIS.isExtensionIndex()
-                && customQuery instanceof AbstractCompundCustomQuery) {
-            //Remove already traversed paths
-            String indexName = customQuery.getCustomIndexes().get(0).getIndexName();
-            List<String> indexNames = Arrays.asList(indexName.split("&"));
-            ((AbstractCompundCustomQuery) customQuery).get_subQueries().removeIf(
-                    subQuery -> indexNames.contains(((RelationRange) subQuery).getIndexScanner().getIndexName()));
+                && resultOIS != null && resultOIS.isExtensionIndex()) {
+            //Remove already traversed paths of first custom index
+            final String customIndexName = customQuery.getCustomIndexes().get(0).getIndexName();
+            ((QueryExtensionIndexEntryIteratorWrapper) resultOIS).setAlreadyMatchedIndexPath(customIndexName);
             return resultOIS;
         }
 

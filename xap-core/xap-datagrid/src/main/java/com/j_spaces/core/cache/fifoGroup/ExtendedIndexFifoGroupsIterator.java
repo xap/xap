@@ -145,11 +145,6 @@ public class ExtendedIndexFifoGroupsIterator<V>
         return _idx.getPos();
     }
 
-    @Override
-    public String getAlreadyMatchedIndexPath() {
-        return null;
-    }
-
     public boolean isMultiValueIterator() {
         return true;
     }
