@@ -678,7 +678,7 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
         if (GlobalTracer.isRegistered()) {
 
             Tracer tracer = GlobalTracer.get();
-            io.opentracing.Span span = tracer.buildSpan(name).start();
+            io.opentracing.Span span = tracer.buildSpan("gigaspace:"+name).start();
             //noinspection unused
             try (Scope scope = tracer.scopeManager().activate(span)) {
                 return c.call();

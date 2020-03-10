@@ -13,18 +13,23 @@ import zipkin2.reporter.AsyncReporter;
 import zipkin2.reporter.okhttp3.OkHttpSender;
 
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ZipkinTracerBean implements InitializingBean, DisposableBean {
+    private static final String CONSUL_KEY = "gigaspaces/tracing";
+    private Logger logger = Logger.getLogger(this.getClass().getName());
 
     private AsyncReporter<Span> reporter;
     private Tracing tracing;
     private BraveTracer tracer;
     private Thread thread;
-    private boolean consulPlugin = true;
+    private boolean useConsul = true;
     private boolean startActive = false;
     private String serviceName;
+    private String zipkinUrl = "http://zipkin.service.consul:9411";
 
-    public ZipkinTracerBean() {
+    private ZipkinTracerBean() {
         if (GlobalTracer.isRegistered()) throw new IllegalArgumentException("GlobalTracer already exists");
     }
 
@@ -33,15 +38,32 @@ public class ZipkinTracerBean implements InitializingBean, DisposableBean {
         this.serviceName = serviceName;
     }
 
-    public ZipkinTracerBean(String serviceName, boolean startActive) {
-        this(serviceName);
+    public ZipkinTracerBean setUseConsul(boolean useConsul) {
+        this.useConsul = useConsul;
+        return this;
+    }
+
+    public ZipkinTracerBean setStartActive(boolean startActive) {
         this.startActive = startActive;
+        return this;
+    }
+
+    public ZipkinTracerBean setZipkinUrl(String zipkinUrl) {
+        this.zipkinUrl = zipkinUrl;
+        return this;
     }
 
     @Override
     public void afterPropertiesSet() {
+        logger.info("Starting " + (startActive ? "active" : "inactive") + " with service name [" + serviceName + "]");
+        logger.info("Connecting to Zepking at " + zipkinUrl);
+        if (useConsul) {
+            logger.info("Using Consul for turning tracing on/off, key is: " + CONSUL_KEY);
+        }
+
+
         OkHttpSender sender = OkHttpSender.create(
-                "http://zipkin.service.consul:9411/api/v2/spans");
+                zipkinUrl + "/api/v2/spans");
         reporter = AsyncReporter.builder(sender).build();
         tracing = Tracing.newBuilder()
                 .localServiceName(serviceName)
@@ -54,7 +76,7 @@ public class ZipkinTracerBean implements InitializingBean, DisposableBean {
         tracer = BraveTracer.create(tracing);
         GlobalTracer.registerIfAbsent(tracer);
 
-        if (consulPlugin) {
+        if (useConsul) {
 
             thread = new Thread(new Runnable() {
                 private final ConsulClient client = new ConsulClient("localhost");
@@ -62,21 +84,25 @@ public class ZipkinTracerBean implements InitializingBean, DisposableBean {
                 @Override
                 public void run() {
                     while (!Thread.currentThread().isInterrupted()) {
-                        Response<GetValue> kvClient = client.getKVValue("gigaspaces/tracing");
-                        if (kvClient.getValue() != null) {
-                            System.out.println("Tracing value: " + kvClient.getValue().getDecodedValue());
-                            boolean tracingIsOn = Boolean.parseBoolean(kvClient.getValue().getDecodedValue());
-                            if (tracingIsOn && tracing.isNoop()) {
-                                System.out.println("Tracing was set to on...");
-                                tracing.setNoop(false);
-                            } else if (!tracingIsOn && !tracing.isNoop()) {
-                                System.out.println("Tracing was set to off...");
-                                tracing.setNoop(true);
+                        try {
+                            Response<GetValue> kvClient = client.getKVValue(CONSUL_KEY);
+                            if (kvClient.getValue() != null) {
+                                boolean tracingIsOn = Boolean.parseBoolean(kvClient.getValue().getDecodedValue());
+                                if (tracingIsOn && tracing.isNoop()) {
+                                    logger.info("Turning tracing on");
+                                    tracing.setNoop(false);
+                                } else if (!tracingIsOn && !tracing.isNoop()) {
+                                    logger.info("Turning tracing off");
+                                    tracing.setNoop(true);
+                                }
                             }
+                        } catch (Exception e) {
+                            logger.log(Level.SEVERE, "Got exception while querying Consul", e);
                         }
                         try {
                             TimeUnit.SECONDS.sleep(10);
                         } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
                             break;
                         }
                     }
