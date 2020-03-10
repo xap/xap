@@ -8,20 +8,20 @@
     <parent>
         <groupId>org.gigaspaces</groupId>
         <artifactId>hola-mundo-example</artifactId>
-        <version>15.2.0-SNAPSHOT</version>
+        <version>15.2.0-m15-tue-12</version>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>hola-mundo-example-common</artifactId>
-            <version>15.2.0-SNAPSHOT</version>
+            <version>15.2.0-m15-tue-12</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-reporter</artifactId>
-            <version>15.2.0-SNAPSHOT</version>
+            <version>15.2.0-m15-tue-12</version>
         </dependency>
     </dependencies>
 
