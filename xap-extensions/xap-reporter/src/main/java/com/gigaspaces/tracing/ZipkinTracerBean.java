@@ -25,7 +25,7 @@ public class ZipkinTracerBean implements InitializingBean, DisposableBean {
     private BraveTracer tracer;
     private Thread thread;
     private boolean useConsul = true;
-    private boolean startActive = false;
+    private boolean startActive = true;
     private String serviceName;
     private String zipkinUrl = "http://zipkin.service.consul:9411";
 
