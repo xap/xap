@@ -23,7 +23,7 @@ public class SpaceGetBatchForIteratorExecutor extends SpaceActionExecutor{
         ServerIteratorAnswerHolder serverIteratorAnswerHolder = null;
         GetBatchForIteratorException exception = null;
         try {
-            serverIteratorAnswerHolder = space.getNextBatchFromServerIterator(requestInfo.getTemplatePacket(), requestInfo.getSpaceContext(),requestInfo.getModifiers(), new ServerIteratorRequestInfo(requestInfo.getIteratorId(), 0, requestInfo.getBatchSize(), requestInfo.getBatchNumber()));
+            serverIteratorAnswerHolder = space.getNextBatchFromServerIterator(requestInfo.getTemplatePacket(), requestInfo.getSpaceContext(),requestInfo.getModifiers(), new ServerIteratorRequestInfo(requestInfo.getIteratorId(), requestInfo.getBatchSize(), requestInfo.getBatchNumber()));
         } catch (Exception e) {
             exception = e instanceof GetBatchForIteratorException ? (GetBatchForIteratorException) e : new GetBatchForIteratorException(e) ;
         }

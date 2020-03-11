@@ -25,6 +25,7 @@ import net.jini.core.transaction.Transaction;
 
 import java.io.Closeable;
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,6 +43,8 @@ public class SpaceIterator<T> implements Iterator<T>, Iterable<T>, Closeable { /
     public static int getDefaultBatchSize() {
         return 100;
     }
+    public static long getDefaultLease(){return TimeUnit.SECONDS.toMillis(60);}
+
 
     private final IEntryPacketIterator iterator;
 

@@ -604,4 +604,9 @@ public abstract class AbstractSpaceProxy implements ISpaceProxy {
     public void closeSpaceIterator(UUID uuid) throws RemoteException, InterruptedException {
         _actionManager.closeServerIterator(uuid);
     }
+
+    @Override
+    public void renewSpaceIteratorLease(UUID uuid) throws RemoteException, InterruptedException {
+        _actionManager.renewSpaceIteratorLease(uuid);
+    }
 }

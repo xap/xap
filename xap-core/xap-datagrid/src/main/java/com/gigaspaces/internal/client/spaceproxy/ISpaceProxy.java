@@ -267,4 +267,6 @@ public interface ISpaceProxy extends IJSpace, ActionMaker, SecuredService, IDotn
     AggregationResult aggregate(Object template, AggregationSet aggregationSet, Transaction txn, int readModifiers) throws RemoteException, TransactionException, InterruptedException;
 
     void closeSpaceIterator(UUID uuid) throws RemoteException, InterruptedException;
+
+    void renewSpaceIteratorLease(UUID uuid) throws RemoteException, InterruptedException;
 }

@@ -71,10 +71,7 @@ import com.gigaspaces.internal.server.metadata.AddTypeDescResult;
 import com.gigaspaces.internal.server.metadata.AddTypeDescResultType;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.events.SpaceDataEventManager;
-import com.gigaspaces.internal.server.space.iterator.ServerIteratorInfo;
-import com.gigaspaces.internal.server.space.iterator.ServerIteratorManager;
-import com.gigaspaces.internal.server.space.iterator.ServerIteratorRequestInfo;
-import com.gigaspaces.internal.server.space.iterator.ServerIteratorStatus;
+import com.gigaspaces.internal.server.space.iterator.*;
 import com.gigaspaces.internal.server.space.metadata.ServerTypeDesc;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.space.operations.WriteEntriesResult;
@@ -204,7 +201,7 @@ public class SpaceEngine implements ISpaceModeListener {
     private final FifoGroupsHandler _fifoGroupsHandler;
     private LeaseManager _leaseManager;
     private MemoryManager _memoryManager;
-    private ServerIteratorManager _serverIteratorManager = new ServerIteratorManager();
+    private ServerIteratorsManager _serverIteratorsManager = new ServerIteratorsManager();
 
     /*--------- Working Groups ---------*/
     private final WorkingGroup<BusPacket<Processor>> _processorWG;
@@ -1934,7 +1931,7 @@ public class SpaceEngine implements ISpaceModeListener {
                 txnEntry, startTime, templateOperation, respContext, returnOnlyUid,
                 operationModifiers, isFifoOperation);
         if(isServerIteratorRequest) {
-            ServerIteratorInfo serverIteratorInfo = _serverIteratorManager.getOrCreateServerIteratorInfo(serverIteratorRequestInfo);
+            ServerIteratorInfo serverIteratorInfo = _serverIteratorsManager.getOrCreateServerIteratorInfo(serverIteratorRequestInfo);
             if(_logger.isLoggable(Level.FINE))
                 _logger.fine("Iterator " + serverIteratorRequestInfo.getUuid() + " requested batch " + serverIteratorRequestInfo.getRequestedBatchNumber() + ", stored batch " + serverIteratorInfo.getStoredBatchNumber());
             if(serverIteratorInfo.isBatchRetrialRequest(serverIteratorRequestInfo)){
@@ -4104,17 +4101,17 @@ public class SpaceEngine implements ISpaceModeListener {
 
     private IScanListIterator<IEntryCacheInfo> getOrCreateScanListIteratorFromServerIterator(Context context, IServerTypeDesc entryTypeDesc, ITemplateHolder template, IServerTypeDesc serverTypeDesc) {
         ServerIteratorInfo serverIteratorInfo = template.getServerIteratorInfo();
+        if(!serverIteratorInfo.isActive()){
+            if(_logger.isLoggable(Level.FINE))
+                _logger.fine("Server Iterator " + serverIteratorInfo.getUuid() + " is not active.");
+            return null;
+        }
         if(serverIteratorInfo.getScanListIterator() == null){
             IScanListIterator scanListIterator = _cacheManager.getMatchingMemoryEntriesForScanning(context, entryTypeDesc, template, serverTypeDesc);
             if(scanListIterator != null) {
                 serverIteratorInfo.setScanListIterator(scanListIterator);
-                serverIteratorInfo.setStatus(ServerIteratorStatus.ACTIVE);
                 return scanListIterator;
             }
-            return null;
-        }
-        if(serverIteratorInfo.isExpired() || serverIteratorInfo.isClosed()){
-            //TODO throw exception here + handle logic
             return null;
         }
         return serverIteratorInfo.getScanListIterator();
@@ -6280,6 +6277,10 @@ public class SpaceEngine implements ISpaceModeListener {
         return remoteObjID != 0 ? LRMIRuntime.getRuntime().countRemoteObjectConnections(remoteObjID) : 0;
     }
 
+    public ServerIteratorsManager getIteratorsManager() {
+        return _serverIteratorsManager;
+    }
+
     /**
      * XTN CONFLICT CHECK INDICATOR.
      */
@@ -7238,7 +7239,11 @@ public class SpaceEngine implements ISpaceModeListener {
     }
 
     public void closeServerIterator(UUID uuid){
-        _serverIteratorManager.closeServerIterator(uuid);
+        _serverIteratorsManager.closeServerIterator(uuid);
+    }
+
+    public void renewServerIteratorLease(UUID uuid){
+        _serverIteratorsManager.tryRenewServerIteratorLease(uuid);
     }
 
     public Logger getLogger() {

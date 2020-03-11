@@ -1,6 +1,5 @@
 package com.gigaspaces.client.iterator.server_based;
 
-import com.gigaspaces.async.AsyncResult;
 import com.gigaspaces.internal.client.SpaceIteratorBatchResult;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.transport.ITemplatePacket;
@@ -9,9 +8,10 @@ import com.j_spaces.core.GetBatchForIteratorException;
 import net.jini.core.transaction.TransactionException;
 
 import java.rmi.RemoteException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,16 +25,41 @@ public class SpaceIteratorBatchResultsManager {
     private enum ResultStatus {NORMAL, LAST_BATCH, FAILED, ILLEGAL_BATCH_NUMBER};
     private final Map<Integer, SpaceIteratorBatchResult> _partitionIteratorBatchResults;
     private final SpaceIteratorBatchResultProvider _spaceIteratorBatchResultProvider;
+    private final ScheduledExecutorService _scheduler;
     private int _activePartitions;
 
     public SpaceIteratorBatchResultsManager(ISpaceProxy spaceProxy, int batchSize, int readModifiers, ITemplatePacket queryPacket){
         this._partitionIteratorBatchResults = new HashMap<>();
         this._spaceIteratorBatchResultProvider = new SpaceIteratorBatchResultProvider(spaceProxy, batchSize, readModifiers, queryPacket, UUID.randomUUID());
         this._activePartitions = this._spaceIteratorBatchResultProvider.getInitialNumberOfActivePartitions();
+        this._scheduler = Executors.newScheduledThreadPool(1);
+        initRenewLeaseTask();
+    }
+
+    private void initRenewLeaseTask() {
+        _scheduler.scheduleWithFixedDelay(() -> {
+            if(isFinished()) {
+                _scheduler.shutdown();
+                return;
+            }
+            try {
+                _spaceIteratorBatchResultProvider.renewIteratorLease();
+            } catch (RemoteException e) {
+                processRenewIteratorLeaseFailure(e);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                processRenewIteratorLeaseFailure(e);
+            }
+        }, 1, 1, TimeUnit.SECONDS);
+    }
+
+    private void processRenewIteratorLeaseFailure(Exception e) {
+        if (_logger.isLoggable(Level.WARNING))
+            _logger.log(Level.WARNING, "Failed to renew space iterator " + _spaceIteratorBatchResultProvider.getUuid() + " lease.", e);
     }
 
     public Object[] getNextBatch(long timeout) throws InterruptedException, SpaceIteratorException {
-        if(_activePartitions == 0){
+        if(isFinished()){
             tryFinish();
             if (_logger.isLoggable(Level.FINE))
                 _logger.fine("Space Iterator has finished successfully.");
@@ -136,5 +161,10 @@ public class SpaceIteratorBatchResultsManager {
     public void close() {
         _partitionIteratorBatchResults.clear();
         _spaceIteratorBatchResultProvider.close();
+        _scheduler.shutdown();
+    }
+
+    private boolean isFinished(){
+        return _activePartitions == 0;
     }
 }

@@ -15,10 +15,9 @@ import net.jini.core.transaction.TransactionException;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
+import java.util.Collection;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,6 +36,7 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
     private final UUID _uuid;
     private final int _numberOfPartitions;
     private final transient SpaceIteratorBatchResultListener _spaceIteratorBatchResultListener;
+
 
     public SpaceIteratorBatchResultProvider(ISpaceProxy spaceProxy, int batchSize, int readModifiers, ITemplatePacket queryPacket, UUID uuid){
         this._spaceProxy = spaceProxy;
@@ -146,8 +146,16 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
         return _numberOfPartitions;
     }
 
+    public ISpaceProxy getSpaceProxy() {
+        return _spaceProxy;
+    }
+
     private void processCloseIteratorFailure(Exception e) {
-        if (_logger.isLoggable(Level.SEVERE))
-            _logger.log(Level.SEVERE, "Failed to close iterator " + _uuid + " in server", e);
+        if (_logger.isLoggable(Level.WARNING))
+            _logger.log(Level.WARNING, "Failed to close iterator " + _uuid, e);
+    }
+
+    public void renewIteratorLease() throws RemoteException, InterruptedException{
+       _spaceProxy.renewSpaceIteratorLease(_uuid);
     }
 }

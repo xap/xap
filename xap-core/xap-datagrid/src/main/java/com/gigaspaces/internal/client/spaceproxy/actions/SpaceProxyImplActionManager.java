@@ -85,4 +85,9 @@ public class SpaceProxyImplActionManager extends AbstractSpaceProxyActionManager
     protected CloseSpaceIteratorProxyAction<SpaceProxyImpl> createCloseSpaceIteratorAction() {
         return new SpaceProxyImplCloseSpaceIteratorAction();
     }
+
+    @Override
+    protected RenewSpaceIteratorLeaseProxyAction<SpaceProxyImpl> createRenewSpaceIteratorLeaseAction() {
+        return new SpaceProxyImplRenewSpaceIteratorLeaseAction();
+    }
 }

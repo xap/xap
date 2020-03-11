@@ -6,36 +6,29 @@ import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.kernel.list.IScanListIterator;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class ServerIteratorInfo {
+    final public static long DEFAULT_LEASE = TimeUnit.SECONDS.toMillis(10);
+    final private Object lock = new Object();
     final private UUID uuid;
     final private int batchSize;
-    final private long lease;
-    private volatile ServerIteratorStatus status;
-    private volatile long expirationTime;
-    private volatile IScanListIterator<IEntryCacheInfo> scanListIterator; //check if could be final
+    private volatile boolean active;
+    private volatile IScanListIterator<IEntryCacheInfo> scanListIterator;
     private volatile IEntryPacket[] storedEntryPacketsBatch;
     private volatile int storedBatchNumber;
-//    private volatile ServerIterator`LeaseHolder serverIteratorLeaseHolder;
+    private volatile long expirationTime;
 
-    public ServerIteratorInfo(UUID uuid, int batchSize, long lease) {
+    public ServerIteratorInfo(UUID uuid, int batchSize) {
         this.uuid = uuid;
         this.batchSize = batchSize;
-        this.lease = lease;
-        this.status = ServerIteratorStatus.ACTIVE;
         this.storedBatchNumber = 0;
+        this.expirationTime = System.currentTimeMillis() + DEFAULT_LEASE;
+        this.active = true;
     }
 
     public UUID getUuid() {
         return uuid;
-    }
-
-    public ServerIteratorStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ServerIteratorStatus status) {
-        this.status = status;
     }
 
     public IScanListIterator<IEntryCacheInfo> getScanListIterator() {
@@ -46,41 +39,12 @@ public class ServerIteratorInfo {
         this.scanListIterator = scanListIterator;
     }
 
-    public long getExpirationTime() {
-        return expirationTime;
-    }
-
-    public void setExpirationTime(long expirationTime) {
-        this.expirationTime = expirationTime;
-    }
-
     public int getBatchSize() {
         return batchSize;
     }
 
-//    public ServerIteratorLeaseHolder getServerIteratorLeaseHolder() {
-//        return serverIteratorLeaseHolder;
-//    }
-//
-//    public void setServerIteratorLeaseHolder(ServerIteratorLeaseHolder serverIteratorLeaseHolder) {
-//        this.serverIteratorLeaseHolder = serverIteratorLeaseHolder;
-//    }
-
-    public boolean isActive(){
-        return status.equals(ServerIteratorStatus.ACTIVE);
-    }
-
-    public boolean isExpired(){
-        return status.equals(ServerIteratorStatus.EXPIRED);
-    }
-
-    public boolean isClosed(){
-        return status.equals(ServerIteratorStatus.CLOSED);
-    }
-
     public void renewLease(){
-        if(!isExpired())
-            expirationTime = System.currentTimeMillis() + lease;
+        setExpirationTime(System.currentTimeMillis() + DEFAULT_LEASE);
     }
 
     public IEntryPacket[] getStoredEntryPacketsBatch() {
@@ -101,6 +65,15 @@ public class ServerIteratorInfo {
         return this;
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
+    public ServerIteratorInfo setActive(boolean active) {
+        this.active = active;
+        return this;
+    }
+
     private boolean isFirstTime(){
         return storedBatchNumber == 0;
     }
@@ -110,11 +83,27 @@ public class ServerIteratorInfo {
             return false;
         }
         int requestedBatchNumber = serverIteratorRequestInfo.getRequestedBatchNumber();
-//        if(Math.abs(requestedBatchNumber - storedBatchNumber) > 1 || requestedBatchNumber < storedBatchNumber){
-//            //TODO impeove messages
-//            throw new GetBatchForIteratorException("Illegal batch request, requested batch number is " + requestedBatchNumber + ", stored batch number is " + storedBatchNumber);
-//        }
+        if(Math.abs(requestedBatchNumber - storedBatchNumber) > 1 || requestedBatchNumber < storedBatchNumber){
+            throw new GetBatchForIteratorException("Illegal batch request, requested batch number is " + requestedBatchNumber + ", stored batch number is " + storedBatchNumber);
+        }
         return requestedBatchNumber == storedBatchNumber;
+    }
+
+    public boolean isCandidateForExpiration(){
+        return expirationTime < System.currentTimeMillis();
+    }
+
+    public long getExpirationTime() {
+        return expirationTime;
+    }
+
+    public ServerIteratorInfo setExpirationTime(long expirationTime) {
+        this.expirationTime = expirationTime;
+        return this;
+    }
+
+    public Object getLock(){
+        return lock;
     }
 
     @Override
@@ -122,14 +111,11 @@ public class ServerIteratorInfo {
         return "ServerIteratorInfo{" +
                 "uuid=" + uuid +
                 ", batchSize=" + batchSize +
-                ", lease=" + lease +
-                ", status=" + status +
-                ", expirationTime=" + expirationTime +
+                ", active=" + active +
                 ", scanListIterator=" + scanListIterator +
-                ", storedEntryPacketsBatch=" + (storedEntryPacketsBatch!=null ? storedEntryPacketsBatch.length : null) +
+                ", storedEntryPacketsBatch=" + + (storedEntryPacketsBatch!=null ? storedEntryPacketsBatch.length : null) +
                 ", storedBatchNumber=" + storedBatchNumber +
+                ", expirationTime=" + expirationTime +
                 '}';
     }
-
-    //TODO status modification and inquiry
 }

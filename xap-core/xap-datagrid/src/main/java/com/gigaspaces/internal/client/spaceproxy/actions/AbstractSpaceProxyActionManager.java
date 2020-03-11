@@ -75,6 +75,7 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
     private final ChangeProxyAction<TSpaceProxy> _changeAction;
     private final AggregateProxyAction<TSpaceProxy> _aggregationAction;
     private final CloseSpaceIteratorProxyAction<TSpaceProxy> _closeSpaceIteratorAction;
+    private final RenewSpaceIteratorLeaseProxyAction<TSpaceProxy> _renewSpaceIteratorLeaseProxyAction;
 
     protected AbstractSpaceProxyActionManager(TSpaceProxy spaceProxy) {
         _spaceProxy = spaceProxy;
@@ -90,6 +91,7 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
         _changeAction = createChangeProxyAction();
         _aggregationAction = createAggregateAction();
         _closeSpaceIteratorAction = createCloseSpaceIteratorAction();
+        _renewSpaceIteratorLeaseProxyAction = createRenewSpaceIteratorLeaseAction();
     }
 
     public ITypeDesc getTypeDescriptor(String typeName) throws RemoteException {
@@ -175,6 +177,10 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
 
     public void closeServerIterator(UUID uuid) throws RemoteException, InterruptedException {
         _closeSpaceIteratorAction.closeSpaceIterator(_spaceProxy, uuid);
+    }
+
+    public void renewSpaceIteratorLease(UUID uuid) throws RemoteException, InterruptedException{
+        _renewSpaceIteratorLeaseProxyAction.renewSpaceIteratorLease(_spaceProxy, uuid);
     }
 
     public Object read(ReadTakeProxyActionInfo actionInfo)
@@ -443,6 +449,8 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
     protected abstract AggregateProxyAction<TSpaceProxy> createAggregateAction();
 
     protected abstract CloseSpaceIteratorProxyAction<TSpaceProxy> createCloseSpaceIteratorAction();
+
+    protected abstract RenewSpaceIteratorLeaseProxyAction<TSpaceProxy> createRenewSpaceIteratorLeaseAction();
 
     private ProxyInternalSpaceException processInternalException(Exception e) {
         return JSpaceUtilities.createProxyInternalSpaceException(e);

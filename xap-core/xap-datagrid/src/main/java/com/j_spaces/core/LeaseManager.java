@@ -16,7 +16,7 @@
 
 /*
  * Title: LeaseManager.java Description: Manages expired leases for all types
- * Company: 	 GigaSpaces Technologies 
+ * Company: 	 GigaSpaces Technologies
  * @author		 Moran Avigdor
  * @version		 1.0 27/11/2005
  * @since		 5.0EAG Build#1314
@@ -245,7 +245,7 @@ public class LeaseManager {
         _leaseReaperDaemon = leaseReaperDaemon;
     }
 
-	/* ----------------------------- public API ------------------------------ */
+    /* ----------------------------- public API ------------------------------ */
 
     public void registerEntryLease(IEntryCacheInfo entryCacheInfo, long expiration) {
         register(entryCacheInfo, entryCacheInfo.getEntryHolder(_cacheManager), expiration, ObjectTypes.ENTRY);
@@ -568,7 +568,7 @@ public class LeaseManager {
         return _supportsRecentExtendedUpdates;
     }
 
-	/* ----------------------------- private API ------------------------------ */
+    /* ----------------------------- private API ------------------------------ */
 
     /**
      * Notifies the manager of a new lease being created.
@@ -889,7 +889,7 @@ public class LeaseManager {
          * different reap intervals (assumption is that
          * LM_EXPIRATION_TIME_INTERVAL is always smaller then other intervals,
          * otherwise intervals are equivalent.)
-		 */
+         */
         private long _lastReapedSpaceContentObjects;
         private long _lastRepeadRecentDeletes;
         private long _lastReapedRecentUpdates;
@@ -947,6 +947,8 @@ public class LeaseManager {
                             reapReachedMarkers();
                             reapStuck2PCPreparedXtns();
                             reapRecentExtendedUpdates();
+                            reapExpiredIterators();
+                            //TODO reap expired iterators
                         }
                         reapUnusedXtns();
                         signalEndCycle();
@@ -1128,7 +1130,7 @@ public class LeaseManager {
         }
 
 
-      /* --------------------------- Reaper tasks -------------------------- */
+        /* --------------------------- Reaper tasks -------------------------- */
 
 
         /**
@@ -1514,6 +1516,18 @@ public class LeaseManager {
                             + _transactionHandler
                             .getTimedXtns()
                             .size() + "]");
+                }
+        }
+
+        private void reapExpiredIterators() {
+            int reapCount = _engine.getIteratorsManager().purgeExpiredIterators();
+            if (reapCount > 0)
+                if (_logger.isLoggable(Level.FINE)) {
+                    _logger.fine(this.getName()
+                            + " - Reaped expired iterators. [Reaped: "
+                            + reapCount
+                            + ", Alive: "
+                            + _engine.getIteratorsManager().getServerIteratorInfoMap().size() + "]");
                 }
         }
 
