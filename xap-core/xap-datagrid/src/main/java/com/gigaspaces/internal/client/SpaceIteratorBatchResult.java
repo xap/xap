@@ -42,6 +42,14 @@ public class SpaceIteratorBatchResult extends AbstractSpaceResponseInfo {
     public SpaceIteratorBatchResult() {
     }
 
+    public SpaceIteratorBatchResult(Exception exception, UUID uuid, int partitionId, int batchNumber) {
+        this._entries = new Object[0];
+        this._exception = exception;
+        this._partitionId = partitionId;
+        this._batchNumber = batchNumber;
+        this._uuid = uuid;
+    }
+
     public SpaceIteratorBatchResult(Exception exception, UUID uuid) {
         this._entries = new Object[0];
         this._exception = exception;

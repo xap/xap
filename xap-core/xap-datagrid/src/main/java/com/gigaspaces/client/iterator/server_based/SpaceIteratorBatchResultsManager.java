@@ -115,7 +115,7 @@ public class SpaceIteratorBatchResultsManager {
         try {
             _spaceIteratorBatchResultProvider.triggerSinglePartitionBatchTask(currentSpaceIteratorBatchResult.getPartitionId(), currentSpaceIteratorBatchResult.getBatchNumber() + 1);
         } catch (RemoteException | TransactionException e) {
-            _spaceIteratorBatchResultProvider.addBatchResult(new SpaceIteratorBatchResult(e, currentSpaceIteratorBatchResult.getUuid()));
+            _spaceIteratorBatchResultProvider.addBatchResult(new SpaceIteratorBatchResult(e, currentSpaceIteratorBatchResult.getUuid(), currentSpaceIteratorBatchResult.getPartitionId(), currentSpaceIteratorBatchResult.getBatchNumber() + 1));
         }
         return currentSpaceIteratorBatchResult.getEntries();
     }
