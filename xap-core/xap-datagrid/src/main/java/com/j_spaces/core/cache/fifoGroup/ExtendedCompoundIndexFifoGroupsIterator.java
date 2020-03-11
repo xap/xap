@@ -37,9 +37,4 @@ public class ExtendedCompoundIndexFifoGroupsIterator<V>
     protected Object getActualGroupValue(Map.Entry<Object, IStoredList<V>> mapEntry) {
         return ((SimpleCompoundIndexValueHolder) mapEntry.getKey()).getValueBySegment(2);
     }
-
-    @Override
-    public String getAlreadyMatchedIndexPath() {
-        return null;
-    }
 }

@@ -53,13 +53,18 @@ public interface IScanListIterator<T>
      */
     int getAlreadyMatchedFixedPropertyIndexPos();
 
-    String getAlreadyMatchedIndexPath();
+    default String getAlreadyMatchedIndexPath() { return null; }
 
     /**
      * is the entry returned already matched against the searching template currently is true if the
      * underlying scan made by CacheManager::EntriesIter
      */
     boolean isAlreadyMatched();
+
+    /**
+     * @return true if this iterator is QueryExtensionIndexEntryIteratorWrapper
+     */
+    default boolean isExtensionIndex() { return false; }
 
     /**
      * does this iter contain multiple lists
@@ -78,6 +83,4 @@ public interface IScanListIterator<T>
     {
         throw new RuntimeException("internal error-invalid usage");
     }
-
-
 }

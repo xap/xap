@@ -325,11 +325,6 @@ public class MultiIntersectedStoredList<T>
     }
 
     @Override
-    public String getAlreadyMatchedIndexPath() {
-        return null;
-    }
-
-    @Override
     public boolean isAlreadyMatched() {
         return false;
     }

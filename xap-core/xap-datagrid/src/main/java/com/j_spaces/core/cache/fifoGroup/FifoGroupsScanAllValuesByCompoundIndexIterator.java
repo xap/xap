@@ -39,11 +39,6 @@ public class FifoGroupsScanAllValuesByCompoundIndexIterator<T>
         super(list);
     }
 
-    @Override
-    public String getAlreadyMatchedIndexPath() {
-        return null;
-    }
-
 	/*
     @Override
 	 protected IStoredList getActualList(Object candidate)

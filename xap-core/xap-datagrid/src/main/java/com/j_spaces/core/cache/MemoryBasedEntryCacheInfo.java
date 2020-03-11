@@ -373,11 +373,6 @@ public class MemoryBasedEntryCacheInfo implements IEntryCacheInfo {
         return -1;
     }
 
-    @Override
-    public String getAlreadyMatchedIndexPath() {
-        return null;
-    }
-
     /**
      * is the entry returned already matched against the searching template currently is true if the
      * underlying scan made by CacheManager::EntriesIter

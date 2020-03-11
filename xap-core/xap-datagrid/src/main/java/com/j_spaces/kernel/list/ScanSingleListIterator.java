@@ -162,11 +162,6 @@ public class ScanSingleListIterator<T>
         return -1;
     }
 
-    @Override
-    public String getAlreadyMatchedIndexPath() {
-        return null;
-    }
-
     public boolean isAlreadyMatched() {
         return false;
     }

@@ -317,10 +317,4 @@ public class EvictableEntryCacheInfo extends MemoryBasedEntryCacheInfo implement
             }
         }
     }
-
-
-    @Override
-    public String getAlreadyMatchedIndexPath() {
-        return null;
-    }
 }

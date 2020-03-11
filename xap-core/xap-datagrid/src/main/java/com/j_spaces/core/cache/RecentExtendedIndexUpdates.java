@@ -179,10 +179,6 @@ public class RecentExtendedIndexUpdates {
             return -1;
         }
 
-        public String getAlreadyMatchedIndexPath() {
-            return null;
-        }
-
         /**
          * is the entry returned already matched against the searching template currently is true if
          * the underlying scan made by CacheManager::EntriesIter
