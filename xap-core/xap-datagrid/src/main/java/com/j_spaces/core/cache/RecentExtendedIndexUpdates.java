@@ -191,6 +191,11 @@ public class RecentExtendedIndexUpdates {
             return false;
         }
 
+        @Override
+        public boolean isExtensionIndex() {
+            return false;
+        }
+
         public boolean isIterator() {
             return true;
         }

@@ -138,6 +138,11 @@ public class MultiStoredList<T>
         return false;
     }
 
+    @Override
+    public boolean isExtensionIndex() {
+        return false;
+    }
+
     public boolean isIterator() {
         return true;
     }

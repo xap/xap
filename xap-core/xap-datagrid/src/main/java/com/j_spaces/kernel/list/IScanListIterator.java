@@ -61,5 +61,8 @@ public interface IScanListIterator<T>
      */
     boolean isAlreadyMatched();
 
-
+    /**
+     * @return true if this iterator is QueryExtensionIndexEntryIteratorWrapper
+     */
+    boolean isExtensionIndex();
 }

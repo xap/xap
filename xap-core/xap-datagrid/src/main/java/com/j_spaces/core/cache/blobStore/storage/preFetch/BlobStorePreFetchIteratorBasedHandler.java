@@ -20,8 +20,8 @@ import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.server.blobstore.BlobStoreException;
 import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.IEntryCacheInfo;
-import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.blobStore.BlobStoreRefEntryCacheInfo;
+import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.list.IScanListIterator;
 
@@ -324,6 +324,11 @@ public class BlobStorePreFetchIteratorBasedHandler implements IScanListIterator<
      */
     @Override
     public boolean isAlreadyMatched() {
+        return false;
+    }
+
+    @Override
+    public boolean isExtensionIndex() {
         return false;
     }
 

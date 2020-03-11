@@ -43,23 +43,17 @@ import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.server.blobstore.BlobStoreException;
 import com.gigaspaces.server.blobstore.BlobStoreObjectType;
-import com.j_spaces.core.cache.CacheManager;
-import com.j_spaces.core.cache.IEntryCacheInfo;
-import com.j_spaces.core.cache.ILeasedEntryCacheInfo;
-import com.j_spaces.core.cache.TypeData;
-import com.j_spaces.core.cache.TypeDataIndex;
+import com.j_spaces.core.cache.*;
+import com.j_spaces.core.cache.blobStore.errors.BlobStoreErrorBulkEntryInfo;
 import com.j_spaces.core.cache.blobStore.errors.BlobStoreErrorsHandler;
 import com.j_spaces.core.cache.blobStore.memory_pool.AbstractMemoryPool;
-import com.j_spaces.core.cache.blobStore.memory_pool.OffHeapMemoryPool;
 import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBusyInBulkException;
-import com.j_spaces.core.cache.blobStore.storage.bulks.delayedReplication.DelayedReplicationInsertInfo;
-import com.j_spaces.core.cache.context.Context;
-import com.j_spaces.core.cache.blobStore.errors.BlobStoreErrorBulkEntryInfo;
-import com.j_spaces.core.cache.CacheOperationReason;
 import com.j_spaces.core.cache.blobStore.storage.bulks.delayedReplication.DelayedReplicationBasicInfo;
+import com.j_spaces.core.cache.blobStore.storage.bulks.delayedReplication.DelayedReplicationInsertInfo;
 import com.j_spaces.core.cache.blobStore.storage.bulks.delayedReplication.DelayedReplicationRemoveInfo;
 import com.j_spaces.core.cache.blobStore.storage.bulks.delayedReplication.DelayedReplicationUpdateInfo;
+import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.IObjectInfo;
@@ -1318,6 +1312,11 @@ public class BlobStoreRefEntryCacheInfo
      */
     @Override
     public boolean isAlreadyMatched() {
+        return false;
+    }
+
+    @Override
+    public boolean isExtensionIndex() {
         return false;
     }
 

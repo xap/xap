@@ -228,6 +228,8 @@ public class CacheManager extends AbstractCacheManager
 
     public static final int MIN_SIZE_TO_PERFORM_EXPLICIT_PROPERTIES_INDEX_SCAN_ = 5;
 
+    public static final boolean GS_13953_ENABLED = Boolean.parseBoolean(System.getProperty("com.gs.13953.enabled", "true"));
+
     public CacheManager(SpaceConfigReader configReader, ClusterPolicy clusterPolicy,
                         SpaceTypeManager typeManager, IReplicationNode replicationNode,
                         IStorageAdapter sa, SpaceEngine engine, Properties customProperties) throws CreateException {
@@ -4398,7 +4400,9 @@ public class CacheManager extends AbstractCacheManager
 
         final ICustomQuery customQuery = template.getCustomQuery();
         boolean indexUsed = false;
+        int numberOfCustomIndexes = 0;
         if (customQuery != null && customQuery.getCustomIndexes() != null) {
+            numberOfCustomIndexes = customQuery.getCustomIndexes().size();
             for (IQueryIndexScanner index : customQuery.getCustomIndexes()) {
                 // Get entries in space that match the indexed value in the query (a.k.a potential match list):
                 IObjectsList result = index.getIndexedEntriesByType(context, entryType, template, latestIndexToConsider);
@@ -4463,6 +4467,15 @@ public class CacheManager extends AbstractCacheManager
                     resultSL = entriesVector;
                 }
             }
+        }
+
+        //if single index and is a lucene index
+        if (GS_13953_ENABLED && indexUsed && numberOfCustomIndexes == 1
+                && resultOIS != null && resultOIS.isExtensionIndex()) {
+            //Remove already traversed paths of first custom index
+            final String customIndexName = customQuery.getCustomIndexes().get(0).getIndexName();
+            ((QueryExtensionIndexEntryIteratorWrapper) resultOIS).setAlreadyMatchedIndexPath(customIndexName);
+            return resultOIS;
         }
 
         if (resultSL == null || (resultSL.size() > MIN_SIZE_TO_PERFORM_EXPLICIT_PROPERTIES_INDEX_SCAN_

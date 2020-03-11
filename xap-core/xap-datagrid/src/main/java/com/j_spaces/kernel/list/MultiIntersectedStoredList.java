@@ -293,6 +293,11 @@ public class MultiIntersectedStoredList<T>
     }
 
     @Override
+    public boolean isExtensionIndex() {
+        return false;
+    }
+
+    @Override
     public boolean isIterator() {
         return true;
     }

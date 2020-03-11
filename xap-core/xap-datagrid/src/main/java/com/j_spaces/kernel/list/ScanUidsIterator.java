@@ -18,7 +18,6 @@ package com.j_spaces.kernel.list;
 import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.kernel.IStoredList;
-import com.j_spaces.kernel.IStoredListIterator;
 
 import java.util.Set;
 
@@ -96,6 +95,11 @@ public class ScanUidsIterator
     }
 
     public boolean isAlreadyMatched() {
+        return false;
+    }
+
+    @Override
+    public boolean isExtensionIndex() {
         return false;
     }
 

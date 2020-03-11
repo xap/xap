@@ -98,6 +98,11 @@ public class ScanListSAIterator
         return true;
     }
 
+    @Override
+    public boolean isExtensionIndex() {
+        return false;
+    }
+
     public boolean isIterator() {
         return true;
     }
