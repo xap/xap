@@ -80,11 +80,6 @@
             <artifactId>jboss-transaction-api_1.1_spec</artifactId>
             <version>1.0.0.Final</version>
         </dependency>
-        <dependency>
-            <groupId>org.aopalliance</groupId>
-            <artifactId>com.springsource.org.aopalliance</artifactId>
-            <version>1.0.0</version>
-        </dependency>
 
         <!-- spring dependencies identified by mvn dependency:analyze must be <scope>compile</scope>
              otherwise PUs that depend no this pom will have compilation problems -->
