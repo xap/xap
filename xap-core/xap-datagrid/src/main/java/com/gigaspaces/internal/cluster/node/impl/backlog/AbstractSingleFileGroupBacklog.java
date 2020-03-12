@@ -871,7 +871,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
                     if (_logger.isLoggable(Level.WARNING))
                         _logger.log(Level.WARNING,
                                 getLogPrefix() + "replicating a packet which is bigger than the batch size, "
-                                        + "[packet key=" + packet.getKey()
+                                        + "[member name="+memberName+", packet key=" + packet.getKey()
                                         + ", packet weight=" + packet.getWeight() + ", backlog batch size = " + maxWeight + "]\n"
                                         + getStatistics()
                                         + "]");
@@ -1665,7 +1665,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         return packets;
     }
 
-    protected List<IReplicationOrderedPacket> getPacketsWithFullSerializedContent(long fromKey,
+    protected List<IReplicationOrderedPacket> getPacketsWithFullSerializedContent(String memberName, long fromKey,
                                                                                   long upToKey, int maxWeight) {
         List<IReplicationOrderedPacket> packets = new LinkedList<IReplicationOrderedPacket>();
         _rwLock.readLock().lock();
@@ -1686,7 +1686,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
                         if (_logger.isLoggable(Level.WARNING))
                             _logger.log(Level.WARNING,
                                     getLogPrefix() + "replicating a packet which is bigger than the batch size, "
-                                            + "[packet key=" + packet.getKey()
+                                            + "[member name="+memberName+", packet key=" + packet.getKey()
                                             + ", packet weight=" + packet.getWeight() + ", backlog batch size = " + maxWeight + "]\n"
                                             + getStatistics()
                                             + "]");

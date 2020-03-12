@@ -469,7 +469,7 @@ public class MultiBucketSingleFileReliableAsyncGroupBacklog
         long fromKey = typedHandshakeContext.getMinimumUnsentKey();
         long upToKey = typedHandshakeContext.getLastProcessedKey();
         int maxSize = sourceGroupConfig.getBacklogCompletionBatchSize();
-        List<IReplicationOrderedPacket> packets = getPacketsWithFullSerializedContent(fromKey, upToKey, maxSize);
+        List<IReplicationOrderedPacket> packets = getPacketsWithFullSerializedContent(memberName, fromKey, upToKey, maxSize);
 
         final long minimumUnsentKey = packets.isEmpty() ? upToKey + 1 : packets.get(packets.size() - 1).getKey() + 1;
 
