@@ -104,9 +104,6 @@ public class SystemLocations {
             return ClassLoaderType.SERVICE;
         }
 
-        if (fileName.startsWith("com.springsource.org.aopalliance-"))
-            return ClassLoaderType.SERVICE;
-
         return ClassLoaderType.SYSTEM;
     }
 

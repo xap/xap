@@ -62,7 +62,6 @@
                 <include>spring-core-*</include>
                 <include>spring-expression-*</include>
                 <include>spring-tx-*</include>
-                <include>com.springsource.org.aopalliance-*</include>
                 <include>spring-jcl-*</include>
             </includes>
         </fileSet>
