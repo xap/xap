@@ -18,7 +18,6 @@ package com.gigaspaces.internal.version;
 
 import com.gigaspaces.start.ProductType;
 import com.gigaspaces.start.SystemLocations;
-import com.gigaspaces.start.manager.ManagerType;
 
 import java.io.InputStream;
 import java.util.Properties;
@@ -41,7 +40,6 @@ public class PlatformVersion {
     private final ProductType productType;
     private final String patchId;
     private final int patchNumber;
-    private final ManagerType managerType;
 
     public PlatformVersion(Properties properties) {
         this.id = properties.getProperty("gs.build-name");
@@ -62,13 +60,8 @@ public class PlatformVersion {
         spVersion = Byte.parseByte(versionTokens[2]);
 
         productHelpUrl = "https://docs.gigaspaces.com/" + majorVersion + "." + minorVersion;
-        managerType = parseEnvManagerType();
     }
 
-    private static ManagerType parseEnvManagerType(){
-        String managerTypeEnv = System.getenv("MANAGER_TYPE");
-        return managerTypeEnv == null ? ManagerType.SERVICE_GRID : ManagerType.valueOf(managerTypeEnv.toUpperCase());//todo- upper class?
-    }
 
     private static String extractPrefix(String s, String separator) {
         int pos = s.indexOf(separator);
@@ -155,10 +148,6 @@ public class PlatformVersion {
 
     int getPatchNumber() {
         return patchNumber;
-    }
-
-    public static ManagerType getManagerType() {
-        return instance.managerType;
     }
 
     public String getId() {

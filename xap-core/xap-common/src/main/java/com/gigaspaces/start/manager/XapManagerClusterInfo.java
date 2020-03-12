@@ -18,6 +18,7 @@ public class XapManagerClusterInfo {
     public static final String SERVERS_ENV_VAR_SUFFIX = "MANAGER_SERVERS";
     public static final String SERVERS_ENV_VAR = "GS_" + SERVERS_ENV_VAR_SUFFIX;
     public static final String SERVER_ENV_VAR_SUFFIX = "MANAGER_SERVER";
+    private final EnvironmentType environmentType = parseEnvironmentType(); //todo- verify final?
 
     private final XapManagerConfig currServer;
     private final XapManagerConfig[] servers;
@@ -38,6 +39,15 @@ public class XapManagerClusterInfo {
         if (currServer != null) {
             System.setProperty(CommonSystemProperties.MANAGER_REST_URL, currServer.getAdminRestUrl());
         }
+    }
+
+    private static EnvironmentType parseEnvironmentType(){
+        String managerTypeEnv = System.getenv("ENVIRONMENT_TYPE");
+        return managerTypeEnv == null ? EnvironmentType.SERVICE_GRID : EnvironmentType.valueOf(managerTypeEnv.toUpperCase());//todo- upper class?
+    }
+
+    public EnvironmentType getEnvironmentType() {
+        return environmentType;
     }
 
     public XapManagerConfig[] getServers() {
