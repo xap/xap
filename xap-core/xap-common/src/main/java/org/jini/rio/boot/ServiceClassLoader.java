@@ -36,22 +36,11 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnnotation {
     private static final Logger logger = Logger.getLogger("com.gigaspaces.lrmi.classloading");
-    private static final String DEFAULT_SYSTEM_CLASSES = "java.," +
-            "javax.," +
-            // Additional packages needed by javax.xml.
-            "org.xml.," +
-            "org.w3c.," +
-            // GigaSpaces packages in boot jars (xap-common)
-            "com.gigaspaces.," +
-            "com.sun.jini.," +
-            "net.jini.," +
-            "org.jini.rio.," +
-            // Oshi + dependencies (jna)
-            "oshi.," +
-            "com.sun.jna.," +
-            // Sigar
-            "org.hyperic.sigar.," +
-            "org.hyperic.jni.";
+    private static final String DEFAULT_SYSTEM_EXCLUDES = "org.slf4j.," + // SLF4J
+            "org.apache.commons.logging.," + // JCL
+            "ch.qos.logback..," +            // Logback
+            "org.apache.log4j.," +           // Log4j
+            "org.apache.logging.log4j,";     // Log4j2
     /**
      * URLs that this class loader will to search for and load classes
      */
@@ -66,8 +55,8 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
     private boolean parentFirst = Boolean.parseBoolean(System.getProperty("com.gs.pu.classloader.parentFirst", "false"));
 
     private CodeChangeClassLoadersManager codeChangeClassLoadersManager;
-    private final Collection<String> systemClassPatterns = Arrays.asList(
-            GsEnv.property("com.gs.pu.classloader.system-classes").get(DEFAULT_SYSTEM_CLASSES).split(","));
+    private final Collection<String> systemClassExcludes = Arrays.asList(
+            GsEnv.property("com.gs.pu.classloader.system-classes.exclude").get(DEFAULT_SYSTEM_EXCLUDES).split(","));
 
     /**
      * Constructs a new ServiceClassLoader for the specified URLs having the given parent. The
@@ -202,12 +191,16 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
         return loadClass(name, false);
     }
 
+    private static void logClassLocated(String where) {
+
+    }
     @Override
     protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         Class clazz = null;
         // 1. check if we already loaded the class
         clazz = findLoadedClass(name);
         if (clazz != null) {
+            logger.info("ServiceClassLoader");
             if (resolve) {
                 resolveClass(clazz);
             }
@@ -286,7 +279,7 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
     }
 
     protected boolean isSystemClass(String name) {
-        return matches(name, systemClassPatterns);
+        return !matches(name, systemClassExcludes);
     }
 
     protected static boolean matches(String className, Collection<String> patterns) {
