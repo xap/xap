@@ -54,6 +54,7 @@ import com.gigaspaces.query.aggregators.AggregationSet;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.LeaseContext;
 import io.opentracing.Scope;
+import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.util.GlobalTracer;
 import net.jini.core.transaction.Transaction;
@@ -686,6 +687,10 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
         if (GlobalTracer.isRegistered()) {
 
             Tracer tracer = GlobalTracer.get();
+            Span activeSpan = tracer.scopeManager().activeSpan();
+            if (activeSpan == null) {
+                return c.call();
+            }
             io.opentracing.Span span = tracer.buildSpan("gigaspaces:"+name).start();
             //noinspection unused
             try (Scope scope = tracer.scopeManager().activate(span)) {
