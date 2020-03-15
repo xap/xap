@@ -191,16 +191,12 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
         return loadClass(name, false);
     }
 
-    private static void logClassLocated(String where) {
-
-    }
     @Override
     protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         Class clazz = null;
         // 1. check if we already loaded the class
         clazz = findLoadedClass(name);
         if (clazz != null) {
-            logger.info("ServiceClassLoader");
             if (resolve) {
                 resolveClass(clazz);
             }
