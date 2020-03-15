@@ -765,6 +765,11 @@ public class SelectQuery extends AbstractDMLQuery {
                 Class<?> type = getFieldClassType(columnData);
                 commonJavaType = ReflectionUtils.isCommonJavaType(type) || type.isEnum();
             }
+            catch( NoSuchFieldException e ){
+                if( _logger.isLoggable(Level.WARNING)){
+                    _logger.log(Level.WARNING, "Field [" + columnPath + "] does not exist", e );
+                }
+            }
             catch( Exception e ){
                 if( _logger.isLoggable(Level.SEVERE)){
                     _logger.log(Level.SEVERE, "Failed verifying common Java type for [" + columnPath + "]", e );
