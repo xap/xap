@@ -33,7 +33,8 @@ public class XapManagerClusterInfo {
     public static final String SERVERS_ENV_VAR_SUFFIX = "MANAGER_SERVERS";
     public static final String SERVERS_ENV_VAR = "GS_" + SERVERS_ENV_VAR_SUFFIX;
     public static final String SERVER_ENV_VAR_SUFFIX = "MANAGER_SERVER";
-    public static final String MANAGER_CLUSTER_TYPE_ENV_VAR_SUFFIX = "MANAGER_CLUSTER_TYPE";
+    private static final String MANAGER_CLUSTER_TYPE_ENV_VAR_SUFFIX = "MANAGER_CLUSTER_TYPE";
+    public static final String MANAGER_CLUSTER_TYPE_ENV_VAR = "GS_"+MANAGER_CLUSTER_TYPE_ENV_VAR_SUFFIX;
 
     private final XapManagerConfig currServer;
     private final XapManagerConfig[] servers;
