@@ -17,6 +17,16 @@
 			<useTransitiveDependencies/>
 			<useTransitiveFiltering/>
 		</dependencySet>
+		<dependencySet>
+			<useProjectArtifact>false</useProjectArtifact>
+			<outputDirectory>product/lib/required</outputDirectory>
+			<includes>
+				<include>io.opentracing:opentracing-util</include>
+			</includes>
+			<useProjectAttachments>true</useProjectAttachments>
+			<useTransitiveDependencies>true</useTransitiveDependencies>
+			<useTransitiveFiltering>true</useTransitiveFiltering>
+		</dependencySet>
 
 		<dependencySet>
 			<useProjectArtifact>false</useProjectArtifact>

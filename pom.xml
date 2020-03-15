@@ -65,6 +65,7 @@
         <module>xap-extensions/xap-full-text-search</module>
         <module>xap-tools/xap-cli</module>
         <module>xap-dist</module>
+        <module>xap-extensions/xap-reporter</module>
     </modules>
 
     <dependencies>
