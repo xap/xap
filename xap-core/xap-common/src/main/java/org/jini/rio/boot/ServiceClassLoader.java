@@ -17,6 +17,7 @@
 package org.jini.rio.boot;
 
 import com.gigaspaces.classloader.CustomURLClassLoader;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.start.ClasspathBuilder;
 import net.jini.loader.ClassAnnotation;
 
@@ -34,7 +35,12 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnnotation {
-    final private static Logger logger = Logger.getLogger("com.gigaspaces.lrmi.classloading");
+    private static final Logger logger = Logger.getLogger("com.gigaspaces.lrmi.classloading");
+    private static final String DEFAULT_SYSTEM_EXCLUDES = "org.slf4j.," + // SLF4J
+            "org.apache.commons.logging.," + // JCL
+            "ch.qos.logback..," +            // Logback
+            "org.apache.log4j.," +           // Log4j
+            "org.apache.logging.log4j,";     // Log4j2
     /**
      * URLs that this class loader will to search for and load classes
      */
@@ -49,6 +55,8 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
     private boolean parentFirst = Boolean.parseBoolean(System.getProperty("com.gs.pu.classloader.parentFirst", "false"));
 
     private CodeChangeClassLoadersManager codeChangeClassLoadersManager;
+    private final Collection<String> systemClassExcludes = Arrays.asList(
+            GsEnv.property("com.gs.pu.classloader.system-classes.exclude").get(DEFAULT_SYSTEM_EXCLUDES).split(","));
 
     /**
      * Constructs a new ServiceClassLoader for the specified URLs having the given parent. The
@@ -195,17 +203,19 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
             return clazz;
         }
 
-        // 2. check in the system class loader, so processing units won't be able to override it
-        try {
-            clazz = getSystemClassLoader().loadClass(name);
-            if (clazz != null) {
-                if (resolve) {
-                    resolveClass(clazz);
+        // 2. If class is a system class, check in the system class loader, so processing units won't be able to override it
+        if (isSystemClass(name)) {
+            try {
+                clazz = getSystemClassLoader().loadClass(name);
+                if (clazz != null) {
+                    if (resolve) {
+                        resolveClass(clazz);
+                    }
+                    return clazz;
                 }
-                return clazz;
+            } catch (ClassNotFoundException e) {
+                // ignore
             }
-        } catch (ClassNotFoundException e) {
-            // ignore
         }
 
         // 3. if parent first, try it first
@@ -262,6 +272,23 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
             }
         }
         throw new ClassNotFoundException(name);
+    }
+
+    protected boolean isSystemClass(String name) {
+        return !matches(name, systemClassExcludes);
+    }
+
+    protected static boolean matches(String className, Collection<String> patterns) {
+        for (String pattern : patterns) {
+            if (pattern.endsWith(".")) {
+                if (className.startsWith(pattern))
+                    return true;
+            } else {
+                if (className.equals(pattern))
+                    return true;
+            }
+        }
+        return false;
     }
 
     public ClassLoader getCodeChangeClassLoader(SupportCodeChangeAnnotationContainer supportCodeChangeAnnotationContainer) {
