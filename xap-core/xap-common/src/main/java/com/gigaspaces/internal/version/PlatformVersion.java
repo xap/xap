@@ -62,7 +62,6 @@ public class PlatformVersion {
         productHelpUrl = "https://docs.gigaspaces.com/" + majorVersion + "." + minorVersion;
     }
 
-
     private static String extractPrefix(String s, String separator) {
         int pos = s.indexOf(separator);
         return pos == -1 ? s : s.substring(0, pos);
