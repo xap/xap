@@ -18,9 +18,11 @@ public class XapManagerClusterInfo {
     public static final String SERVERS_ENV_VAR_SUFFIX = "MANAGER_SERVERS";
     public static final String SERVERS_ENV_VAR = "GS_" + SERVERS_ENV_VAR_SUFFIX;
     public static final String SERVER_ENV_VAR_SUFFIX = "MANAGER_SERVER";
+    public static final String MANAGER_CLUSTER_TYPE_ENV_VAR_SUFFIX = "MANAGER_CLUSTER_TYPE";
 
     private final XapManagerConfig currServer;
     private final XapManagerConfig[] servers;
+    private final ManagerClusterType managerClusterType;
 
     public XapManagerClusterInfo(InetAddress currHost) {
         this(parse(), currHost);
@@ -38,6 +40,12 @@ public class XapManagerClusterInfo {
         if (currServer != null) {
             System.setProperty(CommonSystemProperties.MANAGER_REST_URL, currServer.getAdminRestUrl());
         }
+
+        this.managerClusterType = GsEnv.getOptional(MANAGER_CLUSTER_TYPE_ENV_VAR_SUFFIX).map(ManagerClusterType::valueOf).orElse(ManagerClusterType.SERVICE_GRID);
+    }
+
+    public ManagerClusterType getManagerClusterType() {
+        return managerClusterType;
     }
 
     public XapManagerConfig[] getServers() {
