@@ -27,14 +27,10 @@ import com.gigaspaces.sync.TransactionData;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.Criteria;
 import org.hibernate.query.Query;
 import org.hibernate.SessionFactory;
 import org.hibernate.StatelessSession;
 import org.hibernate.Transaction;
-import org.hibernate.criterion.Projections;
-import org.hibernate.criterion.Restrictions;
-import org.hibernate.metadata.ClassMetadata;
 
 import java.util.Map;
 import java.util.Set;
@@ -284,8 +280,6 @@ public class StatelessHibernateSpaceSynchronizationEndpoint extends AbstractHibe
     }
 
     private boolean exists(DataSyncOperation dataSyncOperation, StatelessSession session) {
-
-        Criteria criteria = null;
         switch (dataSyncOperation.getDataSyncOperationType()) {
             case REMOVE:
             case WRITE:
@@ -293,22 +287,28 @@ public class StatelessHibernateSpaceSynchronizationEndpoint extends AbstractHibe
                 if (!dataSyncOperation.supportsDataAsObject())
                     return false;
                 Object entry = dataSyncOperation.getDataAsObject();
-                criteria = session.createCriteria(entry.getClass().getName());
-                ClassMetadata classMetaData = getSessionFactory().getClassMetadata(entry.getClass());
-                criteria.add(Restrictions.idEq(classMetaData.getIdentifier(entry)));
-                criteria.setProjection(Projections.rowCount());
-                return ((Number) criteria.uniqueResult()).intValue() > 0;
+                Object id = getSessionFactory().getClassMetadata(entry.getClass()).getIdentifier(entry);
+                return count(session, entry.getClass().getName(), id) > 0;
             case PARTIAL_UPDATE:
                 if (!dataSyncOperation.supportsGetTypeDescriptor())
                     return false;
                 SpaceTypeDescriptor typeDescriptor = dataSyncOperation.getTypeDescriptor();
-                criteria = session.createCriteria(typeDescriptor.getTypeName());
-                criteria.add(Restrictions.idEq(typeDescriptor.getIdPropertyName()));
-                criteria.setProjection(Projections.rowCount());
-                return ((Number) criteria.uniqueResult()).intValue() > 0;
+                return count(session, typeDescriptor.getTypeName(), typeDescriptor.getIdPropertyName()) > 0;
             default:
                 return false;
         }
     }
 
+    private int count(StatelessSession session, String typeName, Object id) {
+        String idProperty = getSessionFactory().getClassMetadata(typeName).getIdentifierPropertyName();
+        Query query = session.createQuery("select count(*) from " + typeName + "where " + idProperty + " = ?");
+        query.setParameter(1, id);
+        return ((Number) query.uniqueResult()).intValue();
+        /*
+        Criteria criteria = session.createCriteria(typeName);
+        criteria.add(Restrictions.idEq(id));
+        criteria.setProjection(Projections.rowCount());
+        return ((Number) criteria.uniqueResult()).intValue();
+         */
+    }
 }

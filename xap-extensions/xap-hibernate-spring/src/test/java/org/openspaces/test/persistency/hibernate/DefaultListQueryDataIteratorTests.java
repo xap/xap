@@ -4,7 +4,6 @@ import com.gigaspaces.datasource.DataIterator;
 import com.gigaspaces.datasource.DataSourceSQLQuery;
 import com.gigaspaces.datasource.SQLQueryToDataSourceSQLQueryAdapter;
 import com.j_spaces.core.client.SQLQuery;
-import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -32,9 +31,9 @@ public class DefaultListQueryDataIteratorTests {
     @Test
     public void iteratorWithTypeName() {
         String typeName = "foo";
-        Criteria criteria = mock(Criteria.class);
-        when(session.createCriteria(typeName)).thenReturn(criteria);
-        when(criteria.list()).thenThrow(HibernateException.class);
+        Query query = mock(Query.class);
+        when(session.createQuery(new SQLQuery(typeName, "").getFromQuery())).thenReturn(query);
+        when(query.list()).thenThrow(HibernateException.class);
 
         DataIterator iterator = new DefaultListQueryDataIterator(typeName, sessionFactory);
         try {

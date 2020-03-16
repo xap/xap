@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.openspaces.persistency.hibernate.iterator;
 
 import com.gigaspaces.SpaceRuntimeException;
@@ -22,9 +21,6 @@ import com.gigaspaces.datasource.DataIterator;
 import com.gigaspaces.datasource.DataSourceSQLQuery;
 import com.j_spaces.core.client.SQLQuery;
 
-import org.hibernate.CacheMode;
-import org.hibernate.Criteria;
-import org.hibernate.FlushMode;
 import org.hibernate.HibernateException;
 import org.hibernate.query.Query;
 import org.hibernate.Session;
@@ -45,8 +41,6 @@ public class DefaultListQueryDataIterator implements DataIterator {
 
     protected final DataSourceSQLQuery dataSourceSQLQuery;
 
-    protected final String entityName;
-
     protected final SessionFactory sessionFactory;
 
     protected final int from;
@@ -62,17 +56,11 @@ public class DefaultListQueryDataIterator implements DataIterator {
     protected int limitResults = -1;
 
     public DefaultListQueryDataIterator(SQLQuery sqlQuery, SessionFactory sessionFactory) {
-        this.sqlQuery = sqlQuery;
-        this.entityName = null;
-        this.dataSourceSQLQuery = null;
-        this.sessionFactory = sessionFactory;
-        this.from = -1;
-        this.size = -1;
+        this(sqlQuery, sessionFactory, -1);
     }
 
     public DefaultListQueryDataIterator(SQLQuery sqlQuery, SessionFactory sessionFactory, int limitResults) {
         this.sqlQuery = sqlQuery;
-        this.entityName = null;
         this.dataSourceSQLQuery = null;
         this.sessionFactory = sessionFactory;
         this.from = -1;
@@ -81,45 +69,19 @@ public class DefaultListQueryDataIterator implements DataIterator {
     }
 
     public DefaultListQueryDataIterator(String entityName, SessionFactory sessionFactory) {
-        this.entityName = entityName;
-        this.sqlQuery = null;
-        this.dataSourceSQLQuery = null;
-        this.sessionFactory = sessionFactory;
-        this.from = -1;
-        this.size = -1;
-    }
-
-    public DefaultListQueryDataIterator(String entityName, SessionFactory sessionFactory, int limitResults) {
-        this.entityName = entityName;
-        this.sqlQuery = null;
-        this.dataSourceSQLQuery = null;
-        this.sessionFactory = sessionFactory;
-        this.from = -1;
-        this.size = -1;
-        this.limitResults = limitResults;
+        this(new SQLQuery(entityName, ""), sessionFactory);
     }
 
     public DefaultListQueryDataIterator(DataSourceSQLQuery dataSourceSQLQuery, SessionFactory sessionFactory) {
         this.dataSourceSQLQuery = dataSourceSQLQuery;
         this.sqlQuery = null;
-        this.entityName = null;
         this.sessionFactory = sessionFactory;
         this.from = -1;
         this.size = -1;
     }
 
-    public DefaultListQueryDataIterator(String entityName, SessionFactory sessionFactory, int from, int size) {
-        this.entityName = entityName;
-        this.sqlQuery = null;
-        this.dataSourceSQLQuery = null;
-        this.sessionFactory = sessionFactory;
-        this.from = from;
-        this.size = size;
-    }
-
     public DefaultListQueryDataIterator(SQLQuery sqlQuery, SessionFactory sessionFactory, int from, int size) {
         this.sqlQuery = sqlQuery;
-        this.entityName = null;
         this.dataSourceSQLQuery = null;
         this.sessionFactory = sessionFactory;
         this.from = from;
@@ -158,32 +120,12 @@ public class DefaultListQueryDataIterator implements DataIterator {
     protected Iterator createIterator() {
         session = sessionFactory.openSession();
         transaction = session.beginTransaction();
-        if (entityName != null) {
-            return createIteratorFromCriteria();
-        } else  if (sqlQuery != null) {
+        if (sqlQuery != null) {
             return createIteratorFromSqlQuery();
         } else if (dataSourceSQLQuery != null) {
             return createIteratorFromDataSourceQuery();
         } else {
             throw new IllegalStateException("Either SQLQuery or entity must be provided");
-        }
-    }
-
-    private Iterator createIteratorFromCriteria() {
-        try {
-            Criteria criteria = session.createCriteria(entityName);
-            criteria.setCacheMode(CacheMode.IGNORE);
-            criteria.setCacheable(false);
-            criteria.setFlushMode(FlushMode.MANUAL);
-            if (from >= 0) {
-                criteria.setFirstResult(from);
-                criteria.setMaxResults(size);
-            } else if(limitResults > 0){
-                criteria.setMaxResults(limitResults);
-            }
-            return criteria.list().iterator();
-        } catch (HibernateException e) {
-            throw new SpaceRuntimeException("Failed to create iterator for [" + entityName + "]", e);
         }
     }
 

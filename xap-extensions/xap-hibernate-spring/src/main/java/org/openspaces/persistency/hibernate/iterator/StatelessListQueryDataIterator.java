@@ -21,7 +21,6 @@ import com.gigaspaces.datasource.DataIterator;
 import com.gigaspaces.datasource.DataSourceSQLQuery;
 import com.j_spaces.core.client.SQLQuery;
 
-import org.hibernate.Criteria;
 import org.hibernate.query.Query;
 import org.hibernate.SessionFactory;
 import org.hibernate.StatelessSession;
@@ -35,8 +34,6 @@ import java.util.Iterator;
  * @author kimchy
  */
 public class StatelessListQueryDataIterator implements DataIterator {
-
-    protected final String entityName;
 
     protected final SQLQuery<?> sqlQuery;
 
@@ -53,17 +50,11 @@ public class StatelessListQueryDataIterator implements DataIterator {
     private Iterator iterator;
 
     public StatelessListQueryDataIterator(SQLQuery sqlQuery, SessionFactory sessionFactory) {
-        this.sqlQuery = sqlQuery;
-        this.entityName = null;
-        this.dataSourceSQLQuery = null;
-        this.sessionFactory = sessionFactory;
-        this.from = -1;
-        this.size = -1;
+        this(sqlQuery, sessionFactory, -1, -1);
     }
 
     public StatelessListQueryDataIterator(SQLQuery sqlQuery, SessionFactory sessionFactory, int from, int size) {
         this.sqlQuery = sqlQuery;
-        this.entityName = null;
         this.dataSourceSQLQuery = null;
         this.sessionFactory = sessionFactory;
         this.from = from;
@@ -71,26 +62,11 @@ public class StatelessListQueryDataIterator implements DataIterator {
     }
 
     public StatelessListQueryDataIterator(String entityName, SessionFactory sessionFactory) {
-        this.entityName = entityName;
-        this.sqlQuery = null;
-        this.dataSourceSQLQuery = null;
-        this.sessionFactory = sessionFactory;
-        this.from = -1;
-        this.size = -1;
-    }
-
-    public StatelessListQueryDataIterator(String entityName, SessionFactory sessionFactory, int from, int size) {
-        this.entityName = entityName;
-        this.sqlQuery = null;
-        this.dataSourceSQLQuery = null;
-        this.sessionFactory = sessionFactory;
-        this.from = from;
-        this.size = size;
+        this(new SQLQuery(entityName, ""), sessionFactory);
     }
 
     public StatelessListQueryDataIterator(DataSourceSQLQuery dataSourceSQLQuery, SessionFactory sessionFactory) {
         this.sqlQuery = null;
-        this.entityName = null;
         this.dataSourceSQLQuery = dataSourceSQLQuery;
         this.sessionFactory = sessionFactory;
         this.from = -1;
@@ -124,15 +100,7 @@ public class StatelessListQueryDataIterator implements DataIterator {
 
     protected Iterator createIterator() {
         session = sessionFactory.openStatelessSession();
-        if (entityName != null) {
-            Criteria criteria = session.createCriteria(entityName);
-            criteria.setCacheable(false);
-            if (from >= 0) {
-                criteria.setFirstResult(from);
-                criteria.setMaxResults(size);
-            }
-            return criteria.list().iterator();
-        } else if (sqlQuery != null) {
+        if (sqlQuery != null) {
             Query query = HibernateIteratorUtils.createQueryFromSQLQuery(sqlQuery, session);
             if (from >= 0) {
                 query.setFirstResult(from);

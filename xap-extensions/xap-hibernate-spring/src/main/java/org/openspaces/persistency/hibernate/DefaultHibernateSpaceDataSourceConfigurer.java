@@ -85,7 +85,7 @@ public class DefaultHibernateSpaceDataSourceConfigurer {
      * Sets the fetch size that will be used when working with scrollable results. Defaults to
      * <code>100</code>.
      *
-     * @see org.hibernate.Criteria#setFetchSize(int)
+     * @see org.hibernate.query.Query#setFetchSize(int)
      */
     public DefaultHibernateSpaceDataSourceConfigurer fetchSize(int fetchSize) {
         this.fetchSize = fetchSize;

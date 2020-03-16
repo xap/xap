@@ -66,10 +66,6 @@ public class DefaultChunkListDataIterator extends AbstractChunkDataIterator {
         super(hQuery, sessionFactory, fetchSize, chunkSize);
     }
 
-    protected DataIterator createIteratorByEntityName(String entityName, SessionFactory sessionFactory, int fetchSize, boolean performOrderById, int from, int size) {
-        return new DefaultListQueryDataIterator(entityName, sessionFactory, from, size);
-    }
-
     protected DataIterator createIteratorBySQLQuery(SQLQuery sqlQuery, SessionFactory sessionFactory, int fetchSize, boolean performOrderById, int from, int size) {
         return new DefaultListQueryDataIterator(sqlQuery, sessionFactory, from, size);
     }

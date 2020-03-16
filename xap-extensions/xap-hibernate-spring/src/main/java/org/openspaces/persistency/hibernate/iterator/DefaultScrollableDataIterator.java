@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-
 package org.openspaces.persistency.hibernate.iterator;
 
 import com.j_spaces.core.client.SQLQuery;
 
 import org.hibernate.CacheMode;
-import org.hibernate.Criteria;
 import org.hibernate.FlushMode;
 import org.hibernate.query.Query;
 import org.hibernate.ScrollMode;
@@ -28,8 +26,6 @@ import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.criterion.Order;
-import org.hibernate.metadata.ClassMetadata;
 
 /**
  * A default scrollable result iterator based on Hibernate {@link Session}.
@@ -52,20 +48,6 @@ public class DefaultScrollableDataIterator extends AbstractScrollableDataIterato
      */
     public DefaultScrollableDataIterator(String entityName, SessionFactory sessionFactory, int fetchSize, boolean performOrderById) {
         super(entityName, sessionFactory, fetchSize, performOrderById);
-    }
-
-    /**
-     * Constructs a scrollable iterator over the given entity name.
-     *
-     * @param entityName       The entity name to scroll over
-     * @param sessionFactory   The session factory to use to constrcut the session
-     * @param fetchSize        The fetch size of the scrollable result set
-     * @param performOrderById Should the query perform order by id or not
-     * @param from             The from index to scroll from
-     * @param size             The size of data to scroll to
-     */
-    public DefaultScrollableDataIterator(String entityName, SessionFactory sessionFactory, int fetchSize, boolean performOrderById, int from, int size) {
-        super(entityName, sessionFactory, fetchSize, performOrderById, from, size);
     }
 
     /**
@@ -140,25 +122,7 @@ public class DefaultScrollableDataIterator extends AbstractScrollableDataIterato
         session = sessionFactory.openSession();
         session.setFlushMode(FlushMode.MANUAL);
         transaction = session.beginTransaction();
-        if (entityName != null) {
-            Criteria criteria = session.createCriteria(entityName);
-            criteria.setCacheable(false);
-            criteria.setFlushMode(FlushMode.MANUAL);
-            criteria.setFetchSize(fetchSize);
-            if (perfromOrderById) {
-                ClassMetadata metadata = sessionFactory.getClassMetadata(entityName);
-                String idPropName = metadata.getIdentifierPropertyName();
-                if (idPropName != null) {
-                    criteria.addOrder(Order.asc(idPropName));
-                }
-            }
-            if (from >= 0) {
-                if (from > 0)
-                    criteria.setFirstResult(from);
-                criteria.setMaxResults(size);
-            }
-            return criteria.scroll(ScrollMode.FORWARD_ONLY);
-        } else if (sqlQuery != null) {
+        if (sqlQuery != null) {
             Query query = HibernateIteratorUtils.createQueryFromSQLQuery(sqlQuery, session);
             query.setFetchSize(fetchSize);
             if (from >= 0) {

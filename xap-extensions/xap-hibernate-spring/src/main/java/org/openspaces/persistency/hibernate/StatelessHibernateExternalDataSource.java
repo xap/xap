@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.openspaces.persistency.hibernate;
 
 import com.gigaspaces.datasource.BulkDataPersister;
@@ -26,13 +25,9 @@ import com.j_spaces.core.client.SQLQuery;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.Criteria;
 import org.hibernate.query.Query;
 import org.hibernate.StatelessSession;
 import org.hibernate.Transaction;
-import org.hibernate.criterion.Projections;
-import org.hibernate.criterion.Restrictions;
-import org.hibernate.metadata.ClassMetadata;
 import org.openspaces.persistency.hibernate.iterator.HibernateProxyRemoverIterator;
 import org.openspaces.persistency.hibernate.iterator.StatelessChunkListDataIterator;
 import org.openspaces.persistency.hibernate.iterator.StatelessChunkScrollableDataIterator;
@@ -293,25 +288,31 @@ public class StatelessHibernateExternalDataSource extends AbstractHibernateExter
 
     protected boolean exists(BulkItem bulkItem, StatelessSession session) {
 
-        Criteria criteria = null;
         switch (bulkItem.getOperation()) {
             case BulkItem.REMOVE:
             case BulkItem.WRITE:
             case BulkItem.UPDATE:
                 Object entry = bulkItem.getItem();
-                criteria = session.createCriteria(entry.getClass().getName());
-                ClassMetadata classMetaData = getSessionFactory().getClassMetadata(entry.getClass());
-                criteria.add(Restrictions.idEq(classMetaData.getIdentifier(entry)));
-                criteria.setProjection(Projections.rowCount());
-                return ((Number) criteria.uniqueResult()).intValue() > 0;
+                Object id = getSessionFactory().getClassMetadata(entry.getClass()).getIdentifier(entry);
+                return count(session, entry.getClass().getName(), id) > 0;
             case BulkItem.PARTIAL_UPDATE:
-                criteria = session.createCriteria(bulkItem.getTypeName());
-                criteria.add(Restrictions.idEq(bulkItem.getIdPropertyValue()));
-                criteria.setProjection(Projections.rowCount());
-                return ((Number) criteria.uniqueResult()).intValue() > 0;
+                return count(session, bulkItem.getTypeName(), bulkItem.getIdPropertyValue()) > 0;
             default:
                 return false;
         }
+    }
+
+    private int count(StatelessSession session, String typeName, Object id) {
+        String idProperty = getSessionFactory().getClassMetadata(typeName).getIdentifierPropertyName();
+        Query query = session.createQuery("select count(*) from " + typeName + "where " + idProperty + " = ?");
+        query.setParameter(1, id);
+        return ((Number) query.uniqueResult()).intValue();
+        /*
+        Criteria criteria = session.createCriteria(typeName);
+        criteria.add(Restrictions.idEq(id));
+        criteria.setProjection(Projections.rowCount());
+        return ((Number) criteria.uniqueResult()).intValue();
+         */
     }
 
     private void rollbackTx(Transaction tr) {

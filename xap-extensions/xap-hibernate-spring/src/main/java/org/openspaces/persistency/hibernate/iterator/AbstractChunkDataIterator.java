@@ -20,12 +20,11 @@ package org.openspaces.persistency.hibernate.iterator;
 import com.gigaspaces.datasource.DataIterator;
 import com.j_spaces.core.client.SQLQuery;
 
-import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.criterion.Projections;
+import org.hibernate.query.Query;
 import org.openspaces.persistency.support.ConcurrentMultiDataIterator;
 import org.openspaces.persistency.support.MultiDataIterator;
 import org.openspaces.persistency.support.SerialMultiDataIterator;
@@ -39,8 +38,6 @@ import java.util.ArrayList;
  * @author kimchy
  */
 public abstract class AbstractChunkDataIterator implements MultiDataIterator {
-
-    protected final String entityName;
 
     protected final SQLQuery sqlQuery;
 
@@ -68,13 +65,7 @@ public abstract class AbstractChunkDataIterator implements MultiDataIterator {
      * @param chunkSize        The size of the chunks the entity table will be broken to
      */
     public AbstractChunkDataIterator(String entityName, SessionFactory sessionFactory, int fetchSize, boolean performOrderById, int chunkSize) {
-        this.entityName = entityName;
-        this.sqlQuery = null;
-        this.hQuery = null;
-        this.sessionFactory = sessionFactory;
-        this.fetchSize = fetchSize;
-        this.perfromOrderById = performOrderById;
-        this.chunkSize = chunkSize;
+        this(new SQLQuery(entityName, ""), sessionFactory, fetchSize, performOrderById, chunkSize);
     }
 
     /**
@@ -88,7 +79,6 @@ public abstract class AbstractChunkDataIterator implements MultiDataIterator {
      */
     public AbstractChunkDataIterator(SQLQuery sqlQuery, SessionFactory sessionFactory, int fetchSize, boolean performOrderById, int chunkSize) {
         this.sqlQuery = sqlQuery;
-        this.entityName = null;
         this.hQuery = null;
         this.sessionFactory = sessionFactory;
         this.fetchSize = fetchSize;
@@ -106,7 +96,6 @@ public abstract class AbstractChunkDataIterator implements MultiDataIterator {
      */
     public AbstractChunkDataIterator(String hQuery, SessionFactory sessionFactory, int fetchSize, int chunkSize) {
         this.sqlQuery = null;
-        this.entityName = null;
         this.hQuery = hQuery;
         this.sessionFactory = sessionFactory;
         this.fetchSize = fetchSize;
@@ -156,14 +145,10 @@ public abstract class AbstractChunkDataIterator implements MultiDataIterator {
             Transaction transaction = session.beginTransaction();
             try {
                 int count = -1;
-                if (entityName != null) {
-                    Criteria criteria = session.createCriteria(entityName);
-                    criteria.setProjection(Projections.rowCount());
+                if (sqlQuery != null && sqlQuery.getQuery().isEmpty()) {
+                    Query countQuery = session.createQuery("select count(*) from " + sqlQuery.getTypeName());
                     try {
-                        Number result = null;
-                        if (null != criteria) {
-                            result = (Number) criteria.uniqueResult();
-                        }
+                        Number result = (Number) countQuery.uniqueResult();
                         count = (result == null) ? -1 : result.intValue();
                     } catch (HibernateException e) {
                         count = -1;
@@ -172,9 +157,7 @@ public abstract class AbstractChunkDataIterator implements MultiDataIterator {
                 if (count != -1) {
                     int from = 0;
                     while (from < count) {
-                        if (entityName != null) {
-                            itList.add(createIteratorByEntityName(entityName, sessionFactory, fetchSize, perfromOrderById, from, chunkSize));
-                        } else if (sqlQuery != null) {
+                        if (sqlQuery != null) {
                             itList.add(createIteratorBySQLQuery(sqlQuery, sessionFactory, fetchSize, perfromOrderById, from, chunkSize));
                         } else if (hQuery != null) {
                             itList.add(createIteratorByHibernateQuery(hQuery, sessionFactory, fetchSize, from, chunkSize));
@@ -182,9 +165,7 @@ public abstract class AbstractChunkDataIterator implements MultiDataIterator {
                         from += chunkSize;
                     }
                 } else {
-                    if (entityName != null) {
-                        itList.add(createIteratorByEntityName(entityName, sessionFactory, fetchSize, perfromOrderById, -1, -1));
-                    } else if (sqlQuery != null) {
+                    if (sqlQuery != null) {
                         itList.add(createIteratorBySQLQuery(sqlQuery, sessionFactory, fetchSize, perfromOrderById, -1, -1));
                     } else if (hQuery != null) {
                         itList.add(createIteratorByHibernateQuery(hQuery, sessionFactory, fetchSize, -1, -1));
@@ -197,8 +178,6 @@ public abstract class AbstractChunkDataIterator implements MultiDataIterator {
             }
         }
     }
-
-    protected abstract DataIterator createIteratorByEntityName(String entityName, SessionFactory sessionFactory, int fetchSize, boolean performOrderById, int from, int size);
 
     protected abstract DataIterator createIteratorBySQLQuery(SQLQuery sqlQuery, SessionFactory sessionFactory, int fetchSize, boolean performOrderById, int from, int size);
 
