@@ -93,6 +93,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
 
     protected final static Logger _loggerReplica = Logger.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
     protected final Logger _logger;
+    protected final Logger _replicationLogger;
 
     private final static long WEIGHT_WARNING_THRESHOLD = 50;
     private final DynamicSourceGroupConfigHolder _groupConfigHolder;
@@ -136,6 +137,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         _dataProducer = dataProducer;
         _name = name;
         _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_BACKLOG + "." + ReplicationLogUtils.toShortGroupName(_groupName));
+        _replicationLogger = Logger.getLogger(Constants.LOGGER_REPLICATION_BACKLOG_REPLICATION + "."+ ReplicationLogUtils.toShortGroupName(_groupName));
 
         _outOfSyncDueToDeletionTargets = new HashSet<String>();
         _backlogCapacityAllowedBreachingTargets = new CopyOnUpdateSet<String>();
@@ -868,8 +870,8 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
                     break;
 
                 if (packet.getWeight() > maxWeight && weightSum == 0) { // packet is bigger than maxWeight and it's the first iteration
-                    if (_logger.isLoggable(Level.WARNING))
-                        _logger.log(Level.WARNING,
+                    if (_replicationLogger.isLoggable(Level.WARNING))
+                        _replicationLogger.log(Level.WARNING,
                                 getLogPrefix() + "replicating a packet which is bigger than the batch size, "
                                         + "[member name="+memberName+", packet key=" + packet.getKey()
                                         + ", packet weight=" + packet.getWeight() + ", backlog batch size = " + maxWeight + "]\n"
@@ -1683,8 +1685,8 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
                         break;
 
                     if (packet.getWeight() > maxWeight && weightSum == 0) { // packet is bigger than maxWeight and it's the first iteration
-                        if (_logger.isLoggable(Level.WARNING))
-                            _logger.log(Level.WARNING,
+                        if (_replicationLogger.isLoggable(Level.WARNING))
+                            _replicationLogger.log(Level.WARNING,
                                     getLogPrefix() + "replicating a packet which is bigger than the batch size, "
                                             + "[member name="+memberName+", packet key=" + packet.getKey()
                                             + ", packet weight=" + packet.getWeight() + ", backlog batch size = " + maxWeight + "]\n"
