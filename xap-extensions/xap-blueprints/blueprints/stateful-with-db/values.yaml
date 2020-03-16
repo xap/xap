@@ -23,7 +23,7 @@ db:
     enabled: true
 
 hibernate:
-  version: 5.2.18.Final
+  version: 5.3.15.Final
   dialect: org.hibernate.dialect.HSQLDialect
 
 topology:
