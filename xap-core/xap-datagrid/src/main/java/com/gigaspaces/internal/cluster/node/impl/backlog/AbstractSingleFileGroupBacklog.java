@@ -137,7 +137,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
         _dataProducer = dataProducer;
         _name = name;
         _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_BACKLOG + "." + ReplicationLogUtils.toShortGroupName(_groupName));
-        _replicationLogger = Logger.getLogger(Constants.LOGGER_REPLICATION_BACKLOG_REPLICATION + "."+ ReplicationLogUtils.toShortGroupName(_groupName));
+        _replicationLogger = Logger.getLogger(Constants.LOGGER_REPLICATION_BACKLOG_WEIGHT + "."+ ReplicationLogUtils.toShortGroupName(_groupName));
 
         _outOfSyncDueToDeletionTargets = new HashSet<String>();
         _backlogCapacityAllowedBreachingTargets = new CopyOnUpdateSet<String>();
