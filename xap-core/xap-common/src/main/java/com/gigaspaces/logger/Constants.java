@@ -114,6 +114,7 @@ public interface Constants {
     final public static String LOGGER_REPLICATION_ROUTER = LOGGER_REPLICATION + ".router";
     final public static String LOGGER_REPLICATION_ROUTER_COMMUNICATION = LOGGER_REPLICATION_ROUTER + ".communication";
     final public static String LOGGER_REPLICATION_BACKLOG = LOGGER_REPLICATION + ".backlog";
+    final public static String LOGGER_REPLICATION_BACKLOG_WEIGHT = LOGGER_REPLICATION_BACKLOG + ".weight";
 
     //.NET Bridge
     final public static String LOGGER_DISPATCHER_BRIDGE = "com.gigaspaces.bridge.dispatcher";

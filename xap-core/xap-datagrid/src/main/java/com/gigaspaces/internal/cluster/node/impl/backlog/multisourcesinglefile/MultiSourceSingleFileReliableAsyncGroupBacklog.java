@@ -428,7 +428,7 @@ public class MultiSourceSingleFileReliableAsyncGroupBacklog extends AbstractMult
         long fromKey = handshakeContext.getMinimumUnsentKey();
         long upToKey = handshakeContext.getLastProcessedKey();
         int maxSize = sourceGroupConfig.getBacklogCompletionBatchSize();
-        List<IReplicationOrderedPacket> packets = getPacketsWithFullSerializedContent(fromKey,
+        List<IReplicationOrderedPacket> packets = getPacketsWithFullSerializedContent(memberName, fromKey,
                 upToKey,
                 maxSize);
 
