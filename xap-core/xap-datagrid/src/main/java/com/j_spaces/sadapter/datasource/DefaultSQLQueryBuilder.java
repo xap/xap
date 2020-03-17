@@ -36,6 +36,7 @@ import java.util.List;
 @com.gigaspaces.api.InternalApi
 public class DefaultSQLQueryBuilder implements SQLQueryBuilder {
     public static final String BIND_PARAMETER = "?";
+    public static final Integer BIND_PARAMETER_POS_BASE = Integer.getInteger("com.gs.data-source.bind-parameter.positional-base", 0);
     public static final String OR = " or ";
     public static final String AND = " and ";
     /**
@@ -99,6 +100,8 @@ public class DefaultSQLQueryBuilder implements SQLQueryBuilder {
         wherePart.append(idPropertyName);
         wherePart.append(mapCodeToSign(TemplateMatchCodes.EQ));
         wherePart.append(BIND_PARAMETER);
+        if (BIND_PARAMETER_POS_BASE != null)
+            wherePart.append(BIND_PARAMETER_POS_BASE);
 
         // Add the field values to the prepared values
         List<Object> preparedValues = new LinkedList<Object>();
