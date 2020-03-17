@@ -21,7 +21,7 @@ public class SinglePartitionGetBatchForIteratorSpaceTask extends SystemTask<Spac
     }
 
     public SinglePartitionGetBatchForIteratorSpaceTask(SpaceIteratorBatchResultProvider spaceIteratorBatchResultProvider, int batchNumber) {
-        _getBatchForIteratorSpaceRequestInfo = new GetBatchForIteratorSpaceRequestInfo(spaceIteratorBatchResultProvider.getQueryPacket(), spaceIteratorBatchResultProvider.getReadModifiers(), spaceIteratorBatchResultProvider.getBatchSize(), batchNumber, spaceIteratorBatchResultProvider.getUuid());
+        _getBatchForIteratorSpaceRequestInfo = new GetBatchForIteratorSpaceRequestInfo(spaceIteratorBatchResultProvider.getQueryPacket(), spaceIteratorBatchResultProvider.getReadModifiers(), spaceIteratorBatchResultProvider.getBatchSize(), batchNumber, spaceIteratorBatchResultProvider.getUuid(), spaceIteratorBatchResultProvider.getMaxInactiveDuration());
     }
 
     @Override

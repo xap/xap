@@ -32,6 +32,7 @@ import com.gigaspaces.client.TakeByIdsResult;
 import com.gigaspaces.client.TakeModifiers;
 import com.gigaspaces.client.WriteModifiers;
 import com.gigaspaces.client.iterator.SpaceIterator;
+import com.gigaspaces.client.iterator.SpaceIteratorConfiguration;
 import com.gigaspaces.events.DataEventSession;
 import com.gigaspaces.events.EventSessionConfig;
 import com.gigaspaces.query.ISpaceQuery;
@@ -2096,6 +2097,18 @@ public interface GigaSpace {
     /**
      * Returns an iterator over the entries in the space which match the specified template.
      *
+     * @param template  The template used for matching. Matching is done against the template with
+     *                  <code>null</code> fields being. wildcards ("match anything") other fields
+     *                  being values ("match exactly on the serialized form"). The template can also
+     *                  be one of the different {@link com.gigaspaces.query.ISpaceQuery} classes
+     * @param spaceIteratorConfiguration {@link SpaceIteratorConfiguration}.
+     * @return An iterator over the entries which match the template.
+     */
+    <T> SpaceIterator<T> iterator(T template, SpaceIteratorConfiguration spaceIteratorConfiguration);
+
+    /**
+     * Returns an iterator over the entries in the space which match the specified template.
+     *
      * @param template A query to be executed against the space. Most common one is {@link
      *                 com.j_spaces.core.client.SQLQuery}.
      * @return An iterator over the entries which match the template.
@@ -2122,6 +2135,16 @@ public interface GigaSpace {
      * @return An iterator over the entries which match the template.
      */
     <T> SpaceIterator<T> iterator(ISpaceQuery<T> template, int batchSize, ReadModifiers modifiers);
+
+    /**
+     * Returns an iterator over the entries in the space which match the specified template.
+     *
+     * @param template  A query to be executed against the space. Most common one is {@link
+     *                 com.j_spaces.core.client.SQLQuery}.
+     * @param spaceIteratorConfiguration {@link SpaceIteratorConfiguration}.
+     * @return An iterator over the entries which match the template.
+     */
+    <T> SpaceIterator<T> iterator(ISpaceQuery<T> template, SpaceIteratorConfiguration spaceIteratorConfiguration);
 
     /**
      * Executes a task on a specific space node. The space node it will execute on should be

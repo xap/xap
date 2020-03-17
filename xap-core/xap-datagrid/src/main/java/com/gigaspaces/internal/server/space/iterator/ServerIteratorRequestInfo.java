@@ -6,11 +6,13 @@ public class ServerIteratorRequestInfo {
     private final UUID uuid;
     private final int batchSize;
     private final int requestedBatchNumber;
+    private final long maxInactiveDuration;
 
-    public ServerIteratorRequestInfo(UUID uuid, int batchSize, int requestedBatchNumber) {
+    public ServerIteratorRequestInfo(UUID uuid, int batchSize, int requestedBatchNumber, long maxInactiveDuration) {
         this.uuid = uuid;
         this.batchSize = batchSize;
         this.requestedBatchNumber = requestedBatchNumber;
+        this.maxInactiveDuration = maxInactiveDuration;
     }
 
     public UUID getUuid() {
@@ -23,6 +25,10 @@ public class ServerIteratorRequestInfo {
 
     public int getRequestedBatchNumber() {
         return requestedBatchNumber;
+    }
+
+    public long getMaxInactiveDuration() {
+        return maxInactiveDuration;
     }
 
     public boolean isFirstTime() {

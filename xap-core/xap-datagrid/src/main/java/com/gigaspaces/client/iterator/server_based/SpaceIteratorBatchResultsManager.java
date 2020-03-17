@@ -28,15 +28,15 @@ public class SpaceIteratorBatchResultsManager {
     private final ScheduledExecutorService _scheduler;
     private int _activePartitions;
 
-    public SpaceIteratorBatchResultsManager(ISpaceProxy spaceProxy, int batchSize, int readModifiers, ITemplatePacket queryPacket){
+    public SpaceIteratorBatchResultsManager(ISpaceProxy spaceProxy, int batchSize, int readModifiers, ITemplatePacket queryPacket, long maxInactiveDuration){
         this._partitionIteratorBatchResults = new HashMap<>();
-        this._spaceIteratorBatchResultProvider = new SpaceIteratorBatchResultProvider(spaceProxy, batchSize, readModifiers, queryPacket, UUID.randomUUID());
+        this._spaceIteratorBatchResultProvider = new SpaceIteratorBatchResultProvider(spaceProxy, batchSize, readModifiers, queryPacket, UUID.randomUUID(), maxInactiveDuration);
         this._activePartitions = this._spaceIteratorBatchResultProvider.getInitialNumberOfActivePartitions();
         this._scheduler = Executors.newScheduledThreadPool(1);
-        initRenewLeaseTask();
+        initRenewLeaseTask(maxInactiveDuration/2);
     }
 
-    private void initRenewLeaseTask() {
+    private void initRenewLeaseTask(long delay) {
         _scheduler.scheduleWithFixedDelay(() -> {
             if(isFinished()) {
                 _scheduler.shutdown();
@@ -50,7 +50,7 @@ public class SpaceIteratorBatchResultsManager {
                 Thread.currentThread().interrupt();
                 processRenewIteratorLeaseFailure(e);
             }
-        }, 1, 1, TimeUnit.SECONDS);
+        }, 0, delay, TimeUnit.MILLISECONDS);
     }
 
     private void processRenewIteratorLeaseFailure(Exception e) {

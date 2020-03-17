@@ -37,31 +37,32 @@ import java.util.logging.Logger;
  * @since 15.2
  */
 @com.gigaspaces.api.InternalApi
-public class ServerBasedEntryPacketIterator implements IEntryPacketIterator {
+public class CursorEntryPacketIterator implements IEntryPacketIterator {
     private static final Logger _logger = Logger.getLogger(Constants.LOGGER_GSITERATOR);
     private final ISpaceProxy _spaceProxy;
-    private final long _timeout;
+    private final long _serverLookupTimeout;
     private final ITemplatePacket _queryPacket;
     private final List<IEntryPacket> _buffer;
     private Iterator<IEntryPacket> _bufferIterator;
     private boolean _closed;
     private SpaceIteratorBatchResultsManager _spaceIteratorBatchResultsManager;
 
-    public ServerBasedEntryPacketIterator(ISpaceProxy spaceProxy, Object query, int batchSize, int modifiers) {
+    public CursorEntryPacketIterator(ISpaceProxy spaceProxy, Object query, SpaceIteratorConfiguration spaceIteratorConfiguration) {
         if (spaceProxy == null)
             throw new IllegalArgumentException("space argument must not be null.");
         if (query == null)
             throw new IllegalArgumentException("query argument must not be null.");
+        int batchSize = spaceIteratorConfiguration.getBatchSize();
         if (batchSize <= 0)
-            throw new IllegalArgumentException("batchSize argument must be greater than zero.");
+            throw new IllegalArgumentException("batchSize must be greater than zero.");
 
         if (_logger.isLoggable(Level.FINE))
             _logger.log(Level.FINE, "SpaceIterator initialized with batchSize=" + batchSize);
         this._spaceProxy = spaceProxy;
-        this._timeout = _spaceProxy.getDirectProxy().getProxyRouter().getConfig().getActiveServerLookupTimeout();
+        this._serverLookupTimeout = _spaceProxy.getDirectProxy().getProxyRouter().getConfig().getActiveServerLookupTimeout();
         this._queryPacket = toTemplatePacket(query);
         this._buffer = new LinkedList<>();
-        this._spaceIteratorBatchResultsManager = new SpaceIteratorBatchResultsManager(_spaceProxy, batchSize, modifiers, _queryPacket);
+        this._spaceIteratorBatchResultsManager = new SpaceIteratorBatchResultsManager(_spaceProxy, batchSize, spaceIteratorConfiguration.getReadModifiers().getCode(), _queryPacket, spaceIteratorConfiguration.getMaxInactiveDuration().toMillis());
         this._bufferIterator = getNextBatch();
     }
 
@@ -143,7 +144,7 @@ public class ServerBasedEntryPacketIterator implements IEntryPacketIterator {
     private Iterator<IEntryPacket> getNextBatch() throws SpaceIteratorException {
         _buffer.clear();
         try {
-            Object[] entries =  _spaceIteratorBatchResultsManager.getNextBatch(_timeout);
+            Object[] entries =  _spaceIteratorBatchResultsManager.getNextBatch(_serverLookupTimeout);
             if(entries == null)
                 return null;
             if (_logger.isLoggable(Level.FINE))

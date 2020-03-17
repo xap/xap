@@ -16,26 +16,15 @@
 
 package com.gigaspaces.internal.space.requests;
 
-import com.gigaspaces.internal.client.SpaceIteratorBatchResult;
 import com.gigaspaces.internal.io.IOUtils;
-import com.gigaspaces.internal.query.QueryUtils;
-import com.gigaspaces.internal.query.explainplan.ExplainPlanImpl;
-import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterExecutionType;
-import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterRemoteOperationRouter;
-import com.gigaspaces.internal.server.space.operations.SpaceOperationsCodes;
-import com.gigaspaces.internal.space.requests.AbstractSpaceRequestInfo;
 import com.gigaspaces.internal.transport.ITemplatePacket;
-import com.gigaspaces.internal.utils.Textualizer;
 import com.gigaspaces.logger.Constants;
-import com.j_spaces.core.GetBatchForIteratorException;
 import com.j_spaces.core.client.ReadModifiers;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.List;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -53,6 +42,7 @@ public class GetBatchForIteratorSpaceRequestInfo extends AbstractSpaceRequestInf
     private int _modifiers;
     private int _batchSize;
     private int _batchNumber;
+    private long _maxInactiveDuration;
 
     /**
      * Required for Externalizable.
@@ -61,12 +51,13 @@ public class GetBatchForIteratorSpaceRequestInfo extends AbstractSpaceRequestInf
     }
 
     public GetBatchForIteratorSpaceRequestInfo(
-            ITemplatePacket templatePacket, int modifiers, int batchSize, int batchNumber, UUID iteratorId) {
+            ITemplatePacket templatePacket, int modifiers, int batchSize, int batchNumber, UUID iteratorId, long maxInactiveDuration) {
         this._templatePacket = templatePacket;
         this._modifiers = modifiers;
         this._batchSize = batchSize;
         this._batchNumber = batchNumber;
         this._iteratorId = iteratorId;
+        this._maxInactiveDuration = maxInactiveDuration;
     }
 
     public ITemplatePacket getTemplatePacket() {
@@ -85,6 +76,10 @@ public class GetBatchForIteratorSpaceRequestInfo extends AbstractSpaceRequestInf
         return _iteratorId;
     }
 
+    public long getMaxInactiveDuration() {
+        return _maxInactiveDuration;
+    }
+
     private static final short FLAG_MODIFIERS = 1;
 
     private static final int DEFAULT_MODIFIERS = ReadModifiers.REPEATABLE_READ;
@@ -99,6 +94,7 @@ public class GetBatchForIteratorSpaceRequestInfo extends AbstractSpaceRequestInf
         IOUtils.writeUUID(out, _iteratorId);
         out.writeInt(_batchSize);
         out.writeInt(_batchNumber);
+        out.writeLong(_maxInactiveDuration);
         if (flags != 0) {
             if (_modifiers != DEFAULT_MODIFIERS)
                 out.writeInt(_modifiers);
@@ -114,6 +110,7 @@ public class GetBatchForIteratorSpaceRequestInfo extends AbstractSpaceRequestInf
         _iteratorId = IOUtils.readUUID(in);
         _batchSize = in.readInt();
         _batchNumber = in.readInt();
+        _maxInactiveDuration = in.readLong();
         if (flags != 0) {
             _modifiers = (flags & FLAG_MODIFIERS) != 0 ? in.readInt() : DEFAULT_MODIFIERS;
         } else {
@@ -126,15 +123,6 @@ public class GetBatchForIteratorSpaceRequestInfo extends AbstractSpaceRequestInf
         if (_modifiers != DEFAULT_MODIFIERS)
             flags |= FLAG_MODIFIERS;
         return flags;
-    }
-
-    public long getLease() {
-        //TODO add lease field to flow
-        return 1000;
-    }
-
-    public boolean isFirstTime() {
-        return _batchNumber == 0;
     }
 
     public int getBatchNumber() {

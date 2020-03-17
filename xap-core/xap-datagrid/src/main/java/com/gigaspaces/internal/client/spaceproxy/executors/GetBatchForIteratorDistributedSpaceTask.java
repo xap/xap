@@ -27,7 +27,7 @@ public class GetBatchForIteratorDistributedSpaceTask extends SystemDistributedTa
 
     public GetBatchForIteratorDistributedSpaceTask(SpaceIteratorBatchResultProvider spaceIteratorBatchResultProvider) {
         _spaceIteratorBatchResultProvider = spaceIteratorBatchResultProvider;
-        _getBatchForIteratorSpaceRequestInfo = new GetBatchForIteratorSpaceRequestInfo(_spaceIteratorBatchResultProvider.getQueryPacket(), _spaceIteratorBatchResultProvider.getReadModifiers(), _spaceIteratorBatchResultProvider.getBatchSize(), 0, _spaceIteratorBatchResultProvider.getUuid());
+        _getBatchForIteratorSpaceRequestInfo = new GetBatchForIteratorSpaceRequestInfo(_spaceIteratorBatchResultProvider.getQueryPacket(), _spaceIteratorBatchResultProvider.getReadModifiers(), _spaceIteratorBatchResultProvider.getBatchSize(), 0, _spaceIteratorBatchResultProvider.getUuid(), spaceIteratorBatchResultProvider.getMaxInactiveDuration());
     }
 
     /*

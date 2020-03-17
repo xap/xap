@@ -9,11 +9,7 @@ import com.gigaspaces.internal.space.responses.SpaceResponseInfo;
 import com.gigaspaces.security.authorities.SpaceAuthority;
 import com.j_spaces.core.GetBatchForIteratorException;
 import com.j_spaces.core.ServerIteratorAnswerHolder;
-import com.j_spaces.core.UnknownTypeException;
-import net.jini.core.entry.UnusableEntryException;
-import net.jini.core.transaction.TransactionException;
 
-import java.rmi.RemoteException;
 import java.util.UUID;
 
 public class SpaceGetBatchForIteratorExecutor extends SpaceActionExecutor{
@@ -23,7 +19,7 @@ public class SpaceGetBatchForIteratorExecutor extends SpaceActionExecutor{
         ServerIteratorAnswerHolder serverIteratorAnswerHolder = null;
         GetBatchForIteratorException exception = null;
         try {
-            serverIteratorAnswerHolder = space.getNextBatchFromServerIterator(requestInfo.getTemplatePacket(), requestInfo.getSpaceContext(),requestInfo.getModifiers(), new ServerIteratorRequestInfo(requestInfo.getIteratorId(), requestInfo.getBatchSize(), requestInfo.getBatchNumber()));
+            serverIteratorAnswerHolder = space.getNextBatchFromServerIterator(requestInfo.getTemplatePacket(), requestInfo.getSpaceContext(),requestInfo.getModifiers(), new ServerIteratorRequestInfo(requestInfo.getIteratorId(), requestInfo.getBatchSize(), requestInfo.getBatchNumber(), requestInfo.getMaxInactiveDuration()));
         } catch (Exception e) {
             exception = e instanceof GetBatchForIteratorException ? (GetBatchForIteratorException) e : new GetBatchForIteratorException(e) ;
         }

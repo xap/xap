@@ -37,6 +37,7 @@ import com.gigaspaces.client.TakeByIdsResultImpl;
 import com.gigaspaces.client.TakeModifiers;
 import com.gigaspaces.client.WriteModifiers;
 import com.gigaspaces.client.iterator.SpaceIterator;
+import com.gigaspaces.client.iterator.SpaceIteratorConfiguration;
 import com.gigaspaces.events.DataEventSession;
 import com.gigaspaces.events.DataEventSessionFactory;
 import com.gigaspaces.events.EventSessionConfig;
@@ -1323,18 +1324,29 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
 
     @Override
     public <T> SpaceIterator<T> iterator(T template) {
-        return iterator(template, SpaceIterator.getDefaultBatchSize(), getDefaultReadModifiers());
+        return iterator(template, new SpaceIteratorConfiguration());
     }
 
     @Override
     public <T> SpaceIterator<T> iterator(T template, int batchSize) {
-        return iterator(template, batchSize, getDefaultReadModifiers());
+        return iterator(template, new SpaceIteratorConfiguration().setBatchSize(batchSize));
     }
 
     @Override
     public <T> SpaceIterator<T> iterator(T template, int batchSize, ReadModifiers modifiers) {
         try {
-            return new SpaceIterator<T>(space, template, getCurrentTransaction(), batchSize, modifiers);
+            return new SpaceIterator<T>(space, template, getCurrentTransaction(), new SpaceIteratorConfiguration().setBatchSize(batchSize).setReadModifiers(modifiers));
+        } catch (Exception e) {
+            throw exTranslator.translate(e);
+        }
+    }
+
+    @Override
+    public <T> SpaceIterator<T> iterator(T template, SpaceIteratorConfiguration spaceIteratorConfiguration) {
+        try {
+            if(spaceIteratorConfiguration.getReadModifiers() == null)
+                spaceIteratorConfiguration.setReadModifiers(getDefaultReadModifiers());
+            return new SpaceIterator<T>(space, template, getCurrentTransaction(), spaceIteratorConfiguration);
         } catch (Exception e) {
             throw exTranslator.translate(e);
         }
@@ -1342,18 +1354,29 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
 
     @Override
     public <T> SpaceIterator<T> iterator(ISpaceQuery<T> template) {
-        return iterator(template, SpaceIterator.getDefaultBatchSize(), getDefaultReadModifiers());
+        return iterator(template, new SpaceIteratorConfiguration());
     }
 
     @Override
     public <T> SpaceIterator<T> iterator(ISpaceQuery<T> template, int batchSize) {
-        return iterator(template, batchSize, getDefaultReadModifiers());
+        return iterator(template, new SpaceIteratorConfiguration().setBatchSize(batchSize));
     }
 
     @Override
     public <T> SpaceIterator<T> iterator(ISpaceQuery<T> template, int batchSize, ReadModifiers modifiers) {
         try {
-            return new SpaceIterator<T>(space, template, getCurrentTransaction(), batchSize, modifiers);
+            return new SpaceIterator<T>(space, template, getCurrentTransaction(), new SpaceIteratorConfiguration().setBatchSize(batchSize).setReadModifiers(modifiers));
+        } catch (Exception e) {
+            throw exTranslator.translate(e);
+        }
+    }
+
+    @Override
+    public <T> SpaceIterator<T> iterator(ISpaceQuery<T> template, SpaceIteratorConfiguration spaceIteratorConfiguration) {
+        try {
+            if(spaceIteratorConfiguration.getReadModifiers() == null)
+                spaceIteratorConfiguration.setReadModifiers(getDefaultReadModifiers());
+            return new SpaceIterator<T>(space, template, getCurrentTransaction(), spaceIteratorConfiguration);
         } catch (Exception e) {
             throw exTranslator.translate(e);
         }

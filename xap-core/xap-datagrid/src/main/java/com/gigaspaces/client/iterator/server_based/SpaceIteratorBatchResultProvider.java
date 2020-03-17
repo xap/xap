@@ -7,15 +7,12 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.executors.GetBatchForIteratorDistributedSpaceTask;
 import com.gigaspaces.internal.client.spaceproxy.executors.SinglePartitionGetBatchForIteratorSpaceTask;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterUtils;
-import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.logger.Constants;
-import com.j_spaces.core.GetBatchForIteratorException;
 import net.jini.core.transaction.TransactionException;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
-import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.logging.Level;
@@ -32,16 +29,18 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
     private transient final ISpaceProxy _spaceProxy;
     private final int _batchSize;
     private final int _readModifiers;
+    private final long _maxInactiveDuration;
     private final ITemplatePacket _queryPacket;
     private final UUID _uuid;
     private final int _numberOfPartitions;
     private final transient SpaceIteratorBatchResultListener _spaceIteratorBatchResultListener;
 
 
-    public SpaceIteratorBatchResultProvider(ISpaceProxy spaceProxy, int batchSize, int readModifiers, ITemplatePacket queryPacket, UUID uuid){
+    public SpaceIteratorBatchResultProvider(ISpaceProxy spaceProxy, int batchSize, int readModifiers, ITemplatePacket queryPacket, UUID uuid, long maxInactiveDuration){
         this._spaceProxy = spaceProxy;
         this._batchSize = batchSize;
         this._readModifiers = readModifiers;
+        this._maxInactiveDuration = maxInactiveDuration;
         this._queryPacket = queryPacket;
         this._uuid = uuid;
         this._numberOfPartitions = _spaceProxy.getDirectProxy().getSpaceClusterInfo().getNumberOfPartitions();
@@ -136,6 +135,10 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
 
     public int getNumberOfPartitions() {
         return _numberOfPartitions;
+    }
+
+    public long getMaxInactiveDuration() {
+        return _maxInactiveDuration;
     }
 
     public int getInitialNumberOfActivePartitions() {

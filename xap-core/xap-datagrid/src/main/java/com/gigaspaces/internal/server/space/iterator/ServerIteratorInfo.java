@@ -6,24 +6,24 @@ import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.kernel.list.IScanListIterator;
 
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 public class ServerIteratorInfo {
-    final public static long DEFAULT_LEASE = TimeUnit.SECONDS.toMillis(10);
     final private Object lock = new Object();
     final private UUID uuid;
     final private int batchSize;
+    final private long maxInactiveDuration;
     private volatile boolean active;
     private volatile IScanListIterator<IEntryCacheInfo> scanListIterator;
     private volatile IEntryPacket[] storedEntryPacketsBatch;
     private volatile int storedBatchNumber;
     private volatile long expirationTime;
 
-    public ServerIteratorInfo(UUID uuid, int batchSize) {
+    public ServerIteratorInfo(UUID uuid, int batchSize, long maxInactiveDuration) {
         this.uuid = uuid;
         this.batchSize = batchSize;
+        this.maxInactiveDuration = maxInactiveDuration;
         this.storedBatchNumber = 0;
-        this.expirationTime = System.currentTimeMillis() + DEFAULT_LEASE;
+        this.expirationTime = System.currentTimeMillis() + maxInactiveDuration;
         this.active = true;
     }
 
@@ -44,7 +44,7 @@ public class ServerIteratorInfo {
     }
 
     public void renewLease(){
-        setExpirationTime(System.currentTimeMillis() + DEFAULT_LEASE);
+        setExpirationTime(System.currentTimeMillis() + maxInactiveDuration);
     }
 
     public IEntryPacket[] getStoredEntryPacketsBatch() {

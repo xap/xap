@@ -24,7 +24,7 @@ public class ServerIteratorsManager {
         boolean createNew = !containsUuid && firstTime;
         boolean foundActive = containsUuid && !firstTime;
         if(createNew){
-            ServerIteratorInfo result = new ServerIteratorInfo(serverIteratorRequestInfo.getUuid(), serverIteratorRequestInfo.getBatchSize());
+            ServerIteratorInfo result = new ServerIteratorInfo(serverIteratorRequestInfo.getUuid(), serverIteratorRequestInfo.getBatchSize(), serverIteratorRequestInfo.getMaxInactiveDuration());
             serverIteratorInfoMap.put(uuid, result);
             if(_logger.isLoggable(Level.FINE))
                 _logger.fine("Space iterator " + uuid + " was created in server");

@@ -18,6 +18,7 @@
 package com.j_spaces.kernel;
 
 import com.gigaspaces.CommonSystemProperties;
+import com.gigaspaces.client.iterator.SpaceIteratorType;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.client.UpdateModifiers;
@@ -296,11 +297,11 @@ public class SystemProperties extends CommonSystemProperties {
     public final static String LRMI_SIMPLE_CLASSLOADING_DEFAULT = "false";
 
     /**
-     * Set to true in order to enable space iterator new server based implementation, set to false to disable
-     * it. Defaults to false
+     * Set the space iterator type, allowed values: CURSOR, PREFETCH_UIDS
+     * it. Defaults to CURSOR
      */
-    public final static String SPACE_ITERATOR_IMPLEMENTATION = "com.gs.iterator.server-based-implementation-enabled";
-    public final static String SPACE_ITERATOR_IMPLEMENTATION_DEFAULT = "true";
+    public final static String SPACE_ITERATOR_TYPE = "com.gs.iterator.type";
+    public final static String SPACE_ITERATOR_TYPE_DEFAULT = SpaceIteratorType.CURSOR.toString();
 
     /**
      * Set to true in order to enable lrmi class loading for all purposes, set to false to disable
