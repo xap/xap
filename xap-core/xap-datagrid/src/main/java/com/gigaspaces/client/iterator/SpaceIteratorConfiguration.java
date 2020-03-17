@@ -8,15 +8,17 @@ import static com.j_spaces.kernel.SystemProperties.SPACE_ITERATOR_TYPE_DEFAULT;
 
 /**
  * Configuration class for {@link SpaceIterator}
- * @Author Alon Shoham
- * @Since 15.2.0
+ * @author Alon Shoham
+ * @since 15.2.0
  */
 public final class SpaceIteratorConfiguration {
     public static int getDefaultBatchSize() {
         return 100;
     }
     public static Duration getDefaultMaxInactiveDuration() { return Duration.ofMinutes(1);}
-    private SpaceIteratorType iteratorType = SpaceIteratorType.valueOf(System.getProperty(SPACE_ITERATOR_TYPE, SPACE_ITERATOR_TYPE_DEFAULT));
+    private static final SpaceIteratorType defaultIteratorType = SpaceIteratorType.valueOf(System.getProperty(SPACE_ITERATOR_TYPE, SPACE_ITERATOR_TYPE_DEFAULT));
+
+    private SpaceIteratorType iteratorType = defaultIteratorType;
     private int batchSize = getDefaultBatchSize();
     private Duration maxInactiveDuration = getDefaultMaxInactiveDuration();
     private ReadModifiers readModifiers;
