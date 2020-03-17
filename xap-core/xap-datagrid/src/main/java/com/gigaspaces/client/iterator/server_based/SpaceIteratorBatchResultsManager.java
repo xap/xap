@@ -42,20 +42,8 @@ public class SpaceIteratorBatchResultsManager {
                 _scheduler.shutdown();
                 return;
             }
-            try {
-                _spaceIteratorBatchResultProvider.renewIteratorLease();
-            } catch (RemoteException e) {
-                processRenewIteratorLeaseFailure(e);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                processRenewIteratorLeaseFailure(e);
-            }
+            _spaceIteratorBatchResultProvider.renewIteratorLease();
         }, 0, delay, TimeUnit.MILLISECONDS);
-    }
-
-    private void processRenewIteratorLeaseFailure(Exception e) {
-        if (_logger.isLoggable(Level.WARNING))
-            _logger.log(Level.WARNING, "Failed to renew space iterator " + _spaceIteratorBatchResultProvider.getUuid() + " lease.", e);
     }
 
     public Object[] getNextBatch(long timeout) throws InterruptedException, SpaceIteratorException {

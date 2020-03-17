@@ -14,18 +14,30 @@
  * limitations under the License.
  */
 
-package com.gigaspaces.internal.client.spaceproxy.actions;
+package com.gigaspaces.internal.client;
 
-import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.internal.space.responses.AbstractSpaceResponseInfo;
 
-import java.rmi.RemoteException;
-import java.util.UUID;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * @author Alon Shoham
  * @since 15.2.0
  */
-public abstract class RenewSpaceIteratorLeaseProxyAction<TSpaceProxy extends ISpaceProxy> {
-    public abstract void renewSpaceIteratorLease(TSpaceProxy spaceProxy, UUID uuid)
-            throws RemoteException, InterruptedException;
+@com.gigaspaces.api.InternalApi
+public class RenewIteratorLeaseSpaceResponseInfo extends AbstractSpaceResponseInfo {
+
+    public RenewIteratorLeaseSpaceResponseInfo() {
+    }
+
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    }
 }

@@ -55,8 +55,6 @@ public class SpaceOperationsExecutor {
         this._operations[SpaceOperationsCodes.REGISTER_LOCAL_VIEW] = new RegisterLocalViewSpaceOperation();
         this._operations[SpaceOperationsCodes.UNREGISTER_LOCAL_VIEW] = new UnregisterLocalViewSpaceOperation();
         this._operations[SpaceOperationsCodes.AGGREGATE_ENTRIES] = new AggregateEntriesSpaceOperation();
-        this._operations[SpaceOperationsCodes.CLOSE_SERVER_ITERATOR] = new CloseIteratorSpaceOperation();
-        this._operations[SpaceOperationsCodes.RENEW_SERVER_ITERATOR_LEASE] = new RenewIteratorLeaseSpaceOperation();
     }
 
     public SpaceOperationsExecutor(AbstractSpaceOperation<?, ?>[] operations) {

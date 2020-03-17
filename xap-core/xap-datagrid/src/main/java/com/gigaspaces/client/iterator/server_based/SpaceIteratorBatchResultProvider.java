@@ -4,7 +4,9 @@ import com.gigaspaces.SpaceRuntimeException;
 import com.gigaspaces.async.AsyncResult;
 import com.gigaspaces.internal.client.SpaceIteratorBatchResult;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.internal.client.spaceproxy.executors.CloseIteratorDistributedSpaceTask;
 import com.gigaspaces.internal.client.spaceproxy.executors.GetBatchForIteratorDistributedSpaceTask;
+import com.gigaspaces.internal.client.spaceproxy.executors.RenewIteratorLeaseDistributedSpaceTask;
 import com.gigaspaces.internal.client.spaceproxy.executors.SinglePartitionGetBatchForIteratorSpaceTask;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterUtils;
 import com.gigaspaces.internal.transport.ITemplatePacket;
@@ -110,8 +112,8 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
         if(_logger.isLoggable(Level.FINE))
             _logger.fine("Sending close request to space iterator "  + _uuid);
         try {
-            _spaceProxy.closeSpaceIterator(_uuid);
-        } catch (RemoteException | InterruptedException e) {
+            _spaceProxy.execute(new CloseIteratorDistributedSpaceTask(_uuid), null, null, null);
+        } catch (RemoteException | TransactionException e) {
             processCloseIteratorFailure(e);
         }
         _queue.clear();
@@ -158,7 +160,18 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
             _logger.log(Level.WARNING, "Failed to close iterator " + _uuid, e);
     }
 
-    public void renewIteratorLease() throws RemoteException, InterruptedException{
-       _spaceProxy.renewSpaceIteratorLease(_uuid);
+    public void renewIteratorLease() {
+        if(_logger.isLoggable(Level.FINE))
+            _logger.fine("Renewing space iterator "  + _uuid + " lease");
+        try {
+            _spaceProxy.execute(new RenewIteratorLeaseDistributedSpaceTask(_uuid), null, null, null);
+        } catch (TransactionException | RemoteException e) {
+            processRenewIteratorLeaseFailure(e);
+        }
+    }
+
+    private void processRenewIteratorLeaseFailure(Exception e) {
+        if (_logger.isLoggable(Level.WARNING))
+            _logger.log(Level.WARNING, "Failed to renew space iterator " + getUuid() + " lease.", e);
     }
 }

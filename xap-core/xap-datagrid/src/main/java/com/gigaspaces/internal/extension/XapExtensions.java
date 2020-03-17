@@ -65,6 +65,8 @@ public class XapExtensions {
         registerSystemTaskExecutor(UnregisterReplicationNotificationTask.class, new SpaceUnregisterReplicationNotificationExecutor());
         registerSystemTaskExecutor(GetBatchForIteratorDistributedSpaceTask.class, new SpaceGetBatchForIteratorExecutor());
         registerSystemTaskExecutor(SinglePartitionGetBatchForIteratorSpaceTask.class, new SpaceGetBatchForIteratorExecutor());
+        registerSystemTaskExecutor(CloseIteratorDistributedSpaceTask.class, new SpaceCloseIteratorExecutor());
+        registerSystemTaskExecutor(RenewIteratorLeaseDistributedSpaceTask.class, new SpaceRenewIteratorLeaseExecutor());
     }
 
     public ReplicationRouterBuilderFactory getReplicationRouterBuilderFactory() {

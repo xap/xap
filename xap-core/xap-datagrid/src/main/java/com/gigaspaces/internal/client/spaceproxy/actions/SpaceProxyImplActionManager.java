@@ -80,14 +80,4 @@ public class SpaceProxyImplActionManager extends AbstractSpaceProxyActionManager
     protected AggregateProxyAction<SpaceProxyImpl> createAggregateAction() {
         return new SpaceProxyImplAggregateAction();
     }
-
-    @Override
-    protected CloseSpaceIteratorProxyAction<SpaceProxyImpl> createCloseSpaceIteratorAction() {
-        return new SpaceProxyImplCloseSpaceIteratorAction();
-    }
-
-    @Override
-    protected RenewSpaceIteratorLeaseProxyAction<SpaceProxyImpl> createRenewSpaceIteratorLeaseAction() {
-        return new SpaceProxyImplRenewSpaceIteratorLeaseAction();
-    }
 }
