@@ -22,6 +22,7 @@ package com.j_spaces.sadapter.datasource;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.core.client.TemplateMatchCodes;
 
@@ -36,7 +37,7 @@ import java.util.List;
 @com.gigaspaces.api.InternalApi
 public class DefaultSQLQueryBuilder implements SQLQueryBuilder {
     public static final String BIND_PARAMETER = "?";
-    public static final Integer BIND_PARAMETER_POS_BASE = Integer.getInteger("com.gs.data-source.bind-parameter.positional-base", 0);
+    public static final boolean ADAPT_POSITIONAL_PARAMETERS = GsEnv.propertyBoolean("com.gs.persist.adapt-positional-sql-parameters").get(true);
     public static final String OR = " or ";
     public static final String AND = " and ";
     /**
@@ -100,8 +101,8 @@ public class DefaultSQLQueryBuilder implements SQLQueryBuilder {
         wherePart.append(idPropertyName);
         wherePart.append(mapCodeToSign(TemplateMatchCodes.EQ));
         wherePart.append(BIND_PARAMETER);
-        if (BIND_PARAMETER_POS_BASE != null)
-            wherePart.append(BIND_PARAMETER_POS_BASE);
+        if (ADAPT_POSITIONAL_PARAMETERS)
+            wherePart.append("0");
 
         // Add the field values to the prepared values
         List<Object> preparedValues = new LinkedList<Object>();

@@ -88,6 +88,14 @@ public class GsEnv {
         return new GsEnvProperty<>(systemProperty, envKey, Integer::parseInt);
     }
 
+    public static GsEnvProperty<Boolean> propertyBoolean(String systemProperty) {
+        return propertyBoolean(systemProperty, toEnvKey(systemProperty));
+    }
+
+    public static GsEnvProperty<Boolean> propertyBoolean(String systemProperty, String envKey) {
+        return new GsEnvProperty<>(systemProperty, envKey, Boolean::parseBoolean);
+    }
+
     public static GsEnvProperty<Path> propertyPath(String systemProperty) {
         return propertyPath(systemProperty, toEnvKey(systemProperty));
     }
