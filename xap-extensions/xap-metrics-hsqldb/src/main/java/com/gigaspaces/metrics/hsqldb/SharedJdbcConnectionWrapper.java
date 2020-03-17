@@ -21,6 +21,8 @@ public class SharedJdbcConnectionWrapper implements Closeable {
     private final Object connectionLock = new Object();
     private final ActivityLogger connectionLogger;
     private final AtomicInteger referenceCounter = new AtomicInteger(1);
+    private final int minLoginTimeoutInSec = Integer.getInteger("com.gigaspaces.metrics.hsqldb.loginTimeoutSec.min", 10);
+    private final int maxLoginTimeoutInSec = Integer.getInteger("com.gigaspaces.metrics.hsqldb.loginTimeoutSec.max", 60);
 
     public SharedJdbcConnectionWrapper(HsqlDBReporterFactory factory) {
         this.logger = LoggerFactory.getLogger(this.getClass());
@@ -64,7 +66,9 @@ public class SharedJdbcConnectionWrapper implements Closeable {
             synchronized (connectionLock) {
                 if (connection == null) {
                     try {
-                        logger.debug("Connecting to [{}]", url);
+                        final int loginTimeoutInSec = getLoginTimeout();
+                        logger.debug("Connecting to [{}] with a maximum wait time of [{}s]", url, loginTimeoutInSec);
+                        DriverManager.setLoginTimeout(loginTimeoutInSec);
                         connection = DriverManager.getConnection(url, factory.getUsername(), factory.getPassword());
                         connectionLogger.success();
                         logger.info("Connected to [{}]", url);
@@ -75,6 +79,31 @@ public class SharedJdbcConnectionWrapper implements Closeable {
             }
         }
         return connection;
+    }
+
+    /**
+     * LoginTimeout: The amount of time, in seconds, that the driver waits for a connection
+     * to be established before timing out the connection request. zero means there is no limit.
+     *
+     * The timeout starts from minLoginTimeoutInSec and increases by minLoginTimeoutInSec until
+     * greater than maxLoginTimeoutInSec, and then starts cycles back to minLoginTimeoutInSec.
+     *
+     * updates are guarded by connectionLock
+     */
+    private int getLoginTimeout() {
+        //zero means there is no limit
+        if (minLoginTimeoutInSec == 0
+                || maxLoginTimeoutInSec == 0) {
+            return 0;
+        }
+
+        int loginTimeout = DriverManager.getLoginTimeout();
+        if (loginTimeout < maxLoginTimeoutInSec) {
+            loginTimeout += minLoginTimeoutInSec;
+        } else {
+            loginTimeout = minLoginTimeoutInSec;
+        }
+        return loginTimeout;
     }
 
     public void resetConnection(Connection conn) {
