@@ -66,10 +66,6 @@ public class StatelessChunkListDataIterator extends AbstractChunkDataIterator {
         super(hQuery, sessionFactory, fetchSize, chunkSize);
     }
 
-    protected DataIterator createIteratorByEntityName(String entityName, SessionFactory sessionFactory, int fetchSize, boolean performOrderById, int from, int size) {
-        return new StatelessListQueryDataIterator(entityName, sessionFactory, from, size);
-    }
-
     protected DataIterator createIteratorBySQLQuery(SQLQuery sqlQuery, SessionFactory sessionFactory, int fetchSize, boolean performOrderById, int from, int size) {
         return new StatelessListQueryDataIterator(sqlQuery, sessionFactory, from, size);
     }

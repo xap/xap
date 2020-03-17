@@ -32,8 +32,6 @@ import org.hibernate.SessionFactory;
  */
 public abstract class AbstractScrollableDataIterator implements DataIterator {
 
-    protected final String entityName;
-
     protected final SQLQuery sqlQuery;
 
     protected final String hQuery;
@@ -77,14 +75,7 @@ public abstract class AbstractScrollableDataIterator implements DataIterator {
      * @param size             The size of data to scroll to
      */
     public AbstractScrollableDataIterator(String entityName, SessionFactory sessionFactory, int fetchSize, boolean performOrderById, int from, int size) {
-        this.entityName = entityName;
-        this.sqlQuery = null;
-        this.hQuery = null;
-        this.sessionFactory = sessionFactory;
-        this.fetchSize = fetchSize;
-        this.perfromOrderById = performOrderById;
-        this.from = from;
-        this.size = size;
+        this(new SQLQuery(entityName, ""), sessionFactory, fetchSize, performOrderById, from, size);
     }
 
     /**
@@ -108,7 +99,6 @@ public abstract class AbstractScrollableDataIterator implements DataIterator {
      * @param size           The size of data to scroll to
      */
     public AbstractScrollableDataIterator(String hQuery, SessionFactory sessionFactory, int fetchSize, int from, int size) {
-        this.entityName = null;
         this.sqlQuery = null;
         this.hQuery = hQuery;
         this.sessionFactory = sessionFactory;
@@ -142,7 +132,6 @@ public abstract class AbstractScrollableDataIterator implements DataIterator {
      */
     public AbstractScrollableDataIterator(SQLQuery sqlQuery, SessionFactory sessionFactory, int fetchSize, boolean performOrderById, int from, int size) {
         this.sqlQuery = sqlQuery;
-        this.entityName = null;
         this.hQuery = null;
         this.sessionFactory = sessionFactory;
         this.fetchSize = fetchSize;

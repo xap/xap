@@ -67,51 +67,37 @@ public class DefaultHibernateSpaceDataSource extends AbstractHibernateSpaceDataS
         initialLoadTypes.addAll(initialLoadQueries.keySet());
         initialLoadTypes.addAll(getInitialLoadEntries());
         for (String type : initialLoadTypes) {
-            SQLQuery sqlQuery = null;
-            String query = null;
-            if (initialLoadQueries.containsKey(type)) {
-                query = initialLoadQueries.get(type);
-                sqlQuery = new SQLQuery(type, query);
-            }
+            String query = initialLoadQueries.getOrDefault(type, "");
+            SQLQuery sqlQuery = new SQLQuery(type, query);
             if(getLimitResults() > 0){
                 if (logger.isTraceEnabled()) {
                     logger.trace("Creating initial load list iterator for entry [" + type + (query == null ? "]" : "], query: " + query));
                 }
-                iterators.add(sqlQuery == null ?
-                        new DefaultListQueryDataIterator(type, getSessionFactory(), getLimitResults()) :
-                        new DefaultListQueryDataIterator(sqlQuery, getSessionFactory(), getLimitResults()));
+                iterators.add(new DefaultListQueryDataIterator(sqlQuery, getSessionFactory(), getLimitResults()));
             } else {
                 if (getInitialLoadChunkSize() == -1) {
                     if (isUseScrollableResultSet()) {
                         if (logger.isTraceEnabled()) {
                             logger.trace("Creating initial load scrollable iterator for entry [" + type + (query == null ? "]" : "], query: " + query));
                         }
-                        iterators.add(sqlQuery == null ?
-                                new DefaultScrollableDataIterator(type, getSessionFactory(), getFetchSize(), isPerformOrderById()) :
-                                new DefaultScrollableDataIterator(sqlQuery, getSessionFactory(), getFetchSize(), isPerformOrderById()));
+                        iterators.add(new DefaultScrollableDataIterator(sqlQuery, getSessionFactory(), getFetchSize(), isPerformOrderById()));
                     } else {
                         if (logger.isTraceEnabled()) {
                             logger.trace("Creating initial load list iterator for entry [" + type + (query == null ? "]" : "], query: " + query));
                         }
-                        iterators.add(sqlQuery == null ?
-                                new DefaultListQueryDataIterator(type, getSessionFactory()) :
-                                new DefaultListQueryDataIterator(sqlQuery, getSessionFactory()));
+                        iterators.add(new DefaultListQueryDataIterator(sqlQuery, getSessionFactory()));
                     }
                 } else {
                     if (isUseScrollableResultSet()) {
                         if (logger.isTraceEnabled()) {
                             logger.trace("Creating initial load chunk scrollable iterator for entry [" + type + (query == null ? "]" : "], query: " + query));
                         }
-                        iterators.add(sqlQuery == null ?
-                                new DefaultChunkScrollableDataIterator(type, getSessionFactory(), getFetchSize(), isPerformOrderById(), getInitialLoadChunkSize()) :
-                                new DefaultChunkScrollableDataIterator(sqlQuery, getSessionFactory(), getFetchSize(), isPerformOrderById(), getInitialLoadChunkSize()));
+                        iterators.add(new DefaultChunkScrollableDataIterator(sqlQuery, getSessionFactory(), getFetchSize(), isPerformOrderById(), getInitialLoadChunkSize()));
                     } else {
                         if (logger.isTraceEnabled()) {
                             logger.trace("Creating initial load chunk list iterator for entry [" + type + (query == null ? "]" : "], query: " + query));
                         }
-                        iterators.add(sqlQuery == null ?
-                                new DefaultChunkListDataIterator(type, getSessionFactory(), getFetchSize(), isPerformOrderById(), getInitialLoadChunkSize()) :
-                                new DefaultChunkListDataIterator(sqlQuery, getSessionFactory(), getFetchSize(), isPerformOrderById(), getInitialLoadChunkSize()));
+                        iterators.add(new DefaultChunkListDataIterator(sqlQuery, getSessionFactory(), getFetchSize(), isPerformOrderById(), getInitialLoadChunkSize()));
                     }
                 }
             }

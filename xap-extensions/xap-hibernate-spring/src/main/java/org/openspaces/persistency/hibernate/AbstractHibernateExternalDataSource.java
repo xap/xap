@@ -148,7 +148,7 @@ public abstract class AbstractHibernateExternalDataSource implements ManagedData
      * Sets the fetch size that will be used when working with scrollable results. Defaults to
      * <code>100</code>.
      *
-     * @see org.hibernate.Criteria#setFetchSize(int)
+     * @see org.hibernate.query.Query#setFetchSize(int)
      */
     public void setFetchSize(int fetchSize) {
         this.fetchSize = fetchSize;
@@ -158,7 +158,7 @@ public abstract class AbstractHibernateExternalDataSource implements ManagedData
      * Returns the fetch size that will be used when working with scrollable results. Defaults to
      * <code>100</code>.
      *
-     * @see org.hibernate.Criteria#setFetchSize(int)
+     * @see org.hibernate.query.Query#setFetchSize(int)
      */
     protected int getFetchSize() {
         return fetchSize;
