@@ -13,7 +13,7 @@ import static com.j_spaces.kernel.SystemProperties.SPACE_ITERATOR_TYPE_DEFAULT;
  */
 public final class SpaceIteratorConfiguration {
     public static int getDefaultBatchSize() {
-        return 100;
+        return 1000;
     }
     public static Duration getDefaultMaxInactiveDuration() { return Duration.ofMinutes(1);}
     private static final SpaceIteratorType defaultIteratorType = SpaceIteratorType.valueOf(System.getProperty(SPACE_ITERATOR_TYPE, SPACE_ITERATOR_TYPE_DEFAULT));
