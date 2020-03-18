@@ -275,6 +275,9 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
     }
 
     protected boolean isSystemClass(String name) {
+        // Special case to ensure GigaSpaces-custom-jul-slf4j bridge is preferred.
+        if (name.equals("org.slf4j.bridge.SLF4JBridgeHandler"))
+            return true;
         return !matches(name, systemClassExcludes);
     }
 
