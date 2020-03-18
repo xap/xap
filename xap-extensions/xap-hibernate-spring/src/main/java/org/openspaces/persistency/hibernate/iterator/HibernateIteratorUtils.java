@@ -40,7 +40,7 @@ public class HibernateIteratorUtils {
     }
 
     public static Query createQueryFromSQLQuery(SQLQuery<?> sqlQuery, Session session) {
-        String select = sqlQuery.getFromQuery();
+        String select = toString(sqlQuery);
         Query query = session.createQuery(select);
         Object[] preparedValues = sqlQuery.getParameters();
         if (preparedValues != null) {
@@ -55,7 +55,7 @@ public class HibernateIteratorUtils {
     }
 
     public static Query createQueryFromSQLQuery(SQLQuery<?> sqlQuery, StatelessSession session) {
-        String select = sqlQuery.getFromQuery();
+        String select = toString(sqlQuery);
         Query query = session.createQuery(select);
         Object[] preparedValues = sqlQuery.getParameters();
         if (preparedValues != null) {
@@ -93,16 +93,24 @@ public class HibernateIteratorUtils {
         return query;
     }
 
-    private static String toString(DataSourceSQLQuery dataSourceSQLQuery) {
-        String query = dataSourceSQLQuery.getFromQuery();
+    private static String toString(SQLQuery sqlQuery) {
+        String query = sqlQuery.getFromQuery();
         if (DefaultSQLQueryBuilder.ADAPT_POSITIONAL_PARAMETERS) {
-            Object[] parameters = dataSourceSQLQuery.getQueryParameters();
-            query = adaptPositionalParameters(query, parameters == null ? 0 : parameters.length);
+            query = adaptPositionalParameters(query, sqlQuery.getParameters());
         }
         return query;
     }
 
-    private static String adaptPositionalParameters(String query, int numOfParameters) {
+    private static String toString(DataSourceSQLQuery dataSourceSQLQuery) {
+        String query = dataSourceSQLQuery.getFromQuery();
+        if (DefaultSQLQueryBuilder.ADAPT_POSITIONAL_PARAMETERS) {
+            query = adaptPositionalParameters(query, dataSourceSQLQuery.getQueryParameters());
+        }
+        return query;
+    }
+
+    private static String adaptPositionalParameters(String query, Object[] parameters) {
+        int numOfParameters = parameters == null ? 0 : parameters.length;
         if (numOfParameters == 0)
             return query;
         String[] tokens = query.split("\\?", -1);

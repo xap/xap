@@ -304,7 +304,7 @@ public class StatelessHibernateExternalDataSource extends AbstractHibernateExter
 
     private int count(StatelessSession session, String typeName, Object id) {
         String idProperty = getSessionFactory().getClassMetadata(typeName).getIdentifierPropertyName();
-        Query query = session.createQuery("select count(*) from " + typeName + "where " + idProperty + " = ?");
+        Query query = session.createQuery("select count(*) from " + typeName + " where " + idProperty + " = ?1");
         query.setParameter(1, id);
         return ((Number) query.uniqueResult()).intValue();
         /*
