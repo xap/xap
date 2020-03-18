@@ -11,7 +11,7 @@ import static com.j_spaces.kernel.SystemProperties.SPACE_ITERATOR_TYPE_DEFAULT;
  * @author Alon Shoham
  * @since 15.2.0
  */
-public final class SpaceIteratorConfiguration {
+public class SpaceIteratorConfiguration {
     public static int getDefaultBatchSize() {
         return 1000;
     }
