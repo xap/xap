@@ -20,7 +20,7 @@ public class SpaceIteratorConfiguration {
 
     private SpaceIteratorType iteratorType = defaultIteratorType;
     private int batchSize = getDefaultBatchSize();
-    private Duration maxInactiveDuration = getDefaultMaxInactiveDuration();
+    private Duration maxInactiveDuration = null;
     private ReadModifiers readModifiers;
 
     /**

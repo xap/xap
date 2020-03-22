@@ -43,8 +43,11 @@ public class SpaceIterator<T> implements Iterator<T>, Iterable<T>, Closeable {
         if (query instanceof SQLQuery && ((SQLQuery)query).getExplainPlan() != null) {
             throw new UnsupportedOperationException("Sql explain plan does not support space iterator");
         }
-        if(_logger.isLoggable(Level.INFO)) {
-            _logger.info("Space Iterator is of type " +  spaceIteratorConfiguration.getIteratorType());
+        if(spaceIteratorConfiguration.getIteratorType().equals(SpaceIteratorType.PREFETCH_UIDS) && spaceIteratorConfiguration.getMaxInactiveDuration() != null){
+            throw new UnsupportedOperationException("Setting the maxInactiveDuration value in not supported for space iterator of type " + spaceIteratorConfiguration.getIteratorType().toString());
+        }
+        if(_logger.isLoggable(Level.FINE)) {
+            _logger.fine("Space Iterator is of type " +  spaceIteratorConfiguration.getIteratorType());
         }
         this.iterator = spaceIteratorConfiguration.getIteratorType().equals(SpaceIteratorType.CURSOR) ? new CursorEntryPacketIterator(spaceProxy, query, spaceIteratorConfiguration) : new SpaceEntryPacketIterator(spaceProxy, query, txn, spaceIteratorConfiguration.getBatchSize(), spaceIteratorConfiguration.getReadModifiers().getCode());
     }

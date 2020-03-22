@@ -26,6 +26,7 @@ import com.gigaspaces.logger.Constants;
 import com.gigaspaces.client.iterator.server_based.SpaceIteratorException;
 import com.j_spaces.jdbc.builder.SQLQueryTemplatePacket;
 
+import java.time.Duration;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -55,14 +56,16 @@ public class CursorEntryPacketIterator implements IEntryPacketIterator {
         int batchSize = spaceIteratorConfiguration.getBatchSize();
         if (batchSize <= 0)
             throw new IllegalArgumentException("batchSize must be greater than zero.");
-
+        if (_logger.isLoggable(Level.FINE))
+            _logger.log(Level.FINE, "SpaceIterator initialized with batchSize=" + batchSize);
+        Duration maxInactiveDuration = spaceIteratorConfiguration.getMaxInactiveDuration() == null ? SpaceIteratorConfiguration.getDefaultMaxInactiveDuration() : spaceIteratorConfiguration.getMaxInactiveDuration();
         if (_logger.isLoggable(Level.FINE))
             _logger.log(Level.FINE, "SpaceIterator initialized with batchSize=" + batchSize);
         this._spaceProxy = spaceProxy;
         this._serverLookupTimeout = _spaceProxy.getDirectProxy().getProxyRouter().getConfig().getActiveServerLookupTimeout();
         this._queryPacket = toTemplatePacket(query);
         this._buffer = new LinkedList<>();
-        this._spaceIteratorBatchResultsManager = new SpaceIteratorBatchResultsManager(_spaceProxy, batchSize, spaceIteratorConfiguration.getReadModifiers().getCode(), _queryPacket, spaceIteratorConfiguration.getMaxInactiveDuration().toMillis());
+        this._spaceIteratorBatchResultsManager = new SpaceIteratorBatchResultsManager(_spaceProxy, batchSize, spaceIteratorConfiguration.getReadModifiers().getCode(), _queryPacket, maxInactiveDuration.toMillis());
         this._bufferIterator = getNextBatch();
     }
 
