@@ -1184,6 +1184,11 @@ public class TypeDataIndex<K> {
                     continue;
 
                 String indexName = customIndexScanner.getIndexName();
+
+                if(indexName == null){
+                    continue;
+                }
+
                 TypeDataIndex<?> index = typeData.getIndex(indexName);
                 if (index.isCompound())
                     continue;
