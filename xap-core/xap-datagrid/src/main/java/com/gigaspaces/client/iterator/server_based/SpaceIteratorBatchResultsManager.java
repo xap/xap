@@ -43,7 +43,7 @@ public class SpaceIteratorBatchResultsManager {
                 return;
             }
             _spaceIteratorBatchResultProvider.renewIteratorLease();
-        }, 0, delay, TimeUnit.MILLISECONDS);
+        }, delay, delay, TimeUnit.MILLISECONDS);
     }
 
     public Object[] getNextBatch(long timeout) throws InterruptedException, SpaceIteratorException {
