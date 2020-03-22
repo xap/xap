@@ -12,11 +12,11 @@ public class ServerIteratorInfo {
     final private UUID uuid;
     final private int batchSize;
     final private long maxInactiveDuration;
-    private volatile boolean active;
     private volatile IScanListIterator<IEntryCacheInfo> scanListIterator;
     private volatile IEntryPacket[] storedEntryPacketsBatch;
     private volatile int storedBatchNumber;
     private volatile long expirationTime;
+    private volatile boolean active;
 
     public ServerIteratorInfo(UUID uuid, int batchSize, long maxInactiveDuration) {
         this.uuid = uuid;
@@ -43,10 +43,6 @@ public class ServerIteratorInfo {
         return batchSize;
     }
 
-    public void renewLease(){
-        setExpirationTime(System.currentTimeMillis() + maxInactiveDuration);
-    }
-
     public IEntryPacket[] getStoredEntryPacketsBatch() {
         return storedEntryPacketsBatch;
     }
@@ -65,6 +61,15 @@ public class ServerIteratorInfo {
         return this;
     }
 
+    public long getExpirationTime() {
+        return expirationTime;
+    }
+
+    public ServerIteratorInfo setExpirationTime(long expirationTime) {
+        this.expirationTime = expirationTime;
+        return this;
+    }
+
     public boolean isActive() {
         return active;
     }
@@ -72,6 +77,10 @@ public class ServerIteratorInfo {
     public ServerIteratorInfo setActive(boolean active) {
         this.active = active;
         return this;
+    }
+
+    public long getMaxInactiveDuration() {
+        return maxInactiveDuration;
     }
 
     private boolean isFirstTime(){
@@ -93,17 +102,37 @@ public class ServerIteratorInfo {
         return expirationTime < System.currentTimeMillis();
     }
 
-    public long getExpirationTime() {
-        return expirationTime;
+    public boolean tryDeactivateIterator(){
+        if(!isActive())
+            return false;
+        synchronized (lock){
+            if(!isActive())
+                return false;
+            setActive(false);
+            return true;
+        }
     }
 
-    public ServerIteratorInfo setExpirationTime(long expirationTime) {
-        this.expirationTime = expirationTime;
-        return this;
+    public boolean tryRenewLease(){
+        synchronized (lock){
+            if(!isActive())
+                return false;
+            setExpirationTime(System.currentTimeMillis() + maxInactiveDuration);
+            return true;
+        }
     }
 
-    public Object getLock(){
-        return lock;
+    public boolean tryExpireIterator(){
+        if(isCandidateForExpiration()) {
+            synchronized(lock){
+                if(isCandidateForExpiration()){
+                    setActive(false);
+                    return true;
+                }
+                return false;
+            }
+        }
+        return false;
     }
 
     @Override
