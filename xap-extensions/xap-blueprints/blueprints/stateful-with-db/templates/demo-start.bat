@@ -18,4 +18,6 @@ echo Deploying services (processing units)...
 call deploy.bat
 
 echo Demo start completed
+{{#db.demo.enabled}}
 pause
+{{/db.demo.enabled}}
