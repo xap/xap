@@ -20,6 +20,7 @@ package org.openspaces.persistency.hibernate.iterator;
 import com.gigaspaces.datasource.DataSourceSQLQuery;
 import com.j_spaces.core.client.SQLQuery;
 
+import com.j_spaces.sadapter.datasource.DefaultSQLQueryBuilder;
 import org.hibernate.CacheMode;
 import org.hibernate.query.Query;
 import org.hibernate.Session;
@@ -39,7 +40,7 @@ public class HibernateIteratorUtils {
     }
 
     public static Query createQueryFromSQLQuery(SQLQuery<?> sqlQuery, Session session) {
-        String select = sqlQuery.getFromQuery();
+        String select = toString(sqlQuery);
         Query query = session.createQuery(select);
         Object[] preparedValues = sqlQuery.getParameters();
         if (preparedValues != null) {
@@ -54,7 +55,7 @@ public class HibernateIteratorUtils {
     }
 
     public static Query createQueryFromSQLQuery(SQLQuery<?> sqlQuery, StatelessSession session) {
-        String select = sqlQuery.getFromQuery();
+        String select = toString(sqlQuery);
         Query query = session.createQuery(select);
         Object[] preparedValues = sqlQuery.getParameters();
         if (preparedValues != null) {
@@ -67,7 +68,7 @@ public class HibernateIteratorUtils {
     }
 
     public static Query createQueryFromDataSourceSQLQuery(DataSourceSQLQuery dataSourceSQLQuery, Session session) {
-        String select = dataSourceSQLQuery.getFromQuery();
+        String select = toString(dataSourceSQLQuery);
         Query query = session.createQuery(select);
         Object[] preparedValues = dataSourceSQLQuery.getQueryParameters();
         if (preparedValues != null) {
@@ -80,7 +81,7 @@ public class HibernateIteratorUtils {
     }
 
     public static Query createQueryFromDataSourceSQLQuery(DataSourceSQLQuery dataSourceSQLQuery, StatelessSession session) {
-        String select = dataSourceSQLQuery.getFromQuery();
+        String select = toString(dataSourceSQLQuery);
         Query query = session.createQuery(select);
         Object[] preparedValues = dataSourceSQLQuery.getQueryParameters();
         if (preparedValues != null) {
@@ -90,5 +91,36 @@ public class HibernateIteratorUtils {
         }
         query.setReadOnly(true);
         return query;
+    }
+
+    private static String toString(SQLQuery sqlQuery) {
+        String query = sqlQuery.getFromQuery();
+        if (DefaultSQLQueryBuilder.ADAPT_POSITIONAL_PARAMETERS) {
+            query = adaptPositionalParameters(query, sqlQuery.getParameters());
+        }
+        return query;
+    }
+
+    private static String toString(DataSourceSQLQuery dataSourceSQLQuery) {
+        String query = dataSourceSQLQuery.getFromQuery();
+        if (DefaultSQLQueryBuilder.ADAPT_POSITIONAL_PARAMETERS) {
+            query = adaptPositionalParameters(query, dataSourceSQLQuery.getQueryParameters());
+        }
+        return query;
+    }
+
+    private static String adaptPositionalParameters(String query, Object[] parameters) {
+        int numOfParameters = parameters == null ? 0 : parameters.length;
+        if (numOfParameters == 0)
+            return query;
+        String[] tokens = query.split("\\?", -1);
+        if (tokens.length != numOfParameters + 1)
+            throw new IllegalArgumentException("Cannot convert query positional parameters to jpa format: [" + query + "] - params=" + numOfParameters + ", tokens=" + tokens.length);
+        StringBuilder sb = new StringBuilder();
+        for (int i=0 ; i < numOfParameters ; i++) {
+            sb.append(tokens[i]).append(DefaultSQLQueryBuilder.BIND_PARAMETER).append(i);
+        }
+        sb.append(tokens[tokens.length-1]);
+        return sb.toString();
     }
 }
