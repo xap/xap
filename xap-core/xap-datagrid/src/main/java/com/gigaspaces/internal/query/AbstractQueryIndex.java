@@ -161,10 +161,4 @@ public abstract class AbstractQueryIndex implements IQueryIndexScanner {
     @Override
     public boolean  isUidsScanner() {return false;}
 
-    @Override
-    public boolean isActualIndex() {
-        return true;
-    }
-
-
 }

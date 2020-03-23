@@ -4417,7 +4417,7 @@ public class CacheManager extends AbstractCacheManager
                     indexUsed = true;
                 }
 
-                if (_logger.isLoggable(Level.FINEST) && index.isActualIndex()) {
+                if (_logger.isLoggable(Level.FINEST)) {
                     final TypeDataIndex idx = entryType.getIndex(index.getIndexName());
                     if (idx != null && idx.isCompound()) {
                         compound_selection = result;

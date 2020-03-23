@@ -1180,7 +1180,7 @@ public class TypeDataIndex<K> {
 
         if (customIndexes != null) {
             for (IQueryIndexScanner customIndexScanner : customIndexes) {
-                if (!customIndexScanner.supportsTemplateIndex() || !customIndexScanner.isActualIndex())
+                if (!customIndexScanner.supportsTemplateIndex())
                     continue;
 
                 String indexName = customIndexScanner.getIndexName();
