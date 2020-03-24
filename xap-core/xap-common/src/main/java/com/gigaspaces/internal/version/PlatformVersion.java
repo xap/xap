@@ -35,7 +35,6 @@ public class PlatformVersion {
     private final byte spVersion;
     private final String tag;
     private final Properties shas;
-    private final Properties shasTimestamps;
     private final String revision;
     private final String productHelpUrl;
     private final ProductType productType;
@@ -49,7 +48,6 @@ public class PlatformVersion {
         this.officialVersion = "GigaSpaces " + productType + " " + id;
         this.tag = properties.getProperty("gs.git-tag");
         this.shas = extractPropertiesByPrefix(properties, "gs.git-sha.");
-        this.shasTimestamps = extractPropertiesByPrefix(properties, "gs.git-ts.");
         this.revision = initRevision(tag, shas);
 
         String[] patchTokens = extractPatchTokens(this.id, this.version);
@@ -179,13 +177,5 @@ public class PlatformVersion {
 
     public static String getProductHelpUrl() {
         return instance.productHelpUrl;
-    }
-
-    public static Properties getShas() {
-        return instance.shas;
-    }
-
-    public static Properties getShasTimestamps() {
-        return instance.shasTimestamps;
     }
 }
