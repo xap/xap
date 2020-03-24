@@ -1527,7 +1527,7 @@ public class LeaseManager {
                             + " - Reaped expired iterators. [Reaped: "
                             + reapCount
                             + ", Alive: "
-                            + _engine.getIteratorsManager().getServerIteratorInfoMap().size() + "]");
+                            + _engine.getIteratorsManager().getNumberOfActiveIterators() + "]");
                 }
         }
 

@@ -114,6 +114,8 @@ public class ServerIteratorInfo {
     }
 
     public boolean tryRenewLease(){
+        if(!isActive())
+            return false;
         synchronized (lock){
             if(!isActive())
                 return false;
@@ -123,16 +125,15 @@ public class ServerIteratorInfo {
     }
 
     public boolean tryExpireIterator(){
-        if(isCandidateForExpiration()) {
-            synchronized(lock){
-                if(isCandidateForExpiration()){
-                    setActive(false);
-                    return true;
-                }
-                return false;
+        if(!isCandidateForExpiration())
+            return false;
+        synchronized(lock){
+            if(isCandidateForExpiration()){
+                setActive(false);
+                return true;
             }
+            return false;
         }
-        return false;
     }
 
     @Override

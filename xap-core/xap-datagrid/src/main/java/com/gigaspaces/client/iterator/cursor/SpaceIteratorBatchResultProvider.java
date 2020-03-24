@@ -1,4 +1,4 @@
-package com.gigaspaces.client.iterator.server_based;
+package com.gigaspaces.client.iterator.cursor;
 
 import com.gigaspaces.SpaceRuntimeException;
 import com.gigaspaces.async.AsyncResult;

@@ -1,6 +1,6 @@
 package com.gigaspaces.internal.client.spaceproxy.executors;
 
-import com.gigaspaces.client.iterator.server_based.SpaceIteratorBatchResultProvider;
+import com.gigaspaces.client.iterator.cursor.SpaceIteratorBatchResultProvider;
 import com.gigaspaces.internal.client.SpaceIteratorBatchResult;
 import com.gigaspaces.internal.space.requests.GetBatchForIteratorSpaceRequestInfo;
 import com.gigaspaces.internal.space.requests.SpaceRequestInfo;

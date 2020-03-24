@@ -17,13 +17,13 @@
 
 package com.gigaspaces.client.iterator;
 
-import com.gigaspaces.client.iterator.server_based.SpaceIteratorBatchResultsManager;
+import com.gigaspaces.client.iterator.cursor.SpaceIteratorBatchResultsManager;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ObjectType;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.logger.Constants;
-import com.gigaspaces.client.iterator.server_based.SpaceIteratorException;
+import com.gigaspaces.client.iterator.cursor.SpaceIteratorException;
 import com.j_spaces.jdbc.builder.SQLQueryTemplatePacket;
 
 import java.time.Duration;

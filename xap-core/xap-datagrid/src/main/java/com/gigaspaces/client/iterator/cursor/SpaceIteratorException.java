@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.gigaspaces.client.iterator.server_based;
+package com.gigaspaces.client.iterator.cursor;
 
 import java.util.HashMap;
 import java.util.Map;

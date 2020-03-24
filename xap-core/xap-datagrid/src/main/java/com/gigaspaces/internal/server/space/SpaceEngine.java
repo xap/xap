@@ -201,7 +201,7 @@ public class SpaceEngine implements ISpaceModeListener {
     private final FifoGroupsHandler _fifoGroupsHandler;
     private LeaseManager _leaseManager;
     private MemoryManager _memoryManager;
-    private ServerIteratorsManager _serverIteratorsManager = new ServerIteratorsManager();
+    private ServerIteratorsManager _serverIteratorsManager;
 
     /*--------- Working Groups ---------*/
     private final WorkingGroup<BusPacket<Processor>> _processorWG;
@@ -364,7 +364,7 @@ public class SpaceEngine implements ISpaceModeListener {
         _resultsSizeLimitMemoryCheckBatchSize = _configReader.getIntSpaceProperty(ENGINE_QUERY_RESULT_SIZE_LIMIT_MEMORY_CHECK_BATCH_SIZE, ENGINE_QUERY_RESULT_SIZE_LIMIT_MEMORY_CHECK_BATCH_SIZE_DEFAULT);
         if (!_isLocalCache)
             registerSpaceMetrics(_metricRegistrator);
-
+        _serverIteratorsManager = new ServerIteratorsManager(_spaceImpl.getPartitionId());
     }
 
     private void blobStoreOverrideConfig(SpaceImpl spaceImpl) {
