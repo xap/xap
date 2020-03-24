@@ -176,6 +176,10 @@ public class SystemLocations {
         return sparkHome;
     }
 
+    public boolean isXapNet() {
+        return xapNetHome != null;
+    }
+
     public Path xapNetHome() {
         return xapNetHome;
     }
