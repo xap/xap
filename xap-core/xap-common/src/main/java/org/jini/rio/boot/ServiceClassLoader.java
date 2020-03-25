@@ -28,7 +28,6 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * The ServiceClassLoader overrides getURLs(), ensuring all classes that need to be annotated with
@@ -36,12 +35,7 @@ import java.util.stream.Collectors;
  */
 @com.gigaspaces.api.InternalApi
 public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnnotation {
-    private static final Logger logger = Logger.getLogger("com.gigaspaces.lrmi.classloading");
-    private static final String DEFAULT_SYSTEM_EXCLUDES = "org.slf4j.," + // SLF4J
-            "org.apache.commons.logging.," + // JCL
-            "ch.qos.logback..," +            // Logback
-            "org.apache.log4j.," +           // Log4j
-            "org.apache.logging.log4j,";     // Log4j2
+    private static final Logger logger = Logger.getLogger("com.gigaspaces.service.classloading");
     /**
      * URLs that this class loader will to search for and load classes
      */
@@ -54,10 +48,19 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
     private final ClassAnnotator annotator;
 
     private boolean parentFirst = Boolean.parseBoolean(System.getProperty("com.gs.pu.classloader.parentFirst", "false"));
+    private boolean autoDetectSlf4JBinding = Boolean.parseBoolean(System.getProperty("com.gs.pu.classloader.auto-detect-slf4j", "true"));
 
     private CodeChangeClassLoadersManager codeChangeClassLoadersManager;
-    private final Collection<String> systemClassExcludes = Arrays.asList(
-            GsEnv.property("com.gs.pu.classloader.system-classes.exclude").get(DEFAULT_SYSTEM_EXCLUDES).split(","));
+    private final Set<String> systemClassExcludes = initSystemClassExcludes();
+
+    private static Set<String> initSystemClassExcludes() {
+        Set<String> result = new LinkedHashSet<>();
+        String s = GsEnv.property("com.gs.pu.classloader.system-classes.exclude").get();
+        if (s != null) {
+            Collections.addAll(result, s.split(","));
+        }
+        return result;
+    }
 
     /**
      * Constructs a new ServiceClassLoader for the specified URLs having the given parent. The
@@ -275,10 +278,31 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
         throw new ClassNotFoundException(name);
     }
 
-    protected boolean isSystemClass(String name) {
+
+    /**
+     * NOTE: this method is not thread-safe, should only be called from a synchronized context
+     */
+    private boolean isSystemClass(String name) {
         // Special case to ensure GigaSpaces-custom-jul-slf4j bridge is preferred.
         if (name.equals("org.slf4j.bridge.SLF4JBridgeHandler")) {
             return true;
+        }
+        if (autoDetectSlf4JBinding && name.startsWith("org.slf4j.")) {
+            // This approach is derived from SLF4J's LoggerFactory.bind().
+            // Note: this is valid for slf4j 1.7 and lower, but not for later versions: http://www.slf4j.org/faq.html#changesInVersion18
+            boolean hasSlf4jStaticLoggerBinder = this.findResource("org/slf4j/impl/StaticLoggerBinder.class") != null;
+            if (logger.isLoggable(Level.FINE))
+                logger.fine("autoDetectSlf4JBinding enabled: hasSlf4jStaticLoggerBinder = " + hasSlf4jStaticLoggerBinder + " (while loading class " + name +")");
+            if (hasSlf4jStaticLoggerBinder) {
+                systemClassExcludes.addAll(Arrays.asList(
+                        "org.slf4j.",                   // SLF4J
+                        "org.apache.commons.logging.",  // JCL
+                        "ch.qos.logback.",              // Logback
+                        "org.apache.log4j.",            // Log4j
+                        "org.apache.logging.log4j."     // Log4j2
+                ));
+            }
+            autoDetectSlf4JBinding = false;
         }
         return !matches(name, systemClassExcludes);
     }
