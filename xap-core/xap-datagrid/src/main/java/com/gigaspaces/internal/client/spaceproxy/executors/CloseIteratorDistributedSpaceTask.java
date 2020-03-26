@@ -17,6 +17,8 @@ import java.util.UUID;
  */
 @com.gigaspaces.api.InternalApi
 public class CloseIteratorDistributedSpaceTask extends SystemDistributedTask<CloseIteratorSpaceResponseInfo> {
+    private static final long serialVersionUID = 1L;
+
     private CloseIteratorSpaceRequestInfo _closeIteratorSpaceRequestInfo;
 
     public CloseIteratorDistributedSpaceTask() {

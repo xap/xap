@@ -19,6 +19,7 @@ import java.util.List;
  */
 @com.gigaspaces.api.InternalApi
 public class GetBatchForIteratorDistributedSpaceTask extends SystemDistributedTask<SpaceIteratorBatchResult> implements AsyncResultFilter<SpaceIteratorBatchResult> {
+    private static final long serialVersionUID = 1L;
     private transient SpaceIteratorBatchResultProvider _spaceIteratorBatchResultProvider;
     private GetBatchForIteratorSpaceRequestInfo _getBatchForIteratorSpaceRequestInfo;
 

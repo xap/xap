@@ -1,9 +1,9 @@
 package com.gigaspaces.internal.server.space.executors;
 
 import com.gigaspaces.internal.client.SpaceIteratorBatchResult;
-import com.gigaspaces.internal.space.requests.GetBatchForIteratorSpaceRequestInfo;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.space.iterator.ServerIteratorRequestInfo;
+import com.gigaspaces.internal.space.requests.GetBatchForIteratorSpaceRequestInfo;
 import com.gigaspaces.internal.space.requests.SpaceRequestInfo;
 import com.gigaspaces.internal.space.responses.SpaceResponseInfo;
 import com.gigaspaces.security.authorities.SpaceAuthority;

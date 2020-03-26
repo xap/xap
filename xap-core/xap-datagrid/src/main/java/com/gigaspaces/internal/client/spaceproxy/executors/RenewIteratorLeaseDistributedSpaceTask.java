@@ -17,6 +17,8 @@ import java.util.UUID;
  */
 @com.gigaspaces.api.InternalApi
 public class RenewIteratorLeaseDistributedSpaceTask extends SystemDistributedTask<RenewIteratorLeaseSpaceResponseInfo> {
+    private static final long serialVersionUID = 1L;
+
     private RenewIteratorLeaseSpaceRequestInfo _renewIteratorLeaseSpaceRequestInfo;
 
     public RenewIteratorLeaseDistributedSpaceTask() {

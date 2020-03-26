@@ -30,6 +30,8 @@ import java.util.UUID;
  */
 @com.gigaspaces.api.InternalApi
 public class SpaceIteratorBatchResult extends AbstractSpaceResponseInfo {
+    private static final long serialVersionUID = 1L;
+
     public static final int NO_BATCH_NUMBER = -1;
     private static final short FLAG_ENTRY_PACKETS = 1 << 0;
     private static final short FLAG_EXCEPTION = 1 << 1;

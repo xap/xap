@@ -28,7 +28,7 @@ import java.io.ObjectOutput;
  */
 @com.gigaspaces.api.InternalApi
 public class CloseIteratorSpaceResponseInfo extends AbstractSpaceResponseInfo {
-
+    private static final long serialVersionUID = 1L;
     public CloseIteratorSpaceResponseInfo() {
     }
 

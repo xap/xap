@@ -26,6 +26,8 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class SpaceIteratorBatchResultProvider implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private static final Logger _logger = Logger.getLogger(Constants.LOGGER_GSITERATOR);
     private final BlockingQueue<SpaceIteratorBatchResult> _queue;
     private transient final ISpaceProxy _spaceProxy;
