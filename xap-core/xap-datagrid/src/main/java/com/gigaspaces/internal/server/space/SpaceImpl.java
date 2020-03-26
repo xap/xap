@@ -2253,6 +2253,11 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     private void updateObjectTypeReadCounts(AnswerHolder answerHolder, ITemplatePacket template) {
 
+        if( answerHolder == null ){
+            //answerHolder is null when read returns empty result
+            return;
+        }
+
         String typeName = template.getTypeName();
         if( typeName != null ){
             LongAdder currentReadCount = objectTypeReadCounts.get( typeName );
