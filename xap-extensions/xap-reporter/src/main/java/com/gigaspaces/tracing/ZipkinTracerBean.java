@@ -33,7 +33,7 @@ public class ZipkinTracerBean {
 
     private ZipkinTracerBean() {
         if (GlobalTracer.isRegistered()) throw new IllegalArgumentException("GlobalTracer already exists");
-        useConsul = SystemInfo.singleton().getManagerClusterInfo().getManagerClusterType() == ManagerClusterType.NOMAD;
+        useConsul = SystemInfo.singleton().getManagerClusterInfo().getManagerClusterType() == ManagerClusterType.ELASTIC_GRID;
     }
 
     public ZipkinTracerBean(String serviceName) {
