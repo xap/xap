@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.gigaspaces</groupId>
 		<artifactId>xap</artifactId>
-		<version>15.2.0</version>
+		<version>15.2.0-patch-powerbi-sun-10</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
