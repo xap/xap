@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 . ./{{project.artifactId}}-env.sh
 
 echo "Building services (processing units)..."
