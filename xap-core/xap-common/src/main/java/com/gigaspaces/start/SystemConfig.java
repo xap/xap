@@ -27,17 +27,21 @@ import com.gigaspaces.internal.services.ZooKeeperServiceFactory;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.start.manager.XapManagerConfig;
 import com.sun.jini.start.ServiceDescriptor;
-
 import net.jini.config.Configuration;
 import net.jini.config.ConfigurationException;
 import net.jini.config.ConfigurationProvider;
-
 import org.jini.rio.boot.BootUtil;
 import org.jini.rio.boot.CommonClassLoader;
 import org.jini.rio.boot.RioServiceDescriptor;
 import org.jini.rio.jmx.MBeanServerFactory;
 import org.jini.rio.tools.webster.Webster;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.management.MBeanServer;
+import javax.management.remote.JMXConnectorServer;
+import javax.management.remote.JMXConnectorServerFactory;
+import javax.management.remote.JMXServiceURL;
 import java.io.Closeable;
 import java.io.File;
 import java.net.BindException;
@@ -49,13 +53,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.*;
-
-import org.slf4j.*;
-
-import javax.management.MBeanServer;
-import javax.management.remote.JMXConnectorServer;
-import javax.management.remote.JMXConnectorServerFactory;
-import javax.management.remote.JMXServiceURL;
 
 /**
  * Provides system configuration support.
@@ -324,7 +321,7 @@ public class SystemConfig {
             classpathBuilder.appendPlatformJars("javax");
         }
         //GS-13825 added hsql jar
-        classpathBuilder.appendOptionalJars("jdbc");
+        classpathBuilder.appendOptionalJars("jdbc", FileUtils.Filters.nameStartsWith( "hsqldb" ) );
 
         // I don't expect anybody to use this feature, but its here just to be on the safe side
         boolean osInCommonClassLoader = Boolean.parseBoolean(System.getProperty("com.gs.pu.classloader.os-in-common-classloader", "false"));
