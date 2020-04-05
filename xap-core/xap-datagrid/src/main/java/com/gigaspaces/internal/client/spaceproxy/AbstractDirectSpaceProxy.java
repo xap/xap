@@ -41,7 +41,7 @@ public abstract class AbstractDirectSpaceProxy extends AbstractSpaceProxy implem
     private static final long serialVersionUID = 1L;
     private static final int SERIAL_VERSION = 1;
 
-    protected final ProxySettings _proxySettings;
+    protected ProxySettings _proxySettings;
 
     public AbstractDirectSpaceProxy(ProxySettings proxySettings) {
         this._proxySettings = proxySettings;

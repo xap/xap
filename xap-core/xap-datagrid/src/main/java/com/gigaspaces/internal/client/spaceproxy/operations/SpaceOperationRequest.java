@@ -20,6 +20,8 @@ import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.utils.Textualizable;
 import com.gigaspaces.internal.utils.Textualizer;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.j_spaces.core.SpaceContext;
 
 import net.jini.core.transaction.Transaction;
@@ -99,6 +101,7 @@ public abstract class SpaceOperationRequest<TResult extends SpaceOperationResult
         _spaceContext = spaceContext;
     }
 
+    @Override
     public SpaceContext getSpaceContext() {
         return _spaceContext;
     }

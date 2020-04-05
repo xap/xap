@@ -65,4 +65,8 @@ public class SpaceClusterRemoteOperationRouter extends ClusterRemoteOperationRou
         RemoteOperationsExecutorProxy activeMember = getAnyActiveMember();
         return activeMember != null ? activeMember.getName() : null;
     }
+
+    public SpaceProxyImpl getSpaceProxy(){
+        return _spaceProxy;
+    }
 }

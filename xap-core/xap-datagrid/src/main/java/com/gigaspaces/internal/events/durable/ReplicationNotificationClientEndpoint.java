@@ -23,7 +23,6 @@ import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.executors.RegisterReplicationNotificationTask;
 import com.gigaspaces.internal.client.spaceproxy.executors.UnregisterReplicationNotificationTask;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ObjectType;
-import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.cluster.node.handlers.IReplicationInBatchConsumptionHandler;
 import com.gigaspaces.internal.cluster.node.impl.ReplicationNode;
 import com.gigaspaces.internal.cluster.node.impl.ReplicationNodeBuilder;
@@ -64,7 +63,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Dan Kilman
@@ -83,7 +81,6 @@ public class ReplicationNotificationClientEndpoint {
     private final Object _template;
     private final ITemplatePacket _templatePacket;
     private final int _partitionId;
-    private final int _numOfPartitions;
     private final NotifyInfo _notifyInfo;
     private final long _eventID;
     private final Uuid _spaceUID;
@@ -109,8 +106,6 @@ public class ReplicationNotificationClientEndpoint {
         _notifyInfo.getOrInitTemplateUID();
 
         //((SpaceProxyImpl)_remoteSpace).checkProxyInit();
-        SpaceClusterInfo clusterInfo = _remoteSpace.getSpaceClusterInfo();
-        _numOfPartitions = clusterInfo.isPartitioned() ? clusterInfo.getNumberOfPartitions() : 1;
         _templatePacket = prepareTemplatePacket();
         _partitionId = getPartitionId();
 
@@ -124,7 +119,7 @@ public class ReplicationNotificationClientEndpoint {
         _stateListener = new DurableNotificationReplicationNodeStateListener(sessionConfig,
                 _lease,
                 _asyncProvider,
-                _numOfPartitions,
+                _remoteSpace.getSpaceClusterInfo(),
                 _partitionId);
         _notificationReplicationNode = createReplicationNode();
         _spaceUID = registerNotificationReplicationNode();
@@ -188,8 +183,7 @@ public class ReplicationNotificationClientEndpoint {
     }
 
     private int getPartitionId() {
-        return PartitionedClusterUtils.getPartitionId((_templatePacket).getRoutingFieldValue(),
-                _numOfPartitions);
+        return PartitionedClusterUtils.getPartitionId((_templatePacket).getRoutingFieldValue(), _remoteSpace.getSpaceClusterInfo());
     }
 
     public void close() {
@@ -220,7 +214,7 @@ public class ReplicationNotificationClientEndpoint {
 
         ReplicationNodeBuilder replicationNodeBuilder = createReplicationNodeBuilder(uuid, lookupName);
         ReplicationNodeConfig replicationNodeConfig = ReplicationNodeConfigBuilder.getInstance().createNotificationConfig(
-                _remoteSpace.getName(), _remoteSpace.getSpaceClusterInfo(), replicationNodeBuilder, _partitionId, _numOfPartitions);
+                _remoteSpace.getName(), _remoteSpace.getSpaceClusterInfo(), replicationNodeBuilder, _partitionId, _remoteSpace.getSpaceClusterInfo().getNumberOfPartitions());
         ReplicationNode replicationNode = new ReplicationNode(replicationNodeConfig,
                 replicationNodeBuilder, lookupName, DummyMetricRegistrator.get());
 
@@ -293,7 +287,7 @@ public class ReplicationNotificationClientEndpoint {
             // Register replication node with template for each partition asynchronously:
 
             int startIndex = _partitionId == PartitionedClusterUtils.NO_PARTITION ? 0 : _partitionId;
-            int endIndex = _partitionId == PartitionedClusterUtils.NO_PARTITION ? (_numOfPartitions - 1) : _partitionId;
+            int endIndex = _partitionId == PartitionedClusterUtils.NO_PARTITION ? (_remoteSpace.getSpaceClusterInfo().getNumberOfPartitions() - 1) : _partitionId;
 
             for (int i = startIndex; i <= endIndex; i++) {
                 RegisterReplicationNotificationRequestInfo request = new RegisterReplicationNotificationRequestInfo();
@@ -350,7 +344,7 @@ public class ReplicationNotificationClientEndpoint {
         request.viewStubHolderName = getNotificationReplicationNode().getAdmin().getRouterAdmin().getMyRouterStubHolder().getMyEndpointDetails().getLookupName();
 
         int startIndex = _partitionId == PartitionedClusterUtils.NO_PARTITION ? 0 : _partitionId;
-        int endIndex = _partitionId == PartitionedClusterUtils.NO_PARTITION ? (_numOfPartitions - 1) : _partitionId;
+        int endIndex = _partitionId == PartitionedClusterUtils.NO_PARTITION ? (_remoteSpace.getSpaceClusterInfo().getNumberOfPartitions() - 1) : _partitionId;
 
         List<Future<SpaceResponseInfo>> futureList = new ArrayList<Future<SpaceResponseInfo>>();
         for (int i = startIndex; i <= endIndex; i++) {

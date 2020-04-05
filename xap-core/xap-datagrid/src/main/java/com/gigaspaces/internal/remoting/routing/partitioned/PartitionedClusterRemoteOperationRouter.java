@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.remoting.routing.partitioned;
 
 import com.gigaspaces.async.AsyncFutureListener;
+import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.quiesce.QuiesceTokenProviderImpl;
 import com.gigaspaces.internal.remoting.RemoteOperationFutureListener;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
@@ -27,12 +28,10 @@ import com.gigaspaces.internal.remoting.routing.RemoteOperationRouterException;
 import com.gigaspaces.internal.remoting.routing.clustered.RemoteOperationsExecutorProxy;
 import com.gigaspaces.internal.remoting.routing.clustered.RemoteOperationsExecutorsCluster;
 import com.gigaspaces.internal.utils.concurrent.CyclicAtomicInteger;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -47,6 +46,7 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
     private final RemoteOperationsExecutorsCluster _partitionedCluster;
     private final CyclicAtomicInteger[] _roundRobinPreciseIndexes;
     private final boolean _broadcastDisabled;
+    private SpaceClusterInfo _clusterInfo;
     private int _roundRobinApproxIndex = 0;
 
 
@@ -55,9 +55,10 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
                                                    CoordinatorFactory coordinatorFactory,
                                                    boolean broadcastDisabled,
                                                    int numberOfPerciseRoundRobingOperations,
-                                                   RemoteOperationsExecutorsCluster partitionedCluster) {
+                                                   RemoteOperationsExecutorsCluster partitionedCluster, SpaceClusterInfo clusterInfo) {
         super(name);
         this._partitions = partitions;
+        this._clusterInfo = clusterInfo;
         this._listenerFactory = coordinatorFactory;
         this._broadcastDisabled = broadcastDisabled;
         this._partitionedCluster = partitionedCluster;
@@ -71,6 +72,18 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
 
     public int getNumOfPartitions() {
         return _partitions.length;
+    }
+
+    public RemoteOperationRouter[] getPartitions() {
+        return _partitions;
+    }
+
+    public SpaceClusterInfo getClusterInfo() {
+        return _clusterInfo;
+    }
+
+    public void setClusterInfo(SpaceClusterInfo clusterInfo){
+        this._clusterInfo = clusterInfo;
     }
 
     public RemoteOperationRouter getPartitionRouter(int partitionId) {
@@ -196,7 +209,7 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
     private <T extends RemoteOperationResult> void executeSingle(RemoteOperationRequest<T> request, boolean oneway)
             throws InterruptedException {
         Object routingValue = request.getPartitionedClusterRoutingValue(this);
-        int partitionId = PartitionedClusterUtils.getPartitionId(routingValue, _partitions.length);
+        int partitionId = PartitionedClusterUtils.getPartitionId(routingValue, _clusterInfo);
         if (partitionId == PartitionedClusterUtils.NO_PARTITION) {
             request.setRemoteOperationExecutionError(new RemoteOperationRouterException("Cannot execute operation on partitioned cluster without routing value"));
             return;
@@ -209,7 +222,7 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
 
     private <T extends RemoteOperationResult> void executeSingleAsync(RemoteOperationRequest<T> request, RemoteOperationFutureListener<T> listener) {
         Object routingValue = request.getPartitionedClusterRoutingValue(this);
-        int partitionId = PartitionedClusterUtils.getPartitionId(routingValue, _partitions.length);
+        int partitionId = PartitionedClusterUtils.getPartitionId(routingValue, _clusterInfo);
         if (partitionId == PartitionedClusterUtils.NO_PARTITION) {
             request.setRemoteOperationExecutionError(new RemoteOperationRouterException("Cannot execute operation on partitioned cluster without routing value"));
             if (listener != null)

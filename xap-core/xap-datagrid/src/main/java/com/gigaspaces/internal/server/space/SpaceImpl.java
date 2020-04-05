@@ -22,6 +22,7 @@ import com.gigaspaces.admin.quiesce.QuiesceException;
 import com.gigaspaces.admin.quiesce.QuiesceState;
 import com.gigaspaces.admin.quiesce.QuiesceStateChangedEvent;
 import com.gigaspaces.annotation.SupportCodeChange;
+import com.gigaspaces.attribute_store.AttributeStore;
 import com.gigaspaces.client.ReadTakeByIdResult;
 import com.gigaspaces.client.ReadTakeByIdsException;
 import com.gigaspaces.client.WriteMultipleException;
@@ -53,6 +54,8 @@ import com.gigaspaces.internal.cluster.node.replica.ISpaceSynchronizeReplicaStat
 import com.gigaspaces.internal.cluster.node.replica.ISpaceSynchronizeResult;
 import com.gigaspaces.internal.document.DocumentObjectConverterInternal;
 import com.gigaspaces.internal.exceptions.BatchQueryException;
+import com.gigaspaces.internal.exceptions.ChunksMapGenerationException;
+import com.gigaspaces.internal.exceptions.ChunksMapMissingException;
 import com.gigaspaces.internal.exceptions.WriteResultImpl;
 import com.gigaspaces.internal.extension.XapExtensions;
 import com.gigaspaces.internal.jvm.JVMDetails;
@@ -76,6 +79,7 @@ import com.gigaspaces.internal.server.space.operations.WriteEntriesResult;
 import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.server.space.quiesce.QuiesceHandler;
 import com.gigaspaces.internal.server.space.recovery.RecoveryManager;
+import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryException;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryHelper;
 import com.gigaspaces.internal.server.space.recovery.strategy.SpaceRecoverStrategy;
 import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
@@ -87,6 +91,7 @@ import com.gigaspaces.internal.transport.AbstractProjectionTemplate;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.transport.ITransportPacket;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.internal.utils.ReplaceInFileUtils;
 import com.gigaspaces.internal.utils.concurrent.GSThreadFactory;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
@@ -175,6 +180,7 @@ import org.w3c.dom.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
+import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
@@ -183,9 +189,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 
-
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_BLOB_STORE;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_PROP;
+import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ATTRIBUET_STORE_HANDLER_CLASS_NAME;
 import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER_CLASS_NAME;
 import static com.j_spaces.core.Constants.LeaseManager.*;
 
@@ -254,7 +260,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     //direct-persistency recovery
     private volatile DirectPersistencyRecoveryHelper _directPersistencyRecoveryHelper;
 
+    private final AttributeStore attributeStore;
     private final ZookeeperLastPrimaryHandler zookeeperLastPrimaryHandler;
+    private ZookeeperChunksMapHandler zookeeperChunksMapHandler;
 
     private final Map<Class<? extends SystemTask>, SpaceActionExecutor> executorMap = XapExtensions.getInstance().getActionExecutors();
 
@@ -273,16 +281,17 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         this._customProperties = new Properties();
         this._customProperties.putAll(customProperties);
         this._clusterPolicy = _jspaceAttr.getClusterPolicy();
-        this._clusterInfo = new SpaceClusterInfo(_jspaceAttr, _spaceMemberName);
+        this._instanceId = extractInstanceIdFromContainerName(containerName);
+        this._nodeName = _instanceId.equals("0") ? spaceName : spaceName + "." + _instanceId;
+        this._logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE + "." + _nodeName);
+        this._operationLogger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE_OPERATIONS + "." + _nodeName);
+        this.attributeStore = useZooKeeper() ? createZooKeeperAttributeStore() : null;
+        this._clusterInfo = createClusterInfo();
         this._secondary = isSecondary;
 
         this._deployPath = _customProperties.getProperty("deployPath");
         this._configReader = new SpaceConfigReader(_spaceMemberName);
 
-        this._instanceId = extractInstanceIdFromContainerName(containerName);
-        this._nodeName = _instanceId == "0" ? spaceName : spaceName + "." + _instanceId;
-        this._logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE + "." + _nodeName);
-        this._operationLogger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE_OPERATIONS + "." + _nodeName);
         this._isLusRegEnabled = Boolean.valueOf(JProperties.getContainerProperty(
                 containerName, Constants.LookupManager.LOOKUP_ENABLED_PROP,
                 Constants.LookupManager.LOOKUP_ENABLED_DEFAULT)).booleanValue();
@@ -307,9 +316,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
         boolean useZooKeeper = useZooKeeper();
         if(useZooKeeper){
-            zookeeperLastPrimaryHandler = new ZookeeperLastPrimaryHandler(this, _logger);
-        }
-        else {
+            zookeeperLastPrimaryHandler = new ZookeeperLastPrimaryHandler(this, attributeStore, _logger);
+        } else {
             zookeeperLastPrimaryHandler = null;
         }
         startInternal();
@@ -317,6 +325,35 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         // TODO RMI connections are not blocked
         if (_clusterPolicy != null && _clusterPolicy.isPersistentStartupEnabled())
             initSpaceStartupStateManager();
+    }
+
+    private AttributeStore createZooKeeperAttributeStore() {
+        try {
+            //noinspection unchecked
+            Constructor constructor = ClassLoaderHelper.loadLocalClass(ATTRIBUET_STORE_HANDLER_CLASS_NAME)
+                    .getConstructor(String.class);
+            return (AttributeStore) constructor.newInstance("");
+
+        } catch (Exception e) {
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to create attribute store ");
+            throw new DirectPersistencyRecoveryException("Failed to start [" + _spaceName
+                    + "] Failed to create attribute store.");
+        }
+    }
+
+    private SpaceClusterInfo createClusterInfo() {
+        SpaceClusterInfo clusterInfo = new SpaceClusterInfo(_jspaceAttr, _spaceMemberName);
+        if (useZooKeeper() && GsEnv.propertyBoolean(SystemProperties.CHUNKS_SPACE_ROUTING).get(true)) {
+            zookeeperChunksMapHandler = new ZookeeperChunksMapHandler(_spaceName, attributeStore);
+            try {
+                clusterInfo.setChunksMap(zookeeperChunksMapHandler.initChunksMap(clusterInfo.getNumberOfPartitions()));
+                return clusterInfo;
+            }catch (ChunksMapMissingException e){
+                _logger.warn("Failed to find chunks map in zk - disabling chunks space routing",e);
+            }
+        }
+        return clusterInfo;
     }
 
     private HttpServer initWebServerIfNeeded() throws CreateException {
@@ -571,6 +608,17 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         } catch (RuntimeException ex) {
             throw logException(ex);
         }
+
+        if(sc != null && this.getClusterInfo().isChunksRouting()) {
+            int spaceGeneration = getClusterInfo().getChunksMap().getGeneration();
+            if (sc.getChunksMapGeneration() != spaceGeneration) {
+                ChunksMapGenerationException exception = new ChunksMapGenerationException("chunks map generation of client is " + sc.getChunksMapGeneration()
+                        + " but partition " + getPartitionId() + " is at generation " + spaceGeneration);
+                exception.setNewMap(getClusterInfo().getChunksMap());
+                throw exception;
+            }
+        }
+
     }
 
     private void assertAvailable()
@@ -667,8 +715,16 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 _leaderSelector.terminate();
             }
 
-            if (zookeeperLastPrimaryHandler != null) {
-                zookeeperLastPrimaryHandler.closeZooKeeperAttributeStore();
+            if (attributeStore != null) {
+                try {
+                    attributeStore.close();
+                } catch (Exception e) {
+                    _logger.warn("Failed to close ZooKeeperAttributeStore", e);
+                }
+            }
+
+            if (zookeeperChunksMapHandler != null) {
+                zookeeperChunksMapHandler.close();
             }
 
             if (_qp != null)
@@ -3094,6 +3150,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             _clusterFailureDetector = initClusterFailureDetector(_clusterPolicy);
             _engine = new SpaceEngine(this);
+            if (zookeeperChunksMapHandler != null && _clusterInfo.isChunksRouting()) {
+                zookeeperChunksMapHandler.addListener(_spaceConfig);
+            }
             if (isLookupServiceEnabled)
                 registerLookupService();
             _directPersistencyRecoveryHelper = initDirectPersistencyRecoveryHelper(_clusterPolicy);

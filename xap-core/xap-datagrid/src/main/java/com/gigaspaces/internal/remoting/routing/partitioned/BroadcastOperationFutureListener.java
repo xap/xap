@@ -17,6 +17,9 @@
 package com.gigaspaces.internal.remoting.routing.partitioned;
 
 import com.gigaspaces.async.AsyncFutureListener;
+import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
+import com.gigaspaces.internal.client.spaceproxy.router.SpacePartitionedClusterRemoteOperationRouter;
+import com.gigaspaces.internal.exceptions.ChunksMapGenerationException;
 import com.gigaspaces.internal.remoting.RemoteOperationFutureListener;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
@@ -47,6 +50,11 @@ public class BroadcastOperationFutureListener<T extends RemoteOperationResult> e
     protected boolean onOperationResultArrival(RemoteOperationRequest<T> partitionRequest) {
         // Process incoming partition result:
         T partitionResult = partitionRequest.getRemoteOperationResult();
+        Exception executionException = partitionRequest.getRemoteOperationResult().getExecutionException();
+        if(executionException instanceof ChunksMapGenerationException){
+            SpaceProxyImpl spaceProxy = ((SpacePartitionedClusterRemoteOperationRouter) this._router).getSpaceProxy();
+            spaceProxy.updateProxyRouter(spaceProxy.getProxyRouter(),((ChunksMapGenerationException) executionException).getNewMap());
+        }
         boolean continueProcessing = _mainRequest.processPartitionResult(partitionResult, _previousResults, _router.getNumOfPartitions());
         // If there are enough accumulated results, or this is the last possible result, signal completion:
         if (!continueProcessing || _previousResults.size() + 1 >= _router.getNumOfPartitions())

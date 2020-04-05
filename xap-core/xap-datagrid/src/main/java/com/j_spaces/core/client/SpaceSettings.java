@@ -20,6 +20,7 @@
 package com.j_spaces.core.client;
 
 import com.gigaspaces.config.lrmi.ITransportConfig;
+import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.j_spaces.core.IJSpaceContainer;
 import com.j_spaces.core.IStubHandler;
 import com.j_spaces.core.admin.SpaceConfig;
@@ -159,6 +160,16 @@ public class SpaceSettings implements Externalizable, Cloneable {
 
     public ITransportConfig getExportedTransportConfig() {
         return _exportedTransportConfig;
+    }
+
+    public SpaceSettings cloneAndUpdate(PartitionToChunksMap chunksMap) {
+        try {
+            SpaceSettings newSpaceSettings = (SpaceSettings) super.clone();
+            newSpaceSettings._spaceConfig = _spaceConfig.cloneAndUpdate(chunksMap);
+            return newSpaceSettings;
+        } catch (CloneNotSupportedException e) {
+            throw new IllegalStateException("Failed to clone a cloneable object");
+        }
     }
 
     /* Bit map for serialization */

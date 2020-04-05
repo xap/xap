@@ -161,7 +161,7 @@ public class SpaceProxyRouter {
         return new SpacePartitionedClusterRemoteOperationRouter(spaceProxy.getName(),
                 partitions,
                 clusterInfo.isBroadcastDisabled(),
-                partitionedCluster);
+                partitionedCluster, clusterInfo, spaceProxy);
     }
 
     private Properties loadConfig(Properties properties, SpaceClusterInfo clusterInfo) {
@@ -276,13 +276,17 @@ public class SpaceProxyRouter {
         return _defaultSpaceContext;
     }
 
+    public int getChunksMapGeneration() {
+        return _clusterInfo.isChunksRouting() ? _clusterInfo.getChunksMap().getGeneration() : 0;
+    }
+
     public void setQuiesceToken(QuiesceToken token) {
         updateDefaultSpaceContext(token);
     }
 
     private void updateDefaultSpaceContext(QuiesceToken token) {
-        this._defaultSpaceContext = isSecured || isGateway || token != null
-                ? new SpaceContext(isGateway) : null;
+        this._defaultSpaceContext = isSecured || isGateway || token != null || _clusterInfo.isChunksRouting()
+                ? new SpaceContext(isGateway, getChunksMapGeneration()) : null;
         if (token != null) {
             _defaultSpaceContext.setQuiesceToken(token);
         }

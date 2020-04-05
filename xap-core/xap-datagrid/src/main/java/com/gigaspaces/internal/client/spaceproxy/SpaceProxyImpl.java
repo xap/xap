@@ -31,6 +31,7 @@ import com.gigaspaces.internal.client.spaceproxy.operations.RegisterEntryTypeDes
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceOperationRequest;
 import com.gigaspaces.internal.client.spaceproxy.router.SpaceProxyRouter;
 import com.gigaspaces.internal.client.spaceproxy.transaction.SpaceProxyTransactionManager;
+import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
@@ -84,7 +85,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.rmi.RemoteException;
 import java.security.SecureRandom;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -610,6 +610,19 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
             _proxyRouter = new SpaceProxyRouter(this);
             _initializedNewRouter = true;
             return _proxyRouter;
+        }
+    }
+
+    public void updateProxyRouter(SpaceProxyRouter oldRouter, PartitionToChunksMap chunksMap){
+        if(this._proxyRouter != oldRouter){
+            return;
+        }
+        synchronized (_spaceInitializeLock) {
+            if(this._proxyRouter != oldRouter){
+                return;
+            }
+            this._proxySettings = this._proxySettings.cloneAndUpdate(chunksMap);
+            this._proxyRouter = new SpaceProxyRouter(this);
         }
     }
 

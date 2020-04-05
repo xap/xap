@@ -241,7 +241,6 @@ public class SpaceEngine implements ISpaceModeListener {
      * for non-dynamic cluster -1 if not relevant
      **/
     private final int _partitionId;
-    private final int _numberOfPartitions;
 
     private final boolean _allowNonBlockingRead;
     private boolean _memoryRecoveryEnabled;
@@ -309,7 +308,6 @@ public class SpaceEngine implements ISpaceModeListener {
         final TypeDescFactory typeDescFactory = new TypeDescFactory(_directProxy);
         _typeManager = new SpaceTypeManager(typeDescFactory, _configReader);
 
-        _numberOfPartitions = _clusterInfo.isPartitioned() ? _clusterInfo.getNumberOfPartitions() : 1;
         _partitionId = _clusterInfo.getPartitionOfMember(_fullSpaceName);
 
         // ********** Finished initializing components which depend only on spaceImpl and configuration **********
@@ -2729,7 +2727,7 @@ public class SpaceEngine implements ISpaceModeListener {
     }
 
     private ProtectiveModeException createExceptionIfRoutingValueDoesntMatchesCurrentPartition(Object routingValue, IServerTypeDesc typeDesc, String operation) {
-        int partitionIdZeroBased = PartitionedClusterUtils.getPartitionId(routingValue, getNumberOfPartitions());
+        int partitionIdZeroBased = PartitionedClusterUtils.getPartitionId(routingValue, _clusterInfo);
         if (partitionIdZeroBased != getPartitionIdZeroBased()) {
             if (ProtectiveMode.shouldIgnoreWrongRoutingProtectiveMode(typeDesc.getTypeName()))
                 return null;
@@ -6696,7 +6694,7 @@ public class SpaceEngine implements ISpaceModeListener {
         if (!_clusterInfo.isPartitioned())
             return true;
 
-        final int partitionId = PartitionedClusterUtils.getPartitionId(routingValue, _clusterInfo.getNumberOfPartitions());
+        final int partitionId = PartitionedClusterUtils.getPartitionId(routingValue, _clusterInfo);
         return partitionId == _partitionId;
     }
 
@@ -6795,7 +6793,7 @@ public class SpaceEngine implements ISpaceModeListener {
      * @return the number of partitions in the static cluster.
      */
     public int getNumberOfPartitions() {
-        return _numberOfPartitions;
+        return _clusterInfo.getNumberOfPartitions();
     }
 
     /**

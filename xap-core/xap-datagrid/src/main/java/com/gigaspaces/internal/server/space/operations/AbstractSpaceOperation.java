@@ -32,4 +32,5 @@ public abstract class AbstractSpaceOperation<TResult extends RemoteOperationResu
     public boolean isGenericLogging() {
         return true;
     }
+
 }

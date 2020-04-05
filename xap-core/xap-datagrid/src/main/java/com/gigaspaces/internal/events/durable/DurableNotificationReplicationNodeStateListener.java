@@ -18,6 +18,7 @@ package com.gigaspaces.internal.events.durable;
 
 import com.gigaspaces.cluster.replication.IncomingReplicationOutOfSyncException;
 import com.gigaspaces.events.EventSessionConfig;
+import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.cluster.node.IReplicationNodeStateListener;
 import com.gigaspaces.internal.cluster.node.impl.backlog.IBacklogMemberState;
 import com.gigaspaces.internal.cluster.node.impl.config.ReplicationNodeMode;
@@ -28,16 +29,13 @@ import com.gigaspaces.internal.utils.concurrent.IAsyncHandler;
 import com.gigaspaces.internal.utils.concurrent.IAsyncHandlerProvider;
 import com.gigaspaces.internal.utils.concurrent.IAsyncHandlerProvider.CycleResult;
 import com.gigaspaces.time.SystemTime;
-
 import net.jini.lease.LeaseListener;
 import net.jini.lease.LeaseRenewalEvent;
+import org.slf4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Dan Kilman
@@ -53,7 +51,7 @@ public class DurableNotificationReplicationNodeStateListener
     private final DurableNotificationLease _lease;
     private final LeaseListener _leaseListener;
     private final IAsyncHandlerProvider _asyncProvider;
-    private final int _numOfPartitions;
+    private final SpaceClusterInfo _clusterInfo;
     private final int _partitionId;
 
     private final Object _lock = new Object();
@@ -68,12 +66,12 @@ public class DurableNotificationReplicationNodeStateListener
     public DurableNotificationReplicationNodeStateListener(
             EventSessionConfig config,
             DurableNotificationLease lease,
-            IAsyncHandlerProvider asyncProvider, int numOfPartitions, int partitionId) {
+            IAsyncHandlerProvider asyncProvider, SpaceClusterInfo clusterInfo, int partitionId) {
         _logger = lease.getLogger();
         _lease = lease;
         _config = config;
         _asyncProvider = asyncProvider;
-        _numOfPartitions = numOfPartitions;
+        _clusterInfo = clusterInfo;
         _partitionId = partitionId;
         _leaseListener = _config.getLeaseListener();
         _disconnectedPartitions = populateDisconnectedPartitions();
@@ -181,7 +179,7 @@ public class DurableNotificationReplicationNodeStateListener
         Map<Integer, Long> result = new HashMap<Integer, Long>();
 
         int startIndex = _partitionId == PartitionedClusterUtils.NO_PARTITION ? 0 : _partitionId;
-        int endIndex = _partitionId == PartitionedClusterUtils.NO_PARTITION ? (_numOfPartitions - 1) : _partitionId;
+        int endIndex = _partitionId == PartitionedClusterUtils.NO_PARTITION ? (_clusterInfo.getNumberOfPartitions() - 1) : _partitionId;
 
         for (int i = startIndex; i <= endIndex; i++) {
             long currentTime = SystemTime.timeMillis();

@@ -18,6 +18,7 @@ package com.j_spaces.core;
 
 import com.gigaspaces.datasource.SQLDataProvider;
 import com.gigaspaces.datasource.SpaceDataSource;
+import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.server.space.SpaceInstanceConfig;
 import com.gigaspaces.internal.utils.StringUtils;
@@ -26,6 +27,7 @@ import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.server.SpaceCustomComponent;
 import com.gigaspaces.sync.SpaceSynchronizationEndpoint;
 import com.j_spaces.core.Constants.SpaceProxy;
+import com.j_spaces.core.admin.SpaceConfig;
 import com.j_spaces.core.cluster.ClusterPolicy;
 import com.j_spaces.core.filters.FiltersInfo;
 import com.j_spaces.sadapter.datasource.DataAdaptorIterator;
@@ -1422,6 +1424,12 @@ public class JSpaceAttributes
 
     public void setClusterInfo(SpaceClusterInfo _clusterInfo) {
         this._clusterInfo = _clusterInfo;
+    }
+
+    public SpaceConfig cloneAndUpdate(PartitionToChunksMap chunksMap) {
+        SpaceConfig newSpaceConfig = (SpaceConfig) this.clone();
+        newSpaceConfig.setClusterInfo(this._clusterInfo.cloneAndUpdate(chunksMap));
+        return newSpaceConfig;
     }
 
     /* Bit map for serialization */
