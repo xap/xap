@@ -14,7 +14,9 @@ Running XAP requires Java 6 or later.
 
 Building XAP requires Java 8 or later (The core requires Java 6, but some optional components and integrations depend on features from higher Java version, so building the entire product requires Java 8).
 
-In addition you'll need `Maven` to build the project.
+In addition you'll need [Maven](https://maven.apache.org/) and [Scala](https://www.scala-lang.org/) to build the project.
+
+Make sure environment variable `SCALA_HOME` points to the root of your Scala installation.
 
 ### Installing
 
