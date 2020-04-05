@@ -31,6 +31,7 @@ import com.gigaspaces.internal.client.spaceproxy.operations.RegisterEntryTypeDes
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceOperationRequest;
 import com.gigaspaces.internal.client.spaceproxy.router.SpaceProxyRouter;
 import com.gigaspaces.internal.client.spaceproxy.transaction.SpaceProxyTransactionManager;
+import com.gigaspaces.internal.cluster.PartitionToGrainsMap;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
@@ -613,6 +614,20 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
         }
     }
 
+    public SpaceProxyRouter updateProxyRouter(SpaceProxyRouter oldRouter, PartitionToGrainsMap grainsMap){
+        if(this._proxyRouter != oldRouter){
+            return _proxyRouter;
+        }
+        synchronized (_spaceInitializeLock) {
+            if(this._proxyRouter != oldRouter){
+                return _proxyRouter;
+            }
+            this._proxySettings = this._proxySettings.cloneAndUpdate(grainsMap);
+            this._proxyRouter = new SpaceProxyRouter(this);
+            return this._proxyRouter;
+        }
+    }
+
     private static final int SERIAL_VERSION = 1;
     private static final byte FLAG_ISCLUSTER = 1 << 1;
     //private static final byte FLAG_LBHANDLER					= 1 << 2;
@@ -655,6 +670,7 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
                     spaceContext.setQuiesceToken(token);
             }
             spaceRequest.setSpaceContext(spaceContext);
+            spaceRequest.setGrainsMapGeneration(getProxyRouter().getGrainsMapGeneration());
         } catch (com.gigaspaces.security.SecurityException e) {
             spaceRequest.setRemoteOperationExecutionError(e);
             return false;

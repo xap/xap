@@ -16,7 +16,9 @@
 
 package com.gigaspaces.internal.client.spaceproxy.router;
 
+import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpacePreciseDistributionGroupingCodes;
+import com.gigaspaces.internal.cluster.PartitionToGrainsMap;
 import com.gigaspaces.internal.remoting.routing.clustered.RemoteOperationsExecutorsCluster;
 import com.gigaspaces.internal.remoting.routing.partitioned.CoordinatorFactory;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterRemoteOperationRouter;
@@ -27,16 +29,20 @@ import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterRe
  */
 @com.gigaspaces.api.InternalApi
 public class SpacePartitionedClusterRemoteOperationRouter extends PartitionedClusterRemoteOperationRouter implements SpaceProxyRemoteOperationRouter {
+
+    private final SpaceProxyImpl spaceProxy;
+
     public SpacePartitionedClusterRemoteOperationRouter(String name,
                                                         SpaceProxyRemoteOperationRouter[] partitions,
                                                         boolean broadcastDisabled,
-                                                        RemoteOperationsExecutorsCluster partitionedCluster) {
+                                                        RemoteOperationsExecutorsCluster partitionedCluster, PartitionToGrainsMap grainsMap, SpaceProxyImpl spaceProxy) {
         super(name,
                 partitions,
                 new CoordinatorFactory(),
                 broadcastDisabled,
                 SpacePreciseDistributionGroupingCodes.NUMBER_OF_GROUPS,
-                partitionedCluster);
+                partitionedCluster, grainsMap);
+        this.spaceProxy = spaceProxy;
     }
 
     @Override
@@ -47,5 +53,9 @@ public class SpacePartitionedClusterRemoteOperationRouter extends PartitionedClu
     @Override
     public String getActiveMemberName(int partitionId) {
         return getPartitionRouter(partitionId).getActiveMemberName(partitionId);
+    }
+
+    public SpaceProxyImpl getSpaceProxy() {
+        return spaceProxy;
     }
 }

@@ -149,4 +149,14 @@ public class PropertiesFileAttributeStore implements AttributeStore, Serializabl
         }
         fileChannel.truncate(byteArray.length);
     }
+
+    @Override
+    public byte[] getBytes(String key) throws IOException {
+        throw new UnsupportedOperationException("only supported in ZooKeeperAttributeStore.class");
+    }
+
+    @Override
+    public byte[] setBytes(String key, byte[] value) throws IOException {
+        throw new UnsupportedOperationException("only supported in ZooKeeperAttributeStore.class");
+    }
 }

@@ -805,6 +805,8 @@ public class SystemProperties extends CommonSystemProperties {
     //GS-13424 java 9 support: VisualVM is not part of JDK 9
     public static final String VISUAL_VM_LAUNCH_FILE_PATH = "com.gs.visualvm.binary";
 
+    public static final String GRAINS_SPACE_ROUTING = "com.gs.grains-space-routing";
+
     private static final Map<String, String> defaultValues = initDefaultValues();
 
     private static Map<String, String> initDefaultValues() {

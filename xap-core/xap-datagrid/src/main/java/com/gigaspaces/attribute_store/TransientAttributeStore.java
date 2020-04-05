@@ -47,4 +47,14 @@ public class TransientAttributeStore implements AttributeStore, Serializable {
     @Override
     public void close() throws IOException {
     }
+
+    @Override
+    public byte[] getBytes(String key) throws IOException {
+        throw new UnsupportedOperationException("only supported in ZooKeeperAttributeStore.class");
+    }
+
+    @Override
+    public byte[] setBytes(String key, byte[] value) throws IOException {
+        throw new UnsupportedOperationException("only supported in ZooKeeperAttributeStore.class");
+    }
 }

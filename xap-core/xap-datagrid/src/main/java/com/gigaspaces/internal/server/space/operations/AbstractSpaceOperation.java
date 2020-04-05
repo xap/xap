@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.server.space.operations;
 
+import com.gigaspaces.internal.exceptions.GrainsMapGenerationException;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
 import com.gigaspaces.internal.server.space.SpaceImpl;
@@ -32,4 +33,15 @@ public abstract class AbstractSpaceOperation<TResult extends RemoteOperationResu
     public boolean isGenericLogging() {
         return true;
     }
+
+    public void validateGrainsMapGeneration(TRequest request, SpaceImpl space) throws GrainsMapGenerationException {
+        int spaceGeneration = space.getClusterInfo().getGrainsMap().getGeneration();
+        if(request.getGrainsMapGeneration() != spaceGeneration) {
+            GrainsMapGenerationException exception = new GrainsMapGenerationException("grains map generation of client is " + request.getGrainsMapGeneration()
+                    + " but partition " + space.getPartitionId() + " is at generation " + spaceGeneration);
+            exception.setNewMap(space.getClusterInfo().getGrainsMap());
+            throw exception;
+        }
+    }
+
 }

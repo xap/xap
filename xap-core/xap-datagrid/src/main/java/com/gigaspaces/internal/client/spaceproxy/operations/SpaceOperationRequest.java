@@ -20,6 +20,8 @@ import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.utils.Textualizable;
 import com.gigaspaces.internal.utils.Textualizer;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.j_spaces.core.SpaceContext;
 
 import net.jini.core.transaction.Transaction;
@@ -39,6 +41,7 @@ public abstract class SpaceOperationRequest<TResult extends SpaceOperationResult
 
     // TODO: consider merging SpaceContext with Request
     private SpaceContext _spaceContext;
+    private int _grainsMapGeneration;
     private transient TResult _remoteOperationResult;
 
     @Override
@@ -99,8 +102,16 @@ public abstract class SpaceOperationRequest<TResult extends SpaceOperationResult
         _spaceContext = spaceContext;
     }
 
+    public void setGrainsMapGeneration(int grainsMapGeneration) {
+        _grainsMapGeneration = grainsMapGeneration;
+    }
+
     public SpaceContext getSpaceContext() {
         return _spaceContext;
+    }
+
+    public int getGrainsMapGeneration() {
+        return _grainsMapGeneration;
     }
 
     @Override
@@ -129,6 +140,9 @@ public abstract class SpaceOperationRequest<TResult extends SpaceOperationResult
             if (_spaceContext != null)
                 IOUtils.writeObject(out, _spaceContext);
         }
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_5_0)){
+            out.writeShort(_grainsMapGeneration);
+        }
     }
 
     @Override
@@ -138,6 +152,9 @@ public abstract class SpaceOperationRequest<TResult extends SpaceOperationResult
         if (flags != 0) {
             if ((flags & FLAG_SPACE_CONTEXT) != 0)
                 this._spaceContext = IOUtils.readObject(in);
+        }
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_5_0)){
+            this._grainsMapGeneration =  in.readShort();
         }
     }
 

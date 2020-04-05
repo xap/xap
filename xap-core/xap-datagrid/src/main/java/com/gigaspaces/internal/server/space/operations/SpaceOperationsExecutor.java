@@ -80,6 +80,7 @@ public class SpaceOperationsExecutor {
             if (loggable)
                 space.getOperationLogger().trace("executing " + operation.getLogName(request, result) + " operation" + (oneway ? "(oneway)" : "") + " [" + request + "]");
             // Execute operation:
+            operation.validateGrainsMapGeneration(request,space);
             operation.execute(request, result, space, oneway);
 
             if (loggable)

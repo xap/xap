@@ -16,6 +16,9 @@
 
 package com.gigaspaces.internal.remoting.routing.partitioned;
 
+import com.gigaspaces.internal.cluster.PartitionToGrainsMap;
+import com.j_spaces.kernel.SystemProperties;
+
 /**
  * @author Niv Ingberg
  * @since 9.0.0
@@ -24,17 +27,18 @@ package com.gigaspaces.internal.remoting.routing.partitioned;
 public class PartitionedClusterUtils {
     public static final int NO_PARTITION = -1;
     private static final boolean PRECISE_LONG_ROUTING = !Boolean.getBoolean("com.gs.disable-precise-long-routing");
+    private static final boolean GRAINS_ROUTING = SystemProperties.getBoolean(SystemProperties.GRAINS_SPACE_ROUTING, false);
 
     private PartitionedClusterUtils() {
     }
 
-    public static int getPartitionId(Object routingValue, int numOfPartitions) {
+    public static int getPartitionId(Object routingValue, PartitionToGrainsMap grainsMap) {
         if (routingValue == null)
             return NO_PARTITION;
         if (routingValue instanceof Long && PRECISE_LONG_ROUTING) {
-            return (int) (safeAbs((Long) routingValue) % numOfPartitions);
+            return  GRAINS_ROUTING ? grainsMap.getPartitionId((safeAbs((Long) routingValue))) : (int) (safeAbs((Long) routingValue) % grainsMap.getNumOfPartitions());
         }
-        return safeAbs(routingValue.hashCode()) % numOfPartitions;
+        return GRAINS_ROUTING ? grainsMap.getPartitionId(safeAbs(routingValue.hashCode())) : safeAbs(routingValue.hashCode()) % grainsMap.getNumOfPartitions();
     }
 
     public static int safeAbs(int value) {

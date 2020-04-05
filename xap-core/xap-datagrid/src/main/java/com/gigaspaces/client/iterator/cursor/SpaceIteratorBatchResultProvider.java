@@ -8,6 +8,7 @@ import com.gigaspaces.internal.client.spaceproxy.executors.CloseIteratorDistribu
 import com.gigaspaces.internal.client.spaceproxy.executors.GetBatchForIteratorDistributedSpaceTask;
 import com.gigaspaces.internal.client.spaceproxy.executors.RenewIteratorLeaseDistributedSpaceTask;
 import com.gigaspaces.internal.client.spaceproxy.executors.SinglePartitionGetBatchForIteratorSpaceTask;
+import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterUtils;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.logger.Constants;
@@ -37,18 +38,18 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
     private final long _maxInactiveDuration;
     private final ITemplatePacket _queryPacket;
     private final UUID _uuid;
-    private final int _numberOfPartitions;
+    private final SpaceClusterInfo _clusterInfo;
     private final transient SpaceIteratorBatchResultListener _spaceIteratorBatchResultListener;
 
 
-    public SpaceIteratorBatchResultProvider(ISpaceProxy spaceProxy, int batchSize, int readModifiers, ITemplatePacket queryPacket, UUID uuid, long maxInactiveDuration){
+    public SpaceIteratorBatchResultProvider(ISpaceProxy spaceProxy, int batchSize, int readModifiers, ITemplatePacket queryPacket, UUID uuid, long maxInactiveDuration) {
         this._spaceProxy = spaceProxy;
         this._batchSize = batchSize;
         this._readModifiers = readModifiers;
         this._maxInactiveDuration = maxInactiveDuration;
         this._queryPacket = queryPacket;
         this._uuid = uuid;
-        this._numberOfPartitions = _spaceProxy.getDirectProxy().getSpaceClusterInfo().getNumberOfPartitions();
+        this._clusterInfo = _spaceProxy.getDirectProxy().getSpaceClusterInfo();
         this._queue = new LinkedBlockingQueue<>(getInitialNumberOfActivePartitions());
         this._spaceIteratorBatchResultListener = new SpaceIteratorBatchResultListener(this);
         initBatchTask();
@@ -56,7 +57,7 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
 
     private void initBatchTask() {
         try {
-            if(_numberOfPartitions == 0){
+            if(_clusterInfo.getNumberOfPartitions() == 0){
                 if(_logger.isDebugEnabled())
                     _logger.debug("Initializing space iterator batch task in embedded space.");
                 triggerSinglePartitionBatchTask(PartitionedClusterUtils.NO_PARTITION, 0);
@@ -65,11 +66,11 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
             if(_queryPacket.getRoutingFieldValue() != null){
                 if(_logger.isDebugEnabled())
                     _logger.debug("Initializing space iterator batch task with routing " + _queryPacket.getRoutingFieldValue());
-                triggerSinglePartitionBatchTask(PartitionedClusterUtils.getPartitionId(_queryPacket.getRoutingFieldValue(), _numberOfPartitions), 0);
+                triggerSinglePartitionBatchTask(PartitionedClusterUtils.getPartitionId(_queryPacket.getRoutingFieldValue(), _clusterMap), 0);
                 return;
             }
             if(_logger.isDebugEnabled())
-                _logger.debug("Initializing space iterator batch task in all " + _numberOfPartitions + " partitions");
+                _logger.debug("Initializing space iterator batch task in all " + _clusterMap.getNumOfPartitions() + " partitions");
             triggerBatchTaskInAllPartitions();
         } catch (RemoteException | TransactionException e) {
             throw new SpaceRuntimeException("Failed to initialize iterator", e);
@@ -139,7 +140,7 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
     }
 
     public int getNumberOfPartitions() {
-        return _numberOfPartitions;
+        return _clusterInfo.getNumberOfPartitions();
     }
 
     public long getMaxInactiveDuration() {
@@ -147,11 +148,11 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
     }
 
     public int getInitialNumberOfActivePartitions() {
-        if(_numberOfPartitions == 0)
+        if (_clusterInfo.getNumberOfPartitions() == 0)
             return 1;
         if(_queryPacket.getRoutingFieldValue() != null)
             return 1;
-        return _numberOfPartitions;
+        return getNumberOfPartitions();
     }
 
     public ISpaceProxy getSpaceProxy() {

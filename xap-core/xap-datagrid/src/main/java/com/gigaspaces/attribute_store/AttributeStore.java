@@ -29,5 +29,9 @@ public interface AttributeStore extends Closeable {
 
     String set(String key, String value) throws IOException;
 
+    byte[] getBytes(String key) throws IOException;
+
+    byte[] setBytes(String key, byte[] value) throws IOException;
+
     String remove(String key) throws IOException;
 }

@@ -904,6 +904,7 @@ public interface Constants {
 
         public interface ZOOKEEPER {
             String ATTRIBUET_STORE_HANDLER_CLASS_NAME = "org.openspaces.zookeeper.attribute_store.ZooKeeperAttributeStore";
+            String ZOKEEPER_CLIENT_CLASS_NAME = "org.openspaces.zookeeper.grains_map.GrainsMapZookeeperClient";
         }
     }
 
