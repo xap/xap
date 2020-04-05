@@ -17,8 +17,10 @@
 package com.gigaspaces.query.sql.functions;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 
 /**
@@ -29,6 +31,8 @@ import java.util.TimeZone;
  */
 @com.gigaspaces.api.InternalApi
 public class ToCharSqlFunction extends SqlFunction {
+    public static final DecimalFormatSymbols DECIMAL_FORMAT_SYMBOLS = DecimalFormatSymbols.getInstance(Locale.ENGLISH);
+
     /**
      * @param context which contains a argument of type Number or Date and can have an additional
      *                format argument. A Number argument should be used with {@link DecimalFormat},
@@ -46,14 +50,14 @@ public class ToCharSqlFunction extends SqlFunction {
         }
         if (arg instanceof Number) {
             if (format != null) {
-                DecimalFormat decimalFormat = new DecimalFormat(String.valueOf(format));
+                DecimalFormat decimalFormat = new DecimalFormat(String.valueOf(format), DECIMAL_FORMAT_SYMBOLS);
                 return decimalFormat.format(arg);
             } else {
                 return arg;
             }
         } else if (arg instanceof Date) {
             if (format != null) {
-                SimpleDateFormat sdf = new SimpleDateFormat(String.valueOf(format));
+                SimpleDateFormat sdf = new SimpleDateFormat(String.valueOf(format), Locale.ENGLISH);
                 sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
                 return sdf.format(arg);
             }
