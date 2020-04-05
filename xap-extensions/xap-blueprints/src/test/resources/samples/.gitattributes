@@ -1,0 +1,4 @@
+# Git may (depending on user settings) convert the EOLs of "Person.java" to
+# the platform-native ones. But code generation always uses line feed (\n), so
+# the code generation test fails with other EOLs.
+Person.java text eol=lf
