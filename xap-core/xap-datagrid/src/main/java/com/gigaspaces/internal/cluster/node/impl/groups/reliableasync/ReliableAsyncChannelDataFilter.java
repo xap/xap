@@ -22,7 +22,8 @@ import com.gigaspaces.internal.cluster.node.impl.groups.ReplicationChannelDataFi
 import com.gigaspaces.internal.cluster.node.impl.packets.data.IReplicationPacketData;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public abstract class ReliableAsyncChannelDataFilter extends AbstractReplicationChannelDataFilter {

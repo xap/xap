@@ -25,15 +25,16 @@ import com.gigaspaces.internal.reflection.ReflectionUtil;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
  * @since 12.0
  */
 public abstract class CollectionsFactory {
-    private static final Logger _logger = Logger.getLogger(CollectionsFactory.class.getName());
+    private static final Logger _logger = LoggerFactory.getLogger(CollectionsFactory.class.getName());
 
     private static final CollectionsFactory instance = initialize();
 
@@ -41,7 +42,7 @@ public abstract class CollectionsFactory {
         final Class<?> factoryClass = com.gigaspaces.internal.collections.trove.TroveCollectionsFactory.class;
         CollectionsFactory factory = (CollectionsFactory) ReflectionUtil.createInstanceWithOptionalDependencies(factoryClass);
         if (factory == null) {
-            _logger.log(Level.WARNING, "Failed to create collections factory [" + factoryClass.getName() + "], falling back to standard factory instead");
+            _logger.warn("Failed to create collections factory [" + factoryClass.getName() + "], falling back to standard factory instead");
             factory = new StandardCollectionsFactory();
         }
         return factory;

@@ -36,8 +36,9 @@ import net.jini.core.event.UnknownEventException;
 
 import java.rmi.RemoteException;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.Engine.ENGINE_NOTIFIER_RETRIES_DEFAULT;
 import static com.j_spaces.core.Constants.Engine.ENGINE_NOTIFIER_TTL_PROP;
@@ -56,7 +57,7 @@ import static com.j_spaces.core.Constants.Engine.ENGINE_NOTIFY_MIN_THREADS_PROP;
  */
 @com.gigaspaces.api.InternalApi
 public class SpaceDataEventManager implements ISpaceModeListener {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_FILTERS);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_FILTERS);
 
     private final IDirectSpaceProxy _spaceProxy;
     private final SpaceImpl _spaceImpl;
@@ -130,8 +131,8 @@ public class SpaceDataEventManager implements ISpaceModeListener {
             try {
                 _filterManager.invokeFilters(FilterOperationCodes.AFTER_NOTIFY_TRIGGER, null, entries);
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Exception was thrown by filter on AFTER_NOTIFY_TRIGGER.", e);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Exception was thrown by filter on AFTER_NOTIFY_TRIGGER.", e);
             }
         }
 
@@ -216,8 +217,8 @@ public class SpaceDataEventManager implements ISpaceModeListener {
             } catch (RuntimeException e) // filters can only throw RuntimeException
             {
                 //TODO abort all the notifications
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Exception was thrown by filter on BEFORE_ALL_NOTIFY_TRIGGER.", e);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Exception was thrown by filter on BEFORE_ALL_NOTIFY_TRIGGER.", e);
             }
         }
 
@@ -226,8 +227,8 @@ public class SpaceDataEventManager implements ISpaceModeListener {
             try {
                 _filterManager.invokeFilters(FilterOperationCodes.BEFORE_NOTIFY_TRIGGER, null, arguments);
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Exception was thrown by filter on BEFORE_NOTIFY_TRIGGER.", e);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Exception was thrown by filter on BEFORE_NOTIFY_TRIGGER.", e);
                 notifyContext.countDec(); // reduce the count by 1, cause this notification will never occur.
                 return false; //abort notifications
             }
@@ -247,8 +248,8 @@ public class SpaceDataEventManager implements ISpaceModeListener {
             try {
                 _filterManager.invokeFilters(FilterOperationCodes.AFTER_ALL_NOTIFY_TRIGGER, null, notifyContext);
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Exception was thrown by filter on AFTER_ALL_NOTIFY_TRIGGER.", e);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Exception was thrown by filter on AFTER_ALL_NOTIFY_TRIGGER.", e);
             }
         }
     }

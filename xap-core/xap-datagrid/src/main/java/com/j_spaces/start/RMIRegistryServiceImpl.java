@@ -27,8 +27,9 @@ import net.jini.config.ConfigurationProvider;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*******************************************************************************
  * Copyright (c) 2010 GigaSpaces Technologies Ltd. All rights reserved
@@ -44,7 +45,7 @@ public class RMIRegistryServiceImpl {
     private int registryPort;
 
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_ADMIN);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_ADMIN);
 
 
     /**
@@ -62,7 +63,7 @@ public class RMIRegistryServiceImpl {
                 new Integer(10098))).intValue();
 
         LocateRegistry.createRegistry(registryPort);
-        if (_logger.isLoggable(Level.INFO)) {
+        if (_logger.isInfoEnabled()) {
             _logger.info("RMIRegistry started [port " + registryPort + "]");
         }
     }

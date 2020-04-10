@@ -24,8 +24,9 @@ import net.jini.security.Security;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A convenience class for retrieving the string value of a system property as a privileged action.
@@ -56,7 +57,7 @@ import java.util.logging.Logger;
 public class GetPropertyAction implements PrivilegedAction {
 
     private static final Logger logger =
-            Logger.getLogger("com.sun.jini.action.GetPropertyAction");
+            LoggerFactory.getLogger("com.sun.jini.action.GetPropertyAction");
 
     private final String theProp;
     private final String defaultVal;
@@ -101,7 +102,7 @@ public class GetPropertyAction implements PrivilegedAction {
                 return value;
             }
         } catch (SecurityException e) {
-            if (logger.isLoggable(Level.FINE)) {
+            if (logger.isDebugEnabled()) {
                 LogUtils.throwing(logger, GetPropertyAction.class, "run", e,
                         "security exception reading \"{0}\", returning {1}", theProp, defaultVal);
             }

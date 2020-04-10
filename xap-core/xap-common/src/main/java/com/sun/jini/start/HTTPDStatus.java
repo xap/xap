@@ -23,8 +23,9 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class which can be used to print a descriptive warning message if a codebase accessibility
@@ -70,7 +71,7 @@ public class HTTPDStatus {
      */
     public static void httpdWarning(String codebase) {
         if (codebase == null) {
-            logger.log(Level.WARNING, "Problem accessing desired URL[{0}]: {1}.",
+            logger.warn("Problem accessing desired URL[{0}]: {1}.",
                     new Object[]{codebase, "Codebase is null"});
             return;
         }
@@ -85,19 +86,19 @@ public class HTTPDStatus {
                 //Skip file check for directories
                 if (fileName == null ||
                         fileName.endsWith("/")) {
-                    logger.log(Level.FINEST, "Skipping file check for: {0}", url);
+                    logger.trace("Skipping file check for: {0}", url);
                 } else {
                     try {
                         drainStream(u.openStream());
                     } catch (Exception ioe) {
-                        logger.log(Level.WARNING, "Problem accessing desired URL[{0}]: {1}.",
+                        logger.warn("Problem accessing desired URL[{0}]: {1}.",
                                 new Object[]{url, ioe.toString()});
-                        logger.log(Level.FINEST, "Associated exception:", ioe);
+                        logger.trace("Associated exception:", ioe);
                     }
                 }
             } catch (MalformedURLException e) {
-                logger.log(Level.WARNING, "Unknown protocol for URL: {0} may cause problems", url);
-                logger.log(Level.FINEST, "Associated exception:", e);
+                logger.warn("Unknown protocol for URL: {0} may cause problems", url);
+                logger.trace("Associated exception:", e);
             }
         }
         return;

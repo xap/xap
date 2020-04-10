@@ -25,8 +25,9 @@ import com.sun.jini.thread.WakeupManager;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A <code>Job</code> manages the division of work for a problem whose solution is obtained by
@@ -150,8 +151,8 @@ public abstract class Job {
         TaskManager.Task[] tmp = createTasks();
 
         if (tmp != null) {
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.log(Level.FINEST,
+            if (logger.isTraceEnabled()) {
+                logger.trace(
                         "Job:scheduleTasks with {0} tasks",
                         new Integer(tmp.length));
             }
@@ -169,8 +170,8 @@ public abstract class Job {
                 synchronized (tasks) {
                     tasks.put(tmp[i], new Integer(i));
                     pool.add(tmp[i]);
-                    if (logger.isLoggable(Level.FINEST)) {
-                        logger.log(Level.FINEST,
+                    if (logger.isTraceEnabled()) {
+                        logger.trace(
                                 "Job:scheduleTasks added {0} to thread pool",
                                 tmp[i]);
                     }
@@ -189,8 +190,8 @@ public abstract class Job {
             return;
 
         try {
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.log(Level.FINEST,
+            if (logger.isTraceEnabled()) {
+                logger.trace(
                         "Job:awaitPending waiting for {0} items",
                         new Integer(pending));
             }
@@ -198,8 +199,8 @@ public abstract class Job {
             if (waitFor == Long.MAX_VALUE) {
                 while (pending > 0) {
                     wait();
-                    if (logger.isLoggable(Level.FINEST)) {
-                        logger.log(Level.FINEST,
+                    if (logger.isTraceEnabled()) {
+                        logger.trace(
                                 "Job:awaitPending awoken");
                     }
                 }
@@ -224,8 +225,8 @@ public abstract class Job {
         pending = num;
 
         if (pending <= 0) {
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.log(Level.FINEST,
+            if (logger.isTraceEnabled()) {
+                logger.trace(
                         "Job:setPending notifying, pending = {0}",
                         new Integer(pending));
             }
@@ -237,8 +238,8 @@ public abstract class Job {
         pending--;
 
         if (pending <= 0) {
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.log(Level.FINEST,
+            if (logger.isTraceEnabled()) {
+                logger.trace(
                         "Job:decrementPending notifying, pending = {0}",
                         new Integer(pending));
             }
@@ -286,8 +287,8 @@ public abstract class Job {
 
         synchronized (results) {
             if (results[position.intValue()] == null) {
-                if (logger.isLoggable(Level.FINEST)) {
-                    logger.log(Level.FINEST,
+                if (logger.isTraceEnabled()) {
+                    logger.trace(
                             "Job:reportDone who = {0}, param = {1}",
                             new Object[]{who, param});
                 }

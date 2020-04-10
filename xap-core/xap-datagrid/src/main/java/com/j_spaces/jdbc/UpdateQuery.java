@@ -47,8 +47,9 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class UpdateQuery extends AbstractDMLQuery {
@@ -58,7 +59,7 @@ public class UpdateQuery extends AbstractDMLQuery {
     private boolean _selfIncrementedUpdateColumn;
 
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_QUERY);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     public UpdateQuery() {
         super();
@@ -211,8 +212,8 @@ public class UpdateQuery extends AbstractDMLQuery {
                 response.setIntResult(updatedEntries.length - notUpdated);
             }
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.getMessage(), e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.getMessage(), e);
             }
 
             if (e instanceof SQLException)
@@ -421,8 +422,8 @@ public class UpdateQuery extends AbstractDMLQuery {
             }
 
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.getMessage(), e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.getMessage(), e);
             }
             SQLException se = new SQLException("Failed to update row; Cause: " + e, "GSP", -130);
             se.initCause(e);

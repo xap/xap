@@ -25,8 +25,9 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A handler for rejected tasks that inserts the specified element into this queue, waiting if
@@ -78,7 +79,7 @@ public class TimedBlockingPolicy implements RejectedExecutionHandler {
     }
 
     private void warnThresholdExceededIfNeeded(ThreadPoolExecutor executor) {
-        if (warnOnRejection && warnLogger.isLoggable(Level.WARNING)) {
+        if (warnOnRejection && warnLogger.isWarnEnabled()) {
             final long timeMillis = SystemTime.timeMillis();
             if (timeMillis - lastSampleTime < SAMPLE_INTERVAL_TIME)
                 return;
@@ -113,9 +114,9 @@ public class TimedBlockingPolicy implements RejectedExecutionHandler {
                                 + " (you can modify the threshold sample rate using 'com.gs.transport_protocol.lrmi.threshold-check-interval' system property setting the desired ms interval). "
                                 + addIncreaseLogLevelMessageIfNeeded();
 
-                        warnLogger.warning(warningMsg);
-                        if (warnLogger.isLoggable(Level.FINE))
-                            warnLogger.fine("Generating Thread dump upon resource critical level warning " + StringUtils.NEW_LINE + ThreadDumpUtility.generateThreadDumpIfPossible());
+                        warnLogger.warn(warningMsg);
+                        if (warnLogger.isDebugEnabled())
+                            warnLogger.debug("Generating Thread dump upon resource critical level warning " + StringUtils.NEW_LINE + ThreadDumpUtility.generateThreadDumpIfPossible());
                     }
                     if (tasksDidNotAdvanceSinceLastCheck) {
                         String severeMsg = poolName
@@ -125,9 +126,9 @@ public class TimedBlockingPolicy implements RejectedExecutionHandler {
                                 "(you can modify the threshold sample rate using 'com.gs.transport_protocol.lrmi.threshold-check-interval' system property setting the desired ms interval). "
                                 + addIncreaseLogLevelMessageIfNeeded();
 
-                        warnLogger.severe(severeMsg);
-                        if (warnLogger.isLoggable(Level.FINE))
-                            warnLogger.fine("Generating Thread dump upon resource critical level warning " + StringUtils.NEW_LINE + ThreadDumpUtility.generateThreadDumpIfPossible());
+                        warnLogger.error(severeMsg);
+                        if (warnLogger.isDebugEnabled())
+                            warnLogger.debug("Generating Thread dump upon resource critical level warning " + StringUtils.NEW_LINE + ThreadDumpUtility.generateThreadDumpIfPossible());
                     }
                 }
             }
@@ -135,7 +136,7 @@ public class TimedBlockingPolicy implements RejectedExecutionHandler {
     }
 
     private String addIncreaseLogLevelMessageIfNeeded() {
-        String increaseLogLevelIfNeeded = warnLogger.isLoggable(Level.FINE) ? "" : "(in order to log an automatic thread dump, increase this logger logging level to FINE)";
+        String increaseLogLevelIfNeeded = warnLogger.isDebugEnabled() ? "" : "(in order to log an automatic thread dump, increase this logger logging level to FINE)";
         return increaseLogLevelIfNeeded;
     }
 }

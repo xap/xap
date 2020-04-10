@@ -35,8 +35,9 @@ import com.j_spaces.kernel.ClassLoaderHelper;
 import java.io.IOException;
 import java.io.InvalidClassException;
 import java.rmi.UnmarshalException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A Request Packet is constructed by the NIO client peer and sent to the server.
@@ -51,7 +52,7 @@ public class RequestPacket implements IPacket {
     private static final long serialVersionUID = 1L;
     private static final byte SERIAL_VERSION = Byte.MIN_VALUE + 2;
 
-    private final static Logger _contextLogger = Logger.getLogger(Constants.LOGGER_LRMI_CONTEXT);
+    private final static Logger _contextLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_CONTEXT);
 
     private long lrmiId;
     private long objectId;
@@ -182,7 +183,7 @@ public class RequestPacket implements IPacket {
 
                 //Update context for debug logging purpose
 
-                boolean logContext = _contextLogger.isLoggable(Level.FINE);
+                boolean logContext = _contextLogger.isDebugEnabled();
                 if (logContext) {
                     LRMIInvocationContext currentContext = LRMIInvocationContext.getCurrentContext();
                     LRMIInvocationTrace trace = currentContext.getTrace();

@@ -27,8 +27,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by Barak Bar Orion 8/24/15.
@@ -37,7 +38,7 @@ import java.util.logging.Logger;
 public class RelationRange extends SingleValueRange {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger _logger = Logger.getLogger(RelationRange.class.getName());
+    private static final Logger _logger = LoggerFactory.getLogger(RelationRange.class.getName());
 
     private String typeName;
     private String namespace;
@@ -144,8 +145,8 @@ public class RelationRange extends SingleValueRange {
     @Override
     public boolean isIndexed(ITypeDesc typeDesc) {
         boolean result = typeDesc.getQueryExtensions() != null && typeDesc.getQueryExtensions().isIndexed(namespace, getPath());
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "isIndexed(" + typeName + "." + getPath() + ") - " + result);
+        if (_logger.isDebugEnabled())
+            _logger.debug("isIndexed(" + typeName + "." + getPath() + ") - " + result);
         return result;
     }
 

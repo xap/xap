@@ -12,8 +12,9 @@ import org.jini.rio.boot.LoggableClassLoader;
 
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -27,15 +28,15 @@ public class CustomURLClassLoader extends URLClassLoader implements LoggableClas
     public CustomURLClassLoader(String name, URL[] urls, ClassLoader parent) {
         super(urls, parent);
         this.name = name;
-        this.logger = Logger.getLogger("com.gigaspaces.classloader." + name);
-        if (logger.isLoggable(Level.FINE)) {
+        this.logger = LoggerFactory.getLogger("com.gigaspaces.classloader." + name);
+        if (logger.isDebugEnabled()) {
             StringBuilder sb = new StringBuilder("Created [urls=" + urls.length + "]");
             final String prefix = BootIOUtils.NEW_LINE + "\t";
             for (URL url : urls) {
                 sb.append(prefix).append(url);
             }
 
-            logger.log(Level.FINE, sb.toString());
+            logger.debug(sb.toString());
         }
     }
 
@@ -51,29 +52,29 @@ public class CustomURLClassLoader extends URLClassLoader implements LoggableClas
 
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        if (logger.isLoggable(Level.FINEST))
-            this.logger.log(Level.FINEST, "loadClass(" + name + ")");
+        if (logger.isTraceEnabled())
+            this.logger.trace("loadClass(" + name + ")");
         return super.loadClass(name, resolve);
     }
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        if (logger.isLoggable(Level.FINE))
-            this.logger.log(Level.FINE, "findClass(" + name + ")");
+        if (logger.isDebugEnabled())
+            this.logger.debug("findClass(" + name + ")");
         return super.findClass(name);
     }
 
     @Override
     public URL getResource(String name) {
-        if (logger.isLoggable(Level.FINEST))
-            this.logger.log(Level.FINEST, "getResource(" + name + ")");
+        if (logger.isTraceEnabled())
+            this.logger.trace("getResource(" + name + ")");
         return super.getResource(name);
     }
 
     @Override
     public URL findResource(String name) {
-        if (logger.isLoggable(Level.FINE))
-            this.logger.log(Level.FINE, "findResource(" + name + ")");
+        if (logger.isDebugEnabled())
+            this.logger.debug("findResource(" + name + ")");
         return super.findResource(name);
     }
 

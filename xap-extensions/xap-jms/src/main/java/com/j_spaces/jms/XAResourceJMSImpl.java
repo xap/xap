@@ -32,8 +32,9 @@ import net.jini.core.transaction.server.TransactionManager;
 
 import java.rmi.RemoteException;
 import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
@@ -49,7 +50,7 @@ public class XAResourceJMSImpl extends XAResourceImpl {
     private GSXASessionImpl session = null;
 
     // logger
-    private static Logger logger = Logger.getLogger(Constants.LOGGER_XA);
+    private static Logger logger = LoggerFactory.getLogger(Constants.LOGGER_XA);
 
     /**
      * Map from Xid to transaction <p> <b>Key:</b> <code>XID</code> <br> <b>Object:</b>
@@ -64,8 +65,8 @@ public class XAResourceJMSImpl extends XAResourceImpl {
         super(tm, proxy);
         this.session = session;
         transactionsTable = new HashMap<Xid, XATrasactionContext>();
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "Initialized: " + toString());
+        if (logger.isDebugEnabled()) {
+            logger.debug("Initialized: " + toString());
         }
     }
 
@@ -75,8 +76,8 @@ public class XAResourceJMSImpl extends XAResourceImpl {
     @Override
     public void start(Xid xid, int flag) throws XAException {
         Xid originalxid = xid;
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "Associating transaction: " + xid);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Associating transaction: " + xid);
         }
         xid = createGSXid(xid);
         Transaction.Created cr = startIn(originalxid, flag, false);
@@ -97,8 +98,8 @@ public class XAResourceJMSImpl extends XAResourceImpl {
      */
     @Override
     public void end(Xid xid, int flag) throws XAException {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "Disassociating transaction: " + xid);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Disassociating transaction: " + xid);
         }
         session.setTransaction(null);
         xid = createGSXid(xid);
@@ -132,8 +133,8 @@ public class XAResourceJMSImpl extends XAResourceImpl {
      */
     @Override
     public int prepare(Xid xid) throws XAException {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "Preparing transaction: " + xid);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Preparing transaction: " + xid);
         }
         Xid originalxid = xid;
         xid = createGSXid(xid);
@@ -157,8 +158,8 @@ public class XAResourceJMSImpl extends XAResourceImpl {
      */
     @Override
     public void commit(Xid xid, boolean onePhase) throws XAException {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "Committing transaction: " + xid);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Committing transaction: " + xid);
         }
 
         // TODO: in case of onePhase, do we need to prepare here??
@@ -178,8 +179,8 @@ public class XAResourceJMSImpl extends XAResourceImpl {
      */
     @Override
     public void rollback(Xid xid) throws XAException {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "Rolling back transaction: " + xid);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Rolling back transaction: " + xid);
         }
         Xid originalxid = xid;
         xid = createGSXid(xid);
@@ -197,8 +198,8 @@ public class XAResourceJMSImpl extends XAResourceImpl {
      */
     @Override
     public void forget(Xid xid) throws XAException {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "Forgetting transaction: " + xid);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Forgetting transaction: " + xid);
         }
         xid = createGSXid(xid);
         transactionsTable.remove(xid);
@@ -210,8 +211,8 @@ public class XAResourceJMSImpl extends XAResourceImpl {
      */
     @Override
     public boolean isSameRM(XAResource xares) throws XAException {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "Comparing XAResource to: " + xares);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Comparing XAResource to: " + xares);
         }
         if (xares == this) {
             return true;
@@ -222,8 +223,8 @@ public class XAResourceJMSImpl extends XAResourceImpl {
                 return session.equals(xaresImpl.session);
             }
         } catch (Exception e) {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "Exception while comparing XAResource to: " + xares);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Exception while comparing XAResource to: " + xares);
             }
         }
         return false;

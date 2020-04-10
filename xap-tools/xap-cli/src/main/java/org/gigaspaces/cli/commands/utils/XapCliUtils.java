@@ -10,8 +10,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @since 12.3
@@ -26,7 +27,7 @@ public class XapCliUtils {
 
     static {
         GSLogConfigLoader.getLoader("cli");
-        LOGGER = Logger.getLogger(Constants.LOGGER_CLI);
+        LOGGER = LoggerFactory.getLogger(Constants.LOGGER_CLI);
     }
 
 
@@ -58,12 +59,12 @@ public class XapCliUtils {
                             System.exit(process.exitValue());
                         }
                     } catch (IOException e) {
-                        if (LOGGER.isLoggable(Level.SEVERE)) {
-                            LOGGER.log(Level.SEVERE, e.toString(), e);
+                        if (LOGGER.isErrorEnabled()) {
+                            LOGGER.error(e.toString(), e);
                         }
                     } catch (InterruptedException e) {
-                        if (LOGGER.isLoggable(Level.FINE)) {
-                            LOGGER.log(Level.FINE, e.toString(), e);
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug(e.toString(), e);
                         }
                         Thread.currentThread().interrupt();
                     }

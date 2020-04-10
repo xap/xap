@@ -21,8 +21,9 @@ import com.gigaspaces.security.SecurityException;
 import com.gigaspaces.security.audit.SecurityAudit;
 
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A factory for creating {@link SecurityAudit} implementation
@@ -32,7 +33,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class SecurityAuditFactory {
 
-    private static final Logger logger = Logger.getLogger(SecurityAuditFactory.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(SecurityAuditFactory.class.getName());
 
     /**
      * The property key identifying the security audit class in a properties file/object
@@ -55,10 +56,10 @@ public class SecurityAuditFactory {
      * @throws SecurityException if failed to create the security audit.
      */
     public static SecurityAudit createSecurityAudit(Properties securityProperties) throws SecurityException {
-        if (logger.isLoggable(Level.FINE)) {
+        if (logger.isDebugEnabled()) {
             String property = securityProperties.getProperty(SECURITY_AUDIT_CLASS_PROPERTY_KEY);
             if (property != null) {
-                logger.fine("Security security-audit class: " + property);
+                logger.debug("Security security-audit class: " + property);
             }
         }
 

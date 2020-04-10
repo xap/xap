@@ -43,7 +43,7 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
+
 
 
 @com.gigaspaces.api.InternalApi
@@ -155,8 +155,8 @@ public class ProcessLogBucket {
                                     break;
                                 }
                                 _processLog.throwIfRepetitiveError(prevResult, consumeResult);
-                                if (_replicationInContext.getContextLogger().isLoggable(Level.FINER))
-                                    _replicationInContext.getContextLogger().log(Level.FINER,
+                                if (_replicationInContext.getContextLogger().isDebugEnabled())
+                                    _replicationInContext.getContextLogger().debug(
                                             "Encountered error while consuming packet ["
                                                     + packet
                                                     + "], trying to resolve issue",
@@ -166,8 +166,8 @@ public class ProcessLogBucket {
                                 data = _processLog.getDataConsumer().applyFix(_replicationInContext,
                                         data,
                                         fix);
-                                if (_replicationInContext.getContextLogger().isLoggable(Level.FINER))
-                                    _replicationInContext.getContextLogger().log(Level.FINER, "Fix applied - retrying the operation [" + fix + "]");
+                                if (_replicationInContext.getContextLogger().isDebugEnabled())
+                                    _replicationInContext.getContextLogger().debug("Fix applied - retrying the operation [" + fix + "]");
                                 prevResult = consumeResult;
                             } while (true);
                         } finally {

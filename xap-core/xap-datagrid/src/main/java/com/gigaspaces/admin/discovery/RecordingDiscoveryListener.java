@@ -27,8 +27,9 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A DiscoveryListener that keeps a record of discovered and discarded ServiceRegistrar instances
@@ -38,7 +39,7 @@ public class RecordingDiscoveryListener implements DiscoveryListener {
 
     private ArrayList discoveryTimes = new ArrayList();
 
-    private static Logger LOGGER = Logger.getLogger(RecordingDiscoveryListener.class.getName());
+    private static Logger LOGGER = LoggerFactory.getLogger(RecordingDiscoveryListener.class.getName());
 
     public RecordingDiscoveryListener() {
 
@@ -49,8 +50,8 @@ public class RecordingDiscoveryListener implements DiscoveryListener {
             public void run() {
                 long t = System.currentTimeMillis();
 
-                if (LOGGER.isLoggable(Level.FINER)) {
-                    LOGGER.finer(" --- BEGIN- discovered ");
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(" --- BEGIN- discovered ");
                 }
 
                 Map groupsMap = dEvent.getGroups();
@@ -69,16 +70,16 @@ public class RecordingDiscoveryListener implements DiscoveryListener {
                             discoveryTimes.add(rt);
                         }
                     } catch (RemoteException e) {
-                        if (LOGGER.isLoggable(Level.INFO)) {
-                            LOGGER.log(Level.INFO,
+                        if (LOGGER.isInfoEnabled()) {
+                            LOGGER.info(
                                     "During recording discovery: " + e.toString(), e);
                         }
                     }
                 }
                 long endTime = System.currentTimeMillis();
 
-                if (LOGGER.isLoggable(Level.FINER)) {
-                    LOGGER.finer(" --- Processing of discovering for event " + dEvent +
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(" --- Processing of discovering for event " + dEvent +
                             " took " + (endTime - t) + " msec.");
                 }
 

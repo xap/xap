@@ -35,8 +35,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -49,7 +50,7 @@ import java.util.logging.Logger;
  **/
 @com.gigaspaces.api.InternalApi
 public class SplitBrainController {
-    final private static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLUSTER_ACTIVE_ELECTION);
+    final private static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLUSTER_ACTIVE_ELECTION);
 
     private static final int EXTRA_BACKUP_RESOLUTION_RETRIES = Integer.getInteger(SystemProperties.EXTRA_BACKUP_SPACE_RESOLUTION_RETRIES,
             SystemProperties.EXTRA_BACKUP_SPACE_RESOLUTION_RETRIES_DEFAULT);
@@ -100,8 +101,8 @@ public class SplitBrainController {
 
                             _electManager.onSplitBrain(splitActives);
                         } catch (Exception ex) {
-                            if (_logger.isLoggable(Level.SEVERE))
-                                _logger.log(Level.SEVERE, toString() + " Failed to resolve split-brain.", ex);
+                            if (_logger.isErrorEnabled())
+                                _logger.error(toString() + " Failed to resolve split-brain.", ex);
                         }
                     }
                 }, 10, TimeUnit.SECONDS);
@@ -130,8 +131,8 @@ public class SplitBrainController {
                         final ServiceItem activeServiceItem = event.getPostEventServiceItem();
 
                         if ((retries--) == 0) {
-                            if (_logger.isLoggable(Level.WARNING)) {
-                                _logger.warning("Exhausted " + EXTRA_BACKUP_RESOLUTION_RETRIES + " retry attempts to resolve " +
+                            if (_logger.isWarnEnabled()) {
+                                _logger.warn("Exhausted " + EXTRA_BACKUP_RESOLUTION_RETRIES + " retry attempts to resolve " +
                                         "discovery of extra-backup Space using: [" + activeServiceItem + "]");
                             }
                             throw new CancellationException(); //cancel this task
@@ -179,8 +180,8 @@ public class SplitBrainController {
         INamingService namingSrv = electManager.getNamingService();
         _namingCache = namingSrv.notify(template, null, new ActiveDiscovery());
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine(toString() + " started.");
+        if (_logger.isDebugEnabled())
+            _logger.debug(toString() + " started.");
     }
 
     /**
@@ -204,8 +205,8 @@ public class SplitBrainController {
         if (threadPool != null)
             threadPool.shutdown();
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine(toString() + " terminated.");
+        if (_logger.isDebugEnabled())
+            _logger.debug(toString() + " terminated.");
     }
 
     /**
@@ -231,8 +232,8 @@ public class SplitBrainController {
             try {
                 primarySpace.ping();
             } catch (RemoteException e) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine("Primary space [] is not available, ignoring it in election process.");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Primary space [] is not available, ignoring it in election process.");
                 iterator.remove();
             }
         }

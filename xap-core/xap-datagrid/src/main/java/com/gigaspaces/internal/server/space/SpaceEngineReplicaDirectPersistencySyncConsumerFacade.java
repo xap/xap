@@ -31,13 +31,14 @@ import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
 import com.j_spaces.core.client.UpdateModifiers;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @com.gigaspaces.api.InternalApi
 public class SpaceEngineReplicaDirectPersistencySyncConsumerFacade implements ISpaceReplicaConsumeFacade {
-    private final static Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
+    private final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
     private final SpaceEngine _spaceEngine;
 
     public SpaceEngineReplicaDirectPersistencySyncConsumerFacade(SpaceEngine spaceEngine) {
@@ -47,14 +48,14 @@ public class SpaceEngineReplicaDirectPersistencySyncConsumerFacade implements IS
 
     public void remove(String uidToRemove, IMarker evictionMarker, SpaceCopyReplicaParameters.ReplicaType replicaType)
             throws Exception {
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.finest(_spaceEngine.getReplicationNode()
+        if (_logger.isTraceEnabled()) {
+            _logger.trace(_spaceEngine.getReplicationNode()
                     + " removing entry with uid: " + uidToRemove);
         }
 
         if (!_spaceEngine.getCacheManager().isEntryInPureCache(uidToRemove)) {
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.finest(_spaceEngine.getReplicationNode()
+            if (_logger.isTraceEnabled()) {
+                _logger.trace(_spaceEngine.getReplicationNode()
                         + " the entry with uid: " + uidToRemove + " does not exists, will not be deleted");
             }
             return;
@@ -77,8 +78,8 @@ public class SpaceEngineReplicaDirectPersistencySyncConsumerFacade implements IS
 
     @Override
     public GSEventRegistration insertNotifyTemplate(ITemplatePacket templatePacket, String templateUid, NotifyInfo notifyInfo) throws Exception {
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest(_spaceEngine.getReplicationNode()
+        if (_logger.isTraceEnabled())
+            _logger.trace(_spaceEngine.getReplicationNode()
                     + " inserting notify template " + templatePacket);
         return _spaceEngine.notify(templatePacket,
                 templatePacket.getTTL(),
@@ -97,15 +98,15 @@ public class SpaceEngineReplicaDirectPersistencySyncConsumerFacade implements IS
 
     @Override
     public void write(IEntryPacket entryPacket, IMarker evictionMarker, SpaceCopyReplicaParameters.ReplicaType replicaType) throws Exception {
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest(_spaceEngine.getReplicationNode()
+        if (_logger.isTraceEnabled())
+            _logger.trace(_spaceEngine.getReplicationNode()
                     + " inserting entry " + entryPacket);
 
         boolean exists = _spaceEngine.getCacheManager().isEntryInPureCache(entryPacket.getUID());
 
-        if (_logger.isLoggable(Level.FINER)) {
+        if (_logger.isDebugEnabled()) {
             String opStr = exists ? "UPDATE" : "WRITE";
-            _logger.finer(_spaceEngine.getReplicationNode() + " [" + _spaceEngine.getFullSpaceName() + "]" + " performing " + opStr +
+            _logger.debug(_spaceEngine.getReplicationNode() + " [" + _spaceEngine.getFullSpaceName() + "]" + " performing " + opStr +
                     " operation, uid= " + entryPacket.getUID() + " ,version before operation: " + entryPacket.getVersion());
         }
 

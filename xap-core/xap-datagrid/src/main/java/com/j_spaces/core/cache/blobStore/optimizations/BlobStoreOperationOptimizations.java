@@ -24,8 +24,9 @@ import com.gigaspaces.internal.transport.AbstractProjectionTemplate;
 import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.context.Context;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Yael Nahon
@@ -33,7 +34,7 @@ import java.util.logging.Logger;
  */
 public class BlobStoreOperationOptimizations {
 
-    private static Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private static Logger logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
 
     public static boolean isConsiderOptimizedForBlobstore(SpaceEngine spaceEngine, Context context, ITemplateHolder template, IEntryCacheInfo pEntry) {
         if (!pEntry.isBlobStoreEntry() || template.getXidOriginatedTransaction() != null) {
@@ -52,11 +53,11 @@ public class BlobStoreOperationOptimizations {
             res = isConsiderOptimizedTakeForBlobstore(spaceEngine, context, serverTypeDesc);
         }
         context.setOptimizedBlobStoreReadEnabled(res);
-        if(logger.isLoggable(Level.FINE)){
+        if(logger.isDebugEnabled()){
             if(res){
-                logger.fine("BlobStore - enabled optimization for query: "+template.toSQLQuery(serverTypeDesc.getTypeDesc()).toString());
+                logger.debug("BlobStore - enabled optimization for query: "+template.toSQLQuery(serverTypeDesc.getTypeDesc()).toString());
             } else {
-                logger.fine("BlobStore - disabled optimization for query: "+template.toSQLQuery(serverTypeDesc.getTypeDesc()).toString());
+                logger.debug("BlobStore - disabled optimization for query: "+template.toSQLQuery(serverTypeDesc.getTypeDesc()).toString());
             }
         }
         return res;

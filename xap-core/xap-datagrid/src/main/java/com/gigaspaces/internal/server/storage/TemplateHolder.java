@@ -56,7 +56,8 @@ import com.j_spaces.kernel.locks.ILockObject;
 import net.jini.core.transaction.server.ServerTransaction;
 
 import java.util.*;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class represents a template in a J-Space. Each instance of this class contains a reference

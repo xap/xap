@@ -57,8 +57,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Supplies objects needed to configure applications, such as {@link Exporter} or {@link
@@ -415,13 +416,13 @@ public class ConfigurationFile extends AbstractConfiguration {
                     if (line == null) {
                         break;
                     }
-                    logger.log(Level.FINER, "Adding prohibited method: {0}",
+                    logger.debug("Adding prohibited method: {0}",
                             line);
                     prohibitedMethods.add(line);
                 }
             }
         } catch (IOException e) {
-            logger.log(Level.INFO, "Problem reading prohibited methods resource", e);
+            logger.info("Problem reading prohibited methods resource", e);
         } finally {
             if (in != null) {
                 try {
@@ -1833,7 +1834,7 @@ public class ConfigurationFile extends AbstractConfiguration {
                 }
             }
         }
-        logger.log(Level.FINER, "created {0}", this);
+        logger.debug("created {0}", this);
     }
 
     /**
@@ -1923,7 +1924,7 @@ public class ConfigurationFile extends AbstractConfiguration {
         this.cl = nonNullLoaderSupplied ? cl
                 : (ClassLoader) Security.doPrivileged(contextClassLoader);
         new Parser(reader, options);
-        logger.log(Level.FINER, "created {0}", this);
+        logger.debug("created {0}", this);
     }
 
     /**
@@ -2098,8 +2099,8 @@ public class ConfigurationFile extends AbstractConfiguration {
         }
         Entry entry = (Entry) entries.get(component + '.' + name);
         if (entry == null || entry.isPrivate) {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE,
+            if (logger.isDebugEnabled()) {
+                logger.debug(
                         "entry for component {0}, name {1} not found in {2}",
                         new Object[]{component, name, this});
             }
@@ -2109,8 +2110,8 @@ public class ConfigurationFile extends AbstractConfiguration {
         ConfigurationException configEx;
         try {
             Class result = entry.resolve(null);
-            if (logger.isLoggable(Level.FINER)) {
-                logger.log(Level.FINER,
+            if (logger.isDebugEnabled()) {
+                logger.debug(
                         "{0}, component {1}, name {2}: returns {3}",
                         new Object[]{this, component, name, result});
             }
@@ -2127,10 +2128,10 @@ public class ConfigurationFile extends AbstractConfiguration {
                 configEx = ce;
             }
         }
-        if (logger.isLoggable(Level.FINE)) {
+        if (logger.isDebugEnabled()) {
             String message = LogUtils.format(this.getClass(), "getEntryType",
                     "{0}, component {1}, name {2}: throws", this, component, name);
-            logger.log(Level.FINE, message, configEx);
+            logger.debug(message, configEx);
 
         }
         throw configEx;

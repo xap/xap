@@ -41,8 +41,9 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * QueryHandler executes the JDBC  statements set by the {@link GConnection}. For each statement the
@@ -54,7 +55,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class QueryHandler {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_QUERY);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     private final ISpaceProxy _spaceCluster;
     private final ISpaceProxy _spaceRegular;
@@ -166,8 +167,8 @@ public class QueryHandler {
         Query query = _queryCache.getQueryFromCache(request.getStatement());
         try {
             if (query == null) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("Query wasn't in cache, will be parsed");
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Query wasn't in cache, will be parsed");
                 }
 
                 // query was not in the cache to build a parser to parse it.
@@ -190,14 +191,14 @@ public class QueryHandler {
 
             return query;
         } catch (SQLException sqlEx) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "Error executing statement ["
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Error executing statement ["
                         + request + "]", sqlEx);
             }
             throw sqlEx;
         } catch (Throwable t) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "Couldn't parse given statement ["
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Couldn't parse given statement ["
                         + request + "]", t);
             }
             // now should throw an SQLException back to the JDBC driver.
@@ -289,8 +290,8 @@ public class QueryHandler {
                 try {
                     session.getTransaction().abort();
                 } catch (Exception e) {
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE,
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug(
                                 "Failed to abort transaction.",
                                 e);
                     }

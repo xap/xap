@@ -76,8 +76,9 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -88,8 +89,8 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class CPeer extends BaseClientPeer {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
-    private static final Logger _contextLogger = Logger.getLogger(Constants.LOGGER_LRMI_CONTEXT);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
+    private static final Logger _contextLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_CONTEXT);
 
     private static final int SELECTOR_BUG_CONNECT_RETRY = Integer.getInteger(SystemProperties.LRMI_SELECTOR_BUG_CONNECT_RETRY, 5);
 
@@ -205,7 +206,7 @@ public class CPeer extends BaseClientPeer {
                 DynamicSmartStub.throwProxyClosedExeption(connectionURL);
         }
 
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             detailedLogging("CPeer.connect", "trying to connect using connection url [" + connectionURL + "], calling method [" + lrmiMethod.realMethod.getDeclaringClass().getSimpleName() + "." + lrmiMethod.realMethod.getName() + "]");
 
         // parse connection URL
@@ -255,8 +256,8 @@ public class CPeer extends BaseClientPeer {
     }
 
     private SocketChannel createAsyncChannel(String host, int port, LRMIMethod lrmiMethod) throws IOException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("connecting new socket channel to " + host + ":" + port + ", connect timeout=" + _config.getSocketConnectTimeout() + " keepalive=" + LRMIUtilities.KEEP_ALIVE_MODE);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("connecting new socket channel to " + host + ":" + port + ", connect timeout=" + _config.getSocketConnectTimeout() + " keepalive=" + LRMIUtilities.KEEP_ALIVE_MODE);
         }
         Conversation conversation = new Conversation(new InetSocketAddress(host, port));
         if (_protocolValidationEnabled) {
@@ -289,7 +290,7 @@ public class CPeer extends BaseClientPeer {
                 DynamicSmartStub.throwProxyClosedExeption(connectionURL);
         }
 
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             detailedLogging("CPeer.connect", "trying to connect using connection url [" + connectionURL + "], calling method [" + lrmiMethod.realMethod.getDeclaringClass().getSimpleName() + "." + lrmiMethod.realMethod.getName() + "]");
 
         // parse connection URL
@@ -334,8 +335,8 @@ public class CPeer extends BaseClientPeer {
             try {
                 _filterManager = IOBlockFilterManager.createFilter(_reader, _writer, true, m_SockChannel);
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to load communication filter " + System.getProperty(SystemProperties.LRMI_NETWORK_FILTER_FACTORY), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to load communication filter " + System.getProperty(SystemProperties.LRMI_NETWORK_FILTER_FACTORY), e);
                 throw new InternalSpaceException("Failed to load communication filter " + System.getProperty(SystemProperties.LRMI_NETWORK_FILTER_FACTORY), e);
             }
             if (_filterManager != null) {
@@ -377,7 +378,7 @@ public class CPeer extends BaseClientPeer {
     }
 
     private void detailedLogging(String methodName, String description) {
-        if (_logger.isLoggable(Level.FINER)) {
+        if (_logger.isDebugEnabled()) {
             String localAddress = "not connected";
             if (m_SockChannel != null) {
                 //Avoid possible NPE if socket gets disconnected
@@ -389,10 +390,10 @@ public class CPeer extends BaseClientPeer {
                         localAddress = localSocketAddress.toString();
                 }
             }
-            _logger.finer("At " + methodName + " method, " + description + " [invoker address=" + localAddress + ", ServerEndPoint=" + getConnectionURL() + "]");
+            _logger.debug("At " + methodName + " method, " + description + " [invoker address=" + localAddress + ", ServerEndPoint=" + getConnectionURL() + "]");
         }
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.log(Level.FINEST, "At " + methodName + ", thread stack:" + StringUtils.NEW_LINE + StringUtils.getCurrentStackTrace());
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("At " + methodName + ", thread stack:" + StringUtils.NEW_LINE + StringUtils.getCurrentStackTrace());
         }
     }
 
@@ -400,8 +401,8 @@ public class CPeer extends BaseClientPeer {
      * Create a new socket channel and set its parameters
      */
     private SocketChannel createChannel(String host, int port) throws IOException {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("connecting new socket channel to " + host + ":" + port + ", connect timeout=" + _config.getSocketConnectTimeout() + " keepalive=" + LRMIUtilities.KEEP_ALIVE_MODE);
+        if (_logger.isDebugEnabled())
+            _logger.debug("connecting new socket channel to " + host + ":" + port + ", connect timeout=" + _config.getSocketConnectTimeout() + " keepalive=" + LRMIUtilities.KEEP_ALIVE_MODE);
 
         SocketChannel sockChannel;
         for (int i = 0; /* true */ ; ++i) {
@@ -458,15 +459,15 @@ public class CPeer extends BaseClientPeer {
     private void handleConnectError(int retry, String host, int port,
                                     SocketChannel sockChannel, ClosedSelectorException e) {
         // BugID GS-5873: retry to connect, this is a workaround for a bug in IBM1.4 JVM (IZ19325)
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "retrying connection due to closed selector exception: connecting to " +
+        if (_logger.isDebugEnabled())
+            _logger.debug("retrying connection due to closed selector exception: connecting to " +
                     host + ":" + port + ", connect timeout=" + _config.getSocketConnectTimeout() +
                     " keepalive=" + LRMIUtilities.KEEP_ALIVE_MODE, e);
         try {
             sockChannel.close();
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Failed to close socket: connecting to " +
+            if (_logger.isDebugEnabled())
+                _logger.debug("Failed to close socket: connecting to " +
                         host + ":" + port + ", connect timeout=" + _config.getSocketConnectTimeout() +
                         " keepalive=" + LRMIUtilities.KEEP_ALIVE_MODE, ex);
         }
@@ -525,8 +526,8 @@ public class CPeer extends BaseClientPeer {
                 m_SockChannel.close();
         } catch (Exception ex) {
             // nothing todo
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Failed to disconnect from " + getConnectionURL(), ex);
+            if (_logger.isDebugEnabled())
+                _logger.debug("Failed to disconnect from " + getConnectionURL(), ex);
 
         } finally {
             if (_watchdogContext != null)
@@ -603,8 +604,8 @@ public class CPeer extends BaseClientPeer {
             else
                 _reader.readReply(_slowConsumerLatency, 1000);
         } catch (ClassNotFoundException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "unexpected exception occured at handshake sequence: [" + getConnectionURL() + "]", e);
+            if (_logger.isErrorEnabled())
+                _logger.error("unexpected exception occured at handshake sequence: [" + getConnectionURL() + "]", e);
 
             throw e;
         } finally {
@@ -628,11 +629,11 @@ public class CPeer extends BaseClientPeer {
 
     public Object invoke(Object proxy, LRMIMethod lrmiMethod, Object[] args, ConnectionPool connPool)
             throws ApplicationException, ProtocolException, RemoteException, InterruptedException {
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             detailedLogging("CPeer.invoke", "trying to invoke method [" + lrmiMethod.realMethod.getDeclaringClass().getSimpleName() + "." + lrmiMethod.realMethod.getName() + "]");
 
         LRMIInvocationContext currentContext = LRMIInvocationContext.getCurrentContext();
-        if (_contextLogger.isLoggable(Level.FINE)) {
+        if (_contextLogger.isDebugEnabled()) {
             LRMIInvocationTrace trace = currentContext.getTrace();
             if (trace != null) {
                 trace = trace.setIdentifier(NIOUtils.getSocketDisplayString(m_SockChannel));
@@ -751,14 +752,14 @@ public class CPeer extends BaseClientPeer {
             }
         } catch (LRMIUnhandledException ex) {
             if (ex.getStage() == Stage.DESERIALIZATION) {
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.log(Level.FINE, "LRMI caught LRMIUnhandledException during deserialization stage at end point, reseting writer context.", ex);
+                if (_logger.isTraceEnabled())
+                    _logger.debug("LRMI caught LRMIUnhandledException during deserialization stage at end point, reseting writer context.", ex);
                 //We must reset the context because the other side have not completed reading the stream and therefore didn't
                 //learn all the new context
                 _writer.resetContext();
             }
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "LRMI caught LRMIUnhandledException, propogating it upwards.", ex);
+            if (_logger.isDebugEnabled())
+                _logger.debug("LRMI caught LRMIUnhandledException, propogating it upwards.", ex);
             //Throw exception as is
             throw ex;
         } catch (NoSuchObjectException ex) {
@@ -775,8 +776,8 @@ public class CPeer extends BaseClientPeer {
 
             String exMessage = "LRMI transport protocol over NIO broken connection with ServerEndPoint: [" + getConnectionURL() + "]";
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, exMessage, ex);
+            if (_logger.isDebugEnabled())
+                _logger.debug(exMessage, ex);
 
             if (_watchdogContext.requestWatchHasException())
                 throw new ConnectIOException(exMessage, _watchdogContext.getAndClearRequestWatchException());
@@ -791,8 +792,8 @@ public class CPeer extends BaseClientPeer {
 
             String exMessage = "LRMI transport protocol over NIO broken connection with ServerEndPoint: [" + getConnectionURL() + "]";
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, exMessage, ex);
+            if (_logger.isDebugEnabled())
+                _logger.debug(exMessage, ex);
 
             throw new RemoteException(exMessage, ex);
         } catch (Throwable ex) {
@@ -856,8 +857,8 @@ public class CPeer extends BaseClientPeer {
 
     private NoSuchObjectException handleNoSuchObjectException(
             LRMIMethod lrmiMethod, NoSuchObjectException ex) {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "LRMI made an attempt to invoke a method ["
+        if (_logger.isDebugEnabled())
+            _logger.debug("LRMI made an attempt to invoke a method ["
                     + LRMIUtilities.getMethodDisplayString(lrmiMethod.realMethod)
                     + "] on an RemoteObject: [" + getConnectionURL()
                     + "]\n that no longer "
@@ -903,10 +904,10 @@ public class CPeer extends BaseClientPeer {
 
             return true;
         } catch (Throwable t) {
-            if (_logger.isLoggable(Level.FINE)) {
+            if (_logger.isDebugEnabled()) {
                 String exMessage = "LRMI over NIO broken connection with ServerEndPoint: "
                         + getConnectionURL();
-                _logger.log(Level.FINE, exMessage, t);
+                _logger.debug(exMessage, t);
             }
 
             return false;

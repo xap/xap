@@ -53,8 +53,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public abstract class AbstractMultiBucketSingleFileTargetProcessLog extends AbstractSingleFileTargetProcessLog
@@ -638,8 +639,8 @@ public abstract class AbstractMultiBucketSingleFileTargetProcessLog extends Abst
                 DeletedMultiBucketOrderedPacket deletedBacklogPacket = (DeletedMultiBucketOrderedPacket) packet;
                 String deletionMessage = "packets [" + deletedBacklogPacket.getKey() + "-" + deletedBacklogPacket.getEndKey() + "] are lost due to backlog deletion at the source";
                 getGroupHistory().logEvent(getSourceLookupName(), deletionMessage);
-                if (_specificLogger.isLoggable(Level.WARNING))
-                    _specificLogger.warning(deletionMessage);
+                if (_specificLogger.isWarnEnabled())
+                    _specificLogger.warn(deletionMessage);
             }
         }
     }

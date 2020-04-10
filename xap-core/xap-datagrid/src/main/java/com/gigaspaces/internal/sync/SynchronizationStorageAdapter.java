@@ -64,8 +64,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.DataAdapter.DATA_CLASS_PROP;
 import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_RECENT_DELETES_DEFAULT;
@@ -80,7 +81,7 @@ import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_RECENT
  */
 @com.gigaspaces.api.InternalApi
 public class SynchronizationStorageAdapter implements IStorageAdapter {
-    private final static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT);
+    private final static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT);
 
     private final SpaceEngine _engine;
     private final String _spaceName;
@@ -133,7 +134,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
             initOldDataStorage();
             initializeSharedModeIteratorIfNecessary();
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.FINER))
+            if (_logger.isDebugEnabled())
                 LogUtils.throwing(_logger, getClass(), "Initialize", e);
             throw new SAException(e);
         }
@@ -154,7 +155,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
 
         long warnThreshold = (long) (Math.min(leaseManagerExpirationTimeRecentDeletes, leaseManagerExpirationTimeRecentUpdates) * 0.8);
         if (shareIteratorMode && sharedIteratorTimeToLive > warnThreshold)
-            _logger.warning("shared iterator time to live [" + sharedIteratorTimeToLive + "] exceeds lease manager expiration time of recent deletes or recent updates threshold [" + warnThreshold + "], this can cause correctness issues. ");
+            _logger.warn("shared iterator time to live [" + sharedIteratorTimeToLive + "] exceeds lease manager expiration time of recent deletes or recent updates threshold [" + warnThreshold + "], this can cause correctness issues. ");
 
         _spaceDataSource = new SharedIteratorSpaceDataSourceDecorator(_spaceDataSource, sharedIteratorTimeToLive);
     }
@@ -211,7 +212,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
                     _typeManager.addTypeDesc(typeDescriptor);
                 }
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.FINER))
+                if (_logger.isDebugEnabled())
                     LogUtils.throwing(_logger, getClass(), "Initial Metadata Load", e);
                 throw new SAException(e);
             }
@@ -233,7 +234,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
             }
             return cacheAdapterIterator;
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.FINER))
+            if (_logger.isDebugEnabled())
                 LogUtils.throwing(_logger, getClass(), "Initial Load", e);
             throw new SAException(e);
         }
@@ -252,7 +253,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
             }
             _syncEndpoint.onOperationsBatchSynchronization(new OperationsDataBatchImpl(operation, _spaceName));
         } catch (Throwable t) {
-            if (_logger.isLoggable(Level.FINER))
+            if (_logger.isDebugEnabled())
                 LogUtils.throwing(_logger, getClass(), "Insert Entry", t);
 
             throw new SAException(t);
@@ -303,7 +304,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
             }
             _syncEndpoint.onOperationsBatchSynchronization(new OperationsDataBatchImpl(operation, _spaceName));
         } catch (Throwable t) {
-            if (_logger.isLoggable(Level.FINER))
+            if (_logger.isDebugEnabled())
                 LogUtils.throwing(_logger, getClass(), "Remove Entry", t);
 
             throw new SAException(t);
@@ -366,7 +367,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
                         _spaceName));
             }
         } catch (Throwable t) {
-            if (_logger.isLoggable(Level.FINER))
+            if (_logger.isDebugEnabled())
                 LogUtils.throwing(_logger, getClass(), "Prepare", t);
             throw new SAException(t);
         }
@@ -414,7 +415,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
             }
             return results;
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.FINER))
+            if (_logger.isDebugEnabled())
                 LogUtils.throwing(_logger, getClass(), "Get Entries", e);
             throw new SAException(e);
         }
@@ -454,7 +455,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
 
             return holder;
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.FINER))
+            if (_logger.isDebugEnabled())
                 LogUtils.throwing(_logger, getClass(), "Get Entry", e);
             //could be: UnusableEntryException, UnknownTypeException or other
             throw new SAException(e);
@@ -515,7 +516,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
             }
             return cacheAdapterIterator;
         } catch (Throwable t) {
-            if (_logger.isLoggable(Level.FINER))
+            if (_logger.isDebugEnabled())
                 LogUtils.throwing(_logger, SynchronizationStorageAdapter.class, "Entries Iterator", t);
 
             throw new SAException(t);

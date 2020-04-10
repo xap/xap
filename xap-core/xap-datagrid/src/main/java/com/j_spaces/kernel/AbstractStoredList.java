@@ -23,8 +23,9 @@ import com.j_spaces.kernel.list.IterableStoredListIterator;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An abstract implementation of the IStoredList, provides common
@@ -60,7 +61,7 @@ public abstract class AbstractStoredList<T>
      * @see com.j_spaces.kernel.IStoredList#dump(java.util.logging.Logger, java.lang.String)
      */
     public void dump(Logger logger, String msg) {
-        if (logger.isLoggable(Level.INFO)) {
+        if (logger.isInfoEnabled()) {
             logger.info(msg);
 
             IStoredListIterator<T> slh = null;

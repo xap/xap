@@ -32,15 +32,16 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
  * @since 8.0.4
  */
 public abstract class DataEventListener implements ManagedRemoteEventListener, BatchRemoteEventListener {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLIENT);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLIENT);
 
     protected final RemoteEventListener _listener;
     protected final BatchRemoteEventListener _batchListener;
@@ -90,7 +91,7 @@ public abstract class DataEventListener implements ManagedRemoteEventListener, B
             try {
                 result.get();
             } catch (InterruptedException e) {
-                _logger.log(Level.FINE, "caught exception during event delivery", e);
+                _logger.debug("caught exception during event delivery", e);
             } catch (ExecutionException e) {
                 Throwable cause = e.getCause();
                 if (cause instanceof UnknownEventException)
@@ -98,7 +99,7 @@ public abstract class DataEventListener implements ManagedRemoteEventListener, B
                 if (cause instanceof RemoteException)
                     throw ((RemoteException) cause);
 
-                _logger.log(Level.FINE, "caught exception during event delivery", e);
+                _logger.debug("caught exception during event delivery", e);
             }
         }
     }

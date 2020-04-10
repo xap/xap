@@ -23,7 +23,7 @@ import com.j_spaces.kernel.SystemProperties;
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.logging.Level;
+
 
 @com.gigaspaces.api.InternalApi
 public class CacheContextFactory {
@@ -116,7 +116,7 @@ public class CacheContextFactory {
                     } catch (InterruptedException ignored) {
                     }
                     if ((0 < closeMaxWait) && (0 < (System.currentTimeMillis() - endTime))) {
-                        CacheManager.getLogger().log(Level.WARNING, _fullSpaceName + ": not all cache context closed, forced exit, owning thread is " + context.getOwningThreadName());
+                        CacheManager.getLogger().warn(_fullSpaceName + ": not all cache context closed, forced exit, owning thread is " + context.getOwningThreadName());
                         return;
                     }
                 }

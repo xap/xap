@@ -25,8 +25,9 @@ import com.j_spaces.kernel.JSpaceUtilities;
 
 import java.io.Serializable;
 import java.rmi.Remote;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*******************************************************************************
  * Copyright (c) 2010 GigaSpaces Technologies Ltd. All rights reserved
@@ -45,7 +46,7 @@ public class JSpaceContainerProxyWrapper implements Remote, Serializable {
     private String proxyPresentName;
     private boolean isLoginProcessed;
 
-    final private static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEBROWSER);
+    final private static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEBROWSER);
 
     public JSpaceContainerProxyWrapper() {
     }
@@ -56,8 +57,8 @@ public class JSpaceContainerProxyWrapper implements Remote, Serializable {
     public JSpaceContainerProxyWrapper(IJSpaceContainer spacecContainerProxy, String containerName, String hostName) {
         this.proxyObject = spacecContainerProxy;
 
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.finest("%%% Debug Stack trace:" +
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("%%% Debug Stack trace:" +
                     JSpaceUtilities.getStackTrace(new Exception("--DEBUG--")));
         }
 

@@ -34,12 +34,13 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class ReflectionUtil {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_REFLECTION);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_REFLECTION);
 
     /**
      * Used to look up no-arg constructors.
@@ -57,7 +58,7 @@ public class ReflectionUtil {
         final Class<?> factoryClass = com.gigaspaces.internal.reflection.fast.ASMReflectionFactory.class;
         IReflectionFactory reflectionFactory = (IReflectionFactory) createInstanceWithOptionalDependencies(factoryClass);
         if (reflectionFactory == null) {
-            _logger.log(Level.WARNING, "Failed to create reflection factory [" + factoryClass.getName() + "], falling back to standard reflection instead");
+            _logger.warn("Failed to create reflection factory [" + factoryClass.getName() + "], falling back to standard reflection instead");
             reflectionFactory = new StandardReflectionFactory();
         }
         return reflectionFactory;

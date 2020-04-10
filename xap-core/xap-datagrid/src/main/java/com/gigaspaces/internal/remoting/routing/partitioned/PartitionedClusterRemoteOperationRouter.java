@@ -30,8 +30,9 @@ import com.gigaspaces.internal.utils.concurrent.CyclicAtomicInteger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -64,8 +65,8 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
         for (int i = 0; i < _roundRobinPreciseIndexes.length; i++)
             _roundRobinPreciseIndexes[i] = new CyclicAtomicInteger(getNumOfPartitions() - 1);
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Initialized partitioned cluster router - number of partitions = " + partitions.length);
+        if (_logger.isDebugEnabled())
+            _logger.debug("Initialized partitioned cluster router - number of partitions = " + partitions.length);
     }
 
     public int getNumOfPartitions() {
@@ -95,8 +96,8 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
     public <T extends RemoteOperationResult> void execute(RemoteOperationRequest<T> request)
             throws InterruptedException {
         PartitionedClusterExecutionType executionType = request.getPartitionedClusterExecutionType();
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.log(Level.FINEST, "Starting partitioned execution (" + executionType + ") of " + request.toString());
+        if (_logger.isTraceEnabled())
+            _logger.trace("Starting partitioned execution (" + executionType + ") of " + request.toString());
 
         switch (executionType) {
             case SINGLE:
@@ -143,8 +144,8 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
     public <T extends RemoteOperationResult> void executeAsync(RemoteOperationRequest<T> request, RemoteOperationFutureListener<T> futureListener) {
         PartitionedClusterExecutionType executionType = request.getPartitionedClusterExecutionType();
 
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.log(Level.FINEST, "Starting async partitioned execution (" + executionType + ") of " + request.toString());
+        if (_logger.isTraceEnabled())
+            _logger.trace("Starting async partitioned execution (" + executionType + ") of " + request.toString());
 
         switch (executionType) {
             case SINGLE:
@@ -173,8 +174,8 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
     public void executeOneway(RemoteOperationRequest<?> request)
             throws InterruptedException {
         PartitionedClusterExecutionType executionType = request.getPartitionedClusterExecutionType();
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.log(Level.FINEST, "Starting oneway partitioned execution (" + executionType + ") of " + request.toString());
+        if (_logger.isTraceEnabled())
+            _logger.trace("Starting oneway partitioned execution (" + executionType + ") of " + request.toString());
 
         switch (executionType) {
             case SINGLE:

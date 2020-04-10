@@ -35,8 +35,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An implementation of a re-usable <code>Log</code>.
@@ -82,19 +83,19 @@ public class SimpleLogFile implements Log {
      * Logger for persistence related messages
      */
     private static final Logger persistenceLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".persistence");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".persistence");
 
     /**
      * Logger for operations related messages
      */
     private static final Logger operationsLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".operations");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".operations");
 
     /**
      * Logger for initialization related messages
      */
     private static final Logger initLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".init");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".init");
 
     /**
      * This class extends <tt>ObjectInputStream</tt> and overrides the <code>readStreamHeader</code>
@@ -193,7 +194,7 @@ public class SimpleLogFile implements Log {
      * Utility method that contains code common to all constructors 
      */
     private void init(String name, long cookie, LogRemovalManager logMgr) {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, SimpleLogFile.class, "init", new Object[]{name, new Long(cookie), logMgr});
         }
         if (name == null)
@@ -206,7 +207,7 @@ public class SimpleLogFile implements Log {
         this.name = name;
         this.cookie = cookie;
         this.logMgr = logMgr;
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, SimpleLogFile.class, "init");
         }
     }
@@ -228,7 +229,7 @@ public class SimpleLogFile implements Log {
      * @see com.sun.jini.mahalo.log.LogRecord
      */
     public synchronized void write(LogRecord rec) throws LogException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, SimpleLogFile.class, "write", rec);
         }
         try {
@@ -255,36 +256,36 @@ public class SimpleLogFile implements Log {
             out.flush();
             outfile.getFD().sync();
 
-            if (persistenceLogger.isLoggable(Level.FINEST)) {
-                persistenceLogger.log(Level.FINEST,
+            if (persistenceLogger.isTraceEnabled()) {
+                persistenceLogger.trace(
                         "Wrote: {0}", rec);
             }
         } catch (InvalidClassException ice) {
-            if (persistenceLogger.isLoggable(Level.WARNING)) {
-                persistenceLogger.log(Level.WARNING,
+            if (persistenceLogger.isWarnEnabled()) {
+                persistenceLogger.warn(
                         "Problem persisting LogRecord", ice);
             }
 // TODO - assertion error? ... should not happen
         } catch (NotSerializableException nse) {
-            if (persistenceLogger.isLoggable(Level.WARNING)) {
-                persistenceLogger.log(Level.WARNING,
+            if (persistenceLogger.isWarnEnabled()) {
+                persistenceLogger.warn(
                         "Problem persisting LogRecord", nse);
             }
 // TODO - assertion error? ... should not happen
         } catch (IOException ioe) {
-            if (persistenceLogger.isLoggable(Level.WARNING)) {
-                persistenceLogger.log(Level.WARNING,
+            if (persistenceLogger.isWarnEnabled()) {
+                persistenceLogger.warn(
                         "Problem persisting LogRecord", ioe);
             }
 // TODO - throw LogException?
         } catch (SecurityException se) {
-            if (persistenceLogger.isLoggable(Level.WARNING)) {
-                persistenceLogger.log(Level.WARNING,
+            if (persistenceLogger.isWarnEnabled()) {
+                persistenceLogger.warn(
                         "Problem persisting LogRecord", se);
             }
 // TODO - assertion error? ... should not happen
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, SimpleLogFile.class, "write", rec);
         }
     }
@@ -294,12 +295,12 @@ public class SimpleLogFile implements Log {
      */
     public synchronized void invalidate() throws LogException {
         // No short circuit check because we allow repeat calls
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, MultiLogManager.class, "invalidate");
         }
 
-        if (persistenceLogger.isLoggable(Level.FINEST)) {
-            persistenceLogger.log(Level.FINEST,
+        if (persistenceLogger.isTraceEnabled()) {
+            persistenceLogger.trace(
                     "Invalidating log for cookie: {0}", new Long(cookie));
         }
 
@@ -313,40 +314,40 @@ public class SimpleLogFile implements Log {
 
         try {
             if (out != null) {
-                if (persistenceLogger.isLoggable(Level.FINEST)) {
-                    persistenceLogger.log(Level.FINEST,
+                if (persistenceLogger.isTraceEnabled()) {
+                    persistenceLogger.trace(
                             "Closing log file for: {0}", new Long(cookie));
                 }
                 out.close(); // calls outfile.close()
             }
         } catch (IOException ioe) { // just log it
-            if (persistenceLogger.isLoggable(Level.FINE)) {
-                persistenceLogger.log(Level.FINE,
+            if (persistenceLogger.isDebugEnabled()) {
+                persistenceLogger.debug(
                         "Problem closing log file", ioe);
             }
         }
 
         try {
             File fl = new File(name);
-            if (persistenceLogger.isLoggable(Level.FINEST)) {
-                persistenceLogger.log(Level.FINEST,
+            if (persistenceLogger.isTraceEnabled()) {
+                persistenceLogger.trace(
                         "Deleting log file for: {0}", new Long(cookie));
             }
             if (!fl.delete()) {
-                if (persistenceLogger.isLoggable(Level.FINE)) {
-                    persistenceLogger.log(Level.FINE,
+                if (persistenceLogger.isDebugEnabled()) {
+                    persistenceLogger.debug(
                             "Could not delete log file");
                 }
             }
         } catch (SecurityException se) { // notify caller
-            if (persistenceLogger.isLoggable(Level.FINEST)) {
-                persistenceLogger.log(Level.FINEST,
+            if (persistenceLogger.isTraceEnabled()) {
+                persistenceLogger.trace(
                         "SecurityException on log deletion", se);
             }
             throw new LogException("SimpleLogFile: invalidate: "
                     + "cannot delete log file.");
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, MultiLogManager.class, "invalidate");
         }
     }
@@ -358,7 +359,7 @@ public class SimpleLogFile implements Log {
      * @see com.sun.jini.mahalo.log.LogRecovery
      */
     public synchronized void recover(LogRecovery client) throws LogException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, MultiLogManager.class, "recover", client);
         }
         if (!valid)
@@ -371,8 +372,8 @@ public class SimpleLogFile implements Log {
         ObjectInputStream in = null;
         ArrayList recList = new ArrayList();
         try {
-            if (persistenceLogger.isLoggable(Level.FINEST)) {
-                persistenceLogger.log(Level.FINEST,
+            if (persistenceLogger.isTraceEnabled()) {
+                persistenceLogger.trace(
                         "Recovering from: {0}", name);
             }
             in = new HeaderlessObjectInputStream(
@@ -392,8 +393,8 @@ public class SimpleLogFile implements Log {
                     } else { //TBD - ignore?
                         update = false;
                         done = true; // bad log ... skip it
-                        if (persistenceLogger.isLoggable(Level.FINE)) {
-                            persistenceLogger.log(Level.FINE,
+                        if (persistenceLogger.isDebugEnabled()) {
+                            persistenceLogger.debug(
                                     "Log for cookie {0} contained a null "
                                             + "record object", new Long(cookie));
                         }
@@ -401,15 +402,15 @@ public class SimpleLogFile implements Log {
                 }
             } catch (ClassNotFoundException cnfe) {
                 update = false;
-                if (persistenceLogger.isLoggable(Level.WARNING)) {
-                    persistenceLogger.log(Level.WARNING,
+                if (persistenceLogger.isWarnEnabled()) {
+                    persistenceLogger.warn(
                             "Problem recovering log file", cnfe);
                 }
 // TODO - assertion error? ... should not happen
             } catch (ClassCastException cce) {
                 update = false;
-                if (persistenceLogger.isLoggable(Level.WARNING)) {
-                    persistenceLogger.log(Level.WARNING,
+                if (persistenceLogger.isWarnEnabled()) {
+                    persistenceLogger.warn(
                             "Problem recovering log file", cce);
                 }
 // TODO - assertion error? ... should not happen
@@ -417,8 +418,8 @@ public class SimpleLogFile implements Log {
                 // OK. Assume we've hit the end of the log file
             } catch (IOException ioe) {
                 update = false;
-                if (persistenceLogger.isLoggable(Level.WARNING)) {
-                    persistenceLogger.log(Level.WARNING,
+                if (persistenceLogger.isWarnEnabled()) {
+                    persistenceLogger.warn(
                             "Problem recovering log file", ioe);
                 }
             }
@@ -428,29 +429,29 @@ public class SimpleLogFile implements Log {
                     client.recover(cookie, (LogRecord) recList.get(i));
                 }
             } else {
-                if (persistenceLogger.isLoggable(Level.WARNING)) {
-                    persistenceLogger.log(Level.WARNING,
+                if (persistenceLogger.isWarnEnabled()) {
+                    persistenceLogger.warn(
                             "Skipping log recovery for", name);
                 }
             }
         } catch (IOException ioe) {
             // bogus log file -- skip it
-            if (persistenceLogger.isLoggable(Level.WARNING)) {
-                persistenceLogger.log(Level.WARNING,
+            if (persistenceLogger.isWarnEnabled()) {
+                persistenceLogger.warn(
                         "Problem recovering log file", ioe);
             }
         } finally {
             try {
                 if (in != null) in.close(); // calls fin.close()
             } catch (IOException ioe) {
-                if (persistenceLogger.isLoggable(Level.FINE)) {
-                    persistenceLogger.log(Level.FINE,
+                if (persistenceLogger.isDebugEnabled()) {
+                    persistenceLogger.debug(
                             "Problem closing recovered log file", ioe);
                 }
             }
             readonly = false;
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, MultiLogManager.class,"recover");
         }
     }

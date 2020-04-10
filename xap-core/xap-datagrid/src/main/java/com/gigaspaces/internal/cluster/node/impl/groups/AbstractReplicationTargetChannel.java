@@ -46,8 +46,9 @@ import java.rmi.RemoteException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public abstract class AbstractReplicationTargetChannel
@@ -127,8 +128,8 @@ public abstract class AbstractReplicationTargetChannel
     }
 
     public Object processBatch(List<IReplicationOrderedPacket> packets) {
-        if (_specificLogger.isLoggable(Level.FINEST))
-            _specificLogger.finest("Incoming packets: " + ReplicationLogUtils.packetsToLogString(packets));
+        if (_specificLogger.isTraceEnabled())
+            _specificLogger.trace("Incoming packets: " + ReplicationLogUtils.packetsToLogString(packets));
 
         updateLastProcessTimeStamp();
 
@@ -142,8 +143,8 @@ public abstract class AbstractReplicationTargetChannel
     }
 
     public Object processIdleStateData(IIdleStateData idleStateData) {
-        if (_specificVerboseLogger.isLoggable(Level.FINEST))
-            _specificVerboseLogger.finest("incoming idle state data replication: "
+        if (_specificVerboseLogger.isTraceEnabled())
+            _specificVerboseLogger.trace("incoming idle state data replication: "
                     + idleStateData);
 
         updateLastProcessTimeStamp();
@@ -159,7 +160,7 @@ public abstract class AbstractReplicationTargetChannel
 
     private void logProcessResultIfNecessary(
             IProcessResult processResult, List<IReplicationOrderedPacket> packets) {
-        if (_specificVerboseLogger.isLoggable(Level.FINEST)) {
+        if (_specificVerboseLogger.isTraceEnabled()) {
             String packetsBatchText = packets.isEmpty() ? "IDLE-STATE"
                     : "firstPacketKey="
                     + packets.get(0)
@@ -167,7 +168,7 @@ public abstract class AbstractReplicationTargetChannel
                     + ", lastPacketKey="
                     + packets.get(packets.size() - 1)
                     .getEndKey();
-            _specificVerboseLogger.finest("Returning " + processResult.toString() + " for received packets batch [" + packetsBatchText + "]");
+            _specificVerboseLogger.trace("Returning " + processResult.toString() + " for received packets batch [" + packetsBatchText + "]");
         }
     }
 
@@ -176,8 +177,8 @@ public abstract class AbstractReplicationTargetChannel
     }
 
     public Object process(IReplicationOrderedPacket packet) {
-        if (_specificLogger.isLoggable(Level.FINEST))
-            _specificLogger.finest("Incoming packet: " + packet);
+        if (_specificLogger.isTraceEnabled())
+            _specificLogger.trace("Incoming packet: " + packet);
 
         updateLastProcessTimeStamp();
 
@@ -186,8 +187,8 @@ public abstract class AbstractReplicationTargetChannel
                 packet,
                 _isInFiltered ? this
                         : null);
-        if (_specificVerboseLogger.isLoggable(Level.FINEST))
-            _specificVerboseLogger.finest("Returning " + processResult.toString() + " for received packet [packetKey=" + packet.getKey() + "]");
+        if (_specificVerboseLogger.isTraceEnabled())
+            _specificVerboseLogger.trace("Returning " + processResult.toString() + " for received packet [packetKey=" + packet.getKey() + "]");
 
         return _processLog.toWireForm(processResult);
     }
@@ -213,16 +214,16 @@ public abstract class AbstractReplicationTargetChannel
         }
 
         if (data.isEmpty()) {
-            if (_specificLogger.isLoggable(Level.FINER))
-                _specificLogger.finer("Input filter discarded packet " + data);
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("Input filter discarded packet " + data);
         }
     }
 
     public IProcessLogHandshakeResponse performHandshake(
             IBacklogHandshakeRequest handshakeRequest) {
         synchronized (_channelStateLock) {
-            if (_specificLogger.isLoggable(Level.FINE))
-                _specificLogger.fine("Received handshake request {" + handshakeRequest.toLogMessage() + "}");
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("Received handshake request {" + handshakeRequest.toLogMessage() + "}");
 
             IProcessLogHandshakeResponse handshakeResponse;
             try {
@@ -251,20 +252,20 @@ public abstract class AbstractReplicationTargetChannel
                             + e
                             + StringUtils.NEW_LINE
                             + "Outcome: Resynchronized channel and dropped missing packets");
-                    if (_specificLogger.isLoggable(Level.SEVERE))
-                        _specificLogger.log(Level.SEVERE,
+                    if (_specificLogger.isErrorEnabled())
+                        _specificLogger.error(
                                 msg + StringUtils.NEW_LINE +
                                         "Outcome: Resynchronized channel and dropped missing packets",
                                 e);
                 } else {
                     logEventInHistory(msg + StringUtils.NEW_LINE + "Reason - " + e);
-                    _specificLogger.log(Level.SEVERE, msg, e);
+                    _specificLogger.error(msg, e);
                     throw new ReplicationChannelOutOfSync(e.getMessage(), e);
                 }
             }
 
-            if (_specificLogger.isLoggable(Level.FINE))
-                _specificLogger.fine("Handshake response {" + handshakeResponse.toLogMessage() + "}");
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("Handshake response {" + handshakeResponse.toLogMessage() + "}");
 
             // Track completed handshakes
             logEventInHistory("Handshake executed:"
@@ -295,9 +296,9 @@ public abstract class AbstractReplicationTargetChannel
     }
 
     public void processHandshakeIteration(IHandshakeIteration handshakeIteration) {
-        boolean detailed = _specificLogger.isLoggable(Level.FINEST);
-        if (_specificLogger.isLoggable(Level.FINER))
-            _specificLogger.finer("Received handshake iteration {"
+        boolean detailed = _specificLogger.isTraceEnabled();
+        if (_specificLogger.isDebugEnabled())
+            _specificLogger.debug("Received handshake iteration {"
                     + handshakeIteration.toLogMessage(detailed) + "}");
 
         updateLastProcessTimeStamp();
@@ -309,8 +310,8 @@ public abstract class AbstractReplicationTargetChannel
     public void close(long channelCloseTimeout, TimeUnit unit) {
         try {
             if (!_processLog.close(channelCloseTimeout, unit)
-                    && _specificLogger.isLoggable(Level.WARNING))
-                _specificLogger.warning("Channel was not closed gracefully, close operation timed-out");
+                    && _specificLogger.isWarnEnabled())
+                _specificLogger.warn("Channel was not closed gracefully, close operation timed-out");
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -343,7 +344,7 @@ public abstract class AbstractReplicationTargetChannel
         String msg = "Channel is out of sync, backlog was dropped by source {" + memberState.toLogMessage() + "}";
         logEventInHistory(msg);
         if (listener != null) {
-            _specificLogger.severe(msg);
+            _specificLogger.error(msg);
             listener.onTargetChannelBacklogDropped(groupName,
                     getSourceLookupName(),
                     memberState);

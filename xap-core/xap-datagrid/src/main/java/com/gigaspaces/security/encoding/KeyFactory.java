@@ -18,8 +18,9 @@
 package com.gigaspaces.security.encoding;
 
 import java.io.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -52,7 +53,7 @@ public class KeyFactory {
     /**
      * logger
      */
-    private static final Logger logger = Logger.getLogger(KeyFactory.class.getPackage().getName());
+    private static final Logger logger = LoggerFactory.getLogger(KeyFactory.class.getPackage().getName());
 
     /**
      * Generate a 128 bit key using the key generator of the algorithm provided.
@@ -124,15 +125,15 @@ public class KeyFactory {
             } else {
                 inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourceName);
                 if (inputStream == null) {
-                    if (logger.isLoggable(Level.FINEST)) {
-                        logger.finest("Security key [" + resourceName + "] not located in classpath; Assuming default");
+                    if (logger.isTraceEnabled()) {
+                        logger.trace("Security key [" + resourceName + "] not located in classpath; Assuming default");
                     }
                     return null;
                 }
             }
 
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("Security key [" + resourceName + "] located in classpath");
+            if (logger.isDebugEnabled()) {
+                logger.debug("Security key [" + resourceName + "] located in classpath");
             }
 
             try (ObjectInputStream in = new ObjectInputStream(inputStream)) {

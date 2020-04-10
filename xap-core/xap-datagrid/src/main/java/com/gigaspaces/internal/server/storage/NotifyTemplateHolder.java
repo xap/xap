@@ -48,8 +48,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * this class contains all the information relevant to a notify template.
@@ -60,7 +61,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class NotifyTemplateHolder extends TemplateHolder {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_NOTIFY);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_NOTIFY);
     private static final String EMPTY_STRING = "";
 
     private final long _eventId;
@@ -91,8 +92,8 @@ public class NotifyTemplateHolder extends TemplateHolder {
             _numPendingBatchEvents = null;
         }
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Created notify template: eventId=" + _eventId +
+        if (_logger.isDebugEnabled())
+            _logger.debug("Created notify template: eventId=" + _eventId +
                     ", templateUid=" + _notifyInfo.getTemplateUID() +
                     ", type=[" + template.getTypeName() + "]" +
                     ", notifyType=" + NotifyModifiers.toString(_notifyInfo.getNotifyType()) +
@@ -292,7 +293,7 @@ public class NotifyTemplateHolder extends TemplateHolder {
                 if (!filter.process(event))
                     return null;
             } catch (Throwable e) {
-                _logger.log(Level.FINE, "calling user filter caused an exception", e);
+                _logger.debug("calling user filter caused an exception", e);
             }
         }
 

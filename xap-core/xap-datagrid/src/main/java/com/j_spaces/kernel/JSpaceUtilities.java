@@ -68,8 +68,9 @@ import java.net.URLClassLoader;
 import java.rmi.RemoteException;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.LookupManager.*;
 
@@ -88,7 +89,7 @@ public class JSpaceUtilities {
 
     public static final String NOT_AVAILABLE_STR = "n/a";
 
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
 
     /**
      * this tag will be appear in all XML files that container will be created.
@@ -439,7 +440,7 @@ public class JSpaceUtilities {
         try {
             nodes = (NodeList) XPathFactory.newInstance().newXPath().evaluate(xpath, clusterConfigRootDoc, XPathConstants.NODESET);
         } catch (Exception e) {
-            _logger.log(Level.SEVERE,
+            _logger.error(
                     "Failed to override the cluster config using the xpath expression <"
                             + xpath
                             + "> passed through the custom properties.", e);
@@ -456,8 +457,8 @@ public class JSpaceUtilities {
                 if (firstNode != null) {
                     String oldNodeValue = firstNode.getNodeValue().trim();
                     firstNode.setNodeValue(newValue);
-                    if (_logger.isLoggable(Level.INFO)) {
-                        _logger.log(Level.INFO,
+                    if (_logger.isInfoEnabled()) {
+                        _logger.info(
                                 "Override the cluster config using the xpath expression <"
                                         + xpath
                                         + "> passed through the custom properties.\n\tOld value: <"
@@ -467,7 +468,7 @@ public class JSpaceUtilities {
                 }
             }
         }
-        if (firstNode == null && _logger.isLoggable(Level.SEVERE)) {
+        if (firstNode == null && _logger.isErrorEnabled()) {
             throw new ClusterConfigurationException("Failed to override the cluster config using the xpath expression <"
                     + xpath
                     + ">, no element matched the given xpath expression");
@@ -932,8 +933,8 @@ public class JSpaceUtilities {
             returnObject =
                     ((ISpaceProxy) spaceProxy).getDirectProxy().getTypeManager().getObjectFromIGSEntry(entry);
         } catch (Exception exc) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, exc.toString(), exc);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(exc.toString(), exc);
             }
         }
 
@@ -1189,8 +1190,8 @@ public class JSpaceUtilities {
                     jmxRemotePortDefiedMap.put(serviceId, isJmxRemoteAuthenticationRequired);
                 }
             } catch (RemoteException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, e.toString(), e);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(e.toString(), e);
                 }
             }
         }
@@ -1481,8 +1482,8 @@ public class JSpaceUtilities {
         try {
             exportCodebase = url.toURI().getPath();
         } catch (URISyntaxException e) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, e.toString(), e);
+            if (_logger.isWarnEnabled()) {
+                _logger.warn(e.toString(), e);
             }
         }
 

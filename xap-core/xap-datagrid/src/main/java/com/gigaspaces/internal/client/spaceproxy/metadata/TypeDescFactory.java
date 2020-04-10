@@ -57,8 +57,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -66,8 +67,8 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class TypeDescFactory {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLIENT);
-    private static final Logger _deprecationLogger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_METADATA + ".deprecation");
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLIENT);
+    private static final Logger _deprecationLogger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_METADATA + ".deprecation");
 
     private final IDirectSpaceProxy _spaceProxy;
     private final StorageType _storageType;
@@ -119,8 +120,8 @@ public class TypeDescFactory {
                 EntryType.OBJECT_JAVA, type, ExternalEntry.class, SpaceDocument.class, null, DotNetStorageType.NULL,
                 blobstoreEnabled, sequenceNumberPropertyName, queryExtensionsInfo);
 
-        if (typeDesc.isExternalizable() && shouldWarnExternalizable(typeInfo) && _deprecationLogger.isLoggable(Level.WARNING))
-            _deprecationLogger.warning("Current class [" + type.getName() + "] implements " + Externalizable.class + ", usage of Externalizable in order to serialize it to a space is deprecated, Use SpaceExclude, StorageType and nested object serialization where relevant instead."
+        if (typeDesc.isExternalizable() && shouldWarnExternalizable(typeInfo) && _deprecationLogger.isWarnEnabled())
+            _deprecationLogger.warn("Current class [" + type.getName() + "] implements " + Externalizable.class + ", usage of Externalizable in order to serialize it to a space is deprecated, Use SpaceExclude, StorageType and nested object serialization where relevant instead."
                     + "If you use Externalizable for other purposes which are not serializing it into a space you can turn off this logger. The side effect of externalizable when it comes to serializing object to a space will be ignored in future version");
 
         return typeDesc;
@@ -349,7 +350,7 @@ public class TypeDescFactory {
                     if (firstIndexName == null)
                         firstIndexName = indexName;
                 } else
-                    _logger.log(Level.SEVERE, "Field: " + indexName + " is not found or not usable in class: "
+                    _logger.error("Field: " + indexName + " is not found or not usable in class: "
                             + realClass.getName() + " although it is returned by __getSpaceIndexedFields()");
             }
         } catch (NoSuchMethodException e) {

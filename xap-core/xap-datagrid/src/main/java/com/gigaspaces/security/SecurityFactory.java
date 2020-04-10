@@ -25,8 +25,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A factory for creating an {@link SecurityManager} and locating of security properties file by
@@ -38,7 +39,7 @@ import java.util.logging.Logger;
 
 public class SecurityFactory {
 
-    private static final Logger logger = Logger.getLogger("com.gigaspaces.security");
+    private static final Logger logger = LoggerFactory.getLogger("com.gigaspaces.security");
 
     public final static String DEFAULT_SECURITY_RESOURCE = "security.properties";
     public final static String DEFAULT_SECURITY_DIRECTORY = "config/security/";
@@ -64,10 +65,10 @@ public class SecurityFactory {
             if (securityProperties == null) {
                 securityProperties = new Properties();
             }
-            if (logger.isLoggable(Level.FINE)) {
+            if (logger.isDebugEnabled()) {
                 String property = securityProperties.getProperty(SecurityManager.SECURITY_MANAGER_CLASS_PROPERTY_KEY);
                 if (property != null) {
-                    logger.fine("Security security-manager class: " + property);
+                    logger.debug("Security security-manager class: " + property);
                 }
             }
             String classname = securityProperties.getProperty(SecurityManager.SECURITY_MANAGER_CLASS_PROPERTY_KEY,
@@ -132,13 +133,13 @@ public class SecurityFactory {
             resourceStream = SecurityFactory.findSecurityProperties(fullName);
             if (resourceStream == null) {
                 resourceStream = SecurityFactory.findSecurityProperties(securityPropertyFile);
-                if (logger.isLoggable(Level.FINE))
-                    logger.log(Level.FINE, "found security properties file by matching the component name [ " + fullName + " ]");
+                if (logger.isDebugEnabled())
+                    logger.debug("found security properties file by matching the component name [ " + fullName + " ]");
             }
         } else {
             resourceStream = SecurityFactory.findSecurityProperties(securityPropertyFile);
-            if (logger.isLoggable(Level.FINE))
-                logger.log(Level.FINE, "found security property by matching the sys-prop provided name[ " + securityPropertyFile + " ]");
+            if (logger.isDebugEnabled())
+                logger.debug("found security property by matching the sys-prop provided name[ " + securityPropertyFile + " ]");
         }
         if (resourceStream != null) {
             try {
@@ -208,8 +209,8 @@ public class SecurityFactory {
             }
         }
 
-        if (resourceAsStream != null && logger.isLoggable(Level.FINE)) {
-            logger.fine("Security properties file: " + resourceName);
+        if (resourceAsStream != null && logger.isDebugEnabled()) {
+            logger.debug("Security properties file: " + resourceName);
         }
 
         return resourceAsStream;

@@ -28,15 +28,16 @@ import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by Barak Bar Orion 12/29/14.
  */
 @com.gigaspaces.api.InternalApi
 public class ClientConversationRunner implements Runnable {
-    private static final Logger logger = Logger.getLogger(Constants.LOGGER_LRMI);
+    private static final Logger logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
     private static final long SELECT_TIMEOUT = Long.getLong("com.gs.lrmi.nio.selector.select-timeout", 10000L);
 
     private final Selector selector;
@@ -76,12 +77,12 @@ public class ClientConversationRunner implements Runnable {
                 conversation.handleKey(key);
             }
         } catch (ClosedSelectorException ex) {
-            logger.log(Level.FINER, "Selector was closed.", ex);
+            logger.debug("Selector was closed.", ex);
             if (key != null) {
                 key.cancel();
             }
         } catch (Throwable t) {
-            logger.log(Level.SEVERE, "exception in main selection loop", t);
+            logger.error("exception in main selection loop", t);
             if (key != null) {
                 key.cancel();
             }

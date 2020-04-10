@@ -4,8 +4,9 @@ import com.gigaspaces.internal.cluster.node.impl.ReplicationNode;
 import com.gigaspaces.logger.Constants;
 
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author yael nahon
@@ -16,7 +17,7 @@ import java.util.logging.Logger;
 public class SpaceReplicaFifoBatchesHandler {
 
     private final ReplicationNode replicationNode;
-    private final Logger logger = Logger.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
+    private final Logger logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
     private final TreeMap<Integer, SpaceReplicaBatch> pendingBatches = new TreeMap<Integer, SpaceReplicaBatch>();
     private final Object lock = new Object();
     private int lastProcessed = 0;
@@ -35,8 +36,8 @@ public class SpaceReplicaFifoBatchesHandler {
     void handleIncomingBatch(SpaceReplicaBatch batch, SpaceCopyReplicaRunnable consumer) {
         synchronized (getLock()) {
             addBatch(batch);
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine(replicationNode.getLogPrefix() + "inserting fifo batch " + batch.getFifoId() + " to queue, fifo state: " + this);
+            if (logger.isDebugEnabled()) {
+                logger.debug(replicationNode.getLogPrefix() + "inserting fifo batch " + batch.getFifoId() + " to queue, fifo state: " + this);
             }
         }//synchronized
         processNextIfPossible(consumer);
@@ -62,12 +63,12 @@ public class SpaceReplicaFifoBatchesHandler {
 
     private void onProcessBatchCompletion(int id) {
         synchronized (getLock()) {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine(replicationNode.getLogPrefix() + "finished processing fifo batch " + id + ", fifo state: " + this);
+            if (logger.isDebugEnabled()) {
+                logger.debug(replicationNode.getLogPrefix() + "finished processing fifo batch " + id + ", fifo state: " + this);
             }
 
             if (id != (lastProcessed + 1)) {
-                logger.severe("completed processing batch " + id + " but was expecting " + (lastProcessed + 1));
+                logger.error("completed processing batch " + id + " but was expecting " + (lastProcessed + 1));
                 throw new IllegalStateException("completed processing batch " + id + " but was expecting " + (lastProcessed + 1));
             }
 
@@ -86,8 +87,8 @@ public class SpaceReplicaFifoBatchesHandler {
                 }
             }//synchronized
             if (process) {
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine(consumer.getHandler().getName() + " processing fifo batch " + currentBatch.getFifoId() + ", fifo state: " + this);
+                if (logger.isDebugEnabled()) {
+                    logger.debug(consumer.getHandler().getName() + " processing fifo batch " + currentBatch.getFifoId() + ", fifo state: " + this);
                 }
 
                 consumer.processBatch(currentBatch.getBatch(), false);

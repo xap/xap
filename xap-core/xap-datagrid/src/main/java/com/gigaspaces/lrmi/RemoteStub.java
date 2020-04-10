@@ -33,8 +33,9 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -52,7 +53,7 @@ public class RemoteStub<T>
     static final long serialVersionUID = 1L;
 
     // logger
-    final static private Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
+    final static private Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
 
     /**
      * Unchangeable dynamic proxy instance
@@ -109,8 +110,8 @@ public class RemoteStub<T>
         try {
             initCall.call();
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "Failed to initialize remote stub.", ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error("Failed to initialize remote stub.", ex);
             }
         }
     }// init

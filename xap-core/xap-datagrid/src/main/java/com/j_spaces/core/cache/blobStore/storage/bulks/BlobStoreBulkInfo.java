@@ -46,8 +46,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class BlobStoreBulkInfo {
@@ -280,7 +281,7 @@ public class BlobStoreBulkInfo {
                 throw !(t instanceof BlobStoreException) ? new BlobStoreException(t) : (BlobStoreException) t;
             afterBulkFlush(context, termination);
         } catch (Throwable t) {
-            _logger.log(Level.SEVERE, getClass().getName() + " blobstore:execute-bulk ", t);
+            _logger.error(getClass().getName() + " blobstore:execute-bulk ", t);
             BlobStoreException ex = (t instanceof BlobStoreException) ? (BlobStoreException) t : (new BlobStoreException(t));
             if (getException() == null)
                 setExecption(t);
@@ -355,8 +356,8 @@ public class BlobStoreBulkInfo {
                 if (unpined != null)
                     _cacheManager.getEngine().getProcessorWG().enqueueBlocked(new BlobStoreUnpinMultiplePacket(unpined));
             } catch (Throwable ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, "failure during handling flush error", ex);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error("failure during handling flush error", ex);
                 }
             } finally {
                 if (_uids != null) {
@@ -422,7 +423,7 @@ public class BlobStoreBulkInfo {
     }
 
     public void setExecption(Throwable t) {
-        _logger.severe(getClass().getName() + " blobstore:set exception [in bulk] " + t);
+        _logger.error(getClass().getName() + " blobstore:set exception [in bulk] " + t);
         if (_exceptionOccured == null)
             _exceptionOccured = t;
     }

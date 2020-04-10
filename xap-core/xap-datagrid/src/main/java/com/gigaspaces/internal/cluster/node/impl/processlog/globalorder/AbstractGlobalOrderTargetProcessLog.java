@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
+
 
 
 public abstract class AbstractGlobalOrderTargetProcessLog
@@ -221,8 +221,8 @@ public abstract class AbstractGlobalOrderTargetProcessLog
             GlobalOrderDeletedBacklogPacket deletedBacklogPacket) {
         String deletionMessage = "packets [" + deletedBacklogPacket.getKey() + "-" + deletedBacklogPacket.getEndKey() + "] are lost due to backlog deletion at the source";
         getGroupHistory().logEvent(getSourceLookupName(), deletionMessage);
-        if (_specificLogger.isLoggable(Level.WARNING))
-            _specificLogger.warning(deletionMessage);
+        if (_specificLogger.isWarnEnabled())
+            _specificLogger.warn(deletionMessage);
     }
 
     public String dumpState() {

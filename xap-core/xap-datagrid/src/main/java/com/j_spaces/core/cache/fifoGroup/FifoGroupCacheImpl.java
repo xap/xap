@@ -51,8 +51,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * TODO	add Javadoc
@@ -303,16 +304,16 @@ public class FifoGroupCacheImpl {
                 if (result != null && result.isIterator()) {
                     resultOIS = (IScanListIterator<IEntryCacheInfo>) result;
                     // Log index usage
-                    if (_logger.isLoggable(Level.FINEST))
-                        _logger.log(Level.FINEST, "EXTENDED-INDEX '" + index.getIndexName() + "' has been used for type [" +
+                    if (_logger.isTraceEnabled())
+                        _logger.trace("EXTENDED-INDEX '" + index.getIndexName() + "' has been used for type [" +
                                 entryType.getClassName() + "]");
                     continue;
                 }
 
                 IStoredList<IEntryCacheInfo> entriesVector = (IStoredList<IEntryCacheInfo>) result;
                 // Log index usage
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.log(Level.FINEST, "BASIC-INDEX '" + index.getIndexName() + "' has been used for type [" +
+                if (_logger.isTraceEnabled())
+                    _logger.trace("BASIC-INDEX '" + index.getIndexName() + "' has been used for type [" +
                             entryType.getClassName() + "]");
 
                 if (entriesVector == null)
@@ -482,7 +483,7 @@ public class FifoGroupCacheImpl {
                 }
             }
         } catch (Exception ex) {
-            CacheManager.getCacheLogger().log(Level.SEVERE, "createFifoGroupCompoundIndexes failed with exception " + ex.fillInStackTrace() + "]");
+            CacheManager.getCacheLogger().error("createFifoGroupCompoundIndexes failed with exception " + ex.fillInStackTrace() + "]");
             exp = new RuntimeException(ex);
         } finally {
             if (exp != null)

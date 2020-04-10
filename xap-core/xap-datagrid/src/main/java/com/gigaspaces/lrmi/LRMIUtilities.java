@@ -54,8 +54,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -68,7 +69,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class LRMIUtilities {
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
 
     final private static Comparator<IMethod> _methodComparator = new MethodComparator();
 
@@ -175,15 +176,15 @@ public class LRMIUtilities {
                 LRMIMethodMetadata lrmiMethodMetadata = overrideMethodsMetadata.get(methodNameAndDescriptor);
                 if (lrmiMethodMetadata.isOneWayPresence()) {
                     isOneWay = lrmiMethodMetadata.isOneWay();
-                    _logger.fine("LRMI override metadata one-way [" + isOneWay + "] : " + interfMethod);
+                    _logger.debug("LRMI override metadata one-way [" + isOneWay + "] : " + interfMethod);
                 }
                 if (lrmiMethodMetadata.isAsyncPresence()) {
                     isAsync = lrmiMethodMetadata.isAsync();
                 }
             }
 
-            if (isOneWay && _logger.isLoggable(Level.FINE)) {
-                _logger.fine("LRMI @OneWayRemoteCallAnnotation - registered one-way method : " + interfMethod);
+            if (isOneWay && _logger.isDebugEnabled()) {
+                _logger.debug("LRMI @OneWayRemoteCallAnnotation - registered one-way method : " + interfMethod);
             }
 
             Integer methodOrder = methodMapping.get(methodNameAndDescriptor);
@@ -457,7 +458,7 @@ public class LRMIUtilities {
             } catch (Exception e) {
                 if (!_hadSetSendBufferSizeError) {
                     _hadSetSendBufferSizeError = true;
-                    _logger.log(Level.WARNING, "Failed setting send buffer size [" + SEND_BUFFER_SIZE + "]", e);
+                    _logger.warn("Failed setting send buffer size [" + SEND_BUFFER_SIZE + "]", e);
                 }
             }
         }
@@ -467,7 +468,7 @@ public class LRMIUtilities {
             } catch (Exception e) {
                 if (!_hadSetReceiveBufferSizeError) {
                     _hadSetReceiveBufferSizeError = true;
-                    _logger.log(Level.WARNING, "Failed setting receive buffer size [" + RECEIVE_BUFFER_SIZE + "]", e);
+                    _logger.warn("Failed setting receive buffer size [" + RECEIVE_BUFFER_SIZE + "]", e);
                 }
             }
 
@@ -477,7 +478,7 @@ public class LRMIUtilities {
         } catch (Exception e) {
             if (!_hadSetKeepAliveError) {
                 _hadSetKeepAliveError = true;
-                _logger.log(Level.WARNING, "Failed setting keep alive mode [" + KEEP_ALIVE_MODE + "]", e);
+                _logger.warn("Failed setting keep alive mode [" + KEEP_ALIVE_MODE + "]", e);
             }
         }
         try {
@@ -485,7 +486,7 @@ public class LRMIUtilities {
         } catch (Exception e) {
             if (!_hadSetTcpNoDelayError) {
                 _hadSetTcpNoDelayError = true;
-                _logger.log(Level.WARNING, "Failed setting tcp no delay mode [" + TCP_NO_DELAY_MODE + "]", e);
+                _logger.warn("Failed setting tcp no delay mode [" + TCP_NO_DELAY_MODE + "]", e);
             }
         }
         if (TRAFFIC_CLASS != null)
@@ -494,7 +495,7 @@ public class LRMIUtilities {
             } catch (Exception e) {
                 if (!_hadSetTrafficClassError) {
                     _hadSetTrafficClassError = true;
-                    _logger.log(Level.WARNING, "Failed setting traffic class [" + TRAFFIC_CLASS + "]", e);
+                    _logger.warn("Failed setting traffic class [" + TRAFFIC_CLASS + "]", e);
                 }
             }
     }

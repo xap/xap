@@ -26,8 +26,9 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.HashMap;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * GigaSpaces JDBC driver implementation.
@@ -43,7 +44,7 @@ public class GDriver implements Driver {
     public static boolean registered = false;
     private static HashMap procTable = null;
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_QUERY);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     static {
         registerDriver();
@@ -52,16 +53,16 @@ public class GDriver implements Driver {
     public static void registerDriver() {
         //Class.forName will call this, so this is where we register the driver
         if (!registered) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("QueryProcessor: Registering driver");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("QueryProcessor: Registering driver");
             }
             try {
                 java.sql.DriverManager.registerDriver(new GDriver());
                 registered = true;
 
             } catch (SQLException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, e.getMessage(), e);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(e.getMessage(), e);
                 }
             }
         }
@@ -128,7 +129,7 @@ public class GDriver implements Driver {
         return procTable;
     }
 
-    public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-        return _logger;
+    public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
+        return java.util.logging.Logger.getLogger(Constants.LOGGER_QUERY);
     }
 }

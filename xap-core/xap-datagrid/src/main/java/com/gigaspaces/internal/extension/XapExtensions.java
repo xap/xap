@@ -29,12 +29,13 @@ import java.io.Externalizable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class XapExtensions {
-    private static final Logger logger = Logger.getLogger(XapExtensions.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(XapExtensions.class.getName());
     private XapRuntimeReporter xapRuntimeReporter = new XapRuntimeReporter();
     private SpaceFinderListener spaceFinderListener;
     private ReplicationNodeConfigBuilder replicationNodeConfigBuilder = new ReplicationNodeConfigBuilder();
@@ -106,8 +107,8 @@ public class XapExtensions {
     }
 
     public void registerSystemTaskExecutor(Class<? extends SystemTask> taskClass, SpaceActionExecutor executor) {
-        if (logger.isLoggable(Level.FINE))
-            logger.fine("Registering system task" + taskClass.getName() + " => " + executor.getClass().getName());
+        if (logger.isDebugEnabled())
+            logger.debug("Registering system task" + taskClass.getName() + " => " + executor.getClass().getName());
         actionExecutors.put(taskClass, executor);
     }
 
@@ -117,8 +118,8 @@ public class XapExtensions {
     }
 
     public <T extends Externalizable> void registerCustomSerializer(Class<T> c, CustomSerializer<T> serializer) {
-        if (logger.isLoggable(Level.FINE))
-            logger.fine("Registering custom serializer " + c.getName() + " => " + serializer.getClass().getName());
+        if (logger.isDebugEnabled())
+            logger.debug("Registering custom serializer " + c.getName() + " => " + serializer.getClass().getName());
         customSerializers.put(c, serializer);
     }
 

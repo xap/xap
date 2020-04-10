@@ -44,8 +44,9 @@ import java.rmi.RemoteException;
 import java.rmi.server.ExportException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An NIO based implementation of LRMI Protocol Adapter
@@ -62,7 +63,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class PAdapter implements ProtocolAdapter<CPeer> {
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
 
     final static String ADAPTER_NAME = "NIO";
 
@@ -112,7 +113,7 @@ public class PAdapter implements ProtocolAdapter<CPeer> {
                 writeThread.setDaemon(true);
                 writeThread.start();
             } catch (IOException e) {
-                _logger.log(Level.SEVERE, "cant create a selector for async calls", e);
+                _logger.error("cant create a selector for async calls", e);
                 throw new IllegalStateException("cant create a selector for async calls", e);
             }
         }
@@ -122,7 +123,7 @@ public class PAdapter implements ProtocolAdapter<CPeer> {
             writeThread.setDaemon(true);
             writeThread.start();
         } catch (Exception e) {
-            _logger.log(Level.SEVERE, "cant create a selector for connect", e);
+            _logger.error("cant create a selector for connect", e);
             throw new IllegalStateException("cant create a selector for connect", e);
         }
     }
@@ -143,8 +144,8 @@ public class PAdapter implements ProtocolAdapter<CPeer> {
         _exporter = (GenericExporter) ServiceConfigLoader.getExporter();
         initClassProvider();
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine(config.toString());
+        if (_logger.isDebugEnabled())
+            _logger.debug(config.toString());
 
         try {
             // creates Pivot on specified according to nioConfig

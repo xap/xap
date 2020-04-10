@@ -31,8 +31,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Guy Korland
@@ -77,7 +78,7 @@ public class Launcher implements Closeable {
             GSLogConfigLoader.getLoader();
         }
 
-        this.logger = Logger.getLogger(config.getLoggerName());
+        this.logger = LoggerFactory.getLogger(config.getLoggerName());
         RuntimeInfo.logRuntimeInfo(logger, "Starting " + config.getName() + ", security enabled:" +
                 SecurityResolver.isSecurityEnabled() + ", host: " + config.getHostAddress() + ", port: " + config.getPort());
         this.webLauncher = initWebLauncher();
@@ -100,7 +101,7 @@ public class Launcher implements Closeable {
             webLauncher.launch(config);
             return webLauncher;
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Failed to start " + webLauncherClass, e);
+            logger.error("Failed to start " + webLauncherClass, e);
             return null;
         }
     }
@@ -112,7 +113,7 @@ public class Launcher implements Closeable {
         try {
             Desktop.getDesktop().browse(URI.create(url));
         } catch (Exception e) {
-            logger.warning("Failed to browse to XAP web-ui: " + e.getMessage());
+            logger.warn("Failed to browse to XAP web-ui: " + e.getMessage());
         }
     }
 

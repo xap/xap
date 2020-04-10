@@ -32,8 +32,9 @@ import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -41,7 +42,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class SpaceTypeInfoRepository extends AbstractClassRepository<SpaceTypeInfo> {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_METADATA_POJO);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_METADATA_POJO);
     private static final String GS_MAPPING = "/config/mapping";
     private static final SpaceTypeInfoRepository _globalRepository = new SpaceTypeInfoRepository();
 
@@ -67,11 +68,11 @@ public class SpaceTypeInfoRepository extends AbstractClassRepository<SpaceTypeIn
         //    // no config/mapping, no need to log a warning for it
         //}
         catch (Throwable e) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Failed to parse *.gs.xml files from folder '" + GS_MAPPING + "': ", e);
+            if (_logger.isWarnEnabled()) {
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Failed to parse *.gs.xml files from folder '" + GS_MAPPING + "': ", e);
                 else
-                    _logger.log(Level.WARNING, "Failed to parse *.gs.xml files from folder '" + GS_MAPPING +
+                    _logger.warn("Failed to parse *.gs.xml files from folder '" + GS_MAPPING +
                             "' for more information set logger '" + _logger.getName() + "' level to FINE.");
             }
         }
@@ -82,11 +83,11 @@ public class SpaceTypeInfoRepository extends AbstractClassRepository<SpaceTypeIn
         // Create type info:
         SpaceTypeInfo typeInfo = new SpaceTypeInfo(type, superTypeInfo, (Map<String, Node>) context);
 
-        if (_logger.isLoggable(Level.FINE)) {
-            if (_logger.isLoggable(Level.FINER))
-                _logger.log(Level.FINER, "Type metadata created and cached: [" + type.getName() + "].\n" + typeInfo.getFullDescription());
+        if (_logger.isDebugEnabled()) {
+            if (_logger.isDebugEnabled())
+                _logger.debug("Type metadata created and cached: [" + type.getName() + "].\n" + typeInfo.getFullDescription());
             else
-                _logger.log(Level.FINE, "Type metadata created and cached: [" + type.getName() + "].");
+                _logger.debug("Type metadata created and cached: [" + type.getName() + "].");
         }
 
         // Return result:
@@ -102,34 +103,34 @@ public class SpaceTypeInfoRepository extends AbstractClassRepository<SpaceTypeIn
 
         File file = new File(URLDecoder.decode(url.getFile()));
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Scanning for type metadata info at [" + file.getAbsolutePath() + "].");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Scanning for type metadata info at [" + file.getAbsolutePath() + "].");
 
         Map<String, Node> xmlMap = new HashMap<String, Node>();
         loadPath(file, xmlMap);
 
         final String[] typeNames = xmlMap.keySet().toArray(new String[xmlMap.size()]);
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Found " + typeNames.length + " type metadata specifications while scanning [" + file.getAbsolutePath() + "].");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Found " + typeNames.length + " type metadata specifications while scanning [" + file.getAbsolutePath() + "].");
 
         for (String typeName : typeNames) {
             try {
                 SpaceTypeInfo typeInfo = super.getByName(typeName, xmlMap);
-                if (typeInfo == null && _logger.isLoggable(Level.WARNING))
-                    _logger.log(Level.WARNING, "Skipped gs.xml for type [" + typeName + "] because type could not be loaded.");
+                if (typeInfo == null && _logger.isWarnEnabled())
+                    _logger.warn("Skipped gs.xml for type [" + typeName + "] because type could not be loaded.");
             } catch (Throwable e) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.log(Level.WARNING, "Failed to load type info for type [" + typeName + "].", e);
+                if (_logger.isWarnEnabled()) {
+                    if (_logger.isDebugEnabled())
+                        _logger.warn("Failed to load type info for type [" + typeName + "].", e);
                     else
-                        _logger.log(Level.WARNING, "Failed to load type info for type [" + typeName + "]: " + e.getMessage());
+                        _logger.warn("Failed to load type info for type [" + typeName + "]: " + e.getMessage());
                 }
             }
         }
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Finished loading types metadata from [" + file.getAbsolutePath() + "].");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Finished loading types metadata from [" + file.getAbsolutePath() + "].");
     }
 
     private static void loadPath(File file, Map<String, Node> xmlMap) {
@@ -138,23 +139,23 @@ public class SpaceTypeInfoRepository extends AbstractClassRepository<SpaceTypeIn
             for (int i = 0; i < subFiles.length; i++)
                 loadPath(subFiles[i], xmlMap);
         } else if (file.getName().endsWith(".gs.xml")) {
-            if (_logger.isLoggable(Level.FINER))
-                _logger.log(Level.FINER, "Scanning for type metadata info at [{0}].", file.getAbsolutePath());
+            if (_logger.isDebugEnabled())
+                _logger.debug("Scanning for type metadata info at [{0}].", file.getAbsolutePath());
 
             FileInputStream inputStream = null;
             try {
                 inputStream = new FileInputStream(file);
                 GsXmlParser.parseGsXml(inputStream, xmlMap, file.getAbsolutePath());
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Error while scanning for type metadata info at [" + file.getAbsolutePath() + "].", e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Error while scanning for type metadata info at [" + file.getAbsolutePath() + "].", e);
             } finally {
                 try {
                     if (inputStream != null)
                         inputStream.close();
                 } catch (IOException e) {
-                    if (_logger.isLoggable(Level.WARNING))
-                        _logger.log(Level.WARNING, "Could not close input stream for file [" + file.getAbsolutePath() + "].", e);
+                    if (_logger.isWarnEnabled())
+                        _logger.warn("Could not close input stream for file [" + file.getAbsolutePath() + "].", e);
                 }
             }
         }
@@ -180,8 +181,8 @@ public class SpaceTypeInfoRepository extends AbstractClassRepository<SpaceTypeIn
             try {
                 inputStream.close();
             } catch (IOException e) {
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.log(Level.WARNING, "Could not close input stream", e);
+                if (_logger.isWarnEnabled())
+                    _logger.warn("Could not close input stream", e);
             }
         }
     }

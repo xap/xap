@@ -25,8 +25,9 @@ import com.j_spaces.core.cluster.startup.CompactionResult;
 import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
 
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Wraps a {@link INonBatchRedoLogFileStorage} with a cache that keeps a constant size number of
@@ -40,7 +41,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedPacket> implements INonBatchRedoLogFileStorage<T> {
 
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_BACKLOG);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_BACKLOG);
 
     private final int _bufferCapacity;
     private final INonBatchRedoLogFileStorage<T> _storage;
@@ -54,8 +55,8 @@ public class CacheLastRedoLogFileStorageDecorator<T extends IReplicationOrderedP
         this._bufferCapacity = bufferSize;
         this._storage = storage;
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("CacheLastRedoLogFileStorageDecorator created:"
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("CacheLastRedoLogFileStorageDecorator created:"
                     + "\n\tbufferSize = " + _bufferCapacity);
         }
         _bufferWeight = 0;

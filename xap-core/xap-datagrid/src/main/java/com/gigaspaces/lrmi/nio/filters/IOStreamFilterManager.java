@@ -23,13 +23,14 @@ import com.gigaspaces.lrmi.nio.Writer;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class IOStreamFilterManager implements IOFilterManager {
 
     @SuppressWarnings("UnusedDeclaration")
-    private final static Logger logger = Logger.getLogger(IOStreamFilterManager.class.getName());
+    private final static Logger logger = LoggerFactory.getLogger(IOStreamFilterManager.class.getName());
 
     private final Writer writer;
     private final IOStreamFilter filter;

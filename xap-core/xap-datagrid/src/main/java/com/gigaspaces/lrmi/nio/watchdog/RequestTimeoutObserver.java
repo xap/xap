@@ -34,8 +34,9 @@ import java.net.SocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 import java.util.Collection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -52,7 +53,7 @@ public class RequestTimeoutObserver
         implements TimeoutObserver {
     protected final static int _INSPECT_TIMEOUT = Integer.getInteger(SystemProperties.WATCHDOG_INSPECT_TIMEOUT, 10000).intValue();
 
-    protected final static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI_WATCHDOG);
+    protected final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_WATCHDOG);
 
     private final long _inspectResponseTimeout;
 
@@ -90,8 +91,8 @@ public class RequestTimeoutObserver
 
             final int localPort = watched.getSocket().socket().getLocalPort();
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Attempting to create a new socket to the ServerEndPoint [" + serverAddress + "], local port[" + localPort + "]");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Attempting to create a new socket to the ServerEndPoint [" + serverAddress + "], local port[" + localPort + "]");
 
             // for connect
             socketChannel.configureBlocking(true);
@@ -105,8 +106,8 @@ public class RequestTimeoutObserver
             newSock.connect(serverAddress, _INSPECT_TIMEOUT);
             handleOpenSocket(socketChannel, localPort, absoluteTimeout, watched.getClient());
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, getValidConnectionMessage(serverAddress));
+            if (_logger.isDebugEnabled())
+                _logger.debug(getValidConnectionMessage(serverAddress));
 
             // Reset client time
             watched.startWatch();
@@ -179,8 +180,8 @@ public class RequestTimeoutObserver
             long currentWatchedInvocationVersion = watched.getVersion();
             if (!RequestResponseTimeoutObserver.DISABLE_RESPONSE_WATCH &&
                     currentWatchedInvocationVersion > originalInvocationVersion) {
-                if (_logger.isLoggable(Level.FINER)) {
-                    _logger.log(Level.FINER, "Not closing invalid connection as current invocation version does not match" +
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Not closing invalid connection as current invocation version does not match" +
                             " original invocation version. [original version=" + originalInvocationVersion +
                             ", current version=" + currentWatchedInvocationVersion +
                             "original message [" +
@@ -220,8 +221,8 @@ public class RequestTimeoutObserver
                     }
                 }
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, getFailureToCloseInvalidConnectionMessage(serverAddress, watched.getSocket()), ex);
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(getFailureToCloseInvalidConnectionMessage(serverAddress, watched.getSocket()), ex);
                 }
             }
         }

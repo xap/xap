@@ -23,23 +23,24 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
  * @since 10.2.1
  */
 public class InfluxDBHttpDispatcher extends InfluxDBDispatcher {
-    private static final Logger logger = Logger.getLogger(InfluxDBHttpDispatcher.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(InfluxDBHttpDispatcher.class.getName());
     private static final String CONTENT_TYPE = System.getProperty("com.gigaspaces.metrics.influxdb.http.content_type", "text/plain");
     private static final int TIMEOUT = Integer.getInteger("com.gigaspaces.metrics.influxdb.http.timeout", 30000);
     private final URL url;
 
     public InfluxDBHttpDispatcher(InfluxDBReporterFactory factory) {
         this.url = toUrl("write", factory);
-        if (logger.isLoggable(Level.FINE))
-            logger.log(Level.FINE, "InfluxDBHttpDispatcher created [url=" + url + "]");
+        if (logger.isDebugEnabled())
+            logger.debug("InfluxDBHttpDispatcher created [url=" + url + "]");
     }
 
     public URL getUrl() {

@@ -18,18 +18,19 @@ package org.openspaces.core.extension;
 
 import com.gigaspaces.internal.extension.XapExtension;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MapSpringXapExtension extends XapExtension {
 
-    private static final Logger logger = Logger.getLogger(MapSpringXapExtension.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(MapSpringXapExtension.class.getName());
 
     @Override
     public void activate() {
-        logger.fine("Activating...");
+        logger.debug("Activating...");
         OpenSpacesExtensions.getInstance().register("map", new org.openspaces.core.config.MapBeanDefinitionParser());
         OpenSpacesExtensions.getInstance().register("local-cache-support", new org.openspaces.core.config.MapLocalCacheSettingsBeanDefinitionParser());
         OpenSpacesExtensions.getInstance().register("giga-map", new org.openspaces.core.config.GigaMapBeanDefinitionParser());
-        logger.fine("Activated.");
+        logger.debug("Activated.");
     }
 }

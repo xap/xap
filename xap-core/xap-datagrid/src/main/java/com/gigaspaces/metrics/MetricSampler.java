@@ -33,8 +33,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -58,15 +59,15 @@ public class MetricSampler implements Closeable {
     public MetricSampler(MetricSamplerConfig config, Collection<MetricReporter> reporters) {
         this.lock = new Object();
         this.name = config.getName();
-        this.logger = Logger.getLogger(Constants.LOGGER_METRICS_SAMPLER + '.' + name);
+        this.logger = LoggerFactory.getLogger(Constants.LOGGER_METRICS_SAMPLER + '.' + name);
         this.registry = new MetricRegistry(name);
         this.contextProviders = Collections.newSetFromMap(new ConcurrentHashMap<GaugeContextProvider, Boolean>());
         this.samplingRate = config.getSamplingRate();
         this.batchSize = config.getBatchSize();
         this.reporters = reporters;
         this.executor = Executors.newSingleThreadScheduledExecutor(new GSThreadFactory("metrics-sampler-" + config.getName(), true));
-        if (logger.isLoggable(Level.FINE))
-            logger.log(Level.FINE, "Metric sampler created [sampleRate=" + samplingRate + "ms, batchSize=" + batchSize + "]");
+        if (logger.isDebugEnabled())
+            logger.debug("Metric sampler created [sampleRate=" + samplingRate + "ms, batchSize=" + batchSize + "]");
     }
 
     Collection<MetricReporter> getReporters() {
@@ -86,8 +87,8 @@ public class MetricSampler implements Closeable {
      */
     @Override
     public void close() {
-        if (logger.isLoggable(Level.FINE))
-            logger.fine("Closing metric sampler");
+        if (logger.isDebugEnabled())
+            logger.debug("Closing metric sampler");
 
         /* Uses the shutdown pattern from http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/ExecutorService.html */
 
@@ -99,7 +100,7 @@ public class MetricSampler implements Closeable {
                 executor.shutdownNow(); // Cancel currently executing tasks
                 // Wait a while for tasks to respond to being cancelled
                 if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-                    logger.warning("ScheduledExecutorService did not terminate");
+                    logger.warn("ScheduledExecutorService did not terminate");
                 }
             }
         } catch (InterruptedException ie) {
@@ -127,8 +128,8 @@ public class MetricSampler implements Closeable {
             synchronized (lock) {
                 if (!isActive() && shouldBeActive()) {
                     future = executor.scheduleAtFixedRate(new Sampler(), 0, samplingRate, TimeUnit.MILLISECONDS);
-                    if (logger.isLoggable(Level.FINE))
-                        logger.log(Level.FINE, "Started metric sampler [sample-rate=" + samplingRate + "ms]");
+                    if (logger.isDebugEnabled())
+                        logger.debug("Started metric sampler [sample-rate=" + samplingRate + "ms]");
                 }
             }
         }
@@ -179,17 +180,17 @@ public class MetricSampler implements Closeable {
 
         @Override
         public void run() {
-            if (logger.isLoggable(Level.FINEST))
-                logger.log(Level.FINEST, "Sample started");
+            if (logger.isTraceEnabled())
+                logger.trace("Sample started");
 
             for (GaugeContextProvider contextProvider : contextProviders)
                 contextProvider.reset();
 
             final long sampleTime = System.currentTimeMillis();
             final MetricRegistrySnapshot snapshot = registry.snapshot(sampleTime);
-            if (logger.isLoggable(Level.FINEST)) {
+            if (logger.isTraceEnabled()) {
                 final long duration = System.currentTimeMillis() - sampleTime;
-                logger.log(Level.FINEST, "Snapshot completed [sampleTime=" + sampleTime +
+                logger.trace("Snapshot completed [sampleTime=" + sampleTime +
                         ", duration=" + duration + "ms" +
                         ", groups=" + snapshot.getGroups().size() +
                         ", metrics=" + snapshot.getTotalMetrics() +
@@ -200,22 +201,22 @@ public class MetricSampler implements Closeable {
             if (buffer.size() == batchSize) {
                 for (MetricReporter reporter : reporters) {
                     long startTime = 0;
-                    if (logger.isLoggable(Level.FINEST)) {
+                    if (logger.isTraceEnabled()) {
                         startTime = System.currentTimeMillis();
-                        logger.log(Level.FINEST, "Starting buffer report via " + reporter.toString());
+                        logger.trace("Starting buffer report via " + reporter.toString());
                     }
                     reporter.report(buffer);
-                    if (logger.isLoggable(Level.FINEST)) {
+                    if (logger.isTraceEnabled()) {
                         long duration = System.currentTimeMillis() - startTime;
-                        logger.log(Level.FINEST, "Finished buffer report via " + reporter.toString() + "[duration=" + duration + "ms]");
+                        logger.trace("Finished buffer report via " + reporter.toString() + "[duration=" + duration + "ms]");
                     }
                 }
                 buffer.clear();
             }
 
-            if (logger.isLoggable(Level.FINEST)) {
+            if (logger.isTraceEnabled()) {
                 final long duration = System.currentTimeMillis() - sampleTime;
-                logger.log(Level.FINEST, "Sample completed [duration=" + duration + "ms]");
+                logger.trace("Sample completed [duration=" + duration + "ms]");
             }
         }
     }

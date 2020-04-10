@@ -36,7 +36,7 @@ import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
+
 
 /**
  * On top of {@link RequestTimeoutObserver} behaviour, The request response timeout observer also
@@ -159,8 +159,8 @@ public class RequestResponseTimeoutObserver extends RequestTimeoutObserver {
             SocketAddress remoteSocketAddress,
             PlatformLogicalVersion serviceVersion)
             throws IOException {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("Writing watch monitor request to the ServerEndpoint at [" + remoteSocketAddress + "]");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Writing watch monitor request to the ServerEndpoint at [" + remoteSocketAddress + "]");
 
         // header(int) + local watched socket port(int)
         ByteBuffer byteBuffer = ByteBuffer.allocate(4 + 4);
@@ -189,8 +189,8 @@ public class RequestResponseTimeoutObserver extends RequestTimeoutObserver {
             long absoluteTimeout,
             SocketAddress remoteSocketAddress,
             PlatformLogicalVersion serviceVersion) throws IOException {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("Reading watch monitor response from the ServerEndpoint at [" + remoteSocketAddress + "]");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Reading watch monitor response from the ServerEndpoint at [" + remoteSocketAddress + "]");
 
         // we set timeout on the socket for read opeations
         socketChannel.configureBlocking(true);

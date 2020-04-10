@@ -52,7 +52,7 @@ import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
+
 
 
 @com.gigaspaces.api.InternalApi
@@ -183,8 +183,8 @@ public class AsyncReplicationSourceChannel
             synchronized (_pendingCountLock) {
                 if (_pendingCount.get() == 0)
                     return;
-                if (_specificLogger.isLoggable(Level.FINEST))
-                    _specificLogger.finest("Reached interval operations ["
+                if (_specificLogger.isTraceEnabled())
+                    _specificLogger.trace("Reached interval operations ["
                             + _pendingCount + "/" + _intervalOperations
                             + "], waking up async dispatcher");
                 _pendingCount.set(0);
@@ -216,8 +216,8 @@ public class AsyncReplicationSourceChannel
 
         public CycleResult call() throws Exception {
             if (!isActive()) {
-                if (_specificVerboseLogger.isLoggable(Level.FINEST))
-                    _specificVerboseLogger.finest("AsyncDispatcher idle cycle. Channel is not active");
+                if (_specificVerboseLogger.isTraceEnabled())
+                    _specificVerboseLogger.trace("AsyncDispatcher idle cycle. Channel is not active");
 
                 return CycleResult.IDLE_CONTINUE;
             }
@@ -233,14 +233,14 @@ public class AsyncReplicationSourceChannel
                 try {
                     dispatchBacklogDropped(memberState);
                 } catch (RemoteException e) {
-                    if (_specificLogger.isLoggable(Level.FINE)) {
-                        _specificLogger.log(Level.FINE,
+                    if (_specificLogger.isDebugEnabled()) {
+                        _specificLogger.debug(
                                 "Caught remote exception while asynchronous dispatcher notifies target of backlog dropped",
                                 e);
                     }
                 } catch (Throwable t) {
-                    if (_specificLogger.isLoggable(Level.SEVERE)) {
-                        _specificLogger.log(Level.SEVERE,
+                    if (_specificLogger.isErrorEnabled()) {
+                        _specificLogger.error(
                                 "Error in replication when attempting notify target of backlog dropped",
                                 t);
                     }
@@ -250,8 +250,8 @@ public class AsyncReplicationSourceChannel
             _currentCyclePackets = getPendingPackets();
 
             if (_currentCyclePackets == null || _currentCyclePackets.isEmpty()) {
-                if (_specificVerboseLogger.isLoggable(Level.FINEST))
-                    _specificVerboseLogger.finest("AsyncDispatcher idle cycle. No pending packets to replicate.");
+                if (_specificVerboseLogger.isTraceEnabled())
+                    _specificVerboseLogger.trace("AsyncDispatcher idle cycle. No pending packets to replicate.");
 
                 // If this channel is in synchronizing mode, this means it
                 // is done
@@ -266,8 +266,8 @@ public class AsyncReplicationSourceChannel
                 return CycleResult.IDLE_CONTINUE;
             }
 
-            if (_specificLogger.isLoggable(Level.FINEST))
-                _specificLogger.finest("AsyncDispatcher cycle. Replicating ["
+            if (_specificLogger.isTraceEnabled())
+                _specificLogger.trace("AsyncDispatcher cycle. Replicating ["
                         + _currentCyclePackets.size() + "] pending packets.");
 
             //Make sure resume is not called before suspend in case async invocation ends before the suspend is returned.
@@ -277,8 +277,8 @@ public class AsyncReplicationSourceChannel
 
                     return CycleResult.SUSPEND;
                 } catch (RemoteException e) {
-                    if (_specificLogger.isLoggable(Level.FINE))
-                        _specificLogger.log(Level.FINE,
+                    if (_specificLogger.isDebugEnabled())
+                        _specificLogger.debug(
                                 "AsyncDispatcher cycle error.",
                                 e);
 
@@ -286,8 +286,8 @@ public class AsyncReplicationSourceChannel
                     _currentCyclePackets = null;
                     return CycleResult.IDLE_CONTINUE;
                 } catch (Throwable t) {
-                    if (_specificLogger.isLoggable(Level.FINER)) {
-                        _specificLogger.log(Level.FINER,
+                    if (_specificLogger.isDebugEnabled()) {
+                        _specificLogger.debug(
                                 "AsyncDispatcher cycle error while replicating "
                                         + _currentCyclePackets
                                         + "."
@@ -310,15 +310,15 @@ public class AsyncReplicationSourceChannel
 
                     return CycleResult.SUSPEND;
                 } catch (RemoteException e) {
-                    if (_specificLogger.isLoggable(Level.FINE))
-                        _specificLogger.log(Level.FINE,
+                    if (_specificLogger.isDebugEnabled())
+                        _specificLogger.debug(
                                 "AsyncDispatcher idle state cycle error.",
                                 e);
 
                     return CycleResult.IDLE_CONTINUE;
                 } catch (Throwable t) {
-                    if (_specificLogger.isLoggable(Level.FINER)) {
-                        _specificLogger.log(Level.FINER,
+                    if (_specificLogger.isDebugEnabled()) {
+                        _specificLogger.debug(
                                 "AsyncDispatcher cycle error while replicating idle state data."
                                         + StringUtils.NEW_LINE
                                         + getGroupBacklog().toLogMessage(getMemberName()),
@@ -331,8 +331,8 @@ public class AsyncReplicationSourceChannel
         }
 
         private void replicateIdleStateDataAsync(final IIdleStateData idleStateData, final IAsyncReplicationListener listener) throws RemoteException {
-            if (_specificVerboseLogger.isLoggable(Level.FINEST))
-                _specificVerboseLogger.finest("replicating idle state data: "
+            if (_specificVerboseLogger.isTraceEnabled())
+                _specificVerboseLogger.trace("replicating idle state data: "
                         + idleStateData);
 
             final ReplicatedDataPacketResource replicatedDataPacketResource = _packetsPool.get();
@@ -404,16 +404,16 @@ public class AsyncReplicationSourceChannel
                 _currentCycleIdleStateData = null;
 
                 if (error instanceof RemoteException) {
-                    if (_specificLogger.isLoggable(Level.FINE))
-                        _specificLogger.log(Level.FINE,
+                    if (_specificLogger.isDebugEnabled())
+                        _specificLogger.debug(
                                 "AsyncDispatcher cycle error.",
                                 error);
 
                 } else {
-                    if (_specificLogger.isLoggable(Level.FINER))
+                    if (_specificLogger.isDebugEnabled())
 
                     {
-                        _specificLogger.log(Level.FINER,
+                        _specificLogger.debug(
                                 "AsyncDispatcher cycle error while replicating "
                                         + ((packets != null) ? packets : idleStateData)
                                         + "."
@@ -449,8 +449,8 @@ public class AsyncReplicationSourceChannel
                 if (processResult != null && processResult instanceof GlobalOrderProcessResult) {
                     GlobalOrderProcessResult typedResult = (GlobalOrderProcessResult) processResult;
                     if (!typedResult.isProcessed() && typedResult.getError() == null) {
-                        if (_specificLogger.isLoggable(Level.FINER))
-                            _specificLogger.log(Level.FINER,
+                        if (_specificLogger.isDebugEnabled())
+                            _specificLogger.debug(
                                     "Replication was not fully processed, probably due to unconsolidated transactions, resuming replication.");
                         getHandler().resumeNow();
                         return;
@@ -463,14 +463,14 @@ public class AsyncReplicationSourceChannel
                     try {
                         signalSynchronizingDone();
                     } catch (RemoteException e) {
-                        if (_specificLogger.isLoggable(Level.FINE))
-                            _specificLogger.log(Level.FINE,
+                        if (_specificLogger.isDebugEnabled())
+                            _specificLogger.debug(
                                     "AsyncDispatcher cycle error.",
                                     e);
 
                     } catch (Throwable t) {
-                        if (_specificLogger.isLoggable(Level.SEVERE)) {
-                            _specificLogger.log(Level.SEVERE,
+                        if (_specificLogger.isErrorEnabled()) {
+                            _specificLogger.error(
                                     "AsyncDispatcher cycle error while replicating "
                                             + ((packets != null) ? packets : idleStateData)
                                             + "."

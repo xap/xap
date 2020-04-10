@@ -33,7 +33,7 @@ import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
 
 import java.rmi.RemoteException;
-import java.util.logging.Level;
+
 
 
 @com.gigaspaces.api.InternalApi

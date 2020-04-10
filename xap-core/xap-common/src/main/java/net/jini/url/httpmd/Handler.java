@@ -25,7 +25,8 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A stream handler for URLs with the HTTPMD protocol. HTTPMD URLs provide a way to insure the

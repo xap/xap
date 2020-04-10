@@ -68,8 +68,9 @@ import com.j_spaces.core.sadapter.IStorageAdapter;
 import com.j_spaces.kernel.SystemProperties;
 
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_ALL_IN_CACHE;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_BLOB_STORE;
@@ -86,7 +87,7 @@ import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_USE_BL
  */
 @com.gigaspaces.api.InternalApi
 public class SpaceReplicationInitializer {
-    private static final Logger _replicationNodeLogger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_REPLICATION_NODE);
+    private static final Logger _replicationNodeLogger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_REPLICATION_NODE);
 
     private final SpaceConfigReader _configReader;
     private final SpaceImpl _spaceImpl;
@@ -193,7 +194,7 @@ public class SpaceReplicationInitializer {
         nodeBuilder.setReplicationBacklogBuilder(createReplicationBacklog(_storageAdapter, packetDataMediator));
         nodeBuilder.setReplicaDataProducerBuilder(new SpaceReplicaDataProducerBuilder(_spaceEngine));
         if (isReplicatedPersistentBlobstore() && _syncListEnabled) {
-            if (_replicationNodeLogger.isLoggable(Level.INFO)) {
+            if (_replicationNodeLogger.isInfoEnabled()) {
                 _replicationNodeLogger.info("[" + _fullSpaceName + "]" + " initialized with direct persistency sync list recovery mode");
             }
             nodeBuilder.setReplicaDataConsumer(new SpaceReplicaDataConsumer(_typeManager, new SpaceEngineReplicaDirectPersistencySyncConsumerFacade(_spaceEngine)));
@@ -372,8 +373,8 @@ public class SpaceReplicationInitializer {
             if (throwOnError)
                 throw new IllegalArgumentException(errorMessage + ", use 'cluster-config.groups.group.repl-policy.processing-type=global-order' instead");
             if (!_alreadyWarnedUnsupportedConfig) {
-                if (_replicationNodeLogger.isLoggable(Level.WARNING)) {
-                    _replicationNodeLogger.warning(StringUtils.NEW_LINE +
+                if (_replicationNodeLogger.isWarnEnabled()) {
+                    _replicationNodeLogger.warn(StringUtils.NEW_LINE +
                             "*********************************************************************" + StringUtils.NEW_LINE +
                             errorMessage + "," + StringUtils.NEW_LINE +
                             "reverting to Global order replication processing" + StringUtils.NEW_LINE +
@@ -394,8 +395,8 @@ public class SpaceReplicationInitializer {
             if (throwOnError)
                 throw new IllegalArgumentException(errorMessage + ", use 'cluster-config.groups.group.repl-policy.processing-type=global-order' instead");
             if (!_alreadyWarnedUnsupportedConfig) {
-                if (_replicationNodeLogger.isLoggable(Level.WARNING)) {
-                    _replicationNodeLogger.warning(StringUtils.NEW_LINE +
+                if (_replicationNodeLogger.isWarnEnabled()) {
+                    _replicationNodeLogger.warn(StringUtils.NEW_LINE +
                             "*********************************************************************" + StringUtils.NEW_LINE +
                             errorMessage + "," + StringUtils.NEW_LINE +
                             "reverting to Global order replication processing" + StringUtils.NEW_LINE +

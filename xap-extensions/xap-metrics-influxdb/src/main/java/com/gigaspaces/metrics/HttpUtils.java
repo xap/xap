@@ -24,15 +24,16 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
  * @since 10.1
  */
 public class HttpUtils {
-    private static final Logger logger = Logger.getLogger(HttpUtils.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(HttpUtils.class.getName());
 
     private static final Charset DEFAULT_ENCODING = Charset.forName("UTF-8");
 
@@ -114,14 +115,14 @@ public class HttpUtils {
             while ((line = br.readLine()) != null)
                 sb.append(line);
         } catch (IOException e) {
-            if (logger.isLoggable(Level.FINEST))
-                logger.log(Level.FINEST, "Failed to read HTTP response error stream", e);
+            if (logger.isTraceEnabled())
+                logger.trace("Failed to read HTTP response error stream", e);
         } finally {
             try {
                 br.close();
             } catch (IOException e) {
-                if (logger.isLoggable(Level.FINEST))
-                    logger.log(Level.FINEST, "Failed to close HTTP response error stream", e);
+                if (logger.isTraceEnabled())
+                    logger.trace("Failed to close HTTP response error stream", e);
             }
         }
         return sb.toString();

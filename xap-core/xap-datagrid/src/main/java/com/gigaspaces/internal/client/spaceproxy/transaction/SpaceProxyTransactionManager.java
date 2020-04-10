@@ -22,8 +22,9 @@ import com.j_spaces.core.client.XAResourceImpl;
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.Transaction.Created;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
  * @author anna
@@ -44,7 +45,7 @@ public class SpaceProxyTransactionManager {
      */
     private transient ActionListener _actionListener;
     final private static Logger _logger =
-            Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_XA);
+            LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_XA);
 
     public SpaceProxyTransactionManager() {
         this._contextTransactions = new ThreadLocal<CurrentXtnProxyHolder>();
@@ -64,17 +65,17 @@ public class SpaceProxyTransactionManager {
     }
 
     public Transaction.Created replaceContextTransaction(Transaction.Created txn, ActionListener currentActionListener, boolean delegatedXa) {
-        if (_logger.isLoggable(Level.FINE)) {
+        if (_logger.isDebugEnabled()) {
             if (txn == null) {
-                _logger.log(Level.FINE, "GS:replaceContextTransaction called with txn NULL  thread=" + Thread.currentThread().getId() + " proxy=" + this);
+                _logger.debug("GS:replaceContextTransaction called with txn NULL  thread=" + Thread.currentThread().getId() + " proxy=" + this);
             } else {
                 XAResourceImpl xares = null;
                 if (currentActionListener != null)
                     xares = (XAResourceImpl) currentActionListener;
                 if (xares != null)
-                    _logger.log(Level.FINE, "GS:replaceContextTransaction called with txn  thread=" + Thread.currentThread().getId() + " rmid=" + xares.getRmid() + " proxy=" + this);
+                    _logger.debug("GS:replaceContextTransaction called with txn  thread=" + Thread.currentThread().getId() + " rmid=" + xares.getRmid() + " proxy=" + this);
                 else
-                    _logger.log(Level.FINE, "GS:replaceContextTransaction called with txn  thread=" + Thread.currentThread().getId() + " rmid= = NULL" + " proxy=" + this);
+                    _logger.debug("GS:replaceContextTransaction called with txn  thread=" + Thread.currentThread().getId() + " rmid= = NULL" + " proxy=" + this);
             }
         }
 

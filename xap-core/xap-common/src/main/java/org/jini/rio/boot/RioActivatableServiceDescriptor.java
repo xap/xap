@@ -41,8 +41,9 @@ import java.rmi.activation.ActivationID;
 import java.rmi.activation.ActivationSystem;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class used to launch shared, activatable services. Clients construct this object with the details
@@ -273,8 +274,8 @@ public class RioActivatableServiceDescriptor extends RioServiceDescriptor {
         String rioHome = System.getProperty("RIO_HOME");
         if (rioHome == null) {
             defaultCommonJARs = new URL[0];
-            if (logger.isLoggable(Level.FINEST))
-                logger.finest("RIO_HOME not defined, defaultCommonJARs " +
+            if (logger.isTraceEnabled())
+                logger.trace("RIO_HOME not defined, defaultCommonJARs " +
                         "set to zero-length array");
         } else {
             File rio = new File(rioHome + File.separator + "lib" +
@@ -322,7 +323,7 @@ public class RioActivatableServiceDescriptor extends RioServiceDescriptor {
                             commonJARs,
                             getPolicy(),
                             params);
-            logger.finest("ActivateDesc: " + adesc);
+            logger.trace("ActivateDesc: " + adesc);
             // Get hosting activation group
             gid = restoreGroupID(getSharedGroupLog());
             /* Register the desired service with the activation system */
@@ -342,7 +343,7 @@ public class RioActivatableServiceDescriptor extends RioServiceDescriptor {
                     sys.unregisterObject(aid);
             } catch (Exception ee) {
                 // ignore -- did the best we could.
-                logger.log(Level.FINEST,
+                logger.trace(
                         "Unable to unregister with activation system",
                         ee);
             }

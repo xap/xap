@@ -30,8 +30,9 @@ import com.j_spaces.map.eviction.AbstractEvictionStrategy;
 import com.j_spaces.map.eviction.NoneEvictionStrategy;
 
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MapFactory {
 
@@ -75,9 +76,9 @@ public class MapFactory {
             }
             return evictionStrategy;
         } catch (java.lang.ClassNotFoundException e) {
-            Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEFINDER);
-            if (logger.isLoggable(Level.WARNING))
-                logger.log(Level.WARNING, "Failed to find eviction strategy implementation using NoneEvictionStrategy.", e);
+            Logger logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEFINDER);
+            if (logger.isWarnEnabled())
+                logger.warn("Failed to find eviction strategy implementation using NoneEvictionStrategy.", e);
 
             return new NoneEvictionStrategy();
         } catch (InstantiationException e) {

@@ -30,8 +30,9 @@ import com.j_spaces.map.Envelope;
 
 import net.jini.core.transaction.Transaction;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SubAction that contains most Action parameters and implements ParamProxyAction for access.
@@ -41,7 +42,7 @@ import java.util.logging.Logger;
  * @since 6.0
  */
 public abstract class QueryProxyActionInfo extends CommonProxyActionInfo {
-    protected static final Logger _devLogger = Logger.getLogger(Constants.LOGGER_DEV);
+    protected static final Logger _devLogger = LoggerFactory.getLogger(Constants.LOGGER_DEV);
 
     protected Object _query;
     protected final ObjectType _queryObjectType;
@@ -128,8 +129,8 @@ public abstract class QueryProxyActionInfo extends CommonProxyActionInfo {
     }
 
     protected boolean verifyLogScannedEntriesCountParams(long timeout) {
-        if (timeout > 0 & _devLogger.isLoggable(Level.FINEST)) {
-            _devLogger.finest("Logging scanned entries count is not available for blocking operations, 0 timeout must be used");
+        if (timeout > 0 & _devLogger.isTraceEnabled()) {
+            _devLogger.trace("Logging scanned entries count is not available for blocking operations, 0 timeout must be used");
             return false;
         }
 

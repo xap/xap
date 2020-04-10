@@ -40,8 +40,9 @@ import net.jini.lease.LeaseRenewalEvent;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -69,8 +70,8 @@ public class BatchLeaseRenewalManager implements EventLeaseRenewalManager {
         _lock = new Object();
         _renewalTask = new BatchLeaseRenewalTask();
         _leases = new ConcurrentHashMap<SpaceLease, LeaseListener>();
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "BatchLeaseRenewalManager initialized (" +
+        if (_logger.isDebugEnabled())
+            _logger.debug("BatchLeaseRenewalManager initialized (" +
                     "renewDuration=" + _renewDuration + ", " +
                     "renewInterval=" + _renewInterval + ")");
         if (_renewInterval > _renewDuration)
@@ -91,8 +92,8 @@ public class BatchLeaseRenewalManager implements EventLeaseRenewalManager {
     @Override
     public void registerAutoRenew(EventRegistration eventRegistration, LeaseListener listener) {
         synchronized (_lock) {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.log(Level.FINEST, "lease has been registered for auto-renewal");
+            if (_logger.isTraceEnabled())
+                _logger.trace("lease has been registered for auto-renewal");
             _leases.put((SpaceNotifyLease) eventRegistration.getLease(), listener);
             _batch = null;
             if (_leases.size() == 1)
@@ -133,8 +134,8 @@ public class BatchLeaseRenewalManager implements EventLeaseRenewalManager {
                     index++;
                 }
                 _batch = new LeaseUpdateBatch(leases, leasesUpdateDetails, true);
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.log(Level.FINEST, "Cached lease batch was modified - now contains " + _batch.getSize() +
+                if (_logger.isTraceEnabled())
+                    _logger.trace("Cached lease batch was modified - now contains " + _batch.getSize() +
                             " leases.");
             }
 
@@ -149,8 +150,8 @@ public class BatchLeaseRenewalManager implements EventLeaseRenewalManager {
 
             LeaseUpdateBatch batch = getBatch();
             if (batch == null) {
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.log(Level.FINEST, "No leases to renew.");
+                if (_logger.isTraceEnabled())
+                    _logger.trace("No leases to renew.");
                 return IAsyncHandlerProvider.CycleResult.TERMINATE;
             }
             final long newExpiration = LeaseUtils.safeAdd(SystemTime.timeMillis(), _renewDuration);
@@ -158,8 +159,8 @@ public class BatchLeaseRenewalManager implements EventLeaseRenewalManager {
                 @Override
                 public void onResult(AsyncResult<Map<SpaceLease, Throwable>> result) {
                     final Map<SpaceLease, Throwable> errorsMap = result.getResult();
-                    if (_logger.isLoggable(Level.FINEST))
-                        _logger.log(Level.FINEST, "Async batch lease renewal completed - " + (errorsMap == null ? 0 :
+                    if (_logger.isTraceEnabled())
+                        _logger.trace("Async batch lease renewal completed - " + (errorsMap == null ? 0 :
                                 errorsMap.size()) + " errors");
                     if (errorsMap != null) {
                         for (Map.Entry<SpaceLease, Throwable> entry : errorsMap.entrySet()) {
@@ -178,8 +179,8 @@ public class BatchLeaseRenewalManager implements EventLeaseRenewalManager {
                 }
             };
 
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.log(Level.FINEST, "Executing async batch renewal of " + batch.getSize() + " registrations...");
+            if (_logger.isTraceEnabled())
+                _logger.trace("Executing async batch renewal of " + batch.getSize() + " registrations...");
             LeaseUtils.updateBatchAsync(_spaceProxy, batch, listener);
             return IAsyncHandlerProvider.CycleResult.IDLE_CONTINUE;
         }

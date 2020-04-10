@@ -40,8 +40,9 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A base class for all the Proxies created by reflection.
@@ -51,7 +52,7 @@ import java.util.logging.Logger;
  */
 public abstract class AbstractProxy implements Serializable, IDynamicProxy {
     private static final long serialVersionUID = -7155145351229271987L;
-    private static final Logger _stubCacheLogger = Logger.getLogger(Constants.LOGGER_LRMI_STUB_CACHE);
+    private static final Logger _stubCacheLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_STUB_CACHE);
 
     final public static String INTERNAL_NAME = ReflectionUtil.getInternalName(AbstractProxy.class);
     final private static Method EQUAL_METHOD;
@@ -103,21 +104,21 @@ public abstract class AbstractProxy implements Serializable, IDynamicProxy {
 
         switch (proxyWriteType) {
             case UNCACHED:
-                if (_stubCacheLogger.isLoggable(Level.FINER))
-                    _stubCacheLogger.finer("serializing full uncached stub, toString() = " + this.toString());
+                if (_stubCacheLogger.isDebugEnabled())
+                    _stubCacheLogger.debug("serializing full uncached stub, toString() = " + this.toString());
 
                 return _fullSerializationObjectUncached;
             case CACHED_LIGHT:
                 if (_lightSerializationObject != null) {
-                    if (_stubCacheLogger.isLoggable(Level.FINEST))
-                        _stubCacheLogger.finest("serializing light stub with id = " + ((ILRMIProxy) _handler).getStubId() + ", stub toString() = " + this.toString());
+                    if (_stubCacheLogger.isTraceEnabled())
+                        _stubCacheLogger.trace("serializing light stub with id = " + ((ILRMIProxy) _handler).getStubId() + ", stub toString() = " + this.toString());
 
                     return _lightSerializationObject;
                 }
                 //else fall through to CACHED_FULL state because this is the first time this object is written
             case CACHED_FULL:
-                if (_stubCacheLogger.isLoggable(Level.FINE))
-                    _stubCacheLogger.fine("serializing full stub for caching with id = " + ((ILRMIProxy) _handler).getStubId() + ", stub toString() = " + this.toString());
+                if (_stubCacheLogger.isDebugEnabled())
+                    _stubCacheLogger.debug("serializing full stub for caching with id = " + ((ILRMIProxy) _handler).getStubId() + ", stub toString() = " + this.toString());
 
                 return new ProxyReplace(this.getClass().getInterfaces(), getInvocatioHandler(), true, true, this);
             default:
@@ -191,13 +192,13 @@ public abstract class AbstractProxy implements Serializable, IDynamicProxy {
             if (_cacheProxy && _handler instanceof ILRMIProxy) {
                 StubId stubId = ((ILRMIProxy) _handler).getStubId();
 
-                if (_stubCacheLogger.isLoggable(Level.FINE))
-                    _stubCacheLogger.fine("adding stub to cache, id = " + stubId + ", stub toString() = " + proxyInstance);
+                if (_stubCacheLogger.isDebugEnabled())
+                    _stubCacheLogger.debug("adding stub to cache, id = " + stubId + ", stub toString() = " + proxyInstance);
 
                 LRMIRuntime.getRuntime().getStubCache().addStub(stubId, proxyInstance);
             } else {
-                if (_stubCacheLogger.isLoggable(Level.FINER))
-                    _stubCacheLogger.finer("stub state is uncached, skipping cache insertion. toString() = " + proxyInstance);
+                if (_stubCacheLogger.isDebugEnabled())
+                    _stubCacheLogger.debug("stub state is uncached, skipping cache insertion. toString() = " + proxyInstance);
             }
             return proxyInstance;
         }
@@ -268,13 +269,13 @@ public abstract class AbstractProxy implements Serializable, IDynamicProxy {
         public Object readResolve() throws ObjectStreamException {
             Object stub = LRMIRuntime.getRuntime().getStubCache().getStub(_stubId);
             if (stub == null) {
-                if (_stubCacheLogger.isLoggable(Level.FINEST))
-                    _stubCacheLogger.finest("attempt to get stub from cache by id " + _stubId + " no cached stub exist under that id");
+                if (_stubCacheLogger.isTraceEnabled())
+                    _stubCacheLogger.trace("attempt to get stub from cache by id " + _stubId + " no cached stub exist under that id");
                 throw new MissingCachedStubException(_stubId);
             }
 
-            if (_stubCacheLogger.isLoggable(Level.FINEST))
-                _stubCacheLogger.finest("got stub from cache by id " + _stubId + " result stub toString() = " + stub);
+            if (_stubCacheLogger.isTraceEnabled())
+                _stubCacheLogger.trace("got stub from cache by id " + _stubId + " result stub toString() = " + stub);
 
             return stub;
         }

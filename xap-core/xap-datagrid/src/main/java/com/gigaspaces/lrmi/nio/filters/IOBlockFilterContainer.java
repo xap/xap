@@ -33,15 +33,16 @@ import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.kernel.SystemProperties.LRMI_NETWORK_FILTER_UNWRAP_BUFFER_ALLOCATION_STRATEGY;
 
 @com.gigaspaces.api.InternalApi
 public class IOBlockFilterContainer {
-    private static final Logger logger = Logger.getLogger(IOBlockFilterContainer.class.getName());
-    private static final Logger _contextLogger = Logger.getLogger(Constants.LOGGER_LRMI_CONTEXT);
+    private static final Logger logger = LoggerFactory.getLogger(IOBlockFilterContainer.class.getName());
+    private static final Logger _contextLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_CONTEXT);
 
     public static final byte MESSAGE_SUFFIX = 0;
     public static final byte PREFIX_PART = 1;
@@ -184,7 +185,7 @@ public class IOBlockFilterContainer {
         if (filterContext.result.getStatus() == IOFilterResult.Status.OK) {
             context = ctx;
         } else {
-            LRMIInvocationTrace trace = _contextLogger.isLoggable(Level.FINE) ? LRMIInvocationContext.getCurrentContext().getTrace() : null;
+            LRMIInvocationTrace trace = _contextLogger.isDebugEnabled() ? LRMIInvocationContext.getCurrentContext().getTrace() : null;
             context = new Writer.Context(trace);
         }
         return context;
@@ -254,7 +255,7 @@ public class IOBlockFilterContainer {
             filterContext.getDst().flip();
             return toBytes(filterContext.getSrc());
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Failed to handle blocking content", e);
+            logger.error("Failed to handle blocking content", e);
             return bytes;
         } finally {
             filterContext.setDst(old);
@@ -369,7 +370,7 @@ public class IOBlockFilterContainer {
         if (isBlocking) {
             writer.writeBytesToChannelBlocking(buf);
         } else {
-            LRMIInvocationTrace trace = _contextLogger.isLoggable(Level.FINE) ? LRMIInvocationContext.getCurrentContext().getTrace() : null;
+            LRMIInvocationTrace trace = _contextLogger.isDebugEnabled() ? LRMIInvocationContext.getCurrentContext().getTrace() : null;
             Writer.Context ctx = new Writer.Context(trace);
             ctx.setTotalLength(buf.remaining());
             ctx.setBuffer(buf);

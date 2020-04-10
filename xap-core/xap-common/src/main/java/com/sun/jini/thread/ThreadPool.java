@@ -22,8 +22,9 @@ import com.sun.jini.action.GetLongAction;
 
 import java.security.AccessController;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * ThreadPool is a simple thread pool implementation of the Executor interface.
@@ -61,7 +62,7 @@ final class ThreadPool implements Executor {
                     .longValue();
 
     private static final Logger logger =
-            Logger.getLogger("com.sun.jini.thread.ThreadPool");
+            LoggerFactory.getLogger("com.sun.jini.thread.ThreadPool");
 
     /**
      * thread group that this pool's threads execute in
@@ -138,7 +139,7 @@ final class ThreadPool implements Executor {
                 try {
                     task.runnable.run();
                 } catch (Throwable t) {
-                    logger.log(Level.WARNING, "uncaught exception", t);
+                    logger.warn("uncaught exception", t);
                 }
         /*
          * REMIND: What if the task changed this thread's

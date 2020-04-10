@@ -30,8 +30,9 @@ import net.jini.core.lease.UnknownLeaseException;
 
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Dan Kilman
@@ -89,15 +90,15 @@ public class DurableNotificationLease
                 _currentTask.stop(10, TimeUnit.MILLISECONDS);
             }
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Scheduling lease cancel thread, will be activated in " + duration + "ms");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Scheduling lease cancel thread, will be activated in " + duration + "ms");
 
             _currentTask = _asyncProvider.start(new AsyncCallable() {
                 public CycleResult call() throws Exception {
                     new Thread(new Runnable() {
                         public void run() {
-                            if (_logger.isLoggable(Level.FINE))
-                                _logger.log(Level.FINE, "Lease cancel thread was activated, canceling lease");
+                            if (_logger.isDebugEnabled())
+                                _logger.debug("Lease cancel thread was activated, canceling lease");
 
                             DurableNotificationLease.this.cancel();
                         }
@@ -127,8 +128,8 @@ public class DurableNotificationLease
                 _currentTask.stop(10, TimeUnit.MILLISECONDS);
         }
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Lease cancel request, canceling lease on registration");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Lease cancel request, canceling lease on registration");
 
         _clientEndpoint.close();
     }

@@ -42,8 +42,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An implementation of redo log file storage which is based on an underlying byte buffer storages
@@ -55,7 +56,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
         implements IRedoLogFileStorage<T>, IStorageSegmentsMediator {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_BACKLOG);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_BACKLOG);
     private static final TraceableLogger _traceableLogger = TraceableLogger.getLogger(Constants.LOGGER_REPLICATION_BACKLOG);
 
     private final StorageReadOnlyIterator<T> EMPTY_ITERATOR = new EmptyStorageReadOnlyIterator<T>();
@@ -107,8 +108,8 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
         this._writerBuffer = ByteBuffer.allocate(config.getWriterBufferSize());
         this._packetSerializer = new PacketSerializer<T>(config.getPacketStreamSerializer());
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("ByteBufferRedoLogFileStorage created:"
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("ByteBufferRedoLogFileStorage created:"
                     + "\n\tmaxWriteBufferSize = " + (config.getWriterMaxBufferSize() / 1024) + "kb"
                     + "\n\tmaxSwapSize = " + (config.getMaxSwapSize() == -1 ? "UNLIMITED" : (_maxSwapSize / (1024 * 1024)) + "mb")
                     + "\n\tmaxSizePerSegment = " + (config.getMaxSizePerSegment() / (1024 * 1024)) + "mb"
@@ -167,8 +168,8 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                     unindexedPacketsCount = 0;
                     //We can seal this segment writer, because this segment will not contain anymore packets
                     currentLastSegment.sealWriter();
-                    if (_logger.isLoggable(Level.FINEST))
-                        _logger.finest("segment sealed, a new segment created, current segment count is " + _segments.size());
+                    if (_logger.isTraceEnabled())
+                        _logger.trace("segment sealed, a new segment created, current segment count is " + _segments.size());
                     //Make sure we do not double release this writer if an exception occurd at the release operation
                     final SegmentCursor tempWriter = writer;
                     writer = null;
@@ -229,12 +230,12 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
             ArrayList<T> deniedPackets = new ArrayList<T>();
             for (int i = writtenPackets; i < replicationPackets.size(); ++i)
                 deniedPackets.add(replicationPackets.get(i));
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("Storage is full, denied " + deniedPackets.size() + " packets");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Storage is full, denied " + deniedPackets.size() + " packets");
             throw new StorageFullException(e.getMessage(), e.getCause(), deniedPackets);
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "error appending replications packets to storage", e);
+            if (_logger.isErrorEnabled())
+                _logger.error("error appending replications packets to storage", e);
             throw new StorageException("error appending replications packets to storage", e);
         } finally {
             if (writer != null)
@@ -349,8 +350,8 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                 _weight -= segment.getWeight();
                 //If not the last segment
                 if (currentSegmentCounter < numberOfSegments) {
-                    if (_logger.isLoggable(Level.FINEST))
-                        _logger.finest("deleted segment " + currentSegmentCounter);
+                    if (_logger.isTraceEnabled())
+                        _logger.trace("deleted segment " + currentSegmentCounter);
                     segment.delete();
                     remaining -= numOfPackets;
                     deletedSegments++;
@@ -402,8 +403,8 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                             reader.release();
                             _weight -= currentSegment.getWeight();
                             currentSegment.delete();
-                            if (_logger.isLoggable(Level.FINEST))
-                                _logger.finest("deleted segment " + numberOfDeletedSegments);
+                            if (_logger.isTraceEnabled())
+                                _logger.trace("deleted segment " + numberOfDeletedSegments);
                             numberOfDeletedSegments++;
                             currentSegment = segments.next();
                             removedFromCurrentSegment = 0;
@@ -515,8 +516,8 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
         _initialized = false;
         _dataStartPos = 0;
         _size = 0;
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("closed storage");
+        if (_logger.isDebugEnabled())
+            _logger.debug("closed storage");
     }
 
     @Override
@@ -551,8 +552,8 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
                         markEndOfPackets(writer);
                         _segments.add(firstSegment);
                         _initialized = true;
-                        if (_logger.isLoggable(Level.FINE))
-                            _logger.fine("disk is used for the first time, created first storage segment");
+                        if (_logger.isDebugEnabled())
+                            _logger.debug("disk is used for the first time, created first storage segment");
                     } catch (ByteBufferStorageException e) {
                         throw new StorageException(e);
                     } finally {
@@ -580,8 +581,8 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
         StorageSegment segment = getLastSegment();
         segment.clear();
         _dataStartPos = 0;
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("first segments cleared");
+        if (_logger.isTraceEnabled())
+            _logger.trace("first segments cleared");
         SegmentCursor writer = segment.getCursorForWriting();
         try {
             markEndOfPackets(writer);
@@ -876,8 +877,8 @@ public class ByteBufferRedoLogFileStorage<T extends IReplicationOrderedPacket>
     }
 
     private void logGeneralStatusOnError() {
-        if (_logger.isLoggable(Level.SEVERE))
-            _logger.severe("integrity validation failed, general state:"
+        if (_logger.isErrorEnabled())
+            _logger.error("integrity validation failed, general state:"
                     + StringUtils.NEW_LINE + "dataStartPos="
                     + _dataStartPos + StringUtils.NEW_LINE + "known size="
                     + _size + StringUtils.NEW_LINE + "number of segments="

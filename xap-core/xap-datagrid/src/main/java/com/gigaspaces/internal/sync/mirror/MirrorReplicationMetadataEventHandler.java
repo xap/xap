@@ -27,8 +27,9 @@ import com.gigaspaces.logger.Constants;
 import com.gigaspaces.sync.AddIndexDataImpl;
 import com.gigaspaces.sync.IntroduceTypeDataImpl;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -39,7 +40,7 @@ public class MirrorReplicationMetadataEventHandler extends MirrorReplicationInHa
         IReplicationInDataTypeCreatedHandler,
         IReplicationInDataTypeIndexAddedHandler {
 
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION);
 
     public MirrorReplicationMetadataEventHandler(MirrorBulkExecutor bulkExecutor,
                                                  MirrorStatisticsImpl operationStatisticsHandler) {
@@ -57,8 +58,8 @@ public class MirrorReplicationMetadataEventHandler extends MirrorReplicationInHa
             _syncEndpoint.onIntroduceType(new IntroduceTypeDataImpl(typeDesc));
             batchContext.currentConsumed();
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Conflict in type introduction.", e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Conflict in type introduction.", e);
         }
     }
 
@@ -72,8 +73,8 @@ public class MirrorReplicationMetadataEventHandler extends MirrorReplicationInHa
             getTypeManager().addIndexes(requestInfo.getTypeName(), requestInfo.getIndexes());
             _syncEndpoint.onAddIndex(new AddIndexDataImpl(requestInfo.getTypeName(), requestInfo.getIndexes()));
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, "Error adding new index to type [" + requestInfo.getTypeName() + "].", e);
+            if (_logger.isWarnEnabled()) {
+                _logger.warn("Error adding new index to type [" + requestInfo.getTypeName() + "].", e);
             }
         }
         batchContext.currentConsumed();

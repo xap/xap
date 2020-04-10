@@ -49,8 +49,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.WeakHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <pre>
@@ -145,7 +146,7 @@ public class SpaceFinder {
         //set in the m_customProperties
         JSpaceUtilities.setXMLImplSystemProps();
 
-        this._logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEFINDER);
+        this._logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEFINDER);
 
         // Check if the RMI GC system properties are been set, if not we set it to the recommended values.
         try {
@@ -154,8 +155,8 @@ public class SpaceFinder {
             if (System.getProperty(SystemProperties.RMI_SERVER_GC_INTERVAL) == null)
                 System.setProperty(SystemProperties.RMI_SERVER_GC_INTERVAL, SystemProperties.RMI_GC_DEFAULT_INTERVAL);
         } catch (java.lang.SecurityException e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Failed to set sun.rmi.dgc.xxx system properties. \n", e);
+            if (_logger.isWarnEnabled())
+                _logger.warn("Failed to set sun.rmi.dgc.xxx system properties. \n", e);
         }
     }
 
@@ -497,8 +498,8 @@ public class SpaceFinder {
         //Go and find the container schema file if schema is requested AND
         //no regular <container name>-config.xml exists on disk. We try to find it in the resource bundles.
         if (!configFile.canRead() && !JSpaceUtilities.isEmpty(schemaName)) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Could not find the " + containerName + "-config.xml file: "
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Could not find the " + containerName + "-config.xml file: "
                         + contConfFile + ".\n Loading the default container schema file from the ResourceBundle, for the container configuration.");
             }
             InputStream schemaInputStream = ResourceLoader.findContainerSchema(schemaName);
@@ -546,8 +547,8 @@ public class SpaceFinder {
                 _embeddedSpaces.put(url, space);
             }
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "java:// protocol. Get <" + spaceName + "> space from <" + containerName + "> container");
+            if (_logger.isDebugEnabled())
+                _logger.debug("java:// protocol. Get <" + spaceName + "> space from <" + containerName + "> container");
             return (ISpaceProxy) space.getContainer().getContainerEntry().getClusteredSpaceProxy();
         }
     }
@@ -607,12 +608,12 @@ public class SpaceFinder {
 
         Object space = find(args[0]);
         if (space != null) {
-            Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEFINDER);
-            if (logger.isLoggable(Level.FINE)) {
+            Logger logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEFINDER);
+            if (logger.isDebugEnabled()) {
                 if (space instanceof ISpaceProxy)
-                    logger.log(Level.FINE, "Found space: " + space + " using this SpaceURL: " + ((ISpaceProxy) space).getFinderURL() + ". \n The found space initialized using this SpaceURL: " + ((ISpaceProxy) space).getURL());
+                    logger.debug("Found space: " + space + " using this SpaceURL: " + ((ISpaceProxy) space).getFinderURL() + ". \n The found space initialized using this SpaceURL: " + ((ISpaceProxy) space).getURL());
                 else
-                    logger.log(Level.FINE, "Found space: " + space);
+                    logger.debug("Found space: " + space);
             }
         }
     }

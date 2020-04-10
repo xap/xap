@@ -31,15 +31,16 @@ import net.jini.core.transaction.server.ServerTransaction;
 
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author yaeln
  * @since 11.0.1
  */
 public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStorageAdapter {
-    private final static Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT);
+    private final static Logger logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT);
     private final CacheManager cacheManager;
     private final SynchronizationStorageAdapter synchronizationStorageAdapter;
     private final BlobStoreStorageAdapter blobStoreStorageAdapter;
@@ -88,7 +89,7 @@ public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStor
 
     @Override
     public void initialize() throws SAException {
-        if (logger.isLoggable(Level.INFO)) {
+        if (logger.isInfoEnabled()) {
             logger.info("["+cacheManager.getEngine().getFullSpaceName()+"] Initializing sync hybrid storage adapter");
         }
         synchronizationStorageAdapter.initialize();
@@ -277,7 +278,7 @@ public class SyncHybridStorageAdapter implements IStorageAdapter, IBlobStoreStor
                 operationType = "remove";
                 break;
         }
-        if (logger.isLoggable(Level.FINER)) {
+        if (logger.isDebugEnabled()) {
             LogUtils.throwing(logger, getClass(), "failed to execute " + operationType + " operation on " + exceptionOrigin, ex);
         }
         throw new SyncHybridSAException(ex, context.getSyncHybridOperationDetails(), exceptionOrigin);

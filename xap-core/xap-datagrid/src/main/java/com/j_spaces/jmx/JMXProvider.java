@@ -39,8 +39,9 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
@@ -90,7 +91,7 @@ public class JMXProvider {
 
     //logger
     final private static Logger _logger =
-            Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_JMX);
+            LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_JMX);
 
     private static final String CONNECTION_FAILED_MESSAGE = "Failed to receive MBean Server.";
 
@@ -152,8 +153,8 @@ public class JMXProvider {
                         try {
                             jmxConn.start();
 
-                            if (_logger.isLoggable(Level.FINE)) {
-                                _logger.fine("\nNew JMXConnectorServer was successfully registered" +
+                            if (_logger.isDebugEnabled()) {
+                                _logger.debug("\nNew JMXConnectorServer was successfully registered" +
                                         " into the MBeanServer using service url: "
                                         + "\n" + jmxServiceURL + "\n");
                             }
@@ -161,12 +162,12 @@ public class JMXProvider {
                             String message = JSpaceUtilities.getCauseExceptionMessageFromHierarchy(
                                     ioe, NameAlreadyBoundException.class);
                             if (message != null) {
-                                if (_logger.isLoggable(Level.FINE)) {
-                                    _logger.fine("\nUsing an already registered JMXConnectorServer " +
+                                if (_logger.isDebugEnabled()) {
+                                    _logger.debug("\nUsing an already registered JMXConnectorServer " +
                                             "with service url:\n" + jmxServiceURL + "\n");
                                 }
-                            } else if (_logger.isLoggable(Level.WARNING)) {
-                                _logger.log(Level.WARNING, CONNECTION_FAILED_MESSAGE + ioe.toString(), ioe);
+                            } else if (_logger.isWarnEnabled()) {
+                                _logger.warn(CONNECTION_FAILED_MESSAGE + ioe.toString(), ioe);
                             }
                         }
                     }
@@ -176,15 +177,15 @@ public class JMXProvider {
             String message = JSpaceUtilities.getCauseExceptionMessageFromHierarchy(
                     e, NameAlreadyBoundException.class);
             if (message != null) {
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.log(Level.FINEST, CONNECTION_FAILED_MESSAGE + e.toString(), e);
+                if (_logger.isTraceEnabled()) {
+                    _logger.trace(CONNECTION_FAILED_MESSAGE + e.toString(), e);
                 }
-            } else if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, CONNECTION_FAILED_MESSAGE + e.toString(), e);
+            } else if (_logger.isWarnEnabled()) {
+                _logger.warn(CONNECTION_FAILED_MESSAGE + e.toString(), e);
             }
         } catch (Throwable th) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, CONNECTION_FAILED_MESSAGE + th.toString(), th);
+            if (_logger.isWarnEnabled()) {
+                _logger.warn(CONNECTION_FAILED_MESSAGE + th.toString(), th);
             }
         }
 
@@ -208,19 +209,19 @@ public class JMXProvider {
             ObjectName objName = ObjectNameFactory.buildObjectName(DEFAULT_DOMAIN, mbean.getType(), containerName);
             m_MBeansRepository.put(containerName, mBeanServer.registerMBean(mbean, objName));
         } catch (InstanceAlreadyExistsException e) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Container MBean is already registered for <" +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Container MBean is already registered for <" +
                         containerName + ">");
             }
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, "Failed to register MBean for <" +
+            if (_logger.isWarnEnabled()) {
+                _logger.warn("Failed to register MBean for <" +
                         containerName + "> container.", ex);
             }
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("\nContainer <" + containerName + "> MBean was registered successfully.\n");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("\nContainer <" + containerName + "> MBean was registered successfully.\n");
         }
     }
 
@@ -239,28 +240,28 @@ public class JMXProvider {
             try {
                 mBeanServer.registerMBean(transportConnectionsInfoMBean, objName);
             } catch (InstanceAlreadyExistsException e) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine(alreadyRegistredTransportMBeanMessage + containerName + ">");
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(alreadyRegistredTransportMBeanMessage + containerName + ">");
                 }
             } catch (NotCompliantMBeanException e) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.log(Level.SEVERE, failedTransportMBeanRegistrationMessagePrefix +
+                if (_logger.isWarnEnabled()) {
+                    _logger.error(failedTransportMBeanRegistrationMessagePrefix +
                             containerName + ">", e);
                 }
             } catch (MBeanRegistrationException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, failedTransportMBeanRegistrationMessagePrefix +
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(failedTransportMBeanRegistrationMessagePrefix +
                             containerName + ">", e);
                 }
             }
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine(
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(
                         successfulTransportMBeanRegistrationMessage + containerName + ">");
             }
         } else {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine(alreadyRegistredTransportMBeanMessage);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(alreadyRegistredTransportMBeanMessage);
             }
         }
     }
@@ -286,19 +287,19 @@ public class JMXProvider {
                 }
                  */
             } catch (NotCompliantMBeanException e) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.log(Level.SEVERE, failedLocalTimeMBeanRegistrationMessagePrefix +
+                if (_logger.isWarnEnabled()) {
+                    _logger.error(failedLocalTimeMBeanRegistrationMessagePrefix +
                             containerName + ">", e);
                 }
             } catch (MBeanRegistrationException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, failedLocalTimeMBeanRegistrationMessagePrefix +
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(failedLocalTimeMBeanRegistrationMessagePrefix +
                             containerName + ">", e);
                 }
             }
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine(
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(
                         successfulTransportMBeanRegistrationMessage + containerName + ">");
             }
         }
@@ -319,8 +320,8 @@ public class JMXProvider {
                 TransportConstants.createTransportMBeanObjectName(containerName);
         if (mBeanServer.isRegistered(transportMBeanObjectName)) {
             mBeanServer.unregisterMBean(transportMBeanObjectName);
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Transport MBean was unregistered successfully.");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Transport MBean was unregistered successfully.");
 
             }
         }
@@ -342,13 +343,13 @@ public class JMXProvider {
             if (objInst != null) {
                 getMBeanServer(containerName).unregisterMBean(objInst.getObjectName());
 
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("Container <" + containerName + "> MBean was unregistered successfully.");
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Container <" + containerName + "> MBean was unregistered successfully.");
                 }
             }
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, "Failed to unregister MBean for <" + containerName + "> container", ex);
+            if (_logger.isWarnEnabled()) {
+                _logger.warn("Failed to unregister MBean for <" + containerName + "> container", ex);
             }
         }
 
@@ -382,16 +383,16 @@ public class JMXProvider {
 
             m_MBeansRepository.put(spaceImpl.getServiceName() + "Ext", mBeanServer.registerMBean(mbeanExt, objNameExt));
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("\nSpace <" + spaceImpl.getServiceName() + "> MBean was registered successfully.\n");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("\nSpace <" + spaceImpl.getServiceName() + "> MBean was registered successfully.\n");
             }
         } catch (InstanceAlreadyExistsException e) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Space MBean is already registered for <" + spaceImpl.getServiceName() + ">");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Space MBean is already registered for <" + spaceImpl.getServiceName() + ">");
             }
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, "Failed to register MBean for <" + spaceImpl.getServiceName() + "> space.", ex);
+            if (_logger.isWarnEnabled()) {
+                _logger.warn("Failed to register MBean for <" + spaceImpl.getServiceName() + "> space.", ex);
             }
         }
     }
@@ -416,13 +417,13 @@ public class JMXProvider {
                 m_MBeanServer.unregisterMBean(objInst.getObjectName());
             }
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Space <" + containerName + ":" +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Space <" + containerName + ":" +
                         spaceName + "> MBean was unregister successfully.");
             }
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, "Failed to unregister MBean for <" +
+            if (_logger.isWarnEnabled()) {
+                _logger.warn("Failed to unregister MBean for <" +
                         containerName + ":" + spaceName + "> space.", ex);
             }
         }
@@ -442,9 +443,9 @@ public class JMXProvider {
 			}
 			catch( Exception e )
 			{
-				if( _logger.isLoggable(Level.WARNING))
+				if( _logger.isWarnEnabled())
 				{
-					_logger.log(Level.WARNING, "Failed to stop JMX Connector.", e );
+					_logger.warn("Failed to stop JMX Connector.", e );
 				}
 			}
 			if( _logger.isLoggable(Level.CONFIG))

@@ -26,7 +26,8 @@ import java.security.SecureClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.StringTokenizer;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class provides useful utilities for creating and manipulating class loaders.
@@ -39,7 +40,7 @@ public class ClassLoaderUtil {
      * Configure logger
      */
     static final Logger logger =
-            Logger.getLogger("com.sun.jini.start.ClassLoaderUtil");
+            LoggerFactory.getLogger("com.sun.jini.start.ClassLoaderUtil");
 
     // Private constructor to prevent instantiation
     private ClassLoaderUtil() {

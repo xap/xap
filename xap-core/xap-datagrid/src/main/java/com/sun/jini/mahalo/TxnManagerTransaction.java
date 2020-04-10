@@ -51,8 +51,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * TxnManagerTransaction is a class which captures the internal representation of a transaction in
@@ -314,8 +315,8 @@ class TxnManagerTransaction
         // Expires is set after object is created when the associated
         // lease is constructed.
 
-        finer_op_logger = operationsLogger.isLoggable(Level.FINER);
-        finest_tr_logger = transactionsLogger.isLoggable(Level.FINEST);
+        finer_op_logger = operationsLogger.isDebugEnabled();
+        finest_tr_logger = transactionsLogger.isTraceEnabled();
 
     }
 
@@ -335,7 +336,7 @@ class TxnManagerTransaction
      */
     synchronized void add(ParticipantHandle handle)
             throws InternalManagerException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "add", handle);
         }
 
@@ -347,20 +348,20 @@ class TxnManagerTransaction
         //      fine.
 
         try {
-            if (transactionsLogger.isLoggable(Level.FINEST)) {
-                transactionsLogger.log(Level.FINEST,
+            if (transactionsLogger.isTraceEnabled()) {
+                transactionsLogger.trace(
                         "Adding ParticipantHandle: {0}", handle);
             }
             _parts.put(handle, handle);
         } catch (Exception e) {
-            if (transactionsLogger.isLoggable(Level.SEVERE)) {
-                transactionsLogger.log(Level.SEVERE,
+            if (transactionsLogger.isErrorEnabled()) {
+                transactionsLogger.error(
                         "Unable to add ParticipantHandle", e);
             }
             throw new InternalManagerException("TxnManagerTransaction: " +
                     "add: " + e.getMessage());
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "add");
         }
     }
@@ -373,7 +374,7 @@ class TxnManagerTransaction
      * @param state  The new prepstate
      */
     synchronized void modifyParticipant(ParticipantHandle handle, int state) {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "modifyParticipant", new Object[]{handle, new Integer(state)});
         }
         ParticipantHandle ph = null;
@@ -388,7 +389,7 @@ class TxnManagerTransaction
             ph = _parts.get(_parts.get(handle));
 
         if (ph == null) {
-            if (operationsLogger.isLoggable(Level.FINER)) {
+            if (operationsLogger.isDebugEnabled()) {
                 LogUtils.exiting(operationsLogger, TxnManagerTransaction.class,
                         "modifyParticipant");
             }
@@ -397,7 +398,7 @@ class TxnManagerTransaction
         }
 
         ph.setPrepState(state);
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "modifyParticipant");
         }
     }
@@ -508,14 +509,14 @@ class TxnManagerTransaction
             }
 
         } catch (InternalManagerException ime) {
-            if (transactionsLogger.isLoggable(Level.SEVERE)) {
-                transactionsLogger.log(Level.SEVERE,
+            if (transactionsLogger.isErrorEnabled()) {
+                transactionsLogger.error(
                         "TransactionParticipant unable to join", ime);
             }
             throw ime;
         } catch (RemoteException re) {
-            if (transactionsLogger.isLoggable(Level.FINEST)) {
-                transactionsLogger.log(Level.FINEST,
+            if (transactionsLogger.isTraceEnabled()) {
+                transactionsLogger.trace(
                         "TransactionParticipant unable to be stored", re);
             }
             throw re;
@@ -730,8 +731,8 @@ class TxnManagerTransaction
 
             ClientLog log = logmgr.logFor(str.id);
 
-            if (transactionsLogger.isLoggable(Level.FINEST)) {
-                transactionsLogger.log(Level.FINEST,
+            if (transactionsLogger.isTraceEnabled()) {
+                transactionsLogger.trace(
                         "{0} TransactionParticipants have joined",
                         new Integer(phs.length));
             }
@@ -873,8 +874,8 @@ class TxnManagerTransaction
                     result = new Integer(PREPARED);
             }
 
-            if (transactionsLogger.isLoggable(Level.FINEST)) {
-                transactionsLogger.log(Level.FINEST,
+            if (transactionsLogger.isTraceEnabled()) {
+                transactionsLogger.trace(
                         "Voting result: {0}",
                         TxnConstants.getName(result.intValue()));
             }
@@ -1050,21 +1051,21 @@ class TxnManagerTransaction
             log.invalidate();
 
         } catch (RuntimeException rte) {
-            if (transactionsLogger.isLoggable(Level.FINEST)) {
-                transactionsLogger.log(Level.FINEST,
+            if (transactionsLogger.isTraceEnabled()) {
+                transactionsLogger.trace(
                         "Problem committing transaction",
                         rte);
             }
             throw rte;
         } catch (LogException le) {
-            if (transactionsLogger.isLoggable(Level.FINEST)) {
-                transactionsLogger.log(Level.FINEST,
+            if (transactionsLogger.isTraceEnabled()) {
+                transactionsLogger.trace(
                         "Problem persisting transaction",
                         le);
             }
             throw new CannotCommitException("Unable to log [ID=" + +getTransaction().id + "]");
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "commit");
         }
         return COMMITTED;
@@ -1255,7 +1256,7 @@ class TxnManagerTransaction
      */
     void abort(long waitFor)
             throws CannotAbortException, TimeoutExpiredException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "abort", new Long(waitFor));
         }
         boolean use_light_abort = false;
@@ -1389,22 +1390,22 @@ class TxnManagerTransaction
 
             log.invalidate();
         } catch (RuntimeException rte) {
-            if (transactionsLogger.isLoggable(Level.SEVERE)) {
-                transactionsLogger.log(Level.SEVERE,
+            if (transactionsLogger.isErrorEnabled()) {
+                transactionsLogger.error(
                         "Problem aborting transaction",
                         rte);
             }
             throw new InternalManagerException("TxnManagerTransaction: " +
                     "abort: fatal error");
         } catch (LogException le) {
-            if (transactionsLogger.isLoggable(Level.FINEST)) {
-                transactionsLogger.log(Level.FINEST,
+            if (transactionsLogger.isTraceEnabled()) {
+                transactionsLogger.trace(
                         "Problem persisting transaction",
                         le);
             }
             throw new CannotAbortException("Unable to log");
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "abort");
         }
     }
@@ -1491,10 +1492,10 @@ class TxnManagerTransaction
 
 
     public Uuid getCookie() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "getCookie");
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerTransaction.class,
                     "getCookie", uuid);
         }
@@ -1502,7 +1503,7 @@ class TxnManagerTransaction
     }
 
     private void doAbort(long timeout) {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerTransaction.class,
                     "doAbort", new Long(timeout));
         }
@@ -1510,27 +1511,27 @@ class TxnManagerTransaction
             str.abort(timeout);
         } catch (RemoteException re) {
             //abort must have happened, so ignore
-            if (transactionsLogger.isLoggable(Level.FINE)) {
-                transactionsLogger.log(Level.FINE,
+            if (transactionsLogger.isDebugEnabled()) {
+                transactionsLogger.debug(
                         "Trouble aborting  transaction", re);
             }
         } catch (TimeoutExpiredException te) {
             //Swallow this because we really only
             //care about a scheduling a SettlerTask
-            if (transactionsLogger.isLoggable(Level.FINE)) {
-                transactionsLogger.log(Level.FINE,
+            if (transactionsLogger.isDebugEnabled()) {
+                transactionsLogger.debug(
                         "Trouble aborting  transaction", te);
             }
         } catch (TransactionException bte) {
             //If abort has problems, swallow
             //it because the abort must have
             //happened
-            if (transactionsLogger.isLoggable(Level.FINE)) {
-                transactionsLogger.log(Level.FINE,
+            if (transactionsLogger.isDebugEnabled()) {
+                transactionsLogger.debug(
                         "Trouble aborting  transaction", bte);
             }
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "doAbort");
         }
 
@@ -1574,13 +1575,13 @@ class TxnManagerTransaction
         }
         if (vect == null)
 
-            if (transactionsLogger.isLoggable(Level.FINEST)) {
-                transactionsLogger.log(Level.FINEST,
+            if (transactionsLogger.isTraceEnabled()) {
+                transactionsLogger.trace(
                         "Retrieved {0} participants",
                         new Integer(0));
             }
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "parthandles");
         }
         return vect == null ? null : vect.toArray(new ParticipantHandle[vect.size()]);
@@ -1588,7 +1589,7 @@ class TxnManagerTransaction
 
 
     private String getParticipantInfo() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "getParticipantInfo");
         }
         ParticipantHandle[] phs = parthandles();
@@ -1596,8 +1597,8 @@ class TxnManagerTransaction
         if (phs == null)
             return "No participants";
 
-        if (transactionsLogger.isLoggable(Level.FINEST)) {
-            transactionsLogger.log(Level.FINEST,
+        if (transactionsLogger.isTraceEnabled()) {
+            transactionsLogger.trace(
                     "{0} participants joined", new Integer(phs.length));
         }
         StringBuilder sb = new StringBuilder(phs.length + " Participants: ");
@@ -1617,7 +1618,7 @@ class TxnManagerTransaction
 
     void restoreTransientState(ProxyPreparer preparer)
             throws RemoteException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerTransaction.class, "restoreTransientState");
         }
 
@@ -1636,14 +1637,14 @@ class TxnManagerTransaction
 
         for (int i = 0; i < handles.length; i++) {
             handles[i].restoreTransientState(preparer);
-            if (transactionsLogger.isLoggable(Level.FINEST)) {
-                transactionsLogger.log(Level.FINEST,
+            if (transactionsLogger.isTraceEnabled()) {
+                transactionsLogger.trace(
                         "Restored transient state for {0}",
                         handles[i]);
             }
         }
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerTransaction.class, "restoreTransientState");
         }
     }

@@ -50,8 +50,9 @@ import java.rmi.ConnectIOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * a client handler context implementation. stores the state of the async operation. a normal
@@ -68,8 +69,8 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class AsyncContext implements Context {
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
-    final private static Logger _contextLogger = Logger.getLogger(Constants.LOGGER_LRMI_CONTEXT);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
+    final private static Logger _contextLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_CONTEXT);
 
 
     private final ConnectionPool connectionPool;
@@ -122,7 +123,7 @@ public class AsyncContext implements Context {
         this.watchedObjectContext = watchedObjectContext;
 
         LRMIInvocationContext invocationContext = LRMIInvocationContext.getCurrentContext();
-        invocationTrace = _contextLogger.isLoggable(Level.FINE) ? invocationContext.getTrace() : null;
+        invocationTrace = _contextLogger.isDebugEnabled() ? invocationContext.getTrace() : null;
         sourceLogicalVersion = invocationContext.getSourceLogicalVersion();
         targetLogicalVersion = invocationContext.getTargetLogicalVersion();
         proxyWriteType = invocationContext.getProxyWriteType();
@@ -258,8 +259,8 @@ public class AsyncContext implements Context {
         }
 
         disconnect();
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "LRMI transport protocol over NIO broken connection with ServerEndPoint: [" + cpeer.getConnectionURL() + "]", e);
+        if (_logger.isDebugEnabled())
+            _logger.debug("LRMI transport protocol over NIO broken connection with ServerEndPoint: [" + cpeer.getConnectionURL() + "]", e);
 
         finishExecution(new ReplyPacket(null, convertException(e)), false);
     }

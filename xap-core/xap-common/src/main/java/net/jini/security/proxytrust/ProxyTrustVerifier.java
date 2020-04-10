@@ -45,8 +45,9 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Trust verifier for service proxies that use dynamically downloaded code. This verifier uses a
@@ -77,7 +78,7 @@ import java.util.logging.Logger;
 public class ProxyTrustVerifier implements TrustVerifier {
 
     private static final Logger logger =
-            Logger.getLogger("net.jini.security.trust");
+            LoggerFactory.getLogger("net.jini.security.trust");
 
     /**
      * Thread-local state containing object to skip, if any
@@ -265,7 +266,7 @@ public class ProxyTrustVerifier implements TrustVerifier {
                 return null;
             }
         }
-        logger.log(Level.FINER, "{0} has ProxyTrustIterator", obj);
+        logger.debug("{0} has ProxyTrustIterator", obj);
         SecurityContext rsc = uosc.getContext();
         ProxyTrustIterator iter;
         try {
@@ -284,7 +285,7 @@ public class ProxyTrustVerifier implements TrustVerifier {
             obj = null;
             try {
                 obj = restrictedNext(iter, rsc);
-                logger.log(Level.FINER, "ProxyTrustIterator produces {0}",
+                logger.debug("ProxyTrustIterator produces {0}",
                         obj);
                 if (!(obj instanceof ProxyTrust)) {
                     TrustVerifier verifier = getVerifier(obj, ctx, mc, uosc);
@@ -296,7 +297,7 @@ public class ProxyTrustVerifier implements TrustVerifier {
                         obj = ((RemoteMethodControl) obj).setConstraints(mc);
                         TrustVerifier verifier =
                                 ((ProxyTrust) obj).getProxyVerifier();
-                        logger.log(Level.FINE, "verifier is {0}", verifier);
+                        logger.debug("verifier is {0}", verifier);
                         return verifier;
                     } else if (Proxy.isProxyClass(obj.getClass()) &&
                             getMethod(obj) == null &&
@@ -311,7 +312,7 @@ public class ProxyTrustVerifier implements TrustVerifier {
             } catch (RemoteException e) {
                 lastEx = e;
                 if (obj instanceof ProxyTrust) {
-                    logger.log(Level.FINE,
+                    logger.debug(
                             "setting ProxyTrustIterator exception", e);
                     restrictedSetException(iter, e, rsc);
                 }
@@ -320,7 +321,7 @@ public class ProxyTrustVerifier implements TrustVerifier {
         if (lastEx != null) {
             throw lastEx;
         }
-        logger.log(Level.FINE,
+        logger.debug(
                 "no verifier obtained from ProxyTrustIterator");
         return null;
     }
@@ -467,7 +468,7 @@ public class ProxyTrustVerifier implements TrustVerifier {
         if (obj == null) {
             return null;
         }
-        logger.log(Level.FINER, "trying derivative bootstrap proxy {0}", obj);
+        logger.debug("trying derivative bootstrap proxy {0}", obj);
         if (!isTrusted(obj, ctx)) {
             return null;
         }
@@ -491,7 +492,7 @@ public class ProxyTrustVerifier implements TrustVerifier {
                 out.writeObject(verifier);
                 out.close();
                 if (out.replace) {
-                    logger.log(Level.FINER, "remarshalling verifier");
+                    logger.debug("remarshalling verifier");
                     MarshalInputStream in =
                             new MarshalInputStream(
                                     new ByteArrayInputStream(bout.toByteArray()),
@@ -508,7 +509,7 @@ public class ProxyTrustVerifier implements TrustVerifier {
                         e);
             }
         }
-        logger.log(Level.FINE, "verifier is {0}", verifier);
+        logger.debug("verifier is {0}", verifier);
         return verifier;
     }
 

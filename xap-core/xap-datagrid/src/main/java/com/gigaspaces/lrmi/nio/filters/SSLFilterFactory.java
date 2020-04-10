@@ -29,8 +29,9 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -46,7 +47,7 @@ import javax.net.ssl.TrustManagerFactory;
 
 public class SSLFilterFactory implements IOFilterFactory {
 
-    final private static Logger _logger = Logger.getLogger(SSLFilterFactory.class.getName());
+    final private static Logger _logger = LoggerFactory.getLogger(SSLFilterFactory.class.getName());
     private final String PROTOCOL;
     private final String keystore;
     private final String password;
@@ -76,15 +77,15 @@ public class SSLFilterFactory implements IOFilterFactory {
         try {
             ks = SelfSignedCertificate.keystore();
         } catch (Throwable e) {
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.log(Level.FINEST, "Failed to create self signed certificate using sun classes will try Bouncy Castle.", e);
-            } else if (_logger.isLoggable(Level.INFO)) {
-                _logger.log(Level.INFO, "Could not create self signed certificate using sun classes - trying Bouncy Castle");
+            if (_logger.isTraceEnabled()) {
+                _logger.trace("Failed to create self signed certificate using sun classes will try Bouncy Castle.", e);
+            } else if (_logger.isInfoEnabled()) {
+                _logger.info("Could not create self signed certificate using sun classes - trying Bouncy Castle");
             }
             try {
                 ks = BouncyCastleSelfSignedCertificate.keystore();
             } catch (Throwable t) {
-                _logger.log(Level.WARNING, "Failed to create self signed certificate using Bouncy Castle classes.\n" +
+                _logger.warn("Failed to create self signed certificate using Bouncy Castle classes.\n" +
                         " please add Bouncy Castle jars to classpath (or add the artifact org.bouncycastle.bcpkix-jdk15on to maven)", t);
 
             }
@@ -100,8 +101,8 @@ public class SSLFilterFactory implements IOFilterFactory {
     }
 
     private IOFilter createFilter(boolean clientMode, InetSocketAddress remoteAddress) throws Exception {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("Create a new SSL filter clientMode=" + clientMode);
+        if (_logger.isDebugEnabled())
+            _logger.debug("Create a new SSL filter clientMode=" + clientMode);
         SSLContext sslContext = createSSLContext(clientMode, keystore, password);
         IOSSLFilter filter = new IOSSLFilter(sslContext, remoteAddress);
         filter.setUseClientMode(clientMode);

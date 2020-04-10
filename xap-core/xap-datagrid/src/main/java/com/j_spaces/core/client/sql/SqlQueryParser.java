@@ -32,8 +32,9 @@ import java.io.BufferedReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The parser manager is responsible for handling statements and calling the SqlParser for parsing
@@ -42,7 +43,7 @@ import java.util.logging.Logger;
  */
 public abstract class SqlQueryParser {
     // logger
-    private final static Logger _logger = Logger.getLogger(Constants.LOGGER_QUERY);
+    private final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
     private final QueryCache _queryCache = new QueryCache();
     private final ThreadLocal<SqlParser> _parser = new ThreadLocal<SqlParser>();
 
@@ -61,8 +62,8 @@ public abstract class SqlQueryParser {
         AbstractDMLQuery query = (AbstractDMLQuery) getQueryFromCache(getUniqueKey(sqlQuery));
         try {
             if (query == null) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("Query wasn't in cache, will be parsed");
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Query wasn't in cache, will be parsed");
                 }
 
                 // query was not in the cache to build a parser to parse it.
@@ -86,14 +87,14 @@ public abstract class SqlQueryParser {
 
             return query;
         } catch (SQLException sqlEx) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "Error executing statement ["
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Error executing statement ["
                         + sqlQuery.getQuery() + "]", sqlEx);
             }
             throw sqlEx;
         } catch (Throwable t) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "Couldn't parse given statement ["
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Couldn't parse given statement ["
                         + sqlQuery.getQuery() + "]", t);
             }
             // now should throw an SQLException back to the JDBC driver.

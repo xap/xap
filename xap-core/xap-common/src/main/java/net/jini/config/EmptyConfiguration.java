@@ -18,8 +18,9 @@
 
 package net.jini.config;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A <code>Configuration</code> with no entries. Applications can use an instance of this class to

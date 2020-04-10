@@ -36,8 +36,9 @@ import net.jini.lookup.entry.Name;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * LookupFinder is a generalized concept of the SpaceFinder utility. It simplifies the process of
@@ -50,7 +51,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class LookupFinder {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_LOOKUPFINDER);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_LOOKUPFINDER);
 
     public static final long DEFAULT_TIMEOUT = 5 * 1000;
     public final static long DEFAULT_INTERVAL_TIMEOUT = 100;
@@ -126,8 +127,8 @@ public class LookupFinder {
             }
 
             if (result != null) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine(generateReport(result, serviceName, serviceID, serviceClass, serviceAttributes,
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(generateReport(result, serviceName, serviceID, serviceClass, serviceAttributes,
                             lookupLocators, lookupGroups, timeout, sdm));
                 }
 
@@ -136,8 +137,8 @@ public class LookupFinder {
 
             String report = generateReport(null, serviceName, serviceID, serviceClass, serviceAttributes,
                     lookupLocators, lookupGroups, timeout, sdm);
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine(report);
+            if (_logger.isDebugEnabled())
+                _logger.debug(report);
 
             throw new FinderException(report, exception);
         } finally {
@@ -189,14 +190,14 @@ public class LookupFinder {
         boolean firstTime = true;
 
         while (true) {
-            if (firstTime && _logger.isLoggable(Level.FINE) && sdm.getDiscoveryManager().getRegistrars().length > 0) {
-                _logger.fine("Initial LUS found in [" + (SystemTime.timeMillis() - sdmCreationTime) + "ms]");
+            if (firstTime && _logger.isDebugEnabled() && sdm.getDiscoveryManager().getRegistrars().length > 0) {
+                _logger.debug("Initial LUS found in [" + (SystemTime.timeMillis() - sdmCreationTime) + "ms]");
                 firstTime = false;
             }
-            final long lookupTimeStart = _logger.isLoggable(Level.FINE) ? SystemTime.timeMillis() : 0;
+            final long lookupTimeStart = _logger.isDebugEnabled() ? SystemTime.timeMillis() : 0;
             final ServiceItem foundService = sdm.lookup(template, null);
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Service Lookup took [" + (SystemTime.timeMillis() - lookupTimeStart) + "ms]");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Service Lookup took [" + (SystemTime.timeMillis() - lookupTimeStart) + "ms]");
             }
             final Object result = foundService == null ? null : foundService.getService();
             if (result != null)
@@ -222,14 +223,14 @@ public class LookupFinder {
         };
         sdm.getDiscoveryManager().addDiscoveryListener(listener);
         try {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("1ms (special value) passed, waiting at most [" +
+            if (_logger.isDebugEnabled())
+                _logger.debug("1ms (special value) passed, waiting at most [" +
                         REPEATS_BASED_LUS_LOOKUP_TIMEOUT + "ms] to discover at least one lookup service");
 
             discoveredLatch.await(REPEATS_BASED_LUS_LOOKUP_TIMEOUT, TimeUnit.MILLISECONDS);
-            if (_logger.isLoggable(Level.FINE) &&
+            if (_logger.isDebugEnabled() &&
                     sdm.getDiscoveryManager().getRegistrars().length == 0)
-                _logger.fine("No LUS found after wait");
+                _logger.debug("No LUS found after wait");
         } finally {
             sdm.getDiscoveryManager().removeDiscoveryListener(listener);
         }

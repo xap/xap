@@ -45,8 +45,9 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.rmi.RemoteException;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*******************************************************************************
  * Copyright (c) 2010 GigaSpaces Technologies Ltd. All rights reserved
@@ -57,7 +58,7 @@ import java.util.logging.Logger;
  *******************************************************************************/
 @com.gigaspaces.api.InternalApi
 public class JSpaceServiceImpl extends AbstractService implements ProxyAccessor {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_ADMIN);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ADMIN);
 
     /**
      * Configuration component name.
@@ -159,8 +160,8 @@ public class JSpaceServiceImpl extends AbstractService implements ProxyAccessor 
                 try {
                     _spaceProxy = _spaceContainer.createSpace(_spaceName, _spaceAttr);
                 } catch (Exception ex1) {
-                    if (_logger.isLoggable(Level.SEVERE))
-                        _logger.log(Level.SEVERE, ex1.toString(), ex1);
+                    if (_logger.isErrorEnabled())
+                        _logger.error(ex1.toString(), ex1);
                 }
             }
         }
@@ -186,8 +187,8 @@ public class JSpaceServiceImpl extends AbstractService implements ProxyAccessor 
             _spaceUrl = getConfigString(config, "spaceURL", null);
             _startEmbeddedLus = getConfigBoolean(config, "startEmbeddedLus", Boolean.FALSE);
         } catch (ConfigurationException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Error while loading JSpaceService. " + e.toString()
+            if (_logger.isErrorEnabled())
+                _logger.error("Error while loading JSpaceService. " + e.toString()
                         + " Please check the Jini configuration files.");
         }
         
@@ -245,7 +246,7 @@ public class JSpaceServiceImpl extends AbstractService implements ProxyAccessor 
         //Go and find the container schema file if schema is requested AND
         //no regular <container name>-config.xml exists on disk. We try to find it in the resource bundles.
         if (!configFile.canRead() && !JSpaceUtilities.isEmpty(schemaName)) {
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 _logger.info("Couldn't find the required " + containerName + "-config.xml file: "
                         + contConfFile + ".\n About to load the default container schema file from the ResourceBundle, to be used for the container configuration.");
             }

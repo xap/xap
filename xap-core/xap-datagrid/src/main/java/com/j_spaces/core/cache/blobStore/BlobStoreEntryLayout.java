@@ -43,7 +43,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Level;
+
 
 @com.gigaspaces.api.InternalApi
 public class BlobStoreEntryLayout implements Externalizable {
@@ -550,13 +550,13 @@ public class BlobStoreEntryLayout implements Externalizable {
             BlobStoreStorageAdapterClassInfo ci = ((IBlobStoreStorageAdapter) cacheManager.getStorageAdapter()).getBlobStoreStorageAdapterClassInfo(_typeName);
             if (ci == null) {
                 onlyIndexedPart = false;
-                if (CacheManager.getLogger().isLoggable(Level.INFO)) {
+                if (CacheManager.getLogger().isInfoEnabled()) {
                     CacheManager.getLogger().info("Blobstore- full entry loaded since no type was introduced to blobstore type name =" + _typeName + " uid=" + _m_Uid);
                 }
             }
             if (ci != null && indexesStoredVersion != ci.getStoredVersion()) {
                 onlyIndexedPart = false;
-                if (CacheManager.getLogger().isLoggable(Level.INFO)) {
+                if (CacheManager.getLogger().isInfoEnabled()) {
                     CacheManager.getLogger().info("Blobstore- full entry loaded since index version changed stored=" + indexesStoredVersion + " current=" + ci.getStoredVersion() + " uid=" + _m_Uid);
                 }
 
@@ -570,8 +570,8 @@ public class BlobStoreEntryLayout implements Externalizable {
             _dynamicProperties = readMapStringObject(in, _dynamicProperties);
 
         if (!onlyIndexedPart) {
-            if (CacheManager.getLogger().isLoggable(Level.FINER)) {
-                CacheManager.getLogger().finer("container [" + cacheManager.getEngine().getFullSpaceName() + "] Blobstore- full entry loaded, uid=" + _m_Uid);
+            if (CacheManager.getLogger().isDebugEnabled()) {
+                CacheManager.getLogger().debug("container [" + cacheManager.getEngine().getFullSpaceName() + "] Blobstore- full entry loaded, uid=" + _m_Uid);
             }
             _fieldsValues = readObjectArray(in, typeDesc, _fieldsValues);
             if ((flags & FLAG_DYNAMIC_PROPERTIES) == FLAG_DYNAMIC_PROPERTIES)

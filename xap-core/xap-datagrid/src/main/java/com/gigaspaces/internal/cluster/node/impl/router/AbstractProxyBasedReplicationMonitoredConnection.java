@@ -41,8 +41,9 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @SuppressWarnings("rawtypes")
@@ -92,7 +93,7 @@ public abstract class AbstractProxyBasedReplicationMonitoredConnection<T, L> imp
         _timeOfDisconnection = _connectionState == ConnectionState.DISCONNECTED ? SystemTime.timeMillis() : null;
         _lastDisconnectionReason = disconnectionReason;
         _asyncContextProvider = asyncContextProvider;
-        _specificLogger = Logger.getLogger(Constants.LOGGER_REPLICATION_ROUTER_COMMUNICATION
+        _specificLogger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_ROUTER_COMMUNICATION
                 + "." + ReplicationLogUtils.toShortLookupName(router.getMyLookupName()));
         _monitor.monitor(this);
     }
@@ -129,12 +130,12 @@ public abstract class AbstractProxyBasedReplicationMonitoredConnection<T, L> imp
             packet.setSourceEndpointDetails(_router.getMyEndpointDetails());
         }
         try {
-            final boolean logCommunication = _specificLogger.isLoggable(Level.FINEST);
+            final boolean logCommunication = _specificLogger.isTraceEnabled();
             if (logCommunication)
-                _specificLogger.finest("dispatching packet to " + ReplicationLogUtils.toShortLookupName(_endPointLookupName) + " - " + packet);
+                _specificLogger.trace("dispatching packet to " + ReplicationLogUtils.toShortLookupName(_endPointLookupName) + " - " + packet);
             TR result = _connectionProxy.dispatch(packet);
             if (logCommunication)
-                _specificLogger.finest("dispatch result from " + ReplicationLogUtils.toShortLookupName(_endPointLookupName) + " for packet " + packet.toIdString() + " is - " + result);
+                _specificLogger.trace("dispatch result from " + ReplicationLogUtils.toShortLookupName(_endPointLookupName) + " for packet " + packet.toIdString() + " is - " + result);
             return result;
         } catch (RemoteException e) {
             _monitor.updateDisconnected(this, e);
@@ -150,8 +151,8 @@ public abstract class AbstractProxyBasedReplicationMonitoredConnection<T, L> imp
         try {
             IReplicationConnectionProxy connectionProxy = _connectionProxy;
             _asyncContextProvider.setExceptionHandler(this);
-            if (_specificLogger.isLoggable(Level.FINEST))
-                _specificLogger.finest("async dispatching packet to " + ReplicationLogUtils.toShortLookupName(_endPointLookupName) + " - " + packet);
+            if (_specificLogger.isTraceEnabled())
+                _specificLogger.trace("async dispatching packet to " + ReplicationLogUtils.toShortLookupName(_endPointLookupName) + " - " + packet);
             TR result = connectionProxy.dispatchAsync(packet);
             return _asyncContextProvider.getFutureContext(result, connectionProxy);
         } catch (RemoteException e) {
@@ -182,7 +183,7 @@ public abstract class AbstractProxyBasedReplicationMonitoredConnection<T, L> imp
             _proxyId = proxyId;
             _connectionState = ConnectionState.CONNECTED;
 
-            if (_specificLogger.isLoggable(Level.INFO))
+            if (_specificLogger.isInfoEnabled())
                 _specificLogger.info("Connection state updated to 'CONNECTED', Lookup name: "+endPointLookupName);
 
             addPendingEvent(newTarget ? StateChangedEvent.CONNECTED_NEW
@@ -230,8 +231,8 @@ public abstract class AbstractProxyBasedReplicationMonitoredConnection<T, L> imp
             _connectionProxy = new DisconnectionProxy();
             _connectionState = ConnectionState.DISCONNECTED;
 
-            if (_specificLogger.isLoggable(Level.WARNING)) {
-                _specificLogger.warning("Connection state updated to 'DISCONNECTED', Lookup name: " +_endPointLookupName+ ", Reason: " + reason);
+            if (_specificLogger.isWarnEnabled()) {
+                _specificLogger.warn("Connection state updated to 'DISCONNECTED', Lookup name: " +_endPointLookupName+ ", Reason: " + reason);
             }
 
             addPendingEvent(StateChangedEvent.DISCONNECTED);

@@ -32,8 +32,9 @@ import com.gigaspaces.sync.SpaceSynchronizationEndpoint;
 
 import net.jini.id.Uuid;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -42,7 +43,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class MirrorService {
 
-    private static final Logger _mirrorLogger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_MIRROR_REPLICATION);
+    private static final Logger _mirrorLogger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_MIRROR_REPLICATION);
 
     private final MirrorStatisticsImpl _mirrorStatistics;
     private final ReplicationNode _replicationNode;
@@ -101,8 +102,8 @@ public class MirrorService {
         }
         replicationNode.setInTransactionHandler(txnHandler);
 
-        if (_mirrorLogger.isLoggable(Level.FINE))
-            _mirrorLogger.fine("No source cluster provided for mirror, mirror will attach to the first encountered cluster");
+        if (_mirrorLogger.isDebugEnabled())
+            _mirrorLogger.debug("No source cluster provided for mirror, mirror will attach to the first encountered cluster");
 
         replicationNode.getAdmin().setNodeStateListener(new MirrorNodeStateListener(name, mirrorConfig));
         replicationNode.getAdmin().getRouterAdmin().enableIncomingCommunication();

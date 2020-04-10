@@ -21,8 +21,9 @@ package com.sun.jini.logging;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Defines a {@link java.util.logging.LogManager} that insures that the {@link Level#FINE
@@ -140,7 +141,7 @@ public class LogManager extends java.util.logging.LogManager {
 
         public void run() {
             Logger logger =
-                    Logger.getLogger("com.sun.jini.logging.LogManager");
+                    LoggerFactory.getLogger("com.sun.jini.logging.LogManager");
             try {
                 while (interval > 0) {
                     Thread.sleep(interval);
@@ -152,13 +153,13 @@ public class LogManager extends java.util.logging.LogManager {
                         try {
                             readConfiguration();
                             interval = getInterval();
-                            logger.log(Level.FINE,
+                            logger.debug(
                                     "logging config file reread complete," +
                                             " new interval is {0}",
                                     new Long(interval));
                         } catch (Throwable t) {
                             try {
-                                logger.log(Level.WARNING,
+                                logger.warn(
                                         "exception reading logging config file", t);
                             } catch (Throwable t2) {
                             }
@@ -172,7 +173,7 @@ public class LogManager extends java.util.logging.LogManager {
                 synchronized (LogManager.this) {
                     probe = null;
                 }
-                logger.fine("logging config file probe terminating");
+                logger.debug("logging config file probe terminating");
             }
         }
     }

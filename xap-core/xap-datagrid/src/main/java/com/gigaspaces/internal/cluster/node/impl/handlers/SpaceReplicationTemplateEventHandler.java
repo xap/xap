@@ -35,8 +35,9 @@ import com.j_spaces.core.cluster.ConflictingOperationPolicy;
 import net.jini.core.lease.UnknownLeaseException;
 import net.jini.space.InternalSpaceException;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -48,7 +49,7 @@ public class SpaceReplicationTemplateEventHandler implements
         IReplicationInNotifyTemplateRemovedHandler,
         IReplicationInNotifyTemplateLeaseExtendedHandler,
         IReplicationInNotifyTemplateLeaseExpiredHandler {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION);
 
     private final SpaceEngine _engine;
     private final SpaceTypeManager _typeManager;
@@ -86,8 +87,8 @@ public class SpaceReplicationTemplateEventHandler implements
             if (getConflictingOperationPolicy().isOverride())
                 return;
 
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, "Replicator: " + e.getClass().getName() +
+            if (_logger.isWarnEnabled()) {
+                _logger.warn("Replicator: " + e.getClass().getName() +
                         ". Failed to cancel NotifyTemplate lease: " + typeName +
                         " UID: " + uid +
                         " ObjectType: " + ObjectTypes.NOTIFY_TEMPLATE +

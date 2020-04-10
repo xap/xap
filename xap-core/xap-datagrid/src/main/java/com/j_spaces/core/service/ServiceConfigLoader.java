@@ -35,8 +35,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -49,7 +50,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class ServiceConfigLoader {
-    private final static Logger _logger = Logger.getLogger(Constants.LOGGER_CONFIG);
+    private final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_CONFIG);
     private final static String SERVICES_CONFIG = "config/services/services.config";
 
     /**
@@ -93,8 +94,8 @@ public class ServiceConfigLoader {
                 URL servicesConfig = ResourceLoader.getResourceURL(SERVICES_CONFIG);
                 InputStream is = null;
                 if (servicesConfig != null) {
-                    if (_logger.isLoggable(Level.WARNING))
-                        _logger.warning("The use of services.config file is deprecated. Please use system properties instead.");
+                    if (_logger.isWarnEnabled())
+                        _logger.warn("The use of services.config file is deprecated. Please use system properties instead.");
                     try {
                         is = servicesConfig.openStream();
                     } catch (IOException e) {
@@ -171,8 +172,8 @@ public class ServiceConfigLoader {
                     Exporter.class,
                     null);
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, "Failed to create Exporter using " + SERVICES_CONFIG + " config file. Going to use a default GenericExporter instance.", ex);
+            if (_logger.isWarnEnabled()) {
+                _logger.warn("Failed to create Exporter using " + SERVICES_CONFIG + " config file. Going to use a default GenericExporter instance.", ex);
             }
             throw new IllegalStateException("Failed to find nio configuration", ex);
         }

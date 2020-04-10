@@ -42,8 +42,9 @@ import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Vector;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.JMSException;
 
@@ -52,7 +53,7 @@ import javax.jms.JMSException;
  * @version 4.0
  */
 public class JMSDurableSubService extends GSThread {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_JMS);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_JMS);
     private static final String DELIM = "!#$%";
 
     private static final String[] FIELDS_NAMES = new String[]{
@@ -173,8 +174,8 @@ public class JMSDurableSubService extends GSThread {
             _eventSession.addListener(new JMSOfflineStateDurSubDataEntry(), m_subscriptionRemoteEventListener,
                     NotifyActionType.NOTIFY_LEASE_EXPIRATION);
         } catch (RemoteException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, e.toString(), e);
+            if (_logger.isErrorEnabled())
+                _logger.error(e.toString(), e);
         }
     }
 
@@ -206,8 +207,8 @@ public class JMSDurableSubService extends GSThread {
 
                 if (entry instanceof JMSOfflineStateDurSubDataEntry) {
                     JMSOfflineStateDurSubDataEntry jmsOfflineStateDurSubDataEntry = (JMSOfflineStateDurSubDataEntry) entry;
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.fine(" SubscriptionRemoteEventListener.notify()  "
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug(" SubscriptionRemoteEventListener.notify()  "
                                 + jmsOfflineStateDurSubDataEntry.toString());
                     }
 
@@ -218,8 +219,8 @@ public class JMSDurableSubService extends GSThread {
                     String subscribedTopicName = jmsOfflineStateDurSubDataEntry.m_topicName;
 
                     if (NotifyModifiers.isLeaseExpiration(notifyType)) {
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.fine(" SubscriptionRemoteEventListener.notify() -- Lease has expired -- the durable subscriber went down.  || --  "
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug(" SubscriptionRemoteEventListener.notify() -- Lease has expired -- the durable subscriber went down.  || --  "
                                     + jmsOfflineStateDurSubDataEntry.toString());
                         }
                         //TODO actually- here we get into the offline durable
@@ -231,8 +232,8 @@ public class JMSDurableSubService extends GSThread {
 
                 else if (entry instanceof JMSDurableSubDataEntry) {
                     JMSDurableSubDataEntry jmsDurableSubDataEntry = (JMSDurableSubDataEntry) entry;
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.fine(" SubscriptionRemoteEventListener.notify() "
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug(" SubscriptionRemoteEventListener.notify() "
                                 + " || --  " + jmsDurableSubDataEntry.toString());
                     }
 
@@ -280,12 +281,12 @@ public class JMSDurableSubService extends GSThread {
                     }
                 }//entry instanceof JMSDurableSubDataEntry
             } catch (UnusableEntryException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, e.toString(), e);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(e.toString(), e);
                 }
             } catch (JMSException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, e.toString(), e);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(e.toString(), e);
                 }
             } finally {
                 notifyLock.unlock();
@@ -319,8 +320,8 @@ public class JMSDurableSubService extends GSThread {
                 final EntryArrivedRemoteEvent spaceEvent = (EntryArrivedRemoteEvent) theEvent;
                 final String uid = spaceEvent.getEntryPacket().getUID();
                 final String className = spaceEvent.getEntryPacket().getTypeName();
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine("WriteRemoteEventListener.notify() -- className: " + className + " | uid: " + uid);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("WriteRemoteEventListener.notify() -- className: " + className + " | uid: " + uid);
                 //the topic name of the destination to where this extEntry
                 // suppose to be redirected and later consumed from
                 String topicName = className;
@@ -332,17 +333,17 @@ public class JMSDurableSubService extends GSThread {
                     m_space.updateMultiple(updatedSubEntriesArray, null, leases);
                 }
             } catch (UnusableEntryException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, e.toString(), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error(e.toString(), e);
             } catch (JMSException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, e.toString(), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error(e.toString(), e);
             } catch (RemoteException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, e.toString(), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error(e.toString(), e);
             } catch (TransactionException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, e.toString(), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error(e.toString(), e);
             } finally {
                 notifyLock.unlock();
             }
@@ -373,8 +374,8 @@ public class JMSDurableSubService extends GSThread {
                     + DELIM + unsubscribedTopicName;
             JMSDurableSubDataEntry subscriptionEntryToRemove = m_subscriptionNamesHash
                     .remove(id);
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine(" unsubscribe() with ID: " + id);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(" unsubscribe() with ID: " + id);
             }
             Vector subscriptionEntriesVec = (Vector) m_topicsHash
                     .remove(unsubscribedTopicName);
@@ -406,11 +407,11 @@ public class JMSDurableSubService extends GSThread {
                     try {
                         _eventSession.removeListener(registration);
                     } catch (UnknownLeaseException e) {
-                        if (_logger.isLoggable(Level.FINE))
-                            _logger.log(Level.FINE, "unsubscribe() cancel ND lease:  " + e.toString(), e);
+                        if (_logger.isDebugEnabled())
+                            _logger.debug("unsubscribe() cancel ND lease:  " + e.toString(), e);
                     } catch (RemoteException e) {
-                        if (_logger.isLoggable(Level.FINE))
-                            _logger.log(Level.FINE, "unsubscribe() cancel ND lease:  " + e.toString(), e);
+                        if (_logger.isDebugEnabled())
+                            _logger.debug("unsubscribe() cancel ND lease:  " + e.toString(), e);
                     }
             }
         } finally {
@@ -459,8 +460,8 @@ public class JMSDurableSubService extends GSThread {
                 + subscribedTopicName;
         JMSDurableSubDataEntry subscriptionEntryToRemove = m_subscriptionNamesHash
                 .get(id);
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine(" removeOfflineStateSubscription() with ID: " + id);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(" removeOfflineStateSubscription() with ID: " + id);
         }
 
         Vector subscriptionEntriesVec = (Vector) m_topicsHash
@@ -505,8 +506,8 @@ public class JMSDurableSubService extends GSThread {
         String id = clientIDToSubscribe + DELIM + subscriptionName + DELIM
                 + subscribedTopicName;
         JMSDurableSubDataEntry subscriptionEntry = m_subscriptionNamesHash.get(id);
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("JMSDurableSubService.addOfflineStateSubscription() with ID: " + id);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("JMSDurableSubService.addOfflineStateSubscription() with ID: " + id);
         }
         Vector subscriptionEntriesVec = (Vector) m_topicsHash.remove(subscribedTopicName);
         subscriptionEntriesVec.addElement(subscriptionEntry);
@@ -522,8 +523,8 @@ public class JMSDurableSubService extends GSThread {
                         m_WriteRemoteEventListener, NotifyActionType.NOTIFY_WRITE);
                 m_registrations.put(subscribedTopicName, registration);
             } catch (RemoteException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, e.toString(), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error(e.toString(), e);
             }
         }
     }
@@ -538,8 +539,8 @@ public class JMSDurableSubService extends GSThread {
                                            JMSDurableSubDataEntry subsriptionDataEntry) throws JMSException {
         String id = clientIDToSubscribe + DELIM + subscriptionName + DELIM
                 + subscribedTopicName;
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("JMSDurableSubService.addOnlineStateSubscription() with ID: " + id);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("JMSDurableSubService.addOnlineStateSubscription() with ID: " + id);
         }
         m_subscriptionNamesHash.put(id, subsriptionDataEntry);
 
@@ -582,8 +583,8 @@ public class JMSDurableSubService extends GSThread {
                 // Long.parseLong(System.getProperty("com.gs.mdn.refresh_rate")));
                 Thread.sleep(2000);
             } catch (InterruptedException ie) {
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.log(Level.FINEST, this.getName() + " interrupted.", ie);
+                if (_logger.isTraceEnabled()) {
+                    _logger.trace(this.getName() + " interrupted.", ie);
                 }
 
                 //Restore the interrupted status
@@ -610,8 +611,8 @@ public class JMSDurableSubService extends GSThread {
     }
 
     public void shutdown() {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("inside shutdown() ");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("inside shutdown() ");
         }
         synchronized (m_ShutdownMonitor) {
             // check if shutdown already executed
@@ -631,8 +632,8 @@ public class JMSDurableSubService extends GSThread {
         try {
             space = (IJSpace) SpaceFinder.find(args[0]);
         } catch (FinderException e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.toString(), e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.toString(), e);
             }
         }
         new JMSDurableSubService(space);

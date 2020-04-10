@@ -46,8 +46,9 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.BytesMessage;
 import javax.jms.Destination;
@@ -250,7 +251,7 @@ public class GSSessionImpl
 
 
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_JMS);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_JMS);
 
 
     //Reserved identifiers (e.g. for Message selector usage)
@@ -304,8 +305,8 @@ public class GSSessionImpl
                          boolean isTransacted,
                          int acknowledgeMode)
             throws JMSException {
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.log(Level.FINEST, "GSSessionImpl.GSSessionImpl()");
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("GSSessionImpl.GSSessionImpl()");
         }
         if (!isTransacted
                 && acknowledgeMode != Session.AUTO_ACKNOWLEDGE
@@ -337,8 +338,8 @@ public class GSSessionImpl
         if (!isTransacted) {
             m_acknowledgeMode = acknowledgeMode;
             if (m_acknowledgeMode == Session.CLIENT_ACKNOWLEDGE) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, "GSSessionImpl.GSSessionImpl(): " +
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSSessionImpl.GSSessionImpl(): " +
                             "The session's acknowledge mode is CLIENT_ACKNOWLEDGE." +
                             " The session will use " + txnType + " transactions: " + m_sessionID);
                 }
@@ -350,19 +351,19 @@ public class GSSessionImpl
                     throw jmse;
                 }
             } else {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, "GSSessionImpl.GSSessionImpl(): The session is not transacted: " + m_sessionID);
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSSessionImpl.GSSessionImpl(): The session is not transacted: " + m_sessionID);
                 }
             }
         } else {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "GSSessionImpl.GSSessionImpl(): Session is transacted: " + m_sessionID);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSSessionImpl.GSSessionImpl(): Session is transacted: " + m_sessionID);
             }
             m_acknowledgeMode = Session.SESSION_TRANSACTED;
             sentMessages = new LinkedList<GSMessageImpl>();
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "GSSessionImpl.GSSessionImpl(): " + "The session is transacted " +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSSessionImpl.GSSessionImpl(): " + "The session is transacted " +
                         " and it will use " + txnType + " transactions: " + m_sessionID);
             }
             try {
@@ -378,8 +379,8 @@ public class GSSessionImpl
         _compressedConvertorPool = new ResourcePool<CompressedMarshObjectConvertor>(CompressedMarshObjectConvertor.getFactory(), 0, 100);
 
         conn.addSession(this);//TODO according to j2EE 1.4 every m_conn
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSSessionImpl.GSSessionImpl() session: "
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.GSSessionImpl() session: "
                     + this.getClass().getName()
                     + " |	" + toString()
                     + " |	space: " + m_space);
@@ -584,8 +585,8 @@ public class GSSessionImpl
                 message.setProperties(message.cloneProperties());
             }
         } else {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("GSSessionImpl.sendMessage():"
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSSessionImpl.sendMessage():"
                         + " Adding message to sent messages list: " + message.JMSMessageID);
             }
 
@@ -613,10 +614,10 @@ public class GSSessionImpl
             throws RemoteException,
             TransactionException,
             JMSException {
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.finest("GSSessionImpl.doSend(): Sending message: Txn=" + tx + message);
-        } else if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSSessionImpl.doSend(): Sending message: Txn=" + tx + ", ID=" + message.JMSMessageID);
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("GSSessionImpl.doSend(): Sending message: Txn=" + tx + message);
+        } else if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.doSend(): Sending message: Txn=" + tx + ", ID=" + message.JMSMessageID);
         }
 
         // decide the lease time of the object
@@ -627,8 +628,8 @@ public class GSSessionImpl
             // if the message has expired and was
             // not sent yet we discard it.
             if (ttl <= 0) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.warning("GSSessionImpl.doSend(): Message expired and won't be sent: " + message.getJMSMessageID());
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn("GSSessionImpl.doSend(): Message expired and won't be sent: " + message.getJMSMessageID());
                 }
                 return false;
             }
@@ -642,15 +643,15 @@ public class GSSessionImpl
         Object messageConverterProp = message.Properties.remove(GSMessageImpl.JMS_GSCONVERTER);
         if (messageConverterProp != null && messageConverterProp instanceof IMessageConverter) {
             IMessageConverter messageConverter = (IMessageConverter) messageConverterProp;
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("GSSessionImpl.doSend(): Converting JMS message " +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSSessionImpl.doSend(): Converting JMS message " +
                         message.JMSMessageID + " with MessageConverter: " +
                         messageConverter.getClass().getName());
             }
             Object objToWrite = messageConverter.toObject((Message) message);
             if (objToWrite == null) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("GSSessionImpl.doSend(): MessageConverter returned null for message " +
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSSessionImpl.doSend(): MessageConverter returned null for message " +
                             message.JMSMessageID + ". Nothing is sent to the space.");
                 }
                 return false;
@@ -684,8 +685,8 @@ public class GSSessionImpl
             if (txtMsg.Body != null) {
                 int lengthInBytes = txtMsg.Body.toString().length() * 2;
                 if (lengthInBytes > m_compressionMinSize) {
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.fine("GSSessionImpl.doSend(): Compressing message body. bytes=" + lengthInBytes);
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("GSSessionImpl.doSend(): Compressing message body. bytes=" + lengthInBytes);
                     }
                     doSendCompressMessage(txtMsg, tx, ttl);
                     return true;
@@ -708,15 +709,15 @@ public class GSSessionImpl
         MarshObject compressedObject;
         HashMap<GSTextMessageImpl, Object> contents = new HashMap<GSTextMessageImpl, Object>();
         if (entries.length == 0) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("GSSessionImpl.writeEntries(): MessageConverter returned a zero" +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSSessionImpl.writeEntries(): MessageConverter returned a zero" +
                         " length Entry array. Nothing is sent to the space.");
             }
             return false;
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSSessionImpl.writeEntries(): Writing " +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.writeEntries(): Writing " +
                     entries.length + " entries to the space. tx=" + tx + ", ttl=" + ttl);
         }
 
@@ -730,8 +731,8 @@ public class GSSessionImpl
                     if (txtMsg.Body != null) {
                         int lengthInBytes = txtMsg.Body.toString().length() * 2;
                         if (lengthInBytes > m_compressionMinSize) {
-                            if (_logger.isLoggable(Level.FINE)) {
-                                _logger.fine("GSSessionImpl.writeEntries(): Compressing message body. bytes=" + lengthInBytes);
+                            if (_logger.isDebugEnabled()) {
+                                _logger.debug("GSSessionImpl.writeEntries(): Compressing message body. bytes=" + lengthInBytes);
                             }
 
                             // replace the message body with the compressed object
@@ -747,8 +748,8 @@ public class GSSessionImpl
             // increment the sent messages counter
             m_numOfProducedMsg += entries.length;
         } catch (IOException e) {
-            if (_logger.isLoggable(Level.SEVERE) && txtMsg != null) {
-                _logger.severe("GSSessionImpl.writeEntries(): IOException while compressing message body: " +
+            if (_logger.isErrorEnabled() && txtMsg != null) {
+                _logger.error("GSSessionImpl.writeEntries(): IOException while compressing message body: " +
                         txtMsg.Body);
             }
         } finally {
@@ -771,23 +772,23 @@ public class GSSessionImpl
         if (obj instanceof Object[]) {
             Object[] objects = (Object[]) obj;
             if (objects.length > 0) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("GSSessionImpl.writeObject(): Writing " +
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSSessionImpl.writeObject(): Writing " +
                             objects.length + " objects to the space. tx=" + tx + ", ttl=" + ttl);
                 }
                 m_space.writeMultiple(objects, tx, ttl);
                 // increment the sent messages counter
                 m_numOfProducedMsg += objects.length;
             } else {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("GSSessionImpl.writeObject(): MessageConverter returned a zero" +
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSSessionImpl.writeObject(): MessageConverter returned a zero" +
                             " length array. Nothing is sent to the space.");
                 }
                 return false;
             }
         } else {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("GSSessionImpl.writeObject(): Writing object: " +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSSessionImpl.writeObject(): Writing object: " +
                         obj + ", tx=" + tx + ", ttl=" + ttl);
             }
             m_space.write(obj, tx, ttl);
@@ -816,8 +817,8 @@ public class GSSessionImpl
             // replace the message body with the compressed object
             message.Body = compressedObject;
         } catch (IOException e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.severe("GSSessionImpl.doSend(): IOException while compressing message body. Sending uncompressed: " +
+            if (_logger.isErrorEnabled()) {
+                _logger.error("GSSessionImpl.doSend(): IOException while compressing message body. Sending uncompressed: " +
                         message.Body);
             }
         }
@@ -927,16 +928,16 @@ public class GSSessionImpl
      * @throws IllegalStateException If the connection is broken.
      */
     void acknowledge() throws CommitFailedException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSsessionImpl.acknowledge(): " + m_sessionID);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSsessionImpl.acknowledge(): " + m_sessionID);
         }
 
         unackedMessages.clear();
 
         // currently tx.commit() is the ack - we use it only for queue
         if (this.m_isQueue && !isAutoAck()) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "Acknowledging messages. Txn=" + _tx);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Acknowledging messages. Txn=" + _tx);
             }
             commitLocalTransaction();
         }
@@ -953,8 +954,8 @@ public class GSSessionImpl
         ensureOpen();
         ensureTX();
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSSessionImpl.commit(): Committing JMS transaction: " + _tx);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.commit(): Committing JMS transaction: " + _tx);
         }
 
         try {
@@ -962,8 +963,8 @@ public class GSSessionImpl
             sendMessages(this.sentMessages, _tx);
 
             // ack by committing the local transacrtion
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("GSSessionImpl.commit(): Committing local transaction: " + _tx);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSSessionImpl.commit(): Committing local transaction: " + _tx);
             }
             //_tx.commit();
             commitLocalTransaction();
@@ -971,18 +972,18 @@ public class GSSessionImpl
             // in case we don't get here, the rollback will create a new transaction
             renewTransaction();
         } catch (JMSException mfE) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE,
+            if (_logger.isErrorEnabled()) {
+                _logger.error(
                         "JMSException during GSSessionImpl.commit(): ", mfE);
 
-                _logger.log(Level.SEVERE,
+                _logger.error(
                         "Rolling back transaction: " + _tx);
             }
             try {
                 rollback();
             } catch (JMSException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             "Failed to roll back transaction: " + _tx, e);
                 }
             }
@@ -992,18 +993,18 @@ public class GSSessionImpl
             tE.setLinkedException(mfE);
             throw tE;
         } catch (TransactionException te) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE,
+            if (_logger.isErrorEnabled()) {
+                _logger.error(
                         "TransactionException during GSSessionImpl.commit(): ", te);
 
-                _logger.log(Level.SEVERE,
+                _logger.error(
                         "Rolling back transaction: " + _tx);
             }
             try {
                 rollback();
             } catch (JMSException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             "Failed to roll back transaction: " + _tx, e);
                 }
             }
@@ -1013,11 +1014,11 @@ public class GSSessionImpl
             e.setLinkedException(te);
             throw e;
         } catch (RemoteException re) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE,
+            if (_logger.isErrorEnabled()) {
+                _logger.error(
                         "RemoteException during GSSessionImpl.commit(): ", re);
 
-                _logger.log(Level.SEVERE,
+                _logger.error(
                         "Rolling back transaction: " + _tx);
             }
             try {
@@ -1030,18 +1031,18 @@ public class GSSessionImpl
             e.setLinkedException(re);
             throw e;
         } catch (CommitFailedException cfe) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE,
+            if (_logger.isErrorEnabled()) {
+                _logger.error(
                         "Internal error during GSSessionImpl.commit(): ", cfe.orig);
 
-                _logger.log(Level.SEVERE,
+                _logger.error(
                         "Rolling back transaction: " + _tx);
             }
             try {
                 rollback();
             } catch (JMSException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             "Failed to roll back transaction: " + _tx, e);
                 }
             }
@@ -1051,11 +1052,11 @@ public class GSSessionImpl
             e.setLinkedException(cfe.orig);
             throw e;
         } catch (TransactionCreateException tce) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE,
+            if (_logger.isErrorEnabled()) {
+                _logger.error(
                         "Failed to renew transaction after commit: ", tce.orig);
 
-                _logger.log(Level.SEVERE,
+                _logger.error(
                         "Rolling back transaction: " + _tx);
             }
 
@@ -1077,8 +1078,8 @@ public class GSSessionImpl
      */
     boolean sendMessages(LinkedList<GSMessageImpl> messages, Transaction tx)
             throws RemoteException, TransactionException, JMSException {
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.finest("GSSession.sendProducedMessages()");
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("GSSession.sendProducedMessages()");
         }
 
         boolean messagesSent = false;
@@ -1102,8 +1103,8 @@ public class GSSessionImpl
         ensureOpen();
         ensureTX();
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSSessionImpl.rollback(): Rolling back transaction: " + _tx);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.rollback(): Rolling back transaction: " + _tx);
         }
 
         // delete produced messages
@@ -1113,8 +1114,8 @@ public class GSSessionImpl
         try {
             recoverMessages();
         } catch (RollbackFailedException e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.fine("GSSessionImpl.rollback(): Failed to roll back transaction: " + _tx);
+            if (_logger.isErrorEnabled()) {
+                _logger.debug("GSSessionImpl.rollback(): Failed to roll back transaction: " + _tx);
             }
             JMSException je = new JMSException("Failed to roll back transaction: " + _tx);
             je.setLinkedException(e.orig);
@@ -1136,28 +1137,28 @@ public class GSSessionImpl
      */
     void renewTransaction() throws TransactionCreateException {
         if (m_conn == null || m_closing) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("GSSessionImpl.renewTransaction(): The Session is closed. Not renewing transaction.");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSSessionImpl.renewTransaction(): The Session is closed. Not renewing transaction.");
             }
             _tx = null;
             return;
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSSessionImpl.renewTransaction(): Renewing transaction.");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.renewTransaction(): Renewing transaction.");
         }
 
         try {
             _tx = m_conn.getTransaction(useLocalTransactions, GSSessionImpl.txLeaseTime);
         } catch (TransactionCreateException re) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "GSSessionImpl.renewTransaction(): Failed to renew transaction: ", re.orig);
+            if (_logger.isErrorEnabled()) {
+                _logger.error("GSSessionImpl.renewTransaction(): Failed to renew transaction: ", re.orig);
             }
             _tx = null;
             throw re;
         }
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSSessionImpl.renewTransaction(): New transaction: " + _tx);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.renewTransaction(): New transaction: " + _tx);
         }
     }
 
@@ -1168,9 +1169,9 @@ public class GSSessionImpl
     boolean cancel(Transaction tx) throws IllegalStateException {
 //		ensureOpen();
 //
-//		if( _logger.isLoggable(Level.FINE))
+//		if( _logger.isDebugEnabled())
 //		{
-//			_logger.fine( "GSSessionImpl.cancel(): " + toString() );
+//			_logger.debug( "GSSessionImpl.cancel(): " + toString() );
 //		}
 //
 //		deny();
@@ -1196,8 +1197,8 @@ public class GSSessionImpl
      * @see Session#recover()
      */
     public void recover() throws JMSException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "GSSessionImpl.recover()");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.recover()");
         }
 
         //checked in getTransacted()
@@ -1211,20 +1212,20 @@ public class GSSessionImpl
         }
 
         // stop message delivery
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "GSSessionImpl.recover(): Stopping session");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.recover(): Stopping session");
         }
         stop();
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "GSSessionImpl.recover(): Session stopped");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.recover(): Session stopped");
         }
 
         // start deliver from the first unacked message
         try {
             recoverMessages();
         } catch (RollbackFailedException e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.fine("GSSessionImpl.recover(): Failed to roll back transaction: " + _tx);
+            if (_logger.isErrorEnabled()) {
+                _logger.debug("GSSessionImpl.recover(): Failed to roll back transaction: " + _tx);
             }
             JMSException je = new JMSException("Failed to roll back transaction: " + _tx);
             je.setLinkedException(e.orig);
@@ -1239,15 +1240,15 @@ public class GSSessionImpl
                     throw jmse;
                 } finally {
                     // resume message delivery
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE, "GSSessionImpl.recover(): Restarting session");
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("GSSessionImpl.recover(): Restarting session");
                     }
                     start();
                 }
             } else {
                 // resume message delivery
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, "GSSessionImpl.recover(): Restarting session");
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSSessionImpl.recover(): Restarting session");
                 }
                 start();
             }
@@ -1263,8 +1264,8 @@ public class GSSessionImpl
     void recoverMessages() throws RollbackFailedException//JMSException
     {
         if (m_isQueue) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "GSSessionImpl.recoverMessages(): Recovering messages of Queue");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSSessionImpl.recoverMessages(): Recovering messages of Queue");
             }
 
             unackedMessages.clear();
@@ -1274,8 +1275,8 @@ public class GSSessionImpl
                 rollbackLocalTransaction();
             }
         } else {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "GSSessionImpl.recoverMessages(): Recovering messages of Topic");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSSessionImpl.recoverMessages(): Recovering messages of Topic");
             }
 
             unackedMessages.addAll(recoverMessages);
@@ -1363,9 +1364,9 @@ public class GSSessionImpl
 //				}
 //				catch (EntryAlreadyInSpaceException entryInSpaceException)
 //				{
-//					if( _logger.isLoggable(Level.FINE))
+//					if( _logger.isDebugEnabled())
 //					{
-//						_logger.log(Level.FINE, "EntryAlreadyInSpaceException inside GSSession.deny(): "
+//						_logger.debug("EntryAlreadyInSpaceException inside GSSession.deny(): "
 //								+ entryInSpaceException.toString() );
 //					}
 //					//										   JMSException e = new
@@ -1376,9 +1377,9 @@ public class GSSessionImpl
 //				}
 //				catch (TransactionException te)
 //				{
-//					if( _logger.isLoggable(Level.FINE))
+//					if( _logger.isDebugEnabled())
 //					{
-//						_logger.log(Level.FINE, "TransactionException inside GSSession.deny(): ", te );
+//						_logger.debug("TransactionException inside GSSession.deny(): ", te );
 //					}
 //					//				   JMSException e = new JMSException("TransactionException :
 //					// "+ te.toString());
@@ -1387,9 +1388,9 @@ public class GSSessionImpl
 //				}
 //				catch (RemoteException re)
 //				{
-//					if( _logger.isLoggable(Level.FINE))
+//					if( _logger.isDebugEnabled())
 //					{
-//						_logger.log(Level.FINE, "RemoteException inside GSSession.deny(): ", re );
+//						_logger.debug("RemoteException inside GSSession.deny(): ", re );
 //					}
 //					//				   JMSException e = new JMSException("RemoteException : "
 //					// +re.toString());
@@ -1398,9 +1399,9 @@ public class GSSessionImpl
 //				}
 //				catch (JMSException e)
 //				{
-//					if( _logger.isLoggable(Level.FINE))
+//					if( _logger.isDebugEnabled())
 //					{
-//						_logger.log(Level.FINE, "JMSException inside GSSession.deny(): ", e );
+//						_logger.debug("JMSException inside GSSession.deny(): ", e );
 //					}
 //				}//end of try/catch
 //			}//end of while
@@ -1416,9 +1417,9 @@ public class GSSessionImpl
 
 //	public boolean cancel( Transaction tx) throws IllegalStateException{
 //
-//		if( _logger.isLoggable(Level.FINE))
+//		if( _logger.isDebugEnabled())
 //		{
-//			_logger.fine( "GSSessionImpl.rollback() ... " + toString() );
+//			_logger.debug( "GSSessionImpl.rollback() ... " + toString() );
 //		}
 //
 //		ensureOpen();
@@ -1471,15 +1472,15 @@ public class GSSessionImpl
             return;
         }
 
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.log(Level.FINEST, "Committing local transaction: " + _tx);
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("Committing local transaction: " + _tx);
         }
 
         try {
             _tx.commit();
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE,
+            if (_logger.isErrorEnabled()) {
+                _logger.error(
                         "Failed to commit local transaction: " + _tx, e);
             }
             throw new CommitFailedException(e);
@@ -1489,9 +1490,9 @@ public class GSSessionImpl
 //			// The transaction is not known to the transaction manager.
 //			// Therefore rolling back won't do us good.
 //			String text = "Internal error during local transaction commit: "+_tx;
-//			if( _logger.isLoggable(Level.SEVERE))
+//			if( _logger.isErrorEnabled())
 //			{
-//				_logger.log(Level.SEVERE, text, e );
+//				_logger.error(text, e );
 //			}
 //			JMSException jmse = new JMSException(text);
 //			jmse.setLinkedException(e);
@@ -1500,9 +1501,9 @@ public class GSSessionImpl
 //		catch (CannotCommitException e)
 //		{
 //			String text = "Internal error during local transaction commit: "+_tx;
-//			if( _logger.isLoggable(Level.SEVERE))
+//			if( _logger.isErrorEnabled())
 //			{
-//				_logger.log(Level.SEVERE, text, e );
+//				_logger.error(text, e );
 //			}
 //			JMSException jmse = new JMSException(text);
 //			jmse.setLinkedException(e);
@@ -1511,9 +1512,9 @@ public class GSSessionImpl
 //		catch (RemoteException e)
 //		{
 //			String text = "Internal error during local transaction commit: "+_tx;
-//			if( _logger.isLoggable(Level.SEVERE))
+//			if( _logger.isErrorEnabled())
 //			{
-//				_logger.log(Level.SEVERE, text, e );
+//				_logger.error(text, e );
 //			}
 //			JMSException jmse = new JMSException(text);
 //			jmse.setLinkedException(e);
@@ -1534,13 +1535,13 @@ public class GSSessionImpl
         }
 
         try {
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.log(Level.FINEST, "Aborting local transaction: " + _tx);
+            if (_logger.isTraceEnabled()) {
+                _logger.trace("Aborting local transaction: " + _tx);
             }
             _tx.abort();
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE,
+            if (_logger.isErrorEnabled()) {
+                _logger.error(
                         "Internal error during local transaction abort: "
                                 + _tx, e);
             }
@@ -1551,9 +1552,9 @@ public class GSSessionImpl
 //			// The transaction is not known to the transaction manager.
 //			// Therefore rolling back won't do us good.
 //			String text = "Internal error during local transaction abort: "+_tx;
-//			if( _logger.isLoggable(Level.SEVERE))
+//			if( _logger.isErrorEnabled())
 //			{
-//				_logger.log(Level.SEVERE, text, e );
+//				_logger.error(text, e );
 //			}
 //			JMSException jmse = new JMSException(text);
 //			jmse.setLinkedException(e);
@@ -1562,9 +1563,9 @@ public class GSSessionImpl
 //		catch (CannotAbortException e)
 //		{
 //			String text = "Internal error during local transaction abort: "+_tx;
-//			if( _logger.isLoggable(Level.SEVERE))
+//			if( _logger.isErrorEnabled())
 //			{
-//				_logger.log(Level.SEVERE, text, e );
+//				_logger.error(text, e );
 //			}
 //			JMSException jmse = new JMSException(text);
 //			jmse.setLinkedException(e);
@@ -1573,9 +1574,9 @@ public class GSSessionImpl
 //		catch (RemoteException e)
 //		{
 //			String text = "Internal error during local transaction abort: "+_tx;
-//			if( _logger.isLoggable(Level.SEVERE))
+//			if( _logger.isErrorEnabled())
 //			{
-//				_logger.log(Level.SEVERE, text, e );
+//				_logger.error(text, e );
 //			}
 //			JMSException jmse = new JMSException(text);
 //			jmse.setLinkedException(e);
@@ -1605,8 +1606,8 @@ public class GSSessionImpl
             return;
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSSessionImpl.stop(): Stopping the session: " + toString());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.stop(): Stopping the session: " + toString());
         }
 
         synchronized (stopMonitor) {
@@ -1615,8 +1616,8 @@ public class GSSessionImpl
             // the stop method should not return until the control thread
             // is stopped. the control thread notifies about it.
             if (onProcess) {
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.finest("Waiting for the consumers to stop: " + toString());
+                if (_logger.isTraceEnabled()) {
+                    _logger.trace("Waiting for the consumers to stop: " + toString());
                 }
                 try {
                     Iterator<GSMessageConsumerImpl> consumers = m_consumers.values().iterator();
@@ -1625,15 +1626,15 @@ public class GSSessionImpl
                     }
                     stopMonitor.wait();
                 } catch (InterruptedException e) {
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.severe("GSSessionImpl.stop(): InterruptedException during wait: " + e);
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error("GSSessionImpl.stop(): InterruptedException during wait: " + e);
                     }
                 }
             }
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSSessionImpl.stop(): The session is stopped: " + toString());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.stop(): The session is stopped: " + toString());
         }
     }
 
@@ -1649,8 +1650,8 @@ public class GSSessionImpl
             return;
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSSessionImpl.start(): Starting the session: " + toString());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.start(): Starting the session: " + toString());
         }
 
         //synchronized (sessionStopMonitor) {
@@ -1661,8 +1662,8 @@ public class GSSessionImpl
             stopMonitor.notifyAll();
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSSessionImpl.start()  session was started: " + toString());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.start()  session was started: " + toString());
         }
     }
 
@@ -1676,8 +1677,8 @@ public class GSSessionImpl
         try {
             //Ignoring the call if the session is already m_closed:
             if (!m_closed) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("GSSession.close(): Closing the session: " + toString());
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSSession.close(): Closing the session: " + toString());
                 }
 
                 m_closing = true;
@@ -1694,16 +1695,16 @@ public class GSSessionImpl
                     try {
                         rollbackLocalTransaction();
                     } catch (RollbackFailedException e) {
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.severe("Failed to rollback transaction during session.close(): " + e.orig);
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error("Failed to rollback transaction during session.close(): " + e.orig);
                         }
                         // continue the close procedure.
                     }
                 }
 
                 // Closing the session's resources:
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.finest("Closing the session's resources: " + toString());
+                if (_logger.isTraceEnabled()) {
+                    _logger.trace("Closing the session's resources: " + toString());
                 }
 
                 // removing consumers is a little more tricky because we use an iterator.
@@ -1712,22 +1713,22 @@ public class GSSessionImpl
                 Iterator<GSMessageConsumerImpl> i = m_consumers.values().iterator();
                 while (i.hasNext()) {
                     GSMessageConsumerImpl consumer = i.next();
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.finest("Closing consumer: " + consumer.toString());
+                    if (_logger.isTraceEnabled()) {
+                        _logger.trace("Closing consumer: " + consumer.toString());
                     }
                     consumer.close();
                 }
                 while (!m_browsers.isEmpty()) {
                     GSQueueBrowserImpl browser = m_browsers.get(0);
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.finest("Closing queue browser: " + browser.toString());
+                    if (_logger.isTraceEnabled()) {
+                        _logger.trace("Closing queue browser: " + browser.toString());
                     }
                     browser.close();
                 }
                 while (!m_producers.isEmpty()) {
                     GSMessageProducerImpl producer = m_producers.get(0);
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.finest("Closing producer: " + producer.toString());
+                    if (_logger.isTraceEnabled()) {
+                        _logger.trace("Closing producer: " + producer.toString());
                     }
                     producer.close();
                 }
@@ -1738,8 +1739,8 @@ public class GSSessionImpl
                 //update the session state
                 m_closed = true;
                 m_closing = false;
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("GSSession.close() session was closed: " + toString());
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSSession.close() session was closed: " + toString());
                 }
             }
         } finally {
@@ -1816,8 +1817,8 @@ public class GSSessionImpl
      * @see java.lang.Runnable#run()
      */
     public void run() {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSSessionImpl.run() method is not implemented. ");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSSessionImpl.run() method is not implemented. ");
         }
     }
 
@@ -1840,8 +1841,8 @@ public class GSSessionImpl
 
     private MessageProducer createGenericProducer(Destination dest)
             throws JMSException {
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.log(Level.FINEST, "Creating publisher for destination: " + dest);
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("Creating publisher for destination: " + dest);
         }
         GSMessageProducerImpl producer;
         synchronized (this) {
@@ -1900,14 +1901,14 @@ public class GSSessionImpl
         }
 
         if (m_consumers.size() > 0) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.severe("GSSession.addConsumer(): Sessions support only one consumer: " + toString());
+            if (_logger.isErrorEnabled()) {
+                _logger.error("GSSession.addConsumer(): Sessions support only one consumer: " + toString());
             }
             throw new JMSException("Sessions support only one consumer.");
         }
 
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.log(Level.FINEST, "Creating MessageConsumer: dest=" + destination
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("Creating MessageConsumer: dest=" + destination
                     + ", selector=" + messageSelector + ", noLocal=" + noLocal);
         }
 
@@ -2001,15 +2002,15 @@ public class GSSessionImpl
 //				catch (InterruptedException e)
 //				{
 //					// TODO Auto-generated catch block
-//					if( _logger.isLoggable(Level.SEVERE))
+//					if( _logger.isErrorEnabled())
 //					{
-//						_logger.log(Level.SEVERE, e.toString(), e );
+//						_logger.error(e.toString(), e );
 //					}
 //				}
 //				curTX.commit();
-//				if( _logger.isLoggable(Level.FINE))
+//				if( _logger.isDebugEnabled())
 //				{
-//					_logger.fine("GSSessionImpl.removeExternalEntryFromSpace() After clear() + After tx.commit()	TX:  "
+//					_logger.debug("GSSessionImpl.removeExternalEntryFromSpace() After clear() + After tx.commit()	TX:  "
 //							+ ((ServerTransaction) curTX).id
 //							+ " | m_sessionID:  " + m_sessionID );
 //				}
@@ -2031,9 +2032,9 @@ public class GSSessionImpl
 //			// entryInSpaceException.toString());
 //			//				e.setLinkedException( entryInSpaceException);
 //			//				throw e;
-//			if( _logger.isLoggable(Level.FINE))
+//			if( _logger.isDebugEnabled())
 //			{
-//				_logger.log(Level.FINE, "GSSessionImpl.removeExternalEntryFromSpace() EntryAlreadyInSpaceException:  "
+//				_logger.debug("GSSessionImpl.removeExternalEntryFromSpace() EntryAlreadyInSpaceException:  "
 //						+ entryInSpaceException.toString(), entryInSpaceException );
 //			}
 //		}
@@ -2048,9 +2049,9 @@ public class GSSessionImpl
 //		{
 //			if (uue instanceof EntryNotInSpaceException)
 //			{
-//				if( _logger.isLoggable(Level.FINE))
+//				if( _logger.isDebugEnabled())
 //				{
-//					_logger.log(Level.FINE, "GSSessionImpl.removeExternalEntryFromSpace(): The Entry "
+//					_logger.debug("GSSessionImpl.removeExternalEntryFromSpace(): The Entry "
 //							+ ((EntryNotInSpaceException) uue).getUID()
 //							+ " No Longer In Space " + uue.getCause(), uue );
 //				}
@@ -2070,9 +2071,9 @@ public class GSSessionImpl
 //			// GSSessionImpl.removeExternalEntryFromSpace()"+re.toString());
 //			//				 e.setLinkedException( re);
 //			//				 throw e;
-//			if( _logger.isLoggable(Level.FINE))
+//			if( _logger.isDebugEnabled())
 //			{
-//				_logger.log(Level.FINE, "GSSessionImpl.removeExternalEntryFromSpace() RemoteException:  "
+//				_logger.debug("GSSessionImpl.removeExternalEntryFromSpace() RemoteException:  "
 //						+ re.toString(), re );
 //			}
 //		}
@@ -2113,8 +2114,8 @@ public class GSSessionImpl
             throw e;
         } catch (UnusableEntryException uue) {
             if (uue instanceof EntryNotInSpaceException) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, "GSSessionImpl.removeJMSAckDataEntryFromSpace(): The Entry "
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSSessionImpl.removeJMSAckDataEntryFromSpace(): The Entry "
                             + ((EntryNotInSpaceException) uue).getUID()
                             + " No Longer In Space " + uue.getCause(), uue);
                 }
@@ -2479,9 +2480,9 @@ public class GSSessionImpl
 //    	ensureOpen();
 //        synchronized(this)
 //        {
-//        	if( _logger.isLoggable(Level.FINE))
+//        	if( _logger.isDebugEnabled())
 //			{
-//				_logger.fine( "GSSessionImpl.unsubscribe(): unsubscribe from: "
+//				_logger.debug( "GSSessionImpl.unsubscribe(): unsubscribe from: "
 //	                + subscriptionName + " || " + toString() );
 //			}
 //	        //getConn().ensureOpen();
@@ -2581,9 +2582,9 @@ public class GSSessionImpl
 //        }
 //        catch (TransactionException te)
 //        {
-//        	if( _logger.isLoggable(Level.FINE))
+//        	if( _logger.isDebugEnabled())
 //			{
-//				_logger.log(Level.FINE, "TransactionException inside GSTopicSessionImpl.unsubscribeFromTopic(): "
+//				_logger.debug("TransactionException inside GSTopicSessionImpl.unsubscribeFromTopic(): "
 //                            + te.toString(), te );
 //			}
 //            JMSException e = new JMSException("TransactionException : "
@@ -2593,9 +2594,9 @@ public class GSSessionImpl
 //        }
 //        catch (RemoteException re)
 //        {
-//        	if( _logger.isLoggable(Level.FINE))
+//        	if( _logger.isDebugEnabled())
 //			{
-//				_logger.log(Level.FINE, "RemoteException inside GSTopicSessionImpl.unsubscribeFromTopic(): "
+//				_logger.debug("RemoteException inside GSTopicSessionImpl.unsubscribeFromTopic(): "
 //                            + re.toString(), re );
 //			}
 //            JMSException e = new JMSException("RemoteException : "
@@ -2607,9 +2608,9 @@ public class GSSessionImpl
 //        {
 //            if (uue instanceof EntryNotInSpaceException)
 //            {
-//            	if( _logger.isLoggable(Level.FINE))
+//            	if( _logger.isDebugEnabled())
 //				{
-//					_logger.log(Level.FINE, "GSTopicSessionImpl.unsubscribeFromTopic(): The Entry "
+//					_logger.debug("GSTopicSessionImpl.unsubscribeFromTopic(): The Entry "
 //                                + ((EntryNotInSpaceException) uue).getUID()
 //                                + " No Longer In Space " + uue.getCause(), uue);
 //
@@ -2645,15 +2646,15 @@ public class GSSessionImpl
 //    	}
 //    	if (m_consumers.size() > 0)
 //		{
-//			if( _logger.isLoggable(Level.SEVERE))
+//			if( _logger.isErrorEnabled())
 //			{
-//				_logger.severe( "GSSession.addConsumer(): Sessions support only one consumer: " + toString() );
+//				_logger.error( "GSSession.addConsumer(): Sessions support only one consumer: " + toString() );
 //			}
 //			throw new JMSException("Sessions support only one consumer.");
 //		}
-//    	if( _logger.isLoggable(Level.FINEST))
+//    	if( _logger.isTraceEnabled())
 //		{
-//			_logger.log(Level.FINEST, "GSTopicSessionImpl.createDurableSubscriber(Topic, String, String, boolean)");
+//			_logger.trace("GSTopicSessionImpl.createDurableSubscriber(Topic, String, String, boolean)");
 //		}
 //        GSTopicSubscriberImpl durableSubscriber;
 //        synchronized(this)
@@ -2721,9 +2722,9 @@ public class GSSessionImpl
 //	            durbleSubscriberDetails.put(GSJMSAdmin.DUR_SUB_TOPIC_NAME, topicName);
 //	            durbleSubscriberDetails.put(GSJMSAdmin.DUR_SUB_SUBSCRIPTION_NAME,
 //	                    name);
-//	            if( _logger.isLoggable(Level.FINE))
+//	            if( _logger.isDebugEnabled())
 //				{
-//					_logger.fine( "GSTopicSessionImpl.createDurableSubscriber(): "
+//					_logger.debug( "GSTopicSessionImpl.createDurableSubscriber(): "
 //					              + "updating jms-config.xml about newly subscribed DurableSubscriber details." );
 //				}
 //	            _admin
@@ -2747,15 +2748,15 @@ public class GSSessionImpl
 //	                    "_cons_", false);
 //	            nextConsumerId();//we still increment the m_consumers counter after
 //	            // using the durable client details
-//	            if( _logger.isLoggable(Level.FINE))
+//	            if( _logger.isDebugEnabled())
 //				{
-//					_logger.fine( "GSTopicSessionImpl.createDurableSubscriber(): "
+//					_logger.debug( "GSTopicSessionImpl.createDurableSubscriber(): "
 //					              + "loading existing subscribed DurableSubscriber details from jms-config.xml file." );
 //				}
 //	        }
-//	        if( _logger.isLoggable(Level.FINE))
+//	        if( _logger.isDebugEnabled())
 //			{
-//				_logger.fine( "GSTopicSessionImpl.createDurableSubscriber(): || sessionID:"
+//				_logger.debug( "GSTopicSessionImpl.createDurableSubscriber(): || sessionID:"
 //	                        + getSessionID() + " || consumerID: " + consumerID
 //	                        + " || clientID: " + clientID );
 //			}
@@ -2766,9 +2767,9 @@ public class GSSessionImpl
 //	        m_durableNames.add(name);
 //           if( !(topic instanceof GSTopicImpl) )
 //           {
-//        	   if( _logger.isLoggable(Level.FINE))
+//        	   if( _logger.isDebugEnabled())
 //        	   {
-//        		   _logger.fine( "GSTopicSessionImpl.createTopicSession(): "
+//        		   _logger.debug( "GSTopicSessionImpl.createTopicSession(): "
 //        		                 + "Invalid JMS Topic of type: " + topic.getClass().getName() );
 //        	   }
 //           }
@@ -2789,9 +2790,9 @@ public class GSSessionImpl
             throws JMSException {
         ensureOpen();
         throw new JMSException("This version of JMS does not support durable subscribers.");
-//    	if( _logger.isLoggable(Level.FINEST))
+//    	if( _logger.isTraceEnabled())
 //		{
-//			_logger.log(Level.FINEST, "GSTopicSessionImpl.createDurableSubscriber(Topic, String)");
+//			_logger.trace("GSTopicSessionImpl.createDurableSubscriber(Topic, String)");
 //		}
 //        return this.createDurableSubscriber(topic, name, null, false);
     }
@@ -2808,9 +2809,9 @@ public class GSSessionImpl
 //    protected void removeSubscriber(GSTopicSubscriberImpl subscriber)
 //    	throws JMSException
 //    {
-//    	if( _logger.isLoggable(Level.FINEST))
+//    	if( _logger.isTraceEnabled())
 //		{
-//    		_logger.log(Level.FINEST, "GSTopicSessionImpl.removeSubscriber(GSTopicSubscriberImpl)");
+//    		_logger.trace("GSTopicSessionImpl.removeSubscriber(GSTopicSubscriberImpl)");
 //		}
 //        if (!isClosed())
 //        {
@@ -2844,8 +2845,8 @@ public class GSSessionImpl
      */
     public synchronized TemporaryTopic createTemporaryTopic() throws JMSException {
         ensureOpen();
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "Creating temporary Topic");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Creating temporary Topic");
         }
         return new GSTemporaryTopicImpl(m_sessionID + ":" + getRandomInt(), m_sessionID);
     }
@@ -2855,8 +2856,8 @@ public class GSSessionImpl
      * @see Session#createTopic(String)
      */
     public Topic createTopic(String topicName) throws JMSException {
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.log(Level.FINEST, "GSTopicSessionImpl.createTopic(String)");
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("GSTopicSessionImpl.createTopic(String)");
         }
         GSTopicImpl topic;
         synchronized (this) {
@@ -2928,8 +2929,8 @@ public class GSSessionImpl
     * @param browser the browser to add
     */
     protected void addBrowser(GSQueueBrowserImpl browser) {
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.log(Level.FINEST, "GSQueueSessionImpl.addBrowser(GSQueueBrowserImpl)");
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("GSQueueSessionImpl.addBrowser(GSQueueBrowserImpl)");
         }
         if (m_browsers == null) {
             m_browsers = new Vector<GSQueueBrowserImpl>();
@@ -2943,8 +2944,8 @@ public class GSSessionImpl
      * @param browser the browser to remove
      */
     protected void removeBrower(GSQueueBrowserImpl browser) {
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.log(Level.FINEST, "GSQueueSessionImpl.removeBrower(GSQueueBrowserImpl)");
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("GSQueueSessionImpl.removeBrower(GSQueueBrowserImpl)");
         }
         m_browsers.remove(browser);
         browser = null;
@@ -2968,8 +2969,8 @@ public class GSSessionImpl
      */
     public synchronized TemporaryQueue createTemporaryQueue() throws JMSException {
         ensureOpen();
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "Creating temporary Queue");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Creating temporary Queue");
         }
         return new GSTemporaryQueueImpl(m_sessionID + ":" + getRandomInt(), m_sessionID);
     }

@@ -115,8 +115,9 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -130,8 +131,8 @@ public class ReplicationNode
         implements IReplicationNode, IIncomingReplicationHandler,
         IIncomingReplicationFacade, IReplicationTargetGroupStateListener,
         IReplicationSourceGroupStateListener {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_NODE);
-    private static final Logger _loggerReplica = Logger.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_NODE);
+    private static final Logger _loggerReplica = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
 
     private final ReplicationNodeConfig _replicationNodeConfig;
     private final IReplicationNodeBuilder _nodeBuilder;
@@ -181,8 +182,8 @@ public class ReplicationNode
         _name = name;
         this.metricRegister = metricRegister.extend(MetricConstants.REPLICATION_METRIC_NAME);
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine(getLogPrefix()
+        if (_logger.isDebugEnabled())
+            _logger.debug(getLogPrefix()
                     + "creating replication node with config:"
                     + StringUtils.NEW_LINE + replicationNodeConfig
                     + StringUtils.NEW_LINE + "builder:" + StringUtils.NEW_LINE
@@ -236,8 +237,8 @@ public class ReplicationNode
 
         ReplicationOutContext replicationContext = (ReplicationOutContext) context;
 
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest(getLogPrefix() + "executing replication context "
+        if (_logger.isTraceEnabled())
+            _logger.trace(getLogPrefix() + "executing replication context "
                     + context);
         if (replicationContext.isEmpty())
             return 0;
@@ -389,8 +390,8 @@ public class ReplicationNode
         GroupMapping groupMapping = GroupMapping.getAllMapping();
         replicationContext.setGroupMapping(groupMapping);
 
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest(getLogPrefix() + "before replicate of operation "
+        if (_logger.isTraceEnabled())
+            _logger.trace(getLogPrefix() + "before replicate of operation "
                     + operationType + " and entries " + lockedEntries + " routed to " + groupMapping + " groups");
 
         for (IReplicationSourceGroup sourceGroup : _groupsHolder.getSourceGroups()) {
@@ -521,8 +522,8 @@ public class ReplicationNode
             ISpaceSynchronizeReplicaRequestContext context) {
         SpaceSynchronizeReplicaRequestContext replicaContext = (SpaceSynchronizeReplicaRequestContext) context;
         _replicaHandler.initFifoBatchesHandler();
-        if (_loggerReplica.isLoggable(Level.FINE))
-            _loggerReplica.fine(getLogPrefix()
+        if (_loggerReplica.isDebugEnabled())
+            _loggerReplica.debug(getLogPrefix()
                     + "starting space synchronization replica process using Url "
                     + replicaContext.getOriginUrl());
         return doSpaceReplica(replicaContext.getOriginUrl(),
@@ -537,8 +538,8 @@ public class ReplicationNode
     public ISpaceCopyReplicaState spaceCopyReplicaRequest(
             ISpaceCopyReplicaRequestContext context) {
         SpaceCopyReplicaRequestContext replicaContext = (SpaceCopyReplicaRequestContext) context;
-        if (_loggerReplica.isLoggable(Level.FINE))
-            _loggerReplica.fine(getLogPrefix()
+        if (_loggerReplica.isDebugEnabled())
+            _loggerReplica.debug(getLogPrefix()
                     + "starting space copy replica process using Url "
                     + replicaContext.getOriginUrl());
         return doSpaceReplica(replicaContext.getOriginUrl(),
@@ -570,8 +571,8 @@ public class ReplicationNode
     public void close() {
         if (_closed)
             return;
-        if (_logger.isLoggable(Level.FINER))
-            _logger.finer(getLogPrefix() + " closing replication node");
+        if (_logger.isDebugEnabled())
+            _logger.debug(getLogPrefix() + " closing replication node");
 
         _replicaHandler.close();
         _statisticsMonitor.shutdownNow();
@@ -580,8 +581,8 @@ public class ReplicationNode
         if (_asyncHandlerProvider != null)
             _asyncHandlerProvider.close();
         _closed = true;
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine(getLogPrefix() + " replication node closed");
+        if (_logger.isDebugEnabled())
+            _logger.debug(getLogPrefix() + " replication node closed");
     }
 
     @Override
@@ -670,8 +671,8 @@ public class ReplicationNode
         String routing = _spaceItemGroupsExtractor.extractGroupMapping(entryHolder);
         // Get all the groups from the mapping
         GroupMapping mapping = _groupsMapping.get(routing);
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest(getLogPrefix() + "before replicate of operation "
+        if (_logger.isTraceEnabled())
+            _logger.trace(getLogPrefix() + "before replicate of operation "
                     + operationType + " and entry " + entryHolder + " routed to " + mapping + " groups");
         replicationContext.setGroupMapping(mapping);
         // Dispatch to specific mapping
@@ -700,8 +701,8 @@ public class ReplicationNode
             IReplicationSourceGroup group = builder.createGroup(_replicationRouter,
                     _replicationOutFilter,
                     this);
-            if (_logger.isLoggable(Level.FINER))
-                _logger.finer(getLogPrefix() + "created source group "
+            if (_logger.isDebugEnabled())
+                _logger.debug(getLogPrefix() + "created source group "
                         + group.getGroupName());
             _groupsHolder.addSourceGroup(group, nodeMode);
         }
@@ -730,8 +731,8 @@ public class ReplicationNode
                     _exceptionHandlerBuilder,
                     _replicationInFilter,
                     this);
-            if (_logger.isLoggable(Level.FINER))
-                _logger.finer(getLogPrefix() + "created target group "
+            if (_logger.isDebugEnabled())
+                _logger.debug(getLogPrefix() + "created target group "
                         + group.getGroupName());
             _groupsHolder.addTargetGroup(group, nodeMode);
         }
@@ -783,8 +784,8 @@ public class ReplicationNode
             IReplicationTargetGroup finalGroup = _groupsHolder.addIfAbsentTargetGroup(dynamicGroup,
                     getNodeMode());
             if (dynamicGroup == finalGroup) {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.finer(getLogPrefix()
+                if (_logger.isDebugEnabled())
+                    _logger.debug(getLogPrefix()
                             + "created dynamic target group "
                             + dynamicGroup.getGroupName());
                 switch (getNodeMode()) {
@@ -960,8 +961,8 @@ public class ReplicationNode
     }
 
     public boolean flushPendingReplication(long timeout, TimeUnit units) {
-        if (_logger.isLoggable(Level.FINER))
-            _logger.fine(getLogPrefix()
+        if (_logger.isDebugEnabled())
+            _logger.debug(getLogPrefix()
                     + "initiating flush of pending replication");
         long remainingTime = units.toMillis(timeout);
         for (IReplicationSourceGroup sourceGroup : _groupsHolder.getSourceGroups()) {
@@ -975,7 +976,7 @@ public class ReplicationNode
             if (remainingTime <= 0)
                 return false;
         }
-        if (_logger.isLoggable(Level.INFO))
+        if (_logger.isInfoEnabled())
             _logger.info(getLogPrefix() + "completed replication.");
         return true;
     }

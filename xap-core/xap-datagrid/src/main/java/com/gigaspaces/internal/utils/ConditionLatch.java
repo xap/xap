@@ -20,15 +20,16 @@ import com.gigaspaces.time.SystemTime;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class ConditionLatch {
 
     private static final String DEFAULT_TIMEOUT_ERROR_MESSAGE = "Operation timed out";
 
-    private final Logger logger = Logger.getLogger(this.getClass().getName());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     private String timeoutErrorMessage = DEFAULT_TIMEOUT_ERROR_MESSAGE;
     private long pollingIntervalMilliseconds = 50;
     private long timeoutMilliseconds;
@@ -58,8 +59,8 @@ public class ConditionLatch {
 
         boolean isDone = predicate.isDone();
         while (!isDone && SystemTime.timeMillis() < end) {
-            if (logger.isLoggable(Level.FINER))
-                logger.log(Level.FINER, "next check in " + pollingIntervalMilliseconds + " milliseconds");
+            if (logger.isDebugEnabled())
+                logger.debug("next check in " + pollingIntervalMilliseconds + " milliseconds");
             Thread.sleep(pollingIntervalMilliseconds);
             isDone = predicate.isDone();
         }

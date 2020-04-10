@@ -16,7 +16,7 @@
  */
 package org.jini.rio.resources.resource;
 
-import java.util.logging.Level;
+
 
 /**
  * A resource pool to handle a pool of threads
@@ -43,7 +43,7 @@ public class ThreadPool extends ResourcePool {
         try {
             createResources();
         } catch (ResourceUnavailableException e) {
-            logger.log(Level.SEVERE,
+            logger.error(
                     "Creating ThreadPool with min=" + min + ", max=" + max,
                     e);
         }
@@ -66,7 +66,7 @@ public class ThreadPool extends ResourcePool {
         try {
             Thread.sleep(1);
         } catch (InterruptedException e) {
-            logger.log(Level.WARNING, "Creating a resource interrupted", e);
+            logger.warn("Creating a resource interrupted", e);
         }
         return (thread);
     }
@@ -112,7 +112,7 @@ public class ThreadPool extends ResourcePool {
                     ((PoolableThread) activeThreads[i]).cleanStop();
                 activeThreads[i].interrupt();
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Failed to stop active thread " + activeThreads[i].getId(), ex);
+                logger.warn("Failed to stop active thread " + activeThreads[i].getId(), ex);
                 ex.printStackTrace();
             }
             remove(activeThreads[i]);
@@ -124,7 +124,7 @@ public class ThreadPool extends ResourcePool {
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
-                logger.log(Level.WARNING, "Interrupted while destroying latent Threads", e);
+                logger.warn("Interrupted while destroying latent Threads", e);
             }
         }
         try {
@@ -133,7 +133,7 @@ public class ThreadPool extends ResourcePool {
         } catch (IllegalThreadStateException e) {
             if (!group.isDestroyed()) {
                 //not a race condition issue, weird
-                logger.log(Level.WARNING, "IllegalThreadState destroying ThreadGroup", e);
+                logger.warn("IllegalThreadState destroying ThreadGroup", e);
             }
         }
     }

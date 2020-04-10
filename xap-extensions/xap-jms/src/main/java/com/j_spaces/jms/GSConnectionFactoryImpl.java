@@ -43,8 +43,9 @@ import java.rmi.RemoteException;
 import java.util.Hashtable;
 import java.util.Random;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -73,7 +74,7 @@ public class GSConnectionFactoryImpl implements ConnectionFactory,
         Remote {
     private static final long serialVersionUID = 1L;
 
-    protected static final Logger _logger = Logger.getLogger(Constants.LOGGER_JMS);
+    protected static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_JMS);
     private static final Object distributedTransactionManagerProviderLock = new Object();
     private static final Random random = new Random();
     private static final String ID_SUFFIX = generateIdSuffix();
@@ -161,16 +162,16 @@ public class GSConnectionFactoryImpl implements ConnectionFactory,
             }
             ((ISpaceProxy) m_space).login(new DefaultCredentialsProvider(username, password));
         } catch (SpaceSecurityException se) {
-            if (_logger.isLoggable(Level.INFO)) {
-                _logger.log(Level.INFO, "exception inside setSpaceSecurityContext(user,pass): " + se.toString(), se);
+            if (_logger.isInfoEnabled()) {
+                _logger.info("exception inside setSpaceSecurityContext(user,pass): " + se.toString(), se);
             }
             JMSSecurityException e = new JMSSecurityException(
                     "SpaceSecurityException : " + se.toString());
             e.setLinkedException(se);
             throw e;
         } catch (RemoteException re) {
-            if (_logger.isLoggable(Level.INFO)) {
-                _logger.log(Level.INFO, "exception inside setSpaceSecurityContext(user,pass): " + re.toString(), re);
+            if (_logger.isInfoEnabled()) {
+                _logger.info("exception inside setSpaceSecurityContext(user,pass): " + re.toString(), re);
             }
             JMSException e = new JMSException("RemoteException : "
                     + re.toString());
@@ -202,8 +203,8 @@ public class GSConnectionFactoryImpl implements ConnectionFactory,
                         distributedTransactionManagerProvider = new DistributedTransactionManagerProvider();
                 }
             } catch (TransactionException re) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Exception inside GSConnectionFactoryImpl.createLocalTransactionManager() : " + re.toString(), re);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Exception inside GSConnectionFactoryImpl.createLocalTransactionManager() : " + re.toString(), re);
                 JMSException e = new JMSException("RemoteException: " + re.toString());
                 e.setLinkedException(re);
                 throw e;
@@ -222,11 +223,11 @@ public class GSConnectionFactoryImpl implements ConnectionFactory,
 
                 dtm = (TransactionManager) LookupFinder.find(request);
 
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine("Created Distributed Transaction Manager: " + dtm.toString());
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Created Distributed Transaction Manager: " + dtm.toString());
             } catch (FinderException fe) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to create Exception Distributed Transaction Manager.", fe);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to create Exception Distributed Transaction Manager.", fe);
                 JMSException e = new JMSException("FinderException: " + fe.toString());
                 e.setLinkedException(fe);
                 throw e;
@@ -260,8 +261,8 @@ public class GSConnectionFactoryImpl implements ConnectionFactory,
         conn.setCnxKey(connKey);
         conn.updateClientIDInternally(connKey + "_" + getSpaceName());
         addConnection(conn);
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("GSConnectionFactoryImpl.createGSConnection() connKey: " + connKey);
+        if (_logger.isDebugEnabled())
+            _logger.debug("GSConnectionFactoryImpl.createGSConnection() connKey: " + connKey);
         return conn;
     }
 

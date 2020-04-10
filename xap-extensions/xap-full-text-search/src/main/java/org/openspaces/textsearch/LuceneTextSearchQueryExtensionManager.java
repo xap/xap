@@ -46,8 +46,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -55,7 +56,7 @@ import java.util.logging.Logger;
  * @since 12.1
  */
 public class LuceneTextSearchQueryExtensionManager extends QueryExtensionManager {
-    private static final Logger _logger = Logger.getLogger(LuceneTextSearchQueryExtensionManager.class.getName());
+    private static final Logger _logger = LoggerFactory.getLogger(LuceneTextSearchQueryExtensionManager.class.getName());
 
     public static final String SEARCH_OPERATION_NAME = "match";
 
@@ -97,7 +98,7 @@ public class LuceneTextSearchQueryExtensionManager extends QueryExtensionManager
                 throw new SpaceRuntimeException("Failed to register type " + typeName, e);
             }
         } else {
-            _logger.log(Level.WARNING, "Type [" + typeName + "] is already registered");
+            _logger.warn("Type [" + typeName + "] is already registered");
         }
     }
 
@@ -111,8 +112,8 @@ public class LuceneTextSearchQueryExtensionManager extends QueryExtensionManager
         Objects.requireNonNull(luceneQuery, "Provided lucene query is null");
         validateOperationName(operation);
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "filter [operation=" + operation + ", leftOperand(value from grid)=" + gridValue + ", rightOperand(lucene query)=" + luceneQuery + "]");
+        if (_logger.isDebugEnabled())
+            _logger.debug("filter [operation=" + operation + ", leftOperand(value from grid)=" + gridValue + ", rightOperand(lucene query)=" + luceneQuery + "]");
 
         try {
             Analyzer analyzer = getAnalyzer(typeName, path);
@@ -201,8 +202,8 @@ public class LuceneTextSearchQueryExtensionManager extends QueryExtensionManager
 
     @Override
     public QueryExtensionEntryIterator queryByIndex(String typeName, String path, String operationName, Object operand) {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "query [typeName=" + typeName + ", path=" + path + ", operation=" + operationName + ", operand=" + operand + "]");
+        if (_logger.isDebugEnabled())
+            _logger.debug("query [typeName=" + typeName + ", path=" + path + ", operation=" + operationName + ", operand=" + operand + "]");
 
         final Query query = createQuery(typeName, path, operationName, operand);
         final LuceneTextSearchTypeIndex luceneHolder = _luceneHolderMap.get(typeName);

@@ -31,31 +31,32 @@ import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class XapExtensionActivator {
 
-    private static final Logger logger = Logger.getLogger(XapExtensionActivator.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(XapExtensionActivator.class.getName());
 
     public static synchronized void scanAndActivate(ClassLoader classLoader, String key) {
-        if (logger.isLoggable(Level.FINE))
-            logger.log(Level.FINE, "Scanning for " + key + " in class loader " + toString(classLoader));
+        if (logger.isDebugEnabled())
+            logger.debug("Scanning for " + key + " in class loader " + toString(classLoader));
         final long startTime = System.currentTimeMillis();
         final Map<URL, Properties> xapProperties = loadManifestsEntryAttributes(classLoader, "xap");
         final Set<String> extensions = loadSet(xapProperties, key, ",");
         activate(classLoader, extensions);
-        if (logger.isLoggable(Level.FINE))
-            logger.log(Level.FINE, LogUtils.formatDuration(startTime, "Finished scanning for extensions in class loader " + toString(classLoader)));
+        if (logger.isDebugEnabled())
+            logger.debug(LogUtils.formatDuration(startTime, "Finished scanning for extensions in class loader " + toString(classLoader)));
     }
 
     private static void activate(ClassLoader classLoader, Set<String> extensions) {
         final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(classLoader);
-            if (logger.isLoggable(Level.FINE))
-                logger.log(Level.FINE, "Activating " + extensions.size() + " extensions...");
+            if (logger.isDebugEnabled())
+                logger.debug("Activating " + extensions.size() + " extensions...");
             for (String extensionName : extensions) {
                 activate(classLoader, extensionName);
             }
@@ -65,26 +66,26 @@ public class XapExtensionActivator {
     }
 
     private static void activate(ClassLoader classLoader, String extensionName) {
-        if (logger.isLoggable(Level.FINE))
-            logger.log(Level.FINE, "Activating extension " + extensionName);
+        if (logger.isDebugEnabled())
+            logger.debug("Activating extension " + extensionName);
         try {
             final Class<?> extensionClass = classLoader.loadClass(extensionName);
             final Object instance = extensionClass.newInstance();
             XapExtension extension = (XapExtension) instance;
             extension.activate();
-            if (logger.isLoggable(Level.FINE))
-                logger.log(Level.FINE, "Activated extension " + extensionName);
+            if (logger.isDebugEnabled())
+                logger.debug("Activated extension " + extensionName);
         } catch (NoClassDefFoundError e) {
-            logger.log(Level.WARNING, "Failed to activate extension " + extensionName + " - " + e);
+            logger.warn("Failed to activate extension " + extensionName + " - " + e);
             throw new RuntimeException("Failed to activate extension " + extensionName, e);
         } catch (ClassNotFoundException e) {
-            logger.log(Level.WARNING, "Failed to activate extension " + extensionName + " - " + e);
+            logger.warn("Failed to activate extension " + extensionName + " - " + e);
             throw new RuntimeException("Failed to activate extension " + extensionName, e);
         } catch (InstantiationException e) {
-            logger.log(Level.WARNING, "Failed to activate extension " + extensionName + " - " + e);
+            logger.warn("Failed to activate extension " + extensionName + " - " + e);
             throw new RuntimeException("Failed to activate extension " + extensionName, e);
         } catch (IllegalAccessException e) {
-            logger.log(Level.WARNING, "Failed to activate extension " + extensionName + " - " + e);
+            logger.warn("Failed to activate extension " + extensionName + " - " + e);
             throw new RuntimeException("Failed to activate extension " + extensionName, e);
         }
     }
@@ -124,19 +125,19 @@ public class XapExtensionActivator {
         Properties result = null;
         InputStream inputStream = null;
         try {
-            if (logger.isLoggable(Level.FINEST))
-                logger.log(Level.FINEST, "Loading manifest from " + url);
+            if (logger.isTraceEnabled())
+                logger.trace("Loading manifest from " + url);
             inputStream = url.openStream();
             Manifest manifest = new Manifest(inputStream);
             final Attributes attributes = manifest.getAttributes(entryName);
             if (attributes != null) {
                 result = new Properties();
-                if (logger.isLoggable(Level.FINE))
-                    logger.log(Level.FINE, "Found " + attributes.size() + " attributes for entry '" + entryName + "'");
+                if (logger.isDebugEnabled())
+                    logger.debug("Found " + attributes.size() + " attributes for entry '" + entryName + "'");
                 for (Map.Entry<Object, Object> entry : attributes.entrySet()) {
                     result.setProperty(entry.getKey().toString(), entry.getValue().toString());
-                    if (logger.isLoggable(Level.FINEST))
-                        logger.log(Level.FINEST, "Found entry " + entry.getKey() + " => " + entry.getValue());
+                    if (logger.isTraceEnabled())
+                        logger.trace("Found entry " + entry.getKey() + " => " + entry.getValue());
                 }
             }
         } finally {

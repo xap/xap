@@ -5,7 +5,8 @@ import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.internal.sigar.SigarChecker;
 
 import java.util.Optional;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -13,7 +14,7 @@ import java.util.logging.Logger;
  */
 public class ProcessUtils {
 
-    public static final Logger logger = Logger.getLogger(ProcessUtils.class.getName());
+    public static final Logger logger = LoggerFactory.getLogger(ProcessUtils.class.getName());
     private static final Optional<ProcessKiller> processKiller = initProcessKiller();
     private static final boolean RECURSIVE_DEFAULT = initDefaultRecursive();
 
@@ -30,7 +31,7 @@ public class ProcessUtils {
             try {
                 return Optional.of(new ProcessHandleProcessKiller());
             } catch (ReflectiveOperationException e) {
-                logger.warning("Failed to create ProcessHandleProcessKiller: " + e.getMessage());
+                logger.warn("Failed to create ProcessHandleProcessKiller: " + e.getMessage());
             }
         }
         if (SigarChecker.isAvailable()) {

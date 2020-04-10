@@ -19,8 +19,9 @@ package com.gigaspaces.lrmi.nio.filters;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
@@ -33,7 +34,7 @@ import java.util.zip.Inflater;
 
 public class IOStreamCompressionFilter implements IOStreamFilter {
 
-    private static final Logger logger = Logger.getLogger(IOStreamCompressionFilter.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(IOStreamCompressionFilter.class.getName());
     private final Algo algo;
 
     public enum Algo {
@@ -73,8 +74,8 @@ public class IOStreamCompressionFilter implements IOStreamFilter {
         }
         _decompressor.reset();
         byte[] res = bos.toByteArray();
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Uncompress message of " + size + " bytes to "
+        if (logger.isDebugEnabled()) {
+            logger.debug("Uncompress message of " + size + " bytes to "
                     + res.length + " bytes, ratio ["
                     + (int) Math.ceil((size * 100.0) / res.length) + "%]");
         }
@@ -103,8 +104,8 @@ public class IOStreamCompressionFilter implements IOStreamFilter {
         _compressor.reset();
         // Get the compressed data
         byte[] res = bos.toByteArray();
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Compress message of " + size + " bytes to "
+        if (logger.isDebugEnabled()) {
+            logger.debug("Compress message of " + size + " bytes to "
                     + res.length + " bytes, ratio ["
                     + (int) Math.ceil((res.length * 100.0) / size) + "%]");
         }

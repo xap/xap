@@ -155,8 +155,9 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginContext;
@@ -198,12 +199,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
      */
     private static final Uuid myLeaseID = UuidFactory.create(0L, 0L);
 
-    private static final Logger logger = Logger.getLogger(GigaRegistrar.class.getName());
-    private static final Logger loggerCache = Logger.getLogger(logger.getName() + ".cache");
-    private static final Logger loggerStats = Logger.getLogger(logger.getName() + ".stats");
+    private static final Logger logger = LoggerFactory.getLogger(GigaRegistrar.class.getName());
+    private static final Logger loggerCache = LoggerFactory.getLogger(logger.getName() + ".cache");
+    private static final Logger loggerStats = LoggerFactory.getLogger(logger.getName() + ".stats");
 
-    private static final Logger loggerServiceExpire = Logger.getLogger(COMPONENT + ".expire.service");
-    private static final Logger loggerEventExpire = Logger.getLogger(COMPONENT + ".expire.event");
+    private static final Logger loggerServiceExpire = LoggerFactory.getLogger(COMPONENT + ".expire.service");
+    private static final Logger loggerEventExpire = LoggerFactory.getLogger(COMPONENT + ".expire.event");
     private static final Object _lock = new Object();
     private static boolean isActive;
 
@@ -619,7 +620,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             registerMetrics(metricRegistrator);
 
         } catch (Throwable t) {
-            logger.log(Level.SEVERE, "Reggie initialization failed", t);
+            logger.error("Reggie initialization failed", t);
             if (t instanceof Exception) {
                 throw (Exception) t;
             }
@@ -996,7 +997,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                                 ThrowableConstants.BAD_OBJECT) {
                     throw (Error) e;
                 }
-                logger.log(Level.WARNING,
+                logger.warn(
                         "failed to recover event listener", e);
             }
         }
@@ -1369,8 +1370,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
          */
         public void run() {
 
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "Notifying listener {0} of event {1}", new Object[]{reg.listener, reg.eventID});
+            if (logger.isDebugEnabled()) {
+                logger.debug("Notifying listener {0} of event {1}", new Object[]{reg.listener, reg.eventID});
             }
 
             boolean requeue = false;
@@ -1444,13 +1445,13 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             final boolean exceededBounds = size > maxEventsPerEventReg;
             if (exceededBounds) {
                 try {
-                    logger.log(Level.WARNING, "Cancelling registered listener: " + reg
+                    logger.warn("Cancelling registered listener: " + reg
                             + " - its events queue size ("+size+") exceeded the maximum of "+ maxEventsPerEventReg +".");
 
                     cancelEventLease(reg.eventID, reg.leaseID);
 
                 }catch(Exception e) {
-                    logger.log(Level.WARNING, "Failed to cancel registered listener: " + reg, e);
+                    logger.warn("Failed to cancel registered listener: " + reg, e);
                 }
             }
             return exceededBounds;
@@ -1476,7 +1477,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 switch (ThrowableConstants.retryable(e)) {
                     case ThrowableConstants.BAD_OBJECT:
                         if (e instanceof Error) {
-                            logger.log(Level.FINE, "Exception sending event to [" + reg.listener + "], serviceID [" + theEvent.getServiceID() + "], eventID [" + reg.eventID + "], " + reg.tmpl, e);
+                            logger.debug("Exception sending event to [" + reg.listener + "], serviceID [" + theEvent.getServiceID() + "], eventID [" + reg.eventID + "], " + reg.tmpl, e);
                             throw (Error) e;
                         }
                     case ThrowableConstants.BAD_INVOCATION:
@@ -1484,17 +1485,17 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     /* If the listener throws UnknownEvent or some other
                      * definite exception, we can cancel the lease.
                      */
-                        if (logger.isLoggable(Level.FINE)) {
-                            logger.log(Level.FINE, "Exception sending event to [" + reg.listener + "], ServiceID [" + theEvent.getServiceID() + "], eventID [" + reg.eventID + "], " + reg.tmpl + " canceling lease [" + reg.leaseID + "]", e);
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Exception sending event to [" + reg.listener + "], ServiceID [" + theEvent.getServiceID() + "], eventID [" + reg.eventID + "], " + reg.tmpl + " canceling lease [" + reg.leaseID + "]", e);
                         }
                         try {
                             cancelEventLease(reg.eventID, reg.leaseID);
                         } catch (UnknownLeaseException ee) {
-                            logger.log(Level.FINE,
+                            logger.debug(
                                     "Exception canceling event lease",
                                     e);
                         } catch (RemoteException ee) {
-                            logger.log(Level.FINE,
+                            logger.debug(
                                     "The server has been shutdown",
                                     e);
                         }
@@ -1558,7 +1559,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                         multicastRequestSubjectChecker, true);
             } catch (Exception e) {
                 if (!(e instanceof InterruptedIOException) &&
-                        logger.isLoggable(Level.FINE)) {
+                        logger.isDebugEnabled()) {
                     LogUtils.throwing(logger, getClass(), "run", e,
                             "exception decoding multicast request from {0}:{1}", datagram.getAddress(), datagram.getPort());
                 }
@@ -1571,7 +1572,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     req.checkConstraints();
                 } catch (Exception e) {
                     if (!(e instanceof InterruptedIOException) &&
-                            logger.isLoggable(Level.FINE)) {
+                            logger.isDebugEnabled()) {
                         LogUtils.throwing(logger, getClass(), "run", e,
                                 "exception decoding multicast request from {0}:{1}", datagram.getAddress(), datagram.getPort());
                     }
@@ -1639,7 +1640,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                         addr = addrByName;
                     }
                 } catch (UnknownHostException e) {
-                    if (logger.isLoggable(Level.INFO)) {
+                    if (logger.isInfoEnabled()) {
                         LogUtils.throwing(LogLevel.INFO, logger, getClass(), "run", e, "failed to resolve host {0}; connection will still be attempted", host);
                     }
                 }
@@ -1665,7 +1666,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                                 new InetSocketAddress(anAddr, port), timeout);
                         return;
                     } catch (Exception e) {
-                        if (logger.isLoggable(Level.FINE)) {
+                        if (logger.isDebugEnabled()) {
                             LogUtils.throwing(logger, getClass(), "run", e, "exception responding to {0}:{1}", anAddr, port);
                         }
                     }
@@ -1677,7 +1678,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                                 + " before successful response");
                 }
             } catch (Exception e) {
-                if (logger.isLoggable(Level.INFO)) {
+                if (logger.isInfoEnabled()) {
                     LogUtils.throwing(LogLevel.INFO, logger, getClass(), "run", e, "failed to respond to {0} on port {1}", Arrays.asList(addr), port);
                 }
             }
@@ -1703,7 +1704,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 try {
                     s.close();
                 } catch (IOException e) {
-                    logger.log(Level.FINE, "exception closing socket", e);
+                    logger.debug("exception closing socket", e);
                 }
             }
         }
@@ -1732,16 +1733,16 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         public void run() {
             try {
                 long time = 0;
-                if (logger.isLoggable(Level.FINEST)) {
+                if (logger.isTraceEnabled()) {
                     time = SystemTime.timeMillis();
                 }
                 respond(socket);
-                if (logger.isLoggable(Level.FINEST)) {
+                if (logger.isTraceEnabled()) {
                     long took = SystemTime.timeMillis() - time;
-                    logger.log(Level.FINEST, "Unicast task [" + System.identityHashCode(this) + "] executed, took [" + took + "ms]");
+                    logger.trace("Unicast task [" + System.identityHashCode(this) + "] executed, took [" + took + "ms]");
                 }
             } catch (Exception e) {
-                if (logger.isLoggable(Level.FINE)) {
+                if (logger.isDebugEnabled()) {
                     LogUtils.throwing(logger, getClass(), "run", e,
                             "exception handling unicast discovery from {0}:{1}", socket.getInetAddress(), socket.getPort());
                 }
@@ -1778,20 +1779,20 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     try {
                         regExpirationKey = serviceByTime.firstKey();
                     } catch (NoSuchElementException e) {
-                        if (loggerServiceExpire.isLoggable(Level.FINEST)) {
-                            loggerServiceExpire.finest("No services to check");
+                        if (loggerServiceExpire.isTraceEnabled()) {
+                            loggerServiceExpire.trace("No services to check");
                         }
                         // map is empty
                         break;
                     }
                     if (regExpirationKey.leaseExpiration > now) {
-                        if (loggerServiceExpire.isLoggable(Level.FINEST)) {
-                            loggerServiceExpire.finest("[" + System.identityHashCode(regExpirationKey) + "]: Service [" + regExpirationKey.svcReg.item.serviceID + "]: lease [" + regExpirationKey.svcReg.leaseID + "/" + regExpirationKey.leaseExpiration + "] is higher than [" + now + "], bail");
+                        if (loggerServiceExpire.isTraceEnabled()) {
+                            loggerServiceExpire.trace("[" + System.identityHashCode(regExpirationKey) + "]: Service [" + regExpirationKey.svcReg.item.serviceID + "]: lease [" + regExpirationKey.svcReg.leaseID + "/" + regExpirationKey.leaseExpiration + "] is higher than [" + now + "], bail");
                         }
                         break;
                     } else {
-                        if (loggerServiceExpire.isLoggable(Level.FINER)) {
-                            loggerServiceExpire.finer("[" + System.identityHashCode(regExpirationKey) + "]: Service [" + regExpirationKey.svcReg.item.serviceID + "]: lease [" + regExpirationKey.svcReg.leaseID + "/" + regExpirationKey.leaseExpiration + "] is lower than [" + now + "], try and expire...");
+                        if (loggerServiceExpire.isDebugEnabled()) {
+                            loggerServiceExpire.debug("[" + System.identityHashCode(regExpirationKey) + "]: Service [" + regExpirationKey.svcReg.item.serviceID + "]: lease [" + regExpirationKey.svcReg.leaseID + "/" + regExpirationKey.leaseExpiration + "] is lower than [" + now + "], try and expire...");
                         }
                     }
                     try {
@@ -1809,8 +1810,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                             SvcReg tmpReg = serviceByID.get(regExpirationKey.svcReg.item.serviceID);
                             if (tmpReg == null || !tmpReg.leaseID.equals(regExpirationKey.svcReg.leaseID)) {
                                 Object removed = serviceByTime.remove(regExpirationKey);
-                                if (loggerServiceExpire.isLoggable(Level.FINER)) {
-                                    loggerServiceExpire.finer("[" + System.identityHashCode(regExpirationKey) + "]: Service [" + regExpirationKey.svcReg.item.serviceID + "]: Not found, removing (" + (removed != null) + ")");
+                                if (loggerServiceExpire.isDebugEnabled()) {
+                                    loggerServiceExpire.debug("[" + System.identityHashCode(regExpirationKey) + "]: Service [" + regExpirationKey.svcReg.item.serviceID + "]: Not found, removing (" + (removed != null) + ")");
                                 }
                                 continue;
                             }
@@ -1820,20 +1821,20 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                             try {
                                 otherExpirationKey = serviceByTime.firstKey();
                             } catch (NoSuchElementException e) {
-                                if (loggerServiceExpire.isLoggable(Level.FINEST)) {
-                                    loggerServiceExpire.finest("No services to check");
+                                if (loggerServiceExpire.isTraceEnabled()) {
+                                    loggerServiceExpire.trace("No services to check");
                                 }
                                 // map is empty
                                 break;
                             }
                             if (!otherExpirationKey.equals(regExpirationKey)) {
-                                if (loggerServiceExpire.isLoggable(Level.FINEST)) {
-                                    loggerServiceExpire.finer("[" + System.identityHashCode(regExpirationKey) + "]: Service [" + regExpirationKey.svcReg.item.serviceID + "]: Renew happened until lock acquired, continue");
+                                if (loggerServiceExpire.isTraceEnabled()) {
+                                    loggerServiceExpire.debug("[" + System.identityHashCode(regExpirationKey) + "]: Service [" + regExpirationKey.svcReg.item.serviceID + "]: Renew happened until lock acquired, continue");
                                 }
                                 continue;
                             }
-                            if (loggerServiceExpire.isLoggable(Level.FINE)) {
-                                loggerServiceExpire.fine("[" + System.identityHashCode(regExpirationKey) + "]: Service [" + regExpirationKey.svcReg.item.serviceID + "]: Expired, deleting ....");
+                            if (loggerServiceExpire.isDebugEnabled()) {
+                                loggerServiceExpire.debug("[" + System.identityHashCode(regExpirationKey) + "]: Service [" + regExpirationKey.svcReg.item.serviceID + "]: Expired, deleting ....");
                             }
                             deleteService(regExpirationKey, regExpirationKey.svcReg, now);
                             queueEvents();
@@ -1843,8 +1844,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     }
                 }
                 try {
-                    if (loggerServiceExpire.isLoggable(Level.FINEST)) {
-                        loggerServiceExpire.finest("Sleeping for 200 millis");
+                    if (loggerServiceExpire.isTraceEnabled()) {
+                        loggerServiceExpire.trace("Sleeping for 200 millis");
                     }
                     // we want to wake early, since space active election might rely on this
                     Thread.sleep(200);
@@ -1877,19 +1878,19 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     try {
                         regExpirationKey = (EventRegKeyExpiration) eventByTime.firstKey();
                     } catch (NoSuchElementException e) {
-                        if (loggerEventExpire.isLoggable(Level.FINEST)) {
-                            loggerEventExpire.finest("No events to check");
+                        if (loggerEventExpire.isTraceEnabled()) {
+                            loggerEventExpire.trace("No events to check");
                         }
                         break;
                     }
                     if (regExpirationKey.leaseExpiration > now) {
-                        if (loggerEventExpire.isLoggable(Level.FINEST)) {
-                            loggerEventExpire.finest("[" + System.identityHashCode(regExpirationKey) + "]: Event [" + regExpirationKey.reg.eventID + "]: lease [" + regExpirationKey.leaseExpiration + "] is higher than [" + now + "], bail");
+                        if (loggerEventExpire.isTraceEnabled()) {
+                            loggerEventExpire.trace("[" + System.identityHashCode(regExpirationKey) + "]: Event [" + regExpirationKey.reg.eventID + "]: lease [" + regExpirationKey.leaseExpiration + "] is higher than [" + now + "], bail");
                         }
                         break;
                     } else {
-                        if (loggerEventExpire.isLoggable(Level.FINER)) {
-                            loggerEventExpire.finer("[" + System.identityHashCode(regExpirationKey) + "]: Event [" + regExpirationKey.reg.eventID + "]: lease [" + regExpirationKey.leaseExpiration + "] is lower than [" + now + "], try and expire...");
+                        if (loggerEventExpire.isDebugEnabled()) {
+                            loggerEventExpire.debug("[" + System.identityHashCode(regExpirationKey) + "]: Event [" + regExpirationKey.reg.eventID + "]: lease [" + regExpirationKey.leaseExpiration + "] is lower than [" + now + "], try and expire...");
                         }
                     }
                     try {
@@ -1906,8 +1907,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                             EventReg tmpReg = eventByID.get(regExpirationKey.reg.eventID);
                             if (tmpReg == null || !tmpReg.leaseID.equals(regExpirationKey.reg.leaseID)) {
                                 Object removed = eventByTime.remove(regExpirationKey);
-                                if (loggerEventExpire.isLoggable(Level.FINER)) {
-                                    loggerEventExpire.finer("[" + System.identityHashCode(regExpirationKey) + "]: Event [" + regExpirationKey.reg.eventID + "]: Not found, removing (" + (removed != null) + ")");
+                                if (loggerEventExpire.isDebugEnabled()) {
+                                    loggerEventExpire.debug("[" + System.identityHashCode(regExpirationKey) + "]: Event [" + regExpirationKey.reg.eventID + "]: Not found, removing (" + (removed != null) + ")");
                                 }
                                 continue;
                             }
@@ -1917,19 +1918,19 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                             try {
                                 otherFirstKey = (EventRegKeyExpiration) eventByTime.firstKey();
                             } catch (NoSuchElementException e) {
-                                if (loggerEventExpire.isLoggable(Level.FINEST)) {
-                                    loggerEventExpire.finest("No events to check");
+                                if (loggerEventExpire.isTraceEnabled()) {
+                                    loggerEventExpire.trace("No events to check");
                                 }
                                 break;
                             }
                             if (!otherFirstKey.equals(regExpirationKey)) {
-                                if (loggerEventExpire.isLoggable(Level.FINEST)) {
-                                    loggerEventExpire.finest("[" + System.identityHashCode(regExpirationKey) + "]: Event [" + regExpirationKey.reg.eventID + "]: Renew happened until lock acquired, continue");
+                                if (loggerEventExpire.isTraceEnabled()) {
+                                    loggerEventExpire.trace("[" + System.identityHashCode(regExpirationKey) + "]: Event [" + regExpirationKey.reg.eventID + "]: Renew happened until lock acquired, continue");
                                 }
                                 continue;
                             }
-                            if (loggerEventExpire.isLoggable(Level.FINE)) {
-                                loggerEventExpire.fine("[" + System.identityHashCode(regExpirationKey) + "]: Event [" + regExpirationKey.reg.eventID + "]: Expired, deleting ....");
+                            if (loggerEventExpire.isDebugEnabled()) {
+                                loggerEventExpire.debug("[" + System.identityHashCode(regExpirationKey) + "]: Event [" + regExpirationKey.reg.eventID + "]: Expired, deleting ....");
                             }
                             deleteEvent(regExpirationKey, regExpirationKey.reg);
                         }
@@ -1939,8 +1940,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 }
                 try {
                     // no need for high accuracy with event expiration
-                    if (loggerEventExpire.isLoggable(Level.FINEST)) {
-                        loggerEventExpire.finest("Sleeping for 500 millis");
+                    if (loggerEventExpire.isTraceEnabled()) {
+                        loggerEventExpire.trace("Sleeping for 500 millis");
                     }
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
@@ -1966,7 +1967,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     Thread.sleep(sleepTime);
                     now = SystemTime.timeMillis();
                 } catch (InterruptedException e) {
-                    logger.log(Level.FINE, "exception during unexport wait", e);
+                    logger.debug("exception during unexport wait", e);
                 }
             }
         }
@@ -2011,7 +2012,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             try {
                 loginContext.logout();
             } catch (LoginException e) {
-                logger.log(Level.INFO, "logout failed", e);
+                logger.info("logout failed", e);
             }
         }
         deactivate();
@@ -2058,8 +2059,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     try {
                         final long nicStartTime = LogUtils.getCurrTimeIfTraceEnabled(logger);
                         socket.setNetworkInterface(nic);
-                        if (logger.isLoggable(Level.FINEST))
-                            logger.log(Level.FINEST, LogUtils.formatDuration(nicStartTime, "MulticastThread() - setNetworkInterface() for nic " + nic));
+                        if (logger.isTraceEnabled())
+                            logger.trace(LogUtils.formatDuration(nicStartTime, "MulticastThread() - setNetworkInterface() for nic " + nic));
                         socket.joinGroup(requestAddr);
                     } catch (IOException e) {
                         failedInterfaces.add(nic);
@@ -2067,14 +2068,14 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                             LogUtils.throwing(failureLogLevel, logger, getClass(), "<init>", e, "exception enabling {0}", nic);
                     }
                 }
-                if (logger.isLoggable(Level.FINE))
-                    logger.log(Level.FINE, LogUtils.formatDuration(startTime, "MulticastThread() processed " + multicastInterfaces.length + " network interfaces"));
+                if (logger.isDebugEnabled())
+                    logger.debug(LogUtils.formatDuration(startTime, "MulticastThread() processed " + multicastInterfaces.length + " network interfaces"));
             } else {
                 try {
                     socket.joinGroup(requestAddr);
                 } catch (IOException e) {
                     failedInterfaces.add(null);
-                    logger.log(Level.WARNING, "exception enabling default interface", e);
+                    logger.warn("exception enabling default interface", e);
                 }
             }
         }
@@ -2137,7 +2138,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     if (hasBeenInterrupted()) {
                         break;
                     }
-                    logger.log(Level.FINE,
+                    logger.debug(
                             "exception receiving multicast request", e);
                 }
             }
@@ -2217,7 +2218,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 try {
                     listen = new ServerSocket(Constants.getDiscoveryPort(), backlog, host);
                 } catch (IOException e) {
-                    logger.log(Level.FINE, "failed to bind to default port", e);
+                    logger.debug("failed to bind to default port", e);
                 }
             }
             if (listen == null) {
@@ -2235,18 +2236,18 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                         try {
                             socket.close();
                         } catch (IOException e) {
-                            logger.log(Level.FINE, "exception closing socket", e);
+                            logger.debug("exception closing socket", e);
                         }
                         break;
                     }
                     SocketTask task = new SocketTask(socket);
-                    if (logger.isLoggable(Level.FINEST)) {
-                        logger.log(Level.FINEST, "Unicast task [" + System.identityHashCode(task) + "] added");
+                    if (logger.isTraceEnabled()) {
+                        logger.trace("Unicast task [" + System.identityHashCode(task) + "] added");
                     }
                     try {
                         taskerComm.execute(task);
                     } catch (RejectedExecutionException e) {
-                        logger.warning("Rejected task because of overflow in backlog, please consider increasing either the commTaskManager number of threads, or its backlog");
+                        logger.warn("Rejected task because of overflow in backlog, please consider increasing either the commTaskManager number of threads, or its backlog");
                         try {
                             socket.close();
                         } catch (Exception se) {
@@ -2256,14 +2257,14 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 } catch (InterruptedIOException e) {
                     break;
                 } catch (Exception e) {
-                    logger.log(Level.FINE, "exception listening on socket", e);
+                    logger.debug("exception listening on socket", e);
                 }
                 /* if we fail in any way, just forget about it */
             }
             try {
                 listen.close();
             } catch (IOException e) {
-                logger.log(Level.FINE, "exception closing server socket", e);
+                logger.debug("exception closing server socket", e);
             }
         }
 
@@ -2394,8 +2395,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 long startTime = LogUtils.getCurrTimeIfDebugEnabled(logger);
                 for (NetworkInterface multicastInterface : multicastInterfaces)
                     send(packets, multicastInterface, failureLogLevel);
-                if (logger.isLoggable(Level.FINE))
-                    logger.log(Level.FINE, LogUtils.formatDuration(startTime, Thread.currentThread().getName() + ".send()"));
+                if (logger.isDebugEnabled())
+                    logger.debug(LogUtils.formatDuration(startTime, Thread.currentThread().getName() + ".send()"));
             } else {
                 send(packets, null, LogLevel.WARNING);
             }
@@ -2411,14 +2412,14 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 long startTime = LogUtils.getCurrTimeIfTraceEnabled(logger);
                 try {
                     socket.setNetworkInterface(nic);
-                    if (logger.isLoggable(Level.FINEST))
-                        logger.log(Level.FINEST, LogUtils.formatDuration(startTime, "send() - setNetworkInterface() for nic " + nic));
+                    if (logger.isTraceEnabled())
+                        logger.trace(LogUtils.formatDuration(startTime, "send() - setNetworkInterface() for nic " + nic));
                 } catch (SocketException e) {
                     if (failureLogLevel.isEnabled(logger)) {
                         LogUtils.throwing(failureLogLevel, logger, getClass(), "send", e, "exception setting {0}", nic);
                     }
-                    if (logger.isLoggable(Level.FINEST))
-                        logger.log(Level.FINEST, LogUtils.formatDuration(startTime, "send() - setNetworkInterface() failed for nic " + nic));
+                    if (logger.isTraceEnabled())
+                        logger.trace(LogUtils.formatDuration(startTime, "send() - setNetworkInterface() failed for nic " + nic));
                     return;
                 }
             }
@@ -2463,26 +2464,26 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public ServiceRegistration register(Item nitem, long leaseDuration) throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         concurrentObj.writeLock();
         try {
             ready.check();
             ServiceRegistration reg = registerDo(nitem, leaseDuration);
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "registered instance of {0} as {1} with lease of {2} ms", new Object[]{
+            if (logger.isDebugEnabled()) {
+                logger.debug("registered instance of {0} as {1} with lease of {2} ms", new Object[]{
                                 nitem.serviceType.getName(), reg.getServiceID(), (reg.getLease().getExpiration() - SystemTime.timeMillis())});
             }
             return reg;
         } finally {
             concurrentObj.writeUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > registerMaxDuration) {
                     registerMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + registerMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + registerMaxDuration + "]");
             }
         }
     }
@@ -2501,26 +2502,26 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public MarshalledWrapper lookup(Template tmpl) throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         Item item = lookupItem(tmpl);
         if (item == null) {
             return null;
         }
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             long duration = SystemTime.timeMillis() - startTime;
             if (duration > lookupMaxDuration) {
                 lookupMaxDuration = duration;
             }
-            loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + lookupMaxDuration + "]");
+            loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + lookupMaxDuration + "]");
         }
         return item.service;
     }
 
     private Item lookupItem(Template tmpl) throws NoSuchObjectException {
-        if (loggerCache.isLoggable(Level.FINEST)) {
-            loggerCache.finest("Lookup item for template: " + tmpl);
+        if (loggerCache.isTraceEnabled()) {
+            loggerCache.trace("Lookup item for template: " + tmpl);
         }
         ConcurrentHashMap<ServiceID, Item> items = lookupServiceCache.get(tmpl);
         if (items != null) {
@@ -2535,8 +2536,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     for (int i = 0; it.hasNext(); i++) {
                         retVal = it.next();
                         if (i == index) {
-                            if (loggerCache.isLoggable(Level.FINEST)) {
-                                loggerCache.finest("Cache hit for template: " + tmpl + ", index [" + index + "] out of [" + size + "]");
+                            if (loggerCache.isTraceEnabled()) {
+                                loggerCache.trace("Cache hit for template: " + tmpl + ", index [" + index + "] out of [" + size + "]");
                             }
                             return retVal;
                         }
@@ -2544,8 +2545,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     // if we have a match on first, and it was removed from "under our feet"
                     // while we iterate, then we can return the first one
                     if (retVal != null) {
-                        if (loggerCache.isLoggable(Level.FINEST)) {
-                            loggerCache.finest("Cache hit for template: " + tmpl + ", index [0] out of [" + size + "]");
+                        if (loggerCache.isTraceEnabled()) {
+                            loggerCache.trace("Cache hit for template: " + tmpl + ", index [0] out of [" + size + "]");
                         }
                         return retVal;
                     }
@@ -2567,8 +2568,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 && tmpl.serviceTypes[0].getName().equals(SERVICE_CLASSNAME)
                 && tmpl.attributeSetTemplates != null
                 && (tmpl.attributeSetTemplates.length < 5)) {
-            if (loggerCache.isLoggable(Level.FINEST)) {
-                loggerCache.finest("Cache hit (null) for template: " + tmpl);
+            if (loggerCache.isTraceEnabled()) {
+                loggerCache.trace("Cache hit (null) for template: " + tmpl);
             }
             return null;
         }
@@ -2579,8 +2580,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             // just in case we a lot were waiting on this lock
             items = lookupServiceCache.get(tmpl);
             if (items != null && !items.isEmpty()) {
-                if (loggerCache.isLoggable(Level.FINEST)) {
-                    loggerCache.finest("Cache hit for template: " + tmpl);
+                if (loggerCache.isTraceEnabled()) {
+                    loggerCache.trace("Cache hit for template: " + tmpl);
                 }
                 try {
                     Iterator<Item> it = items.values().iterator();
@@ -2594,8 +2595,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             ready.check();
             item = lookupDo(tmpl);
             if (item != null) {
-                if (loggerCache.isLoggable(Level.FINEST)) {
-                    loggerCache.finest("Adding to cache template (on miss): " + tmpl
+                if (loggerCache.isTraceEnabled()) {
+                    loggerCache.trace("Adding to cache template (on miss): " + tmpl
                             + "\n   ---- > " + item.serviceID + " " + item.serviceType);
                 }
                 items = lookupServiceCache.get(tmpl);
@@ -2616,7 +2617,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public Matches lookup(Template tmpl, int maxMatches) throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         if (maxMatches == 1) {
@@ -2625,12 +2626,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             if (item != null) {
                 items.add(item);
             }
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > lookupMaxMatchesMaxDuration) {
                     lookupMaxMatchesMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + lookupMaxMatchesMaxDuration + "]\t\tMAX MATCHES [1]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + lookupMaxMatchesMaxDuration + "]\t\tMAX MATCHES [1]");
             }
             return new Matches(items, items.size());
         }
@@ -2640,12 +2641,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             return lookupDo(tmpl, maxMatches);
         } finally {
             concurrentObj.readUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > lookupMaxMatchesMaxDuration) {
                     lookupMaxMatchesMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + lookupMaxMatchesMaxDuration + "]\t\tMAX MATCHES [" + maxMatches + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + lookupMaxMatchesMaxDuration + "]\t\tMAX MATCHES [" + maxMatches + "]");
             }
         }
     }
@@ -2663,7 +2664,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                                              MarshalledObject handback, long leaseDuration, int notifyType)
             throws RemoteException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         concurrentObj.writeLock();
@@ -2671,20 +2672,20 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             ready.check();
             RegistrarEventRegistration reg = notifyDo(
                     tmpl, transitions, listener, handback, leaseDuration, notifyType);
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "registered event listener {0} as {1}", new Object[]{
+            if (logger.isDebugEnabled()) {
+                logger.debug("registered event listener {0} as {1}", new Object[]{
                                 listener,
                                 ((ReferentUuid) reg.getLease()).getReferentUuid()});
             }
             return reg;
         } finally {
             concurrentObj.writeUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > notifyMaxDuration) {
                     notifyMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + notifyMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + notifyMaxDuration + "]");
             }
         }
     }
@@ -2695,7 +2696,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     public EntryClassBase[] getEntryClasses(Template tmpl)
             throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         concurrentObj.readLock();
@@ -2704,12 +2705,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             return getEntryClassesDo(tmpl);
         } finally {
             concurrentObj.readUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > getEntryClassesMaxDuration) {
                     getEntryClassesMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + getEntryClassesMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + getEntryClassesMaxDuration + "]");
             }
         }
     }
@@ -2719,7 +2720,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public Object[] getFieldValues(Template tmpl, int setIndex, int field) throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         concurrentObj.readLock();
@@ -2728,12 +2729,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             return getFieldValuesDo(tmpl, setIndex, field);
         } finally {
             concurrentObj.readUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > getFieldValuesMaxDuration) {
                     getFieldValuesMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + getFieldValuesMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + getFieldValuesMaxDuration + "]");
             }
         }
     }
@@ -2743,7 +2744,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public ServiceTypeBase[] getServiceTypes(Template tmpl, String prefix) throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         concurrentObj.readLock();
@@ -2752,12 +2753,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             return getServiceTypesDo(tmpl, prefix);
         } finally {
             concurrentObj.readUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > getServiceTypesMaxDuration) {
                     getServiceTypesMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + getServiceTypesMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + getServiceTypesMaxDuration + "]");
             }
         }
     }
@@ -2767,16 +2768,16 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public LookupLocator getLocator() throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         ready.check();
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             long duration = SystemTime.timeMillis() - startTime;
             if (duration > getLocatorMaxDuration) {
                 getLocatorMaxDuration = duration;
             }
-            loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + getLocatorMaxDuration + "]");
+            loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + getLocatorMaxDuration + "]");
         }
         return myLocator;
     }
@@ -2793,7 +2794,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     public void addAttributes(ServiceID serviceID, Uuid leaseID, EntryRep[] attrSets)
             throws NoSuchObjectException, UnknownLeaseException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         try {
@@ -2809,12 +2810,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             queueEvents();
         } finally {
             concurrentObj.writeUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > addAttributesMaxDuration) {
                     addAttributesMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + addAttributesMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + addAttributesMaxDuration + "]");
             }
         }
     }
@@ -2825,7 +2826,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     public void modifyAttributes(ServiceID serviceID, Uuid leaseID, EntryRep[] attrSetTmpls, EntryRep[] attrSets)
             throws NoSuchObjectException, UnknownLeaseException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         try {
@@ -2841,12 +2842,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             queueEvents();
         } finally {
             concurrentObj.writeUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > modifyAttributesMaxDuration) {
                     modifyAttributesMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + modifyAttributesMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + modifyAttributesMaxDuration + "]");
             }
         }
     }
@@ -2857,7 +2858,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     public void setAttributes(ServiceID serviceID, Uuid leaseID, EntryRep[] attrSets)
             throws NoSuchObjectException, UnknownLeaseException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         try {
@@ -2873,12 +2874,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             queueEvents();
         } finally {
             concurrentObj.writeUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > setAttributesMaxDuration) {
                     setAttributesMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + setAttributesMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + setAttributesMaxDuration + "]");
             }
         }
     }
@@ -2888,7 +2889,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public void cancelServiceLease(ServiceID serviceID, Uuid leaseID) throws NoSuchObjectException, UnknownLeaseException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         try {
@@ -2900,17 +2901,17 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             ready.check();
             cancelServiceLeaseDo(serviceID, leaseID);
             queueEvents();
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "cancelled service registration {0}", new Object[]{serviceID});
+            if (logger.isDebugEnabled()) {
+                logger.debug("cancelled service registration {0}", new Object[]{serviceID});
             }
         } finally {
             concurrentObj.writeUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > cacncelServiceLeaseMaxDuration) {
                     cacncelServiceLeaseMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + cacncelServiceLeaseMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + cacncelServiceLeaseMaxDuration + "]");
             }
         }
     }
@@ -2921,7 +2922,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     public long renewServiceLease(ServiceID serviceID, Uuid leaseID, long renewDuration)
             throws NoSuchObjectException, UnknownLeaseException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         try {
@@ -2929,12 +2930,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             return renewServiceLeaseDo(serviceID, leaseID, renewDuration);
             /* addLogRecord is in renewServiceLeaseDo */
         } finally {
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > renewServiceLeaseMaxDuration) {
                     renewServiceLeaseMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + renewServiceLeaseMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + renewServiceLeaseMaxDuration + "]");
             }
         }
     }
@@ -2944,7 +2945,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public void cancelEventLease(long eventID, Uuid leaseID) throws NoSuchObjectException, UnknownLeaseException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         try {
@@ -2955,17 +2956,17 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         try {
             ready.check();
             cancelEventLeaseDo(eventID, leaseID);
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "cancelled event registration {0}", new Object[]{leaseID});
+            if (logger.isDebugEnabled()) {
+                logger.debug("cancelled event registration {0}", new Object[]{leaseID});
             }
         } finally {
             concurrentObj.writeUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > cancelEventLeaseMaxDuration) {
                     cancelEventLeaseMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + cancelEventLeaseMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + cancelEventLeaseMaxDuration + "]");
             }
         }
     }
@@ -2976,7 +2977,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     public long renewEventLease(long eventID, Uuid leaseID, long renewDuration)
             throws NoSuchObjectException, UnknownLeaseException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         try {
@@ -2984,12 +2985,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             return renewEventLeaseDo(eventID, leaseID, renewDuration);
             /* addLogRecord is in renewEventLeaseDo */
         } finally {
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > renewEventLeaseMaxDuration) {
                     renewEventLeaseMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + renewEventLeaseMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + renewEventLeaseMaxDuration + "]");
             }
         }
     }
@@ -3002,7 +3003,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                                     long[] renewDurations)
             throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         try {
@@ -3010,12 +3011,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             return renewLeasesDo(regIDs, leaseIDs, renewDurations);
             /* addLogRecord is in renewLeasesDo */
         } finally {
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > renewLeasesMaxDuration) {
                     renewLeasesMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + renewLeasesMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + renewLeasesMaxDuration + "]");
             }
         }
     }
@@ -3026,7 +3027,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     public Exception[] cancelLeases(Object[] regIDs, Uuid[] leaseIDs)
             throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         concurrentObj.writeLock();
@@ -3034,27 +3035,27 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             ready.check();
             Exception[] exceptions = cancelLeasesDo(regIDs, leaseIDs);
             queueEvents();
-            if (logger.isLoggable(Level.FINE)) {
+            if (logger.isDebugEnabled()) {
                 for (int i = 0; i < regIDs.length; i++) {
                     if (exceptions != null && exceptions[i] != null) {
                         continue;
                     }
                     if (regIDs[i] instanceof ServiceID) {
-                        logger.log(Level.FINE, "cancelled service registration {0}", new Object[]{regIDs[i]});
+                        logger.debug("cancelled service registration {0}", new Object[]{regIDs[i]});
                     } else {
-                        logger.log(Level.FINE, "cancelled event registration {0}", new Object[]{leaseIDs[i]});
+                        logger.debug("cancelled event registration {0}", new Object[]{leaseIDs[i]});
                     }
                 }
             }
             return exceptions;
         } finally {
             concurrentObj.writeUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > cancelLeasesMaxDuration) {
                     cancelLeasesMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + cancelLeasesMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + cancelLeasesMaxDuration + "]");
             }
         }
     }
@@ -3064,7 +3065,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public Entry[] getLookupAttributes() throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         concurrentObj.readLock();
@@ -3074,12 +3075,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             return lookupAttrs;
         } finally {
             concurrentObj.readUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > getLookupAttributesMaxDuration) {
                     getLookupAttributesMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + getLookupAttributesMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + getLookupAttributesMaxDuration + "]");
             }
         }
     }
@@ -3089,7 +3090,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public void addLookupAttributes(Entry[] attrSets) throws RemoteException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         try {
@@ -3108,12 +3109,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             throw new AssertionError("Self-registration never expires");
         } finally {
             concurrentObj.writeUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > addLookupAttributesMaxDuration) {
                     addLookupAttributesMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + addLookupAttributesMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + addLookupAttributesMaxDuration + "]");
             }
         }
     }
@@ -3125,7 +3126,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                                        Entry[] attrSets)
             throws RemoteException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         try {
@@ -3145,12 +3146,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             throw new AssertionError("Self-registration never expires");
         } finally {
             concurrentObj.writeUnlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > modifyLookupAttributesMaxDuration) {
                     modifyLookupAttributesMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + modifyLookupAttributesMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + modifyLookupAttributesMaxDuration + "]");
             }
         }
     }
@@ -3160,7 +3161,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public String[] getLookupGroups() throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         lookupGroupsRWL.readLock().lock();
@@ -3170,12 +3171,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             return lookupGroups;
         } finally {
             lookupGroupsRWL.readLock().unlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > getLookupGroupsMaxDuration) {
                     getLookupGroupsMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + getLookupGroupsMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + getLookupGroupsMaxDuration + "]");
             }
         }
     }
@@ -3185,7 +3186,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public void addLookupGroups(String[] groups) throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         lookupGroupsRWL.writeLock().lock();
@@ -3198,17 +3199,17 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 throw new RuntimeException(e.toString());
             }
             lookupGroups = dgm.getGroups();
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "added lookup groups {0}", new Object[]{Arrays.asList(groups)});
+            if (logger.isDebugEnabled()) {
+                logger.debug("added lookup groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             lookupGroupsRWL.writeLock().unlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > addLookupGroupsMaxDuration) {
                     addLookupGroupsMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + addLookupGroupsMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + addLookupGroupsMaxDuration + "]");
             }
         }
     }
@@ -3219,7 +3220,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     public void removeLookupGroups(String[] groups)
             throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         lookupGroupsRWL.writeLock().lock();
@@ -3228,17 +3229,17 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             DiscoveryGroupManagement dgm = (DiscoveryGroupManagement) discoer;
             dgm.removeGroups(groups);
             lookupGroups = dgm.getGroups();
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "removed lookup groups {0}", new Object[]{Arrays.asList(groups)});
+            if (logger.isDebugEnabled()) {
+                logger.debug("removed lookup groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             lookupGroupsRWL.writeLock().unlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > removeLookupGroupsMaxDuration) {
                     removeLookupGroupsMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + removeLookupGroupsMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + removeLookupGroupsMaxDuration + "]");
             }
         }
     }
@@ -3248,7 +3249,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public void setLookupGroups(String[] groups) throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         lookupGroupsRWL.writeLock().lock();
@@ -3261,18 +3262,18 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 throw new RuntimeException(e.toString());
             }
             lookupGroups = dgm.getGroups();
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "set lookup groups {0}", new Object[]{
+            if (logger.isDebugEnabled()) {
+                logger.debug("set lookup groups {0}", new Object[]{
                                 (groups != null) ? Arrays.asList(groups) : null});
             }
         } finally {
             lookupGroupsRWL.writeLock().unlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > setLookupGroupsMaxDuration) {
                     setLookupGroupsMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + setLookupGroupsMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + setLookupGroupsMaxDuration + "]");
             }
         }
     }
@@ -3282,7 +3283,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public LookupLocator[] getLookupLocators() throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         lookupLocatorsRWL.readLock().lock();
@@ -3292,12 +3293,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             return lookupLocators;
         } finally {
             lookupLocatorsRWL.readLock().unlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > getLookupLocatorMaxDuration) {
                     getLookupLocatorMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + getLookupLocatorMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + getLookupLocatorMaxDuration + "]");
             }
         }
     }
@@ -3308,7 +3309,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     public void addLookupLocators(LookupLocator[] locators)
             throws RemoteException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         ready.check();
@@ -3320,17 +3321,17 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     (DiscoveryLocatorManagement) discoer;
             dlm.addLocators(locators);
             lookupLocators = dlm.getLocators();
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "added lookup locators {0}", new Object[]{Arrays.asList(locators)});
+            if (logger.isDebugEnabled()) {
+                logger.debug("added lookup locators {0}", new Object[]{Arrays.asList(locators)});
             }
         } finally {
             lookupLocatorsRWL.writeLock().unlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > addLookupLocatorMaxDuration) {
                     addLookupLocatorMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + addLookupLocatorMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + addLookupLocatorMaxDuration + "]");
             }
         }
     }
@@ -3341,7 +3342,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     public void removeLookupLocators(LookupLocator[] locators)
             throws RemoteException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         ready.check();
@@ -3353,17 +3354,17 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     (DiscoveryLocatorManagement) discoer;
             dlm.removeLocators(locators);
             lookupLocators = dlm.getLocators();
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "removed lookup locators {0}", new Object[]{Arrays.asList(locators)});
+            if (logger.isDebugEnabled()) {
+                logger.debug("removed lookup locators {0}", new Object[]{Arrays.asList(locators)});
             }
         } finally {
             lookupLocatorsRWL.writeLock().unlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > removeLookupLocatorMaxDuration) {
                     removeLookupLocatorMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + removeLookupLocatorMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + removeLookupLocatorMaxDuration + "]");
             }
         }
     }
@@ -3374,7 +3375,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     public void setLookupLocators(LookupLocator[] locators)
             throws RemoteException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         ready.check();
@@ -3386,17 +3387,17 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     (DiscoveryLocatorManagement) discoer;
             dlm.setLocators(locators);
             lookupLocators = dlm.getLocators();
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "set lookup locators {0}", new Object[]{Arrays.asList(locators)});
+            if (logger.isDebugEnabled()) {
+                logger.debug("set lookup locators {0}", new Object[]{Arrays.asList(locators)});
             }
         } finally {
             lookupLocatorsRWL.writeLock().unlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > setLookupLocatorMaxDuration) {
                     setLookupLocatorMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + setLookupLocatorMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + setLookupLocatorMaxDuration + "]");
             }
         }
     }
@@ -3406,7 +3407,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public void addMemberGroups(String[] groups) throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         memberGroupRWL.writeLock().lock();
@@ -3421,17 +3422,17 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     announcer.notify();
                 }
             }
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "added member groups {0}", new Object[]{Arrays.asList(groups)});
+            if (logger.isDebugEnabled()) {
+                logger.debug("added member groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             memberGroupRWL.writeLock().unlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > addMembersGroupsMaxDuration) {
                     addMembersGroupsMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + addMembersGroupsMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + addMembersGroupsMaxDuration + "]");
             }
         }
     }
@@ -3442,7 +3443,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     public void removeMemberGroups(String[] groups)
             throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         memberGroupRWL.writeLock().lock();
@@ -3458,17 +3459,17 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     announcer.notify();
                 }
             }
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "removed member groups {0}", new Object[]{Arrays.asList(groups)});
+            if (logger.isDebugEnabled()) {
+                logger.debug("removed member groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             memberGroupRWL.writeLock().unlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > removeMembersGroupsMaxDuration) {
                     removeMembersGroupsMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + removeMembersGroupsMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + removeMembersGroupsMaxDuration + "]");
             }
         }
     }
@@ -3478,7 +3479,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public String[] getMemberGroups() throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         memberGroupRWL.readLock().lock();
@@ -3488,12 +3489,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             return memberGroups;
         } finally {
             memberGroupRWL.readLock().unlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > getMembersGroupsMaxDuration) {
                     getMembersGroupsMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + getMembersGroupsMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + getMembersGroupsMaxDuration + "]");
             }
         }
     }
@@ -3503,7 +3504,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public void setMemberGroups(String[] groups) throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         memberGroupRWL.writeLock().lock();
@@ -3515,17 +3516,17 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     announcer.notify();
                 }
             }
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "set member groups {0}", new Object[]{Arrays.asList(groups)});
+            if (logger.isDebugEnabled()) {
+                logger.debug("set member groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             memberGroupRWL.writeLock().unlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > setMembersGroupsMaxDuration) {
                     setMembersGroupsMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + setMembersGroupsMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + setMembersGroupsMaxDuration + "]");
             }
         }
     }
@@ -3535,7 +3536,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public int getUnicastPort() throws NoSuchObjectException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         unicastPortRWL.readLock().lock();
@@ -3544,12 +3545,12 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             return unicastPort;
         } finally {
             unicastPortRWL.readLock().unlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > getUnicastPortMaxDuration) {
                     getUnicastPortMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + getUnicastPortMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + getUnicastPortMaxDuration + "]");
             }
         }
     }
@@ -3559,7 +3560,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
     // This method's javadoc is inherited from an interface of this class
     public void setUnicastPort(int port) throws IOException {
         long startTime = 0;
-        if (loggerStats.isLoggable(Level.FINEST)) {
+        if (loggerStats.isTraceEnabled()) {
             startTime = SystemTime.timeMillis();
         }
         unicastPortRWL.writeLock().lock();
@@ -3594,17 +3595,17 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     announcer.notify();
                 }
             }
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "changed unicast discovery port to {0}", new Object[]{unicaster.port});
+            if (logger.isDebugEnabled()) {
+                logger.debug("changed unicast discovery port to {0}", new Object[]{unicaster.port});
             }
         } finally {
             unicastPortRWL.writeLock().unlock();
-            if (loggerStats.isLoggable(Level.FINEST)) {
+            if (loggerStats.isTraceEnabled()) {
                 long duration = SystemTime.timeMillis() - startTime;
                 if (duration > setUnicastPortMaxDuration) {
                     setUnicastPortMaxDuration = duration;
                 }
-                loggerStats.finest("DURATION [" + duration + "]\t\tMAX [" + setUnicastPortMaxDuration + "]");
+                loggerStats.trace("DURATION [" + duration + "]\t\tMAX [" + setUnicastPortMaxDuration + "]");
             }
         }
     }
@@ -3970,7 +3971,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     }
                     throw (RuntimeException) e;
                 }
-                if (logger.isLoggable(Level.WARNING)) {
+                if (logger.isWarnEnabled()) {
                     LogUtils.throwing(LogLevel.WARNING, logger, GigaRegistrar.class, "prepareLocators", e, "failed to prepare lookup locator {0}", locator);
                 }
             }
@@ -3990,8 +3991,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         items.inc();
         synchronized (reg) {
             serviceByID.put(reg.item.serviceID, reg);
-            if (loggerServiceExpire.isLoggable(Level.FINE)) {
-                loggerServiceExpire.fine("[" + System.identityHashCode(reg) + "]: Service [" + reg.item.serviceID + "]: Registered with lease [" + reg.leaseID + "/" + reg.leaseExpiration + "], type [" + reg.item.serviceType.getName());
+            if (loggerServiceExpire.isDebugEnabled()) {
+                loggerServiceExpire.debug("[" + System.identityHashCode(reg) + "]: Service [" + reg.item.serviceID + "]: Registered with lease [" + reg.leaseID + "/" + reg.leaseExpiration + "], type [" + reg.item.serviceType.getName());
             }
             serviceByTime.put(new SvcRegExpirationKey(reg, reg.leaseExpiration), reg);
             addServiceByTypes(reg.item.serviceType, reg);
@@ -4017,8 +4018,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             Item item = reg.item;
             generateEvents(item, null, now);
             serviceByID.remove(item.serviceID);
-            if (loggerServiceExpire.isLoggable(Level.FINE)) {
-                loggerServiceExpire.fine("[" + System.identityHashCode(reg) + "]: Service [" + reg.item.serviceID + "]: Deleting with lease [" + reg.leaseID + "/" + reg.leaseExpiration + "]");
+            if (loggerServiceExpire.isDebugEnabled()) {
+                loggerServiceExpire.debug("[" + System.identityHashCode(reg) + "]: Service [" + reg.item.serviceID + "]: Deleting with lease [" + reg.leaseID + "/" + reg.leaseExpiration + "]");
             }
             if (regExpKey != null) {
                 serviceByTime.remove(regExpKey);
@@ -4047,7 +4048,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         try {
             SERVICE_SERVICE_TYPE = ClassMapper.toServiceType(Service.class);
         } catch (MarshalException e) {
-            logger.log(Level.SEVERE, "Failed to convert", e);
+            logger.error("Failed to convert", e);
         }
     }
 
@@ -4057,18 +4058,18 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
      * (NOTE: this depends on the actual structure here...).
      */
     private void refreshServiceFromLookupCache(Item item, boolean delete) {
-        if (loggerCache.isLoggable(Level.FINEST)) {
+        if (loggerCache.isTraceEnabled()) {
             if (delete) {
-                loggerCache.finest("Delete item: " + item.serviceID + ", " + item.serviceType + ", " + asList(item.attributeSets));
+                loggerCache.trace("Delete item: " + item.serviceID + ", " + item.serviceType + ", " + asList(item.attributeSets));
             } else {
-                loggerCache.finest("Refresh item: " + item.serviceID + ", " + item.serviceType + ", " + asList(item.attributeSets));
+                loggerCache.trace("Refresh item: " + item.serviceID + ", " + item.serviceType + ", " + asList(item.attributeSets));
             }
         }
         for (ConcurrentHashMap<ServiceID, Item> items : lookupServiceCache.values()) {
             Item oldItem = items.remove(item.serviceID);
             if (oldItem != null) {
-                if (loggerCache.isLoggable(Level.FINEST)) {
-                    loggerCache.finest("Removing from cache template (explicitly): " + item.serviceID + ", " + item.serviceType);
+                if (loggerCache.isTraceEnabled()) {
+                    loggerCache.trace("Removing from cache template (explicitly): " + item.serviceID + ", " + item.serviceType);
                 }
             }
         }
@@ -4204,8 +4205,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 if (items.isEmpty()) {
                     lookupServiceCache.remove(tmpl);
                 }
-                if (loggerCache.isLoggable(Level.FINEST)) {
-                    loggerCache.finest("Removing cache template (explicitly): " + tmpl
+                if (loggerCache.isTraceEnabled()) {
+                    loggerCache.trace("Removing cache template (explicitly): " + tmpl
                             + "\n   ---- > id: " + item.serviceID + " , type: " + item.serviceType + " , items left: " + items.size());
                 }
             }
@@ -4217,8 +4218,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 lookupServiceCache.put(tmpl, items);
             }
             items.put(item.serviceID, item);
-            if (loggerCache.isLoggable(Level.FINEST)) {
-                loggerCache.finest("Adding to cache template (explicitly): " + tmpl
+            if (loggerCache.isTraceEnabled()) {
+                loggerCache.trace("Adding to cache template (explicitly): " + tmpl
                         + "\n   ---- > " + item.serviceID + " " + item.serviceType);
             }
         }
@@ -4247,8 +4248,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             listeners.inc();
             eventByID.put(id, reg);
             EventRegKeyExpiration regExpirationKey = new EventRegKeyExpiration(reg, reg.leaseExpiration);
-            if (loggerEventExpire.isLoggable(Level.FINE)) {
-                loggerEventExpire.fine("[" + System.identityHashCode(regExpirationKey) + "]: Event [" + regExpirationKey.reg.eventID + "]: Registered with lease [" + regExpirationKey.leaseExpiration + "] and listener [" + reg.listener);
+            if (loggerEventExpire.isDebugEnabled()) {
+                loggerEventExpire.debug("[" + System.identityHashCode(regExpirationKey) + "]: Event [" + regExpirationKey.reg.eventID + "]: Registered with lease [" + regExpirationKey.leaseExpiration + "] and listener [" + reg.listener);
             }
             eventByTime.put(regExpirationKey, reg);
             if (reg.tmpl.serviceID != null) {
@@ -4296,8 +4297,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 removedPending.clear();
             }
 
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("Removed event registration for: " + reg);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Removed event registration for: " + reg);
             }
 
             if (regExpiration != null) {
@@ -4620,8 +4621,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     socket.setKeepAlive(true);
                 }
             } catch (SocketException e) {
-                if (logger.isLoggable(Level.FINE))
-                    logger.log(Level.FINE,
+                if (logger.isDebugEnabled())
+                    logger.debug(
                             "problem setting socket options", e);
             }
             socket.setSoTimeout(
@@ -4642,7 +4643,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             try {
                 socket.close();
             } catch (IOException e) {
-                logger.log(Level.FINE, "exception closing socket", e);
+                logger.debug("exception closing socket", e);
             }
         }
     }
@@ -4782,15 +4783,15 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             multicastInterfacesSpecified = false;
         }
         if (multicastInterfaces == null) {
-            logger.fine("using system default interface for multicast");
+            logger.debug("using system default interface for multicast");
         } else if (multicastInterfaces.length == 0) {
             if (multicastInterfacesSpecified) {
-                logger.fine("multicast disabled");
+                logger.debug("multicast disabled");
             } else {
-                logger.severe("no network interfaces detected");
+                logger.error("no network interfaces detected");
             }
-        } else if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "multicasting on interfaces {0}",
+        } else if (logger.isDebugEnabled()) {
+            logger.debug("multicasting on interfaces {0}",
                     new Object[]{Arrays.asList(multicastInterfaces)});
         }
 
@@ -4948,9 +4949,9 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         if (announcer != null) {
             announcer.start();
         }
-        if (logger.isLoggable(Level.INFO)) {
+        if (logger.isInfoEnabled()) {
             final long duration = (System.currentTimeMillis() - startTime);
-            logger.log(Level.INFO, "Started Lookup Service " +
+            logger.info("Started Lookup Service " +
                     "[duration=" + BootUtil.formatDuration(duration) +
                     ", groups=" + Arrays.asList(memberGroups) +
                     ", service-id=" + myServiceID +
@@ -5438,8 +5439,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 renewDuration = Math.max(reg.leaseExpiration - now,
                         maxServiceLease);
             long renewExpiration = now + renewDuration;
-            if (loggerServiceExpire.isLoggable(Level.FINEST)) {
-                loggerServiceExpire.finest("[" + System.identityHashCode(reg) + "]: Service [" + reg.item.serviceID + "]: Renew lease [" + reg.leaseID + "/" + renewExpiration + "], old lease [" + reg.leaseExpiration + "]");
+            if (loggerServiceExpire.isTraceEnabled()) {
+                loggerServiceExpire.trace("[" + System.identityHashCode(reg) + "]: Service [" + reg.item.serviceID + "]: Renew lease [" + reg.leaseID + "/" + renewExpiration + "], old lease [" + reg.leaseExpiration + "]");
             }
             serviceByTime.remove(new SvcRegExpirationKey(reg, reg.leaseExpiration));
             reg.leaseExpiration = renewExpiration;

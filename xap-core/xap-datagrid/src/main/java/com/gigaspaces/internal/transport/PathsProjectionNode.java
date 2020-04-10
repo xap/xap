@@ -29,8 +29,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Info regarding a projection node for a path property
@@ -47,7 +48,7 @@ class PathsProjectionNode {
     private final PathProjectionInfo _projectionInfo;
     private final int _pos;
 
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_METADATA_POJO);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_METADATA_POJO);
 
     PathsProjectionNode(String property, int pos, List<PathProjectionInfo> paths) {
         _propertyInfo = new SpacePropertyInfo[1];
@@ -139,8 +140,8 @@ class PathsProjectionNode {
             /*
             if (!isCollectionDefined())
 			{
-		    	if (_logger.isLoggable(Level.SEVERE))
-		    		_logger.log(Level.SEVERE, "property not declared as collection using [*] notation  [" +  _tokens[_pos] + "]" );
+		    	if (_logger.isErrorEnabled())
+		    		_logger.error("property not declared as collection using [*] notation  [" +  _tokens[_pos] + "]" );
 		    	throw new SpaceMetadataException("property not declared as collection using [*] notation  [" +  _tokens[_pos] + "] ");
 			}
 			*/
@@ -150,12 +151,12 @@ class PathsProjectionNode {
             try {
                 newC = ctype.newInstance();
             } catch (InstantiationException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to create instance of type [" + ctype.getName() + "]: " + e.getMessage(), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to create instance of type [" + ctype.getName() + "]: " + e.getMessage(), e);
                 throw new SpaceMetadataException("Failed to create instance of type [" + ctype.getName() + "]: " + e.getMessage(), e);
             } catch (IllegalAccessException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to create instance of type [" + ctype.getName() + "]: " + e.getMessage(), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to create instance of type [" + ctype.getName() + "]: " + e.getMessage(), e);
                 throw new SpaceMetadataException("Failed to create instance of type [" + ctype.getName() + "]: " + e.getMessage(), e);
             }
 
@@ -170,8 +171,8 @@ class PathsProjectionNode {
             return newC;
         } else {
             if (isCollectionDefined()) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "property declared as collection using [*] notation but is not [" + _tokens[_pos] + "]");
+                if (_logger.isErrorEnabled())
+                    _logger.error("property declared as collection using [*] notation but is not [" + _tokens[_pos] + "]");
                 throw new SpaceMetadataException("property declared as collection using [*] notation but is not [" + _tokens[_pos] + "] ");
             }
         }
@@ -191,12 +192,12 @@ class PathsProjectionNode {
             try {
                 newC = ctype.newInstance();
             } catch (InstantiationException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to create instance of type [" + ctype.getName() + "]: " + e.getMessage(), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to create instance of type [" + ctype.getName() + "]: " + e.getMessage(), e);
                 throw new SpaceMetadataException("Failed to create instance of type [" + ctype.getName() + "]: " + e.getMessage(), e);
             } catch (IllegalAccessException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to create instance of type [" + ctype.getName() + "]: " + e.getMessage(), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to create instance of type [" + ctype.getName() + "]: " + e.getMessage(), e);
                 throw new SpaceMetadataException("Failed to create instance of type [" + ctype.getName() + "]: " + e.getMessage(), e);
             }
 
@@ -217,12 +218,12 @@ class PathsProjectionNode {
             try {
                 newM = mtype.newInstance();
             } catch (InstantiationException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to create instance of type [" + mtype.getName() + "]: " + e.getMessage(), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to create instance of type [" + mtype.getName() + "]: " + e.getMessage(), e);
                 throw new SpaceMetadataException("Failed to create instance of type [" + mtype.getName() + "]: " + e.getMessage(), e);
             } catch (IllegalAccessException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to create instance of type [" + mtype.getName() + "]: " + e.getMessage(), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to create instance of type [" + mtype.getName() + "]: " + e.getMessage(), e);
                 throw new SpaceMetadataException("Failed to create instance of type [" + mtype.getName() + "]: " + e.getMessage(), e);
             }
             for (PathsProjectionNode under : _pathsProjectionSubTree) {
@@ -239,12 +240,12 @@ class PathsProjectionNode {
             try {
                 newVE = vetype.newInstance();
             } catch (InstantiationException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to create instance of type [" + vetype.getName() + "]: " + e.getMessage(), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to create instance of type [" + vetype.getName() + "]: " + e.getMessage(), e);
                 throw new SpaceMetadataException("Failed to create instance of type [" + vetype.getName() + "]: " + e.getMessage(), e);
             } catch (IllegalAccessException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to create instance of type [" + vetype.getName() + "]: " + e.getMessage(), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to create instance of type [" + vetype.getName() + "]: " + e.getMessage(), e);
                 throw new SpaceMetadataException("Failed to create instance of type [" + vetype.getName() + "]: " + e.getMessage(), e);
             }
 

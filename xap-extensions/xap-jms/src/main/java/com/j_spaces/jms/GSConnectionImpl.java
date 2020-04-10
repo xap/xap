@@ -38,8 +38,9 @@ import net.jini.core.transaction.server.TransactionManager;
 
 import java.util.Vector;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionConsumer;
@@ -148,7 +149,7 @@ class GSConnectionImpl implements Connection, QueueConnection, TopicConnection {
     private final int m_compressionMinSize;
 
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_JMS);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_JMS);
 
     /**
      * Constructor:
@@ -327,13 +328,13 @@ class GSConnectionImpl implements Connection, QueueConnection, TopicConnection {
      */
     void onException(JMSException jE) {
         if (errorHandler != null) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("calling ExceptionListener.onException(): " + cnxKey);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("calling ExceptionListener.onException(): " + cnxKey);
             }
             errorHandler.onException(jE);
         } else {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("ExceptionListener is not set for connection: " + cnxKey);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("ExceptionListener is not set for connection: " + cnxKey);
             }
         }
     }
@@ -355,8 +356,8 @@ class GSConnectionImpl implements Connection, QueueConnection, TopicConnection {
 
             try {
                 if (stopped) {
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.fine(
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug(
                                 "GSConnectionImpl.start()  starting connection: " + toString());
                     }
                     // propagate the start to all the associated sessions. When
@@ -369,8 +370,8 @@ class GSConnectionImpl implements Connection, QueueConnection, TopicConnection {
                     }
                     // set the state of the connection to start
                     stopped = false;
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.fine("GSConnectionImpl.start()  connection was started: " + toString());
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("GSConnectionImpl.start()  connection was started: " + toString());
                     }
                 }
             } catch (JMSException exception) {
@@ -397,8 +398,8 @@ class GSConnectionImpl implements Connection, QueueConnection, TopicConnection {
             setModified();
 
             if (!stopped) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("GSConnectionImpl.stop()  stopping connection: " + toString());
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSConnectionImpl.stop()  stopping connection: " + toString());
                 }
                 // propagate the stop to all the encapsulated sessions before
                 // changing the state of the connection. Only when all the
@@ -409,8 +410,8 @@ class GSConnectionImpl implements Connection, QueueConnection, TopicConnection {
                     GSSessionImpl session = (GSSessionImpl) sessions.get(i);
                     session.stop();
                 }
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("GSConnectionImpl.stop()  connection was stopped: " + getCnxKey());
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSConnectionImpl.stop()  connection was stopped: " + getCnxKey());
                 }
                 // set the state of the connection to stopped before stopping
                 // all the enclosed sessions
@@ -438,8 +439,8 @@ class GSConnectionImpl implements Connection, QueueConnection, TopicConnection {
                 closing = true;
                 //before we close we should stop the connection and any
                 // associated sessions
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("GSConnectionImpl.close()  closing connection: " + toString());
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSConnectionImpl.close()  closing connection: " + toString());
                 }
                 stop();
                 //closing the sessions ??? DO WE NEED THIS in j2ee 1.4 must be only
@@ -466,8 +467,8 @@ class GSConnectionImpl implements Connection, QueueConnection, TopicConnection {
 
                 closed = true;
                 closing = false;
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("GSConnectionImpl.close() connection was closed: " + toString());
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSConnectionImpl.close() connection was closed: " + toString());
                 }
             }
         }
@@ -500,8 +501,8 @@ class GSConnectionImpl implements Connection, QueueConnection, TopicConnection {
     public ConnectionConsumer createConnectionConsumer(Destination destination,
                                                        String messageSelector, ServerSessionPool sessionPool,
                                                        int maxMessages) throws JMSException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSConnectionImpl.createConnectionConsumer() method is not implemented. ");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSConnectionImpl.createConnectionConsumer() method is not implemented. ");
         }
         return null;
     }
@@ -513,8 +514,8 @@ class GSConnectionImpl implements Connection, QueueConnection, TopicConnection {
     public ConnectionConsumer createDurableConnectionConsumer(Topic topic,
                                                               String subscriptionName, String messageSelector,
                                                               ServerSessionPool sessionPool, int maxMessages) throws JMSException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSConnectionImpl.createDurableConnectionConsumer() method is not implemented. ");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSConnectionImpl.createDurableConnectionConsumer() method is not implemented. ");
         }
         return null;
     }
@@ -560,15 +561,15 @@ class GSConnectionImpl implements Connection, QueueConnection, TopicConnection {
                         leaseTime);
             }
             tr = tCreated.transaction;
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("GSConnectionImpl.getTransaction() leaseTime: "
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSConnectionImpl.getTransaction() leaseTime: "
                         + leaseTime + "  |  TX.id: " + ((ServerTransaction) tr).id
                         + "|  TX.mgr: " + ((ServerTransaction) tr).mgr.toString());
             }
         } catch (Exception e) {
             String msg = "Failed to create transaction: " + e;
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, msg);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(msg);
             }
             throw new TransactionCreateException(msg, e);
         } finally {

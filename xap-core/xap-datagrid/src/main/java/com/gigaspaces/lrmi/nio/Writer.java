@@ -39,8 +39,9 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A Writer is capable of writing Request Packets and Reply Packets to a Socket Channel. An NIO
@@ -53,8 +54,8 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class Writer implements IChannelWriter {
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
-    final private static Logger _slowerConsumerLogger = Logger.getLogger(Constants.LOGGER_LRMI_SLOW_COMSUMER);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
+    final private static Logger _slowerConsumerLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_SLOW_COMSUMER);
 
     /**
      * writer socket channel.
@@ -123,8 +124,8 @@ public class Writer implements IChannelWriter {
             _oos = new MarshalOutputStream(_baos, true); // add a TC_RESET using the MarshalOutputStream.writeStreamHeader() 
             initBuffer(_baos);
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.getMessage(), e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.getMessage(), e);
             }
 
             throw new RuntimeException("Failed to initialize LRMI Writer stream: ", e);
@@ -179,8 +180,8 @@ public class Writer implements IChannelWriter {
 
     //Access to contexts should be synchronized
     private synchronized void writePacket(IPacket packet, boolean requestReuseBuffer, Context ctx) throws IOException, IOFilterException {
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.finest("--> Write Packet " + packet);
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("--> Write Packet " + packet);
         }
         ByteBuffer byteBuffer;
         MarshalOutputStream mos;
@@ -500,16 +501,16 @@ public class Writer implements IChannelWriter {
                 if (_slowConsumer && bytesRetries < _slowConsumerBytes) {
                     if (retries-- == 0) {
                         String slowConsumerCloseMsg = prepareSlowConsumerCloseMsg(getEndPointAddress());
-                        if (_slowerConsumerLogger.isLoggable(Level.WARNING)) {
-                            _slowerConsumerLogger.warning(slowConsumerCloseMsg);
+                        if (_slowerConsumerLogger.isWarnEnabled()) {
+                            _slowerConsumerLogger.warn(slowConsumerCloseMsg);
                         }
                         _sockChannel.close();
                         throw new SlowConsumerException(slowConsumerCloseMsg);
                     }
                     //else
                     try {
-                        if (_slowerConsumerLogger.isLoggable(Level.FINE)) {
-                            _slowerConsumerLogger.fine(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries));
+                        if (_slowerConsumerLogger.isDebugEnabled()) {
+                            _slowerConsumerLogger.debug(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries));
                         }
                         Thread.sleep(_slowConsumerSleepTime);
                     } catch (InterruptedException e) {
@@ -581,7 +582,7 @@ public class Writer implements IChannelWriter {
         long writeTime = System.currentTimeMillis() - context.getCreationTime();
         if (WRITE_DELAY_BEFORE_WARN < writeTime) {
             String method = context.getTrace() != null ? context.getTrace().getTraceShortDisplayString() : "unknown";
-            _logger.warning("write to " + getEndPointAddress() + " method " + method + " was fully performed only " + writeTime + " milliseconds after requested" +
+            _logger.warn("write to " + getEndPointAddress() + " method " + method + " was fully performed only " + writeTime + " milliseconds after requested" +
                     ", the system may be overloaded or the network is bad.");
         }
     }

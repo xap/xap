@@ -24,8 +24,9 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The synchronizing direct-persistency  embedded segment handler
@@ -97,8 +98,8 @@ public class EmbeddedSyncSegment {
 
     private boolean transferIfPossibleImpl(EmbeddedSingeUidSyncOpInfo oi) {
         if (!oi.canTransferToMainList(_currentGenerationId)) {
-            if (getLogger().isLoggable(Level.FINE)) {
-                getLogger().fine("[" + getEmbeddedHandler().getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment will not transfer " + oi.getOriginalOpInfo() + " current generation [" + _currentGenerationId + "]");
+            if (getLogger().isDebugEnabled()) {
+                getLogger().debug("[" + getEmbeddedHandler().getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment will not transfer " + oi.getOriginalOpInfo() + " current generation [" + _currentGenerationId + "]");
             }
             return false;
         }
@@ -112,8 +113,8 @@ public class EmbeddedSyncSegment {
                     _readLock.lock();
                     lockAcquired = true;
                     if (_embeddedHandler.getMainSyncHandler().afterRecoveryStarted()) {
-                        if (getLogger().isLoggable(Level.FINER)) {
-                            getLogger().finer("[" + getEmbeddedHandler().getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment will not transfer " + oi.getOriginalOpInfo() +
+                        if (getLogger().isDebugEnabled()) {
+                            getLogger().debug("[" + getEmbeddedHandler().getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment will not transfer " + oi.getOriginalOpInfo() +
                                     " current generation [" + _currentGenerationId + "] because afterRecovery already cleared it");
                         }
                         relevant = false;
@@ -128,8 +129,8 @@ public class EmbeddedSyncSegment {
                 }
 
                 if (!relevant || !addToMainList) {
-                    if (getLogger().isLoggable(Level.FINE)) {
-                        getLogger().fine("[" + getEmbeddedHandler().getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment will not transfer " + oi.getOriginalOpInfo() +
+                    if (getLogger().isDebugEnabled()) {
+                        getLogger().debug("[" + getEmbeddedHandler().getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment will not transfer " + oi.getOriginalOpInfo() +
                                 " current generation [" + _currentGenerationId + "], relevant? [" + relevant + "], should add to main sync list? [" + addToMainList + "]");
                     }
                 }
@@ -159,8 +160,8 @@ public class EmbeddedSyncSegment {
 
     private boolean transferIfPossibleImpl(EmbeddedMultiUidsSyncOpInfo oi) {
         if (!oi.canTransferToMainList(_currentGenerationId)) {
-            if (getLogger().isLoggable(Level.FINE)) {
-                getLogger().fine("[" + getEmbeddedHandler().getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment will not transfer " + oi.getOriginalOpInfo() + " current generation [" + _currentGenerationId + "]");
+            if (getLogger().isDebugEnabled()) {
+                getLogger().debug("[" + getEmbeddedHandler().getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment will not transfer " + oi.getOriginalOpInfo() + " current generation [" + _currentGenerationId + "]");
             }
             return false;
         }
@@ -174,8 +175,8 @@ public class EmbeddedSyncSegment {
                     _readLock.lock();
                     lockAcquired = true;
                     if (_embeddedHandler.getMainSyncHandler().afterRecoveryStarted()) {
-                        if (getLogger().isLoggable(Level.FINER)) {
-                            getLogger().finer("[" + getEmbeddedHandler().getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment will not transfer " + oi.getOriginalOpInfo() +
+                        if (getLogger().isDebugEnabled()) {
+                            getLogger().debug("[" + getEmbeddedHandler().getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment will not transfer " + oi.getOriginalOpInfo() +
                                     " current generation [" + _currentGenerationId + "] because afterRecovery already cleared it");
                         }
                         relevant = false;
@@ -187,8 +188,8 @@ public class EmbeddedSyncSegment {
                 boolean addToMainList = persist && oi.getOriginalOpInfo().getGenerationId() == _currentGenerationId;
 
                 if (!relevant || !addToMainList) {
-                    if (getLogger().isLoggable(Level.FINE)) {
-                        getLogger().fine("[" + getEmbeddedHandler().getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment will not transfer " + oi.getOriginalOpInfo() +
+                    if (getLogger().isDebugEnabled()) {
+                        getLogger().debug("[" + getEmbeddedHandler().getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment will not transfer " + oi.getOriginalOpInfo() +
                                 " current generation [" + _currentGenerationId + "], relevant? [" + relevant + "], should add to main sync list? [" + addToMainList + "]");
                     }
                 }
@@ -269,8 +270,8 @@ public class EmbeddedSyncSegment {
                         try {
                             Thread.sleep(timeToSleep);
                         } catch (InterruptedException ex) {
-                            if (_mainHandler.getLogger().isLoggable(Level.FINE)) {
-                                _mainHandler.getLogger().warning("[" + _mainHandler.getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment EmbeddedSyncer thread interrupted");
+                            if (_mainHandler.getLogger().isDebugEnabled()) {
+                                _mainHandler.getLogger().warn("[" + _mainHandler.getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment EmbeddedSyncer thread interrupted");
                             }
                             if (_closed)
                                 break;
@@ -280,8 +281,8 @@ public class EmbeddedSyncSegment {
                             break;
                         synced = handeRecordsRipeForTransfer();
                     } catch (Throwable ex) {
-                        if (_mainHandler.getLogger().isLoggable(Level.SEVERE)) {
-                            _mainHandler.getLogger().severe("[" + _mainHandler.getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment EmbeddedSyncer thread got unexpected exception " + ex);
+                        if (_mainHandler.getLogger().isErrorEnabled()) {
+                            _mainHandler.getLogger().error("[" + _mainHandler.getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment EmbeddedSyncer thread got unexpected exception " + ex);
                         }
                         if (_closed)
                             break;
@@ -322,8 +323,8 @@ public class EmbeddedSyncSegment {
             }
 
             if (reaped > 0) {
-                if (_mainHandler.getLogger().isLoggable(Level.FINER)) {
-                    _mainHandler.getLogger().log(Level.FINER, "[" + _mainHandler.getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment:handeRecordsRipeForTransfer moved=" + reaped + " left=" + _segment.size());
+                if (_mainHandler.getLogger().isDebugEnabled()) {
+                    _mainHandler.getLogger().debug("[" + _mainHandler.getSpaceEngine().getFullSpaceName() + "]" + " EmbeddedSyncSegment:handeRecordsRipeForTransfer moved=" + reaped + " left=" + _segment.size());
                 }
             }
             return reaped;

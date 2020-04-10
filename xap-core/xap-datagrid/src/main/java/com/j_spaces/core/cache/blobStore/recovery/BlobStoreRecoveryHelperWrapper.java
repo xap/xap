@@ -23,8 +23,9 @@ import com.gigaspaces.internal.server.space.recovery.direct_persistency.StorageC
 import com.gigaspaces.server.blobstore.BlobStoreStorageHandler;
 
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -57,7 +58,7 @@ public class BlobStoreRecoveryHelperWrapper implements IStorageConsistency {
             return _default.getStorageState();
 
         StorageConsistencyModes res = _original.getStorageState();
-        if (_logger.isLoggable(Level.INFO)) {
+        if (_logger.isInfoEnabled()) {
             _logger.info("blob-store getStorageState result=" + res + " space=" + _spaceName);
         }
         return res;
@@ -72,7 +73,7 @@ public class BlobStoreRecoveryHelperWrapper implements IStorageConsistency {
         }
 
         _original.setStorageState(s);
-        if (_logger.isLoggable(Level.INFO)) {
+        if (_logger.isInfoEnabled()) {
             _logger.info("blob-store setStorageState to " + s + " space=" + _spaceName);
         }
     }

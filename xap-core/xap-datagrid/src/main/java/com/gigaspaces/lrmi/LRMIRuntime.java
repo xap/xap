@@ -46,8 +46,9 @@ import java.rmi.RemoteException;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * LRMI is the main LRMI class, from the developer's perspective.
@@ -71,8 +72,8 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class LRMIRuntime {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
-    private static final Logger _exporterLogger = Logger.getLogger(Constants.LOGGER_LRMI_EXPORTER);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
+    private static final Logger _exporterLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_EXPORTER);
     private static final LRMIRuntime _runtime = new LRMIRuntime();
 
     final private ProtocolRegistry _protocolRegistry;
@@ -153,13 +154,13 @@ public class LRMIRuntime {
     static private INetworkMapper constructNetworkMapper() {
         String networkMapperName = System.getProperty(SystemProperties.LRMI_NETWORK_MAPPER);
         if (networkMapperName == null) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("Creating default network mapper");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Creating default network mapper");
             return new DefaultNetworkMapper();
         }
         try {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("Creating custom network mapper provider " + networkMapperName);
+            if (_logger.isDebugEnabled())
+                _logger.debug("Creating custom network mapper provider " + networkMapperName);
             Class<INetworkMapper> loadClass = ClassLoaderHelper.loadClass(networkMapperName, true);
             return loadClass.newInstance();
         } catch (Exception e) {
@@ -262,8 +263,8 @@ public class LRMIRuntime {
             throws RemoteException, ConfigurationException {
         if (_isShutdown)
             throw new RMIShutDownException("LRMIRuntime was shutdown");
-        if (_exporterLogger.isLoggable(Level.FINE)) {
-            _exporterLogger.log(Level.FINE, "Trying to export class=" + object.getClass());
+        if (_exporterLogger.isDebugEnabled()) {
+            _exporterLogger.debug("Trying to export class=" + object.getClass());
         }
 
         String protocol = config.getProtocolName();
@@ -294,8 +295,8 @@ public class LRMIRuntime {
                 orEntry.setProtocol(protocol);
                 orEntry.setServerPeer(serverPeer);
 
-                if (_exporterLogger.isLoggable(Level.FINE)) {
-                    _exporterLogger.log(Level.FINE, "LRMIRuntime exported remote object [localObj=" +
+                if (_exporterLogger.isDebugEnabled()) {
+                    _exporterLogger.debug("LRMIRuntime exported remote object [localObj=" +
                             object.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(object)) +
                             ", protocol=" + protocol +
                             ", remoteObjID=" + orEntry.m_ObjectId +
@@ -365,8 +366,8 @@ public class LRMIRuntime {
                 serverPeer.getProtocolAdapter().shutdown();
             }// if
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "LRMIRuntime unexported remote object [localObj=" +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("LRMIRuntime unexported remote object [localObj=" +
                         object.getClass().getName() + "@" + System.identityHashCode(object) +
                         ", protocol=" + protocol +
                         ", remoteObjID=" + orEntry.m_ObjectId + "]");
@@ -435,36 +436,36 @@ public class LRMIRuntime {
             if (changeCL)
                 ClassLoaderHelper.setContextClassLoader(orEntry.getExportedThreadClassLoader(), true /*ignore security*/);
 
-            if (_logger.isLoggable(Level.FINER))
+            if (_logger.isDebugEnabled())
                 LogUtils.entering(_logger, "LRMIRuntime - " + targetObject.getClass().getName() + "#" + objectId, method.getName(), args);
 
             //noinspection unchecked
             Object resultInv = method.invoke(targetObject, args);
 
-            if (_logger.isLoggable(Level.FINER))
+            if (_logger.isDebugEnabled())
                 LogUtils.exiting(_logger, "LRMIRuntime - " + targetObject.getClass().getName() + "#" + objectId, method.getName(), resultInv);
 
             return resultInv;
         } catch (IllegalArgumentException ex) {
             String exMsg = "LRMIRuntime - Failed to invoke RemoteMethod: [" + method + "] on [" + targetObject + "] Reason: " + ex.toString();
 
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, exMsg, ex);
+            if (_logger.isErrorEnabled())
+                _logger.error(exMsg, ex);
 
             throw new ApplicationException(exMsg, ex);
 
         } catch (IllegalAccessException ex) {
             String exMsg = "LRMIRuntime - Failed to invoke RemoteMethod: [" + method + "] on [" + targetObject + "] Reason: " + ex.toString();
 
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, exMsg, ex);
+            if (_logger.isErrorEnabled())
+                _logger.error(exMsg, ex);
 
             throw new ApplicationException(exMsg, ex);
         } catch (InvocationTargetException ex) {
-            if (_logger.isLoggable(Level.FINER)) {
+            if (_logger.isDebugEnabled()) {
                 String exMsg = "LRMIRuntime - Failed to invoke RemoteMethod: " + method + " Reason: " + ex.toString();
 
-                _logger.log(Level.FINER, exMsg, ex.getTargetException());
+                _logger.debug(exMsg, ex.getTargetException());
             }
 
             throw new ApplicationException(null /* save message network serialization */, ex.getTargetException());

@@ -30,7 +30,8 @@ import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * segmented Read/Write Lock version of StoredList to be used with JDK 1.5+ NOTE : some of the apis

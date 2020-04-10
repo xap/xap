@@ -26,8 +26,9 @@ import com.gigaspaces.internal.utils.StringUtils;
 import com.j_spaces.core.cluster.ClusterPolicy;
 import com.j_spaces.core.exception.internal.InternalInactiveSpaceException;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -35,7 +36,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class ReplicationNodeStateListener extends AbstractReplicationNodeStateListener {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE);
 
     private final SpaceEngine _spaceEngine;
     private final String _fullSpaceName;
@@ -55,8 +56,8 @@ public class ReplicationNodeStateListener extends AbstractReplicationNodeStateLi
         //Only backup is allowed to recover, other should ignore
         if (_spaceImpl.isPrimary()) {
             message += StringUtils.NEW_LINE + "The current space is an active space, it will resynchronize with the source and may lose packets";
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.severe(message);
+            if (_logger.isErrorEnabled())
+                _logger.error(message);
             return true;
         }
 
@@ -65,14 +66,14 @@ public class ReplicationNodeStateListener extends AbstractReplicationNodeStateLi
                 //If set to ignore we can resync, otherwise we can't
                 case IGNORE: {
                     message += StringUtils.NEW_LINE + "The current space is an inactive space (backup), it is set to ignore missing packets, it will resynchronize with the source and may lose packets";
-                    if (_logger.isLoggable(Level.SEVERE))
-                        _logger.severe(message);
+                    if (_logger.isErrorEnabled())
+                        _logger.error(message);
                     return true;
                 }
                 case RECOVER: {
                     message += StringUtils.NEW_LINE + "The current space is an inactive space (backup), it will be restarted and perform full recovery from its primary space";
-                    if (_logger.isLoggable(Level.WARNING))
-                        _logger.warning(message);
+                    if (_logger.isWarnEnabled())
+                        _logger.warn(message);
                     _spaceEngine.setReplicationUnhealthyReason(outOfSyncReason);
                     return false;
                 }
@@ -85,8 +86,8 @@ public class ReplicationNodeStateListener extends AbstractReplicationNodeStateLi
 
     @Override
     public void onTargetChannelBacklogDropped(String groupName, String channelSourceLookupName, IBacklogMemberState memberState) {
-        if (_logger.isLoggable(Level.WARNING))
-            _logger.warning("Space [" + _fullSpaceName + "] received backlog dropped notification from replication group [" + groupName + "] source member [" + channelSourceLookupName + "]"
+        if (_logger.isWarnEnabled())
+            _logger.warn("Space [" + _fullSpaceName + "] received backlog dropped notification from replication group [" + groupName + "] source member [" + channelSourceLookupName + "]"
                     + StringUtils.NEW_LINE + "Current space will be restarted and perform full recovery from its primary space");
         _spaceEngine.setReplicationUnhealthyReason(new IncomingReplicationOutOfSyncException("Replication is out of sync, backlog was dropped by source, replication state " + memberState.toLogMessage()));
     }
@@ -111,8 +112,8 @@ public class ReplicationNodeStateListener extends AbstractReplicationNodeStateLi
         if (isSynchronizeRequest && !_spaceImpl.isPrimary()) {
             String message = "Space [" + _fullSpaceName + "] received new replica request from replication group [" + groupName + "] , source member [" + memberName + "]";
             message += StringUtils.NEW_LINE + "The current space is not an active space. New replica request was denied.";
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.warning(message);
+            if (_logger.isWarnEnabled())
+                _logger.warn(message);
 
             throw new InternalInactiveSpaceException(message);
         }

@@ -20,8 +20,9 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A generic abstract class to handle a finite set of resources
@@ -58,7 +59,7 @@ public abstract class ResourcePool {
     /**
      * A Logger
      */
-    static Logger logger = Logger.getLogger("org.jini.rio.resources.resource");
+    static Logger logger = LoggerFactory.getLogger("org.jini.rio.resources.resource");
 
     /**
      * Abstract method for creating a specific resource in the sub-class
@@ -143,7 +144,7 @@ public abstract class ResourcePool {
                     try {
                         wait(timeout);
                     } catch (InterruptedException ignore) {
-                        logger.warning("Getting a resource has been interrupted");
+                        logger.warn("Getting a resource has been interrupted");
                     }
                     if (timeout > 0)
                         break;
@@ -178,7 +179,7 @@ public abstract class ResourcePool {
                 numCreated--;
                 disposeResource(obj);
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Disposing a resource", e);
+                logger.warn("Disposing a resource", e);
             }
         }
     }

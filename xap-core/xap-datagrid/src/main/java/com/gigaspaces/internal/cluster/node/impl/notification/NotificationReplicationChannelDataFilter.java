@@ -43,8 +43,9 @@ import com.j_spaces.core.filters.FilterManager;
 import com.j_spaces.core.filters.FilterOperationCodes;
 
 import java.util.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.gigaspaces.internal.cluster.node.impl.ReplicationSingleOperationType.ENTRY_LEASE_EXPIRED;
 import static com.gigaspaces.internal.cluster.node.impl.ReplicationSingleOperationType.REMOVE_ENTRY;
@@ -76,7 +77,7 @@ public class NotificationReplicationChannelDataFilter extends ReliableAsyncChann
 
     }
 
-    private static final Logger _spaceFilterLogger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_FILTERS);
+    private static final Logger _spaceFilterLogger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_FILTERS);
 
     private enum MatchLevel {CURRENT, PREVIOUS, BOTH, NONE}
 
@@ -170,9 +171,9 @@ public class NotificationReplicationChannelDataFilter extends ReliableAsyncChann
                 IEntryData entryBeforeUpdate = contentExtractor.getSecondaryEntryData(packetEntryData);
                 IEntryData entryAfterUpdate = contentExtractor.getMainEntryData(packetEntryData);
 
-                if (entryBeforeUpdate == null && contextLogger.isLoggable(Level.WARNING)) {
+                if (entryBeforeUpdate == null && contextLogger.isWarnEnabled()) {
                     String operation = isUpdate ? "update" : "change";
-                    contextLogger.log(Level.WARNING, operation + " operation of entry [" + packetEntryData + "] is missing previous entry state, this may result with inconsistent durable notification state");
+                    contextLogger.warn(operation + " operation of entry [" + packetEntryData + "] is missing previous entry state, this may result with inconsistent durable notification state");
                 }
 
                 ReplicationEntryDataConversionMetadata metadata = new ReplicationEntryDataConversionMetadata(UPDATE)
@@ -276,8 +277,8 @@ public class NotificationReplicationChannelDataFilter extends ReliableAsyncChann
             try {
                 _filterManager.invokeFilters(FilterOperationCodes.BEFORE_NOTIFY_TRIGGER, null, arguments);
             } catch (RuntimeException e) {
-                if (_spaceFilterLogger.isLoggable(Level.FINE))
-                    _spaceFilterLogger.log(Level.FINE, "Exception was thrown by filter on BEFORE_NOTIFY_TRIGGER.", e);
+                if (_spaceFilterLogger.isDebugEnabled())
+                    _spaceFilterLogger.debug("Exception was thrown by filter on BEFORE_NOTIFY_TRIGGER.", e);
 
                 return ReplicationChannelEntryDataFilterResult.FILTER_DATA;
             }
@@ -456,8 +457,8 @@ public class NotificationReplicationChannelDataFilter extends ReliableAsyncChann
             try {
                 _filterManager.invokeFilters(FilterOperationCodes.AFTER_NOTIFY_TRIGGER, null, arguments);
             } catch (RuntimeException e) {
-                if (_spaceFilterLogger.isLoggable(Level.FINE))
-                    _spaceFilterLogger.log(Level.FINE, "Exception was thrown by filter on AFTER_NOTIFY_TRIGGER.", e);
+                if (_spaceFilterLogger.isDebugEnabled())
+                    _spaceFilterLogger.debug("Exception was thrown by filter on AFTER_NOTIFY_TRIGGER.", e);
             }
         }
     }

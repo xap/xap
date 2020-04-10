@@ -41,8 +41,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.rmi.RemoteException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author anna
@@ -52,7 +53,7 @@ import java.util.logging.Logger;
 public class ReadTakeEntrySpaceOperationRequest extends SpaceOperationRequest<ReadTakeEntrySpaceOperationResult> {
     private static final long serialVersionUID = 1L;
 
-    private static final Logger _devLogger = Logger.getLogger(Constants.LOGGER_DEV);
+    private static final Logger _devLogger = LoggerFactory.getLogger(Constants.LOGGER_DEV);
 
     private ITemplatePacket _templatePacket;
     private Transaction _txn;
@@ -215,8 +216,8 @@ public class ReadTakeEntrySpaceOperationRequest extends SpaceOperationRequest<Re
             processExecutionException(_executionException);
 
         if (_totalNumberOfMatchesEntries > 0
-                && _devLogger.isLoggable(Level.FINEST))
-            _devLogger.finest(_totalNumberOfMatchesEntries
+                && _devLogger.isTraceEnabled())
+            _devLogger.trace(_totalNumberOfMatchesEntries
                     + " entries were scanned in the space in order to return the result for the "
                     + (_isTake ? "take" : "read") + " operation of query "
                     + QueryUtils.getQueryDescription(_query));

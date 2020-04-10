@@ -1,7 +1,8 @@
 package com.gigaspaces.logger;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface LogLevel {
 
@@ -13,110 +14,110 @@ public interface LogLevel {
     LogLevel SEVERE = new LogLevel() {
         @Override
         public boolean isEnabled(Logger logger) {
-            return logger.isLoggable(Level.SEVERE);
+            return logger.isErrorEnabled();
         }
 
         @Override
         public void log(Logger logger, String message) {
-            logger.log(Level.SEVERE, message);
+            logger.error(message);
         }
 
         @Override
         public void log(Logger logger, String message, Object arg) {
-            logger.log(Level.SEVERE, message, arg);
+            logger.error(message, arg);
         }
 
         @Override
         public void log(Logger logger, String message, Object... args) {
-            logger.log(Level.SEVERE, message, args);
+            logger.error(message, args);
         }
     };
 
     LogLevel WARNING = new LogLevel() {
         @Override
         public boolean isEnabled(Logger logger) {
-            return logger.isLoggable(Level.WARNING);
+            return logger.isWarnEnabled();
         }
 
         @Override
         public void log(Logger logger, String message) {
-            logger.log(Level.WARNING, message);
+            logger.warn(message);
         }
 
         @Override
         public void log(Logger logger, String message, Object arg) {
-            logger.log(Level.WARNING, message, arg);
+            logger.warn(message, arg);
         }
 
         @Override
         public void log(Logger logger, String message, Object... args) {
-            logger.log(Level.WARNING, message, args);
+            logger.warn(message, args);
         }
     };
 
     LogLevel INFO = new LogLevel() {
         @Override
         public boolean isEnabled(Logger logger) {
-            return logger.isLoggable(Level.INFO);
+            return logger.isInfoEnabled();
         }
 
         @Override
         public void log(Logger logger, String message) {
-            logger.log(Level.INFO, message);
+            logger.info(message);
         }
 
         @Override
         public void log(Logger logger, String message, Object arg) {
-            logger.log(Level.INFO, message, arg);
+            logger.info(message, arg);
         }
 
         @Override
         public void log(Logger logger, String message, Object... args) {
-            logger.log(Level.INFO, message, args);
+            logger.info(message, args);
         }
     };
 
     LogLevel DEBUG = new LogLevel() {
         @Override
         public boolean isEnabled(Logger logger) {
-            return logger.isLoggable(Level.FINE);
+            return logger.isDebugEnabled();
         }
 
         @Override
         public void log(Logger logger, String message) {
-            logger.log(Level.FINE, message);
+            logger.debug(message);
         }
 
         @Override
         public void log(Logger logger, String message, Object arg) {
-            logger.log(Level.FINE, message, arg);
+            logger.debug(message, arg);
         }
 
         @Override
         public void log(Logger logger, String message, Object... args) {
-            logger.log(Level.FINE, message, args);
+            logger.debug(message, args);
         }
     };
 
     LogLevel TRACE = new LogLevel() {
         @Override
         public boolean isEnabled(Logger logger) {
-            return logger.isLoggable(Level.FINEST);
+            return logger.isTraceEnabled();
         }
 
         @Override
         public void log(Logger logger, String message) {
-            logger.log(Level.FINEST, message);
+            logger.trace(message);
         }
 
         @Override
         public void log(Logger logger, String message, Object arg) {
-            logger.log(Level.FINEST, message, arg);
+            logger.trace(message, arg);
         }
 
         @Override
         public void log(Logger logger, String message, Object... args) {
-            logger.log(Level.FINEST, message, args);
+            logger.trace(message, args);
         }
     };
 }

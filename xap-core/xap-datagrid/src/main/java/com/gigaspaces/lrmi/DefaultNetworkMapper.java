@@ -24,8 +24,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A default network mapper based on a configuration file named "network_mapping" simply maps a
@@ -37,7 +38,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class DefaultNetworkMapper
         implements INetworkMapper {
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
 
     private static final String NETWORK_MAPPING_FILE = System.getProperty(SystemProperties.LRMI_NETWORK_MAPPING_FILE, "config/network_mapping.config");
     private static final String MALFORMED_FORMAT_MSG = "Unsupported format of network mapping file, " +
@@ -49,7 +50,7 @@ public class DefaultNetworkMapper
     public DefaultNetworkMapper() {
         InputStream resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(NETWORK_MAPPING_FILE);
         if (resourceAsStream == null) {
-            if (_logger.isLoggable(Level.INFO))
+            if (_logger.isInfoEnabled())
                 _logger.info("Could not locate networking mapping file " + NETWORK_MAPPING_FILE + " in the classpath, no mapping created");
             return;
         }
@@ -68,8 +69,8 @@ public class DefaultNetworkMapper
                 ServerAddress mapped = getAddress(split[1].trim());
                 if (_mapping.containsKey(original))
                     throw new IllegalArgumentException("Address " + original + " is already mapped to " + _mapping.get(original));
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine("Adding mapping of " + original + " to " + mapped);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Adding mapping of " + original + " to " + mapped);
                 _mapping.put(original, mapped);
             }
         } catch (IOException e) {
@@ -95,12 +96,12 @@ public class DefaultNetworkMapper
         ServerAddress transformed = _mapping.get(serverAddress);
         //No mapping, return original
         if (transformed == null) {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("No mapping exists for provided address " + serverAddress + " returning original address");
+            if (_logger.isTraceEnabled())
+                _logger.trace("No mapping exists for provided address " + serverAddress + " returning original address");
             return serverAddress;
         }
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("Mapping  address " + serverAddress + " to " + transformed);
+        if (_logger.isTraceEnabled())
+            _logger.trace("Mapping  address " + serverAddress + " to " + transformed);
         return transformed;
     }
 

@@ -64,8 +64,9 @@ import com.j_spaces.kernel.locks.ILockObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -146,7 +147,7 @@ public class BlobStoreRefEntryCacheInfo
             if(_blobStoreVersion == -1){
                 _blobStoreVersion = 1;
                 restartBlobStoreVersionCount = true;
-                CacheManager.getLogger().finest("Blobstore- read _blobStoreVersion = -1 from initial load, set _blobStoreVersion to "+_blobStoreVersion);
+                CacheManager.getLogger().trace("Blobstore- read _blobStoreVersion = -1 from initial load, set _blobStoreVersion to "+_blobStoreVersion);
             }
         }
 
@@ -223,7 +224,7 @@ public class BlobStoreRefEntryCacheInfo
                         try {
                             cacheManager.getBlobStoreStorageHandler().getOffHeapCache().write(this, ((BlobStoreEntryLayout) getEntryLayout(cacheManager)).getIndexValuesBytes(cacheManager));
                         } catch (IOException e) {
-                            CacheManager.getLogger().log(Level.SEVERE,"Blobstore- BLRECI:flushedFromBulk could not write to off heap,  got exception " + e.toString(), e);
+                            CacheManager.getLogger().error("Blobstore- BLRECI:flushedFromBulk could not write to off heap,  got exception " + e.toString(), e);
                             throw new RuntimeException("Blobstore- BLRECI:flushedFromBulk got exception " + e.toString(), e);
                         }
                     }
@@ -236,7 +237,7 @@ public class BlobStoreRefEntryCacheInfo
                         try {
                             cacheManager.getBlobStoreStorageHandler().getOffHeapCache().update(this, ((BlobStoreEntryLayout) getEntryLayout(cacheManager)).getIndexValuesBytes(cacheManager));
                         } catch (IOException e) {
-                            CacheManager.getLogger().log(Level.SEVERE,"Blobstore- BLRECI:flushedFromBulk could not update valur in off heap, got exception " + e.toString(), e);
+                            CacheManager.getLogger().error("Blobstore- BLRECI:flushedFromBulk could not update valur in off heap, got exception " + e.toString(), e);
                             throw new RuntimeException("Blobstore- BLRECI:flushedFromBulk got exception " + e.toString(), e);
                         }
                     }
@@ -256,11 +257,11 @@ public class BlobStoreRefEntryCacheInfo
             _crcForFields = buildCrcForFields(_loadedBlobStoreEntry);
             if(_blobStoreVersion != -1 ) {
                 _blobStoreVersion = (short) (_blobStoreVersion + (short) 1);
-                if(_blobStoreVersion == -1 && CacheManager.getLogger().isLoggable(Level.WARNING)){
-                    CacheManager.getLogger().warning("Blobstore- entry "+getUID()+" of type "+getTypeName()+" has been updated 65535 times, and exhausted its update counter, update optimization for this entry is now disabled");
+                if(_blobStoreVersion == -1 && CacheManager.getLogger().isWarnEnabled()){
+                    CacheManager.getLogger().warn("Blobstore- entry "+getUID()+" of type "+getTypeName()+" has been updated 65535 times, and exhausted its update counter, update optimization for this entry is now disabled");
                 }
-                if(CacheManager.getLogger().isLoggable(Level.FINEST)){
-                    CacheManager.getLogger().finest("Blobstore- bumped _blobStoreVersion to "+_blobStoreVersion);
+                if(CacheManager.getLogger().isTraceEnabled()){
+                    CacheManager.getLogger().trace("Blobstore- bumped _blobStoreVersion to "+_blobStoreVersion);
                 }
             }
             _loadedBlobStoreEntry.setBlobStoreVersion(_blobStoreVersion);
@@ -523,7 +524,7 @@ public class BlobStoreRefEntryCacheInfo
                     break;
             }
         } catch (SAException ex) {
-            CacheManager.getLogger().severe("Blobstore- BLRECI:handleDelayedReplication got execption" + ex.toString() + ex.getStackTrace());
+            CacheManager.getLogger().error("Blobstore- BLRECI:handleDelayedReplication got execption" + ex.toString() + ex.getStackTrace());
             throw new RuntimeException("Blobstore- BLRECI:handleDelayedReplication got execption" + ex.toString() + ex.getStackTrace());
         }
     }
@@ -560,20 +561,20 @@ public class BlobStoreRefEntryCacheInfo
                         ole.setBlobStoreVersion(_blobStoreVersion);
                         ole.setOnlyIndexesPart(true);
                         ole.setUid(_m_Uid);
-                        if(CacheManager.getLogger().isLoggable(Level.FINER)){
-                            CacheManager.getLogger().finer("container [" + cacheManager.getEngine().getFullSpaceName() + "] Blobstore- entry loaded from off heap, uid=" + _m_Uid);
+                        if(CacheManager.getLogger().isDebugEnabled()){
+                            CacheManager.getLogger().debug("container [" + cacheManager.getEngine().getFullSpaceName() + "] Blobstore- entry loaded from off heap, uid=" + _m_Uid);
                         }
                     } catch (Exception e) {
-                        CacheManager.getLogger().severe("Blobstore- BLRECI:getFullEntry got execption" + e.toString() + e.getStackTrace());
+                        CacheManager.getLogger().error("Blobstore- BLRECI:getFullEntry got execption" + e.toString() + e.getStackTrace());
                         throw new RuntimeException("Blobstore- BLRECI:getFullEntry got execption" + e.toString() + e.getStackTrace());
                     }
                 } else {
                     ole = (BlobStoreEntryLayout) cacheManager.getBlobStoreStorageHandler().get(getStorageKey_impl(), _blobStorePosition, BlobStoreObjectType.DATA, onlyIndexesPart, this);
-                    if(CacheManager.getLogger().isLoggable(Level.FINER)){
+                    if(CacheManager.getLogger().isDebugEnabled()){
                         if(cacheManager.isPersistentBlobStore()){
-                            CacheManager.getLogger().finer("container [" + cacheManager.getEngine().getFullSpaceName() + "] Blobstore- entry loaded from disk, uid=" + _m_Uid);
+                            CacheManager.getLogger().debug("container [" + cacheManager.getEngine().getFullSpaceName() + "] Blobstore- entry loaded from disk, uid=" + _m_Uid);
                         } else {
-                            CacheManager.getLogger().finer("container [" + cacheManager.getEngine().getFullSpaceName() + "] Blobstore- entry loaded from off heap, uid=" + _m_Uid);
+                            CacheManager.getLogger().debug("container [" + cacheManager.getEngine().getFullSpaceName() + "] Blobstore- entry loaded from off heap, uid=" + _m_Uid);
                         }
                     }
                 }
@@ -952,7 +953,7 @@ public class BlobStoreRefEntryCacheInfo
                     continue;
                 int numBackRefs = index.numOfEntryIndexBackRefs(index.getIndexValue(entryData));
                 if (bitpos > 62) {
-                    if (CacheManager.getLogger().isLoggable(Level.INFO)) {
+                    if (CacheManager.getLogger().isInfoEnabled()) {
                         CacheManager.getLogger().info("Blobstore- num of indexes exceeds efficient limit, num=" + (indxNum));
                     }
                     set_full_indexes_backrefs_forced(true);
@@ -967,7 +968,7 @@ public class BlobStoreRefEntryCacheInfo
 
                 if (numBackRefs == 2) {
                     if (bitpos + 1 > 62) {
-                        if (CacheManager.getLogger().isLoggable(Level.INFO)) {
+                        if (CacheManager.getLogger().isInfoEnabled()) {
                             CacheManager.getLogger().info("Blobstore- num of indexes exceeds efficient limit, num=" + (indxNum));
                         }
                         set_full_indexes_backrefs_forced(true);
@@ -1074,7 +1075,7 @@ public class BlobStoreRefEntryCacheInfo
     @Override
     public void setLatestIndexCreationNumber(int val) {
         if (val > 255) {
-            CacheManager.getLogger().severe("Blobstore- LatestIndexCreationNumber exceeds supported limit, num=" + val);
+            CacheManager.getLogger().error("Blobstore- LatestIndexCreationNumber exceeds supported limit, num=" + val);
             throw new RuntimeException("Blobstore- LatestIndexCreationNumber exceeds supported limit, num=" + val);
         }
         _latestIndexCreationNumber = (byte) val;

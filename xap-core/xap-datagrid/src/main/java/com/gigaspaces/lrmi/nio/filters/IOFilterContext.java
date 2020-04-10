@@ -17,11 +17,12 @@
 package com.gigaspaces.lrmi.nio.filters;
 
 import java.nio.ByteBuffer;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class IOFilterContext {
-    private final static Logger logger = Logger.getLogger(IOFilterContext.class.getName());
+    private final static Logger logger = LoggerFactory.getLogger(IOFilterContext.class.getName());
     public IOFilterResult result;
     public IOBlockFilter filter;
     private ByteBuffer src;

@@ -30,8 +30,9 @@ import com.j_spaces.core.exception.internal.InterruptedSpaceException;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Wraps a {@link ILRMIInvocationHandler} as a {@link InvocationHandler} with an internam {@link
@@ -43,7 +44,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class MethodCachedInvocationHandler
         implements ProxyInvocationHandler {
-    final private static Logger _contextLogger = Logger.getLogger(Constants.LOGGER_LRMI_CONTEXT);
+    final private static Logger _contextLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_CONTEXT);
     final static boolean DISABLE_STUB_CACHE = Boolean.getBoolean("com.gs.transport_protocol.lrmi.disable-stub-cache");
 
     private final RemoteMethodCache _cache;
@@ -103,7 +104,7 @@ public class MethodCachedInvocationHandler
 
     private void setLRMIInvocationContext(IMethod method, Object[] args,
                                           LRMIMethod lrmiMethod) {
-        LRMIInvocationTrace trace = _contextLogger.isLoggable(Level.FINE) ? new LRMIInvocationTrace(LRMIUtilities.getMethodDisplayString(method), args, null, true) : null;
+        LRMIInvocationTrace trace = _contextLogger.isDebugEnabled() ? new LRMIInvocationTrace(LRMIUtilities.getMethodDisplayString(method), args, null, true) : null;
         ProxyWriteType proxyWriteType = DISABLE_STUB_CACHE ? ProxyWriteType.UNCACHED : ProxyWriteType.CACHED_LIGHT;
         //We must create a snapshot and update a new context because we do not control the thread that called this method
         //which might contain other invocation context in its stack (For instance incoming destructive operation which is being replicated to

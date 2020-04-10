@@ -29,7 +29,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A feeder bean starts a scheduled task that writes a new Data objects to the space (in an
@@ -45,7 +46,7 @@ import java.util.logging.Logger;
  */
 public class Feeder implements InitializingBean, DisposableBean {
 
-    Logger log = Logger.getLogger(this.getClass().getName());
+    Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
     private ScheduledExecutorService executorService;
 

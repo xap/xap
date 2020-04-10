@@ -20,8 +20,9 @@ import com.gigaspaces.internal.cluster.node.impl.ReplicationLogUtils;
 import com.gigaspaces.time.SystemTime;
 
 import java.text.NumberFormat;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -81,8 +82,8 @@ public class BacklogAdjustedThrottleController
         if (channelActive) {
             // Stop throttling
             if (backlogSize == 0 || backlogSize < _threshold) {
-                if (_specificLogger.isLoggable(Level.FINE))
-                    _specificLogger.fine("backlog size [" + backlogSize
+                if (_specificLogger.isDebugEnabled())
+                    _specificLogger.debug("backlog size [" + backlogSize
                             + "] is below the threshold [" + _threshold
                             + "], throttling ended");
                 return false;
@@ -103,8 +104,8 @@ public class BacklogAdjustedThrottleController
                 if (interval >= _sampleRate) {
                     if (!_atFinalStage
                             && backlogSize < (_minOperationPer1milisWhenActive * 1000L * _finalStageLength)) {
-                        if (_specificLogger.isLoggable(Level.FINER))
-                            _specificLogger.finer("Entering final stage, no throttling up allowed");
+                        if (_specificLogger.isDebugEnabled())
+                            _specificLogger.debug("Entering final stage, no throttling up allowed");
                         _atFinalStage = true;
                     }
 
@@ -128,8 +129,8 @@ public class BacklogAdjustedThrottleController
                     // reached minimal throttling
                     if (backlogProprotionalGrowthPerSecond > 0
                             && _addaptiveTPPer1milis <= _minOperationPer1milisWhenActive) {
-                        if (_specificLogger.isLoggable(Level.FINER))
-                            _specificLogger.finer("Throttling does not keep up with backlog increase rate, throttling down to 1000 operations per second");
+                        if (_specificLogger.isDebugEnabled())
+                            _specificLogger.debug("Throttling does not keep up with backlog increase rate, throttling down to 1000 operations per second");
                         throttleRatePer1ms = 1;
                     }
 
@@ -142,8 +143,8 @@ public class BacklogAdjustedThrottleController
                             _addaptiveTPPer1milis = Math.max(_minOperationPer1milisWhenActive,
                                     (_addaptiveTPPer1milis * reduceFactor));
 
-                            if (_specificLogger.isLoggable(Level.FINEST))
-                                _specificLogger.finest("Throttling down to "
+                            if (_specificLogger.isTraceEnabled())
+                                _specificLogger.trace("Throttling down to "
                                         + NumberFormat.getPercentInstance()
                                         .format(reduceFactor));
                         }
@@ -155,8 +156,8 @@ public class BacklogAdjustedThrottleController
                             _addaptiveTPPer1milis = Math.min(_calibratedOperationsPer1milis,
                                     (_addaptiveTPPer1milis * throttleUpFactor));
 
-                            if (_specificLogger.isLoggable(Level.FINEST))
-                                _specificLogger.finest("Throttling up to "
+                            if (_specificLogger.isTraceEnabled())
+                                _specificLogger.trace("Throttling up to "
                                         + NumberFormat.getPercentInstance()
                                         .format(throttleUpFactor));
                         }
@@ -175,9 +176,9 @@ public class BacklogAdjustedThrottleController
             _sampleIteration += _operations;
             // Display estimated every 3 seconds if TP is kept at the max
             if (_sampleIteration > (_minOperationPer1milisWhenActive * 1000 * 5)
-                    && _specificLogger.isLoggable(Level.FINER)) {
+                    && _specificLogger.isDebugEnabled()) {
                 _sampleIteration = 0;
-                _specificLogger.finer("Throttling, [throttle rate = "
+                _specificLogger.debug("Throttling, [throttle rate = "
                         + (throttleRatePer1ms * 1000)
                         + " ops/per second, backlog size = " + backlogSize
                         + ", channel active = " + channelActive + "]");
@@ -218,8 +219,8 @@ public class BacklogAdjustedThrottleController
                 _calibratedOperationsPer1milis = Math.max(throughPutPer1Milis,
                         _defaultOperationPer1milisWhenInactive);
         }
-        if (_specificLogger.isLoggable(Level.FINER))
-            _specificLogger.finer("calibrated throttle throughput to "
+        if (_specificLogger.isDebugEnabled())
+            _specificLogger.debug("calibrated throttle throughput to "
                     + (_calibratedOperationsPer1milis * 1000));
     }
 

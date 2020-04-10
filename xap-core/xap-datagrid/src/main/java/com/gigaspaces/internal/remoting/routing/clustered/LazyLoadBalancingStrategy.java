@@ -18,7 +18,7 @@ package com.gigaspaces.internal.remoting.routing.clustered;
 
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 
-import java.util.logging.Level;
+
 
 /**
  * @author Niv Ingberg
@@ -44,11 +44,11 @@ public class LazyLoadBalancingStrategy extends SpaceProxyLoadBalancingStrategy {
         _activeProxy = newActiveProxy;
         if (_activeProxy != null) {
             if (_activeProxyInitialized) {
-                if (_logger.isLoggable(Level.INFO))
-                    _logger.log(Level.INFO, "Active server" + _cluster.getPartitionDesc() + " is updated to " + _activeProxy.getName());
+                if (_logger.isInfoEnabled())
+                    _logger.info("Active server" + _cluster.getPartitionDesc() + " is updated to " + _activeProxy.getName());
             } else {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Active server" + _cluster.getPartitionDesc() + " is initialized to " + _activeProxy.getName());
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Active server" + _cluster.getPartitionDesc() + " is initialized to " + _activeProxy.getName());
                 _activeProxyInitialized = true;
             }
         }

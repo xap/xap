@@ -17,8 +17,9 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.UUID;
 import java.util.concurrent.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Alon Shoham
@@ -28,7 +29,7 @@ import java.util.logging.Logger;
 public class SpaceIteratorBatchResultProvider implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_GSITERATOR);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_GSITERATOR);
     private final BlockingQueue<SpaceIteratorBatchResult> _queue;
     private transient final ISpaceProxy _spaceProxy;
     private final int _batchSize;
@@ -56,19 +57,19 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
     private void initBatchTask() {
         try {
             if(_numberOfPartitions == 0){
-                if(_logger.isLoggable(Level.FINE))
-                    _logger.fine("Initializing space iterator batch task in embedded space.");
+                if(_logger.isDebugEnabled())
+                    _logger.debug("Initializing space iterator batch task in embedded space.");
                 triggerSinglePartitionBatchTask(PartitionedClusterUtils.NO_PARTITION, 0);
                 return;
             }
             if(_queryPacket.getRoutingFieldValue() != null){
-                if(_logger.isLoggable(Level.FINE))
-                    _logger.fine("Initializing space iterator batch task with routing " + _queryPacket.getRoutingFieldValue());
+                if(_logger.isDebugEnabled())
+                    _logger.debug("Initializing space iterator batch task with routing " + _queryPacket.getRoutingFieldValue());
                 triggerSinglePartitionBatchTask(PartitionedClusterUtils.getPartitionId(_queryPacket.getRoutingFieldValue(), _numberOfPartitions), 0);
                 return;
             }
-            if(_logger.isLoggable(Level.FINE))
-                _logger.fine("Initializing space iterator batch task in all " + _numberOfPartitions + " partitions");
+            if(_logger.isDebugEnabled())
+                _logger.debug("Initializing space iterator batch task in all " + _numberOfPartitions + " partitions");
             triggerBatchTaskInAllPartitions();
         } catch (RemoteException | TransactionException e) {
             throw new SpaceRuntimeException("Failed to initialize iterator", e);
@@ -95,14 +96,14 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
     }
 
     public SpaceIteratorBatchResult consumeBatch(long timeout) throws InterruptedException {
-        if(_logger.isLoggable(Level.FINE))
-            _logger.fine("Waiting for space iterator " + _uuid + " next batch for " + timeout + " milliseconds.");
+        if(_logger.isDebugEnabled())
+            _logger.debug("Waiting for space iterator " + _uuid + " next batch for " + timeout + " milliseconds.");
         return _queue.poll(timeout, TimeUnit.MILLISECONDS);
     }
 
     public void triggerSinglePartitionBatchTask(int partitionId, int batchNumber) throws RemoteException, TransactionException {
-        if(_logger.isLoggable(Level.FINE))
-            _logger.fine("Triggering task for space iterator " + _uuid + " in partition " + partitionId + " fetch batchNumber " + batchNumber);
+        if(_logger.isDebugEnabled())
+            _logger.debug("Triggering task for space iterator " + _uuid + " in partition " + partitionId + " fetch batchNumber " + batchNumber);
         _spaceProxy.execute(new SinglePartitionGetBatchForIteratorSpaceTask(this, batchNumber), partitionId, null, _spaceIteratorBatchResultListener);
     }
 
@@ -111,8 +112,8 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
     }
 
     public void close() {
-        if(_logger.isLoggable(Level.FINE))
-            _logger.fine("Sending close request to space iterator "  + _uuid);
+        if(_logger.isDebugEnabled())
+            _logger.debug("Sending close request to space iterator "  + _uuid);
         try {
             _spaceProxy.execute(new CloseIteratorDistributedSpaceTask(_uuid), null, null, null);
         } catch (RemoteException | TransactionException e) {
@@ -158,13 +159,13 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
     }
 
     private void processCloseIteratorFailure(Exception e) {
-        if (_logger.isLoggable(Level.WARNING))
-            _logger.log(Level.WARNING, "Failed to close iterator " + _uuid, e);
+        if (_logger.isWarnEnabled())
+            _logger.warn("Failed to close iterator " + _uuid, e);
     }
 
     public void renewIteratorLease() {
-        if(_logger.isLoggable(Level.FINE))
-            _logger.fine("Renewing space iterator "  + _uuid + " lease");
+        if(_logger.isDebugEnabled())
+            _logger.debug("Renewing space iterator "  + _uuid + " lease");
         try {
             _spaceProxy.execute(new RenewIteratorLeaseDistributedSpaceTask(_uuid), null, null, null);
         } catch (TransactionException | RemoteException e) {
@@ -173,7 +174,7 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
     }
 
     private void processRenewIteratorLeaseFailure(Exception e) {
-        if (_logger.isLoggable(Level.WARNING))
-            _logger.log(Level.WARNING, "Failed to renew space iterator " + getUuid() + " lease.", e);
+        if (_logger.isWarnEnabled())
+            _logger.warn("Failed to renew space iterator " + getUuid() + " lease.", e);
     }
 }

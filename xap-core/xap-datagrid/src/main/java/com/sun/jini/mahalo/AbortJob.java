@@ -25,8 +25,9 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.rmi.UnknownHostException;
 import java.rmi.activation.ActivateFailedException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import net.jini.core.transaction.CannotAbortException;
 import net.jini.core.transaction.Transaction;
@@ -143,8 +144,8 @@ public class AbortJob extends Job implements TransactionConstants {
             //we do not need to log this info since it
             //exists in the log which was used for recovery...
 
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.log(Level.FINEST,
+            if (logger.isTraceEnabled()) {
+                logger.trace(
                         "AbortJob:doWork aborting handle: {0}", handle);
             }
             int vote = 0;
@@ -316,8 +317,8 @@ public class AbortJob extends Job implements TransactionConstants {
                 count++;
         }
 
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST,
+        if (logger.isTraceEnabled()) {
+            logger.trace(
                     "AbortJob:computeResult {0} participants ABORTED",
                     new Integer(count));
         }

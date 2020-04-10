@@ -147,8 +147,9 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.Engine.*;
@@ -270,9 +271,9 @@ public class SpaceEngine implements ISpaceModeListener {
     }
 
     public SpaceEngine(SpaceImpl spaceImpl) throws CreateException, RemoteException {
-        _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE + "." + spaceImpl.getNodeName());
-        _operationLogger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE_OPERATIONS + "." + spaceImpl.getNodeName());
-        _loggerConfig = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG + "." + spaceImpl.getNodeName());
+        _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE + "." + spaceImpl.getNodeName());
+        _operationLogger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE_OPERATIONS + "." + spaceImpl.getNodeName());
+        _loggerConfig = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG + "." + spaceImpl.getNodeName());
 
         _spaceImpl = spaceImpl;
         _spaceName = spaceImpl.getName();
@@ -376,19 +377,19 @@ public class SpaceEngine implements ISpaceModeListener {
         String onRedoLogCapacityExceededFromCustomProperties = spaceImpl.getCustomProperties().getProperty(replicationPolicyPath + ClusterXML.REPL_REDO_LOG_CAPACITY_EXCEEDED_TAG);
 
         if (redoLogCapacityFromCustomProperties == null && spaceImpl.getClusterPolicy() != null && spaceImpl.getClusterPolicy().getReplicationPolicy() != null) {
-            if (_loggerConfig.isLoggable(Level.INFO)) {
+            if (_loggerConfig.isInfoEnabled()) {
                 _loggerConfig.info("Override the cluster config property <" + replicationPolicyPath + ClusterXML.REPL_REDO_LOG_CAPACITY_EXCEEDED_TAG + ">. new value: <" + ClusterXML.REPL_PESRISTENT_BLOBSTORE_REDO_LOG_CAPACITY_DEFAULT_VALUE + ">");
             }
             spaceImpl.getClusterPolicy().getReplicationPolicy().setMaxRedoLogCapacity(Integer.valueOf(ClusterXML.REPL_PESRISTENT_BLOBSTORE_REDO_LOG_CAPACITY_DEFAULT_VALUE));
         }
         if (redoLogMemoryCapacityFromCustomProperties == null && spaceImpl.getClusterPolicy() != null && spaceImpl.getClusterPolicy().getReplicationPolicy() != null) {
-            if (_loggerConfig.isLoggable(Level.INFO)) {
+            if (_loggerConfig.isInfoEnabled()) {
                 _loggerConfig.info("Override the cluster config property <" + replicationPolicyPath + ClusterXML.REPL_REDO_LOG_MEMORY_CAPACITY_TAG + ">. new value: <" + ClusterXML.REPL_PESRISTENT_BLOBSTORE_MEMORY_REDO_LOG_CAPACITY_DEFAULT_VALUE + ">");
             }
             spaceImpl.getClusterPolicy().getReplicationPolicy().setMaxRedoLogMemoryCapacity(Integer.valueOf(ClusterXML.REPL_PESRISTENT_BLOBSTORE_MEMORY_REDO_LOG_CAPACITY_DEFAULT_VALUE));
         }
         if (onRedoLogCapacityExceededFromCustomProperties == null && spaceImpl.getClusterPolicy() != null && spaceImpl.getClusterPolicy().getReplicationPolicy() != null) {
-            if (_loggerConfig.isLoggable(Level.INFO)) {
+            if (_loggerConfig.isInfoEnabled()) {
                 _loggerConfig.info("Override the cluster config property <" + replicationPolicyPath + ClusterXML.REPL_REDO_LOG_CAPACITY_EXCEEDED_TAG + ">. new value: <" + RedoLogCapacityExceededPolicy.BLOCK_OPERATIONS + ">");
             }
             spaceImpl.getClusterPolicy().getReplicationPolicy().setOnRedoLogCapacityExceeded(RedoLogCapacityExceededPolicy.BLOCK_OPERATIONS);
@@ -526,7 +527,7 @@ public class SpaceEngine implements ISpaceModeListener {
     }
 
     private void verifySystemTime(final IStorageAdapter sa) {
-        if (_logger.isLoggable(Level.INFO)) {
+        if (_logger.isInfoEnabled()) {
             Throwable initializedException = null;
             String initializedMsg = null;
             try {
@@ -554,8 +555,8 @@ public class SpaceEngine implements ISpaceModeListener {
     //Force memory barrier
     public synchronized void init(boolean loadDataFromDB, boolean considerMemoryRecovery)
             throws CreateException {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("init(loadDataFromDB=" + loadDataFromDB + ", considerMemoryRecovery=" + considerMemoryRecovery + ")");
+        if (_logger.isDebugEnabled())
+            _logger.debug("init(loadDataFromDB=" + loadDataFromDB + ", considerMemoryRecovery=" + considerMemoryRecovery + ")");
         try {
             JSpaceAttributes spaceAttr = _spaceImpl.getJspaceAttr();
             if (!spaceAttr.isPersistent() || _replicationManager.isMirrorService())
@@ -604,8 +605,8 @@ public class SpaceEngine implements ISpaceModeListener {
         } catch (Exception ex) {
             String msg = "Failed to init [" + _spaceName + "] space.";
 
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, msg, ex);
+            if (_logger.isErrorEnabled())
+                _logger.error(msg, ex);
 
             // clean all working groups plus LeaseManager
             _processorWG.shutdown();
@@ -948,7 +949,7 @@ public class SpaceEngine implements ISpaceModeListener {
             try {
                 info.getFilter().init(_directProxy, template.toObject(template.getEntryType()));
             } catch (Throwable e) {
-                _logger.log(Level.FINE, "initializing user filter caused an exception", e);
+                _logger.debug("initializing user filter caused an exception", e);
             }
         }
 
@@ -1932,8 +1933,8 @@ public class SpaceEngine implements ISpaceModeListener {
                 operationModifiers, isFifoOperation);
         if(isServerIteratorRequest) {
             ServerIteratorInfo serverIteratorInfo = _serverIteratorsManager.getOrCreateServerIteratorInfo(serverIteratorRequestInfo);
-            if(_logger.isLoggable(Level.FINE))
-                _logger.fine("Iterator " + serverIteratorRequestInfo.getUuid() + " requested batch " + serverIteratorRequestInfo.getRequestedBatchNumber() + ", stored batch " + serverIteratorInfo.getStoredBatchNumber());
+            if(_logger.isDebugEnabled())
+                _logger.debug("Iterator " + serverIteratorRequestInfo.getUuid() + " requested batch " + serverIteratorRequestInfo.getRequestedBatchNumber() + ", stored batch " + serverIteratorInfo.getStoredBatchNumber());
             if(serverIteratorInfo.isBatchRetrialRequest(serverIteratorRequestInfo)){
                 ServerIteratorAnswerHolder serverIteratorAnswerHolder = new ServerIteratorAnswerHolder(serverIteratorRequestInfo.getRequestedBatchNumber());
                 serverIteratorAnswerHolder.setEntryPackets(serverIteratorInfo.getStoredEntryPacketsBatch());
@@ -3155,8 +3156,8 @@ public class SpaceEngine implements ISpaceModeListener {
         } catch (UnknownTransactionException ex) {
             throw ex;
         } catch (RuntimeException ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, ex.toString(), ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(ex.toString(), ex);
             }
             handleExceptionOnPrepare(mgr,
                     st,
@@ -3164,8 +3165,8 @@ public class SpaceEngine implements ISpaceModeListener {
                     xtnEntry);
             throw ex;
         } catch (SAException ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, ex.toString(), ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(ex.toString(), ex);
             }
 
             handleExceptionOnPrepare(mgr,
@@ -3214,8 +3215,8 @@ public class SpaceEngine implements ISpaceModeListener {
         try {
             abort(mgr, st, supportsTwoPhaseReplication, null);
         } catch (Exception ei) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Exception occurred while aborting a transaction [" + st + "] which failed prepare process", ei);
+            if (_logger.isWarnEnabled())
+                _logger.warn("Exception occurred while aborting a transaction [" + st + "] which failed prepare process", ei);
         }
     }
 
@@ -3224,8 +3225,8 @@ public class SpaceEngine implements ISpaceModeListener {
      * without changes
      */
     public int prepareAndCommit(TransactionManager mgr, ServerTransaction st, OperationID operationID) throws UnknownTransactionException, RemoteException {
-        if (_operationLogger.isLoggable(Level.FINEST))
-            _operationLogger.finest("preparing and committing transaction [" + createTransactionDetailsString(st, operationID) + "]");
+        if (_operationLogger.isTraceEnabled())
+            _operationLogger.trace("preparing and committing transaction [" + createTransactionDetailsString(st, operationID) + "]");
         int result;
         if (isExecutedAlready(operationID)) {
             handleDuplicateCommitOperation(st, operationID);
@@ -3237,15 +3238,15 @@ public class SpaceEngine implements ISpaceModeListener {
                 result = TransactionConstants.COMMITTED;
             }
         }
-        if (_operationLogger.isLoggable(Level.FINEST))
-            _operationLogger.finest("prepared and committed transaction [" + createTransactionDetailsString(st, operationID) + "] result=" + result);
+        if (_operationLogger.isTraceEnabled())
+            _operationLogger.trace("prepared and committed transaction [" + createTransactionDetailsString(st, operationID) + "] result=" + result);
         return result;
     }
 
     public void commit(TransactionManager mgr, ServerTransaction st, boolean supportsTwoPhaseReplication, OperationID operationID, boolean mayBeFromReplication)
             throws UnknownTransactionException, RemoteException {
-        if (_operationLogger.isLoggable(Level.FINEST))
-            _operationLogger.finest("committing transaction [" + createTransactionDetailsString(st, operationID) + "]");
+        if (_operationLogger.isTraceEnabled())
+            _operationLogger.trace("committing transaction [" + createTransactionDetailsString(st, operationID) + "]");
 
         if (isExecutedAlready(operationID)) {
             handleDuplicateCommitOperation(st, operationID);
@@ -3254,8 +3255,8 @@ public class SpaceEngine implements ISpaceModeListener {
         monitorMemoryUsage(false);
         commitSA(mgr, st, supportsTwoPhaseReplication, operationID, mayBeFromReplication);
 
-        if (_operationLogger.isLoggable(Level.FINEST))
-            _operationLogger.finest("committed transaction [" + createTransactionDetailsString(st, operationID) + "]");
+        if (_operationLogger.isTraceEnabled())
+            _operationLogger.trace("committed transaction [" + createTransactionDetailsString(st, operationID) + "]");
     }
 
     public String createTransactionDetailsString(ServerTransaction st,
@@ -3265,28 +3266,28 @@ public class SpaceEngine implements ISpaceModeListener {
     }
 
     private void handleDuplicateCommitOperation(ServerTransaction st, OperationID operationID) {
-        if (_operationLogger.isLoggable(Level.FINER))
-            _operationLogger.finer("encountered duplicate transaction commit which may occur after failover, ignoring the operation is it is already applied to space [" + createTransactionDetailsString(st, operationID) + "]");
+        if (_operationLogger.isDebugEnabled())
+            _operationLogger.debug("encountered duplicate transaction commit which may occur after failover, ignoring the operation is it is already applied to space [" + createTransactionDetailsString(st, operationID) + "]");
         //Do nothing, commit already executed
     }
 
     public void abort(TransactionManager mgr, ServerTransaction st, boolean supportsTwoPhaseReplication, OperationID operationID)
             throws UnknownTransactionException {
-        if (_operationLogger.isLoggable(Level.FINEST))
-            _operationLogger.finest("aborting transaction [" + createTransactionDetailsString(st, operationID) + "]");
+        if (_operationLogger.isTraceEnabled())
+            _operationLogger.trace("aborting transaction [" + createTransactionDetailsString(st, operationID) + "]");
         if (isExecutedAlready(operationID)) {
             handleDuplicateAbortOperation(st, operationID);
             return;
         }
         monitorMemoryUsage(false);
         abortSA(mgr, st, false /*fromCancelLease*/, false/*verifyExpiredXtn*/, supportsTwoPhaseReplication, operationID);
-        if (_operationLogger.isLoggable(Level.FINEST))
-            _operationLogger.finest("aborted transaction [" + createTransactionDetailsString(st, operationID) + "]");
+        if (_operationLogger.isTraceEnabled())
+            _operationLogger.trace("aborted transaction [" + createTransactionDetailsString(st, operationID) + "]");
     }
 
     private void handleDuplicateAbortOperation(ServerTransaction st, OperationID operationID) {
-        if (_operationLogger.isLoggable(Level.FINER))
-            _operationLogger.finer("encountered duplicate transaction abort which may occur after failover, ignoring the operation is it is already applied to space [" + createTransactionDetailsString(st, operationID) + "]");
+        if (_operationLogger.isDebugEnabled())
+            _operationLogger.debug("encountered duplicate transaction abort which may occur after failover, ignoring the operation is it is already applied to space [" + createTransactionDetailsString(st, operationID) + "]");
         //Do nothing, abort already executed
     }
 
@@ -3468,8 +3469,8 @@ public class SpaceEngine implements ISpaceModeListener {
                     getReplicationNode().getAdmin().flushPendingReplication(_clusterPolicy.getReplicationPolicy().getAsyncChannelShutdownTimeout(), TimeUnit.MILLISECONDS);
             } catch (RuntimeException e) {
                 //postpone runtime exception .. we want to export to disk before process goes down and data is lost.
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Flush pending replication raised an exception:", e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Flush pending replication raised an exception:", e);
                 throw e;
             }
 
@@ -3480,8 +3481,8 @@ public class SpaceEngine implements ISpaceModeListener {
         SpaceHealthStatus spaceHealthStatus = _spaceImpl.getLocalSpaceHealthStatus();
         //If space is unhealthy do not wait for pending replication flush
         if (!spaceHealthStatus.isHealthy()) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine(getFullSpaceName() + " is unhealthy [" + spaceHealthStatus.getUnhealthyReason() + "], skipping flush of pending replication packets");
+            if (_logger.isDebugEnabled())
+                _logger.debug(getFullSpaceName() + " is unhealthy [" + spaceHealthStatus.getUnhealthyReason() + "], skipping flush of pending replication packets");
             return false;
         }
         return true;
@@ -4102,8 +4103,8 @@ public class SpaceEngine implements ISpaceModeListener {
     private IScanListIterator<IEntryCacheInfo> getOrCreateScanListIteratorFromServerIterator(Context context, IServerTypeDesc entryTypeDesc, ITemplateHolder template, IServerTypeDesc serverTypeDesc) {
         ServerIteratorInfo serverIteratorInfo = template.getServerIteratorInfo();
         if(!serverIteratorInfo.isActive()){
-            if(_logger.isLoggable(Level.FINE))
-                _logger.fine("Server Iterator " + serverIteratorInfo.getUuid() + " is not active.");
+            if(_logger.isDebugEnabled())
+                _logger.debug("Server Iterator " + serverIteratorInfo.getUuid() + " is not active.");
             return null;
         }
         if(serverIteratorInfo.getScanListIterator() == null){
@@ -4691,8 +4692,8 @@ public class SpaceEngine implements ISpaceModeListener {
                 }
                 break;
             default:
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.severe("Unknown operation in template.");
+                if (_logger.isErrorEnabled())
+                    _logger.error("Unknown operation in template.");
         }
     }
 
@@ -5481,8 +5482,8 @@ public class SpaceEngine implements ISpaceModeListener {
                 _filterManager.invokeFilters(FilterOperationCodes.AFTER_REMOVE, null, entry);
         } catch (RuntimeException ex) {
             // keep on with thread operation
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "Failed AFTER_REMOVE filter.", ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error("Failed AFTER_REMOVE filter.", ex);
             }
         }
 
@@ -5658,8 +5659,8 @@ public class SpaceEngine implements ISpaceModeListener {
                 _processorWG.enqueueBlocked(new CommitBusPacket(xtnEntry));
             }
         } catch (SAException ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, ex.toString(), ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(ex.toString(), ex);
             }
 
             if (_spaceImpl.isAborted()) {
@@ -5830,8 +5831,8 @@ public class SpaceEngine implements ISpaceModeListener {
                 _processorWG.enqueueBlocked(new RollbackBusPacket(xtnEntry));
             }
         } catch (SAException ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, ex.toString(), ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(ex.toString(), ex);
             }
             JSpaceUtilities.throwEngineInternalSpaceException(ex.getMessage(), ex);
         } finally {
@@ -6370,8 +6371,8 @@ public class SpaceEngine implements ISpaceModeListener {
                     spaceCopyReplica,
                     false);
         } catch (InterruptedException ex) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, "", ex);
+            if (_logger.isWarnEnabled()) {
+                _logger.warn("", ex);
             }
             return FailedSyncSpaceReplicateState.createFailedSyncState(ex);
         }
@@ -6422,7 +6423,7 @@ public class SpaceEngine implements ISpaceModeListener {
 
         //if relevant mark the backup as inconsistent utill all data is recovered
         if (getCacheManager().isEmptyAfterInitialLoadStage() && getSpaceImpl().isBackup() && getSpaceImpl().getDirectPersistencyRecoveryHelper() != null) {
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 _logger.info("[" + getFullSpaceName() + "] setting storage state of backup to Inconsistent before recovery from primary");
             }
             getSpaceImpl().getDirectPersistencyRecoveryHelper().setStorageState(StorageConsistencyModes.Inconsistent);
@@ -6439,7 +6440,7 @@ public class SpaceEngine implements ISpaceModeListener {
                 DirectPersistencyBackupSyncIteratorHandler directPersistencyBackupSyncIteratorHandler = new DirectPersistencyBackupSyncIteratorHandler(entriesForRecovery);
                 getReplicationNode().setDirectPersistencyBackupSyncIteratorHandler(
                         new DirectPersistencyBackupSyncIteratorHandler(entriesForRecovery));
-                if (_logger.isLoggable(Level.INFO)) {
+                if (_logger.isInfoEnabled()) {
                     _logger.info(getSpaceName() + " performing direct persistency sync list recovery, batch size is: "
                             + directPersistencyBackupSyncIteratorHandler.getBatchSize());
                 }
@@ -6471,8 +6472,8 @@ public class SpaceEngine implements ISpaceModeListener {
             return spaceSynchronizeReplicaRequest;
 
         } catch (InterruptedException ex) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, "", ex);
+            if (_logger.isWarnEnabled()) {
+                _logger.warn("", ex);
             }
             return FailedSyncSpaceReplicateState.createFailedSyncState(ex);
         }
@@ -6718,8 +6719,8 @@ public class SpaceEngine implements ISpaceModeListener {
         try {
             replicateAndfreeCache(context);
         } catch (RuntimeException ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "Failed to perform sync-replication on transactionId: " + transaction, ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error("Failed to perform sync-replication on transactionId: " + transaction, ex);
             }
         }
     }
@@ -6983,8 +6984,8 @@ public class SpaceEngine implements ISpaceModeListener {
     }
 
     public void afterSpaceModeChange(SpaceMode newMode) {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("afterSpaceModeChange(newMode=" + newMode + ")");
+        if (_logger.isDebugEnabled())
+            _logger.debug("afterSpaceModeChange(newMode=" + newMode + ")");
         if (newMode == SpaceMode.PRIMARY) {
             if (_spaceImpl.isRecovering())
                 _failOverDuringRecovery = true;
@@ -6996,8 +6997,8 @@ public class SpaceEngine implements ISpaceModeListener {
     }
 
     public void beforeSpaceModeChange(SpaceMode newMode) {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("beforeSpaceModeChange(newMode=" + newMode + ")");
+        if (_logger.isDebugEnabled())
+            _logger.debug("beforeSpaceModeChange(newMode=" + newMode + ")");
         //Change the replication node state according to the new space mode
         switch (newMode) {
             case PRIMARY:

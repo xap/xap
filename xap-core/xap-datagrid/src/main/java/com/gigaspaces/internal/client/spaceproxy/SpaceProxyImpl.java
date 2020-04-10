@@ -88,8 +88,9 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides the functionality of clustered proxy.
@@ -101,7 +102,7 @@ import java.util.logging.Logger;
 public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProxyVersionProvider, MarshalPivotProvider {
     private static final long serialVersionUID = 1L;
 
-    private static final Logger _clientLogger = Logger.getLogger(Constants.LOGGER_CLIENT);
+    private static final Logger _clientLogger = LoggerFactory.getLogger(Constants.LOGGER_CLIENT);
 
     private final DirectSpaceProxyFactoryImpl _factory;
     private final long _clientID;
@@ -139,7 +140,7 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
             if (_proxySettings.getTimeProvider() != null)
                 System.setProperty(SystemProperties.SYSTEM_TIME_PROVIDER, _proxySettings.getTimeProvider());
         } catch (SecurityException se) {
-            _clientLogger.log(Level.INFO, "Failed to set time provider system property", se);
+            _clientLogger.info("Failed to set time provider system property", se);
         }
     }
 
@@ -664,8 +665,8 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
             try {
                 if (transaction.joinIfNeededAndEmbedded(targetSpace, partitionId, clusterName, this)) {
                     // TODO: Log joined transaction.
-                    //	            if (_logger.isLoggable(Level.FINEST))
-                    //	                _logger.log(Level.FINEST, "Joined transaction [" + proxy.toLogMessage(request) + "]");
+                    //	            if (_logger.isTraceEnabled())
+                    //	                _logger.trace("Joined transaction [" + proxy.toLogMessage(request) + "]");
                 }
             } catch (TransactionException e) {
                 spaceRequest.setRemoteOperationExecutionError(e);
@@ -688,8 +689,8 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
             if (transaction.isEmbeddedMgrInProxy()) {
                 try {
                     // TODO: Log joined transaction.
-                    //if (_logger.isLoggable(Level.FINEST))
-                    //    _logger.log(Level.FINEST, "Detaching transaction [" + proxy.toLogMessage(request) + "]");
+                    //if (_logger.isTraceEnabled())
+                    //    _logger.trace("Detaching transaction [" + proxy.toLogMessage(request) + "]");
                     transaction.mgr.disJoin(transaction.id, targetSpace);
                 } catch (Exception e) {
                     // Ignore..

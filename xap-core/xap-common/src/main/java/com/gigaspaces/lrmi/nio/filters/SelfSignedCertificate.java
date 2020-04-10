@@ -39,15 +39,16 @@ import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by Barak Bar Orion 2/1/15.
  */
 @com.gigaspaces.api.InternalApi
 public class SelfSignedCertificate {
-    private final static Logger logger = Logger.getLogger(SelfSignedCertificate.class.getName());
+    private final static Logger logger = LoggerFactory.getLogger(SelfSignedCertificate.class.getName());
 
     static final SecureRandom random = new SecureRandom();
     static final Date NOT_BEFORE = new Date(System.currentTimeMillis() - 86400000L * 365);
@@ -63,7 +64,7 @@ public class SelfSignedCertificate {
             try {
                 instance = new SelfSignedCertificate();
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Failed to create self signed certificate", e);
+                logger.warn("Failed to create self signed certificate", e);
             }
         }
         if (instance != null) {

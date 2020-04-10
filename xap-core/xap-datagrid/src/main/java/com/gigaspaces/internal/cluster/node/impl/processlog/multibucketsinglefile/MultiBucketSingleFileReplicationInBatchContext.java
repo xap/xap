@@ -25,7 +25,8 @@ import com.gigaspaces.internal.collections.ShortLongMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class MultiBucketSingleFileReplicationInBatchContext

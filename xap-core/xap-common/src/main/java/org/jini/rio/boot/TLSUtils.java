@@ -21,7 +21,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by Barak Bar Orion on 11/26/15.
@@ -42,7 +43,7 @@ public class TLSUtils {
         if (!wasInit) {
             wasInit = true;
             if (Boolean.getBoolean("org.jini.rio.tools.webster.tls")) {
-                Logger logger = Logger.getLogger(TLSUtils.class.getName());
+                Logger logger = LoggerFactory.getLogger(TLSUtils.class.getName());
                 try {
                     SSLContext sc = SSLContext.getInstance("TLS");
                     sc.init(null,

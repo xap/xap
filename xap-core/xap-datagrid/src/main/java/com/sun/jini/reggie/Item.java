@@ -32,8 +32,9 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.RemoteObject;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An Item contains the fields of a ServiceItem packaged up for transmission between client-side
@@ -52,7 +53,7 @@ public class Item implements Serializable, Cloneable {
      * Logger for Reggie.
      */
     private static final Logger logger =
-            Logger.getLogger("com.sun.jini.reggie");
+            LoggerFactory.getLogger("com.sun.jini.reggie");
     /**
      * Flag to enable JRMP impl-to-stub replacement during marshalling of service proxy.
      */
@@ -64,7 +65,7 @@ public class Item implements Serializable, Cloneable {
             b = (Boolean) Security.doPrivileged(new GetBooleanAction(
                     "com.sun.jini.reggie.enableImplToStubReplacement"));
         } catch (SecurityException e) {
-            logger.log(Level.FINE, "failed to read system property", e);
+            logger.debug("failed to read system property", e);
             b = Boolean.FALSE;
         }
         enableImplToStubReplacement = b.booleanValue();
@@ -110,8 +111,8 @@ public class Item implements Serializable, Cloneable {
         if (enableImplToStubReplacement && svc instanceof Remote) {
             try {
                 svc = RemoteObject.toStub((Remote) svc);
-                if (logger.isLoggable(Level.FINER)) {
-                    logger.log(Level.FINER, "replacing {0} with {1}",
+                if (logger.isDebugEnabled()) {
+                    logger.debug("replacing {0} with {1}",
                             new Object[]{item.service, svc});
                 }
             } catch (NoSuchObjectException e) {

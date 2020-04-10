@@ -29,7 +29,8 @@ package com.j_spaces.kernel;
 import com.gigaspaces.internal.utils.collections.economy.IHashEntry;
 import com.j_spaces.kernel.list.IObjectsList;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  */

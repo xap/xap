@@ -21,8 +21,9 @@ import com.gigaspaces.server.eviction.SpaceEvictionStrategy;
 
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * note- concurrent LRU is not an  "accurate" eviction policy in the sense that the number of
@@ -34,7 +35,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class ConcurrentLruSpaceEvictionStrategy extends SpaceEvictionStrategy {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
     private static final int TOUCH_UNSAFE_MARGIN = 500;
     private static final int MIN_TOUCH_THRESHOLD = 0;
     private static final int MAX_TOUCH_THRESHOLD = 100;
@@ -55,8 +56,8 @@ public class ConcurrentLruSpaceEvictionStrategy extends SpaceEvictionStrategy {
         this._chain = new ChainsSegments(false /*unsafe*/, touchThreshold);
         this._estimatedNumCachedEntries = new AtomicInteger();
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, this.getClass().getSimpleName() + " started: [" +
+        if (_logger.isDebugEnabled())
+            _logger.debug(this.getClass().getSimpleName() + " started: [" +
                     "max-cache-size= " + maxCacheSize +
                     ", touch-threshold= " + _touchThreshold +
                     ", touch-limit=" + _touchLimit +

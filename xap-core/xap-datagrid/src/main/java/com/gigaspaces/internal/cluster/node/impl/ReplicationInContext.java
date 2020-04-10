@@ -23,7 +23,8 @@ import com.gigaspaces.internal.cluster.node.impl.backlog.sync.IMarker;
 import com.gigaspaces.internal.cluster.node.impl.groups.reliableasync.IReplicationReliableAsyncMediator;
 import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPacket;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class ReplicationInContext

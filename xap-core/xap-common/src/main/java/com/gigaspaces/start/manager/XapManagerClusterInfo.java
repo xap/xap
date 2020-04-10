@@ -6,12 +6,13 @@ import com.gigaspaces.logger.Constants;
 
 import java.net.InetAddress;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sun.net.util.IPAddressUtil;
 
 public class XapManagerClusterInfo {
-    private static final Logger logger = Logger.getLogger(Constants.LOGGER_MANAGER);
+    private static final Logger logger = LoggerFactory.getLogger(Constants.LOGGER_MANAGER);
 
     public static final String SERVERS_PROPERTY = "com.gs.manager.servers";
     public static final String SERVER_PROPERTY = "com.gs.manager.server";
@@ -104,23 +105,23 @@ public class XapManagerClusterInfo {
 
     private static XapManagerConfig parse(String s) {
         XapManagerConfig result = XapManagerConfig.parse(s);
-        if (logger.isLoggable(Level.FINE))
-            logger.log(Level.FINE, "Parse XapManagerConfig " + result);
+        if (logger.isDebugEnabled())
+            logger.debug("Parse XapManagerConfig " + result);
         return result;
     }
 
     private static String get(String sysProp, String envVarSuffix) {
         String result = System.getProperty(sysProp);
         if (result != null) {
-            if (logger.isLoggable(Level.FINE))
-                logger.log(Level.FINE, "Loaded config from system property " + sysProp + "=" + result);
+            if (logger.isDebugEnabled())
+                logger.debug("Loaded config from system property " + sysProp + "=" + result);
             return result;
         }
         String envVar = GsEnv.key(envVarSuffix);
         if (envVar != null) {
             result = System.getenv(envVar);
-            if (logger.isLoggable(Level.FINE))
-                logger.log(Level.FINE, "Loaded config from environment variable " + envVar + "=" + result);
+            if (logger.isDebugEnabled())
+                logger.debug("Loaded config from environment variable " + envVar + "=" + result);
             return result;
         }
         return null;
@@ -140,11 +141,11 @@ public class XapManagerClusterInfo {
                 result = servers[0];
             }
         }
-        if (logger.isLoggable(Level.FINE)) {
+        if (logger.isDebugEnabled()) {
             if (result == null)
-                logger.log(Level.FINE, "Current host [" + currHost +"] is not part of configured managers");
+                logger.debug("Current host [" + currHost +"] is not part of configured managers");
             else
-                logger.log(Level.FINE, "Current manager is " + result);
+                logger.debug("Current manager is " + result);
         }
         return result;
     }

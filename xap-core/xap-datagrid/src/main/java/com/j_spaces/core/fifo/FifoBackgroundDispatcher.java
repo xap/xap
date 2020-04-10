@@ -19,14 +19,15 @@ package com.j_spaces.core.fifo;
 import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.j_spaces.core.cache.CacheManager;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
  * @since 8.0.4
  */
 public abstract class FifoBackgroundDispatcher {
-    protected static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_FIFO);
+    protected static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_FIFO);
 
     protected final FifoWorkerThread[] _notifyFifoThreads;
     protected final FifoWorkerThread[] _nonNotifyFifoThreads;

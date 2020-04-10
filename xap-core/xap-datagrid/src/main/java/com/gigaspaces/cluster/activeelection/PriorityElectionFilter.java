@@ -31,8 +31,9 @@ import net.jini.lookup.entry.Name;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This election decision filter provides the condition to aquire desired space state on
@@ -49,7 +50,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class PriorityElectionFilter
         implements IActiveElectionDecisionFilter {
-    final private static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLUSTER_ACTIVE_ELECTION);
+    final private static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLUSTER_ACTIVE_ELECTION);
 
     private final String _memberName;
     private final FailOverPolicy _failOverPolicy;
@@ -92,15 +93,15 @@ public class PriorityElectionFilter
 	  /* get the orderId from the elected candidate list */
         int orderId = orderedMemberList.indexOf(new CandidateEntry(_memberName));
 
-        if (orderId == -1 && _logger.isLoggable(Level.SEVERE)) {
+        if (orderId == -1 && _logger.isErrorEnabled()) {
             String msgEx = "Cluster may be in inconsistent state due to an illegal active election state: Space instance <" + _memberName + "> is not registered as a candidate to become PRIMARY in LUS.\n Please restart the space cluster. ";
 
-            _logger.severe(msgEx);
+            _logger.error(msgEx);
             return false;
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("PriorityElectionFilter - " +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("PriorityElectionFilter - " +
                     "\n Member: [" + _memberName + "] ask to acquire [" + aquireState + "] state." +
                     "\n OrderId: " + orderId +
                     "\n Candidates: " + orderedMemberList +

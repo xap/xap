@@ -26,8 +26,9 @@ import com.gigaspaces.internal.cluster.node.impl.packets.data.IReplicationPacket
 import com.gigaspaces.server.blobstore.BlobStoreException;
 import com.j_spaces.core.exception.SpaceUnavailableException;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public abstract class AbstractSingleFileTargetProcessLog {

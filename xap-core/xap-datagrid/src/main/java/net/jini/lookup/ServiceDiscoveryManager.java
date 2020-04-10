@@ -68,8 +68,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The <code>ServiceDiscoveryManager</code> class is a helper utility class that any client-like
@@ -740,7 +741,7 @@ public class ServiceDiscoveryManager {
 
             @Override
             public void runInternal() {
-                logger.finest("ServiceDiscoveryManager - RegisterListenerTask "
+                logger.trace("ServiceDiscoveryManager - RegisterListenerTask "
                         + "started");
                 long duration = getLeaseDuration();
                 if (duration < 0) return;
@@ -771,7 +772,7 @@ public class ServiceDiscoveryManager {
                                             + "with the lookup service event mechanism",
                                     cacheTerminated);
                 }
-                logger.finest("ServiceDiscoveryManager - RegisterListenerTask "
+                logger.trace("ServiceDiscoveryManager - RegisterListenerTask "
                         + "completed");
             }//end run
         }//end class LookupCacheImpl.RegisterListenerTask
@@ -802,7 +803,7 @@ public class ServiceDiscoveryManager {
 
             @Override
             public void runInternal() {
-                logger.finest("ServiceDiscoveryManager - LookupTask started");
+                logger.trace("ServiceDiscoveryManager - LookupTask started");
                 ClassLoader origClassLoader = Thread.currentThread().getContextClassLoader();
                 ServiceRegistrar proxy = reg.proxy;
                 ServiceMatches matches = null;
@@ -859,7 +860,7 @@ public class ServiceDiscoveryManager {
                         cacheTaskMgr.add(t);
                     }//end loop
                 }//end sync(serviceIdMap)
-                logger.finest("ServiceDiscoveryManager - LookupTask "
+                logger.trace("ServiceDiscoveryManager - LookupTask "
                         + "completed");
             }//end run
 
@@ -910,7 +911,7 @@ public class ServiceDiscoveryManager {
 
             @Override
             public void runInternal() {
-                logger.finest("ServiceDiscoveryManager - ProxyRegDropTask "
+                logger.trace("ServiceDiscoveryManager - ProxyRegDropTask "
                         + "started");
                 synchronized (serviceIdMap) {
                     //lease has already been cancelled by removeProxyReg
@@ -943,7 +944,7 @@ public class ServiceDiscoveryManager {
                         cacheTaskMgr.add(t);
                     }//end loop
                 }//end sync(serviceIdMap)
-                logger.finest("ServiceDiscoveryManager - ProxyRegDropTask "
+                logger.trace("ServiceDiscoveryManager - ProxyRegDropTask "
                         + "completed");
             }//end run
 
@@ -987,18 +988,18 @@ public class ServiceDiscoveryManager {
             @Override
             public void runInternal() {
 
-                logger.finest("ServiceDiscoveryManager - RemoveOrphanServicesTask "
+                logger.trace("ServiceDiscoveryManager - RemoveOrphanServicesTask "
                         + "started");
 
                 try {
                     sleepUntilWakeupTimestamp();
                 } catch (InterruptedException e) {
-                    logger.log(Level.INFO, "ServiceDiscoveryManager - RemoveOrphanServicesTask "
+                    logger.info("ServiceDiscoveryManager - RemoveOrphanServicesTask "
                             + " interrupted", e);
                     return;
                 }
 
-                logger.finest("ServiceDiscoveryManager - RemoveOrphanServicesTask "
+                logger.trace("ServiceDiscoveryManager - RemoveOrphanServicesTask "
                         + "woke up");
 
 				/* For each itemReg in the serviceIdMap,
@@ -1017,7 +1018,7 @@ public class ServiceDiscoveryManager {
 
                 }//end loop
 
-                logger.finest("ServiceDiscoveryManager - RemoveOrphanServicesTask "
+                logger.trace("ServiceDiscoveryManager - RemoveOrphanServicesTask "
                         + "completed");
             }
 
@@ -1084,7 +1085,7 @@ public class ServiceDiscoveryManager {
 
             @Override
             public void runInternal() {
-                logger.finest("ServiceDiscoveryManager - DiscardServiceTask "
+                logger.trace("ServiceDiscoveryManager - DiscardServiceTask "
                         + "started");
                 Iterator iter = getServiceIdMapEntrySetIterator();
                 while (iter.hasNext()) {
@@ -1102,7 +1103,7 @@ public class ServiceDiscoveryManager {
                         return;
                     }//endif
                 }//end loop
-                logger.finest("ServiceDiscoveryManager - DiscardServiceTask "
+                logger.trace("ServiceDiscoveryManager - DiscardServiceTask "
                         + "completed");
             }//end run
         }//end class LookupCacheImpl.DiscardServiceTask
@@ -1129,7 +1130,7 @@ public class ServiceDiscoveryManager {
 
             @Override
             public void runInternal() {
-                logger.finest("ServiceDiscoveryManager - NotifyEventTask "
+                logger.trace("ServiceDiscoveryManager - NotifyEventTask "
                         + "started");
 				/* Fix for Bug ID 4378751. The conditions described by that
 				 * bug involve a ServiceItem (corresponding to a previously
@@ -1156,7 +1157,7 @@ public class ServiceDiscoveryManager {
                             (transition == ServiceRegistrar.TRANSITION_MATCH_MATCH),
                             thisTaskSeqN)).run();
                 }//endif(transition)
-                logger.finest("ServiceDiscoveryManager - NotifyEventTask "
+                logger.trace("ServiceDiscoveryManager - NotifyEventTask "
                         + "completed");
             }//end run
 
@@ -1214,7 +1215,7 @@ public class ServiceDiscoveryManager {
             }//end constructor
 
             public void run() {
-                logger.finest("ServiceDiscoveryManager - "
+                logger.trace("ServiceDiscoveryManager - "
                         + "ServiceDiscardTimerTask started");
 				/* Exit if this cache has already been terminated. */
                 synchronized (serviceIdMap) {
@@ -1321,7 +1322,7 @@ public class ServiceDiscoveryManager {
                     }//end sync(itemReg)
                     addServiceNotify(itemToSend);
                 }//endif
-                logger.finest("ServiceDiscoveryManager - "
+                logger.trace("ServiceDiscoveryManager - "
                         + "ServiceDiscardTimerTask completed");
             }//end run
 
@@ -1374,7 +1375,7 @@ public class ServiceDiscoveryManager {
 
             @Override
             public void runInternal() {
-                logger.finest("ServiceDiscoveryManager - NewOldServiceTask "
+                logger.trace("ServiceDiscoveryManager - NewOldServiceTask "
                         + "started");
                 ServiceItemReg itemReg;
                 synchronized (serviceIdMap) {
@@ -1387,7 +1388,7 @@ public class ServiceDiscoveryManager {
                     synchronized (serviceIdMap) {
                         if (!eventRegMap.containsKey(reg)) {
 							/* reg must have been discarded, simply return */
-                            logger.finest("ServiceDiscoveryManager - "
+                            logger.trace("ServiceDiscoveryManager - "
                                     + "NewOldServiceTask completed");
                             return;
                         }//endif
@@ -1400,7 +1401,7 @@ public class ServiceDiscoveryManager {
                         addServiceNotify(newFilteredItem);
                     }//endif
                 }//endif
-                logger.finest("ServiceDiscoveryManager - NewOldServiceTask "
+                logger.trace("ServiceDiscoveryManager - NewOldServiceTask "
                         + "completed");
             }//end run
         }//end class LookupCacheImpl.NewOldServiceTask
@@ -1447,7 +1448,7 @@ public class ServiceDiscoveryManager {
 
             @Override
             public void runInternal() {
-                logger.finest("ServiceDiscoveryManager - UnmapProxyTask "
+                logger.trace("ServiceDiscoveryManager - UnmapProxyTask "
                         + "started");
                 synchronized (itemReg) {
                     itemReg.removeProxy(reg.proxy);//disassociate the LUS
@@ -1457,7 +1458,7 @@ public class ServiceDiscoveryManager {
                 } else {
                     delayedRemoveOrphanServices(removeOrphanServicesDelayMilliseconds, TimeUnit.MILLISECONDS);
                 }
-                logger.finest("ServiceDiscoveryManager - UnmapProxyTask "
+                logger.trace("ServiceDiscoveryManager - UnmapProxyTask "
                         + "completed");
             }//end run
         }//end class LookupCacheImpl.UnmapProxyTask
@@ -1575,12 +1576,12 @@ public class ServiceDiscoveryManager {
                 try {
                     lookupListenerExporter.unexport(true);
                 } catch (IllegalStateException e) {
-                    logger.log(Level.FINEST,
+                    logger.trace(
                             "IllegalStateException occurred while unexporting "
                                     + "the cache's remote event listener",
                             e);
                 }
-                logger.finest("ServiceDiscoveryManager - LookupCache terminated");
+                logger.trace("ServiceDiscoveryManager - LookupCache terminated");
             } finally {
                 Thread.currentThread().setContextClassLoader(origClassLoader);
             }
@@ -1762,7 +1763,7 @@ public class ServiceDiscoveryManager {
                     try {
                         leaseRenewalMgr.remove(eReg.lease);
                     } catch (Exception e) {
-                        logger.log(Level.FINER,
+                        logger.debug(
                                 "exception occurred while removing an "
                                         + "event registration lease", e);
                     }
@@ -1848,7 +1849,7 @@ public class ServiceDiscoveryManager {
                             (lookupCacheClassLoader, reg, sid, item, transition, taskSeqN++);
                 } else {//gap in event sequence, request snapshot
                     t = new LookupTask(lookupCacheClassLoader, reg, taskSeqN++);
-                    if (logger.isLoggable(Level.FINE)) {
+                    if (logger.isDebugEnabled()) {
                         String msg = "notifyServiceMap - GAP in event sequence "
                                 + "[serviceRegistrar={0}], "
                                 + "[serviceItem={1}, "
@@ -1864,7 +1865,7 @@ public class ServiceDiscoveryManager {
                                 new Long(eventID),
                                 new Long(prevSeqNo),
                                 new Long(seqNo)};
-                        logger.log(Level.FINE, msg, params);
+                        logger.debug(msg, params);
                     }//endif
                 }//endif
                 cacheTaskMgr.add(t);
@@ -2058,7 +2059,7 @@ public class ServiceDiscoveryManager {
                 MarshalledInstance mi1 = new MarshalledInstance(item1.service);
                 fullyEqual = mi0.fullyEquals(mi1);
             } catch (IOException e) {
-                logger.log(Level.INFO, "failure marshalling old and new "
+                logger.info("failure marshalling old and new "
                         + "services for equality check", e);
             }
             return fullyEqual;
@@ -2351,7 +2352,7 @@ public class ServiceDiscoveryManager {
     private static final String COMPONENT_NAME
             = "net.jini.lookup.ServiceDiscoveryManager";
     /* Logger used by this utility. */
-    private static final Logger logger = Logger.getLogger(COMPONENT_NAME);
+    private static final Logger logger = LoggerFactory.getLogger(COMPONENT_NAME);
 
     private static final long DEFAULT_NOTIFICATIONS_LEASE_RENEW_RATE = TimeUnit.SECONDS.toMillis(30);
     private static final long DEFAULT_REMOVE_SERVICE_IF_ORPHAN_DELAY = TimeUnit.SECONDS.toMillis(60);
@@ -2416,11 +2417,11 @@ public class ServiceDiscoveryManager {
                     proxys[i]
                             = (ServiceRegistrar) registrarPreparer.prepareProxy
                             (proxys[i]);
-                    logger.log(Level.FINEST, "ServiceDiscoveryManager - "
+                    logger.trace("ServiceDiscoveryManager - "
                                     + "discovered lookup service proxy prepared: {0}",
                             proxys[i]);
                 } catch (Exception e1) {
-                    logger.log(Level.INFO,
+                    logger.info(
                             "failure preparing discovered ServiceRegistrar "
                                     + "proxy, discarding the proxy",
                             e1);
@@ -2723,7 +2724,7 @@ public class ServiceDiscoveryManager {
             try {
                 serviceDetails.add(proxy.serviceDetails(serviceID));
             } catch (Exception e) {
-                logger.log(Level.INFO,
+                logger.info(
                         "Exception occurred during service details, discarding reggie [" + proxy + "]",
                         e);
                 discard(proxy);
@@ -2806,9 +2807,9 @@ public class ServiceDiscoveryManager {
                 // Don't discard the current lookup service when the exception is due to thread interrup
                 // This should have been InterruptedException but the call to proxy.lookup()
                 // only throws RemoteException
-                logger.log(Level.INFO, "Interrupt exception occurred during query", e);
+                logger.info("Interrupt exception occurred during query", e);
             } catch (Exception e) {
-                logger.log(Level.INFO,
+                logger.info(
                         "Exception occurred during query, discarding reggie [" + proxy + "]",
                         e);
                 discard(proxy);
@@ -3094,8 +3095,8 @@ public class ServiceDiscoveryManager {
             proxys = buildServiceRegistrar();
         }
         int len = proxys.length;
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, "query {0} lookup service(s) for template: {1} max-matches: {2}",
+        if (logger.isTraceEnabled()) {
+            logger.trace("query {0} lookup service(s) for template: {1} max-matches: {2}",
                     new Object[]{len, tmpl, maxMatches});
         }
         ArrayList sItemSet = new ArrayList(len);
@@ -3142,7 +3143,7 @@ public class ServiceDiscoveryManager {
                         }
                     }//end loop(j)
                 } catch (Exception e) {
-                    logger.log(Level.FINE, "Exception occurred during query, discarding proxy", e);
+                    logger.debug("Exception occurred during query, discarding proxy", e);
                     discard(proxy);
                 }
             }//end loop(i)
@@ -3332,7 +3333,7 @@ public class ServiceDiscoveryManager {
         synchronized (caches) {
             caches.add(cache);
         }
-        logger.finest("ServiceDiscoveryManager - LookupCache created");
+        logger.trace("ServiceDiscoveryManager - LookupCache created");
         return cache;
     }//end createLookupCache
 
@@ -3409,7 +3410,7 @@ public class ServiceDiscoveryManager {
         try {
             leaseRenewalMgr.cancel(lease);
         } catch (Exception e) {
-            logger.log(Level.FINER,
+            logger.debug(
                     "exception occurred while cancelling an event "
                             + "registration lease",
                     e);
@@ -3454,7 +3455,7 @@ public class ServiceDiscoveryManager {
 		 */
         Lease eventLease = e.getLease();
         eventLease = (Lease) eventLeasePreparer.prepareProxy(eventLease);
-        logger.log(Level.FINEST, "ServiceDiscoveryManager - proxy to event "
+        logger.trace("ServiceDiscoveryManager - proxy to event "
                 + "registration lease prepared: {0}", eventLease);
 		/* Management the lease on the event registration */
         leaseRenewalMgr.renewFor(eventLease,

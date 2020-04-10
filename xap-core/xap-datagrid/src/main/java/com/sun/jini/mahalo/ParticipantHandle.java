@@ -29,8 +29,9 @@ import net.jini.security.ProxyPreparer;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -110,8 +111,8 @@ class ParticipantHandle implements Serializable, TransactionConstants {
                 _clusterProxy = clusterProxy;
 
         } catch (RemoteException re) {
-            if (persistenceLogger.isLoggable(Level.WARNING)) {
-                persistenceLogger.log(Level.WARNING,
+            if (persistenceLogger.isWarnEnabled()) {
+                persistenceLogger.warn(
                         "Cannot store the TransactionParticipant", re);
             }
         }

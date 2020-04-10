@@ -31,8 +31,9 @@ import com.gigaspaces.metadata.index.AddTypeIndexesResult;
 import net.jini.core.transaction.TransactionException;
 
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -40,7 +41,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class SpaceProxyImplTypeDescriptorActionsExecutor extends TypeDescriptorActionsProxyExecutor<SpaceProxyImpl> {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_TYPEMANAGER);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_TYPEMANAGER);
 
     @Override
     public ITypeDesc getTypeDescriptor(SpaceProxyImpl spaceProxy, GetTypeDescriptorActionInfo actionInfo) throws RemoteException {
@@ -104,8 +105,8 @@ public class SpaceProxyImplTypeDescriptorActionsExecutor extends TypeDescriptorA
                     }
                 }
             } catch (RuntimeException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, "Failed to add index.", e);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error("Failed to add index.", e);
                 }
                 throw e;
             } finally {

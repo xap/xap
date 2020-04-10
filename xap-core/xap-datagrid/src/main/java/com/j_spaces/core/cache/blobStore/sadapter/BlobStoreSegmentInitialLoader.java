@@ -29,7 +29,7 @@ import com.j_spaces.core.cache.blobStore.IBlobStoreEntryHolder;
 import com.j_spaces.kernel.JSpaceUtilities;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.logging.Level;
+
 
 @com.gigaspaces.api.InternalApi
 public class BlobStoreSegmentInitialLoader extends Thread {
@@ -105,7 +105,7 @@ public class BlobStoreSegmentInitialLoader extends Thread {
     }
 
     private long logInsertionIfNeeded(long startLogTime, long lastLogTime, int fetchedEntries) {
-        if (_initialLoadInfo.isLogRecoveryProcess() && _initialLoadInfo.getLogger().isLoggable(Level.INFO)) {
+        if (_initialLoadInfo.isLogRecoveryProcess() && _initialLoadInfo.getLogger().isInfoEnabled()) {
             long curTime = SystemTime.timeMillis();
             if (curTime - lastLogTime > _initialLoadInfo.getRecoveryLogInterval()) {
                 _initialLoadInfo.getLogger().info("BlobStore segment #" + _segmentNumber + " entries loaded so far : " + fetchedEntries + " [" + JSpaceUtilities.formatMillis(curTime - startLogTime) + "]");

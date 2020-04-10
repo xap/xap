@@ -26,8 +26,9 @@ import java.net.MalformedURLException;
 import java.rmi.server.RMIClassLoader;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This utility class which helps to load the desired class by the context ClassLoader for current
@@ -42,7 +43,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class ClassLoaderHelper {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_KERNEL);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_KERNEL);
     private static final Map<String, Class<?>> _primitiveTypes = loadPrimitiveTypes();
 
     /**
@@ -69,8 +70,8 @@ public class ClassLoaderHelper {
             threadCLField.set(currThread, cl);
         } catch (Throwable th) {
             // if we got here, we don't have permissions or the contextClassLoader field doesn't exists in Thread.class
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.log(Level.FINEST, "Failed to get access to 'contextClassLoader' field.", th);
+            if (_logger.isTraceEnabled()) {
+                _logger.trace("Failed to get access to 'contextClassLoader' field.", th);
             }
         }
 
@@ -127,19 +128,19 @@ public class ClassLoaderHelper {
         try {
             Class loadClass = Class.forName(className, true, loader);
 
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.log(Level.FINEST,
+            if (_logger.isTraceEnabled()) {
+                _logger.trace(
                         "Load class: [" + className + "] Thread: [" + Thread.currentThread().getName()
                                 + "] using ClassLoader: [" + loader + "]\n"
                                 + JSpaceUtilities.getStackTrace(new Exception("Debugging stack trace: ")));
-            } else if (_logger.isLoggable(Level.FINE)) {
+            } else if (_logger.isDebugEnabled()) {
                 StringBuilder classLoaderHierarchy = new StringBuilder("ClassLoader Hierarchy: ");
                 ClassLoader classLoaders = loader;
                 while (classLoaders != null) {
                     classLoaderHierarchy.append(classLoaders.getClass().toString()).append(" <-- ");
                     classLoaders = classLoaders.getParent();
                 }
-                _logger.log(Level.FINE, "Load class: [" + className + "] Thread: [" + Thread.currentThread().getName()
+                _logger.debug("Load class: [" + className + "] Thread: [" + Thread.currentThread().getName()
                         + "] using ClassLoader: [" + loader + "] \n"
                         + " [ " + classLoaderHierarchy.toString() + " ] \n");
             }
@@ -148,8 +149,8 @@ public class ClassLoaderHelper {
             if (localOnly)
                 throw ex;
 
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.log(Level.FINEST, "Thread: [" + Thread.currentThread().getName()
+            if (_logger.isTraceEnabled())
+                _logger.trace("Thread: [" + Thread.currentThread().getName()
                         + "] failed to load class [" + className
                         + "] by Thread ContextClassLoader: [" + loader
                         + "]. Attempting to load by Class.forName()", ex);
@@ -213,8 +214,8 @@ public class ClassLoaderHelper {
         try {
             Class loaded = RMIClassLoader.loadClass(codebase, className, classLoader);
 
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.log(Level.FINEST, "Load class: [" + className
+            if (_logger.isTraceEnabled()) {
+                _logger.trace("Load class: [" + className
                         + "] Thread: [" + Thread.currentThread().getName()
                         + "] using RMIClassLoader passing codebase: [" + codebase
                         + "] and additional ClassLoader: [" + classLoader + "] \n");
@@ -228,8 +229,8 @@ public class ClassLoaderHelper {
         try {
             return LRMIClassLoadersHolder.loadClass(className);
         } catch (ClassNotFoundException e) {
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.log(Level.FINEST, "Thread: ["
+            if (_logger.isTraceEnabled()) {
+                _logger.trace("Thread: ["
                         + Thread.currentThread().getName()
                         + "] failed to load class [" + className
                         + "] using LRMIClassLoader \n", e);
@@ -281,8 +282,8 @@ public class ClassLoaderHelper {
             return;
         }
         if (_directContextClassLoaderThreadField != null) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("Thread: " + Thread.currentThread() + " set direct contextClassLoader: " + cl);
+            if (_logger.isDebugEnabled())
+                _logger.debug("Thread: " + Thread.currentThread() + " set direct contextClassLoader: " + cl);
 
             try {
                 _directContextClassLoaderThreadField.set(Thread.currentThread(), cl);

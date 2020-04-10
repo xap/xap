@@ -47,8 +47,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.WeakHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
 import javax.security.auth.SubjectDomainCombiner;
@@ -90,11 +91,11 @@ import javax.security.auth.SubjectDomainCombiner;
 public final class Security {
 
     private static final Logger trustLogger =
-            Logger.getLogger("net.jini.security.trust");
+            LoggerFactory.getLogger("net.jini.security.trust");
     private static final Logger integrityLogger =
-            Logger.getLogger("net.jini.security.integrity");
+            LoggerFactory.getLogger("net.jini.security.integrity");
     private static final Logger policyLogger =
-            Logger.getLogger("net.jini.security.policy");
+            LoggerFactory.getLogger("net.jini.security.policy");
 
     /**
      * Weak map from String to [URL[], SoftReference(key)]
@@ -184,7 +185,7 @@ public final class Security {
         }
         SecurityException e = new SecurityException(
                 "object is not trusted: " + obj);
-        if (trustLogger.isLoggable(Level.FINE)) {
+        if (trustLogger.isDebugEnabled()) {
             LogUtils.throwing(trustLogger, Security.class, "verifyObjectTrust", e,
                     "no verifier trusts {0}", obj);
         }
@@ -235,8 +236,8 @@ public final class Security {
         for (int i = urls.length; --i >= 0; ) {
             for (int j = 0; j < verifiers.length; j++) {
                 if (verifiers[j].providesIntegrity(urls[i])) {
-                    if (integrityLogger.isLoggable(Level.FINE)) {
-                        integrityLogger.log(Level.FINE,
+                    if (integrityLogger.isDebugEnabled()) {
+                        integrityLogger.debug(
                                 "{0} verifies {1}",
                                 new Object[]{verifiers[j],
                                         urls[i]});
@@ -247,7 +248,7 @@ public final class Security {
             SecurityException e =
                     new SecurityException("URL does not provide integrity: " +
                             urls[i]);
-            if (integrityLogger.isLoggable(Level.FINE)) {
+            if (integrityLogger.isDebugEnabled()) {
                 LogUtils.throwing(integrityLogger,
                         Security.class, "verifyCodebaseIntegrity", e,
                         "no verifier verifies {0}", urls[i]);
@@ -304,8 +305,8 @@ public final class Security {
                     return null;
                 }
             });
-            if (integrityLogger.isLoggable(Level.FINE)) {
-                integrityLogger.log(Level.FINE, LogUtils.format(Security.class, "verifyCodebaseIntegrity",
+            if (integrityLogger.isDebugEnabled()) {
+                integrityLogger.debug(LogUtils.format(Security.class, "verifyCodebaseIntegrity",
                         "integrity verifiers {0}", list));
             }
             verifiers = (IntegrityVerifier[]) list.toArray(
@@ -547,8 +548,8 @@ public final class Security {
             throw new UnsupportedOperationException("grants not supported");
         }
         ((DynamicPolicy) policy).grant(cl, principals, permissions);
-        if (policyLogger.isLoggable(Level.FINER)) {
-            policyLogger.log(Level.FINER, "granted {0} to {1}, {2}",
+        if (policyLogger.isDebugEnabled()) {
+            policyLogger.debug("granted {0} to {1}, {2}",
                     new Object[]{
                             (permissions != null) ? Arrays.asList(permissions) : null,
                             (cl != null) ? cl.getName() : null,
@@ -597,8 +598,8 @@ public final class Security {
                 grantablePermissions(dpolicy.getGrants(fromClass, principals));
 
         dpolicy.grant(toClass, principals, permissions);
-        if (policyLogger.isLoggable(Level.FINER)) {
-            policyLogger.log(Level.FINER, "granted {0} from {1} to {2}, {3}",
+        if (policyLogger.isDebugEnabled()) {
+            policyLogger.debug("granted {0} from {1} to {2}, {3}",
                     new Object[]{
                             (permissions != null) ? Arrays.asList(permissions) : null,
                             fromClass.getName(),
@@ -728,8 +729,8 @@ public final class Security {
                         return null;
                     }
                 });
-                if (trustLogger.isLoggable(Level.FINE)) {
-                    trustLogger.log(Level.FINE, LogUtils.format(Security.class, "verifyObjectTrust",
+                if (trustLogger.isDebugEnabled()) {
+                    trustLogger.debug(LogUtils.format(Security.class, "verifyObjectTrust",
                             "trust verifiers {0}", list));
                 }
                 verifiers = (TrustVerifier[]) list.toArray(
@@ -751,8 +752,8 @@ public final class Security {
             for (int i = 0; i < verifiers.length; i++) {
                 try {
                     if (verifiers[i].isTrustedObject(obj, this)) {
-                        if (trustLogger.isLoggable(Level.FINE)) {
-                            trustLogger.log(Level.FINE,
+                        if (trustLogger.isDebugEnabled()) {
+                            trustLogger.debug(
                                     "{0} trusts {1}",
                                     new Object[]{verifiers[i], obj});
                         }
@@ -761,7 +762,7 @@ public final class Security {
                 } catch (Exception e) {
                     boolean rethrow = (e instanceof RuntimeException &&
                             !(e instanceof SecurityException));
-                    if (trustLogger.isLoggable(Level.FINE)) {
+                    if (trustLogger.isDebugEnabled()) {
                         LogUtils.throwing(trustLogger, this.getClass(), "isTrustedObject", e,
                                 "{0} checking {1} throws", verifiers[i], obj);
                     }
@@ -772,7 +773,7 @@ public final class Security {
                 }
             }
             if (ex != null) {
-                if (trustLogger.isLoggable(Level.FINE)) {
+                if (trustLogger.isDebugEnabled()) {
                     LogUtils.throwing(trustLogger, this.getClass(), "isTrustedObject", ex,
                             "checking {0} throws", obj);
                 }
@@ -781,8 +782,8 @@ public final class Security {
                 }
                 throw (SecurityException) ex;
             }
-            if (trustLogger.isLoggable(Level.FINE)) {
-                trustLogger.log(Level.FINE, "no verifier trusts {0}", obj);
+            if (trustLogger.isDebugEnabled()) {
+                trustLogger.debug("no verifier trusts {0}", obj);
             }
             return false;
         }

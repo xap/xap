@@ -21,8 +21,9 @@ package net.jini.config;
 import com.gigaspaces.logger.LogUtils;
 
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A skeletal implementation of the <code>Configuration</code> interface, used to simplify writing
@@ -79,7 +80,7 @@ public abstract class AbstractConfiguration implements Configuration {
     /**
      * Config logger.
      */
-    static final Logger logger = Logger.getLogger("net.jini.config");
+    static final Logger logger = LoggerFactory.getLogger("net.jini.config");
 
     /**
      * Represents the value of an entry with a primitive type. Subclasses of {@link
@@ -337,8 +338,8 @@ public abstract class AbstractConfiguration implements Configuration {
                                 " is of wrong type: " +
                                 Utilities.typeString(resultType));
             }
-            if (logger.isLoggable(Level.FINER)) {
-                logger.log(Level.FINER,
+            if (logger.isDebugEnabled()) {
+                logger.debug(
                         "{0}, component {1}, name {2}" +
                                 "{3,choice,0#|1#, data {4}}: returns {5}",
                         new Object[]{
@@ -349,15 +350,15 @@ public abstract class AbstractConfiguration implements Configuration {
             return result;
         } catch (NoSuchEntryException e) {
             if (defaultValue == NO_DEFAULT) {
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.log(Level.FINE,
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
                             "{0}, component {1}, name {2}: entry not found",
                             new Object[]{this, component, name});
                 }
                 throw e;
             } else {
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.log(Level.FINE, "{0}, component {1}, name {2}: returns default {3}",
+                if (logger.isDebugEnabled()) {
+                    logger.debug("{0}, component {1}, name {2}: returns default {3}",
                             new Object[]{this, component, name, defaultValue});
                 }
                 return defaultValue;
@@ -370,7 +371,7 @@ public abstract class AbstractConfiguration implements Configuration {
                             ", name " + name,
                     e);
         }
-        if (logger.isLoggable(Level.FINE)) {
+        if (logger.isDebugEnabled()) {
             LogUtils.throwing(logger, this.getClass(), "getEntry", configEx,
                     "{0}, component {1}, name {2}{3,choice,0#|1#, data {4}}: throws",
                     this, component, name, new Double(data == NO_DATA ? 0 : 1), data);

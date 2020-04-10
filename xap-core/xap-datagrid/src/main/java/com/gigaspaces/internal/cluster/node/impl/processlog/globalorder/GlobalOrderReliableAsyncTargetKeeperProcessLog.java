@@ -43,7 +43,7 @@ import com.j_spaces.core.exception.internal.ReplicationInternalSpaceException;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
+
 
 
 @com.gigaspaces.api.InternalApi
@@ -156,18 +156,18 @@ public class GlobalOrderReliableAsyncTargetKeeperProcessLog
 
                         IBacklogMemberState state = sourceGroup.getGroupBacklog().getState(sourceMemberName);
                         if (state.isBacklogDropped()) {
-                            if (_specificLogger.isLoggable(Level.WARNING))
-                                _specificLogger.warning("failed completing missing packets from keeper to active primary - backlog is dropped for source, skipping process ");
+                            if (_specificLogger.isWarnEnabled())
+                                _specificLogger.warn("failed completing missing packets from keeper to active primary - backlog is dropped for source, skipping process ");
                             return true;
                         }
                         if (!state.isExistingMember()) {
-                            if (_specificLogger.isLoggable(Level.WARNING))
-                                _specificLogger.warning("failed completing missing packets from keeper to active primary - source does not exists in backlog, skipping process ");
+                            if (_specificLogger.isWarnEnabled())
+                                _specificLogger.warn("failed completing missing packets from keeper to active primary - source does not exists in backlog, skipping process ");
                             return true;
                         }
                         if (state.isInconsistent()) {
-                            if (_specificLogger.isLoggable(Level.WARNING))
-                                _specificLogger.log(Level.WARNING, "failed completing missing packets from keeper to active primary, skipping process", state.getInconsistencyReason());
+                            if (_specificLogger.isWarnEnabled())
+                                _specificLogger.warn("failed completing missing packets from keeper to active primary, skipping process", state.getInconsistencyReason());
                             return true;
                         }
 

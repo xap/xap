@@ -39,8 +39,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.DeliveryMode;
 import javax.jms.Destination;
@@ -61,7 +62,7 @@ public class GSMessageImpl extends MetaDataEntry implements Externalizable, IRep
     /**
      * logger
      */
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_JMS);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_JMS);
 
     /**
      * <code>true</code> if the body is read-only. else the body is write-only
@@ -290,30 +291,30 @@ public class GSMessageImpl extends MetaDataEntry implements Externalizable, IRep
         session.ensureOpen();
 
         if (session.m_acknowledgeMode != Session.CLIENT_ACKNOWLEDGE) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("GSMessageImpl.acknowledge(): Session's acknowledge" +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSMessageImpl.acknowledge(): Session's acknowledge" +
                         " mode != CLIENT_ACKNOWLEDGE - ignoring." + this.JMSMessageID);
             }
             return;
         }
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSMessageImpl.acknowledge(): " + this.JMSMessageID);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSMessageImpl.acknowledge(): " + this.JMSMessageID);
         }
 
         try {
             session.acknowledge();
         } catch (CommitFailedException e) {
             // Happens only for QUEUE!
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE,
+            if (_logger.isErrorEnabled()) {
+                _logger.error(
                         "GSMessageImpl.acknowledge(): Failed to acknowledge consumed messages: " + e.orig);
             }
 
             try {
                 session.recoverMessages();
             } catch (RollbackFailedException e1) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             "GSMessageImpl.acknowledge(): Failed to recover messages of transaction " +
                                     session.getTransaction() + e1.orig);
                 }
@@ -328,8 +329,8 @@ public class GSMessageImpl extends MetaDataEntry implements Externalizable, IRep
                 try {
                     session.renewTransaction();
                 } catch (TransactionCreateException e) {
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE,
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error(
                                 "GSMessageImpl.acknowledge(): Failed to renew transaction");
                     }
                     JMSException je = new JMSException("Failed to renew transaction");

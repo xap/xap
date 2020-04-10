@@ -85,8 +85,9 @@ import java.rmi.registry.Registry;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -195,8 +196,8 @@ import static com.j_spaces.core.Constants.StorageAdapter.PERSISTENT_ENABLED_PROP
  */
 @com.gigaspaces.api.InternalApi
 public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAdmin {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONTAINER);
-    private static final Logger licenseLogger = Logger.getLogger("com.gigaspaces.license");
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONTAINER);
+    private static final Logger licenseLogger = LoggerFactory.getLogger("com.gigaspaces.license");
     /**
      * Maximum delay for unexport attempts
      */
@@ -365,8 +366,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
         try {
             _containerStub = new LRMIJSpaceContainer(this, (IJSpaceContainer) _containerExporter.export(this), _containerName);
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to exports the remote object for <" + getName() + "> container: ", ex);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to exports the remote object for <" + getName() + "> container: ", ex);
         }
 
         try {
@@ -375,7 +376,7 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
             try {
                 shutdownInternal();
             } catch (Exception e2) {
-                _logger.log(Level.FINE, "Could not shutdown cleanly after failed initialization.", e);
+                _logger.debug("Could not shutdown cleanly after failed initialization.", e);
             }
             throw e;
         }
@@ -401,8 +402,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
              * embedded space inside Application server without granting implicit
              * policy permissions.
              */
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to add the sun.security.provider.Sun SecurityManager: " + e.toString(), e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to add the sun.security.provider.Sun SecurityManager: " + e.toString(), e);
         }
     }
 
@@ -420,8 +421,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                 Runtime.getRuntime().addShutdownHook(shutdownHook);
             }
         } catch (Throwable t) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Failed to add ShutdownHook for <" + getName() + "> container: ", t);
+            if (_logger.isWarnEnabled())
+                _logger.warn("Failed to add ShutdownHook for <" + getName() + "> container: ", t);
         }
 
         return shutdownHook;
@@ -468,8 +469,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
             try {
                 com.j_spaces.jmx.JMXProvider.registerContainerMBean(_containerName, this);
             } catch (Throwable ex) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.log(Level.WARNING, "Failed registering ContainerMBean: "
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn("Failed registering ContainerMBean: "
                             + ex.toString(), ex);
                 }
             }
@@ -477,8 +478,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
             com.j_spaces.jmx.JMXProvider.registerTransportMBean(_containerName);
             com.j_spaces.jmx.JMXProvider.registerLocalTimeMBean(_containerName);
         } else {
-            if (_logger.isLoggable(Level.INFO)) {
-                _logger.log(Level.INFO, "MBean Server did not start since the JMX support is disabled.");
+            if (_logger.isInfoEnabled()) {
+                _logger.info("MBean Server did not start since the JMX support is disabled.");
             }
         }
 
@@ -487,7 +488,7 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
         if (Boolean.getBoolean(SystemProperties.ENV_REPORT)) {
             StringBuilder envDumpInfo = getSystemDump();
 
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 _logger.info("\n " + envDumpInfo.toString());
             }
         }
@@ -540,8 +541,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
             if (!unexported)
                 _containerExporter.unexport(true);
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, ex.toString(), ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(ex.toString(), ex);
             }
         }
     }
@@ -636,8 +637,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
 
             // throw exception if [space-config] tag not found
             if (spConfNL.getLength() == 0) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("<"
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("<"
                             + SPACE_CONFIG
                             + "> tag does not exist in "
                             + m_configDirectory
@@ -653,8 +654,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
         if (m_ContainerFile != null && m_ContainerFile.exists()) {
             loadSpacesFromXMLFile(builder);
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("This container " + _containerName
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("This container " + _containerName
                         + " loaded successful from " + m_ContainerFile + " XML file.");
             }
         }
@@ -807,8 +808,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                     try {
                         updateContainerXML();
                     } catch (Exception ex) {
-                        if (_logger.isLoggable(Level.WARNING))
-                            _logger.log(Level.WARNING, "Fail to update " + _containerName + " container XML", ex);
+                        if (_logger.isWarnEnabled())
+                            _logger.warn("Fail to update " + _containerName + " container XML", ex);
                     }
 
                     if (isJMXEnabled())
@@ -830,8 +831,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                         sf.delete();
                     }
 
-                    if (_logger.isLoggable(Level.SEVERE))
-                        _logger.log(Level.SEVERE, "Failed to create <" + spaceName + "> space", ex);
+                    if (_logger.isErrorEnabled())
+                        _logger.error("Failed to create <" + spaceName + "> space", ex);
 
                     throw new CreateException("Failed to create <" + spaceName + "> space", ex);
                 }
@@ -867,8 +868,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                     // opened
                     _containerEntry.getSpaceImpl().shutdown(true, false);
                 } catch (RemoteException ex) {
-                    if (_logger.isLoggable(Level.WARNING))
-                        _logger.log(Level.WARNING, "Failed to destroy <" + spaceName + "> space", ex);
+                    if (_logger.isWarnEnabled())
+                        _logger.warn("Failed to destroy <" + spaceName + "> space", ex);
 
                     throw new DestroyedFailedException("Failed to destroy <" + spaceName + "> space", ex);
                 }
@@ -905,15 +906,15 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                 File sf = new File(m_configDirectory + File.separator + spaceName + ".xml");
                 sf.delete();
 
-                if (_logger.isLoggable(Level.INFO))
+                if (_logger.isInfoEnabled())
                     _logger.info("The <" + spaceName + "> space of <" + _containerName + "> container was destroyed successfully.");
 
                 // Update container XML
                 try {
                     updateContainerXML();
                 } catch (Exception ex) {
-                    if (_logger.isLoggable(Level.WARNING))
-                        _logger.log(Level.WARNING, "Fail to update " + _containerName + " container XML", ex);
+                    if (_logger.isWarnEnabled())
+                        _logger.warn("Fail to update " + _containerName + " container XML", ex);
                 }
 
                 if (isJMXEnabled())
@@ -1011,16 +1012,16 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                 try {
                     com.j_spaces.jmx.JMXProvider.unregisterContainerMBean(this);
                 } catch (Exception ex) {
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE, ex.toString(), ex);
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error(ex.toString(), ex);
                     }
                 }
             }
             try {
                 com.j_spaces.jmx.JMXProvider.unregisterTransportMBean(_containerName);
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, ex.toString(), ex);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(ex.toString(), ex);
                 }
             }
 
@@ -1041,12 +1042,12 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                 notifyAll();
             }
 
-            if (_logger.isLoggable(Level.INFO))
+            if (_logger.isInfoEnabled())
                 _logger.info("Container <" + _containerName + "> shutdown completed");
 
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to shutdown <" + _containerName + "> container", ex);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to shutdown <" + _containerName + "> container", ex);
         } finally {
             /** Write to the disk indication that container was close successfully. */
             if (Boolean.getBoolean(GracefulContainerShutDown.GRACEFUL_SHUTDOWN))
@@ -1057,8 +1058,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                 if (_shutdownHook != null)
                     Runtime.getRuntime().removeShutdownHook(_shutdownHook);
             } catch (Throwable t) {
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.log(Level.WARNING, "Failed to remove ShutdownHook for <" + getName() + "> container: ", t);
+                if (_logger.isWarnEnabled())
+                    _logger.warn("Failed to remove ShutdownHook for <" + getName() + "> container: ", t);
             }
         }
     }
@@ -1095,8 +1096,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
         if (m_ContainerFile != null && !m_ContainerFile.exists()) {
             m_ContainerFile.createNewFile();
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Created new " + m_ContainerFile + " XML file for "
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Created new " + m_ContainerFile + " XML file for "
                         + _containerName + " container.");
             }
         }
@@ -1130,8 +1131,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
     synchronized public void updateContainerXMLTree(String spaceName,
                                                     JSpaceAttributes spaceAttr) {
         if (m_rootSpaceElement == null) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Fail to update the " + _containerName
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Fail to update the " + _containerName
                         + " container XML file for " + spaceName
                         + " space; the DOM element for spaces is null");
             }
@@ -1310,8 +1311,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
 
                 loadSpace(spaceName, spaceAttr);
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.log(Level.WARNING, "Exception occurs during loading "
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn("Exception occurs during loading "
                             + spaceName + " from xml.", ex);
                 }
             }
@@ -1341,22 +1342,22 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                     spaceName);
             clusterConfigOutput = clusXml.getClusterConfigDebugOutput();
 
-            if (clusterConfigOutput != null && _logger.isLoggable(Level.FINE)) {
-                _logger.fine("Cluster Config for space <" + spaceName + " > \n"
+            if (clusterConfigOutput != null && _logger.isDebugEnabled()) {
+                _logger.debug("Cluster Config for space <" + spaceName + " > \n"
                         + clusterConfigOutput.toString());
             }
 
             clusterPolicy = clusXml.createClusterPolicy(_containerName + ":"
                     + spaceName);
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, ex.toString(), ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(ex.toString(), ex);
             }
             throw new CreateException("Failed to create cluster policy", ex);
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, clusterPolicy.toString());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(clusterPolicy.toString());
         }
 
         return clusterPolicy;
@@ -1601,7 +1602,7 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                 if (spaceSchemaInputStream != null)
                     schemaFileSetAndExists = true;
                 else {
-                    if (_logger.isLoggable(Level.WARNING)) {
+                    if (_logger.isWarnEnabled()) {
                         _logger.info("The requested space schema <"
                                 + schemaName
                                 + "> does not exist in the resource bundle");
@@ -1631,9 +1632,9 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                     JProperties.setUrlWithSchema(fullSpaceName, spaceAttr.getCustomProperties(), spaceSchemaInputStream);
                     // JProperties.setDefaultSpaceProperties( spaceSchemaInputStream
                     // );
-                    Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
-                    if (logger.isLoggable(Level.FINE)) {
-                        logger.fine("Loaded the requested space schema < "
+                    Logger logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Loaded the requested space schema < "
                                 + schemaName
                                 + " > to be used for the < " + spaceName
                                 + " > space configuration.");
@@ -1701,7 +1702,7 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                     // set <code>Properties</code> object of created space
                     JProperties.setUrlWithoutSchema(fullSpaceName, spaceAttr.getCustomProperties(), spaceFileURL);
 
-                    if (_logger.isLoggable(Level.INFO)) {
+                    if (_logger.isInfoEnabled()) {
                         _logger.info("XML configuration file " + spaceName
                                 + ".xml created successfully");
                     }
@@ -1728,9 +1729,9 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                                         + IS_CLUSTER_SPACE_PROP,
                                 Boolean.TRUE.toString());
 
-                    Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
-                    if (logger.isLoggable(Level.FINE)) {
-                        logger.fine("Loaded the requested space schema < "
+                    Logger logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Loaded the requested space schema < "
                                 + spaceAttr.getSchemaName()
                                 + " > to be used for the < " + spaceName
                                 + " > space configuration.");
@@ -1751,8 +1752,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
         } catch (com.gigaspaces.config.ConfigurationException sce) {
             throw sce;
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, ex.toString()
+            if (_logger.isWarnEnabled()) {
+                _logger.warn(ex.toString()
                         + " exception occurred during < " + spaceName
                         + " > space configuration setup.", ex);
             }
@@ -1803,13 +1804,13 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                 attrStream.close();
             }
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("The " + m_ContainerFile + " XML file for "
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("The " + m_ContainerFile + " XML file for "
                         + _containerName + " container has been updated");
             }
         } catch (FileNotFoundException ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "FileNotFoundException: ", ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error("FileNotFoundException: ", ex);
             }
         } /* catch */
     }
@@ -1926,8 +1927,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                                 _containerName,
                                 true, schemaProperties.getFullPath());
                     } catch (SpaceConfigurationException exc) {
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE,
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error(
                                     "An exception occurred while loading space configuration for container: "
                                             + _containerName,
                                     exc);
@@ -1973,8 +1974,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                                             _containerName,
                                             true, fullSpaceSchemaLocation);
                                 } catch (SpaceConfigurationException exc) {
-                                    if (_logger.isLoggable(Level.SEVERE)) {
-                                        _logger.log(Level.SEVERE,
+                                    if (_logger.isErrorEnabled()) {
+                                        _logger.error(
                                                 "An exception occurred while loading space configuration for container: "
                                                         + _containerName,
                                                 exc);
@@ -1994,8 +1995,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                 } // end of if ( allSchemaFiles != null )
 
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, ex.toString(), ex);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(ex.toString(), ex);
                 }
             }
             _allSpaceSchemasMap = allSpaceSchemasMap;
@@ -2044,8 +2045,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
 
                 JProperties.setInputStream(_containerName, schemaInputStream, null);
             } // if no containerUpdate
-            else if (_logger.isLoggable(Level.WARNING)) {
-                _logger.warning("Remote Access Denied. Unable to update the configuration file: "
+            else if (_logger.isWarnEnabled()) {
+                _logger.warn("Remote Access Denied. Unable to update the configuration file: "
                         + containerConfigURL + " via FTP/HTTP protocol.");
             }
 
@@ -2144,7 +2145,7 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                             registry.list();
                         } catch (RemoteException exc) {
                             isPortOccupiedByAnotherAppl = true;
-                            if (_logger.isLoggable(Level.INFO)) {
+                            if (_logger.isInfoEnabled()) {
                                 _logger.info("Failed to run RMI registry on " + jndiPort +
                                         ".Port is busy.");
                             }
@@ -2175,16 +2176,16 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
 
                     String jmxServiceURL = JMXUtilities.createJMXUrl(_rmiHostAndPort);
                     System.setProperty(CommonSystemProperties.JMX_SERVICE_URL, jmxServiceURL);
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.fine("Created RMIRegistry on: < " + _rmiHostAndPort + " >");
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("Created RMIRegistry on: < " + _rmiHostAndPort + " >");
                 } else {
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.fine("Using an already running RMIRegistry on: < " + _rmiHostAndPort + " >");
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("Using an already running RMIRegistry on: < " + _rmiHostAndPort + " >");
                 }
 
             } catch (RemoteException ex) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("RMIRegistry did not start on: < " + _rmiHostAndPort + " >. It might be already running.");
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("RMIRegistry did not start on: < " + _rmiHostAndPort + " >. It might be already running.");
                 }
                 // in case the rmi-registry is already running, we do nothing
             }
@@ -2221,8 +2222,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
             // enabling the Jini Unicast Discovery even if its disabled (by
             // default) in the container configuration.
             JProperties.getContainerProperties(containerName).setProperty(LOOKUP_UNICAST_ENABLED_PROP, String.valueOf(true));
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Enabled the Jini Unicast Discovery on: < " + JProperties.getContainerProperty(
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Enabled the Jini Unicast Discovery on: < " + JProperties.getContainerProperty(
                         containerName, LOOKUP_UNICAST_URL_PROP, LOOKUP_UNICAST_URL_DEFAULT, true) + " >  ");
             }
             return result;
@@ -2233,8 +2234,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                 if (throwable != null)
                     error = throwable.getMessage();
             }
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, "Failed to start an embedded Jini Lookup Service - " + error, ex);
+            if (_logger.isWarnEnabled()) {
+                _logger.warn("Failed to start an embedded Jini Lookup Service - " + error, ex);
             }
             return null;
         }
@@ -2269,8 +2270,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                 if (throwable != null)
                     error = throwable.getMessage();
             }
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, "Failed to start an embedded Mahalo Jini Transaction Manager - " + error, ex);
+            if (_logger.isWarnEnabled()) {
+                _logger.warn("Failed to start an embedded Mahalo Jini Transaction Manager - " + error, ex);
             }
             return null;
         }

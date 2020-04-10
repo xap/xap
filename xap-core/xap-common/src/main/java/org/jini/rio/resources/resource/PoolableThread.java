@@ -17,8 +17,9 @@
 package org.jini.rio.resources.resource;
 
 import java.util.Hashtable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An extension of Thread, PoolableThread instances know how to stay alive and wait in a pool
@@ -48,7 +49,7 @@ public final class PoolableThread extends Thread {
      * A Logger for the poolable
      */
     private static final Logger logger =
-            Logger.getLogger("org.jini.rio.resources.resource.PoolableThread");
+            LoggerFactory.getLogger("org.jini.rio.resources.resource.PoolableThread");
 
     /**
      * A thread that is a good pool citizen.
@@ -102,16 +103,16 @@ public final class PoolableThread extends Thread {
                     }
                 } catch (Throwable t) {
                     /* catch the throwable, and release */
-                    if (logger.isLoggable(Level.FINEST))
-                        logger.log(Level.FINEST,
+                    if (logger.isTraceEnabled())
+                        logger.trace(
                                 "Running poolable thread id=" + threadID,
                                 t);
                 } finally {
                     try {
                         pool.release(this);     // return resource to pool
                     } catch (Exception e) {
-                        if (logger.isLoggable(Level.FINEST))
-                            logger.log(Level.FINEST,
+                        if (logger.isTraceEnabled())
+                            logger.trace(
                                     "Releasing poolable thread " +
                                             "id=" + threadID,
                                     e);

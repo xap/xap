@@ -42,8 +42,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides bootstrapping support for the GigaSpaces Service Grid.
@@ -191,8 +192,8 @@ public class SystemBoot {
             try {
                 registryPort = Integer.parseInt(sPort);
             } catch (NumberFormatException e) {
-                if (logger.isLoggable(Level.FINE))
-                    logger.finest("Bad value for " +
+                if (logger.isDebugEnabled())
+                    logger.trace("Bad value for " +
                             "RMI Registry Port [" + sPort + "]");
             }
         }
@@ -229,7 +230,7 @@ public class SystemBoot {
 
         /* Refetch the system properties */
         addSysProps = sysConfig.getSystemProperties();
-        if (logger.isLoggable(Level.FINE)) {
+        if (logger.isDebugEnabled()) {
             StringBuilder buff = new StringBuilder();
             for (Enumeration<?> en = addSysProps.propertyNames();
                  en.hasMoreElements(); ) {
@@ -238,7 +239,7 @@ public class SystemBoot {
                 buff.append("    ").append(name).append("=").append(value);
                 buff.append("\n");
             }
-            logger.fine("Configured System Properties {\n" +
+            logger.debug("Configured System Properties {\n" +
                     buff.toString() +
                     "}");
         }
@@ -246,7 +247,7 @@ public class SystemBoot {
         sysProps.putAll(addSysProps);
         System.setProperties(sysProps);
 
-        logger.finest("Full list of System Properties {\n" +
+        logger.trace("Full list of System Properties {\n" +
                 System.getProperties() +
                 "}");
     }
@@ -290,13 +291,13 @@ public class SystemBoot {
             logger = getLogger(processRole);
 
             if (!isSilent) {
-                if (logger.isLoggable(Level.INFO)) {
+                if (logger.isInfoEnabled()) {
                     logger.info("Starting ServiceGrid [user=" + System.getProperty("user.name") +
                             ", command=\"" + command + "\"]");
                 }
 
-                if (logger.isLoggable(Level.FINEST)) {
-                    logger.finest("Security policy=" + System.getProperty("java.security.policy"));
+                if (logger.isTraceEnabled()) {
+                    logger.trace("Security policy=" + System.getProperty("java.security.policy"));
                 }
             }
 
@@ -323,8 +324,8 @@ public class SystemBoot {
             final Collection<Closeable> customServices = new ArrayList<Closeable>();
             for (String service : services) {
                 ServiceDescriptor serviceDescriptor = systemConfig.getServiceDescriptor(service);
-                if (logger.isLoggable(Level.FINE))
-                    logger.log(Level.FINE, "Creating service " + service + (serviceDescriptor == null ? "" :
+                if (logger.isDebugEnabled())
+                    logger.debug("Creating service " + service + (serviceDescriptor == null ? "" :
                     " with serviceDescriptor " + serviceDescriptor));
                 if (serviceDescriptor != null) {
                     serviceDescriptor.create(config);
@@ -347,8 +348,8 @@ public class SystemBoot {
                         try {
                             customService.close();
                         } catch (IOException e) {
-                            if (logger.isLoggable(Level.WARNING))
-                                logger.log(Level.WARNING, "Failed to close service " + customService.toString(), e);
+                            if (logger.isWarnEnabled())
+                                logger.warn("Failed to close service " + customService.toString(), e);
                         }
                     }
 
@@ -381,9 +382,9 @@ public class SystemBoot {
     private static void reportError(Throwable t, boolean bootError) {
         if (logger != null) {
             if (bootError) {
-                logger.log(Level.SEVERE, "Error while booting system - " + t.getMessage());
+                logger.error("Error while booting system - " + t.getMessage());
             } else
-                logger.log(Level.SEVERE, "Error while booting system - ", t);
+                logger.error("Error while booting system - ", t);
         } else {
             if (bootError) {
                 System.err.println("Error while booting system - " + t.getMessage());
@@ -472,7 +473,7 @@ public class SystemBoot {
         final long scheduledSystemBootTime = Long.parseLong(System.getProperty("gs.start.scheduledSystemBootTime", "10000"));
         final boolean loadCleanerEnabled = System.getProperty("gs.rmi.loaderHandlerCleaner", "true").equals("true");
         final long gcCollectionWarning = Long.parseLong(System.getProperty("gs.gc.collectionTimeThresholdWarning", "60000"));
-        logger.fine("GC collection time warning set to [" + gcCollectionWarning + "ms]");
+        logger.debug("GC collection time warning set to [" + gcCollectionWarning + "ms]");
         final Thread scheduledSystemBootThread = new Thread("GS-Scheduled-System-Boot-Thread") {
             @Override
             public void run() {
@@ -488,7 +489,7 @@ public class SystemBoot {
                     JVMStatistics newStats = JVMHelper.getStatistics();
                     long collectionTime = newStats.getGcCollectionTime() - jvmStats.getGcCollectionTime();
                     if (collectionTime > gcCollectionWarning) {
-                        logger.warning("Long GC collection occurred, took [" + collectionTime + "ms], breached threshold [" + gcCollectionWarning + "]");
+                        logger.warn("Long GC collection occurred, took [" + collectionTime + "ms], breached threshold [" + gcCollectionWarning + "]");
                     }
                     jvmStats = newStats;
 
@@ -506,7 +507,7 @@ public class SystemBoot {
 
     private static void enableDynamicLocatorsIfNeeded() {
         if (AgentHelper.hasAgentId() && AgentHelper.enableDynamicLocators()) {
-            if (logger.isLoggable(Level.INFO)) {
+            if (logger.isInfoEnabled()) {
                 logger.info("Dynamic locators discovery is enabled.");
             }
             System.setProperty(CommonSystemProperties.ENABLE_DYNAMIC_LOCATORS, Boolean.TRUE.toString());
@@ -521,14 +522,14 @@ public class SystemBoot {
             try {
                 systemConfig.getJMXServiceDescriptor().create(config);
             } catch (Exception e) {
-                if (logger.isLoggable(Level.FINEST))
-                    logger.log(Level.FINEST, "Unable to create the MBeanServer", e);
+                if (logger.isTraceEnabled())
+                    logger.trace("Unable to create the MBeanServer", e);
                 else
-                    logger.log(Level.WARNING, "Unable to create the MBeanServer");
+                    logger.warn("Unable to create the MBeanServer");
             }
         } else {
             if (System.getProperty(CommonSystemProperties.JMX_ENABLED_PROP) == null) {
-                if (logger.isLoggable(Level.INFO)) {
+                if (logger.isInfoEnabled()) {
                     logger.info("\n\nJMX is disabled \n\n");
                 }
             }
@@ -600,7 +601,7 @@ public class SystemBoot {
             logFileName += "_" + AgentHelper.getAgentId();
         System.setProperty("gs.logFileName", logFileName);
         GSLogConfigLoader.getLoader(logFileName);
-        return Logger.getLogger(COMPONENT);
+        return LoggerFactory.getLogger(COMPONENT);
     }
 
     /**
@@ -614,8 +615,8 @@ public class SystemBoot {
             if (System.getProperty("sun.rmi.dgc.server.gcInterval") == null)
                 System.setProperty("sun.rmi.dgc.server.gcInterval", "36000000");
         } catch (Exception secExc) {
-            if (logger.isLoggable(Level.WARNING)) {
-                logger.log(Level.WARNING, "Failed to set sun.rmi.dgc.xxx system properties. \n", secExc);
+            if (logger.isWarnEnabled()) {
+                logger.warn("Failed to set sun.rmi.dgc.xxx system properties. \n", secExc);
             }
         }
     }
@@ -1004,7 +1005,7 @@ public class SystemBoot {
         outStream.setIgnore(false);
         errStream.setIgnore(false);
 
-        if (logger.isLoggable(Level.INFO)) {
+        if (logger.isInfoEnabled()) {
             logger.info("Processed shutdown-hooks:\n" + output);
         }
     }

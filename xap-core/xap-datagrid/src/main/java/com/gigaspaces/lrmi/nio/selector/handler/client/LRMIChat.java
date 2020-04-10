@@ -27,7 +27,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by Barak Bar Orion 12/30/14.
@@ -35,7 +36,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class LRMIChat extends AbstractChat<ByteBuffer> {
     @SuppressWarnings("UnusedDeclaration")
-    private static final Logger logger = Logger.getLogger(Constants.LOGGER_LRMI);
+    private static final Logger logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
 
     private ByteBuffer msg;
     final private ByteBuffer headerBuffer;

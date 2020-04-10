@@ -24,8 +24,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A task manager manages a single queue of tasks, and some number of worker threads.  New tasks are
@@ -66,7 +67,7 @@ public class TaskManager {
      * Logger
      */
     protected static final Logger logger =
-            Logger.getLogger("com.sun.jini.thread.TaskManager");
+            LoggerFactory.getLogger("com.sun.jini.thread.TaskManager");
 
     /**
      * Active and pending tasks
@@ -137,7 +138,7 @@ public class TaskManager {
     }
 
     public TaskManager(int maxThreads, long timeout, float loadFactor, String threadName, int retriesOnIdle, int threadPriority) {
-        if (logger.isLoggable(Level.FINEST)) {
+        if (logger.isTraceEnabled()) {
             this.creationStackTrace = new Exception().getStackTrace();
         }
         this.maxThreads = maxThreads;
@@ -176,7 +177,7 @@ public class TaskManager {
     // internal add, not under sync. Should be called within one
     private void addInternal(Task t) {
         tasks.add(t);
-        if (logger.isLoggable(Level.FINEST)) {
+        if (logger.isTraceEnabled()) {
             if (tasks.size() > 50) {
                 StringBuffer sb = new StringBuffer();
                 if (creationStackTrace != null) {
@@ -184,7 +185,7 @@ public class TaskManager {
                         sb.append(creationStackTrace[i]).append("\n");
                     }
                 }
-                logger.warning("Task [" + threadName + "] has more than 50 tasks, consider reconfiguring it. Creation Stack Trace: \n" + sb.toString());
+                logger.warn("Task [" + threadName + "] has more than 50 tasks, consider reconfiguring it. Creation Stack Trace: \n" + sb.toString());
             }
         }
         boolean poke = true;
@@ -254,7 +255,7 @@ public class TaskManager {
             return t.runAfter(roTasks, i);
         } catch (Throwable tt) {
             try {
-                logger.log(Level.WARNING, "Task.runAfter exception", tt);
+                logger.warn("Task.runAfter exception", tt);
             } catch (Throwable ttt) {
             }
             return false;
@@ -452,14 +453,14 @@ public class TaskManager {
                                 isTerminated = terminated;
                             }
 
-                            logger.log(Level.FINER,
+                            logger.debug(
                                     (isTerminated ? "TaskManager was terminated - all tasks interrupted. " : "")
                                             + threadName + " ran [" + task + "] but was interrupted. ", t);
                         } else {
-                            logger.log(Level.WARNING, threadName + " ran [" + task + "] and caught an exception.", t);
+                            logger.warn(threadName + " ran [" + task + "] and caught an exception.", t);
                         }
                     } catch (Throwable logException) {
-                        logger.log(Level.SEVERE, "Ran [" + task + "] but caught exception: " + t + "\nAttempt to log caused: "
+                        logger.error("Ran [" + task + "] but caught exception: " + t + "\nAttempt to log caused: "
                                 , logException);
                     }
                 }

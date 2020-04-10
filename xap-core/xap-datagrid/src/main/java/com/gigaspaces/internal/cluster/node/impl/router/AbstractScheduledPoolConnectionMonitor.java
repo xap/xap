@@ -30,8 +30,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public abstract class AbstractScheduledPoolConnectionMonitor<T, L>
@@ -59,7 +60,7 @@ public abstract class AbstractScheduledPoolConnectionMonitor<T, L>
         _monitorConnectedDelay = monitorConnectedDelay;
         _monitorDisconnectedDelay = monitorDisconnectedDelay;
         _timeUnit = timeUnit;
-        _specificLogger = Logger.getLogger(Constants.LOGGER_REPLICATION_ROUTER
+        _specificLogger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_ROUTER
                 + "." + ReplicationLogUtils.toShortLookupName(_myLookupName));
         _pool = new ScheduledThreadPoolExecutor(corePoolSize,
                 new GSThreadFactory("connection-monitor-thread", true));
@@ -92,8 +93,8 @@ public abstract class AbstractScheduledPoolConnectionMonitor<T, L>
             throw new IllegalArgumentException("Provided connection "
                     + connection + " is already monitored");
 
-        if (_specificLogger.isLoggable(Level.FINEST))
-            _specificLogger.finest(getLogPrefix()
+        if (_specificLogger.isTraceEnabled())
+            _specificLogger.trace(getLogPrefix()
                     + "monitoring disconnected connection "
                     + connection.getTargetLookupName());
 
@@ -120,8 +121,8 @@ public abstract class AbstractScheduledPoolConnectionMonitor<T, L>
             throw new IllegalArgumentException("Provided connection "
                     + connection + " is already monitored");
 
-        if (_specificLogger.isLoggable(Level.FINEST))
-            _specificLogger.finest(getLogPrefix() + "monitoring connected connection "
+        if (_specificLogger.isTraceEnabled())
+            _specificLogger.trace(getLogPrefix() + "monitoring connected connection "
                     + connection.getTargetLookupName() + StringUtils.NEW_LINE
                     + "ServiceID=" + connection.getServiceId());
 
@@ -165,8 +166,8 @@ public abstract class AbstractScheduledPoolConnectionMonitor<T, L>
                 // called updateDisconnected.
                 return;
             }
-            if (_specificLogger.isLoggable(Level.FINE))
-                _specificLogger.fine(getLogPrefix()
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug(getLogPrefix()
                         + "connection disconnection detected "
                         + connection.getTargetLookupName() + reason != null ? " reason - "
                         + reason

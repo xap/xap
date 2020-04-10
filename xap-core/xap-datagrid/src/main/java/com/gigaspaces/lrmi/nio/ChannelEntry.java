@@ -47,8 +47,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -59,7 +60,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class ChannelEntry implements IWriteInterestManager {
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
 
 
     final private Pivot _pivot;
@@ -145,15 +146,15 @@ public class ChannelEntry implements IWriteInterestManager {
             }
             return _reader.readRequest(ctx);
         } catch (ClosedChannelException e) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Failed to read from " + getClientEndPointAddress() + " due to closed channel", e);
+            if (_logger.isDebugEnabled())
+                _logger.debug("Failed to read from " + getClientEndPointAddress() + " due to closed channel", e);
         } catch (IOFilterException e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Closing connection to " + getClientEndPointAddress() + " because of " + e, e);
+            if (_logger.isWarnEnabled())
+                _logger.warn("Closing connection to " + getClientEndPointAddress() + " because of " + e, e);
         } catch (ConnectException e) {
-            _logger.log(Level.WARNING, "Closing connection to " + getClientEndPointAddress() + " because of " + e, e);
+            _logger.warn("Closing connection to " + getClientEndPointAddress() + " because of " + e, e);
         } catch (OutOfMemoryError oome) {
-            _logger.log(Level.WARNING, "Closing connection to " + getClientEndPointAddress() + " because of " + oome + ", message length is " + ctx.dataLength + " bytes", oome);
+            _logger.warn("Closing connection to " + getClientEndPointAddress() + " because of " + oome + ", message length is " + ctx.dataLength + " bytes", oome);
         } catch (Throwable e) {
             _pivot.handleExceptionFromServer(_writer, _reader, e);
         }
@@ -202,8 +203,8 @@ public class ChannelEntry implements IWriteInterestManager {
             _writer.writeReply(packet, reuseBuffer, ctx);
             monitorActivity(monitoringId);
         } catch (MarshalContextClearedException e) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Caught marshal context cleared exception, closing connection", e);
+            if (_logger.isDebugEnabled())
+                _logger.debug("Caught marshal context cleared exception, closing connection", e);
             _pivot.closeConnection(this);
             throw e;
         } catch (Exception ex) {
@@ -336,11 +337,11 @@ public class ChannelEntry implements IWriteInterestManager {
 
             return true;
         } catch (IOException e) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Failed to read protocol header from " + getClientEndPointAddress() + " due to IOException", e);
+            if (_logger.isDebugEnabled())
+                _logger.debug("Failed to read protocol header from " + getClientEndPointAddress() + " due to IOException", e);
         } catch (Throwable t) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to read protocol header from " + getClientEndPointAddress(), t);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to read protocol header from " + getClientEndPointAddress(), t);
         }
         return false;
     }
@@ -360,8 +361,8 @@ public class ChannelEntry implements IWriteInterestManager {
             if (StringUtils.hasText(hostName) && !_rejectedProtocolHosts.containsKey(hostName)) {
                 long currentTime = SystemTime.timeMillis();
                 _rejectedProtocolHosts.put(hostName, currentTime);
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.warning("Incoming communication from " + getClientEndPointAddress() + " using unrecognized protocol, closing channel");
+                if (_logger.isWarnEnabled())
+                    _logger.warn("Incoming communication from " + getClientEndPointAddress() + " using unrecognized protocol, closing channel");
             }
         }
     }

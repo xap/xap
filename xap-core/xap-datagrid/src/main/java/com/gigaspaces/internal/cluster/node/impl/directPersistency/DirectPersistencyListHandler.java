@@ -25,8 +25,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_SYNC_LIST_MAX_SIZE_IN_MEMORY_DEFAULT;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_SYNC_LIST_MAX_SIZE_IN_MEMORY_PROP;
@@ -40,7 +41,7 @@ import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_SYNC_LIST_M
 @com.gigaspaces.api.InternalApi
 public class DirectPersistencyListHandler {
 
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_DIRECT_PERSISTENCY);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_DIRECT_PERSISTENCY);
     private final static int NUM_MEM_SEGMENTS = 8;
 
     final int MAX_ENTRIES_IN_MEMORY;
@@ -119,8 +120,8 @@ public class DirectPersistencyListHandler {
     public void insertToPersistentSyncListFromEmbeddedList(IDirectPersistencyOpInfo o, boolean onlyIfNotExists) {
         if (onlyIfNotExists) {//check existance of the list record. can exist in case of initial load
             if (_ioHandler.get(o.getGenerationId(), o.getSequenceNumber()) != null) {
-                if (_logger.isLoggable(Level.FINER)) {
-                    _logger.finer("[" + _handler.getSpaceEngine().getFullSpaceName() + "] DirectPersistencyListHandler will not move " + o +
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("[" + _handler.getSpaceEngine().getFullSpaceName() + "] DirectPersistencyListHandler will not move " + o +
                             " from embedded sync list to persistent sync list because it is already there");
                 }
                 return;
@@ -157,8 +158,8 @@ public class DirectPersistencyListHandler {
         e.setInMainList();
         // add op into sync memory segment only if it is NOT an old generation operation
         if (!_handler.isEmbeddedListUsed() || (e.getGenerationId() == _handler.getCurrentGenerationId())) {
-            if (_logger.isLoggable(Level.FINER)) {
-                _logger.finer("[" + _handler.getSpaceEngine().getFullSpaceName() + "] DirectPersistencyListHandler adding to SyncList: uid= " + e.getUid() + " ,redokey= " + e.getRedoKey());
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("[" + _handler.getSpaceEngine().getFullSpaceName() + "] DirectPersistencyListHandler adding to SyncList: uid= " + e.getUid() + " ,redokey= " + e.getRedoKey());
             }
             _memSegments[MemorySegment.getMemSegmentNumber(e)].add(e);
         }
@@ -211,8 +212,8 @@ public class DirectPersistencyListHandler {
 
 
     Iterator<String> getRecoveryIterator() {
-        if (_logger.isLoggable(Level.FINER)) {
-            _logger.finer("[" + _handler.getSpaceEngine().getFullSpaceName() + "] DirectPersistencyListHandler getting entries to recover");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("[" + _handler.getSpaceEngine().getFullSpaceName() + "] DirectPersistencyListHandler getting entries to recover");
         }
         return new DirectPersistencyRecoveryIterator(this);
     }
@@ -222,8 +223,8 @@ public class DirectPersistencyListHandler {
     void cleanPreviousGenerationsOps() {
         List<IDirectPersistencyOpInfo> toRemove = new LinkedList<IDirectPersistencyOpInfo>();
 
-        if (_logger.isLoggable(Level.FINER)) {
-            _logger.finer("[" + _handler.getSpaceEngine().getFullSpaceName() + "] DirectPersistencyListHandler cleanPreviousGenerationsOps");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("[" + _handler.getSpaceEngine().getFullSpaceName() + "] DirectPersistencyListHandler cleanPreviousGenerationsOps");
         }
 
         Iterator<IDirectPersistencyOpInfo> prevGenIter = _ioHandler.iterateOps(false/*currentGeneration*/);
@@ -438,8 +439,8 @@ public class DirectPersistencyListHandler {
                     break;
                 //remove this record from disk and memory
                 _listHandler.getIoHandler().remove(e);
-                if (_logger.isLoggable(Level.FINER)) {
-                    _logger.finer("[" + _listHandler._handler.getSpaceEngine().getFullSpaceName() + "] DirectPersistencyListHandler received redo log confirmation on uid= " + e.getUid() + " ,redokey= " + e.getRedoKey());
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("[" + _listHandler._handler.getSpaceEngine().getFullSpaceName() + "] DirectPersistencyListHandler received redo log confirmation on uid= " + e.getUid() + " ,redokey= " + e.getRedoKey());
                 }
                 iter.remove();
                 removed++;

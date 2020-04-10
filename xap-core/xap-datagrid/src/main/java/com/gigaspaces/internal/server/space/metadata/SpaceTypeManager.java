@@ -54,8 +54,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -63,7 +64,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class SpaceTypeManager {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_TYPEMANAGER);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_TYPEMANAGER);
     private static final boolean SUPPORT_CHECKSUM = Boolean.parseBoolean(
             System.getProperty(SystemProperties.TYPE_CHECKSUM_VALIDATION, SystemProperties.TYPE_CHECKSUM_VALIDATION_DEFAULT));
 
@@ -331,11 +332,11 @@ public class SpaceTypeManager {
         localTypeMap.put(typeName, serverTypeDesc);
 
         // Log:
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "Created ServerTypeDesc for type [" + typeName + "]." + getClientAddressAddition());
-            if (_logger.isLoggable(Level.FINEST))
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Created ServerTypeDesc for type [" + typeName + "]." + getClientAddressAddition());
+            if (_logger.isTraceEnabled())
                 logTypeMap(localTypeMap);
-            else if (_logger.isLoggable(Level.FINER))
+            else if (_logger.isDebugEnabled())
                 logServerTypeDesc(serverTypeDesc, LogLevel.DEBUG);
         }
 
@@ -353,11 +354,11 @@ public class SpaceTypeManager {
 
         serverTypeDesc.setTypeDesc(typeDesc);
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "Activated ServerTypeDesc [" + typeName + "]." + getClientAddressAddition());
-            if (_logger.isLoggable(Level.FINEST))
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Activated ServerTypeDesc [" + typeName + "]." + getClientAddressAddition());
+            if (_logger.isTraceEnabled())
                 logTypeMap(localTypeMap);
-            else if (_logger.isLoggable(Level.FINER))
+            else if (_logger.isDebugEnabled())
                 logServerTypeDesc(serverTypeDesc, LogLevel.DEBUG);
         }
 
@@ -427,8 +428,8 @@ public class SpaceTypeManager {
             // volatile - exchange references to the new updated type table
             _typeMap = typeMapCopy;
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "setting " + typeDesc.getTypeName() + " to inActive");
+            if (_logger.isDebugEnabled())
+                _logger.debug("setting " + typeDesc.getTypeName() + " to inActive");
         }
     }
 
@@ -462,8 +463,8 @@ public class SpaceTypeManager {
         printTypeDesc(sb, clientTypeDesc, "Operation type description:\n");
 
         final String message = sb.toString();
-        if (_logger.isLoggable(Level.SEVERE))
-            _logger.log(Level.SEVERE, message);
+        if (_logger.isErrorEnabled())
+            _logger.error(message);
 
         throw new DetailedUnusableEntryException(message);
     }
@@ -617,13 +618,13 @@ public class SpaceTypeManager {
     }
 
     private static void logEnter(String methodName, String argName, Object argValue) {
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.log(Level.FINEST, "Entered " + methodName + ", " + argName + "=[" + argValue + "].");
+        if (_logger.isTraceEnabled())
+            _logger.trace("Entered " + methodName + ", " + argName + "=[" + argValue + "].");
     }
 
     private static void logExit(String methodName, String argName, Object argValue) {
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.log(Level.FINEST, "Finished " + methodName + ", " + argName + "=[" + argValue + "].");
+        if (_logger.isTraceEnabled())
+            _logger.trace("Finished " + methodName + ", " + argName + "=[" + argValue + "].");
     }
 
     public void loadSpaceTypes(SpaceURL url)

@@ -19,7 +19,7 @@ package com.gigaspaces.internal.cluster.node.impl.replica;
 import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.storage.NotifyTemplateHolder;
 
-import java.util.logging.Level;
+
 
 
 @com.gigaspaces.api.InternalApi
@@ -32,14 +32,14 @@ public class BroadcastNotifyTemplateReplicaProducer
 
     protected boolean isRelevant(NotifyTemplateHolder notifyTemplate) {
         if (!notifyTemplate.isBroadcast()) {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest(getLogPrefix() + "filtered notify template " + notifyTemplate.getClassName() + " Uid=" + notifyTemplate.getUID() + " since it is not a broadcast template");
+            if (_logger.isTraceEnabled())
+                _logger.trace(getLogPrefix() + "filtered notify template " + notifyTemplate.getClassName() + " Uid=" + notifyTemplate.getUID() + " since it is not a broadcast template");
             return false;
         }
 
         if (notifyTemplate.getXidOriginatedTransaction() != null) {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest(getLogPrefix() + "filtered notify template " + notifyTemplate.getClassName() + " Uid=" + notifyTemplate.getUID() + " since it is under transaction");
+            if (_logger.isTraceEnabled())
+                _logger.trace(getLogPrefix() + "filtered notify template " + notifyTemplate.getClassName() + " Uid=" + notifyTemplate.getUID() + " since it is under transaction");
             return false;
         }
 

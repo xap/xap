@@ -19,7 +19,7 @@ package com.gigaspaces.internal.cluster.node.impl.router;
 import com.gigaspaces.internal.cluster.node.impl.router.spacefinder.IReplicationConnectionProxy;
 
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
+
 
 /**
  * A replication connection monitors for connection that are established with a direct connection
@@ -62,8 +62,8 @@ public class DirectConnectionScheduledPoolConnectionMonitor
 
         @Override
         public void run() {
-            if (_specificLogger.isLoggable(Level.FINER))
-                _specificLogger.finer(getLogPrefix()
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug(getLogPrefix()
                         + "trying to establish connection with "
                         + _connection.getTargetLookupName() + " ["
                         + _connection.getFinderURL() + "]");
@@ -72,8 +72,8 @@ public class DirectConnectionScheduledPoolConnectionMonitor
                 IReplicationConnectionProxy directConnectionProxy = _connection.getTag();
                 _connection.getRouter().pingStub(directConnectionProxy);
                 synchronized (_connection.getStateLock()) {
-                    if (_specificLogger.isLoggable(Level.FINE))
-                        _specificLogger.fine(getLogPrefix()
+                    if (_specificLogger.isDebugEnabled())
+                        _specificLogger.debug(getLogPrefix()
                                 + "established connection with "
                                 + _connection.getTargetLookupName() + " ["
                                 + _connection.getFinderURL() + "]");

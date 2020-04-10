@@ -32,14 +32,15 @@ import com.j_spaces.core.client.SQLQuery;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author kobi on 20/12/16.
  * @since 12.1
  */
 public class BlobStoreInternalCacheFilter {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
 
     final private SpaceEngine _spaceEngine;
     final private List<SQLQuery> _sqlQueries;

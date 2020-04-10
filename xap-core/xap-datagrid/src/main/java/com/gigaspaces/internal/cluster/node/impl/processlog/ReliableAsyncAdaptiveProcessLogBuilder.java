@@ -36,8 +36,9 @@ import com.gigaspaces.internal.cluster.node.impl.processlog.multisourcesinglefil
 import com.gigaspaces.internal.cluster.node.impl.processlog.reliableasync.IReplicationReliableAsyncTargetProcessLog;
 import com.gigaspaces.internal.cluster.node.impl.processlog.sync.IReplicationSyncTargetProcessLog;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -200,8 +201,8 @@ public class ReliableAsyncAdaptiveProcessLogBuilder
     private void verifyReplicationModeOnDistributedTransactionProcessingConfiguration(
             Logger specificLogger) {
         if (_distributedTransactionProcessingConfiguration.isOverriden()) {
-            if (specificLogger.isLoggable(Level.WARNING))
-                specificLogger.log(Level.WARNING,
+            if (specificLogger.isWarnEnabled())
+                specificLogger.warn(
                         "Distributed transaction processing configuration has been set but replication mode was not set to '" + MULTI_SOURCE_MODE + "' - configuration will be ignored");
         }
     }

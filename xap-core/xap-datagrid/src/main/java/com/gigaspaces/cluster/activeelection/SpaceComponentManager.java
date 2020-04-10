@@ -23,8 +23,9 @@ import com.sun.jini.admin.DestroyAdmin;
 import java.rmi.RemoteException;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -60,7 +61,7 @@ public class SpaceComponentManager
     private LinkedList<ISpaceComponentsHandler> _componentsHandlers = new LinkedList<ISpaceComponentsHandler>();
 
     // logger
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLUSTER_ACTIVE_ELECTION);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLUSTER_ACTIVE_ELECTION);
 
     /**
      * Constructor.
@@ -127,16 +128,16 @@ public class SpaceComponentManager
             //  one of the components
             // Shutdown the space
             try {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             "Failed to initialize space components, shutting down the space.",
                             e);
                 }
                 ((DestroyAdmin) _space.getAdmin()).destroy();
 
             } catch (RemoteException e1) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, "Failed to shutdown space.", e1);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error("Failed to shutdown space.", e1);
                 }
 
             }
@@ -199,8 +200,8 @@ public class SpaceComponentManager
 //                    _space.stopInternal();
 //                    _space.startInternal();
 //                } catch (RemoteException e) {
-//                    if (_logger.isLoggable(Level.WARNING)) {
-//                        _logger.log(Level.WARNING, "Failed moving to backup", e);
+//                    if (_logger.isWarnEnabled()) {
+//                        _logger.warn("Failed moving to backup", e);
 //                    }
 //                }
 

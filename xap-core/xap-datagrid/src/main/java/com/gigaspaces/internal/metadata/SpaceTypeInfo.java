@@ -74,15 +74,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class SpaceTypeInfo implements Externalizable {
     private static final long serialVersionUID = 1L;
     private static final byte OldVersionId = 2;
 
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_METADATA_POJO);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_METADATA_POJO);
 
     private static final String GS_XML_SUFFIX = ".gs.xml";
 
@@ -310,16 +311,16 @@ public class SpaceTypeInfo implements Externalizable {
         try {
             return constructor.newInstance();
         } catch (InvocationTargetException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
             throw new SpaceMetadataException("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
         } catch (InstantiationException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
             throw new SpaceMetadataException("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
         } catch (IllegalAccessException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
             throw new SpaceMetadataException("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
         }
     }
@@ -402,16 +403,16 @@ public class SpaceTypeInfo implements Externalizable {
 
             return result;
         } catch (InvocationTargetException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
             throw new SpaceMetadataException("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
         } catch (InstantiationException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
             throw new SpaceMetadataException("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
         } catch (IllegalAccessException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
             throw new SpaceMetadataException("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
         }
     }
@@ -647,19 +648,19 @@ public class SpaceTypeInfo implements Externalizable {
                 String superClass = XmlUtils.getAttribute(propertyNode, "class-ref");
                 String actualSuperClass = _superClasses[1];
                 if (!actualSuperClass.equals(superClass)) {
-                    if (_logger.isLoggable(Level.WARNING))
-                        _logger.log(Level.WARNING, "Metadata for type [" + _type.getName() +
+                    if (_logger.isWarnEnabled())
+                        _logger.warn("Metadata for type [" + _type.getName() +
                                 "] defines class-ref [" + superClass +
                                 "] but actual super class is [" + actualSuperClass + "]. The actual super class will be used. " +
                                 "To avoid this message please remove the class-ref definition (it is not required).");
-                } else if (_logger.isLoggable(Level.INFO))
-                    _logger.log(Level.INFO, "Specifying class reference in gs.xml is no longer required (see type " + _type.getName() + ").");
+                } else if (_logger.isInfoEnabled())
+                    _logger.info("Specifying class reference in gs.xml is no longer required (see type " + _type.getName() + ").");
             } else if (nodeName.equals("compound-index")) {// format = 		<compound-index paths="p1 p2"></compound-index>
                 if (compounds == null)
                     compounds = new ArrayList<Node>();
                 compounds.add(propertyNode);
-            } else if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Unrecognized xml node: " + nodeName);
+            } else if (_logger.isWarnEnabled())
+                _logger.warn("Unrecognized xml node: " + nodeName);
         }
 
         //do we have compound indices to cater for ?
@@ -667,7 +668,7 @@ public class SpaceTypeInfo implements Externalizable {
             for (Node c : compounds) {
                 String paths = XmlUtils.getAttribute(c, "paths", null);
                 if (paths == null || paths.equals("")) {
-                    _logger.log(Level.SEVERE, "missing paths in xml definition of compound index class " + _type.getName());
+                    _logger.error("missing paths in xml definition of compound index class " + _type.getName());
                     throw new IllegalArgumentException("missing paths in xml definition of compound index class " + _type.getName());
                 }
                 //parse the paths
@@ -675,7 +676,7 @@ public class SpaceTypeInfo implements Externalizable {
                 StringTokenizer st = new StringTokenizer(paths, delim);
                 int pnum = st.countTokens();
                 if (pnum < 2) {
-                    _logger.log(Level.SEVERE, "invalid paths in xml definition of compound index class " + _type.getName() + " paths=" + paths);
+                    _logger.error("invalid paths in xml definition of compound index class " + _type.getName() + " paths=" + paths);
                     throw new IllegalArgumentException("invalid paths in xml definition of compound index class " + _type.getName() + " paths=" + paths);
                 }
                 String[] ps = new String[pnum];
@@ -688,7 +689,7 @@ public class SpaceTypeInfo implements Externalizable {
                 try {
                     addCompoundIndex(ps, indexType.toSpaceIndexType(), unique);
                 } catch (Exception ex) {
-                    _logger.log(Level.SEVERE, "creating a compound index from GSXML failed class " + _type.getName() + " exception=" + ex);
+                    _logger.error("creating a compound index from GSXML failed class " + _type.getName() + " exception=" + ex);
                     throw new RuntimeException("creating a compound index from GSXML failed class " + _type.getName() + " exception=" + ex);
                 }
             }
@@ -1388,7 +1389,7 @@ public class SpaceTypeInfo implements Externalizable {
         }       
         
 		/*
-        if (_logger.isLoggable(Level.WARNING) && _superTypeInfo != null)
+        if (_logger.isWarnEnabled() && _superTypeInfo != null)
 			validateWarnings();
 		*/
     }
@@ -1445,18 +1446,18 @@ public class SpaceTypeInfo implements Externalizable {
     private void validateWarnings() {
         // No space properties:
         if (_spaceProperties.length == 0) {
-            _logger.log(Level.WARNING, "Type [" + _type.getName() + "] does not have any properties which can be saved in a space.");
+            _logger.warn("Type [" + _type.getName() + "] does not have any properties which can be saved in a space.");
             // Skip remaining warnings - no point bothering the user about them for now.
             return;
         }
 
         // No explicit routing/id:
         if (_routingProperty == null && (_idProperty == null || _idAutoGenerate))
-            _logger.log(Level.WARNING, "Type [" + _type.getName() + "] does not define a routing property or an id property with autoGenerate=false - The routing property will be selected implicitly.\n"
+            _logger.warn("Type [" + _type.getName() + "] does not define a routing property or an id property with autoGenerate=false - The routing property will be selected implicitly.\n"
                     + "Consider setting a routing property explicitly to avoid unexpected behaviour or errors.");
 
         if (_indexes.isEmpty())
-            _logger.log(Level.WARNING, "Type [" + _type.getName() + "] does not have any indexes - this may impact queries performance.\n"
+            _logger.warn("Type [" + _type.getName() + "] does not have any indexes - this may impact queries performance.\n"
                     + "Consider indexing properties which participate in common queries to improve performance.");
 
 		/* TODO: Validate indexes types.

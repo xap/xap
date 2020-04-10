@@ -41,7 +41,8 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Properties;
 import java.util.StringTokenizer;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -116,7 +117,7 @@ import static com.j_spaces.core.Constants.StorageAdapter.PERSISTENT_ENABLED_PROP
 
 @com.gigaspaces.api.InternalApi
 public class SpaceConfigFactory {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONTAINER);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONTAINER);
 
     public static SpaceConfig createSpaceConfig(Properties schemaProps,
                                                 ClusterPolicy m_ClusterPolicy, String containerName, boolean isSchema, String fullSpaceSchemaLocation)
@@ -368,7 +369,7 @@ public class SpaceConfigFactory {
             if (filterName.equalsIgnoreCase(DEFAULT_FILTER_SECURITY_NAME))// && info.enabled )
             {
                 String schemaRef = fullSpaceSchemaLocation != null ? " [" + fullSpaceSchemaLocation + "] " : " ";
-                _logger.warning("The filter [" + DEFAULT_FILTER_SECURITY_NAME
+                _logger.warn("The filter [" + DEFAULT_FILTER_SECURITY_NAME
                         + "] defined in the space schema file" + schemaRef + "is no longer in use since 7.0.1; Please remove it.");
             }
         }// while filters...

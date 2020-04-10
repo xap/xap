@@ -35,8 +35,9 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_SYNC_LIST_THREAD_INTERVAL_TIME_DEFAULT;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_SYNC_LIST_THREAD_INTERVAL_TIME_PROP;
@@ -50,7 +51,7 @@ import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_SYNC_LIST_T
 @com.gigaspaces.api.InternalApi
 public class DirectPersistencySyncHandler implements IDirectPersistencySyncHandler {
 
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_DIRECT_PERSISTENCY);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_DIRECT_PERSISTENCY);
     private final long _currentGenerationId;
     private final DirectPersistencyListHandler _directPersistencyListHandler;
     private final DirectPersistencySyncListAdmin _admin;
@@ -193,8 +194,8 @@ public class DirectPersistencySyncHandler implements IDirectPersistencySyncHandl
     /* get the prev generation entries- an iterator of uids*/
     @Override
     public Iterator<String> getEntriesForRecovery() {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "space " + _currentSpace + " DirectPersistencySyncHandler: getEntriesForRecovery called");
+        if (_logger.isDebugEnabled())
+            _logger.debug("space " + _currentSpace + " DirectPersistencySyncHandler: getEntriesForRecovery called");
         return _directPersistencyListHandler.getRecoveryIterator();
     }
 
@@ -315,8 +316,8 @@ public class DirectPersistencySyncHandler implements IDirectPersistencySyncHandl
                             if (synced == 0 || !_handler.isOverflow())
                                 Thread.sleep(timeToSleep);
                         } catch (InterruptedException ex) {
-                            if (_handler.getLogger().isLoggable(Level.FINE)) {
-                                _handler.getLogger().warning("[" + _handler._currentSpace + "]" + " DirectPersistencySyncHandler Syncer thread interrupted");
+                            if (_handler.getLogger().isDebugEnabled()) {
+                                _handler.getLogger().warn("[" + _handler._currentSpace + "]" + " DirectPersistencySyncHandler Syncer thread interrupted");
                             }
                             if (_closed)
                                 break;
@@ -328,8 +329,8 @@ public class DirectPersistencySyncHandler implements IDirectPersistencySyncHandl
 
                         moveToOverflowIfNeeded();
                     } catch (Throwable ex) {
-                        if (_handler.getLogger().isLoggable(Level.SEVERE)) {
-                            _handler.getLogger().severe("[" + _handler._currentSpace + "]" + " DirectPersistencySyncHandler Syncer thread got unexpected exception " + ex);
+                        if (_handler.getLogger().isErrorEnabled()) {
+                            _handler.getLogger().error("[" + _handler._currentSpace + "]" + " DirectPersistencySyncHandler Syncer thread got unexpected exception " + ex);
                         }
                         if (_closed)
                             break;
@@ -344,8 +345,8 @@ public class DirectPersistencySyncHandler implements IDirectPersistencySyncHandl
 
         private int handelListIfConfirmationsOccured() {
             if (_backlog == null) {
-                if (_logger.isLoggable(Level.FINE) && _spaceEngine.getSpaceImpl().isPrimary())
-                    _logger.log(Level.FINE, "[" + _handler._currentSpace + "]" + " DirectPersistencySyncHandler:Syncer backlog not set yet");
+                if (_logger.isDebugEnabled() && _spaceEngine.getSpaceImpl().isPrimary())
+                    _logger.debug("[" + _handler._currentSpace + "]" + " DirectPersistencySyncHandler:Syncer backlog not set yet");
                 return 0;
             }
             long confirmed = _backlog.getConfirmed(_peerSpace);
@@ -354,8 +355,8 @@ public class DirectPersistencySyncHandler implements IDirectPersistencySyncHandl
 
             int synced = _directPersistencyListHandler.syncToRedologConfirmation(_handler.getLastConfirmed());
             if (synced > 0) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, "[" + _handler._currentSpace + "]" + " DirectPersistencySyncHandler ripped " + synced + " confirmed=" + _handler.getLastConfirmed() + " confirmed ops, remained in memory=" + _handler._directPersistencyListHandler.getNumMemoryOps() + " overflow=" + _handler.isOverflow());
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("[" + _handler._currentSpace + "]" + " DirectPersistencySyncHandler ripped " + synced + " confirmed=" + _handler.getLastConfirmed() + " confirmed ops, remained in memory=" + _handler._directPersistencyListHandler.getNumMemoryOps() + " overflow=" + _handler.isOverflow());
                 }
             }
             return synced;
@@ -364,8 +365,8 @@ public class DirectPersistencySyncHandler implements IDirectPersistencySyncHandl
         private void moveToOverflowIfNeeded() {
             int overf = _directPersistencyListHandler.moveTooverflowIfNeeded();
             if (overf > 0) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, "[" + _handler._currentSpace + "]" + " DirectPersistencySyncHandler " + overf + " moved to overflow");
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("[" + _handler._currentSpace + "]" + " DirectPersistencySyncHandler " + overf + " moved to overflow");
                 }
             }
 

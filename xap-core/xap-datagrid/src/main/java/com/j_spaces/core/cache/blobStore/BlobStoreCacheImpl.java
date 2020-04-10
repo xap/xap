@@ -32,7 +32,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -43,7 +44,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class BlobStoreCacheImpl implements IBlobStoreCacheImpl{
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
 
     private final int BLOB_STORE_INTERNAL_CACHE_CAPACITY;
 

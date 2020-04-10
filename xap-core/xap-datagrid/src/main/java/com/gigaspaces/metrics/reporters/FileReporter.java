@@ -27,8 +27,9 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author yohana
@@ -36,7 +37,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class FileReporter extends MetricReporter {
-    private static final Logger logger = Logger.getLogger(FileReporter.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(FileReporter.class.getName());
     private static final String NEWLINE = System.getProperty("line.separator");
 
     private final Date date = new Date();
@@ -89,13 +90,13 @@ public class FileReporter extends MetricReporter {
             fw = new FileWriter(file, true);
             fw.write(text);
         } catch (IOException e) {
-            logger.log(Level.WARNING, "Failed to write report to file", e);
+            logger.warn("Failed to write report to file", e);
         }
         if (fw != null) {
             try {
                 fw.close();
             } catch (IOException e) {
-                logger.log(Level.WARNING, "Failed to close FileWriter", e);
+                logger.warn("Failed to close FileWriter", e);
             }
         }
     }

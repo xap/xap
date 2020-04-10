@@ -77,8 +77,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class is a helper utility class that encapsulates the functionality required of an entity
@@ -427,7 +428,7 @@ public class LookupDiscovery implements DiscoveryManagement,
     /* Name of this component; used in config entry retrieval and the logger.*/
     private static final String COMPONENT_NAME = "net.jini.discovery.LookupDiscovery";
     /* Logger used by this utility. */
-    private static final Logger logger = Logger.getLogger(COMPONENT_NAME);
+    private static final Logger logger = LoggerFactory.getLogger(COMPONENT_NAME);
     /**
      * Maximum number of concurrent tasks that can be run in any task manager created by this
      * class.
@@ -631,7 +632,7 @@ public class LookupDiscovery implements DiscoveryManagement,
 
         @Override
         public void run() {
-            logger.finest("LookupDiscovery - Notifier thread started");
+            logger.trace("LookupDiscovery - Notifier thread started");
             while (true) {
                 final NotifyTask task;
                 synchronized (pendingNotifies) {
@@ -674,13 +675,13 @@ public class LookupDiscovery implements DiscoveryManagement,
                                             deepCopy((HashMap) task.groupsMap));
                     /* Log the event info about the lookup(s) */
                     if (firstListener
-                            && (logger.isLoggable(Level.FINEST))) {
+                            && (logger.isTraceEnabled())) {
                         String eType =
                                 new String[]{"discovered",
                                         "discarded",
                                         "changed"}[task.eventType];
                         ServiceRegistrar[] regs = e.getRegistrars();
-                        logger.finest(eType + " event  -- " + regs.length
+                        logger.trace(eType + " event  -- " + regs.length
                                 + " lookup(s)");
                         Map groupsMap = e.getGroups();
                         for (int i = 0; i < regs.length; i++) {
@@ -690,14 +691,14 @@ public class LookupDiscovery implements DiscoveryManagement,
                             } catch (Throwable ex) { /* ignore */ }
                             String[] groups =
                                     (String[]) groupsMap.get(regs[i]);
-                            logger.finest("    " + eType + " locator  = "
+                            logger.trace("    " + eType + " locator  = "
                                     + loc);
                             if (groups.length == 0) {
-                                logger.finest("    " + eType + " group    "
+                                logger.trace("    " + eType + " group    "
                                         + "= NO_GROUPS");
                             } else {
                                 for (int j = 0; j < groups.length; j++) {
-                                    logger.finest("    " + eType
+                                    logger.trace("    " + eType
                                             + " group[" + j + "] = "
                                             + groups[j]);
                                 }//end loop
@@ -770,8 +771,8 @@ public class LookupDiscovery implements DiscoveryManagement,
                                 retryNics = new ArrayList(nics.length);
                             }//endif
                             retryNics.add(nics[i]);
-                            if (logger.isLoggable(Level.FINE)) {
-                                logger.log(Level.FINE, "network interface is bad or not configured for multicast: " + nics[i], e);
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("network interface is bad or not configured for multicast: " + nics[i], e);
                             }//endif
                         }
                     }//end loop
@@ -790,8 +791,8 @@ public class LookupDiscovery implements DiscoveryManagement,
                                 retryNics = new ArrayList(nics.length);
                             }//endif
                             retryNics.add(nics[i]);
-                            if (logger.isLoggable(Level.SEVERE)) {
-                                logger.log(Level.SEVERE, "network interface is bad or not configured for multicast: " + nics[i], e);
+                            if (logger.isErrorEnabled()) {
+                                logger.error("network interface is bad or not configured for multicast: " + nics[i], e);
                             }//endif
                         }
                     }//end loop
@@ -806,8 +807,8 @@ public class LookupDiscovery implements DiscoveryManagement,
                         sock.joinGroup(Constants.getAnnouncementAddress());
                     } catch (IOException e) {
                         retryNics = new ArrayList(0);
-                        if (logger.isLoggable(Level.SEVERE)) {
-                            logger.log(Level.SEVERE, "system default network "
+                        if (logger.isErrorEnabled()) {
+                            logger.error("system default network "
                                     + "interface is bad or not configured "
                                     + "for multicast", e);
                         }//endif
@@ -859,9 +860,9 @@ public class LookupDiscovery implements DiscoveryManagement,
                         sock.setNetworkInterface(nic);
                         sock.joinGroup(Constants.getAnnouncementAddress());
                         if (nicsToUse == NICS_USE_LIST) {
-                            logger.log(Level.INFO, recoveredStr, nic);
+                            logger.info(recoveredStr, nic);
                         } else {
-                            logger.log(Level.FINE, recoveredStr, nic);
+                            logger.debug(recoveredStr, nic);
                         }//endif
                     } catch (IOException e1) {
                         retryNics.add(nic);//put back for another retry later
@@ -872,7 +873,7 @@ public class LookupDiscovery implements DiscoveryManagement,
                 try {
                     sock.joinGroup(Constants.getAnnouncementAddress());
                     retryNics = null;
-                    logger.log(Level.INFO, "system default network "
+                    logger.info("system default network "
                             + "interface has recovered from "
                             + "previous failure");
                 } catch (IOException e1) {
@@ -882,7 +883,7 @@ public class LookupDiscovery implements DiscoveryManagement,
 
         @Override
         public void run() {
-            logger.finest("LookupDiscovery - AnnouncementListener thread "
+            logger.trace("LookupDiscovery - AnnouncementListener thread "
                     + "started");
             byte[] buf = new byte[
                     multicastAnnouncementConstraints.getMulticastMaxPacketSize(
@@ -921,7 +922,7 @@ public class LookupDiscovery implements DiscoveryManagement,
                     break;
                 } catch (Exception e) {//ignore
                     if (isInterrupted()) break;
-                    logger.log(Level.INFO,
+                    logger.info(
                             "exception while listening for multicast "
                                     + "announcements",
                             e);
@@ -929,7 +930,7 @@ public class LookupDiscovery implements DiscoveryManagement,
             }//end loop(!interrupted)
             sock.close();
             sock = null;
-            logger.finest("LookupDiscovery - AnnouncementListener thread "
+            logger.trace("LookupDiscovery - AnnouncementListener thread "
                     + "completed");
         }//end run
     }//end class AnnouncementListener
@@ -986,7 +987,7 @@ public class LookupDiscovery implements DiscoveryManagement,
 
         @Override
         public void run() {
-            logger.finest("LookupDiscovery - ResponseListener thread started");
+            logger.trace("LookupDiscovery - ResponseListener thread started");
             while (!isInterrupted()) {
                 try {
                     Socket sock = serv.accept();
@@ -1004,7 +1005,7 @@ public class LookupDiscovery implements DiscoveryManagement,
                 } catch (InterruptedIOException e) {
                     break;
                 } catch (Exception e) {//ignore
-                    logger.log(Level.INFO,
+                    logger.info(
                             "exception while listening for multicast "
                                     + "response",
                             e);
@@ -1013,11 +1014,11 @@ public class LookupDiscovery implements DiscoveryManagement,
             try {
                 serv.close();
             } catch (IOException e) {//ignore
-                logger.log(Level.FINE,
+                logger.debug(
                         "IOException while attempting a socket close",
                         e);
             }
-            logger.finest("LookupDiscovery - ResponseListener thread "
+            logger.trace("LookupDiscovery - ResponseListener thread "
                     + "completed");
         }//end run
 
@@ -1083,7 +1084,7 @@ public class LookupDiscovery implements DiscoveryManagement,
          */
         @Override
         public void run() {
-            logger.finest("LookupDiscovery - Requestor thread started");
+            logger.trace("LookupDiscovery - Requestor thread started");
             int count; // bug 4084783/4187594
             try {
                 if (delayFlag
@@ -1106,7 +1107,7 @@ public class LookupDiscovery implements DiscoveryManagement,
             } catch (InterruptedException e) {//terminate gracefully
             } catch (InterruptedIOException e) {//terminate gracefully
             } catch (Exception e) {
-                logger.log(Level.INFO, "exception while marshalling outgoing "
+                logger.info("exception while marshalling outgoing "
                         + "multicast request", e);
             } finally {
                 synchronized (requestors) {
@@ -1117,7 +1118,7 @@ public class LookupDiscovery implements DiscoveryManagement,
                     }
                 }//end sync
                 sock.close();
-                logger.finest("LookupDiscovery - Requestor thread completed");
+                logger.trace("LookupDiscovery - Requestor thread completed");
             }//end try/catch/finally
         }//end run
     }//end class Requestor
@@ -1269,7 +1270,7 @@ public class LookupDiscovery implements DiscoveryManagement,
                 ann = decodeMulticastAnnouncement(datagram);
             } catch (Exception e) {
                 if (!(e instanceof InterruptedIOException)) {
-                    logger.log(Level.FINE,
+                    logger.debug(
                             "exception decoding multicast announcement", e);
                 }
                 return;
@@ -1321,7 +1322,7 @@ public class LookupDiscovery implements DiscoveryManagement,
                     ann.checkConstraints();
                 } catch (Exception e) {
                     if (!(e instanceof InterruptedIOException)) {
-                        logger.log(Level.FINE,
+                        logger.debug(
                                 "exception decoding multicast announcement", e);
                     }
                     return;
@@ -1449,7 +1450,7 @@ public class LookupDiscovery implements DiscoveryManagement,
         }
 
         public void run() {
-            logger.finest("LookupDiscovery - UnicastDiscoveryTask started");
+            logger.trace("LookupDiscovery - UnicastDiscoveryTask started");
             try {
                 synchronized (this) {
                     while (delayRun) {
@@ -1499,7 +1500,7 @@ public class LookupDiscovery implements DiscoveryManagement,
                         protected void singleResponseException(Exception e,
                                                                InetAddress addr,
                                                                int port) {
-                            logger.log(Level.FINE,
+                            logger.debug(
                                     "Exception occurred during unicast discovery " +
                                             addr + ":" + port, e);
                         }
@@ -1524,13 +1525,13 @@ public class LookupDiscovery implements DiscoveryManagement,
                     maybeSendEvent(response, null);
                 }//endif
             } catch (InterruptedIOException e) {
-                logger.log(Level.FINE,
+                logger.debug(
                         "exception occurred during unicast discovery",
                         e);
             } catch (Throwable e) {
                 if (((req instanceof Socket) ||
                         (req instanceof LookupLocator)) &&
-                        logger.isLoggable(Level.FINE)) {
+                        logger.isDebugEnabled()) {
                     String format = this.getClass().getName() + "#run: exception occurred during unicast discovery to {0}:{1,number,#} with constraints {2}";
                     String message;
                     if (req instanceof Socket) {
@@ -1540,9 +1541,9 @@ public class LookupDiscovery implements DiscoveryManagement,
                         LookupLocator loc = (LookupLocator) req;
                         message = java.text.MessageFormat.format(format, loc.getHost(), loc.getPort(), rawUnicastDiscoveryConstraints);
                     }
-                    logger.log(Level.INFO, message, e);
+                    logger.info(message, e);
                 } else {
-                    logger.log(Level.INFO, "exception occurred during unicast discovery - request: " + req, e);
+                    logger.info("exception occurred during unicast discovery - request: " + req, e);
                 }
             } finally {
                 // Done with the request. Remove it regardless of
@@ -1551,7 +1552,7 @@ public class LookupDiscovery implements DiscoveryManagement,
                     pendingDiscoveries.remove(req);
                 }
             }//end try/catch
-            logger.finest("LookupDiscovery - UnicastDiscoveryTask completed");
+            logger.trace("LookupDiscovery - UnicastDiscoveryTask completed");
         }//end run
 
         /**
@@ -1912,12 +1913,12 @@ public class LookupDiscovery implements DiscoveryManagement,
                     } catch (InterruptedIOException e) {
                         throw e;//to signal a graceful exit
                     } catch (IOException e) {
-                        if (logger.isLoggable(Level.FINE)) {
-                            logger.log(Level.FINE, "network interface is bad or not configured for multicast: " + nics[i], e);
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("network interface is bad or not configured for multicast: " + nics[i], e);
                         }//endif
                     } catch (Exception e) {
-                        if (logger.isLoggable(Level.FINE)) {
-                            logger.log(Level.FINE, "exception while sending packet through network interface: " + nics[i], e);
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("exception while sending packet through network interface: " + nics[i], e);
                         }//endif
                     }
                 }//end loop
@@ -1934,12 +1935,12 @@ public class LookupDiscovery implements DiscoveryManagement,
                     } catch (InterruptedIOException e) {
                         throw e;//to signal a graceful exit
                     } catch (IOException e) {
-                        if (logger.isLoggable(Level.SEVERE)) {
-                            logger.log(Level.SEVERE, "network interface is bad or not configured for multicast: " + nics[i], e);
+                        if (logger.isErrorEnabled()) {
+                            logger.error("network interface is bad or not configured for multicast: " + nics[i], e);
                         }//endif
                     } catch (Exception e) {
-                        if (logger.isLoggable(Level.SEVERE)) {
-                            logger.log(Level.SEVERE, "exception while sending packet through network interface: " + nics[i], e);
+                        if (logger.isErrorEnabled()) {
+                            logger.error("exception while sending packet through network interface: " + nics[i], e);
                         }//endif
                     }
                 }//end loop
@@ -1954,14 +1955,14 @@ public class LookupDiscovery implements DiscoveryManagement,
                 } catch (InterruptedIOException e) {
                     throw e;//to signal a graceful exit
                 } catch (IOException e) {
-                    if (logger.isLoggable(Level.SEVERE)) {
-                        logger.log(Level.SEVERE, "system default network "
+                    if (logger.isErrorEnabled()) {
+                        logger.error("system default network "
                                 + "interface is bad or not configured "
                                 + "for multicast", e);
                     }//endif
                 } catch (Exception e) {
-                    if (logger.isLoggable(Level.SEVERE)) {
-                        logger.log(Level.SEVERE, "exception while sending "
+                    if (logger.isErrorEnabled()) {
+                        logger.error("exception while sending "
                                 + "packet through system default network "
                                 + "interface", e);
                     }//endif
@@ -2194,8 +2195,8 @@ public class LookupDiscovery implements DiscoveryManagement,
         try {
             final ServiceRegistrar srcReg = resp.getRegistrar();
             ServiceRegistrar prepReg = (ServiceRegistrar) registrarPreparer.prepareProxy(srcReg);
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.log(Level.FINEST, "LookupDiscovery - "
+            if (logger.isTraceEnabled()) {
+                logger.trace("LookupDiscovery - "
                                 + "prepared lookup service proxy: {0}",
                         prepReg);
             }
@@ -2208,7 +2209,7 @@ public class LookupDiscovery implements DiscoveryManagement,
         } catch (Exception e) {
             Exception e1 = ((e instanceof PrivilegedActionException) ?
                     ((PrivilegedActionException) e).getException() : e);
-            logger.log(Level.INFO,
+            logger.info(
                     "exception while preparing lookup service proxy",
                     e1);
             return;
@@ -2717,19 +2718,19 @@ public class LookupDiscovery implements DiscoveryManagement,
                             NetworkInterface[].class);
             if (!Constants.isMulticastEnabled()) {
                 nicsToUse = NICS_USE_NONE;
-                logger.fine("LookupDiscovery - MULTICAST DISABLED");
+                logger.debug("LookupDiscovery - MULTICAST DISABLED");
             } else if (nics == null) {
                 nicsToUse = NICS_USE_SYS;
-                logger.fine("LookupDiscovery - using system default network "
+                logger.debug("LookupDiscovery - using system default network "
                         + "interface for multicast");
             } else {//(nics != null)
                 if (nics.length == 0) {
                     nicsToUse = NICS_USE_NONE;
-                    logger.fine("LookupDiscovery - MULTICAST DISABLED");
+                    logger.debug("LookupDiscovery - MULTICAST DISABLED");
                 } else {//(nics.length > 0), use the given specific list
                     nicsToUse = NICS_USE_LIST;
-                    if (logger.isLoggable(Level.FINE)) {
-                        logger.log(Level.FINE,
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(
                                 "LookupDiscovery - multicast network "
                                         + "interface(s): {0}", Arrays.asList(nics));
                     }//endif
@@ -2738,7 +2739,7 @@ public class LookupDiscovery implements DiscoveryManagement,
         } catch (NoSuchEntryException e) {// no config item, use default - all or none if disabled
             if (!Constants.isMulticastEnabled()) {
                 nicsToUse = NICS_USE_NONE;
-                logger.fine("LookupDiscovery - MULTICAST DISABLED");
+                logger.debug("LookupDiscovery - MULTICAST DISABLED");
             } else {
                 String multicastInterface = System.getProperty("net.jini.discovery.LookupDiscovery.multicastInterface");
                 if (multicastInterface != null) {
@@ -2754,8 +2755,8 @@ public class LookupDiscovery implements DiscoveryManagement,
                 } else {
                     nics = BootUtil.getNetworkInterfaces();
                     nicsToUse = NICS_USE_ALL;
-                    if (logger.isLoggable(Level.FINE)) {
-                        logger.log(Level.FINE, "LookupDiscovery - multicast network interface(s): {0}", Arrays.toString(nics));
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("LookupDiscovery - multicast network interface(s): {0}", Arrays.toString(nics));
                     }//endif
                 }
             }
@@ -2803,8 +2804,8 @@ public class LookupDiscovery implements DiscoveryManagement,
                 0,
                 Long.MAX_VALUE);
 
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine(
+        if (logger.isDebugEnabled()) {
+            logger.debug(
                     "\n\nConfiguration settings for [com.gs.multicast] :" +
                             "\n .enabled= " + Constants.isMulticastEnabled() +
                             "\n .ttl= " + Constants.getTtl() +

@@ -22,7 +22,7 @@ import com.j_spaces.core.cluster.IReplicationFilterEntry;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
+
 
 /**
  * {@link BroadcastNotifyTemplateReplicaProducer} creates a replica of the space broadcast
@@ -47,12 +47,12 @@ public class SpaceBroadcastNotifyReplicaDataProducer
         ArrayList<ISingleStageReplicaDataProducer<? extends IExecutableSpaceReplicaData>> dataProducers = new ArrayList<ISingleStageReplicaDataProducer<? extends IExecutableSpaceReplicaData>>();
 
         dataProducers.add(new SpaceTypeReplicaDataProducer(_engine));
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest(_engine.getReplicationNode() + "created SpaceTypeReplicaDataProducer");
+        if (_logger.isTraceEnabled())
+            _logger.trace(_engine.getReplicationNode() + "created SpaceTypeReplicaDataProducer");
         if (parameters.isCopyNotifyTemplates()) {
             dataProducers.add(new BroadcastNotifyTemplateReplicaProducer(_engine, _requestContext));
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest(getLogPrefix() + "created BroadcastNotifyTemplateReplicaProducer");
+            if (_logger.isTraceEnabled())
+                _logger.trace(getLogPrefix() + "created BroadcastNotifyTemplateReplicaProducer");
         }
         return dataProducers;
 

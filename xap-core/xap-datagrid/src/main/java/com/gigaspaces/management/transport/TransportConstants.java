@@ -20,8 +20,9 @@ import com.j_spaces.jmx.JMXProvider;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -34,7 +35,7 @@ public class TransportConstants {
 
     //logger
     final private static Logger _logger =
-            Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_ADMIN);
+            LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ADMIN);
 
 
     static final String DOMAIN_NAME_SUFFIX = ".management";
@@ -54,7 +55,7 @@ public class TransportConstants {
                 objectName = new ObjectName(MBEAN_NAME + "-" + containerName);
                 objectsNameMap.put(containerName, objectName);
             } catch (MalformedObjectNameException exc) {
-                _logger.log(Level.SEVERE, exc.toString(), exc);
+                _logger.error(exc.toString(), exc);
             }
         }
 

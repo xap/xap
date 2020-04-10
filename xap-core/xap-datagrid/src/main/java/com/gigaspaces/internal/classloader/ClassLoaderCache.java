@@ -27,8 +27,9 @@ import com.j_spaces.kernel.ClassLoaderHelper;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -101,8 +102,8 @@ public class ClassLoaderCache
                     if (listener != null)
                         listener.onClassLoaderRemoved(classLoaderKey, explicit);
                 } catch (Exception e) {
-                    if (_logger.isLoggable(Level.SEVERE))
-                        _logger.log(Level.SEVERE,
+                    if (_logger.isErrorEnabled())
+                        _logger.error(
                                 "received exception while dispatching class loader removed event, class loader id"
                                         + classLoaderKey,
                                 e);
@@ -123,7 +124,7 @@ public class ClassLoaderCache
 
     // minute
     private final static ClassLoaderCache _cache = new ClassLoaderCache(60 * 1000); //1 minute
-    private final static Logger _logger = Logger.getLogger(Constants.LOGGER_CLASSLOADERS_CACHE);
+    private final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_CLASSLOADERS_CACHE);
 
     private final CopyOnUpdateMap<Long, ClassLoaderContext> _classLoaders;
     private final SelfCleaningTable<ClassLoader, Long> _classLoaderToIdMap;
@@ -174,8 +175,8 @@ public class ClassLoaderCache
             removeMarkers();
 
             long id = generateClassLoaderKey();
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("introducing new class loader to cache ["
+            if (_logger.isDebugEnabled())
+                _logger.debug("introducing new class loader to cache ["
                         + ClassLoaderHelper.getClassLoaderLogName(classLoader)
                         + "] to the class provider, class loader designated id is "
                         + id);
@@ -224,8 +225,8 @@ public class ClassLoaderCache
      * Remove the specified class loader
      */
     public void removeClassLoader(ClassLoader classLoader) {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("removing class loader from cache ["
+        if (_logger.isDebugEnabled())
+            _logger.debug("removing class loader from cache ["
                     + ClassLoaderHelper.getClassLoaderLogName(classLoader)
                     + "]");
         Long removedClassLoadedId = _classLoaderToIdMap.remove(classLoader);
@@ -242,7 +243,7 @@ public class ClassLoaderCache
                     removedContext,
                     true);
         } else {
-            _logger.fine("class loader ["
+            _logger.debug("class loader ["
                     + ClassLoaderHelper.getClassLoaderLogName(classLoader)
                     + "] is not present in cache");
         }
@@ -254,8 +255,8 @@ public class ClassLoaderCache
     }
 
     public void weakEntryRemoved(Long value) {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("class loader with key " + value
+        if (_logger.isDebugEnabled())
+            _logger.debug("class loader with key " + value
                     + " is removed because it has no more active references");
         ClassLoaderContext removedContext = _classLoaders.put(value,
                 new ClassLoaderContext(null,
@@ -317,8 +318,8 @@ public class ClassLoaderCache
             try {
                 listener.onClassLoaderRemoved(removedClKey, explicit);
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled())
+                    _logger.error(
                             "received exception while dispatching class loader removed event, class loader id"
                                     + removedClKey,
                             e);
@@ -363,8 +364,8 @@ public class ClassLoaderCache
             try {
                 listener.onClassLoaderRemoved(classLoaderKey, explicit);
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled())
+                    _logger.error(
                             "received exception while dispatching class loader removed event, class loader id"
                                     + classLoaderKey,
                             e);

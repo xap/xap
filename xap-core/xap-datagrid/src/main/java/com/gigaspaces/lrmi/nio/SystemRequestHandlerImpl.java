@@ -24,8 +24,9 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Dan Kilman
@@ -58,7 +59,7 @@ public class SystemRequestHandlerImpl
     }
 
     public static abstract class AbstractWatchdogMonitorSystemRequestContext implements SystemRequestContext {
-        final static private Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI_WATCHDOG);
+        final static private Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_WATCHDOG);
 
         private int _monitoredClientSocketPort;
 
@@ -101,8 +102,8 @@ public class SystemRequestHandlerImpl
                     String monitoringId = null;
                     ReplyPacket<?> replyPacket = createReplyPacket(found, channelEntryState);
 
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.fine("Writing watchdog monitor system response for client[" + monitoredClient +
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Writing watchdog monitor system response for client[" + monitoredClient +
                                 "], channelEntryState[ " + channelEntryState + " ] " +
                                 "watchdog request read at [ " + requestReadStartTimestamp + " ] " +
                                 "watchdog response task creation at [ " + taskCreationTimestamp + " ] " +

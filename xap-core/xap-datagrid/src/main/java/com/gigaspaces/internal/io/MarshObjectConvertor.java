@@ -29,8 +29,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamConstants;
 import java.io.OutputStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Notice! this implementation is not Thread safe and should be use in conjuction with {@link
@@ -52,7 +53,7 @@ public class MarshObjectConvertor extends Resource implements MarshObjectConvert
     private final ObjectInputStreamFactory objectInputStreamFactory;
 
     // logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
     final private static byte[] DUMMY_BUFFER = new byte[0];
     // byte array that is used to clear the ObjectInputStream tables after each read
     // the byte array is written to be stream as if it was sent over the network
@@ -87,13 +88,13 @@ public class MarshObjectConvertor extends Resource implements MarshObjectConvert
             try {
                 fromBinary(serializeToByteArray(""));
             } catch (ClassNotFoundException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, e.getMessage(), e);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(e.getMessage(), e);
                 }
             }
         } catch (IOException e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.getMessage(), e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.getMessage(), e);
             }
         }
     }

@@ -33,7 +33,7 @@ import net.jini.core.transaction.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
+
 
 @com.gigaspaces.api.InternalApi
 public class ReadTakeMultipleProxyActionInfo extends QueryProxyActionInfo {
@@ -66,7 +66,7 @@ public class ReadTakeMultipleProxyActionInfo extends QueryProxyActionInfo {
             this.ifExist = ifExist;
             if (ReadModifiers.isFifoGroupingPoll(modifiers))
                 verifyFifoGroupsCallParams(isTake);
-            if (_devLogger.isLoggable(Level.FINEST)) {
+            if (_devLogger.isTraceEnabled()) {
                 if (verifyLogScannedEntriesCountParams(this.timeout))
                     this.modifiers |= Modifiers.LOG_SCANNED_ENTRIES_COUNT;
             }

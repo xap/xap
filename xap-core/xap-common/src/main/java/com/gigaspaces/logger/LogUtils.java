@@ -20,8 +20,9 @@ package com.gigaspaces.logger;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.StringJoiner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class LogUtils {
@@ -39,11 +40,11 @@ public class LogUtils {
     }
 
     public static long getCurrTimeIfDebugEnabled(Logger logger) {
-        return logger.isLoggable(Level.FINE) ? System.currentTimeMillis() : 0;
+        return logger.isDebugEnabled() ? System.currentTimeMillis() : 0;
     }
 
     public static long getCurrTimeIfTraceEnabled(Logger logger) {
-        return logger.isLoggable(Level.FINEST) ? System.currentTimeMillis() : 0;
+        return logger.isTraceEnabled() ? System.currentTimeMillis() : 0;
     }
 
 
@@ -62,15 +63,15 @@ public class LogUtils {
     }
 
     public static void throwing(Logger logger, Class<?> sourceClass, String sourceMethod, Throwable thrown) {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, action("throw", sourceClass.getName(), sourceMethod), thrown);
+        if (logger.isDebugEnabled()) {
+            logger.debug(action("throw", sourceClass.getName(), sourceMethod), thrown);
         }
     }
 
     public static void throwing(Logger logger, Class<?> sourceClass, String sourceMethod, Throwable thrown,
                                 String format, Object ... params) {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, format(sourceClass, sourceMethod, format, params), thrown);
+        if (logger.isDebugEnabled()) {
+            logger.debug(format(sourceClass, sourceMethod, format, params), thrown);
         }
     }
 
@@ -82,43 +83,43 @@ public class LogUtils {
     }
 
     public static void entering(Logger logger, Class<?> sourceClass, String sourceMethod) {
-        if (logger.isLoggable(Level.FINER))
-            logger.log(Level.FINER, action("enter", sourceClass.getName(), sourceMethod));
+        if (logger.isDebugEnabled())
+            logger.debug(action("enter", sourceClass.getName(), sourceMethod));
     }
 
     public static void entering(Logger logger, Class<?> sourceClass, String sourceMethod, Object arg) {
-        if (logger.isLoggable(Level.FINER))
-            logger.log(Level.FINER, action("enter", sourceClass.getName(), sourceMethod, arg));
+        if (logger.isDebugEnabled())
+            logger.debug(action("enter", sourceClass.getName(), sourceMethod, arg));
     }
 
     public static void entering(Logger logger, Class<?> sourceClass, String sourceMethod, Object[] args) {
-        if (logger.isLoggable(Level.FINER))
-            logger.log(Level.FINER, action("enter", sourceClass.getName(), sourceMethod, args));
+        if (logger.isDebugEnabled())
+            logger.debug(action("enter", sourceClass.getName(), sourceMethod, args));
     }
 
     public static void entering(Logger logger, String sourceClass, String sourceMethod, Object[] args) {
-        if (logger.isLoggable(Level.FINER))
-            logger.log(Level.FINER, action("enter", sourceClass, sourceMethod, args));
+        if (logger.isDebugEnabled())
+            logger.debug(action("enter", sourceClass, sourceMethod, args));
     }
 
     public static void exiting(Logger logger, Class<?> sourceClass, String sourceMethod) {
-        if (logger.isLoggable(Level.FINER))
-            logger.log(Level.FINER, action("exit", sourceClass.getName(), sourceMethod));
+        if (logger.isDebugEnabled())
+            logger.debug(action("exit", sourceClass.getName(), sourceMethod));
     }
 
     public static void exiting(Logger logger, Class<?> sourceClass, String sourceMethod, Object arg) {
-        if (logger.isLoggable(Level.FINER))
-            logger.log(Level.FINER, action("exit", sourceClass.getName(), sourceMethod, arg));
+        if (logger.isDebugEnabled())
+            logger.debug(action("exit", sourceClass.getName(), sourceMethod, arg));
     }
 
     public static void exiting(Logger logger, String sourceClass, String sourceMethod, Object arg) {
-        if (logger.isLoggable(Level.FINER))
-            logger.log(Level.FINER, action("exit", sourceClass, sourceMethod, arg));
+        if (logger.isDebugEnabled())
+            logger.debug(action("exit", sourceClass, sourceMethod, arg));
     }
 
     public static void exiting(Logger logger, Class<?> sourceClass, String sourceMethod, Object[] args) {
-        if (logger.isLoggable(Level.FINER))
-            logger.log(Level.FINER, action("exit", sourceClass.getName(), sourceMethod, args));
+        if (logger.isDebugEnabled())
+            logger.debug(action("exit", sourceClass.getName(), sourceMethod, args));
     }
 
     private static String action(String action, String sourceClass, String sourceMethod, Object ... params) {

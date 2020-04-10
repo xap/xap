@@ -25,8 +25,9 @@ import com.j_spaces.core.Constants;
 import com.j_spaces.core.Constants.Mirror;
 
 import java.io.File;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Mirror space configuration. Contains mirror specific configuration located under
@@ -38,7 +39,7 @@ import java.util.logging.Logger;
  * @since 7.1
  */
 final public class MirrorConfig {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_MIRROR_REPLICATION);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_MIRROR_REPLICATION);
 
     private static final int DEFAULT_NUM_OF_PARTITIONS = 100;
     private static final int DEFAULT_BACKUPS_PER_PARTITION = 1;
@@ -73,8 +74,8 @@ final public class MirrorConfig {
 
         _clusterName = configReader.getSpaceProperty(Mirror.MIRROR_SERVICE_CLUSTER_NAME, null);
         if (_clusterName == null) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.warning(StringUtils.NEW_LINE +
+            if (_logger.isWarnEnabled()) {
+                _logger.warn(StringUtils.NEW_LINE +
                         StringUtils.NEW_LINE +
                         "**************************************************************************************" + StringUtils.NEW_LINE +
                         "Cluster name is missing." + StringUtils.NEW_LINE +
@@ -92,8 +93,8 @@ final public class MirrorConfig {
         boolean hasMembersPerPartition = configReader.containsSpaceProperty(Mirror.MIRROR_SERVICE_CLUSTER_BACKUPS_PER_PARTITION);
         _backupsPerPartition = configReader.getIntSpaceProperty(Mirror.MIRROR_SERVICE_CLUSTER_BACKUPS_PER_PARTITION, String.valueOf(DEFAULT_BACKUPS_PER_PARTITION));
         if (!hasPartitionCount || !hasMembersPerPartition) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.warning("No cluster configuration was defined for mirror - using default configuration - supports upto " + DEFAULT_NUM_OF_PARTITIONS + " partitions and exactly " + DEFAULT_BACKUPS_PER_PARTITION + " " + (DEFAULT_BACKUPS_PER_PARTITION == 1 ? "backup" : "backups") + " per partition.");
+            if (_logger.isWarnEnabled())
+                _logger.warn("No cluster configuration was defined for mirror - using default configuration - supports upto " + DEFAULT_NUM_OF_PARTITIONS + " partitions and exactly " + DEFAULT_BACKUPS_PER_PARTITION + " " + (DEFAULT_BACKUPS_PER_PARTITION == 1 ? "backup" : "backups") + " per partition.");
         }
 
         final String timeoutBeforePartialCommit = configReader.getSpaceProperty(Mirror.MIRROR_DISTRIBUTED_TRANSACTION_TIMEOUT,
@@ -117,8 +118,8 @@ final public class MirrorConfig {
                         "\t" + Mirror.MIRROR_DISTRIBUTED_TRANSACTION_WAIT_FOR_OPERATIONS + "=" + waitForOperationsBeforePartialCommit +
                         "\t" + Mirror.MIRROR_DISTRIBUTED_TRANSACTION_MONITOR_PENDING_OPERATIONS_MEMORY + "=" + monitorPendingOperationsMemory;
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine(configLogMessage);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(configLogMessage);
         }
     }
 

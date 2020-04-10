@@ -28,8 +28,9 @@ import net.jini.core.event.UnknownEventException;
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A custom listener which is used to group all notification registrations from a space proxy using
@@ -40,7 +41,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class MultiplexDataEventListener implements ManagedRemoteEventListener, BatchRemoteEventListener {
-    private static final Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEPROXY_DATA_EVENTS_LISTENER);
+    private static final Logger logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEPROXY_DATA_EVENTS_LISTENER);
 
     private final Map<String, RegistrationInfo> _registrations;
 
@@ -56,10 +57,10 @@ public class MultiplexDataEventListener implements ManagedRemoteEventListener, B
             try {
                 regInfo.getEventRegistration().getLease().cancel();
             } catch (RemoteException ex) {
-                logger.log(Level.WARNING, "Failed to close event registration " + regInfo.getEventRegistration() + " skipping more " + remains + " registrations");
+                logger.warn("Failed to close event registration " + regInfo.getEventRegistration() + " skipping more " + remains + " registrations");
                 break;
             } catch (Exception ex) {
-                logger.log(Level.FINE, "Failed to close event registration ", ex);
+                logger.debug("Failed to close event registration ", ex);
             }
         }
 

@@ -21,7 +21,8 @@ import com.gigaspaces.internal.version.PlatformLogicalVersion;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The synchronizing direct-persistency handler
@@ -38,7 +39,7 @@ public class DirectPersistencySyncListAdmin {
     private static final Object _lock = new Object();
     private static volatile Map<Long, PlatformLogicalVersion> _versions = new HashMap<Long, PlatformLogicalVersion>();
 
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_DIRECT_PERSISTENCY);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_DIRECT_PERSISTENCY);
     private final DirectPersistencySyncHandler _main;
     private DirectPersistencySyncAdminInfo _info;
 

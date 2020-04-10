@@ -26,8 +26,9 @@ import net.jini.config.ConfigurationException;
 
 import java.text.DateFormat;
 import java.util.SortedSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A Queue of timed tasks.  Each task implements {@link Runnable}. Events can either be executed in
@@ -161,7 +162,7 @@ public class WakeupManager {
     /**
      * Logger for this class and nested classes
      */
-    private static final Logger logger = Logger.getLogger(COMPONENT_NAME);
+    private static final Logger logger = LoggerFactory.getLogger(COMPONENT_NAME);
 
     /**
      * Description of a future thread.
@@ -433,7 +434,7 @@ public class WakeupManager {
             contents.add(t);
 
             if (kickerThread == null) {
-                logger.log(Level.FINEST, "starting queue's thread");
+                logger.trace("starting queue's thread");
 
                 try {
                     final Thread thread = kickerDesc.thread(kicker);
@@ -443,7 +444,7 @@ public class WakeupManager {
                     kickerThread = thread;
                 } catch (Throwable tt) {
                     try {
-                        logger.log(Level.SEVERE,
+                        logger.error(
                                 "queue thread creation exception", tt);
                     } catch (Throwable ttt) {
                         // don't let a problem in logging kill the thread
@@ -571,7 +572,7 @@ public class WakeupManager {
 				 */
                                 kickerThread = null;
 
-                                logger.log(Level.FINEST,
+                                logger.trace(
                                         "stopping queue's thread");
                                 return;
                             }
@@ -590,8 +591,8 @@ public class WakeupManager {
                             }
                         }
 
-                        if (logger.isLoggable(Level.FINEST)) {
-                            logger.log(Level.FINEST, "timeToNextEvent:{0}",
+                        if (logger.isTraceEnabled()) {
+                            logger.trace("timeToNextEvent:{0}",
                                     (timeToNextEvent == Long.MAX_VALUE ?
                                             "Long.MAX_VALUE" :
                                             Long.toString(timeToNextEvent)));
@@ -610,7 +611,7 @@ public class WakeupManager {
 			     */
 
                             try {
-                                logger.log(Level.WARNING,
+                                logger.warn(
                                         "Attempt to interrupt Queue's thread");
                             } catch (Throwable t) {
                                 // ignore
@@ -639,7 +640,7 @@ public class WakeupManager {
                         ticketToRun.task.run();
                     } catch (Throwable e) {
                         try {
-                            logger.log(Level.WARNING, "Runnable.run exception", e);
+                            logger.warn("Runnable.run exception", e);
                         } catch (Throwable t) {
                             // don't let a problem in logging kill the thread
                         }
@@ -650,7 +651,7 @@ public class WakeupManager {
                         ticketToRun.desc.thread(ticketToRun.task).start();
                     } catch (Throwable t) {
                         try {
-                            logger.log(Level.WARNING,
+                            logger.warn(
                                     "task thread creation exception", t);
                         } catch (Throwable tt) {
                             // don't let a problem in logging kill the thread

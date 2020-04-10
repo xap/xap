@@ -32,7 +32,7 @@ import com.j_spaces.core.cluster.ConflictingOperationPolicy;
 
 import net.jini.core.lease.UnknownLeaseException;
 
-import java.util.logging.Level;
+
 
 /**
  * @author Niv Ingberg
@@ -80,8 +80,8 @@ public class SpaceReplicationEntryLeaseEventHandler implements
                 if (entryHolder != null) {
                     IEntryData entryData = entryHolder.getEntryData();
                     context.getContentContext().setMainEntryData(entryData);
-                } else if (context.getContextLogger().isLoggable(Level.FINE))
-                    context.getContextLogger().log(Level.FINE, "Cancellation of entry lease did not return an associated entry: Type name:" + typeName +
+                } else if (context.getContextLogger().isDebugEnabled())
+                    context.getContextLogger().debug("Cancellation of entry lease did not return an associated entry: Type name:" + typeName +
                             " UID: " + uid);
             }
 
@@ -90,8 +90,8 @@ public class SpaceReplicationEntryLeaseEventHandler implements
             if (getConflictingOperationPolicy().isOverride())
                 return;
 
-            if (context.getContextLogger().isLoggable(Level.WARNING)) {
-                context.getContextLogger().log(Level.WARNING, "Replicator: " + ex.getClass().getName() +
+            if (context.getContextLogger().isWarnEnabled()) {
+                context.getContextLogger().warn("Replicator: " + ex.getClass().getName() +
                         ". Failed to cancel Entry lease: " + typeName +
                         " UID: " + uid +
                         " ObjectType: " + ObjectTypes.ENTRY +
@@ -134,8 +134,8 @@ public class SpaceReplicationEntryLeaseEventHandler implements
                 if (entryHolder != null) {
                     IEntryData entryData = entryHolder.getEntryData();
                     context.getContentContext().setMainEntryData(entryData);
-                } else if (context.getContextLogger().isLoggable(Level.FINE))
-                    context.getContextLogger().log(Level.FINE, "Expiration of entry lease did not return an associated entry: Type name:" + typeName +
+                } else if (context.getContextLogger().isDebugEnabled())
+                    context.getContextLogger().debug("Expiration of entry lease did not return an associated entry: Type name:" + typeName +
                             " UID: " + uid);
             }
 

@@ -24,7 +24,8 @@ import com.j_spaces.core.client.SQLQuery;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A cache policy that stores data blobStore and indexes onheap.
@@ -32,7 +33,7 @@ import java.util.logging.Logger;
  * @author yechielf, Kobi
  */
 public class BlobStoreDataCachePolicy implements CachePolicy {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
 
     private Integer avgObjectSizeBytes;
     private Integer cacheEntriesPercentage;
@@ -98,7 +99,7 @@ public class BlobStoreDataCachePolicy implements CachePolicy {
             long maxMemoryInBytes = Runtime.getRuntime().maxMemory();
             if (maxMemoryInBytes == Long.MAX_VALUE) {
                 blobStoreCacheSize = Long.parseLong(Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_DELAULT);
-                _logger.fine("Blob Store Cache size [ " + blobStoreCacheSize + " ]");
+                _logger.debug("Blob Store Cache size [ " + blobStoreCacheSize + " ]");
             } else {
                 double percentage = (double) cacheEntriesPercentage / 100;
                 blobStoreCacheSize = (long) ((maxMemoryInBytes * percentage) / (avgObjectSizeBytes));

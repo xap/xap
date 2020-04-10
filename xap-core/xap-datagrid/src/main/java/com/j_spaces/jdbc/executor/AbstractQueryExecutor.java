@@ -51,8 +51,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author anna
@@ -102,7 +103,7 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
         }
     }
 
-    protected final static Logger _logger = Logger.getLogger(Constants.LOGGER_QUERY);
+    protected final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     protected final AbstractDMLQuery query;
     private final HashMap<ExpNode, IQueryResultSet<IEntryPacket>> _intermediateResults = new HashMap<ExpNode, IQueryResultSet<IEntryPacket>>();
@@ -122,8 +123,8 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
         try {
             return space.count(template, txn, readModifier);
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, e.getMessage(), e);
+            if (_logger.isErrorEnabled())
+                _logger.error(e.getMessage(), e);
             throw new SQLException("Failed to execute count: " + e.getMessage(), "GSP", -111);
         }
     }
@@ -212,8 +213,8 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
         } catch (AccessDeniedException e) {
             throw e;
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.SEVERE, e.getMessage(), e);
+            if (_logger.isDebugEnabled()) {
+                _logger.error(e.getMessage(), e);
             }
 
             SQLException t = new SQLException("Failed to execute readMultiple: "

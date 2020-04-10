@@ -3,11 +3,12 @@ package com.gigaspaces.internal.oshi;
 import com.gigaspaces.CommonSystemProperties;
 import oshi.SystemInfo;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OshiChecker {
 
-    private static final Logger logger = Logger.getLogger(OshiChecker.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(OshiChecker.class.getName());
     private static final SystemInfo systemInfo = initSystemInfo();
 
     private static SystemInfo initSystemInfo() {
@@ -20,22 +21,22 @@ public class OshiChecker {
         }
 
         if (isImplicit)
-            logger.fine("Oshi is enabled");
+            logger.debug("Oshi is enabled");
         else
             logger.info("Oshi is enabled");
 
         try {
             SystemInfo systemInfo = new SystemInfo();
             if (isImplicit)
-                logger.fine("Oshi is available");
+                logger.debug("Oshi is available");
             else
                 logger.info("Oshi is available");
             return systemInfo;
         } catch (Throwable t) {
             if (isImplicit)
-                logger.fine("Oshi is not available: " + t.toString());
+                logger.debug("Oshi is not available: " + t.toString());
             else
-                logger.warning("Oshi is not available: " + t.toString());
+                logger.warn("Oshi is not available: " + t.toString());
             return null;
         }
     }

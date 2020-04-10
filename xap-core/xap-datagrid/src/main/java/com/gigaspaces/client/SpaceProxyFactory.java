@@ -46,8 +46,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -56,7 +57,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class SpaceProxyFactory {
 
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_URL);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_URL);
 
     private Map<String, Object> parameters;
     private Properties properties;
@@ -158,8 +159,8 @@ public class SpaceProxyFactory {
             assertEmbedded(isRemote, "External data source");
             if (spaceDataSource != null || spaceSynchronizationEndpoint != null)
                 throw new IllegalArgumentException("Cannot set both externalDataSource and spaceDataSource/spaceSynchronizationEndpoint - it is recommended to use spaceDataSource/spaceSynchronizationEndpoint since externalDataSource is deprecated");
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.warning("externalDataSource is deprecated - instead use spaceDataSource and/or spaceSynchronizationEndpoint");
+            if (_logger.isWarnEnabled())
+                _logger.warn("externalDataSource is deprecated - instead use spaceDataSource and/or spaceSynchronizationEndpoint");
             props.put(Constants.DataAdapter.DATA_SOURCE, externalDataSource);
             props.put(Constants.StorageAdapter.FULL_STORAGE_PERSISTENT_ENABLED_PROP, "true");
         }

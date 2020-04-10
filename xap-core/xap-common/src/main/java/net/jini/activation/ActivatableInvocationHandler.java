@@ -55,8 +55,9 @@ import java.rmi.activation.UnknownObjectException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.NoSuchElementException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An invocation handler for activatable remote objects.  If the client constraints of this
@@ -121,7 +122,7 @@ public final class ActivatableInvocationHandler
      * logger
      */
     private static final Logger logger =
-            Logger.getLogger("net.jini.activation.ActivatableInvocationHandler");
+            LoggerFactory.getLogger("net.jini.activation.ActivatableInvocationHandler");
 
     /**
      * Constructor parameter classes for proxy classes.
@@ -525,7 +526,7 @@ public final class ActivatableInvocationHandler
         }
 
         for (int retries = MAX_RETRIES; --retries >= 0; ) {
-            if (logger.isLoggable(Level.FINE)) {
+            if (logger.isDebugEnabled()) {
                 if (failure != null) {
                     LogUtils.throwing(logger, this.getClass(), "invokeRemoteMethod", failure.exception, format("outbound call", method));
                 }
@@ -579,7 +580,7 @@ public final class ActivatableInvocationHandler
             }
         }
 
-        if (logger.isLoggable(Level.FINE)) {
+        if (logger.isDebugEnabled()) {
             LogUtils.throwing(logger, this.getClass(), "invokeRemoteMethod", failure.exception, format("outbound call", method));
         }
         throw failure.exception;
@@ -893,7 +894,7 @@ public final class ActivatableInvocationHandler
         try {
             activate0(force, proxy);
         } catch (Exception e) {
-            if (logger.isLoggable(Level.FINE)) {
+            if (logger.isDebugEnabled()) {
                 LogUtils.throwing(logger, this.getClass(), "activate", e, format("activating object for call", method));
             }
             throw e;

@@ -69,8 +69,9 @@ import java.rmi.UnmarshalException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The Pivot is the center of the NIO Protocol Adapter server-side implementation. It handles
@@ -97,8 +98,8 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class Pivot {
     // logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
-    final private static Logger _contextLogger = Logger.getLogger(Constants.LOGGER_LRMI_CONTEXT);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
+    final private static Logger _contextLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_CONTEXT);
 
     private final IClassProvider _classProvider;
 
@@ -113,7 +114,7 @@ public class Pivot {
 
         public synchronized IClassProvider getClassProvider() throws IOException, IOFilterException {
             if(isSimpleClassLoadingEnabled() && checkClientBackwardsCompatibility()){
-                _logger.fine("Simple remote classloading is enabled, using SimpleClassProvider");
+                _logger.debug("Simple remote classloading is enabled, using SimpleClassProvider");
                 if(_simpleClassProvider == null){
                     _simpleClassProvider = new SimpleClassProvider(channel);
                 }
@@ -181,8 +182,8 @@ public class Pivot {
                     try {
                         //Update stage once we finished unmarshaling the request
                         LRMIInvocationContext.updateContext(null, null, InvocationStage.INVOCATION_HANDLING, null, null, false, null, null);
-                        if (_logger.isLoggable(Level.FINEST))
-                            _logger.finest("<-- " + requestPacket);
+                        if (_logger.isTraceEnabled())
+                            _logger.trace("<-- " + requestPacket);
                         pivot.handleRequest(requestPacket, channelEntry);
                     } finally {
                         //During unmarshal of request packet, a lrmi remote class loader context is switched in case a remote class
@@ -202,7 +203,7 @@ public class Pivot {
         }
 
         private void setLRMIInvocationContext() {
-            LRMIInvocationTrace trace = _contextLogger.isLoggable(Level.FINE) ? new LRMIInvocationTrace(null, null, NIOUtils.getSocketDisplayString(channelEntry.getSocketChannel()), false) : null;
+            LRMIInvocationTrace trace = _contextLogger.isDebugEnabled() ? new LRMIInvocationTrace(null, null, NIOUtils.getSocketDisplayString(channelEntry.getSocketChannel()), false) : null;
             //We do not need a new snapshot because this is called by a new task which we control
             LRMIInvocationContext.updateContext(trace, ProxyWriteType.UNCACHED, InvocationStage.SERVER_UNMARSHAL_REQUEST, channelEntry.getSourcePlatformLogicalVersion(), null, false, null, channelEntry.getClientEndPointAddress());
         }
@@ -291,14 +292,14 @@ public class Pivot {
      */
     public boolean handleExceptionFromServer(Writer writer, Reader reader, Throwable ex) {
         if (ex instanceof ClosedChannelException) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Connection with client closed from [" + writer.getEndPointAddress() + "] endpoint.");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Connection with client closed from [" + writer.getEndPointAddress() + "] endpoint.");
 
             return true;
         }
         if (ex instanceof MarshalContextClearedException) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Marshal context have been cleared, probably because the exported service class loader has been unloaded, service incoming invocation from [" + writer.getEndPointAddress() + "] endpoint.");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Marshal context have been cleared, probably because the exported service class loader has been unloaded, service incoming invocation from [" + writer.getEndPointAddress() + "] endpoint.");
 
             return true;
         }
@@ -307,8 +308,8 @@ public class Pivot {
             String msg = "LRMI Transport Protocol caught server exception caused by [" + writer.getEndPointAddress() + "] client.";
 
             if (ex instanceof LRMIUnhandledException) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, msg, ex);
+                if (_logger.isDebugEnabled())
+                    _logger.debug(msg, ex);
                 LRMIUnhandledException lrmiue = (LRMIUnhandledException) ex;
                 if (lrmiue.getStage() == Stage.DESERIALIZATION) {
                     //If exception thrown during deserialization we must reset read context because the sending side could have sent us
@@ -321,14 +322,14 @@ public class Pivot {
                 //Dont request close connection on this exception if upper layer permits                
                 return false;
             } else if (ex instanceof RuntimeException || ex instanceof InvalidClassException) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, msg, ex);
+                if (_logger.isErrorEnabled())
+                    _logger.error(msg, ex);
             } else if (ex instanceof UnmarshalException) {
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.log(Level.WARNING, msg, ex);
+                if (_logger.isWarnEnabled())
+                    _logger.warn(msg, ex);
             } else {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, msg, ex);
+                if (_logger.isDebugEnabled())
+                    _logger.debug(msg, ex);
             }
 
             if (writer.isOpen())
@@ -337,8 +338,8 @@ public class Pivot {
             return true;
 
         } catch (Exception ex2) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Failed to send handledServerException to endpoint [" + writer.getEndPointAddress() + "] , the client disconnected from the server.", ex);
+            if (_logger.isDebugEnabled())
+                _logger.debug("Failed to send handledServerException to endpoint [" + writer.getEndPointAddress() + "] , the client disconnected from the server.", ex);
             return true;
         }
     }
@@ -361,8 +362,8 @@ public class Pivot {
             _clientToChannel.put(socketAddress, channelEntry);
         }
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Connected new client from [" + channelEntry.getClientEndPointAddress() + "] endpoint.");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Connected new client from [" + channelEntry.getClientEndPointAddress() + "] endpoint.");
 
         return channelEntry;
     }
@@ -371,8 +372,8 @@ public class Pivot {
      * Called by anyone who wants to close a connection.
      */
     public synchronized void closeConnection(ChannelEntry channelEntry) {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Connection with client closed from [" + channelEntry.getClientEndPointAddress() + "] endpoint.");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Connection with client closed from [" + channelEntry.getClientEndPointAddress() + "] endpoint.");
 
         try {
             // cancel channel registration in its selector
@@ -392,8 +393,8 @@ public class Pivot {
             m_Channels.remove(socketChannel);
 
         } catch (IOException ex) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, ex.toString(), ex);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(ex.toString(), ex);
             }
         }
     }
@@ -502,7 +503,7 @@ public class Pivot {
             // Check for dummy packets - ignore them
             if (requestPacket.getObjectId() != LRMIRuntime.DUMMY_OBJECT_ID) {
                 if (requestPacket.getInvokeMethod() == null) {
-                    _logger.log(Level.WARNING, "canceling invocation of request packet without invokeMethod : " + requestPacket);
+                    _logger.warn("canceling invocation of request packet without invokeMethod : " + requestPacket);
                 } else {
                     result = LRMIRuntime.getRuntime().invoked(requestPacket.getObjectId(),
                             requestPacket.getInvokeMethod().realMethod,
@@ -512,8 +513,8 @@ public class Pivot {
         } catch (NoSuchObjectException ex) {
             /** the remote object died, no reason to print-out the message in non debug mode,  */
             if (requestPacket.isOneWay()) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, "Failed to invoke one way method : " + requestPacket.getInvokeMethod() +
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Failed to invoke one way method : " + requestPacket.getInvokeMethod() +
                             "\nReason: This remoteObject: " + requestPacket.getObjectId() +
                             " has been already unexported.", ex);
                 }
@@ -530,8 +531,8 @@ public class Pivot {
 
         /** if true, no reply to client */
         if (requestPacket.isOneWay()) {
-            if (resultEx != null && _logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "Failed to invoke one-way method: " + requestPacket.getInvokeMethod(), resultEx);
+            if (resultEx != null && _logger.isErrorEnabled()) {
+                _logger.error("Failed to invoke one-way method: " + requestPacket.getInvokeMethod(), resultEx);
             }
         }
 
@@ -571,7 +572,7 @@ public class Pivot {
         IResponseContext respContext = null;
         String monitoringId = extractMonitoringId(requestPacket);
         if (requestPacket.isCallBack) {
-            LRMIInvocationTrace trace = _contextLogger.isLoggable(Level.FINE) ? LRMIInvocationContext.getCurrentContext().getTrace() : null;
+            LRMIInvocationTrace trace = _contextLogger.isDebugEnabled() ? LRMIInvocationContext.getCurrentContext().getTrace() : null;
             respContext = new PivotResponseContext(this,
                     channelEntry,
                     _defaultResponseHandler,
@@ -630,12 +631,12 @@ public class Pivot {
             LRMIInvocationContext.updateContext(null, null, InvocationStage.SERVER_MARSHAL_REPLY, null, null, false, null, null);
 
             if (respContext != null && !respContext.markAsSentResponse()) {
-                _logger.severe("Trying to send a response twice using the same response context.");
+                _logger.error("Trying to send a response twice using the same response context.");
                 return;
             }
 
             // Send reply to the client
-            LRMIInvocationTrace trace = respContext != null ? respContext.getTrace() : _contextLogger.isLoggable(Level.FINE) ? LRMIInvocationContext.getCurrentContext().getTrace() : null;
+            LRMIInvocationTrace trace = respContext != null ? respContext.getTrace() : _contextLogger.isDebugEnabled() ? LRMIInvocationContext.getCurrentContext().getTrace() : null;
             Writer.Context ctx = new Writer.ChannelEntryContext(trace, channelEntry.getWriteExecutionPhaseListener());
 
             ObjectRegistry.Entry entry = LRMIRuntime.getRuntime().getRegistryObject(channelEntry.getRemoteObjID());

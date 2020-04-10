@@ -30,8 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -39,7 +40,7 @@ import java.util.logging.Logger;
  */
 public class InfluxDBReporter extends MetricReporter {
 
-    private static final Logger logger = Logger.getLogger(InfluxDBReporter.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(InfluxDBReporter.class.getName());
     private static final String[] COLUMNS = {"time", "value"};
 
     private static final String SEPARATOR = ".";
@@ -160,8 +161,8 @@ public class InfluxDBReporter extends MetricReporter {
             if (beforeAppend == 0) {
                 finalizeReport();
                 // Report is too large:
-                if (logger.isLoggable(Level.WARNING))
-                    logger.log(Level.WARNING, "Metrics report skipped because its length (" + json.length() + ") exceeds the maximum length ("
+                if (logger.isWarnEnabled())
+                    logger.warn("Metrics report skipped because its length (" + json.length() + ") exceeds the maximum length ("
                             + getMaxReportLength() + ").\n" +
                             "Report: " + json.toString());
                 json.reset();

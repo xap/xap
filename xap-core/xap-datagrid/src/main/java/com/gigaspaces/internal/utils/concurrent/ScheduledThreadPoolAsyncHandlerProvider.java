@@ -28,8 +28,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Scheduled thread pool based implementation for {@link IAsyncHandlerProvider}
@@ -39,7 +40,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class ScheduledThreadPoolAsyncHandlerProvider extends AbstractAsyncHandlerProvider {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION);
 
     final private ScheduledExecutorService _executorService;
     final private ThreadAsyncHandlerProvider _threadAsyncHandlerProvider;
@@ -326,19 +327,19 @@ public class ScheduledThreadPoolAsyncHandlerProvider extends AbstractAsyncHandle
                         }
                     } finally {
                         if (!_singleRunnerFlag.compareAndSet(true, false)) {
-                            if (_logger.isLoggable(Level.SEVERE))
-                                _logger.severe("Unexpected single flag runner result on ScheduledThreadPoolAsyncHandlerProvider. task is " + _runnable);
+                            if (_logger.isErrorEnabled())
+                                _logger.error("Unexpected single flag runner result on ScheduledThreadPoolAsyncHandlerProvider. task is " + _runnable);
                         }
                         _lock.unlock();
                     }
                 } catch (InterruptedException e) {
-                    if (_logger.isLoggable(Level.FINER))
-                        _logger.log(Level.FINER,
+                    if (_logger.isDebugEnabled())
+                        _logger.debug(
                                 "async handler is interrupted",
                                 e);
                 } catch (Exception e) {
-                    if (_logger.isLoggable(Level.SEVERE))
-                        _logger.log(Level.SEVERE,
+                    if (_logger.isErrorEnabled())
+                        _logger.error(
                                 "Error occurred while executing async cycle",
                                 e);
                 }

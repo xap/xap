@@ -19,8 +19,9 @@ package com.gigaspaces.metrics;
 import com.gigaspaces.logger.Constants;
 
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A metric which measures total and throughput values using sampling.
@@ -31,7 +32,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class ThroughputMetric extends Metric {
     private static final double NANOSEC_PER_SECOND = TimeUnit.SECONDS.toNanos(1);
-    private static final Logger logger = Logger.getLogger(Constants.LOGGER_METRICS_MANAGER);
+    private static final Logger logger = LoggerFactory.getLogger(Constants.LOGGER_METRICS_MANAGER);
     private final LongCounter total = new LongCounter();
     // TODO: Doc why this is thread-safe for our use case.
     private long prevTotal;
@@ -78,8 +79,8 @@ public class ThroughputMetric extends Metric {
         prevTime = currTime;
 
         double result = delta / (elapsedTime / NANOSEC_PER_SECOND);
-        if (logger.isLoggable(Level.FINEST))
-            logger.log(Level.FINEST, "delta=" + delta + ", period=" + (elapsedTime / NANOSEC_PER_SECOND) + "s, TP=" + result);
+        if (logger.isTraceEnabled())
+            logger.trace("delta=" + delta + ", period=" + (elapsedTime / NANOSEC_PER_SECOND) + "s, TP=" + result);
         return result;
     }
 

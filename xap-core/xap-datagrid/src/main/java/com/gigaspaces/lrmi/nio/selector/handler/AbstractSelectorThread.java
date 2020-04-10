@@ -31,8 +31,9 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides a general selector logic.
@@ -42,7 +43,7 @@ import java.util.logging.Logger;
  */
 public abstract class AbstractSelectorThread extends ManagedRunnable implements Runnable {
     private static final long SELECT_TIMEOUT = 10 * 1000; // 10 sec
-    protected static final Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
+    protected static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
 
     final private Selector _selector;
     final protected Pivot _pivot;
@@ -84,7 +85,7 @@ public abstract class AbstractSelectorThread extends ManagedRunnable implements 
                 }
             }
         } catch (ClosedSelectorException ex) {
-            _logger.log(Level.FINER, "Selector was closed.", ex);
+            _logger.debug("Selector was closed.", ex);
             if (key != null) {
                 key.cancel();
             }
@@ -92,17 +93,17 @@ public abstract class AbstractSelectorThread extends ManagedRunnable implements 
             // handle exception in main selection loop; Caused by: java.io.IOException: Too many open files
             if (key != null) {
                 if (this instanceof AcceptSelectorThread) {
-                    _logger.log(Level.SEVERE, "exception in main selection loop, delay selector for 1 second", e);
+                    _logger.error("exception in main selection loop, delay selector for 1 second", e);
                     delay(e);
                 } else {
-                    _logger.log(Level.SEVERE, "exception in main selection loop, canceling key", e);
+                    _logger.error("exception in main selection loop, canceling key", e);
                     key.cancel();
                 }
             } else {
-                _logger.log(Level.SEVERE, "exception in main selection loop", e);
+                _logger.error("exception in main selection loop", e);
             }
         } catch (Throwable t) {
-            _logger.log(Level.SEVERE, "exception in main selection loop", t);
+            _logger.error("exception in main selection loop", t);
             if (key != null) {
                 key.cancel();
             }
@@ -113,7 +114,7 @@ public abstract class AbstractSelectorThread extends ManagedRunnable implements 
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
-            _logger.log(Level.SEVERE, "Interrupted while delaying accept selector because of exception " + ex, e);
+            _logger.error("Interrupted while delaying accept selector because of exception " + ex, e);
         }
     }
 
@@ -130,8 +131,8 @@ public abstract class AbstractSelectorThread extends ManagedRunnable implements 
             } catch (CancelledKeyException cke) {
                 try {
                     failureReason = cke;
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.log(Level.FINE, "caught CancelledKeyException while registering socket interest [" + channel.toString() + "] at attempt " + (i + 1) + ", retrying...", cke);
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("caught CancelledKeyException while registering socket interest [" + channel.toString() + "] at attempt " + (i + 1) + ", retrying...", cke);
                     //GS-6557 if we received cancel key exception it is (probably) because a concurrent thread that uses the same
                     //socket had removed the write interest, hence canceled the SelectionKey associated with this channel (can occur due to concurrency issue described in ChannelEntryTask.run() method)
                     //In that case, channel.register throws this exception because it returns the same key, it will remove this key only
@@ -139,16 +140,16 @@ public abstract class AbstractSelectorThread extends ManagedRunnable implements 
                     _selector.selectNow();
                 } catch (IOException ioe) {
                     failureReason = ioe;
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.log(Level.FINE, "caught IOException while registering socket interest [" + channel.toString() + "] at attempt " + (i + 1), ioe);
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("caught IOException while registering socket interest [" + channel.toString() + "] at attempt " + (i + 1), ioe);
                     //Nothing to do, break attempt and close the channel
                     break;
                 }
             }
         }
 
-        if (_logger.isLoggable(Level.WARNING))
-            _logger.log(Level.WARNING, "failed all attempts of registering socket interest, closing socket [" + channel.toString() + "]", failureReason);
+        if (_logger.isWarnEnabled())
+            _logger.warn("failed all attempts of registering socket interest, closing socket [" + channel.toString() + "]", failureReason);
         // no hope, the channel is probably corrupted.
         closeChannel(channel);
         throw new ClosedChannelException();
@@ -194,15 +195,15 @@ public abstract class AbstractSelectorThread extends ManagedRunnable implements 
             socket.shutdownOutput();
             socket.close();
         } catch (IOException ex) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "error while closing a key", ex);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("error while closing a key", ex);
             }
         } finally {
             try {
                 channel.close();
             } catch (IOException ex) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, "error while closing a channel", ex);
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("error while closing a channel", ex);
                 }
             }
         }
@@ -214,8 +215,8 @@ public abstract class AbstractSelectorThread extends ManagedRunnable implements 
             // close selector
             _selector.close();
         } catch (IOException ex) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "error while closing the selector", ex);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("error while closing the selector", ex);
             }
         }
     }

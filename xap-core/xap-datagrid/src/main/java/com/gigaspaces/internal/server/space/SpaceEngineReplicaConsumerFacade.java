@@ -26,14 +26,15 @@ import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.logger.Constants;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @com.gigaspaces.api.InternalApi
 public class SpaceEngineReplicaConsumerFacade
         implements ISpaceReplicaConsumeFacade {
-    private final static Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
+    private final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
     private final SpaceEngine _spaceEngine;
 
     public SpaceEngineReplicaConsumerFacade(SpaceEngine spaceEngine) {
@@ -49,8 +50,8 @@ public class SpaceEngineReplicaConsumerFacade
 
     public void write(IEntryPacket entryPacket, IMarker evictionMarker, ReplicaType replicaType)
             throws Exception {
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest(_spaceEngine.getReplicationNode()
+        if (_logger.isTraceEnabled())
+            _logger.trace(_spaceEngine.getReplicationNode()
                     + " inserting entry " + entryPacket);
         if (evictionMarker != null && _spaceEngine.getCacheManager().requiresEvictionReplicationProtection()) {
             _spaceEngine.getCacheManager()
@@ -74,8 +75,8 @@ public class SpaceEngineReplicaConsumerFacade
     public GSEventRegistration insertNotifyTemplate(
             ITemplatePacket templatePacket, String templateUid,
             NotifyInfo notifyInfo) throws Exception {
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest(_spaceEngine.getReplicationNode()
+        if (_logger.isTraceEnabled())
+            _logger.trace(_spaceEngine.getReplicationNode()
                     + " inserting notify template " + templatePacket);
         return _spaceEngine.notify(templatePacket,
                 templatePacket.getTTL(),

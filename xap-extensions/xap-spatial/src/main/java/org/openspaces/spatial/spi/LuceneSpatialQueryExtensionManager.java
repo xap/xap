@@ -45,15 +45,16 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author yechielf
  * @since 11.0
  */
 public class LuceneSpatialQueryExtensionManager extends QueryExtensionManager {
-    private static final Logger _logger = Logger.getLogger(LuceneSpatialQueryExtensionManager.class.getName());
+    private static final Logger _logger = LoggerFactory.getLogger(LuceneSpatialQueryExtensionManager.class.getName());
 
     protected static final String XAP_ID = "XAP_ID";
     private static final FieldType XAP_ID_TYPE = toFieldType(Field.Store.YES, IndexOptions.NONE, true);
@@ -95,7 +96,7 @@ public class LuceneSpatialQueryExtensionManager extends QueryExtensionManager {
                 throw new SpaceRuntimeException("Failed to register type " + typeName, e);
             }
         } else {
-            _logger.log(Level.WARNING, "Type [" + typeName + "] is already registered");
+            _logger.warn("Type [" + typeName + "] is already registered");
         }
     }
 
@@ -136,8 +137,8 @@ public class LuceneSpatialQueryExtensionManager extends QueryExtensionManager {
 
     @Override
     public QueryExtensionEntryIterator queryByIndex(String typeName, String path, String operationName, Object operand) {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "query [typeName=" + typeName + ", path=" + path + ", operation=" + operationName + ", operand=" + operand + "]");
+        if (_logger.isDebugEnabled())
+            _logger.debug("query [typeName=" + typeName + ", path=" + path + ", operation=" + operationName + ", operand=" + operand + "]");
 
         final SpatialStrategy spatialStrategy = _luceneConfiguration.getStrategy(path);
         final Query query = spatialStrategy.makeQuery(new SpatialArgs(toOperation(operationName), toShape(operand)));
@@ -157,8 +158,8 @@ public class LuceneSpatialQueryExtensionManager extends QueryExtensionManager {
 
     @Override
     public boolean accept(String typeName, String path, String operation, Object leftOperand, Object rightOperand) {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "filter [operation=" + operation + ", leftOperand=" + leftOperand + ", rightOperand=" + rightOperand + "]");
+        if (_logger.isDebugEnabled())
+            _logger.debug("filter [operation=" + operation + ", leftOperand=" + leftOperand + ", rightOperand=" + rightOperand + "]");
 
         return toOperation(operation).evaluate(toShape(leftOperand), toShape(rightOperand));
     }

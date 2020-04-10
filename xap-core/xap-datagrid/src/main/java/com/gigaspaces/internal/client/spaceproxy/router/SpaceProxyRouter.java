@@ -46,8 +46,9 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -68,7 +69,7 @@ public class SpaceProxyRouter {
     private final QuiesceTokenProviderImpl quiesceTokenProvider;
 
     public SpaceProxyRouter(SpaceProxyImpl spaceProxy) {
-        this._logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEPROXY_ROUTER + '.' + spaceProxy.getName());
+        this._logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEPROXY_ROUTER + '.' + spaceProxy.getName());
         this._clusterInfo = spaceProxy.getSpaceClusterInfo();
         this.isGateway = spaceProxy.isGatewayProxy();
         this.isSecured = spaceProxy.isSecured();
@@ -78,8 +79,8 @@ public class SpaceProxyRouter {
         this._config = new SpaceRemoteOperationsExecutorsClusterConfig(properties);
         if (_clusterInfo.isPartitioned() && _config.getLoadBalancerType() == SpaceProxyLoadBalancerType.ROUND_ROBIN)
             throw new IllegalStateException("Cannot use round robin load balancing with a partitioned space.");
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "Initializing space proxy router - [" +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Initializing space proxy router - [" +
                     "Active server lookup timeout=" + _config.getActiveServerLookupTimeout() +
                     ", Active server lookup sampling interval=" + _config.getActiveServerLookupSamplingInterval() +
                     ", Thread pool size=" + _config.getThreadPoolSize() +
@@ -110,7 +111,7 @@ public class SpaceProxyRouter {
     }
 
     private void warnIfOldConfigIsUsed(Properties properties) {
-        if (_logger.isLoggable(Level.WARNING)) {
+        if (_logger.isWarnEnabled()) {
             testDeprecatedProperty(properties, Constants.SpaceProxy.OldRouter.CONNECTION_MONITOR_FULL);
             testDeprecatedProperty(properties, Constants.SpaceProxy.OldRouter.CONNECTION_RETRIES_FULL);
             testDeprecatedProperty(properties, Constants.SpaceProxy.OldRouter.DETECTOR_FREQUENCY_FULL);
@@ -121,7 +122,7 @@ public class SpaceProxyRouter {
 
     private void testDeprecatedProperty(Properties properties, String propertyName) {
         if (properties.containsKey(propertyName))
-            _logger.warning("Property is ignored when using the new space proxy router: " + propertyName);
+            _logger.warn("Property is ignored when using the new space proxy router: " + propertyName);
     }
 
     private SpaceProxyRemoteOperationRouter createClusteredRouter(SpaceProxyImpl spaceProxy, List<String> membersNames,
@@ -167,8 +168,8 @@ public class SpaceProxyRouter {
         if (!properties.containsKey(Constants.SpaceProxy.Router.LOAD_BALANCER_TYPE)) {
             if (clusterInfo != null && clusterInfo.getLoadBalancerType() != null && clusterInfo.getLoadBalancerType() != SpaceProxyLoadBalancerType.STICKY) {
                 properties.setProperty(Constants.SpaceProxy.Router.LOAD_BALANCER_TYPE, clusterInfo.getLoadBalancerType().toString());
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.log(Level.WARNING, "Setting load balance type via cluster policy is deprecated, use space property '" + Constants.SpaceProxy.Router.LOAD_BALANCER_TYPE + "' instead.");
+                if (_logger.isWarnEnabled())
+                    _logger.warn("Setting load balance type via cluster policy is deprecated, use space property '" + Constants.SpaceProxy.Router.LOAD_BALANCER_TYPE + "' instead.");
             }
         }
         return properties;

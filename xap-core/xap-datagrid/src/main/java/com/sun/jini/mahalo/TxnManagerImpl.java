@@ -95,8 +95,9 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginContext;
@@ -116,43 +117,43 @@ public class TxnManagerImpl /*extends RemoteServer*/
      * Logger for (successful) service startup message
      */
     static final Logger startupLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".startup");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".startup");
 
     /**
      * Logger for service re/initialization related messages
      */
     static final Logger initLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".init");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".init");
 
     /**
      * Logger for service destruction related messages
      */
     static final Logger destroyLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".destroy");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".destroy");
 
     /**
      * Logger for service operation messages
      */
     static final Logger operationsLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".operations");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".operations");
 
     /**
      * Logger for transaction related messages (creation, destruction, transition, etc.)
      */
     static final Logger transactionsLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".transactions");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".transactions");
 
     /**
      * Logger for transaction participant related messages
      */
     static final Logger participantLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".participant");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".participant");
 
     /**
      * Logger for transaction persistence related messages
      */
     static final Logger persistenceLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".persistence");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".persistence");
 
     /**
      * @serial
@@ -374,7 +375,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
      */
     TxnManagerImpl(String[] args, LifeCycle lc, boolean persistent, boolean lookupRegister)
             throws Exception {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "TxnManagerImpl", new Object[]{
                             Arrays.asList(args), lc, Boolean.valueOf(persistent)});
         }
@@ -392,15 +393,15 @@ public class TxnManagerImpl /*extends RemoteServer*/
             cleanup();
             initFailed(e);
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "TxnManagerImpl");
         }
-        finer_par_logger = participantLogger.isLoggable(Level.FINER);
-        finest_par_logger = participantLogger.isLoggable(Level.FINEST);
-        finer_op_logger = operationsLogger.isLoggable(Level.FINER);
-        finest_op_logger = operationsLogger.isLoggable(Level.FINEST);
-        finer_tr_logger = transactionsLogger.isLoggable(Level.FINER);
-        finest_tr_logger = transactionsLogger.isLoggable(Level.FINEST);
+        finer_par_logger = participantLogger.isDebugEnabled();
+        finest_par_logger = participantLogger.isTraceEnabled();
+        finer_op_logger = operationsLogger.isDebugEnabled();
+        finest_op_logger = operationsLogger.isTraceEnabled();
+        finer_tr_logger = transactionsLogger.isDebugEnabled();
+        finest_tr_logger = transactionsLogger.isTraceEnabled();
     }
 
     /**
@@ -411,7 +412,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
      */
     TxnManagerImpl(ActivationID activationID, MarshalledObject data)
             throws Exception {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "TxnManagerImpl",
                     new Object[]{activationID, data});
         }
@@ -423,16 +424,16 @@ public class TxnManagerImpl /*extends RemoteServer*/
             cleanup();
             initFailed(e);
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger,
                     TxnManagerImpl.class, "TxnManagerImpl");
         }
-        finer_par_logger = participantLogger.isLoggable(Level.FINER);
-        finest_par_logger = participantLogger.isLoggable(Level.FINEST);
-        finer_op_logger = operationsLogger.isLoggable(Level.FINER);
-        finest_op_logger = operationsLogger.isLoggable(Level.FINEST);
-        finer_tr_logger = transactionsLogger.isLoggable(Level.FINER);
-        finest_tr_logger = transactionsLogger.isLoggable(Level.FINEST);
+        finer_par_logger = participantLogger.isDebugEnabled();
+        finest_par_logger = participantLogger.isTraceEnabled();
+        finer_op_logger = operationsLogger.isDebugEnabled();
+        finest_op_logger = operationsLogger.isTraceEnabled();
+        finer_tr_logger = transactionsLogger.isDebugEnabled();
+        finest_tr_logger = transactionsLogger.isTraceEnabled();
     }
 
     /**
@@ -440,7 +441,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
      */
     private void init(String[] configArgs)
             throws Exception {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "init", configArgs);
         }
         final Configuration config =
@@ -453,14 +454,14 @@ public class TxnManagerImpl /*extends RemoteServer*/
         } else {
             doInit(config);
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "init");
         }
     }
 
     private void doInitWithLogin(final Configuration config,
                                  LoginContext loginContext) throws Exception {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "doInitWithLogin",
                     new Object[]{config, loginContext});
         }
@@ -480,13 +481,13 @@ public class TxnManagerImpl /*extends RemoteServer*/
             try {
                 loginContext.logout();
             } catch (LoginException le) {
-                if (initLogger.isLoggable(Level.FINE)) {
-                    initLogger.log(Level.FINE, "Trouble logging out", le);
+                if (initLogger.isDebugEnabled()) {
+                    initLogger.debug("Trouble logging out", le);
                 }
             }
             throw e.getException();
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "doInitWithLogin");
         }
 
@@ -494,7 +495,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
     private void doInit(Configuration config) throws Exception {
         final long startTime = System.currentTimeMillis();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "doInit", config);
         }
         // Get activatable settings, if activated
@@ -503,44 +504,44 @@ public class TxnManagerImpl /*extends RemoteServer*/
                     (ProxyPreparer) Config.getNonNullEntry(config,
                             TxnManager.MAHALO, "activationSystemPreparer",
                             ProxyPreparer.class, new BasicProxyPreparer());
-            if (initLogger.isLoggable(Level.FINE)) {
-                initLogger.log(Level.FINE, "activationSystemPreparer: {0}",
+            if (initLogger.isDebugEnabled()) {
+                initLogger.debug("activationSystemPreparer: {0}",
                         activationSystemPreparer);
             }
             activationSystem =
                     (ActivationSystem) activationSystemPreparer.prepareProxy(
                             ActivationGroup.getSystem());
-            if (initLogger.isLoggable(Level.FINE)) {
-                initLogger.log(Level.FINE, "Prepared activation system is: {0}",
+            if (initLogger.isDebugEnabled()) {
+                initLogger.debug("Prepared activation system is: {0}",
                         activationSystem);
             }
             ProxyPreparer activationIdPreparer =
                     (ProxyPreparer) Config.getNonNullEntry(config,
                             TxnManager.MAHALO, "activationIdPreparer",
                             ProxyPreparer.class, new BasicProxyPreparer());
-            if (initLogger.isLoggable(Level.FINE)) {
-                initLogger.log(Level.FINE, "activationIdPreparer: {0}",
+            if (initLogger.isDebugEnabled()) {
+                initLogger.debug("activationIdPreparer: {0}",
                         activationIdPreparer);
             }
             activationID = (ActivationID) activationIdPreparer.prepareProxy(
                     activationID);
-            if (initLogger.isLoggable(Level.FINE)) {
-                initLogger.log(Level.FINE, "Prepared activationID is: {0}",
+            if (initLogger.isDebugEnabled()) {
+                initLogger.debug("Prepared activationID is: {0}",
                         activationID);
             }
             activationPrepared = true;
             exporter = (Exporter) Config.getNonNullEntry(config,
                     TxnManager.MAHALO, "serverExporter", Exporter.class);
             exporter = new ActivationExporter(activationID, exporter);
-            if (initLogger.isLoggable(Level.FINE)) {
-                initLogger.log(Level.FINE,
+            if (initLogger.isDebugEnabled()) {
+                initLogger.debug(
                         "Activatable service exporter is: {0}", exporter);
             }
         } else {
             exporter = (Exporter) Config.getNonNullEntry(config,
                     TxnManager.MAHALO, "serverExporter", Exporter.class);
-            if (initLogger.isLoggable(Level.FINE)) {
-                initLogger.log(Level.FINE,
+            if (initLogger.isDebugEnabled()) {
+                initLogger.debug(
                         "Non-activatable service exporter is: {0}", exporter);
             }
         }
@@ -549,16 +550,16 @@ public class TxnManagerImpl /*extends RemoteServer*/
                 (ProxyPreparer) Config.getNonNullEntry(config,
                         TxnManager.MAHALO, "recoveredParticipantPreparer",
                         ProxyPreparer.class, new BasicProxyPreparer());
-        if (initLogger.isLoggable(Level.FINE)) {
-            initLogger.log(Level.FINE, "Recovered participant preparer is: {0}",
+        if (initLogger.isDebugEnabled()) {
+            initLogger.debug("Recovered participant preparer is: {0}",
                     recoveredParticipantPreparer);
         }
         if (persistent) {
             participantPreparer = (ProxyPreparer) Config.getNonNullEntry(config,
                     TxnManager.MAHALO, "participantPreparer", ProxyPreparer.class,
                     new BasicProxyPreparer());
-            if (initLogger.isLoggable(Level.FINE)) {
-                initLogger.log(Level.FINE, "Participant preparer is: {0}",
+            if (initLogger.isDebugEnabled()) {
+                initLogger.debug("Participant preparer is: {0}",
                         participantPreparer);
             }
         }
@@ -567,8 +568,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
                 config, TxnManager.MAHALO, "leasePeriodPolicy",
                 LeasePeriodPolicy.class,
                 new SystemTimeFixedLeasePeriodPolicy(3 * HOURS, 1 * HOURS));
-        if (initLogger.isLoggable(Level.FINE)) {
-            initLogger.log(Level.FINE, "leasePeriodPolicy is: {0}",
+        if (initLogger.isDebugEnabled()) {
+            initLogger.debug("leasePeriodPolicy is: {0}",
                     txnLeasePeriodPolicy);
         }
 
@@ -576,42 +577,42 @@ public class TxnManagerImpl /*extends RemoteServer*/
             persistenceDirectory =
                     (String) Config.getNonNullEntry(config,
                             TxnManager.MAHALO, "persistenceDirectory", String.class);
-            if (initLogger.isLoggable(Level.FINE)) {
-                initLogger.log(Level.FINE, "Persistence directory is: {0}",
+            if (initLogger.isDebugEnabled()) {
+                initLogger.debug("Persistence directory is: {0}",
                         persistenceDirectory);
             }
         } else { // just for insurance
             persistenceDirectory = null;
         }
 
-        if (initLogger.isLoggable(Level.FINEST)) {
-            initLogger.log(Level.FINEST, "Creating JoinStateManager");
+        if (initLogger.isTraceEnabled()) {
+            initLogger.trace("Creating JoinStateManager");
         }
         // Note: null persistenceDirectory means no persistence
         joinStateManager = new JoinStateManager(persistenceDirectory);
-        if (initLogger.isLoggable(Level.FINEST)) {
-            initLogger.log(Level.FINEST, "Recovering join state ...");
+        if (initLogger.isTraceEnabled()) {
+            initLogger.trace("Recovering join state ...");
         }
         joinStateManager.recover();
 
         // ServiceUuid will be null first time up.
         if (joinStateManager.getServiceUuid() == null) {
-            if (initLogger.isLoggable(Level.FINEST)) {
-                initLogger.log(Level.FINEST, "Generating service Uuid");
+            if (initLogger.isTraceEnabled()) {
+                initLogger.trace("Generating service Uuid");
             }
             topUuid = UuidFactory.generate();
             // Actual snapshot deferred until JSM is started, below
             joinStateManager.setServiceUuid(topUuid);
         } else { // get recovered value for serviceUuid
-            if (initLogger.isLoggable(Level.FINEST)) {
-                initLogger.log(Level.FINEST, "Recovering service Uuid");
+            if (initLogger.isTraceEnabled()) {
+                initLogger.trace("Recovering service Uuid");
             }
             topUuid = joinStateManager.getServiceUuid();
         }
         _dummyLeaseUuid = new Uuid(topUuid.getLeastSignificantBits(),
                 -1);
-        if (initLogger.isLoggable(Level.FINEST)) {
-            initLogger.log(Level.FINEST, "Uuid is: {0}", topUuid);
+        if (initLogger.isTraceEnabled()) {
+            initLogger.trace("Uuid is: {0}", topUuid);
         }
 
         if (persistent) {
@@ -619,30 +620,30 @@ public class TxnManagerImpl /*extends RemoteServer*/
             com.sun.jini.system.FileSystem.ensureDir(persistenceDirectory);
         }
 
-        if (initLogger.isLoggable(Level.FINEST)) {
-            initLogger.log(Level.FINEST, "Exporting server");
+        if (initLogger.isTraceEnabled()) {
+            initLogger.trace("Exporting server");
         }
         serverStub = (TxnManager) exporter.export(this);
-        if (initLogger.isLoggable(Level.FINEST)) {
-            initLogger.log(Level.FINEST, "Server stub: {0}", serverStub);
+        if (initLogger.isTraceEnabled()) {
+            initLogger.trace("Server stub: {0}", serverStub);
         }
         txnMgrLocalProxy = TxnMgrProxy.create(serverStub, this, topUuid);
         // Create the proxy that will be registered in the lookup service
         txnMgrProxy =
                 TxnMgrProxy.create(serverStub, this, topUuid);
-        if (initLogger.isLoggable(Level.FINEST)) {
-            initLogger.log(Level.FINEST, "Service proxy is: {0}",
+        if (initLogger.isTraceEnabled()) {
+            initLogger.trace("Service proxy is: {0}",
                     txnMgrProxy);
         }
         // Create the admin proxy for this service
         txnMgrAdminProxy =
                 TxnMgrAdminProxy.create(serverStub, topUuid);
-        if (initLogger.isLoggable(Level.FINEST)) {
-            initLogger.log(Level.FINEST, "Service admin proxy is: {0}",
+        if (initLogger.isTraceEnabled()) {
+            initLogger.trace("Service admin proxy is: {0}",
                     txnMgrAdminProxy);
         }
-        if (initLogger.isLoggable(Level.FINEST)) {
-            initLogger.log(Level.FINEST, "Setting up data structures");
+        if (initLogger.isTraceEnabled()) {
+            initLogger.trace("Setting up data structures");
         }
 
         // Used by log recovery logic
@@ -670,8 +671,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
         // Create LeaseExpirationMgr
         expMgr = new LeaseExpirationMgr(this);
 
-        if (initLogger.isLoggable(Level.FINEST)) {
-            initLogger.log(Level.FINEST, "Setting up log manager");
+        if (initLogger.isTraceEnabled()) {
+            initLogger.trace("Setting up log manager");
         }
         if (persistent) {
             logmgr = new MultiLogManager(this, persistenceDirectory);
@@ -681,8 +682,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
         }
 
         try {
-            if (initLogger.isLoggable(Level.FINEST)) {
-                initLogger.log(Level.FINEST, "Recovering state");
+            if (initLogger.isTraceEnabled()) {
+                initLogger.trace("Recovering state");
             }
             logmgr.recover();
 
@@ -691,32 +692,32 @@ public class TxnManagerImpl /*extends RemoteServer*/
             TxnManagerTransaction txn;
             while (iter.hasNext()) {
                 txn = (TxnManagerTransaction) iter.next();
-                if (initLogger.isLoggable(Level.FINEST)) {
-                    initLogger.log(Level.FINEST,
+                if (initLogger.isTraceEnabled()) {
+                    initLogger.trace(
                             "Restoring transient state for txn id: {0}",
                             new Long(((ServerTransaction) txn.getTransaction()).id));
                 }
                 try {
                     txn.restoreTransientState(recoveredParticipantPreparer);
                 } catch (RemoteException re) {
-                    if (persistenceLogger.isLoggable(Level.WARNING)) {
-                        persistenceLogger.log(Level.WARNING,
+                    if (persistenceLogger.isWarnEnabled()) {
+                        persistenceLogger.warn(
                                 "Cannot restore the TransactionParticipant", re);
                     }
 //TODO - what should happen when participant preparation fails?
                 }
             }
 
-            if (initLogger.isLoggable(Level.FINEST)) {
-                initLogger.log(Level.FINEST, "Settling incomplete transactions");
+            if (initLogger.isTraceEnabled()) {
+                initLogger.trace("Settling incomplete transactions");
             }
             settleThread = new InterruptedStatusThread("settleThread") {
                 public void run() {
                     try {
                         settleTxns();
                     } catch (InterruptedException ie) {
-                        if (transactionsLogger.isLoggable(Level.FINEST)) {
-                            transactionsLogger.log(Level.FINEST,
+                        if (transactionsLogger.isTraceEnabled()) {
+                            transactionsLogger.trace(
                                     "settleThread interrupted -- exiting");
                         }
                         return;
@@ -748,8 +749,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
     /*
      * Create the object that manages and persists our join state
 	 */
-            if (initLogger.isLoggable(Level.FINEST)) {
-                initLogger.log(Level.FINEST, "Starting JoinStateManager");
+            if (initLogger.isTraceEnabled()) {
+                initLogger.trace("Starting JoinStateManager");
             }
             // Starting causes snapshot to occur
             joinStateManager.startManager(config, txnMgrProxy,
@@ -758,13 +759,13 @@ public class TxnManagerImpl /*extends RemoteServer*/
                     attributesFor());
         }
 
-        if (startupLogger.isLoggable(Level.INFO)) {
+        if (startupLogger.isInfoEnabled()) {
             final double duration = (System.currentTimeMillis() - startTime) / 1000d;
-            startupLogger.log(Level.INFO, "Started Mahalo (duration={0}): {1}", new Object[]{duration, this});
+            startupLogger.info("Started Mahalo (duration={0}): {1}", new Object[]{duration, this});
         }
         readyState.ready();
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "doInit");
         }
     }
@@ -798,7 +799,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
 
         if (finest_tr_logger) {
-            transactionsLogger.log(Level.FINEST,
+            transactionsLogger.trace(
                     "Transaction ID is: {0}", new Long(tid));
         }
 
@@ -830,7 +831,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         }
 
         if (finest_tr_logger) {
-            transactionsLogger.log(Level.FINEST,
+            transactionsLogger.trace(
                     "Created new TxnManagerTransaction ID is: {0}", new Long(tid));
         }
 
@@ -841,7 +842,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             _txns.put(tid, txntr);
 
         if (finest_tr_logger) {
-            transactionsLogger.log(Level.FINEST,
+            transactionsLogger.trace(
                     "recorded new TxnManagerTransaction", txntr);
         }
 
@@ -959,7 +960,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
                             participantPreparer.prepareProxy(part);
 
         if (finest_par_logger) {
-            participantLogger.log(Level.FINEST,
+            participantLogger.trace(
                     "prepared participant: {0}", preparedTarget);
         }
 
@@ -997,14 +998,14 @@ public class TxnManagerImpl /*extends RemoteServer*/
     private boolean
     disJoin_impl(Object id, TransactionParticipant part)
             throws UnknownTransactionException, RemoteException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "disJoin", new Object[]{id, part});
         }
 
         TransactionParticipant preparedTarget = part;
 
-        if (participantLogger.isLoggable(Level.FINEST)) {
-            participantLogger.log(Level.FINEST,
+        if (participantLogger.isTraceEnabled()) {
+            participantLogger.trace(
                     "prepared participant: {0}", preparedTarget);
         }
 
@@ -1015,7 +1016,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
         // txntr.join does expiration check
         boolean res = txntr.disJoin(preparedTarget);
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "disJoin");
         }
         return res;
@@ -1029,7 +1030,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
      */
     public int prepare(Object xid)
             throws CannotCommitException, UnknownTransactionException, RemoteException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "prepare-xid", xid);
         }
         TxnManagerTransaction txntr = _txns.get(xid);
@@ -1049,7 +1050,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
     public int getState(Object id)
             throws UnknownTransactionException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "getState", id);
         }
         readyState.check();
@@ -1074,7 +1075,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         if (state == ACTIVE && !ensureCurrent(txntr))
             throw new UnknownTransactionException("unknown transaction");
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "getState", new Integer(state));
         }
         return state;
@@ -1115,7 +1116,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         TxnManagerTransaction txntr = _txns.get(id);
 
         if (finest_tr_logger) {
-            transactionsLogger.log(Level.FINEST,
+            transactionsLogger.trace(
                     "Retrieved TxnManagerTransaction: {0}", txntr);
         }
 
@@ -1129,10 +1130,10 @@ public class TxnManagerImpl /*extends RemoteServer*/
             _tidToExternalXid.remove(txntr.getTransaction().id);
 
         if (finest_tr_logger) {
-            transactionsLogger.log(Level.FINEST,
+            transactionsLogger.trace(
                     "Committed transaction id {0}", id);
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "commit");
         }
     }
@@ -1165,7 +1166,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
     public void abort(long id)
             throws UnknownTransactionException, CannotAbortException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "abort", id);
         }
         readyState.check();
@@ -1175,7 +1176,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             //Swallow this exception because we only want to
             //schedule a settler task
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "abort");
         }
     }
@@ -1190,7 +1191,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
     public void abort_impl(Object id, long waitFor)
             throws UnknownTransactionException, CannotAbortException,
             TimeoutExpiredException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "abort", new Object[]{id, new Long(waitFor)});
         }
         readyState.check();
@@ -1205,8 +1206,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
         TxnManagerTransaction txntr =
                 _txns.get(id);
 
-        if (transactionsLogger.isLoggable(Level.FINEST)) {
-            transactionsLogger.log(Level.FINEST,
+        if (transactionsLogger.isTraceEnabled()) {
+            transactionsLogger.trace(
                     "Retrieved TxnManagerTransaction: {0}", txntr);
         }
 	/*
@@ -1224,11 +1225,11 @@ public class TxnManagerImpl /*extends RemoteServer*/
         if (txntr.isExternalXid())
             _tidToExternalXid.remove(txntr.getTransaction().id);
 
-        if (transactionsLogger.isLoggable(Level.FINEST)) {
-            transactionsLogger.log(Level.FINEST,
+        if (transactionsLogger.isTraceEnabled()) {
+            transactionsLogger.trace(
                     "aborted transaction id {0}", id);
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "abort");
         }
     }
@@ -1272,14 +1273,14 @@ public class TxnManagerImpl /*extends RemoteServer*/
      * @param rec    the <code>LogRecord</code>
      */
     public void recover(long cookie, LogRecord rec) throws LogException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "recover",
                     new Object[]{new Long(cookie), rec});
         }
         TxnManagerTransaction tmt = enterTMT(cookie);
         TxnLogRecord trec = (TxnLogRecord) rec;
         trec.recover(tmt);
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "recover");
         }
     }
@@ -1291,14 +1292,14 @@ public class TxnManagerImpl /*extends RemoteServer*/
      * @param tid the transaction's ID
      */
     public synchronized void noteUnsettledTxn(Object tid) {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "noteUnsettledTxn", tid);
         }
         unsettledtxns.add(tid);
 
         notifyAll();
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "noteUnsettledTxn");
         }
     }
@@ -1306,11 +1307,11 @@ public class TxnManagerImpl /*extends RemoteServer*/
     private synchronized void settleTxns() throws InterruptedException {
         ClientLog log = null;
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "settleTxns");
         }
-        if (transactionsLogger.isLoggable(Level.FINEST)) {
-            transactionsLogger.log(Level.FINEST,
+        if (transactionsLogger.isTraceEnabled()) {
+            transactionsLogger.trace(
                     "Settling {0} transactions.",
                     new Integer(unsettledtxns.size()));
         }
@@ -1323,14 +1324,14 @@ public class TxnManagerImpl /*extends RemoteServer*/
             numtxns = unsettledtxns.size();
 
             if (numtxns == 0) {
-                if (transactionsLogger.isLoggable(Level.FINEST)) {
-                    transactionsLogger.log(Level.FINEST,
+                if (transactionsLogger.isTraceEnabled()) {
+                    transactionsLogger.trace(
                             "Settler waiting");
                 }
                 wait();
 
-                if (transactionsLogger.isLoggable(Level.FINEST)) {
-                    transactionsLogger.log(Level.FINEST,
+                if (transactionsLogger.isTraceEnabled()) {
+                    transactionsLogger.trace(
                             "Settler notified");
                 }
                 continue;
@@ -1350,14 +1351,14 @@ public class TxnManagerImpl /*extends RemoteServer*/
             if (settleThread.hasBeenInterrupted())
                 throw new InterruptedException("settleTxns interrupted");
 
-            if (transactionsLogger.isLoggable(Level.FINEST)) {
-                transactionsLogger.log(Level.FINEST,
+            if (transactionsLogger.isTraceEnabled()) {
+                transactionsLogger.trace(
                         "Added SettlerTask for tid {0}", tid);
             }
         }
         // Not reachable
         /*
-	 * if (operationsLogger.isLoggable(Level.FINER)) {
+	 * if (operationsLogger.isDebugEnabled()) {
             operationsLogger.exiting(TxnManagerImpl.class.getName(),
 	 *   "settleTxns");
 	 */
@@ -1423,7 +1424,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
     public long renew(Uuid uuid, long extension)
             throws UnknownLeaseException, LeaseDeniedException {
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "renew",
                     new Object[]{uuid, new Long(extension)});
         }
@@ -1454,7 +1455,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             r = txnLeasePeriodPolicy.renew(txntr, extension);
             txntr.setExpiration(r.expiration);
             expMgr.renewed(txntr);
-            if (operationsLogger.isLoggable(Level.FINER)) {
+            if (operationsLogger.isDebugEnabled()) {
                 LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "renew", new Object[]{new Long(r.duration)});
             }
 
@@ -1474,7 +1475,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
      */
     public void cancel(Uuid uuid) throws UnknownLeaseException {
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "cancel", uuid);
         }
         readyState.check();
@@ -1520,7 +1521,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             }
         }
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "cancel");
         }
     }
@@ -1535,14 +1536,14 @@ public class TxnManagerImpl /*extends RemoteServer*/
      * @see com.sun.jini.mahalo.LeaseManager
      */
     public Landlord.RenewResults renewAll(Uuid[] cookies, long[] extensions) {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "renewAll");
         }
         readyState.check();
 
         Landlord.RenewResults results =
                 LandlordUtil.renewAll(this, cookies, extensions);
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "renewAll");
         }
         return results;
@@ -1558,13 +1559,13 @@ public class TxnManagerImpl /*extends RemoteServer*/
      * @see com.sun.jini.mahalo.LeaseManager
      */
     public Map cancelAll(Uuid[] cookies) {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "cancelAll");
         }
         readyState.check();
 
         Map results = LandlordUtil.cancelAll(this, cookies);
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "cancelAll");
         }
         return results;
@@ -1581,7 +1582,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
 
     static long nextID__() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "nextID");
         }
 
@@ -1595,7 +1596,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
                     id = (id << 8) | (idGenBuf[i] & 0xFF);
             } while (id == 0);                // skip flag value
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "nextID", new Long(id));
         }
         return id;
@@ -1604,11 +1605,11 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
     private ServerTransaction serverTransaction(Transaction baseTr)
             throws UnknownTransactionException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "serverTransaction", baseTr);
         }
         try {
-            if (operationsLogger.isLoggable(Level.FINER)) {
+            if (operationsLogger.isDebugEnabled()) {
                 LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "serverTransaction", baseTr);
             }
             return (ServerTransaction) baseTr;
@@ -1632,7 +1633,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
     private TxnManagerTransaction enterTMT(long cookie) {
         Long key = new Long(cookie);
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "enterTMT", key);
         }
         TxnManagerTransaction tmt =
@@ -1652,7 +1653,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
         _txns.put(key, tmt);
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "enterTMT", tmt);
         }
         return tmt;
@@ -1695,13 +1696,13 @@ public class TxnManagerImpl /*extends RemoteServer*/
      * Cleans up and exits the transaction manager.
      */
     public synchronized void destroy() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "destroy");
         }
         readyState.check();
 
         (new DestroyThread()).start();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "destroy");
         }
     }
@@ -1727,7 +1728,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         }
 
         public void run() {
-            if (operationsLogger.isLoggable(Level.FINER)) {
+            if (operationsLogger.isDebugEnabled()) {
                 LogUtils.entering(operationsLogger, DestroyThread.class, "run");
             }
 
@@ -1739,16 +1740,16 @@ public class TxnManagerImpl /*extends RemoteServer*/
  */
             if (activationPrepared) {
                 try {
-                    if (destroyLogger.isLoggable(Level.FINEST)) {
-                        destroyLogger.log(Level.FINEST,
+                    if (destroyLogger.isTraceEnabled()) {
+                        destroyLogger.trace(
                                 "Unregistering object.");
                     }
                     if (activationID != null)
                         activationSystem.unregisterObject(activationID);
                 } catch (RemoteException e) {
    		    /* give up until we can at least unregister */
-                    if (destroyLogger.isLoggable(Level.WARNING)) {
-                        destroyLogger.log(Level.WARNING,
+                    if (destroyLogger.isWarnEnabled()) {
+                        destroyLogger.warn(
                                 "Trouble unregistering object -- aborting.", e);
                     }
                     return;
@@ -1758,16 +1759,16 @@ public class TxnManagerImpl /*extends RemoteServer*/
                      * object has already been unregistered --
                      * ignore in either case.
                      */
-                    if (destroyLogger.isLoggable(Level.FINE)) {
-                        destroyLogger.log(Level.FINE,
+                    if (destroyLogger.isDebugEnabled()) {
+                        destroyLogger.debug(
                                 "Trouble unregistering object -- ignoring.", e);
                     }
                 }
             }
 
             // Attempt to unexport this object -- nicely first
-            if (destroyLogger.isLoggable(Level.FINEST)) {
-                destroyLogger.log(Level.FINEST,
+            if (destroyLogger.isTraceEnabled()) {
+                destroyLogger.trace(
                         "Attempting unforced unexport.");
             }
             long endTime =
@@ -1784,22 +1785,22 @@ public class TxnManagerImpl /*extends RemoteServer*/
                 /* wait for any pending operations to complete */
                 unexported = exporter.unexport(false);
                 if (!unexported) {
-                    if (destroyLogger.isLoggable(Level.FINEST)) {
-                        destroyLogger.log(Level.FINEST,
+                    if (destroyLogger.isTraceEnabled()) {
+                        destroyLogger.trace(
                                 "Waiting for in-progress calls to complete");
                     }
                     try {
                         sleep(1000);
                     } catch (InterruptedException ie) {
-                        if (destroyLogger.isLoggable(Level.FINE)) {
-                            destroyLogger.log(Level.FINE,
+                        if (destroyLogger.isDebugEnabled()) {
+                            destroyLogger.debug(
                                     "problem unexporting nicely", ie);
                         }
                         break; //fall through to forced unexport
                     }
                 } else {
-                    if (destroyLogger.isLoggable(Level.FINEST)) {
-                        destroyLogger.log(Level.FINEST,
+                    if (destroyLogger.isTraceEnabled()) {
+                        destroyLogger.trace(
                                 "Unexport completed");
                     }
                 }
@@ -1807,22 +1808,22 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
             // Attempt to forcefully unexport this object, if not already done
             if (!unexported) {
-                if (destroyLogger.isLoggable(Level.FINEST)) {
-                    destroyLogger.log(Level.FINEST,
+                if (destroyLogger.isTraceEnabled()) {
+                    destroyLogger.trace(
                             "Attempting forced unexport.");
                 }
 		/* Attempt to forcefully export the service */
                 unexported = exporter.unexport(true);
             }
 
-            if (destroyLogger.isLoggable(Level.FINEST)) {
-                destroyLogger.log(Level.FINEST, "Destroying JoinStateManager.");
+            if (destroyLogger.isTraceEnabled()) {
+                destroyLogger.trace("Destroying JoinStateManager.");
             }
             try {
                 joinStateManager.destroy();
             } catch (Exception t) {
-                if (destroyLogger.isLoggable(Level.FINE)) {
-                    destroyLogger.log(Level.FINE,
+                if (destroyLogger.isDebugEnabled()) {
+                    destroyLogger.debug(
                             "Problem destroying JoinStateManager", t);
                 }
             }
@@ -1830,33 +1831,33 @@ public class TxnManagerImpl /*extends RemoteServer*/
             //
             // Attempt to stop all running threads
             //
-            if (destroyLogger.isLoggable(Level.FINEST)) {
-                destroyLogger.log(Level.FINEST, "Terminating lease expiration manager.");
+            if (destroyLogger.isTraceEnabled()) {
+                destroyLogger.trace("Terminating lease expiration manager.");
             }
             expMgr.terminate();
 
-            if (destroyLogger.isLoggable(Level.FINEST)) {
-                destroyLogger.log(Level.FINEST, "Interrupting settleThread.");
+            if (destroyLogger.isTraceEnabled()) {
+                destroyLogger.trace("Interrupting settleThread.");
             }
             settleThread.interrupt();
             try {
                 settleThread.join();
             } catch (InterruptedException ie) {
-                if (destroyLogger.isLoggable(Level.FINE)) {
-                    destroyLogger.log(Level.FINE,
+                if (destroyLogger.isDebugEnabled()) {
+                    destroyLogger.debug(
                             "Problem stopping settleThread", ie);
                 }
             }
 
-            if (destroyLogger.isLoggable(Level.FINEST)) {
-                destroyLogger.log(Level.FINEST, "Terminating settlerpool.");
+            if (destroyLogger.isTraceEnabled()) {
+                destroyLogger.trace("Terminating settlerpool.");
             }
             settlerpool.terminate();
             settlerWakeupMgr.stop();
             settlerWakeupMgr.cancelAll();
 
-            if (destroyLogger.isLoggable(Level.FINEST)) {
-                destroyLogger.log(Level.FINEST, "Terminating taskpool.");
+            if (destroyLogger.isTraceEnabled()) {
+                destroyLogger.trace("Terminating taskpool.");
             }
             taskpool.terminate();
             taskWakeupMgr.stop();
@@ -1865,8 +1866,8 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
             // Remove persistent store- ask LogManager to clean
             // itself up, then clean up the persistence path.
-            if (destroyLogger.isLoggable(Level.FINEST)) {
-                destroyLogger.log(Level.FINEST, "Destroying transaction logs.");
+            if (destroyLogger.isTraceEnabled()) {
+                destroyLogger.trace("Destroying transaction logs.");
             }
             MultiLogManagerAdmin logadmin =
                     (MultiLogManagerAdmin) logmgr.getAdmin();
@@ -1874,42 +1875,42 @@ public class TxnManagerImpl /*extends RemoteServer*/
             logadmin.destroy();
 
             if (persistent) {
-                if (destroyLogger.isLoggable(Level.FINEST)) {
-                    destroyLogger.log(Level.FINEST, "Destroying persistence directory.");
+                if (destroyLogger.isTraceEnabled()) {
+                    destroyLogger.trace("Destroying persistence directory.");
                 }
                 try {
                     com.sun.jini.system.FileSystem.destroy(
                             new File(persistenceDirectory), true);
                 } catch (IOException e) {
-                    if (destroyLogger.isLoggable(Level.FINE)) {
-                        destroyLogger.log(Level.FINE,
+                    if (destroyLogger.isDebugEnabled()) {
+                        destroyLogger.debug(
                                 "Problem destroying persistence directory", e);
                     }
                 }
             }
 
             if (activationID != null) {
-                if (destroyLogger.isLoggable(Level.FINEST)) {
-                    destroyLogger.log(Level.FINEST, "Calling Activatable.inactive.");
+                if (destroyLogger.isTraceEnabled()) {
+                    destroyLogger.trace("Calling Activatable.inactive.");
                 }
                 try {
                     Activatable.inactive(activationID);
                 } catch (RemoteException e) { // ignore
-                    if (destroyLogger.isLoggable(Level.FINE)) {
-                        destroyLogger.log(Level.FINE,
+                    if (destroyLogger.isDebugEnabled()) {
+                        destroyLogger.debug(
                                 "Problem inactivating service", e);
                     }
                 } catch (ActivationException e) { // ignore
-                    if (destroyLogger.isLoggable(Level.FINE)) {
-                        destroyLogger.log(Level.FINE,
+                    if (destroyLogger.isDebugEnabled()) {
+                        destroyLogger.debug(
                                 "Problem inactivating service", e);
                     }
                 }
             }
 
             if (lifeCycle != null) {
-                if (destroyLogger.isLoggable(Level.FINEST)) {
-                    destroyLogger.log(Level.FINEST,
+                if (destroyLogger.isTraceEnabled()) {
+                    destroyLogger.trace(
                             "Unregistering with LifeCycle.");
                 }
                 lifeCycle.unregister(TxnManagerImpl.this);
@@ -1917,14 +1918,14 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
             if (loginContext != null) {
                 try {
-                    if (destroyLogger.isLoggable(Level.FINEST)) {
-                        destroyLogger.log(Level.FINEST,
+                    if (destroyLogger.isTraceEnabled()) {
+                        destroyLogger.trace(
                                 "Logging out");
                     }
                     loginContext.logout();
                 } catch (Exception e) {
-                    if (destroyLogger.isLoggable(Level.FINE)) {
-                        destroyLogger.log(Level.FINE,
+                    if (destroyLogger.isDebugEnabled()) {
+                        destroyLogger.debug(
                                 "Exception while logging out",
                                 e);
                     }
@@ -1932,7 +1933,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             }
             readyState.shutdown();
 
-            if (operationsLogger.isLoggable(Level.FINER)) {
+            if (operationsLogger.isDebugEnabled()) {
                 LogUtils.exiting(operationsLogger, DestroyThread.class, "run");
             }
         }
@@ -1942,12 +1943,12 @@ public class TxnManagerImpl /*extends RemoteServer*/
      * Returns the administration object for the transaction manager.
      */
     public Object getAdmin() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "getAdmin");
         }
         readyState.check();
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "getAdmin", txnMgrAdminProxy);
         }
         return txnMgrAdminProxy;
@@ -2055,10 +2056,10 @@ public class TxnManagerImpl /*extends RemoteServer*/
     }
 
     public Object getProxy() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "getProxy");
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "getProxy", serverStub);
         }
         return serverStub;
@@ -2070,12 +2071,12 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
     /* inherit javadoc */
     public Object getServiceProxy() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "getServiceProxy");
         }
         readyState.check();
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "getServiceProxy", txnMgrProxy);
         }
         return txnMgrProxy;
@@ -2088,13 +2089,13 @@ public class TxnManagerImpl /*extends RemoteServer*/
      * @param e the exception produced by the failure
      */
     protected void initFailed(Throwable e) throws Exception {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "initFailed");
         }
-        if (initLogger.isLoggable(Level.SEVERE)) {
-            initLogger.log(Level.SEVERE, "Mahalo failed to initialize", e);
+        if (initLogger.isErrorEnabled()) {
+            initLogger.error("Mahalo failed to initialize", e);
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "initFailed");
         }
         if (e instanceof Exception) {
@@ -2113,104 +2114,104 @@ public class TxnManagerImpl /*extends RemoteServer*/
      *
      */
     private void cleanup() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "cleanup");
         }
 //TODO - add custom logic
         if (serverStub != null) { // implies that exporter != null
             try {
-                if (initLogger.isLoggable(Level.FINEST)) {
-                    initLogger.log(Level.FINEST, "Unexporting service");
+                if (initLogger.isTraceEnabled()) {
+                    initLogger.trace("Unexporting service");
                 }
                 exporter.unexport(true);
             } catch (Throwable t) {
-                if (initLogger.isLoggable(Level.FINE)) {
-                    initLogger.log(Level.FINE, "Trouble unexporting service", t);
+                if (initLogger.isDebugEnabled()) {
+                    initLogger.debug("Trouble unexporting service", t);
                 }
             }
         }
 
         if (settlerpool != null) {
-            if (initLogger.isLoggable(Level.FINEST)) {
-                initLogger.log(Level.FINEST, "Terminating settlerpool.");
+            if (initLogger.isTraceEnabled()) {
+                initLogger.trace("Terminating settlerpool.");
             }
             try {
                 settlerpool.terminate();
                 if (settlerWakeupMgr != null) {
-                    if (initLogger.isLoggable(Level.FINEST)) {
-                        initLogger.log(Level.FINEST,
+                    if (initLogger.isTraceEnabled()) {
+                        initLogger.trace(
                                 "Terminating settlerWakeupMgr.");
                     }
                     settlerWakeupMgr.stop();
                     settlerWakeupMgr.cancelAll();
                 }
             } catch (Throwable t) {
-                if (initLogger.isLoggable(Level.FINE)) {
-                    initLogger.log(Level.FINE,
+                if (initLogger.isDebugEnabled()) {
+                    initLogger.debug(
                             "Trouble terminating settlerpool", t);
                 }
             }
         }
 
         if (taskpool != null) {
-            if (initLogger.isLoggable(Level.FINEST)) {
-                initLogger.log(Level.FINEST, "Terminating taskpool.");
+            if (initLogger.isTraceEnabled()) {
+                initLogger.trace("Terminating taskpool.");
             }
             try {
                 taskpool.terminate();
                 if (taskWakeupMgr != null) {
-                    if (initLogger.isLoggable(Level.FINEST)) {
-                        initLogger.log(Level.FINEST,
+                    if (initLogger.isTraceEnabled()) {
+                        initLogger.trace(
                                 "Terminating taskWakeupMgr.");
                     }
                     taskWakeupMgr.stop();
                     taskWakeupMgr.cancelAll();
                 }
             } catch (Throwable t) {
-                if (initLogger.isLoggable(Level.FINE)) {
-                    initLogger.log(Level.FINE,
+                if (initLogger.isDebugEnabled()) {
+                    initLogger.debug(
                             "Trouble terminating taskpool", t);
                 }
             }
         }
 
         if (settleThread != null) {
-            if (initLogger.isLoggable(Level.FINEST)) {
-                initLogger.log(Level.FINEST, "Interrupting settleThread.");
+            if (initLogger.isTraceEnabled()) {
+                initLogger.trace("Interrupting settleThread.");
             }
             try {
                 settleThread.interrupt();
             } catch (Throwable t) {
-                if (initLogger.isLoggable(Level.FINE)) {
-                    initLogger.log(Level.FINE,
+                if (initLogger.isDebugEnabled()) {
+                    initLogger.debug(
                             "Trouble terminating settleThread", t);
                 }
             }
         }
 
         if (expMgr != null) {
-            if (initLogger.isLoggable(Level.FINEST)) {
-                initLogger.log(Level.FINEST,
+            if (initLogger.isTraceEnabled()) {
+                initLogger.trace(
                         "Terminating lease expiration manager.");
             }
             expMgr.terminate();
         }
 
-        if (initLogger.isLoggable(Level.FINEST)) {
-            initLogger.log(Level.FINEST, "Destroying JoinStateManager.");
+        if (initLogger.isTraceEnabled()) {
+            initLogger.trace("Destroying JoinStateManager.");
         }
         try {
             if (joinStateManager != null) {
                 joinStateManager.stop();
             }
         } catch (Exception t) {
-            if (initLogger.isLoggable(Level.FINE)) {
-                initLogger.log(Level.FINE,
+            if (initLogger.isDebugEnabled()) {
+                initLogger.debug(
                         "Problem destroying JoinStateManager", t);
             }
         }
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "cleanup");
         }
     }
@@ -2219,7 +2220,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
     // ProxyTrust Method
     //////////////////////////////////////////
     public TrustVerifier getProxyVerifier() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "getProxyVerifier");
         }
         readyState.check();
@@ -2228,7 +2229,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         if (!(txnMgrProxy instanceof RemoteMethodControl)) {
             throw new UnsupportedOperationException();
         } else {
-            if (operationsLogger.isLoggable(Level.FINER)) {
+            if (operationsLogger.isDebugEnabled()) {
                 LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "getProxyVerifier");
             }
             return new ProxyVerifier(serverStub, topUuid);

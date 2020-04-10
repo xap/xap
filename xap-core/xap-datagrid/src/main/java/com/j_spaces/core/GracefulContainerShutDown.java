@@ -22,8 +22,9 @@ package com.j_spaces.core;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class GracefulContainerShutDown {
@@ -31,15 +32,15 @@ public class GracefulContainerShutDown {
     final static String GRACEFUL_SHUTDOWN = "com.gs.graceful-shutDown";
 
     //logger
-    final private static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONTAINER);
+    final private static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONTAINER);
 
 
     public static void gracefulShutDown(String containerName) {
         try {
             new File(containerName + FILENAME_POSTFIX).createNewFile();
         } catch (IOException e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, " Failed to create graceful shutDown for " + containerName + FILENAME_POSTFIX + " Exception: " + e.toString(), e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(" Failed to create graceful shutDown for " + containerName + FILENAME_POSTFIX + " Exception: " + e.toString(), e);
             }
         }
     }

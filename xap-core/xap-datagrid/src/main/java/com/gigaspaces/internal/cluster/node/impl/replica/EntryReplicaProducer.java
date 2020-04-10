@@ -49,13 +49,14 @@ import com.j_spaces.kernel.locks.ILockObject;
 
 import net.jini.space.InternalSpaceException;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @com.gigaspaces.api.InternalApi
 public class EntryReplicaProducer
         implements ISingleStageReplicaDataProducer<AbstractEntryReplicaData> {
-    protected final static Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
+    protected final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
 
     /**
      * keeps already recovered UIDs

@@ -27,7 +27,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * TODO	add Javadoc
@@ -39,7 +40,7 @@ import java.util.logging.Logger;
 /* common methods for collection/array/ indexing*/
 
 public abstract class AbstractMultiValueIndexHandler<K> {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
 
     final TypeDataIndex<K> _typeDataIndex;
 

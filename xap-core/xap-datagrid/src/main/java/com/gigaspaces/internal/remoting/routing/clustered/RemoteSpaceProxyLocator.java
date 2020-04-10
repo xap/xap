@@ -26,8 +26,9 @@ import com.j_spaces.core.client.SpaceURL;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author idan
@@ -45,7 +46,7 @@ public class RemoteSpaceProxyLocator implements RemoteOperationsExecutorProxyLoc
     private final QuiesceTokenProvider _quiesceTokenProvider;
 
     public RemoteSpaceProxyLocator(String name, SpaceURL spaceUrl, QuiesceTokenProvider quiesceTokenProvider) {
-        this._logger = Logger.getLogger(Constants.LOGGER_SPACEPROXY_ROUTER_LOOKUP + '.' + name);
+        this._logger = LoggerFactory.getLogger(Constants.LOGGER_SPACEPROXY_ROUTER_LOOKUP + '.' + name);
         this._spaceURL = spaceUrl;
         this._membersUrls = new ConcurrentHashMap<String, SpaceURL>();
         this._quiesceTokenProvider = quiesceTokenProvider;
@@ -68,19 +69,19 @@ public class RemoteSpaceProxyLocator implements RemoteOperationsExecutorProxyLoc
 
     public RemoteOperationsExecutorProxy locateMember(String memberName, String spaceUuid, LookupType lookupType) {
         SpaceURL memberURL = getMemberUrl(memberName);
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.log(Level.FINEST, "Looking for server " + memberName + " at [" + memberURL + "]...");
+        if (_logger.isTraceEnabled())
+            _logger.trace("Looking for server " + memberName + " at [" + memberURL + "]...");
 
         try {
             IRemoteSpace proxy = SpaceFinder.findJiniSpace(memberURL, spaceUuid, memberURL.getCustomProperties(), LOOKUP_TIMEOUT, lookupType);
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Server " + memberName + " was found at [" + memberURL + "].");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Server " + memberName + " was found at [" + memberURL + "].");
             return new RemoteOperationsExecutorProxy(memberName, proxy, _quiesceTokenProvider);
         } catch (FinderException e) {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.log(Level.FINEST, "Could not find server " + memberName + " at " + memberURL + ".", e);
-            else if (_logger.isLoggable(Level.FINER))
-                _logger.log(Level.FINER, "Could not find server " + memberName + " at " + memberURL + ".");
+            if (_logger.isTraceEnabled())
+                _logger.trace("Could not find server " + memberName + " at " + memberURL + ".", e);
+            else if (_logger.isDebugEnabled())
+                _logger.debug("Could not find server " + memberName + " at " + memberURL + ".");
 
             return null;
         }

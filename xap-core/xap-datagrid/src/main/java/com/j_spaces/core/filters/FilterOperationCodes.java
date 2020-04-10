@@ -26,8 +26,9 @@ import net.jini.core.transaction.Transaction;
 import java.lang.reflect.Field;
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class declares static fields for filter operation codes.
@@ -187,7 +188,7 @@ public class FilterOperationCodes {
     private static int maxCodeValue;
 
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_FILTERS);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_FILTERS);
 
     static {
         try {
@@ -199,8 +200,8 @@ public class FilterOperationCodes {
                     maxCodeValue = StrictMath.max(maxCodeValue, ((Number) fieldValue).intValue());
             }
         } catch (IllegalAccessException ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, ex.getMessage(), ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(ex.getMessage(), ex);
             }
         }
     }

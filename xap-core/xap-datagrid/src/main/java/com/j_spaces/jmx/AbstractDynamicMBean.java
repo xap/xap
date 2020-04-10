@@ -26,8 +26,9 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -60,7 +61,7 @@ public abstract class AbstractDynamicMBean implements DynamicMBean {
     final private List<MBeanNotificationInfo> m_notifications;
     final private List<MBeanConstructorInfo> m_constructors;
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_JMX);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_JMX);
 
     protected AbstractDynamicMBean() {
         m_attributesMap = new Hashtable<String, MBeanAttributeInfo>();
@@ -207,27 +208,27 @@ public abstract class AbstractDynamicMBean implements DynamicMBean {
                 return result;
             }
             /** If attribute has not been recognized throw an AttributeNotFoundException */ catch (NoSuchFieldException ex1) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, ex1.toString(), ex1);
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(ex1.toString(), ex1);
                 }
 
                 throw new AttributeNotFoundException("Can not find " +
                         attributeName + " attribute in " + THIS_CLASS_NAME);
             } catch (Exception ex2) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, ex2.toString(), ex2);
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(ex2.toString(), ex2);
                 }
                 throw new MBeanException(new Exception(e.getCause()));
             }
         } catch (InvocationTargetException ex) {
             Throwable targetException = ex.getTargetException();
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, targetException.toString(), targetException);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(targetException.toString(), targetException);
             }
             throw new MBeanException((Exception) targetException);
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, e.toString(), e);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(e.toString(), e);
             }
 
             throw new MBeanException(e);
@@ -281,8 +282,8 @@ public abstract class AbstractDynamicMBean implements DynamicMBean {
                 /** If attribute has not been recognized throw an AttributeNotFoundException */
                     throw (new AttributeNotFoundException("Cannot find " + attributeName + " attribute in " + THIS_CLASS_NAME));
             } catch (Exception ex2) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.log(Level.WARNING, ex2.toString(), ex2);
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn(ex2.toString(), ex2);
                 }
                 throw new MBeanException(new Exception(ex.getCause()));
             }
@@ -341,8 +342,8 @@ public abstract class AbstractDynamicMBean implements DynamicMBean {
                 Object value = getAttribute(name);
                 resultList.add(new Attribute(name, value));
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.log(Level.WARNING, e.toString(), e);
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn(e.toString(), e);
                 }
             }
         }
@@ -373,14 +374,14 @@ public abstract class AbstractDynamicMBean implements DynamicMBean {
         }
         // unrecognized operation name
         catch (NoSuchMethodException ex) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, ex.toString(), ex);
+            if (_logger.isWarnEnabled()) {
+                _logger.warn(ex.toString(), ex);
             }
             throw new ReflectionException(ex, "Can not find the operation " +
                     operationName + " in " + THIS_CLASS_NAME);
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, ex.toString(), ex);
+            if (_logger.isWarnEnabled()) {
+                _logger.warn(ex.toString(), ex);
             }
             throw new MBeanException(new Exception(ex.getCause()));
         }
@@ -397,8 +398,8 @@ public abstract class AbstractDynamicMBean implements DynamicMBean {
                     createMBeanAttributesInfo(), createMBeanConstructorsInfo(),
                     createMBeanOperationsInfo(), createMBeanNotificationsInfo());
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, ex.toString(), ex);
+            if (_logger.isWarnEnabled()) {
+                _logger.warn(ex.toString(), ex);
             }
         }
         return info;

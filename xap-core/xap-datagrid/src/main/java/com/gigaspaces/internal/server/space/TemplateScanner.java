@@ -49,8 +49,9 @@ import net.jini.core.transaction.server.ServerTransaction;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -58,7 +59,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class TemplateScanner {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_TEMPLATE_SCANNER);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_TEMPLATE_SCANNER);
 
     private final SpaceEngine _engine;
     private final SpaceTypeManager _typeManager;
@@ -173,21 +174,21 @@ public class TemplateScanner {
     public void scanNonNotifyTemplates(Context context, IEntryHolder entry,
                                        ServerTransaction txn, FifoSearch fifoSearch, FifoGroupsSearch fifoGroupsSearch)
             throws EntryDeletedException, SAException {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Starting scan of non-notify templates: EntryUid=" + entry.getUID() + ", fifoSearch=" + fifoSearch);
+        if (_logger.isDebugEnabled())
+            _logger.debug("Starting scan of non-notify templates: EntryUid=" + entry.getUID() + ", fifoSearch=" + fifoSearch);
 
         context.setExhaustedFifoGroupsTemplatesSearch(false);
         scanTemplates(context, entry, txn, fifoSearch, null /*notifyContextsHolder*/, fifoGroupsSearch);
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Finished scan of non-notify templates: EntryUid=" + entry.getUID() + ", fifoSearch=" + fifoSearch);
+        if (_logger.isDebugEnabled())
+            _logger.debug("Finished scan of non-notify templates: EntryUid=" + entry.getUID() + ", fifoSearch=" + fifoSearch);
     }
 
     public void scanNotifyTemplates(NotifyContextsHolder notifyContextsHolder, Context context, ServerTransaction txn, FifoSearch fifoSearch)
             throws EntryDeletedException, SAException {
         String entryUid = notifyContextsHolder.getNotifyEntry().getUID();
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Starting scan of notify templates: EntryUid=" + entryUid +
+        if (_logger.isDebugEnabled())
+            _logger.debug("Starting scan of notify templates: EntryUid=" + entryUid +
                     ", fifoSearch=" + fifoSearch +
                     ", notifyTypes=" + notifyContextsHolder.getNotifyTypes());
 
@@ -199,8 +200,8 @@ public class TemplateScanner {
             notifyContext.setFinishedTemplateSearch(true);
             _dataEventManager.finishTemplatesSearch(notifyContext);
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Finished scan of notify templates: EntryUid=" + entryUid +
+            if (_logger.isDebugEnabled())
+                _logger.debug("Finished scan of notify templates: EntryUid=" + entryUid +
                         ", fifoSearch=" + fifoSearch +
                         ", notifyType=" + notifyContext.getNotifyType().toString());
         }
@@ -215,8 +216,8 @@ public class TemplateScanner {
         final IServerTypeDesc entryTypeDesc = _typeManager.getServerTypeDesc(entry.getClassName());
         try {
             for (IServerTypeDesc typeDesc : entryTypeDesc.getSuperTypes()) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Scanning templates of type [" + typeDesc.getTypeName() + "]: entryUid=" + entry.getUID() + ", fifoSearch=" + fifoSearch);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Scanning templates of type [" + typeDesc.getTypeName() + "]: entryUid=" + entry.getUID() + ", fifoSearch=" + fifoSearch);
                 if (typeDesc.isInactive())
                     continue;
                 if (context.isExhaustedFifoGroupsTemplatesSearch() && fifoGroupsSearch == FifoGroupsSearch.EXCLUSIVE)
@@ -347,8 +348,8 @@ public class TemplateScanner {
 
     private void notifyIfMatching(NotifyTemplateHolder template, NotifyContextsHolder notifyContextsHolder,
                                   Context context, FifoSearch fifoSearch, ServerTransaction txn) {
-        if (_logger.isLoggable(Level.FINER))
-            _logger.log(Level.FINER, "Scanning template #" + template.getEventId() +
+        if (_logger.isDebugEnabled())
+            _logger.debug("Scanning template #" + template.getEventId() +
                     " (uid=" + template.getUID() +
                     "): entryUid=" + notifyContextsHolder.getNotifyEntry().getUID()
                     + ", fifoSearch=" + fifoSearch);
@@ -399,8 +400,8 @@ public class TemplateScanner {
             }
 
 
-            if (_logger.isLoggable(Level.FINER))
-                _logger.log(Level.FINER, "Match found: template #" + template.getEventId() +
+            if (_logger.isDebugEnabled())
+                _logger.debug("Match found: template #" + template.getEventId() +
                         " (uid=" + template.getUID() +
                         "), entryUid=" + notifyContextsHolder.getNotifyEntry().getUID()
                         + ", fifoSearch=" + fifoSearch);
@@ -417,8 +418,8 @@ public class TemplateScanner {
     private void scanNonNotifyTemplate(ITemplateHolder template, IEntryHolder entry,
                                        Context context, FifoSearch fifoSearch)
             throws EntryDeletedException, SAException {
-        if (_logger.isLoggable(Level.FINER))
-            _logger.log(Level.FINER, "Scanning template " + template.getUID() + ": entryUid=" + entry.getUID()
+        if (_logger.isDebugEnabled())
+            _logger.debug("Scanning template " + template.getUID() + ": entryUid=" + entry.getUID()
                     + ", fifoSearch=" + fifoSearch);
         if (template.quickReject(context, fifoSearch))
             return;

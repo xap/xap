@@ -44,7 +44,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
+
 
 
 @com.gigaspaces.api.InternalApi
@@ -151,8 +151,8 @@ public class MultiBucketSingleFileBatchConsumeTargetProcessLog
             } catch (ClosedResourceException e) {
                 throw e;
             } catch (Throwable t) {
-                if (_specificLogger.isLoggable(Level.FINER))
-                    _specificLogger.log(Level.FINER, "error while processing incoming replication", t);
+                if (_specificLogger.isDebugEnabled())
+                    _specificLogger.debug("error while processing incoming replication", t);
 
                 // Exception thrown from exception handler meaning it can not
                 // handle this exception
@@ -213,16 +213,16 @@ public class MultiBucketSingleFileBatchConsumeTargetProcessLog
                         if (!consumeResult.isFailed())
                             break;
                         throwIfRepetitiveError(prevResult, consumeResult);
-                        if (_specificLogger.isLoggable(Level.FINER))
-                            _specificLogger.log(Level.FINER,
+                        if (_specificLogger.isDebugEnabled())
+                            _specificLogger.debug(
                                     "Encountered error while consuming packet ["
                                             + packet
                                             + "], trying to resolve issue",
                                     consumeResult.toException());
                         IDataConsumeFix fix = getExceptionHandler().handleException(consumeResult, null/*packet, this is batch consumption we dont know the origin packet that the data causes this error*/);
                         data = getDataConsumer().applyFix(context, data, fix);
-                        if (_specificLogger.isLoggable(Level.FINER))
-                            _specificLogger.log(Level.FINER, "Fix applied - retrying the operation [" + fix + "]");
+                        if (_specificLogger.isDebugEnabled())
+                            _specificLogger.debug("Fix applied - retrying the operation [" + fix + "]");
 
                         // Rollback to the previous context snapshot state
                         context.rollback();

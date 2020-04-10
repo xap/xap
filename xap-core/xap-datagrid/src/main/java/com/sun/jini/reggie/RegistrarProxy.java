@@ -47,8 +47,9 @@ import java.rmi.MarshalledObject;
 import java.rmi.RemoteException;
 import java.rmi.UnmarshalException;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A RegistrarProxy is a proxy for a registrar.  Clients only see instances via the
@@ -61,7 +62,7 @@ class RegistrarProxy
     private static final long serialVersionUID = 2L;
 
     private static final Logger logger =
-            Logger.getLogger("com.sun.jini.reggie");
+            LoggerFactory.getLogger("com.sun.jini.reggie");
 
     /**
      * The registrar.
@@ -209,8 +210,8 @@ class RegistrarProxy
                         e instanceof StackOverflowError)) {
             throw (Error) e;
         }
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, "unmarshalling failure", e);
+        if (logger.isTraceEnabled()) {
+            logger.trace("unmarshalling failure", e);
         }
     }
 

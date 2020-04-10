@@ -62,8 +62,9 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Dan Kilman
@@ -196,8 +197,8 @@ public class ReplicationNotificationClientEndpoint {
             if (_closed)
                 return;
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Closing replication client endpoint");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Closing replication client endpoint");
 
             if (getNotificationReplicationNode() != null) {
                 _stateListener.close();
@@ -328,8 +329,8 @@ public class ReplicationNotificationClientEndpoint {
                 throw new DurableNotificationRegistrationException(e.getMessage(), e);
             }
         } catch (DurableNotificationRegistrationException e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Notification replication node registration failed", e);
+            if (_logger.isWarnEnabled())
+                _logger.warn("Notification replication node registration failed", e);
 
             close();
 
@@ -353,16 +354,16 @@ public class ReplicationNotificationClientEndpoint {
 
         List<Future<SpaceResponseInfo>> futureList = new ArrayList<Future<SpaceResponseInfo>>();
         for (int i = startIndex; i <= endIndex; i++) {
-            if (_logger.isLoggable(Level.FINER))
-                _logger.log(Level.FINER, "sending replication node unregistration request to node on partition " + i);
+            if (_logger.isDebugEnabled())
+                _logger.debug("sending replication node unregistration request to node on partition " + i);
 
             UnregisterReplicationNotificationTask task = new UnregisterReplicationNotificationTask(request);
             try {
                 Future<SpaceResponseInfo> future = _remoteSpace.execute(task, i, null /* transaction */, null /* listener */);
                 futureList.add(future);
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.log(Level.FINER, "Notification replication node unregistration failed", e);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Notification replication node unregistration failed", e);
             }
         }
 
@@ -370,12 +371,12 @@ public class ReplicationNotificationClientEndpoint {
             try {
                 future.get();
             } catch (InterruptedException e) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Notification replication node unregistration interrupted", e);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Notification replication node unregistration interrupted", e);
                 Thread.currentThread().interrupt();
             } catch (ExecutionException e) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Notification replication node unregistration failed", e.getCause());
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Notification replication node unregistration failed", e.getCause());
             }
         }
     }

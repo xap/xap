@@ -48,7 +48,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+
 
 
 public abstract class AbstractGlobalOrderGroupBacklog
@@ -190,8 +190,8 @@ public abstract class AbstractGlobalOrderGroupBacklog
 
     private void handleErrorResult(String memberName, Throwable error,
                                    long lastProcessedKey) throws ReplicationException {
-        if (_logger.isLoggable(Level.FINER))
-            _logger.finer(getLogPrefix()
+        if (_logger.isDebugEnabled())
+            _logger.debug(getLogPrefix()
                     + "handling error result in backlog - " + error);
         GlobalOrderConfirmationHolder confirmationHolder = getConfirmationHolderUnsafe(memberName);
         if (!confirmationHolder.hadAnyHandshake() || confirmationHolder.getLastConfirmedKey() < lastProcessedKey) {
@@ -329,15 +329,15 @@ public abstract class AbstractGlobalOrderGroupBacklog
             GlobalOrderOperationPacket packet = new GlobalOrderOperationPacket(takeNextKeyUnsafe(outContext),
                     data);
 
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest(getLogPrefix() + "inserting packet [" + packet
+            if (_logger.isTraceEnabled())
+                _logger.trace(getLogPrefix() + "inserting packet [" + packet
                         + "] to backlog");
 
             insertReplicationOrderedPacketToBacklog(packet, outContext);
             return packet;
         } catch (RuntimeException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE,
+            if (_logger.isErrorEnabled())
+                _logger.error(
                         "exception while inserting a packet to the backlog file (insertPacketToBacklog), "
                                 + "[" + getStatistics() + "]",
                         e);

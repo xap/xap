@@ -24,8 +24,9 @@ import net.jini.security.Security;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A convenience class for retrieving the <code>long</code> value of a system property as a
@@ -72,7 +73,7 @@ import java.util.logging.Logger;
 public class GetLongAction implements PrivilegedAction {
 
     private static final Logger logger =
-            Logger.getLogger("com.sun.jini.action.GetLongAction");
+            LoggerFactory.getLogger("com.sun.jini.action.GetLongAction");
 
     private final String theProp;
     private final long defaultVal;
@@ -123,7 +124,7 @@ public class GetLongAction implements PrivilegedAction {
                 return value;
             }
         } catch (SecurityException e) {
-            if (logger.isLoggable(Level.FINE)) {
+            if (logger.isDebugEnabled()) {
                 LogUtils.throwing(logger, GetLongAction.class, "run", e,
                         "security exception reading \"{0}\", returning {1}", theProp, defaultValue());
             }

@@ -24,8 +24,9 @@ import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /*******************************************************************************
@@ -39,7 +40,7 @@ import java.util.logging.Logger;
 public class SpaceURLValidator {
 
     //logger
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_URL);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_URL);
 
     private static final HashSet<String> urlElements = new HashSet<String>();
     private static final String[] urlElementsNames =
@@ -221,14 +222,14 @@ public class SpaceURLValidator {
      * @throws SpaceURLValidationException thrown if something went wrong
      */
     public static void validate(SpaceURL spaceURL) throws Exception {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("attributesSpaceUrl  =  " + spaceURL);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("attributesSpaceUrl  =  " + spaceURL);
         }
         try {
             validateURL(spaceURL);
         } catch (SpaceURLValidationException e) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Exception while validating space URL: " + e.getMessage() +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Exception while validating space URL: " + e.getMessage() +
                         "\nSpace URL: " + spaceURL);
             }
             throw e;
@@ -244,8 +245,8 @@ public class SpaceURLValidator {
         Enumeration names = spaceURL.propertyNames();
         while (names.hasMoreElements()) {
             String property = names.nextElement().toString();
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("Validating Space URL property: " + property + " = " + spaceURL.getProperty(property));
+            if (_logger.isDebugEnabled())
+                _logger.debug("Validating Space URL property: " + property + " = " + spaceURL.getProperty(property));
             if (!urlElements.contains(property.toLowerCase()))
                 throw new SpaceURLValidationException("Invalid space url property - '" + property + "'");
         }

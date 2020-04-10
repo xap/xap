@@ -20,8 +20,9 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*******************************************************************************
  * Copyright (c) 2010 GigaSpaces Technologies Ltd. All rights reserved
@@ -48,7 +49,7 @@ public class JSpaceState implements ISpaceState, Serializable {
     }
 
     //logger
-    final private static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE);
+    final private static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE);
 
     private final static Map<Object, String> fieldsMap = new Hashtable<Object, String>();
 
@@ -58,8 +59,8 @@ public class JSpaceState implements ISpaceState, Serializable {
             for (int i = 0; i < fields.length; i++)
                 fieldsMap.put(fields[i].get(null), fields[i].getName().toLowerCase());
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, ex.toString(), ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(ex.toString(), ex);
             }
         }
     }

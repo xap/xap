@@ -42,8 +42,9 @@ import com.j_spaces.kernel.JSpaceUtilities;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -55,7 +56,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class ReplicationNodeAdmin
         implements IReplicationNodeAdmin {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_NODE);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_NODE);
 
     private final ReplicationNode _replicationNode;
 
@@ -150,15 +151,15 @@ public class ReplicationNodeAdmin
     public synchronized void setActive() {
         if (_replicationNode.getNodeMode() == ReplicationNodeMode.ACTIVE)
             return;
-        if (_logger.isLoggable(Level.FINER))
-            _logger.finer("Replication node [" + _replicationNode.getName()
+        if (_logger.isDebugEnabled())
+            _logger.debug("Replication node [" + _replicationNode.getName()
                     + "] moving from " + nodeModeDisplayString() + " mode to "
                     + ReplicationNodeMode.ACTIVE + " mode");
         _replicationNode.createSourceGroups(ReplicationNodeMode.ACTIVE);
         _replicationNode.createTargetGroups(ReplicationNodeMode.ACTIVE);
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("Replication node [" + _replicationNode.getName()
+        if (_logger.isDebugEnabled())
+            _logger.debug("Replication node [" + _replicationNode.getName()
                     + "] moved from " + nodeModeDisplayString() + " mode to "
                     + ReplicationNodeMode.ACTIVE + " mode");
 
@@ -178,16 +179,16 @@ public class ReplicationNodeAdmin
     public synchronized void setPassive(boolean closeProxy) {
         if (_replicationNode.getNodeMode() == ReplicationNodeMode.PASSIVE)
             return;
-        if (_logger.isLoggable(Level.FINER))
-            _logger.finer("Replication node [" + _replicationNode.getName()
+        if (_logger.isDebugEnabled())
+            _logger.debug("Replication node [" + _replicationNode.getName()
                     + "] moving from " + nodeModeDisplayString() + " mode to "
                     + ReplicationNodeMode.PASSIVE + " mode");
 
         _replicationNode.createSourceGroups(ReplicationNodeMode.PASSIVE);
         _replicationNode.createTargetGroups(ReplicationNodeMode.PASSIVE);
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("Replication node [" + _replicationNode.getName()
+        if (_logger.isDebugEnabled())
+            _logger.debug("Replication node [" + _replicationNode.getName()
                     + "] moved from " + nodeModeDisplayString() + " mode to "
                     + ReplicationNodeMode.PASSIVE + " mode");
 

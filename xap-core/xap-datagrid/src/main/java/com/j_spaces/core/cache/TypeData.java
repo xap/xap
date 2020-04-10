@@ -60,12 +60,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class TypeData {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
     private static final int _fifoCountRecheckFrom = Integer.MAX_VALUE - 100000;
 
     private final CacheManager _cacheManager;
@@ -423,8 +424,8 @@ public class TypeData {
                     manager.introduceType(typeDesc);
                     queryExtensionIndexManagers.add(manager);
                 } catch (Exception e) {
-                    if (_logger.isLoggable(Level.WARNING))
-                        _logger.log(Level.WARNING, "Failed to install query extension manager for " + namespace, e);
+                    if (_logger.isWarnEnabled())
+                        _logger.warn("Failed to install query extension manager for " + namespace, e);
                 }
             }
         }
@@ -1113,8 +1114,8 @@ public class TypeData {
             try {
                 restoreReferencesAfterUpdateFailure(cacheManager, eh, pEntry, oldEntryData, deletedBackRefs, numOfFieldsDone, insertedNewValues, originalUniques);
             } catch (Exception ex1) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "failed to restore entry after update failure ", ex1);
+                if (_logger.isErrorEnabled())
+                    _logger.error("failed to restore entry after update failure ", ex1);
             }
             throw ex;
         }

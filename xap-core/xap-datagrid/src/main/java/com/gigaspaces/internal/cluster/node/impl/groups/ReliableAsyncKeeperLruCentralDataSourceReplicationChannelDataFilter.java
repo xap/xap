@@ -30,7 +30,8 @@ import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.j_spaces.core.filters.ReplicationStatistics.ReplicationMode;
 
 import java.util.Map;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.gigaspaces.internal.cluster.node.impl.ReplicationSingleOperationType.CANCEL_LEASE;
 import static com.gigaspaces.internal.cluster.node.impl.ReplicationSingleOperationType.CHANGE;

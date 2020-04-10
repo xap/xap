@@ -25,8 +25,9 @@ import com.sun.jini.thread.WakeupManager;
 import net.jini.core.transaction.server.TransactionParticipant;
 
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A <code>ParticipantTask</code> is a general task which interacts with a participant.
@@ -68,7 +69,7 @@ public class ParticipantTask extends RetryTask {
     }
 
     public boolean tryOnce() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, ParticipantTask.class, "tryOnce");
         }
 
@@ -82,7 +83,7 @@ public class ParticipantTask extends RetryTask {
         } catch (JobException je) {
             je.printStackTrace();
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, ParticipantTask.class, "tryOnce", Boolean.valueOf(result));
         }
 

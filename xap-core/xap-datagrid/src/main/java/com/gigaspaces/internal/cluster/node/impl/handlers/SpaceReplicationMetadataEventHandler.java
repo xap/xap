@@ -25,8 +25,9 @@ import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.space.requests.AddTypeIndexesRequestInfo;
 import com.gigaspaces.logger.Constants;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -36,7 +37,7 @@ import java.util.logging.Logger;
 public class SpaceReplicationMetadataEventHandler implements
         IReplicationInDataTypeCreatedHandler,
         IReplicationInDataTypeIndexAddedHandler {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION);
     private final SpaceTypeManager _typeManager;
     private final SpaceEngine _spaceEngine;
 
@@ -55,8 +56,8 @@ public class SpaceReplicationMetadataEventHandler implements
                 _spaceEngine.getCacheManager().getStorageAdapter().introduceDataType(typeDesc);
 
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Conflict in type introduction.", e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Conflict in type introduction.", e);
         }
     }
 
@@ -68,8 +69,8 @@ public class SpaceReplicationMetadataEventHandler implements
             if (_spaceEngine.getCacheManager().isBlobStoreCachePolicy()) //need to be stored in case blobStore recovery will be used
                 _spaceEngine.getCacheManager().getStorageAdapter().addIndexes(requestInfo.getTypeName(), requestInfo.getIndexes());
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Error adding new index to type [" + requestInfo.getTypeName() + "].", e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Error adding new index to type [" + requestInfo.getTypeName() + "].", e);
         }
     }
 }

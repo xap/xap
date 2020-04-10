@@ -45,8 +45,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class providing methods for implementing discovery protocol version 2.
@@ -84,7 +85,7 @@ class DiscoveryV2 extends Discovery {
 
     private static final WeakIdentityMap instances = new WeakIdentityMap();
     private static final Logger logger =
-            Logger.getLogger(DiscoveryV2.class.getName());
+            LoggerFactory.getLogger(DiscoveryV2.class.getName());
 
     private final Map[] formatIdMaps;
 
@@ -110,8 +111,8 @@ class DiscoveryV2 extends Discovery {
                 instances.put(loader, new SoftReference(disco));
             }
         }
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, "returning {0}", new Object[]{disco});
+        if (logger.isTraceEnabled()) {
+            logger.trace("returning {0}", new Object[]{disco});
         }
         return disco;
     }
@@ -133,8 +134,8 @@ class DiscoveryV2 extends Discovery {
         providers[UNICAST_DISCOVERY_CLIENT] = asList(udc);
         providers[UNICAST_DISCOVERY_SERVER] = asList(uds);
         DiscoveryV2 disco = new DiscoveryV2(providers);
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, "returning {0}", new Object[]{disco});
+        if (logger.isTraceEnabled()) {
+            logger.trace("returning {0}", new Object[]{disco});
         }
         return disco;
     }
@@ -177,8 +178,8 @@ class DiscoveryV2 extends Discovery {
 
                 // encode data
                 mre.encodeMulticastRequest(request, db, absc);
-                if (logger.isLoggable(Level.FINEST)) {
-                    logger.log(Level.FINEST, "encoded {0} using {1}, {2}",
+                if (logger.isTraceEnabled()) {
+                    logger.trace("encoded {0} using {1}, {2}",
                             new Object[]{request, mre, absc});
                 }
                 return db.getDatagrams();
@@ -239,8 +240,8 @@ class DiscoveryV2 extends Discovery {
         } else {
             req = mrd.decodeMulticastRequest(buf, constraints, checker);
         }
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, "decoded {0} using {1}, {2}, {3}",
+        if (logger.isTraceEnabled()) {
+            logger.trace("decoded {0} using {1}, {2}, {3}",
                     new Object[]{req, mrd, constraints, checker});
         }
         return req;
@@ -286,8 +287,8 @@ class DiscoveryV2 extends Discovery {
 
                 // encode data
                 mae.encodeMulticastAnnouncement(announcement, db, absc);
-                if (logger.isLoggable(Level.FINEST)) {
-                    logger.log(Level.FINEST, "encoded {0} using {1}, {2}",
+                if (logger.isTraceEnabled()) {
+                    logger.trace("encoded {0} using {1}, {2}",
                             new Object[]{announcement, mae, absc});
                 }
                 return db.getDatagrams();
@@ -347,8 +348,8 @@ class DiscoveryV2 extends Discovery {
         } else {
             ann = mad.decodeMulticastAnnouncement(buf, constraints);
         }
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, "decoded {0} using {1}, {2}",
+        if (logger.isTraceEnabled()) {
+            logger.trace("decoded {0} using {1}, {2}",
                     new Object[]{ann, mad, constraints});
         }
         return ann;
@@ -387,14 +388,14 @@ class DiscoveryV2 extends Discovery {
                 udc.checkUnicastDiscoveryConstraints(constraints);
                 fids.add(ent.getKey());
                 if (fids.size() == MAX_FORMATS) {
-                    logger.log(Level.WARNING, "truncating format ID list");
+                    logger.warn("truncating format ID list");
                     break;
                 }
             } catch (Exception e) {
                 if (e instanceof UnsupportedConstraintException ||
                         e instanceof SecurityException) {
                     ex = e;
-                    logger.log(Level.FINE, "constraint check failed", e);
+                    logger.debug("constraint check failed", e);
                 } else {
                     throw (RuntimeException) e;
                 }
@@ -454,8 +455,8 @@ class DiscoveryV2 extends Discovery {
         UnicastResponse resp = udc.doUnicastDiscovery(
                 socket, constraints, defaultLoader, verifierLoader, context,
                 (ByteBuffer) outBuf.flip(), (ByteBuffer) inBuf.flip());
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, "received {0} using {1}, {2}",
+        if (logger.isTraceEnabled()) {
+            logger.trace("received {0} using {1}, {2}",
                     new Object[]{resp, udc, constraints});
         }
         return resp;
@@ -502,7 +503,7 @@ class DiscoveryV2 extends Discovery {
                     uds = s;
                     break;
                 } catch (Exception e) {
-                    logger.log(Level.FINE, "constraint check failed", e);
+                    logger.debug("constraint check failed", e);
                 }
             }
         }
@@ -527,8 +528,8 @@ class DiscoveryV2 extends Discovery {
         uds.handleUnicastDiscovery(
                 response, socket, constraints, checker, context,
                 (ByteBuffer) inBuf.flip(), (ByteBuffer) outBuf.flip());
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, "sent {0} using {1}, {2}, {3}",
+        if (logger.isTraceEnabled()) {
+            logger.trace("sent {0} using {1}, {2}, {3}",
                     new Object[]{response, uds, constraints, checker});
         }
     }
@@ -568,7 +569,7 @@ class DiscoveryV2 extends Discovery {
                 }
             }
             if (!used) {
-                logger.log(Level.WARNING,
+                logger.warn(
                         "unusable format provider {0}",
                         new Object[]{obj});
             }
@@ -582,7 +583,7 @@ class DiscoveryV2 extends Discovery {
             DiscoveryFormatProvider p = (DiscoveryFormatProvider) i.next();
             Long fid = new Long(computeFormatID(p.getFormatName()));
             if (map.keySet().contains(fid)) {
-                logger.log(Level.WARNING,
+                logger.warn(
                         "ignoring provider {0} ({1}) with " +
                                 "conflicting format ID {2}",
                         new Object[]{p, p.getFormatName(), fid});

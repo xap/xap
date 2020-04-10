@@ -21,15 +21,16 @@ import com.gigaspaces.metrics.UdpConnection;
 import java.io.IOException;
 import java.net.SocketException;
 import java.nio.charset.Charset;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
  * @since 10.2.1
  */
 public class InfluxDBUdpDispatcher extends InfluxDBDispatcher {
-    private static final Logger logger = Logger.getLogger(InfluxDBUdpDispatcher.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(InfluxDBUdpDispatcher.class.getName());
     private final UdpConnection connection;
 
     public InfluxDBUdpDispatcher(InfluxDBReporterFactory factory) {
@@ -38,8 +39,8 @@ public class InfluxDBUdpDispatcher extends InfluxDBDispatcher {
         } catch (SocketException e) {
             throw new RuntimeException("Failed to create InfluxDBUdpDispatcher", e);
         }
-        if (logger.isLoggable(Level.FINE))
-            logger.log(Level.FINE, "InfluxDBUdpDispatcher created [host=" + factory.getHost() +
+        if (logger.isDebugEnabled())
+            logger.debug("InfluxDBUdpDispatcher created [host=" + factory.getHost() +
                     ", port=" + factory.getPort() + "]");
     }
 

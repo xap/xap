@@ -21,8 +21,9 @@ import com.j_spaces.core.admin.ContainerConfig;
 import com.j_spaces.core.admin.IJSpaceContainerAdmin;
 
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -50,7 +51,7 @@ public class JMXSpaceContainer
     private MBeanServer m_mbeanServer;
 
     //logger
-    final private static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_JMX);
+    final private static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_JMX);
 
     /**
      * This constructor receive instance of manageable container.
@@ -96,8 +97,8 @@ public class JMXSpaceContainer
         try {
             updateConfig();
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, ex.toString(), ex);
+            if (_logger.isWarnEnabled()) {
+                _logger.warn(ex.toString(), ex);
             }
         }
         return result;

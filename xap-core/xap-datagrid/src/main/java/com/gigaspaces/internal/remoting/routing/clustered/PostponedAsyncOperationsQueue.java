@@ -25,8 +25,9 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author eitany
@@ -47,7 +48,7 @@ public class PostponedAsyncOperationsQueue {
                 new LinkedBlockingDeque<Runnable>(CAPACITY),
                 new GSThreadFactory(THREADS_NAME_PREFIX + name, true));
 
-        this._logger = Logger.getLogger(Constants.LOGGER_SPACEPROXY_ROUTER + '.' + name);
+        this._logger = LoggerFactory.getLogger(Constants.LOGGER_SPACEPROXY_ROUTER + '.' + name);
     }
 
     public void enqueue(final AsyncOperationExecutor<?> executor) {
@@ -59,8 +60,8 @@ public class PostponedAsyncOperationsQueue {
                     try {
                         executor.executeAsync();
                     } catch (Exception e) {
-                        if (_logger.isLoggable(Level.WARNING))
-                            _logger.log(Level.WARNING, "Unexpected exception caught in PostponedAsyncOperationsHandler", e);
+                        if (_logger.isWarnEnabled())
+                            _logger.warn("Unexpected exception caught in PostponedAsyncOperationsHandler", e);
                     }
                 }
             });

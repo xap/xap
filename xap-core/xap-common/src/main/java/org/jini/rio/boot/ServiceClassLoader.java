@@ -26,8 +26,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The ServiceClassLoader overrides getURLs(), ensuring all classes that need to be annotated with
@@ -35,7 +36,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnnotation {
-    private static final Logger logger = Logger.getLogger("com.gigaspaces.service.classloading");
+    private static final Logger logger = LoggerFactory.getLogger("com.gigaspaces.service.classloading");
     /**
      * URLs that this class loader will to search for and load classes
      */
@@ -291,8 +292,8 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
             // This approach is derived from SLF4J's LoggerFactory.bind().
             // Note: this is valid for slf4j 1.7 and lower, but not for later versions: http://www.slf4j.org/faq.html#changesInVersion18
             boolean hasSlf4jStaticLoggerBinder = this.findResource("org/slf4j/impl/StaticLoggerBinder.class") != null;
-            if (logger.isLoggable(Level.FINE))
-                logger.fine("autoDetectSlf4JBinding enabled: hasSlf4jStaticLoggerBinder = " + hasSlf4jStaticLoggerBinder + " (while loading class " + name +")");
+            if (logger.isDebugEnabled())
+                logger.debug("autoDetectSlf4JBinding enabled: hasSlf4jStaticLoggerBinder = " + hasSlf4jStaticLoggerBinder + " (while loading class " + name +")");
             if (hasSlf4jStaticLoggerBinder) {
                 systemClassExcludes.addAll(Arrays.asList(
                         "org.slf4j.",                   // SLF4J
@@ -322,8 +323,8 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
 
     public ClassLoader getCodeChangeClassLoader(SupportCodeChangeAnnotationContainer supportCodeChangeAnnotationContainer) {
         ClassLoader classLoader = codeChangeClassLoadersManager.getCodeChangeClassLoader(supportCodeChangeAnnotationContainer);
-        if(logger.isLoggable(Level.FINEST)){
-            logger.finest("In ServiceClassLoader["+this+"], asked for class-loader with version ["+ supportCodeChangeAnnotationContainer.getVersion() + "] " +
+        if(logger.isTraceEnabled()){
+            logger.trace("In ServiceClassLoader["+this+"], asked for class-loader with version ["+ supportCodeChangeAnnotationContainer.getVersion() + "] " +
                     " from CodeChangeClassLoadersManager ["+ codeChangeClassLoadersManager +"]. " +
                     "Got class-loader ["+classLoader+" ]");
         }

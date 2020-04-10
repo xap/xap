@@ -29,8 +29,9 @@ import com.j_spaces.kernel.list.MultiStoredList;
 
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handles data manipulation of space extended index
@@ -42,7 +43,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class ExtendedIndexHandler<K>
         implements IExtendedEntriesIndex<K, IEntryCacheInfo> {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
     private final FastConcurrentSkipListMap<Object, IStoredList<IEntryCacheInfo>> _orderedStore;
     private final FastConcurrentSkipListMap<Object, IEntryCacheInfo> _uniqueOrderedStore;
     private final TypeDataIndex _index;
@@ -104,8 +105,8 @@ public class ExtendedIndexHandler<K>
                     getUniqueEntriesStore().remove(fieldValue, other); //help remove
                 } else {
                     DuplicateIndexValueException ex = new DuplicateIndexValueException(pEntry.getUID(), pEntry.getEntryHolder(_index.getCacheManager()).getClassName(), _index.getIndexDefinition().getName(), fieldValue, other.getUID());
-                    if (_logger.isLoggable(Level.SEVERE))
-                        _logger.log(Level.SEVERE, "Duplicate value encountered on unique index insertion ", ex);
+                    if (_logger.isErrorEnabled())
+                        _logger.error("Duplicate value encountered on unique index insertion ", ex);
                     //if case of failure we need to remove the partally inserted entry
                     //relevant for write + update + update under txn, done in the calling code
                     throw ex;

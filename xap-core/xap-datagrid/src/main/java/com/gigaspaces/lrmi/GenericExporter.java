@@ -34,8 +34,9 @@ import java.rmi.server.ExportException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -97,7 +98,7 @@ public class GenericExporter
     private static final long serialVersionUID = 1L;
 
     // logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI_EXPORTER);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_EXPORTER);
 
     /**
      * the configuration object this exporter
@@ -263,8 +264,8 @@ public class GenericExporter
      *                                  <code>Exporter</code> instance
      **/
     synchronized public Remote export(Remote impl, ITransportConfig config, boolean allowCache) throws ExportException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "Trying to export class=" + impl.getClass());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Trying to export class=" + impl.getClass());
         }
 
         if (impl == null)
@@ -289,8 +290,8 @@ public class GenericExporter
 
         _identityExportObjTable.put(wk, new WeakReference(implStub));
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("ObjImpl: [" + implStub + "] was exported.");
+        if (_logger.isDebugEnabled())
+            _logger.debug("ObjImpl: [" + implStub + "] was exported.");
 
         return implStub;
     }
@@ -311,8 +312,8 @@ public class GenericExporter
         DynamicSmartStub dynamicSmartStub = TransportProtocolHelper.extractSmartStubFromProxy(dynamicProxy);
         dynamicSmartStub.unexport();
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("ObjImpl: [" + dynamicSmartStub.getLocalObjImpl() + "] was unexported.");
+        if (_logger.isDebugEnabled())
+            _logger.debug("ObjImpl: [" + dynamicSmartStub.getLocalObjImpl() + "] was unexported.");
 
         return true;
     }

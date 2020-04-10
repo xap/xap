@@ -39,8 +39,9 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -91,7 +92,7 @@ public abstract class AbstractConnectionProxyBasedReplicationRouter<T, L>
         _connections = new HashMap<String, AbstractProxyBasedReplicationMonitoredConnection<T, L>>();
         _directStubs = new HashMap<String, RouterStubHolder>();
         _connectionEndPoint = new ConnectionEndpoint();
-        _specificLogger = Logger.getLogger(Constants.LOGGER_REPLICATION_ROUTER
+        _specificLogger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_ROUTER
                 + "." + ReplicationLogUtils.toShortLookupName(_myLookupName));
 
         //TODO configurable
@@ -137,8 +138,8 @@ public abstract class AbstractConnectionProxyBasedReplicationRouter<T, L>
         }
 
         // Create connection
-        if (_specificLogger.isLoggable(Level.FINE))
-            _specificLogger.fine("creating new member connection to ["
+        if (_specificLogger.isDebugEnabled())
+            _specificLogger.debug("creating new member connection to ["
                     + lookupName + "], connect synchronously [" + connectSynchronously + "]");
         connection = createNewMemberConnection(lookupName, connectSynchronously);
         _connections.put(lookupName, connection);
@@ -147,8 +148,8 @@ public abstract class AbstractConnectionProxyBasedReplicationRouter<T, L>
 
     protected IReplicationMonitoredConnection createDirectConnection(
             String lookupName, boolean connectSynchronously) {
-        if (_specificLogger.isLoggable(Level.FINE))
-            _specificLogger.fine("creating new direct connection to ["
+        if (_specificLogger.isDebugEnabled())
+            _specificLogger.debug("creating new direct connection to ["
                     + lookupName + "], connect synchronously [" + connectSynchronously + "]");
         RouterStubHolder routerStubHolder = _directStubs.get(lookupName);
 
@@ -200,8 +201,8 @@ public abstract class AbstractConnectionProxyBasedReplicationRouter<T, L>
 
     private void pingIfPossible(RouterStubHolder routerStubHolder) {
         if (routerStubHolder.getStub() instanceof CallbackVerifier) {
-            if (_specificLogger.isLoggable(Level.FINER))
-                _specificLogger.finer("Verifying connection using a remote stub " + routerStubHolder.toString());
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("Verifying connection using a remote stub " + routerStubHolder.toString());
             try {
                 ((CallbackVerifier) routerStubHolder.getStub()).verify();
             } catch (RemoteException e) {
@@ -228,31 +229,31 @@ public abstract class AbstractConnectionProxyBasedReplicationRouter<T, L>
         if (_closed)
             return;
 
-        if (_specificLogger.isLoggable(Level.FINER))
-            _specificLogger.finer("closing replication router");
+        if (_specificLogger.isDebugEnabled())
+            _specificLogger.debug("closing replication router");
 
-        if (_specificLogger.isLoggable(Level.FINEST))
-            _specificLogger.finest("unexporting stub");
+        if (_specificLogger.isTraceEnabled())
+            _specificLogger.trace("unexporting stub");
         _serviceExporter.unexport(_connectionEndPoint);
 
-        if (_specificLogger.isLoggable(Level.FINEST))
-            _specificLogger.finest("closing connection monitor");
+        if (_specificLogger.isTraceEnabled())
+            _specificLogger.trace("closing connection monitor");
         getConnectionMonitor().close();
-        if (_specificLogger.isLoggable(Level.FINEST))
-            _specificLogger.finest("closing direct connection monitor");
+        if (_specificLogger.isTraceEnabled())
+            _specificLogger.trace("closing direct connection monitor");
         _directConnectionMonitor.close();
         Exception reason = new ClosedResourceException("Replication Router ["
                 + getMyLookupName() + "] is closed");
-        if (_specificLogger.isLoggable(Level.FINEST))
-            _specificLogger.finest("disconnecting connections");
+        if (_specificLogger.isTraceEnabled())
+            _specificLogger.trace("disconnecting connections");
         for (AbstractProxyBasedReplicationMonitoredConnection<T, L> connection : _connections.values()) {
             connection.setDisconnected(reason);
         }
         _connections.clear();
         _closed = true;
 
-        if (_specificLogger.isLoggable(Level.FINER))
-            _specificLogger.finer("replication router closed");
+        if (_specificLogger.isDebugEnabled())
+            _specificLogger.debug("replication router closed");
     }
 
     public String getMyLookupName() {
@@ -315,12 +316,12 @@ public abstract class AbstractConnectionProxyBasedReplicationRouter<T, L>
             if (e.getCause() instanceof RemoteException)
                 throw (RemoteException) e.getCause();
 
-            if (_specificLogger.isLoggable(Level.FINER))
-                _specificLogger.finer("pinging of stub has failed [" + e.getCause() + "], considering it as failure");
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("pinging of stub has failed [" + e.getCause() + "], considering it as failure");
             throw new RemoteException(e.getMessage(), e.getCause());
         } catch (TimeoutException e) {
-            if (_specificLogger.isLoggable(Level.FINER))
-                _specificLogger.finer("pinging of stub has timed out, considering it as failure");
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("pinging of stub has timed out, considering it as failure");
             throw new RemoteException(e.getMessage(), e);
         }
     }
@@ -389,8 +390,8 @@ public abstract class AbstractConnectionProxyBasedReplicationRouter<T, L>
     //Flush to main memory
     @Override
     public synchronized void enableIncomingCommunication() {
-        if (_specificLogger.isLoggable(Level.FINER))
-            _specificLogger.finer("Incoming communication enabled");
+        if (_specificLogger.isDebugEnabled())
+            _specificLogger.debug("Incoming communication enabled");
         _incommingCommunicationEnabled = true;
     }
 

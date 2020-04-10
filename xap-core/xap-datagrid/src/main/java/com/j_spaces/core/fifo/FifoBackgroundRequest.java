@@ -24,8 +24,9 @@ import com.j_spaces.core.cache.TerminatingFifoXtnsInfo;
 
 import net.jini.core.transaction.server.ServerTransaction;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -38,7 +39,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class FifoBackgroundRequest {
-    private static final Logger _loggerFifo = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_FIFO);
+    private static final Logger _loggerFifo = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_FIFO);
 
     private final OperationID _operID;
     private final boolean _isNotifyRequest;   //handle notify templates
@@ -194,13 +195,13 @@ public class FifoBackgroundRequest {
                 try {
                     this.wait(timeLimit);
                 } catch (InterruptedException e) {
-                    if (_loggerFifo.isLoggable(Level.SEVERE))
-                        _loggerFifo.log(Level.SEVERE, " InterruptedException while waiting for operation to become available for notifications", e);
+                    if (_loggerFifo.isErrorEnabled())
+                        _loggerFifo.error(" InterruptedException while waiting for operation to become available for notifications", e);
                     Thread.currentThread().interrupt();
                 }
                 if (!allowed) {
-                    if (_loggerFifo.isLoggable(Level.WARNING))
-                        _loggerFifo.log(Level.WARNING, " fifo notifications- operation didn't become available for notifications within designated time- notification allowed");
+                    if (_loggerFifo.isWarnEnabled())
+                        _loggerFifo.warn(" fifo notifications- operation didn't become available for notifications within designated time- notification allowed");
                     allowed = true; //needless to block others
                 }
             }

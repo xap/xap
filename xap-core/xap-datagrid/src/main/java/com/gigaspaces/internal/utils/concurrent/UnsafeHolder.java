@@ -19,8 +19,9 @@ package com.gigaspaces.internal.utils.concurrent;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author kimchy
@@ -28,7 +29,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class UnsafeHolder {
 
-    private static final Logger logger = Logger.getLogger("com.gigaspaces.core.unsafe");
+    private static final Logger logger = LoggerFactory.getLogger("com.gigaspaces.core.unsafe");
 
     private static final Unsafe _unsafe = initUnsafe();
 
@@ -40,7 +41,7 @@ public class UnsafeHolder {
             field.setAccessible(true);
             return (Unsafe) field.get(null);
         } catch (Throwable e) {
-            logger.log(Level.FINE, "Fail to initialize Unsafe.", e);
+            logger.debug("Fail to initialize Unsafe.", e);
             return null;
         }
     }

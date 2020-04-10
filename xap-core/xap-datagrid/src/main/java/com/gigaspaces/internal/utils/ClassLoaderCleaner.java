@@ -28,8 +28,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author kimchy (shay.banon)
@@ -45,7 +46,7 @@ public class ClassLoaderCleaner {
         JVM_THREAD_GROUP_NAMES.add("RMI Runtime");
     }
 
-    final private static Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLASSLOADERS_CLEANER);
+    final private static Logger logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLASSLOADERS_CLEANER);
 
     /**
      * Should Tomcat attempt to terminate threads that have been started by the web application?
@@ -175,13 +176,13 @@ public class ClassLoaderCleaner {
             @SuppressWarnings("unchecked")
             List<String> driverNames = (List<String>) obj.getClass().getMethod("clearJdbcDriverRegistrations").invoke(obj);
             for (String name : driverNames) {
-                if (logger.isLoggable(Level.FINE))
-                    logger.fine("A class loader registered the JDBC driver [" + name + "] but failed to unregister it when the web application was stopped. To prevent a memory leak, the JDBC Driver has been forcibly unregistered.");
+                if (logger.isDebugEnabled())
+                    logger.debug("A class loader registered the JDBC driver [" + name + "] but failed to unregister it when the web application was stopped. To prevent a memory leak, the JDBC Driver has been forcibly unregistered.");
             }
         } catch (Exception e) {
             //So many things to go wrong above...
-            if (logger.isLoggable(Level.FINE))
-                logger.log(Level.FINE, "JDBC driver de-registration failed", e);
+            if (logger.isDebugEnabled())
+                logger.debug("JDBC driver de-registration failed", e);
         } finally {
             if (is != null) {
                 try {
@@ -225,8 +226,8 @@ public class ClassLoaderCleaner {
                         continue;
                     }
 
-                    if (logger.isLoggable(Level.FINE))
-                        logger.fine("A thread named [" + thread.getName() + "] started but has failed to stop it. This is very likely to create a memory leak.");
+                    if (logger.isDebugEnabled())
+                        logger.debug("A thread named [" + thread.getName() + "] started but has failed to stop it. This is very likely to create a memory leak.");
 
                     // Don't try an stop the threads unless explicitly
                     // configured to do so
@@ -254,7 +255,7 @@ public class ClassLoaderCleaner {
                             }
                         }
                     } catch (Exception e) {
-                        logger.log(Level.WARNING, "Failed to terminate thread named [" + thread.getName() + "]", e);
+                        logger.warn("Failed to terminate thread named [" + thread.getName() + "]", e);
                     }
 
                     // This method is deprecated and for good reason. This is
@@ -293,11 +294,11 @@ public class ClassLoaderCleaner {
                 queue.notify();  // In case queue was already empty.
             }
 
-            if (logger.isLoggable(Level.FINE))
-                logger.fine("A web application appears to have started a TimerThread named [" + thread.getName() + "] via the java.util.Timer API but has failed to stop it. To prevent a memory leak, the timer (and hence the associated thread) has been forcibly cancelled.");
+            if (logger.isDebugEnabled())
+                logger.debug("A web application appears to have started a TimerThread named [" + thread.getName() + "] via the java.util.Timer API but has failed to stop it. To prevent a memory leak, the timer (and hence the associated thread) has been forcibly cancelled.");
 
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to terminate TimerThread named [" + thread.getName() + "]", e);
+            logger.warn("Failed to terminate TimerThread named [" + thread.getName() + "]", e);
         }
     }
 
@@ -333,7 +334,7 @@ public class ClassLoaderCleaner {
                 }
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to clear ThreadLocal references", e);
+            logger.warn("Failed to clear ThreadLocal references", e);
         }
     }
 
@@ -385,12 +386,12 @@ public class ClassLoaderCleaner {
                                 args[3] = value.toString();
                             }
                             if (value == null) {
-                                if (logger.isLoggable(Level.FINE)) {
-                                    logger.fine("A created a ThreadLocal with key of type [" + args[0] + "] (value [" + args[1] + "]). The ThreadLocal has been correctly set to null and the key will be removed by GC. However, to simplify the process of tracing memory leaks, the key has been forcibly removed.");
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("A created a ThreadLocal with key of type [" + args[0] + "] (value [" + args[1] + "]). The ThreadLocal has been correctly set to null and the key will be removed by GC. However, to simplify the process of tracing memory leaks, the key has been forcibly removed.");
                                 }
                             } else {
-                                if (logger.isLoggable(Level.FINE))
-                                    logger.fine("A created ThreadLocal with key of type [" + args[0] + "] (value [" + args[1] + "]) and a value of type [" + args[2] + "] (value [" + args[3] + "]) but failed to remove it when class loader is removed. To prevent a memory leak, the ThreadLocal has been forcibly removed.");
+                                if (logger.isDebugEnabled())
+                                    logger.debug("A created ThreadLocal with key of type [" + args[0] + "] (value [" + args[1] + "]) and a value of type [" + args[2] + "] (value [" + args[3] + "]) but failed to remove it when class loader is removed. To prevent a memory leak, the ThreadLocal has been forcibly removed.");
                             }
                             if (key == null) {
                                 staleEntriesCount++;
@@ -491,7 +492,7 @@ public class ClassLoaderCleaner {
                 }
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to clear context class loader referenced from sun.rmi.transport.Target ", e);
+            logger.warn("Failed to clear context class loader referenced from sun.rmi.transport.Target ", e);
         }
     }
 
@@ -541,7 +542,7 @@ public class ClassLoaderCleaner {
                         }
                     }
                     if (fieldsRef.isEmpty()) {
-                        logger.log(Level.WARNING, "Failed to clear ResourceBundle references");
+                        logger.warn("Failed to clear ResourceBundle references");
                         return;
                     }
                 }
@@ -575,11 +576,11 @@ public class ClassLoaderCleaner {
                 }
             }
 
-            if (countRemoved > 0 && logger.isLoggable(Level.FINE)) {
-                logger.fine("Removed [" + countRemoved + "] ResourceBundle references from the cache");
+            if (countRemoved > 0 && logger.isDebugEnabled()) {
+                logger.debug("Removed [" + countRemoved + "] ResourceBundle references from the cache");
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to clear ResourceBundle references", e);
+            logger.warn("Failed to clear ResourceBundle references", e);
         }
     }
 }

@@ -40,8 +40,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * BlockedOrderedQueue is a concurrent ordered queue that can deliver unordered events to a client
@@ -66,7 +67,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class BlockedOrderedQueue {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLIENT);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLIENT);
 
     private static class SingleProducer {
         public final SizeConcurrentHashMap<Long, RemoteEvent> orderedEventsMap =
@@ -281,11 +282,11 @@ public class BlockedOrderedQueue {
                     //new BatchRemoteEvent(eventsArray)
                     _listener.notify(theEvent);
                 } catch (UnknownEventException e) {
-                    _logger.log(Level.FINE, "Cant deliver notification to listener", e);
+                    _logger.debug("Cant deliver notification to listener", e);
                 } catch (RemoteException e) {
-                    _logger.log(Level.FINE, "Cant deliver notification to listener", e);
+                    _logger.debug("Cant deliver notification to listener", e);
                 } catch (Throwable e) {
-                    _logger.log(Level.SEVERE, "Notification was send but user listener throws exception", e);
+                    _logger.error("Notification was send but user listener throws exception", e);
                 }
             }
         }
@@ -316,11 +317,11 @@ public class BlockedOrderedQueue {
                 try {
                     _batchListener.notifyBatch(new BatchRemoteEvent(eventsList.toArray(new RemoteEvent[eventsList.size()])));
                 } catch (UnknownEventException e) {
-                    _logger.log(Level.FINE, "Cant deliver notification to listener", e);
+                    _logger.debug("Cant deliver notification to listener", e);
                 } catch (RemoteException e) {
-                    _logger.log(Level.FINE, "Cant deliver notification to listener", e);
+                    _logger.debug("Cant deliver notification to listener", e);
                 } catch (Throwable e) {
-                    _logger.log(Level.SEVERE, "Notification was send but user listener throws exception", e);
+                    _logger.error("Notification was send but user listener throws exception", e);
                 }
             }
         }

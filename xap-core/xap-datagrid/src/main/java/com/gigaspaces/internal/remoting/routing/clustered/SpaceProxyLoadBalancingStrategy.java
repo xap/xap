@@ -20,8 +20,9 @@ import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.routing.RemoteOperationRouterException;
 
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -46,8 +47,8 @@ public abstract class SpaceProxyLoadBalancingStrategy {
             // Double check candidate:
             RemoteOperationsExecutorProxy newCandidate = getCandidate(request);
             if (newCandidate != oldCandidate && newCandidate != null) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Active server" + _cluster.getPartitionDesc() + " was updated from " + (oldCandidate == null ? "null" : oldCandidate.getName()) + " to " + newCandidate.getName());
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Active server" + _cluster.getPartitionDesc() + " was updated from " + (oldCandidate == null ? "null" : oldCandidate.getName()) + " to " + newCandidate.getName());
                 _cluster.disconnect(oldCandidate);
                 return newCandidate;
             }
@@ -55,8 +56,8 @@ public abstract class SpaceProxyLoadBalancingStrategy {
             // Recalculate remaining time - might have changed while waiting for sync block:
             long remainingTime = _cluster.getRemainingTime(request, initialFailureTime);
             if (remainingTime <= 0) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Timeout expired while searching for active server" + _cluster.getPartitionDesc() + " " + _cluster.getElapsedTime(initialFailureTime));
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Timeout expired while searching for active server" + _cluster.getPartitionDesc() + " " + _cluster.getElapsedTime(initialFailureTime));
                 return null;
             }
 
@@ -65,8 +66,8 @@ public abstract class SpaceProxyLoadBalancingStrategy {
                 updateActiveProxy(activeProxy);
                 if (activeProxy == null) {
                     String timeoutErrorMessage = _cluster.generateTimeoutErrorMessage(initialFailureTime, request);
-                    if (_logger.isLoggable(Level.SEVERE))
-                        _logger.log(Level.SEVERE, timeoutErrorMessage);
+                    if (_logger.isErrorEnabled())
+                        _logger.error(timeoutErrorMessage);
                     request.setRemoteOperationExecutionError(new RemoteException(timeoutErrorMessage));
                 }
                 return activeProxy;

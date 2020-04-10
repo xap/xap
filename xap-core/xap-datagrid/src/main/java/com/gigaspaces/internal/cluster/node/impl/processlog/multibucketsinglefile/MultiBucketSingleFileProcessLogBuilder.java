@@ -29,7 +29,8 @@ import com.gigaspaces.internal.cluster.node.impl.processlog.async.IReplicationBa
 import com.gigaspaces.internal.cluster.node.impl.processlog.reliableasync.IReplicationReliableAsyncTargetProcessLog;
 import com.gigaspaces.internal.cluster.node.impl.processlog.sync.IReplicationSyncTargetProcessLog;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @com.gigaspaces.api.InternalApi

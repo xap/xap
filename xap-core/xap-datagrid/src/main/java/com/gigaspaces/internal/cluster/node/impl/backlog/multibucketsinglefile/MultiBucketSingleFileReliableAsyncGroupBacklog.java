@@ -59,8 +59,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // TODO there's code duplication between this class and
 // GlobalOrderReliableAsyncGroupBacklog
@@ -328,8 +329,8 @@ public class MultiBucketSingleFileReliableAsyncGroupBacklog
         MultiBucketSingleFileReliableAsyncState typedState = (MultiBucketSingleFileReliableAsyncState) reliableAsyncState;
         _rwLock.writeLock().lock();
         try {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest(getLogPrefix()
+            if (_logger.isTraceEnabled())
+                _logger.trace(getLogPrefix()
                         + "incoming reliable async state update " + typedState);
 
             ReliableAsyncSourceGroupConfig sourceGroupConfig = getGroupConfigSnapshot();
@@ -403,19 +404,19 @@ public class MultiBucketSingleFileReliableAsyncGroupBacklog
         try {
             long newNextKey = typedResponse.getLastProcessedGlobalKey() + 1;
             long[] lastProcessesKeysBuckets = typedResponse.getLastProcessesKeysBuckets();
-            if (_logger.isLoggable(Level.FINER))
-                _logger.finer(getLogPrefix() + " adjusting group key ["
+            if (_logger.isDebugEnabled())
+                _logger.debug(getLogPrefix() + " adjusting group key ["
                         + newNextKey
                         + "] and using last processed bucket keys "
                         + Arrays.toString(lastProcessesKeysBuckets));
 
             if (getNextKeyUnsafe() <= newNextKey) {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.finer(getLogPrefix() + " adjusting group key ["
+                if (_logger.isDebugEnabled())
+                    _logger.debug(getLogPrefix() + " adjusting group key ["
                             + newNextKey + "]");
                 setNextKeyUnsafe(newNextKey);
             }
-            _logger.finer(getLogPrefix() + " adjusting group bucket keys, existing keys " + Arrays.toString(_bucketLastKeys)
+            _logger.debug(getLogPrefix() + " adjusting group bucket keys, existing keys " + Arrays.toString(_bucketLastKeys)
                     + " using last processed bucket keys "
                     + Arrays.toString(lastProcessesKeysBuckets));
 

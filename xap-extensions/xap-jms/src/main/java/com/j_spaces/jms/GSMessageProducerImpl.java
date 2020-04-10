@@ -34,8 +34,9 @@ import net.jini.core.transaction.TransactionException;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.DeliveryMode;
 import javax.jms.Destination;
@@ -135,7 +136,7 @@ public class GSMessageProducerImpl implements MessageProducer, QueueSender, Topi
 
 
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_JMS);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_JMS);
 
     /**
      * @param sess   - The Session the producer belongs to
@@ -308,8 +309,8 @@ public class GSMessageProducerImpl implements MessageProducer, QueueSender, Topi
         if (m_closed) {
             return;
         }
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSMessageProducerImpl.close(): " + toString());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSMessageProducerImpl.close(): " + toString());
         }
         m_session.removeProducer(this);
         m_session = null;
@@ -399,8 +400,8 @@ public class GSMessageProducerImpl implements MessageProducer, QueueSender, Topi
 
             m_session.handleSendMessage(message);
         } catch (RemoteException re) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "Exception inside GSMessageProducerImpl.send(: "
+            if (_logger.isErrorEnabled()) {
+                _logger.error("Exception inside GSMessageProducerImpl.send(: "
                         + re.toString(), re);
             }
             JMSException e = new JMSException("RemoteException : "
@@ -408,8 +409,8 @@ public class GSMessageProducerImpl implements MessageProducer, QueueSender, Topi
             e.setLinkedException(re);
             throw e;
         } catch (TransactionException te) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "Exception inside GSMessageProducerImpl.send(: "
+            if (_logger.isErrorEnabled()) {
+                _logger.error("Exception inside GSMessageProducerImpl.send(: "
                         + te.toString(), te);
             }
             JMSException e = new JMSException("TransactionException : "
@@ -417,8 +418,8 @@ public class GSMessageProducerImpl implements MessageProducer, QueueSender, Topi
             e.setLinkedException(te);
             throw e;
         } catch (EntryAlreadyInSpaceException eaine) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.severe("GSMessageProducerImpl.send() EntryAlreadyInSpaceException: "
+            if (_logger.isErrorEnabled()) {
+                _logger.error("GSMessageProducerImpl.send() EntryAlreadyInSpaceException: "
                         + message.DestinationName + "  |  destination:  "
                         + _destination + "  |  uid:  "
                         + message.__getEntryInfo().m_UID);
@@ -428,12 +429,12 @@ public class GSMessageProducerImpl implements MessageProducer, QueueSender, Topi
             e.setLinkedException(eaine);
             throw e;
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "Exception inside GSMessageProducerImpl.send(): ", e);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Exception inside GSMessageProducerImpl.send(): ", e);
             }
             if (!(e instanceof InterruptedException)) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, e.toString(), e);
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(e.toString(), e);
                 }
                 JMSException jmse = new JMSException("Exception: " + e.toString());
                 jmse.setLinkedException(e);

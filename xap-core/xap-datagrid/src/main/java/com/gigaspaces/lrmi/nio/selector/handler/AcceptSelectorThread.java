@@ -27,7 +27,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
+
 
 /**
  * Handle accept events from selector.
@@ -73,8 +73,8 @@ public class AcceptSelectorThread extends AbstractSelectorThread {
                     _serverSocket.bind(new InetSocketAddress(hostName, portNumber), backlog);
                     bounded = true;
                 } catch (IOException e) {
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE, "Failed to bind to port [" + portNumber + "] on host [" + hostName + "]", e);
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Failed to bind to port [" + portNumber + "] on host [" + hostName + "]", e);
                     }
                     continue;
                 }
@@ -91,8 +91,8 @@ public class AcceptSelectorThread extends AbstractSelectorThread {
                         bounded = true;
                         break;
                     } catch (IOException ex) {
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.log(Level.FINE, "Failed to bind to port [" + portNumber + "] on host [" + hostName + "]", ex);
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug("Failed to bind to port [" + portNumber + "] on host [" + hostName + "]", ex);
                         }
                         continue;
                     }
@@ -152,8 +152,8 @@ public class AcceptSelectorThread extends AbstractSelectorThread {
             // close the connection of ServerSocket
             _serverSocket.close();
         } catch (IOException ex) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "Error while closing the server socket.", ex);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Error while closing the server socket.", ex);
             }
         }
     }

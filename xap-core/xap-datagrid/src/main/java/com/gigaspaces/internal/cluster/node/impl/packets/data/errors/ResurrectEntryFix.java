@@ -29,7 +29,7 @@ import com.j_spaces.core.client.EntryAlreadyInSpaceException;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.logging.Level;
+
 
 
 @com.gigaspaces.api.InternalApi
@@ -57,8 +57,8 @@ public class ResurrectEntryFix
             //If reached here than this must be active active topology and this object have
             //inserted to this space during the extend lease error processing (which was originally
             //generated when this object was not in space)
-            if (context.getContextLogger().isLoggable(Level.SEVERE)) {
-                context.getContextLogger().severe("Detected conflicting WRITE"
+            if (context.getContextLogger().isErrorEnabled()) {
+                context.getContextLogger().error("Detected conflicting WRITE"
                         + " operation on entry - "
                         + "<"
                         + _entryPacket.getTypeName() + ">"

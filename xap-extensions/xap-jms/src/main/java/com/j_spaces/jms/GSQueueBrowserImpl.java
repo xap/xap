@@ -37,8 +37,9 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.IllegalStateException;
 import javax.jms.InvalidDestinationException;
@@ -83,7 +84,7 @@ public class GSQueueBrowserImpl implements QueueBrowser {
     private boolean m_closed = false;
 
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_JMS);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_JMS);
 
     /**
      * The iterator buffer size used for the QueueBrowser. Defaults to 1000 objects.
@@ -120,8 +121,8 @@ public class GSQueueBrowserImpl implements QueueBrowser {
         try {
             gsIterator = new GSIterator(m_session.getConn().getSpace(), templates, config);
         } catch (RemoteException re) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE,
+            if (_logger.isErrorEnabled()) {
+                _logger.error(
                         "Exception inside GSQueueBrowserImpl: "
                                 + re.toString(), re);
             }
@@ -130,8 +131,8 @@ public class GSQueueBrowserImpl implements QueueBrowser {
             throw e;
         } catch (UnusableEntryException uue) {
             if (uue instanceof EntryNotInSpaceException) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, "The Entry " +
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("The Entry " +
                             ((EntryNotInSpaceException) uue).getUID() +
                             " is no longer in Space " + uue.getCause(), uue);
                 }
@@ -198,8 +199,8 @@ public class GSQueueBrowserImpl implements QueueBrowser {
 //	Ignoring the call if the browser is already m_closed:
         try {
             if (!m_closed) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("GSQueueBrowserImpl.close() closing browser: " + toString());
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSQueueBrowserImpl.close() closing browser: " + toString());
                 }
                 // unregister this browser from the session before closing, and
                 // then call the base class method.

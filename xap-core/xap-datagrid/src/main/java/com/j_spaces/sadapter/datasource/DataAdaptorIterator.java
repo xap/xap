@@ -30,8 +30,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by IntelliJ IDEA. User: assafr Date: Apr 24, 2008 Time: 11:41:20 AM To change this
@@ -39,7 +40,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class DataAdaptorIterator implements ISAdapterIterator<IEntryHolder> {
-    private final static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT);
+    private final static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT);
 
     private final SpaceTypeManager _typeManager;
     private final EntryDataType _entryDataType;
@@ -128,8 +129,8 @@ public class DataAdaptorIterator implements ISAdapterIterator<IEntryHolder> {
                 return null;
             IServerTypeDesc typeDesc = _typeManager.loadServerTypeDesc(next);
 
-            if (_logger.isLoggable(Level.FINER))
-                _logger.finer("CacheIterator#next() RETURNs " + next.toString());
+            if (_logger.isDebugEnabled())
+                _logger.debug("CacheIterator#next() RETURNs " + next.toString());
 
             return EntryHolderFactory.createEntryHolder(typeDesc, next, _entryDataType);
         } catch (Throwable t) {

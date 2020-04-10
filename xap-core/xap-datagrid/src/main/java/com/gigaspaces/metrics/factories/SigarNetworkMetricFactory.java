@@ -29,8 +29,9 @@ import org.hyperic.sigar.SigarException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Barak Bar Orion
@@ -39,28 +40,28 @@ import java.util.logging.Logger;
 
 public class SigarNetworkMetricFactory {
 
-    private static final Logger logger = Logger.getLogger(Constants.LOGGER_METRICS_MANAGER);
+    private static final Logger logger = LoggerFactory.getLogger(Constants.LOGGER_METRICS_MANAGER);
     private final Sigar sigar = SigarHolder.getSigar();
 
     public Collection<String> getNetInterfacesNames() {
         try {
             HashSet<String> result = new HashSet<String>();
             String[] names = sigar.getNetInterfaceList();
-            if (logger.isLoggable(Level.FINE))
-                logger.log(Level.FINE, "The following network interface cards were detected by Sigar: " + Arrays.toString(names));
+            if (logger.isDebugEnabled())
+                logger.debug("The following network interface cards were detected by Sigar: " + Arrays.toString(names));
             for (String name : names) {
                 NetInterfaceConfig config = sigar.getNetInterfaceConfig(name);
                 if (config.getAddress().equals(NetFlags.ANY_ADDR)) {
-                    if (logger.isLoggable(Level.FINE))
-                        logger.log(Level.FINE, "Skipping " + nameWithAddress(name, config) + " - invalid address");
+                    if (logger.isDebugEnabled())
+                        logger.debug("Skipping " + nameWithAddress(name, config) + " - invalid address");
                 } else {
                     boolean added = result.add(name);
                     if (added) {
-                        if (logger.isLoggable(Level.FINE))
-                            logger.log(Level.FINE, nameWithAddress(name, config) + " will be registered for metrics");
+                        if (logger.isDebugEnabled())
+                            logger.debug(nameWithAddress(name, config) + " will be registered for metrics");
                     } else {
-                        if (logger.isLoggable(Level.WARNING))
-                            logger.log(Level.WARNING, "Skipping " + nameWithAddress(name, config) + " - a NIC by the same name has already been registered for metrics");
+                        if (logger.isWarnEnabled())
+                            logger.warn("Skipping " + nameWithAddress(name, config) + " - a NIC by the same name has already been registered for metrics");
                     }
                 }
             }

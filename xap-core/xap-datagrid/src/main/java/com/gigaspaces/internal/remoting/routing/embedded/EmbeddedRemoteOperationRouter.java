@@ -28,7 +28,7 @@ import com.gigaspaces.internal.utils.concurrent.ContextClassLoaderRunnable;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.logging.Level;
+
 
 /**
  * @author Niv Ingberg
@@ -52,8 +52,8 @@ public class EmbeddedRemoteOperationRouter extends AbstractRemoteOperationRouter
         this._executor = memberProxy.getExecutor();
         this._asyncExecutor = asyncExecutor;
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Initialized embedded router" + getPartitionDesc() + " - member=[" + memberProxy.getName() + "]");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Initialized embedded router" + getPartitionDesc() + " - member=[" + memberProxy.getName() + "]");
     }
 
     public RemoteOperationsExecutor getExecutor() {

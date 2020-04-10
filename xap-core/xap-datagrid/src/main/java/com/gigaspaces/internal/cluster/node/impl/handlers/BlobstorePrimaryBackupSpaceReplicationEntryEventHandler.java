@@ -33,8 +33,9 @@ import net.jini.core.transaction.TransactionException;
 
 import java.rmi.RemoteException;
 import java.util.Collection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Boris
@@ -110,16 +111,16 @@ public class BlobstorePrimaryBackupSpaceReplicationEntryEventHandler
     private void logNewBulkArrived(IReplicationInContext context) {
         Logger contextLogger = context.getContextLogger();
         int bulkId = context.getReplicationBlobstoreBulkContext().getBulkId();
-        if (contextLogger != null && contextLogger.isLoggable(Level.FINEST)) {
-            contextLogger.log(Level.FINEST, LOG_PREFIX + " an entry which is a part of a new blobstore bulk with id [" + bulkId + "] arrived," +
+        if (contextLogger != null && contextLogger.isTraceEnabled()) {
+            contextLogger.trace(LOG_PREFIX + " an entry which is a part of a new blobstore bulk with id [" + bulkId + "] arrived," +
                     " will flush the previous bulk, packetkey=" + context.getLastProcessedKey());
         }
     }
 
     private void logNonBulkEntryArrived(IReplicationInContext context) {
         Logger contextLogger = context.getContextLogger();
-        if (contextLogger != null && contextLogger.isLoggable(Level.FINEST)) {
-            contextLogger.log(Level.FINEST, LOG_PREFIX + " an entry which is not part of a blobstore bulk arrived, " +
+        if (contextLogger != null && contextLogger.isTraceEnabled()) {
+            contextLogger.trace(LOG_PREFIX + " an entry which is not part of a blobstore bulk arrived, " +
                     "will flush the previous bulk, packetKey=" + context.getLastProcessedKey());
         }
     }
@@ -127,19 +128,19 @@ public class BlobstorePrimaryBackupSpaceReplicationEntryEventHandler
     private void logProcessingBulk(IReplicationInContext context) {
         Logger contextLogger = context.getContextLogger();
         int bulkId = context.getReplicationBlobstoreBulkContext().getBulkId();
-        if (contextLogger != null && contextLogger.isLoggable(Level.FINEST)) {
-            contextLogger.log(Level.FINEST, LOG_PREFIX + " processing replication blobstore bulk with id [" + bulkId + "], packetKey=" + context.getLastProcessedKey());
+        if (contextLogger != null && contextLogger.isTraceEnabled()) {
+            contextLogger.trace(LOG_PREFIX + " processing replication blobstore bulk with id [" + bulkId + "], packetKey=" + context.getLastProcessedKey());
         }
     }
 
     private void logFlushAfterConsumption(IReplicationInContext context, boolean successful, long lastProcessedKey) {
-        if (context.getContextLogger() != null && context.getContextLogger().isLoggable(Level.FINE)) {
+        if (context.getContextLogger() != null && context.getContextLogger().isDebugEnabled()) {
             int bulkId = 0;
             if (context.getReplicationBlobstoreBulkContext() != null) {
                 bulkId = context.getReplicationBlobstoreBulkContext().getBulkId();
             }
             String bulkIdStr = Integer.toString(bulkId).equals("0") ? "none" : Integer.toString(bulkId);
-            context.getContextLogger().log(Level.FINE, LOG_PREFIX + " flushed the bulk [" + bulkIdStr + "] after consumption," +
+            context.getContextLogger().debug(LOG_PREFIX + " flushed the bulk [" + bulkIdStr + "] after consumption," +
                     " successful? [" + successful + "], last flushed key=" + lastProcessedKey + ", thread=" + Thread.currentThread().getName());
         }
     }

@@ -54,7 +54,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+
 
 
 public abstract class AbstractMultiBucketSingleFileGroupBacklog
@@ -452,14 +452,14 @@ public abstract class AbstractMultiBucketSingleFileGroupBacklog
 
     private void insertPacketToBacklog(
             IMultiBucketSingleFileReplicationOrderedPacket packet, ReplicationOutContext outContext) {
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest(getLogPrefix() + "inserting packet [" + packet
+        if (_logger.isTraceEnabled())
+            _logger.trace(getLogPrefix() + "inserting packet [" + packet
                     + "] to backlog");
         try {
             insertReplicationOrderedPacketToBacklog(packet, outContext);
         } catch (RuntimeException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE,
+            if (_logger.isErrorEnabled())
+                _logger.error(
                         "exception while inserting a packet to the backlog file (insertPacketToBacklog), "
                                 + "[" + getStatistics() + "]",
                         e);

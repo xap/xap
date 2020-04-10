@@ -42,8 +42,9 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides static convenience methods for use in configuration files. This class cannot be
@@ -51,7 +52,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class BootUtil {
-    private static final Logger LOGGER = Logger.getLogger(BootUtil.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(BootUtil.class.getName());
 
     private static final AtomicBoolean isLocalHostLoaded = new AtomicBoolean(false);
     private static NetworkInterface[] networkInterfaces;
@@ -321,15 +322,15 @@ public class BootUtil {
                     LookupLocator lookupLocator = new LookupLocator(locatorURL);
                     locatorList.add(lookupLocator);
                 } catch (MalformedURLException ex) {
-                    if (LOGGER.isLoggable(Level.WARNING)) {
-                        LOGGER.log(Level.WARNING, "Failed to parse list of LookupLocator URLs: " + locatorURL + " - " + ex.toString(), ex
+                    if (LOGGER.isWarnEnabled()) {
+                        LOGGER.warn("Failed to parse list of LookupLocator URLs: " + locatorURL + " - " + ex.toString(), ex
                         );
                     }
                 }
             }//end of while()
         }
-        if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.log(Level.FINE, locatorList.toString());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(locatorList.toString());
         }
         return locatorList.toArray(new LookupLocator[0]);
     }
@@ -387,16 +388,16 @@ public class BootUtil {
 
     private static void warmup() {
         if (!isLocalHostLoaded.getAndSet(true)) {
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine("---Before local host initialization---");
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("---Before local host initialization---");
                 try {
                     InetAddress.getLocalHost();
                 } catch (UnknownHostException e) {
-                    if (LOGGER.isLoggable(Level.WARNING))
-                        LOGGER.log(Level.WARNING, e.toString(), e);
+                    if (LOGGER.isWarnEnabled())
+                        LOGGER.warn(e.toString(), e);
                 }
-                if (LOGGER.isLoggable(Level.FINE))
-                    LOGGER.fine("---After local host initialization---");
+                if (LOGGER.isDebugEnabled())
+                    LOGGER.debug("---After local host initialization---");
             }
         }
     }
@@ -492,8 +493,8 @@ public class BootUtil {
                         result = NetworkInterface.getByInetAddress(InetAddress.getByName(hostName));
                     }
                 } catch (Exception e) {
-                    if (LOGGER.isLoggable(Level.WARNING))
-                        LOGGER.log(Level.WARNING, e.toString(), e);
+                    if (LOGGER.isWarnEnabled())
+                        LOGGER.warn(e.toString(), e);
                 }
             }
 
@@ -618,14 +619,14 @@ public class BootUtil {
                 File file = new File(name);
                 if (file.isFile() && file.exists()) {
                     result = file.toURI().toURL();
-                    if (LOGGER.isLoggable(Level.FINE)) {
-                        LOGGER.log(Level.FINE, "Going to load the resource <" + name + "> from the path: " + result);
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Going to load the resource <" + name + "> from the path: " + result);
                     }
                     if (result != null) {
-                        if (LOGGER.isLoggable(Level.FINE)) {
-                            LOGGER.log(Level.FINE, "Load resource: [" + name + "] \n"
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Load resource: [" + name + "] \n"
                                     + " [ Returning result: " + result + " ] \n"
-                                    + (LOGGER.isLoggable(Level.FINEST) ? BootUtil.getStackTrace(new Exception("Debugging stack trace only (can be ignored): ")) : ""));
+                                    + (LOGGER.isTraceEnabled() ? BootUtil.getStackTrace(new Exception("Debugging stack trace only (can be ignored): ")) : ""));
                         }
                         return result;
                     }
@@ -652,16 +653,16 @@ public class BootUtil {
             }
         } catch (Exception e) {
             //wrap ConfigurationException and throw relevant exception
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.log(Level.FINE, "Failed to load resource: [" + name + "] ", e);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Failed to load resource: [" + name + "] ", e);
             }
         }
         return result;
     }
 
     private static URL getResourceURL(ClassLoader classLoader, String name, String onlyResourceName) {
-        if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.log(Level.FINE, "Going to load resource <" + name + "> from ClassLoader: " + classLoader.getClass().getName());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Going to load resource <" + name + "> from ClassLoader: " + classLoader.getClass().getName());
         }
 
         boolean searchedOnlyResourceName = false;
@@ -670,24 +671,24 @@ public class BootUtil {
         if (result == null && onlyResourceName != null) {
             //try search only with resource name
             searchedOnlyResourceName = true;
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.log(Level.FINE, "Going to load resource <" + onlyResourceName + "> from ClassLoader: " + classLoader.getClass().getName());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Going to load resource <" + onlyResourceName + "> from ClassLoader: " + classLoader.getClass().getName());
             }
             result = classLoader.getResource(onlyResourceName);
         }
 
-        if (LOGGER.isLoggable(Level.FINE)) {
+        if (LOGGER.isDebugEnabled()) {
             StringBuilder classLoaderHierarchy = new StringBuilder("ClassLoader Hierarchy: ");
             ClassLoader tmpCL = classLoader;
             while (tmpCL != null) {
                 classLoaderHierarchy.append(tmpCL.getClass().toString()).append(" <-- ");
                 tmpCL = tmpCL.getParent();
             }
-            LOGGER.log(Level.FINE, "Load resource: [" + (searchedOnlyResourceName ? onlyResourceName : name) + "] Thread: [" + Thread.currentThread().getName()
+            LOGGER.debug("Load resource: [" + (searchedOnlyResourceName ? onlyResourceName : name) + "] Thread: [" + Thread.currentThread().getName()
                     + "] using ClassLoader: [" + classLoader + "] \n"
                     + " [ " + classLoaderHierarchy.toString() + " ] \n"
                     + " [ Returning result: " + result + " ] \n"
-                    + (LOGGER.isLoggable(Level.FINEST) ? BootUtil.getStackTrace(new Exception("Debugging stack trace only (can be ignored): ")) : ""));
+                    + (LOGGER.isTraceEnabled() ? BootUtil.getStackTrace(new Exception("Debugging stack trace only (can be ignored): ")) : ""));
         }
 
         return result;
