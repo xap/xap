@@ -111,9 +111,6 @@ public class TypeDataIndex<K> {
     private int _estimatedNumNonNullValues;
     private int _estimatedUniqueNonNullValues;
 
-    //currently concurrent SL is used for null-value entries only
-    private final boolean _useConcurrentSl;
-
     private final boolean _useEconomyHashMap;
 
     private Class<?> _valueType;
@@ -178,21 +175,12 @@ public class TypeDataIndex<K> {
             this._nonUniqueEntriesStore = null;
         }
 
-        int numOfCoresToUseSL = Integer.getInteger(SystemProperties.ENGINE_CORES_TOUSE_CONCURRENT_SL, SystemProperties.ENGINE_CORES_TOUSE_CONCURRENT_SL_DEFAULT);
-        _useConcurrentSl = Runtime.getRuntime().availableProcessors() >= numOfCoresToUseSL;
-
         _RTTemplates = new ConcurrentHashMap<Object, IStoredList<TemplateCacheInfo>[]>();
         _NTemplates = new ConcurrentHashMap<Object, IStoredList<TemplateCacheInfo>[]>();
 
-        if (_useConcurrentSl) {
-            _nullEntries = StoredListFactory.createConcurrentSegmentedList(true/* supportFifoPerSegment*/,1 /* inputNumOfSegments*/,true /* padded*/);
-            _RTNullTemplates = StoredListFactory.createConcurrentSegmentedList(true/* supportFifoPerSegment*/,1 /* inputNumOfSegments*/,true /* padded*/);
-            _NNullTemplates = StoredListFactory.createConcurrentSegmentedList(true/* supportFifoPerSegment*/,1 /* inputNumOfSegments*/,true /* padded*/);
-        } else {
-            _nullEntries = StoredListFactory.createRandomScanList(true);
-            _RTNullTemplates = StoredListFactory.createList(true);
-            _NNullTemplates = StoredListFactory.createList(true);
-        }
+        _nullEntries = StoredListFactory.createConcurrentSegmentedList(true/* supportFifoPerSegment*/,1 /* inputNumOfSegments*/,true /* padded*/);
+        _RTNullTemplates = StoredListFactory.createConcurrentSegmentedList(true/* supportFifoPerSegment*/,1 /* inputNumOfSegments*/,true /* padded*/);
+        _NNullTemplates = StoredListFactory.createConcurrentSegmentedList(true/* supportFifoPerSegment*/,1 /* inputNumOfSegments*/,true /* padded*/);
 
         if (_indexType.isOrdered()) {
             _concurrentExtendedIndex = new ExtendedIndexHandler<K>(this);
