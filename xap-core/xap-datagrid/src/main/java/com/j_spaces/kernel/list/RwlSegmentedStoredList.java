@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
  * @version 1.0
  * @since 6.1
  */
+@Deprecated //Unused internally since 15.5
 @com.gigaspaces.api.InternalApi
 public class RwlSegmentedStoredList<T>
         implements IStoredList<T> {

@@ -617,17 +617,6 @@ public class SystemProperties extends CommonSystemProperties {
      * case of constant thread numbers If set to 0 - the default is used.
      */
     public final static int ENGINE_STORED_LIST_SEGMENTS_DEFAULT = 5 * Runtime.getRuntime().availableProcessors() + 1;
-    /**
-     * specifies the property name- min # of cores to use concurrent sl for class level entries and
-     * single-value index entries.
-     */
-    public final static String ENGINE_CORES_TOUSE_CONCURRENT_SL = "com.gs.engine.coresToUseConcurrentSL";
-
-    /**
-     * specifies the default property - min # of cores to use concurrent sl for class level entries
-     * and single-value index entries.
-     */
-    public final static int ENGINE_CORES_TOUSE_CONCURRENT_SL_DEFAULT = 2;
 
     /**
      * Number of locks used by the engine stored lists. Reducing the  number of locks will reduce

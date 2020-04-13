@@ -48,33 +48,6 @@ public final class StoredListFactory {
     }
 
     /**
-     * Creates a StoredList that can be scanned from random position
-     *
-     * @return createStoredList
-     */
-    public static <T> IStoredList<T> createRandomScanList(boolean reuseLocks) {
-        return createStoredList(true, reuseLocks);
-    }
-
-    /**
-     * Creates an ordered list.
-     *
-     * @return ExternallyLockedStoredList
-     */
-    public static <T> IOrderedList<T> createOrderedList() {
-        return new ExternallyLockedStoredList<T>(false/*random*/);
-    }
-
-    /**
-     * Creates a segmented stored list - used for highly concurrent lists.
-     *
-     * @return RwlSegmentedStoredLis
-     */
-    public static <T> IStoredList<T> createSegmentedList() {
-        return new RwlSegmentedStoredList<T>(null /*locks-pool*/);
-    }
-
-    /**
      * Creates a concurrent stored list - used for highly concurrent lists.
      *
      * @return IStoredList
