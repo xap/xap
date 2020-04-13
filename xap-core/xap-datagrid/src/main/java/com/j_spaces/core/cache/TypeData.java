@@ -930,11 +930,7 @@ public class TypeData {
             else
                 return StoredListFactory.createRandomScanList(false);
         }
-
-        if (useConcurrentStoreList)
-            return StoredListFactory.createConcurrentSegmentedList(false /* supportsFifoPerSegment*/);
-        else
-            return StoredListFactory.createSegmentedList();
+        return StoredListFactory.createConcurrentSegmentedList(false /* supportsFifoPerSegment*/);
     }
 
     public boolean isFifoSupport() {
