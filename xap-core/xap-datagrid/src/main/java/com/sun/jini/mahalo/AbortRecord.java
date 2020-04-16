@@ -19,8 +19,9 @@ package com.sun.jini.mahalo;
 
 import com.sun.jini.mahalo.log.CannotRecoverException;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An <code>AbortRecord</code> represents the logged state of a <code>Transaction</code> which has
@@ -72,8 +73,8 @@ class AbortRecord implements TxnLogRecord {
                     ime.getMessage());
         }
 
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, "AbortJob:recover recovered");
+        if (logger.isTraceEnabled()) {
+            logger.trace("AbortJob:recover recovered");
         }
     }
 

@@ -26,8 +26,9 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Sun Microsystems, Inc.
@@ -41,19 +42,19 @@ public class MultiLogManager
      * Logger for persistence related messages
      */
     private static final Logger persistenceLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".persistence");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".persistence");
 
     /**
      * Logger for operations related messages
      */
     private static final Logger operationsLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".operations");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".operations");
 
     /**
      * Logger for initialization related messages
      */
     private static final Logger initLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".init");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".init");
 
     /**
      * Client called during log recovery to process log objects
@@ -83,11 +84,11 @@ public class MultiLogManager
     private final static FilenameFilter filter =
             new FilenameFilter() {
                 public boolean accept(File dir, String name) {
-                    if (operationsLogger.isLoggable(Level.FINER)) {
+                    if (operationsLogger.isDebugEnabled()) {
                         LogUtils.entering(operationsLogger, FilenameFilter.class, "accept", new Object[]{dir, name});
                     }
                     final boolean isLog = name.startsWith(LOG_FILE);
-                    if (operationsLogger.isLoggable(Level.FINER)) {
+                    if (operationsLogger.isDebugEnabled()) {
                         LogUtils.exiting(operationsLogger, FilenameFilter.class, "accept", Boolean.valueOf(isLog));
                     }
                     return isLog;
@@ -137,8 +138,8 @@ public class MultiLogManager
         if (!directory.endsWith(File.separator))
             directory = directory.concat(File.separator);
 
-        if (persistenceLogger.isLoggable(Level.FINEST)) {
-            persistenceLogger.log(Level.FINEST,
+        if (persistenceLogger.isTraceEnabled()) {
+            persistenceLogger.trace(
                     "directory = {0}", directory);
         }
 
@@ -149,14 +150,14 @@ public class MultiLogManager
         try {
             if (!tmpfile.exists())
                 if (!tmpfile.mkdirs())
-                    if (persistenceLogger.isLoggable(Level.SEVERE)) {
-                        persistenceLogger.log(Level.SEVERE,
+                    if (persistenceLogger.isErrorEnabled()) {
+                        persistenceLogger.error(
                                 "Could not create {0}", tmpfile);
                     }
 //TODO - ignore???		    
         } catch (SecurityException se) {
-            if (persistenceLogger.isLoggable(Level.SEVERE)) {
-                persistenceLogger.log(Level.SEVERE,
+            if (persistenceLogger.isErrorEnabled()) {
+                persistenceLogger.error(
                         "Error accessing Version File", se);
             }
 //TODO ignore? throw (SecurityException)se.fillInStackTrace();
@@ -165,7 +166,7 @@ public class MultiLogManager
 
     // javadoc inherited from supertype
     public ClientLog logFor(long cookie) throws LogException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, MultiLogManager.class,"logFor", new Long(cookie));
         }
         ClientLog cl = null;
@@ -183,15 +184,15 @@ public class MultiLogManager
                         (ClientLog) new SimpleLogFile(
                                 directory + LOG_FILE + cookie,
                                 cookie, logMgrRef);
-                if (persistenceLogger.isLoggable(Level.FINEST)) {
-                    persistenceLogger.log(Level.FINEST,
+                if (persistenceLogger.isTraceEnabled()) {
+                    persistenceLogger.trace(
                             "Created ClientLog: {0}",
                             directory + LOG_FILE + cookie);
                 }
                 prev = logByID.put(key, cl);
             }
-            if (persistenceLogger.isLoggable(Level.FINEST)) {
-                persistenceLogger.log(Level.FINEST,
+            if (persistenceLogger.isTraceEnabled()) {
+                persistenceLogger.trace(
                         "Currently managing {0} logs.",
                         new Integer(logByID.size()));
             }
@@ -201,13 +202,13 @@ public class MultiLogManager
             throw new LogException("Previous mapping for cookie("
                     + cookie + ") -- internal table corrupt?");
 
-        if (persistenceLogger.isLoggable(Level.FINEST)) {
-            persistenceLogger.log(Level.FINEST,
+        if (persistenceLogger.isTraceEnabled()) {
+            persistenceLogger.trace(
                     "Using ClientLog {0} for cookie {1}",
                     new Object[]{cl, new Long(cookie)});
         }
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, MultiLogManager.class, "logFor", cl);
         }
         return cl;
@@ -215,34 +216,34 @@ public class MultiLogManager
 
     // javadoc inherited from supertype
     private void release(long cookie) {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, MultiLogManager.class, "release", new Long(cookie));
         }
         Object prev = null;
         synchronized (logByIDLock) {
             if (destroyed)
                 return;
-            if (persistenceLogger.isLoggable(Level.FINEST)) {
-                persistenceLogger.log(Level.FINEST,
+            if (persistenceLogger.isTraceEnabled()) {
+                persistenceLogger.trace(
                         "Releasing ClientLog for cookie {0}",
                         new Long(cookie));
             }
             prev = logByID.remove(new Long(cookie));
-            if (persistenceLogger.isLoggable(Level.FINEST)) {
-                persistenceLogger.log(Level.FINEST,
+            if (persistenceLogger.isTraceEnabled()) {
+                persistenceLogger.trace(
                         "Currently managing {0} logs.",
                         new Integer(logByID.size()));
             }
         }
 
-        if (persistenceLogger.isLoggable(Level.FINEST)) {
+        if (persistenceLogger.isTraceEnabled()) {
             if (prev == null) {
-                persistenceLogger.log(Level.FINEST,
+                persistenceLogger.trace(
                         "Note: ClientLog already removed");
             }
         }
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, MultiLogManager.class, "release");
         }
     }
@@ -251,7 +252,7 @@ public class MultiLogManager
      * Consumes the log file and re-constructs a system's state.
      */
     public void recover() throws LogException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, MultiLogManager.class, "recover");
         }
         // Short-circuit for non-persistent mode
@@ -276,8 +277,8 @@ public class MultiLogManager
             for (int i = 0; i < filenames.length; i++) {
                 logName = directory + filenames[i];
                 log = new SimpleLogFile(logName, logMgrRef);
-                if (persistenceLogger.isLoggable(Level.FINEST)) {
-                    persistenceLogger.log(Level.FINEST,
+                if (persistenceLogger.isTraceEnabled()) {
+                    persistenceLogger.trace(
                             "Recovering log: {0}", logName);
                 }
                 try {
@@ -288,19 +289,19 @@ public class MultiLogManager
 		     */
                     logByID.put(new Long(log.cookie()), log);
                 } catch (LogException le) {
-                    if (persistenceLogger.isLoggable(Level.WARNING)) {
-                        persistenceLogger.log(Level.WARNING,
+                    if (persistenceLogger.isWarnEnabled()) {
+                        persistenceLogger.warn(
                                 "Unable to recover log state", le);
                     }
                 }
             }
         } catch (SecurityException se) { // TODO - shouldn't this percolate back up?
-            if (persistenceLogger.isLoggable(Level.WARNING)) {
-                persistenceLogger.log(Level.WARNING,
+            if (persistenceLogger.isWarnEnabled()) {
+                persistenceLogger.warn(
                         "Unable to recover log state", se);
             }
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, MultiLogManager.class, "recover");
         }
     }
@@ -311,10 +312,10 @@ public class MultiLogManager
      */
     public Object getAdmin() {
         // TBD - pass capability object instead?
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, MultiLogManager.class, "getAdmin");
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, MultiLogManager.class,"getAdmin", this);
         }
         return (MultiLogManagerAdmin) this;
@@ -328,7 +329,7 @@ public class MultiLogManager
      * @see com.sun.jini.system.FileSystem
      */
     public void destroy() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, MultiLogManager.class, "destroy");
         }
 
@@ -353,19 +354,19 @@ public class MultiLogManager
                         if (slf != null)
                             slf.invalidate();
                         else {
-                            if (persistenceLogger.isLoggable(Level.FINEST)) {
-                                persistenceLogger.log(Level.FINEST,
+                            if (persistenceLogger.isTraceEnabled()) {
+                                persistenceLogger.trace(
                                         "Observed a null log file entry for: {0}", slf);
                             }
                         }
                     } catch (LogException le) {
-                        if (persistenceLogger.isLoggable(Level.FINE)) {
-                            persistenceLogger.log(Level.FINE,
+                        if (persistenceLogger.isDebugEnabled()) {
+                            persistenceLogger.debug(
                                     "Unable to recover log state", le);
                         }
                     } catch (java.util.NoSuchElementException nsee) {
-                        if (persistenceLogger.isLoggable(Level.FINE)) {
-                            persistenceLogger.log(Level.FINE,
+                        if (persistenceLogger.isDebugEnabled()) {
+                            persistenceLogger.debug(
                                     "Problem enumerating internal log state", nsee);
                         }
                     }
@@ -374,7 +375,7 @@ public class MultiLogManager
                 destroyed = true;
             }
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, MultiLogManager.class, "destroy");
         }
     }

@@ -37,15 +37,16 @@ import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by Barak Bar Orion 2/1/15.
  */
 @com.gigaspaces.api.InternalApi
 public class BouncyCastleSelfSignedCertificate {
-    private final static Logger logger = Logger.getLogger(BouncyCastleSelfSignedCertificate.class.getName());
+    private final static Logger logger = LoggerFactory.getLogger(BouncyCastleSelfSignedCertificate.class.getName());
 
     private static final Provider PROVIDER = new BouncyCastleProvider();
     static final SecureRandom random = new SecureRandom();
@@ -62,7 +63,7 @@ public class BouncyCastleSelfSignedCertificate {
             try {
                 instance = new BouncyCastleSelfSignedCertificate();
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Failed to create self signed certificate", e);
+                logger.warn("Failed to create self signed certificate", e);
             }
         }
         if (instance != null) {

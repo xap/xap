@@ -7,7 +7,7 @@ import com.gigaspaces.start.JavaCommandBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
+
 
 public abstract class AbstractRunCommand extends CliCommand {
 
@@ -43,10 +43,10 @@ public abstract class AbstractRunCommand extends CliCommand {
     protected static ProcessBuilder toProcessBuilder(JavaCommandBuilder command, String desc) {
         ProcessBuilder processBuilder = command.toProcessBuilder();
         processBuilder.inheritIO();
-        if (LOGGER.isLoggable(Level.FINE)) {
+        if (LOGGER.isDebugEnabled()) {
             String message = "Starting " + desc + " with line:";
             String commandline = String.join(" ", processBuilder.command());
-            LOGGER.fine(message + System.lineSeparator() + commandline + System.lineSeparator());
+            LOGGER.debug(message + System.lineSeparator() + commandline + System.lineSeparator());
             //System.out.println(message + System.lineSeparator() + commandline + System.lineSeparator());
         }
 

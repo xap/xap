@@ -27,8 +27,9 @@ import net.jini.core.lease.Lease;
 
 import java.rmi.MarshalledObject;
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * the super class of all DataEventSession implementations. <br> it supplies an automatic renew
@@ -52,8 +53,8 @@ public abstract class AbstractDataEventSession implements DataEventSession {
         this._notificationsSpace = _space.getNotificationsDirectProxy();
         this._config = config;
         this._logger = _notificationsSpace.getDataEventsManager().getLogger();
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "DataEventSession created - " + config.toString());
+        if (_logger.isDebugEnabled())
+            _logger.debug("DataEventSession created - " + config.toString());
     }
 
     @Override

@@ -31,7 +31,7 @@ import com.j_spaces.sadapter.datasource.InternalBulkItem;
 import net.jini.core.transaction.server.TransactionParticipantDataImpl;
 
 import java.util.List;
-import java.util.logging.Level;
+
 
 /**
  * @author Niv Ingberg
@@ -74,8 +74,8 @@ public class MirrorBulkExecutor {
             try {
                 _syncEndpoint.afterOperationsBatchSynchronization(batchData);
             } catch (Throwable t) {
-                if (batchContext.getContextLogger().isLoggable(Level.WARNING))
-                    batchContext.getContextLogger().log(Level.WARNING, "Synchronization endpoint interceptor afterOperationsBatchSynchronization caused an exception", t);
+                if (batchContext.getContextLogger().isWarnEnabled())
+                    batchContext.getContextLogger().warn("Synchronization endpoint interceptor afterOperationsBatchSynchronization caused an exception", t);
             }
         } else {
             final TransactionDataImpl transactionData = new TransactionDataImpl(operations, transactionMetaData,
@@ -84,8 +84,8 @@ public class MirrorBulkExecutor {
             try {
                 _syncEndpoint.afterTransactionSynchronization(transactionData);
             } catch (Throwable t) {
-                if (batchContext.getContextLogger().isLoggable(Level.WARNING))
-                    batchContext.getContextLogger().log(Level.WARNING, "Synchronization endpoint interceptor afterSynchronizingTransaction caused an exception", t);
+                if (batchContext.getContextLogger().isWarnEnabled())
+                    batchContext.getContextLogger().warn("Synchronization endpoint interceptor afterSynchronizingTransaction caused an exception", t);
             }
         }
     }

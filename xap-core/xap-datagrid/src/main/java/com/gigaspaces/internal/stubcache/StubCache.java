@@ -29,8 +29,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -41,7 +42,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class StubCache implements IClassLoaderCacheStateListener {
-    private final static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI_STUB_CACHE);
+    private final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_STUB_CACHE);
 
     private static final int CLEAN_RATE = Integer.getInteger("com.gs.transport_protocol.lrmi.stub-cache.clean-rate", 200000);
     private static final int CACHE_MAX_SIZE = Integer.getInteger("com.gs.transport_protocol.lrmi.stub-cache.size", 1024 * 10);
@@ -70,8 +71,8 @@ public class StubCache implements IClassLoaderCacheStateListener {
 
     public synchronized void addStub(StubId id, Object stub) {
         if (_cachedStubs.size() >= CACHE_MAX_SIZE) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("stub cache size reached, clearing the cache");
+            if (_logger.isDebugEnabled())
+                _logger.debug("stub cache size reached, clearing the cache");
 
             _cachedStubs.clear();
             _classLoaderContext.clear();
@@ -98,8 +99,8 @@ public class StubCache implements IClassLoaderCacheStateListener {
      * cycles
      */
     public synchronized void clearStaleEntries() {
-        if (_logger.isLoggable(Level.FINER))
-            _logger.finer("clearing stale entries from stub cache");
+        if (_logger.isDebugEnabled())
+            _logger.debug("clearing stale entries from stub cache");
 
         List<StubId> staleEntries = new ArrayList<StubId>();
         for (Map.Entry<StubId, TouchedItem<Object>> entry : _cachedStubs.entrySet()) {
@@ -108,12 +109,12 @@ public class StubCache implements IClassLoaderCacheStateListener {
                 staleEntries.add(entry.getKey());
         }
 
-        if (_logger.isLoggable(Level.FINER)) {
+        if (_logger.isDebugEnabled()) {
             int staleEntriesCount = staleEntries.size();
             if (staleEntriesCount > 0)
-                _logger.finer("found " + staleEntriesCount + " stale entries in cache, removing them");
+                _logger.debug("found " + staleEntriesCount + " stale entries in cache, removing them");
             else
-                _logger.finer("no stale entries found in cache");
+                _logger.debug("no stale entries found in cache");
         }
 
         for (StubId id : staleEntries) {

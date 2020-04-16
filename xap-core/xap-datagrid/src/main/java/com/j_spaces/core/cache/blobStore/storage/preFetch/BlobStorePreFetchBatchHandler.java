@@ -28,8 +28,9 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * handlels prefetch activity
@@ -93,13 +94,13 @@ public class BlobStorePreFetchBatchHandler implements Callable<BlobStorePreFetch
             if (_result != null) {
                 _result.setException(e);
             }
-            _logger.log(Level.SEVERE, "PreFetchBatchHandler got an exception:", e);
+            _logger.error("PreFetchBatchHandler got an exception:", e);
 
             throw new BlobStoreException(e);
         }
         if (!_future.isDone()) {
             BlobStoreException ex = new BlobStoreException("BlobStorePreFetchBatchHandler:getReadyResult could not get any batch on time");
-            _logger.log(Level.SEVERE, "BlobStorePreFetchBatchHandler got an exception:", ex);
+            _logger.error("BlobStorePreFetchBatchHandler got an exception:", ex);
             throw ex;
         }
         return _result;

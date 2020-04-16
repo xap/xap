@@ -60,8 +60,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -70,7 +71,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class MetricManager implements Closeable {
 
-    private static final Logger logger = Logger.getLogger(Constants.LOGGER_METRICS_MANAGER);
+    private static final Logger logger = LoggerFactory.getLogger(Constants.LOGGER_METRICS_MANAGER);
     private static MetricManager instance;
     private static int refCount;
 
@@ -117,10 +118,10 @@ public class MetricManager implements Closeable {
     }
 
     private MetricManager() {
-        logger.log(Level.FINE, "Starting Metric Manager...");
+        logger.debug("Starting Metric Manager...");
         this.defaultTags = initDefaultTags();
         reload();
-        logger.log(Level.FINE, "Started Metric Manager.");
+        logger.debug("Started Metric Manager.");
 
         final String processName = SystemBoot.getProcessRole();
         if (processName != null) {
@@ -150,7 +151,7 @@ public class MetricManager implements Closeable {
         synchronized (lock) {
             // Close all existing samplers (if any):
             if (samplers != null) {
-                if (logger.isLoggable(Level.INFO))
+                if (logger.isInfoEnabled())
                     logger.info("Reloading Metrics Configuration");
                 for (MetricSampler sampler : samplers.values())
                     sampler.close();
@@ -203,12 +204,12 @@ public class MetricManager implements Closeable {
         if (!release())
             return;
 
-        logger.log(Level.FINE, "Closing Metric Manager...");
+        logger.debug("Closing Metric Manager...");
         synchronized (lock) {
             for (MetricSampler sampler : samplers.values())
                 sampler.close();
         }
-        logger.log(Level.FINE, "Closed Metric Manager.");
+        logger.debug("Closed Metric Manager.");
     }
 
     public MetricRegistrator createRegistrator(String prefix) {
@@ -266,13 +267,13 @@ public class MetricManager implements Closeable {
     }
 
     private MetricReporter createReporter(String name, MetricReporterFactory reporterFactory) {
-        if (logger.isLoggable(Level.FINE))
-            logger.log(Level.FINE, "Loading metric reporter factory " + name);
+        if (logger.isDebugEnabled())
+            logger.debug("Loading metric reporter factory " + name);
 
         try {
             return reporterFactory.create();
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to create reporter " + name, e);
+            logger.warn("Failed to create reporter " + name, e);
             return null;
         }
     }
@@ -319,7 +320,7 @@ public class MetricManager implements Closeable {
         try {
             return factory.getNetInterfacesNames();
         } catch (RuntimeException e) {
-            logger.log(Level.WARNING, "Failed to retrieve network interfaces names", e);
+            logger.warn("Failed to retrieve network interfaces names", e);
             return Collections.emptyList();
         }
     }

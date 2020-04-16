@@ -64,8 +64,9 @@ import java.rmi.MarshalledObject;
 import java.rmi.RemoteException;
 import java.util.UUID;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A common base class for most space proxies. <p/> Implements all the space operations and calling
@@ -77,7 +78,7 @@ import java.util.logging.Logger;
 public abstract class AbstractSpaceProxy implements ISpaceProxy {
     @SuppressWarnings("unused")
     private static final long serialVersionUID = -7437421509223305572L;
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLIENT);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLIENT);
 
 
     private final transient AbstractSpaceProxyActionManager<?> _actionManager;
@@ -574,8 +575,8 @@ public abstract class AbstractSpaceProxy implements ISpaceProxy {
         } catch (RemoteException e) {
             return false;
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, " Unexpected exception during checkIfConnected.", e);
+            if (_logger.isWarnEnabled())
+                _logger.warn(" Unexpected exception during checkIfConnected.", e);
             return false;
         }
     }

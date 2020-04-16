@@ -28,13 +28,14 @@ import com.j_spaces.core.cluster.IReplicationFilterEntry;
 import com.j_spaces.kernel.locks.ILockObject;
 
 import java.util.Enumeration;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class NotifyTemplateReplicaProducer
         implements ISingleStageReplicaDataProducer<NotifyTemplateReplicaData> {
-    protected final static Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
+    protected final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
 
     private final SpaceEngine _engine;
     protected final Object _requestContext;
@@ -123,8 +124,8 @@ public class NotifyTemplateReplicaProducer
 
     protected boolean isRelevant(NotifyTemplateHolder notifyTemplate) {
         if (!notifyTemplate.isReplicateNotify()) {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest(getLogPrefix() + "filtered notify template "
+            if (_logger.isTraceEnabled())
+                _logger.trace(getLogPrefix() + "filtered notify template "
                         + notifyTemplate.getClassName() + " Uid="
                         + notifyTemplate.getUID()
                         + " since it is set not to be replicated");
@@ -132,8 +133,8 @@ public class NotifyTemplateReplicaProducer
         }
 
         if (notifyTemplate.getXidOriginatedTransaction() != null) {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest(getLogPrefix() + "filtered notify template "
+            if (_logger.isTraceEnabled())
+                _logger.trace(getLogPrefix() + "filtered notify template "
                         + notifyTemplate.getClassName() + " Uid="
                         + notifyTemplate.getUID()
                         + " since it is under transaction");

@@ -27,8 +27,9 @@ import com.j_spaces.core.cache.blobStore.IBlobStoreOffHeapInfo;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Yael Nahon
@@ -36,7 +37,7 @@ import java.util.logging.Logger;
  */
 public class OffHeapMemoryPool extends AbstractMemoryPool {
 
-    private Logger logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private Logger logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
     private int minimalDiffToAllocate;
     private final LongCounter totalCounter = new LongCounter();
     private final Map<Short, LongCounter> typesCounters = new ConcurrentHashMap<Short, LongCounter>();
@@ -170,14 +171,14 @@ public class OffHeapMemoryPool extends AbstractMemoryPool {
             }
 
         } catch (Error e) {
-            logger.log(Level.SEVERE, "failed to allocateAndWrite offheap space", e);
+            logger.error("failed to allocateAndWrite offheap space", e);
             throw e;
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "failed to allocateAndWrite offheap space");
+            logger.error("failed to allocateAndWrite offheap space");
             throw new RuntimeException("failed to allocateAndWrite offheap space", e);
         }
         if (newAddress == 0) {
-            logger.log(Level.SEVERE, "failed to allocateAndWrite offheap space");
+            logger.error("failed to allocateAndWrite offheap space");
             throw new RuntimeException("failed to allocateAndWrite offheap space");
         }
 

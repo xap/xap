@@ -27,8 +27,9 @@ import com.gigaspaces.datasource.SpaceDataSourceException;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Decorates a {@link SpaceDataSource} with additional property, concurrent request for an iterator
@@ -44,7 +45,7 @@ import java.util.logging.Logger;
 public class SharedIteratorSpaceDataSourceDecorator
         extends SpaceDataSource
         implements ISharedDataIteratorSourceStateChangedListener<Object> {
-    private final static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT_SHARED_ITERATOR);
+    private final static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT_SHARED_ITERATOR);
 
     private final ConcurrentHashMap<DataSourceSQLQuery, SharedDataIteratorSource<Object>> _queryToSources;
     private final ConcurrentHashMap<SharedDataIteratorSource<Object>, DataSourceSQLQuery> _sourcesToQuery;
@@ -82,13 +83,13 @@ public class SharedIteratorSpaceDataSourceDecorator
                 try {
                     return sharedDataIteratorSource.getIterator();
                 } catch (SharedDataIteratorSourceClosedException e) {
-                    if (_logger.isLoggable(Level.FINEST))
-                        _logger.finest("shared iterator source is already closed, creating a new one");
+                    if (_logger.isTraceEnabled())
+                        _logger.trace("shared iterator source is already closed, creating a new one");
                     //The mediator was closed exactly at this point, create a new one
                     sharedDataIteratorSource = createSource(query, dataSourceSQLQuery);
                 } catch (SharedDataIteratorSourceExpiredException e) {
-                    if (_logger.isLoggable(Level.FINEST))
-                        _logger.finest("shared iterator source is already expired, creating a new one");
+                    if (_logger.isTraceEnabled())
+                        _logger.trace("shared iterator source is already expired, creating a new one");
                     //The mediator has expired exactly at this point, create a new one
                     sharedDataIteratorSource = createSource(query, dataSourceSQLQuery);
                 }
@@ -99,8 +100,8 @@ public class SharedIteratorSpaceDataSourceDecorator
     }
 
     public void shutdown() throws DataSourceException {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("shutdown shared iterator SQL data provider decorator");
+        if (_logger.isDebugEnabled())
+            _logger.debug("shutdown shared iterator SQL data provider decorator");
         _queryToSources.clear();
         _sourcesToQuery.clear();
     }
@@ -119,8 +120,8 @@ public class SharedIteratorSpaceDataSourceDecorator
         if (previousMediator != null)
             sharedDataIteratorSource = previousMediator;
         else {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("create new shared iterator source for query " + dataSourceSQLQuery.toString());
+            if (_logger.isTraceEnabled())
+                _logger.trace("create new shared iterator source for query " + dataSourceSQLQuery.toString());
             _sourcesToQuery.put(sharedDataIteratorSource, dataSourceSQLQuery);
         }
         return sharedDataIteratorSource;
@@ -136,8 +137,8 @@ public class SharedIteratorSpaceDataSourceDecorator
 
     private void handleSourceStateChangedEvent(SharedDataIteratorSource<Object> sender) {
         DataSourceSQLQuery query = _sourcesToQuery.remove(sender);
-        if (_logger.isLoggable(Level.FINEST) && query != null)
-            _logger.finest("shared iterator source is closed or expired, detaching from local table [" + query.toString() + "]");
+        if (_logger.isTraceEnabled() && query != null)
+            _logger.trace("shared iterator source is closed or expired, detaching from local table [" + query.toString() + "]");
         if (query != null)
             _queryToSources.remove(query);
     }

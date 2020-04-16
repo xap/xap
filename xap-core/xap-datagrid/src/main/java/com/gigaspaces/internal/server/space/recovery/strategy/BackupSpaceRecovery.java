@@ -28,12 +28,13 @@ import com.j_spaces.core.cluster.ClusterPolicy;
 import com.j_spaces.core.exception.internal.InternalInactiveSpaceException;
 
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class BackupSpaceRecovery implements SpaceRecoverStrategy {
     //logger
-    static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_COMMON);
+    static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_COMMON);
 
     protected final SpaceImpl _space;
 
@@ -73,12 +74,12 @@ public abstract class BackupSpaceRecovery implements SpaceRecoverStrategy {
                 if (_space.getDirectPersistencyRecoveryHelper() != null) {
                     _space.getDirectPersistencyRecoveryHelper().handleDirectPersistencyRecoverFailure(++directPersistencyRecoverRetryCount);
                 }
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.log(Level.WARNING, "Primary space is unavailable.", e);
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn("Primary space is unavailable.", e);
                 }
                 if (_space.getEngine().isFailOverDuringRecovery()) {
-                    if (_logger.isLoggable(Level.WARNING))
-                        _logger.warning("Primary space failure detected during the recovery process of this space instance - recovery will be aborted");
+                    if (_logger.isWarnEnabled())
+                        _logger.warn("Primary space failure detected during the recovery process of this space instance - recovery will be aborted");
                     throw e;
                 }
                 Thread.sleep(5000);
@@ -132,7 +133,7 @@ public abstract class BackupSpaceRecovery implements SpaceRecoverStrategy {
 
         //if relevant mark the backup as consistent  all data is recovered
         if (_space.getEngine().getSpaceImpl().getDirectPersistencyRecoveryHelper() != null) {
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 _logger.info("[" + _space.getEngine().getFullSpaceName() + "] setting storage state of backup to Consistent after recovery from primary");
             }
             _space.getEngine().getSpaceImpl().getDirectPersistencyRecoveryHelper().setStorageState(StorageConsistencyModes.Consistent);

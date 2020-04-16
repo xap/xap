@@ -33,8 +33,9 @@ import net.jini.lease.LeaseRenewalManager;
 import net.jini.lookup.JoinManager;
 
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -42,7 +43,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class ServiceRegistrator {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_SERVICE);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_SERVICE);
 
     private final String[] _lookupGroups;
     private final LookupLocator[] _lookupLocators;
@@ -96,7 +97,7 @@ public class ServiceRegistrator {
                     _discoveryManager, _leaseRenewalManager, config);
 
             _isRegistered = true;
-            if (_logger.isLoggable(Level.FINE)) {
+            if (_logger.isDebugEnabled()) {
                 String groupsDesc = _lookupGroups == null ? "[ALL]" : Arrays.asList(_lookupGroups).toString();
                 String locatorsSuffix = _lookupLocators == null ? "" : "\n[ and Unicast Locators " + Arrays.asList(_lookupLocators) + "  ]";
 
@@ -104,12 +105,12 @@ public class ServiceRegistrator {
                         + "[ " + _service.getServiceTypeDescription() + " <" + _service.getServiceName() + "> member of " + groupsDesc + " jini lookup groups  ]\n"
                         + "[ Was advertised with serviceID <" + serviceId + "> ]" + locatorsSuffix;
 
-                _logger.log(Level.FINE, message);
+                _logger.debug(message);
             }
         } catch (Throwable e) {
             unregister();
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to register service: " + e.getMessage(), e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to register service: " + e.getMessage(), e);
             throw new ServiceRegistrationException("Failed to register service", e);
         }
     }
@@ -150,24 +151,24 @@ public class ServiceRegistrator {
          * The security exception might happen while running in the context of other container e.g.
          * embedded space inside Application server without granting implicit policy permissions.
          */ catch (java.security.AccessControlException e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Failed to initialize Jini Configuration object", e);
+            if (_logger.isWarnEnabled())
+                _logger.warn("Failed to initialize Jini Configuration object", e);
         } catch (SecurityException e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Failed to initialize Jini Configuration object", e);
+            if (_logger.isWarnEnabled())
+                _logger.warn("Failed to initialize Jini Configuration object", e);
         } catch (ExceptionInInitializerError e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Failed to initialize Jini Configuration object", e);
+            if (_logger.isWarnEnabled())
+                _logger.warn("Failed to initialize Jini Configuration object", e);
         } catch (Throwable e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to initialize Jini Configuration object", e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to initialize Jini Configuration object", e);
         }
 
         if (config != null && isAdvanced) {
             Long renewalDuration = ((Long) config.getEntry("net.jini.lookup.JoinManager", "maxLeaseDuration", long.class));
             Long roundTripTime = ((Long) config.getEntry("net.jini.lease.LeaseRenewalManager", "roundTripTime", long.class));
             if (roundTripTime != null && renewalDuration != null)
-                _logger.log(Level.FINE, "The Space JoinManager leasing configuration values are: roundTripTime:" + roundTripTime + " maxLeaseDuration:" + renewalDuration);
+                _logger.debug("The Space JoinManager leasing configuration values are: roundTripTime:" + roundTripTime + " maxLeaseDuration:" + renewalDuration);
         }
         return config;
     }

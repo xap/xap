@@ -49,8 +49,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig>
@@ -87,7 +88,7 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
         _groupChannelsHistory = new CopyOnUpdateMap<String, EventsTracer<String>>();
         _groupHistory = new EventsTracer<String>(_groupConfigHolder.getConfig().getHistoryLength());
 
-        _specificLogger = Logger.getLogger(Constants.LOGGER_REPLICATION_GROUP + "." + _groupConfigHolder.getConfig().getName());
+        _specificLogger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_GROUP + "." + _groupConfigHolder.getConfig().getName());
         _groupBacklog.setGroupHistory(this);
         //It is important that the channel will register after the backlog have registered for this notifications
         _groupConfigHolder.addListener(this);
@@ -153,12 +154,12 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
             SourceGroupConfig config = _groupConfigHolder.getConfig();
             for (String memberLookupName : config.getMembersLookupNames()) {
                 createChannel(memberLookupName, false, config, false, null);
-                if (_specificLogger.isLoggable(Level.FINEST))
-                    _specificLogger.finest(getLogPrefix() + "created channel to "
+                if (_specificLogger.isTraceEnabled())
+                    _specificLogger.trace(getLogPrefix() + "created channel to "
                             + memberLookupName);
             }
-            if (_specificLogger.isLoggable(Level.FINER))
-                _specificLogger.finest(getLogPrefix() + "created all channels");
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.trace(getLogPrefix() + "created all channels");
         }
     }
 
@@ -166,13 +167,13 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
         synchronized (_channelCreationLock) {
             for (AbstractReplicationSourceChannel channel : _channels.values()) {
                 channel.close();
-                if (_specificLogger.isLoggable(Level.FINEST))
-                    _specificLogger.finest(getLogPrefix() + "closed channel to "
+                if (_specificLogger.isTraceEnabled())
+                    _specificLogger.trace(getLogPrefix() + "closed channel to "
                             + channel.getMemberName());
             }
             _channels.clear();
-            if (_specificLogger.isLoggable(Level.FINER))
-                _specificLogger.finest(getLogPrefix() + "closed all channels");
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.trace(getLogPrefix() + "closed all channels");
         }
     }
 
@@ -181,8 +182,8 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
     public void memberAdded(MemberAddedEvent memberAddedEvent, SourceGroupConfig newConfig) {
         synchronized (_channelCreationLock) {
             _groupBacklog.memberAdded(memberAddedEvent, newConfig);
-            if (_specificLogger.isLoggable(Level.FINE))
-                _specificLogger.fine("adding new member [" + memberAddedEvent.getMemberName() + "] to replication group");
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("adding new member [" + memberAddedEvent.getMemberName() + "] to replication group");
 
             onMemberAdded(memberAddedEvent, newConfig);
 
@@ -193,8 +194,8 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
     @Override
     public void memberRemoved(String memberName, SourceGroupConfig newConfig) {
         synchronized (_channelCreationLock) {
-            if (_specificLogger.isLoggable(Level.FINE))
-                _specificLogger.fine("removing member [" + memberName + "] from replication group");
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("removing member [" + memberName + "] from replication group");
             AbstractReplicationSourceChannel channel = _channels.remove(memberName);
             if (channel != null)
                 channel.close();
@@ -350,8 +351,8 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
 
         onClose();
 
-        if (_specificLogger.isLoggable(Level.FINER))
-            _specificLogger.finer("closing replication group");
+        if (_specificLogger.isDebugEnabled())
+            _specificLogger.debug("closing replication group");
         for (AbstractReplicationSourceChannel channel : _channels.values())
             channel.close();
 
@@ -359,8 +360,8 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
 
         _closed = true;
 
-        if (_specificLogger.isLoggable(Level.FINER))
-            _specificLogger.finer("replication group closed");
+        if (_specificLogger.isDebugEnabled())
+            _specificLogger.debug("replication group closed");
     }
 
     protected void onClose() {
@@ -417,8 +418,8 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
     }
 
     public boolean flushPendingReplication(long timeout, TimeUnit units) {
-        if (_specificLogger.isLoggable(Level.FINE))
-            _specificLogger.fine(getLogPrefix() + "flushing pending replication");
+        if (_specificLogger.isDebugEnabled())
+            _specificLogger.debug(getLogPrefix() + "flushing pending replication");
         final Collection<AbstractReplicationSourceChannel> channels = _channels.values();
         for (AbstractReplicationSourceChannel sourceChannel : channels) {
             sourceChannel.flushPendingReplication();
@@ -437,18 +438,18 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
                 }
             }
             if (done) {
-                if (_specificLogger.isLoggable(Level.FINE))
-                    _specificLogger.fine(getLogPrefix() + "flushing pending replication completed");
+                if (_specificLogger.isDebugEnabled())
+                    _specificLogger.debug(getLogPrefix() + "flushing pending replication completed");
                 return true;
             }
             if(remainingTime == 0){
-                if (_specificLogger.isLoggable(Level.WARNING))
-                    _specificLogger.log(Level.WARNING, getLogPrefix() + "failed flush of pending replication due to incomplete replication:" + buildingPendingReplicationMsg());
+                if (_specificLogger.isWarnEnabled())
+                    _specificLogger.warn(getLogPrefix() + "failed flush of pending replication due to incomplete replication:" + buildingPendingReplicationMsg());
                 return false;
             }
             if (remainingTime > 0)
                 try {
-                    if (runningTime % 5000 == 0 && _specificLogger.isLoggable(Level.INFO))
+                    if (runningTime % 5000 == 0 && _specificLogger.isInfoEnabled())
                         _specificLogger.info(getLogPrefix() + "waiting for replication of " +
                                 weightToReplicate + " weight to complete [Time remaining "
                                 + JSpaceUtilities.formatMillis(remainingTime) + "]:" +
@@ -457,14 +458,14 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
                     runningTime += sleepTime;
                     remainingTime -= sleepTime;
                 } catch (InterruptedException e) {
-                    if (_specificLogger.isLoggable(Level.WARNING))
-                        _specificLogger.log(Level.WARNING, getLogPrefix() + "failed replication orderly shutdown", e);
+                    if (_specificLogger.isWarnEnabled())
+                        _specificLogger.warn(getLogPrefix() + "failed replication orderly shutdown", e);
                     Thread.currentThread().interrupt();
                     return false;
                 }
         }
-        if (_specificLogger.isLoggable(Level.WARNING))
-            _specificLogger.log(Level.WARNING, getLogPrefix() + "failed flush of pending replication due to incomplete replication:" + buildingPendingReplicationMsg());
+        if (_specificLogger.isWarnEnabled())
+            _specificLogger.warn(getLogPrefix() + "failed flush of pending replication due to incomplete replication:" + buildingPendingReplicationMsg());
         return false;
     }
 
@@ -481,7 +482,7 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
                         String msg = "member ["
                                 + memberName
                                 + "] backlog is dropped due to capacity limitations, this member will be removed from the group";
-                        if (_specificLogger.isLoggable(Level.INFO))
+                        if (_specificLogger.isInfoEnabled())
                             _specificLogger.info(msg);
 
                         logGroupEvent(msg);
@@ -505,7 +506,7 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
                             String msg = "member ["
                                     + memberName
                                     + "] is disconnected for [" + timeDisconnected + "ms] and is being dropped due to disconnection time limitations [" + channelConfig.getMaxAllowedDisconnectionTimeBeforeDrop() + "ms], this member will be removed from the group";
-                            if (_specificLogger.isLoggable(Level.INFO))
+                            if (_specificLogger.isInfoEnabled())
                                 _specificLogger.info(msg);
 
                             logGroupEvent(msg);
@@ -515,8 +516,8 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
                     }
                 }
             } catch (Exception e) {
-                if (_specificLogger.isLoggable(Level.WARNING))
-                    _specificLogger.log(Level.WARNING, "Caught exception when scanning for dropped members [" + memberName + "]", e);
+                if (_specificLogger.isWarnEnabled())
+                    _specificLogger.warn("Caught exception when scanning for dropped members [" + memberName + "]", e);
             }
         }
     }

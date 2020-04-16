@@ -36,8 +36,9 @@ import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.server.ServerEntry;
 import com.j_spaces.core.cache.CacheManager;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv
@@ -129,7 +130,7 @@ public class ViewReplicationChannelDataFilter extends ReliableAsyncChannelDataFi
                 ServerEntry entry = contentExtractor.getMainEntryData(entryData);
 
                 if (prevEntry == null)
-                    contextLogger.log(Level.WARNING,
+                    contextLogger.warn(
                             "update operation of entry [" + entryData + "] is missing previous entry state, this may result with inconsistent local view state");
 
                 return filterUpdateEntry(entry,

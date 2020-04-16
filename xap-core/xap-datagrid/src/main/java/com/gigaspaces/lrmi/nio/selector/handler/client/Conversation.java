@@ -27,7 +27,8 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by Barak Bar Orion 12/30/14.
@@ -35,7 +36,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class Conversation {
     @SuppressWarnings("unused")
-    private static final Logger logger = Logger.getLogger(Constants.LOGGER_LRMI);
+    private static final Logger logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
 
     private final SocketChannel channel;
     private final SettableFuture<Conversation> future;

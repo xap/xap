@@ -24,8 +24,9 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -47,8 +48,8 @@ public class ConsoleReporterFactory extends MetricReporterFactory<ConsoleReporte
     @Override
     public ConsoleReporter create() {
 
-        final Logger logger = Logger.getLogger(ConsoleReporterFactory.class.getName());
-        if (logger.isLoggable(Level.FINE)) {
+        final Logger logger = LoggerFactory.getLogger(ConsoleReporterFactory.class.getName());
+        if (logger.isDebugEnabled()) {
             setLoggerAsOutputStream(logger);
         }
 
@@ -66,7 +67,7 @@ public class ConsoleReporterFactory extends MetricReporterFactory<ConsoleReporte
 
             @Override
             public void flush() throws IOException {
-                logger.fine(s.toString());
+                logger.debug(s.toString());
                 s.setLength(0);
             }
         }));

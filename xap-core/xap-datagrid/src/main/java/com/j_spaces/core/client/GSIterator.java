@@ -68,8 +68,9 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Creates an iterator that can be used to exhaustively read through all of the visible matching
@@ -156,7 +157,7 @@ import java.util.logging.Logger;
 @Deprecated
 @com.gigaspaces.api.InternalApi
 public class GSIterator implements Iterator, Iterable {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_GSITERATOR);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_GSITERATOR);
 
     private final ISpaceProxy _spaceProxy;
     private final GSIteratorConfig _config;
@@ -296,8 +297,8 @@ public class GSIterator implements Iterator, Iterable {
             throws RemoteException, UnusableEntryException {
         validateArgs(spaceProxy, templates, config);
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "GSIterator initialized with scope=" + config.getIteratorScope() +
+        if (_logger.isDebugEnabled())
+            _logger.debug("GSIterator initialized with scope=" + config.getIteratorScope() +
                     ", bufferSize=" + config.getBufferSize() +
                     ", leaseDuration=" + config.getLeaseDuration());
 
@@ -477,8 +478,8 @@ public class GSIterator implements Iterator, Iterable {
         // add a dummy partition for the new object that arrive through notifications
         _uidsPartitionedList.startPartition(new PartitionResultMetadata(null, 0));
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "extractHistoryIfNeeded found " + _uidsPartitionedList.size() + " matching uids.");
+        if (_logger.isDebugEnabled())
+            _logger.debug("extractHistoryIfNeeded found " + _uidsPartitionedList.size() + " matching uids.");
     }
 
     private int indexOfByRef(List l, Object o) {
@@ -546,8 +547,8 @@ public class GSIterator implements Iterator, Iterable {
             }
         }
 
-        if (_logger.isLoggable(Level.FINER))
-            _logger.log(Level.FINER, "hasNext() returned " + result);
+        if (_logger.isDebugEnabled())
+            _logger.debug("hasNext() returned " + result);
 
         return result;
     }
@@ -596,8 +597,8 @@ public class GSIterator implements Iterator, Iterable {
         } else
             _snapshot = null;
 
-        if (_logger.isLoggable(Level.FINER))
-            _logger.log(Level.FINER, "next() returned " + (_snapshot == null ? "null" : "object with uid=" + _snapshot.getUID()));
+        if (_logger.isDebugEnabled())
+            _logger.debug("next() returned " + (_snapshot == null ? "null" : "object with uid=" + _snapshot.getUID()));
 
         return result;
     }
@@ -688,19 +689,19 @@ public class GSIterator implements Iterator, Iterable {
 
                 result = _buffer.iterator();
             } catch (RemoteException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to build iterator data", e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to build iterator data", e);
             } catch (UnusableEntryException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to build iterator data", e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to build iterator data", e);
             } catch (TransactionException e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to build iterator data", e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to build iterator data", e);
             }
         }
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "getNextBatch returns with a buffer of " + _buffer.size() + " entries.");
+        if (_logger.isDebugEnabled())
+            _logger.debug("getNextBatch returns with a buffer of " + _buffer.size() + " entries.");
         return result;
     }
 
@@ -911,8 +912,8 @@ public class GSIterator implements Iterator, Iterable {
             try {
                 while (stillLeased() && !isInterrupted()) ;
             } catch (InterruptedException ie) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, this.getName() + " interrupted.\n", ie);
+                if (_logger.isErrorEnabled())
+                    _logger.error(this.getName() + " interrupted.\n", ie);
 
                 //Restore the interrupted status
                 interrupt();

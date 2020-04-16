@@ -23,8 +23,9 @@ import com.gigaspaces.internal.cluster.node.impl.groups.BrokenReplicationTopolog
 import com.gigaspaces.internal.cluster.node.impl.groups.ReplicationSourceAlreadyAttachedException;
 import com.gigaspaces.internal.utils.StringUtils;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -33,7 +34,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class MirrorNodeStateListener extends AbstractReplicationNodeStateListener {
 
-    private static final Logger _mirrorLogger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_MIRROR_REPLICATION);
+    private static final Logger _mirrorLogger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_MIRROR_REPLICATION);
 
     private final String _fullSpaceName;
     private final Object _lock;
@@ -48,28 +49,28 @@ public class MirrorNodeStateListener extends AbstractReplicationNodeStateListene
 
     @Override
     public void onTargetChannelBacklogDropped(String groupName, String channelSourceLooString, IBacklogMemberState memberState) {
-        if (_mirrorLogger.isLoggable(Level.WARNING))
-            _mirrorLogger.warning("Mirror service [" + _fullSpaceName + "] received channel backlog dropped message which is not allowed");
+        if (_mirrorLogger.isWarnEnabled())
+            _mirrorLogger.warn("Mirror service [" + _fullSpaceName + "] received channel backlog dropped message which is not allowed");
     }
 
     @Override
     public void onSourceBrokenReplicationTopology(String groupName, String channelTargetMemberName, BrokenReplicationTopologyException error) {
-        if (_mirrorLogger.isLoggable(Level.FINE))
-            _mirrorLogger.fine("Mirror service [" + _fullSpaceName + "] received source channel broken replication topology message which is not allowed");
+        if (_mirrorLogger.isDebugEnabled())
+            _mirrorLogger.debug("Mirror service [" + _fullSpaceName + "] received source channel broken replication topology message which is not allowed");
     }
 
     @Override
     public void onSourceChannelActivated(String groupName, String memberName) {
-        if (_mirrorLogger.isLoggable(Level.FINE))
-            _mirrorLogger.fine("Mirror service [" + _fullSpaceName + "] received source channel activated message which is not allowed");
+        if (_mirrorLogger.isDebugEnabled())
+            _mirrorLogger.debug("Mirror service [" + _fullSpaceName + "] received source channel activated message which is not allowed");
     }
 
     @Override
     public void onNewReplicaRequest(String groupName, String memberName, boolean isSynchronizeRequest) {
         String errorMessage = "Mirror service [" + _fullSpaceName + "] received new replica request from replication group [" + groupName + "] source member [" + memberName + "],"
                 + StringUtils.NEW_LINE + " The operation is not supported.";
-        if (_mirrorLogger.isLoggable(Level.SEVERE))
-            _mirrorLogger.log(Level.SEVERE, errorMessage);
+        if (_mirrorLogger.isErrorEnabled())
+            _mirrorLogger.error(errorMessage);
 
         throw new UnsupportedOperationException(errorMessage);
     }
@@ -77,8 +78,8 @@ public class MirrorNodeStateListener extends AbstractReplicationNodeStateListene
     @Override
     public boolean onTargetChannelOutOfSync(String groupName, String channelSourceLookupName, IncomingReplicationOutOfSyncException outOfSyncReason) {
         //Mirror will tolerate out of sync since there's nothing that can be done in order to fix that state
-        if (_mirrorLogger.isLoggable(Level.SEVERE))
-            _mirrorLogger.log(Level.SEVERE, "Mirror service [" + _fullSpaceName + "] received out of sync indication from replication group [" + groupName + "] source member [" + channelSourceLookupName + "],"
+        if (_mirrorLogger.isErrorEnabled())
+            _mirrorLogger.error("Mirror service [" + _fullSpaceName + "] received out of sync indication from replication group [" + groupName + "] source member [" + channelSourceLookupName + "],"
                     + StringUtils.NEW_LINE + "it will resynchronize with the source space and may lose packets", outOfSyncReason);
         return true;
     }
@@ -92,8 +93,8 @@ public class MirrorNodeStateListener extends AbstractReplicationNodeStateListene
         synchronized (_lock) {
             if (_firstAttachedClusterName == null) {
                 _firstAttachedClusterName = extractClusterName(sourceMemberName);
-                if (_mirrorLogger.isLoggable(Level.FINE))
-                    _mirrorLogger.fine("Mirror service [" + _fullSpaceName + "] first connected cluster is " + _firstAttachedClusterName + ", the mirror will only accept replication from that cluster");
+                if (_mirrorLogger.isDebugEnabled())
+                    _mirrorLogger.debug("Mirror service [" + _fullSpaceName + "] first connected cluster is " + _firstAttachedClusterName + ", the mirror will only accept replication from that cluster");
                 return;
             }
 

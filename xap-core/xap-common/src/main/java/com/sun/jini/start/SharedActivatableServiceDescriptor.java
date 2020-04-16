@@ -35,8 +35,9 @@ import java.rmi.activation.ActivationID;
 import java.rmi.activation.ActivationSystem;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class used to launch shared, activatable services. Clients construct this object with the details
@@ -508,7 +509,7 @@ public class SharedActivatableServiceDescriptor
                             ClassLoaderUtil.getCodebaseURLs(getExportCodebase()),
                             getPolicy(),
                             params);
-            logger.finest("ActivateDesc: " + adesc);
+            logger.trace("ActivateDesc: " + adesc);
             // Get hosting activation group
             gid = SharedActivationGroupDescriptor.restoreGroupID(
                     getSharedGroupLog());
@@ -527,7 +528,7 @@ public class SharedActivatableServiceDescriptor
                     if (proxy != null) {
                         proxy = getServicePreparer().prepareProxy(proxy);
                     } else {
-                        logger.log(Level.FINE,
+                        logger.debug(
                                 "Service's getServiceProxy() returned null");
                     }
                 }
@@ -537,7 +538,7 @@ public class SharedActivatableServiceDescriptor
                 if (aid != null) sys.unregisterObject(aid);
             } catch (Exception ee) {
                 // ignore -- did the best we could.
-                logger.log(Level.FINEST,
+                logger.trace(
                         "Unable to unregister with activation system", ee);
             }
             if (e instanceof IOException)

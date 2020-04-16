@@ -29,8 +29,9 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class IOBlockFilterManager implements IOFilterManager {
@@ -52,14 +53,14 @@ public class IOBlockFilterManager implements IOFilterManager {
         try {
             _filterFactory = loadFilterFactoryFromSystemProperty();
         } catch (ClassNotFoundException e) {
-            Logger.getLogger(Constants.LOGGER_LRMI_FILTERS).log(Level.SEVERE,
+            LoggerFactory.getLogger(Constants.LOGGER_LRMI_FILTERS).error(
                             "Error while creating LRMI filter factory, make sure the filter class is available in the classpath" +
                                     " (lib/ext for service grid components, or the same classpath of the classloader that loaded " +
                                     XapModules.DATA_GRID.getJarFileName() + " for remote clients): "
                                     + e,
                             e);
         } catch (Exception e) {
-            Logger.getLogger(Constants.LOGGER_LRMI_FILTERS).log(Level.SEVERE, "Error while creating LRMI filter factory: " + e, e);
+            LoggerFactory.getLogger(Constants.LOGGER_LRMI_FILTERS).error("Error while creating LRMI filter factory: " + e, e);
         }
     }
 
@@ -166,7 +167,7 @@ public class IOBlockFilterManager implements IOFilterManager {
         Class<IOFilterFactory> c = (Class<IOFilterFactory>) IOBlockFilterManager.class
                 .getClassLoader().loadClass(className);
         IOFilterFactory filterFactory = c.newInstance();
-        Logger.getLogger(Constants.LOGGER_LRMI_FILTERS).info("Created LRMI filter factory: " + className);
+        LoggerFactory.getLogger(Constants.LOGGER_LRMI_FILTERS).info("Created LRMI filter factory: " + className);
         String addressMatcherFile = System.getProperty(SystemProperties.LRMI_NETWORK_FILTER_FACTORY_ADDRESS_MATCHERS_FILE);
         if (addressMatcherFile != null)
             filterFactory = new AddressMatcherFilterFactoryDelegator(filterFactory, addressMatcherFile);

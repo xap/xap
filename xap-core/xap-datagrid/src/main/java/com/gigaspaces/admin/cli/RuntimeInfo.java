@@ -22,8 +22,9 @@ package com.gigaspaces.admin.cli;
 
 import com.gigaspaces.internal.extension.XapExtensions;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Igor Goldenberg
@@ -35,11 +36,11 @@ public class RuntimeInfo {
     private static boolean isFirstTime = true;
 
     public static void logRuntimeInfo(Logger logger, String prefix) {
-        if (logger.isLoggable(Level.INFO)) {
-            if (logger.isLoggable(Level.FINE))
-                logger.log(Level.FINE, prefix + getEnvironmentInfoIfFirstTime(true));
+        if (logger.isInfoEnabled()) {
+            if (logger.isDebugEnabled())
+                logger.debug(prefix + getEnvironmentInfoIfFirstTime(true));
             else
-                logger.log(Level.INFO, prefix + getEnvironmentInfoIfFirstTime(false));
+                logger.info(prefix + getEnvironmentInfoIfFirstTime(false));
         }
     }
 

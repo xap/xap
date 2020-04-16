@@ -47,8 +47,9 @@ import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
 import java.util.Arrays;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A wrapper for activatable objects, providing separation of the import codebase (where the server
@@ -74,7 +75,7 @@ public class ActivateWrapper implements Remote, Serializable {
     /**
      * Configure logger
      */
-    static final Logger logger = Logger.getLogger("org.jini.rio.boot.wrapper");
+    static final Logger logger = LoggerFactory.getLogger("org.jini.rio.boot.wrapper");
     /**
      * The <code>Policy</code> object that aggregates the individual service policy objects.
      */
@@ -200,12 +201,12 @@ public class ActivateWrapper implements Remote, Serializable {
             throws Exception {
         LogUtils.entering(logger, ActivateWrapper.class, "ActivateWrapper", new Object[]{id, data});
         ActivateDesc desc = (ActivateDesc) data.get();
-        logger.log(Level.FINEST, "ActivateDesc: {0}", desc);
+        logger.trace("ActivateDesc: {0}", desc);
 
         CommonClassLoader commonCL = CommonClassLoader.getInstance();
         commonCL.addCommonJARs(desc.commonJARs);
-        if (logger.isLoggable(Level.FINEST))
-            logger.log(Level.FINEST,
+        if (logger.isTraceEnabled())
+            logger.trace(
                     "Created CommonClassLoader: {0}",
                     commonCL);
 
@@ -215,8 +216,8 @@ public class ActivateWrapper implements Remote, Serializable {
                     new ClassAnnotator(desc.exportLocation,
                             new Properties()),
                     commonCL);
-            if (logger.isLoggable(Level.FINEST))
-                logger.log(Level.FINEST,
+            if (logger.isTraceEnabled())
+                logger.trace(
                         "Created ServiceClassLoader: {0}",
                         cl);
         } catch (Exception e) {
@@ -231,7 +232,7 @@ public class ActivateWrapper implements Remote, Serializable {
                 initialGlobalPolicy = Policy.getPolicy();
                 globalPolicy = new AggregatePolicyProvider(initialGlobalPolicy);
                 Policy.setPolicy(globalPolicy);
-                logger.log(Level.FINEST,
+                logger.trace(
                         "Global policy set: {0}",
                         globalPolicy);
             }
@@ -246,35 +247,35 @@ public class ActivateWrapper implements Remote, Serializable {
                     null, /* Principal[] */
                     new Permission[]{new AllPermission()});
             globalPolicy.setPolicy(cl, split_service_policy);
-            logger.log(Level.FINEST,
+            logger.trace(
                     "Added policy to set: {0}",
                     desc.policy);
         }
         Thread t = Thread.currentThread();
         ClassLoader ccl = t.getContextClassLoader();
-        logger.log(Level.FINEST,
+        logger.trace(
                 "Saved current context class loader: {0}",
                 ccl);
         t.setContextClassLoader(cl);
-        logger.log(Level.FINEST, "Set new context class loader: {0}", cl);
+        logger.trace("Set new context class loader: {0}", cl);
         try {
             boolean initialize = false;
             Class ac = Class.forName(desc.className, initialize, cl);
-            logger.log(Level.FINEST,
+            logger.trace(
                     "Obtained implementation class: {0}",
                     ac);
             Constructor constructor = ac.getDeclaredConstructor(actTypes);
-            logger.log(Level.FINEST,
+            logger.trace(
                     "Obtained implementation constructor: {0}",
                     constructor);
             constructor.setAccessible(true);
             impl = constructor.newInstance(new Object[]{id, desc.data});
-            logger.log(Level.FINEST,
+            logger.trace(
                     "Obtained implementation instance: {0}",
                     impl);
         } finally {
             t.setContextClassLoader(ccl);
-            logger.log(Level.FINEST,
+            logger.trace(
                     "Context class loader reset to: {0}",
                     ccl);
 
@@ -289,7 +290,7 @@ public class ActivateWrapper implements Remote, Serializable {
         Object impl_proxy = impl;
         if (impl instanceof ProxyAccessor) {
             impl_proxy = ((ProxyAccessor) impl).getProxy();
-            logger.log(Level.FINEST,
+            logger.trace(
                     "Obtained implementation proxy: {0}",
                     impl_proxy);
             if (impl_proxy == null) {
@@ -327,7 +328,7 @@ public class ActivateWrapper implements Remote, Serializable {
                 null,
                 data,
                 restart);
-        logger.log(Level.FINEST,
+        logger.trace(
                 "Registering descriptor with activation: {0}",
                 adesc);
         ActivationID aid = sys.registerObject(adesc);
@@ -350,7 +351,7 @@ public class ActivateWrapper implements Remote, Serializable {
             // Create ProtectionDomain for given codesource
             cs = new CodeSource(urls[i], certs);
             pd = new ProtectionDomain(cs, null, null, null);
-            logger.log(Level.FINEST, "Checking protection domain: {0}", pd);
+            logger.trace("Checking protection domain: {0}", pd);
             // Check if current domain allows desired permission
             if (!pd.implies(perm)) {
                 SecurityException se = new SecurityException("ProtectionDomain "

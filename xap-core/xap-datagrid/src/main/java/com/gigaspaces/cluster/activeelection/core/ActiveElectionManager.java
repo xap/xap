@@ -58,8 +58,9 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -276,8 +277,8 @@ public class ActiveElectionManager {
                                  SplitBrainRecoveryHolder splitBrainRecoveryHolder,
                                  AtomicBoolean recoveryIndicator)
             throws ActiveElectionException {
-        _logger = Logger.getLogger(Constants.LOGGER_CLUSTER_ACTIVE_ELECTION + "." + nodeName);
-        _xbLogger = Logger.getLogger(Constants.LOGGER_CLUSTER_ACTIVE_ELECTION_XBACKUP + "." + nodeName);
+        _logger = LoggerFactory.getLogger(Constants.LOGGER_CLUSTER_ACTIVE_ELECTION + "." + nodeName);
+        _xbLogger = LoggerFactory.getLogger(Constants.LOGGER_CLUSTER_ACTIVE_ELECTION_XBACKUP + "." + nodeName);
         if (service == null)
             throw new NullPointerException("service can not be null.");
 
@@ -286,8 +287,8 @@ public class ActiveElectionManager {
             throw new IllegalArgumentException("ServiceTemplate can not be initialized with attributeSetTemplates=null and serviceTypes=null");
 
         if (!(service instanceof ReferentUuid)) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.warning(service + " is not implements [" + ReferentUuid.class.getName() + "] interface. " +
+            if (_logger.isWarnEnabled())
+                _logger.warn(service + " is not implements [" + ReferentUuid.class.getName() + "] interface. " +
                         "			  In this case the service must provide the consistent equals() implementation.");
         }
 
@@ -300,8 +301,8 @@ public class ActiveElectionManager {
         this.splitBrainRecoveryHolder = splitBrainRecoveryHolder;
         this.recoveryIndicator = recoveryIndicator;
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("Initialized with: " +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Initialized with: " +
                     "\n\t\t ServiceTemplate: " + participantSrvTemplate +
                     "\n\t\t NamingService: " + namingSrv.getName() +
                     "\n\t\t ActiveElectionListener: " + activeElectionListener +
@@ -343,13 +344,13 @@ public class ActiveElectionManager {
 
             setCurrentState(State.PENDING);
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("Added initial [" + State.PENDING + "] state on [" + _namingService.getName() + "]");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Added initial [" + State.PENDING + "] state on [" + _namingService.getName() + "]");
 
         } catch (RemoteException ex) {
             String exMsg = "ActiveElectionManager failed to add [" + ActiveElectionState.class.getName() + "] attribute on [" + _namingService.getName() + "] naming service.";
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, exMsg, ex);
+            if (_logger.isErrorEnabled())
+                _logger.error(exMsg, ex);
 
             throw new ActiveElectionException(exMsg, ex);
         }
@@ -367,10 +368,10 @@ public class ActiveElectionManager {
         }// for
 
         if (isFound) {
-            _logger.fine("register [PENDING] state as existing service attributes");
+            _logger.debug("register [PENDING] state as existing service attributes");
             changeState(null /* any state */, State.PENDING, true /* force */);
         } else {
-            _logger.fine("register [PENDING] state as new service attributes");
+            _logger.debug("register [PENDING] state as new service attributes");
             _namingService.addNamingAttributes(_electTemplate.getService(), new Entry[]{new ActiveElectionState(State.PENDING)});
         }
     }
@@ -390,7 +391,7 @@ public class ActiveElectionManager {
         ServiceTemplate srvTmpl = new ServiceTemplate(_electTemplate._serviceID, new Class[]{Service.class}, new Entry[]{new ActiveElectionState(State.PENDING)});
         ServiceItem[] srvMatch = _namingService.lookup(srvTmpl, 1, null /* filter */);
         if (srvMatch == null || srvMatch.length == 0) {
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 LogLevel logLevel = retryCount <= 10 ? LogLevel.WARNING : LogLevel.INFO;
                 logLevel.log(_logger,
                         "Waiting [" + _config.getYieldTime() + " ms] for [" + State.PENDING + "] state registration on " + _namingService.getName()
@@ -409,8 +410,8 @@ public class ActiveElectionManager {
             return false;
         } else {
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("[" + State.PENDING + "] state registration successfully confirmed by " + _namingService.getName());
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("[" + State.PENDING + "] state registration successfully confirmed by " + _namingService.getName());
             }
             return true; // registration confirmed
         }
@@ -433,8 +434,8 @@ public class ActiveElectionManager {
         ServiceItem[] foundSrv = _namingService.lookup(_electTemplate, maxMatches, null /*filter*/);
 
         if (foundSrv == null) {
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.finest("Lookup service not found while querying for state: " + _electTemplate._actState.getState());
+            if (_logger.isTraceEnabled()) {
+                _logger.trace("Lookup service not found while querying for state: " + _electTemplate._actState.getState());
             }
             return null;
         }
@@ -445,9 +446,9 @@ public class ActiveElectionManager {
          */
         List<ServiceItem> matchedSrv = trimServices(foundSrv);
 
-        if (_logger.isLoggable(Level.FINEST)) {
+        if (_logger.isTraceEnabled()) {
             int duplicates = foundSrv.length - matchedSrv.size();
-            _logger.finest("Found: [" + matchedSrv.size() + "] matches for " +
+            _logger.trace("Found: [" + matchedSrv.size() + "] matches for " +
                     " serviceTemplate: [" + _electTemplate + "]; matched services: " + matchedSrv +
                     (duplicates > 0 ? " duplicates: [" + duplicates + "]" : ""));
         }
@@ -480,8 +481,8 @@ public class ActiveElectionManager {
 
                 setCurrentState(newState);
 
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("Changed state from [" + (oldState == null ? "any" : oldState) + "] to [" + newState + "]");
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Changed state from [" + (oldState == null ? "any" : oldState) + "] to [" + newState + "]");
                 }
 
                 return true;
@@ -491,8 +492,8 @@ public class ActiveElectionManager {
                 if (force)
                     msg = msg + ".ForceChange enabled - Retry again...";
 
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, msg, ex);
+                if (_logger.isDebugEnabled())
+                    _logger.debug(msg, ex);
 
                 if (force) {
                     try {
@@ -564,8 +565,8 @@ public class ActiveElectionManager {
                 break; //lookup not available or no results for state
             }
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("Found better election candidate - continue polling [" + pollingState + "]...");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Found better election candidate - continue polling [" + pollingState + "]...");
 
             /* polling state is still available, check if one from the candidate already become an ACTIVE */
             ServiceItem active = findActive();
@@ -594,8 +595,8 @@ public class ActiveElectionManager {
      **/
     protected boolean isAdvanceToStateAllowed(State currentState, State acquireState)
             throws RemoteException, InterruptedException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("Request to advance from [" + currentState + "] to [" + acquireState + "]");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Request to advance from [" + currentState + "] to [" + acquireState + "]");
         }
 
         List<ServiceItem> matchSrv = lookup(currentState, Integer.MAX_VALUE /* all service with matched state */);
@@ -607,8 +608,8 @@ public class ActiveElectionManager {
 
         /* unexpected behavior, failed to find currentState (can be due to lease expiration of service) */
         if (matchSrv.isEmpty()) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.warning("Cannot advance from [" + currentState + "] to [" + acquireState + "] - Current state is not available on " + _namingService.getName()
+            if (_logger.isWarnEnabled()) {
+                _logger.warn("Cannot advance from [" + currentState + "] to [" + acquireState + "] - Current state is not available on " + _namingService.getName()
                         + "; force change state to [" + State.PENDING + "]");
             }
             changeState(null /* any state */, State.PENDING, true /* force */);
@@ -617,8 +618,8 @@ public class ActiveElectionManager {
         }
 
         if (!_decisionFilter.isAcceptable(acquireState, matchSrv)) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.warning("Cannot advance from [" + currentState + "] to [" + acquireState + "] - found better candidate"
+            if (_logger.isWarnEnabled()) {
+                _logger.warn("Cannot advance from [" + currentState + "] to [" + acquireState + "] - found better candidate"
                         + "; force change state to [" + State.PENDING + "]");
             }
             changeState(null /* any state */, State.PENDING, true /* force */);
@@ -642,14 +643,14 @@ public class ActiveElectionManager {
         //before changing state, verify no other candidate has already reached ACTIVE state
         ServiceItem activeCandidate = findActive();
         if (activeCandidate != null) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Advance from [" + currentState + "] to [" + acquireState + "] was rejected - found [" + activeCandidate.service + "] in [ACTIVE] state");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Advance from [" + currentState + "] to [" + acquireState + "] was rejected - found [" + activeCandidate.service + "] in [ACTIVE] state");
             }
             return false;
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("Advance from [" + currentState + "] to [" + acquireState + "] was accepted");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Advance from [" + currentState + "] to [" + acquireState + "] was accepted");
         }
 
         /* Offers itself as candidate for leadership with acquire-state */
@@ -684,8 +685,8 @@ public class ActiveElectionManager {
 
             /* discovered more then one ACTIVE service, network split-brain */
             if (matchedSrv.size() > 1) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("Identified network split-brain. Discovered [" +
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Identified network split-brain. Discovered [" +
                             matchedSrv.size() + "] " +
                             State.ACTIVE + " services. Waiting for split-brain resolution...");
                 }
@@ -696,8 +697,8 @@ public class ActiveElectionManager {
             ServiceItem activeService = matchedSrv.get(0);
 
             try {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("Found [" + activeService.service + "] in ACTIVE state");
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Found [" + activeService.service + "] in ACTIVE state");
                 }
 
                 /* register the active service to failure detector to get a callback on active failure  */
@@ -706,8 +707,8 @@ public class ActiveElectionManager {
                     _activeFailureDetector = new ActiveFailureDetector(this, activeService);
                 }
 
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("Registered active failure callback for [" + activeService.service + "]");
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Registered active failure callback for [" + activeService.service + "]");
                 }
             } catch (RemoteException e) {
                 /*
@@ -799,11 +800,11 @@ public class ActiveElectionManager {
                 // AttributeStore failed to set or get state
                 catch (DirectPersistencyRecoveryException ex) {
                     try {
-                        if (_logger.isLoggable(Level.WARNING)) {
+                        if (_logger.isWarnEnabled()) {
                             if (ex instanceof DirectPersistencyAttributeStoreException) {
-                                _logger.log(Level.WARNING, "Failed to set or get last primary state using AttributeStore, will try to reelect...", ex);
+                                _logger.warn("Failed to set or get last primary state using AttributeStore, will try to reelect...", ex);
                             } else {
-                                _logger.log(Level.WARNING, "Failed to elect as primary", ex);
+                                _logger.warn("Failed to elect as primary", ex);
                             }
                         }
 
@@ -917,7 +918,7 @@ public class ActiveElectionManager {
             if (quiesceHandler.isOn()) {
                 _logger.info(description + " - Quiesce token [" + quiesceToken + "]");
             } else if (!quiesceHandler.isSupported()) {
-                _logger.warning("Split-brain will need to be resolved by terminating extra primary instances manually");
+                _logger.warn("Split-brain will need to be resolved by terminating extra primary instances manually");
             }
         } else {
             _logger.info("Space instance [" + _electTemplate.service + "] is already in Quiesce state; awaiting resolution of split-brain");
@@ -937,15 +938,15 @@ public class ActiveElectionManager {
             logSplitBrainResolution(splitBrainServiceEntries, electedPrimary);
 
             if (electedPrimary.getService().serviceID.equals(_electTemplate._serviceID)) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine("Split-brain resolved. Staying Primary");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Split-brain resolved. Staying Primary");
 
                 _listener.onSplitBrainActive(new ActiveElectionEvent(electedPrimary.getService()));
             } else {
                 /* not acceptable --> "shoot in the head!" found better ACTIVE */
-                if (_logger.isLoggable(Level.FINE)) {
+                if (_logger.isDebugEnabled()) {
                     Object service = electedPrimary.getService().getService();
-                    _logger.fine("Split-brain resolved. Space [" + service + "] remains Primary. ");
+                    _logger.debug("Split-brain resolved. Space [" + service + "] remains Primary. ");
                 }
 
                 // change the space state to unhealthy
@@ -953,7 +954,7 @@ public class ActiveElectionManager {
             }
         } else {
             /* the manage service in PENDING state, on split-brain find new ACTIVE */
-            _logger.fine(" Split-brain -> looking for a new Primary.");
+            _logger.debug(" Split-brain -> looking for a new Primary.");
             elect();
         }
     }
@@ -962,7 +963,7 @@ public class ActiveElectionManager {
     private void logSplitBrainResolution(
             List<SplitBrainServiceEntry> splitBrainServiceEntries,
             SplitBrainServiceEntry electedPrimary) {
-        if (_logger.isLoggable(Level.INFO)) {
+        if (_logger.isInfoEnabled()) {
             String resolutionReason = getResolutionReason(splitBrainServiceEntries);
             Object service = electedPrimary.getService().getService();
             StringBuilder sb = new StringBuilder();
@@ -982,7 +983,7 @@ public class ActiveElectionManager {
     }
 
     private void logSplitBrainDetection(List<ServiceItem> splitActives) {
-        if (_logger.isLoggable(Level.WARNING)) {
+        if (_logger.isWarnEnabled()) {
             StringBuilder logBuf = new StringBuilder();
             //noinspection StringConcatenationInsideStringBufferAppend
             logBuf.append("Split-Brain detected by space instance [" + _electTemplate.service + "]. There is more than one primary space. Primary spaces are:\n");
@@ -1002,7 +1003,7 @@ public class ActiveElectionManager {
                 logBuf.append("\n");
             }
 
-            _logger.warning(logBuf.toString());
+            _logger.warn(logBuf.toString());
         }
     }
 
@@ -1020,8 +1021,8 @@ public class ActiveElectionManager {
 
         //verify instance has its mode set to backup
         if (!getSpaceMode().equals(SpaceMode.BACKUP)) {
-            if (_xbLogger.isLoggable(Level.FINE)) {
-                _xbLogger.log(Level.FINE, "Space instance [" + _electTemplate.service + "] current space mode ["
+            if (_xbLogger.isDebugEnabled()) {
+                _xbLogger.debug("Space instance [" + _electTemplate.service + "] current space mode ["
                         + getSpaceMode() + "] - validation requires [" + SpaceMode.BACKUP + "]");
             }
             throw new CancellationException(); //cancel this task
@@ -1029,8 +1030,8 @@ public class ActiveElectionManager {
 
         //verify instance is not elected (election happens before SpaceMode change)
         if (getState().equals(State.ACTIVE)) {
-            if (_xbLogger.isLoggable(Level.FINE)) {
-                _xbLogger.log(Level.FINE, "Space instance [" + _electTemplate.service + "] current election state ["
+            if (_xbLogger.isDebugEnabled()) {
+                _xbLogger.debug("Space instance [" + _electTemplate.service + "] current election state ["
                         + getState() + "] - validation requires [" + State.ACTIVE + "]");
             }
             throw new CancellationException(); //cancel this task
@@ -1044,7 +1045,7 @@ public class ActiveElectionManager {
          * and of course B1.1 (by name) will never be in it's replication targets. Same goes for B1 receiving an event of P1.
          */
         if (targetMemberName.equals(String.valueOf(activeServiceItem.getService()))) {
-            _logger.warning("backup Space instance [" + _electTemplate.service
+            _logger.warn("backup Space instance [" + _electTemplate.service
                     + "] will be removed since it has the same name identifier as the primary Space instance ["
                     + activeServiceItem.service + "] on host [" + HostName.getHostNameFrom(activeServiceItem.attributeSets) + "]");
 
@@ -1058,8 +1059,8 @@ public class ActiveElectionManager {
         ServiceReplicationStatus serviceReplicationStatus = getServiceReplicationStatus(activeServiceItem, allOutgoingReplicationChannels);
         if (ServiceReplicationStatus.UNKNOWN.equals(serviceReplicationStatus)
                 || ServiceReplicationStatus.UNREACHABLE_TARGET.equals(serviceReplicationStatus)) {
-            if (_xbLogger.isLoggable(Level.FINE)) {
-                _xbLogger.log(Level.FINE, "primary Space instance [" + activeServiceItem.service
+            if (_xbLogger.isDebugEnabled()) {
+                _xbLogger.debug("primary Space instance [" + activeServiceItem.service
                         + "] on host [" + HostName.getHostNameFrom(activeServiceItem.attributeSets) + "] is unreachable");
             }
             throw new CancellationException(); //cancel this task
@@ -1067,8 +1068,8 @@ public class ActiveElectionManager {
 
         //not in replication target, retry until replication established
         if (!serviceReplicationStatus.containsReplicationTarget(targetMemberName)) {
-            if (_xbLogger.isLoggable(Level.FINEST)) {
-                _xbLogger.log(Level.FINEST, "backup Space instance [" + _electTemplate.service
+            if (_xbLogger.isTraceEnabled()) {
+                _xbLogger.trace("backup Space instance [" + _electTemplate.service
                         + "] is not a replication target of primary Space instance ["
                         + activeServiceItem.service + "] on host [" + HostName.getHostNameFrom(activeServiceItem.attributeSets) + "]");
             }
@@ -1078,16 +1079,16 @@ public class ActiveElectionManager {
         //verify replication pre-conditions
         OutgoingChannel outgoingChannel = allOutgoingReplicationChannels.get(targetMemberName);
         if (!outgoingChannel.getReplicationMode().equals(ReplicationMode.BACKUP_SPACE)) {
-            if (_xbLogger.isLoggable(Level.FINE)) {
-                _xbLogger.log(Level.FINE, "backup Space instance [" + _electTemplate.service + "] current replication mode ["
+            if (_xbLogger.isDebugEnabled()) {
+                _xbLogger.debug("backup Space instance [" + _electTemplate.service + "] current replication mode ["
                         + outgoingChannel.getReplicationMode() + "] - validation requires [ " + ReplicationMode.BACKUP_SPACE + "]");
             }
             throw new CancellationException(); //cancel this task
         }
 
         if (!outgoingChannel.getChannelState().equals(ReplicationStatistics.ChannelState.ACTIVE)) {
-            if (_xbLogger.isLoggable(Level.FINEST)) {
-                _xbLogger.log(Level.FINEST, "backup Space instance [" + _electTemplate.service + "] current replication channel state ["
+            if (_xbLogger.isTraceEnabled()) {
+                _xbLogger.trace("backup Space instance [" + _electTemplate.service + "] current replication channel state ["
                         + outgoingChannel.getChannelState() + "] - validation requires [" + ReplicationStatistics.ChannelState.ACTIVE + "]");
             }
             return; //re-schedule until active (after handshake)
@@ -1097,12 +1098,12 @@ public class ActiveElectionManager {
         final String targetServiceUuid = String.valueOf(targetServiceID);
         final String outgoingChannelTargetUuid = String.valueOf(outgoingChannel.getTargetUuid());
 
-        if (_xbLogger.isLoggable(Level.FINER)) {
-            _xbLogger.log(Level.FINER, "backup Space instance [" + _electTemplate.service + "] discovered a primary Space instance: ["
+        if (_xbLogger.isDebugEnabled()) {
+            _xbLogger.debug("backup Space instance [" + _electTemplate.service + "] discovered a primary Space instance: ["
                     + activeServiceItem.service + "] on host [" + HostName.getHostNameFrom(activeServiceItem.attributeSets)
                     + "] with an outgoing replication channel - outgoingChannelTargetUuid=[" + outgoingChannelTargetUuid
                     + "] compared to targetServiceUuid=[" + targetServiceUuid
-                    + (_xbLogger.isLoggable(Level.FINEST) ? "] outgoingChannel=[" + outgoingChannel + "]" : "]"));
+                    + (_xbLogger.isTraceEnabled() ? "] outgoingChannel=[" + outgoingChannel + "]" : "]"));
         }
 
         /**
@@ -1112,11 +1113,11 @@ public class ActiveElectionManager {
          * name but a different service ID.
          */
         if (!(String.valueOf(targetServiceID).equals(String.valueOf(outgoingChannel.getTargetUuid())))) {
-            _logger.warning("backup Space instance [" + _electTemplate.service + "] has been detected as an extra backup Space and will be removed");
+            _logger.warn("backup Space instance [" + _electTemplate.service + "] has been detected as an extra backup Space and will be removed");
             _listener.onExtraBackup(new ActiveElectionEvent(activeServiceItem));
         } else {
-            if (_xbLogger.isLoggable(Level.FINE)) {
-                _xbLogger.log(Level.FINE, "backup Space instance [" + _electTemplate.service + "] is a replication target of ["
+            if (_xbLogger.isDebugEnabled()) {
+                _xbLogger.debug("backup Space instance [" + _electTemplate.service + "] is a replication target of ["
                         + activeServiceItem.service + "] on host [" + HostName.getHostNameFrom(activeServiceItem.attributeSets) + "]");
             }
         }
@@ -1180,8 +1181,8 @@ public class ActiveElectionManager {
             return ServiceReplicationStatus.UNKNOWN;
 
         ServiceReplicationStatus serviceReplicationStatus = calculateServiceReplicationStatus((ISpaceProxy) service, serviceItem, allOutgoingReplicationChannels);
-        if (_logger.isLoggable(Level.FINER))
-            _logger.finer("calculated replication status for " + serviceItem + " is " + serviceReplicationStatus);
+        if (_logger.isDebugEnabled())
+            _logger.debug("calculated replication status for " + serviceItem + " is " + serviceReplicationStatus);
         return serviceReplicationStatus;
     }
 
@@ -1200,12 +1201,12 @@ public class ActiveElectionManager {
                 final IInternalRemoteJSpaceAdmin admin = (IInternalRemoteJSpaceAdmin) (serviceProxy).getAdmin();
                 final ReplicationStatistics replicationStatistics = ((StatisticsAdmin) admin).getHolder().getReplicationStatistics();
                 serviceReplicationStatus.setProcessId(admin.getJVMDetails().getPid());
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.finer("calculating election priority for " + serviceItem + " try " + iteration + " out of " + MAX_TRIES);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("calculating election priority for " + serviceItem + " try " + iteration + " out of " + MAX_TRIES);
 
                 if (replicationStatistics == null || replicationStatistics.getOutgoingReplication() == null || replicationStatistics.getOutgoingReplication().getChannels() == null) {
-                    if (_logger.isLoggable(Level.WARNING))
-                        _logger.warning("Failed to retrieve replicationStatistics for " + serviceItem);
+                    if (_logger.isWarnEnabled())
+                        _logger.warn("Failed to retrieve replicationStatistics for " + serviceItem);
 
                     return ServiceReplicationStatus.UNKNOWN;
                 }
@@ -1221,8 +1222,8 @@ public class ActiveElectionManager {
                     else //noinspection deprecation
                         if (outgoingChannel.getState() != com.gigaspaces.cluster.replication.IReplicationChannel.State.CONNECTED) {
                             String description = "Service replication with target [" + outgoingChannel.getTargetMemberName() + "] is inactive";
-                            if (_logger.isLoggable(Level.FINER))
-                                _logger.finer(description + ", reducing priority by " + ServiceReplicationStatus.INACTIVE_FACTOR);
+                            if (_logger.isDebugEnabled())
+                                _logger.debug(description + ", reducing priority by " + ServiceReplicationStatus.INACTIVE_FACTOR);
                             //A disconnected channel
                             serviceReplicationStatus.reducePriority(ServiceReplicationStatus.INACTIVE_FACTOR, description);
                             hasDisconnected = true;
@@ -1231,8 +1232,8 @@ public class ActiveElectionManager {
 
                 if (hasDisconnected && iteration < MAX_TRIES) {
                     try {
-                        if (_logger.isLoggable(Level.FINER))
-                            _logger.finer("there are disconnected replication targets, sleeping for " + INCOMPLETE_ITERATION_SLEEP_TIME + " and retrying");
+                        if (_logger.isDebugEnabled())
+                            _logger.debug("there are disconnected replication targets, sleeping for " + INCOMPLETE_ITERATION_SLEEP_TIME + " and retrying");
                         Thread.sleep(INCOMPLETE_ITERATION_SLEEP_TIME);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
@@ -1242,16 +1243,16 @@ public class ActiveElectionManager {
             } catch (RemoteException e) {
                 if (iteration < MAX_TRIES) {
                     try {
-                        if (_logger.isLoggable(Level.FINER))
-                            _logger.finer("target is unreachable, sleeping for " + INCOMPLETE_ITERATION_SLEEP_TIME + " and retrying");
+                        if (_logger.isDebugEnabled())
+                            _logger.debug("target is unreachable, sleeping for " + INCOMPLETE_ITERATION_SLEEP_TIME + " and retrying");
                         Thread.sleep(INCOMPLETE_ITERATION_SLEEP_TIME);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                         return ServiceReplicationStatus.UNKNOWN;
                     }
                 } else {
-                    if (_logger.isLoggable(Level.FINER))
-                        _logger.log(Level.FINER, "Got exception while calculating replication priority", e);
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("Got exception while calculating replication priority", e);
 
                     return ServiceReplicationStatus.UNREACHABLE_TARGET;
                 }
@@ -1265,14 +1266,14 @@ public class ActiveElectionManager {
         if (outgoingChannel.getReplicationMode() == ReplicationMode.MIRROR || outgoingChannel.getReplicationMode() == ReplicationMode.GATEWAY) {
             String targetType = outgoingChannel.getReplicationMode() == ReplicationMode.MIRROR ? "mirror" : "gateway";
             String description = "Service is inconsistent with a " + targetType + " target [" + outgoingChannel.getTargetMemberName() + "] (gives highest inconsistency state)";
-            if (_logger.isLoggable(Level.FINER)) {
-                _logger.finer(description + ", reducing priority by " + ServiceReplicationStatus.INCONSISTENT_WITH_MIRROR_FACTOR);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(description + ", reducing priority by " + ServiceReplicationStatus.INCONSISTENT_WITH_MIRROR_FACTOR);
             }
             serviceReplicationStatus.reducePriority(ServiceReplicationStatus.INCONSISTENT_WITH_MIRROR_FACTOR, description);
         } else {
             String description = "Service is inconsistent with target [" + outgoingChannel.getTargetMemberName() + "]";
-            if (_logger.isLoggable(Level.FINER)) {
-                _logger.finer(description + ", reducing priority by " + ServiceReplicationStatus.INCONSISTENT_WITH_SPACE_FACTOR);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(description + ", reducing priority by " + ServiceReplicationStatus.INCONSISTENT_WITH_SPACE_FACTOR);
             }
             //Other in consistent target reduce priority by this rate
             serviceReplicationStatus.reducePriority(ServiceReplicationStatus.INCONSISTENT_WITH_SPACE_FACTOR, description);
@@ -1320,14 +1321,14 @@ public class ActiveElectionManager {
         if (_isTerminated)
             return;
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("Terminating...");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Terminating...");
 
         try {
             changeState(null /* any state */, State.NONE, false /* force change */);
         } catch (RemoteException ex) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("Failed to reset current state on " + getNamingService().getName());
+            if (_logger.isDebugEnabled())
+                _logger.debug("Failed to reset current state on " + getNamingService().getName());
         }
 
         if (_splitBrainController != null)
@@ -1338,7 +1339,7 @@ public class ActiveElectionManager {
 
         _isTerminated = true;
 
-        _logger.fine("Terminated");
+        _logger.debug("Terminated");
     }// terminate
 
     /**

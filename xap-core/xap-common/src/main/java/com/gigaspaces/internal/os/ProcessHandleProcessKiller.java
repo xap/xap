@@ -69,7 +69,7 @@ public class ProcessHandleProcessKiller implements ProcessKiller {
             return pruneTerminated(processes);
 
         } catch (ReflectiveOperationException e) {
-            ProcessUtils.logger.warning("Failed to kill process " + pid + ": " + e.getMessage());
+            ProcessUtils.logger.warn("Failed to kill process " + pid + ": " + e.getMessage());
             return false;
         }
     }

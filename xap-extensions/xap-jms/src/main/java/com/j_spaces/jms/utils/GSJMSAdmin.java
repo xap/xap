@@ -30,8 +30,9 @@ import net.jini.id.Uuid;
 
 import java.util.HashMap;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
@@ -79,7 +80,7 @@ public class GSJMSAdmin {
     /**
      * logger
      */
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_JMS);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_JMS);
 
 
     /**
@@ -157,8 +158,8 @@ public class GSJMSAdmin {
      */
     public synchronized ConnectionFactory getConnectionFactory(String spaceURL, IMessageConverter messageConverter)
             throws JMSException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getConnectionFactory(String): spaceURL="
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getConnectionFactory(String): spaceURL="
                     + spaceURL + ", IMessageConverter=" + messageConverter);
         }
 
@@ -189,8 +190,8 @@ public class GSJMSAdmin {
     public synchronized ConnectionFactory getConnectionFactory(IJSpace space, IMessageConverter messageConverter)
             throws JMSException {
         if (space == null) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("GSJMSAdmin.getConnectionFactory(IJSpace): " +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSJMSAdmin.getConnectionFactory(IJSpace): " +
                         "Space proxy is null");
             }
             throw new JMSException("Space proxy is null");
@@ -200,8 +201,8 @@ public class GSJMSAdmin {
         Uuid spaceUuid = ((ReferentUuid) space).getReferentUuid();
         //String url = space.getURL().getURL();
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getConnectionFactory(IJSpace): " +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getConnectionFactory(IJSpace): " +
                     "Space URL=" + space.getURL().getURL() + ", Space UUID=" + spaceUuid +
                     ", IMessageConverter=" + messageConverter);
             //"Space URL="+url+"  |  Space UUID="+spaceUuid);
@@ -218,15 +219,15 @@ public class GSJMSAdmin {
         //ConnectionFactory connectionFactory = connectionfactories.get(spaceUuid);
         ConnectionFactory connectionFactory = connectionfactories.get(key);
         if (connectionFactory != null) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("GSJMSAdmin.getConnectionFactory(IJSpace): " +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSJMSAdmin.getConnectionFactory(IJSpace): " +
                         "Found ConnectionFactory in cache: " + connectionFactory);
             }
             return connectionFactory;
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getConnectionFactory(IJSpace): " +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getConnectionFactory(IJSpace): " +
                     "ConnectionFactory not found in cache");
         }
 
@@ -235,8 +236,8 @@ public class GSJMSAdmin {
         connectionFactory = new GSConnectionFactoryImpl(space, messageConverter);
         //connectionfactories.put(spaceUuid, connectionFactory);
         connectionfactories.put(key, connectionFactory);
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getConnectionFactory(IJSpace): " +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getConnectionFactory(IJSpace): " +
                     "Created a new ConnectionFactory: " + connectionFactory);
         }
 
@@ -260,8 +261,8 @@ public class GSJMSAdmin {
      */
     public synchronized QueueConnectionFactory getQueueConnectionFactory(String spaceURL, IMessageConverter messageConverter)
             throws JMSException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getQueueConnectionFactory(String): spaceURL="
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getQueueConnectionFactory(String): spaceURL="
                     + spaceURL + ", IMessageConverter=" + messageConverter);
         }
         return (QueueConnectionFactory) getConnectionFactory(spaceURL, messageConverter);
@@ -285,8 +286,8 @@ public class GSJMSAdmin {
      */
     public synchronized TopicConnectionFactory getTopicConnectionFactory(String spaceURL, IMessageConverter messageConverter)
             throws JMSException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getTopicConnectionFactory(String): spaceURL="
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getTopicConnectionFactory(String): spaceURL="
                     + spaceURL + ", IMessageConverter=" + messageConverter);
         }
         return (TopicConnectionFactory) getConnectionFactory(spaceURL, messageConverter);
@@ -309,8 +310,8 @@ public class GSJMSAdmin {
      */
     public synchronized QueueConnectionFactory getQueueConnectionFactory(IJSpace space, IMessageConverter messageConverter)
             throws JMSException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getQueueConnectionFactory(IJSpace): Space="
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getQueueConnectionFactory(IJSpace): Space="
                     + space.getName() + ", IMessageConverter=" + messageConverter);
         }
         return (QueueConnectionFactory) getConnectionFactory(space, messageConverter);
@@ -334,8 +335,8 @@ public class GSJMSAdmin {
      */
     public synchronized TopicConnectionFactory getTopicConnectionFactory(IJSpace space, IMessageConverter messageConverter)
             throws JMSException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getTopicConnectionFactory(IJSpace): Space="
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getTopicConnectionFactory(IJSpace): Space="
                     + space.getName() + ", IMessageConverter=" + messageConverter);
         }
         return (TopicConnectionFactory) getConnectionFactory(space, messageConverter);
@@ -358,8 +359,8 @@ public class GSJMSAdmin {
      */
     public synchronized XAConnectionFactory getXAConnectionFactory(String spaceURL, IMessageConverter messageConverter)
             throws JMSException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getXAConnectionFactory(String): spaceURL="
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getXAConnectionFactory(String): spaceURL="
                     + spaceURL + ", IMessageConverter=" + messageConverter);
         }
 
@@ -389,8 +390,8 @@ public class GSJMSAdmin {
     public synchronized XAConnectionFactory getXAConnectionFactory(IJSpace space, IMessageConverter messageConverter)
             throws JMSException {
         if (space == null) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("GSJMSAdmin.getXAConnectionFactory(IJSpace): " +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSJMSAdmin.getXAConnectionFactory(IJSpace): " +
                         "Space proxy is null");
             }
             throw new JMSException("Space proxy is null");
@@ -400,8 +401,8 @@ public class GSJMSAdmin {
         Uuid spaceUuid = ((ReferentUuid) space).getReferentUuid();
         //String url = space.getURL().getURL();
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getXAConnectionFactory(IJSpace): " +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getXAConnectionFactory(IJSpace): " +
                     "Space URL=" + space.getURL().getURL() + ", Space UUID=" + spaceUuid +
                     ", IMessageConverter=" + messageConverter);
             //"Space URL="+url+"  |  Space UUID="+spaceUuid);
@@ -418,15 +419,15 @@ public class GSJMSAdmin {
         //XAConnectionFactory connectionFactory = xaConnectionfactories.get(spaceUuid);
         XAConnectionFactory connectionFactory = xaConnectionfactories.get(key);
         if (connectionFactory != null) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("GSJMSAdmin.getXAConnectionFactory(IJSpace): " +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSJMSAdmin.getXAConnectionFactory(IJSpace): " +
                         "Found XAConnectionFactory in cache: " + connectionFactory);
             }
             return connectionFactory;
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getXAConnectionFactory(IJSpace): " +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getXAConnectionFactory(IJSpace): " +
                     "XAConnectionFactory not found in cache");
         }
 
@@ -435,8 +436,8 @@ public class GSJMSAdmin {
         connectionFactory = new GSXAConnectionFactoryImpl(space, messageConverter);
         //xaConnectionfactories.put(spaceUuid, connectionFactory);
         xaConnectionfactories.put(key, connectionFactory);
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getXAConnectionFactory(IJSpace): " +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getXAConnectionFactory(IJSpace): " +
                     "Created a new XAConnectionFactory: " + connectionFactory);
         }
 
@@ -461,8 +462,8 @@ public class GSJMSAdmin {
      */
     public synchronized XAQueueConnectionFactory getXAQueueConnectionFactory(String spaceURL, IMessageConverter messageConverter)
             throws JMSException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getXAQueueConnectionFactory(String): spaceURL=" +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getXAQueueConnectionFactory(String): spaceURL=" +
                     spaceURL + ", IMessageConverter=" + messageConverter);
         }
         return (XAQueueConnectionFactory) getConnectionFactory(spaceURL, messageConverter);
@@ -486,8 +487,8 @@ public class GSJMSAdmin {
      */
     public synchronized XATopicConnectionFactory getXATopicConnectionFactory(String spaceURL, IMessageConverter messageConverter)
             throws JMSException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getXATopicConnectionFactory(String): spaceURL=" +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getXATopicConnectionFactory(String): spaceURL=" +
                     spaceURL + ", IMessageConverter=" + messageConverter);
         }
         return (XATopicConnectionFactory) getConnectionFactory(spaceURL, messageConverter);
@@ -510,8 +511,8 @@ public class GSJMSAdmin {
      */
     public synchronized XAQueueConnectionFactory getXAQueueConnectionFactory(IJSpace space, IMessageConverter messageConverter)
             throws JMSException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getXAQueueConnectionFactory(IJSpace): Space="
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getXAQueueConnectionFactory(IJSpace): Space="
                     + space.getName() + ", IMessageConverter=" + messageConverter);
         }
         return (XAQueueConnectionFactory) getXAConnectionFactory(space, messageConverter);
@@ -534,8 +535,8 @@ public class GSJMSAdmin {
      */
     public synchronized XATopicConnectionFactory getXATopicConnectionFactory(IJSpace space, IMessageConverter messageConverter)
             throws JMSException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("GSJMSAdmin.getXATopicConnectionFactory(IJSpace): Space="
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("GSJMSAdmin.getXATopicConnectionFactory(IJSpace): Space="
                     + space.getName() + ", IMessageConverter=" + messageConverter);
         }
         return (XATopicConnectionFactory) getXAConnectionFactory(space, messageConverter);
@@ -580,7 +581,7 @@ public class GSJMSAdmin {
         IJSpace spaceProxy = null;
         try {
             spaceProxy = (IJSpace) SpaceFinder.find(spaceURL);
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 _logger.info("GSJMSAdmin.findSpace() Found space <" + spaceProxy.getName() + "> " + " using SpaceURL: " + spaceURL);
             }
         } catch (FinderException ex) {
@@ -666,8 +667,8 @@ public class GSJMSAdmin {
                         "rmi://localhost:10098");
 
                 jndiContext = new InitialContext(props);
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("GSJMSAdmin.getInitialContext() Using fallback" +
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("GSJMSAdmin.getInitialContext() Using fallback" +
                             " jndiContext environment: " + jndiContext.getEnvironment());
                 }
             }

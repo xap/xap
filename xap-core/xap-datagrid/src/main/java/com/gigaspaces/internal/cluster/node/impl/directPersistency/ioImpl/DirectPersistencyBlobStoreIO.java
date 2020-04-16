@@ -35,7 +35,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The actual i/o of DirectPersistencyOpInfo objects
@@ -75,7 +76,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             _cacheManager.getBlobStoreStorageHandler().add(getOpInfoStorageKey(entry.getGenerationId(), entry.getSequenceNumber()), entry, BlobStoreObjectType.SYNC, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add got exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add got exception: " + ex);
             throw ex;
         }
 
@@ -86,7 +87,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             _cacheManager.getBlobStoreStorageHandler().remove(getOpInfoStorageKey(entry.getGenerationId(), entry.getSequenceNumber()), null, BlobStoreObjectType.SYNC, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::remove got exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::remove got exception: " + ex);
             throw ex;
         }
 
@@ -97,7 +98,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             _cacheManager.getBlobStoreStorageHandler().replace(getOpInfoStorageKey(entry.getGenerationId(), entry.getSequenceNumber()), entry, null, BlobStoreObjectType.SYNC, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace got exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace got exception: " + ex);
             throw ex;
         }
     }
@@ -107,7 +108,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             return (IDirectPersistencyOpInfo) _cacheManager.getBlobStoreStorageHandler().get( getOpInfoStorageKey(getGenerationId, sequenceNumber), null, BlobStoreObjectType.SYNC, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::get exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::get exception: " + ex);
             throw ex;
         }
 
@@ -134,7 +135,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             _cacheManager.getBlobStoreStorageHandler().add(getOverflowSegmentStorageKey(segment.getGenerationId(), segment.getSequenceNumber()), segment, BlobStoreObjectType.SYNC_OVERFLOW, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add-OVF got exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add-OVF got exception: " + ex);
             throw ex;
         }
     }
@@ -144,7 +145,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             _cacheManager.getBlobStoreStorageHandler().remove(getOverflowSegmentStorageKey(segment.getGenerationId(), segment.getSequenceNumber()), null, BlobStoreObjectType.SYNC_OVERFLOW, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::remove-OVF got exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::remove-OVF got exception: " + ex);
             throw ex;
         }
     }
@@ -154,7 +155,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             _cacheManager.getBlobStoreStorageHandler().replace(getOverflowSegmentStorageKey(segment.getGenerationId(), segment.getSequenceNumber()), segment, null, BlobStoreObjectType.SYNC_OVERFLOW, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace_OVF got exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace_OVF got exception: " + ex);
             throw ex;
         }
     }
@@ -164,7 +165,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             return (DirectPersistencyOverflowListSegment) _cacheManager.getBlobStoreStorageHandler().get(getOverflowSegmentStorageKey(generationId, seq), null, BlobStoreObjectType.SYNC_OVERFLOW, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::getOverflowSegment exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::getOverflowSegment exception: " + ex);
             throw ex;
         }
     }
@@ -191,7 +192,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             _cacheManager.getBlobStoreStorageHandler().add(DirectPersistencySyncAdminInfo.getStorageKey(), ai, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add-syncadmin got exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add-syncadmin got exception: " + ex);
             throw ex;
         }
 
@@ -202,7 +203,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             _cacheManager.getBlobStoreStorageHandler().replace(DirectPersistencySyncAdminInfo.getStorageKey(), ai, null, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace_syncadmin got exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace_syncadmin got exception: " + ex);
             throw ex;
         }
 
@@ -213,7 +214,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             return (DirectPersistencySyncAdminInfo) _cacheManager.getBlobStoreStorageHandler().get(DirectPersistencySyncAdminInfo.getStorageKey(), null, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::getsyncadmin exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::getsyncadmin exception: " + ex);
             throw ex;
         }
 
@@ -234,7 +235,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
             _cacheManager.getBlobStoreStorageHandler().remove(EmbeddedSyncHandler.getStorageKeyForPhantom(uid), null, BlobStoreObjectType.DATA, null);
 
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::removePhantom exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::removePhantom exception: " + ex);
             throw ex;
         }
 
@@ -244,7 +245,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             return (EmbeddedSyncTransferredInfo) _cacheManager.getBlobStoreStorageHandler().get(EmbeddedSyncTransferredInfo.getStorageKey(generationId, segment), null, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::EmbeddedSyncTransferredInfo exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::EmbeddedSyncTransferredInfo exception: " + ex);
             throw ex;
         }
     }
@@ -254,7 +255,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             _cacheManager.getBlobStoreStorageHandler().add(EmbeddedSyncTransferredInfo.getStorageKey(ai.getGenerationId(), ai.getSegmentNum()), ai, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add-EmbeddedSyncTransferredInfo got exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add-EmbeddedSyncTransferredInfo got exception: " + ex);
             throw ex;
         }
 
@@ -265,7 +266,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             _cacheManager.getBlobStoreStorageHandler().replace(EmbeddedSyncTransferredInfo.getStorageKey(ai.getGenerationId(), ai.getSegmentNum()), ai, null, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace_EmbeddedSyncTransferredInfo got exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace_EmbeddedSyncTransferredInfo got exception: " + ex);
             throw ex;
         }
 
@@ -277,7 +278,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             _cacheManager.getBlobStoreStorageHandler().remove(EmbeddedSyncTransferredInfo.getStorageKey(ai.getGenerationId(), ai.getSegmentNum()), null, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::remove_EmbeddedSyncTransferredInfo got exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::remove_EmbeddedSyncTransferredInfo got exception: " + ex);
             throw ex;
         }
 
@@ -289,7 +290,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             return (EmbeddedRelevantGenerationIdsInfo) _cacheManager.getBlobStoreStorageHandler().get( EmbeddedRelevantGenerationIdsInfo.getStorageKey(), null, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::getEmbeddedRelevantGenerationIdsInfo exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::getEmbeddedRelevantGenerationIdsInfo exception: " + ex);
             throw ex;
         }
 
@@ -300,7 +301,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             _cacheManager.getBlobStoreStorageHandler().replace(EmbeddedRelevantGenerationIdsInfo.getStorageKey(), ai, null, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace EmbeddedRelevantGenerationIdsInfo got exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::replace EmbeddedRelevantGenerationIdsInfo got exception: " + ex);
             throw ex;
         }
 
@@ -311,7 +312,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
         try {
             _cacheManager.getBlobStoreStorageHandler().add(EmbeddedRelevantGenerationIdsInfo.getStorageKey(), ai, BlobStoreObjectType.ADMIN, null);
         } catch (BlobStoreException ex) {
-            _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add-EmbeddedRelevantGenerationIdsInfo got exception: " + ex);
+            _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::add-EmbeddedRelevantGenerationIdsInfo got exception: " + ex);
             throw ex;
         }
 
@@ -352,7 +353,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
             try {
                 _iter = _cacheManager.getBlobStoreStorageHandler().iterator(BlobStoreObjectType.SYNC);
             } catch (BlobStoreException ex) {
-                _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::create-iterator got exception: " + ex);
+                _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::create-iterator got exception: " + ex);
                 _closed = true;
                 throw ex;
             }
@@ -388,7 +389,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
                     }
                 }
             } catch (BlobStoreException ex) {
-                _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::iterator-hasnext got exception: " + ex);
+                _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::iterator-hasnext got exception: " + ex);
                 _closed = true;
                 throw ex;
             }
@@ -405,7 +406,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
             try {
                 return _iter.next();
             } catch (BlobStoreException ex) {
-                _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::iterator-next got exception: " + ex);
+                _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::iterator-next got exception: " + ex);
                 _closed = true;
                 throw ex;
             }
@@ -451,7 +452,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
             try {
                 _iter = _cacheManager.getBlobStoreStorageHandler().iterator(BlobStoreObjectType.SYNC_OVERFLOW);
             } catch (BlobStoreException ex) {
-                _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::create-iterator-OVERFLOW got exception: " + ex);
+                _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::create-iterator-OVERFLOW got exception: " + ex);
                 _closed = true;
                 throw ex;
             }
@@ -475,7 +476,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
                         return true;
                 }
             } catch (BlobStoreException ex) {
-                _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::iterator-hasnext got exception: " + ex);
+                _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::iterator-hasnext got exception: " + ex);
                 _closed = true;
                 throw ex;
             }
@@ -491,7 +492,7 @@ public class DirectPersistencyBlobStoreIO implements IDirectPersistencyIoHandler
                     _cur = cur;
                 return;
             } catch (BlobStoreException ex) {
-                _logger.severe("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::iteratorOVF-next got exception: " + ex);
+                _logger.error("space " + _cacheManager.getEngine().getFullSpaceName() + " DirectPersistencyBlobStoreIO::iteratorOVF-next got exception: " + ex);
                 _closed = true;
                 throw ex;
             }

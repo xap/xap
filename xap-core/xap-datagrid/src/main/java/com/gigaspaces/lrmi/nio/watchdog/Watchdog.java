@@ -34,8 +34,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -47,7 +48,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class Watchdog extends GSThread {
-    final static private Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI_WATCHDOG);
+    final static private Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_WATCHDOG);
 
     /** */
     private static final int MAX_RESOLUTION = 100;
@@ -147,8 +148,8 @@ public class Watchdog extends GSThread {
                 MIN_RESOLUTION,
                 MAX_RESOLUTION);
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("Running watchdog with listening timeout="
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Running watchdog with listening timeout="
                     + listeningTimeout + "sec,request timeout=" + requestTimeout
                     + " millis,idle connection timeout=" + idleConnectionTimeout
                     + " millis, retries=" + idleConnectionRetries
@@ -203,8 +204,8 @@ public class Watchdog extends GSThread {
 
             } catch (InterruptedException ie) {
 
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.log(Level.FINEST, this.getName() + " interrupted.", ie);
+                if (_logger.isTraceEnabled()) {
+                    _logger.trace(this.getName() + " interrupted.", ie);
                 }
 
                 //Restore the interrupted status
@@ -213,8 +214,8 @@ public class Watchdog extends GSThread {
                 //fall through
                 break;
             } catch (Throwable t) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             "Unexpected exception in watchdog thread.",
                             t);
                 }
@@ -356,7 +357,7 @@ public class Watchdog extends GSThread {
                 if (t - time < _timeoutLogical)
                     continue;
 
-                if (_logger.isLoggable(Level.FINE)) {
+                if (_logger.isDebugEnabled()) {
                     //log request timeouts as FINE, listening as FINER, idle as FINEST
                     LogLevel logLevel = LogLevel.TRACE;
                     if (Group.REQUEST_GROUP.name().equals(_name) ||

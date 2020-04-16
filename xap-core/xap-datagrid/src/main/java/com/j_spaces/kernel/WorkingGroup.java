@@ -34,8 +34,9 @@ import com.j_spaces.kernel.threadpool.queue.DynamicQueue;
 
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -52,7 +53,7 @@ public class WorkingGroup<E>
         extends DynamicThreadPoolExecutor {
     final private IConsumerObject<E> _consumerObject;
     final private String _workingGroupName;
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_KERNEL);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_KERNEL);
 
     /**
      * TaskWrapper for the runnable object to be run by a dispatcher. Dispatcher implements the
@@ -151,8 +152,8 @@ public class WorkingGroup<E>
         try {
             this.execute(new TaskWrapper<E>(o, _consumerObject));
         } catch (RejectedExecutionException ree) {
-            if (_logger.isLoggable(Level.INFO)) {
-                _logger.log(Level.INFO, "Task cannot be accepted for execution.", ree);
+            if (_logger.isInfoEnabled()) {
+                _logger.info("Task cannot be accepted for execution.", ree);
             }
         }
     }
@@ -173,8 +174,8 @@ public class WorkingGroup<E>
     @Override
     public void shutdown() {
         if (!this.isShutdown()) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine(_workingGroupName
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(_workingGroupName
                         + " executor is commencing shutdown...");
             }
 
@@ -185,23 +186,23 @@ public class WorkingGroup<E>
                 // shutdown request, or the timeout occurs
                 this.awaitTermination(60, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.log(Level.WARNING, _workingGroupName
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn(_workingGroupName
                             + " interrupted while waiting for shutdown.", e);
                 }
             }
 
             if (this.isTerminated()) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine(_workingGroupName + " shutdown complete.");
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(_workingGroupName + " shutdown complete.");
                 }
             } else {
                 if (this.isTerminating())
-                    if (_logger.isLoggable(Level.WARNING)) {
-                        _logger.warning(_workingGroupName
+                    if (_logger.isWarnEnabled()) {
+                        _logger.warn(_workingGroupName
                                 + " unsafe shutdown still in progress...");
-                    } else if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.severe(_workingGroupName
+                    } else if (_logger.isErrorEnabled()) {
+                        _logger.error(_workingGroupName
                                 + " shutdown failed to complete.");
                     }
             }

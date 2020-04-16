@@ -42,8 +42,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class providing methods for implementing discovery protocol version 1.
@@ -57,7 +58,7 @@ class DiscoveryV1 extends Discovery {
 
     private static final DiscoveryV1 instance = new DiscoveryV1();
     private static final Logger logger =
-            Logger.getLogger(DiscoveryV1.class.getName());
+            LoggerFactory.getLogger(DiscoveryV1.class.getName());
 
     static DiscoveryV1 getInstance() {
         return instance;
@@ -156,8 +157,8 @@ class DiscoveryV1 extends Discovery {
                     Constants.getDiscoveryPort()));
         } while (!groups.isEmpty());
 
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, "encoded {0}", new Object[]{request});
+        if (logger.isTraceEnabled()) {
+            logger.trace("encoded {0}", new Object[]{request});
         }
         return (DatagramPacket[])
                 packets.toArray(new DatagramPacket[packets.size()]);
@@ -228,8 +229,8 @@ class DiscoveryV1 extends Discovery {
 
             MulticastRequest req =
                     new MulticastRequest(host, port, groups, ids);
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.log(Level.FINEST, "decoded {0}", new Object[]{req});
+            if (logger.isTraceEnabled()) {
+                logger.trace("decoded {0}", new Object[]{req});
             }
             return req;
 
@@ -321,8 +322,8 @@ class DiscoveryV1 extends Discovery {
                     Constants.getDiscoveryPort()));
         } while (!groups.isEmpty());
 
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, "encoded {0}",
+        if (logger.isTraceEnabled()) {
+            logger.trace("encoded {0}",
                     new Object[]{announcement});
         }
         return (DatagramPacket[])
@@ -376,8 +377,8 @@ class DiscoveryV1 extends Discovery {
 
             MulticastAnnouncement ann =
                     new MulticastAnnouncement(-1, host, port, groups, id);
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.log(Level.FINEST, "decoded {0}", new Object[]{ann});
+            if (logger.isTraceEnabled()) {
+                logger.trace("decoded {0}", new Object[]{ann});
             }
             return ann;
 
@@ -438,8 +439,8 @@ class DiscoveryV1 extends Discovery {
 
             UnicastResponse resp =
                     new UnicastResponse(host, port, groups, reg);
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.log(Level.FINEST, "received {0}", new Object[]{resp});
+            if (logger.isTraceEnabled()) {
+                logger.trace("received {0}", new Object[]{resp});
             }
             return resp;
 
@@ -482,8 +483,8 @@ class DiscoveryV1 extends Discovery {
         }
 
         oout.flush();
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, "sent {0}", new Object[]{response});
+        if (logger.isTraceEnabled()) {
+            logger.trace("sent {0}", new Object[]{response});
         }
     }
 

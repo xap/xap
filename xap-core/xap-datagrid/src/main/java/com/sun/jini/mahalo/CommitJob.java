@@ -40,8 +40,9 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.rmi.UnknownHostException;
 import java.rmi.activation.ActivateFailedException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An implementation of a <code>Job</code> which interacts with a set of
@@ -125,8 +126,8 @@ public class CommitJob extends Job implements TransactionConstants {
         //Check to see if participant has state associated
         //with it on account of being recovered from a log
 
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST,
+        if (logger.isTraceEnabled()) {
+            logger.trace(
                     "CommitJob:doWork committing handle: {0}", handle);
         }
 
@@ -307,8 +308,8 @@ public class CommitJob extends Job implements TransactionConstants {
                 count++;
         }
 
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST,
+        if (logger.isTraceEnabled()) {
+            logger.trace(
                     "CommitJob:computeResult {0} participants COMMITTED",
                     new Integer(count));
         }

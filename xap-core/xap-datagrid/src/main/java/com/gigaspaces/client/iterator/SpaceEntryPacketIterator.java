@@ -38,8 +38,9 @@ import java.rmi.RemoteException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -47,7 +48,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class SpaceEntryPacketIterator implements IEntryPacketIterator {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_GSITERATOR);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_GSITERATOR);
 
     private final ISpaceProxy _spaceProxy;
     private final Transaction _txn;
@@ -68,8 +69,8 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
         if (batchSize <= 0)
             throw new IllegalArgumentException("batchSize argument must be greater than zero.");
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "SpaceIterator initialized with batchSize=" + batchSize);
+        if (_logger.isDebugEnabled())
+            _logger.debug("SpaceIterator initialized with batchSize=" + batchSize);
 
         this._spaceProxy = spaceProxy;
         this._txn = txn;
@@ -97,7 +98,7 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
     @Override
     public boolean hasNext() {
         if (_closed) {
-            _logger.log(Level.FINER, "hasNext() returned false - iterator is closed");
+            _logger.debug("hasNext() returned false - iterator is closed");
             return false;
         }
 
@@ -120,8 +121,8 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
             }
         }
 
-        if (_logger.isLoggable(Level.FINER))
-            _logger.log(Level.FINER, "hasNext() returned " + result);
+        if (_logger.isDebugEnabled())
+            _logger.debug("hasNext() returned " + result);
 
         if (!result)
             close();
@@ -131,8 +132,8 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
     @Override
     public IEntryPacket next() {
         IEntryPacket entryPacket = hasNext() ? _bufferIterator.next() : null;
-        if (_logger.isLoggable(Level.FINER))
-            _logger.log(Level.FINER, "next() returned " + (entryPacket == null ? "null" : "object with uid=" + entryPacket.getUID()));
+        if (_logger.isDebugEnabled())
+            _logger.debug("next() returned " + (entryPacket == null ? "null" : "object with uid=" + entryPacket.getUID()));
         return entryPacket;
     }
     @Override
@@ -176,8 +177,8 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
             throw new SpaceRuntimeException("Failed to initialize iterator", e);
         }
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "initialize found " + result.size() + " matching entries.");
+        if (_logger.isDebugEnabled())
+            _logger.debug("initialize found " + result.size() + " matching entries.");
 
         return result;
     }
@@ -204,14 +205,14 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
             processNextBatchFailure(e);
         }
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "getNextBatch returns with a buffer of " + _buffer.size() + " entries.");
+        if (_logger.isDebugEnabled())
+            _logger.debug("getNextBatch returns with a buffer of " + _buffer.size() + " entries.");
 
         return result;
     }
 
     private void processNextBatchFailure(Exception e) {
-        if (_logger.isLoggable(Level.SEVERE))
-            _logger.log(Level.SEVERE, "Failed to build iterator data", e);
+        if (_logger.isErrorEnabled())
+            _logger.error("Failed to build iterator data", e);
     }
 }

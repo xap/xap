@@ -31,13 +31,14 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @com.gigaspaces.api.InternalApi
 public class DirectPersisntecyEntryReplicaProducer extends EntryReplicaProducer {
-    protected final static Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
+    protected final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
     private Set<String> _unitedSyncList;
     private Iterator<String> _iterator;
 
@@ -55,7 +56,7 @@ public class DirectPersisntecyEntryReplicaProducer extends EntryReplicaProducer 
         // if backup has entries in it's list
         if (remoteSyncList != null) {
             _unitedSyncList.addAll(remoteSyncList);
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 _logger.info("[" + getEngine().getFullSpaceName() + "]" + " received sync list with size " + remoteSyncList.size() + " from backup remote space");
             }
         }
@@ -65,15 +66,15 @@ public class DirectPersisntecyEntryReplicaProducer extends EntryReplicaProducer 
             localSyncListSize++;
             _unitedSyncList.add(entriesForRecovery.next());
         }
-        if (_logger.isLoggable(Level.INFO)) {
+        if (_logger.isInfoEnabled()) {
             _logger.info("[" + getEngine().getFullSpaceName() + "]" + " local sync list size is " + localSyncListSize);
         }
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("[" + getEngine().getFullSpaceName() + "]" + " united sync list size is " + _unitedSyncList.size());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("[" + getEngine().getFullSpaceName() + "]" + " united sync list size is " + _unitedSyncList.size());
         }
-        if (_logger.isLoggable(Level.FINER)) {
+        if (_logger.isDebugEnabled()) {
             for (String entry : _unitedSyncList) {
-                _logger.fine("[" + getEngine().getFullSpaceName() + "]" + " merging sync list, uid=" + entry);
+                _logger.debug("[" + getEngine().getFullSpaceName() + "]" + " merging sync list, uid=" + entry);
             }
         }
     }

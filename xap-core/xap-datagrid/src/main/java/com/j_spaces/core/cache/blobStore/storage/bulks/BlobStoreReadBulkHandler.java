@@ -33,7 +33,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * handlels prefetch activity
@@ -88,7 +89,7 @@ public class BlobStoreReadBulkHandler {
 
             }
         } catch (Throwable t) {
-            _logger.severe(getClass().getName() + " blobstore:execute-bulk " + t);
+            _logger.error(getClass().getName() + " blobstore:execute-bulk " + t);
             BlobStoreException ex = (t instanceof BlobStoreException) ? (BlobStoreException) t : (new BlobStoreException(t));
             res.setException(ex);
         }

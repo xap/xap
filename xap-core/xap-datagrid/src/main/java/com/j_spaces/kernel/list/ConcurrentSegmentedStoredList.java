@@ -29,8 +29,9 @@ import com.j_spaces.kernel.list.StoredListChainSegment.ConcurrentSLObjectInfo;
 
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Yechiel Fefer

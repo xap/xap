@@ -61,8 +61,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class MultiSourceSingleFileReliableAsyncGroupBacklog extends AbstractMultiSourceSingleFileGroupBacklog
@@ -196,8 +197,8 @@ public class MultiSourceSingleFileReliableAsyncGroupBacklog extends AbstractMult
         MultiSourceSingleFileReliableAsyncState sharedAsyncState = (MultiSourceSingleFileReliableAsyncState) reliableAsyncState;
         _rwLock.writeLock().lock();
         try {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest(getLogPrefix()
+            if (_logger.isTraceEnabled())
+                _logger.trace(getLogPrefix()
                         + "incoming reliable async state update "
                         + Arrays.toString(sharedAsyncState.getAsyncTargetsState()));
 
@@ -284,13 +285,13 @@ public class MultiSourceSingleFileReliableAsyncGroupBacklog extends AbstractMult
             long newNextKey = typedResponse.getLastProcessedKey() + 1;
 
             if (getNextKeyUnsafe() <= newNextKey) {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.finer(getLogPrefix() + " adjusting group key ["
+                if (_logger.isDebugEnabled())
+                    _logger.debug(getLogPrefix() + " adjusting group key ["
                             + newNextKey + "]");
                 setNextKeyUnsafe(newNextKey);
             } else {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.finer(getLogPrefix() + " received next key ["
+                if (_logger.isDebugEnabled())
+                    _logger.debug(getLogPrefix() + " received next key ["
                             + newNextKey + "] is older than the existing one ["
                             + getNextKeyUnsafe()
                             + "], skipping local group adjustment group key");

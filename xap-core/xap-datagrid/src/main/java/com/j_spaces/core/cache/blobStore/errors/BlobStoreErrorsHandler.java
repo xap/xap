@@ -49,7 +49,7 @@ public class BlobStoreErrorsHandler {
                     CacheManager.RecentDeleteCodes.NONE);
 
         } catch (Throwable ex) {
-            cm.getLogger().severe("error while reverting failed blob store op in backup,space " + cm.getEngine().getFullSpaceName() + " uid=" + eci.getUID() + " error=" + ex);
+            cm.getLogger().error("error while reverting failed blob store op in backup,space " + cm.getEngine().getFullSpaceName() + " uid=" + eci.getUID() + " error=" + ex);
         }
     }
 
@@ -61,7 +61,7 @@ public class BlobStoreErrorsHandler {
             eci.resetNonTransactionalFailedBlobstoreOpStatus(context,cm);
             eh.setDeleted(false);
         } catch (Throwable ex) {
-            cm.getLogger().severe("error while reverting failed blob store op in backup,space " + cm.getEngine().getFullSpaceName() + " uid=" + eci.getUID() + " error=" + ex);
+            cm.getLogger().error("error while reverting failed blob store op in backup,space " + cm.getEngine().getFullSpaceName() + " uid=" + eci.getUID() + " error=" + ex);
         }
     }
 
@@ -94,7 +94,7 @@ public class BlobStoreErrorsHandler {
             cm.getLeaseManager().registerEntryLease(eci, eh.getEntryData().getExpirationTime());
 
         } catch (Throwable ex) {
-            cm.getLogger().severe("error while reverting failed blob store op in backup,space " + cm.getEngine().getFullSpaceName() + " uid=" + eci.getUID() + " error=" + ex);
+            cm.getLogger().error("error while reverting failed blob store op in backup,space " + cm.getEngine().getFullSpaceName() + " uid=" + eci.getUID() + " error=" + ex);
         }
     }
 

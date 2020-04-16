@@ -53,8 +53,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A goal of any well-behaved service is to advertise the facilities and functions it provides by
@@ -799,7 +800,7 @@ public class JoinManager {
         protected void doAttributes(ProxyReg proxyReg) throws Exception {
             log("JoinManager - AddAttributesTask started");
             try {
-                if (logger.isLoggable(Level.FINEST)) {
+                if (logger.isTraceEnabled()) {
                     log("add attributes [" + Arrays.toString(attrSets) + "] to lus-id [" + proxyReg.proxy.getServiceID() + "]");
                 }
                 proxyReg.addAttributes(attrSets);
@@ -1295,7 +1296,7 @@ public class JoinManager {
     /* Name of this component; used in config entry retrieval and the logger.*/
     private static final String COMPONENT_NAME = "net.jini.lookup.JoinManager";
     /* Logger used by this utility. */
-    private static final Logger logger = Logger.getLogger(COMPONENT_NAME);
+    private static final Logger logger = LoggerFactory.getLogger(COMPONENT_NAME);
     /**
      * Maximum number of concurrent tasks that can be run in any default task manager created by
      * this class.
@@ -1890,7 +1891,7 @@ public class JoinManager {
             if (latchFactory != null) {
                 latch = latchFactory.create(joinSet.size());
             }
-            if (logger.isLoggable(Level.FINEST)) {
+            if (logger.isTraceEnabled()) {
                 log("add attributes to [" + joinSet.size() + "] lookup services");
             }
             for (int i = 0; i < joinSet.size(); i++) {
@@ -2434,8 +2435,8 @@ public class JoinManager {
 
     // log methods used to prepend the initial service id (if exists) to each log message
     private void log(String message) {
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, messageWithID(message));
+        if (logger.isTraceEnabled()) {
+            logger.trace(messageWithID(message));
         }
     }
 
@@ -2446,8 +2447,8 @@ public class JoinManager {
     }
 
     private void log(String message, Object param) {
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, messageWithID(message), param);
+        if (logger.isTraceEnabled()) {
+            logger.trace(messageWithID(message), param);
         }
     }
 

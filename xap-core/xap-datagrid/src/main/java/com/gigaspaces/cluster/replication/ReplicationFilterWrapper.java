@@ -22,8 +22,9 @@ import com.j_spaces.core.cluster.IReplicationFilterEntry;
 import com.j_spaces.core.cluster.ReplicationPolicy;
 import com.j_spaces.kernel.ClassLoaderHelper;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -35,7 +36,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class ReplicationFilterWrapper {
     // logger
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_REPLICATION);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_REPLICATION);
 
     private final IReplicationFilter _filter;
 
@@ -51,8 +52,8 @@ public class ReplicationFilterWrapper {
             _filter = (IReplicationFilter) ClassLoaderHelper.loadClass(className)
                     .newInstance();
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "Failed to add replication filter "
+            if (_logger.isErrorEnabled()) {
+                _logger.error("Failed to add replication filter "
                         + className + ": " + "newInstance() aborted: ", e);
             }
 
@@ -77,8 +78,8 @@ public class ReplicationFilterWrapper {
             _state = State.INITIALIZED;
 
         } catch (RuntimeException re) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE,
+            if (_logger.isErrorEnabled()) {
+                _logger.error(
                         "Failed to initialize replication filter "
                                 + getClassName(),
                         re);
@@ -110,14 +111,14 @@ public class ReplicationFilterWrapper {
         try {
             _filter.close();
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("ReplicationFilterManager: Filter: "
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("ReplicationFilterManager: Filter: "
                         + getClassName() + " closed successfully.");
             }
             _state = State.CLOSED;
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE,
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(
                         "ReplicationFilterManager:  Failed to close "
                                 + getClassName(),
                         e);

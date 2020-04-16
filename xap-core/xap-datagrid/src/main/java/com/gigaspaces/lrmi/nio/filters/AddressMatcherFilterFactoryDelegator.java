@@ -25,8 +25,9 @@ import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -38,7 +39,7 @@ public class
 AddressMatcherFilterFactoryDelegator
         implements IOFilterFactory {
 
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI_FILTERS);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_FILTERS);
 
     private final IOFilterFactory _filterFactory;
     private final List<Pattern> _addresMatchers;
@@ -51,8 +52,8 @@ AddressMatcherFilterFactoryDelegator
         if (resourceAsStream == null) {
             throw new IllegalArgumentException("Could not locate lrmi filter factory address matchers file " + addressMatchersFile + " in the classpath");
         }
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("Loading address matcher configuration file from " + addressMatchersFile);
+        if (_logger.isDebugEnabled())
+            _logger.debug("Loading address matcher configuration file from " + addressMatchersFile);
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(resourceAsStream));
         String line = null;
@@ -79,13 +80,13 @@ AddressMatcherFilterFactoryDelegator
             //Cause resolving
             remoteAddress.getHostName();
             if (addressMatcher.matcher(remoteAddress.toString()).matches()) {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.finer("Created lrmi filter for a connection to " + remoteAddress);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Created lrmi filter for a connection to " + remoteAddress);
                 return _filterFactory.createClientFilter(remoteAddress);
             }
         }
-        if (_logger.isLoggable(Level.FINER))
-            _logger.finer("No address matcher found for connection to " + remoteAddress + ", no filter created");
+        if (_logger.isDebugEnabled())
+            _logger.debug("No address matcher found for connection to " + remoteAddress + ", no filter created");
         return null;
     }
 
@@ -96,13 +97,13 @@ AddressMatcherFilterFactoryDelegator
             //Cause resolving
             remoteAddress.getHostName();
             if (addressMatcher.matcher(remoteAddress.toString()).matches()) {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.finer("Created lrmi filter for a connection to " + remoteAddress);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Created lrmi filter for a connection to " + remoteAddress);
                 return _filterFactory.createServerFilter(remoteAddress);
             }
         }
-        if (_logger.isLoggable(Level.FINER))
-            _logger.finer("No address matcher found for connection to " + remoteAddress + ", no filter created");
+        if (_logger.isDebugEnabled())
+            _logger.debug("No address matcher found for connection to " + remoteAddress + ", no filter created");
         return null;
     }
 

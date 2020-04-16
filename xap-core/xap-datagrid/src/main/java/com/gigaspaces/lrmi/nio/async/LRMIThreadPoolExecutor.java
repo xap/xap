@@ -31,7 +31,8 @@ import org.jini.rio.boot.CommonClassLoader;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * a version of dynamicThreadPool that can return an IFuture from a submit call.
@@ -41,7 +42,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class LRMIThreadPoolExecutor extends DynamicThreadPoolExecutor {
-    private final static Logger _warnLogger = Logger.getLogger(Constants.LOGGER_LRMI + ".resources");
+    private final static Logger _warnLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI + ".resources");
     private final static double _warnFactor = Double.parseDouble(System.getProperty(SystemProperties.LRMI_RESOURCE_WARN_THRESHOLD_FACTOR, "10.0"));
 
     public LRMIThreadPoolExecutor(int min, int max, long keepAliveTime, int capacity,

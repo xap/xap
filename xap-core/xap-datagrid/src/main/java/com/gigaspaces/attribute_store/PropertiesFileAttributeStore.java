@@ -25,7 +25,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.Properties;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Note that this is a technology preview feature may be changed in the future.
@@ -37,7 +38,7 @@ import java.util.logging.Logger;
 public class PropertiesFileAttributeStore implements AttributeStore, Serializable {
     private static final long serialVersionUID = 1789885876431145300L;
 
-    final private static Logger logger = Logger.getLogger(PropertiesFileAttributeStore.class.getName());
+    final private static Logger logger = LoggerFactory.getLogger(PropertiesFileAttributeStore.class.getName());
 
     private File file;
 

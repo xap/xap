@@ -34,8 +34,9 @@ import java.rmi.Remote;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base class for GigaSpaces Services that supports registration in Jini Lookup Service.
@@ -44,7 +45,7 @@ import java.util.logging.Logger;
  * @since 8.0.3
  */
 public abstract class AbstractGigaSpacesService implements Remote, ServiceProxyAccessor, ILRMIService {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_SERVICE);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_SERVICE);
 
     /**
      * Wait for 60 seconds for any attributes change
@@ -119,7 +120,7 @@ public abstract class AbstractGigaSpacesService implements Remote, ServiceProxyA
             advertised = latch.await(timeoutInMillis);
         }
         if (!advertised) {
-            _logger.warning("active attribute has not yet been advertised");
+            _logger.warn("active attribute has not yet been advertised");
         }
     }
 
@@ -191,17 +192,17 @@ public abstract class AbstractGigaSpacesService implements Remote, ServiceProxyA
          * The security exception might happen while running in the context of other container e.g.
          * embedded space inside Application server without granting implicit policy permissions.
          */ catch (java.security.AccessControlException e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Failed to create exporter.", e);
+            if (_logger.isWarnEnabled())
+                _logger.warn("Failed to create exporter.", e);
         } catch (SecurityException e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Failed to create exporter.", e);
+            if (_logger.isWarnEnabled())
+                _logger.warn("Failed to create exporter.", e);
         } catch (ExceptionInInitializerError e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Failed to create exporter.", e);
+            if (_logger.isWarnEnabled())
+                _logger.warn("Failed to create exporter.", e);
         } catch (Throwable e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to create exporter.", e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to create exporter.", e);
         }
 
         return exporter;

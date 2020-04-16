@@ -22,7 +22,8 @@ import com.gigaspaces.internal.cluster.node.impl.config.TargetGroupConfig;
 import com.gigaspaces.internal.cluster.node.impl.groups.IReplicationGroupHistory;
 import com.gigaspaces.internal.cluster.node.impl.processlog.IReplicationProcessLogExceptionHandler;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public interface IReplicationReliableAsyncProcessLogBuilder {

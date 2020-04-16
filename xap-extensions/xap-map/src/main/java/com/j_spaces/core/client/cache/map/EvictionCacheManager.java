@@ -23,15 +23,16 @@ import com.j_spaces.javax.cache.EvictionStrategy;
 import com.j_spaces.map.eviction.AbstractEvictionStrategy;
 
 import java.lang.ref.WeakReference;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EvictionCacheManager extends AbstractCacheManager {
     private EvictionStrategy _evictionStrategy;
     private WeakReference<Cache> _cache;
 
     //logger
-    final static private Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    final static private Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
 
     public EvictionCacheManager(EvictionStrategy evictionStrategy, Cache cache) {
         setCachePolicy(CacheManager.CACHE_POLICY_LRU);
@@ -43,14 +44,14 @@ public class EvictionCacheManager extends AbstractCacheManager {
     public int evictBatch(int evictionQuota) {
 
         final Cache cache = _cache.get();
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.finest("Cache size before eviction=" + cache.size());
+        if (_logger.isDebugEnabled()) {
+            _logger.trace("Cache size before eviction=" + cache.size());
         }
 
         int size = _evictionStrategy.evict(cache);
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("Cache size after eviction=" + cache.size() + " Evicted=" + size);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Cache size after eviction=" + cache.size() + " Evicted=" + size);
         }
 
         return size;

@@ -37,8 +37,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Dan Kilman
@@ -58,7 +59,7 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
     public static final String DYNAMIC_LOCATORS_REMOVE_SEEDS_ENABELD_PROP = "com.gs.jini_lus.locators.dynamic.remove_seeds_enabled";
     public static final boolean DYNAMIC_LOCATORS_REMOVE_SEEDS_ENABELD_DEFAULT = true;
 
-    private final Logger _logger = Logger.getLogger("com.gs.locator.dynamic.listener");
+    private final Logger _logger = LoggerFactory.getLogger("com.gs.locator.dynamic.listener");
 
     private final Object _lock = new Object();
 
@@ -122,8 +123,8 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
             }
 
             try {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.finer("Trying to find find registrar with initial seed locator: " + locator);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Trying to find find registrar with initial seed locator: " + locator);
 
                 ServiceID serviceID = locator.getRegistrar(_getRegistrarProxyTimeout).getServiceID();
                 Set<LookupLocator> set = _locators.get(serviceID);
@@ -137,8 +138,8 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
                 // we'll move on
                 // no point of logging a warning here, as it might be normal for
                 // a seed lus to not be up yet
-                if (_logger.isLoggable(Level.FINER)) {
-                    _logger.log(Level.FINER, "Could not get proxy to registrar at " + locator, e);
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Could not get proxy to registrar at " + locator, e);
                 }
             } catch (ClassNotFoundException e) {
                 // This should never happer
@@ -159,8 +160,8 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
             Object service = event.getPostEventServiceItem().getService();
             ServiceRegistrar registrar = (ServiceRegistrar) service;
 
-            if (_logger.isLoggable(Level.FINER)) {
-                _logger.finer("ServiceRegistrar service added with serviceID: "
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("ServiceRegistrar service added with serviceID: "
                         + registrar.getServiceID()
                         + ", Current locators: "
                         + BootUtil.arrayToCommaDelimitedString(_dlm.getLocators()));
@@ -174,13 +175,13 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
                     for (LookupLocator locator : locators)
                         _locatorsPendingRemovalEventTime.remove(locator);
 
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.fine("locators " + locators + " removed from pending removal locators");
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("locators " + locators + " removed from pending removal locators");
                     }
                     return;
                 } else if (_locators.containsKey(registrar.getServiceID())) {
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.fine("ServiceRegistrar with locators "
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("ServiceRegistrar with locators "
                                 + _locators.get(registrar.getServiceID())
                                 + " already registered");
                     }
@@ -191,7 +192,7 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
 
                 if (registrar.getServiceID().equals(_ourRegistrarServiceID) &&
                         _ourRegistrar == null) {
-                    if (_logger.isLoggable(Level.INFO)) {
+                    if (_logger.isInfoEnabled()) {
                         _logger.info("Found previously missing registrar with service id: " + registrar.getServiceID() +
                                 ", This lookup service will now update its state properly");
                     }
@@ -201,7 +202,7 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
                 }
 
                 if (_ourRegistrar != null) {
-                    if (_logger.isLoggable(Level.INFO)) {
+                    if (_logger.isInfoEnabled()) {
                         _logger.info("Adding locator " + locators[0]
                                 + " to ServiceRegistrar at "
                                 + _ourRegistrarLocator);
@@ -210,7 +211,7 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
                     JoinAdmin joinAdmin = (JoinAdmin) administrable.getAdmin();
                     joinAdmin.addLookupLocators(locators);
                 } else {
-                    if (_logger.isLoggable(Level.INFO)) {
+                    if (_logger.isInfoEnabled()) {
                         _logger.info("Adding locator " + locators[0]
                                 + " to DiscoveryLocatorManagement");
                     }
@@ -222,15 +223,15 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
                 locatorSet.add(locators[0]);
                 _locators.put(registrar.getServiceID(), locatorSet);
 
-                if (_logger.isLoggable(Level.FINER)) {
-                    _logger.finer("After addition, current locators are: "
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("After addition, current locators are: "
                             + BootUtil.arrayToCommaDelimitedString(_dlm.getLocators()));
                 }
 
             }
         } catch (RemoteException e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Failed adding lookup locator", e);
+            if (_logger.isWarnEnabled())
+                _logger.warn("Failed adding lookup locator", e);
         }
     }
 
@@ -239,8 +240,8 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
         Object service = event.getPreEventServiceItem().getService();
         ServiceRegistrar registrar = (ServiceRegistrar) service;
 
-        if (_logger.isLoggable(Level.FINER)) {
-            _logger.finer("ServiceRegistrar service removed with serviceID: "
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("ServiceRegistrar service removed with serviceID: "
                     + registrar.getServiceID()
                     + ", Current locators: "
                     + BootUtil.arrayToCommaDelimitedString(_dlm.getLocators()));
@@ -250,13 +251,13 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
             Set<LookupLocator> locators = _locators.get(registrar.getServiceID());
             if (locators != null) {
                 if (!_enabledSeedRemoval && anySeedLocator(locators)) {
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.fine("Not removing locators of registrar with service id: " + registrar.getServiceID() +
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Not removing locators of registrar with service id: " + registrar.getServiceID() +
                                 ", as seed removal is disabled");
                     }
                 } else if (!_locatorsPendingRemovalServiceIDs.containsKey(registrar.getServiceID())) {
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.fine("Adding locators " + locators + " to pending removal locators");
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Adding locators " + locators + " to pending removal locators");
                     }
 
                     _locatorsPendingRemovalServiceIDs.put(registrar.getServiceID(), locators);
@@ -264,14 +265,14 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
                     for (LookupLocator locator : locators)
                         _locatorsPendingRemovalEventTime.put(locator, eventTime);
                 } else {
-                    if (_logger.isLoggable(Level.FINER)) {
-                        _logger.finer("locators: "
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("locators: "
                                 + locators + " already added to pending removal locators");
                     }
                 }
             } else {
-                if (_logger.isLoggable(Level.FINER)) {
-                    _logger.finer("ServiceRegistrar with serviceID "
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("ServiceRegistrar with serviceID "
                             + registrar.getServiceID() + " already removed");
                 }
             }
@@ -324,8 +325,8 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
                     return CycleResult.IDLE_CONTINUE;
 
                 if (serviceIDs.size() >= _locators.size()) {
-                    if (_logger.isLoggable(Level.WARNING) && !_loggedPossibleDisconnetion) {
-                        _logger.warning("Found that all registered locators were removed, this could mean that this " +
+                    if (_logger.isWarnEnabled() && !_loggedPossibleDisconnetion) {
+                        _logger.warn("Found that all registered locators were removed, this could mean that this " +
                                 "machine has disconnected, so no locator removal will be made");
 
                         _loggedPossibleDisconnetion = true;
@@ -341,7 +342,7 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
                     LookupLocator[] locators = locatorsToRemove.toArray(new LookupLocator[locatorsToRemove.size()]);
 
                     if (_ourRegistrar != null) {
-                        if (_logger.isLoggable(Level.INFO)) {
+                        if (_logger.isInfoEnabled()) {
                             _logger.info("Removing locators "
                                     + locatorsToRemove
                                     + " from ServiceRegistrar at "
@@ -351,7 +352,7 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
                         JoinAdmin joinAdmin = (JoinAdmin) administrable.getAdmin();
                         joinAdmin.removeLookupLocators(locators);
                     } else {
-                        if (_logger.isLoggable(Level.INFO)) {
+                        if (_logger.isInfoEnabled()) {
                             _logger.info("Removing locators " + locatorsToRemove
                                     + " from DiscoveryLocatorManagement");
                         }
@@ -373,8 +374,8 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
                     // we have a JoinAdmin proxy, the calls to getAdmin and
                     // joinAdmin.removeLookupLocators are done from within
                     // the registrar jvm
-                    if (_logger.isLoggable(Level.WARNING)) {
-                        _logger.log(Level.WARNING, "Failed removing locators", e);
+                    if (_logger.isWarnEnabled()) {
+                        _logger.warn("Failed removing locators", e);
                     }
                 }
 
@@ -386,8 +387,8 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
     }
 
     private void notifyListeners(final LookupLocator[] locators) {
-        if (_logger.isLoggable(Level.FINER)) {
-            _logger.finer("Notifying registered listeners on locators changed event with locators: " +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Notifying registered listeners on locators changed event with locators: " +
                     StringUtils.arrayToCommaDelimitedString(locators));
         }
 
@@ -400,8 +401,8 @@ public class ServiceRegistrarServiceDiscoveryListener implements ServiceDiscover
                         listener.locatorsChanged(event);
                     } catch (Exception e) {
                         // ignore listener exceptions
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.log(Level.FINE, "Listener threw exception during notification", e);
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug("Listener threw exception during notification", e);
                         }
                     }
                 }

@@ -29,8 +29,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.gigaspaces.internal.remoting.routing.clustered.PostponedAsyncOperationsQueue.THREADS_NAME_PREFIX;
 
@@ -136,16 +137,16 @@ public class RemoteOperationFutureListener<T extends RemoteOperationResult> impl
         synchronized (_completionLatch) {
             // If already completed, ignore this result:
             if (isDone()) {
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.log(Level.FINEST, "Operation already completed, ignoring " + request.getRemoteOperationResult() + ((sourceProxy != null) ? " from " + sourceProxy.toLogMessage(request) : ""));
+                if (_logger.isTraceEnabled())
+                    _logger.trace("Operation already completed, ignoring " + request.getRemoteOperationResult() + ((sourceProxy != null) ? " from " + sourceProxy.toLogMessage(request) : ""));
                 return;
             }
 
             boolean isCompleted;
 
             try {
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.log(Level.FINEST, "Received " + request.getRemoteOperationResult() + ((sourceProxy != null) ? " from " + sourceProxy.toLogMessage(request) : ""));
+                if (_logger.isTraceEnabled())
+                    _logger.trace("Received " + request.getRemoteOperationResult() + ((sourceProxy != null) ? " from " + sourceProxy.toLogMessage(request) : ""));
                 isCompleted = onOperationResultArrival(request);
                 if (isCompleted && _getResultOnCompletion)
                     this._result = getResult(request);

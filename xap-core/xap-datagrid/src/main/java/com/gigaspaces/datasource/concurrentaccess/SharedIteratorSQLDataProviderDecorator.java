@@ -23,8 +23,9 @@ import com.j_spaces.core.client.SQLQuery;
 
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Decorates a {@link SQLDataProvider} with additional property, concurrent request for an iterator
@@ -37,7 +38,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class SharedIteratorSQLDataProviderDecorator<T> implements SQLDataProvider<T>, ISharedDataIteratorSourceStateChangedListener<T> {
-    private final static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT_SHARED_ITERATOR);
+    private final static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT_SHARED_ITERATOR);
 
     private final SQLDataProvider<T> _sqlDataProvider;
     private final ConcurrentHashMap<SQLQuery<T>, SharedDataIteratorSource<T>> _queryToSources;
@@ -68,13 +69,13 @@ public class SharedIteratorSQLDataProviderDecorator<T> implements SQLDataProvide
             try {
                 return sharedDataIteratorSource.getIterator();
             } catch (SharedDataIteratorSourceClosedException e) {
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest("shared iterator source is already closed, creating a new one");
+                if (_logger.isTraceEnabled())
+                    _logger.trace("shared iterator source is already closed, creating a new one");
                 //The mediator was closed exactly at this point, create a new one
                 sharedDataIteratorSource = createSource(query);
             } catch (SharedDataIteratorSourceExpiredException e) {
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest("shared iterator source is already expired, creating a new one");
+                if (_logger.isTraceEnabled())
+                    _logger.trace("shared iterator source is already expired, creating a new one");
                 //The mediator has expired exactly at this point, create a new one
                 sharedDataIteratorSource = createSource(query);
             }
@@ -82,20 +83,20 @@ public class SharedIteratorSQLDataProviderDecorator<T> implements SQLDataProvide
     }
 
     public void init(Properties prop) throws DataSourceException {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("init shared iterator SQL data provider decorator");
+        if (_logger.isDebugEnabled())
+            _logger.debug("init shared iterator SQL data provider decorator");
         _sqlDataProvider.init(prop);
     }
 
     public DataIterator<T> initialLoad() throws DataSourceException {
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("initialLoad called on shared iterator SQL data provider decorator");
+        if (_logger.isTraceEnabled())
+            _logger.trace("initialLoad called on shared iterator SQL data provider decorator");
         return _sqlDataProvider.initialLoad();
     }
 
     public void shutdown() throws DataSourceException {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("shutdown shared iterator SQL data provider decorator");
+        if (_logger.isDebugEnabled())
+            _logger.debug("shutdown shared iterator SQL data provider decorator");
         _queryToSources.clear();
         _sourcesToQuery.clear();
         _sqlDataProvider.shutdown();
@@ -115,8 +116,8 @@ public class SharedIteratorSQLDataProviderDecorator<T> implements SQLDataProvide
         if (previousMediator != null)
             sharedDataIteratorSource = previousMediator;
         else {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("create new shared iterator source for query " + query.toString());
+            if (_logger.isTraceEnabled())
+                _logger.trace("create new shared iterator source for query " + query.toString());
             _sourcesToQuery.put(sharedDataIteratorSource, query);
         }
         return sharedDataIteratorSource;
@@ -132,8 +133,8 @@ public class SharedIteratorSQLDataProviderDecorator<T> implements SQLDataProvide
 
     private void handleSourceStateChangedEvent(SharedDataIteratorSource<T> sender) {
         SQLQuery<T> query = _sourcesToQuery.remove(sender);
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("shared iterator source is closed or expired, detaching from local table [" + query.toString() + "]");
+        if (_logger.isTraceEnabled())
+            _logger.trace("shared iterator source is closed or expired, detaching from local table [" + query.toString() + "]");
         if (query != null)
             _queryToSources.remove(query);
     }

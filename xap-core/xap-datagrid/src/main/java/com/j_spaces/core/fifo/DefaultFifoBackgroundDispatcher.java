@@ -26,7 +26,7 @@ import com.j_spaces.core.exception.ClosedResourceException;
 import com.j_spaces.core.sadapter.SAException;
 
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
+
 
 /**
  * position fifo requests for notify and non-notify templates background search and consume
@@ -132,8 +132,8 @@ public class DefaultFifoBackgroundDispatcher extends FifoBackgroundDispatcher {
                         _shutDown.wait();
                     }
                 } catch (InterruptedException ie) {
-                    if (_logger.isLoggable(Level.FINEST))
-                        _logger.log(Level.FINEST, Thread.currentThread().getName() + " interrupted.", ie);
+                    if (_logger.isTraceEnabled())
+                        _logger.trace(Thread.currentThread().getName() + " interrupted.", ie);
                     //Restore interrupted state
                     Thread.currentThread().interrupt();
                 }
@@ -155,8 +155,8 @@ public class DefaultFifoBackgroundDispatcher extends FifoBackgroundDispatcher {
                         try {
                             rd = _fifoRecents.take();
                         } catch (InterruptedException ex) {
-                            if (_logger.isLoggable(Level.FINEST))
-                                _logger.log(Level.FINEST, this.getName() + " interrupted.", ex);
+                            if (_logger.isTraceEnabled())
+                                _logger.trace(this.getName() + " interrupted.", ex);
 
                             //Restore the interrupted status
                             interrupt();
@@ -170,8 +170,8 @@ public class DefaultFifoBackgroundDispatcher extends FifoBackgroundDispatcher {
 
                         handleRequest(rd);
                     } catch (ClosedResourceException ex) {
-                        if (_logger.isLoggable(Level.SEVERE))
-                            _logger.log(Level.SEVERE, "Caught Exception", ex);
+                        if (_logger.isErrorEnabled())
+                            _logger.error("Caught Exception", ex);
                         continue;
                     }
                 } finally {
@@ -179,8 +179,8 @@ public class DefaultFifoBackgroundDispatcher extends FifoBackgroundDispatcher {
                         if (_context != null && (_closeThread || _fifoRecents.peek() == null))
                             _context = _cacheManager.freeCacheContext(_context);
                     } catch (Exception ex) {
-                        if (_logger.isLoggable(Level.SEVERE))
-                            _logger.log(Level.SEVERE, "Recent FIFO thread caught Exception.", ex);
+                        if (_logger.isErrorEnabled())
+                            _logger.error("Recent FIFO thread caught Exception.", ex);
                         _context = null;
                         continue;
                     }

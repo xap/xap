@@ -99,7 +99,7 @@ public class SigarHolder {
             try {
                 result.put(pid, sigar.getProcState(pid));
             } catch (SigarException e) {
-                //logger.log(Level.WARNING, "While scanning for child processes of process " + ppid + ", could not read process state of Process: " + pid + ". Ignoring.", e);
+                //logger.warn("While scanning for child processes of process " + ppid + ", could not read process state of Process: " + pid + ". Ignoring.", e);
             }
         }
         return result;

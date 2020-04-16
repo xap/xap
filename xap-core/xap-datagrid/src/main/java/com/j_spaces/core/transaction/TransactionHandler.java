@@ -40,8 +40,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_UNUSED_TXN_DEFAULT;
 import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_UNUSED_TXN_PROP;
@@ -93,8 +94,8 @@ public class TransactionHandler {
         _engine = engine;
         clean_unused_xtns_interval = configReader.getIntSpaceProperty(LM_EXPIRATION_TIME_UNUSED_TXN_PROP, String.valueOf(LM_EXPIRATION_TIME_UNUSED_TXN_DEFAULT));
         Logger logger = CacheManager.getCacheLogger();
-        if (logger.isLoggable(Level.FINE))
-            logger.fine("TransactionHandler BASIC_TIME_FOR_PREPARED_XTN=" + BASIC_TIME_FOR_PREPARED_XTN + " EXTENTION_TIME_FOR_PREPARED_XTN-" + EXTENTION_TIME_FOR_PREPARED_XTN);
+        if (logger.isDebugEnabled())
+            logger.debug("TransactionHandler BASIC_TIME_FOR_PREPARED_XTN=" + BASIC_TIME_FOR_PREPARED_XTN + " EXTENTION_TIME_FOR_PREPARED_XTN-" + EXTENTION_TIME_FOR_PREPARED_XTN);
     }
 
     /**
@@ -492,10 +493,10 @@ public class TransactionHandler {
         XtnEntry xtnEntry = m_XtnTable.get(txn);
         Logger logger = CacheManager.getCacheLogger();
         //Do no remove/change logger, using in unitTest see @PollingContainerTest
-        if (logger.isLoggable(Level.FINER)) {
+        if (logger.isDebugEnabled()) {
             if (!(_engine.getSpaceImpl().isBackup() || opid == null)) {
 
-                logger.finer("DebugForTest:ThreadID:" + Thread.currentThread().getName() + "TransactionID= " + txn.id + "   operationID={" + opid.toString() + "}");
+                logger.debug("DebugForTest:ThreadID:" + Thread.currentThread().getName() + "TransactionID= " + txn.id + "   operationID={" + opid.toString() + "}");
             }
         }
         if (xtnEntry == null || !xtnEntry.createdOnNonBackup() || opid == null || !xtnEntry.getXtnData().isOperationID(opid)) {
@@ -503,11 +504,11 @@ public class TransactionHandler {
         }
         TransactionException exception = new TransactionException("Transaction was disconnected due to communication fault: " +
                 txn.toString());
-        _engine.getLogger().log(Level.WARNING, "Transaction disconnection has been detected, Transaction will be aborted", exception);
+        _engine.getLogger().warn("Transaction disconnection has been detected, Transaction will be aborted", exception);
         try{
             _engine.abort(txn.getTransactionManager(), txn, false, opid);
         } catch (Exception e){
-            _engine.getLogger().log(Level.WARNING, "Failed to abort transaction "+txn.toString(), e);
+            _engine.getLogger().warn("Failed to abort transaction "+txn.toString(), e);
         }
         addToPhantomGlobalXtns(txn);
         throw exception;

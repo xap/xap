@@ -24,8 +24,9 @@ import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -37,7 +38,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class HeapDump implements HeapDumpMBean {
-    private final static Logger logger = Logger.getLogger(HeapDump.class.getName());
+    private final static Logger logger = LoggerFactory.getLogger(HeapDump.class.getName());
     private volatile boolean enabled = true;
     private volatile int maxHeaps = 1;
     private volatile int currentHeaps = 0;
@@ -103,7 +104,7 @@ public class HeapDump implements HeapDumpMBean {
     public String createHeapDump() throws IOException, InterruptedException {
         File file = new File(subsPid(getOutputFileName()));
         if (file.exists()) {
-            logger.fine("Deleting file " + file.getAbsolutePath());
+            logger.debug("Deleting file " + file.getAbsolutePath());
             //noinspection ResultOfMethodCallIgnored
             file.delete();
         }
@@ -144,7 +145,7 @@ public class HeapDump implements HeapDumpMBean {
             createHeapDump();
             return true;
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Cmd " + Arrays.asList(cmd) + " throws: " + e, e);
+            logger.warn("Cmd " + Arrays.asList(cmd) + " throws: " + e, e);
         }
         return false;
     }

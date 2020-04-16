@@ -17,7 +17,8 @@
 package com.gigaspaces.metrics;
 
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -26,7 +27,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class MetricSamplerConfig {
 
-    private static final Logger logger = Logger.getLogger(MetricSamplerConfig.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(MetricSamplerConfig.class.getName());
 
     static final long DEFAULT_SAMPLING_RATE = TimeUnit.SECONDS.toMillis(5);
 
@@ -47,14 +48,14 @@ public class MetricSamplerConfig {
     private long initReportRate(Long reportRate) {
         long reportRateValue = reportRate != null ? reportRate.longValue() : sampleRate;
         if (reportRateValue < sampleRate) {
-            logger.warning("reportRate (" + reportRate + ") cannot be less than sampleRate (" + sampleRate +
+            logger.warn("reportRate (" + reportRate + ") cannot be less than sampleRate (" + sampleRate +
                     ") - setting reportRate to sampleRate");
             return sampleRate;
         }
         if (reportRateValue != sampleRate && reportRateValue % sampleRate != 0) {
             int batchSize = (int) Math.ceil(reportRateValue / (double) sampleRate);
             reportRateValue = batchSize * sampleRate;
-            logger.warning("reportRate was increased from " + reportRate + " to " + reportRateValue +
+            logger.warn("reportRate was increased from " + reportRate + " to " + reportRateValue +
                     " - must be a multiple of sampleRate (" + sampleRate + ")");
         }
         return reportRateValue;

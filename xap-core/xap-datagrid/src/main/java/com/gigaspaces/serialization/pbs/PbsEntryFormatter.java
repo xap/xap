@@ -73,8 +73,9 @@ import java.util.RandomAccess;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides PBS services for writing/reading Entries to/from the space.
@@ -84,7 +85,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class PbsEntryFormatter {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_COMMON);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_COMMON);
 
     private static final short StreamVersion = 1;
 
@@ -841,7 +842,7 @@ public class PbsEntryFormatter {
                 else
                     throw e;
             } catch (ClassNotFoundException ei) {
-                _logger.log(Level.SEVERE, "PBS error: Object array class not found [" + className + "]");
+                _logger.error("PBS error: Object array class not found [" + className + "]");
                 throw new ConversionException("PBS error: Object array class not found [" + className + "].", e);
             }
         }

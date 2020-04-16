@@ -28,15 +28,16 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Yohana Khoury
  * @since 12.1
  */
 public class JettyManagerRestLauncher implements Closeable {
-    private static final Logger logger = Logger.getLogger(Constants.LOGGER_MANAGER);
+    private static final Logger logger = LoggerFactory.getLogger(Constants.LOGGER_MANAGER);
 
     private AbstractXmlApplicationContext application;
     private Server server;
@@ -60,7 +61,7 @@ public class JettyManagerRestLauncher implements Closeable {
         try {
             final XapManagerConfig config = SystemInfo.singleton().getManagerClusterInfo().getCurrServer();
             if (config == null) {
-                logger.severe("Cannot start server  - this host is not part of the xap managers configuration");
+                logger.error("Cannot start server  - this host is not part of the xap managers configuration");
                 System.exit(1);
             }
             String customJettyPath = System.getProperty(SystemProperties.MANAGER_REST_JETTY_CONFIG);
@@ -83,7 +84,7 @@ public class JettyManagerRestLauncher implements Closeable {
 
                 server.start();
             }
-            if (logger.isLoggable(Level.INFO)) {
+            if (logger.isInfoEnabled()) {
                 String connectors = "";
                 for (Connector connector : server.getConnectors()) {
                     if (connector instanceof ServerConnector) {
@@ -94,7 +95,7 @@ public class JettyManagerRestLauncher implements Closeable {
                 logger.info("Started at " + connectors);
             }
         }catch(Exception e){
-            logger.log(Level.SEVERE, e.toString(), e);
+            logger.error(e.toString(), e);
             System.exit(-1);
         }
     }
@@ -113,15 +114,15 @@ public class JettyManagerRestLauncher implements Closeable {
             logger.info( filteredFiles.length + " rest jetty files are deleting from [" + tempDirectory.getPath() + "]");
 
             for (File file : filteredFiles) {
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine("File name:" + file.getName() + ", exists:" + file.exists());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("File name:" + file.getName() + ", exists:" + file.exists());
                 }
                 try {
                     FileUtils.deleteFileOrDirectory(file);
                     logger.info("Deleted temp file :" + file.getName() );
                 } catch (Throwable t) {
-                    if (logger.isLoggable(Level.WARNING)) {
-                        logger.log(Level.WARNING,
+                    if (logger.isWarnEnabled()) {
+                        logger.warn(
                                    "Failed to delete jetty temp file, " + t.toString());
                     }
                 }
@@ -176,8 +177,8 @@ public class JettyManagerRestLauncher implements Closeable {
                 File tmpDir = File.createTempFile( webAppTmpDir, ".dir", workLocation );
                 webApp.setTempDirectory( tmpDir );
             } catch (IOException e) {
-                if( logger.isLoggable(Level.SEVERE) ) {
-                    logger.log(Level.SEVERE, e.toString(), e);
+                if( logger.isErrorEnabled() ) {
+                    logger.error(e.toString(), e);
                 }
             }
         }
@@ -203,7 +204,7 @@ public class JettyManagerRestLauncher implements Closeable {
                                     +SystemProperties.MANAGER_REST_SSL_ENABLED+"'. " +
                                     "For more information: '" + PlatformVersion.getProductHelpUrl() + "/admin/xap-manager-rest.html#security'");
 
-                logger.warning("Security is enabled, but SSL was explicitly disabled - passwords will be sent over the network without encryption");
+                logger.warn("Security is enabled, but SSL was explicitly disabled - passwords will be sent over the network without encryption");
             }
             return null;
         }
@@ -229,7 +230,7 @@ public class JettyManagerRestLauncher implements Closeable {
             try {
                 server.stop();
             } catch (Exception e) {
-                logger.warning("Failed to stop server: " + e);
+                logger.warn("Failed to stop server: " + e);
             }
         }
         if (this.application != null)

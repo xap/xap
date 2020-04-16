@@ -35,7 +35,8 @@ import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.metrics.MetricRegistrator;
 
 import java.util.List;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**

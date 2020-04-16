@@ -25,8 +25,9 @@ import com.j_spaces.core.cluster.ReplicationFilterProvider;
 import com.j_spaces.core.cluster.ReplicationPolicy;
 import com.j_spaces.core.cluster.ReplicationPolicy.ReplicationPolicyDescription;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Replication Filter Manager.
@@ -48,7 +49,7 @@ public class ReplicationFilterManager implements ISpaceComponentsHandler {
     private boolean _shutdownSpaceOnInitFailure;
 
     //logger
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_REPLICATION);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_REPLICATION);
 
     public ReplicationFilterManager(ReplicationPolicy replPolicy, SpaceURL spaceURL, IJSpace spaceProxy) {
         _replicationPolicy = replPolicy;
@@ -71,7 +72,7 @@ public class ReplicationFilterManager implements ISpaceComponentsHandler {
 
     private void buildFilters(
             ReplicationFilterProvider replicationFilterProvider) {
-        _logger.log(Level.FINE, "Using replication filters injected using replication filter provider, will not use definitions in cluster schema");
+        _logger.debug("Using replication filters injected using replication filter provider, will not use definitions in cluster schema");
         if (replicationFilterProvider.getInputFilter() != null) {
             _inputFilterWrapper = new ReplicationFilterWrapper(replicationFilterProvider.getInputFilter());
         }

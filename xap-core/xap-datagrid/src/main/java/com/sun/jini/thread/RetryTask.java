@@ -21,8 +21,9 @@ import com.gigaspaces.time.SystemTime;
 import com.sun.jini.constants.TimeConstants;
 import com.sun.jini.thread.WakeupManager.Ticket;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class RetryTask implements TaskManager.Task, TimeConstants {
     private final TaskManager manager;    // the TaskManager for this task
@@ -55,7 +56,7 @@ public abstract class RetryTask implements TaskManager.Task, TimeConstants {
      * Logger for this class
      */
     private static final Logger logger =
-            Logger.getLogger("com.sun.jini.thread.RetryTask");
+            LoggerFactory.getLogger("com.sun.jini.thread.RetryTask");
 
     /**
      * Create a new <code>RetryTask</code> that will be scheduled with the given task manager, and
@@ -97,8 +98,8 @@ public abstract class RetryTask implements TaskManager.Task, TimeConstants {
                 attempt++;
                 long at = retryTime();    // ... try, try again
 
-                if (logger.isLoggable(Level.FINEST)) {
-                    logger.log(Level.FINEST, "retry of {0} in {1} ms",
+                if (logger.isTraceEnabled()) {
+                    logger.trace("retry of {0} in {1} ms",
                             new Object[]{this,
                                     new Long(at - SystemTime.timeMillis())});
                 }

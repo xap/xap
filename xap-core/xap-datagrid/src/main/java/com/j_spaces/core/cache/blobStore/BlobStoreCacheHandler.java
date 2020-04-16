@@ -24,8 +24,9 @@ import com.j_spaces.core.cache.CacheOperationReason;
 import com.j_spaces.core.cache.context.Context;
 
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_DELAULT;
 import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP;
@@ -38,7 +39,7 @@ import static com.j_spaces.core.Constants.CacheManager.FULL_CACHE_MANAGER_BLOBST
  */
 @com.gigaspaces.api.InternalApi
 public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
 
     private final int BLOB_STORE_INTERNAL_CACHE_CAPACITY;
 
@@ -51,7 +52,7 @@ public class BlobStoreCacheHandler implements IBlobStoreCacheHandler {
 
     public BlobStoreCacheHandler(Properties properties) {
         BLOB_STORE_INTERNAL_CACHE_CAPACITY = Integer.parseInt(properties.getProperty(FULL_CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_PROP, CACHE_MANAGER_BLOBSTORE_CACHE_SIZE_DELAULT));
-        if (_logger.isLoggable(Level.INFO)) {
+        if (_logger.isInfoEnabled()) {
             _logger.info("BlobStore space data internal cache size=" + BLOB_STORE_INTERNAL_CACHE_CAPACITY);
         }
         _blobStoreCacheImpl = new BlobStoreCacheImpl(BLOB_STORE_INTERNAL_CACHE_CAPACITY);

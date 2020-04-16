@@ -25,7 +25,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.UUID;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Alon Shoham
@@ -34,7 +35,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class RenewIteratorLeaseSpaceRequestInfo extends AbstractSpaceRequestInfo {
     private static final long serialVersionUID = 1L;
-    private static final Logger _devLogger = Logger.getLogger(Constants.LOGGER_DEV);
+    private static final Logger _devLogger = LoggerFactory.getLogger(Constants.LOGGER_DEV);
     private UUID _iteratorId;
     /**
      * Required for Externalizable.

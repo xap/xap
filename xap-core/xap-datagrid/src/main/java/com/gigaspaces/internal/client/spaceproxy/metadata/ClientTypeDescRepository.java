@@ -36,12 +36,13 @@ import org.jini.rio.boot.CodeChangeClassLoader;
 
 import java.net.MalformedURLException;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class ClientTypeDescRepository {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_METADATA);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_METADATA);
 
     private final IDirectSpaceProxy _spaceProxy;
     private final Map<String, ITypeDesc> _typeMap;
@@ -83,8 +84,8 @@ public class ClientTypeDescRepository {
 
         synchronized (_lock) {
             _typeMap.remove(typeName);
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Removed type '" + typeName + "' from proxy type manager.");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Removed type '" + typeName + "' from proxy type manager.");
         }
 
         logExit("ClientTypeDescRepository.remove", "typeName", typeName);
@@ -95,8 +96,8 @@ public class ClientTypeDescRepository {
 
         synchronized (_lock) {
             _typeMap.clear();
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Cleared all types from proxy type manager.");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Cleared all types from proxy type manager.");
         }
 
         logExit("ClientTypeDescRepository.clear", "", "");
@@ -107,8 +108,8 @@ public class ClientTypeDescRepository {
 
         final ITypeDesc typeDesc = _typeMap.get(typeName);
 
-        if (typeDesc == null && _logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Proxy type manager does not contain type descriptor for type '" + typeName + "'.");
+        if (typeDesc == null && _logger.isDebugEnabled())
+            _logger.debug("Proxy type manager does not contain type descriptor for type '" + typeName + "'.");
 
         logExit("ClientTypeDescRepository.getTypeDescIfExistsInProxy", "typeName", typeName);
         return typeDesc;
@@ -129,16 +130,16 @@ public class ClientTypeDescRepository {
                 typeDesc = _typeMap.get(typeName);
                 if (isValid(typeDesc))
                     return typeDesc;
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Proxy type manager does not contain type descriptor for type '" + typeName + "', searching server.");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Proxy type manager does not contain type descriptor for type '" + typeName + "', searching server.");
 
                 // Get type descriptor from server:
                 typeDesc = _spaceProxy.getTypeDescFromServer(typeName);
                 // If type descriptor is valid, register it in cache:
                 if (isValid(typeDesc))
                     _typeMap.put(typeName, typeDesc);
-                else if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Server type manager does not contain type descriptor for type '" + typeName + "'.");
+                else if (_logger.isDebugEnabled())
+                    _logger.debug("Server type manager does not contain type descriptor for type '" + typeName + "'.");
 
                 // return result:
                 return typeDesc;
@@ -228,8 +229,8 @@ public class ClientTypeDescRepository {
                 if (isValid(typeDesc) && hasRequiredIntrospector(typeDesc, objectType))
                     return typeDesc;
 
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Proxy type manager does not contain type descriptor for type '" + typeName + "', creating type descriptor from " + objectType + ".");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Proxy type manager does not contain type descriptor for type '" + typeName + "', creating type descriptor from " + objectType + ".");
 
                 final String codebase = _defaultCodebase;
                 switch (objectType) {
@@ -319,13 +320,13 @@ public class ClientTypeDescRepository {
                         return;
 
                     // Get type descriptor from packet, if available:
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.log(Level.FINE, "Proxy type manager does not contain type descriptor for type '" + typeName + "', using packet's type descriptor.");
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("Proxy type manager does not contain type descriptor for type '" + typeName + "', using packet's type descriptor.");
                     typeDesc = packetTypeDesc;
                     // Otherwise, load by type name:
                     if (typeDesc == null) {
-                        if (_logger.isLoggable(Level.FINE))
-                            _logger.log(Level.FINE, "Packet's type descriptor is null, loading type '" + typeName + "' by name.");
+                        if (_logger.isDebugEnabled())
+                            _logger.debug("Packet's type descriptor is null, loading type '" + typeName + "' by name.");
                         typeDesc = getTypeDescByName(typeName, null);
                     }
 
@@ -371,8 +372,8 @@ public class ClientTypeDescRepository {
             if (isValid(typeDesc) && typeDesc.isConcreteType())
                 return typeDesc;
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Proxy type manager does not contain type descriptor for POJO class '" + typeName + "', creating it.");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Proxy type manager does not contain type descriptor for POJO class '" + typeName + "', creating it.");
 
 
             if (_spaceProxy.isEmbedded() &&
@@ -404,22 +405,22 @@ public class ClientTypeDescRepository {
             if (codebase == null)
                 codebase = _defaultCodebase;
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Proxy type manager does not contain type descriptor for type '" + typeName + "', searching for a java class by the same name.");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Proxy type manager does not contain type descriptor for type '" + typeName + "', searching for a java class by the same name.");
 
             // If type represents a concrete java class, create a type descriptor based on the class:
             final Class<?> realClass = getRealClass(typeName, codebase);
             if (realClass != null) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Java class '" + typeName + "' was found, creating space type descriptor.");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Java class '" + typeName + "' was found, creating space type descriptor.");
 
                 if (Entry.class.isAssignableFrom(realClass))
                     return _typeDescFactory.createEntryTypeDesc(null, typeName, codebase, realClass);
                 return loadPojoTypeDesc(realClass, codebase);
             }
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Java class '" + typeName + "' was not found, searching server.");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Java class '" + typeName + "' was not found, searching server.");
 
             // Otherwise, get type descriptor from server, if available:
             final ITypeDesc serverTypeDesc = _spaceProxy.getTypeDescFromServer(typeName);
@@ -428,14 +429,14 @@ public class ClientTypeDescRepository {
 
             // Otherwise, create type descriptor from external entry, if available:
             if (externalEntry != null) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Server type manager does not contain type descriptor for type '" + typeName + "', loading type descriptor from ExternalEntry.");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Server type manager does not contain type descriptor for type '" + typeName + "', loading type descriptor from ExternalEntry.");
 
                 return _typeDescFactory.createExternalEntryTypeDesc(externalEntry, codebase);
             }
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Server type manager does not contain type descriptor for type '" + typeName + "'.");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Server type manager does not contain type descriptor for type '" + typeName + "'.");
 
             // Otherwise, throw an exception:
             String message = "Failed to load space type descriptor for type '" + typeName + "'.";
@@ -468,8 +469,8 @@ public class ClientTypeDescRepository {
                 } catch (SpaceMetadataException e) {
 
                     if (ignoreException) {
-                        if (_logger.isLoggable(Level.FINE))
-                            _logger.log(Level.FINE, "Failed to register type descriptor in server", e);
+                        if (_logger.isDebugEnabled())
+                            _logger.debug("Failed to register type descriptor in server", e);
                     } else
                         throw e;
                 }
@@ -478,8 +479,8 @@ public class ClientTypeDescRepository {
                 // Cache loaded type descriptor:
                 _typeMap.put(typeDesc.getTypeName(), typeDesc);
 
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Created type descriptor " + typeDesc);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Created type descriptor " + typeDesc);
             }
         } finally {
             logExit("ClientTypeDescRepository.registerTypeDesc", "typeName", typeName);
@@ -502,18 +503,18 @@ public class ClientTypeDescRepository {
             // If real class extends ExternalEntry, ignore it:
             if (ExternalEntry.class.isAssignableFrom(realClass)) {
                 realClass = null;
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Class '" + className + "'' was loaded successfully but ignored since it extends ExternalEntry.");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Class '" + className + "'' was loaded successfully but ignored since it extends ExternalEntry.");
             } else {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Class '" + className + "'' was loaded successfully.");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Class '" + className + "'' was loaded successfully.");
             }
         } catch (ClassNotFoundException e) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Class '" + className + "'' could not be loaded since it was not found.", e);
+            if (_logger.isDebugEnabled())
+                _logger.debug("Class '" + className + "'' could not be loaded since it was not found.", e);
         } catch (MalformedURLException e) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Class '" + className + "'' could not be loaded since the codebase [" + codebase + "] is malformed.", e);
+            if (_logger.isDebugEnabled())
+                _logger.debug("Class '" + className + "'' could not be loaded since the codebase [" + codebase + "] is malformed.", e);
         }
 
         // If real class was located, validate it:
@@ -533,12 +534,12 @@ public class ClientTypeDescRepository {
     }
 
     private static void logEnter(String methodName, String argName, Object argValue) {
-        if (_logger.isLoggable(Level.FINER))
-            _logger.log(Level.FINER, "Entered " + methodName + ", " + argName + "=[" + argValue + "].");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Entered " + methodName + ", " + argName + "=[" + argValue + "].");
     }
 
     private static void logExit(String methodName, String argName, Object argValue) {
-        if (_logger.isLoggable(Level.FINER))
-            _logger.log(Level.FINER, "Finished " + methodName + ", " + argName + "=[" + argValue + "].");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Finished " + methodName + ", " + argName + "=[" + argValue + "].");
     }
 }

@@ -45,8 +45,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author idan
@@ -56,7 +57,7 @@ import java.util.logging.Logger;
 public class ReadTakeEntriesSpaceOperationRequest extends SpaceOperationRequest<ReadTakeEntriesSpaceOperationResult> {
     private static final long serialVersionUID = 1L;
 
-    private static final Logger _devLogger = Logger.getLogger(Constants.LOGGER_DEV);
+    private static final Logger _devLogger = LoggerFactory.getLogger(Constants.LOGGER_DEV);
 
     private ITemplatePacket _templatePacket;
     private Transaction _txn;
@@ -205,8 +206,8 @@ public class ReadTakeEntriesSpaceOperationRequest extends SpaceOperationRequest<
         result.processExecutionException();
 
         if (_totalNumberOfMatchesEntries > 0
-                && _devLogger.isLoggable(Level.FINEST)) {
-            _devLogger.finest(_totalNumberOfMatchesEntries
+                && _devLogger.isTraceEnabled()) {
+            _devLogger.trace(_totalNumberOfMatchesEntries
                     + " entries were scanned in the space in order to return the result for the "
                     + (_isTake ? "take" : "read") + " multiple operation of query "
                     + QueryUtils.getQueryDescription(_query));

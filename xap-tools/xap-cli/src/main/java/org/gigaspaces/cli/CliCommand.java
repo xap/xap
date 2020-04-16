@@ -9,8 +9,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Command(
         versionProvider = XapVersionProvider.class,
@@ -35,11 +36,11 @@ public abstract class CliCommand implements Callable<Object> {
         try {
             execute();
         } catch (Exception e) {
-            if (LOGGER.isLoggable(Level.FINEST)) {
+            if (LOGGER.isTraceEnabled()) {
                 final String stackTrace = BootUtil.getStackTrace(e);
-                LOGGER.log(Level.FINEST, "Execution of [" + this.getClass()+"] threw an exception.\nStack trace: "+stackTrace, e);
-            } else if(LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.log(Level.FINE, "Execution of [" + this.getClass()+"] threw an exception.", e);
+                LOGGER.trace("Execution of [" + this.getClass()+"] threw an exception.\nStack trace: "+stackTrace, e);
+            } else if(LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Execution of [" + this.getClass()+"] threw an exception.", e);
             }
             throw e;
         }
@@ -48,7 +49,7 @@ public abstract class CliCommand implements Callable<Object> {
 
     public CliCommand(){
         GSLogConfigLoader.getLoader("cli");
-        LOGGER = Logger.getLogger(Constants.LOGGER_CLI);
+        LOGGER = LoggerFactory.getLogger(Constants.LOGGER_CLI);
     }
 
     protected void beforeExecute() {

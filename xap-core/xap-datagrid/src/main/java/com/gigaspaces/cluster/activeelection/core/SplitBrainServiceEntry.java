@@ -24,14 +24,15 @@ import com.j_spaces.lookup.entry.HostName;
 
 import net.jini.core.lookup.ServiceItem;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @com.gigaspaces.api.InternalApi
 public class SplitBrainServiceEntry
         implements Comparable<SplitBrainServiceEntry> {
     @SuppressWarnings("UnusedDeclaration")
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_CLUSTER_ACTIVE_ELECTION);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_CLUSTER_ACTIVE_ELECTION);
 
 
     private final ServiceItem _service;

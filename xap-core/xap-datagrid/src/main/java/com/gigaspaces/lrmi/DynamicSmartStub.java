@@ -65,8 +65,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -92,7 +93,7 @@ public class DynamicSmartStub
     private static final long serialVersionUID = 1L;
     private static final byte SERIAL_VERSION = Byte.MIN_VALUE;
 
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
 
     /**
      * direct reference to the exported object, <code>null</code> if this stub was exited from
@@ -249,8 +250,8 @@ public class DynamicSmartStub
             String methodDesc = LRMIUtilities.getMethodNameAndDescriptor(dynamicProxyInvMethod);
             targetInkMethod = _methodDescTable.get(methodDesc);
             if (targetInkMethod == null) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, "DynamicSmartStub - Failed to get method descriptor for  [" + dynamicProxyInvMethod + "] target class " +
+                if (_logger.isErrorEnabled()) {
+                    _logger.error("DynamicSmartStub - Failed to get method descriptor for  [" + dynamicProxyInvMethod + "] target class " +
                             "[" + _localObj.getClass() + "].\nMethod signature: " + methodDesc);
                 }
 
@@ -278,26 +279,26 @@ public class DynamicSmartStub
     static private Object _invoke(final Object targetObject, final IMethod invokeMethod, Object[] args)
             throws Throwable {
         try {
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 LogUtils.entering(_logger, "DynamicSmartStub - " + targetObject.getClass().getName(), invokeMethod.getName(), args);
 
             Object resultInv = invokeMethod.invoke(targetObject, args);
 
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 LogUtils.exiting(_logger, "DynamicSmartStub - " + targetObject.getClass().getName(), invokeMethod.getName(), resultInv);
 
             return resultInv;
 
         } catch (InvocationTargetException e) {
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.log(Level.FINEST, "DynamicSmartStub - Invoke method: [" + invokeMethod + "] on " +
+            if (_logger.isTraceEnabled()) {
+                _logger.trace("DynamicSmartStub - Invoke method: [" + invokeMethod + "] on " +
                         "[" + targetObject.getClass() + "] thrown exception: " + e.toString());
             }
 
             throw e.getTargetException();
         } catch (IllegalArgumentException e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "DynamicSmartStub - Failed to invoke method: [" + invokeMethod + "] on " +
+            if (_logger.isErrorEnabled()) {
+                _logger.error("DynamicSmartStub - Failed to invoke method: [" + invokeMethod + "] on " +
                         "[" + targetObject.getClass() + "] thrown exception: " + e.toString() +
                         "\nInvoke method ClassLoader: " + invokeMethod.getDeclaringClass().getClassLoader() +
                         "\nTarget object instance ClassLoader: " + targetObject.getClass().getClassLoader());
@@ -306,8 +307,8 @@ public class DynamicSmartStub
             throw e;
 
         } catch (IllegalAccessException e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "DynamicSmartStub - Failed to invoke method: " + invokeMethod + "." +
+            if (_logger.isErrorEnabled()) {
+                _logger.error("DynamicSmartStub - Failed to invoke method: " + invokeMethod + "." +
                         "\nMethod does not have an access to the definition of " + targetObject.getClass() + " class.");
             }
 
@@ -355,8 +356,8 @@ public class DynamicSmartStub
                 return _invoke(_localObj, invokeMethod, args);
             }// if
 
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("DynamicSmartStub - declared ClassLoader of invoke method is not is assignable from ClassLoader of localObject." +
+            if (_logger.isTraceEnabled())
+                _logger.trace("DynamicSmartStub - declared ClassLoader of invoke method is not is assignable from ClassLoader of localObject." +
                         " Converting method arguments to ClassLoader of localObject." +
                         "\nMethod: " + invokeMethod +
                         "\nDeclared Method ClassLoader: " + invokeMethod.getDeclaringClass().getClassLoader() +
@@ -497,8 +498,8 @@ public class DynamicSmartStub
                 /* ~cache */
                 _remoteInvHandlerCache.put(_connectionURL, _remoteInvHandler);
 
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine(Thread.currentThread() + " DynamicSmartStub prepared connection: " + toString());
+                if (_logger.isDebugEnabled())
+                    _logger.debug(Thread.currentThread() + " DynamicSmartStub prepared connection: " + toString());
                 return _remoteInvHandler;
             } catch (ProxyClosedException ex) {
                 throw ex;
@@ -540,7 +541,7 @@ public class DynamicSmartStub
                         try {
                             this._connectionURL = sp.getConnectionURL();
                         } catch (NullPointerException e) {
-                            _logger.log(Level.SEVERE, "DEBUG: config is " + _config);
+                            _logger.error("DEBUG: config is " + _config);
                             throw e;
                         }
 
@@ -550,8 +551,8 @@ public class DynamicSmartStub
                         Thread.currentThread().setContextClassLoader(orgCL);
                     }
 
-                    if (_logger.isLoggable(Level.FINER)) {
-                        _logger.finer("Exported and bound ServerEndPoint: " + toString());
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Exported and bound ServerEndPoint: " + toString());
                     }
                 }// if
             }// sync
@@ -742,11 +743,11 @@ public class DynamicSmartStub
                 LRMIRuntime.getRuntime().unexport(_localObj, _config.getProtocolName(), true);
             }
         } catch (NoSuchObjectException e) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("RemoteObject: [" + _localObj.getClass().getName() + "] was never exported.");
+            if (_logger.isDebugEnabled())
+                _logger.debug("RemoteObject: [" + _localObj.getClass().getName() + "] was never exported.");
         } catch (RemoteException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to unexport " + _localObj.getClass().getName() + " object.", e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to unexport " + _localObj.getClass().getName() + " object.", e);
         }
     }// close
 
@@ -902,11 +903,11 @@ public class DynamicSmartStub
     public static void simulatedDisconnectionByPID(int pid) {
         synchronized (_remoteInvHandlerCache) {
             String pidToken = "pid[" + pid + "]";
-            if (_logger.isLoggable(Level.INFO))
+            if (_logger.isInfoEnabled())
                 _logger.info("disabling outbound LRMI stubs to pid [ " + pid + " ] my pid is [ " + SystemInfo.singleton().os().processId() + " ]");
             for (MethodCachedInvocationHandler invocationHandler : _remoteInvHandlerCache.values()) {
                 if (invocationHandler.getConnectionURL().contains(pidToken)) {
-                    if (_logger.isLoggable(Level.INFO))
+                    if (_logger.isInfoEnabled())
                         _logger.info("disabling stub [ " + invocationHandler.getConnectionURL() + " ]");
                     invocationHandler.disable();
                 }
@@ -917,11 +918,11 @@ public class DynamicSmartStub
     public static void simulatedReconnectionByPID(int pid) {
         synchronized (_remoteInvHandlerCache) {
             String pidToken = "pid[" + pid + "]";
-            if (_logger.isLoggable(Level.INFO))
+            if (_logger.isInfoEnabled())
                 _logger.info("enabling outbound LRMI stubs to pid [ " + pid + " ] my pid is [ " + SystemInfo.singleton().os().processId() + " ]");
             for (MethodCachedInvocationHandler invocationHandler : _remoteInvHandlerCache.values()) {
                 if (invocationHandler.getConnectionURL().contains(pidToken)) {
-                    _logger.log(Level.INFO, "enabling stub [ " + invocationHandler.getConnectionURL() + " ]");
+                    _logger.info("enabling stub [ " + invocationHandler.getConnectionURL() + " ]");
                     invocationHandler.enable();
                 }
             }

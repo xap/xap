@@ -33,8 +33,9 @@ import com.j_spaces.kernel.IStoredList;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * PersistentGC thread.
@@ -43,7 +44,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class PersistentGC extends GSThread implements Constants.CacheManager {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
     private static final String OBJECT_CLASS = Object.class.getName();
 
     private final CacheManager _cacheManager;
@@ -60,8 +61,8 @@ public class PersistentGC extends GSThread implements Constants.CacheManager {
         try {
             _persistentGCInterval = configReader.getLongSpaceProperty(PERSISTENT_GC_INTERVAL_PROP, String.valueOf(PERSISTENT_GC_INTERVAL_DEFAULT));
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Failed to parse persistent GC interval (using default).", ex);
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to parse persistent GC interval (using default).", ex);
             _persistentGCInterval = PERSISTENT_GC_INTERVAL_DEFAULT;
         }
     }
@@ -88,8 +89,8 @@ public class PersistentGC extends GSThread implements Constants.CacheManager {
                 // clean index tables
                 cleanIndexTables();
             } catch (InterruptedException ie) {
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.log(Level.FINEST, this.getName() + " interrupted.", ie);
+                if (_logger.isTraceEnabled()) {
+                    _logger.trace(this.getName() + " interrupted.", ie);
                 }
 
                 //Restore the interrupted status
@@ -98,8 +99,8 @@ public class PersistentGC extends GSThread implements Constants.CacheManager {
                 //fall through
                 break;
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, "Persistent gc caught error while cleaning up.", ex);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error("Persistent gc caught error while cleaning up.", ex);
                 }
             }
         } /* while (true) */
@@ -177,8 +178,8 @@ public class PersistentGC extends GSThread implements Constants.CacheManager {
             // waits for this thread to shutdown.
             this.join();
         } catch (InterruptedException ex) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, ex.toString(), ex);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(ex.toString(), ex);
             }
 
             throw new SAException("Failed shutting down " + getName(), ex);

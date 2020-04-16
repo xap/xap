@@ -26,8 +26,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Wraps a {@link IRedoLogFileStorage} with a buffer, allowing adding single packets in the storage
@@ -39,7 +40,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPacket>
         implements INonBatchRedoLogFileStorage<T> {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_BACKLOG);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_BACKLOG);
 
     private final int _bufferCapacity;
     private final IRedoLogFileStorage<T> _storage;
@@ -53,8 +54,8 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
     public BufferedRedoLogFileStorageDecorator(int bufferSize, IRedoLogFileStorage storage) {
         this._bufferCapacity = bufferSize;
         this._storage = storage;
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("BufferedRedoLogFileStorageDecorator created:"
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("BufferedRedoLogFileStorageDecorator created:"
                     + "\n\tbufferSize = " + _bufferCapacity);
         }
         _bufferWeight = 0;
@@ -90,8 +91,8 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
     public void deleteOldestPackets(long packetsCount) throws StorageException {
         long storageSize = _storage.size();
         _storage.deleteOldestPackets(packetsCount);
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("delete a batch of size " + Math.min(packetsCount, storageSize) + " from storage");
+        if (_logger.isTraceEnabled())
+            _logger.trace("delete a batch of size " + Math.min(packetsCount, storageSize) + " from storage");
         int bufferSize = _buffer.size();
         for (long i = 0; i < Math.min(bufferSize, packetsCount - storageSize); ++i) {
             T firstPacket = _buffer.removeFirst();
@@ -116,8 +117,8 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
     public WeightedBatch<T> removeFirstBatch(int batchCapacity, long lastCompactionRangeEndKey) throws StorageException {
         WeightedBatch<T> batch = _storage.removeFirstBatch(batchCapacity, lastCompactionRangeEndKey);
 
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("removed a batch of weight " + batch.getWeight() + " from storage");
+        if (_logger.isTraceEnabled())
+            _logger.trace("removed a batch of weight " + batch.getWeight() + " from storage");
 
 
         while (!_buffer.isEmpty() && batch.getWeight() < batchCapacity && !batch.isLimitReached()){
@@ -202,8 +203,8 @@ public class BufferedRedoLogFileStorageDecorator<T extends IReplicationOrderedPa
 
     private void flushBuffer() throws StorageException {
         try {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("flushing buffer to underlying storage, buffer size is " + _buffer.size());
+            if (_logger.isTraceEnabled())
+                _logger.trace("flushing buffer to underlying storage, buffer size is " + _buffer.size());
             _storage.appendBatch(_buffer);
         } finally {
             _buffer.clear();

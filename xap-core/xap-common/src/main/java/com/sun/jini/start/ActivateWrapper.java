@@ -51,8 +51,9 @@ import java.security.ProtectionDomain;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A wrapper for activatable objects, providing separation of the import codebase (where the server
@@ -138,7 +139,7 @@ import java.util.logging.Logger;
 public class ActivateWrapper implements Remote, Serializable {
     private static final long serialVersionUID = 9142405005980676707L;
 
-    static final Logger logger = Logger.getLogger("com.sun.jini.start.wrapper");
+    static final Logger logger = LoggerFactory.getLogger("com.sun.jini.start.wrapper");
     /**
      * The <code>Policy</code> object that aggregates the individual service policy objects.
      */
@@ -344,11 +345,11 @@ public class ActivateWrapper implements Remote, Serializable {
                     new Object[]{id, data});
 
             ActivateDesc desc = (ActivateDesc) data.get();
-            logger.log(Level.FINEST, "ActivateDesc: {0}", desc);
+            logger.trace("ActivateDesc: {0}", desc);
 
             Thread t = Thread.currentThread();
             ClassLoader ccl = t.getContextClassLoader();
-            logger.log(Level.FINEST, "Saved current context class loader: {0}",
+            logger.trace("Saved current context class loader: {0}",
                     ccl);
 
             ExportClassLoader cl = null;
@@ -356,7 +357,7 @@ public class ActivateWrapper implements Remote, Serializable {
                 cl = new ExportClassLoader(desc.importLocation,
                         desc.exportLocation,
                         ccl);
-                logger.log(Level.FINEST, "Created ExportClassLoader: {0}", cl);
+                logger.trace("Created ExportClassLoader: {0}", cl);
             } catch (Exception e) {
                 LogUtils.throwing(logger, ActivateWrapper.class, "ActivateWrapper", e);
                 throw e;
@@ -375,7 +376,7 @@ public class ActivateWrapper implements Remote, Serializable {
                     globalPolicy =
                             new AggregatePolicyProvider(initialGlobalPolicy);
                     Policy.setPolicy(globalPolicy);
-                    logger.log(Level.FINEST,
+                    logger.trace(
                             "Global policy set: {0}", globalPolicy);
                 }
                 Policy service_policy =
@@ -397,32 +398,32 @@ public class ActivateWrapper implements Remote, Serializable {
                         null, /* Principal[] */
                         new Permission[]{new AllPermission()});
                 globalPolicy.setPolicy(cl, split_service_policy);
-                logger.log(Level.FINEST,
+                logger.trace(
                         "Added policy to set: {0}", desc.policy);
             }
 
             boolean initialize = false;
             Class ac = Class.forName(desc.className, initialize, cl);
-            logger.log(Level.FINEST, "Obtained implementation class: {0}", ac);
+            logger.trace("Obtained implementation class: {0}", ac);
 
             t.setContextClassLoader(cl);
 
             try {
-                logger.log(Level.FINEST,
+                logger.trace(
                         "Set new context class loader: {0}", cl);
                 Constructor constructor =
                         ac.getDeclaredConstructor(actTypes);
-                logger.log(Level.FINEST,
+                logger.trace(
                         "Obtained implementation constructor: {0}",
                         constructor);
                 constructor.setAccessible(true);
                 impl =
                         constructor.newInstance(new Object[]{id, desc.data});
-                logger.log(Level.FINEST,
+                logger.trace(
                         "Obtained implementation instance: {0}", impl);
             } finally {
                 t.setContextClassLoader(ccl);
-                logger.log(Level.FINEST, "Context class loader reset to: {0}",
+                logger.trace("Context class loader reset to: {0}",
                         ccl);
             }
         } catch (Exception e) {
@@ -440,7 +441,7 @@ public class ActivateWrapper implements Remote, Serializable {
         Object impl_proxy = impl;
         if (impl instanceof ProxyAccessor) {
             impl_proxy = ((ProxyAccessor) impl).getProxy();
-            logger.log(Level.FINEST,
+            logger.trace(
                     "Obtained implementation proxy: {0}", impl_proxy);
             if (impl_proxy == null) {
                 throw new InvalidObjectException(
@@ -484,7 +485,7 @@ public class ActivateWrapper implements Remote, Serializable {
                         data,
                         restart
                 );
-        logger.log(Level.FINEST,
+        logger.trace(
                 "Registering descriptor with activation: {0}", adesc);
 
         ActivationID aid = sys.registerObject(adesc);
@@ -508,7 +509,7 @@ public class ActivateWrapper implements Remote, Serializable {
             // Create ProtectionDomain for given codesource
             cs = new CodeSource(urls[i], certs);
             pd = new ProtectionDomain(cs, null, null, null);
-            logger.log(Level.FINEST,
+            logger.trace(
                     "Checking protection domain: {0}", pd);
 
             // Check if current domain allows desired permission
@@ -551,21 +552,21 @@ public class ActivateWrapper implements Remote, Serializable {
         Policy servicePolicyWrapper = null;
         if (servicePolicyProvider != null) {
             Class sp = Class.forName(servicePolicyProvider);
-            logger.log(Level.FINEST,
+            logger.trace(
                     "Obtained custom service policy implementation class: {0}", sp);
             Constructor constructor =
                     sp.getConstructor(policyTypes);
-            logger.log(Level.FINEST,
+            logger.trace(
                     "Obtained custom service policy implementation constructor: {0}",
                     constructor);
             servicePolicyWrapper = (Policy)
                     constructor.newInstance(new Object[]{service_policy});
-            logger.log(Level.FINEST,
+            logger.trace(
                     "Obtained custom service policy implementation instance: {0}",
                     servicePolicyWrapper);
         } else {
             servicePolicyWrapper = new DynamicPolicyProvider(service_policy);
-            logger.log(Level.FINEST,
+            logger.trace(
                     "Using default service policy implementation instance: {0}",
                     servicePolicyWrapper);
         }

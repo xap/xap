@@ -18,7 +18,8 @@ package com.gigaspaces.internal.cluster.node;
 
 import com.gigaspaces.internal.cluster.node.impl.backlog.sync.IMarker;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface IReplicationInContext {
     String getSourceLookupName();

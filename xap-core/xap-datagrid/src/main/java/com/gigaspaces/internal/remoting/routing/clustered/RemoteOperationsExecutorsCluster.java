@@ -36,8 +36,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -62,7 +63,7 @@ public class RemoteOperationsExecutorsCluster {
                                             Collection<String> members, RemoteOperationsExecutorsClusterConfig config,
                                             IAsyncHandlerProvider asyncHandlerProvider, RemoteOperationsExecutorProxyLocator proxyLocator,
                                             RemoteOperationsExecutorProxy defaultMember) {
-        this._logger = Logger.getLogger(Constants.LOGGER_SPACEPROXY_ROUTER_LOOKUP + '.' + name);
+        this._logger = LoggerFactory.getLogger(Constants.LOGGER_SPACEPROXY_ROUTER_LOOKUP + '.' + name);
         this._lock = new Object();
         this._name = name;
         this._clusterInfo = clusterInfo;
@@ -128,12 +129,12 @@ public class RemoteOperationsExecutorsCluster {
                 tasks[i++] = new MemberLocatorTask(entry.getKey(), entry.getValue(), activeOnly, timeBased);
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
+        if (_logger.isDebugEnabled()) {
             String message = "Starting " + (activeOnly ? "active" : "available") + " server lookup" + getPartitionDesc() + " [timeout=" + timeout + "ms, members=(" + tasks[0]._memberName;
             for (int i = 1; i < tasks.length; i++)
                 message += ", " + tasks[i]._memberName;
             message += ")]...";
-            _logger.log(Level.FINE, message);
+            _logger.debug(message);
         }
 
         final String competitionName = (activeOnly ? "Active" : "Available") + "MemberLocator" + "_" + _partitionName;
@@ -151,8 +152,8 @@ public class RemoteOperationsExecutorsCluster {
             if (e.getCause() instanceof ClosedResourceException)
                 throw (ClosedResourceException) e.getCause();
             String message = "Unexpected exception while locating an " + (activeOnly ? "active" : "available") + " server" + getPartitionDesc();
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, message, e.getCause());
+            if (_logger.isErrorEnabled())
+                _logger.error(message, e.getCause());
             throw new RemoteOperationRouterException(message, e.getCause());
         }
     }
@@ -290,27 +291,27 @@ public class RemoteOperationsExecutorsCluster {
                     return false;
             }
 
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.log(Level.FINEST, "Checking if " + _memberName + (_activeOnly ? " is active..." : " is available..."));
+            if (_logger.isTraceEnabled())
+                _logger.trace("Checking if " + _memberName + (_activeOnly ? " is active..." : " is available..."));
             try {
                 boolean isActive = _proxy.isActiveQuiesceTokenAware();
                 if (!_activeOnly) {
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.log(Level.FINE, "Member " + _memberName + " is available.");
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("Member " + _memberName + " is available.");
                     return true;
                 }
 
                 if (isActive) {
-                    if (_logger.isLoggable(Level.FINE))
-                        _logger.log(Level.FINE, "Member " + _memberName + " is active.");
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("Member " + _memberName + " is active.");
                 } else {
-                    if (_logger.isLoggable(Level.FINER))
-                        _logger.log(Level.FINER, "Member " + _memberName + " is not active.");
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("Member " + _memberName + " is not active.");
                 }
                 return isActive;
             } catch (RemoteException e) {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.log(Level.FINER, "Member " + _memberName + " failed to respond: " + e.getClass().getName() + ": " + e.getMessage());
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Member " + _memberName + " failed to respond: " + e.getClass().getName() + ": " + e.getMessage());
                 disconnect(_proxy);
                 _proxy = null;
                 return false;

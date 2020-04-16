@@ -55,8 +55,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -69,7 +70,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStorageAdapter {
 
-    private final static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT);
+    private final static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT);
 
     private final SpaceEngine _engine;
     private final SpaceTypeManager _typeManager;
@@ -138,7 +139,7 @@ public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStora
                 _typeManager.addTypeDesc(typeDescriptor);
             }
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.FINER))
+            if (_logger.isDebugEnabled())
                 LogUtils.throwing(_logger, getClass(), "Initial Metadata Load", e);
             throw new SAException(e);
         } finally {
@@ -188,8 +189,8 @@ public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStora
         ((IBlobStoreEntryHolder) entryHolder).setDirty(_engine.getCacheManager());
         if (!context.isActiveBlobStoreBulk()) {
             //in bulk op the flushing is done in the bulk is execution
-            if (_logger.isLoggable(Level.FINER)) {
-                _logger.finer("[" + _engine.getFullSpaceName() + "] inserting entry with uid=" + entryHolder.getUID() + " using BlobStoreStorageAdapter");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("[" + _engine.getFullSpaceName() + "] inserting entry with uid=" + entryHolder.getUID() + " using BlobStoreStorageAdapter");
             }
             ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().flush(_engine.getCacheManager(), context);
             if (needDirectPersistencySync)
@@ -220,8 +221,8 @@ public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStora
         //setdirty will also prepare for flushing
         ((IBlobStoreEntryHolder) updatedEntry).setDirty(_engine.getCacheManager());
         if (!context.isActiveBlobStoreBulk()) {
-            if (_logger.isLoggable(Level.FINER)) {
-                _logger.finer("[" + _engine.getFullSpaceName() + "] updating entry with uid=" + updatedEntry.getUID() + " using BlobStoreStorageAdapter");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("[" + _engine.getFullSpaceName() + "] updating entry with uid=" + updatedEntry.getUID() + " using BlobStoreStorageAdapter");
             }
             //in bulk op the flushing is done in the bulk is execution
             ((IBlobStoreEntryHolder) updatedEntry).getBlobStoreResidentPart().flush(_engine.getCacheManager(), context);
@@ -251,8 +252,8 @@ public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStora
         //setdirty will also prepare for flushing
         ((IBlobStoreEntryHolder) entryHolder).setDirty(_engine.getCacheManager());
         if (!context.isActiveBlobStoreBulk() || !context.getBlobStoreBulkInfo().isTakeMultipleBulk()) {
-            if (_logger.isLoggable(Level.FINER)) {
-                _logger.finer("[" + _engine.getFullSpaceName() + "] removing entry with uid=" + entryHolder.getUID() + " using BlobStoreStorageAdapter");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("[" + _engine.getFullSpaceName() + "] removing entry with uid=" + entryHolder.getUID() + " using BlobStoreStorageAdapter");
             }
             //in bulk op the flushing is done in the bulk is execution
             ((IBlobStoreEntryHolder) entryHolder).getBlobStoreResidentPart().flush(_engine.getCacheManager(), context);
@@ -380,7 +381,7 @@ public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStora
                 }
             }
         } catch (Throwable t) {
-            _logger.severe(getClass().getName() + " Prepare " + t);
+            _logger.error(getClass().getName() + " Prepare " + t);
             throw new SAException(t);
         }
 
@@ -567,8 +568,8 @@ public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStora
     private boolean handleDirectPersistencyConsistency(Context context, IEntryHolder entryHolder, boolean shouldReplicate, boolean removeEntry) {
         if (!useDirectPersistencySync(shouldReplicate))
             return false;
-        if (_logger.isLoggable(Level.FINER)) {
-            _logger.finer("[" + _engine.getFullSpaceName() + "] handling adding entry with uid=" + entryHolder.getUID() + " to sync using BlobStoreStorageAdapter");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("[" + _engine.getFullSpaceName() + "] handling adding entry with uid=" + entryHolder.getUID() + " to sync using BlobStoreStorageAdapter");
         }
         _engine.getReplicationNode().getDirectPesistencySyncHandler().beforeDirectPersistencyOp(_engine.getCacheManager().getReplicationContext(context), entryHolder, removeEntry);
         return true;
@@ -578,8 +579,8 @@ public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStora
     private boolean handleDirectPersistencyConsistency(Context context, List<String> uids, boolean shouldReplicate, Set<String> removedUids, Map<String, IEntryHolder> entryHolderMap) {
         if (!useDirectPersistencySync(shouldReplicate))
             return false;
-        if (_logger.isLoggable(Level.FINER)) {
-            _logger.finer("[" + _engine.getFullSpaceName() + "] handling adding entries with uids=" + uids + " to sync using BlobStoreStorageAdapter");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("[" + _engine.getFullSpaceName() + "] handling adding entries with uids=" + uids + " to sync using BlobStoreStorageAdapter");
         }
         _engine.getReplicationNode().getDirectPesistencySyncHandler().beforeDirectPersistencyOp(_engine.getCacheManager().getReplicationContext(context), uids, removedUids, entryHolderMap);
         return true;

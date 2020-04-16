@@ -30,8 +30,9 @@ import java.time.Duration;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Alon Shoham
@@ -39,7 +40,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class CursorEntryPacketIterator implements IEntryPacketIterator {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_GSITERATOR);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_GSITERATOR);
     private final ISpaceProxy _spaceProxy;
     private final long _serverLookupTimeout;
     private final ITemplatePacket _queryPacket;
@@ -56,11 +57,11 @@ public class CursorEntryPacketIterator implements IEntryPacketIterator {
         int batchSize = spaceIteratorConfiguration.getBatchSize();
         if (batchSize <= 0)
             throw new IllegalArgumentException("batchSize must be greater than zero.");
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "SpaceIterator initialized with batchSize=" + batchSize);
+        if (_logger.isDebugEnabled())
+            _logger.debug("SpaceIterator initialized with batchSize=" + batchSize);
         Duration maxInactiveDuration = spaceIteratorConfiguration.getMaxInactiveDuration() == null ? SpaceIteratorConfiguration.getDefaultMaxInactiveDuration() : spaceIteratorConfiguration.getMaxInactiveDuration();
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "SpaceIterator initialized with batchSize=" + batchSize);
+        if (_logger.isDebugEnabled())
+            _logger.debug("SpaceIterator initialized with batchSize=" + batchSize);
         this._spaceProxy = spaceProxy;
         this._serverLookupTimeout = _spaceProxy.getDirectProxy().getProxyRouter().getConfig().getActiveServerLookupTimeout();
         this._queryPacket = toTemplatePacket(query);
@@ -84,7 +85,7 @@ public class CursorEntryPacketIterator implements IEntryPacketIterator {
     @Override
     public boolean hasNext() {
         if (_closed) {
-            _logger.log(Level.FINER, "hasNext() returned false - iterator is closed.");
+            _logger.debug("hasNext() returned false - iterator is closed.");
             return false;
         }
         // If null, we either reached end of iterator or this is the first time.
@@ -92,8 +93,8 @@ public class CursorEntryPacketIterator implements IEntryPacketIterator {
             _bufferIterator = getNextBatch();
             // If still null, there's no pending entries:
             if (_bufferIterator == null) {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.log(Level.FINER, "hasNext() returned false.");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("hasNext() returned false.");
                 return false;
             }
         }
@@ -106,16 +107,16 @@ public class CursorEntryPacketIterator implements IEntryPacketIterator {
             _bufferIterator = null;
             result = hasNext();
         }
-        if (_logger.isLoggable(Level.FINER))
-            _logger.log(Level.FINER, "hasNext() returned " + result);
+        if (_logger.isDebugEnabled())
+            _logger.debug("hasNext() returned " + result);
         return result;
     }
 
     @Override
     public IEntryPacket next() {
         IEntryPacket entryPacket = hasNext() ? _bufferIterator.next() : null;
-        if (_logger.isLoggable(Level.FINER))
-            _logger.log(Level.FINER, "next() returned " + (entryPacket == null ? "null" : "object with uid=" + entryPacket.getUID()));
+        if (_logger.isDebugEnabled())
+            _logger.debug("next() returned " + (entryPacket == null ? "null" : "object with uid=" + entryPacket.getUID()));
         return entryPacket;
     }
 
@@ -150,8 +151,8 @@ public class CursorEntryPacketIterator implements IEntryPacketIterator {
             Object[] entries =  _spaceIteratorBatchResultsManager.getNextBatch(_serverLookupTimeout);
             if(entries == null)
                 return null;
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "getNextBatch returns with a buffer of " + entries.length + " entries.");
+            if (_logger.isDebugEnabled())
+                _logger.debug("getNextBatch returns with a buffer of " + entries.length + " entries.");
             for (Object entry : entries)
                 _buffer.add((IEntryPacket) entry);
             return _buffer.iterator();
@@ -162,8 +163,8 @@ public class CursorEntryPacketIterator implements IEntryPacketIterator {
     }
 
     private void processNextBatchFailure(Exception e) {
-        if (_logger.isLoggable(Level.SEVERE))
-            _logger.log(Level.SEVERE, "Failed to get next data batch for iterator.", e);
+        if (_logger.isErrorEnabled())
+            _logger.error("Failed to get next data batch for iterator.", e);
 
     }
 }

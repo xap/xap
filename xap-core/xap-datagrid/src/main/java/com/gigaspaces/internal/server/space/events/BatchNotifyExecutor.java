@@ -34,8 +34,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The main service that notify events in batches.
@@ -45,7 +46,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class BatchNotifyExecutor {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_NOTIFY);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_NOTIFY);
     private static final long SLEEP_PERIOD = 500;
     //granularity of the timekey in order to prevent non-stop activity in case of a large # of templates
     public static final long BATCH_NOTIFY_TIMEKEY_GRANULARITY = 20L;
@@ -94,9 +95,9 @@ public class BatchNotifyExecutor {
         }
         EventHolder eventHolder = new EventHolder(event, time);
         template.addPendingEvent(eventHolder);
-        //if (_logger.isLoggable(Level.FINEST))
+        //if (_logger.isTraceEnabled())
         //{
-        //    _logger.finest("execute: added to template border="  + template.getBatchOrder() + " seq=" + eventHolder.getEvent().getSequenceNumber());
+        //    _logger.trace("execute: added to template border="  + template.getBatchOrder() + " seq=" + eventHolder.getEvent().getSequenceNumber());
         //}
 
         EventHolder firstEvent = null;
@@ -110,19 +111,19 @@ public class BatchNotifyExecutor {
                 Object res = _pendingTemplates.remove(new TimeKey(firstEvent, template));
                 // if events accumulated in the template during batch notification
                 // than the template should be reinserted into the skiplist.
-                if (_logger.isLoggable(Level.FINEST)) {
+                if (_logger.isTraceEnabled()) {
                     if (res != null)
                         _estimatedNumberOfTimeKeys.decrementAndGet();
-                    _logger.finest("execute: OK from notifyEvent remained timekeys=" + _estimatedNumberOfTimeKeys.get() + " removed=" + (res != null));
+                    _logger.trace("execute: OK from notifyEvent remained timekeys=" + _estimatedNumberOfTimeKeys.get() + " removed=" + (res != null));
                 }
                 firstEvent = template.peekPendingEvent();
                 if (firstEvent != null) {
                     TimeKey newTime = new TimeKey(firstEvent, template);
                     _pendingTemplates.put(newTime, template);
                     _notifyThread.notifyIfNeedTo(newTime);
-                    if (_logger.isLoggable(Level.FINEST)) {
+                    if (_logger.isTraceEnabled()) {
                         _estimatedNumberOfTimeKeys.incrementAndGet();
-                        _logger.finest("execute: added template border=" + template.getBatchOrder() + " seq=" + newTime._holder.getEvent().getSequenceNumber() + " size=" + _estimatedNumberOfTimeKeys.get());
+                        _logger.trace("execute: added template border=" + template.getBatchOrder() + " seq=" + newTime._holder.getEvent().getSequenceNumber() + " size=" + _estimatedNumberOfTimeKeys.get());
                     }
 
                 }
@@ -137,8 +138,8 @@ public class BatchNotifyExecutor {
 
     //called by the batch thread-
     private void notifyReadyEvents() throws RemoteException, UnknownEventException {
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.finest("notifyReadyEvents: start scanning size=" + _estimatedNumberOfTimeKeys);
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("notifyReadyEvents: start scanning size=" + _estimatedNumberOfTimeKeys);
         }
         Iterator<Map.Entry<TimeKey, NotifyTemplateHolder>> iterator = _pendingTemplates.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -155,9 +156,9 @@ public class BatchNotifyExecutor {
             // due to size constraint and the template wasn't removed from skiplist.
             if (templateKey._holder != template.peekPendingEvent() && size < template.getBatchSize()) {
                 iterator.remove();
-                if (_logger.isLoggable(Level.FINEST)) {
+                if (_logger.isTraceEnabled()) {
                     _estimatedNumberOfTimeKeys.decrementAndGet();
-                    _logger.finest("notifyReadyEvents: timekey to just remove (first NE and size) border=" + template.getBatchOrder() + " seq=" + templateKey._holder.getEvent().getSequenceNumber() + " size=" + _estimatedNumberOfTimeKeys);
+                    _logger.trace("notifyReadyEvents: timekey to just remove (first NE and size) border=" + template.getBatchOrder() + " seq=" + templateKey._holder.getEvent().getSequenceNumber() + " size=" + _estimatedNumberOfTimeKeys);
                 }
                 continue;
             }
@@ -166,17 +167,17 @@ public class BatchNotifyExecutor {
                 continue; //leave the key entry, the template is busy
 
             iterator.remove();
-            if (_logger.isLoggable(Level.FINEST)) {
+            if (_logger.isTraceEnabled()) {
                 _estimatedNumberOfTimeKeys.decrementAndGet();
-                _logger.finest("notifyReadyEvents: timekey to remove after notify =" + status + " border=" + template.getBatchOrder() + " seq=" + templateKey._holder.getEvent().getSequenceNumber() + " size=" + _estimatedNumberOfTimeKeys);
+                _logger.trace("notifyReadyEvents: timekey to remove after notify =" + status + " border=" + template.getBatchOrder() + " seq=" + templateKey._holder.getEvent().getSequenceNumber() + " size=" + _estimatedNumberOfTimeKeys);
             }
             EventHolder firstEvent = template.peekPendingEvent();
             if (firstEvent != null) {
                 TimeKey key = new TimeKey(firstEvent, template);
                 _pendingTemplates.put(key, template);
-                if (_logger.isLoggable(Level.FINEST)) {
+                if (_logger.isTraceEnabled()) {
                     _estimatedNumberOfTimeKeys.incrementAndGet();
-                    _logger.finest("notifyReadyEvents: added new firstevent after notify status=" + status + " border=" + template.getBatchOrder() + " seq=" + key._holder.getEvent().getSequenceNumber() + " size=" + _estimatedNumberOfTimeKeys);
+                    _logger.trace("notifyReadyEvents: added new firstevent after notify status=" + status + " border=" + template.getBatchOrder() + " seq=" + key._holder.getEvent().getSequenceNumber() + " size=" + _estimatedNumberOfTimeKeys);
                 }
             }
         }
@@ -187,9 +188,9 @@ public class BatchNotifyExecutor {
         if (eh == eventHolder) {
             TimeKey newTime = new TimeKey(eh, template);
             _pendingTemplates.put(newTime, template);
-            if (_logger.isLoggable(Level.FINEST)) {
+            if (_logger.isTraceEnabled()) {
                 _estimatedNumberOfTimeKeys.incrementAndGet();
-                _logger.finest("insertTemplateIfFirst: added new firstevent border=" + template.getBatchOrder() + " seq=" + newTime._holder.getEvent().getSequenceNumber() + " size=" + _estimatedNumberOfTimeKeys);
+                _logger.trace("insertTemplateIfFirst: added new firstevent border=" + template.getBatchOrder() + " seq=" + newTime._holder.getEvent().getSequenceNumber() + " size=" + _estimatedNumberOfTimeKeys);
             }
             _notifyThread.notifyIfNeedTo(newTime);
         }
@@ -203,21 +204,21 @@ public class BatchNotifyExecutor {
         while (true) {
             if (!template.trySetNotifyInProgress()) {
                 // some other thread is triggering this template.
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.finest("notifyEvent: busy from batch " + fromBatchThread + " border" + template.getBatchOrder());
+                if (_logger.isTraceEnabled()) {
+                    _logger.trace("notifyEvent: busy from batch " + fromBatchThread + " border" + template.getBatchOrder());
                 }
                 return notified ? STATUS_OK : STATUS_BUSY;
             }
             try {
                 if (template.getPendingEventsSize() == 0) {
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.finest("notifyEvent: empty from batch " + fromBatchThread + " border" + template.getBatchOrder());
+                    if (_logger.isTraceEnabled()) {
+                        _logger.trace("notifyEvent: empty from batch " + fromBatchThread + " border" + template.getBatchOrder());
                     }
                     return notified ? STATUS_OK : STATUS_EMPTY;
                 }
                 if ((!fromBatchThread) && template.getPendingEventsSize() < template.getBatchSize()) {
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.finest("notifyEvent: half-empty from batch " + fromBatchThread + " border" + template.getBatchOrder());
+                    if (_logger.isTraceEnabled()) {
+                        _logger.trace("notifyEvent: half-empty from batch " + fromBatchThread + " border" + template.getBatchOrder());
                     }
                     return notified ? STATUS_OK : STATUS_EMPTY;
                 }
@@ -226,8 +227,8 @@ public class BatchNotifyExecutor {
                 //listener can be null if notification execution fails. clear
                 if (reListener == null || template.isDeleted()) {
                     template.clearPendingEvents();
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.finest("notifyEvent: INVALID from batch " + fromBatchThread + " border" + template.getBatchOrder());
+                    if (_logger.isTraceEnabled()) {
+                        _logger.trace("notifyEvent: INVALID from batch " + fromBatchThread + " border" + template.getBatchOrder());
                     }
                     return STATUS_EMPTY;
                 }
@@ -250,8 +251,8 @@ public class BatchNotifyExecutor {
                             notified = true;
                         eventsArray[i] = res.getEvent();
                     }
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.finest("notifyEvent: sent batch " + fromBatchThread + " border" + template.getBatchOrder() + " events=" + eventsArray.length + " left=" + template.getPendingEventsSize());
+                    if (_logger.isTraceEnabled()) {
+                        _logger.trace("notifyEvent: sent batch " + fromBatchThread + " border" + template.getBatchOrder() + " events=" + eventsArray.length + " left=" + template.getPendingEventsSize());
                     }
                     if (fromBatchThread) {
                         RemoteEventBatchBusPacket packet = new RemoteEventBatchBusPacket(template, eventsArray);
@@ -261,8 +262,8 @@ public class BatchNotifyExecutor {
                         listener.notifyBatch(new BatchRemoteEvent(eventsArray));
                     }
                 } else {
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.finest("notifyEvent: sent non-batch listener" + fromBatchThread + " border" + template.getBatchOrder() + " events=" + template.getPendingEventsSize());
+                    if (_logger.isTraceEnabled()) {
+                        _logger.trace("notifyEvent: sent non-batch listener" + fromBatchThread + " border" + template.getBatchOrder() + " events=" + template.getPendingEventsSize());
                     }
                     notified = true;
                     while (template.getPendingEventsSize() > 0) {
@@ -290,8 +291,8 @@ public class BatchNotifyExecutor {
                 return notified ? STATUS_OK : STATUS_EMPTY;
             }
 
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.finest("notifyEvent: another loop from batch " + fromBatchThread + " border=" + template.getBatchOrder() + " template events =" + template.getPendingEventsSize());
+            if (_logger.isTraceEnabled()) {
+                _logger.trace("notifyEvent: another loop from batch " + fromBatchThread + " border=" + template.getBatchOrder() + " template events =" + template.getPendingEventsSize());
             }
             continue;
         }
@@ -376,15 +377,15 @@ public class BatchNotifyExecutor {
                         }
                         _wakeUpTime = first == null ? SystemTime.timeMillis() + SLEEP_PERIOD : first._holder.getTime();
                         long waitTime = _wakeUpTime - SystemTime.timeMillis();
-                        if (_logger.isLoggable(Level.FINEST)) {
+                        if (_logger.isTraceEnabled()) {
                             if( first != null ) {
-                                _logger.finest("BatchNotifyThread examine first template border="
+                                _logger.trace("BatchNotifyThread examine first template border="
                                                + first._templateBatchOrder + " seq=" + first._holder
                                                    .getEvent().getSequenceNumber() + " timetosleep="
                                                + waitTime);
                             }
                             else{
-                                _logger.finest("BatchNotifyThread examine TimeKey first is NULL");
+                                _logger.trace("BatchNotifyThread examine TimeKey first is NULL");
                             }
                         }
                         if (waitTime > 0) {
@@ -395,11 +396,11 @@ public class BatchNotifyExecutor {
                     _notifier.notifyReadyEvents();
                 } catch (InterruptedException e) {
                     _active = false;
-                    _logger.log(Level.FINE, "batching thread was interrupted");
+                    _logger.debug("batching thread was interrupted");
                 } catch (RemoteException e) {
-                    _logger.log(Level.FINE, "got remote exception when notifying events", e);
+                    _logger.debug("got remote exception when notifying events", e);
                 } catch (UnknownEventException e) {
-                    _logger.log(Level.FINE, "trying to send a corrupted event", e);
+                    _logger.debug("trying to send a corrupted event", e);
                 }
             }
         }

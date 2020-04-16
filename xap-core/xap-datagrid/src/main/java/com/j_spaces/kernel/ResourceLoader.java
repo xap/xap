@@ -39,8 +39,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -62,7 +63,7 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 @com.gigaspaces.api.InternalApi
 public class ResourceLoader {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_RESOURCE_LOADER);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_RESOURCE_LOADER);
 
     public static URL getServicesConfigUrl() {
         URL servicesConfig = ResourceLoader.getResourceURL("config/services/services.config");
@@ -134,59 +135,59 @@ public class ResourceLoader {
                 onlyResourceName = name.substring(lastChar + 1);
             }
             if (classLoader != null) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, "Going to load the resource <" + name + "> from the ContextClassLoader using CL: " + classLoader.getClass().getName());
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Going to load the resource <" + name + "> from the ContextClassLoader using CL: " + classLoader.getClass().getName());
                 }
                 result = classLoader.getResourceAsStream(name);
                 if (result == null && onlyResourceName != null) {
                     //try search only with resource name
                     searchedOnlyResourceName = true;
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE, "Going to load the resource <" + onlyResourceName + "> from the ContextClassLoader using CL: " + classLoader.getClass().getName());
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Going to load the resource <" + onlyResourceName + "> from the ContextClassLoader using CL: " + classLoader.getClass().getName());
                     }
                     result = classLoader.getResourceAsStream(onlyResourceName);
                 }
-                if (_logger.isLoggable(Level.FINE)) {
+                if (_logger.isDebugEnabled()) {
                     StringBuilder classLoaderHierarchy = new StringBuilder("ClassLoader Hierarchy: ");
                     ClassLoader tmpCL = classLoader;
                     while (tmpCL != null) {
                         classLoaderHierarchy.append(tmpCL.getClass().toString()).append(" <-- ");
                         tmpCL = tmpCL.getParent();
                     }
-                    _logger.log(Level.FINE, "Load resource: [" + (searchedOnlyResourceName ? onlyResourceName : name) + "] Thread: [" + currentThread.getName()
+                    _logger.debug("Load resource: [" + (searchedOnlyResourceName ? onlyResourceName : name) + "] Thread: [" + currentThread.getName()
                             + "] using ClassLoader: [" + classLoader + "] \n"
                             + " [ " + classLoaderHierarchy.toString() + " ] \n"
                             + " [ Returning result: " + result + " ] \n"
-                            + (_logger.isLoggable(Level.FINEST) ? JSpaceUtilities.getStackTrace(new Exception("Debugging stack trace only (can be ignored): ")) : ""));
+                            + (_logger.isTraceEnabled() ? JSpaceUtilities.getStackTrace(new Exception("Debugging stack trace only (can be ignored): ")) : ""));
                 }
             }
             if (result == null) {
                 ClassLoader cl = ResourceLoader.class.getClassLoader();
                 if (cl != null && !cl.equals(classLoader)) {
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE, "2nd try, going to load the resource <" + name + "> NOT from the ContextClassLoader but using CL: " + cl.getClass().getName());
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("2nd try, going to load the resource <" + name + "> NOT from the ContextClassLoader but using CL: " + cl.getClass().getName());
                     }
                     result = cl.getResourceAsStream(name);
                     if (result == null && onlyResourceName != null) {
                         //try search only with resource name
                         searchedOnlyResourceName = true;
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.log(Level.FINE, "2nd try, going to load the resource <" + onlyResourceName + "> NOT from the ContextClassLoader but using CL: " + cl.getClass().getName());
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug("2nd try, going to load the resource <" + onlyResourceName + "> NOT from the ContextClassLoader but using CL: " + cl.getClass().getName());
                         }
                         result = cl.getResourceAsStream(onlyResourceName);
                     }
-                    if (_logger.isLoggable(Level.FINE)) {
+                    if (_logger.isDebugEnabled()) {
                         StringBuilder classLoaderHierarchy = new StringBuilder("ClassLoader Hierarchy: ");
                         ClassLoader tmpCL = cl;
                         while (tmpCL != null) {
                             classLoaderHierarchy.append(tmpCL.getClass().toString()).append(" <-- ");
                             tmpCL = tmpCL.getParent();
                         }
-                        _logger.log(Level.FINE, "Load resource: [" + (searchedOnlyResourceName ? onlyResourceName : name) + "] Thread: [" + currentThread.getName()
+                        _logger.debug("Load resource: [" + (searchedOnlyResourceName ? onlyResourceName : name) + "] Thread: [" + currentThread.getName()
                                 + "] using ClassLoader: [" + cl + "] \n"
                                 + " [ " + classLoaderHierarchy.toString() + " ] \n"
                                 + " [ Returning result: " + result + " ] \n"
-                                + (_logger.isLoggable(Level.FINEST) ? JSpaceUtilities.getStackTrace(new Exception("Debugging stack trace only (can be ignored): ")) : ""));
+                                + (_logger.isTraceEnabled() ? JSpaceUtilities.getStackTrace(new Exception("Debugging stack trace only (can be ignored): ")) : ""));
                     }
                 }
             }
@@ -195,15 +196,15 @@ public class ResourceLoader {
                 File file = new File(name);
                 if (file.isFile() && file.exists()) {
                     URL fileURL = file.toURI().toURL();
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE, "Going to load the resource <" + name + "> from the path: " + fileURL);
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Going to load the resource <" + name + "> from the path: " + fileURL);
                     }
                     result = fileURL.openStream();
                     if (result != null) {
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.log(Level.FINE, "Load resource: [" + fileURL + "] \n"
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug("Load resource: [" + fileURL + "] \n"
                                     + " [ Returning result: " + result + " ] \n"
-                                    + (_logger.isLoggable(Level.FINEST) ? JSpaceUtilities.getStackTrace(new Exception("Debugging stack trace only (can be ignored): ")) : ""));
+                                    + (_logger.isTraceEnabled() ? JSpaceUtilities.getStackTrace(new Exception("Debugging stack trace only (can be ignored): ")) : ""));
                         }
                         return result;
                     }
@@ -216,17 +217,17 @@ public class ResourceLoader {
                 if (resourcePath != null) {
                     result = resourcePath.toURI().toURL().openStream();
                 }
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, "Load resource using Locator utility searching from < " + locatorBaseDir + " > base directory: \n [" + (onlyResourceName != null ? onlyResourceName : name) + "] Thread: [" + currentThread.getName()
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Load resource using Locator utility searching from < " + locatorBaseDir + " > base directory: \n [" + (onlyResourceName != null ? onlyResourceName : name) + "] Thread: [" + currentThread.getName()
                             + "] using resource path: [" + resourcePath + "] \n"
                             + " [ Returning result: " + result + " ] \n"
-                            + (_logger.isLoggable(Level.FINEST) ? JSpaceUtilities.getStackTrace(new Exception("Debugging stack trace only (can be ignored): ")) : ""));
+                            + (_logger.isTraceEnabled() ? JSpaceUtilities.getStackTrace(new Exception("Debugging stack trace only (can be ignored): ")) : ""));
                 }
             }
         } catch (Exception e) {
             //wrap ConfigurationException and throw relevant exception
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "Failed to load resource: [" + name + "] ", e);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Failed to load resource: [" + name + "] ", e);
             }
         }
         return result;
@@ -338,7 +339,7 @@ public class ResourceLoader {
         }
         Properties schemaProperties = null;
         if (schemaInputStream != null) {
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 _logger.info("Loading properties file from: "
                         + (downloadingPropsFromHTTP ? schemaPropertiesFileName
                         : getResourceURL(schemaPropertiesPath).toString()));
@@ -348,8 +349,8 @@ public class ResourceLoader {
             schemaProperties.load(schemaInputStream);
             schemaInputStream.close();
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("custom properties file values: ");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("custom properties file values: ");
                 schemaProperties.list(System.out);
             }
         } else {
@@ -470,8 +471,8 @@ public class ResourceLoader {
 
         schemaInputStream = getResourceStream(schemaFilePath);
         if (schemaInputStream != null) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Loaded the cluster xsl schema < "
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Loaded the cluster xsl schema < "
                         + getResourceURL(schemaFilePath)
                         + " > for the cluster config setup.");
             }
@@ -531,7 +532,7 @@ public class ResourceLoader {
 
         schemaInputStream = getResourceStream(schemaFilePath);
         if (schemaInputStream != null) {
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 _logger.info("Loaded the cluster XML < "
                         + getResourceURL(schemaNameToBeUsed)
                         + " > for the cluster config setup.");
@@ -549,8 +550,8 @@ public class ResourceLoader {
 
             schemaInputStream = getResourceStream(defaultSchemaFileName);
             if (schemaInputStream != null) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.warning("Could not find the cluster xml file: "
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn("Could not find the cluster xml file: "
                             + schemaFilePath + ".\n Loaded the default cluster xml < "
                             + getResourceURL(defaultSchemaFileName)
                             + " > for the cluster config setup.");
@@ -558,8 +559,8 @@ public class ResourceLoader {
                 return schemaInputStream;
             } else {
                 //nothing to do in this case
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.warning("The requested cluster xml file does not exist in the following path: "
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn("The requested cluster xml file does not exist in the following path: "
                             + defaultSchemaFileName);
                 }
             }
@@ -596,8 +597,8 @@ public class ResourceLoader {
 
         schemaInputStream = getResourceStream(schemaFilePath);
         if (schemaInputStream != null) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Loaded the cluster xsl schema < "
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Loaded the cluster xsl schema < "
                         + getResourceURL(schemaFilePath)
                         + " > for the cluster config setup.");
             }
@@ -673,8 +674,8 @@ public class ResourceLoader {
         schemaInputStream = getResourceStream(schemaFilePath, null, createIfNotExists);
 
         if (schemaInputStream != null) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Loaded the container schema < "
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Loaded the container schema < "
                         + getResourceURL(schemaFilePath)
                         + " > for the container configuration.");
             }
@@ -693,16 +694,16 @@ public class ResourceLoader {
 
             schemaInputStream = getResourceStream(defaultSchemaFileName);
             if (schemaInputStream != null) {
-                if (_logger.isLoggable(Level.FINE)) {
+                if (_logger.isDebugEnabled()) {
                     URL urlToLoad = getResourceURL(schemaFilePath);
                     if (urlToLoad != null) {
-                        _logger.fine("Could not find the container schema file at: "
+                        _logger.debug("Could not find the container schema file at: "
                                 + urlToLoad
                                 + ".\nInstead, loaded the default container schema < "
                                 + defaultSchemaFileName
                                 + " > for the container configuration.");
                     } else {
-                        _logger.fine("Could not find the container schema: "
+                        _logger.debug("Could not find the container schema: "
                                 + schemaFilePath
                                 + ".\nInstead, loaded the default container schema < "
                                 + defaultSchemaFileName
@@ -712,8 +713,8 @@ public class ResourceLoader {
                 return schemaInputStream;
             } else {
                 //nothing to do in this case
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.warning("The requested container schema file does not exist in the following path: "
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn("The requested container schema file does not exist in the following path: "
                             + defaultSchemaFileName);
                 }
             }
@@ -722,13 +723,13 @@ public class ResourceLoader {
     }
 
     public static InputStream findConfigDCache(String fileName) {
-        if (!Constants.DCache.DCACHE_CONFIG_NAME_DEFAULT.equals(fileName) && _logger.isLoggable(Level.WARNING))
-            _logger.log(Level.WARNING, "Using a custom dcache configuration file is deprecated.");
+        if (!Constants.DCache.DCACHE_CONFIG_NAME_DEFAULT.equals(fileName) && _logger.isWarnEnabled())
+            _logger.warn("Using a custom dcache configuration file is deprecated.");
 
         final String filePath = Constants.Container.CONTAINER_CONFIG_DIRECTORY + "/" + fileName + DCache.FILE_SUFFIX_EXTENTION;
         final InputStream inputStream = getResourceStream(filePath);
-        if (inputStream != null && _logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Loaded DCache configuration from < " + getResourceURL(filePath) + " > ");
+        if (inputStream != null && _logger.isDebugEnabled())
+            _logger.debug("Loaded DCache configuration from < " + getResourceURL(filePath) + " > ");
         return inputStream;
     }
 
@@ -773,7 +774,7 @@ public class ResourceLoader {
                     + filePath + "'. It does not exist or not readable.";
             throw new Exception(missingJMSConfigFileMsg);
         } else {
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 _logger.info("Loaded the JMS configuration file from < "
                         + getResourceURL(filePath) + " > ");
             }
@@ -816,8 +817,8 @@ public class ResourceLoader {
 
         if (schemaInputStream != null) {
             URL schemaURL = getResourceURL(schemaFilePath);
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Loaded the space schema < "
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Loaded the space schema < "
                         + schemaURL
                         + " > for the space configuration.");
             }
@@ -861,7 +862,7 @@ public class ResourceLoader {
         _containerNameURL = getResourceURL(_containerNameFilePath);
 
         if (_containerNameURL != null) {
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 _logger.info("Loaded the container xml file < "
                         + _containerNameURL + " >.");
             }

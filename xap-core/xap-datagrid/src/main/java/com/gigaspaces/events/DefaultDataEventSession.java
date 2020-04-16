@@ -30,8 +30,9 @@ import net.jini.lease.LeaseRenewalEvent;
 
 import java.rmi.RemoteException;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -65,30 +66,30 @@ public class DefaultDataEventSession extends AbstractDataEventSession {
             return new JiniEventLeaseRenewalManager(config);
 
         if (EventSessionConfig.USE_OLD_LEASE_RENEWAL_MANAGER) {
-            if (logger.isLoggable(Level.WARNING))
-                logger.log(Level.WARNING, "Multiplex auto-renew is disabled because "
+            if (logger.isWarnEnabled())
+                logger.warn("Multiplex auto-renew is disabled because "
                         + EventSessionConfig.USE_OLD_LEASE_RENEWAL_MANAGER_PROPERTY + " is set to true.");
             return new JiniEventLeaseRenewalManager(config);
         }
         if (config.getRenewDuration() != EventSessionConfig.DEFAULT_RENEW_DURATION) {
-            if (logger.isLoggable(Level.WARNING))
-                logger.log(Level.WARNING, "Multiplex auto-renew is disabled because renewDuration has been modified.");
+            if (logger.isWarnEnabled())
+                logger.warn("Multiplex auto-renew is disabled because renewDuration has been modified.");
             return new JiniEventLeaseRenewalManager(config);
         }
         if (config.getRenewExpiration() != EventSessionConfig.DEFAULT_RENEW_EXPIRATION) {
-            if (logger.isLoggable(Level.WARNING))
-                logger.log(Level.WARNING, "Multiplex auto-renew is disabled because renewExpiration has been modified" +
+            if (logger.isWarnEnabled())
+                logger.warn("Multiplex auto-renew is disabled because renewExpiration has been modified" +
                         ".");
             return new JiniEventLeaseRenewalManager(config);
         }
         if (config.getRenewRTT() != EventSessionConfig.DEFAULT_RENEW_RTT) {
-            if (logger.isLoggable(Level.WARNING))
-                logger.log(Level.WARNING, "Multiplex auto-renew is disabled because renewRTT has been modified.");
+            if (logger.isWarnEnabled())
+                logger.warn("Multiplex auto-renew is disabled because renewRTT has been modified.");
             return new JiniEventLeaseRenewalManager(config);
         }
 
-        if (logger.isLoggable(Level.FINEST))
-            logger.finest("Multiplex auto-renew is enabled.");
+        if (logger.isTraceEnabled())
+            logger.trace("Multiplex auto-renew is enabled.");
         return eventsManager.getRenewalManager();
     }
 
@@ -97,7 +98,7 @@ public class DefaultDataEventSession extends AbstractDataEventSession {
             throws RemoteException {
         if (renewalManager != null && !renewalManager.supportsCustomLease()) {
             if (lease != Lease.FOREVER && lease != renewalManager.getRenewalDuration())
-                logger.warning("Custom lease is ignored when using a multiplex data event session with auto-renew - " +
+                logger.warn("Custom lease is ignored when using a multiplex data event session with auto-renew - " +
                         "the session's renewalDuration (" + renewalManager.getRenewalDuration() + ") is used instead."
                 );
             lease = renewalManager.getRenewalDuration();
@@ -139,11 +140,11 @@ public class DefaultDataEventSession extends AbstractDataEventSession {
     }
 
     private static class DefaultLeaseListener implements LeaseListener {
-        private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLIENT);
+        private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLIENT);
 
         @Override
         public void notify(LeaseRenewalEvent e) {
-            _logger.log(Level.FINE, "Cannot renew lease", e.getException());
+            _logger.debug("Cannot renew lease", e.getException());
         }
     }
 }

@@ -31,8 +31,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author kimchy
@@ -42,7 +43,7 @@ public class SigarOSStatisticsProbe implements OSStatisticsProbe {
 
     private Sigar sigar;
 
-    private static final Logger _logger = Logger.getLogger("com.gigaspaces.os.statistics");
+    private static final Logger _logger = LoggerFactory.getLogger("com.gigaspaces.os.statistics");
 
     private static final boolean _isWindows = System.getProperty("os.name").toLowerCase().startsWith("win");
 
@@ -99,17 +100,17 @@ public class SigarOSStatisticsProbe implements OSStatisticsProbe {
             actualUsedMemory = actualUsedMemoryFromSigar;
         }
 
-        if (_logger.isLoggable(Level.FINER)) {
-            _logger.log(Level.FINER,
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(
                     "Memory probe, is winOS:" + _isWindows + ", mem used:" + mem.getUsed() +
                             ", memoryUsedPercSigar:" + memoryUsedPercFromSigar + ", memoryUsedPercCalculated:" + memoryUsedPercCalculated +
                             ", mem actual Used from Sigar:" + actualUsedMemoryFromSigar + ", mem actual Calculated:" + actualUsedMemoryCalculated +
                             ", mem free:" + mem.getFree() + ", mem ram:" + mem.getRam() + ", mem actual free:" + mem.getActualFree());
-            _logger.log(Level.FINER,
+            _logger.debug(
                     "Memory probe (GB):" + ", mem actual Used from Sigar:" + (double) actualUsedMemoryFromSigar / 1024 / 1024 / 1024 +
                             ", mem actual Calculated:" + (double) actualUsedMemoryCalculated / 1024 / 1024 / 1024 +
                             ", mem free GB:" + (double) mem.getFree() / 1024 / 1024 / 1024);
-            _logger.log(Level.FINER,
+            _logger.debug(
                     "Memory probe, swap used:" + swap.getUsed() + ", swap free:" +
                             swap.getFree() + ", cpu perc getCombined:" + cpuPerc.getCombined());
         }

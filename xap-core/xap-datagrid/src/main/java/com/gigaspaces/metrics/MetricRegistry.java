@@ -23,8 +23,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -42,7 +43,7 @@ public class MetricRegistry {
      */
     public MetricRegistry(String name) {
         this.name = name;
-        this.logger = Logger.getLogger(Constants.LOGGER_METRICS_REGISTRY + '.' + name);
+        this.logger = LoggerFactory.getLogger(Constants.LOGGER_METRICS_REGISTRY + '.' + name);
         this.groups = new ConcurrentHashMap<MetricTags, MetricGroup>();
     }
 
@@ -62,8 +63,8 @@ public class MetricRegistry {
      * @throws IllegalArgumentException if the name is already registered
      */
     public void register(String name, MetricTags tags, Metric metric) {
-        if (logger.isLoggable(Level.FINE))
-            logger.log(Level.FINE, "Registering " + name + "[tags=" + tags.getTags() + "]");
+        if (logger.isDebugEnabled())
+            logger.debug("Registering " + name + "[tags=" + tags.getTags() + "]");
 
         if (!verifyMetric(name, metric))
             return;
@@ -83,16 +84,16 @@ public class MetricRegistry {
             if (metric instanceof Gauge) {
                 Gauge gauge = (Gauge) metric;
                 Object value = gauge.getValue();
-                if (logger.isLoggable(Level.FINER))
-                    logger.log(Level.FINER, "Verified gauge " + name + " => " + value);
+                if (logger.isDebugEnabled())
+                    logger.debug("Verified gauge " + name + " => " + value);
             } else {
                 if (!(metric instanceof LongCounter) && !(metric instanceof ThroughputMetric))
                     throw new IllegalArgumentException("Unsupported metric type: " + metric.getClass().getName());
             }
             return true;
         } catch (Exception e) {
-            if (logger.isLoggable(Level.WARNING))
-                logger.log(Level.WARNING, "Registration of metric '" + name + "' was skipped because its value cannot be retrieved - " + e.getMessage(), e);
+            if (logger.isWarnEnabled())
+                logger.warn("Registration of metric '" + name + "' was skipped because its value cannot be retrieved - " + e.getMessage(), e);
             return false;
         }
     }
@@ -131,8 +132,8 @@ public class MetricRegistry {
                         try {
                             metricsSnapshot.put(entry.getKey(), getMetricSnapshot( entry.getValue() ));
                         } catch (Exception e) {
-                            if (logger.isLoggable(Level.FINE)) {
-                                logger.log(Level.FINE, e.toString(), e);
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(e.toString(), e);
                             }
                         }
                     }

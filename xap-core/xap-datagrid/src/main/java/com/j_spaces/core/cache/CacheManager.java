@@ -109,8 +109,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.Engine.UPDATE_NO_LEASE;
@@ -132,7 +133,7 @@ import static com.j_spaces.core.Constants.Engine.UPDATE_NO_LEASE;
 @com.gigaspaces.api.InternalApi
 public class CacheManager extends AbstractCacheManager
         implements SpaceEvictionManager {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
     private static final boolean _USE_UIDS_ECONOMY_HASH_MAP_FOR_BLOBSTORE_ = true;
     public final TerminatingFifoXtnsInfo _terminatingXtnsInfo;
     private final AtomicInteger _cacheSize;
@@ -401,7 +402,7 @@ public class CacheManager extends AbstractCacheManager
 
     private void setOffHeapProperties(Properties customProperties) {
         if (customProperties.getProperty(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP) != null && !hasBlobStoreOffHeapCache() && !hasBlobStoreOffHeapStore()) {
-            _logger.warning(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP + " is set but no off heap memory is used");
+            _logger.warn(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP + " is set but no off heap memory is used");
         } else {
             long minimalDiffToAllocate = StringUtils.parseStringAsBytes(customProperties.getProperty(BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_PROP, BLOBSTORE_OFF_HEAP_MIN_DIFF_TO_ALLOCATE_DEFAULT_VALUE));
             if(_blobStoreStorageHandler.getOffHeapStore() != null &&  _blobStoreStorageHandler.getOffHeapStore() instanceof OffHeapMemoryPool){
@@ -441,8 +442,8 @@ public class CacheManager extends AbstractCacheManager
                 QueryExtensionProvider provider = providerClass.newInstance();
                 queryExtensions.put(namespace, new QueryExtensionIndexManagerWrapper(provider, info));
             } catch (Throwable e) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Failed to load predefined query extension " + namespace + " - " + e);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Failed to load predefined query extension " + namespace + " - " + e);
             }
         }
     }
@@ -516,13 +517,13 @@ public class CacheManager extends AbstractCacheManager
         if (getEngine().getSpaceImpl().getDirectPersistencyRecoveryHelper() != null && getEngine().getSpaceImpl().getDirectPersistencyRecoveryHelper().isPerInstancePersistency()) {
             if (_engine.getSpaceImpl().isPrimary()) {
                 if (getEngine().getSpaceImpl().getDirectPersistencyRecoveryHelper().isInconsistentStorage()) {
-                    _logger.severe("space " + getEngine().getFullSpaceName() + " selected to be primary but storage in inconsistent");
+                    _logger.error("space " + getEngine().getFullSpaceName() + " selected to be primary but storage in inconsistent");
                     DirectPersistencyRecoveryException e = new DirectPersistencyRecoveryException("space " + getEngine().getFullSpaceName() + " selected to be primary but storage in inconsistent");
                     throw e;
                 }
             } else {
                 if (getEngine().getSpaceImpl().getDirectPersistencyRecoveryHelper().isMeLastPrimary()) {
-                    _logger.severe("space " + getEngine().getFullSpaceName() + " selected to be backup but last time was primary");
+                    _logger.error("space " + getEngine().getFullSpaceName() + " selected to be backup but last time was primary");
                     DirectPersistencyRecoveryException e = new DirectPersistencyRecoveryException("space " + getEngine().getFullSpaceName() + " selected to be backup last time was primary");
                     throw e;
                 }
@@ -539,7 +540,7 @@ public class CacheManager extends AbstractCacheManager
             boolean inconsistentBackup = _persistentBlobStore &&
                     (getEngine().getSpaceImpl().getDirectPersistencyRecoveryHelper() != null && !_engine.getSpaceImpl().isPrimary() && getEngine().getSpaceImpl().getDirectPersistencyRecoveryHelper().isInconsistentStorage());
 
-            if (warmStart && inconsistentBackup && _logger.isLoggable(Level.INFO))
+            if (warmStart && inconsistentBackup && _logger.isInfoEnabled())
                 _logger.info(getEngine().getFullSpaceName() + " blob-store backup space inconsistent-storage indicator, forced cold start on");
             warmStart &= (!inconsistentBackup); //inconsistent backup- clear it
 
@@ -593,8 +594,8 @@ public class CacheManager extends AbstractCacheManager
         }
 
         if (isBlobStoreCachePolicy() && _replicationNode.getDirectPesistencySyncHandler() != null) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("[" + getEngine().getFullSpaceName() + "] initializingIoHandler DirectPersistencyBlobStoreIO in DirectPersistencySyncHandler");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("[" + getEngine().getFullSpaceName() + "] initializingIoHandler DirectPersistencyBlobStoreIO in DirectPersistencySyncHandler");
             }
             _replicationNode.getDirectPesistencySyncHandler().afterInitializedBlobStoreIO(new DirectPersistencyBlobStoreIO(this, _logger, _replicationNode.getDirectPesistencySyncHandler().getCurrentGenerationId()));
         }
@@ -607,8 +608,8 @@ public class CacheManager extends AbstractCacheManager
                 _emptyAfterInitialLoadStage = _entries.isEmpty();
             } catch (Exception ex1) {
                 if (getEngine().getSpaceImpl().getDirectPersistencyRecoveryHelper() != null) {
-                    if (_logger.isLoggable(Level.WARNING)) {
-                        _logger.warning("[" + getEngine().getFullSpaceName() + "] setting storage state to Inconsistent due to failure during initial load");
+                    if (_logger.isWarnEnabled()) {
+                        _logger.warn("[" + getEngine().getFullSpaceName() + "] setting storage state to Inconsistent due to failure during initial load");
                     }
                     getEngine().getSpaceImpl().getDirectPersistencyRecoveryHelper().setStorageState(StorageConsistencyModes.Inconsistent);
                 }
@@ -618,14 +619,14 @@ public class CacheManager extends AbstractCacheManager
             }
         }
         if (getEngine().getSpaceImpl().getDirectPersistencyRecoveryHelper() != null && _engine.getSpaceImpl().isPrimary()) {
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 _logger.info("[" + getEngine().getFullSpaceName() + "] setting storage state of primary to Consistent after initial load");
             }
             getEngine().getSpaceImpl().getDirectPersistencyRecoveryHelper().setStorageState(StorageConsistencyModes.Consistent);
         }
         if (isBlobStoreCachePolicy() && _replicationNode.getDirectPesistencySyncHandler() != null) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("[" + getEngine().getFullSpaceName() + "] initializing DirectPersistencyBlobStoreIO in DirectPersistencySyncHandler");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("[" + getEngine().getFullSpaceName() + "] initializing DirectPersistencyBlobStoreIO in DirectPersistencySyncHandler");
             }
 
             if (isDirectPersistencyEmbeddedtHandlerUsed()) {
@@ -862,7 +863,7 @@ public class CacheManager extends AbstractCacheManager
                 throw new CreateException("Failed to load blob-store storage handler class", e);
             }
         } finally {
-            if (res != null && _logger.isLoggable(Level.INFO)) {
+            if (res != null && _logger.isInfoEnabled()) {
                 _logger.info("created blob-store handler class=" + res.getClass().getName() + " persistentBlobStore=" + _persistentBlobStore);
             }
 
@@ -919,7 +920,7 @@ public class CacheManager extends AbstractCacheManager
             residentEntriesInitialLoad(context, configReader, initialLoadInfo);
             if (isBlobStoreCachePolicy() && _persistentBlobStore && _engine.getSpaceImpl().isPrimary() && _entries.isEmpty()) {
                 //if persistent blobstore is empty try mirror if applicable
-                if (((IBlobStoreStorageAdapter) _storageAdapter).hasAnotherInitialLoadSource() && _logger.isLoggable(Level.INFO))
+                if (((IBlobStoreStorageAdapter) _storageAdapter).hasAnotherInitialLoadSource() && _logger.isInfoEnabled())
                     _logger.info("persistent blob store is empty, trying the mirror initial load source");
                 residentEntriesInitialLoad(context, configReader, initialLoadInfo);
             }
@@ -931,7 +932,7 @@ public class CacheManager extends AbstractCacheManager
             evictableEntriesInitialLoad(context, configReader, initialLoadInfo);
 
 
-        if (_logger.isLoggable(Level.INFO)) {
+        if (_logger.isInfoEnabled()) {
             String formattedErrors = format(initialLoadInfo.getInitialLoadErrors());
             _logger.info("Data source recovery:\n " +
                     "\tEntries found in data source: " + initialLoadInfo.getFoundInDatabase() + ".\n" +
@@ -942,7 +943,7 @@ public class CacheManager extends AbstractCacheManager
         }
         if (getBlobStoreInternalCache() != null) {
             if (getBlobStoreInternalCache().getBlobStoreInternalCacheFilter() != null) {
-                if (_logger.isLoggable(Level.INFO)) {
+                if (_logger.isInfoEnabled()) {
                     _logger.info("BlobStore internal cache recovery:\n " +
                             "\tblob-store-queries: " + getBlobStoreInternalCache().getBlobStoreInternalCacheFilter().getSqlQueries() + ".\n" +
                             "\tEntries inserted to blobstore cache: " + getBlobStoreInternalCache().getBlobStoreInternalCacheFilter().getInsertedToBlobStoreInternalCacheOnInitialLoad() + ".\n");
@@ -1196,7 +1197,7 @@ public class CacheManager extends AbstractCacheManager
 
 
     private long logInsertionIfNeeded(long startLogTime, long lastLogTime, int fetchedEntries) {
-        if (_logRecoveryProcess && _logger.isLoggable(Level.INFO)) {
+        if (_logRecoveryProcess && _logger.isInfoEnabled()) {
             long curTime = SystemTime.timeMillis();
             if (curTime - lastLogTime > _recoveryLogInterval) {
                 _logger.info("Entries loaded so far: " + fetchedEntries + " [" + JSpaceUtilities.formatMillis(curTime - startLogTime) + "]");
@@ -1225,8 +1226,8 @@ public class CacheManager extends AbstractCacheManager
         try {
             _persistentGC.shutdown();
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, ex.toString(), ex);
+            if (_logger.isDebugEnabled())
+                _logger.debug(ex.toString(), ex);
         } finally {
             _persistentGC = null;
         }
@@ -1234,15 +1235,15 @@ public class CacheManager extends AbstractCacheManager
         try {
             _cacheContextFactory.closeAllContexts();
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, ex.toString(), ex);
+            if (_logger.isDebugEnabled())
+                _logger.debug(ex.toString(), ex);
         }
 
         try {
             _storageAdapter.shutDown();
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, ex.toString(), ex);
+            if (_logger.isDebugEnabled())
+                _logger.debug(ex.toString(), ex);
         }
 
         if (_evictionStrategy != null)
@@ -1573,8 +1574,8 @@ public class CacheManager extends AbstractCacheManager
             pTemplate = new TemplateCacheInfo(templateHolder);
             TemplateCacheInfo oldValue = _templatesManager.putIfAbsent(pTemplate);
             if (oldValue != null) {
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.warning("notify template already in space, uid=" + oldValue.m_TemplateHolder.getUID() + " , in class: " + oldValue.m_TemplateHolder.getClassName());
+                if (_logger.isWarnEnabled())
+                    _logger.warn("notify template already in space, uid=" + oldValue.m_TemplateHolder.getUID() + " , in class: " + oldValue.m_TemplateHolder.getClassName());
 
                 return;
             }
@@ -2025,7 +2026,7 @@ public class CacheManager extends AbstractCacheManager
                 try {
                     filter.close();
                 } catch (Throwable e) {
-                    _logger.log(Level.FINE, "closing user filter caused an exception", e);
+                    _logger.debug("closing user filter caused an exception", e);
                 }
             }
 
@@ -3037,8 +3038,8 @@ public class CacheManager extends AbstractCacheManager
                             }
                         }
                     } catch (SAException ex) {
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.log(Level.FINE, ex.toString(), ex);
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug(ex.toString(), ex);
                         }
                     } //ignore any
 
@@ -3167,8 +3168,8 @@ public class CacheManager extends AbstractCacheManager
                             //reindex the entry
                             TypeDataIndex.reindexEntry(this, pEntry, updatedTypeData);
                         } catch (SAException ex) {
-                            if (_logger.isLoggable(Level.SEVERE))
-                                _logger.log(Level.SEVERE, "Reindex entry problem uid=" + entry.getUID(), ex);
+                            if (_logger.isErrorEnabled())
+                                _logger.error("Reindex entry problem uid=" + entry.getUID(), ex);
 
                             throw new RuntimeException("Reindex problem: " + ex);
                         } finally {
@@ -3292,7 +3293,7 @@ public class CacheManager extends AbstractCacheManager
                             }
                             entriesIter.releaseScan();
                         } catch (SAException ex) {
-                            _logger.log(Level.WARNING, "caught exception while cleaning offheap entries during shutdown", ex);
+                            _logger.warn("caught exception while cleaning offheap entries during shutdown", ex);
                         }
                     }
                 }
@@ -3300,10 +3301,10 @@ public class CacheManager extends AbstractCacheManager
                 memoryPool.close();
             }
 
-            if (_logger.isLoggable(Level.WARNING) && memoryPool != null) {
+            if (_logger.isWarnEnabled() && memoryPool != null) {
                 final long count = memoryPool.getUsedBytes();
                 if (count != 0) {
-                    _logger.log(Level.WARNING, "offheap used bytes still consumes " + count + " bytes");
+                    _logger.warn("offheap used bytes still consumes " + count + " bytes");
                 }
             }
         } finally {
@@ -3465,8 +3466,8 @@ public class CacheManager extends AbstractCacheManager
                 }
             }
 
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, " insertion entry problem uid=" + entryHolder.getUID() + " new=" + newEntry
+            if (_logger.isErrorEnabled())
+                _logger.error(" insertion entry problem uid=" + entryHolder.getUID() + " new=" + newEntry
                         + " pin=" + pin, ex);
 
             if (ex instanceof RuntimeException)
@@ -4156,7 +4157,7 @@ public class CacheManager extends AbstractCacheManager
                     intersectedList = addToIntersectedList(context, intersectedList, shortestPotentialMatchListCompound, template.isFifoTemplate(), true/*shortest*/, typeData);
                 if (shortestPotentialMatchListSize == 0 || !context.isIndicesIntersectionEnabled()) {
                     if (shortestPotentialMatchListSize < MIN_SIZE_TO_CONSIDER_COMPOUND_INDICES) {
-                        if (_logger.isLoggable(Level.FINEST))
+                        if (_logger.isTraceEnabled())
                             logSearchCompoundSelection(typeData, shortestPotentialMatchList, compound_selection, null);
                         return shortestPotentialMatchList;
                     }
@@ -4205,7 +4206,7 @@ public class CacheManager extends AbstractCacheManager
                 break;
         }
 
-        if (_logger.isLoggable(Level.FINEST))
+        if (_logger.isTraceEnabled())
             logSearchCompoundSelection(typeData, shortestPotentialMatchList, compound_selection, null);
 
         if (context.isIndicesIntersectionEnabled())
@@ -4417,7 +4418,7 @@ public class CacheManager extends AbstractCacheManager
                     indexUsed = true;
                 }
 
-                if (_logger.isLoggable(Level.FINEST) && index.getIndexName() != null) {
+                if (_logger.isTraceEnabled() && index.getIndexName() != null) {
                     final TypeDataIndex idx = entryType.getIndex(index.getIndexName());
                     if (idx != null && idx.isCompound()) {
                         compound_selection = result;
@@ -4443,8 +4444,8 @@ public class CacheManager extends AbstractCacheManager
                             intersectedList = addToIntersectedList(context, intersectedList, resultOIS, template.isFifoTemplate(), false/*shortest*/, entryType);
                         }
                         // Log index usage
-                        if (_logger.isLoggable(Level.FINEST)) {
-                            _logger.log(Level.FINEST, "EXTENDED-INDEX '" + index.getIndexName() + "' has been used for type [" +
+                        if (_logger.isTraceEnabled()) {
+                            _logger.trace("EXTENDED-INDEX '" + index.getIndexName() + "' has been used for type [" +
                                     entryType.getClassName() + "]");
                         }
                     }
@@ -4453,8 +4454,8 @@ public class CacheManager extends AbstractCacheManager
 
                 IStoredList<IEntryCacheInfo> entriesVector = (IStoredList<IEntryCacheInfo>) result;
                 // Log index usage
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.log(Level.FINEST, "BASIC-INDEX '" + index.getIndexName() + "' has been used for type [" +
+                if (_logger.isTraceEnabled()) {
+                    _logger.trace("BASIC-INDEX '" + index.getIndexName() + "' has been used for type [" +
                             entryType.getClassName() + "]");
                 }
 
@@ -4616,7 +4617,7 @@ public class CacheManager extends AbstractCacheManager
                 return entryType.getEntries();
             }
 
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logSearchCompoundSelection(entryType, resultOIS, compound_selection, compound_name);
             if (context.isIndicesIntersectionEnabled())
                 intersectedList = addToIntersectedList(context, intersectedList, resultOIS, template.isFifoTemplate(), true/*shortest*/, entryType);
@@ -4624,7 +4625,7 @@ public class CacheManager extends AbstractCacheManager
         }
 
         if (resultOIS == null || (resultSL.size() < entryType.getEntries().size() && (uidsSize == Integer.MAX_VALUE || resultSL.size() <= uidsSize))) {
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logSearchCompoundSelection(entryType, resultSL, compound_selection, compound_name);
             if (context.isIndicesIntersectionEnabled()) {
                 intersectedList = addToIntersectedList(context, intersectedList, resultOIS, template.isFifoTemplate(), false/*shortest*/, entryType);
@@ -4633,7 +4634,7 @@ public class CacheManager extends AbstractCacheManager
             return resultSL;
         }
 
-        if (_logger.isLoggable(Level.FINEST))
+        if (_logger.isTraceEnabled())
             CacheManager.logSearchCompoundSelection(entryType, resultOIS, compound_selection, compound_name);
         if (context.isIndicesIntersectionEnabled()) {
             intersectedList = addToIntersectedList(context, intersectedList, resultSL, template.isFifoTemplate(), false/*shortest*/, entryType);
@@ -4671,11 +4672,11 @@ public class CacheManager extends AbstractCacheManager
 
 
     private static void logSearchCompoundSelection(TypeData type, Object res, Object compound_selection, String compound_name) {
-        if (!_logger.isLoggable(Level.FINEST) || res == null || res != compound_selection)
+        if (!_logger.isTraceEnabled() || res == null || res != compound_selection)
             return;
         if (compound_name == null)
             compound_name = " ";
-        _logger.log(Level.FINEST, "COMPOUND-INDEX '" + compound_name + "' has been selected for type [" +
+        _logger.trace("COMPOUND-INDEX '" + compound_name + "' has been selected for type [" +
                 type.getClassName() + "]");
     }
 
@@ -5209,7 +5210,7 @@ public class CacheManager extends AbstractCacheManager
 
 //	void debug()
 //	{
-//		if( _logger.isLoggable(Level.INFO))
+//		if( _logger.isInfoEnabled())
 //		{
 //			_logger.info("Cache Manager Entries: ");
 //
@@ -5446,8 +5447,8 @@ public class CacheManager extends AbstractCacheManager
 
                 if (!_engine.isLocalCache())
                     registerTypeMetrics(serverTypeDesc);
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE, "Created new TypeData for type " + serverTypeDesc.getTypeName() +
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Created new TypeData for type " + serverTypeDesc.getTypeName() +
                             " [typeId=" + serverTypeDesc.getTypeId() + "]");
             }
         }
@@ -5510,8 +5511,8 @@ public class CacheManager extends AbstractCacheManager
             TypeData newTypeData = _typeDataFactory.createTypeDataOnDynamicIndexCreation(serverTypeDesc, oldTypeData, reason);
             _typeDataMap.put(serverTypeDesc, newTypeData);
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "replaced TypeData for type [" + serverTypeDesc.getTypeName() +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("replaced TypeData for type [" + serverTypeDesc.getTypeName() +
                         "], typeId: " + serverTypeDesc.getTypeId() +
                         ", isInactive: " + serverTypeDesc.isInactive() +
                         " reason: " + reason);
@@ -5793,8 +5794,8 @@ public class CacheManager extends AbstractCacheManager
             try {
                 manager.close();
             } catch (Throwable e) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.warning("failure closing query extention manager " + manager.toString());
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn("failure closing query extention manager " + manager.toString());
                 }
             }
         }

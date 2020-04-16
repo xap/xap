@@ -27,7 +27,8 @@ import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.gigaspaces.logger.Constants.LOGGER_REPLICATION_BACKLOG;
 
@@ -49,7 +50,7 @@ public class MemoryRedoLogFile<T extends IReplicationOrderedPacket> implements I
 
     public MemoryRedoLogFile(String name, AbstractSingleFileGroupBacklog groupBacklog) {
         _name = name;
-        _logger = Logger.getLogger(LOGGER_REPLICATION_BACKLOG + "." + _name);
+        _logger = LoggerFactory.getLogger(LOGGER_REPLICATION_BACKLOG + "." + _name);
         _groupBacklog = groupBacklog;
     }
 

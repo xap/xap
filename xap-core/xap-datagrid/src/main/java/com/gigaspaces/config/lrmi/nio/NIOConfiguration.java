@@ -28,8 +28,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class provides configuration object of NIO communication transport protocol.
@@ -41,7 +42,7 @@ import java.util.logging.Logger;
 
 public class NIOConfiguration implements ITransportConfig, Cloneable, Externalizable {
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(NIOConfiguration.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(NIOConfiguration.class.getName());
 
     private static final int DEFAULT_MIN_THREADS = 1;
     private static final int DEFAULT_MAX_THREADS = 128;
@@ -420,8 +421,8 @@ public class NIOConfiguration implements ITransportConfig, Cloneable, Externaliz
                 protocolValidationEnabled
         );
 
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine(String.valueOf(nioConfiguration));
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.valueOf(nioConfiguration));
         }
         return nioConfiguration;
     }

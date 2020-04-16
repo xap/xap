@@ -37,7 +37,7 @@ import net.jini.core.transaction.server.ServerTransaction;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.List;
-import java.util.logging.Level;
+
 
 @com.gigaspaces.api.InternalApi
 public class SpaceReplicationTransactionEventHandler implements IReplicationInTransactionHandler, ITransactionalExecutionCallback {
@@ -94,11 +94,11 @@ public class SpaceReplicationTransactionEventHandler implements IReplicationInTr
             packetEntryData.executeTransactional(context, this, transaction, true);
         }
         //Currently we should reach here only in multi participant transactions
-        if (_spaceEngine.getOperationLogger().isLoggable(Level.FINEST))
-            _spaceEngine.getOperationLogger().finest("preparing transaction [" + _spaceEngine.createTransactionDetailsString(transaction, null) + "]");
+        if (_spaceEngine.getOperationLogger().isTraceEnabled())
+            _spaceEngine.getOperationLogger().trace("preparing transaction [" + _spaceEngine.createTransactionDetailsString(transaction, null) + "]");
         int prepareResult = _spaceEngine.prepare(transaction.mgr, transaction, false/*single participant*/, false, null /*OperationID*/);
-        if (_spaceEngine.getOperationLogger().isLoggable(Level.FINEST))
-            _spaceEngine.getOperationLogger().finest("prepared transaction [" + _spaceEngine.createTransactionDetailsString(transaction, null) + "] result=" + prepareResult);
+        if (_spaceEngine.getOperationLogger().isTraceEnabled())
+            _spaceEngine.getOperationLogger().trace("prepared transaction [" + _spaceEngine.createTransactionDetailsString(transaction, null) + "] result=" + prepareResult);
     }
 
     @Override
@@ -124,8 +124,8 @@ public class SpaceReplicationTransactionEventHandler implements IReplicationInTr
             _spaceEngine.abort(transaction.mgr, transaction, false, null);
             _spaceEngine.enableDuplicateExecutionProtection(transactionContext.getOperationID());
         } catch (UnknownTransactionException e) {
-            if (context.getContextLogger() != null && context.getContextLogger().isLoggable(Level.WARNING)) {
-                context.getContextLogger().warning("Replication of abort of two phase commit transaction [Metadata=" + transactionContext.getMetaData() + "] failed with unknown transaction exception, this could occur after failover where the transaction abort has already been replicated. ignoring operation");
+            if (context.getContextLogger() != null && context.getContextLogger().isWarnEnabled()) {
+                context.getContextLogger().warn("Replication of abort of two phase commit transaction [Metadata=" + transactionContext.getMetaData() + "] failed with unknown transaction exception, this could occur after failover where the transaction abort has already been replicated. ignoring operation");
             }
         }
     }

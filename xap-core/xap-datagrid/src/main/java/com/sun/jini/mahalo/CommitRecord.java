@@ -19,8 +19,9 @@ package com.sun.jini.mahalo;
 
 import com.sun.jini.mahalo.log.CannotRecoverException;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A <code>CommitRecord</code> represents the logged state of a <code>Transaction</code> which has
@@ -91,8 +92,8 @@ class CommitRecord implements TxnLogRecord {
                     ime.getMessage());
         }
 
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, "CommitRecord:recover recovered");
+        if (logger.isTraceEnabled()) {
+            logger.trace("CommitRecord:recover recovered");
         }
     }
 

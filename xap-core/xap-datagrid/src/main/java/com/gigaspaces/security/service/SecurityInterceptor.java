@@ -47,8 +47,9 @@ import java.rmi.RemoteException;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Server-side security interceptor, responsible for authentication against the underlying {@link
@@ -60,7 +61,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class SecurityInterceptor {
-    private static final Logger logger = Logger.getLogger("com.gigaspaces.security");
+    private static final Logger logger = LoggerFactory.getLogger("com.gigaspaces.security");
 
     private final SecurityManager securityManager;
     private final SecurityAudit securityAudit; //may be null if SecurityAuditFactory can't load the default implementation
@@ -114,8 +115,8 @@ public class SecurityInterceptor {
      *                      provided name.
      */
     public SecurityInterceptor(String component, Properties props, boolean useMinusDLast) {
-        if (logger.isLoggable(Level.INFO))
-            logger.log(Level.INFO, "Security enabled for " + component);
+        if (logger.isInfoEnabled())
+            logger.info("Security enabled for " + component);
         SecurityManager injectedSecurityManager = null;
         //verify property doesn't exist as a String before trying to cast into SecurityManager
         if (props.get(SecurityManager.SECURITY_MANAGER_CLASS_PROPERTY_KEY) instanceof SecurityManager) {

@@ -21,7 +21,8 @@ import com.gigaspaces.logger.LogLevel;
 import net.jini.core.lookup.ServiceID;
 
 import java.lang.reflect.Method;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Miscellaneous common utility methods.

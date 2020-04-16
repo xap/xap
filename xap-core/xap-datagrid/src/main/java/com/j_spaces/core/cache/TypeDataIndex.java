@@ -51,8 +51,9 @@ import com.j_spaces.kernel.list.IScanListIterator;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class TypeDataIndex<K> {
@@ -153,7 +154,7 @@ public class TypeDataIndex<K> {
     }
 
     public TypeDataIndex(CacheManager cacheManager, ISpaceIndex index, int pos, boolean useEconomyHashmap, int indexCreationNumber, Class<?> valueClass, ISpaceIndex.FifoGroupsIndexTypes fifoGroupsIndexType) {
-        this._logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE + "." + cacheManager.getEngine().getSpaceImpl().getNodeName());
+        this._logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE + "." + cacheManager.getEngine().getSpaceImpl().getNodeName());
         _cacheManager = cacheManager;
         _useEconomyHashMap = useEconomyHashmap;
         _indexCreationNumber = indexCreationNumber;
@@ -437,8 +438,8 @@ public class TypeDataIndex<K> {
                         getUniqueEntriesStore().remove(fieldValue, other); //help remove
                     } else {
                         DuplicateIndexValueException ex = new DuplicateIndexValueException(pEntry.getUID(), pEntry.getEntryHolder(_cacheManager).getClassName(), _indexDefinition.getName(), fieldValue, other.getUID());
-                        if (_logger.isLoggable(Level.SEVERE))
-                            _logger.log(Level.SEVERE, "Duplicate value encountered on unique index insertion ", ex);
+                        if (_logger.isErrorEnabled())
+                            _logger.error("Duplicate value encountered on unique index insertion ", ex);
                         //if case of failure we need to remove the partally inserted entry
                         //relevant for write + update + update under txn, done in the calling code
                         throw ex;

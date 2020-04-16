@@ -24,8 +24,9 @@ import com.j_spaces.core.client.EntryNotInSpaceException;
 import com.j_spaces.core.client.EntryVersionConflictException;
 import com.j_spaces.core.cluster.ClusterXML;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -52,7 +53,7 @@ public class ReplicationInExceptionHandler {
     public void handleEntryLockedByTransactionOnTake(Logger logger, IEntryPacket entryPacket) {
         if (_isCentralDB && !entryPacket.isTransient())
             return;
-        if (logger != null && logger.isLoggable(Level.SEVERE)) {
+        if (logger != null && logger.isErrorEnabled()) {
             logMessage(logger,
                     TAKE,
                     entryPacket.getTypeName(),
@@ -93,7 +94,7 @@ public class ReplicationInExceptionHandler {
 
         } else {
 
-            if (logger != null && logger.isLoggable(Level.FINE))
+            if (logger != null && logger.isDebugEnabled())
                 logMessage(logger,
                         TAKE,
                         entryPacket.getTypeName(),
@@ -124,8 +125,8 @@ public class ReplicationInExceptionHandler {
 
     public void handleNoClassNameOnTake(Logger logger,
                                         String uid) {
-        if (logger != null && logger.isLoggable(Level.SEVERE)) {
-            logger.severe("Replication detected illegal " + TAKE + " operation on entry "
+        if (logger != null && logger.isErrorEnabled()) {
+            logger.error("Replication detected illegal " + TAKE + " operation on entry "
                     + " uid=<"
                     + uid
                     + ">\n"
@@ -142,14 +143,14 @@ public class ReplicationInExceptionHandler {
                                                        IEntryPacket entryPacket) {
         if (_isCentralDB && !entryPacket.isTransient())
             return;
-        if (logger != null && logger.isLoggable(Level.SEVERE)) {
+        if (logger != null && logger.isErrorEnabled()) {
             logMessage(logger, UPDATE, entryPacket.getTypeName(), entryPacket.getUID(), LogLevel.SEVERE, "Entry is locked by another transaction.");
         }
     }
 
     public void handleEntryLockedByTransactionOnChange(Logger logger,
                                                        ITemplatePacket entryPacket) {
-        if (logger != null && logger.isLoggable(Level.SEVERE)) {
+        if (logger != null && logger.isErrorEnabled()) {
             logMessage(logger, CHANGE, entryPacket.getTypeName(), entryPacket.getUID(), LogLevel.SEVERE, "Entry is locked by another transaction.");
         }
     }

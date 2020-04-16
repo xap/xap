@@ -42,8 +42,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides for the systematic renewal and overall management of a set of leases associated with one
@@ -232,7 +233,7 @@ public class LeaseRenewalManager {
 
     private static final String LRM = "net.jini.lease.LeaseRenewalManager";
 
-    private static final Logger logger = Logger.getLogger(LRM);
+    private static final Logger logger = LoggerFactory.getLogger(LRM);
 
     /* Method objects for manipulating method constraints */
     private static final Method cancelMethod;
@@ -936,7 +937,7 @@ public class LeaseRenewalManager {
                         listener, renewalRTT),
                 now);
         calcActualRenews(now);
-        logger.log(Level.FINE, "Added lease {0}", lease);
+        logger.debug("Added lease {0}", lease);
     }
 
     /**
@@ -1032,7 +1033,7 @@ public class LeaseRenewalManager {
         if (!removeLeaseInRenew(e))
             leases.remove(e);
         calcActualRenews();
-        logger.log(Level.FINE, "Removed lease {0}", lease);
+        logger.debug("Removed lease {0}", lease);
     }
 
     /**
@@ -1043,7 +1044,7 @@ public class LeaseRenewalManager {
         leases.clear();
         leaseInRenew.clear();
         calcActualRenews();
-        logger.log(Level.FINE, "Removed all leases");
+        logger.debug("Removed all leases");
     }
 
     public synchronized void terminate() {
@@ -1230,11 +1231,11 @@ public class LeaseRenewalManager {
      */
     private void logExpiration(Entry e) {
         if (e.renewalsDone()) {
-            logger.log(Level.FINE,
+            logger.debug(
                     "Reached desired expiration for lease {0}",
                     e.lease);
         } else {
-            logger.log(Level.FINE,
+            logger.debug(
                     "Lease {0} expired before reaching desired expiration", e.lease);
         }
     }
@@ -1250,11 +1251,11 @@ public class LeaseRenewalManager {
         try {
             if (bList.size() == 1) {
                 Entry e = bList.get(0);
-                logger.log(Level.FINE, "Renewing lease {0}", e.lease);
+                logger.debug("Renewing lease {0}", e.lease);
                 e.lease.renew(e.getRenewDuration(now));
             } else {
                 LeaseMap batchLeaseMap = createBatchLeaseMap(bList, now);
-                logger.log(Level.FINE, "Renewing leases {0}", batchLeaseMap);
+                logger.debug("Renewing leases {0}", batchLeaseMap);
                 batchLeaseMap.renewAll();
             }
         } catch (LeaseMapException ex) {
@@ -1306,11 +1307,11 @@ public class LeaseRenewalManager {
                 if (cat == ThrowableConstants.INDEFINITE) {
                     e.delayRenew();
                     leases.put(e, e);
-                    if (logger.isLoggable(Level.FINE)) {
+                    if (logger.isDebugEnabled()) {
                         LogUtils.throwing(logger, LeaseRenewalManager.class, "renewAll", e.ex, "Indefinite exception while renewing lease {0}", e.lease);
                     }
                 } else {
-                    if (logger.isLoggable(Level.FINE)) {
+                    if (logger.isDebugEnabled()) {
                         LogUtils.throwing(logger, LeaseRenewalManager.class, "renewAll", e.ex, "Lease renewal failed for lease {0}", e.lease);
                     }
                     if (e.listener != null) {

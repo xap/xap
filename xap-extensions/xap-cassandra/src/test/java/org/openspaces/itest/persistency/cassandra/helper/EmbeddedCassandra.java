@@ -30,8 +30,9 @@ import java.io.IOException;
 import java.rmi.Remote;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class EmbeddedCassandra implements IEmbeddedCassandra, Remote {
@@ -44,7 +45,7 @@ public class EmbeddedCassandra implements IEmbeddedCassandra, Remote {
     private static final String SYSTEM_KEYSPACE_NAME = "system";
     private static final String LOCALHOST = "localhost";
 
-    private final Logger _logger = Logger.getLogger(getClass().getName());
+    private final Logger _logger = LoggerFactory.getLogger(getClass().getName());
     private final EmbeddedCassandraThread _thread;
 
     private final int _rpcPort;
@@ -88,7 +89,7 @@ public class EmbeddedCassandra implements IEmbeddedCassandra, Remote {
         try {
             createKeySpaceImpl(keySpace);
         } catch (Exception e) {
-            _logger.log(Level.SEVERE, "Could not create keyspace " + keySpace + " for embedded Cassandra", e);
+            _logger.error("Could not create keyspace " + keySpace + " for embedded Cassandra", e);
         }
     }
 
@@ -97,7 +98,7 @@ public class EmbeddedCassandra implements IEmbeddedCassandra, Remote {
         try {
             dropKeySpaceImpl(keySpace);
         } catch (Exception e) {
-            _logger.log(Level.SEVERE, "Could not drop keyspace " + keySpace + " for embedded Cassandra", e);
+            _logger.error("Could not drop keyspace " + keySpace + " for embedded Cassandra", e);
         }
     }
 
@@ -107,7 +108,7 @@ public class EmbeddedCassandra implements IEmbeddedCassandra, Remote {
         try {
             _thread.join();
         } catch (InterruptedException e) {
-            _logger.log(Level.WARNING, "Interrupted while waiting for EmbeddedCassandra shutdown", e);
+            _logger.warn("Interrupted while waiting for EmbeddedCassandra shutdown", e);
         }
     }
 
@@ -115,7 +116,7 @@ public class EmbeddedCassandra implements IEmbeddedCassandra, Remote {
         try {
             CassandraTestUtils.deleteFileOrDirectory(new File("target/cassandra"));
         } catch (IOException e) {
-            _logger.log(Level.WARNING, "Failed deleting cassandra directory", e);
+            _logger.warn("Failed deleting cassandra directory", e);
         }
     }
 

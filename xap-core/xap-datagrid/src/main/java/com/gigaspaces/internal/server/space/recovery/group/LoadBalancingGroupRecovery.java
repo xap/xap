@@ -27,7 +27,7 @@ import com.j_spaces.core.client.SpaceURL;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
+
 
 /**
  * {@link LoadBalancingGroupRecovery} defines how to recover in load balancing group
@@ -66,7 +66,7 @@ public class LoadBalancingGroupRecovery extends RecoveryGroup {
                 ISpaceCopyResult result = spaceCopyReplica.getCopyResult();
 
                 if (result.isSuccessful()) {
-                    if (_logger.isLoggable(Level.INFO)) {
+                    if (_logger.isInfoEnabled()) {
                         _logger.info("Space [" + _space.getServiceName()
                                 + "] recovered notify templates from ["
                                 + remoteSpaceURL + "]");

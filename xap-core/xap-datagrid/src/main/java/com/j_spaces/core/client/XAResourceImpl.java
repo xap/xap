@@ -47,8 +47,9 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
@@ -80,7 +81,7 @@ public class XAResourceImpl
 
 
     final private static Logger _logger =
-            Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_XA);
+            LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_XA);
 
     final private static boolean failOnInvalidRollback =
             Boolean.parseBoolean(System.getProperty(SystemProperties.FAIL_ON_INVALID_ROLLBACK, Boolean.TRUE.toString()));
@@ -93,8 +94,8 @@ public class XAResourceImpl
      * @param txnManger transaction manger, for used inside GS.
      */
     public XAResourceImpl(TransactionManager txnManger, IJSpace proxy, boolean delegatedXa, boolean resourcePerSingleTxn) {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "XAResourceImpl:Constructor(), the LocalTransactionManager is: " +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("XAResourceImpl:Constructor(), the LocalTransactionManager is: " +
                     txnManger + ", ActionMaker is: " + proxy + " thread=" + Thread.currentThread().getId() + " delegatedXa=" + delegatedXa + " resourcePerSingleTxn=" + resourcePerSingleTxn);
         }
         _rmid = UUID.randomUUID();
@@ -114,8 +115,8 @@ public class XAResourceImpl
             synchronized (_recoverLock) {
                 if (_recoverRes.get(_proxy) == null) {
                     Xid[] xr = new Xid[0];
-                    if (_logger.isLoggable(Level.INFO)) {
-                        _logger.log(Level.INFO, "XAResourceImpl:constructor geting recover info rmid=" + getRmid() + " thread=" + Thread.currentThread().getId() + " proxy=" + _proxy);
+                    if (_logger.isInfoEnabled()) {
+                        _logger.info("XAResourceImpl:constructor geting recover info rmid=" + getRmid() + " thread=" + Thread.currentThread().getId() + " proxy=" + _proxy);
                     }
                     try {
                         xr = recoverImpl(0, true);
@@ -129,8 +130,8 @@ public class XAResourceImpl
             containerName = proxy.getContainerName();
             spaceName = proxy.getName();
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE,
+            if (_logger.isErrorEnabled()) {
+                _logger.error(
                         "The XA resource default timeout " + Integer.MAX_VALUE +
                                 "(msec) will be used since the following exception thrown:" +
                                 e.toString(), e);
@@ -172,8 +173,8 @@ public class XAResourceImpl
         if (timeout < 0)
             throw new XAException(XAException.XAER_INVAL);
         m_timeout = timeout == 0 ? DEFAULT_TIMEOUT : timeout;
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "XAResourceImpl:setTransactionTimeout() set to  " + timeout + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("XAResourceImpl:setTransactionTimeout() set to  " + timeout + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
         }
         return true;
     }
@@ -185,8 +186,8 @@ public class XAResourceImpl
         boolean res = false;
         XAResourceImpl other = null;
         if (_resourcePerSingleTxn && !_relevantTx) { // signal TM (atomikos) resource can be purged
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.fine("tx is not relevant,rmid " + _rmid);
+            if (_logger.isTraceEnabled())
+                _logger.debug("tx is not relevant,rmid " + _rmid);
             throw new XAException("Not relevant TX!");
         }
 
@@ -204,11 +205,11 @@ public class XAResourceImpl
         } catch (Exception e) {
             // false
         } finally {
-            if (_logger.isLoggable(Level.FINEST)) {
+            if (_logger.isTraceEnabled()) {
                 if (other != null)
-                    _logger.log(Level.FINEST, "XAResourceImpl:isSameRM(), the XAResource is: " + xares + " our=" + _rmid + " other=" + other.getRmid() + " result=" + res + " thread=" + Thread.currentThread().getId());
+                    _logger.trace("XAResourceImpl:isSameRM(), the XAResource is: " + xares + " our=" + _rmid + " other=" + other.getRmid() + " result=" + res + " thread=" + Thread.currentThread().getId());
                 else
-                    _logger.log(Level.FINEST, "XAResourceImpl:isSameRM(),othger is NULL  the XAResource is: " + xares + " our=" + _rmid + " result=" + res + " thread=" + Thread.currentThread().getId());
+                    _logger.trace("XAResourceImpl:isSameRM(),othger is NULL  the XAResource is: " + xares + " our=" + _rmid + " result=" + res + " thread=" + Thread.currentThread().getId());
 
             }
 
@@ -231,18 +232,18 @@ public class XAResourceImpl
     }
 
     private Xid[] recoverImpl(int flag, boolean fromInitialize) throws XAException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "XAResourceImpl:recover() called, flag: " + flag + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " fromInitialize=" + fromInitialize);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("XAResourceImpl:recover() called, flag: " + flag + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " fromInitialize=" + fromInitialize);
         }
         Xid[] res = null;
         Xid[] res_cons = null;
         if (!fromInitialize) {
             res_cons = _recoverRes.get(_proxy);
             if (res_cons.length == 0) {
-                _logger.log(Level.FINE, "XAResourceImpl:recover() returned empty, flag: " + flag + " xtns=" + res_cons.length + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
+                _logger.debug("XAResourceImpl:recover() returned empty, flag: " + flag + " xtns=" + res_cons.length + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
                 return res_cons;
             } else {
-                _logger.log(Level.FINE, "XAResourceImpl:recover() advanced to recheck num=" + res_cons.length + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
+                _logger.debug("XAResourceImpl:recover() advanced to recheck num=" + res_cons.length + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
             }
         }
         try {
@@ -259,7 +260,7 @@ public class XAResourceImpl
                             r1.add(x);
                         for (Xid x : res) {
                             if (r1.contains(x)) {
-                                _logger.log(Level.FINE, "XAResourceImpl:recover() continuation xtn=" + x + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
+                                _logger.debug("XAResourceImpl:recover() continuation xtn=" + x + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
                                 r2.add(x);
                             }
                         }
@@ -278,14 +279,14 @@ public class XAResourceImpl
                     throw new XAException(XAException.XAER_INVAL);
             }
         } catch (RemoteException e) {
-            _logger.log(Level.SEVERE, "XAResourceImpl:recover() , RemoteException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e);
+            _logger.error("XAResourceImpl:recover() , RemoteException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e);
             throw createsXAException(XAException.XAER_RMFAIL, e);
         } catch (CannotCommitException e) {
-            _logger.log(Level.SEVERE, "XAResourceImpl:recover() , CannotCommitException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e);
+            _logger.error("XAResourceImpl:recover() , CannotCommitException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e);
             throw createsXAException(XAException.XAER_RMFAIL, e);
         } finally {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "XAResourceImpl:recover() terminated, flag: " + flag + " xtns=" + res.length + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("XAResourceImpl:recover() terminated, flag: " + flag + " xtns=" + res.length + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
             }
 
         }
@@ -344,8 +345,8 @@ public class XAResourceImpl
      * @see javax.transaction.xa.XAResource#prepare(javax.transaction.xa.Xid)
      */
     public int prepare(Xid xid) throws XAException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "XAResourceImpl:prepare(), the Xid is: " + xid + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("XAResourceImpl:prepare(), the Xid is: " + xid + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
         }
 
         xid = createGSXid(xid);
@@ -363,13 +364,13 @@ public class XAResourceImpl
                     throw new XAException(XAException.XA_RBROLLBACK);
             }
         } catch (UnknownTransactionException e) {
-            _logger.log(Level.SEVERE, "XAResourceImpl:prepare() , UnknownTransactionException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
+            _logger.error("XAResourceImpl:prepare() , UnknownTransactionException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
             throw createsXAException(XAException.XA_RBROLLBACK, e);
         } catch (CannotCommitException e) {
-            _logger.log(Level.SEVERE, "XAResourceImpl:prepare() , CannotCommitException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
+            _logger.error("XAResourceImpl:prepare() , CannotCommitException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
             throw createsXAException(XAException.XA_RBROLLBACK, e);
         } catch (RemoteException e) {
-            _logger.log(Level.SEVERE, "XAResourceImpl:prepare() , remoteException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
+            _logger.error("XAResourceImpl:prepare() , remoteException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
             throw createsXAException(XAException.XA_RBCOMMFAIL, e);
         }
     }
@@ -384,8 +385,8 @@ public class XAResourceImpl
      * @see javax.transaction.xa.XAResource#rollback(javax.transaction.xa.Xid)
      */
     public void rollback(Xid xid) throws XAException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "XAResourceImpl:rollback(), the Xid is:" + xid + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("XAResourceImpl:rollback(), the Xid is:" + xid + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
         }
 
         xid = createGSXid(xid);
@@ -393,16 +394,16 @@ public class XAResourceImpl
             m_txnManger.abort(xid, COMMIT_ABORT_DEFAULT_TIMEOUT);
         } catch (UnknownTransactionException e) {
             if (failOnInvalidRollback)
-                _logger.log(Level.SEVERE, "XAResourceImpl:rollback() , unknownTxnException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
+                _logger.error("XAResourceImpl:rollback() , unknownTxnException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
             throw createsXAException(XAException.XA_RBPROTO, e);
         } catch (CannotAbortException e) {
-            _logger.log(Level.SEVERE, "XAResourceImpl:rollback() , CannotAbortException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
+            _logger.error("XAResourceImpl:rollback() , CannotAbortException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
             throw createsXAException(XAException.XA_RBPROTO, e);
         } catch (RemoteException e) {
-            _logger.log(Level.SEVERE, "XAResourceImpl:rollback() , remoteException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
+            _logger.error("XAResourceImpl:rollback() , remoteException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
             throw createsXAException(XAException.XA_RBCOMMFAIL, e);
         } catch (TimeoutExpiredException e) {
-            _logger.log(Level.SEVERE, "XAResourceImpl:rollback() , timeoutException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
+            _logger.error("XAResourceImpl:rollback() , timeoutException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
             throw createsXAException(XAException.XAER_RMFAIL, e);
         } finally {
             _activeEmptyTransactions.remove(xid);
@@ -416,8 +417,8 @@ public class XAResourceImpl
      * @see javax.transaction.xa.XAResource#end(javax.transaction.xa.Xid, int)
      */
     public void end(Xid xid, int flag) throws XAException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "XAResourceImpl:end(), the Xid is:" + xid + ", flag is:" + flag + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("XAResourceImpl:end(), the Xid is:" + xid + ", flag is:" + flag + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
         }
 
         xid = createGSXid(xid);
@@ -425,7 +426,7 @@ public class XAResourceImpl
             case TMSUSPEND: {
                 Transaction.Created suspended = _proxy.getContextTransaction();
                 if (suspended == null) {
-                    _logger.log(Level.SEVERE, "XAResourceImpl:end() + suspend and current is NULL , Xid = :" + xid + ", flag is:" + flag + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
+                    _logger.error("XAResourceImpl:end() + suspend and current is NULL , Xid = :" + xid + ", flag is:" + flag + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
                     throw new RuntimeException("XAResourceImpl:end() + suspend and current is NULL , Xid = :" + xid + ", flag is:" + flag + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
                 }
                 _suspendedXtns.put(xid, suspended);
@@ -450,8 +451,8 @@ public class XAResourceImpl
      * @see javax.transaction.xa.XAResource#start(javax.transaction.xa.Xid, int)
      */
     protected Transaction.Created startIn(Xid xid, int flag, boolean setAsDefault) throws XAException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "XAResourceImpl:startIn(), the Xid: " + xid + ", the flag: " + flag + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("XAResourceImpl:startIn(), the Xid: " + xid + ", the flag: " + flag + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
         }
 
         xid = createGSXid(xid);
@@ -462,7 +463,7 @@ public class XAResourceImpl
             case TMRESUME: {
                 Transaction.Created suspended = _suspendedXtns.remove(xid);
                 if (suspended == null) {
-                    _logger.log(Level.SEVERE, "XAResourceImpl:startIn() + resume and suspended is NULL , Xid = :" + xid + ", flag is:" + flag + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
+                    _logger.error("XAResourceImpl:startIn() + resume and suspended is NULL , Xid = :" + xid + ", flag is:" + flag + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
                     throw new RuntimeException("XAResourceImpl:startIn() + resume and suspended is NULL , Xid = :" + xid + ", flag is:" + flag + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
                 }
                 if (setAsDefault)
@@ -475,10 +476,10 @@ public class XAResourceImpl
                 try {
                     return XATransactionFactory.create(m_txnManger, xid, m_timeout * 1000L, setAsDefault, _proxy, this, _delegatedXa);
                 } catch (RemoteException e) {
-                    _logger.log(Level.SEVERE, "XAResourceImpl:startIn() , remoteException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
+                    _logger.error("XAResourceImpl:startIn() , remoteException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
                     throw createsXAException(XAException.XA_RBCOMMFAIL, e);
                 } catch (LeaseDeniedException e) {
-                    _logger.log(Level.SEVERE, "XAResourceImpl:startIn() , LeaseDeniedException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
+                    _logger.error("XAResourceImpl:startIn() , LeaseDeniedException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
                     throw createsXAException(XAException.XAER_INVAL, e);
                 }
             default: // TODO check dup ID
@@ -490,8 +491,8 @@ public class XAResourceImpl
      * @see javax.transaction.xa.XAResource#commit(javax.transaction.xa.Xid, boolean)
      */
     public void commit(Xid xid, boolean onePhase) throws XAException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "XAResourceImpl:commit(), the xid is:" + xid + ", the onePhase:" + onePhase + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("XAResourceImpl:commit(), the xid is:" + xid + ", the onePhase:" + onePhase + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId());
         }
 
         xid = createGSXid(xid);
@@ -499,16 +500,16 @@ public class XAResourceImpl
         try {
             m_txnManger.commit(xid, COMMIT_ABORT_DEFAULT_TIMEOUT);
         } catch (UnknownTransactionException e) {
-            _logger.log(Level.SEVERE, "XAResourceImpl:commit() , unknowntxnException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
+            _logger.error("XAResourceImpl:commit() , unknowntxnException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
             throw createsXAException(XAException.XAER_RMERR, e);
         } catch (CannotCommitException e) {
-            _logger.log(Level.SEVERE, "XAResourceImpl:commit() , cannotcommitException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
+            _logger.error("XAResourceImpl:commit() , cannotcommitException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
             throw createsXAException(XAException.XAER_RMERR, e);
         } catch (RemoteException e) {
-            _logger.log(Level.SEVERE, "XAResourceImpl:commit() , remoteException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
+            _logger.error("XAResourceImpl:commit() , remoteException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
             throw createsXAException(XAException.XAER_RMFAIL, e);
         } catch (TimeoutExpiredException e) {
-            _logger.log(Level.SEVERE, "XAResourceImpl:commit() , timeoutexpiredException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
+            _logger.error("XAResourceImpl:commit() , timeoutexpiredException  rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " exception:" + e + e.getStackTrace());
             throw createsXAException(XAException.XAER_RMFAIL, e);
         } finally {
             _activeEmptyTransactions.remove(xid);
@@ -523,8 +524,8 @@ public class XAResourceImpl
             return;
         GSServerTransaction gstxn = (GSServerTransaction) txn;
         Xid res = _activeEmptyTransactions.remove(gstxn.getId());
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "XAResourceImpl:action(), the xid is:" + gstxn.getId() + " success=" + (res != null) + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " remained=" + _activeEmptyTransactions.size());
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("XAResourceImpl:action(), the xid is:" + gstxn.getId() + " success=" + (res != null) + " rmid=" + _rmid + " thread=" + Thread.currentThread().getId() + " remained=" + _activeEmptyTransactions.size());
         }
 
 

@@ -27,8 +27,9 @@ import com.j_spaces.core.SpaceContextHelper;
 import net.jini.core.transaction.Transaction;
 
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The Drop table implementation.
@@ -41,7 +42,7 @@ public class DropTableQuery implements Query {
     private String tableName;
 
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_QUERY);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     private QuerySession session;
 
@@ -60,8 +61,8 @@ public class DropTableQuery implements Query {
 
             response.setIntResult(0);
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.getMessage(), e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.getMessage(), e);
             }
             SQLException se = new SQLException("Failed to drop table [" + tableName + "]; Cause: " + e, "GSP", -107);
             se.initCause(e);

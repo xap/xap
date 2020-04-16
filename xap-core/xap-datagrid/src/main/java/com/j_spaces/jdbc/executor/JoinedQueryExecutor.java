@@ -47,7 +47,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
+
 
 
 /**
@@ -454,8 +454,8 @@ public class JoinedQueryExecutor
                     tableData.init(space, txn, query);
                 }
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, e.getMessage(), e);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(e.getMessage(), e);
                 }
                 throw new SQLException("Failed to read objects: " + e.getMessage(),
                         "GSP",

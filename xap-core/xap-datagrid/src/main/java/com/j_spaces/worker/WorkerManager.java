@@ -31,8 +31,9 @@ import com.j_spaces.kernel.ClassLoaderHelper;
 
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * WorkerManager manages users defined workers. During space initialization will be called init()
@@ -46,7 +47,7 @@ import java.util.logging.Logger;
 @Deprecated
 @com.gigaspaces.api.InternalApi
 public class WorkerManager implements ISpaceComponentsHandler {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_WORKER);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_WORKER);
 
     private final IJSpace workerProxy;
     private final String workerManagerName;
@@ -82,8 +83,8 @@ public class WorkerManager implements ISpaceComponentsHandler {
 
         isClosed = true;
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("WorkerManager: " + workerManagerName + " closed successfully.");
+        if (_logger.isDebugEnabled())
+            _logger.debug("WorkerManager: " + workerManagerName + " closed successfully.");
     }
 
     private void close(WorkerInfo worker) {
@@ -93,11 +94,11 @@ public class WorkerManager implements ISpaceComponentsHandler {
                 worker.getWorkerThread().interrupt();
 
             worker.getWorker().close();
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("WorkerManager: " + workerManagerName + " Worker: " + worker.getWorkerName() + " closed successfully.");
+            if (_logger.isDebugEnabled())
+                _logger.debug("WorkerManager: " + workerManagerName + " Worker: " + worker.getWorkerName() + " closed successfully.");
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "WorkerManager: " + workerManagerName + " Failed to close " + worker.getWorkerName(), ex);
+            if (_logger.isDebugEnabled())
+                _logger.debug("WorkerManager: " + workerManagerName + " Failed to close " + worker.getWorkerName(), ex);
         }
     }
 
@@ -106,8 +107,8 @@ public class WorkerManager implements ISpaceComponentsHandler {
         Hashtable<String, WorkerInfo> result = new Hashtable<String, WorkerInfo>();
         String workerNames = configReader.getSpaceProperty(Constants.WorkerManager.WORKER_NAMES_PROP, null);
         if (workerNames == null) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("No worker defined for " + workerManagerName + " space.");
+            if (_logger.isDebugEnabled())
+                _logger.debug("No worker defined for " + workerManagerName + " space.");
             return result;
         }
         String[] workerArr = workerNames.split(",");
@@ -118,8 +119,8 @@ public class WorkerManager implements ISpaceComponentsHandler {
 
             /** don't start if enabled=false */
             if (enabled.equalsIgnoreCase(Boolean.FALSE.toString())) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine("Worker: " + workerArr[i] + " disabled.");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Worker: " + workerArr[i] + " disabled.");
                 continue;
             }
 
@@ -139,14 +140,14 @@ public class WorkerManager implements ISpaceComponentsHandler {
                     WorkerInfo worker = buildWorker(workerName, className, arg, description, startIfPrimaryOnly, shutdownSpaceOnInitFailure);
                     result.put(workerName, worker);
                 } catch (Exception ex) {
-                    if (_logger.isLoggable(Level.SEVERE))
-                        _logger.log(Level.SEVERE, "Failed to configure worker: " + workerName, ex);
+                    if (_logger.isErrorEnabled())
+                        _logger.error("Failed to configure worker: " + workerName, ex);
                     throw new RuntimeException("WorkerManager: Failed to configure worker [" + workerName + "]", ex);
                 }
             }
         }
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("WorkerManager: " + workerManagerName + " initialized successfully.");
+        if (_logger.isDebugEnabled())
+            _logger.debug("WorkerManager: " + workerManagerName + " initialized successfully.");
         return result;
     }
 
@@ -155,12 +156,12 @@ public class WorkerManager implements ISpaceComponentsHandler {
         if (isClosed)
             throw new RuntimeException("Failed to start worker: " + workerName + ".WorkerManager already shutdown.");
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("WorkerManager: " + workerManagerName + " Starting Worker: " + workerName + " Class name: " + className + " arg: " + arg);
+        if (_logger.isDebugEnabled())
+            _logger.debug("WorkerManager: " + workerManagerName + " Starting Worker: " + workerName + " Class name: " + className + " arg: " + arg);
 
         if (className == null) {
             String exMes = "Class name for Worker: " + workerName + " doesn't exist.";
-            _logger.severe(exMes);
+            _logger.error(exMes);
             throw new IllegalArgumentException(exMes);
         }
 
@@ -179,8 +180,8 @@ public class WorkerManager implements ISpaceComponentsHandler {
 
         WorkerInfo wInfo = new WorkerInfo(workerObj, workerThread, workerName, className, arg, desc, startIfPrimaryOnly, shutdownSpaceOnInitFailure);
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("WorkerManager: " + workerManagerName + " Worker: " + workerName + " initialized successfully.");
+        if (_logger.isDebugEnabled())
+            _logger.debug("WorkerManager: " + workerManagerName + " Worker: " + workerName + " initialized successfully.");
         return wInfo;
     }
 
@@ -197,8 +198,8 @@ public class WorkerManager implements ISpaceComponentsHandler {
             try {
                 worker.getWorker().init(workerProxy, worker.getWorkerName(), worker.getArg());
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to initialize worker: " + worker.getWorkerName(), ex);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to initialize worker: " + worker.getWorkerName(), ex);
                 if (worker.isShutdownSpaceOnInitFailure())
                     throw new SpaceComponentsInitializeException("Failed to initialize worker - " + worker.getWorkerName(), ex);
                 iterator.remove();

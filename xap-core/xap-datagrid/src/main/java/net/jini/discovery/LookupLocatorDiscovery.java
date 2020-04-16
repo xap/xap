@@ -58,8 +58,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class encapsulates the functionality required of an entity that wishes to employ the unicast
@@ -227,9 +228,9 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
     private static final String COMPONENT_NAME
             = "net.jini.discovery.LookupLocatorDiscovery";
     /* Logger used by this utility. */
-    private static final Logger logger = Logger.getLogger(COMPONENT_NAME);
+    private static final Logger logger = LoggerFactory.getLogger(COMPONENT_NAME);
 
-    private static final Logger loggerStats = Logger.getLogger(COMPONENT_NAME + ".stats");
+    private static final Logger loggerStats = LoggerFactory.getLogger(COMPONENT_NAME + ".stats");
 
     /**
      * Maximum number of concurrent tasks that can be run in any task manager created by this
@@ -370,7 +371,7 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                         list.add(Long.valueOf(value));
                         buff.append(value);
                     } catch (NumberFormatException e) {
-                        logger.log(Level.INFO, "Value [" + value + "] " +
+                        logger.info("Value [" + value + "] " +
                                 "is illegal for property " +
                                 "com.gigaspaces.unicast.interval, " +
                                 "ignoring");
@@ -380,8 +381,8 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                 for (int i = 0; i < sleepTime.length; i++) {
                     sleepTime[i] = ((Long) list.get(i)).longValue();
                 }
-                if (logger.isLoggable(Level.INFO))
-                    logger.log(Level.INFO,
+                if (logger.isInfoEnabled())
+                    logger.info(
                             "Set unicast interval to [" + buff.toString() +
                                     "]");
             }
@@ -465,15 +466,15 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
             }
             try {
                 long startTime = 0;
-                if (loggerStats.isLoggable(Level.FINEST)) {
+                if (loggerStats.isTraceEnabled()) {
                     startTime = SystemTime.timeMillis();
                 }
                 doUnicastDiscovery(l, ic);
-                if (loggerStats.isLoggable(Level.FINEST)) {
-                    loggerStats.finest("Unicast Lookup took [" + (SystemTime.timeMillis() - startTime) + "ms]");
+                if (loggerStats.isTraceEnabled()) {
+                    loggerStats.trace("Unicast Lookup took [" + (SystemTime.timeMillis() - startTime) + "ms]");
                 }
                 time = SystemTime.timeMillis();//mark the time of discovery
-                logger.log(Level.INFO, "Connected to LUS using locator {0}:{1,number,#}", new Object[]{
+                logger.info("Connected to LUS using locator {0}:{1,number,#}", new Object[]{
                         l.getHost(),
                         l.getPort()});
                 return true;
@@ -482,7 +483,7 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                 final int currTryIndx = tryIndx;
                 setNextTryTime();//discovery failed; try again even later
 
-                logger.log(Level.WARNING,
+                logger.warn(
                         "{0} - using unicast locator {1}:{2,number,#} - delay next lookup by {3} ms",
                         new Object[]{
                                 throwable,
@@ -519,7 +520,7 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                 }
 
                 protected void socketCloseException(IOException e) {
-                    logger.log(Level.FINEST,
+                    logger.trace(
                             "IOException on socket close upon "
                                     + "completion of unicast discovery",
                             e);
@@ -528,7 +529,7 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                 protected void singleResponseException(Exception e,
                                                        InetAddress addr,
                                                        int port) {
-                    logger.log(Level.FINE,
+                    logger.debug(
                             "Exception occurred during unicast discovery " +
                                     addr + ":" + port, e);
                 }
@@ -538,7 +539,7 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
             /* Proxy preparation */
             proxy = (ServiceRegistrar) registrarPreparer.prepareProxy
                     (resp.getRegistrar());
-            logger.log(Level.FINEST, "LookupLocatorDiscovery - prepared "
+            logger.trace("LookupLocatorDiscovery - prepared "
                     + "lookup service proxy: {0}", proxy);
             memberGroups = resp.getGroups();
         }//end doUnicastDiscovery
@@ -600,7 +601,7 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
         }//end constructor
 
         public void run() {
-            logger.finest("LookupLocatorDiscovery - Notifier thread started");
+            logger.trace("LookupLocatorDiscovery - Notifier thread started");
             while (true) {
                 NotifyTask task;
                 synchronized (pendingNotifies) {
@@ -617,11 +618,11 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                             new DiscoveryEvent(LookupLocatorDiscovery.this,
                                     deepCopy((HashMap) task.groupsMap));
                     /* Log the event info about the lookup(s) */
-                    if (firstListener && (logger.isLoggable(Level.FINEST))) {
+                    if (firstListener && (logger.isTraceEnabled())) {
                         String eType = (task.discard ?
                                 "discarded" : "discovered");
                         ServiceRegistrar[] regs = e.getRegistrars();
-                        logger.finest(eType + " event  -- " + regs.length
+                        logger.trace(eType + " event  -- " + regs.length
                                 + " lookup(s)");
                         Map groupsMap = e.getGroups();
                         for (int i = 0; i < regs.length; i++) {
@@ -630,14 +631,14 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                                 loc = regs[i].getLocator();
                             } catch (Throwable ex) { /* ignore */ }
                             String[] groups = (String[]) groupsMap.get(regs[i]);
-                            logger.finest(
+                            logger.trace(
                                     "    " + eType + " locator  = " + loc);
                             if (groups.length == 0) {
-                                logger.finest("    " + eType
+                                logger.trace("    " + eType
                                         + " group    = NO_GROUPS");
                             } else {
                                 for (int j = 0; j < groups.length; j++) {
-                                    logger.finest(
+                                    logger.trace(
                                             "    " + eType + " group[" + j + "] "
                                                     + "= " + groups[j]);
                                 }//end loop
@@ -685,7 +686,7 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
          * returned by <code>retryTime</code>.
          */
         public boolean tryOnce() {
-            logger.finest("LookupLocatorDiscovery - DiscoveryTask started");
+            logger.trace("LookupLocatorDiscovery - DiscoveryTask started");
             synchronized (LookupLocatorDiscovery.this) {
                 if (terminated) {
                     return true;
@@ -696,12 +697,12 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                  * this task should continue.
                  */
                 if (undiscoveredLocators.isEmpty()) {
-                    logger.finest("LookupLocatorDiscovery - DiscoveryTask "
+                    logger.trace("LookupLocatorDiscovery - DiscoveryTask "
                             + "completed");
                     return true;//true ==> done. Don't queue retry.
                 }//endif
                 if (!undiscoveredLocators.contains(reg)) {
-                    logger.finest("LookupLocatorDiscovery - DiscoveryTask "
+                    logger.trace("LookupLocatorDiscovery - DiscoveryTask "
                             + "completed");
                     return true;//already removed, true ==> don't queue retry
                 }
@@ -717,9 +718,9 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                     return true;
                 }
                 if (noRetry) {
-                    logger.finest("LookupLocatorDiscovery - DiscoveryTask completed. locator: " + reg.l);
+                    logger.trace("LookupLocatorDiscovery - DiscoveryTask completed. locator: " + reg.l);
                 } else {
-                    logger.finest("LookupLocatorDiscovery - DiscoveryTask failed, will retry later. locator: " + reg.l);
+                    logger.trace("LookupLocatorDiscovery - DiscoveryTask failed, will retry later. locator: " + reg.l);
                 }//endif
 
                 return noRetry;
@@ -758,8 +759,8 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
      *                                        element
      */
     public LookupLocatorDiscovery(LookupLocator[] locators) {
-        if (logger.isLoggable(Level.FINE))
-            logger.log(Level.FINE, "Created tunable LookupLocatorDiscovery");
+        if (logger.isDebugEnabled())
+            logger.debug("Created tunable LookupLocatorDiscovery");
         try {
             beginDiscovery(locators, EmptyConfiguration.INSTANCE);
         } catch (ConfigurationException e) { /* swallow this exception */ }
@@ -784,8 +785,8 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
     public LookupLocatorDiscovery(LookupLocator[] locators,
                                   Configuration config)
             throws ConfigurationException {
-        if (logger.isLoggable(Level.FINE))
-            logger.log(Level.FINE, "Created tunable LookupLocatorDiscovery");
+        if (logger.isDebugEnabled())
+            logger.debug("Created tunable LookupLocatorDiscovery");
         beginDiscovery(locators, config);
     }//end constructor
 
@@ -1187,8 +1188,8 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
         if (lcts == null) return;
         for (int i = 0; i < lcts.length; i++) {
             boolean discovered = isDiscovered(lcts[i]);
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("discoverLocators " + lcts[i].getHost() + ":" + lcts[i].getPort() + " discovered=" + discovered);
+            if (logger.isDebugEnabled()) {
+                logger.debug("discoverLocators " + lcts[i].getHost() + ":" + lcts[i].getPort() + " discovered=" + discovered);
             }
             if (discovered) continue;
 
@@ -1603,8 +1604,8 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                     }
 
                 } catch (RemoteException e) {
-                    if (logger.isLoggable(Level.WARNING))
-                        logger.log(Level.WARNING,
+                    if (logger.isWarnEnabled())
+                        logger.warn(
                                 "Exception in InternalDiscoveryListener.discovered() going to discard the discoveryEvent: " + discoveryEvent.toString(), e);
                     discard(sr[i]);
                     if (e instanceof ProxyClosedException) {
@@ -1636,13 +1637,13 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                 try {
                     invocationDelay = Long.parseLong(s);
                 } catch (NumberFormatException e) {
-                    logger.log(Level.INFO, "Value [" + s + "] " +
+                    logger.info("Value [" + s + "] " +
                             "is illegal for property " +
                             "com.gigaspaces.unicast.ping, " +
                             "ignoring");
                 }
-                if (logger.isLoggable(Level.FINE))
-                    logger.log(Level.FINE,
+                if (logger.isDebugEnabled())
+                    logger.debug(
                             "Set unicast ping to [" + invocationDelay + "]");
             }
             LookupLocator locator = proxy.getLocator();
@@ -1651,16 +1652,16 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
         }
 
         public void interrupt() {
-            if (logger.isLoggable(Level.FINEST))
-                logger.finest("Terminating LookupAliveTask Thread for " +
+            if (logger.isTraceEnabled())
+                logger.trace("Terminating LookupAliveTask Thread for " +
                         locatorString);
             keepAlive = false;
             super.interrupt();
         }
 
         public void run() {
-            if (logger.isLoggable(Level.FINE))
-                logger.fine("Started LookupAliveTask for " + locatorString);
+            if (logger.isDebugEnabled())
+                logger.debug("Started LookupAliveTask for " + locatorString);
             while (!interrupted()) {
                 if (!keepAlive) {
                     return;
@@ -1669,12 +1670,12 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                     sleep(invocationDelay);
                 } catch (InterruptedException ie) {
                 } catch (IllegalArgumentException iae) {
-                    logger.warning("LookupAliveTask: sleep time is off : "
+                    logger.warn("LookupAliveTask: sleep time is off : "
                             + invocationDelay);
                 }
                 try {
-                    if (logger.isLoggable(Level.FINE))
-                        logger.fine(
+                    if (logger.isDebugEnabled())
+                        logger.debug(
                                 "invoke getLocator() on : " + locatorString);
                     proxy.getLocator();
                 } catch (ConnectException e) {
@@ -1683,8 +1684,8 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                     final int category = ThrowableConstants.retryable(e);
                     if (category == ThrowableConstants.BAD_INVOCATION ||
                             category == ThrowableConstants.BAD_OBJECT) {
-                        if (logger.isLoggable(Level.FINE))
-                            logger.log(Level.FINE,
+                        if (logger.isDebugEnabled())
+                            logger.debug(
                                     "Unrecoverable Exception invoking " +
                                             "getLocator()",
                                     e);

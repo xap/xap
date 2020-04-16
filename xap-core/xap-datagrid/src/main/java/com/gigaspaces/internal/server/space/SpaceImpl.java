@@ -182,7 +182,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.logging.Level;
+
 
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_BLOB_STORE;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_PROP;
@@ -209,7 +209,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private final String _instanceId;
     private final String _nodeName;
     private final Logger _logger;
-    private final java.util.logging.Logger _operationLogger;
+    private final Logger _operationLogger;
     private final String _spaceMemberName;
     private final String _deployPath;
     private final SpaceConfigReader _configReader;
@@ -282,7 +282,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         this._instanceId = extractInstanceIdFromContainerName(containerName);
         this._nodeName = _instanceId == "0" ? spaceName : spaceName + "." + _instanceId;
         this._logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE + "." + _nodeName);
-        this._operationLogger = java.util.logging.Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE_OPERATIONS + "." + _nodeName);
+        this._operationLogger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE_OPERATIONS + "." + _nodeName);
         this._isLusRegEnabled = Boolean.valueOf(JProperties.getContainerProperty(
                 containerName, Constants.LookupManager.LOOKUP_ENABLED_PROP,
                 Constants.LookupManager.LOOKUP_ENABLED_DEFAULT)).booleanValue();
@@ -431,7 +431,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         return _container;
     }
 
-    public java.util.logging.Logger getOperationLogger() {
+    public Logger getOperationLogger() {
         return _operationLogger;
     }
 
@@ -2511,11 +2511,11 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
         try {
             final ServerTransaction transaction = createServerTransaction(mgr, id, numOfParticipants);
-            if (supportsTwoPhaseReplication && _operationLogger.isLoggable(Level.FINEST))
-                _operationLogger.finest("preparing transaction [" + _engine.createTransactionDetailsString(transaction, null) + "]");
+            if (supportsTwoPhaseReplication && _operationLogger.isTraceEnabled())
+                _operationLogger.trace("preparing transaction [" + _engine.createTransactionDetailsString(transaction, null) + "]");
             final int prepareResult = _engine.prepare(mgr, transaction, false /*singleParticipant*/, supportsTwoPhaseReplication, null /*OperationID*/);
-            if (supportsTwoPhaseReplication && _operationLogger.isLoggable(Level.FINEST))
-                _operationLogger.finest("prepared transaction [" + _engine.createTransactionDetailsString(transaction, null) + "] result=" + prepareResult);
+            if (supportsTwoPhaseReplication && _operationLogger.isTraceEnabled())
+                _operationLogger.trace("prepared transaction [" + _engine.createTransactionDetailsString(transaction, null) + "] result=" + prepareResult);
 
             return prepareResult;
         } catch (RuntimeException e) {

@@ -42,7 +42,7 @@ import net.jini.core.lookup.ServiceTemplate;
 import net.jini.discovery.LookupDiscoveryManager;
 
 import java.rmi.RemoteException;
-import java.util.logging.Level;
+
 
 
 /**
@@ -166,8 +166,8 @@ public class LusBasedSelectorHandler extends LeaderSelectorHandler implements IA
     public void onActive(ActiveElectionEvent theEvent) {
         ServiceItem activeServiceItem = theEvent.getActiveServiceItem();
 
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("PrimarySpaceSelector --> onActive: " + activeServiceItem);
+        if (_logger.isTraceEnabled())
+            _logger.trace("PrimarySpaceSelector --> onActive: " + activeServiceItem);
 
 
  	  /* if true the active was changed */
@@ -187,7 +187,7 @@ public class LusBasedSelectorHandler extends LeaderSelectorHandler implements IA
             _logger.info("Space instance has been elected as Primary");
             moveToPrimary();
         } else {
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 StringBuilder logBuf = new StringBuilder();
 
                 String primaryHost = HostName.getHostNameFrom(activeServiceItem.attributeSets);
@@ -262,7 +262,7 @@ public class LusBasedSelectorHandler extends LeaderSelectorHandler implements IA
             return;
         }
 
-        if (_logger.isLoggable(Level.INFO)) {
+        if (_logger.isInfoEnabled()) {
             _logger.info("Extra-backup resolved: primary Space instance [" + activeServiceItem + "] on host ["
                     + HostName.getHostNameFrom(activeServiceItem.attributeSets) + "] is replicating to a different backup");
 
@@ -279,7 +279,7 @@ public class LusBasedSelectorHandler extends LeaderSelectorHandler implements IA
     public void onSplitBrainBackup(ActiveElectionEvent theEvent) {
         ServiceItem activeServiceItem = theEvent.getActiveServiceItem();
 
-        if (_logger.isLoggable(Level.INFO)) {
+        if (_logger.isInfoEnabled()) {
             StringBuilder logBuf = new StringBuilder();
             String primaryHost = HostName.getHostNameFrom(activeServiceItem.attributeSets);
             Object service = activeServiceItem.getService();

@@ -46,7 +46,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @com.gigaspaces.api.InternalApi
@@ -58,7 +59,7 @@ public class ChangeReplicationPacketData
 
     private static final String ChangeReplicationPacketData = null;
 
-    private static final Logger _logger = Logger.getLogger("com.gigaspaces.internal.cluster.node.impl.packets.data.operations.ChangeReplicationPacketData");
+    private static final Logger _logger = LoggerFactory.getLogger("com.gigaspaces.internal.cluster.node.impl.packets.data.operations.ChangeReplicationPacketData");
 
     private transient long _expirationTime;
     private transient IEntryData _previousEntryData;
@@ -277,7 +278,7 @@ public class ChangeReplicationPacketData
         super.writeExternal(out);
         writeExternalImpl(out, LRMIInvocationContext.getEndpointLogicalVersion());
         if (forRecovery.get()) {
-            _logger.fine("Serializing packet data "+this+" with full entryData due to recovery process");
+            _logger.debug("Serializing packet data "+this+" with full entryData due to recovery process");
             serializeEntryData(_entryData, out);
         }
     }

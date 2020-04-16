@@ -29,8 +29,9 @@ import org.xml.sax.SAXException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
@@ -42,7 +43,7 @@ import javax.xml.parsers.ParserConfigurationException;
  * @since 7.0.1
  */
 public abstract class GsXmlParser {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_METADATA_POJO);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_METADATA_POJO);
 
     private static final EntityResolver _entityResolver = new GsXmlEntityResolver();
 
@@ -63,15 +64,15 @@ public abstract class GsXmlParser {
             if (nodeName.equals("class")) {
                 String typeName = XmlUtils.getAttribute(node, "name");
                 if (map.containsKey(typeName)) {
-                    if (_logger.isLoggable(Level.WARNING))
-                        _logger.log(Level.WARNING, "Found duplicate metadata for type [" + typeName + "] while scanning [" + sourceDesc + "].");
+                    if (_logger.isWarnEnabled())
+                        _logger.warn("Found duplicate metadata for type [" + typeName + "] while scanning [" + sourceDesc + "].");
                 } else {
                     map.put(typeName, node);
-                    if (_logger.isLoggable(Level.FINER))
-                        _logger.log(Level.FINER, "Found metadata for type [" + typeName + "] while scanning [" + sourceDesc + "].");
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("Found metadata for type [" + typeName + "] while scanning [" + sourceDesc + "].");
                 }
-            } else if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Unrecognized xml node: " + nodeName);
+            } else if (_logger.isWarnEnabled())
+                _logger.warn("Unrecognized xml node: " + nodeName);
         }
     }
 

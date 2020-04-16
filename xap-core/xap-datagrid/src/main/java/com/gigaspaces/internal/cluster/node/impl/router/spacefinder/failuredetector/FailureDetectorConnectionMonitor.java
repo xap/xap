@@ -47,8 +47,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -84,7 +85,7 @@ public class FailureDetectorConnectionMonitor
         _proxyProvider = proxyProvider;
         _myLookupName = myLookupName;
         _failureDetector = failureDetector;
-        _specificLogger = Logger.getLogger(Constants.LOGGER_REPLICATION_ROUTER
+        _specificLogger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_ROUTER
                 + "." + ReplicationLogUtils.toShortLookupName(_myLookupName));
         _pool = new ScheduledThreadPoolExecutor(corePoolSize,
                 new GSThreadFactory(null, true));
@@ -117,8 +118,8 @@ public class FailureDetectorConnectionMonitor
             throw new IllegalArgumentException("Provided connection "
                     + connection + " is already monitored");
 
-        if (_specificLogger.isLoggable(Level.FINEST))
-            _specificLogger.finest(getLogPrefix()
+        if (_specificLogger.isTraceEnabled())
+            _specificLogger.trace(getLogPrefix()
                     + "monitoring disconnected connection "
                     + connection.getTargetLookupName());
 
@@ -143,8 +144,8 @@ public class FailureDetectorConnectionMonitor
         IRemoteSpace spaceProxy = connection.getTag();
         ServiceID serviceId = connection.getServiceId();
 
-        if (_specificLogger.isLoggable(Level.FINEST))
-            _specificLogger.finest(getLogPrefix() + "monitoring connected connection "
+        if (_specificLogger.isTraceEnabled())
+            _specificLogger.trace(getLogPrefix() + "monitoring connected connection "
                     + connection.getTargetLookupName() + StringUtils.NEW_LINE
                     + "ServiceID=" + serviceId);
 
@@ -204,8 +205,8 @@ public class FailureDetectorConnectionMonitor
                 // called updateDisconnected.
                 return;
             }
-            if (_specificLogger.isLoggable(Level.FINE))
-                _specificLogger.fine(getLogPrefix()
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug(getLogPrefix()
                         + "connection disconnection detected "
                         + connection.getTargetLookupName() + reason != null ? " reason - "
                         + reason
@@ -221,15 +222,15 @@ public class FailureDetectorConnectionMonitor
     }
 
     public void serviceFailure(Object service, Object serviceID) {
-        if (_specificLogger.isLoggable(Level.FINER))
-            _specificLogger.finer(getLogPrefix() + "received failure notice for "
+        if (_specificLogger.isDebugEnabled())
+            _specificLogger.debug(getLogPrefix() + "received failure notice for "
                     + service + ", " + serviceID);
         Set<AbstractProxyBasedReplicationMonitoredConnection<IRemoteSpace, SpaceURL>> connectionSet = _livenessMonitored.get(serviceID);
         if (connectionSet != null) {
             for (AbstractProxyBasedReplicationMonitoredConnection<IRemoteSpace, SpaceURL> connection : connectionSet) {
                 synchronized (connection.getStateLock()) {
-                    if (_specificLogger.isLoggable(Level.FINER))
-                        _specificLogger.fine(getLogPrefix()
+                    if (_specificLogger.isDebugEnabled())
+                        _specificLogger.debug(getLogPrefix()
                                 + "monitoring failure detected via service failure "
                                 + connection.getTargetLookupName());
                     updateDisconnected(connection, null);
@@ -288,8 +289,8 @@ public class FailureDetectorConnectionMonitor
 
         public void run() {
             try {
-                if (_specificLogger.isLoggable(Level.FINER))
-                    _specificLogger.finer(getLogPrefix()
+                if (_specificLogger.isDebugEnabled())
+                    _specificLogger.debug(getLogPrefix()
                             + "trying to establish connection with "
                             + _connection.getTargetLookupName() + " ["
                             + _connection.getFinderURL() + "]");
@@ -311,8 +312,8 @@ public class FailureDetectorConnectionMonitor
                     }
                     if (connectionProxy != null) {
                         synchronized (_connection.getStateLock()) {
-                            if (_specificLogger.isLoggable(Level.FINE))
-                                _specificLogger.fine(getLogPrefix()
+                            if (_specificLogger.isDebugEnabled())
+                                _specificLogger.debug(getLogPrefix()
                                         + "established connection with "
                                         + _connection.getTargetLookupName()
                                         + " [" + _connection.getFinderURL()
@@ -326,8 +327,8 @@ public class FailureDetectorConnectionMonitor
                             _monitor.monitor(_connection);
                         }
                     } else {
-                        if (_specificLogger.isLoggable(Level.WARNING))
-                            _specificLogger.warning(getLogPrefix()
+                        if (_specificLogger.isWarnEnabled())
+                            _specificLogger.warn(getLogPrefix()
                                     + "failed to establish connection with "
                                     + _connection.getTargetLookupName() + " ["
                                     + _connection.getFinderURL() + "]"
@@ -336,8 +337,8 @@ public class FailureDetectorConnectionMonitor
                     }
                 }
             } catch (FinderException e) {
-                if (_specificLogger.isLoggable(Level.FINEST))
-                    _specificLogger.finest(getLogPrefix()
+                if (_specificLogger.isTraceEnabled())
+                    _specificLogger.trace(getLogPrefix()
                             + "failed to establish connection with "
                             + _connection.getTargetLookupName() + " ["
                             + _connection.getFinderURL() + "]"

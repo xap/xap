@@ -25,8 +25,9 @@ import net.jini.core.event.RemoteEvent;
 import net.jini.core.event.RemoteEventListener;
 import net.jini.core.event.UnknownEventException;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Dan Kilman
@@ -63,8 +64,8 @@ public class NotifyCallHandler implements BatchRemoteEventListener {
                 if (_closed)
                     return;
 
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.log(Level.WARNING, getUnknownEventExceptionMessage(), e);
+                if (_logger.isWarnEnabled())
+                    _logger.warn(getUnknownEventExceptionMessage(), e);
 
                 closeRegistration();
 
@@ -72,8 +73,8 @@ public class NotifyCallHandler implements BatchRemoteEventListener {
             }
 
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, getExceptionMessage(), e);
+            if (_logger.isWarnEnabled())
+                _logger.warn(getExceptionMessage(), e);
         }
     }
 
@@ -87,8 +88,8 @@ public class NotifyCallHandler implements BatchRemoteEventListener {
                 if (_closed)
                     return;
 
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.log(Level.WARNING, getUnknownEventExceptionMessage(), e);
+                if (_logger.isWarnEnabled())
+                    _logger.warn(getUnknownEventExceptionMessage(), e);
 
                 closeRegistration();
 
@@ -96,8 +97,8 @@ public class NotifyCallHandler implements BatchRemoteEventListener {
             }
 
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, getExceptionMessage(), e);
+            if (_logger.isWarnEnabled())
+                _logger.warn(getExceptionMessage(), e);
         }
     }
 

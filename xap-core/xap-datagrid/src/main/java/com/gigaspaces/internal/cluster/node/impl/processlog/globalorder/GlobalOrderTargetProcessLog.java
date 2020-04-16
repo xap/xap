@@ -46,7 +46,7 @@ import java.util.NoSuchElementException;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
+
 
 
 @com.gigaspaces.api.InternalApi
@@ -202,13 +202,13 @@ public class GlobalOrderTargetProcessLog
             getReplicationInFacade().afterConsumption(getReplicationInContext(), successful, lastProcessedKey);
             return null;
         } catch (Throwable ex) {
-            if (_specificLogger.isLoggable(Level.SEVERE)) {
-                _specificLogger.log(Level.SEVERE, "failure during after consumption", ex);
+            if (_specificLogger.isErrorEnabled()) {
+                _specificLogger.error("failure during after consumption", ex);
             }
             final long possibleRevertedKey = calcLastProcessedkey();
             if (possibleRevertedKey != _lastProcessedKey) {
-                if (_specificLogger.isLoggable(Level.SEVERE)) {
-                    _specificLogger.log(Level.SEVERE, "reverting last processed redo key from: " + _lastProcessedKey + " to " + possibleRevertedKey, ex);
+                if (_specificLogger.isErrorEnabled()) {
+                    _specificLogger.error("reverting last processed redo key from: " + _lastProcessedKey + " to " + possibleRevertedKey, ex);
                 }
                 _lastProcessedKey = possibleRevertedKey;
             }
@@ -352,16 +352,16 @@ public class GlobalOrderTargetProcessLog
                         break;
 
                     throwIfRepetitiveError(prevResult, consumeResult);
-                    if (_specificLogger.isLoggable(Level.FINER))
-                        _specificLogger.log(Level.FINER,
+                    if (_specificLogger.isDebugEnabled())
+                        _specificLogger.debug(
                                 "Encountered error while consuming packet ["
                                         + packet
                                         + "], trying to resolve issue",
                                 consumeResult.toException());
                     IDataConsumeFix fix = getExceptionHandler().handleException(consumeResult, packet);
                     data = getDataConsumer().applyFix(context, data, fix);
-                    if (_specificLogger.isLoggable(Level.FINER))
-                        _specificLogger.log(Level.FINER, "Fix applied - retrying the operation [" + fix + "]");
+                    if (_specificLogger.isDebugEnabled())
+                        _specificLogger.debug("Fix applied - retrying the operation [" + fix + "]");
                     prevResult = consumeResult;
                 } while (true);
                 _lastProcessedKey++;
@@ -438,8 +438,8 @@ public class GlobalOrderTargetProcessLog
 
         rethrowAsClosedIfNeeded(error);
 
-        if (_specificLogger.isLoggable(Level.FINER))
-            _specificLogger.log(Level.FINER, "error while processing incoming replication", error);
+        if (_specificLogger.isDebugEnabled())
+            _specificLogger.debug("error while processing incoming replication", error);
 
         GlobalOrderProcessResult result = new GlobalOrderProcessResult(error,
                 calcLastProcessedkey());

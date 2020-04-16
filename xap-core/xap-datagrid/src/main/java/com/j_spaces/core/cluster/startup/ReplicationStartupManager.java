@@ -25,8 +25,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -51,7 +52,7 @@ public class ReplicationStartupManager
     public final static String DIR_NAME = "secure-startup";
     public final static String FILENAME_SUFFIX = "-startup-state.txt";
     // logger
-    private static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_REPLICATION);
+    private static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_REPLICATION);
 
     public static enum StartupState {
 
@@ -82,8 +83,8 @@ public class ReplicationStartupManager
         try {
             _currentSpaceState = loadState();
         } catch (IOException e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, " Failed to load space [" + spaceName
+            if (_logger.isErrorEnabled()) {
+                _logger.error(" Failed to load space [" + spaceName
                         + "] state.", e);
             }
         }
@@ -105,8 +106,8 @@ public class ReplicationStartupManager
             return;
 
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "Changing space [" + _spaceName + "] state from "
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Changing space [" + _spaceName + "] state from "
                     + _currentSpaceState + " to " + newState);
         }
 
@@ -114,8 +115,8 @@ public class ReplicationStartupManager
         try {
             saveState(newState);
         } catch (IOException e) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, " Error on space connect [" + _spaceName
+            if (_logger.isWarnEnabled()) {
+                _logger.warn(" Error on space connect [" + _spaceName
                         + "] state.", e);
             }
         }
@@ -241,8 +242,8 @@ public class ReplicationStartupManager
             }
 
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, " Error on space connect [" + _spaceName
+            if (_logger.isWarnEnabled()) {
+                _logger.warn(" Error on space connect [" + _spaceName
                         + "] state.", e);
             }
         }

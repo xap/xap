@@ -71,7 +71,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class provides a lightweight implementation to GigaSpaces IMap interface (A JCache standard
@@ -84,7 +85,7 @@ import java.util.logging.Logger;
  * @since 5.0
  */
 final public class MapCache extends AbstractMap implements RemoteEventListener, LeaseListener {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
     /**
      * The default number of retires to reconnect to server when fault is discovered.
      */

@@ -42,7 +42,8 @@ import com.gigaspaces.internal.utils.parsers.StringParser;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -168,7 +169,7 @@ public abstract class ObjectConverter {
 
     public static void clearRuntimeGeneratedCache(){
         if(!_runtimeGeneratedParserMap.isEmpty()) {
-            Logger.getLogger("ObjectConverter").info("clearing runtime generated parser cache");
+            LoggerFactory.getLogger("ObjectConverter").info("clearing runtime generated parser cache");
             _runtimeGeneratedParserMap.clear();
         }
     }

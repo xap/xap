@@ -25,7 +25,7 @@ import com.j_spaces.core.client.Modifiers;
 import net.jini.core.transaction.Transaction;
 
 import java.util.Collection;
-import java.util.logging.Level;
+
 
 /**
  * @author eitany
@@ -63,7 +63,7 @@ public class ChangeProxyActionInfo extends QueryProxyActionInfo {
                 throw new IllegalArgumentException("Oneway change is not allowed with ChangeModifiers.RETURN_DETAILED_RESULTS modifier.");
         }
 
-        if (_devLogger.isLoggable(Level.FINEST)) {
+        if (_devLogger.isTraceEnabled()) {
             if (verifyLogScannedEntriesCountParams(this.timeout))
                 this.modifiers |= Modifiers.LOG_SCANNED_ENTRIES_COUNT;
         }

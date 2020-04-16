@@ -23,12 +23,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class SpaceConfigReader {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE);
 
     private final String _fullSpaceName;
 
@@ -57,10 +58,10 @@ public class SpaceConfigReader {
     }
 
     public void assertSpacePropertyNotExists(String key, String depracationVersion, String deletionVersion) {
-        if (_logger.isLoggable(Level.WARNING)) {
+        if (_logger.isWarnEnabled()) {
             String value = getSpaceProperty(key, null);
             if (value != null)
-                _logger.log(Level.WARNING, "The setting '" + key +
+                _logger.warn("The setting '" + key +
                         "' has been deprecated since " + depracationVersion +
                         " and is not supported since " + deletionVersion +
                         " - its value is ignored. ");

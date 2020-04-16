@@ -20,8 +20,9 @@ import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jms.utils.IMessageConverter;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.JMSException;
 
@@ -33,7 +34,7 @@ public class GSXATopicConnectionFactoryImpl
     private static final long serialVersionUID = 1L;
 
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_JMS);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_JMS);
 
     /**
      * @param space
@@ -44,8 +45,8 @@ public class GSXATopicConnectionFactoryImpl
             throws JMSException {
         super(space, messageConverter);
         if (space != null) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("GSXATopicConnectionFactoryImpl.GSXATopicConnectionFactoryImpl():  spaceURL: "
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("GSXATopicConnectionFactoryImpl.GSXATopicConnectionFactoryImpl():  spaceURL: "
                         + space.getURL().getURL());
             }
         }

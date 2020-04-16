@@ -22,7 +22,7 @@ import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.j_spaces.core.exception.ClosedResourceException;
 
 import java.rmi.RemoteException;
-import java.util.logging.Level;
+
 
 /**
  * @author Niv Ingberg
@@ -76,14 +76,14 @@ public class SpaceOperationsExecutor {
             // TODO: Handle availability aspect.
             // TODO: Handle security aspect.
             // TODO: Handle memory management aspect.
-            final boolean loggable = operation.isGenericLogging() && space.getOperationLogger().isLoggable(Level.FINEST);
+            final boolean loggable = operation.isGenericLogging() && space.getOperationLogger().isTraceEnabled();
             if (loggable)
-                space.getOperationLogger().finest("executing " + operation.getLogName(request, result) + " operation" + (oneway ? "(oneway)" : "") + " [" + request + "]");
+                space.getOperationLogger().trace("executing " + operation.getLogName(request, result) + " operation" + (oneway ? "(oneway)" : "") + " [" + request + "]");
             // Execute operation:
             operation.execute(request, result, space, oneway);
 
             if (loggable)
-                space.getOperationLogger().finest("operation " + operation.getLogName(request, result) + " executed" + (oneway ? "(oneway)" : "") + " [" + request + "] result [" + result + "]");
+                space.getOperationLogger().trace("operation " + operation.getLogName(request, result) + " executed" + (oneway ? "(oneway)" : "") + " [" + request + "] result [" + result + "]");
         } catch (ClosedResourceException e) {
             result.setExecutionException(new RemoteException(e.getMessage(), e));
         } catch (Exception e) {

@@ -21,8 +21,9 @@ import com.gigaspaces.logger.LogUtils;
 import com.sun.jini.mahalo.TxnManager;
 import com.sun.jini.mahalo.log.MultiLogManager.LogRemovalManager;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An implementation of a non-persistent <code>Log</code>.
@@ -47,13 +48,13 @@ public class TransientLogFile implements Log {
      * Logger for persistence related messages
      */
     private static final Logger persistenceLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".persistence");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".persistence");
 
     /**
      * Logger for operations related messages
      */
     private static final Logger operationsLogger =
-            Logger.getLogger(TxnManager.MAHALO + ".operations");
+            LoggerFactory.getLogger(TxnManager.MAHALO + ".operations");
 
     /**
      * Simple constructor that simply assigns the given parameter to an internal field.
@@ -65,12 +66,12 @@ public class TransientLogFile implements Log {
      * @see com.sun.jini.mahalo.log.MultiLogManager.LogRemovalManager
      */
     public TransientLogFile(long id, LogRemovalManager lrm) {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TransientLogFile.class,"TransientLogFile", new Object[]{new Long(id), lrm});
         }
         cookie = id;
         logMgr = lrm;
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TransientLogFile.class, "TransientLogFile");
         }
     }
@@ -92,14 +93,14 @@ public class TransientLogFile implements Log {
      * @see com.sun.jini.mahalo.log.LogRecord
      */
     public void write(LogRecord rec) throws LogException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TransientLogFile.class, "write", rec);
         }
-        if (persistenceLogger.isLoggable(Level.FINEST)) {
-            persistenceLogger.log(Level.FINEST,
+        if (persistenceLogger.isTraceEnabled()) {
+            persistenceLogger.trace(
                     "(ignored) write called for cookie: {0}", new Long(cookie));
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TransientLogFile.class, "write");
         }
     }
@@ -108,17 +109,17 @@ public class TransientLogFile implements Log {
      * Invalidate the log.
      */
     public void invalidate() throws LogException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, TransientLogFile.class, "invalidate");
         }
 
-        if (persistenceLogger.isLoggable(Level.FINEST)) {
-            persistenceLogger.log(Level.FINEST,
+        if (persistenceLogger.isTraceEnabled()) {
+            persistenceLogger.trace(
                     "Calling logMgr to release cookie: {0}", new Long(cookie));
         }
         logMgr.release(cookie);
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TransientLogFile.class, "invalidate");
         }
     }
@@ -130,14 +131,14 @@ public class TransientLogFile implements Log {
      * @see com.sun.jini.mahalo.log.LogRecovery
      */
     public void recover(LogRecovery client) throws LogException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, MultiLogManager.class, "recover", client);
         }
-        if (persistenceLogger.isLoggable(Level.FINEST)) {
-            persistenceLogger.log(Level.FINEST,
+        if (persistenceLogger.isTraceEnabled()) {
+            persistenceLogger.trace(
                     "(ignored) Recovering for: {0}", new Long(cookie));
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, MultiLogManager.class, "recover");
         }
     }

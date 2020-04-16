@@ -25,7 +25,7 @@ import com.gigaspaces.internal.sync.ConsolidationParticipantDataImpl;
 import com.gigaspaces.sync.DataSyncOperation;
 
 import java.util.List;
-import java.util.logging.Level;
+
 
 
 /**
@@ -64,19 +64,19 @@ public class MirrorReplicationInTransactionHandler extends MirrorReplicationInHa
                 try {
                     _syncEndpoint.onTransactionConsolidationFailure(consolidationParticipantData);
                 } catch (Throwable t) {
-                    if (context.getContextLogger().isLoggable(Level.WARNING))
-                        context.getContextLogger().log(Level.WARNING, "exception caught when executing transaction consolidation interceptor on consolidation aborted [" + consolidationParticipantData + "] - ignoring exception", t);
+                    if (context.getContextLogger().isWarnEnabled())
+                        context.getContextLogger().warn("exception caught when executing transaction consolidation interceptor on consolidation aborted [" + consolidationParticipantData + "] - ignoring exception", t);
                 }
                 //If the user aborted the operation, we do not execute this transaction participant
                 if (consolidationParticipantData.isAborted()) {
-                    if (context.getContextLogger().isLoggable(Level.WARNING))
-                        context.getContextLogger().warning("aborting unconsolidated distributed transaction [" + consolidationParticipantData + "]");
+                    if (context.getContextLogger().isWarnEnabled())
+                        context.getContextLogger().warn("aborting unconsolidated distributed transaction [" + consolidationParticipantData + "]");
                     batchContext.pendingConsumed();
                     // Clear the current bloom filter (a new one will be created for next execution)
                     batchContext.setTagObject(null);
                     return;
-                } else if (context.getContextLogger().isLoggable(Level.WARNING))
-                    context.getContextLogger().warning("executing unconsolidated distributed transaction [" + consolidationParticipantData + "]");
+                } else if (context.getContextLogger().isWarnEnabled())
+                    context.getContextLogger().warn("executing unconsolidated distributed transaction [" + consolidationParticipantData + "]");
             }
         }
 

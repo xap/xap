@@ -32,8 +32,9 @@ import com.j_spaces.kernel.locks.ILockObject;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * a time based service that is responsible of sending back an empty response back to the client
@@ -44,7 +45,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class TemplateExpirationManager implements IConsumerObject<Object> {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE);
 
     private static final int minPoolSize = 1;
     private static final int maxPoolSize = 16;
@@ -115,7 +116,7 @@ public class TemplateExpirationManager implements IConsumerObject<Object> {
                     }
                 }//synchronized (templateLock)
             } catch (ClosedResourceException ex) {
-                _logger.log(Level.FINE, "exception occurred during template removing", ex);
+                _logger.debug("exception occurred during template removing", ex);
             } finally {
                 if (templateLock != null)
                     _cacheManager.getLockManager().freeLockObject(templateLock);

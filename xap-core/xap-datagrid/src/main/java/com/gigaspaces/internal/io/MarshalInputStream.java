@@ -32,8 +32,9 @@ import java.io.ObjectStreamClass;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An extension of <code>AnnotatedObjectInputStream</code> that provides local storage of already
@@ -46,7 +47,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class MarshalInputStream
         extends AnnotatedObjectInputStream {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI_MARSHAL);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_MARSHAL);
     private static final int CODE_DISABLED = -1;
     private static final int CODE_NULL = 0;
 
@@ -232,7 +233,7 @@ public class MarshalInputStream
             cl = _context.getObjectStreamClass(index);
 
         if (cl == null) {
-            if (_logger.isLoggable(Level.FINEST)) {
+            if (_logger.isTraceEnabled()) {
                 Long classLoaderKey = ClassLoaderCache.getCache().getClassLoaderKey(ClassLoaderHelper.getContextClassLoader());
                 logFinest("Received new incoming ObjectStreamClass with key " + index + ", context class loader key " + classLoaderKey + ", reading it from stream");
             }
@@ -257,8 +258,8 @@ public class MarshalInputStream
     }
 
     private static void logFinest(String log) {
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.log(Level.FINEST, log + ", context=" + LRMIInvocationContext.getContextMethodLongDisplayString());
+        if (_logger.isTraceEnabled()) {
+            _logger.trace(log + ", context=" + LRMIInvocationContext.getContextMethodLongDisplayString());
         }
     }
 
@@ -292,7 +293,7 @@ public class MarshalInputStream
 
         public synchronized void addObjectStreamClass(int index, ObjectStreamClass cl) {
             classMap.add(index, cl);
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logFinest("Adding new ObjectStreamClass to incoming context [" + cl.getName() + "] with specified key " + index + ", context class loader key " + ClassLoaderCache.getCache().getClassLoaderKey(ClassLoaderHelper.getContextClassLoader()));
         }
 
@@ -317,7 +318,7 @@ public class MarshalInputStream
             ClassLoaderContext classLoaderContext = getClassLoaderContext(true);
             classLoaderContext.putAnnotateInterfaceNamesMap(names, cl);
 
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logFinest("Adding new NamesWrapper to incoming context [" + names + "] for class " + cl.getName() + ", context class loader key " + classLoaderContext.getClassLoaderCacheKey());
         }
 
@@ -332,7 +333,7 @@ public class MarshalInputStream
             ClassLoaderContext classLoaderContext = getClassLoaderContext(true);
             classLoaderContext.putResolvedClass(classDesc, cl);
 
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logFinest("Adding new resolved class to incoming context [" + cl.getName() + "] for ObjectStreamClass " + classDesc.getName() + ", context class loader key " + classLoaderContext.getClassLoaderCacheKey());
         }
 
@@ -365,13 +366,13 @@ public class MarshalInputStream
         }
 
         public synchronized void onClassLoaderRemoved(Long classLoaderKey, boolean explicit) {
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logFinest("Removed class loader [" + classLoaderKey + "] related context from marshal input stream, explicit=" + explicit);
             _classLoaderContextMap.put(classLoaderKey, REMOVED_CONTEXT_MARKER);
         }
 
         public synchronized void close() {
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logFinest("Closing marshal input stream context");
             for (Long clKey : _classLoaderContextMap.keySet()) {
                 _classLoaderContextMap.put(clKey, REMOVED_CONTEXT_MARKER);
@@ -380,7 +381,7 @@ public class MarshalInputStream
         }
 
         public synchronized void reset() {
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logFinest("Resetting entire marshal input stream context");
             for (Long clKey : _classLoaderContextMap.keySet()) {
                 _classLoaderContextMap.put(clKey, REMOVED_CONTEXT_MARKER);

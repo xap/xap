@@ -18,8 +18,9 @@ package com.gigaspaces.management.local_time;
 
 import com.j_spaces.jmx.JMXProvider;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.ObjectName;
 
@@ -31,7 +32,7 @@ public class LocalTimeConstants {
 
     //logger
     final private static Logger _logger =
-            Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_ADMIN);
+            LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ADMIN);
 
 
     static final String DOMAIN_NAME_SUFFIX = ".management";
@@ -46,8 +47,8 @@ public class LocalTimeConstants {
             mbeanName = new ObjectName(JMXProvider.DEFAULT_DOMAIN +
                     DOMAIN_NAME_SUFFIX + ":type=" + OBJECT_TYPE + ",name=" + OBJECT_NAME);
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.toString(), e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.toString(), e);
             }
         }
         MBEAN_NAME = mbeanName;

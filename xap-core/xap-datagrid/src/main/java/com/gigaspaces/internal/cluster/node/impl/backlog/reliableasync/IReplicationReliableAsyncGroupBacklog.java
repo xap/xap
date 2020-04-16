@@ -31,7 +31,8 @@ import net.jini.core.transaction.server.ServerTransaction;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface IReplicationReliableAsyncGroupBacklog extends IReplicationGroupBacklog {
 

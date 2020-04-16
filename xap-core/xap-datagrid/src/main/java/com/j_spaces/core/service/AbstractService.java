@@ -30,8 +30,9 @@ import net.jini.discovery.DiscoveryListener;
 import net.jini.export.Exporter;
 
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.LookupManager.LOOKUP_GROUP_PROP;
 import static com.j_spaces.core.Constants.LookupManager.LOOKUP_UNICAST_ENABLED_DEFAULT;
@@ -47,7 +48,7 @@ import static com.j_spaces.core.Constants.LookupManager.LOOKUP_UNICAST_URL_PROP;
  * to you by GigaSpaces.
  *******************************************************************************/
 public abstract class AbstractService extends AbstractGigaSpacesService implements Service {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_ADMIN);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_ADMIN);
 
     protected Exporter m_adminExporter;
     protected ServiceAdminImpl m_adminImpl;
@@ -90,8 +91,8 @@ public abstract class AbstractService extends AbstractGigaSpacesService implemen
             if (m_adminImpl == null)
                 m_adminImpl = new ServiceAdminImpl(this, m_adminExporter);
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, ex.getMessage(), ex);
+            if (_logger.isErrorEnabled())
+                _logger.error(ex.getMessage(), ex);
         }
 
         return (m_adminImpl != null ? m_adminImpl.getProxy() : null);

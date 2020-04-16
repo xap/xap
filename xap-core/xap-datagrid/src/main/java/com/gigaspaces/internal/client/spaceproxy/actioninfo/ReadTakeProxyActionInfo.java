@@ -31,7 +31,7 @@ import com.j_spaces.core.exception.internal.ProxyInternalSpaceException;
 
 import net.jini.core.transaction.Transaction;
 
-import java.util.logging.Level;
+
 
 /**
  * @author GigaSpaces
@@ -55,7 +55,7 @@ public class ReadTakeProxyActionInfo extends QueryProxyActionInfo {
         validateReadModifiers(spaceProxy);
         if (ReadModifiers.isFifoGroupingPoll(modifiers))
             verifyFifoGroupsCallParams(isTake);
-        if (_devLogger.isLoggable(Level.FINEST)) {
+        if (_devLogger.isTraceEnabled()) {
             if (verifyLogScannedEntriesCountParams(this.timeout))
                 this.modifiers |= Modifiers.LOG_SCANNED_ENTRIES_COUNT;
         }

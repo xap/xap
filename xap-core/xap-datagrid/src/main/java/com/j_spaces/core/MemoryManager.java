@@ -29,8 +29,9 @@ import com.j_spaces.kernel.SystemProperties;
 
 import java.io.Closeable;
 import java.lang.management.ManagementFactory;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -100,7 +101,7 @@ public class MemoryManager implements Closeable {
     private final Logger _logger;
 
     public MemoryManager(String spaceName, String containerName, AbstractCacheManager cacheManager, LeaseManager leaseManager, boolean isPrimary) {
-        _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_MEMORYMANAGER +
+        _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_MEMORYMANAGER +
                 "." + spaceName + "." + SpaceImpl.extractInstanceIdFromContainerName(containerName));
         _spaceName = spaceName;
         _containerName = containerName;
@@ -219,18 +220,18 @@ public class MemoryManager implements Closeable {
             _memoryUsageSyncEvictionLevel = 100;
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
+        if (_logger.isDebugEnabled()) {
             if (_enabled) {
-                _logger.fine("Memory manager is enabled [" +
+                _logger.debug("Memory manager is enabled [" +
                         "high_watermark=" + _memoryUsageHighLevel + "%, " +
                         "low_watermark=" + _memoryUsageLowLevel + "%, " +
                         "write_only_block=" + _memoryWriteOnlyBlock + "%, " +
                         "write_only_check=" + _memoryWriteOnlyCheck + "%, " +
                         "retry_count=" + _memoryRetryCount + "]");
             } else if (_restartOnFailover)
-                _logger.fine("Memory manager is disabled, but will be activated if this instance becomes primary");
+                _logger.debug("Memory manager is disabled, but will be activated if this instance becomes primary");
             else
-                _logger.fine("Memory manager is disabled");
+                _logger.debug("Memory manager is disabled");
         }
 
         start();
@@ -259,10 +260,10 @@ public class MemoryManager implements Closeable {
                 heapDump.setMaxHeaps(Integer.getInteger(SystemProperties.MAX_HEAPS_ON_MEMORY_SHORTAGE, 1));
                 heapDump.setQuietPeriod(Long.getLong(SystemProperties.HEAPS_ON_MEMORY_SHORTAGE_QUIET_PERIOD, 1));
                 mbs.registerMBean(heapDump, name);
-                _logger.fine("Register HeapDumpMBean " + name);
+                _logger.debug("Register HeapDumpMBean " + name);
             }
         }catch(Exception e){
-            _logger.log(Level.WARNING, "failed to start HeapDumpMBean" +  e);
+            _logger.warn("failed to start HeapDumpMBean" +  e);
         }
     }
 
@@ -272,12 +273,12 @@ public class MemoryManager implements Closeable {
             ObjectName name = new ObjectName("org.xap:type=HeapDumpMBean");
             boolean created = (Boolean)mbs.invoke(name, "onMemoryShortage",  null, null);
             if(created){
-                _logger.log(Level.FINE, "Heap dump created");
+                _logger.debug("Heap dump created");
             }else{
-                _logger.log(Level.FINEST, "Heap dump not created");
+                _logger.trace("Heap dump not created");
             }
         }catch(Exception e){
-            _logger.log(Level.WARNING, "failed to start HeapDumpMBean" +  e);
+            _logger.warn("failed to start HeapDumpMBean" +  e);
         }
     }
 
@@ -382,7 +383,7 @@ public class MemoryManager implements Closeable {
         // Monitor only write-type ops' if the prev' level was LE _memoryWriteOnlyCheck
         boolean monitorOnlyWriteOps = rate <= _memoryWriteOnlyCheck;
         if (monitorOnlyWriteOps != _monitorOnlyWriteOps) {
-            if (_processMemoryManager.isAsyncCheckEnabled() && _logger.isLoggable(Level.INFO)) {
+            if (_processMemoryManager.isAsyncCheckEnabled() && _logger.isInfoEnabled()) {
                 if (monitorOnlyWriteOps) { // below
                     _logger.info("Current memory usage rate [" + rate + "] is below write_only_check_percentage threshold [" + _memoryWriteOnlyCheck + "], moving to async measurement of memory usage rate");
                 } else {
@@ -435,8 +436,8 @@ public class MemoryManager implements Closeable {
     private double getMemoryUsageRate(boolean forceGC, boolean asyncCheckIfEnabled) {
         if (forceGC) {
             if (_forceLeaseReaper && _leaseManager != null) {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine("forcing lease reaper cycle");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("forcing lease reaper cycle");
                 try {
                     _leaseManager.forceLeaseReaperCycle(false);
                 } catch (InterruptedException e) {
@@ -444,8 +445,8 @@ public class MemoryManager implements Closeable {
                     Thread.currentThread().interrupt();
                 }
             }
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("explicit gc call");
+            if (_logger.isDebugEnabled())
+                _logger.debug("explicit gc call");
             _processMemoryManager.performGC();
         }
 
@@ -467,8 +468,8 @@ public class MemoryManager implements Closeable {
             if (_gcBeforeShortage)
                 rate = getMemoryUsageRate(true, false); // recheck rate and force GC
             if (shouldBlock(rate, writeOperation)) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("Memory shortage in cache: " + _spaceName);
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Memory shortage in cache: " + _spaceName);
                 }
 
                 long usage = (long) ((rate * _processMemoryManager.getMaximumMemory()) / 100.0); // convert rate to usage from % to bytes
@@ -487,8 +488,8 @@ public class MemoryManager implements Closeable {
             if (_gcBeforeShortage)
                 rate = getMemoryUsageRate(true, false); // re check rate and force GC
             if (shouldBlock(rate, true) || shouldBlock(rate, false)) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("Memory shortage in cache: " + _spaceName);
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Memory shortage in cache: " + _spaceName);
                 }
 
                 long usage = (long) ((rate * _processMemoryManager.getMaximumMemory()) / 100.0); // convert rate to usage from % to bytes
@@ -527,8 +528,8 @@ public class MemoryManager implements Closeable {
 
         private void evict(boolean aWriteTypeOperation, boolean synchronousCall)
                 throws MemoryShortageException {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("Call evict on operation: " + aWriteTypeOperation + " synchronous=" + synchronousCall);
+            if (_logger.isDebugEnabled())
+                _logger.debug("Call evict on operation: " + aWriteTypeOperation + " synchronous=" + synchronousCall);
 
             MemoryShortageException resultException;
             if (!synchronousCall) {
@@ -603,8 +604,8 @@ public class MemoryManager implements Closeable {
                     synchronized (_lock) {
                         try {
                             while (!_readTypeEvict && !_writeTypeEvict && !_isShutdown) {
-                                if (_logger.isLoggable(Level.FINEST))
-                                    _logger.finest("Evictor waits for - call evict");
+                                if (_logger.isTraceEnabled())
+                                    _logger.trace("Evictor waits for - call evict");
 
                                 _lock.wait();
                             }
@@ -612,8 +613,8 @@ public class MemoryManager implements Closeable {
                             _writeTypeEvict = false;
                         } catch (InterruptedException ie) {
 
-                            if (_logger.isLoggable(Level.FINEST)) {
-                                _logger.log(Level.FINEST, this.getName() + " interrupted.", ie);
+                            if (_logger.isTraceEnabled()) {
+                                _logger.trace(this.getName() + " interrupted.", ie);
                             }
 
                             //Restore the interrupted status
@@ -622,8 +623,8 @@ public class MemoryManager implements Closeable {
                             //fall through
                             break;
                         } catch (Exception e) {
-                            if (_logger.isLoggable(Level.WARNING)) {
-                                _logger.log(Level.WARNING, e.toString(), e);
+                            if (_logger.isWarnEnabled()) {
+                                _logger.warn(e.toString(), e);
                             }
                         }
                         if (_isShutdown) // shutdown thread
@@ -639,8 +640,8 @@ public class MemoryManager implements Closeable {
             private synchronized void doEvict() throws MemoryShortageException {
                 double rate = getMemoryUsageRate(_callGC, false);
 
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine("Evictor started to evict, rate=" + rate + " free-memory=" + _processMemoryManager.getFreeMemory() + " max-memory=" + _processMemoryManager.getMaximumMemory());
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Evictor started to evict, rate=" + rate + " free-memory=" + _processMemoryManager.getFreeMemory() + " max-memory=" + _processMemoryManager.getMaximumMemory());
 
                 try {
                     if (_cacheManager.isEvictableCachePolicy() && _evictionQuota > 0) {
@@ -649,28 +650,28 @@ public class MemoryManager implements Closeable {
                             if (rate <= _memoryUsageLowLevel) // no need to continue nor to check for shortage
                                 return;
 
-                            if (_logger.isLoggable(Level.FINE))
-                                _logger.fine("SpaceName: " + _spaceName + " Cache eviction started: Available memory[%]" + rate);
+                            if (_logger.isDebugEnabled())
+                                _logger.debug("SpaceName: " + _spaceName + " Cache eviction started: Available memory[%]" + rate);
 
                             //try to evict from cache, until situation mended
                             final int evicted = _cacheManager.evictBatch(getEvictionBatchSize());
 
-                            if (_logger.isLoggable(Level.FINE))
-                                _logger.fine("Batch evicted size=" + evicted);
+                            if (_logger.isDebugEnabled())
+                                _logger.debug("Batch evicted size=" + evicted);
 
                             if (evicted == 0) //nothing to evict
                                 break;
 
                             rate = getMemoryUsageRate(_callGC, false);
 
-                            if (_logger.isLoggable(Level.FINE))
-                                _logger.fine("rate=" + rate + " free-memory=" + _processMemoryManager.getFreeMemory() + " max-memory=" + _processMemoryManager.getMaximumMemory());
+                            if (_logger.isDebugEnabled())
+                                _logger.debug("rate=" + rate + " free-memory=" + _processMemoryManager.getFreeMemory() + " max-memory=" + _processMemoryManager.getMaximumMemory());
 
                             if (rate <= _memoryUsageLowLevel) //reached lower level
                                 return;
 
-                            if (_logger.isLoggable(Level.FINE)) {
-                                _logger.fine("SpaceName: " + _spaceName + " Cache eviction finished: Available memory[%]" + rate +
+                            if (_logger.isDebugEnabled()) {
+                                _logger.debug("SpaceName: " + _spaceName + " Cache eviction finished: Available memory[%]" + rate +
                                         " evicted all entries.");
                             }
 
@@ -678,8 +679,8 @@ public class MemoryManager implements Closeable {
                             {
                                 Thread.sleep(_layoffTimeout);
                             } catch (InterruptedException ie) {
-                                if (_logger.isLoggable(Level.FINEST))
-                                    _logger.log(Level.FINEST, Thread.currentThread().getName() + " interrupted.", ie);
+                                if (_logger.isTraceEnabled())
+                                    _logger.trace(Thread.currentThread().getName() + " interrupted.", ie);
 
                                 //Restore the interrupted status
                                 Thread.currentThread().interrupt();
@@ -691,8 +692,8 @@ public class MemoryManager implements Closeable {
                             rate = getMemoryUsageRate(_callGC, false);
                         }// end for loop of retries
 
-                        if (_logger.isLoggable(Level.FINE))
-                            _logger.fine("Evictor finished to evict, rate=" + rate);
+                        if (_logger.isDebugEnabled())
+                            _logger.debug("Evictor finished to evict, rate=" + rate);
 
                     }// if m_CacheManager.m_CachePolicy == CacheManager.CACHE_POLICY_LRU
                 } finally {

@@ -33,8 +33,9 @@ import org.xml.sax.SAXParseException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
@@ -77,7 +78,7 @@ public class XSLTConverter {
             SystemProperties.CLUSTER_XML_SCHEMA_VALIDATION,
             SystemProperties.CLUSTER_XML_SCHEMA_VALIDATION_DEFAULT));
 
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
 
     /**
      * Although its a general porpuse method, it is currently used for the cluster schema
@@ -148,15 +149,15 @@ public class XSLTConverter {
             try {
                 initClusterXSDSchema();
             } catch (SAXException saxE) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             "Failed to create XML xsd validator. Will not validate the cluster configuration due to:  "
                                     + saxE.toString(),
                             saxE);
                 }
             } catch (IllegalArgumentException iae) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             "Failed to create XML xsd validator. Will not validate the cluster configuration due to:  "
                                     + iae.toString(),
                             iae);
@@ -184,8 +185,8 @@ public class XSLTConverter {
                         Attr attr = (Attr) attrNode.getAttributes().getNamedItem("xmlns");
                         if (attr != null) {
                             xpathAttr = ((Element) attrNode).removeAttributeNode(attr);
-                            if (xpathAttr != null && _logger.isLoggable(Level.FINE)) {
-                                _logger.log(Level.FINE,
+                            if (xpathAttr != null && _logger.isDebugEnabled()) {
+                                _logger.debug(
                                         "In order the cluster schema xsl validation succeeds you need to remove the following xsl " +
                                                 " header attribute. \n" +
                                                 xpathAttr +
@@ -194,8 +195,8 @@ public class XSLTConverter {
                         }
                     }
                 } catch (Exception e) {
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE,
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug(
                                 "In order the cluster schema xsl validation succeeds you need to remove the following xsl "
                                         + " header attribute. \n"
                                         + xpathAttr
@@ -208,8 +209,8 @@ public class XSLTConverter {
                     // parse the XML DOM tree againts the stricter XSD schema
                     if (validator != null && validXMLSchema)
                         validator.validate(new DOMSource(validatedXmlDocument));
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE,
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug(
                                 "Validated successfully the cluster configuration using the XML xsd validator: "
                                         + validator.toString());
                     }

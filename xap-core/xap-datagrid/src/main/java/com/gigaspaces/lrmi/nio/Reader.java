@@ -46,8 +46,9 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.rmi.NoSuchObjectException;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A Reader is capable of reading Request Packets and Reply Packets from a Socket Channel. An NIO
@@ -59,9 +60,9 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class Reader {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
-    private static final Logger offendingMessageLogger = Logger.getLogger(Constants.LOGGER_LRMI + ".offending");
-    private static final Logger _slowerConsumerLogger = Logger.getLogger(Constants.LOGGER_LRMI_SLOW_COMSUMER);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
+    private static final Logger offendingMessageLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI + ".offending");
+    private static final Logger _slowerConsumerLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_SLOW_COMSUMER);
     public static final long SUSPICIOUS_THRESHOLD = Long.valueOf(System.getProperty("com.gs.lrmi.suspicious-threshold", "20000000"));
     private static final LongAdder receivedTraffic = new LongAdder();
 
@@ -121,8 +122,8 @@ public class Reader {
         try {
             _ois = new MarshalInputStream(_bais, _streamContext);
         } catch (IOException e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.getMessage(), e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.getMessage(), e);
             }
             throw new RuntimeException("Failed to initialize LRMI Reader stream: ", e);
         }
@@ -247,8 +248,8 @@ public class Reader {
                     final boolean channelIsBlocking = _socketChannel.isBlocking();
                     if (slowConsumerLatency > 0 && (++retries) > _slowConsumerRetries) {
                         String slowConsumerMsg = prepareSlowConsumerCloseMsg(getEndPointAddress(), slowConsumerLatency);
-                        if (_slowerConsumerLogger.isLoggable(Level.WARNING))
-                            _slowerConsumerLogger.warning(slowConsumerMsg);
+                        if (_slowerConsumerLogger.isWarnEnabled())
+                            _slowerConsumerLogger.warn(slowConsumerMsg);
                         throw new SlowConsumerException(slowConsumerMsg);
                     }
                     // if bRead == 0 this channel is either none blocking, or it is in blocking mode
@@ -263,8 +264,8 @@ public class Reader {
                     }
                     tmpKey.interestOps(tmpKey.interestOps() | SelectionKey.OP_READ);
 
-                    if (_slowerConsumerLogger.isLoggable(Level.FINE))
-                        _slowerConsumerLogger.fine(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries, slowConsumerLatency));
+                    if (_slowerConsumerLogger.isDebugEnabled())
+                        _slowerConsumerLogger.debug(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries, slowConsumerLatency));
 
                     tempSelector.select(slowConsumerLatency == 0 ? 0 : selectTimeout);
                     tmpKey.interestOps(tmpKey.interestOps() & (~SelectionKey.OP_READ));
@@ -298,7 +299,7 @@ public class Reader {
             throw new IOException("Handshake failed expecting message of up to " + sizeLimit + " bytes, actual size is: " + dataLength + " bytes.");
         }
         if (dataLength > SUSPICIOUS_THRESHOLD) {
-            _logger.warning("About to allocate " + dataLength + " bytes - from socket channel: " + _socketChannel);
+            _logger.warn("About to allocate " + dataLength + " bytes - from socket channel: " + _socketChannel);
         }
 
         /* allocate the buffer on demand, otherwise reuse the buffer */
@@ -334,8 +335,8 @@ public class Reader {
                     final boolean channelIsBlocking = _socketChannel.isBlocking();
                     if (slowConsumerLatency > 0 && (++retries) > _slowConsumerRetries) {
                         String slowConsumerMsg = prepareSlowConsumerCloseMsg(getEndPointAddress(), slowConsumerLatency);
-                        if (_slowerConsumerLogger.isLoggable(Level.WARNING))
-                            _slowerConsumerLogger.warning(slowConsumerMsg);
+                        if (_slowerConsumerLogger.isWarnEnabled())
+                            _slowerConsumerLogger.warn(slowConsumerMsg);
                         throw new SlowConsumerException(slowConsumerMsg);
                     }
                     // if bRead == 0 this channel is either none blocking, or it is in blocking mode
@@ -349,8 +350,8 @@ public class Reader {
                         tmpKey = _socketChannel.register(tempSelector, SelectionKey.OP_READ);
                     }
                     tmpKey.interestOps(tmpKey.interestOps() | SelectionKey.OP_READ);
-                    if (_slowerConsumerLogger.isLoggable(Level.FINE))
-                        _slowerConsumerLogger.fine(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries, slowConsumerLatency));
+                    if (_slowerConsumerLogger.isDebugEnabled())
+                        _slowerConsumerLogger.debug(prepareSlowConsumerSleepMsg(getEndPointAddress(), retries, slowConsumerLatency));
 
                     tempSelector.select(slowConsumerLatency == 0 ? 0 : selectTimeout);
                     tmpKey.interestOps(tmpKey.interestOps() & (~SelectionKey.OP_READ));
@@ -388,7 +389,7 @@ public class Reader {
                 return _bufferCache.get(dataLength);
             }
         } catch (OutOfMemoryError outOfMemoryError) {
-            _logger.log(Level.WARNING, "Got out of memory error while trying to allocate byte buffer of size  " + dataLength, outOfMemoryError);
+            _logger.warn("Got out of memory error while trying to allocate byte buffer of size  " + dataLength, outOfMemoryError);
             throw outOfMemoryError;
         }
     }
@@ -424,7 +425,7 @@ public class Reader {
             if (ctx.messageSizeLimit != 0 && ctx.messageSizeLimit <= ctx.dataLength) {
                 String offendingAddress = _socketChannel.socket() != null ? String.valueOf(_socketChannel.socket().getRemoteSocketAddress()) : "unknown";
                 String msg = "Handshake failed, expecting message of up to " + ctx.messageSizeLimit + " bytes, actual size is: " + ctx.dataLength + " bytes, offending address is " + offendingAddress;
-                if (offendingMessageLogger.isLoggable(Level.FINEST)) {
+                if (offendingMessageLogger.isTraceEnabled()) {
                     try {
                         ByteBuffer buffer = getByteBufferAllocated(ctx.createNewBuffer, Math.min(ctx.dataLength, 5 * 1024));
                         _socketChannel.read(buffer);
@@ -433,9 +434,9 @@ public class Reader {
                         buffer.get(bytes);
                         try {
                             String str = new String(bytes, "UTF-8");
-                            offendingMessageLogger.finest(msg + ", received string is : " + str);
+                            offendingMessageLogger.trace(msg + ", received string is : " + str);
                         } catch (UnsupportedEncodingException e) {
-                            offendingMessageLogger.finest(msg + ", base64 encoding of the received  buffer is : " + new BASE64Encoder().encode(bytes));
+                            offendingMessageLogger.trace(msg + ", base64 encoding of the received  buffer is : " + new BASE64Encoder().encode(bytes));
                         }
                     } catch (Exception ignored) {
                     }
@@ -517,8 +518,8 @@ public class Reader {
         ReplyPacket<T> packet = new ReplyPacket<T>();
         unmarshall(packet, stream);
 
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.finest("<-- Read Packet " + packet);
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("<-- Read Packet " + packet);
         }
         return packet;
     }
@@ -557,8 +558,8 @@ public class Reader {
             GSByteArrayInputStream bis = new GSByteArrayInputStream(readBytesBlocking(true, slowConsumerTimeout, sizeLimit));
             MarshalInputStream mis = new MarshalInputStream(bis, _streamContext);
             unmarshall(packet, mis);
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.finest("<-- Read Packet " + packet);
+            if (_logger.isTraceEnabled()) {
+                _logger.trace("<-- Read Packet " + packet);
             }
             return packet;
         }
@@ -566,8 +567,8 @@ public class Reader {
         _bufferIsOccupied = true;
         _bais.setBuffer(readBytesBlocking(false, slowConsumerTimeout, sizeLimit));
         unmarshall(packet, _ois);
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.finest("<-- Read packet " + packet);
+        if (_logger.isTraceEnabled()) {
+            _logger.trace("<-- Read packet " + packet);
         }
         return packet;
     }

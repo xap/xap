@@ -35,8 +35,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base class for all Map implementations.
@@ -63,7 +64,7 @@ abstract public class AbstractMap implements IMap {
     protected MapVersionTable _entryInfos;
 
     //logger
-    final static private Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    final static private Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
 
     /**
      * AbstractMap constructor.
@@ -400,11 +401,11 @@ abstract public class AbstractMap implements IMap {
     }
 
     protected void log(String description, Exception ex) {
-        if (_logger.isLoggable(Level.FINE)) {
+        if (_logger.isDebugEnabled()) {
             if (ex != null)
-                _logger.log(Level.FINE, toString() + " " + description + " | ", ex);
+                _logger.debug(toString() + " " + description + " | ", ex);
             else
-                _logger.fine(description);
+                _logger.debug(description);
         }
     }
 

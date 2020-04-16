@@ -27,8 +27,9 @@ import com.j_spaces.kernel.ScheduledRunner;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This space filter should be provide a space statistics information.
@@ -38,7 +39,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class JSpaceStatistics implements ISpaceFilter {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_FILTERS);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_FILTERS);
 
     private final StatisticsContext[] _statRepository;
     private long _period;
@@ -52,8 +53,8 @@ public class JSpaceStatistics implements ISpaceFilter {
 
     public void init(IJSpace space, String filterId, String url, int priority) {
         SpaceImpl spaceImpl = space.getDirectProxy().getSpaceImplIfEmbedded();
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Initializing Space statistics Filter of " + spaceImpl.getNodeName() + " [priority=" + priority + "]");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Initializing Space statistics Filter of " + spaceImpl.getNodeName() + " [priority=" + priority + "]");
 
         _period = Constants.Statistics.DEFAULT_PERIOD;
         Runnable averageCalculator = new Runnable() {

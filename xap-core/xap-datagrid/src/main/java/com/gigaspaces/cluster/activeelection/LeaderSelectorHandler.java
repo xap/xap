@@ -28,8 +28,9 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -60,7 +61,7 @@ public abstract class LeaderSelectorHandler implements LeaderSelector {
     }
 
     public void initialize(LeaderSelectorHandlerConfig config) throws Exception {
-        _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLUSTER_ACTIVE_ELECTION + "." + config.getSpace().getNodeName());
+        _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLUSTER_ACTIVE_ELECTION + "." + config.getSpace().getNodeName());
         if (config.getSpace().getClusterPolicy().m_FailOverPolicy == null)
             throw new IllegalArgumentException("Failed to initialize LeaderElectorHandler. FailoverPolicy is <null>");
 
@@ -86,8 +87,8 @@ public abstract class LeaderSelectorHandler implements LeaderSelector {
      * Notify the listeners about the event
      */
     protected synchronized void beforeSpaceModeChange(SpaceMode newMode) {
-        if (_logger.isLoggable(Level.FINER))
-            _logger.finer("Invoking beforeSpaceModeChange event, new mode " + newMode);
+        if (_logger.isDebugEnabled())
+            _logger.debug("Invoking beforeSpaceModeChange event, new mode " + newMode);
 
         Queue<ISpaceModeListener> remoteListeners = new LinkedList<ISpaceModeListener>();
         for (Iterator<ISpaceModeListener> iter = _primarySpaceModeListeners.iterator(); iter.hasNext(); ) {
@@ -96,21 +97,21 @@ public abstract class LeaderSelectorHandler implements LeaderSelector {
                 // set space initializer , so the components can access the space when it is still backup
                 SpaceInitializationIndicator.setInitializer();
                 if (LRMIUtilities.isRemoteProxy(listener)) {
-                    if (_logger.isLoggable(Level.FINEST))
-                        _logger.finest("located remote listener for beforeSpaceModeChange, adding to asynchronous dispatch queue [" + listener.toString() + "]");
+                    if (_logger.isTraceEnabled())
+                        _logger.trace("located remote listener for beforeSpaceModeChange, adding to asynchronous dispatch queue [" + listener.toString() + "]");
                     remoteListeners.add(listener);
                     continue;
                 }
                 listener.beforeSpaceModeChange(newMode);
             } catch (DirectPersistencyRecoveryException dpe) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, dpe.getMessage());
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(dpe.getMessage());
                 }
                 // cancel notifying and turn off the space in case DirectPersistencyRecoveryException occurred, see DirectPersistencyRecoveryHelper#beforeSpaceModeChange
                 throw dpe;
             } catch (Exception rex) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE,
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(
                             "Failed to invoke method ISpaceModeListener.beforeSpaceModeChange(...) implemented by listener ["
                                     + listener
                                     + "]. Action Taken: Unregistered listener",
@@ -127,8 +128,8 @@ public abstract class LeaderSelectorHandler implements LeaderSelector {
         if (remoteListeners.size() > 0)
             dispatchBeforeEventToRemoteListeners(remoteListeners, newMode);
 
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("completed invoking synchronous beforeSpaceModeChange event with mode " + newMode);
+        if (_logger.isTraceEnabled())
+            _logger.trace("completed invoking synchronous beforeSpaceModeChange event with mode " + newMode);
     }
 
 
@@ -136,22 +137,22 @@ public abstract class LeaderSelectorHandler implements LeaderSelector {
      * Notify the listeners about the event
      */
     protected synchronized void afterSpaceModeChange(SpaceMode newMode) {
-        if (_logger.isLoggable(Level.FINER))
-            _logger.finer("Invoking afterSpaceModeChange event, new mode is " + newMode);
+        if (_logger.isDebugEnabled())
+            _logger.debug("Invoking afterSpaceModeChange event, new mode is " + newMode);
         Queue<ISpaceModeListener> remoteListeners = new LinkedList<ISpaceModeListener>();
         for (Iterator<ISpaceModeListener> iter = _primarySpaceModeListeners.iterator(); iter.hasNext(); ) {
             ISpaceModeListener listener = iter.next();
             try {
                 if (LRMIUtilities.isRemoteProxy(listener)) {
-                    if (_logger.isLoggable(Level.FINEST))
-                        _logger.finest("located remote listener for afterSpaceModeChange, adding to asynchronous dispatch queue [" + listener.toString() + "]");
+                    if (_logger.isTraceEnabled())
+                        _logger.trace("located remote listener for afterSpaceModeChange, adding to asynchronous dispatch queue [" + listener.toString() + "]");
                     remoteListeners.add(listener);
                     continue;
                 }
                 listener.afterSpaceModeChange(newMode);
             } catch (Exception rex) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE,
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(
                             "Failed to invoke remote method ISpaceModeListener.afterSpaceModeChange(...) implemented by listener ["
                                     + listener
                                     + "]. Action Taken: Unregistered listener",
@@ -165,15 +166,15 @@ public abstract class LeaderSelectorHandler implements LeaderSelector {
         if (remoteListeners.size() > 0)
             dispatchAfterEventToRemoteListeners(remoteListeners, newMode);
 
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("completed invoking synchronous afterSpaceModeChange event with mode " + newMode);
+        if (_logger.isTraceEnabled())
+            _logger.trace("completed invoking synchronous afterSpaceModeChange event with mode " + newMode);
     }
 
 
     protected void dispatchBeforeEventToRemoteListeners(
             Queue<ISpaceModeListener> remoteListeners, final SpaceMode newMode) {
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("dispatching asynchronous beforeSpaceModeChange event, new mode is " + newMode + ", pending listeners count is " + remoteListeners.size());
+        if (_logger.isTraceEnabled())
+            _logger.trace("dispatching asynchronous beforeSpaceModeChange event, new mode is " + newMode + ", pending listeners count is " + remoteListeners.size());
         //Pool size is fixed to 1 in order to keep the order of before/after events
         ExecutorService executor = Executors.newFixedThreadPool(1);
         _dispatchRemoteEventExecutor.set(executor);
@@ -185,11 +186,11 @@ public abstract class LeaderSelectorHandler implements LeaderSelector {
                 public void run() {
                     try {
                         remoteListener.beforeSpaceModeChange(newMode);
-                        if (isLast && _logger.isLoggable(Level.FINEST))
-                            _logger.finest("completed invoking asynchronous beforeSpaceModeChange event with mode " + newMode);
+                        if (isLast && _logger.isTraceEnabled())
+                            _logger.trace("completed invoking asynchronous beforeSpaceModeChange event with mode " + newMode);
                     } catch (Exception e) {
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.log(Level.FINE,
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug(
                                     "Failed to invoke remote method ISpaceModeListener.beforeSpaceModeChange(...) implemented by listener ["
                                             + remoteListener
                                             + "]. Action Taken: Unregistered listener",
@@ -204,8 +205,8 @@ public abstract class LeaderSelectorHandler implements LeaderSelector {
     }
 
     private void dispatchAfterEventToRemoteListeners(Queue<ISpaceModeListener> remoteListeners, final SpaceMode newMode) {
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("dispatching asynchronous afterSpaceModeChange event, new mode is " + newMode + ", pending listeners count is " + remoteListeners.size());
+        if (_logger.isTraceEnabled())
+            _logger.trace("dispatching asynchronous afterSpaceModeChange event, new mode is " + newMode + ", pending listeners count is " + remoteListeners.size());
         ExecutorService executor = _dispatchRemoteEventExecutor.get();
         while (!remoteListeners.isEmpty()) {
             final ISpaceModeListener remoteListener = remoteListeners.remove();
@@ -215,11 +216,11 @@ public abstract class LeaderSelectorHandler implements LeaderSelector {
                 public void run() {
                     try {
                         remoteListener.afterSpaceModeChange(newMode);
-                        if (isLast && _logger.isLoggable(Level.FINEST))
-                            _logger.finest("completed invoking asynchronous afterSpaceModeChange event with mode " + newMode);
+                        if (isLast && _logger.isTraceEnabled())
+                            _logger.trace("completed invoking asynchronous afterSpaceModeChange event with mode " + newMode);
                     } catch (Exception e) {
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.log(Level.FINE,
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug(
                                     "Failed to invoke remote method ISpaceModeListener.AfterSpaceModeChange(...) implemented by listener ["
                                             + remoteListener
                                             + "]. Action Taken: Unregistered listener",

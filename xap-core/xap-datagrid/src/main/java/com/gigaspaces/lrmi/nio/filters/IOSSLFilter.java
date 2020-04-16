@@ -23,8 +23,9 @@ import com.gigaspaces.lrmi.nio.filters.IOFilterResult.Status;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -39,7 +40,7 @@ import javax.net.ssl.SSLException;
 
 public class IOSSLFilter implements IOBlockFilter {
 
-    private static final Logger logger = Logger.getLogger(IOBlockFilterContainer.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(IOBlockFilterContainer.class.getName());
     private final SSLEngine _sslEngine;
     private final SSLContext _sslContext;
     private final String _uid;
@@ -54,11 +55,11 @@ public class IOSSLFilter implements IOBlockFilter {
     }
 
     public void beginHandshake() throws IOFilterException {
-        if (logger.isLoggable(Level.FINE)) {
+        if (logger.isDebugEnabled()) {
             if (getUseClientMode())
-                logger.fine("Client IOSSLFilter with uid " + _uid + " connected to " + _remoteAddress + " starting handshake");
+                logger.debug("Client IOSSLFilter with uid " + _uid + " connected to " + _remoteAddress + " starting handshake");
             else
-                logger.fine("Server IOSSLFilter with uid " + _uid + " connected to " + _remoteAddress + " starting handshake");
+                logger.debug("Server IOSSLFilter with uid " + _uid + " connected to " + _remoteAddress + " starting handshake");
         }
         try {
             _sslEngine.beginHandshake();
@@ -119,7 +120,7 @@ public class IOSSLFilter implements IOBlockFilter {
             javax.net.ssl.SSLEngineResult.HandshakeStatus handshakeStatus) {
         switch (handshakeStatus) {
             case FINISHED:
-                if (logger.isLoggable(Level.FINE)) {
+                if (logger.isDebugEnabled()) {
                     if (getUseClientMode())
                         logger.info("Client IOSSLFilter with uid " + _uid + " connected to " + _remoteAddress + " finished handshake");
                     else

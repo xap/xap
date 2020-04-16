@@ -37,8 +37,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * some helper methods to the SpaceApiController class
@@ -47,7 +48,7 @@ import java.util.logging.Logger;
  * @since 8.0
  */
 public class ControllerUtils {
-    private static final Logger logger = Logger.getLogger(ControllerUtils.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(ControllerUtils.class.getName());
     private static final TypeReference<HashMap<String, Object>[]> typeRef = new TypeReference<HashMap<String, Object>[]>() {
     };
     public static final XapConnectionCache xapCache = new XapConnectionCache();
@@ -154,11 +155,11 @@ public class ControllerUtils {
             Object oldPropValue = entry.getValue();
             SpacePropertyDescriptor propDesc = spaceTypeDescriptor.getFixedProperty(propKey);
             if (propDesc == null) {
-                if (logger.isLoggable(Level.WARNING))
-                    logger.warning("could not find SpacePropertyDescriptor for " + propKey + ", using String as property type");
+                if (logger.isWarnEnabled())
+                    logger.warn("could not find SpacePropertyDescriptor for " + propKey + ", using String as property type");
                 newPropertyMap.put(propKey, oldPropValue);
             }/*else if(propDesc.getType().equals(Object.class)){
-                logger.warning("Existing Type of " + propKey + " is Object, using String as property type");
+                logger.warn("Existing Type of " + propKey + " is Object, using String as property type");
                 newPropertyMap.put(propKey, oldPropValue);
             }*/ else {
                 Object convertedObj;
@@ -250,7 +251,7 @@ public class ControllerUtils {
      * @author DeWayne
      */
     public static class XapConnectionCache {
-        private final Logger log = Logger.getLogger("XapConnectionCache");
+        private final Logger log = LoggerFactory.getLogger("XapConnectionCache");
         private static AtomicReference<XapEndpoint> cache = new AtomicReference<XapEndpoint>();
 
         public XapConnectionCache() {
@@ -259,14 +260,14 @@ public class ControllerUtils {
         public GigaSpace get() {
 
             synchronized (cache) {
-                log.finest("getting space");
+                log.trace("getting space");
 
                 GigaSpace gs = getSpace();
                 if (gs != null) return gs;
 
-                log.finest("lookupgroups: " + lookupGroups);
-                log.finest("lookupLocators: " + lookupLocators);
-                log.finest("spaceName: " + spaceName);
+                log.trace("lookupgroups: " + lookupGroups);
+                log.trace("lookupLocators: " + lookupLocators);
+                log.trace("spaceName: " + spaceName);
                 String url = "jini://*/*/" + spaceName;
 
 
@@ -294,7 +295,7 @@ public class ControllerUtils {
                 UrlSpaceConfigurer usc = new UrlSpaceConfigurer(url);
                 gs = new GigaSpaceConfigurer(usc.space()).gigaSpace();
                 cache.set(new XapEndpoint(gs, usc));
-                log.finest("  returning space");
+                log.trace("  returning space");
                 return gs;
             }
         }

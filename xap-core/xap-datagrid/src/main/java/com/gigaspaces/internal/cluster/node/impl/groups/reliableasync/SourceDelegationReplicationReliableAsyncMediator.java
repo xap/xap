@@ -34,8 +34,9 @@ import com.gigaspaces.internal.cluster.node.impl.router.IReplicationRouter;
 import com.gigaspaces.internal.cluster.node.impl.router.RouterStubHolder;
 import com.gigaspaces.internal.utils.StringUtils;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -107,24 +108,24 @@ public class SourceDelegationReplicationReliableAsyncMediator
                 succesfullyUpdated = true;
             } catch (MissingReliableAsyncTargetStateException e) {
                 String missingMember = e.getMissingMember();
-                if (_specificLogger.isLoggable(Level.FINER))
-                    _specificLogger.finer("Received a missing replication member exception [" + missingMember + "] when updating async state, removing member from group");
+                if (_specificLogger.isDebugEnabled())
+                    _specificLogger.debug("Received a missing replication member exception [" + missingMember + "] when updating async state, removing member from group");
                 _groupConfigHolder.removeMember(missingMember);
                 _router.getAdmin().removeRemoteStubHolder(missingMember);
             } catch (NoSuchReplicationMemberException e) {
                 // We have a missing member, fetch missing data from the
                 // replication channel source.
                 final String missingMemberName = e.getMissingMemberName();
-                if (_specificLogger.isLoggable(Level.FINER))
-                    _specificLogger.finer("Received no such replication member exception [" + missingMemberName + "] when updating async state, retrieving member data from source");
+                if (_specificLogger.isDebugEnabled())
+                    _specificLogger.debug("Received no such replication member exception [" + missingMemberName + "] when updating async state, retrieving member data from source");
                 FetchReliableAsyncMissingMemberDataPacket packet = new FetchReliableAsyncMissingMemberDataPacket(_groupConfigHolder.getConfig().getName(),
                         missingMemberName);
                 try {
                     ReliableAsyncMemberData memberData = _sourceConnection.dispatch(packet);
                     if (memberData == null) {
                         //This member does not longer exist in the source
-                        if (_specificLogger.isLoggable(Level.FINER))
-                            _specificLogger.finer("The missing member [" + e.getMissingMemberName() + "] is not present at the source, ignoring current update");
+                        if (_specificLogger.isDebugEnabled())
+                            _specificLogger.debug("The missing member [" + e.getMissingMemberName() + "] is not present at the source, ignoring current update");
                         return;
                     }
                     BacklogMemberLimitationConfig memberBacklogLimitations = memberData.getMemberBacklogLimitationConfig();
@@ -141,8 +142,8 @@ public class SourceDelegationReplicationReliableAsyncMediator
                     if (routerStub != null)
                         _router.getAdmin().addRemoteRouterStub(routerStub);
 
-                    if (_specificLogger.isLoggable(Level.FINE))
-                        _specificLogger.fine("Synchronized new reliable async member [" + missingMemberName + "] state into replication group");
+                    if (_specificLogger.isDebugEnabled())
+                        _specificLogger.debug("Synchronized new reliable async member [" + missingMemberName + "] state into replication group");
 
                     //Add member to the group, this may set this member last confirmed key to be higher than the actual key
                     //since it will take the current last key in redo log and set it as confirmed, however, this is immediately followed
@@ -153,8 +154,8 @@ public class SourceDelegationReplicationReliableAsyncMediator
                             asyncChannelConfig,
                             memberLifyCycle);
                 } catch (Exception innerE) {
-                    if (_specificLogger.isLoggable(Level.WARNING))
-                        _specificLogger.log(Level.WARNING,
+                    if (_specificLogger.isWarnEnabled())
+                        _specificLogger.warn(
                                 "Failed retrieving missing data for reliable async member ["
                                         + missingMemberName
                                         + "], skipping update reliable async state",

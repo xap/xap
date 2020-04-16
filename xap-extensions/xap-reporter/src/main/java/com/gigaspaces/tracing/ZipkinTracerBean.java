@@ -15,12 +15,13 @@ import zipkin2.reporter.okhttp3.OkHttpSender;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ZipkinTracerBean {
     public static final String CONSUL_KEY = "gigaspaces/tracing";
-    private Logger logger = Logger.getLogger(this.getClass().getName());
+    private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     private AsyncReporter<Span> reporter;
     private Tracing tracing;
@@ -95,7 +96,7 @@ public class ZipkinTracerBean {
                                 }
                             }
                         } catch (Exception e) {
-                            logger.log(Level.SEVERE, "Got exception while querying Consul", e);
+                            logger.error("Got exception while querying Consul", e);
                         }
                         try {
                             TimeUnit.SECONDS.sleep(10);

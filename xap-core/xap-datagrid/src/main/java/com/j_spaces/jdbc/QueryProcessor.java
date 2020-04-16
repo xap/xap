@@ -40,8 +40,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The QueryProcessor main class.
@@ -51,7 +52,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class QueryProcessor implements IQueryProcessor {
 
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_QUERY);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
     private static QueryProcessorConfiguration defaultConfig;
 
     private IJSpace _spaceCluster;
@@ -134,7 +135,7 @@ public class QueryProcessor implements IQueryProcessor {
 
                 response = request.accept(_queryHandler, session);
                 long queryTime = System.currentTimeMillis() - startTime;
-                if (_logger.isLoggable(Level.INFO)) {
+                if (_logger.isInfoEnabled()) {
                     _logger.info("Statement=" + request.toString() + ", execution time=" + queryTime + " milliseconds.");
                 }
             } else {
@@ -161,8 +162,8 @@ public class QueryProcessor implements IQueryProcessor {
             _spaceRegular.ping();
             return true;
         } catch (RemoteException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Connection to space failed.", e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Connection to space failed.", e);
             return false;
         }
     }
@@ -192,8 +193,8 @@ public class QueryProcessor implements IQueryProcessor {
     public static synchronized void setDefaultConfig(QueryProcessorConfiguration defaultConfig) {
         if (QueryProcessor.defaultConfig == null){
             QueryProcessor.defaultConfig = defaultConfig;
-            if( _logger.isLoggable(Level.FINE)) {
-                _logger.fine("~~~INITIALIZING of QueryProcessor.defaultConfig" +
+            if( _logger.isDebugEnabled()) {
+                _logger.debug("~~~INITIALIZING of QueryProcessor.defaultConfig" +
                              ", DateTimeFormat=" + defaultConfig.getDateTimeFormat() +
                              ", DateFormat=" + defaultConfig.getDateFormat() +
                              ", TimeFormat=" + defaultConfig.getTimeFormat());
@@ -221,7 +222,7 @@ public class QueryProcessor implements IQueryProcessor {
      */
     public static void main(String[] args) throws Throwable {
         if (args.length != 1) {
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 _logger.info("Usage: QueryProcessor <property file>");
             }
             System.exit(-1);

@@ -27,8 +27,9 @@ import com.j_spaces.kernel.pool.ResourcePool;
 import java.io.IOException;
 import java.io.ObjectStreamConstants;
 import java.nio.ByteBuffer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Supports single serializer multi concurrent deserializers
@@ -38,7 +39,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class PacketSerializer<T> {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_BACKLOG);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_BACKLOG);
 
     private final ByteBufferObjectOutputStream _oss;
     private final GSByteArrayOutputStream _gsByteOutputStream;
@@ -98,18 +99,18 @@ public class PacketSerializer<T> {
             resource.setBuffer(serializedPacket);
             return resource.readPacket();
         } catch (IOException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Unexpected error when deserializing replication packet from the swap space", e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Unexpected error when deserializing replication packet from the swap space", e);
             resource.markCorrupted();
             throw e;
         } catch (ClassNotFoundException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Unexpected error when deserializing replication packet from the swap space", e);
+            if (_logger.isErrorEnabled())
+                _logger.error("Unexpected error when deserializing replication packet from the swap space", e);
             resource.markCorrupted();
             throw e;
         } catch (RuntimeException re) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "Unexpected error when deserializing replication packet from the swap space", re);
+            if (_logger.isErrorEnabled())
+                _logger.error("Unexpected error when deserializing replication packet from the swap space", re);
             resource.markCorrupted();
             throw re;
         } finally {

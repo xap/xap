@@ -26,8 +26,9 @@ import com.gigaspaces.internal.cluster.node.impl.packets.data.ReplicationPacketE
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.j_spaces.core.exception.internal.ReplicationInternalSpaceException;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @com.gigaspaces.api.InternalApi
@@ -209,8 +210,8 @@ public class ReplicationChannelDataFilterHelper {
             PlatformLogicalVersion targetMemberVersion, Logger logger,
             String targetMemberName,
             boolean forceDiscard) {
-        if (logger.isLoggable(Level.FINEST))
-            logger.finest("Packet [" + packet.toString()
+        if (logger.isTraceEnabled())
+            logger.trace("Packet [" + packet.toString()
                     + "] discarded by the channel filter.");
         // This is the first discarded packet, create a new discarded packet
         if (previousDiscardedPacket == null

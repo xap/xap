@@ -26,12 +26,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class ThreadAsyncHandlerProvider extends AbstractAsyncHandlerProvider {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION);
 
     private final Set<Thread> _threads = new HashSet<Thread>();
 
@@ -153,8 +154,8 @@ public class ThreadAsyncHandlerProvider extends AbstractAsyncHandlerProvider {
             } catch (InterruptedException e) {
                 // Break loop on interrupted
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled())
+                    _logger.error(
                             "Error occurred while executing async cycle",
                             e);
             }

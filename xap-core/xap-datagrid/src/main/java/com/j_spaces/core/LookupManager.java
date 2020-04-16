@@ -36,8 +36,9 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Properties;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -100,7 +101,7 @@ import static com.j_spaces.core.Constants.LookupManager.LOOKUP_JNDI_URL_PROP;
  **/
 @com.gigaspaces.api.InternalApi
 public class LookupManager implements ServiceIDListener, LeaseListener {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_LOOKUPMANAGER);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_LOOKUPMANAGER);
 
     private final String m_ContainerName;
     private final Hashtable<String, IJSpace> _registeredSpaces;
@@ -148,7 +149,7 @@ public class LookupManager implements ServiceIDListener, LeaseListener {
      * @param serviceID ServiceID of registered service.
      **/
     public void serviceIDNotify(ServiceID serviceID) {
-        if (_logger.isLoggable(Level.INFO)) {
+        if (_logger.isInfoEnabled()) {
             _logger.info("<" + m_ContainerName + "> container registered with " + serviceID.toString() + " serviceID successfully.");
         }
     }
@@ -161,9 +162,9 @@ public class LookupManager implements ServiceIDListener, LeaseListener {
      *                          that the <code>LeaseRenewalManager</code> was unable to renew.
      **/
     public void notify(LeaseRenewalEvent leaseManagerEvent) {
-        if (_logger.isLoggable(Level.FINE)) {
+        if (_logger.isDebugEnabled()) {
             Throwable error = leaseManagerEvent.getException();
-            _logger.fine("LeaseRenewalManager cannot renew this lease <" +
+            _logger.debug("LeaseRenewalManager cannot renew this lease <" +
                     leaseManagerEvent.getLease().getExpiration() + ">" +
                     (error != null ? " - " + error.toString() : ""));
         }
@@ -196,8 +197,8 @@ public class LookupManager implements ServiceIDListener, LeaseListener {
                     LookupLocator lookupLocator = new LookupLocator(locatorURL);
                     locatorList.add(lookupLocator);
                 } catch (MalformedURLException ex) {
-                    if (_logger.isLoggable(Level.WARNING)) {
-                        _logger.log(Level.WARNING, "Unicast discovery failed for LookupService: " + locatorURL + " - " + ex.toString(), ex);
+                    if (_logger.isWarnEnabled()) {
+                        _logger.warn("Unicast discovery failed for LookupService: " + locatorURL + " - " + ex.toString(), ex);
                     }
                 }
             }
@@ -227,21 +228,21 @@ public class LookupManager implements ServiceIDListener, LeaseListener {
 
             //if jms enabled BUT the JNDI service disabled
             if (m_jmsFlag && !m_jndiFlag && !m_isExternalJmsJndi) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.warning("The JMS Service must have an enabled JNDI Lookup service." +
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn("The JMS Service must have an enabled JNDI Lookup service." +
                             " \nPlease enable Internal or External JNDI service (under <jms_services> tag) and restart the container.");
                 }
             }
         } catch (Exception ex) {
             String cause = "";
-            if (_logger.isLoggable(Level.WARNING)) {
+            if (_logger.isWarnEnabled()) {
                 if (ex instanceof NamingException) {
                     Throwable rootException = ((NamingException) ex).getRootCause();
                     if (rootException != null)
                         cause = rootException.toString();
-                    _logger.warning("\n\nDirectory Service: Failed registering space <" + spaceProxy + "> : " + cause);
+                    _logger.warn("\n\nDirectory Service: Failed registering space <" + spaceProxy + "> : " + cause);
                 } else
-                    _logger.log(Level.WARNING, "\n\nDirectory Service: Failed registering space <" + spaceProxy + "> : ", ex);
+                    _logger.warn("\n\nDirectory Service: Failed registering space <" + spaceProxy + "> : ", ex);
             }
         }
     }
@@ -260,8 +261,8 @@ public class LookupManager implements ServiceIDListener, LeaseListener {
             if (m_jmsLookupManager != null)
                 m_jmsLookupManager.close();
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "\n\nDirectory Service: Failed to unregister space " + spaceName + " : " + e.toString(), e);
+            if (_logger.isWarnEnabled())
+                _logger.warn("\n\nDirectory Service: Failed to unregister space " + spaceName + " : " + e.toString(), e);
         }
 
         _registeredSpaces.remove(spaceName);
@@ -275,8 +276,8 @@ public class LookupManager implements ServiceIDListener, LeaseListener {
         for (String spaceName : tmpDepot.keySet())
             unregister(spaceName);
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("All spaces unregistered successfully");
+        if (_logger.isDebugEnabled())
+            _logger.debug("All spaces unregistered successfully");
     }
 
     private static Context createInternalContext(String containerName) throws NamingException {
@@ -292,13 +293,13 @@ public class LookupManager implements ServiceIDListener, LeaseListener {
             //,and use its Context details in order to connect to other InitialContext
             return new InitialContext();
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
+            if (_logger.isErrorEnabled()) {
                 if (ex instanceof NamingException) {
                     String cause = ((NamingException) ex).getRootCause().toString();
-                    _logger.log(Level.SEVERE, "Failed to create InitialContext and register JMS Admin Objects on space " +
+                    _logger.error("Failed to create InitialContext and register JMS Admin Objects on space " +
                             "<" + spaceName + "> using the external JNDI lookup service | " + cause, ex);
                 } else
-                    _logger.log(Level.SEVERE, "Failed to create InitialContext and register JMS Admin Objects on space " +
+                    _logger.error("Failed to create InitialContext and register JMS Admin Objects on space " +
                             "<" + spaceName + "> using the external JNDI lookup service | " + ex.toString(), ex);
             }
             return null;

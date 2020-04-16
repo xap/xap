@@ -31,8 +31,9 @@ import java.util.Collection;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Suspend/Quiesce core functionality
@@ -53,7 +54,7 @@ public class QuiesceHandler {
 
     public QuiesceHandler(SpaceImpl spaceImpl, QuiesceStateChangedEvent quiesceStateChangedEvent) {
         _spaceImpl = spaceImpl;
-        _logger = Logger.getLogger(Constants.LOGGER_SUSPEND + '.' + spaceImpl.getNodeName());
+        _logger = LoggerFactory.getLogger(Constants.LOGGER_SUSPEND + '.' + spaceImpl.getNodeName());
         _supported = !QUIESCE_DISABLED && !_spaceImpl.isLocalCache();
         _guard = null;
         setSuspendInfo(new SuspendInfo(SuspendType.NONE));
@@ -271,19 +272,19 @@ public class QuiesceHandler {
     synchronized boolean addGuard(Guard newGuard) {
         if (!_supported) {
             if (QUIESCE_DISABLED)
-                _logger.severe("Suspend is not supported because the '" + SystemProperties.DISABLE_QUIESCE_MODE + "' was set");
+                _logger.error("Suspend is not supported because the '" + SystemProperties.DISABLE_QUIESCE_MODE + "' was set");
             if (_spaceImpl.isLocalCache())
-                _logger.severe("Suspend is not supported for local-cache/local-view");
+                _logger.error("Suspend is not supported for local-cache/local-view");
             return false;
         }
 
         if (hasGuard(_guard, newGuard.status)) {
-            _logger.warning("Suspend guard [" + newGuard.status + "] was discarded, it already exists - current state is " + desc(_guard));
+            _logger.warn("Suspend guard [" + newGuard.status + "] was discarded, it already exists - current state is " + desc(_guard));
             return false;
         }
 
         if (!guardCanBeAdded(_guard, newGuard)) {
-            _logger.warning("Suspend guard couldn't be added - current state is " + desc(_guard));
+            _logger.warn("Suspend guard couldn't be added - current state is " + desc(_guard));
             return false;
         }
 
@@ -333,13 +334,13 @@ public class QuiesceHandler {
 
     synchronized void removeGuard(Status status) {
         if (_guard == null) {
-            _logger.warning("No guard to remove");
+            _logger.warn("No guard to remove");
             return;
         }
 
         Guard guardToRemove = getGuard(_guard, status);
         if (guardToRemove == null) {
-            _logger.warning("No " + status + " guard to remove");
+            _logger.warn("No " + status + " guard to remove");
             return;
         }
 
@@ -379,7 +380,7 @@ public class QuiesceHandler {
                 try {
                     listener.onSuspendTypeChanged(suspendInfo.getSuspendType());
                 } catch (Exception e) {
-                    _logger.log(Level.WARNING, "Failed to dispatch suspendInfo event to listener [" + listener +"]: " + e.getMessage(), e);
+                    _logger.warn("Failed to dispatch suspendInfo event to listener [" + listener +"]: " + e.getMessage(), e);
                 }
             }
         }

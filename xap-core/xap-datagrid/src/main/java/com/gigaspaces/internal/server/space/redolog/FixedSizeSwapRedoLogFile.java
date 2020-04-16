@@ -30,8 +30,9 @@ import com.j_spaces.core.cluster.startup.RedoLogCompactionUtil;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A swap based implementation of the {@link IRedoLogFile} interface, A fixed number of packets can
@@ -43,7 +44,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> implements IRedoLogFile<T> {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_BACKLOG);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_BACKLOG);
 
     private final int _memoryMaxCapacity; //max allowed weight that memory can hold in any time
     private final int _fetchBatchCapacity;
@@ -67,8 +68,8 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
         this._fetchBatchCapacity = config.getFetchBatchSize();
         this._combinedMemoryMaxCapacity = config.getCombinedMemoryMaxCapacity();
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("FixedSizeSwapRedoLogFile created:"
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("FixedSizeSwapRedoLogFile created:"
                     + "\n\tmemoryMaxPackets = " + _memoryMaxCapacity
                     + "\n\tfetchBatchSize = " + _fetchBatchCapacity);
         }
@@ -82,7 +83,7 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
         if (!_insertToExternal) {
             if (_memoryRedoLogFile.isEmpty() && packetWeight > _combinedMemoryMaxCapacity) {
                 _memoryRedoLogFile.add(replicationPacket);
-                _logger.warning("inserting to " + _name + " memory an operation which weight is larger than the max memory capacity:" +
+                _logger.warn("inserting to " + _name + " memory an operation which weight is larger than the max memory capacity:" +
                         " packet[key=" + replicationPacket.getKey() + ",Type=" + replicationPacket.getClass() + ", weight=" + replicationPacket.getWeight() + "]\n");
                 return;
             }
@@ -197,11 +198,11 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
     private void moveOldestBatchFromStorage() {
         try {
             WeightedBatch<T> batch = _externalStorage.removeFirstBatch(_fetchBatchCapacity, _lastCompactionRangeEndKey);
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("Moved a batch of packets from storage into memory, batch weight is " + batch.getWeight());
+            if (_logger.isTraceEnabled())
+                _logger.trace("Moved a batch of packets from storage into memory, batch weight is " + batch.getWeight());
 
             if (batch.getWeight() + getCacheSize() > _combinedMemoryMaxCapacity) {
-                _logger.warning("Moved a batch of packets from storage into memory which weight causes a breach of memory max capacity," +
+                _logger.warn("Moved a batch of packets from storage into memory which weight causes a breach of memory max capacity," +
                         " batch weight: " + batch.getWeight() + ", current memory weight: " + getCacheSize() + "\n");
             }
 
@@ -299,21 +300,21 @@ public class FixedSizeSwapRedoLogFile<T extends IReplicationOrderedPacket> imple
         }
 
         if (from > _lastSeenTransientPacketKey) {
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.fine("[" + _name + "]: No transient packets in range " + from + "-" + to + ", lastSeenTransientPacketKey = " + _lastSeenTransientPacketKey);
+            if (_logger.isTraceEnabled()) {
+                _logger.debug("[" + _name + "]: No transient packets in range " + from + "-" + to + ", lastSeenTransientPacketKey = " + _lastSeenTransientPacketKey);
             }
             return result;
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("[" + _name + "]: Performing Compaction " + from + "-" + to);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("[" + _name + "]: Performing Compaction " + from + "-" + to);
         }
 
         result.appendResult(_memoryRedoLogFile.performCompaction(from, to));
         result.appendResult(_externalStorage.performCompaction(from, to));
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("[" + _name + "]: Discarded of " + result.getDiscardedCount() + " packets and deleted "+result.getDeletedFromTxn()+" transient packets from transactions during compaction process");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("[" + _name + "]: Discarded of " + result.getDiscardedCount() + " packets and deleted "+result.getDeletedFromTxn()+" transient packets from transactions during compaction process");
         }
 
         _lastCompactionRangeEndKey = to;

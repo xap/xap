@@ -28,7 +28,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
+
 
 /**
  * A client side selector thread that handles Async remote calls. the handler works against a
@@ -88,7 +88,7 @@ public class ClientHandler extends AbstractSelectorThread {
             }
             context.close();
         } catch (Throwable t) {
-            _logger.log(Level.INFO, t.toString(), t);
+            _logger.info(t.toString(), t);
             // an answer was already sent to the user, no need to send another
             // just disconnect the channel and return it to the pool.
             context.closeAndDisconnect();
@@ -108,7 +108,7 @@ public class ClientHandler extends AbstractSelectorThread {
             // if the exception is an IOException it will be trapped by the ExceptionHandler
             // and trigger a failover event.
             ctx.close(t);
-            _logger.log(Level.WARNING, t.toString(), t);
+            _logger.warn(t.toString(), t);
         }
     }
 

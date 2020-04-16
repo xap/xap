@@ -30,7 +30,7 @@ import com.j_spaces.core.exception.internal.InterruptedSpaceException;
 
 import java.rmi.RemoteException;
 import java.util.List;
-import java.util.logging.Level;
+
 
 /**
  * @author Niv Ingberg
@@ -47,8 +47,8 @@ public class ClusterRemoteOperationRouter extends AbstractRemoteOperationRouter 
         super(cluster.getName());
         this._cluster = cluster;
         this._postponedAsyncOperationsQueue = posponedAsyncOperationsQueue;
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Initialized clustered router" + _cluster.getPartitionDesc() + " - members=" + _cluster.getMembersNames());
+        if (_logger.isDebugEnabled())
+            _logger.debug("Initialized clustered router" + _cluster.getPartitionDesc() + " - members=" + _cluster.getMembersNames());
     }
 
     @Override
@@ -64,8 +64,8 @@ public class ClusterRemoteOperationRouter extends AbstractRemoteOperationRouter 
         RemoteOperationsExecutorProxy proxy = _cluster.getLoadBalancer().getCandidate(request);
         if (proxy == null) {
             initialFailureTime = SystemTime.timeMillis();
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "No active server" + _cluster.getPartitionDesc() + " - attempting to locate an active server...");
+            if (_logger.isWarnEnabled())
+                _logger.warn("No active server" + _cluster.getPartitionDesc() + " - attempting to locate an active server...");
             proxy = _cluster.getLoadBalancer().findActiveMember(request, initialFailureTime, proxy);
             if (proxy == null)
                 return;
@@ -112,8 +112,8 @@ public class ClusterRemoteOperationRouter extends AbstractRemoteOperationRouter 
             if (initialFailureTime == 0)
                 initialFailureTime = SystemTime.timeMillis();
             if (_cluster.getRemainingTime(request, initialFailureTime) <= 0) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, _cluster.generateTimeoutErrorMessage(initialFailureTime, request));
+                if (_logger.isErrorEnabled())
+                    _logger.error(_cluster.generateTimeoutErrorMessage(initialFailureTime, request));
                 return;
             }
 
@@ -126,8 +126,8 @@ public class ClusterRemoteOperationRouter extends AbstractRemoteOperationRouter 
     }
 
     private void logExecutionStatus(String prefix, ExecutionStatus status, Exception exception, RemoteOperationsExecutorProxy proxy, RemoteOperationRequest<?> request) {
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.log(Level.FINEST, prefix +
+        if (_logger.isTraceEnabled())
+            _logger.trace(prefix +
                     " ExecutionStatus=" + status +
                     (exception != null ? " exception=" + exception : "") +
                     " for " + proxy.toLogMessage(request));
@@ -288,8 +288,8 @@ public class ClusterRemoteOperationRouter extends AbstractRemoteOperationRouter 
                 _lastExecutionStatus = status;
                 _postponedAsyncOperationsQueue.enqueue(this);
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Unexpected exception during processing of async operation result. AsyncResult=" + asyncResult.toString() + ", request=" + _request.toString(), e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Unexpected exception during processing of async operation result. AsyncResult=" + asyncResult.toString() + ", request=" + _request.toString(), e);
                 _request.setRemoteOperationExecutionError(e);
                 onOperationCompletion();
             }

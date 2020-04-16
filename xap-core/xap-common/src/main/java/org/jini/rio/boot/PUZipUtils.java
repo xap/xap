@@ -31,8 +31,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -43,7 +44,7 @@ import java.util.zip.ZipOutputStream;
 @com.gigaspaces.api.InternalApi
 public class PUZipUtils {
 
-    final private static Logger logger = Logger.getLogger("com.gigaspaces.zip");
+    final private static Logger logger = LoggerFactory.getLogger("com.gigaspaces.zip");
 
     public static class DownloadProcessingUnitException extends Exception {
         private static final long serialVersionUID = -8734985356212361134L;
@@ -65,14 +66,14 @@ public class PUZipUtils {
         }
         boolean deletePUFile = false;
         if (puFile.isDirectory() && puFile.getParent().endsWith("/templates")) {
-            logger.finest("Skip upload of " + puFile + " - template file");
+            logger.trace("Skip upload of " + puFile + " - template file");
             return;
         }
         if (puFile.exists() && puFile.isDirectory()) {
             // this is a directory, jar it up and prepare it for upload
             File zipPUFile = new File(System.getProperty("java.io.tmpdir") + File.separator + puPath + ".zip");
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("Zip directory [" + puFile.getAbsolutePath() + "] into [" + zipPUFile.getAbsolutePath() + "]");
+            if (logger.isDebugEnabled()) {
+                logger.debug("Zip directory [" + puFile.getAbsolutePath() + "] into [" + zipPUFile.getAbsolutePath() + "]");
             }
             PUZipUtils.zip(puFile, zipPUFile);
             puFile = zipPUFile;
@@ -87,8 +88,8 @@ public class PUZipUtils {
             throw new IllegalArgumentException("File " + puFile.getPath() + " is too big: " + puFile.length() + " bytes");
         }
         byte[] buffer = new byte[4098];
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Uploading [" + puPath + "] from [" + puFile.getPath() + "] to [" + deployURL + "]");
+        if (logger.isDebugEnabled()) {
+            logger.debug("Uploading [" + puPath + "] from [" + puFile.getPath() + "] to [" + deployURL + "]");
         }
         HttpURLConnection conn = (HttpURLConnection) new URL(deployURL + puFile.getName()).openConnection();
         conn.setDoOutput(true);
@@ -130,8 +131,8 @@ public class PUZipUtils {
                 puFile.delete();
             }
         }
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.finest("Upload of [" + puPath + "] completed");
+        if (logger.isTraceEnabled()) {
+            logger.trace("Upload of [" + puPath + "] completed");
         }
     }
 
@@ -139,8 +140,8 @@ public class PUZipUtils {
 
         File tempFile = new File(tempLocation, puName.replace('\\', '/') + random.nextLong() + ".zip");
 
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Downloading [" + puName + "] from [" + url.toString() + "] to [" + tempFile.getAbsolutePath() + "], extracted to [" + extractToTarget.getAbsolutePath() + "]");
+        if (logger.isDebugEnabled()) {
+            logger.debug("Downloading [" + puName + "] from [" + url.toString() + "] to [" + tempFile.getAbsolutePath() + "], extracted to [" + extractToTarget.getAbsolutePath() + "]");
         }
 
         long size = 0;
@@ -232,8 +233,8 @@ public class PUZipUtils {
     }
 
     public static long unzip(File targetZip, File dirToExtract) throws Exception {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Unzipping file [" + targetZip.getAbsolutePath() + "] with size [" + targetZip.length() + "] to [" + dirToExtract.getAbsolutePath() + "]");
+        if (logger.isDebugEnabled()) {
+            logger.debug("Unzipping file [" + targetZip.getAbsolutePath() + "] with size [" + targetZip.length() + "] to [" + dirToExtract.getAbsolutePath() + "]");
         }
         long totalSize = 0;
         final int bufferSize = 4098;
@@ -253,8 +254,8 @@ public class PUZipUtils {
                         if (file.getParentFile() != null) {
                             file.getParentFile().mkdirs();
                         }
-                        if (logger.isLoggable(Level.FINEST)) {
-                            logger.finest("Extracting zip entry [" + entry.getName() + "] with size [" + entry.getSize() + "] to [" + file.getAbsolutePath() + "]");
+                        if (logger.isTraceEnabled()) {
+                            logger.trace("Extracting zip entry [" + entry.getName() + "] with size [" + entry.getSize() + "] to [" + file.getAbsolutePath() + "]");
                         }
                         FileOutputStream fos = new FileOutputStream(file);
                         int count;
@@ -316,8 +317,8 @@ public class PUZipUtils {
                 String path = f.getAbsolutePath().substring(baseDir2zip.length() + 1);
                 path = path.replace('\\', '/');
                 ZipEntry anEntry = new ZipEntry(path);
-                if (logger.isLoggable(Level.FINEST)) {
-                    logger.finest("Compressing zip entry [" + anEntry.getName() + "] with size [" + anEntry.getSize() + "] at [" + f.getAbsolutePath() + "]");
+                if (logger.isTraceEnabled()) {
+                    logger.trace("Compressing zip entry [" + anEntry.getName() + "] with size [" + anEntry.getSize() + "] at [" + f.getAbsolutePath() + "]");
                 }
                 //place the zip entry in the ZipOutputStream object
                 zos.putNextEntry(anEntry);

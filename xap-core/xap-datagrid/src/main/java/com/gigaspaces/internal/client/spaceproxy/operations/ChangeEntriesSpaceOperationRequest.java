@@ -49,8 +49,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author eitany
@@ -60,7 +61,7 @@ import java.util.logging.Logger;
 public class ChangeEntriesSpaceOperationRequest extends SpaceOperationRequest<ChangeEntriesSpaceOperationResult> {
     private static final long serialVersionUID = 1L;
 
-    private static final Logger _devLogger = Logger.getLogger(Constants.LOGGER_DEV);
+    private static final Logger _devLogger = LoggerFactory.getLogger(Constants.LOGGER_DEV);
 
     private ITemplatePacket _templatePacket;
     private Transaction _txn;
@@ -210,8 +211,8 @@ public class ChangeEntriesSpaceOperationRequest extends SpaceOperationRequest<Ch
             ChangeEntriesSpaceOperationResult result = getRemoteOperationResult();
             _totalNumberOfMatchesEntries = result.getNumOfEntriesMatched();
             if (_totalNumberOfMatchesEntries > 0
-                    && _devLogger.isLoggable(Level.FINEST))
-                _devLogger.finest(_totalNumberOfMatchesEntries
+                    && _devLogger.isTraceEnabled())
+                _devLogger.trace(_totalNumberOfMatchesEntries
                         + " entries were scanned in the space in order to return the result for the "
                         + "change operation of query "
                         + QueryUtils.getQueryDescription(_query));
@@ -230,8 +231,8 @@ public class ChangeEntriesSpaceOperationRequest extends SpaceOperationRequest<Ch
         }
 
         if (_totalNumberOfMatchesEntries > 0
-                && _devLogger.isLoggable(Level.FINEST))
-            _devLogger.finest(_totalNumberOfMatchesEntries
+                && _devLogger.isTraceEnabled())
+            _devLogger.trace(_totalNumberOfMatchesEntries
                     + " entries were scanned in the space in order to return the result for the "
                     + "change operation of query "
                     + QueryUtils.getQueryDescription(_query));

@@ -56,8 +56,9 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.KeyManagerFactory;
@@ -89,7 +90,7 @@ public class Webster implements Runnable {
     private int minThreads = DEFAULT_MIN_THREADS;
     private int maxThreads = DEFAULT_MAX_THREADS;
     private int soTimeout = 0;
-    private static Logger logger = Logger.getLogger("org.jini.rio.tools.webster");
+    private static Logger logger = LoggerFactory.getLogger("org.jini.rio.tools.webster");
     private com.sun.jini.start.LifeCycle lifeCycle;
     private boolean debug = false;
     private static String SERVER_DESCRIPTION = Webster.class.getName();
@@ -289,7 +290,7 @@ public class Webster implements Runnable {
                 protocol = "https";
             }
         } catch (Throwable e) {
-            logger.log(Level.SEVERE, "Failed to create TLS connection", e);
+            logger.error("Failed to create TLS connection", e);
         }
         if (serverSocketFactory == null) {
             serverSocketFactory = ServerSocketFactory.getDefault();
@@ -305,13 +306,13 @@ public class Webster implements Runnable {
 
             port = ss.getLocalPort();
 
-            if (logger.isLoggable(Level.FINE) || debug) {
+            if (logger.isDebugEnabled() || debug) {
                 String msg = "Webster serving on : "
                         + ss.getInetAddress().getHostAddress() + ":" + ""
                         + port;
 
                 if (debug) System.out.println(msg);
-                logger.fine(msg);
+                logger.debug(msg);
             }
         } catch (BindException be) {
             logAndThrowBindExceptionException(bindAddress, be);
@@ -336,18 +337,18 @@ public class Webster implements Runnable {
             if (debug)
                 System.out.println("Webster minThreads [" + minThreads + "], " +
                         "maxThreads [" + maxThreads + "]");
-            if (logger.isLoggable(Level.FINE))
-                logger.fine("Webster minThreads [" + minThreads + "], " +
+            if (logger.isDebugEnabled())
+                logger.debug("Webster minThreads [" + minThreads + "], " +
                         "maxThreads [" + maxThreads + "]");
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Could not create ThreadPool", e);
+            logger.error("Could not create ThreadPool", e);
             throw new RuntimeException("Could not create Thread Pool");
         }
         if (soTimeout > 0) {
             if (debug)
                 System.out.println("Webster Socket SO_TIMEOUT set to [" + soTimeout + "] millis");
-            if (logger.isLoggable(Level.FINE))
-                logger.fine("Webster Socket SO_TIMEOUT set to [" + soTimeout + "] millis");
+            if (logger.isDebugEnabled())
+                logger.debug("Webster Socket SO_TIMEOUT set to [" + soTimeout + "] millis");
         }
         runner = new GSThread(this, "Webster Runner");
         runner.setDaemon(true);
@@ -359,15 +360,15 @@ public class Webster implements Runnable {
             return SelfSignedCertificate.keystore();
         } catch (Throwable e) {
             e.printStackTrace();
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.log(Level.FINEST, "Failed to create self signed certificate using sun classes will try Bouncy Castle.", e);
-            } else if (logger.isLoggable(Level.INFO)) {
-                logger.log(Level.INFO, "Could not create self signed certificate using sun classes - trying Bouncy Castle");
+            if (logger.isTraceEnabled()) {
+                logger.trace("Failed to create self signed certificate using sun classes will try Bouncy Castle.", e);
+            } else if (logger.isInfoEnabled()) {
+                logger.info("Could not create self signed certificate using sun classes - trying Bouncy Castle");
             }
             try {
                 return BouncyCastleSelfSignedCertificate.keystore();
             } catch (Throwable t) {
-                logger.log(Level.WARNING, "Failed to create self signed certificate using Bouncy Castle classes.\n" +
+                logger.warn("Failed to create self signed certificate using Bouncy Castle classes.\n" +
                         " please add Bouncy Castle jars to classpath (or add the artifact org.bouncycastle.bcpkix-jdk15on to maven)", t);
 
             }
@@ -380,9 +381,9 @@ public class Webster implements Runnable {
         String hostAddress = SystemInfo.singleton().network().getHostId();
 
         if (bindAddress == null) {
-            logger.log(Level.WARNING, "Failed to bind socket on [" + hostAddress + "], port [" + port + "], please check your network configuration", be);
+            logger.warn("Failed to bind socket on [" + hostAddress + "], port [" + port + "], please check your network configuration", be);
         } else {
-            logger.log(Level.WARNING, "Failed to bind socket on [" + hostAddress + "], bind address [" + bindAddress + "], port [" + port + "], please check your network configuration", be);
+            logger.warn("Failed to bind socket on [" + hostAddress + "], bind address [" + bindAddress + "], port [" + port + "], please check your network configuration", be);
         }
         throw be;
     }
@@ -442,15 +443,15 @@ public class Webster implements Runnable {
                 websterRoot[j] = tok.nextToken();
                 if (debug)
                     System.out.println("Root " + j + " = " + websterRoot[j]);
-                if (logger.isLoggable(Level.FINE))
-                    logger.fine("Root " + j + " = " + websterRoot[j]);
+                if (logger.isDebugEnabled())
+                    logger.debug("Root " + j + " = " + websterRoot[j]);
             }
         } else {
             websterRoot[0] = roots;
             if (debug)
                 System.out.println("Root  = " + websterRoot[0]);
-            if (logger.isLoggable(Level.FINE))
-                logger.fine("Root  = " + websterRoot[0]);
+            if (logger.isDebugEnabled())
+                logger.debug("Root  = " + websterRoot[0]);
         }
     }
 
@@ -463,7 +464,7 @@ public class Webster implements Runnable {
             try {
                 ss.close();
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Exception closing Webster ServerSocket", e);
+                logger.warn("Exception closing Webster ServerSocket", e);
             }
         }
         if (lifeCycle != null) {
@@ -563,13 +564,13 @@ public class Webster implements Runnable {
                         buff.append("Request: " + line);
                         System.out.println(buff.toString());
                     }
-                    if (logger.isLoggable(Level.FINE)) {
+                    if (logger.isDebugEnabled()) {
                         StringBuffer buff = new StringBuffer();
                         buff.append("From: " + from + ", ");
                         if (soTimeout > 0)
                             buff.append("SO_TIMEOUT: " + soTimeout + ", ");
                         buff.append("Request: " + line);
-                        logger.fine(buff.toString());
+                        logger.debug(buff.toString());
                     }
                     if (line != null) {
                         StringTokenizer tokenizer =
@@ -601,8 +602,8 @@ public class Webster implements Runnable {
                         if (restrictAccess) {
                             if (fileName.indexOf("..") != -1) {
                                 // trying to navigate out, and we restrict it, bail
-                                if (logger.isLoggable(Level.FINE))
-                                    logger.log(Level.FINE,
+                                if (logger.isDebugEnabled())
+                                    logger.debug(
                                             "forbidden [" + line + "] " +
                                                     "from " + from);
                                 DataOutputStream clientStream =
@@ -633,8 +634,8 @@ public class Webster implements Runnable {
                             if (debug)
                                 System.out.println(
                                         "bad request [" + line + "] from " + from);
-                            if (logger.isLoggable(Level.FINE))
-                                logger.log(Level.FINE,
+                            if (logger.isDebugEnabled())
+                                logger.debug(
                                         "bad request [" + line + "] " +
                                                 "from " + from);
                             DataOutputStream clientStream =
@@ -648,7 +649,7 @@ public class Webster implements Runnable {
                         }
                     } /* if line != null */
                 } catch (Exception e) {
-                    logger.log(Level.WARNING, "Getting Request from " + s.getInetAddress() + ":" + s.getPort(), e);
+                    logger.warn("Getting Request from " + s.getInetAddress() + ":" + s.getPort(), e);
                     DataOutputStream clientStream = null;
                     try {
                         clientStream =
@@ -663,7 +664,7 @@ public class Webster implements Runnable {
                                         + e);
                         clientStream.flush();
                     } catch (Exception e1) {
-                        logger.log(Level.WARNING, "Failed to send 500 response", e);
+                        logger.warn("Failed to send 500 response", e);
                     } finally {
                         try {
                             if (clientStream != null) {
@@ -678,7 +679,7 @@ public class Webster implements Runnable {
         } catch (Exception e) {
             if (run) {
                 e.printStackTrace();
-                logger.log(Level.WARNING, "Processing HTTP Request", e);
+                logger.warn("Processing HTTP Request", e);
             }
         }
     }
@@ -688,8 +689,8 @@ public class Webster implements Runnable {
         boolean loadDefaults = true;
         if (debug)
             System.out.println("Loading mimetypes ... ");
-        if (logger.isLoggable(Level.FINE))
-            logger.fine("Loading mimetypes ... ");
+        if (logger.isDebugEnabled())
+            logger.debug("Loading mimetypes ... ");
         ClassLoader ccl = Thread.currentThread().getContextClassLoader();
         URL fileURL = ccl != null ?
                 ccl.getResource("org/jini/rio/tools/webster/mimetypes.properties") : null;
@@ -701,18 +702,18 @@ public class Webster implements Runnable {
                 loadDefaults = false;
                 if (debug)
                     System.out.println("Mimetypes loaded");
-                if (logger.isLoggable(Level.FINE))
-                    logger.fine("Mimetypes loaded");
+                if (logger.isDebugEnabled())
+                    logger.debug("Mimetypes loaded");
             } catch (IOException ioe) {
-                logger.log(Level.SEVERE, "Loading Mimetypes", ioe);
+                logger.error("Loading Mimetypes", ioe);
             }
         } else {
             if (loadDefaults) {
                 if (debug)
                     System.out.println("mimetypes.properties not found, " +
                             "loading defaults");
-                if (logger.isLoggable(Level.FINE))
-                    logger.fine("mimetypes.properties not found, loading defaults");
+                if (logger.isDebugEnabled())
+                    logger.debug("mimetypes.properties not found, loading defaults");
             }
             MimeTypes.put("jpg", "image/jpg");
             MimeTypes.put("jpeg", "image/jpg");
@@ -879,8 +880,8 @@ public class Webster implements Runnable {
 
                 if (debug)
                     System.out.println(logData.toString());
-                if (logger.isLoggable(Level.FINE))
-                    logger.fine(logData.toString());
+                if (logger.isDebugEnabled())
+                    logger.debug(logData.toString());
 
                 DataOutputStream clientStream =
                         new DataOutputStream(
@@ -889,12 +890,12 @@ public class Webster implements Runnable {
                 clientStream.flush();
                 clientStream.close();
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Error closing Socket", e);
+                logger.warn("Error closing Socket", e);
             } finally {
                 try {
                     client.close();
                 } catch (IOException e2) {
-                    logger.log(Level.WARNING,
+                    logger.warn(
                             "Closing incoming socket",
                             e2);
                 }
@@ -982,8 +983,8 @@ public class Webster implements Runnable {
                 String packageDir = ignoreCaseProperty(rheader, "Package");
                 if (packageDir != null && "true".equalsIgnoreCase(packageDir)) {
                     synchronized (putGetZipMutex[Math.abs(getFile.getName().hashCode() % putGetZipMutex.length)]) {
-                        if (logger.isLoggable(Level.FINE)) {
-                            logger.fine("Received GET operation for packaged processing unit [" + getFile.getName() + "]");
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Received GET operation for packaged processing unit [" + getFile.getName() + "]");
                         }
                         if (getFile.exists()) {
                             if (!getFile.isDirectory()) {
@@ -1013,8 +1014,8 @@ public class Webster implements Runnable {
                             ras.getFD().sync();
                             ras.close();
 
-                            if (logger.isLoggable(Level.FINE)) {
-                                logger.fine("Created temporary packaged (zip) processing unit to send back at [" + getFile.getAbsolutePath() + "] with size [" + getFile.length() + "]");
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("Created temporary packaged (zip) processing unit to send back at [" + getFile.getAbsolutePath() + "] with size [" + getFile.length() + "]");
                             }
                             files = null;
                         }
@@ -1104,8 +1105,8 @@ public class Webster implements Runnable {
                                 "[" +
                                 client.getInetAddress().getHostAddress() +
                                 "]";
-                        if (logger.isLoggable(Level.FINE)) {
-                            logger.log(Level.FINE, s, e);
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(s, e);
                         }
                         if (debug) {
                             System.out.println(s);
@@ -1122,18 +1123,18 @@ public class Webster implements Runnable {
                 if (debug) {
                     System.out.println(logData.toString());
                 }
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine(logData.toString());
+                if (logger.isDebugEnabled()) {
+                    logger.debug(logData.toString());
                 }
                 clientStream.flush();
                 clientStream.close();
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "GET operation failed for [" + fileName + "]", e);
+                logger.error("GET operation failed for [" + fileName + "]", e);
             } finally {
                 try {
                     client.close();
                 } catch (IOException e2) {
-                    logger.log(Level.WARNING,
+                    logger.warn(
                             "Closing incoming socket",
                             e2);
                 }
@@ -1190,8 +1191,8 @@ public class Webster implements Runnable {
                         }
 
                         int length = Integer.parseInt(ignoreCaseProperty(rheader, "Content-Length"));
-                        if (logger.isLoggable(Level.FINE)) {
-                            logger.fine("Putting file [" + putFile.getAbsolutePath() + "] with length [" + length + "]");
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Putting file [" + putFile.getAbsolutePath() + "] with length [" + length + "]");
                         }
                         for (int i = 0; i < length; i++) {
                             requestedFile.write(in.read());
@@ -1214,8 +1215,8 @@ public class Webster implements Runnable {
                             deleteFileWithRetry(tempDestDir);
                             tempDestDir.mkdirs();
 
-                            if (logger.isLoggable(Level.FINE)) {
-                                logger.fine("Extracting file [" + putFile.getAbsolutePath() + "] to [" + tempDestDir.getAbsolutePath() + "]");
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("Extracting file [" + putFile.getAbsolutePath() + "] to [" + tempDestDir.getAbsolutePath() + "]");
                             }
                             PUZipUtils.unzip(putFile, tempDestDir);
                             deleteFileWithRetry(putFile);
@@ -1230,8 +1231,8 @@ public class Webster implements Runnable {
                                     // So do not deploy from the same folder that Webster is going to use
                                     renameFile(destDir, oldDestDir);
                                 } catch (IOException e) {
-                                    if (logger.isLoggable(Level.WARNING)) {
-                                        logger.log(Level.WARNING,
+                                    if (logger.isWarnEnabled()) {
+                                        logger.warn(
                                                 "Failed to rename " + destDir + " will try to delete it instead. " +
                                                         "This could happen on Windows if " + destDir + " is still locked by another process.", e);
                                     }
@@ -1242,15 +1243,15 @@ public class Webster implements Runnable {
                             try {
                                 deleteFileWithRetry(oldDestDir);
                             } catch (IOException e) {
-                                if (logger.isLoggable(Level.WARNING)) {
-                                    logger.log(Level.WARNING,
+                                if (logger.isWarnEnabled()) {
+                                    logger.warn(
                                             "Failed to delete temp folder " + oldDestDir + " Will try to delete it after this process exists.", e);
                                 }
                                 destDir.deleteOnExit();
                             }
                         }
                     } catch (IOException e) {
-                        logger.log(Level.SEVERE, "Failed to write file [" + fileName + "]", e);
+                        logger.error("Failed to write file [" + fileName + "]", e);
                         header = "HTTP/1.0 500 Internal Server Error\r\n"
                                 + "Allow: PUT\r\n"
                                 + "MIME-Version: 1.0\r\n"
@@ -1272,12 +1273,12 @@ public class Webster implements Runnable {
                 clientStream.flush();
                 clientStream.close();
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Closing Socket", e);
+                logger.warn("Closing Socket", e);
             } finally {
                 try {
                     client.close();
                 } catch (IOException e2) {
-                    logger.log(Level.WARNING,
+                    logger.warn(
                             "Closing incoming socket",
                             e2);
                 }
@@ -1286,8 +1287,8 @@ public class Webster implements Runnable {
 
         private void renameFile(File srcDir, File targetDir)
                 throws IOException {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("Renaming " + srcDir + " to " + targetDir);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Renaming " + srcDir + " to " + targetDir);
             }
             final boolean success = srcDir.renameTo(targetDir);
             if (!success) {
@@ -1296,8 +1297,8 @@ public class Webster implements Runnable {
         }
 
         private void deleteFileWithRetry(File file) throws IOException {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("Trying to delete " + file);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Trying to delete " + file);
             }
             boolean deleted = false;
             for (int i = 0; i < 5; i++) {
@@ -1315,8 +1316,8 @@ public class Webster implements Runnable {
                 throw new IOException("Failed to delete [" + file.getAbsolutePath() + "]");
             }
 
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("Deleted " + file);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Deleted " + file);
             }
         }
 
@@ -1372,12 +1373,12 @@ public class Webster implements Runnable {
                 clientStream.flush();
                 clientStream.close();
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Closing Socket", e);
+                logger.warn("Closing Socket", e);
             } finally {
                 try {
                     client.close();
                 } catch (IOException e2) {
-                    logger.log(Level.WARNING,
+                    logger.warn(
                             "Closing incoming socket",
                             e2);
                 }

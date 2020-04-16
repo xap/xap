@@ -37,8 +37,9 @@ import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,7 +52,7 @@ import java.util.regex.Pattern;
  *******************************************************************************/
 @com.gigaspaces.api.InternalApi
 public class SpaceURLParser {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_URL);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_URL);
     private static final String DEFAULT_RMID_PORT = "10098";
 
     /* prevent to instance this class */
@@ -111,8 +112,8 @@ public class SpaceURLParser {
                 //get IP host address
                 machineName = InetAddress.getByName(hostName).getHostName();
             } catch (UnknownHostException e) {
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.log(Level.FINEST, e.toString(), e);
+                if (_logger.isTraceEnabled())
+                    _logger.trace(e.toString(), e);
             }
 
             unicastHost = hostName + ":" + DEFAULT_RMID_PORT; //always localhost:10098 host/port
@@ -255,8 +256,8 @@ public class SpaceURLParser {
         } catch (SpaceURLValidationException e) {
             throw e;
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE,
+            if (_logger.isErrorEnabled()) {
+                _logger.error(
                         "Space URL validation failed. Please check the error and fix the SpaceURL, since it might have serious implications on the initialized topology. ",
                         e);
             }
@@ -287,7 +288,7 @@ public class SpaceURLParser {
         } catch (Throwable e) {
             //might that we do not have security grant permission for setting/getting sys props
             //in that case we do nothing and just notify about it.
-            if (_logger.isLoggable(Level.INFO)) {
+            if (_logger.isInfoEnabled()) {
                 _logger.info("Could not set properties loaded from < "
                         + propertiesFileName + " > custom properties file: "
                         + e.getMessage());
@@ -376,8 +377,8 @@ public class SpaceURLParser {
         //remove invalid spaces and Inverted Commas as part of SpaceURL
         url = JSpaceUtilities.removeInvertedCommas(url);
         url = JSpaceUtilities.removeDelimiter(url, ' ', '{', '}');
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("Using SpaceURL: " + url);
+        if (_logger.isDebugEnabled())
+            _logger.debug("Using SpaceURL: " + url);
 
         int first = url.indexOf('?');
         if (first != url.lastIndexOf('?'))
@@ -469,8 +470,8 @@ public class SpaceURLParser {
                 customProperties.setProperty(XPathProperties.CONTAINER_JINI_LUS_UNICAST_HOSTS, mergedLocatorsStr);
                 spaceURL.setProperty(SpaceURL.LOCATORS, mergedLocatorsStr);
 
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("SpaceURL locators attribute, <"
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("SpaceURL locators attribute, <"
                             + XPathProperties.CONTAINER_JINI_LUS_UNICAST_HOSTS + "> XPATH were set to: "
                             + mergedLocatorsStr);
                 }
@@ -479,8 +480,8 @@ public class SpaceURLParser {
                 // default) in the container configuration since we assume that
                 //if the user set locators it means he wants to have the unicast discovery enabled
                 customProperties.setProperty(XPathProperties.CONTAINER_JINI_LUS_UNICAST_ENABLED, "true");
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("Enabled the Jini Unicast Discovery flag");
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Enabled the Jini Unicast Discovery flag");
                 }
             }
         }//locators are defined
@@ -534,8 +535,8 @@ public class SpaceURLParser {
                         }
                     }
                 }
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine("Found [ -D" + SystemProperties.JINI_LUS_GROUPS
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Found [ -D" + SystemProperties.JINI_LUS_GROUPS
                             + "=" + sysPropGroups + " ] property - merging with space url attribute to: " +
                             mergedGroups);
                 }
@@ -581,8 +582,8 @@ public class SpaceURLParser {
             customProperties.setProperty(XPathProperties.CONTAINER_JINI_LUS_GROUPS,
                     JSpaceUtilities.removeInvertedCommas(mergedGroups));
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("Found [ -D" + SystemProperties.JINI_LUS_GROUPS + "=" + sysPropGroups
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Found [ -D" + SystemProperties.JINI_LUS_GROUPS + "=" + sysPropGroups
                         + " ] property. SpaceURL will be appended with the attribute groups="
                         + mergedGroups);
             }
@@ -662,8 +663,8 @@ public class SpaceURLParser {
                         propValue = JSpaceUtilities.removeInvertedCommas(propValue);
 
                     System.setProperty(systemPropKey, propValue);
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.fine("Key - ["
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Key - ["
                                 + systemPropKey
                                 + "] Value - ["
                                 + propValue
@@ -681,8 +682,8 @@ public class SpaceURLParser {
                             propValue = "true";//in case passed create, destroy, ignoreValidation without value, we set its value to "true"
                         spaceURL.setProperty(spaceurlArg.toLowerCase(),
                                 propValue);
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.fine("SpaceURL attribute - ["
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug("SpaceURL attribute - ["
                                     + spaceurlArg.toLowerCase()
                                     + "] Value - ["
                                     + propValue
@@ -691,8 +692,8 @@ public class SpaceURLParser {
                     } else
                     //throw msg that this space url key is not valid...
                     {
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.fine("A non valid SpaceURL attribute - ["
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug("A non valid SpaceURL attribute - ["
                                     + spaceurlArg.toLowerCase()
                                     + "] Value - ["
                                     + customProperties.getProperty(propKey)
@@ -733,15 +734,15 @@ public class SpaceURLParser {
                             attrValue = null;
 
                         }
-                        if (_logger.isLoggable(Level.FINE)) {
+                        if (_logger.isDebugEnabled()) {
                             if (attrValue != null) {
-                                _logger.fine("SpaceURL attribute - ["
+                                _logger.debug("SpaceURL attribute - ["
                                         + attrName.toLowerCase()
                                         + "] Value - ["
                                         + attrValue
                                         + "] was added to SpaceURL from Properties object.");
                             } else {
-                                _logger.fine("SpaceURL attribute - ["
+                                _logger.debug("SpaceURL attribute - ["
                                         + attrName.toLowerCase()
                                         + "] Value - [true] was added to SpaceURL from Properties object.");
                             }
@@ -760,7 +761,7 @@ public class SpaceURLParser {
     // print usage and exit
     public static void printUsage()//TODO add the new cluster semi dynamic examples. The dot notations.
     {
-        if (_logger.isLoggable(Level.INFO)) {
+        if (_logger.isInfoEnabled()) {
             _logger.info("Use: Protocol://[host]:[port]/[container_name]/[space_name]?[query_string]"
                     + "\nProtocol: [ RMI | JINI | JAVA (for embedded instance) | WS ]"
                     + "\n\nExamples of Space Urls:"

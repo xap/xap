@@ -30,8 +30,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.HashSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -66,7 +67,7 @@ public class CompressedMarshObjectConvertor extends Resource implements MarshObj
     static private CompressedMarshObjectConvertorFactory _factory = null;
 
     // logger
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
     private static final byte[] DUMMY_BUFFER = new byte[0];
 
     private static SmartByteArrayCache createSerializationByteArrayCache(ISmartLengthBasedCacheCallback cacheCallback) {
@@ -108,8 +109,8 @@ public class CompressedMarshObjectConvertor extends Resource implements MarshObj
             fromBinary(serializeToByteArray("")); // remove header from
             // in/out
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.getMessage(), e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.getMessage(), e);
             }
         }
     }

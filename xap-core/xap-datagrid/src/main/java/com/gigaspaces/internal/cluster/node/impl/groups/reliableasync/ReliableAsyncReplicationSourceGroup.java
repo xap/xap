@@ -67,7 +67,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
+
 
 
 @com.gigaspaces.api.InternalApi
@@ -394,8 +394,8 @@ public class ReliableAsyncReplicationSourceGroup
         if (_active) {
             super.onMemberAdded(memberAddedEvent, newConfig);
 
-            if (_specificLogger.isLoggable(Level.FINER))
-                _specificLogger.finer("Notifying reliable async keepers of member ["
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("Notifying reliable async keepers of member ["
                         + memberAddedEvent.getMemberName() + "] addition");
 
             // Notify keepers of member addition
@@ -438,8 +438,8 @@ public class ReliableAsyncReplicationSourceGroup
 
             super.onMemberRemoved(memberName, newConfig);
 
-            if (_specificLogger.isLoggable(Level.FINER))
-                _specificLogger.finer("Notifying reliable async keepers of member ["
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("Notifying reliable async keepers of member ["
                         + memberName + "] removal");
 
             notifyKeepersOfGroupMembersChange(newConfig);
@@ -488,23 +488,23 @@ public class ReliableAsyncReplicationSourceGroup
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 } catch (TimeoutException e) {
-                    if (_specificLogger.isLoggable(Level.WARNING))
-                        _specificLogger.warning(getLogPrefix() + "timeout occurred while waiting for active state of newly created channel to "
+                    if (_specificLogger.isWarnEnabled())
+                        _specificLogger.warn(getLogPrefix() + "timeout occurred while waiting for active state of newly created channel to "
                                 + memberLookupName);
                 }
-                if (_specificLogger.isLoggable(Level.FINEST))
-                    _specificLogger.finest(getLogPrefix() + "created channel to "
+                if (_specificLogger.isTraceEnabled())
+                    _specificLogger.trace(getLogPrefix() + "created channel to "
                             + memberLookupName);
             }
             //Create channels to async members
             for (String memberLookupName : config.getAsyncMembersLookupNames()) {
                 createChannel(memberLookupName, false, config, false, null);
-                if (_specificLogger.isLoggable(Level.FINEST))
-                    _specificLogger.finest(getLogPrefix() + "created channel to "
+                if (_specificLogger.isTraceEnabled())
+                    _specificLogger.trace(getLogPrefix() + "created channel to "
                             + memberLookupName);
             }
-            if (_specificLogger.isLoggable(Level.FINER))
-                _specificLogger.finest(getLogPrefix() + "created all channels");
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.trace(getLogPrefix() + "created all channels");
         }
 
     }
@@ -620,10 +620,10 @@ public class ReliableAsyncReplicationSourceGroup
                     // We ignore disconnections
                 } catch (RuntimeException rt) {
                     // We ignore any exception thrown here
-                    if (_specificLogger.isLoggable(Level.WARNING)) {
+                    if (_specificLogger.isWarnEnabled()) {
                         if (!JSpaceUtilities.isSameException(_pendingException, rt)) {
                             _pendingException = rt;
-                            _specificLogger.log(Level.WARNING,
+                            _specificLogger.warn(
                                     "error while executing reliable async update",
                                     rt);
                         }
@@ -631,10 +631,10 @@ public class ReliableAsyncReplicationSourceGroup
 
                 } catch (Error er) {
                     // We ignore any exception thrown here
-                    if (_specificLogger.isLoggable(Level.WARNING)) {
+                    if (_specificLogger.isWarnEnabled()) {
                         if (!JSpaceUtilities.isSameException(_pendingException, er)) {
                             _pendingException = er;
-                            _specificLogger.log(Level.WARNING,
+                            _specificLogger.warn(
                                     "error while executing reliable async update",
                                     er);
                         }

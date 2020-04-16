@@ -40,7 +40,8 @@ import java.rmi.activation.ActivationSystem;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Properties;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class used to create a shared activation group. Clients construct this object with the details of

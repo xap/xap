@@ -43,8 +43,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*******************************************************************************
  * Copyright (c) 2010 GigaSpaces Technologies Ltd. All rights reserved
@@ -58,7 +59,7 @@ import java.util.logging.Logger;
 public class SpaceURL extends Properties implements Externalizable {
     private static final long serialVersionUID = 1L;
 
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_URL);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_URL);
 
     /**
      * Holds a list of all the non serialized custom properties to the will be excluded during
@@ -671,7 +672,7 @@ public class SpaceURL extends Properties implements Externalizable {
 
     @Override
     public String toString() {
-        if (_logger.isLoggable(Level.FINE)) {
+        if (_logger.isDebugEnabled()) {
             StringBuilder sb = new StringBuilder();
             if (!super.isEmpty())
                 sb.append("\n\t space url attributes:");
@@ -683,7 +684,7 @@ public class SpaceURL extends Properties implements Externalizable {
                 sb.append("\n\t\t Key [ ").append(propKey).append(" ] Value [ ").append(propValue).append(" ]");
             }
             sb.append("\n");
-            _logger.log(Level.FINE, sb.toString());
+            _logger.debug(sb.toString());
             return sb.toString();
         } else {
             return getProperty(URL_NAME);

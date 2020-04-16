@@ -32,8 +32,9 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Enumeration;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides a standard means for obtaining {@link Configuration} instances, using a configurable
@@ -92,7 +93,7 @@ public class ConfigurationProvider {
     /**
      * Config logger.
      */
-    private static final Logger logger = Logger.getLogger("net.jini.config");
+    private static final Logger logger = LoggerFactory.getLogger("net.jini.config");
 
     /**
      * This class cannot be instantiated.
@@ -217,7 +218,7 @@ public class ConfigurationProvider {
                     "problem accessing provider resources", e);
         }
         if (configEx != null) {
-            logger.log(Level.FINE, "getting configuration provider throws",
+            logger.debug("getting configuration provider throws",
                     configEx);
             throw configEx;
         }
@@ -289,7 +290,7 @@ public class ConfigurationProvider {
             configEx = new ConfigurationException(
                     "problem with provider class", e);
         }
-        logger.log(Level.FINE, "getting configuration throws", configEx);
+        logger.debug("getting configuration throws", configEx);
         throw configEx;
     }
 

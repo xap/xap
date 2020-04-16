@@ -44,7 +44,8 @@ import net.jini.export.Exporter;
 import java.rmi.RemoteException;
 import java.rmi.server.ExportException;
 import java.util.concurrent.ExecutorService;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -67,7 +68,7 @@ public class SpaceProxyDataEventsManager {
     private final boolean _slowConsumer;
 
     public SpaceProxyDataEventsManager(SpaceProxyImpl spaceProxy, ITransportConfig remoteTransportConfig) {
-        this._logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEPROXY_DATA_EVENTS + '.' + spaceProxy.getName());
+        this._logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEPROXY_DATA_EVENTS + '.' + spaceProxy.getName());
         this._spaceProxy = spaceProxy;
         this._multiplexListener = new MultiplexDataEventListener();
         Exporter exporter = ServiceConfigLoader.getExporter();

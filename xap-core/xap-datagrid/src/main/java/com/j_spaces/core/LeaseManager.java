@@ -74,8 +74,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.LeaseManager.LM_BACKUP_EXPIRATION_DELAY_DEFAULT;
 import static com.j_spaces.core.Constants.LeaseManager.LM_BACKUP_EXPIRATION_DELAY_PROP;
@@ -118,7 +119,7 @@ import static com.j_spaces.core.Constants.LeaseManager.LM_SEGMEENTS_PER_EXPIRATI
  */
 @com.gigaspaces.api.InternalApi
 public class LeaseManager {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_LEASE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_LEASE);
 
     private final static long MIN_FORCE_EXPIRATION_INTERVAL = Long.getLong("com.gs.lease-manager.min-force-expiration-interval", 500);
 
@@ -195,8 +196,8 @@ public class LeaseManager {
                         + " [" + result + "] - must be greater/eq than zero.");
         } catch (Exception ex) {
             result = defaultValue;
-            if (_logger.isLoggable(Level.WARNING)) {
-                _logger.log(Level.WARNING, LeaseManager.class.getName()
+            if (_logger.isWarnEnabled()) {
+                _logger.warn(LeaseManager.class.getName()
                         + " - Failed to parse "
                         + spaceProperty
                         + "\n using default: "
@@ -211,8 +212,8 @@ public class LeaseManager {
     }
 
     private void logConfiguration() {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("Lease Manager Reaper will periodically reap expired content of:\n\t"
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Lease Manager Reaper will periodically reap expired content of:\n\t"
                     + "Entries/templates - every "
                     + _expirationTimeInterval
                     + " ms\n\t"
@@ -365,8 +366,8 @@ public class LeaseManager {
                     isFromGateway);
         } catch (UnknownLeaseException unknownLeaseException) {
             if (_cacheManager.isCacheExternalDB() && objectType != ObjectTypes.NOTIFY_NULL_TEMPLATE && objectType != ObjectTypes.NOTIFY_TEMPLATE) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE,
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(
                             "Failed to renew lease of an entry belonging to external-data-source.",
                             unknownLeaseException);
                 }
@@ -451,8 +452,8 @@ public class LeaseManager {
                     isFromGateway);
         } catch (UnknownLeaseException unknownLeaseException) {
             if (_cacheManager.isCacheExternalDB()) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE,
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(
                             "Failed to cancel lease of an entry belonging to external-data-source.",
                             unknownLeaseException);
                 }
@@ -924,8 +925,8 @@ public class LeaseManager {
                         if (_shouldDie)
                             break;
 
-                        if (_logger.isLoggable(Level.FINEST)) {
-                            _logger.finest(this.getName()
+                        if (_logger.isTraceEnabled()) {
+                            _logger.trace(this.getName()
                                     + " - woke up for reaping.");
                         }
                         if (isSpaceInQuiesce(true))
@@ -953,8 +954,8 @@ public class LeaseManager {
                         reapUnusedXtns();
                         signalEndCycle();
                     } catch (Exception e) {
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE, this.getName()
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error(this.getName()
                                     + " - caught Exception", e);
                         }
                     }
@@ -971,16 +972,16 @@ public class LeaseManager {
                     }
                 }
             } finally {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine(this.getName() + " terminated.");
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(this.getName() + " terminated.");
                 }
             }
         }
 
         private boolean isSpaceInQuiesce(boolean useLogger) {
             if (_spaceImpl.getQuiesceHandler() != null && _spaceImpl.getQuiesceHandler().isOn()) {//space in quiesce mode dont reap and harvest
-                if (useLogger && _logger.isLoggable(Level.FINEST)) {
-                    _logger.finest(this.getName()
+                if (useLogger && _logger.isTraceEnabled()) {
+                    _logger.trace(this.getName()
                             + " - is not reaping since space in quiesce mode.");
                 }
                 return true;
@@ -1046,26 +1047,26 @@ public class LeaseManager {
                         _nextExpirationTimeInterval = skippedReapingInQuiesceMode ? (_nextExpirationTimeInterval + (_expirationTimeInterval / 10)) : (_nextExpirationTimeInterval + _expirationTimeInterval);
                         long fixedRateDelay = _nextExpirationTimeInterval - SystemTime.timeMillis();
                         if (fixedRateDelay <= 0) {
-                            if (_logger.isLoggable(Level.FINEST))
-                                _logger.finest("Skipped fallAsleep since fixedRateDelay=" + fixedRateDelay);
+                            if (_logger.isTraceEnabled())
+                                _logger.trace("Skipped fallAsleep since fixedRateDelay=" + fixedRateDelay);
                             _nextExpirationTimeInterval = SystemTime.timeMillis();
                             return;
                         }
 
-                        if (_logger.isLoggable(Level.FINEST))
-                            _logger.finest("fallAsleep - going to wait fixedRateDelay=" + fixedRateDelay);
+                        if (_logger.isTraceEnabled())
+                            _logger.trace("fallAsleep - going to wait fixedRateDelay=" + fixedRateDelay);
                         wait(fixedRateDelay);
                         if (_force) {
-                            if (_logger.isLoggable(Level.FINEST))
-                                _logger.finest("lease reaper was forcibly waken up");
+                            if (_logger.isTraceEnabled())
+                                _logger.trace("lease reaper was forcibly waken up");
                             _nextExpirationTimeInterval = SystemTime.timeMillis();
                         }
 
                     }
                 } catch (InterruptedException ie) {
 
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.log(Level.FINEST, this.getName()
+                    if (_logger.isTraceEnabled()) {
+                        _logger.trace(this.getName()
                                 + " interrupted.", ie);
                     }
 
@@ -1327,8 +1328,8 @@ public class LeaseManager {
                             try {
                                 _coreProcessor.handleEntryExpiredCoreSA(entry, null/* xtn */, false);
                             } catch (Exception ex) {
-                                if (_logger.isLoggable(Level.SEVERE)) {
-                                    _logger.log(Level.SEVERE,
+                                if (_logger.isErrorEnabled()) {
+                                    _logger.error(
                                             this.getName()
                                                     + " - failed while handling expiration of entry.",
                                             ex);
@@ -1346,8 +1347,8 @@ public class LeaseManager {
                             int multiOpChunkSize = replicationPolicy.m_SyncReplPolicy.getMultipleOperationChunkSize();
                             if (multiOpChunkSize != -1 && reapCount >= multiOpChunkSize) {
                                 _engine.performReplication(context); //batch replication
-                                if (_logger.isLoggable(Level.FINE))
-                                    _logger.fine(this.getName() + " - Reaped expired leases. [Reaped: " + reapCount + "]");
+                                if (_logger.isDebugEnabled())
+                                    _logger.debug(this.getName() + " - Reaped expired leases. [Reaped: " + reapCount + "]");
                                 reapCount = 0;
                             }
                         }
@@ -1356,8 +1357,8 @@ public class LeaseManager {
                 }//for
 
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             this.getName()
                                     + " - caught exception while reaping expired entries.",
                             ex);
@@ -1377,14 +1378,14 @@ public class LeaseManager {
             }
 
             if (reapCount > 0) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine(this.getName()
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(this.getName()
                             + " - Reaped expired leases. [Reaped: " + reapCount
                             + "]");
                 }
             }
             if ((reapCount == 0 && detached > 0) || detached > DETACH_LIMIT_TO_REPORT) {
-                if (_logger.isLoggable(Level.INFO)) {
+                if (_logger.isInfoEnabled()) {
                     _logger.info(this.getName()
                             + " - Detached entries exist. [Detached: " + detached
                             + "]");
@@ -1426,8 +1427,8 @@ public class LeaseManager {
 
                 }
             } finally {
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest("Number of expired cells removed is " + numOfCellsRemoved + " number of cells skipped=" + numOfCellsSkiped);
+                if (_logger.isTraceEnabled())
+                    _logger.trace("Number of expired cells removed is " + numOfCellsRemoved + " number of cells skipped=" + numOfCellsSkiped);
             }
         }
 
@@ -1476,7 +1477,7 @@ public class LeaseManager {
                         //abort was ok
                         reapCount++;
 
-                        if (!unused && _logger.isLoggable(Level.INFO)) {
+                        if (!unused && _logger.isInfoEnabled()) {
                             _logger.info("transaction [id="
                                     + tx.id
                                     + "] timed out, transaction aborted by space "
@@ -1487,16 +1488,16 @@ public class LeaseManager {
                     // (maybe aborted by
                     // user/local mngr
                     {
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.log(Level.FINE,
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug(
                                     this.getName()
                                             + " - transaction abort failed by space (maybe aborted by user/localTxnManager) for transaction [id="
                                             + tx.id + "]",
                                     ute);
                         }
                     } catch (Exception ex) {
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE,
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error(
                                     this.getName()
                                             + " -  transaction abort failed by space for transaction [id="
                                             + tx.id + "]",
@@ -1508,8 +1509,8 @@ public class LeaseManager {
 
 
             if (reapCount > 0)
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine(this.getName()
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(this.getName()
                             + " - Reaped expired transactions. [Reaped: "
                             + reapCount
                             + ", Alive: "
@@ -1522,8 +1523,8 @@ public class LeaseManager {
         private void reapExpiredIterators() {
             int reapCount = _engine.getIteratorsManager().purgeExpiredIterators();
             if (reapCount > 0)
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine(this.getName()
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(this.getName()
                             + " - Reaped expired iterators. [Reaped: "
                             + reapCount
                             + ", Alive: "
@@ -1551,7 +1552,7 @@ public class LeaseManager {
                     _transactionHandler.removeFromPhantomGlobalXtns(tx);
                     reapCount++;
 
-                    if (_logger.isLoggable(Level.INFO)) {
+                    if (_logger.isInfoEnabled()) {
                         _logger.info("Globalxtn phantom info transaction [id="
                                 + tx.id
                                 + "] cleared "
@@ -1562,8 +1563,8 @@ public class LeaseManager {
 
 
             if (reapCount > 0)
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine(this.getName()
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(this.getName()
                             + " - Phantom global transactions info. [Reaped: "
                             + reapCount
                             + ", Alive: "
@@ -1595,9 +1596,9 @@ public class LeaseManager {
                 boolean keepOn = pInfo.extendIfPossible(_engine);
                 if (keepOn)
                     continue;
-                if (_logger.isLoggable(Level.WARNING)) {
+                if (_logger.isWarnEnabled()) {
                     String id = pInfo.getXtnEntry().getServerTransaction().isXid() ? " xa " : "";
-                    _logger.warning(this.getName()
+                    _logger.warn(this.getName()
                             + " - lease manager found stuck prepared xtn- going to abort "
                             + ", id=: "
                             + id + pInfo.getXtnEntry().getServerTransaction().id);
@@ -1611,9 +1612,9 @@ public class LeaseManager {
                             false/* verifyExpiredXtn */, false,
                             null/* operationID */);
 
-                    if (_logger.isLoggable(Level.WARNING)) {
+                    if (_logger.isWarnEnabled()) {
                         String id = pInfo.getXtnEntry().getServerTransaction().isXid() ? " xa " : "";
-                        _logger.warning(this.getName()
+                        _logger.warn(this.getName()
                                 + " - lease manager found stuck prepared xtn- aborted "
                                 + ", id=: "
                                 + id + pInfo.getXtnEntry().getServerTransaction().id
@@ -1630,8 +1631,8 @@ public class LeaseManager {
 
 
             if (reapCount > 0)
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.warning(this.getName()
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn(this.getName()
                             + " - stuck 2PC prepared xtns. [Reaped: "
                             + reapCount
                             + ", Alive: "
@@ -1668,8 +1669,8 @@ public class LeaseManager {
                     _transactionHandler
                             .removeUnusedTransaction(xtnEntry, true /* needLock */);
                     reapCount++;
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.fine("Unused transaction [id="
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Unused transaction [id="
                                 + xtnEntry.m_Transaction.id
                                 + "] cleaned,  space "
                                 + _engine.getSpaceName());
@@ -1679,8 +1680,8 @@ public class LeaseManager {
             }
 
             if (reapCount > 0)
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine(this.getName()
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(this.getName()
                             + " - Reaped unused transactions. [Reaped: "
                             + reapCount + " ]");
                 }
@@ -1778,8 +1779,8 @@ public class LeaseManager {
                     }
                 }
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             this.getName()
                                     + " - caught exception while reaping recent deleted entries.",
                             ex);
@@ -1787,8 +1788,8 @@ public class LeaseManager {
             }
 
             if (reapCount > 0) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine(this.getName()
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(this.getName()
                             + " - Reaped content of recently deleted entries. [Reaped: "
                             + reapCount
                             + ", Remaining:"
@@ -1796,9 +1797,9 @@ public class LeaseManager {
                             .getNumOfRecentDeletes()
                             + " ]");
                 }
-                if (_logger.isLoggable(Level.FINEST) && _cacheManager.getNumOfRecentDeletes() == 0)
+                if (_logger.isTraceEnabled() && _cacheManager.getNumOfRecentDeletes() == 0)
                 {
-                    _logger.finest(this.getName()
+                    _logger.trace(this.getName()
                             + " - Number of entries in cache after reap all recent deletes:"
                             + _cacheManager.getEnriesSize());
                 }
@@ -1878,8 +1879,8 @@ public class LeaseManager {
                     }
                 }
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             this.getName()
                                     + " - caught exception while reaping recent updated entries content.",
                             ex);
@@ -1889,8 +1890,8 @@ public class LeaseManager {
                     context = _cacheManager.freeCacheContext(context);
             }
 
-            if (reapCount > 0 && _logger.isLoggable(Level.FINE)) {
-                _logger.fine(this.getName()
+            if (reapCount > 0 && _logger.isDebugEnabled()) {
+                _logger.debug(this.getName()
                         + " - Reaped expired content of recently updated entries. [Reaped: "
                         + reapCount + ", Remaining:"
                         + _cacheManager.getNumOfRecentUpdates()
@@ -1959,8 +1960,8 @@ public class LeaseManager {
                 }//for
 
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             this.getName()
                                     + " - caught exception while reaping transaction content for FIFO entries.",
                             ex);
@@ -1970,8 +1971,8 @@ public class LeaseManager {
             }
 
             if (reapCount > 0)
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.fine(this.getName()
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(this.getName()
                             + " - Reaped expired transaction content of FIFO entries. [Reaped: "
                             + reapCount
                             + ", Pending: "
@@ -2004,24 +2005,24 @@ public class LeaseManager {
 
 
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             this.getName()
                                     + " - caught exception while reaping reached markers ",
                             ex);
                 }
             }
 
-            if (reapCount > 0 && _logger.isLoggable(Level.FINE)) {
-                _logger.fine(this.getName()
+            if (reapCount > 0 && _logger.isDebugEnabled()) {
+                _logger.debug(this.getName()
                         + " - Reaped reached markers. [Reaped: "
                         + reapCount + ", Remaining:"
                         + _cacheManager.getEvictionReplicationsMarkersRepository().size()
                         + "]");
             }
-            if (_logger.isLoggable(Level.FINEST) && _cacheManager.getEvictionReplicationsMarkersRepository().size() == 0)
+            if (_logger.isTraceEnabled() && _cacheManager.getEvictionReplicationsMarkersRepository().size() == 0)
             {
-                _logger.finest(this.getName()
+                _logger.trace(this.getName()
                         + " - Number of entries in cache after reap all recent deletes:"
                         + _cacheManager.getEnriesSize());
             }
@@ -2057,16 +2058,16 @@ public class LeaseManager {
                     }
                 }
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             this.getName()
                                     + " - caught exception while reaping reached markers ",
                             ex);
                 }
             }
 
-            if (reaped > 0 && _logger.isLoggable(Level.FINE)) {
-                _logger.fine(this.getName()
+            if (reaped > 0 && _logger.isDebugEnabled()) {
+                _logger.debug(this.getName()
                         + " - Reaped reapRecentExtendedUpdates. [Reaped: "
                         + reaped + "]");
             }

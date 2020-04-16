@@ -23,8 +23,9 @@ import com.gigaspaces.time.SystemTime;
 import java.util.ArrayList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Used to create {@link SharedDataIterator} over a single {@link DataIterator}, the iterator source
@@ -36,7 +37,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class SharedDataIteratorSource<T> {
-    private final static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT_SHARED_ITERATOR);
+    private final static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT_SHARED_ITERATOR);
 
     private boolean _initialized = false;
     private DataIterator<T> _sourceDataIterator;
@@ -80,8 +81,8 @@ public class SharedDataIteratorSource<T> {
      * Gets a new shared data iterator over the source data iterator
      */
     public DataIterator<T> getIterator() throws SharedDataIteratorSourceClosedException, SharedDataIteratorSourceExpiredException, DataSourceException {
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("requesting a shared iterator from the shared iterator source [" + _identifier + "]");
+        if (_logger.isTraceEnabled())
+            _logger.trace("requesting a shared iterator from the shared iterator source [" + _identifier + "]");
 
         _sharedObjectListLock.writeLock().lock();
         try {
@@ -105,8 +106,8 @@ public class SharedDataIteratorSource<T> {
         if (SystemTime.timeMillis() - _createdTime > _timeToLive) {
             //the iterator is expired
             if (!_expired) {
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest("shared iterator source is expired [" + _identifier + "]");
+                if (_logger.isTraceEnabled())
+                    _logger.trace("shared iterator source is expired [" + _identifier + "]");
                 //trigger expired event only once
                 triggerExpiredEvent();
                 _expired = true;
@@ -138,8 +139,8 @@ public class SharedDataIteratorSource<T> {
                 return;
 
             if (_sourceIteratorExhausted || _numberOfConsumers == 0) {
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest("closed shared iterator source [" + _identifier + "]");
+                if (_logger.isTraceEnabled())
+                    _logger.trace("closed shared iterator source [" + _identifier + "]");
                 //If the underlying iterator is exhausted or there aren't any consumers left
                 triggerClosedEvent();
                 if (_sourceDataIterator != null) {
@@ -166,8 +167,8 @@ public class SharedDataIteratorSource<T> {
      * Called once the source iterator has no more objects
      */
     private void sourceIteratorExhaushted() {
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest("shared iterator source wrapped iterator is exhausted [" + _identifier + "]");
+        if (_logger.isTraceEnabled())
+            _logger.trace("shared iterator source wrapped iterator is exhausted [" + _identifier + "]");
         _sourceIteratorExhausted = true;
     }
 
@@ -184,8 +185,8 @@ public class SharedDataIteratorSource<T> {
 
             if (_accumulatedItems.size() > iteration) {
                 //there are enough accumulated items to satisfy the next request
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest("getting next item from the shared iterator source buffer [" + _identifier + "]");
+                if (_logger.isTraceEnabled())
+                    _logger.trace("getting next item from the shared iterator source buffer [" + _identifier + "]");
                 return true;
             }
         } finally {
@@ -196,8 +197,8 @@ public class SharedDataIteratorSource<T> {
 
             if (_accumulatedItems.size() > iteration) {
                 //double check if there are enough accumulated items to satisfy the next request
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest("getting next item from the shared iterator source buffer [" + _identifier + "]");
+                if (_logger.isTraceEnabled())
+                    _logger.trace("getting next item from the shared iterator source buffer [" + _identifier + "]");
                 return true;
             }
 
@@ -209,8 +210,8 @@ public class SharedDataIteratorSource<T> {
                 sourceIteratorExhaushted();
                 return false;
             }
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("getting next item from the shared iterator source wrapped iterator [" + _identifier + "]");
+            if (_logger.isTraceEnabled())
+                _logger.trace("getting next item from the shared iterator source wrapped iterator [" + _identifier + "]");
             //Reached this point, accumulate next element to the list
             T next = _sourceDataIterator.next();
             _accumulatedItems.add(next);

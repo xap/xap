@@ -19,7 +19,8 @@ package com.gigaspaces.internal.cluster.node.impl.processlog.globalorder;
 import com.gigaspaces.internal.cluster.node.IReplicationInBatchContext;
 import com.gigaspaces.internal.cluster.node.impl.AbstractReplicationInBatchContext;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @com.gigaspaces.api.InternalApi

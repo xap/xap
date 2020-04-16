@@ -34,8 +34,9 @@ import com.j_spaces.core.cluster.IReplicationFilterEntry;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -48,7 +49,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class SpaceCopyReplicaRunnable
         extends AsyncCallable implements AsyncFutureListener<Collection<ISpaceReplicaData>> {
-    protected final static Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
+    protected final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
     private final ReplicationNode _replicationNode;
 
     private final IReplicationMonitoredConnection _originConnection;
@@ -94,8 +95,8 @@ public class SpaceCopyReplicaRunnable
             future.setListener(this);
             return CycleResult.SUSPEND;
         } catch (Throwable e) {
-            if (_logger.isLoggable(Level.FINER))
-                _logger.log(Level.FINER, _replicationNode.getLogPrefix() + " dispatch request for replica batch has an exception", e);
+            if (_logger.isDebugEnabled())
+                _logger.debug(_replicationNode.getLogPrefix() + " dispatch request for replica batch has an exception", e);
 
             if (!(e instanceof Exception))
                 e = new ExecutionException(e.getMessage(), e);
@@ -117,8 +118,8 @@ public class SpaceCopyReplicaRunnable
     public void onResult(AsyncResult<Collection<ISpaceReplicaData>> result) {
         try {
             if (result.getException() != null) {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.log(Level.FINER, _replicationNode.getLogPrefix() + " incoming replica batch has an exception", result.getException());
+                if (_logger.isDebugEnabled())
+                    _logger.debug(_replicationNode.getLogPrefix() + " incoming replica batch has an exception", result.getException());
                 throw result.getException();
             }
 
@@ -150,14 +151,14 @@ public class SpaceCopyReplicaRunnable
                 }
 
                 if (hasMoreStages) {
-                    if (_logger.isLoggable(Level.FINER))
-                        _logger.finer(_replicationNode.getLogPrefix() + (isOldVersion ? "" : " completed current stage [" + stageName + "], ")
+                    if (_logger.isDebugEnabled())
+                        _logger.debug(_replicationNode.getLogPrefix() + (isOldVersion ? "" : " completed current stage [" + stageName + "], ")
                                 + "moved to the next stage"
                                 + (isOldVersion ? "" : " [" + nextStageName + "]") + ".");
                     _state.signalSingleCopyStageDone();
                 } else {
-                    if (_logger.isLoggable(Level.FINER))
-                        _logger.finer(_replicationNode.getLogPrefix() + (isOldVersion ? "" : " completed current stage [" + stageName + "], ") + "all stages completed.");
+                    if (_logger.isDebugEnabled())
+                        _logger.debug(_replicationNode.getLogPrefix() + (isOldVersion ? "" : " completed current stage [" + stageName + "], ") + "all stages completed.");
                     _state.signalEntireCopyStageDoneSucessfully();
                 }
             } else {
@@ -203,8 +204,8 @@ public class SpaceCopyReplicaRunnable
                     _replicationNode.getBlobStoreReplicaConsumeHelper().flushBulk();
             }
             // Should keep running
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.log(Level.FINEST, _replicationNode.getLogPrefix() + "copied replica batch " + copiedData);
+            if (_logger.isTraceEnabled())
+                _logger.trace(_replicationNode.getLogPrefix() + "copied replica batch " + copiedData);
             if(resumeNow){
                 //resubmit SpaceCopyReplicaRunnable task
                 getHandler().resumeNow();

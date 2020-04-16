@@ -19,8 +19,9 @@ package com.gigaspaces.internal.lookup;
 import com.sun.jini.reggie.Registrar;
 
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Starts Lookup Registry
@@ -31,7 +32,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class LookupServiceFactory {
 
-    private static final Logger logger = Logger.getLogger(LookupServiceFactory.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(LookupServiceFactory.class.getName());
 
     public static void main(String[] args) {
         try {
@@ -45,8 +46,8 @@ public class LookupServiceFactory {
                         registrar.destroy();
                         mainThread.interrupt();
                     } catch (RemoteException e) {
-                        if (logger.isLoggable(Level.SEVERE)) {
-                            logger.log(Level.SEVERE, e.toString(), e);
+                        if (logger.isErrorEnabled()) {
+                            logger.error(e.toString(), e);
                         }
                     }
                 }
@@ -60,8 +61,8 @@ public class LookupServiceFactory {
                 }
             }
         } catch (Exception e) {
-            if (logger.isLoggable(Level.SEVERE)) {
-                logger.log(Level.SEVERE, e.toString(), e);
+            if (logger.isErrorEnabled()) {
+                logger.error(e.toString(), e);
             }
         }
     }

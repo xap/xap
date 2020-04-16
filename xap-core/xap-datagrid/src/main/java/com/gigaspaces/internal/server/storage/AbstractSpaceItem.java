@@ -25,7 +25,8 @@ import com.j_spaces.core.client.NotifyModifiers;
 import com.j_spaces.kernel.locks.IEvictableLockObject;
 
 import java.rmi.MarshalledObject;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg

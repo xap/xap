@@ -27,7 +27,7 @@ import com.gigaspaces.internal.io.IOUtils;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.logging.Level;
+
 
 
 /**
@@ -58,8 +58,8 @@ public class UnknownLeaseErrorUnfixed
                                                    IDataConsumeFixFacade fixFacade,
                                                    ReplicationPacketDataConsumer consumer,
                                                    IExecutableReplicationPacketData<?> data) {
-        if (context.getContextLogger().isLoggable(Level.WARNING)) {
-            context.getContextLogger().log(Level.WARNING, "Failed to renew Entry lease: "
+        if (context.getContextLogger().isWarnEnabled()) {
+            context.getContextLogger().warn("Failed to renew Entry lease: "
                     + _className + " UID: " + _uid + "."
                     + "\nThis entry might be already expired or canceled.");
         }

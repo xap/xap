@@ -31,7 +31,8 @@ import com.gigaspaces.internal.cluster.node.impl.processlog.reliableasync.IRepli
 import com.gigaspaces.internal.cluster.node.impl.processlog.sync.IReplicationSyncTargetProcessLog;
 import com.j_spaces.core.ProcessMemoryManager;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**

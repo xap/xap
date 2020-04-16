@@ -23,8 +23,9 @@ import net.jini.core.transaction.Transaction;
 
 import java.io.Closeable;
 import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -32,7 +33,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class SpaceIterator<T> implements Iterator<T>, Iterable<T>, Closeable {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_GSITERATOR);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_GSITERATOR);
     public static int getDefaultBatchSize() {
         return SpaceIteratorConfiguration.getDefaultBatchSize();
     }
@@ -46,8 +47,8 @@ public class SpaceIterator<T> implements Iterator<T>, Iterable<T>, Closeable {
         if(spaceIteratorConfiguration.getIteratorType().equals(SpaceIteratorType.PREFETCH_UIDS) && spaceIteratorConfiguration.getMaxInactiveDuration() != null){
             throw new UnsupportedOperationException("Setting the maxInactiveDuration value in not supported for space iterator of type " + spaceIteratorConfiguration.getIteratorType().toString());
         }
-        if(_logger.isLoggable(Level.FINE)) {
-            _logger.fine("Space Iterator is of type " +  spaceIteratorConfiguration.getIteratorType());
+        if(_logger.isDebugEnabled()) {
+            _logger.debug("Space Iterator is of type " +  spaceIteratorConfiguration.getIteratorType());
         }
         this.iterator = spaceIteratorConfiguration.getIteratorType().equals(SpaceIteratorType.CURSOR) ? new CursorEntryPacketIterator(spaceProxy, query, spaceIteratorConfiguration) : new SpaceEntryPacketIterator(spaceProxy, query, txn, spaceIteratorConfiguration.getBatchSize(), spaceIteratorConfiguration.getReadModifiers().getCode());
     }

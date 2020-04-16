@@ -47,7 +47,7 @@ import net.jini.core.transaction.TransactionException;
 
 import java.rmi.RemoteException;
 import java.util.Collection;
-import java.util.logging.Level;
+
 
 
 public abstract class AbstractSpaceReplicationEntryEventHandler

@@ -36,8 +36,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implement {@link IReflectionFactory} based on ASM.
@@ -50,7 +51,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class ASMReflectionFactory extends AbstractReflectionFactory {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_REFLECTION);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_REFLECTION);
     private final IReflectionFactory _fallbackFactory;
 
     public ASMReflectionFactory() {
@@ -62,8 +63,8 @@ public class ASMReflectionFactory extends AbstractReflectionFactory {
             try {
                 return ASMConstructorFactory.getConstructor(ctor);
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.log(Level.WARNING, "Failed to generate ASM for constructor, falling back to standard reflection. " +
+                if (_logger.isWarnEnabled())
+                    _logger.warn("Failed to generate ASM for constructor, falling back to standard reflection. " +
                             "class: " + ctor.getDeclaringClass().getName(), e);
             }
         }
@@ -76,8 +77,8 @@ public class ASMReflectionFactory extends AbstractReflectionFactory {
             try {
                 return ASMConstructorFactory.getParamsConstructor(ctor);
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.log(Level.WARNING, "Failed to generate ASM for constructor, falling back to standard reflection. " +
+                if (_logger.isWarnEnabled())
+                    _logger.warn("Failed to generate ASM for constructor, falling back to standard reflection. " +
                             "class: " + ctor.getDeclaringClass().getName(), e);
             }
         }
@@ -90,8 +91,8 @@ public class ASMReflectionFactory extends AbstractReflectionFactory {
         try {
             return ConstructorPropertyNameExtractor.getParameterNames(ctor);
         } catch (IOException e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Failed to get constructor parameters names using ASM, falling back to standard reflection. " +
+            if (_logger.isWarnEnabled())
+                _logger.warn("Failed to get constructor parameters names using ASM, falling back to standard reflection. " +
                         "class: " + ctor.getDeclaringClass().getName(), e);
         }
         return _fallbackFactory.getConstructorParametersNames(ctor);
@@ -102,8 +103,8 @@ public class ASMReflectionFactory extends AbstractReflectionFactory {
             try {
                 return ASMMethodFactory.getMethod(classLoader, method);
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.log(Level.WARNING, "Failed to generate ASM for method, falling back to standard reflection. " +
+                if (_logger.isWarnEnabled())
+                    _logger.warn("Failed to generate ASM for method, falling back to standard reflection. " +
                             "class: [" + method.getDeclaringClass().getName() + "], " +
                             "method: [" + method.getName() + "].", e);
             }
@@ -117,8 +118,8 @@ public class ASMReflectionFactory extends AbstractReflectionFactory {
             try {
                 return ASMMethodFactory.getGetterMethod(classLoader, method);
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.log(Level.WARNING, "Failed to generate ASM for getter method, falling back to standard reflection. " +
+                if (_logger.isWarnEnabled())
+                    _logger.warn("Failed to generate ASM for getter method, falling back to standard reflection. " +
                             "class: [" + method.getDeclaringClass().getName() + "], " +
                             "method: [" + method.getName() + "].", e);
             }
@@ -131,8 +132,8 @@ public class ASMReflectionFactory extends AbstractReflectionFactory {
             try {
                 return ASMMethodFactory.getSetterMethod(classLoader, method);
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.log(Level.WARNING, "Failed to generate ASM for setter method, falling back to standard reflection. " +
+                if (_logger.isWarnEnabled())
+                    _logger.warn("Failed to generate ASM for setter method, falling back to standard reflection. " +
                             "class: [" + method.getDeclaringClass().getName() + "], " +
                             "method: [" + method.getName() + "].", e);
             }
@@ -145,8 +146,8 @@ public class ASMReflectionFactory extends AbstractReflectionFactory {
             try {
                 return ASMFieldFactory.getField(field);
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.log(Level.WARNING, "Failed to generate ASM for field, falling back to standard reflection. " +
+                if (_logger.isWarnEnabled())
+                    _logger.warn("Failed to generate ASM for field, falling back to standard reflection. " +
                             "class: [" + field.getDeclaringClass().getName() + "], " +
                             "method: [" + field.getName() + "].", e);
             }
@@ -159,8 +160,8 @@ public class ASMReflectionFactory extends AbstractReflectionFactory {
         try {
             return ASMFieldPropertiesFactory.getProperties(declaringClass, fields);
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Failed to generate ASM for properties, falling back to standard reflection. " +
+            if (_logger.isWarnEnabled())
+                _logger.warn("Failed to generate ASM for properties, falling back to standard reflection. " +
                         "class: [" + declaringClass.getName() + "].", e);
         }
 
@@ -171,8 +172,8 @@ public class ASMReflectionFactory extends AbstractReflectionFactory {
         try {
             return ASMPropertiesFactory.getProperties(typeInfo);
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Failed to generate ASM for properties, falling back to standard reflection. " +
+            if (_logger.isWarnEnabled())
+                _logger.warn("Failed to generate ASM for properties, falling back to standard reflection. " +
                         "class: [" + typeInfo.getName() + "].", e);
         }
 
@@ -183,8 +184,8 @@ public class ASMReflectionFactory extends AbstractReflectionFactory {
         try {
             return ProxyFactory.newProxyInstance(loader, interfaces, handler, allowCache);
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.log(Level.WARNING, "Failed to generate ASM for dynamic proxy, falling back to standard reflection. ", e);
+            if (_logger.isWarnEnabled())
+                _logger.warn("Failed to generate ASM for dynamic proxy, falling back to standard reflection. ", e);
         }
 
         return _fallbackFactory.getProxy(loader, interfaces, handler, allowCache);
@@ -198,8 +199,8 @@ public class ASMReflectionFactory extends AbstractReflectionFactory {
         if (!Modifier.isPrivate(member.getModifiers()) && member.getDeclaringClass().getClassLoader() != null)
             return true;
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Cannot generate ASM for member " + member.getName() +
+        if (_logger.isDebugEnabled())
+            _logger.debug("Cannot generate ASM for member " + member.getName() +
                     " on class " + member.getDeclaringClass().getName() +
                     " - using standard reflection instead.");
 

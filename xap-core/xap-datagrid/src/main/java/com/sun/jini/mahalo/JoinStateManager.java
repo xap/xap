@@ -50,8 +50,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <code>JoinStateManager</code> provides a utility that manages a service's join state (optionally
@@ -123,21 +124,21 @@ class JoinStateManager extends LogHandler {
      */
     JoinStateManager(String logPath) throws IOException {
         super();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "JoinStateManager", logPath);
         }
         this.log = (logPath == null) ? null : new ReliableLog(logPath, this);
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "JoinStateManager");
         }
     }
 
     void recover() throws IOException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "recover");
         }
         if (log != null) log.recover();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "recover");
         }
     }
@@ -164,14 +165,14 @@ class JoinStateManager extends LogHandler {
                     LookupLocator lookupLocator = new LookupLocator("jini://" + locatorURL);
                     locatorList.add(lookupLocator);
                 } catch (MalformedURLException ex) {
-                    if (initlogger.isLoggable(Level.WARNING)) {
-                        initlogger.log(Level.WARNING, "Failed to parse list of LookupLocator URLs: " + locatorURL + " - " + ex.toString(), ex);
+                    if (initlogger.isWarnEnabled()) {
+                        initlogger.warn("Failed to parse list of LookupLocator URLs: " + locatorURL + " - " + ex.toString(), ex);
                     }
                 }
             }//end of while()
         }
-        if (initlogger.isLoggable(Level.FINE)) {
-            initlogger.log(Level.FINE, locatorList.toString());
+        if (initlogger.isDebugEnabled()) {
+            initlogger.debug(locatorList.toString());
         }
         return (LookupLocator[]) locatorList.toArray(new LookupLocator[0]);
     }
@@ -195,7 +196,7 @@ class JoinStateManager extends LogHandler {
     void startManager(Configuration config, Object service,
                       ServiceID serviceID, Entry[] baseAttributes)
             throws IOException, ConfigurationException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class,"startManager",
                     new Object[]{config, service, serviceID, Arrays.asList(baseAttributes)});
         }
@@ -210,8 +211,8 @@ class JoinStateManager extends LogHandler {
                 (ProxyPreparer) Config.getNonNullEntry(config,
                         TxnManager.MAHALO, "lookupLocatorPreparer",
                         ProxyPreparer.class, defaultPreparer);
-        if (initlogger.isLoggable(Level.FINE)) {
-            initlogger.log(Level.FINE, "lookupLocatorPreparer: {0}",
+        if (initlogger.isDebugEnabled()) {
+            initlogger.debug("lookupLocatorPreparer: {0}",
                     lookupLocatorPreparer);
         }
 //TODO - defer creation of default LDM
@@ -220,8 +221,8 @@ class JoinStateManager extends LogHandler {
                         "discoveryManager", DiscoveryManagement.class,
                         new LookupDiscoveryManager(
                                 LookupGroups.none(), null, null, config));
-        if (initlogger.isLoggable(Level.FINE)) {
-            initlogger.log(Level.FINE, "discoveryManager: {0}", dm);
+        if (initlogger.isDebugEnabled()) {
+            initlogger.debug("discoveryManager: {0}", dm);
         }
 
         if (dm instanceof DiscoveryGroupManagement) {
@@ -260,15 +261,15 @@ class JoinStateManager extends LogHandler {
         // if this is the first incarnation, consult config for groups,
         // locators and attributes.
         if (initial) {
-            if (initlogger.isLoggable(Level.FINEST)) {
-                initlogger.log(Level.FINEST, "Obtaining initial values");
+            if (initlogger.isTraceEnabled()) {
+                initlogger.trace("Obtaining initial values");
             }
             groups = (String[])
                     config.getEntry(TxnManager.MAHALO,
                             "initialLookupGroups", String[].class,
                             BootUtil.toArray(SystemInfo.singleton().lookup().groups()));
-            if (initlogger.isLoggable(Level.FINE)) {
-                initlogger.log(Level.FINE, "Obtaining initial groups: {0}",
+            if (initlogger.isDebugEnabled()) {
+                initlogger.debug("Obtaining initial groups: {0}",
                         (groups == null ?
                                 Arrays.asList(new String[]{"<ALL_GROUPS>"}) :
                                 Arrays.asList(groups)));
@@ -277,15 +278,15 @@ class JoinStateManager extends LogHandler {
                     Config.getNonNullEntry(config, TxnManager.MAHALO,
                             "initialLookupLocators", LookupLocator[].class,
                             toLookupLocators(System.getProperty(SystemProperties.JINI_LUS_LOCATORS, "")));
-            if (initlogger.isLoggable(Level.FINE)) {
-                initlogger.log(Level.FINE, "Obtaining initial locators: {0}",
+            if (initlogger.isDebugEnabled()) {
+                initlogger.debug("Obtaining initial locators: {0}",
                         Arrays.asList(locators));
             }
             final Entry[] cAttrs = (Entry[])
                     Config.getNonNullEntry(config, TxnManager.MAHALO,
                             "initialLookupAttributes", Entry[].class, new Entry[0]);
-            if (initlogger.isLoggable(Level.FINE)) {
-                initlogger.log(Level.FINE, "Obtaining initial attributes: {0}",
+            if (initlogger.isDebugEnabled()) {
+                initlogger.debug("Obtaining initial attributes: {0}",
                         Arrays.asList(cAttrs));
             }
             if (cAttrs.length == 0) {
@@ -297,8 +298,8 @@ class JoinStateManager extends LogHandler {
                 System.arraycopy(cAttrs, 0, attributes,
                         baseAttributes.length, cAttrs.length);
             }
-            if (initlogger.isLoggable(Level.FINEST)) {
-                initlogger.log(Level.FINEST, "Combined attributes: {0}",
+            if (initlogger.isTraceEnabled()) {
+                initlogger.trace("Combined attributes: {0}",
                         Arrays.asList(attributes));
             }
 
@@ -306,8 +307,8 @@ class JoinStateManager extends LogHandler {
             /* recovery : if there are any locators get and
              * use recoveredLookupLocatorPreparer
              */
-            if (initlogger.isLoggable(Level.FINEST)) {
-                initlogger.log(Level.FINEST, "Recovered locators: {0}",
+            if (initlogger.isTraceEnabled()) {
+                initlogger.trace("Recovered locators: {0}",
                         Arrays.asList(locators));
             }
             if (locators.length > 0) {
@@ -316,8 +317,8 @@ class JoinStateManager extends LogHandler {
                                 TxnManager.MAHALO,
                                 "recoveredLookupLocatorPreparer", ProxyPreparer.class,
                                 defaultPreparer);
-                if (initlogger.isLoggable(Level.FINE)) {
-                    initlogger.log(Level.FINE, "recoveredLookupLocatorPreparer: {0}",
+                if (initlogger.isDebugEnabled()) {
+                    initlogger.debug("recoveredLookupLocatorPreparer: {0}",
                             recoveredLookupLocatorPreparer);
                 }
                 final List prepared = new java.util.LinkedList();
@@ -326,14 +327,14 @@ class JoinStateManager extends LogHandler {
                         prepared.add(recoveredLookupLocatorPreparer.
                                 prepareProxy(locators[i]));
                     } catch (Throwable t) {
-                        if (initlogger.isLoggable(Level.FINE)) {
-                            initlogger.log(Level.FINE,
+                        if (initlogger.isDebugEnabled()) {
+                            initlogger.debug(
                                     "Exception re-preparing LookupLocator: {0}. "
                                             + "Dropping locator.",
                                     locators[i]);
                         }
-                        if (initlogger.isLoggable(Level.FINE)) {
-                            initlogger.log(Level.FINE,
+                        if (initlogger.isDebugEnabled()) {
+                            initlogger.debug(
                                     "Preparer exception: ", t);
                         }
                     }
@@ -345,14 +346,14 @@ class JoinStateManager extends LogHandler {
 
         // Now that we have groups & locators (either from
         // a previous incarnation or from the config) start discovery.
-        if (initlogger.isLoggable(Level.FINEST)) {
-            initlogger.log(Level.FINEST, "Setting groups and locators");
+        if (initlogger.isTraceEnabled()) {
+            initlogger.trace("Setting groups and locators");
         }
         ((DiscoveryGroupManagement) dm).setGroups(groups);
         ((DiscoveryLocatorManagement) dm).setLocators(locators);
 
-        if (initlogger.isLoggable(Level.FINEST)) {
-            initlogger.log(Level.FINEST, "Creating JoinManager");
+        if (initlogger.isTraceEnabled()) {
+            initlogger.trace("Creating JoinManager");
         }
         mgr = new JoinManager(service, attributes, serviceID,
                 dm, null, config);
@@ -364,33 +365,33 @@ class JoinStateManager extends LogHandler {
         locators = null;
 
         // Now that we have state, make sure it is written to disk.
-        if (initlogger.isLoggable(Level.FINEST)) {
-            initlogger.log(Level.FINEST, "Taking snapshot");
+        if (initlogger.isTraceEnabled()) {
+            initlogger.trace("Taking snapshot");
         }
         update();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "startManager");
         }
     }
 
     public void setServiceUuid(Uuid serviceUuid) {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "setServiceUuid", serviceUuid);
         }
         if (serviceUuid == null)
             throw new NullPointerException("serviceUuid can't be null");
         this.serviceUuid = serviceUuid;
         // Can't update until mgr & dm are started.
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "setServiceUuid");
         }
     }
 
     public Uuid getServiceUuid() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "getServiceUuid");
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "getServiceUuid", serviceUuid);
         }
         return serviceUuid;
@@ -400,7 +401,7 @@ class JoinStateManager extends LogHandler {
      * Make a good faith attempt to terminate discovery, and cancel any lookup registrations.
      */
     public void stop() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "stop");
         }
         // Unregister with lookup
@@ -412,19 +413,19 @@ class JoinStateManager extends LogHandler {
 
         if (dm != null)
             dm.terminate();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "stop");
         }
     }
 
     public void destroy() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "destroy");
         }
         stop();
         if (log != null)
             log.deletePersistentStore();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "destroy");
         }
     }
@@ -444,10 +445,10 @@ class JoinStateManager extends LogHandler {
      * @return the current attribute sets for the service
      */
     public Entry[] getLookupAttributes() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "getLookupAttributes");
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "getLookupAttributes");
         }
         return mgr.getAttributes();
@@ -461,13 +462,13 @@ class JoinStateManager extends LogHandler {
      * @throws java.rmi.RuntimeException if the change can not be persisted.
      */
     public void addLookupAttributes(Entry[] attrSets) {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class,
                     "addLookupAttributes");
         }
         mgr.addAttributes(attrSets, true);
         update();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "addLookupAttributes");
         }
     }
@@ -484,13 +485,13 @@ class JoinStateManager extends LogHandler {
      */
     public void modifyLookupAttributes(Entry[] attrSetTemplates,
                                        Entry[] attrSets) {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class,
                     "modifyLookupAttributes");
         }
         mgr.modifyAttributes(attrSetTemplates, attrSets, true);
         update();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "modifyLookupAttributes");
         }
     }
@@ -504,10 +505,10 @@ class JoinStateManager extends LogHandler {
      * @see #setLookupGroups
      */
     public String[] getLookupGroups() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "getLookupGroups");
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "getLookupGroups");
         }
         return ((DiscoveryGroupManagement) dm).getGroups();
@@ -522,7 +523,7 @@ class JoinStateManager extends LogHandler {
      * @see #removeLookupGroups
      */
     public void addLookupGroups(String[] groups) {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "addLookupGroups");
         }
         try {
@@ -531,7 +532,7 @@ class JoinStateManager extends LogHandler {
             throw new RuntimeException("Could not change groups");
         }
         update();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "addLookupGroups");
         }
     }
@@ -545,12 +546,12 @@ class JoinStateManager extends LogHandler {
      * @see #addLookupGroups
      */
     public void removeLookupGroups(String[] groups) {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "removeLookupGroups");
         }
         ((DiscoveryGroupManagement) dm).removeGroups(groups);
         update();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "removeLookupGroups");
         }
     }
@@ -565,7 +566,7 @@ class JoinStateManager extends LogHandler {
      * @see #getLookupGroups
      */
     public void setLookupGroups(String[] groups) {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "setLookupGroups");
         }
         try {
@@ -574,7 +575,7 @@ class JoinStateManager extends LogHandler {
             throw new RuntimeException("Could not change groups");
         }
         update();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "setLookupGroups");
         }
     }
@@ -586,10 +587,10 @@ class JoinStateManager extends LogHandler {
      * @see #setLookupLocators
      */
     public LookupLocator[] getLookupLocators() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "getLookupLocators");
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "getLookupLocators");
         }
         return ((DiscoveryLocatorManagement) dm).getLocators();
@@ -605,13 +606,13 @@ class JoinStateManager extends LogHandler {
      */
     public void addLookupLocators(LookupLocator[] locators)
             throws RemoteException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class,"addLookupLocators");
         }
         prepareLocators(locators);
         ((DiscoveryLocatorManagement) dm).addLocators(locators);
         update();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "addLookupLocators");
         }
     }
@@ -626,13 +627,13 @@ class JoinStateManager extends LogHandler {
      */
     public void removeLookupLocators(LookupLocator[] locators)
             throws RemoteException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "removeLookupLocators");
         }
         prepareLocators(locators);
         ((DiscoveryLocatorManagement) dm).removeLocators(locators);
         update();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "removeLookupLocators");
         }
     }
@@ -648,13 +649,13 @@ class JoinStateManager extends LogHandler {
      */
     public void setLookupLocators(LookupLocator[] locators)
             throws RemoteException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "setLookupLocators");
         }
         prepareLocators(locators);
         ((DiscoveryLocatorManagement) dm).setLocators(locators);
         update();
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "setLookupLocators");
         }
     }
@@ -670,14 +671,14 @@ class JoinStateManager extends LogHandler {
      */
     private void prepareLocators(LookupLocator[] locators)
             throws RemoteException {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, JoinStateManager.class, "prepareLocators");
         }
         for (int i = 0; i < locators.length; i++) {
             locators[i] = (LookupLocator) lookupLocatorPreparer.prepareProxy(
                     locators[i]);
         }
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, JoinStateManager.class, "prepareLocators");
         }
     }
@@ -688,8 +689,8 @@ class JoinStateManager extends LogHandler {
                 try {
                     log.snapshot();
                 } catch (IOException e) {
-                    if (persistenceLogger.isLoggable(Level.WARNING)) {
-                        persistenceLogger.log(Level.WARNING,
+                    if (persistenceLogger.isWarnEnabled()) {
+                        persistenceLogger.warn(
                                 "Failed to persist join state", e);
                     }
 //TODO - need a better strategy here
@@ -739,13 +740,13 @@ class JoinStateManager extends LogHandler {
                 MarshalledObject mo = (MarshalledObject) in.readObject();
                 entries.add(mo.get());
             } catch (IOException e) {
-                if (initlogger.isLoggable(Level.FINE)) {
-                    initlogger.log(Level.FINE,
+                if (initlogger.isDebugEnabled()) {
+                    initlogger.debug(
                             "Exception getting service attribute ... skipping", e);
                 }
             } catch (ClassNotFoundException e) {
-                if (initlogger.isLoggable(Level.FINE)) {
-                    initlogger.log(Level.FINE,
+                if (initlogger.isDebugEnabled()) {
+                    initlogger.debug(
                             "Exception getting service attribute ... skipping", e);
                 }
             }

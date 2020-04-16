@@ -24,8 +24,9 @@ import java.rmi.Remote;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class provides repository of one-way remote methods.<br> If remote interface method doesn't
@@ -41,7 +42,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class OneWayMethodRepository {
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
 
     final private static Set<IMethod> _repositoryTable = Collections.synchronizedSet(new HashSet<IMethod>());
 
@@ -63,8 +64,8 @@ public class OneWayMethodRepository {
 	 /* don't care if this method already exists, just replace the instance (save sync verifications) */
         _repositoryTable.add(method);
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("OneWayMethodRepository - registered one-way method: " + method);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("OneWayMethodRepository - registered one-way method: " + method);
         }
     }
 

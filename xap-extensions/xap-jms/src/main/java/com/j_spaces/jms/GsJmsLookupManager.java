@@ -26,8 +26,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -53,7 +54,7 @@ import static com.j_spaces.core.Constants.LookupManager.VENDOR;
  * @since 11.0
  */
 public class GsJmsLookupManager implements Closeable {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_LOOKUPMANAGER);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_LOOKUPMANAGER);
 
     private final String spaceName;
     private final IJSpace spaceProxy;
@@ -123,11 +124,11 @@ public class GsJmsLookupManager implements Closeable {
         if (internalContext != null) {
             try {
                 internalContext.rebind(name, obj);
-                if (_logger.isLoggable(Level.INFO))
+                if (_logger.isInfoEnabled())
                     _logger.info("JMS " + desc + " < " + name + " > bound successfully to the RMIRegistry lookup service.");
             } catch (NamingException e) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.log(Level.WARNING, "Failed to register < " + name + " > JMS Admin Object, on space " +
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn("Failed to register < " + name + " > JMS Admin Object, on space " +
                             "<" + spaceName + "> using the the RMIRegistry lookup service: "
                             + internalContext + " | ", e);
                 }
@@ -138,11 +139,11 @@ public class GsJmsLookupManager implements Closeable {
         if (externalContext != null) {
             try {
                 externalContext.rebind(name, obj);
-                if (_logger.isLoggable(Level.INFO))
+                if (_logger.isInfoEnabled())
                     _logger.info("JMS " + desc + " < " + name + " > bound successfully to the External JNDI lookup service: " + externalContext.getEnvironment().toString());
             } catch (NamingException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, "Failed to register < " + name + " > JMS Admin Object, on space " +
+                if (_logger.isErrorEnabled()) {
+                    _logger.error("Failed to register < " + name + " > JMS Admin Object, on space " +
                             "<" + spaceName + "> using the external JNDI lookup service: "
                             + externalContext + " | " + e.getRootCause().getMessage(), e);
                 }
@@ -158,11 +159,11 @@ public class GsJmsLookupManager implements Closeable {
         if (internalContext != null) {
             try {
                 internalContext.unbind(name);
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine("JMS " + desc + " < " + name + " > unbound successfully from the RMIRegistry lookup service");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("JMS " + desc + " < " + name + " > unbound successfully from the RMIRegistry lookup service");
             } catch (NamingException e) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.log(Level.WARNING, "Failed to unbind the < " + name + " > JMS Admin Object, from space " +
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn("Failed to unbind the < " + name + " > JMS Admin Object, from space " +
                             "<" + spaceName + "> using the the RMIRegistry lookup service: "
                             + internalContext + " | " + e.getRootCause().toString(), e);
                 }
@@ -173,11 +174,11 @@ public class GsJmsLookupManager implements Closeable {
         if (externalContext != null) {
             try {
                 externalContext.unbind(name);
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine("JMS " + desc + " < " + name + " > unbound successfully from the External JNDI lookup service: " + externalContext.getEnvironment().toString());
+                if (_logger.isDebugEnabled())
+                    _logger.debug("JMS " + desc + " < " + name + " > unbound successfully from the External JNDI lookup service: " + externalContext.getEnvironment().toString());
             } catch (NamingException e) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.log(Level.WARNING, "Failed to unbind the < " + name + " > JMS Admin Object, from space " +
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn("Failed to unbind the < " + name + " > JMS Admin Object, from space " +
                             "<" + spaceName + "> using the external JNDI lookup service: "
                             + externalContext + " | " + e.getRootCause().toString(), e);
                 }

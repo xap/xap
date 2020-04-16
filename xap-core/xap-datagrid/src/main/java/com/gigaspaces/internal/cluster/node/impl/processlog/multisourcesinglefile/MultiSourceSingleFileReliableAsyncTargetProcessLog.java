@@ -57,7 +57,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
+
 
 /**
  * A reliable async replication process log which merges multiple participants operations to a
@@ -274,8 +274,8 @@ public class MultiSourceSingleFileReliableAsyncTargetProcessLog extends Abstract
             } catch (ClosedResourceException e) {
                 throw e;
             } catch (Throwable t) {
-                if (_specificLogger.isLoggable(Level.FINER))
-                    _specificLogger.log(Level.FINER, "error while processing incoming replication", t);
+                if (_specificLogger.isDebugEnabled())
+                    _specificLogger.debug("error while processing incoming replication", t);
 
                 clearStateAfterException();
 
@@ -299,8 +299,8 @@ public class MultiSourceSingleFileReliableAsyncTargetProcessLog extends Abstract
                 _processMemoryManager.performGC();
 
             if (_processMemoryManager.getMemoryUsagePercentage(false) >= _processLogConfig.getHighMemoryUsagePercentage()) {
-                if (_specificLogger.isLoggable(Level.WARNING))
-                    _specificLogger.warning("Memory shortage in multi source reliable async process log [groupName="
+                if (_specificLogger.isWarnEnabled())
+                    _specificLogger.warn("Memory shortage in multi source reliable async process log [groupName="
                             + getGroupName()
                             + ", pendingPacketsQueueSize="
                             + _pendingPacketsQueue.size()
@@ -529,16 +529,16 @@ public class MultiSourceSingleFileReliableAsyncTargetProcessLog extends Abstract
                     // Rollback to the previous context snapshot state
                     context.rollback();
                     throwIfRepetitiveError(prevResult, consumeResult);
-                    if (_specificLogger.isLoggable(Level.FINER))
-                        _specificLogger.log(Level.FINER,
+                    if (_specificLogger.isDebugEnabled())
+                        _specificLogger.debug(
                                 "Encountered error while consuming packet ["
                                         + packet.getReplicationPacket()
                                         + "], trying to resolve issue",
                                 consumeResult.toException());
                     IDataConsumeFix fix = getExceptionHandler().handleException(consumeResult, null/*packet, this is batch consumption we dont know the origin packet that the data causes this error*/);
                     data = getDataConsumer().applyFix(context, data, fix);
-                    if (_specificLogger.isLoggable(Level.FINER))
-                        _specificLogger.log(Level.FINER, "Fix applied - retrying the operation [" + fix + "]");
+                    if (_specificLogger.isDebugEnabled())
+                        _specificLogger.debug("Fix applied - retrying the operation [" + fix + "]");
 
                     prevResult = consumeResult;
                 } while (true);
@@ -612,9 +612,9 @@ public class MultiSourceSingleFileReliableAsyncTargetProcessLog extends Abstract
 
     private void logConsolidationAbortedWarningMessage(
             IReplicationParticipantsMetadata participantsMetadata, boolean timeBased, long breachingThreshold) {
-        if (_specificLogger.isLoggable(Level.WARNING)) {
+        if (_specificLogger.isWarnEnabled()) {
             if (timeBased)
-                _specificLogger.log(Level.WARNING,
+                _specificLogger.warn(
                         "Timeout exceeded [" + breachingThreshold + "/" + _processLogConfig.getConsumeTimeout() + "ms] while waiting for all participants [contextId="
                                 + participantsMetadata.getContextId()
                                 + ", participantsCount="
@@ -623,7 +623,7 @@ public class MultiSourceSingleFileReliableAsyncTargetProcessLog extends Abstract
                                 + participantsMetadata.getParticipantId()
                                 + "] will be processed independently");
             else
-                _specificLogger.log(Level.WARNING,
+                _specificLogger.warn(
                         "Pending operations threshold exceeded [" + breachingThreshold + "/" + _processLogConfig.getPendingPacketPacketsIntervalBeforeConsumption() + "] while waiting for all participants [contextId="
                                 + participantsMetadata.getContextId()
                                 + ", participantsCount="
@@ -664,8 +664,8 @@ public class MultiSourceSingleFileReliableAsyncTargetProcessLog extends Abstract
             GlobalOrderDeletedBacklogPacket deletedBacklogPacket) {
         String deletionMessage = "packets [" + deletedBacklogPacket.getKey() + "-" + deletedBacklogPacket.getEndKey() + "] are lost due to backlog deletion at the source";
         getGroupHistory().logEvent(getSourceLookupName(), deletionMessage);
-        if (_specificLogger.isLoggable(Level.WARNING))
-            _specificLogger.warning(deletionMessage);
+        if (_specificLogger.isWarnEnabled())
+            _specificLogger.warn(deletionMessage);
     }
 
     protected void filterDuplicate(List<IReplicationOrderedPacket> packets) {
@@ -866,8 +866,8 @@ public class MultiSourceSingleFileReliableAsyncTargetProcessLog extends Abstract
             } catch (ClosedResourceException e) {
                 throw e;
             } catch (Throwable t) {
-                if (_specificLogger.isLoggable(Level.FINER))
-                    _specificLogger.log(Level.FINER, "error while processing incoming idle state data replication", t);
+                if (_specificLogger.isDebugEnabled())
+                    _specificLogger.debug("error while processing incoming idle state data replication", t);
 
                 clearStateAfterException();
 

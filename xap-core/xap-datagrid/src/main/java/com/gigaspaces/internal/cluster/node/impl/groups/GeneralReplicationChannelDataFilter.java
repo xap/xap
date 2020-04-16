@@ -21,7 +21,8 @@ import com.gigaspaces.internal.cluster.node.impl.packets.data.IReplicationPacket
 import com.gigaspaces.internal.cluster.node.impl.packets.data.IReplicationPacketEntryDataContentExtractor;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * General replication filter. Currently handles backwards compatibility support for new replication

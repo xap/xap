@@ -37,8 +37,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Dan Kilman
@@ -57,7 +58,7 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
             new Class[]{ServiceRegistrar.class},
             null);
 
-    private final Logger _logger = Logger.getLogger("com.gs.locator.dynamic.manager");
+    private final Logger _logger = LoggerFactory.getLogger("com.gs.locator.dynamic.manager");
 
     private final Object _lock = new Object();
     private final Object _initialServiceRegistrarsLock = new Object();
@@ -115,8 +116,8 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
                              * for the relevant attribute
                              */
                             if (!dynamicLocatorsEnabled() && !isDynamicLocatorsEnabledAtRegistrar()) {
-                                if (_logger.isLoggable(Level.FINE))
-                                    _logger.fine("Dynamic locators discovery is not enabled at discovered registrars");
+                                if (_logger.isDebugEnabled())
+                                    _logger.debug("Dynamic locators discovery is not enabled at discovered registrars");
 
                                 _terminated = true;
                                 return;
@@ -129,14 +130,14 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
 
                             getAndRegisterInLookupCache(initialLocatorsMap, registrar, serviceID);
 
-                            if (_logger.isLoggable(Level.FINE))
-                                _logger.fine("DynamicLookupLocatorDiscovery initialized");
+                            if (_logger.isDebugEnabled())
+                                _logger.debug("DynamicLookupLocatorDiscovery initialized");
 
                             _initializedIndicator.countDown();
                         }
                     } catch (Exception e) {
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE,
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error(
                                     "Failed initializing DynamicLookupLocatorDiscovery. "
                                             + "Dynamic lookup locators will not work for this service",
                                     e);
@@ -168,8 +169,8 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
         // lookup discovery manager has been instantiated
         _initialRegistrarsDiscoveredLatch = new CountDownLatch(numberOfLocators);
 
-        if (_logger.isLoggable(Level.FINER)) {
-            _logger.log(Level.FINER, "Waiting for registrars at " +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Waiting for registrars at " +
                     BootUtil.arrayToCommaDelimitedString(_ldm.getLocators()) +
                     " to be discovered, for at most " + initDelay + "ms");
         }
@@ -189,8 +190,8 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
         List<ServiceRegistrar> registrars = getRegistrars();
 
         for (ServiceRegistrar registrar : registrars) {
-            if (_logger.isLoggable(Level.FINER)) {
-                _logger.finer("Checking if registrar with service id: " + registrar.getServiceID() +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Checking if registrar with service id: " + registrar.getServiceID() +
                         " supports dynamic locators");
             }
 
@@ -199,18 +200,18 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
                 JoinAdmin joinAdmin = (JoinAdmin) administrable.getAdmin();
                 for (Entry entry : joinAdmin.getLookupAttributes()) {
                     if (DYNAMIC_LOCATORS_ENABLED_LOOKUP_ATTRIBUTE.equals(entry)) {
-                        if (_logger.isLoggable(Level.FINER))
-                            _logger.finer("Registrar with service id: " + registrar.getServiceID() + " supports dynamic locators");
+                        if (_logger.isDebugEnabled())
+                            _logger.debug("Registrar with service id: " + registrar.getServiceID() + " supports dynamic locators");
 
                         return true;
                     }
                 }
 
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.finer("Registrar with service id: " + registrar.getServiceID() + " does not support dynamic locators");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Registrar with service id: " + registrar.getServiceID() + " does not support dynamic locators");
             } catch (RemoteException e) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.log(Level.WARNING, "Failed getting lookup attributes from registrar: " + registrar.getServiceID(), e);
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn("Failed getting lookup attributes from registrar: " + registrar.getServiceID(), e);
                 }
             }
 
@@ -225,8 +226,8 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
     }
 
     private void getServiceDiscoveryManager(Map<ServiceID, LookupLocator> initialLocatorsMap) {
-        if (_logger.isLoggable(Level.FINER)) {
-            _logger.finer("Getting ServiceDiscoveryManager with initial service ids: " + initialLocatorsMap.keySet() +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Getting ServiceDiscoveryManager with initial service ids: " + initialLocatorsMap.keySet() +
                     ", locators: " + BootUtil.arrayToCommaDelimitedString(_ldm.getLocators()) +
                     ", groups: " + BootUtil.arrayToCommaDelimitedString(_ldm.getGroups()));
         }
@@ -240,8 +241,8 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
             _sdm = result.sdm;
             _isSdmManaged = result.isManaged;
 
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest("Number of shared SDM after creation: " + _sdm.getRefCounter() +
+            if (_logger.isTraceEnabled())
+                _logger.trace("Number of shared SDM after creation: " + _sdm.getRefCounter() +
                         ", Is sdm managed: " + _isSdmManaged);
 
         } catch (IOException e) {
@@ -253,8 +254,8 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
             Map<ServiceID, LookupLocator> initialLocatorsMap,
             ServiceRegistrar registrar,
             ServiceID serviceID) {
-        if (_logger.isLoggable(Level.FINER))
-            _logger.finer("Creating lookup cache for ServiceRegistrar services and adding listener");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Creating lookup cache for ServiceRegistrar services and adding listener");
 
         try {
             _lookupCache = _sdm.createLookupCache(LOOKUP_CACHE_TEMPLATE, null, null);
@@ -281,8 +282,8 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
 
         for (ServiceRegistrar reg : registrars) {
             if (reg.getServiceID().equals(serviceID)) {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.finer("Found registrar with service id: " + serviceID);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Found registrar with service id: " + serviceID);
 
                 registrar = reg;
                 break;
@@ -290,8 +291,8 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
         }
 
         if (registrar == null) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.warning("Could not find registrar with service id: " + serviceID +
+            if (_logger.isWarnEnabled())
+                _logger.warn("Could not find registrar with service id: " + serviceID +
                         ", this lookup service will not update its state properly");
         }
 
@@ -304,15 +305,15 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
         List<ServiceRegistrar> registrars = getRegistrars();
         Map<ServiceID, LookupLocator> initialLocatorsMap = new HashMap<ServiceID, LookupLocator>();
         for (ServiceRegistrar registrar : registrars) {
-            if (_logger.isLoggable(Level.FINER)) {
-                _logger.finer("Trying to get locator from registrar with service id: " + registrar.getServiceID());
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Trying to get locator from registrar with service id: " + registrar.getServiceID());
             }
 
             try {
                 initialLocatorsMap.put(registrar.getServiceID(), registrar.getLocator());
             } catch (RemoteException e) {
-                if (_logger.isLoggable(Level.WARNING)) {
-                    _logger.log(Level.WARNING,
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn(
                             "Failed getting initial locator for registrar with service id: "
                                     + registrar.getServiceID(), e);
                 }
@@ -342,16 +343,16 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
 
                 _sdm = null;
 
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.finest("Number of shared SDM after termination: " + sdmRefCounter);
+                if (_logger.isTraceEnabled())
+                    _logger.trace("Number of shared SDM after termination: " + sdmRefCounter);
 
             }
 
             _terminated = true;
         }
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("DynamicLookupLocatorDiscovery terminated");
+        if (_logger.isDebugEnabled())
+            _logger.debug("DynamicLookupLocatorDiscovery terminated");
     }
 
     public boolean awaitInitialization(long timeout, TimeUnit unit) throws InterruptedException {
@@ -379,8 +380,8 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
     public void discovered(DiscoveryEvent e) {
         synchronized (_initialServiceRegistrarsLock) {
             for (ServiceRegistrar registrar : e.getRegistrars()) {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.finer("Discovery event for registrar with service id: " + registrar.getServiceID() + " (discovered via initial seed locators)");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Discovery event for registrar with service id: " + registrar.getServiceID() + " (discovered via initial seed locators)");
 
                 _initialRegistrars.add(registrar);
                 _initialRegistrarsDiscoveredLatch.countDown();
@@ -391,8 +392,8 @@ public class DynamicLookupLocatorDiscovery implements DiscoveryListener {
     @Override
     public void discarded(DiscoveryEvent e) {
         for (ServiceRegistrar registrar : e.getRegistrars()) {
-            if (_logger.isLoggable(Level.FINER))
-                _logger.finer("Discarded event for registrar with service id: " + registrar.getServiceID() + " (discovered via initial seed locators)");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Discarded event for registrar with service id: " + registrar.getServiceID() + " (discovered via initial seed locators)");
         }
     }
 

@@ -27,7 +27,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
+
 
 /**
  * selector thread that deals with server side writes that could not complete in one go.
@@ -90,8 +90,8 @@ public class WriteSelectorThread extends AbstractSelectorThread {
                 try {
                     key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
                 } catch (CancelledKeyException e) {
-                    if (_logger.isLoggable(Level.WARNING))
-                        _logger.log(Level.WARNING, "exception caught while setting write interest", e);
+                    if (_logger.isWarnEnabled())
+                        _logger.warn("exception caught while setting write interest", e);
                     //In case we get cancelled key exception close this channel and let the upper layer recover
                     closeChannel(channelEntry.getSocketChannel());
                 }

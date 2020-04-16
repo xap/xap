@@ -22,7 +22,8 @@ import org.springframework.beans.factory.xml.BeanDefinitionParser;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author kobi on 16/05/16.
@@ -30,7 +31,7 @@ import java.util.logging.Logger;
  */
 public class OpenSpacesExtensions {
 
-    private static final Logger logger = Logger.getLogger(OpenSpacesExtensions.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(OpenSpacesExtensions.class.getName());
     private final Map<String, BeanDefinitionParser> coreBeanDefinitionParsers = new HashMap<String, BeanDefinitionParser>();
 
     private static OpenSpacesExtensions instance;

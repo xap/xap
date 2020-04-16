@@ -26,8 +26,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The synchronizing direct-persistency  embedded initial load handler
@@ -94,8 +95,8 @@ public class InitialLoadHandler {
         InitialLoadBasicInfo cur = null;
         cur = _initialLoaded.putIfAbsent(li, li);
         if (cur != null) {
-            if (getLogger().isLoggable(Level.WARNING)) {
-                getLogger().warning("[" + _embeddedHandler.getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " internal error- EmbeddedSyncInitialLoadHandler mixed single & multiuids gen=" + genId + " seq=" + seq);
+            if (getLogger().isWarnEnabled()) {
+                getLogger().warn("[" + _embeddedHandler.getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " internal error- EmbeddedSyncInitialLoadHandler mixed single & multiuids gen=" + genId + " seq=" + seq);
             }
             throw new RuntimeException("space " + _embeddedHandler.getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "internal error- EmbeddedSyncInitialLoadHandler mixed single & multiuids gen=" + genId + " seq=" + seq + " segment=" + AbstractDirectPersistencyOpInfo.getSegmentNumber(seq) + " order=" + AbstractDirectPersistencyOpInfo.getOrderWithinSegment(seq));
         }
@@ -126,7 +127,7 @@ public class InitialLoadHandler {
             }
             inEmbeddedListFromInitialLoad++;
         }
-        if (getLogger().isLoggable(Level.INFO)) {
+        if (getLogger().isInfoEnabled()) {
             getLogger().info("[" + _embeddedHandler.getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " loaded " + inEmbeddedListFromInitialLoad
                     + " entries to embedded sync list during initial load. Number of phantoms=" + numPhantomsInEmbeddedListFromInitialLoad);
         }

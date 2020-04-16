@@ -22,8 +22,9 @@ import com.gigaspaces.start.SystemLocations;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility class for loading native libraries in GigaSpaces.
@@ -33,7 +34,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class NativeLibraryLoader {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_COMMON);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_COMMON);
     private static final Set<String> _loadedLibs = new HashSet<String>();
     private static final String _defaultNativeLibPath;
 
@@ -58,8 +59,8 @@ public class NativeLibraryLoader {
         if (path == null)
             path = _defaultNativeLibPath + File.separator + libraryName + ".dll";
 
-        if (_logger != null && _logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Loading " + libraryName + " library from " + path);
+        if (_logger != null && _logger.isDebugEnabled())
+            _logger.debug("Loading " + libraryName + " library from " + path);
 
         System.load(path);
 

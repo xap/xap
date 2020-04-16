@@ -24,8 +24,9 @@ import net.jini.core.lookup.ServiceItem;
 
 import java.rmi.RemoteException;
 import java.util.concurrent.CountDownLatch;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides a failure detection on active service. On active failure elect the new active. On elect
@@ -38,7 +39,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class ActiveFailureDetector extends GSThread implements FaultDetectionListener {
-    final private static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLUSTER_ACTIVE_ELECTION);
+    final private static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CLUSTER_ACTIVE_ELECTION);
 
     final private CountDownLatch _onInitialize;
     final private ActiveElectionManager _electionManager;
@@ -62,8 +63,8 @@ public class ActiveFailureDetector extends GSThread implements FaultDetectionLis
         try { // wait while this thread will be ready in run()
             _onInitialize.await();
         } catch (InterruptedException ie) {
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.log(Level.FINEST, Thread.currentThread().getName() + " interrupted", ie);
+            if (_logger.isTraceEnabled()) {
+                _logger.trace(Thread.currentThread().getName() + " interrupted", ie);
             }
 
             //Restore the interrupted status
@@ -82,8 +83,8 @@ public class ActiveFailureDetector extends GSThread implements FaultDetectionLis
             String msg = "Failed to register service: "
                     + service.getClass() + " with fault detection manager";
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, msg, e);
+            if (_logger.isDebugEnabled())
+                _logger.debug(msg, e);
 
             throw new RemoteException(msg, e);
         }
@@ -95,8 +96,8 @@ public class ActiveFailureDetector extends GSThread implements FaultDetectionLis
      */
     @Override
     synchronized public void serviceFailure(Object service, Object serviceID) {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, toString() + " active election failure detector identified failure: [" + service
+        if (_logger.isDebugEnabled())
+            _logger.debug(toString() + " active election failure detector identified failure: [" + service
                     + "] serviceID: [" + serviceID + "]. Started to elect new ACTIVE service");
 
         notify();
@@ -130,16 +131,16 @@ public class ActiveFailureDetector extends GSThread implements FaultDetectionLis
                     if (wasErrorMessageLogged)
                         continue;
 
-                    if (_logger.isLoggable(Level.WARNING)) {
-                        _logger.log(Level.WARNING, toString() + " could not participate in active election. " +
+                    if (_logger.isWarnEnabled()) {
+                        _logger.warn(toString() + " could not participate in active election. " +
                                 "Election process will continue once the Lookup Service is reconnected", e);
                     }
                     wasErrorMessageLogged = true;
                 }
                 // space needs to go down, it can't be elected as primary, see DirectPersistencyRecoveryHelper#beforeSpaceModeChange
                 catch (DirectPersistencyRecoveryException ex) {
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE, toString() + " Direct persistency recovery failure", ex);
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error(toString() + " Direct persistency recovery failure", ex);
                     }
                     break;
                 }
@@ -175,8 +176,8 @@ public class ActiveFailureDetector extends GSThread implements FaultDetectionLis
         if (Thread.currentThread() != this)
             interrupt();
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, toString() + " active failure detector has terminated");
+        if (_logger.isDebugEnabled())
+            _logger.debug(toString() + " active failure detector has terminated");
     }
 
     @Override

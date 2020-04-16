@@ -27,8 +27,9 @@ import net.jini.lookup.JoinManager;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*******************************************************************************
  * Copyright (c) 2010 GigaSpaces Technologies Ltd. All rights reserved
@@ -72,7 +73,7 @@ public class ServiceAdminImpl
     //protected ProxyPreparer m_locatorPreparer = new BasicProxyPreparer();
 
     //logger
-    private static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_ADMIN);
+    private static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ADMIN);
 
     /**
      * Constructs a <code>ServiceAdminImpl</code>.
@@ -118,8 +119,8 @@ public class ServiceAdminImpl
                         m_exporter.unexport(true);
                 }
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, ex.getMessage(), ex);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(ex.getMessage(), ex);
                 }
             }
     }

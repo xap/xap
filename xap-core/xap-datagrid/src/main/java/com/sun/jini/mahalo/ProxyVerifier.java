@@ -31,8 +31,9 @@ import net.jini.security.proxytrust.TrustEquivalence;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Defines a trust verifier for the smart proxies of a Mahalo server.
@@ -45,7 +46,7 @@ final class ProxyVerifier implements TrustVerifier, Serializable {
      * Logger for logging information about this instance
      */
     private static final Logger logger =
-            Logger.getLogger("net.jini.security.trust");
+            LoggerFactory.getLogger("net.jini.security.trust");
 
     /**
      * The Mahalo server proxy.
@@ -90,7 +91,7 @@ final class ProxyVerifier implements TrustVerifier, Serializable {
      */
     public boolean isTrustedObject(Object obj, TrustVerifier.Context ctx)
             throws RemoteException {
-        if (logger.isLoggable(Level.FINER)) {
+        if (logger.isDebugEnabled()) {
             LogUtils.entering(logger, ProxyVerifier.class, "isTrustedObject", new Object[]{obj, ctx});
         }
         if (obj == null || ctx == null) {
@@ -116,7 +117,7 @@ final class ProxyVerifier implements TrustVerifier, Serializable {
             otherServerProxy = (RemoteMethodControl) obj;
             inputProxyID = proxyID;
         } else {
-            logger.log(Level.FINEST, "Object {0} is not a supported type",
+            logger.trace("Object {0} is not a supported type",
                     obj);
             return false;
         }
@@ -131,7 +132,7 @@ final class ProxyVerifier implements TrustVerifier, Serializable {
         TrustEquivalence trusted =
                 (TrustEquivalence) serverProxy.setConstraints(mc);
         boolean result = trusted.checkTrustEquivalence(otherServerProxy);
-        if (logger.isLoggable(Level.FINER)) {
+        if (logger.isDebugEnabled()) {
             LogUtils.exiting(logger, ProxyVerifier.class, "isTrustedObject", Boolean.valueOf(result));
         }
         return result;

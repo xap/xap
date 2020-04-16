@@ -21,8 +21,9 @@ import net.jini.config.Configuration;
 import net.jini.config.ConfigurationException;
 import net.jini.config.NoSuchEntryException;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides static methods for getting entries from a {@link Configuration}. This class cannot be
@@ -55,7 +56,7 @@ public class Config {
     /**
      * Config logger.
      */
-    static final Logger logger = Logger.getLogger("net.jini.config");
+    static final Logger logger = LoggerFactory.getLogger("net.jini.config");
 
     /**
      * Obtains a non-<code>null</code> object from the specified {@link Configuration} using the
@@ -161,8 +162,8 @@ public class Config {
                 defaultValue, data);
 
         if (result == null) {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE,
+            if (logger.isDebugEnabled()) {
+                logger.debug(
                         "{0}, component {1}, name {2}: cannot be null",
                         new Object[]{config, component, name});
             }
@@ -253,8 +254,8 @@ public class Config {
                 new Long(defaultValue))).longValue();
 
         if (!inRange(rslt, min, max)) {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE,
+            if (logger.isDebugEnabled()) {
+                logger.debug(
                         "{0}, component {1}, name {2}: entry is out of range, " +
                                 "value: {3}, valid range: {4}:{5}",
                         new Object[]{config, component, name, new Long(rslt),
@@ -312,8 +313,8 @@ public class Config {
                 new Integer(defaultValue))).intValue();
 
         if (!inRange(rslt, min, max)) {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE,
+            if (logger.isDebugEnabled()) {
+                logger.debug(
                         "{0}, component {1}, name {2}: entry is out of range, " +
                                 "value: {3}, valid range: {4}:{5}",
                         new Object[]{config, component, name, new Integer(rslt),
@@ -371,8 +372,8 @@ public class Config {
                 float.class, new Float(defaultValue))).floatValue();
 
         if (!inRange(rslt, min, max)) {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE,
+            if (logger.isDebugEnabled()) {
+                logger.debug(
                         "{0}, component {1}, name {2}: entry is out of range, " +
                                 "value: {3}, valid range: {4}:{5}",
                         new Object[]{config, component, name, new Float(rslt),

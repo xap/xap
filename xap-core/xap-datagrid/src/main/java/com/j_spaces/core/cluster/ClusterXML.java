@@ -64,8 +64,9 @@ import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
@@ -437,7 +438,7 @@ public class ClusterXML {
     final static public String BC_BROADCAST_ALWAYS = "always";
     final static public String BC_BROADCAST_NEVER = "never";
 
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
 
     /**
      * This constructor is used for both cases: when cluster parameters are passed viw SpaceFinder
@@ -544,8 +545,8 @@ public class ClusterXML {
                             " Using Semi-Dynamic Cluster " + (spaceURL != null ? "\nand SpaceURL:" + spaceURL.getURL() : "\nand cluster schema: " + _clusterSchemaName));
                 }
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, ex.toString(), ex);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(ex.toString(), ex);
                 }
                 throw new CreateException("Failed to load a cluster using a cluster schema. " +
                         "Failed to load the < " + _clusterSchemaName + " > cluster xsl schema.", ex);
@@ -583,8 +584,8 @@ public class ClusterXML {
                 try {
                     JSpaceUtilities.overrideClusterConfigWithXPath(_spaceURL.getCustomProperties(), m_rootDoc);
                 } catch (Exception e) {
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE, "Failed to override the Cluster config using the XPATH passed through the custom properties. Cause:  " + e.toString(), e);
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error("Failed to override the Cluster config using the XPATH passed through the custom properties. Cause:  " + e.toString(), e);
                     }
                 }
             }
@@ -597,23 +598,23 @@ public class ClusterXML {
             // removes all white spaces between XML tags
             JSpaceUtilities.normalize(m_rootDoc);
         } catch (TransformerConfigurationException e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.toString(), e.getException());
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.toString(), e.getException());
             }
             throw new CreateException("Failed to create Transformer instance. Failed to load a cluster using a cluster schema. ", e.getException());
         } catch (TransformerException e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.toString(), e.getException());
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.toString(), e.getException());
             }
             throw new CreateException("Failed to load a cluster using a cluster schema. ", e.getException());
         } catch (ParserConfigurationException e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.toString(), e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.toString(), e);
             }
             throw new CreateException("Failed to load a cluster using a cluster schema. ", e);
         } catch (SAXException e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.toString(), e.getException());
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.toString(), e.getException());
             }
             throw new CreateException("Failed to load a cluster using a cluster schema because of validation errors. ", e);
         }
@@ -633,8 +634,8 @@ public class ClusterXML {
          */
         if (System.getProperty("java.runtime.version").indexOf("1.4") > -1) {
             String[] membersName = getClusterMemberNames();
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("cluster members: " + Arrays.asList(membersName));
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("cluster members: " + Arrays.asList(membersName));
             }
             for (int i = 0; i < membersName.length; i++) {
                 String name = membersName[i];
@@ -646,8 +647,8 @@ public class ClusterXML {
 	           <group-members> -> <member> -> <member-name>
 			 */
             String[] groupMembersArray = getGroupMemberNames();
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine("cluster Group members: " + Arrays.asList(groupMembersArray));
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("cluster Group members: " + Arrays.asList(groupMembersArray));
             }
             for (int i = 0; i < groupMembersArray.length; i++) {
                 validateMemberName(groupMembersArray[i]);
@@ -725,8 +726,8 @@ public class ClusterXML {
                                 try {
                                     JSpaceUtilities.overrideClusterConfigWithXPath(_spaceURL.getCustomProperties(), m_rootDoc);
                                 } catch (Exception e) {
-                                    if (_logger.isLoggable(Level.SEVERE)) {
-                                        _logger.log(Level.SEVERE, "Failed to override the Cluster config using the XPATH passed through the custom properties. Cause:  " + e.toString(), e);
+                                    if (_logger.isErrorEnabled()) {
+                                        _logger.error("Failed to override the Cluster config using the XPATH passed through the custom properties. Cause:  " + e.toString(), e);
                                     }
                                 }
                             }
@@ -744,8 +745,8 @@ public class ClusterXML {
                                     if (transformer == null)
                                         transformer = tFactory.newTransformer();
                                 } catch (TransformerConfigurationException e) {
-                                    if (_logger.isLoggable(Level.SEVERE)) {
-                                        _logger.log(Level.SEVERE, e.toString(), e.getException());
+                                    if (_logger.isErrorEnabled()) {
+                                        _logger.error(e.toString(), e.getException());
                                     }
                                 }
                                 printClusterConfigDebug(null, (Element) staticClusterXmlDoc.getFirstChild(), m_rootDoc,
@@ -782,8 +783,8 @@ public class ClusterXML {
                                 try {
                                     JSpaceUtilities.overrideClusterConfigWithXPath(_spaceURL.getCustomProperties(), m_rootDoc);
                                 } catch (Exception e) {
-                                    if (_logger.isLoggable(Level.SEVERE)) {
-                                        _logger.log(Level.SEVERE, "Failed to override the Cluster config using the XPATH passed through the custom properties. Cause:  " + e.toString(), e);
+                                    if (_logger.isErrorEnabled()) {
+                                        _logger.error("Failed to override the Cluster config using the XPATH passed through the custom properties. Cause:  " + e.toString(), e);
                                     }
                                 }
                             }
@@ -796,8 +797,8 @@ public class ClusterXML {
                                     if (transformer == null)
                                         transformer = tFactory.newTransformer();
                                 } catch (TransformerConfigurationException e) {
-                                    if (_logger.isLoggable(Level.SEVERE)) {
-                                        _logger.log(Level.SEVERE, e.toString(), e.getException());
+                                    if (_logger.isErrorEnabled()) {
+                                        _logger.error(e.toString(), e.getException());
                                     }
                                 }
                                 printClusterConfigDebug(null, null, m_rootDoc, transformer,
@@ -806,8 +807,8 @@ public class ClusterXML {
                             break;
                         }
                     } catch (Throwable ex) {
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE, ex.toString(), ex);
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error(ex.toString(), ex);
                         }
                         throw new ClusterConfigurationException(ex.toString(), ex);
                     }
@@ -892,8 +893,8 @@ public class ClusterXML {
                                     try {
                                         JSpaceUtilities.overrideClusterConfigWithXPath(_spaceURL.getCustomProperties(), m_rootDoc);
                                     } catch (Exception e) {
-                                        if (_logger.isLoggable(Level.SEVERE)) {
-                                            _logger.log(Level.SEVERE, "Failed to override the Cluster config using the XPATH passed through the custom properties. Cause:  " + e.toString(), e);
+                                        if (_logger.isErrorEnabled()) {
+                                            _logger.error("Failed to override the Cluster config using the XPATH passed through the custom properties. Cause:  " + e.toString(), e);
                                         }
                                     }
                                 }
@@ -904,8 +905,8 @@ public class ClusterXML {
                                     try {
                                         JSpaceUtilities.overrideClusterConfigWithXPath(_spaceURL.getCustomProperties(), m_rootDoc);
                                     } catch (Exception e) {
-                                        if (_logger.isLoggable(Level.SEVERE)) {
-                                            _logger.log(Level.SEVERE, "Failed to override the Cluster config using the XPATH passed through the custom properties. Cause:  " + e.toString(), e);
+                                        if (_logger.isErrorEnabled()) {
+                                            _logger.error("Failed to override the Cluster config using the XPATH passed through the custom properties. Cause:  " + e.toString(), e);
                                         }
                                     }
                                 }
@@ -918,8 +919,8 @@ public class ClusterXML {
                                         if (transformer == null)
                                             transformer = tFactory.newTransformer();
                                     } catch (TransformerConfigurationException e) {
-                                        if (_logger.isLoggable(Level.SEVERE)) {
-                                            _logger.log(Level.SEVERE, e.toString(), e.getException());
+                                        if (_logger.isErrorEnabled()) {
+                                            _logger.error(e.toString(), e.getException());
                                         }
                                     }
                                     printClusterConfigDebug(null, staticClusterXmlDoc.getDocumentElement(), m_rootDoc,
@@ -958,8 +959,8 @@ public class ClusterXML {
                                     try {
                                         JSpaceUtilities.overrideClusterConfigWithXPath(_spaceURL.getCustomProperties(), m_rootDoc);
                                     } catch (Exception e) {
-                                        if (_logger.isLoggable(Level.SEVERE)) {
-                                            _logger.log(Level.SEVERE, "Failed to override the Cluster config using the XPATH passed through the custom properties. Cause:  " + e.toString(), e);
+                                        if (_logger.isErrorEnabled()) {
+                                            _logger.error("Failed to override the Cluster config using the XPATH passed through the custom properties. Cause:  " + e.toString(), e);
                                         }
                                     }
                                 }
@@ -972,8 +973,8 @@ public class ClusterXML {
                                         if (transformer == null)
                                             transformer = tFactory.newTransformer();
                                     } catch (TransformerConfigurationException e) {
-                                        if (_logger.isLoggable(Level.SEVERE)) {
-                                            _logger.log(Level.SEVERE, e.toString(), e.getException());
+                                        if (_logger.isErrorEnabled()) {
+                                            _logger.error(e.toString(), e.getException());
                                         }
                                     }
                                     printClusterConfigDebug(null, null, m_rootDoc, transformer,
@@ -982,8 +983,8 @@ public class ClusterXML {
                                 break;
                             }
                         } catch (Throwable ex) {
-                            if (_logger.isLoggable(Level.SEVERE)) {
-                                _logger.log(Level.SEVERE, ex.toString(), ex);
+                            if (_logger.isErrorEnabled()) {
+                                _logger.error(ex.toString(), ex);
                             }
                             throw new ClusterConfigurationException(ex.toString(), ex);
                         }
@@ -998,8 +999,8 @@ public class ClusterXML {
                 if (!urlsStrTokenizer.hasMoreTokens())
                     throw ex;
                 else {
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE, "ClusterXML: " + ex.toString(), ex);
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error("ClusterXML: " + ex.toString(), ex);
                     }
                 }
             }
@@ -1132,8 +1133,8 @@ public class ClusterXML {
 
         long time2 = System.currentTimeMillis();
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("Creation of ClusterPolicy instance for \"" + clusterMemberName +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("Creation of ClusterPolicy instance for \"" + clusterMemberName +
                     "\" cluster member took " + (time2 - time1) + " msec.");
         }
 
@@ -1330,7 +1331,7 @@ public class ClusterXML {
                     // check existent and definition group members in cluster member section
                     for (int x = 0; x < memNameListSize; x++) {
                         if (!groupMemberNames.contains(memNameList.elementAt(x))) {
-                            if (_logger.isLoggable(Level.INFO)) {
+                            if (_logger.isInfoEnabled()) {
                                 _logger.info("WARNING: This member-name: <" + memNameList.elementAt(x) + "> not defined in \"cluster-members\" section. Check " + clusterConfigFile + " cluster config file.");
                             }
                         }
@@ -1639,8 +1640,8 @@ public class ClusterXML {
         value = getNodeValueIfExists(replPolicyNode, REPLICATION_PROCESSING_TYPE);
         if (value != null) {
             replPolicy.setProcessingType(parseProcessingType(value));
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Replication processing type set to: " + value);
+            if (_logger.isDebugEnabled())
+                _logger.debug("Replication processing type set to: " + value);
         }
 
         /*************************** MULTI BUCKET REPLICATION CONFIG ********************/
@@ -2767,7 +2768,7 @@ public class ClusterXML {
                 clusterConfigDebugOutput.append("\n\n==============================================================================================\n");
                 clusterConfigDebugOutput.append("Cluster Configuration: " + _originMsg +
                         "\n---------------------------------------------------------------------------------------- \n");
-                if (!doEnvDump && _logger.isLoggable(Level.INFO)) {
+                if (!doEnvDump && _logger.isInfoEnabled()) {
                     _logger.info(clusterConfigDebugOutput.toString());
                 }
             }
@@ -2783,7 +2784,7 @@ public class ClusterXML {
                 String xslPolicy = sb.toString();
                 clusterConfigDebugOutput.append(xslPolicy);
                 clusterConfigDebugOutput.append("\n ---------------------------------------------------------------------------------------- \n");
-                if (!doEnvDump && _logger.isLoggable(Level.INFO)) {
+                if (!doEnvDump && _logger.isInfoEnabled()) {
                     _logger.info(xslPolicy +
                             "\n ---------------------------------------------------------------------------------------- \n");
                 }
@@ -2793,7 +2794,7 @@ public class ClusterXML {
                 //FOR FLUSHING the xml to sys out for observation in debug
                 clusterConfigDebugOutput.append("\nCluster members XML Document:" +
                         "\n---------------------------------------------------------------------------------------- \n");
-                if (!doEnvDump && _logger.isLoggable(Level.INFO)) {
+                if (!doEnvDump && _logger.isInfoEnabled()) {
                     _logger.info("\nCluster members XML Document:" +
                             "\n ---------------------------------------------------------------------------------------- \n");
                 }
@@ -2810,7 +2811,7 @@ public class ClusterXML {
                 String output = new String(byteArray.toByteArray());
                 clusterConfigDebugOutput.append(output);
                 clusterConfigDebugOutput.append("\n ---------------------------------------------------------------------------------------- \n");
-                if (!doEnvDump && _logger.isLoggable(Level.INFO)) {
+                if (!doEnvDump && _logger.isInfoEnabled()) {
                     _logger.info(output +
                             "\n ---------------------------------------------------------------------------------------- \n");
                 }
@@ -2821,7 +2822,7 @@ public class ClusterXML {
                 clusterConfigDebugOutput.append("\nTransformed Cluster Config XML Document:" +
                         "\n---------------------------------------------------------------------------------------- \n");
                 if (!doEnvDump) {
-                    if (_logger.isLoggable(Level.INFO)) {
+                    if (_logger.isInfoEnabled()) {
                         _logger.info("\nTransformed Cluster Config XML Document:" +
                                 "\n ---------------------------------------------------------------------------------------- \n");
                     }
@@ -2840,15 +2841,15 @@ public class ClusterXML {
                 clusterConfigDebugOutput.append(output);
                 clusterConfigDebugOutput.append("\n ---------------------------------------------------------------------------------------- \n");
                 if (!doEnvDump) {
-                    if (_logger.isLoggable(Level.INFO)) {
+                    if (_logger.isInfoEnabled()) {
                         _logger.info(output +
                                 "\n ---------------------------------------------------------------------------------------- \n");
                     }
                 }
             }
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "failed to print cluster configuration debug output.", e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error("failed to print cluster configuration debug output.", e);
             }
         }
     }

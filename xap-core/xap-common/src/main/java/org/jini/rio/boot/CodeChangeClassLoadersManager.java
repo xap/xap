@@ -20,8 +20,9 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by tamirs
@@ -30,7 +31,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class CodeChangeClassLoadersManager {
 
-    final private static Logger logger = Logger.getLogger("com.gigaspaces.lrmi.classloading");
+    final private static Logger logger = LoggerFactory.getLogger("com.gigaspaces.lrmi.classloading");
     private static CodeChangeClassLoadersManager codeChangeClassLoadersManagerOfSpaceInstance;
 
     private final ClassLoader defaultClassLoader;
@@ -49,13 +50,13 @@ public class CodeChangeClassLoadersManager {
         if(!supportCodeChange){ // disable reloading
             throw new UnsupportedOperationException("Task has supportCodeAnnotation but it is disabled by space");
         }
-        if(logger.isLoggable(Level.FINEST)){
-            logger.finest("Search for class-loader with version ["+supportCodeChangeAnnotationContainer.getVersion()+"] ");
+        if(logger.isTraceEnabled()){
+            logger.trace("Search for class-loader with version ["+supportCodeChangeAnnotationContainer.getVersion()+"] ");
         }
         if(supportCodeChangeAnnotationContainer.getVersion().isEmpty()){ // one time
             CodeChangeClassLoader codeChangeClassLoader = new CodeChangeClassLoader(new URL[]{}, defaultClassLoader);
-            if(logger.isLoggable(Level.FINEST)){
-                logger.finest("Created new class-loader for one time use. New class loader is " + codeChangeClassLoader);
+            if(logger.isTraceEnabled()){
+                logger.trace("Created new class-loader for one time use. New class loader is " + codeChangeClassLoader);
             }
             return codeChangeClassLoader;
         }
@@ -63,8 +64,8 @@ public class CodeChangeClassLoadersManager {
             String classVersion = supportCodeChangeAnnotationContainer.getVersion();
             ClassLoader cachedClassLoader = versionToClassLoadersMap.get(classVersion);
             if(cachedClassLoader != null){ // cached class loader
-                if(logger.isLoggable(Level.FINEST)){
-                    logger.finest("Found class-loader: " + cachedClassLoader + ", with version: " + classVersion);
+                if(logger.isTraceEnabled()){
+                    logger.trace("Found class-loader: " + cachedClassLoader + ", with version: " + classVersion);
                 }
                 return cachedClassLoader;
             }
@@ -87,11 +88,11 @@ public class CodeChangeClassLoadersManager {
         }
         CodeChangeClassLoader codeChangeClassLoader = new CodeChangeClassLoader(new URL[]{}, defaultClassLoader);
         versionToClassLoadersMap.put(version, codeChangeClassLoader);
-        if(logger.isLoggable(Level.INFO)){
+        if(logger.isInfoEnabled()){
             logger.info("Added new class-loader ["+ codeChangeClassLoader +"] for version ["+version+"]");
         }
-        if(logger.isLoggable(Level.FINEST)){
-            logger.finest("Class-loaders: " + versionToClassLoadersMap + " , max-class-loaders=["+maxClassLoaders+"]");
+        if(logger.isTraceEnabled()){
+            logger.trace("Class-loaders: " + versionToClassLoadersMap + " , max-class-loaders=["+maxClassLoaders+"]");
         }
         return codeChangeClassLoader;
     }
@@ -99,7 +100,7 @@ public class CodeChangeClassLoadersManager {
     private void removeOldestClassLoader() {
         String oldestVersion = findOldestVersion();
         CodeChangeClassLoader removedCodeChangeClassLoader = versionToClassLoadersMap.remove(oldestVersion);
-        if(logger.isLoggable(Level.INFO)){
+        if(logger.isInfoEnabled()){
             logger.info("Limit of max-class-loaders=["+maxClassLoaders+"] reached, removing oldest class-loader ["+ removedCodeChangeClassLoader +"] for version ["+oldestVersion+"]");
         }
     }

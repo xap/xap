@@ -25,8 +25,9 @@ import com.j_spaces.core.Constants.QueryProcessorInfo;
 import com.j_spaces.core.JSpaceAttributes;
 
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -38,7 +39,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class QueryProcessorConfiguration {
     //logger 
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_QUERY);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     private static final String TRACE_EXEC_TIME_PROPERTY = "TRACE_EXEC_TIME";
 
@@ -94,8 +95,8 @@ public class QueryProcessorConfiguration {
         // set properties from override properties file
         configure(localProps);
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine("\n QueryProcessor configuration:\n\t"
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("\n QueryProcessor configuration:\n\t"
                     + "parserCaseSensitivity=" + _parserCaseSensitivity + "\n\t"
                     + "writeLease=" + _writeLease + "\n" + "\t"
                     + "readLease=" + _readLease + "\n" + "\t"

@@ -22,7 +22,8 @@ import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.cache.blobStore.sadapter.BlobStoreFifoInitialLoader;
 
 import java.util.LinkedList;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * cache-manager information about initial load performed

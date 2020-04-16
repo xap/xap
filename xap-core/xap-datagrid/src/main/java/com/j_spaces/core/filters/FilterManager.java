@@ -46,8 +46,9 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.Filter.DEFAULT_ACTIVE_WHEN_BACKUP;
 import static com.j_spaces.core.Constants.Filter.DEFAULT_FILTER_ENABLE_VALUE;
@@ -68,7 +69,7 @@ import static com.j_spaces.core.Constants.Filter.FILTER_URL_TAG_NAME;
 
 @com.gigaspaces.api.InternalApi
 public class FilterManager implements ISpaceComponentsHandler {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_FILTERS);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_FILTERS);
 
     private static final int MAX_FILTER_PRIORITIES = 5;
     private static final String DEFAULT_NAME = "default";
@@ -190,21 +191,21 @@ public class FilterManager implements ISpaceComponentsHandler {
                     filterNamePrefix + FILTER_CLASS_TAG_NAME, DEFAULT_NAME);
             if (classname.equals(DEFAULT_NAME)) {
                 // invalid class name
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.severe("Failed to add filter " + filterName + ": " + "no class name specified");
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to add filter " + filterName + ": " + "no class name specified");
                 continue;
             }
             int priority;
             try {
                 priority = configReader.getIntSpaceProperty(filterNamePrefix + FILTER_PRIORITY_TAG_NAME, "0");
             } catch (Exception e) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to add filter " + filterName + ": " + "invalid priority specified", e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to add filter " + filterName + ": " + "invalid priority specified", e);
                 continue;
             }
             if (priority < 0 || priority >= MAX_FILTER_PRIORITIES) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.severe("Failed to add filter " + filterName + ": " + "invalid priority specified: ");
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to add filter " + filterName + ": " + "invalid priority specified: ");
                 continue;
             }
             String url = configReader.getSpaceProperty(filterNamePrefix + FILTER_URL_TAG_NAME, null);
@@ -215,21 +216,21 @@ public class FilterManager implements ISpaceComponentsHandler {
                 try {
                     operation_code = Integer.parseInt(op);
                 } catch (Exception e) {
-                    if (_logger.isLoggable(Level.SEVERE))
-                        _logger.log(Level.SEVERE, "Failed to add filter " + filterName + ": " + "invalid operation-code specified: " + op, e);
+                    if (_logger.isErrorEnabled())
+                        _logger.error("Failed to add filter " + filterName + ": " + "invalid operation-code specified: " + op, e);
                     continue;
                 }
                 if (operation_code < 0 || operation_code >= FilterOperationCodes.MAX_FILTER_OPERATION_CODES) {
-                    if (_logger.isLoggable(Level.SEVERE))
-                        _logger.severe("Failed to add filter " + filterName + ": " + "invalid operation-code specified: " + operation_code);
+                    if (_logger.isErrorEnabled())
+                        _logger.error("Failed to add filter " + filterName + ": " + "invalid operation-code specified: " + operation_code);
                     continue;
                 }
 
                 op_arr.add(operation_code);
             }
             if (op_arr.isEmpty()) {
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.severe("Failed to add filter " + filterName + ": " + "no operation-code specified.");
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to add filter " + filterName + ": " + "no operation-code specified.");
                 continue;
             }
 
@@ -237,8 +238,8 @@ public class FilterManager implements ISpaceComponentsHandler {
                 add(filterName, op_arr.toNativeArray(), priority, url, classname, isActiveWhenBackup, shutdownSpaceOnInitFailure, passFilterEntry, tempFilterConstruction);
             } catch (Exception e) {
                 // continue to next filter
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "Failed to add filter " + filterName, e);
+                if (_logger.isErrorEnabled())
+                    _logger.error("Failed to add filter " + filterName, e);
                 continue;
             }
         }
@@ -251,8 +252,8 @@ public class FilterManager implements ISpaceComponentsHandler {
         try {
             filterObject = (ISpaceFilter) ClassLoaderHelper.loadClass(classname).newInstance();
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "Failed to add filter " + filterId + ": " + "newInstance() aborted", e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error("Failed to add filter " + filterId + ": " + "newInstance() aborted", e);
             }
 
             return;
@@ -300,8 +301,8 @@ public class FilterManager implements ISpaceComponentsHandler {
             try {
                 filterHolder.getFilter().close(); // could throw RuntimeException
             } catch (RuntimeException ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, "Failed to close filter " + filterHolder.getName(), ex);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error("Failed to close filter " + filterHolder.getName(), ex);
                 }
             }
         }
@@ -435,8 +436,8 @@ public class FilterManager implements ISpaceComponentsHandler {
 
             try {
                 if (filterHolder.isInitialized()) {
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE, "Failed to initialize filter - filter already initialized "
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Failed to initialize filter - filter already initialized "
                                 + filterHolder.getName());
                     }
                     continue;
@@ -445,8 +446,8 @@ public class FilterManager implements ISpaceComponentsHandler {
                         filterHolder.getPriority());
                 filterHolder.setInitialized();
             } catch (RuntimeException ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, "Failed to initialize filter " + filterHolder.getName(), ex);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error("Failed to initialize filter " + filterHolder.getName(), ex);
                 }
 
                 // Check if space needs to be closed
@@ -459,12 +460,12 @@ public class FilterManager implements ISpaceComponentsHandler {
                     try {
                         filterObject.close();
 
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.fine("FilterManager: Filter: " + filterHolder.getName() + " closed successfully.");
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug("FilterManager: Filter: " + filterHolder.getName() + " closed successfully.");
                         }
                     } catch (Exception e) {
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.log(Level.FINE, "FilterManager:  Failed to close " + filterHolder.getName(), ex);
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug("FilterManager:  Failed to close " + filterHolder.getName(), ex);
                         }
                     }
                 }
@@ -499,8 +500,8 @@ public class FilterManager implements ISpaceComponentsHandler {
             try {
                 filterHolder.close(); // could throw RuntimeException
             } catch (RuntimeException ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, "Failed to close filter " + filterHolder.getName(), ex);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error("Failed to close filter " + filterHolder.getName(), ex);
                 }
             }
         }

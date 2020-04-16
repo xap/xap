@@ -25,8 +25,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The synchronizing direct-persistency  embedded list handler
@@ -70,8 +71,8 @@ public class EmbeddedSyncHandler {
         for (EmbeddedSyncSegment seg : _segments)
             seg.initialize();
         _gensHandler.initialize();
-        if (getLogger().isLoggable(Level.FINE)) {
-            getLogger().log(Level.FINE, "[" + _mainSyncHandler.getSpaceEngine().getFullSpaceName() + "]" + " Embedded sync list handler was initialized with " + getNumSegments() + " segments");
+        if (getLogger().isDebugEnabled()) {
+            getLogger().debug("[" + _mainSyncHandler.getSpaceEngine().getFullSpaceName() + "]" + " Embedded sync list handler was initialized with " + getNumSegments() + " segments");
         }
     }
 
@@ -98,8 +99,8 @@ public class EmbeddedSyncHandler {
         IEmbeddedSyncOpInfo oi = originalOpInfo.getEmbeddedSyncOpInfo();
         int segmentNumber = originalOpInfo.getSegmentNumber();
         synchronized (oi) {
-            if (getLogger().isLoggable(Level.FINER)) {
-                getLogger().log(Level.FINER, "[" + _mainSyncHandler.getSpaceEngine().getFullSpaceName() + "]" + " Adding " + originalOpInfo
+            if (getLogger().isDebugEnabled()) {
+                getLogger().debug("[" + _mainSyncHandler.getSpaceEngine().getFullSpaceName() + "]" + " Adding " + originalOpInfo
                         + " to embedded sync list handler segment [" + segmentNumber + "] , phantom? [" + oi.containsPhantom(originalOpInfo.getUid()) + "]");
             }
             if (oi.containsPhantom(originalOpInfo.getUid()))
@@ -112,8 +113,8 @@ public class EmbeddedSyncHandler {
         int segmentNumber = originalOpInfo.getSegmentNumber();
         EmbeddedMultiUidsSyncOpInfo oi = (EmbeddedMultiUidsSyncOpInfo) originalOpInfo.getEmbeddedSyncOpInfo();
         synchronized (oi) {
-            if (getLogger().isLoggable(Level.FINER)) {
-                getLogger().log(Level.FINER, "[" + _mainSyncHandler.getSpaceEngine().getFullSpaceName() + "]" + " Adding " + originalOpInfo
+            if (getLogger().isDebugEnabled()) {
+                getLogger().debug("[" + _mainSyncHandler.getSpaceEngine().getFullSpaceName() + "]" + " Adding " + originalOpInfo
                         + " to embedded sync list handler segment [" + segmentNumber + "] , has phantoms? [" + oi.containsAnyPhantom() + "]");
             }
             if (oi.containsAnyPhantom()) {

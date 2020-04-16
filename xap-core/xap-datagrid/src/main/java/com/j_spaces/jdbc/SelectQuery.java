@@ -62,8 +62,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -94,7 +95,7 @@ public class SelectQuery extends AbstractDMLQuery {
     protected AggregationSet _aggregationSet;
 
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_QUERY);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
     private boolean isSelectAll;
 
     public SelectQuery() {
@@ -201,8 +202,8 @@ public class SelectQuery extends AbstractDMLQuery {
                 }
                 // Handle queries that won't return anything
                 else if (expTree.getTemplate().isAlwaysEmpty()) {
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE, "Logical error - query is always empty - fix your SQL syntax");
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Logical error - query is always empty - fix your SQL syntax");
                     }
 
                     // Build only queries can't be handled
@@ -279,8 +280,8 @@ public class SelectQuery extends AbstractDMLQuery {
         } catch (BatchQueryException e) {
             throw e;
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.SEVERE, e.getMessage(), e);
+            if (_logger.isDebugEnabled()) {
+                _logger.error(e.getMessage(), e);
             }
             throw new SQLException("Select failed; Cause: " + e, "GSP", -120, e);
         }
@@ -430,8 +431,8 @@ public class SelectQuery extends AbstractDMLQuery {
 
             return response;
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.getMessage(), e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.getMessage(), e);
             }
             throw new SQLException("Failed to execute count: " + e, "GSP", -111);
         }
@@ -576,8 +577,8 @@ public class SelectQuery extends AbstractDMLQuery {
                     count += entryCount;
                 }
             } catch (IllegalArgumentException ex) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, "Trying to count single space when the metadata is not available.", ex);
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Trying to count single space when the metadata is not available.", ex);
                 }
                 // Workaround in case the type was not introduced yet.
             }
@@ -766,13 +767,13 @@ public class SelectQuery extends AbstractDMLQuery {
                 commonJavaType = ReflectionUtils.isCommonJavaType(type) || type.isEnum();
             }
             catch( NoSuchFieldException e ){
-                if( _logger.isLoggable(Level.WARNING)){
-                    _logger.log(Level.WARNING, "Field [" + columnPath + "] does not exist", e );
+                if( _logger.isWarnEnabled()){
+                    _logger.warn("Field [" + columnPath + "] does not exist", e );
                 }
             }
             catch( Exception e ){
-                if( _logger.isLoggable(Level.SEVERE)){
-                    _logger.log(Level.SEVERE, "Failed verifying common Java type for [" + columnPath + "]", e );
+                if( _logger.isErrorEnabled()){
+                    _logger.error("Failed verifying common Java type for [" + columnPath + "]", e );
                 }
             }
         }

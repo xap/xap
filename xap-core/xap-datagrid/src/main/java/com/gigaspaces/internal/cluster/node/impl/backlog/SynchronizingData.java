@@ -23,8 +23,9 @@ import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.ObjectLongMap;
 import com.j_spaces.core.exception.internal.ReplicationInternalSpaceException;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @com.gigaspaces.api.InternalApi
@@ -70,8 +71,8 @@ public class SynchronizingData<T extends IReplicationPacketData<?>> {
         // (This can happen for example if there is a prepared transaction but
         // the mahalo crashed and the abort/commit never occurred.
         if (key - _keyWhenCopyStageCompleted >= _maxAfterIterationDoneStageLength) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.warning("Synchronization state at completion stage exceeded the allowed number of packets, synchronization state is moving to done");
+            if (_logger.isWarnEnabled())
+                _logger.warn("Synchronization state at completion stage exceeded the allowed number of packets, synchronization state is moving to done");
             return true;
         }
         // We are done when data synchronization state is done
@@ -85,8 +86,8 @@ public class SynchronizingData<T extends IReplicationPacketData<?>> {
     public synchronized boolean filterEntryData(String uid, long packetKey,
                                                 boolean filterIfNotPresentInReplicaState) {
         if (!_entriesUidMap.containsKey(uid)) {
-            if (_logger.isLoggable(Level.FINER)) {
-                _logger.finer("[SynchronizingData::filterEntryData] not in _entriesUidMap: uid=" + uid + " ,_keyWhenCopyStageCompleted=" + _keyWhenCopyStageCompleted +
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("[SynchronizingData::filterEntryData] not in _entriesUidMap: uid=" + uid + " ,_keyWhenCopyStageCompleted=" + _keyWhenCopyStageCompleted +
                         " ,packetKey=" + packetKey + " ,isDirectPersistency=" + _isDirectPersistencySync);
             }
             //don't filter any data from redo log (which is not in sync list) when doing direct persistency sync list recovery
@@ -112,8 +113,8 @@ public class SynchronizingData<T extends IReplicationPacketData<?>> {
         // after the data generation related to this uid happened.
         // since replication is sequential from now on we will only process
         // newer events
-        if (_logger.isLoggable(Level.FINER)) {
-            _logger.finer("[SynchronizingData::filterEntryData] in _entriesUidMap: uid=" + uid + " ,_keyWhenCopyStageCompleted=" + _keyWhenCopyStageCompleted +
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("[SynchronizingData::filterEntryData] in _entriesUidMap: uid=" + uid + " ,_keyWhenCopyStageCompleted=" + _keyWhenCopyStageCompleted +
                     " ,packetKey=" + packetKey + " ,isDirectPersistency=" + _isDirectPersistencySync);
         }
         return keyAtGenerationTime >= packetKey;

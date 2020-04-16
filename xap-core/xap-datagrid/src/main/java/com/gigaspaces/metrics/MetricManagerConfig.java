@@ -33,8 +33,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -43,7 +44,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class MetricManagerConfig {
 
-    private static final Logger logger = Logger.getLogger(Constants.LOGGER_METRICS_MANAGER);
+    private static final Logger logger = LoggerFactory.getLogger(Constants.LOGGER_METRICS_MANAGER);
     private final String separator;
     private final MetricPatternSet patterns;
     private final Map<String, MetricReporterFactory> reportersFactories;
@@ -80,18 +81,18 @@ public class MetricManagerConfig {
 
         if (file.exists()) {
             if (file.canRead()) {
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.log(Level.FINE, "Loading metrics configuration from " + file.getAbsolutePath());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Loading metrics configuration from " + file.getAbsolutePath());
                 }
                 config.loadXml(fileName);
             } else {
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.log(Level.FINE, "Unable to read metrics configuration from " + file.getAbsolutePath());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Unable to read metrics configuration from " + file.getAbsolutePath());
                 }
             }
         } else {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "Metrics configuration file " + file.getAbsolutePath() + " does not exist");
+            if (logger.isDebugEnabled()) {
+                logger.debug("Metrics configuration file " + file.getAbsolutePath() + " does not exist");
             }
         }
         return config;
@@ -167,10 +168,10 @@ public class MetricManagerConfig {
             if (Boolean.parseBoolean(System.getProperty(SystemProperties.UI_ENABLED, "true"))) {
                 XapManagerClusterInfo managerClusterInfo = SystemInfo.singleton().getManagerClusterInfo();
                 if (managerClusterInfo.isEmpty()) {
-                    logger.fine("Skipping default metrics ui reporter - manager not configured");
+                    logger.debug("Skipping default metrics ui reporter - manager not configured");
                 } else {
                     String firstHost = managerClusterInfo.getServers()[0].getHost();
-                    logger.fine("Creating default metrics ui reporter to first manager: " + firstHost);
+                    logger.debug("Creating default metrics ui reporter to first manager: " + firstHost);
                     MetricReporterFactory factory = toFactory("hsqldb", null);
                     Properties properties = new Properties();
                     properties.setProperty("driverClassName", "org.hsqldb.jdbc.JDBCDriver");
@@ -183,7 +184,7 @@ public class MetricManagerConfig {
                     reportersFactories.put("ui", factory);
                 }
             } else {
-                logger.fine("Skipping default metrics ui reporter - ui is disabled");
+                logger.debug("Skipping default metrics ui reporter - ui is disabled");
             }
         }
     }

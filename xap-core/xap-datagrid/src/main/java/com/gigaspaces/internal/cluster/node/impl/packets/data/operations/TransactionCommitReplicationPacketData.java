@@ -26,7 +26,7 @@ import com.j_spaces.core.OperationID;
 
 import net.jini.core.transaction.server.ServerTransaction;
 
-import java.util.logging.Level;
+
 
 /**
  * Replication packet representing transaction commit
@@ -54,8 +54,8 @@ public class TransactionCommitReplicationPacketData
     @Override
     public void execute(IReplicationInContext context,
                         IReplicationInFacade inReplicationHandler, ReplicationPacketDataMediator dataMediator) throws Exception {
-        if (!attachPrepareContent(dataMediator) && context.getContextLogger() != null && context.getContextLogger().isLoggable(Level.WARNING))
-            context.getContextLogger().warning("No previous transaction pending state exists for replicated packet data " + toString() + ", ignoring operation");
+        if (!attachPrepareContent(dataMediator) && context.getContextLogger() != null && context.getContextLogger().isWarnEnabled())
+            context.getContextLogger().warn("No previous transaction pending state exists for replicated packet data " + toString() + ", ignoring operation");
 
         inReplicationHandler.inTransactionCommit(context, this);
     }

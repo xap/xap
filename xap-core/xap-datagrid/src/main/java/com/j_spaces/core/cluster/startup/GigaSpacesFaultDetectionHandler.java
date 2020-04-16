@@ -28,8 +28,9 @@ import net.jini.config.ConfigurationProvider;
 import net.jini.core.lookup.ServiceID;
 
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides support to determine the reachability of the GigaSpace service. The
@@ -108,7 +109,7 @@ public class GigaSpacesFaultDetectionHandler extends AbstractFaultDetectionHandl
     /**
      * A Logger
      */
-    static Logger logger = Logger.getLogger(COMPONENT);
+    static Logger logger = LoggerFactory.getLogger(COMPONENT);
 
     /**
      * @see org.jini.rio.core.FaultDetectionHandler#setConfiguration
@@ -142,15 +143,15 @@ public class GigaSpacesFaultDetectionHandler extends AbstractFaultDetectionHandl
                     0,
                     Long.MAX_VALUE);
 
-            if (logger.isLoggable(Level.FINEST)) {
+            if (logger.isTraceEnabled()) {
                 StringBuilder buffer = new StringBuilder("GigaSpacesFaultDetectionHandler Properties : ");
                 buffer.append("retry count=" + retryCount + ", ");
                 buffer.append("retry timeout=" + retryTimeout + ", ");
                 buffer.append("invocationDelay=" + invocationDelay);
-                logger.finest(buffer.toString());
+                logger.trace(buffer.toString());
             }
         } catch (ConfigurationException e) {
-            logger.log(Level.SEVERE, "Setting Configuration", e);
+            logger.error("Setting Configuration", e);
         }
     }
 
@@ -208,8 +209,8 @@ public class GigaSpacesFaultDetectionHandler extends AbstractFaultDetectionHandl
          * Its all over
          */
         public void drop() {
-            if (logger.isLoggable(Level.FINEST))
-                logger.finest("Terminating GigaSpacesFaultDetectionHandler " +
+            if (logger.isTraceEnabled())
+                logger.trace("Terminating GigaSpacesFaultDetectionHandler " +
                         "Thread");
             keepAlive = false;
             interrupt();
@@ -228,8 +229,8 @@ public class GigaSpacesFaultDetectionHandler extends AbstractFaultDetectionHandl
                 checkAvailability();
                 verified = true;
             } catch (RemoteException e) {
-                if (logger.isLoggable(Level.FINEST))
-                    logger.finest("RemoteException reaching space, " +
+                if (logger.isTraceEnabled())
+                    logger.trace("RemoteException reaching space, " +
                             "space cannot be reached");
                 keepAlive = false;
             } catch (Throwable t) {
@@ -237,8 +238,8 @@ public class GigaSpacesFaultDetectionHandler extends AbstractFaultDetectionHandl
                 if (category == ThrowableConstants.BAD_INVOCATION ||
                         category == ThrowableConstants.BAD_OBJECT) {
                     keepAlive = false;
-                    if (logger.isLoggable(Level.FINE))
-                        logger.log(Level.FINE,
+                    if (logger.isDebugEnabled())
+                        logger.debug(
                                 "Unrecoverable Exception invoking " +
                                         "IJSpace.ping()",
                                 t);
@@ -253,8 +254,8 @@ public class GigaSpacesFaultDetectionHandler extends AbstractFaultDetectionHandl
                 if (!keepAlive) {
                     return;
                 }
-                if (logger.isLoggable(Level.FINEST))
-                    logger.finest("GSPingManager: Wait for " +
+                if (logger.isTraceEnabled())
+                    logger.trace("GSPingManager: Wait for " +
                             "[" + invocationDelay + "] millis " +
                             "to invoke ping() on " +
                             spaceProxy.getClass().getName());
@@ -262,20 +263,20 @@ public class GigaSpacesFaultDetectionHandler extends AbstractFaultDetectionHandl
                     sleep(invocationDelay);
                 } catch (InterruptedException ie) {
 
-                    if (logger.isLoggable(Level.FINEST)) {
-                        logger.log(Level.FINEST, Thread.currentThread().getName() + " interrupted.", ie);
+                    if (logger.isTraceEnabled()) {
+                        logger.trace(Thread.currentThread().getName() + " interrupted.", ie);
                     }
                     //Restore the interrupted status
                     interrupt();
 
                     //fall through
                 } catch (IllegalArgumentException iae) {
-                    logger.warning("GSPingManager: sleep time is off : "
+                    logger.warn("GSPingManager: sleep time is off : "
                             + invocationDelay);
                 }
                 try {
-                    if (logger.isLoggable(Level.FINEST))
-                        logger.finest("invoke ping() on : "
+                    if (logger.isTraceEnabled())
+                        logger.trace("invoke ping() on : "
                                 + spaceProxy.getClass().getName());
                     checkAvailability();
                 } catch (Exception e) {
@@ -283,8 +284,8 @@ public class GigaSpacesFaultDetectionHandler extends AbstractFaultDetectionHandl
                     if (category == ThrowableConstants.BAD_INVOCATION ||
                             category == ThrowableConstants.BAD_OBJECT) {
                         keepAlive = false;
-                        if (logger.isLoggable(Level.FINE))
-                            logger.log(Level.FINE,
+                        if (logger.isDebugEnabled())
+                            logger.debug(
                                     "Unrecoverable Exception invoking " +
                                             "ping()",
                                     e);
@@ -295,8 +296,8 @@ public class GigaSpacesFaultDetectionHandler extends AbstractFaultDetectionHandl
                      * Lease
                      */
                     if (keepAlive) {
-                        if (logger.isLoggable(Level.FINEST))
-                            logger.finest("Failed to invoke ping() on : "
+                        if (logger.isTraceEnabled())
+                            logger.trace("Failed to invoke ping() on : "
                                     + spaceProxy.getClass().getName()
                                     + ", retry [" + retryCount + "] " +
                                     "times, waiting [" + retryTimeout + "] " +
@@ -306,22 +307,22 @@ public class GigaSpacesFaultDetectionHandler extends AbstractFaultDetectionHandl
                             long t0 = 0;
                             long t1 = 0;
                             try {
-                                if (logger.isLoggable(Level.FINEST))
-                                    logger.finest("Attempt to invoke ping() " +
+                                if (logger.isTraceEnabled())
+                                    logger.trace("Attempt to invoke ping() " +
                                             "on : " +
                                             spaceProxy.getClass().getName() +
                                             ", attempt [" + i + "]");
                                 t0 = System.currentTimeMillis();
                                 checkAvailability();
-                                if (logger.isLoggable(Level.FINEST))
-                                    logger.finest("Re-established connection to : " +
+                                if (logger.isTraceEnabled())
+                                    logger.trace("Re-established connection to : " +
                                             spaceProxy.getClass().getName());
                                 connected = true;
                                 break;
                             } catch (Exception e1) {
                                 t1 = System.currentTimeMillis();
-                                if (logger.isLoggable(Level.FINEST))
-                                    logger.finest("Invocation attempt [" + i + "] " +
+                                if (logger.isTraceEnabled())
+                                    logger.trace("Invocation attempt [" + i + "] " +
                                             "took [" + (t1 - t0) + "] " +
                                             "millis to fail for : " +
                                             spaceProxy.getClass().getName());
@@ -329,8 +330,8 @@ public class GigaSpacesFaultDetectionHandler extends AbstractFaultDetectionHandl
                                     try {
                                         sleep(retryTimeout);
                                     } catch (InterruptedException ie) {
-                                        if (logger.isLoggable(Level.FINEST)) {
-                                            logger.log(Level.FINEST, Thread.currentThread().getName() + " interrupted.", ie);
+                                        if (logger.isTraceEnabled()) {
+                                            logger.trace(Thread.currentThread().getName() + " interrupted.", ie);
                                         }
                                         //Restore the interrupted status
                                         interrupt();
@@ -341,13 +342,13 @@ public class GigaSpacesFaultDetectionHandler extends AbstractFaultDetectionHandl
                             }
                         }
                         if (!connected) {
-                            if (logger.isLoggable(Level.FINEST)) {
+                            if (logger.isTraceEnabled()) {
                                 if (spaceProxy != null)
-                                    logger.finest("Unable to invoke ping() on " +
+                                    logger.trace("Unable to invoke ping() on " +
                                             "[" + spaceProxy.getClass().getName() +
                                             "], notify listeners and exit");
                                 else
-                                    logger.finest("Unable to invoke ping() " +
+                                    logger.trace("Unable to invoke ping() " +
                                             "[null spaceProxy], notify listeners " +
                                             "and exit");
                             }

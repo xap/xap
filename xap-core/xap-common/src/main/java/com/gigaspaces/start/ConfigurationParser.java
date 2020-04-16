@@ -35,8 +35,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -46,7 +47,7 @@ import javax.xml.parsers.ParserConfigurationException;
 public class ConfigurationParser {
     private DocumentBuilderFactory factory = null;
     private DocumentBuilder builder = null;
-    static Logger logger = Logger.getLogger("com.gigaspaces.start");
+    static Logger logger = LoggerFactory.getLogger("com.gigaspaces.start");
 
     /**
      * Create a new ConfigurationParser, without document validation.
@@ -245,12 +246,12 @@ public class ConfigurationParser {
             props.put(name, value);
         }
 
-        if (logger.isLoggable(Level.FINEST)) {
+        if (logger.isTraceEnabled()) {
             String tagName = element.getTagName();
             if (element.getParentNode() != null &&
                     element.getParentNode() instanceof Element)
                 tagName = ((Element) element.getParentNode()).getTagName() + "." + tagName;
-            logger.finest("Element [" + tagName + "], " +
+            logger.trace("Element [" + tagName + "], " +
                     "Parameters: " + props.toString());
         }
         return (props);

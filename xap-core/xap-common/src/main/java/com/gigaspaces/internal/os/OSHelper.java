@@ -23,8 +23,9 @@ import com.gigaspaces.internal.os.sigar.SigarOSStatisticsProbe;
 import com.gigaspaces.internal.oshi.OshiChecker;
 import com.gigaspaces.internal.sigar.SigarChecker;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author kimchy
@@ -32,7 +33,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class OSHelper {
 
-    private static final Logger _logger = Logger.getLogger("com.gigaspaces.os");
+    private static final Logger _logger = LoggerFactory.getLogger("com.gigaspaces.os");
 
     private static final OSStatisticsProbe statisticsProbe;
 
@@ -55,7 +56,7 @@ public class OSHelper {
                     statisticsProbeX.probeStatistics();
                 } catch (Throwable t) {
                     statisticsProbeX = null;
-                    _logger.log(Level.FINE, "Trying to load sigar failed", t);
+                    _logger.debug("Trying to load sigar failed", t);
                     // ignore, no sigar
                 }
             }
@@ -66,7 +67,7 @@ public class OSHelper {
                     statisticsProbeX.probeStatistics();
                 } catch (Throwable t) {
                     statisticsProbeX = null;
-                    _logger.log(Level.FINE, "Trying to load JMX failed", t);
+                    _logger.debug("Trying to load JMX failed", t);
                     // ignore, no sigar
                 }
             }
@@ -92,7 +93,7 @@ public class OSHelper {
                     detailsProbeX.probeDetails();
                 } catch (Throwable t) {
                     detailsProbeX = null;
-                    _logger.log(Level.FINE, "Trying to load sigar failed", t);
+                    _logger.debug("Trying to load sigar failed", t);
                     // ignore, no sigar
                 }
             }
@@ -103,7 +104,7 @@ public class OSHelper {
                     detailsProbeX.probeDetails();
                 } catch (Throwable t) {
                     detailsProbeX = null;
-                    _logger.log(Level.FINE, "Trying to load JMX failed", t);
+                    _logger.debug("Trying to load JMX failed", t);
                     // ignore, no sigar
                 }
             }
@@ -131,7 +132,7 @@ public class OSHelper {
             details = detailsProbe.probeDetails();
             return details;
         } catch (Exception e) {
-            _logger.log(Level.FINE, "Failed to get configuration", e);
+            _logger.debug("Failed to get configuration", e);
             e.printStackTrace();
             return NA_DETAILS;
         }
@@ -144,7 +145,7 @@ public class OSHelper {
         try {
             return statisticsProbe.probeStatistics();
         } catch (Exception e) {
-            _logger.log(Level.FINE, "Failed to get stats", e);
+            _logger.debug("Failed to get stats", e);
             return NA_STATISTICS;
         }
     }

@@ -27,8 +27,9 @@ import com.j_spaces.kernel.list.IScanListIterator;
 
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * handles prefetch activity
@@ -176,8 +177,8 @@ public class BlobStorePreFetchIteratorBasedHandler implements IScanListIterator<
                 try {
                     _lock.wait(w);
                 } catch (InterruptedException e) {
-                    if (_logger.isLoggable(Level.SEVERE))
-                        _logger.log(Level.SEVERE, "PreFetchIterator got an exception:", e);
+                    if (_logger.isErrorEnabled())
+                        _logger.error("PreFetchIterator got an exception:", e);
 
                     throw new BlobStoreException(e);
                 }
@@ -193,8 +194,8 @@ public class BlobStorePreFetchIteratorBasedHandler implements IScanListIterator<
             }
             if (r == null) {
                 BlobStoreException ex = new BlobStoreException("PreFetchIterator:getNextBatchNonFifo could not get any batch on time");
-                if (_logger.isLoggable(Level.SEVERE))
-                    _logger.log(Level.SEVERE, "PreFetchIterator got an exception:", ex);
+                if (_logger.isErrorEnabled())
+                    _logger.error("PreFetchIterator got an exception:", ex);
                 throw ex;
             }
         }

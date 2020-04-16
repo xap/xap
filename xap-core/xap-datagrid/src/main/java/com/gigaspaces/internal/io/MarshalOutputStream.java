@@ -32,8 +32,9 @@ import java.io.OutputStream;
 import java.rmi.server.RMIClassLoader;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -63,7 +64,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class MarshalOutputStream
         extends AnnotatedObjectOutputStream {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI_MARSHAL);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_MARSHAL);
     private static final int CODE_DISABLED = -1;
     private static final int CODE_NULL = 0;
 
@@ -217,8 +218,8 @@ public class MarshalOutputStream
     }
 
     private static void logFinest(String log) {
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.log(Level.FINEST, log + ", context=" + LRMIInvocationContext.getContextMethodLongDisplayString());
+        if (_logger.isTraceEnabled()) {
+            _logger.trace(log + ", context=" + LRMIInvocationContext.getContextMethodLongDisplayString());
         }
     }
 
@@ -238,14 +239,14 @@ public class MarshalOutputStream
         public synchronized void putObjectStreamClassKey(ObjectStreamClass desc, int key) {
             ClassLoaderContext classLoaderContext = getClassLoaderContext(true);
             classLoaderContext.putObjectStreamClass(desc, key);
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logFinest("Adding new ObjectStreamClass to outgoing context [" + desc.getName() + "] with specified key " + key + ", context class loader key " + classLoaderContext.getClassLoaderCacheKey());
         }
 
         public synchronized void addAnnotation(Class<?> cl) {
             ClassLoaderContext classLoaderContext = getClassLoaderContext(true);
             classLoaderContext.addAnnotation(cl);
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logFinest("Adding new annotation to outgoing context [" + cl.getName() + "], context class loader key " + classLoaderContext.getClassLoaderCacheKey());
         }
 
@@ -286,7 +287,7 @@ public class MarshalOutputStream
         }
 
         public synchronized void onClassLoaderRemoved(Long classLoaderKey, boolean explicit) {
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logFinest("Removed class loader [" + classLoaderKey + "] related context from marshal output stream, explicit=" + explicit);
             _classLoaderContextMap.put(classLoaderKey, REMOVED_CONTEXT_MARKER);
         }
@@ -300,7 +301,7 @@ public class MarshalOutputStream
         }
 
         public synchronized void close() {
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logFinest("Closing marshal output stream context");
             for (Long clKey : _classLoaderContextMap.keySet()) {
                 _classLoaderContextMap.put(clKey, REMOVED_CONTEXT_MARKER);
@@ -309,7 +310,7 @@ public class MarshalOutputStream
         }
 
         public synchronized void reset() {
-            if (_logger.isLoggable(Level.FINEST))
+            if (_logger.isTraceEnabled())
                 logFinest("Resetting entire marshal output stream context");
             for (Long clKey : _classLoaderContextMap.keySet()) {
                 _classLoaderContextMap.put(clKey, REMOVED_CONTEXT_MARKER);

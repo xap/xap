@@ -89,15 +89,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main logic handler inside engine.
  */
 @com.gigaspaces.api.InternalApi
 public class Processor implements IConsumerObject<BusPacket<Processor>> {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE);
 
     private final SpaceEngine _engine;
     private final CacheManager _cacheManager;
@@ -131,13 +132,13 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
     @Override
     public void dispatch(BusPacket<Processor> packet) {
         try {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("Bus packet arrived: " + packet.getClass().getName());
+            if (_logger.isDebugEnabled())
+                _logger.debug("Bus packet arrived: " + packet.getClass().getName());
 
             packet.execute(this);
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, ex.toString(), ex);
+            if (_logger.isErrorEnabled())
+                _logger.error(ex.toString(), ex);
         }
     }
 
@@ -529,8 +530,8 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
             }
 
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "Error handling update.", ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error("Error handling update.", ex);
             }
             if (templateLock == null)
                 templateLock = getTemplateLockObject(template);
@@ -852,8 +853,8 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
                                 false);
                     } catch (Exception e) {
                         // Log internal error...
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE,
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error(
                                     "Internal Error failed to removeTemplate: ",
                                     ex);
                         }
@@ -1073,8 +1074,8 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
                                 false);
                     } catch (Exception e) {
                         // Log internal error...
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE,
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error(
                                     "Internal Error failed to removeTemplate: ",
                                     ex);
                         }
@@ -1452,8 +1453,8 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
                             false);
                 } catch (Exception e) {
                     // Log internal error...
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE,
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error(
                                 "Internal Error failed to removeTemplate: ",
                                 ex);
                     }
@@ -2349,8 +2350,8 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
                                 false);
                     } catch (Exception e) {
                         // Log internal error...
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE,
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error(
                                     "Internal Error failed to removeTemplate: ",
                                     ex);
                         }
@@ -2604,8 +2605,8 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
                                 false);
                     } catch (Exception e) {
                         // Log internal error...
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE,
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error(
                                     "Internal Error failed to removeTemplate: ",
                                     ex);
                         }

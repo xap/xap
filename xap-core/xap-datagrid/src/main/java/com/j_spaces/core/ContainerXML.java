@@ -31,8 +31,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -57,7 +58,7 @@ public class ContainerXML {
     public static final String TAG_CONTAINER_ADMIN_PASSWORD = "admin-password";
 
     //logger
-    final private static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
+    final private static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CONFIG);
 
     /**
      * Set container administrator account
@@ -129,8 +130,8 @@ public class ContainerXML {
             JSpaceUtilities.domWriter(rootElement, attrStream, "");
             attrStream.close();
         } catch (FileNotFoundException ex) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, "FileNotFoundException: " + ex.toString(), ex);
+            if (_logger.isErrorEnabled()) {
+                _logger.error("FileNotFoundException: " + ex.toString(), ex);
             }
         }
     }

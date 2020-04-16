@@ -72,8 +72,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_ALL_IN_CACHE;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_BLOB_STORE;
@@ -104,7 +105,7 @@ public class ReplicationNodeConfigBuilder {
     public ReplicationNodeConfigBuilder() {
     }
 
-    protected static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_REPLICATION_NODE);
+    protected static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_REPLICATION_NODE);
 
     protected boolean requiresEvictionReplicationProtection(ClusterPolicy clusterPolicy,
                                                             IStorageAdapter storageAdapter,
@@ -151,8 +152,8 @@ public class ReplicationNodeConfigBuilder {
                         lifeCycleBuilder,
                         requiresEvictionReplicationProtection(clusterPolicy, storageAdapter, configReader));
             } else if (isReliableAsync && syncReplication) {
-                if (_logger.isLoggable(Level.WARNING))
-                    _logger.warning("Creating a reliable async mirrored topology without a backup is not considered reliable async");
+                if (_logger.isWarnEnabled())
+                    _logger.warn("Creating a reliable async mirrored topology without a backup is not considered reliable async");
 
                 final MirrorReplicationSettingsAdapter mirrorSettings = new MirrorReplicationSettingsAdapter(clusterPolicy.getReplicationPolicy().getMirrorServiceConfig());
                 final ISpaceReplicationSettings replicationPolicy = new ReplicationSettingsAdapter(clusterPolicy.getReplicationPolicy(), filterManager);
@@ -181,7 +182,7 @@ public class ReplicationNodeConfigBuilder {
                             nodeBuilder);
             } else if (hasExistingReplicationMembers) {
                 if (storageAdapter.supportsExternalDB() && isCentralDB(storageAdapter, clusterPolicy))
-                    _logger.warning("Active active replication topology with central database is deprecated - use gateway replication instead.");
+                    _logger.warn("Active active replication topology with central database is deprecated - use gateway replication instead.");
                 if (syncReplication)
                     return createSyncReplicationConfig(replicationPolicy,
                             nodeBuilder);
@@ -210,8 +211,8 @@ public class ReplicationNodeConfigBuilder {
     protected void validateSupportedConfig(ClusterPolicy clusterPolicy) {
         ReplicationPolicy replicationPolicy = clusterPolicy.getReplicationPolicy();
         if (!replicationPolicy.isReplicateOriginalState()) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.warning("Replicate original state = false is not supported, using true instead. For more information refer to upgrading page");
+            if (_logger.isWarnEnabled())
+                _logger.warn("Replicate original state = false is not supported, using true instead. For more information refer to upgrading page");
         }
         if (replicationPolicy.m_ReplMemberPolicyDescTable == null)
             return;
@@ -233,8 +234,8 @@ public class ReplicationNodeConfigBuilder {
             }
         }
         if (replicationPolicy.isOneWayReplication) {
-            if (_logger.isLoggable(Level.WARNING))
-                _logger.warning("One way replication is not supported, regular replication will be used instead.");
+            if (_logger.isWarnEnabled())
+                _logger.warn("One way replication is not supported, regular replication will be used instead.");
         }
     }
 

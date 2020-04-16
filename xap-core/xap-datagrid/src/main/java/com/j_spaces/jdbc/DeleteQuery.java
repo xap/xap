@@ -42,8 +42,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class handles the DELETE query logic.
@@ -52,7 +53,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class DeleteQuery extends AbstractDMLQuery {
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_QUERY);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     public DeleteQuery() {
         super();
@@ -89,8 +90,8 @@ public class DeleteQuery extends AbstractDMLQuery {
                 }
                 // Handle queries that won't return anything
                 else if (expTree.getTemplate().isAlwaysEmpty()) {
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE, "Logical error - query is always empty - fix your SQL syntax");
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Logical error - query is always empty - fix your SQL syntax");
                     }
                     entries = new ArrayList<IEntryPacket>();
                 }
@@ -121,8 +122,8 @@ public class DeleteQuery extends AbstractDMLQuery {
         } catch (BatchQueryException e) {
             throw e;
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "Error occurred on delete", e);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Error occurred on delete", e);
             }
             SQLException ex = new SQLException("Delete failed; Cause: " + e, "GSP", -104);
             ex.initCause(e);
@@ -172,8 +173,8 @@ public class DeleteQuery extends AbstractDMLQuery {
             result = (IEntryPacket[]) space.readMultiple(template, txn, max, modifiers);
 
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.SEVERE)) {
-                _logger.log(Level.SEVERE, e.getMessage(), e);
+            if (_logger.isErrorEnabled()) {
+                _logger.error(e.getMessage(), e);
             }
             throw new SQLException("Failed to execute readMultiple: "
                     + e, "GSP", -111);

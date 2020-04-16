@@ -30,8 +30,9 @@ import com.j_spaces.core.client.SQLQuery;
 
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -49,7 +50,7 @@ public class DataStorage<T>
         implements DataProvider<T>,
         SQLDataProvider<T>, DataPersister<T>,
         BulkDataPersister, ManagedDataSource<T> {
-    private final static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT);
+    private final static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT);
 
 
     // Space data interfaces
@@ -93,9 +94,9 @@ public class DataStorage<T>
             _saManagedDataSource = null;
 
 
-        if (_logger.isLoggable(Level.FINE)) {
+        if (_logger.isDebugEnabled()) {
 
-            _logger.fine("\n\t Space Data Storage <" + store + "> Loaded"
+            _logger.debug("\n\t Space Data Storage <" + store + "> Loaded"
                     + "\n\t\t " + DataProvider.class.getSimpleName() + "              : " + (isDataProvider() ? "Implemented" : "-")
                     + "\n\t\t " + DataPersister.class.getSimpleName() + "             : " + (isDataPersister() ? "Implemented" : "-")
                     + "\n\t\t " + BulkDataPersister.class.getSimpleName() + "         : " + (isBulkDataPersister() ? "Implemented" : "-")
@@ -152,12 +153,12 @@ public class DataStorage<T>
      * @see com.gigaspaces.datasource.DataProvider#read(java.lang.Object)
      */
     public T read(T template) throws DataSourceException {
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.entering(_logger, DataStorage.class,"DataProvider#read", template);
 
         T result = _saDataProvider.read(template);
 
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.exiting(_logger, DataStorage.class,"DataProvider#read", result);
 
         return result;
@@ -168,12 +169,12 @@ public class DataStorage<T>
      */
     public DataIterator<T> iterator(T template)
             throws DataSourceException {
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.entering(_logger, DataStorage.class, "DataProvider#iterator", template);
 
         DataIterator<T> iter = _saDataProvider.iterator(template);
 
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.exiting(_logger, DataStorage.class, "DataProvider#iterator", iter);
 
         return iter;
@@ -184,12 +185,12 @@ public class DataStorage<T>
      */
     public DataIterator<T> iterator(SQLQuery<T> query)
             throws DataSourceException {
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.entering(_logger, DataStorage.class, "SQLDataProvider#iterator", query);
 
         DataIterator<T> iter = _saSQLDataProvider.iterator(query);
 
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.exiting(_logger, DataStorage.class, "SQLDataProvider#iterator", iter);
 
         return iter;
@@ -199,7 +200,7 @@ public class DataStorage<T>
      * @see com.gigaspaces.datasource.DataPersister#remove(java.lang.Object)
      */
     public void remove(T object) throws DataSourceException {
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.entering(_logger, DataStorage.class,"DataPersister#remove", object);
 
         _saDataPersister.remove(object);
@@ -210,7 +211,7 @@ public class DataStorage<T>
      * @see com.gigaspaces.datasource.DataPersister#update(java.lang.Object)
      */
     public void update(T object) throws DataSourceException {
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.entering(_logger, DataStorage.class, "DataPersister#update", object);
 
         _saDataPersister.update(object);
@@ -221,7 +222,7 @@ public class DataStorage<T>
      * @see com.gigaspaces.datasource.DataPersister#write(java.lang.Object)
      */
     public void write(T object) throws DataSourceException {
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.entering(_logger, DataStorage.class, "DataPersister#write", object);
 
         _saDataPersister.write(object);
@@ -232,7 +233,7 @@ public class DataStorage<T>
      */
     public void writeBatch(List<T> objects)
             throws DataSourceException {
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.entering(_logger, DataStorage.class, "DataPersister#writeBatch", objects);
 
         _saDataPersister.writeBatch(objects);
@@ -244,7 +245,7 @@ public class DataStorage<T>
      */
     public void executeBulk(List<BulkItem> bulk)
             throws DataSourceException {
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.entering(_logger, DataStorage.class, "BulkDataPersister#executeBulk", bulk);
 
         _saBulkDataPersister.executeBulk(bulk);
@@ -256,7 +257,7 @@ public class DataStorage<T>
     public void init(Properties configuration)
             throws DataSourceException {
 
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.entering(_logger, DataStorage.class,"ManagedDataSource#init", configuration);
 
         _saManagedDataSource.init(configuration);
@@ -266,7 +267,7 @@ public class DataStorage<T>
      * @see com.gigaspaces.datasource.ManagedDataSource#shutdown()
      */
     public void shutdown() throws DataSourceException {
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.entering(_logger, DataStorage.class, "ManagedDataSource#shutdown");
 
         _saManagedDataSource.shutdown();
@@ -289,12 +290,12 @@ public class DataStorage<T>
      * @see com.gigaspaces.datasource.ManagedDataSource#iterator()
      */
     public DataIterator<T> initialLoad() throws DataSourceException {
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.entering(_logger, DataStorage.class, "ManagedDataSource#initialLoad");
 
         DataIterator<T> iter = _saManagedDataSource.initialLoad();
 
-        if (_logger.isLoggable(Level.FINER))
+        if (_logger.isDebugEnabled())
             LogUtils.exiting(_logger, DataStorage.class, "ManagedDataSource#initialLoad");
 
         return iter;

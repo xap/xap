@@ -17,8 +17,9 @@
 package com.j_spaces.core.client;
 
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -26,14 +27,14 @@ import java.util.logging.Logger;
  */
 public abstract class LookupResultProcessor {
 
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_LOOKUPFINDER);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_LOOKUPFINDER);
 
     public Object process(Object result) {
         try {
             return processImpl(result);
         } catch (RemoteException e) {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.log(Level.FINEST, "Failed to retrieve proxy from service", e);
+            if (_logger.isTraceEnabled())
+                _logger.trace("Failed to retrieve proxy from service", e);
             return null;
         }
     }

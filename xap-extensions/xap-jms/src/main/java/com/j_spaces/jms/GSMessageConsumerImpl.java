@@ -49,8 +49,9 @@ import net.jini.core.transaction.Transaction;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.sql.Time;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.Destination;
 import javax.jms.IllegalStateException;
@@ -212,7 +213,7 @@ public class GSMessageConsumerImpl
     /**
      * The logger.
      */
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_JMS);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_JMS);
 
 
     /**
@@ -270,8 +271,8 @@ public class GSMessageConsumerImpl
             try {
                 createEventSessionConfig();
             } catch (IOException e) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, toString2() + "IOException inside GSMessageConsumerImpl: Failed to create DataEventSession configuration", e);
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(toString2() + "IOException inside GSMessageConsumerImpl: Failed to create DataEventSession configuration", e);
                 }
                 JMSException e1 = new JMSException("Failed to create DataEventSession configuration: " + e.toString());
                 e1.setLinkedException(e);
@@ -387,8 +388,8 @@ public class GSMessageConsumerImpl
         if (!isValid(message)) {
             long ttl = message.getJMSExpiration();
             Time expTime = new Time(ttl);
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine(toString2() + "Not delivering JMS message < "
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(toString2() + "Not delivering JMS message < "
                         + message.JMSMessageID + " > due to expiration: " + expTime);
             }
             return false;
@@ -396,8 +397,8 @@ public class GSMessageConsumerImpl
         if (m_noLocal) {
             String prodConnection = message.getStringProperty(GSMessageImpl.JMS_GSCONNECTION_KEY_NAME);
             boolean pass = !connectionKey.equals(prodConnection);
-            if (!pass && _logger.isLoggable(Level.FINE)) {
-                _logger.fine(toString2() + "Not delivering JMS message < "
+            if (!pass && _logger.isDebugEnabled()) {
+                _logger.debug(toString2() + "Not delivering JMS message < "
                         + message.JMSMessageID + " > due to noLocal attribute.");
             }
             return pass;
@@ -424,14 +425,14 @@ public class GSMessageConsumerImpl
      */
     synchronized void registerToNotifications() throws JMSException {
         if (m_closed) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, toString2() + "GSMessageConsumerImpl.registerToNotifications(): Called on a closed consumer.");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(toString2() + "GSMessageConsumerImpl.registerToNotifications(): Called on a closed consumer.");
             }
             return;
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, toString2() + "GSMessageConsumerImpl.registerToNotifications(): registering for notifications");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(toString2() + "GSMessageConsumerImpl.registerToNotifications(): registering for notifications");
         }
 
         try {
@@ -439,8 +440,8 @@ public class GSMessageConsumerImpl
             eventSession = DataEventSessionFactory.create(m_space, eventSessionConfig);
             eventSession.addListener(m_jmsMessageTemplate, onMessageEventListener, NotifyActionType.NOTIFY_WRITE);
         } catch (IOException e) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, toString2() + "GSMessageConsumerImpl.startAsynchronous(): IOException while creating event session" + e);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(toString2() + "GSMessageConsumerImpl.startAsynchronous(): IOException while creating event session" + e);
             }
             JMSException e1 = new JMSException("Failed to create event session.");
             e1.setLinkedException(e);
@@ -458,29 +459,29 @@ public class GSMessageConsumerImpl
             return;
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, toString2() + "GSMessageConsumerImpl.unregisterToNotifications(): unregistering from notifications");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(toString2() + "GSMessageConsumerImpl.unregisterToNotifications(): unregistering from notifications");
         }
 
         try {
             eventSession.close();
         } catch (IOException e) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, toString2() + "GSMessageConsumerImpl.stopAsynchronous(): IOException while closing event session" + e);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(toString2() + "GSMessageConsumerImpl.stopAsynchronous(): IOException while closing event session" + e);
             }
             JMSException e1 = new JMSException("Failed to close event session.");
             e1.setLinkedException(e);
             throw e1;
         } catch (UnknownLeaseException e) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, toString2() + "GSMessageConsumerImpl.stopAsynchronous(): UnknownLeaseException while closing event session" + e);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(toString2() + "GSMessageConsumerImpl.stopAsynchronous(): UnknownLeaseException while closing event session" + e);
             }
             JMSException e1 = new JMSException("Failed to close event session.");
             e1.setLinkedException(e);
             throw e1;
         } catch (Exception e) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, toString2() + "GSMessageConsumerImpl.stopAsynchronous(): UnknownLeaseException while closing event session" + e);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(toString2() + "GSMessageConsumerImpl.stopAsynchronous(): UnknownLeaseException while closing event session" + e);
             }
             JMSException e1 = new JMSException("Failed to close event session.");
             e1.setLinkedException(e);
@@ -531,16 +532,16 @@ public class GSMessageConsumerImpl
         if (message instanceof TextMessage &&
                 message.Body != null &&
                 message.Body instanceof MarshObject) {
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.log(Level.FINEST, toString2() +
+            if (_logger.isTraceEnabled()) {
+                _logger.trace(toString2() +
                         "Decompressing message: " + message.JMSMessageID);
             }
             try {
                 Object decompressed = m_session.decompressObject((MarshObject) message.Body);
                 message.Body = decompressed.toString();
             } catch (IOException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, toString2()
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(toString2()
                             + "IOException while decompressing message: "
                             + message.JMSMessageID);
                 }
@@ -549,8 +550,8 @@ public class GSMessageConsumerImpl
                 e1.setLinkedException(e);
                 throw e1;
             } catch (ClassNotFoundException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, toString2() +
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(toString2() +
                             "ClassNotFoundException while decompressing message: "
                             + message.JMSMessageID);
                 }
@@ -593,8 +594,8 @@ public class GSMessageConsumerImpl
 
 
     private synchronized void innerSetMessageListener(MessageListener listener) {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine(toString2() + "Setting MessageListener: " + listener);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(toString2() + "Setting MessageListener: " + listener);
         }
 
         if (listener != null) {
@@ -626,8 +627,8 @@ public class GSMessageConsumerImpl
                     try {
                         asyncPoller.join(60000);
                     } catch (InterruptedException e) {
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE, toString2() +
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error(toString2() +
                                     "Failed to wait for shutdown of thread " + asyncPoller.getName() + ".\n" + e);
                         }
                     }
@@ -684,8 +685,8 @@ public class GSMessageConsumerImpl
             throw new IllegalStateException("Forbidden call to receive() on asynchronous session.");
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, toString2() + "GSMessageConsumerImpl.receive()");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(toString2() + "GSMessageConsumerImpl.receive()");
         }
 
         // Message.DEFAULT_TIME_TO_LIVE = 0L
@@ -703,8 +704,8 @@ public class GSMessageConsumerImpl
                 // wait in case the session is stopped
                 synchronized (m_session.stopMonitor) {
                     if (m_session.m_stopped) {
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.log(Level.FINE, toString2() +
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug(toString2() +
                                     "receive(): Waiting on a stopped session.");
                         }
 
@@ -712,14 +713,14 @@ public class GSMessageConsumerImpl
                         try {
                             m_session.stopMonitor.wait(timeout);
                         } catch (InterruptedException e) {
-                            if (_logger.isLoggable(Level.SEVERE)) {
-                                _logger.log(Level.SEVERE, toString2() +
+                            if (_logger.isErrorEnabled()) {
+                                _logger.error(toString2() +
                                         "receive(): Interrupted while waiting on a stopped session: " + e);
                             }
                         }
 
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.log(Level.FINE, toString2() +
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug(toString2() +
                                     "receive(): Stopped waiting on a stopped session - restarting iteration.");
                         }
 
@@ -727,8 +728,8 @@ public class GSMessageConsumerImpl
                         continue;
                     }
 
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.log(Level.FINEST, toString2() + "onProcess=true");
+                    if (_logger.isTraceEnabled()) {
+                        _logger.trace(toString2() + "onProcess=true");
                     }
                     m_session.onProcess = true;
                 }
@@ -737,14 +738,14 @@ public class GSMessageConsumerImpl
                 // get the message
                 //////////////////////
                 if (m_isQueue) {
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.log(Level.FINEST, toString2() +
+                    if (_logger.isTraceEnabled()) {
+                        _logger.trace(toString2() +
                                 "Retrieving a message from queue.");
                     }
                     message = receiveFromQueueNoBlock(timeout);
                 } else {
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.log(Level.FINEST, toString2() +
+                    if (_logger.isTraceEnabled()) {
+                        _logger.trace(toString2() +
                                 "Retrieving a message from topic.");
                     }
                     message = receiveFromTopic(timeout);
@@ -759,8 +760,8 @@ public class GSMessageConsumerImpl
                     continue;
                 }
 
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, toString2() +
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug(toString2() +
                             "receive(): Got message: " + message.JMSMessageID);
                 }
 
@@ -790,8 +791,8 @@ public class GSMessageConsumerImpl
 
                     break;
                 } else {
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE, toString2() +
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug(toString2() +
                                 "Message not valid for consumer: " + message.JMSMessageID);
                     }
                     // TODO: send to dead letter queue...
@@ -809,8 +810,8 @@ public class GSMessageConsumerImpl
                 // something happened while we tried to take from space.
                 // Note: In QUEUE consumption we use local transactions.
                 String text = "Internal error while fetching a message from a Queue. ";
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, toString2() + text + e.orig);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(toString2() + text + e.orig);
                 }
 
                 //m_session.getConn().onException(new JMSException("Space Lost"));
@@ -823,8 +824,8 @@ public class GSMessageConsumerImpl
                     // a new transaction and try again (new iteration).
                     // We don't throw JMSException to the client - to make
                     // it transaparent to the user.
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE,
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug(
                                 toString2() + "receive(): Session's ack mode is AUTO_ACKNOWLEDGE" +
                                         " or DUPS_OK_ACKNOWLEDGE.\nRenewing transaction.");
                     }
@@ -834,9 +835,9 @@ public class GSMessageConsumerImpl
 //					}
 //					catch (TransactionCreateException e1)
 //					{
-//						if( _logger.isLoggable(Level.SEVERE))
+//						if( _logger.isErrorEnabled())
 //						{
-//							_logger.log(Level.SEVERE,
+//							_logger.error(
 //									toString2()+"receive(): Failed to renew transaction."+e1.orig);
 //						}
 //						// TODO: how do we handle failure to create a new
@@ -847,16 +848,16 @@ public class GSMessageConsumerImpl
                     // new transaction. This will dispose the produced messages as well.
                     // We throw a TransactionRolledBackException (which extends JMSException)
                     // to notify the user that the transaction is canceled.
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE,
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug(
                                 toString2() + "receive(): Session's ack mode is SESSION_TRANSACTED.\n" +
                                         "Rolling back transaction " + m_session.getTransaction());
                     }
                     try {
                         m_session.rollback();
                     } catch (JMSException e1) {
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE,
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error(
                                     toString2() + "receive(): Failed to roll back transaction");
                         }
                     }
@@ -877,16 +878,16 @@ public class GSMessageConsumerImpl
                     // In this case we have to recover the unacked messages. With QUEUE
                     // this is done by aborting the local transaction. We need to notify
                     // the client about it, so we throw TransactionRolledBackException.
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE,
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug(
                                 toString2() + "receive(): Session's ack mode is CLIENT_ACKNOWLEDGE.\n" +
                                         "Recovering messages of transaction " + m_session.getTransaction());
                     }
                     try {
                         m_session.recoverMessages();
                     } catch (RollbackFailedException e1) {
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE,
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error(
                                     toString2() + "receive(): Failed to recover messages of transaction " +
                                             m_session.getTransaction() + e1.orig);
                         }
@@ -894,8 +895,8 @@ public class GSMessageConsumerImpl
                     try {
                         m_session.renewTransaction();
                     } catch (TransactionCreateException e1) {
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE,
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error(
                                     toString2() + "receive(): Failed to renew transaction", e1.orig);
                         }
                     }
@@ -921,15 +922,15 @@ public class GSMessageConsumerImpl
                 // but try to receive a message again in a new transaction.
                 String text = "Internal error during auto commit. Message="
                         + message.JMSMessageID + ", Txn=" + m_session.getTransaction();
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, toString2() + text + e.orig);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(toString2() + text + e.orig);
                 }
 
                 try {
                     m_session.renewTransaction();
                 } catch (TransactionCreateException e1) {
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE,
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error(
                                 toString2() + "receive(): Failed to renew transaction: " + e1.orig);
                     }
                     // TODO: how do we handle failure to create a new
@@ -938,8 +939,8 @@ public class GSMessageConsumerImpl
             } catch (TransactionCreateException e) {
                 // Only in QUEUE, happens if we fail to renew the transaction
                 // after a successfull acknowledge.
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE,
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(
                             toString2() + "receive(): Failed to renew transaction: " + e.orig);
                 }
                 break;
@@ -953,8 +954,8 @@ public class GSMessageConsumerImpl
                     // onProcess=false means that we weren't
                     // in the middle of processing a message.
                     if (m_session.onProcess) {
-                        if (_logger.isLoggable(Level.FINEST)) {
-                            _logger.log(Level.FINEST, toString2() + "onProcess=false");
+                        if (_logger.isTraceEnabled()) {
+                            _logger.trace(toString2() + "onProcess=false");
                         }
                         m_session.onProcess = false;
                         m_session.stopMonitor.notifyAll();
@@ -1000,14 +1001,14 @@ public class GSMessageConsumerImpl
     public synchronized void close() throws JMSException {
         // ignore if the consumer is already closed
         if (m_closed) {
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine(toString2() + "GSMessageConsumerImpl.close(): Consumer already closed.");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(toString2() + "GSMessageConsumerImpl.close(): Consumer already closed.");
             }
             return;
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine(toString2() + "GSMessageConsumerImpl.close(): Closing consumer.");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(toString2() + "GSMessageConsumerImpl.close(): Closing consumer.");
         }
 
 
@@ -1029,19 +1030,19 @@ public class GSMessageConsumerImpl
             while (m_session.onProcess) {
                 try {
                     this.notifyStop();
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.fine(toString2() + "GSMessageConsumerImpl.close(): Waiting for process to finish.");
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug(toString2() + "GSMessageConsumerImpl.close(): Waiting for process to finish.");
                     }
                     m_session.stopMonitor.wait();
                 } catch (InterruptedException e) {
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.severe(toString2() + "GSMessageConsumerImpl.close(): InterruptedException while waiting for process to finish.");
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error(toString2() + "GSMessageConsumerImpl.close(): InterruptedException while waiting for process to finish.");
                     }
                 }
             }
 
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.fine(toString2() + "GSMessageConsumerImpl.close(): No message on process.");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(toString2() + "GSMessageConsumerImpl.close(): No message on process.");
             }
 
             // if the session is stopped:
@@ -1107,15 +1108,15 @@ public class GSMessageConsumerImpl
     private GSMessageImpl receiveFromTopic(long timeout)// throws InterruptedException
     //throws ReceiveFromTopicException
     {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "receiveFromTopic(): Receiving from Topic");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("receiveFromTopic(): Receiving from Topic");
         }
 
         // try to get a message from the recovered messages list
         GSMessageImpl message = m_session.getNextRecoveredMessage();
         if (message != null) {
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.log(Level.FINEST, toString2() +
+            if (_logger.isTraceEnabled()) {
+                _logger.trace(toString2() +
                         "receiveFromTopic(): Recovered message found: " + message.JMSMessageID);
             }
 
@@ -1132,8 +1133,8 @@ public class GSMessageConsumerImpl
                 try {
                     synchTopicNotifyLock.wait(timeout);
                 } catch (InterruptedException e) {
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE, toString2() +
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error(toString2() +
                                 "receiveFromTopic(): InterruptedException while waiting " +
                                 "for a message from a topic: " + e);
                     }
@@ -1194,8 +1195,8 @@ public class GSMessageConsumerImpl
     {
         // get message from space
         Transaction txn = m_session.getTransaction();
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "receiveFromQueue(): Receiving from Queue, txn=" + txn);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("receiveFromQueue(): Receiving from Queue, txn=" + txn);
         }
         try {
             return (GSMessageImpl) m_space.take(m_jmsMessageTemplate, txn, timeout);
@@ -1221,18 +1222,18 @@ public class GSMessageConsumerImpl
         long now;
         long timeToWait;
         long startTime = SystemTime.timeMillis();
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.log(Level.FINEST, toString2() + "timeout=" + timeout);
+        if (_logger.isTraceEnabled()) {
+            _logger.trace(toString2() + "timeout=" + timeout);
         }
         while (!m_closed && !m_session.m_stopped && timeout > 10) {
             timeToWait = Math.min(timeout, RECEIVE_TIME_FRAME);
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.log(Level.FINEST, toString2() + "Next timeToWait=" + timeToWait);
+            if (_logger.isTraceEnabled()) {
+                _logger.trace(toString2() + "Next timeToWait=" + timeToWait);
             }
             message = receiveFromQueue(timeToWait);
             if (message != null) {
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.log(Level.FINEST, toString2() + "Got message: " + message);
+                if (_logger.isTraceEnabled()) {
+                    _logger.trace(toString2() + "Got message: " + message);
                 }
                 return message;
             }
@@ -1240,8 +1241,8 @@ public class GSMessageConsumerImpl
             timeout = timeout - (now - startTime);
             startTime = now;
         }
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.log(Level.FINEST, toString2() + "Exiting: m_closed=" +
+        if (_logger.isTraceEnabled()) {
+            _logger.trace(toString2() + "Exiting: m_closed=" +
                     m_closed + ", m_stopped=" + m_session.m_stopped + ", timeout=" + timeout);
         }
         return null;
@@ -1267,14 +1268,14 @@ public class GSMessageConsumerImpl
                 if (!m_closed) {
                     messageArrived(message);
                 } else {
-                    if (_logger.isLoggable(Level.WARNING)) {
-                        _logger.log(Level.WARNING, toString2() + "OnMessageEventListener.notify():" +
+                    if (_logger.isWarnEnabled()) {
+                        _logger.warn(toString2() + "OnMessageEventListener.notify():" +
                                 " Called on a closed consumer." + message);
                     }
                 }
             } catch (UnusableEntryException e) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, toString2() + "OnMessageEventListener.notify():" +
+                if (_logger.isErrorEnabled()) {
+                    _logger.error(toString2() + "OnMessageEventListener.notify():" +
                             " UnusableEntryException while extracting ExternalEntry: " + e);
                 }
                 //TODO: what to do with the message?
@@ -1289,8 +1290,8 @@ public class GSMessageConsumerImpl
          * @param message The next message.
          */
         private void messageArrived(GSMessageImpl message) {
-            if (_logger.isLoggable(Level.FINEST)) {
-                _logger.log(Level.FINEST, toString2() +
+            if (_logger.isTraceEnabled()) {
+                _logger.trace(toString2() +
                         "messageArrived(): " + message.JMSMessageID);
             }
             synchronized (synchTopicNotifyLock) {
@@ -1298,8 +1299,8 @@ public class GSMessageConsumerImpl
                 // there maight still be a waiting message here. we need to
                 // wait for the consumer to take it or we may lose it.
                 while (currentMessage != null) {
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.log(Level.FINEST, toString2() +
+                    if (_logger.isTraceEnabled()) {
+                        _logger.trace(toString2() +
                                 "messageArrived(): A message is already pending: " +
                                 currentMessage.JMSMessageID);
                     }
@@ -1307,14 +1308,14 @@ public class GSMessageConsumerImpl
                         synchTopicNotifyLock.wait();
                     } catch (InterruptedException e) {
                         if (m_session.isLocalConsumer(m_consumerID)) {
-                            if (_logger.isLoggable(Level.SEVERE)) {
-                                _logger.log(Level.SEVERE, toString2() +
+                            if (_logger.isErrorEnabled()) {
+                                _logger.error(toString2() +
                                         "messageArrived(): The notification thread was interrupted. Notification message: " +
                                         message.JMSMessageID);
                             }
                         } else {
-                            if (_logger.isLoggable(Level.INFO)) {
-                                _logger.log(Level.INFO, toString2() +
+                            if (_logger.isInfoEnabled()) {
+                                _logger.info(toString2() +
                                         "messageArrived(): The notification thread is exiting. Notification message: " +
                                         message.JMSMessageID);
                             }
@@ -1328,14 +1329,14 @@ public class GSMessageConsumerImpl
                         synchTopicNotifyLock.wait();
                     } catch (InterruptedException e) {
                         if (m_session.isLocalConsumer(m_consumerID)) {
-                            if (_logger.isLoggable(Level.SEVERE)) {
-                                _logger.log(Level.SEVERE, toString2() +
+                            if (_logger.isErrorEnabled()) {
+                                _logger.error(toString2() +
                                         "messageArrived(): The notification thread was interrupted while waiting to be released: " +
                                         currentMessage.JMSMessageID);
                             }
                         } else {
-                            if (_logger.isLoggable(Level.INFO)) {
-                                _logger.log(Level.INFO, toString2() +
+                            if (_logger.isInfoEnabled()) {
+                                _logger.info(toString2() +
                                         "messageArrived(): The notification thread is exiting. The consumer is closed. Pending message: " +
                                         currentMessage.JMSMessageID);
                             }
@@ -1452,8 +1453,8 @@ public class GSMessageConsumerImpl
                     // wait in case the session is stopped
                     synchronized (m_session.stopMonitor) {
                         if (m_session.m_stopped) {
-                            if (_logger.isLoggable(Level.FINE)) {
-                                _logger.log(Level.FINE, getName() +
+                            if (_logger.isDebugEnabled()) {
+                                _logger.debug(getName() +
                                         ": Waiting on a stopped session.");
                             }
 
@@ -1461,22 +1462,22 @@ public class GSMessageConsumerImpl
                             try {
                                 m_session.stopMonitor.wait();
                             } catch (InterruptedException e) {
-                                if (_logger.isLoggable(Level.SEVERE)) {
-                                    _logger.log(Level.SEVERE, getName() +
+                                if (_logger.isErrorEnabled()) {
+                                    _logger.error(getName() +
                                             ": Interrupted while waiting on a stopped session: " + e);
                                 }
                             }
 
-                            if (_logger.isLoggable(Level.FINE)) {
-                                _logger.log(Level.FINE, getName() +
+                            if (_logger.isDebugEnabled()) {
+                                _logger.debug(getName() +
                                         ": Stopped waiting on a stopped session - restarting iteration.");
                             }
 
                             continue;
                         }
 
-                        if (_logger.isLoggable(Level.FINEST)) {
-                            _logger.log(Level.FINEST, getName() + ": onProcess=true");
+                        if (_logger.isTraceEnabled()) {
+                            _logger.trace(getName() + ": onProcess=true");
                         }
                         m_session.onProcess = true;
                     }
@@ -1490,15 +1491,15 @@ public class GSMessageConsumerImpl
                     }
 
                     if (message == null) {
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.log(Level.FINE, getName() +
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug(getName() +
                                     ": No message was received.");
                         }
                         continue;
                     }
 
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE, getName() +
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug(getName() +
                                 ": Received message: " + message.JMSMessageID);
                     }
 
@@ -1534,8 +1535,8 @@ public class GSMessageConsumerImpl
                 } catch (JMSException e) {
                     // this exception is thrown only when processing
                     // a message before onMessage
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE, getName() +
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error(getName() +
                                 ": JMSException while handling message: " + message, e);
                     }
                 } catch (ReceiveFromQueueException e) {
@@ -1551,15 +1552,15 @@ public class GSMessageConsumerImpl
                     // Note: In QUEUE consumption we use local transactions.
                     String text = "Internal error while fetching a message from a Queue -" +
                             " The space might be lost.\n";
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE, getName() + ": " + text, e.orig);
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error(getName() + ": " + text, e.orig);
                     }
 
                     if (m_session.isAutoAck()) {
                         // In this case we don't use a transaction.
                         // So we just continue to the next receive.
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.log(Level.FINE,
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug(
                                     getName() + ": The session's acknowledge mode is" +
                                             " AUTO_ACKNOWLEDGE or DUPS_OK_ACKNOWLEDGE.");
                         }
@@ -1568,8 +1569,8 @@ public class GSMessageConsumerImpl
                         // new transaction. This will dispose the produced messages as well.
                         // To notify the client that the transaction is aborted we pass a
                         // a SpaceLostException to the Connection's ExceptionListener.
-                        if (_logger.isLoggable(Level.INFO)) {
-                            _logger.log(Level.INFO,
+                        if (_logger.isInfoEnabled()) {
+                            _logger.info(
                                     getName() + ": The session's acknowledge mode is" +
                                             " SESSION_TRANSACTED.\n" +
                                             "Rolling back transaction " + m_session.getTransaction());
@@ -1577,8 +1578,8 @@ public class GSMessageConsumerImpl
                         try {
                             m_session.rollback();
                         } catch (JMSException e1) {
-                            if (_logger.isLoggable(Level.FINE)) {
-                                _logger.log(Level.FINE,
+                            if (_logger.isDebugEnabled()) {
+                                _logger.debug(
                                         getName() + ": Failed to roll back transaction: " +
                                                 m_session.getTransaction(), e1.getLinkedException());
                             }
@@ -1598,16 +1599,16 @@ public class GSMessageConsumerImpl
                         // Failover handling!
                         // in this case we have to roll back the local transaction.
                         // in other words, we have to recover the messages.
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.log(Level.FINE,
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug(
                                     getName() + ": The session's acknowledge mode is CLIENT_ACKNOWLEDGE.\n" +
                                             "Recovering messages of transaction " + m_session.getTransaction());
                         }
                         try {
                             m_session.recoverMessages();
                         } catch (RollbackFailedException e1) {
-                            if (_logger.isLoggable(Level.FINE)) {
-                                _logger.log(Level.FINE,
+                            if (_logger.isDebugEnabled()) {
+                                _logger.debug(
                                         getName() + ": Failed to recover messages of transaction " +
                                                 m_session.getTransaction(), e1.orig);
                             }
@@ -1615,8 +1616,8 @@ public class GSMessageConsumerImpl
                         try {
                             m_session.renewTransaction();
                         } catch (TransactionCreateException e1) {
-                            if (_logger.isLoggable(Level.SEVERE)) {
-                                _logger.log(Level.SEVERE,
+                            if (_logger.isErrorEnabled()) {
+                                _logger.error(
                                         getName() + ": Failed to renew transaction", e1.orig);
                             }
                             // TODO: how do we handle failure to create a new
@@ -1638,15 +1639,15 @@ public class GSMessageConsumerImpl
                     // Only in QUEUE and only in auto/dup_ok we try to commit
                     String text = ": Internal error during commit. Message="
                             + message.JMSMessageID + ", Txn=" + m_session.getTransaction();
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE, getName() + text + e.orig);
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error(getName() + text + e.orig);
                     }
 
                     try {
                         m_session.renewTransaction();
                     } catch (TransactionCreateException e1) {
-                        if (_logger.isLoggable(Level.SEVERE)) {
-                            _logger.log(Level.SEVERE,
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error(
                                     getName() + ": Failed to renew transaction: " + e1.orig);
                         }
                         // TODO: how do we handle failure to create a new
@@ -1655,8 +1656,8 @@ public class GSMessageConsumerImpl
                 } catch (TransactionCreateException e) {
                     // Only in QUEUE, happens if we fail to renew the transaction
                     // after a successfull iteration.
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE,
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error(
                                 getName() + ": Failed to renew transaction: " + e.orig);
                     }
                     // TODO: how do we handle failure to create a new
@@ -1665,8 +1666,8 @@ public class GSMessageConsumerImpl
                     // Runtime exceptions not caught by the client!!
                     // The behavior of handling exceptions during MessageListener.onMessage()
                     // is described in sections 4.4.12 and 4.5.2 in the spec.
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE, getName() +
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error(getName() +
                                 ": RuntimeException not caught by client during asynchronous delivery: " + e + message);
                     }
 
@@ -1676,8 +1677,8 @@ public class GSMessageConsumerImpl
                         try {
                             m_session.recoverMessages();
                         } catch (RollbackFailedException e1) {
-                            if (_logger.isLoggable(Level.SEVERE)) {
-                                _logger.log(Level.SEVERE,
+                            if (_logger.isErrorEnabled()) {
+                                _logger.error(
                                         getName() + ": Failed to roll back transaction: " +
                                                 m_session.getTransaction(), e1.orig);
                             }
@@ -1686,8 +1687,8 @@ public class GSMessageConsumerImpl
                                 try {
                                     m_session.renewTransaction();
                                 } catch (TransactionCreateException e1) {
-                                    if (_logger.isLoggable(Level.SEVERE)) {
-                                        _logger.log(Level.SEVERE, getName() +
+                                    if (_logger.isErrorEnabled()) {
+                                        _logger.error(getName() +
                                                 ": Failed to renew transaction: " + e1.orig);
                                     }
                                 }
@@ -1696,15 +1697,15 @@ public class GSMessageConsumerImpl
                     }
                 } catch (Exception e) {
                     // catch any other exception
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.log(Level.SEVERE, getName() +
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error(getName() +
                                 ": Exception during asynchronous message delivery: " + e);
                     }
                 } finally {
                     synchronized (m_session.stopMonitor) {
                         if (m_session.onProcess) {
-                            if (_logger.isLoggable(Level.FINEST)) {
-                                _logger.log(Level.FINEST, getName() + ": onProcess=false");
+                            if (_logger.isTraceEnabled()) {
+                                _logger.trace(getName() + ": onProcess=false");
                             }
                             // allow the session.stop() method resume
                             m_session.onProcess = false;
@@ -1715,8 +1716,8 @@ public class GSMessageConsumerImpl
             } // end of while
 
             // shutting down
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, getName() + ": shutting down!");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug(getName() + ": shutting down!");
             }
         }
     }

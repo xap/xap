@@ -19,8 +19,9 @@ package com.gigaspaces.internal.cluster.node.impl.directPersistency.embeddedSync
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The synchronizing direct-persistency  embedded phantoms handler
@@ -50,14 +51,14 @@ public class PhantomsHandler {
         addToNumPhantoms();
         if (_phantoms.putIfAbsent(uid, oi) != null) {
             IEmbeddedSyncOpInfo cur = _phantoms.get(uid);
-            if (getLogger().isLoggable(Level.SEVERE)) {
-                getLogger().log(Level.SEVERE, "[" + _embeddedHandler.getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " DirectPersistencySyncHandler phantomsHandler:add phantom aleady exist uid=" + uid + " adding=" + oi.toString() + " existing=" + cur.toString());
+            if (getLogger().isErrorEnabled()) {
+                getLogger().error("[" + _embeddedHandler.getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " DirectPersistencySyncHandler phantomsHandler:add phantom aleady exist uid=" + uid + " adding=" + oi.toString() + " existing=" + cur.toString());
             }
             throw new RuntimeException("trying to add phantom but phantom already exists uid=" + uid);
         }
 
-        if (getLogger().isLoggable(Level.FINER)) {
-            getLogger().log(Level.FINER, "[" + _embeddedHandler.getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " DirectPersistencySyncHandler phantomsHandler:add phantom " + oi.getOriginalOpInfo());
+        if (getLogger().isDebugEnabled()) {
+            getLogger().debug("[" + _embeddedHandler.getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "]" + " DirectPersistencySyncHandler phantomsHandler:add phantom " + oi.getOriginalOpInfo());
         }
     }
 
@@ -87,11 +88,11 @@ public class PhantomsHandler {
     private void removePhantom(IEmbeddedSyncOpInfo oi, String uid, boolean alreadyVerifiedMap) {
         IEmbeddedSyncOpInfo cur = !alreadyVerifiedMap ? _phantoms.get(uid) : oi;
         if (cur == oi) {//real phantom, remove it
-            getLogger().log(Level.FINER, "[" + _embeddedHandler.getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "] DirectPersistencySyncHandler phantomsHandler removing phantom " + oi.getOriginalOpInfo());
+            getLogger().debug("[" + _embeddedHandler.getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "] DirectPersistencySyncHandler phantomsHandler removing phantom " + oi.getOriginalOpInfo());
             _embeddedHandler.getMainSyncHandler().getListHandler().getIoHandler().removePhantom(uid, oi.getOriginalOpInfo().getGenerationId() != _currentGenerationId /*check existance*/, oi.getOriginalOpInfo().getGenerationId(), oi.getOriginalOpInfo().getSequenceNumber());
         } else {
-            if (getLogger().isLoggable(Level.SEVERE)) {
-                getLogger().log(Level.SEVERE, "[" + _embeddedHandler.getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "] DirectPersistencySyncHandler phantomsHandler:removePhantom not fitting uid=" + uid + " operated=" + oi.toString() + " existing=" + ((cur != null) ? cur.toString() : " null"));
+            if (getLogger().isErrorEnabled()) {
+                getLogger().error("[" + _embeddedHandler.getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "] DirectPersistencySyncHandler phantomsHandler:removePhantom not fitting uid=" + uid + " operated=" + oi.toString() + " existing=" + ((cur != null) ? cur.toString() : " null"));
             }
             throw new RuntimeException("[" + _embeddedHandler.getMainSyncHandler().getSpaceEngine().getFullSpaceName() + "] DirectPersistencySyncHandler phantomsHandler:removePhantom not fitting uid=" + uid + " operated=" + oi.toString() + " existing=" + ((cur != null) ? cur.toString() : " null"));
         }

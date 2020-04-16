@@ -26,7 +26,7 @@ import com.j_spaces.core.filters.FilterOperationCodes;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
+
 
 
 @com.gigaspaces.api.InternalApi
@@ -63,18 +63,18 @@ public class SpaceCopyReplicaDataProducer
         ArrayList<ISingleStageReplicaDataProducer<? extends IExecutableSpaceReplicaData>> dataProducers = new ArrayList<ISingleStageReplicaDataProducer<? extends IExecutableSpaceReplicaData>>();
 
         dataProducers.add(new SpaceTypeReplicaDataProducer(_engine));
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest(_engine.getReplicationNode() + "created SpaceTypeReplicaDataProducer");
+        if (_logger.isTraceEnabled())
+            _logger.trace(_engine.getReplicationNode() + "created SpaceTypeReplicaDataProducer");
         for (ITemplatePacket templatePacket : parameters.getTemplatePackets()) {
             dataProducers.add(new EntryReplicaProducer(_engine, parameters, templatePacket, _requestContext));
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest(getLogPrefix() + "created EntryReplicaProducer for templatePacket " + templatePacket);
+            if (_logger.isTraceEnabled())
+                _logger.trace(getLogPrefix() + "created EntryReplicaProducer for templatePacket " + templatePacket);
         }
 
         if (parameters.isCopyNotifyTemplates()) {
             dataProducers.add(new BroadcastNotifyTemplateReplicaProducer(_engine, _requestContext));
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest(getLogPrefix() + "created BroadcastNotifyTemplateReplicaProducer");
+            if (_logger.isTraceEnabled())
+                _logger.trace(getLogPrefix() + "created BroadcastNotifyTemplateReplicaProducer");
 
         }
         return dataProducers;

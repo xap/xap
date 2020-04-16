@@ -76,8 +76,9 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Spring MVC controller for the RESTful Space API <p/> usage examples: GET:
@@ -135,7 +136,7 @@ public class SpaceAPIController {
     private static final String SPACEID_PARAM = "spaceid";
 
     private static int maxReturnValues = Integer.MAX_VALUE;
-    private static final Logger logger = Logger.getLogger(SpaceAPIController.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(SpaceAPIController.class.getName());
 
     private static Object emptyObject = new Object();
 
@@ -155,8 +156,8 @@ public class SpaceAPIController {
             @PathVariable String type,
             @RequestParam(value = SPACEID_PARAM, defaultValue = "id") String spaceID
     ) {
-        if (logger.isLoggable(Level.FINE))
-            logger.fine("introducing type: " + type);
+        if (logger.isDebugEnabled())
+            logger.debug("introducing type: " + type);
         Map<String, Object> result = new Hashtable<String, Object>();
         try {
             GigaSpace gigaSpace = ControllerUtils.xapCache.get();
@@ -199,8 +200,8 @@ public class SpaceAPIController {
             @PathVariable @ApiPathParam(name = "type", description = TYPE_DESCRIPTION) String type,
             @RequestBody(required = false) @ApiBodyObject String requestBody
     ) {
-        if (logger.isLoggable(Level.FINE))
-            logger.fine("introducing type: " + type);
+        if (logger.isDebugEnabled())
+            logger.debug("introducing type: " + type);
 
         if (requestBody == null) {
             throw new RestException("Request body cannot be empty");
@@ -554,8 +555,8 @@ public class SpaceAPIController {
             @ApiQueryParam(name = "query", description = "a SQLQuery that is a SQL-like syntax") String query,
             @RequestParam(value = MAX_PARAM, required = false)
             @ApiQueryParam(name = "size", description = "") Integer size) throws ObjectNotFoundException {
-        if (logger.isLoggable(Level.FINE))
-            logger.fine("creating read query with type: " + type + " and query: " + query);
+        if (logger.isDebugEnabled())
+            logger.debug("creating read query with type: " + type + " and query: " + query);
 
         if (query == null) {
             query = ""; //Query all the data
@@ -601,8 +602,8 @@ public class SpaceAPIController {
         GigaSpace gigaSpace = ControllerUtils.xapCache.get();
         //read by id request
         Object typedBasedId = getTypeBasedIdObject(gigaSpace, type, id);
-        if (logger.isLoggable(Level.FINE))
-            logger.fine("creating readbyid query with type: " + type + " and id: " + id);
+        if (logger.isDebugEnabled())
+            logger.debug("creating readbyid query with type: " + type + " and id: " + id);
         IdQuery<Object> idQuery = new IdQuery<Object>(type, typedBasedId);
         Object doc;
         try {
@@ -701,8 +702,8 @@ public class SpaceAPIController {
         GigaSpace gigaSpace = ControllerUtils.xapCache.get();
         //take by id
         Object typedBasedId = getTypeBasedIdObject(gigaSpace, type, id);
-        if (logger.isLoggable(Level.FINE))
-            logger.fine("creating takebyid query with type: " + type + " and id: " + id);
+        if (logger.isDebugEnabled())
+            logger.debug("creating takebyid query with type: " + type + " and id: " + id);
         Object doc;
         try {
             doc = gigaSpace.takeById(new IdQuery<Object>(type, typedBasedId));
@@ -746,8 +747,8 @@ public class SpaceAPIController {
             @RequestParam(value = QUERY_PARAM) String query,
             @ApiQueryParam(name = "max", description = "The maximum number of entries to return. Default is Integer.MAX_VALUE")
             @RequestParam(value = MAX_PARAM, required = false) Integer max) {
-        if (logger.isLoggable(Level.FINE))
-            logger.fine("creating take query with type: " + type + " and query: " + query);
+        if (logger.isDebugEnabled())
+            logger.debug("creating take query with type: " + type + " and query: " + query);
 
         GigaSpace gigaSpace = ControllerUtils.xapCache.get();
         SQLQuery<Object> sqlQuery = new SQLQuery<Object>(type, query);
@@ -795,8 +796,8 @@ public class SpaceAPIController {
             @ApiBodyObject(clazz = ErrorMessage.class)
             String requestBody)
             throws TypeNotFoundException {
-        if (logger.isLoggable(Level.FINE))
-            logger.fine("performing post, type: " + type);
+        if (logger.isDebugEnabled())
+            logger.debug("performing post, type: " + type);
         if (requestBody == null) {
             throw new RestException("Request body cannot be empty");
         }
@@ -823,8 +824,8 @@ public class SpaceAPIController {
     public
     @ResponseBody
     ErrorResponse resolveTypeDescriptorNotFoundException(TypeNotFoundException e) throws IOException {
-        if (logger.isLoggable(Level.FINE))
-            logger.fine("type descriptor for typeName: " + e.getTypeName() + " not found, returning error response");
+        if (logger.isDebugEnabled())
+            logger.debug("type descriptor for typeName: " + e.getTypeName() + " not found, returning error response");
 
         return new ErrorResponse(new ErrorMessage("Type: " + e.getTypeName() + " is not registered in space"));
     }
@@ -838,8 +839,8 @@ public class SpaceAPIController {
     public
     @ResponseBody
     ErrorResponse resolveDocumentNotFoundException(ObjectNotFoundException e) throws IOException {
-        if (logger.isLoggable(Level.FINE))
-            logger.fine("space id query has no results, returning error response: " + e.getMessage());
+        if (logger.isDebugEnabled())
+            logger.debug("space id query has no results, returning error response: " + e.getMessage());
 
         return new ErrorResponse(new ErrorMessage(e.getMessage()));
     }
@@ -852,8 +853,8 @@ public class SpaceAPIController {
     public
     @ResponseBody
     ErrorResponse resolveDataAccessException(DataAccessException e) throws IOException {
-        if (logger.isLoggable(Level.WARNING))
-            logger.log(Level.WARNING, "received DataAccessException exception", e);
+        if (logger.isWarnEnabled())
+            logger.warn("received DataAccessException exception", e);
 
         return new ErrorResponse(new ExceptionMessage(e));
 
@@ -864,8 +865,8 @@ public class SpaceAPIController {
     public
     @ResponseBody
     ErrorResponse resolveCannotFindSpaceException(CannotFindSpaceException e) throws IOException {
-        if (logger.isLoggable(Level.WARNING))
-            logger.log(Level.WARNING, "received CannotFindSpaceException exception", e);
+        if (logger.isWarnEnabled())
+            logger.warn("received CannotFindSpaceException exception", e);
 
         return new ErrorResponse(new ExceptionMessage(e));
     }
@@ -876,8 +877,8 @@ public class SpaceAPIController {
     @ResponseBody
     ErrorResponse
     resoleTypeAlreadyRegisteredException(TypeAlreadyRegisteredException e) throws IOException {
-        if (logger.isLoggable(Level.WARNING))
-            logger.log(Level.WARNING, "received TypeAlreadyRegisteredException exception", e);
+        if (logger.isWarnEnabled())
+            logger.warn("received TypeAlreadyRegisteredException exception", e);
 
         return new ErrorResponse(new ErrorMessage("Type: " + e.getTypeName() + " is already introduced to space"));
     }
@@ -887,8 +888,8 @@ public class SpaceAPIController {
     public
     @ResponseBody
     ErrorResponse resolveRestIntroduceTypeException(RestException e) throws IOException {
-        if (logger.isLoggable(Level.WARNING))
-            logger.log(Level.WARNING, "received RestException exception", e.getMessage());
+        if (logger.isWarnEnabled())
+            logger.warn("received RestException exception", e.getMessage());
 
         return new ErrorResponse(new ErrorMessage(e.getMessage()));
     }
@@ -898,8 +899,8 @@ public class SpaceAPIController {
     public
     @ResponseBody
     ErrorResponse resolveRuntimeException(RuntimeException e) throws IOException {
-        if (logger.isLoggable(Level.SEVERE))
-            logger.log(Level.SEVERE, "received RuntimeException (unhandled) exception", e.getMessage());
+        if (logger.isErrorEnabled())
+            logger.error("received RuntimeException (unhandled) exception", e.getMessage());
 
         return new ErrorResponse(new ErrorMessage("Unhandled exception [" + e.getClass() + "]: " + e.toString()));
     }
@@ -909,8 +910,8 @@ public class SpaceAPIController {
     public
     @ResponseBody
     ErrorResponse resolveUnsupportedTypeException(UnsupportedTypeException e) throws IOException {
-        if (logger.isLoggable(Level.WARNING))
-            logger.log(Level.WARNING, "received UnsupportedTypeException exception", e.getMessage());
+        if (logger.isWarnEnabled())
+            logger.warn("received UnsupportedTypeException exception", e.getMessage());
 
         return new ErrorResponse(new ErrorMessage(e.getMessage()));
     }
@@ -929,11 +930,11 @@ public class SpaceAPIController {
             } catch (DataAccessException e) {
                 throw translateDataAccessException(gigaSpace, e, type);
             }
-            if (logger.isLoggable(Level.FINE))
-                logger.fine("wrote space documents to space");
+            if (logger.isDebugEnabled())
+                logger.debug("wrote space documents to space");
         } else {
-            if (logger.isLoggable(Level.FINE))
-                logger.fine("did not write anything to space");
+            if (logger.isDebugEnabled())
+                logger.debug("did not write anything to space");
         }
     }
 

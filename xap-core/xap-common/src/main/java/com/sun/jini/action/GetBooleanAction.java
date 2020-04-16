@@ -24,8 +24,9 @@ import net.jini.security.Security;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A convenience class for retrieving the <code>boolean</code> value of a system property as a
@@ -57,7 +58,7 @@ import java.util.logging.Logger;
 public class GetBooleanAction implements PrivilegedAction {
 
     private static final Logger logger =
-            Logger.getLogger("com.sun.jini.action.GetBooleanAction");
+            LoggerFactory.getLogger("com.sun.jini.action.GetBooleanAction");
 
     private final String theProp;
 
@@ -86,7 +87,7 @@ public class GetBooleanAction implements PrivilegedAction {
         try {
             return Boolean.getBoolean(theProp) ? Boolean.TRUE : Boolean.FALSE;
         } catch (SecurityException e) {
-            if (logger.isLoggable(Level.FINE)) {
+            if (logger.isDebugEnabled()) {
                 LogUtils.throwing(logger, GetBooleanAction.class, "run", e,
                         "security exception reading \"{0}\", returning false", theProp);
             }

@@ -19,7 +19,7 @@ package com.j_spaces.jms;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jms.utils.IMessageConverter;
 
-import java.util.logging.Level;
+
 
 import javax.jms.JMSException;
 import javax.jms.XAConnection;
@@ -74,8 +74,8 @@ public class GSXAConnectionFactoryImpl extends GSConnectionFactoryImpl implement
         conn.setCnxKey(connKey);
         conn.updateClientIDInternally(connKey + "_" + getSpaceName());
         addConnection(conn);
-        if (_logger.isLoggable(Level.FINE))
-            _logger.fine("GSConnectionFactoryImpl.createGSConnection() connKey: " + connKey);
+        if (_logger.isDebugEnabled())
+            _logger.debug("GSConnectionFactoryImpl.createGSConnection() connKey: " + connKey);
         return conn;
     }
 

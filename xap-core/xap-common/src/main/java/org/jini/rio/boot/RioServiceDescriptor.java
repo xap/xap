@@ -41,8 +41,9 @@ import java.security.Policy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The RioServiceDescriptor class is a utility that conforms to the Jini technology ServiceStarter
@@ -66,7 +67,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class RioServiceDescriptor implements ServiceDescriptor {
     static String COMPONENT = "org.jini.rio.boot";
-    static Logger logger = Logger.getLogger(COMPONENT);
+    static Logger logger = LoggerFactory.getLogger(COMPONENT);
     /**
      * The parameter types for the "activation constructor".
      */
@@ -209,7 +210,7 @@ public class RioServiceDescriptor implements ServiceDescriptor {
                 
         /* Warn user of inaccessible codebase(s) */
         // Commented since it is downloading jars for nothing!
-        if (logger.isLoggable(Level.FINEST)) {
+        if (logger.isTraceEnabled()) {
             HTTPDStatus.httpdWarning(getCodebase());
         }
                                             
@@ -218,8 +219,8 @@ public class RioServiceDescriptor implements ServiceDescriptor {
         String rioHome = System.getProperty("RIO_HOME");
         if (rioHome == null) {
             defaultCommonJARs = new URL[0];
-            if (logger.isLoggable(Level.FINEST))
-                logger.finest("RIO_HOME not defined, defaultCommonJARs " +
+            if (logger.isTraceEnabled())
+                logger.trace("RIO_HOME not defined, defaultCommonJARs " +
                         "set to zero-length array");
         } else {
             File rio = new File(rioHome + File.separator + "lib" +
@@ -234,14 +235,14 @@ public class RioServiceDescriptor implements ServiceDescriptor {
         if(commonJARs.length==0)
             throw new RuntimeException("No commonJARs have been defined");
         */
-        if (logger.isLoggable(Level.FINEST)) {
+        if (logger.isTraceEnabled()) {
             StringBuffer buffer = new StringBuffer();
             for (int i = 0; i < commonJARs.length; i++) {
                 if (i > 0)
                     buffer.append("\n");
                 buffer.append(commonJARs[i].toExternalForm());
             }
-            logger.finest("commonJARs=\n" + buffer.toString());
+            logger.trace("commonJARs=\n" + buffer.toString());
         }
 
         CommonClassLoader commonCL = CommonClassLoader.getInstance();
@@ -269,8 +270,8 @@ public class RioServiceDescriptor implements ServiceDescriptor {
                 initialGlobalPolicy = Policy.getPolicy();
                 globalPolicy = new AggregatePolicyProvider(initialGlobalPolicy);
                 Policy.setPolicy(globalPolicy);
-                if (logger.isLoggable(Level.FINEST))
-                    logger.log(Level.FINEST,
+                if (logger.isTraceEnabled())
+                    logger.trace(
                             "Global policy set: {0}",
                             globalPolicy);
             }
@@ -295,24 +296,24 @@ public class RioServiceDescriptor implements ServiceDescriptor {
             Object impl = null;
             Class implClass = null;
             String implClassName = getImplClassName();
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.finest("Attempting to get implementation class name: " + implClassName);
-                logger.finest("jsbCL searchPath: " + Arrays.toString(jsbCL.getURLs()) + "  jsbCL: " + jsbCL);
+            if (logger.isTraceEnabled()) {
+                logger.trace("Attempting to get implementation class name: " + implClassName);
+                logger.trace("jsbCL searchPath: " + Arrays.toString(jsbCL.getURLs()) + "  jsbCL: " + jsbCL);
             }
 
             implClass = Class.forName(implClassName, false, jsbCL);
-            if (logger.isLoggable(Level.FINEST))
-                logger.finest("Attempting to get implementation constructor");
+            if (logger.isTraceEnabled())
+                logger.trace("Attempting to get implementation constructor");
             Constructor constructor = implClass.getDeclaredConstructor(actTypes);
-            if (logger.isLoggable(Level.FINEST))
-                logger.log(Level.FINEST,
+            if (logger.isTraceEnabled())
+                logger.trace(
                         "Obtained implementation constructor: {0}",
                         constructor);
             constructor.setAccessible(true);
             impl = constructor.newInstance(new Object[]{getServerConfigArgs(),
                     lifeCycle});
-            if (logger.isLoggable(Level.FINEST))
-                logger.log(Level.FINEST,
+            if (logger.isTraceEnabled())
+                logger.trace(
                         "Obtained implementation instance: {0}",
                         impl);
             if (impl instanceof ServiceProxyAccessor) {
@@ -325,8 +326,8 @@ public class RioServiceDescriptor implements ServiceDescriptor {
             if (proxy != null) {
                 proxy = servicePreparer.prepareProxy(proxy);
             }
-            if (logger.isLoggable(Level.FINEST))
-                logger.log(Level.FINEST, "Proxy =  {0}", proxy);
+            if (logger.isTraceEnabled())
+                logger.trace("Proxy =  {0}", proxy);
             currentThread.setContextClassLoader(currentClassLoader);
             //TODO - factor in code integrity for MO
             // Don't do that, we end up with different class loaders because

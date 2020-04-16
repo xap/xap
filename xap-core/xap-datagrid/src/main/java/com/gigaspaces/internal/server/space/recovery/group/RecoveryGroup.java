@@ -25,8 +25,9 @@ import com.j_spaces.core.client.SpaceURL;
 
 import java.rmi.RemoteException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -37,7 +38,7 @@ import java.util.logging.Logger;
  */
 public abstract class RecoveryGroup {
     //logger
-    static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_COMMON);
+    static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_COMMON);
 
     protected final SpaceImpl _space;
 
@@ -93,7 +94,7 @@ public abstract class RecoveryGroup {
     private ISpaceSynchronizeReplicaState recoverFromSpace(SpaceURL remoteSpaceURL,
                                                            boolean transientOnly, boolean memoryOnly, int recoveryChunkSize) {
 
-        if (_logger.isLoggable(Level.INFO)) {
+        if (_logger.isInfoEnabled()) {
             _logger.info("Space [" + _space.getServiceName()
                     + "] trying to perform recovery from [" + remoteSpaceURL
                     + "]. RecoveryChunkSize=" + recoveryChunkSize);
@@ -113,7 +114,7 @@ public abstract class RecoveryGroup {
                 String err = ("Space [" + _space.getServiceName()
                         + "] failed to perform recovery from [" + remoteSpaceURL
                         + "] reason=" + (failureReason != null ? failureReason.getCause() : "[]") + " space is disabled since it cannot restart in BlobStore cache-policy");
-                _logger.severe(err);
+                _logger.error(err);
                 try {
                     _space.shutdown();
                 } catch (RemoteException e) {

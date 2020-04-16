@@ -78,8 +78,9 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public abstract class AbstractReplicationSourceChannel
@@ -244,7 +245,7 @@ public abstract class AbstractReplicationSourceChannel
 
     private synchronized void connectChannel() {
         try {
-            _specificLogger.fine("Connection established");
+            _specificLogger.debug("Connection established");
 
             IBacklogMemberState memberState = getGroupBacklog().getState(getMemberName());
             // Handle case where replication is out of sync since backlog was
@@ -255,8 +256,8 @@ public abstract class AbstractReplicationSourceChannel
                         + memberState.toLogMessage());
             }
 
-            if (_specificLogger.isLoggable(Level.FINE))
-                _specificLogger.fine("Performing handshake " + getConnectionDescription());
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("Performing handshake " + getConnectionDescription());
             // Create a connect channel packet with handshake details
             IBacklogHandshakeRequest backlogHandshakeRequest = getHandshakeRequest();
             ConnectChannelHandshakeRequest channelHandshakeRequest = new ConnectChannelHandshakeRequest(backlogHandshakeRequest);
@@ -264,11 +265,11 @@ public abstract class AbstractReplicationSourceChannel
                     _replicationRouter.getMyStubHolder(),
                     channelHandshakeRequest);
 
-            if (_specificLogger.isLoggable(Level.FINE))
-                _specificLogger.fine("Sending handshake request {" + backlogHandshakeRequest.toLogMessage() + "}");
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("Sending handshake request {" + backlogHandshakeRequest.toLogMessage() + "}");
 
-            if (_specificLogger.isLoggable(Level.FINER))
-                _specificLogger.finer("Backlog state {" + getGroupBacklog().toLogMessage(getMemberName()) + "}");
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("Backlog state {" + getGroupBacklog().toLogMessage(getMemberName()) + "}");
 
             // Dispatch the packet and process the handshake details
             Object handshakeResponse = getConnection().dispatch(packet);
@@ -285,8 +286,8 @@ public abstract class AbstractReplicationSourceChannel
             }
             _delegatorEndpointDetails = getConnection().getClosestEndpointDetails();
 
-            if (_specificLogger.isLoggable(Level.FINE))
-                _specificLogger.fine("Got handshake response {" + processLogHandshakeResponse.toLogMessage() + "}");
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("Got handshake response {" + processLogHandshakeResponse.toLogMessage() + "}");
 
 
             IHandshakeContext handshakeContext = getGroupBacklog().processHandshakeResponse(getMemberName(),
@@ -323,13 +324,13 @@ public abstract class AbstractReplicationSourceChannel
                 dispatchInconsistentStateEvent(e);
             }
             if (_inconsistentDuringHandshakeState) {
-                if (_specificLogger.isLoggable(Level.FINER))
-                    _specificLogger.log(Level.FINER, "Error occurred while retrying handshake " + getConnectionDescription(), e);
+                if (_specificLogger.isDebugEnabled())
+                    _specificLogger.debug("Error occurred while retrying handshake " + getConnectionDescription(), e);
                 return;
             }
 
-            if (_specificLogger.isLoggable(Level.SEVERE))
-                _specificLogger.log(Level.SEVERE, "Error occurred while performing handshake, replication is disabled until the error is resolved "
+            if (_specificLogger.isErrorEnabled())
+                _specificLogger.error("Error occurred while performing handshake, replication is disabled until the error is resolved "
                         + getConnectionDescription(), e);
             stopIterativeHandshakeProcess();
             moveToInconsistentState(e);
@@ -338,8 +339,8 @@ public abstract class AbstractReplicationSourceChannel
 
     protected void dispatchBacklogDropped(IBacklogMemberState memberState)
             throws RemoteException {
-        if (_specificLogger.isLoggable(Level.FINE))
-            _specificLogger.fine("Channel backlog was dropped, notifying target {" + memberState.toLogMessage() + "}");
+        if (_specificLogger.isDebugEnabled())
+            _specificLogger.debug("Channel backlog was dropped, notifying target {" + memberState.toLogMessage() + "}");
         ChannelBacklogDroppedPacket backlogDroppedPacket = new ChannelBacklogDroppedPacket(getGroupName(),
                 memberState);
         getConnection().dispatch(backlogDroppedPacket);
@@ -365,12 +366,12 @@ public abstract class AbstractReplicationSourceChannel
         // If handshake is considered done, we can change this channel state
         // to active
         if (handshakeContext.isDone()) {
-            _specificLogger.fine("Handshake completed - channel is active");
+            _specificLogger.debug("Handshake completed - channel is active");
 
             moveToActive();
         } else {
-            if (_specificLogger.isLoggable(Level.FINE))
-                _specificLogger.fine("Handshake is incomplete - iterative handshake activated " + handshakeContext.toLogMessage());
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("Handshake is incomplete - iterative handshake activated " + handshakeContext.toLogMessage());
 
             _iterativeHandshakeHandler = _asyncHandlerProvider.start(new IterativeHandshakeHandler(handshakeContext),
                     1,
@@ -468,8 +469,8 @@ public abstract class AbstractReplicationSourceChannel
         if (_closed)
             return;
 
-        if (_specificLogger.isLoggable(Level.FINER))
-            _specificLogger.finer("Closing...");
+        if (_specificLogger.isDebugEnabled())
+            _specificLogger.debug("Closing...");
 
         stopIterativeHandshakeProcess();
         stopInconsistentStateHandler();
@@ -482,7 +483,7 @@ public abstract class AbstractReplicationSourceChannel
         LogLevel logLevel = requiresHighLevelLogging() ? LogLevel.INFO : LogLevel.DEBUG;
         if (logLevel.isEnabled(_specificLogger))
             logLevel.log(_specificLogger, "Channel is closed " + getConnectionDescription());
-        _specificLogger.finer("Closed");
+        _specificLogger.debug("Closed");
     }
 
     private void stopInconsistentStateHandler() {
@@ -536,7 +537,7 @@ public abstract class AbstractReplicationSourceChannel
     }
 
     public synchronized void signalSynchronizingDone() throws RemoteException {
-        _specificLogger.fine("Signaling to target synchronization is done");
+        _specificLogger.debug("Signaling to target synchronization is done");
         getConnection().dispatch(new SynchronizationDonePacket(getGroupName()));
         getGroupBacklog().synchronizationDone(getMemberName());
         _synchronizing = false;
@@ -561,8 +562,8 @@ public abstract class AbstractReplicationSourceChannel
                     .beforeDelayedReplication();
 
             if (!stillRelevant) {
-                if (_specificLogger.isLoggable(Level.FINER))
-                    _specificLogger.finer("Packet [" + packet.toString() + "] discarded by the channel filter");
+                if (_specificLogger.isDebugEnabled())
+                    _specificLogger.debug("Packet [" + packet.toString() + "] discarded by the channel filter");
 
                 iterator.set(getGroupBacklog().replaceWithDiscarded(packet, false));
 
@@ -627,8 +628,8 @@ public abstract class AbstractReplicationSourceChannel
             List<IReplicationOrderedPacket> packets, boolean containsDiscardedPacket) throws RemoteException,
             ReplicationException {
         invokeOutputFilterIfNeeded(packets, containsDiscardedPacket);
-        if (_specificLogger.isLoggable(Level.FINEST))
-            _specificLogger.finest("Replicating filtered packets: " + ReplicationLogUtils.packetsToLogString(packets));
+        if (_specificLogger.isTraceEnabled())
+            _specificLogger.trace("Replicating filtered packets: " + ReplicationLogUtils.packetsToLogString(packets));
 
         ReplicatedDataPacketResource replicatedDataPacketResource = _packetsPool.get();
         int replicatedCompleted = 0;
@@ -670,8 +671,8 @@ public abstract class AbstractReplicationSourceChannel
             throws RemoteException, ReplicationException {
         int res = 0;
         packet = invokeOutputFilterIfNeeded(packet);
-        if (_specificLogger.isLoggable(Level.FINEST))
-            _specificLogger.finest("Replicating filtered packet: " + packet);
+        if (_specificLogger.isTraceEnabled())
+            _specificLogger.trace("Replicating filtered packet: " + packet);
 
         ReplicatedDataPacketResource replicatedDataPacketResource = _packetsPool.get();
         try {
@@ -821,8 +822,8 @@ public abstract class AbstractReplicationSourceChannel
         final boolean containsDiscarded = invokeOutputFilterIfNeeded(packets, containsDiscardedPacket);
         final List<IReplicationOrderedPacket> finalPackets = packets;
 
-        if (_specificLogger.isLoggable(Level.FINEST))
-            _specificLogger.finest("Replicating filtered packets: "
+        if (_specificLogger.isTraceEnabled())
+            _specificLogger.trace("Replicating filtered packets: "
                     + ReplicationLogUtils.packetsToLogString(finalPackets));
 
         final ReplicatedDataPacketResource replicatedDataPacketResource = _packetsPool.get();
@@ -836,27 +837,27 @@ public abstract class AbstractReplicationSourceChannel
 
                 final int originalSize = finalPackets.size();
 
-                if(_specificLogger.isLoggable(Level.FINEST)){
-                    _specificLogger.finest("Compressing batch packets: "
+                if(_specificLogger.isTraceEnabled()){
+                    _specificLogger.trace("Compressing batch packets: "
                             + ReplicationLogUtils.packetsToLogString(finalPackets));
                 }
 
                 batchPacket.compressBatch(containsDiscarded);
 
-                if (_specificLogger.isLoggable(Level.FINEST)) {
+                if (_specificLogger.isTraceEnabled()) {
 
                     double compressionRatio = (double) batchPacket.getBatch().size() / originalSize;
 
                     String msg = batchPacket.isCompressed() ? "Finished batch packets compression. compressionRatio=" + new DecimalFormat("#.##").format(compressionRatio): "Batch is incompressible.";
 
-                    _specificLogger.finest(msg);
+                    _specificLogger.trace(msg);
 
                 }
             }
 
             else {
-                if(_specificLogger.isLoggable(Level.FINEST)){
-                    _specificLogger.finest("Discarded packets network compression is disabled");
+                if(_specificLogger.isTraceEnabled()){
+                    _specificLogger.trace("Discarded packets network compression is disabled");
                 }
             }
 
@@ -908,12 +909,12 @@ public abstract class AbstractReplicationSourceChannel
     }
 
     private void logProcessResultIfNecessary(IProcessResult processResult, IReplicationOrderedPacket packet) {
-        if (_specificVerboseLogger.isLoggable(Level.FINEST))
-            _specificVerboseLogger.finest("Received " + processResult.toString() + " for packet replication [packetKey=" + packet.getKey() + "]");
+        if (_specificVerboseLogger.isTraceEnabled())
+            _specificVerboseLogger.trace("Received " + processResult.toString() + " for packet replication [packetKey=" + packet.getKey() + "]");
     }
 
     private void logProcessResultReceivedIfNecessary(IProcessResult processResult, final List<IReplicationOrderedPacket> packets) {
-        if (_specificVerboseLogger.isLoggable(Level.FINEST)) {
+        if (_specificVerboseLogger.isTraceEnabled()) {
             String packetsBatchText = packets.isEmpty() ? "EMPTY"
                     : "firstPacketKey="
                     + packets.get(0)
@@ -921,15 +922,15 @@ public abstract class AbstractReplicationSourceChannel
                     + ", lastPacketKey="
                     + packets.get(packets.size() - 1)
                     .getEndKey();
-            _specificVerboseLogger.finest("Received " + processResult.toString() + " for packets batch replication [" + packetsBatchText + "]");
+            _specificVerboseLogger.trace("Received " + processResult.toString() + " for packets batch replication [" + packetsBatchText + "]");
         }
     }
 
     private Future replicateAsyncAfterChannelFilter(
             IReplicationOrderedPacket packet) throws RemoteException {
         final IReplicationOrderedPacket finalPacket = invokeOutputFilterIfNeeded(packet);
-        if (_specificLogger.isLoggable(Level.FINEST))
-            _specificLogger.finest("Replicating filtered packet: "
+        if (_specificLogger.isTraceEnabled())
+            _specificLogger.trace("Replicating filtered packet: "
                     + finalPacket);
         final ReplicatedDataPacketResource replicatedDataPacketResource = _packetsPool.get();
         boolean delegatedToAsync = false;
@@ -1049,15 +1050,15 @@ public abstract class AbstractReplicationSourceChannel
             try {
                 _outFilter.filterOut(filterEntry, getMemberName(), getGroupName());
             } catch (Exception e) {
-                if (_specificLogger.isLoggable(Level.WARNING))
-                    _specificLogger.log(Level.WARNING, "Replication filter caused an exception when filtering entry [" + filterEntry + "]", e);
+                if (_specificLogger.isWarnEnabled())
+                    _specificLogger.warn("Replication filter caused an exception when filtering entry [" + filterEntry + "]", e);
             }
         }
         // If filtered the entire data we can replace it with discarded
         // packet
         if (data.isEmpty()) {
-            if (_specificLogger.isLoggable(Level.FINEST))
-                _specificLogger.finest("Packet [" + packet.toString()
+            if (_specificLogger.isTraceEnabled())
+                _specificLogger.trace("Packet [" + packet.toString()
                         + "] discarded by replication output filter.");
             result = getGroupBacklog().replaceWithDiscarded(clonedPacket, false);
         }
@@ -1203,8 +1204,8 @@ public abstract class AbstractReplicationSourceChannel
         }
         _lastSampledReceivedTraffic = receivedTraffic;
         _totalNumberOfReplicatedPackets += operationsDone;
-        if (_specificVerboseLogger.isLoggable(Level.FINEST))
-            _specificVerboseLogger.finest("sampled packets throughput [" + sampleTP
+        if (_specificVerboseLogger.isTraceEnabled())
+            _specificVerboseLogger.trace("sampled packets throughput [" + sampleTP
                     + "] generated traffic throughput [" + generatedTrafficTP
                     + "] received traffic throughput [" + receivedTrafficTP
                     + "]");
@@ -1240,7 +1241,7 @@ public abstract class AbstractReplicationSourceChannel
             synchronized (AbstractReplicationSourceChannel.this) {
                 if (isClosed())
                     return CycleResult.TERMINATE;
-                _specificLogger.finest("Inconsistent state handler waken up");
+                _specificLogger.trace("Inconsistent state handler waken up");
                 // If we are now not at inconsistent, the connection
                 // could have been disconnected and successfully reconnected
                 // + handshake
@@ -1252,7 +1253,7 @@ public abstract class AbstractReplicationSourceChannel
                 if (!_inconsistentDuringHandshakeState)
                     return CycleResult.TERMINATE;
                 // We are still at inconsistent state
-                _specificLogger.finest("Channel is still at inconsistent state, waiting for next retry");
+                _specificLogger.trace("Channel is still at inconsistent state, waiting for next retry");
                 return CycleResult.IDLE_CONTINUE;
             }
         }
@@ -1281,13 +1282,13 @@ public abstract class AbstractReplicationSourceChannel
                     getConnection().dispatch(new IterativeHandshakePacket(getGroupName(),
                             nextHandshakeIteration));
                     if (!_handshakeContext.isDone()) {
-                        if (_specificLogger.isLoggable(Level.FINER))
-                            _specificLogger.finer("Handshake is incomplete: " + _handshakeContext.toLogMessage());
+                        if (_specificLogger.isDebugEnabled())
+                            _specificLogger.debug("Handshake is incomplete: " + _handshakeContext.toLogMessage());
 
                         return CycleResult.CONTINUE;
                     }
 
-                    _specificLogger.fine("Handshake completed - channel is active");
+                    _specificLogger.debug("Handshake completed - channel is active");
 
                     moveToActive();
                     _iterativeHandshakeHandler = null;
@@ -1296,8 +1297,8 @@ public abstract class AbstractReplicationSourceChannel
                     _iterativeHandshakeHandler = null;
                     return CycleResult.TERMINATE;
                 } catch (Throwable t) {
-                    if (_specificLogger.isLoggable(Level.SEVERE))
-                        _specificLogger.log(Level.SEVERE, "Error occurred while executing iterative handshake, replication is disabled until the error is resolved "
+                    if (_specificLogger.isErrorEnabled())
+                        _specificLogger.error("Error occurred while executing iterative handshake, replication is disabled until the error is resolved "
                                         + getConnectionDescription(),
                                 t);
                     moveToInconsistentState(t);
@@ -1391,13 +1392,13 @@ public abstract class AbstractReplicationSourceChannel
         if (isActive()) {
             if (isDataFiltered()) {
                 if (!getDataFilter().filterBeforeReplicatingUnreliableOperation(operation, getTargetLogicalVersion())) {
-                    if (_specificLogger.isLoggable(Level.FINEST))
-                        _specificLogger.finest("Filtered unreliable operation: " + operation);
+                    if (_specificLogger.isTraceEnabled())
+                        _specificLogger.trace("Filtered unreliable operation: " + operation);
                     return;
                 }
             }
-            if (_specificLogger.isLoggable(Level.FINEST))
-                _specificLogger.finest("Replicating unreliable operation: " + operation);
+            if (_specificLogger.isTraceEnabled())
+                _specificLogger.trace("Replicating unreliable operation: " + operation);
 
             try {
                 getConnection().dispatch(new UnreliableOperationPacket(getGroupName(),

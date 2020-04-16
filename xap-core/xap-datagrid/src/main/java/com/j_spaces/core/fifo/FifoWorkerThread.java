@@ -39,15 +39,16 @@ import com.j_spaces.kernel.locks.ILockObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
  * @since 8.0.4
  */
 public abstract class FifoWorkerThread extends GSThread {
-    protected static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_FIFO);
+    protected static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_FIFO);
 
     protected final int _threadNum;
     protected final boolean _isNotify;
@@ -110,11 +111,11 @@ public abstract class FifoWorkerThread extends GSThread {
         } catch (EntryDeletedException e) {
 
         } catch (SAException e) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "FifoWorkerThread caught SAException notify=" + _isNotify + "  ", e);
+            if (_logger.isErrorEnabled())
+                _logger.error("FifoWorkerThread caught SAException notify=" + _isNotify + "  ", e);
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, "FifoWorkerThread caught unhandeled exception notify=" + _isNotify + "  ", ex);
+            if (_logger.isErrorEnabled())
+                _logger.error("FifoWorkerThread caught unhandeled exception notify=" + _isNotify + "  ", ex);
         }
     }
 

@@ -14,8 +14,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.Engine.*;
 import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER_CLASS_NAME;
@@ -37,7 +38,7 @@ public class DemoteHandler implements ISpaceModeListener {
 
     public DemoteHandler(SpaceImpl spaceImpl) {
         _spaceImpl = spaceImpl;
-        _logger = Logger.getLogger(Constants.LOGGER_DEMOTE + '.' + spaceImpl.getNodeName());
+        _logger = LoggerFactory.getLogger(Constants.LOGGER_DEMOTE + '.' + spaceImpl.getNodeName());
         _demoteMinTimeoutMillis = StringUtils.parseDurationAsMillis(_spaceImpl.getConfigReader().getSpaceProperty(MIN_TIME_TO_DEMOTE_IN_MS, ENGINE_DEMOTE_MIN_TIMEOUT_DEFAULT));
         _demoteCompletionEventTimeoutMillis = StringUtils.parseDurationAsMillis(_spaceImpl.getConfigReader().getSpaceProperty(ENGINE_DEMOTE_COMPLETION_EVENT_TIMEOUT, ENGINE_DEMOTE_COMPLETION_EVENT_TIMEOUT_DEFAULT));
     }
@@ -252,11 +253,11 @@ public class DemoteHandler implements ISpaceModeListener {
     @Override
     public void afterSpaceModeChange(SpaceMode newMode) throws RemoteException {
         if (newMode.equals(SpaceMode.BACKUP)) {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("afterSpaceModeChange >> Space mode changed to backup!");
+            if (_logger.isDebugEnabled())
+                _logger.debug("afterSpaceModeChange >> Space mode changed to backup!");
         } else {
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine("afterSpaceModeChange >> Unexpected Space mode changed to " + newMode);
+            if (_logger.isDebugEnabled())
+                _logger.debug("afterSpaceModeChange >> Unexpected Space mode changed to " + newMode);
         }
         _latch.countDown();
     }

@@ -28,8 +28,9 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The Statement implementation using a GConnection and a GResultSet
@@ -46,7 +47,7 @@ public class GStatement implements Statement {
     protected boolean ignoreUnsupportedOptions;
 
     //logger
-    final private static Logger _logger = Logger.getLogger(Constants.LOGGER_QUERY);
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     //user configured behavior with unsupported sql operations
 
@@ -452,8 +453,8 @@ public class GStatement implements Statement {
             throw new SQLException("Command not Supported!", "GSP", -132);
         }
 
-        if(_logger.isLoggable(Level.WARNING)){
-            _logger.warning("An unsupported java.sql.Statement." + operation + " command was called and ignored ");
+        if(_logger.isWarnEnabled()){
+            _logger.warn("An unsupported java.sql.Statement." + operation + " command was called and ignored ");
         }
 
         return;

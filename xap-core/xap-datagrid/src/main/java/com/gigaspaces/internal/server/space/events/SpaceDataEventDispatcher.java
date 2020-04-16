@@ -27,14 +27,15 @@ import net.jini.core.event.UnknownEventException;
 import net.jini.core.lease.UnknownLeaseException;
 
 import java.rmi.RemoteException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.Engine.NOTIFIER_TIME_LIMIT;
 
 @com.gigaspaces.api.InternalApi
 public class SpaceDataEventDispatcher implements IConsumerObject<RemoteEventBusPacket> {
-    private static final Logger _logger = Logger.getLogger(Constants.LOGGER_NOTIFY);
+    private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_NOTIFY);
 
     private final SpaceDataEventManager _dataEventManager;
     private LeaseManager _leaseManager;
@@ -62,8 +63,8 @@ public class SpaceDataEventDispatcher implements IConsumerObject<RemoteEventBusP
         try {
             packet.execute(this);
         } catch (Exception ex) {
-            if (_logger.isLoggable(Level.SEVERE))
-                _logger.log(Level.SEVERE, ex.toString(), ex);
+            if (_logger.isErrorEnabled())
+                _logger.error(ex.toString(), ex);
         } finally {
             _dataEventManager.notifyReturned(packet.getStatus(), (ITemplateHolder) packet.getEntryHolder());
         }
@@ -86,15 +87,15 @@ public class SpaceDataEventDispatcher implements IConsumerObject<RemoteEventBusP
                 if (th.hasPendingRemoteException() && !signaledRemoteException) {
                     re.setTTL(re.getTTL() - 1);
                     if (re.getTTL() > 0) {
-                        if (_logger.isLoggable(Level.FINE)) {
-                            _logger.fine("Notification failed (signaled by other thread) " +
+                        if (_logger.isDebugEnabled()) {
+                            _logger.debug("Notification failed (signaled by other thread) " +
                                     "\nRetrying: TTL=" + re.getTTL());
                         }
                         try {
                             Thread.sleep(NOTIFIER_TIME_LIMIT);
                         } catch (InterruptedException ie) {
-                            if (_logger.isLoggable(Level.FINEST)) {
-                                _logger.log(Level.FINEST, Thread.currentThread().getName() + " interrupted.", ie);
+                            if (_logger.isTraceEnabled()) {
+                                _logger.trace(Thread.currentThread().getName() + " interrupted.", ie);
                             }
 
                             cancel(th);
@@ -107,8 +108,8 @@ public class SpaceDataEventDispatcher implements IConsumerObject<RemoteEventBusP
                         continue; //retry
                     } else {
                         //I give up
-                        if (_logger.isLoggable(Level.FINE))
-                            _logger.log(Level.FINE, "Notification failed: gave up after " + (NOTIFIER_TIME_LIMIT * ttl) + " milliseconds ; removing notification template.");
+                        if (_logger.isDebugEnabled())
+                            _logger.debug("Notification failed: gave up after " + (NOTIFIER_TIME_LIMIT * ttl) + " milliseconds ; removing notification template.");
                         cancel(th);
                         return;
                     }
@@ -137,16 +138,16 @@ public class SpaceDataEventDispatcher implements IConsumerObject<RemoteEventBusP
                             th.setPendingRemoteException(true);
                         }
                     }
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE, "Notification failed.", rex);
-                        _logger.fine("Retrying: TTL=" + re.getTTL());
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Notification failed.", rex);
+                        _logger.debug("Retrying: TTL=" + re.getTTL());
                     }
                     // sleeping for a radom time (up to 10 seconds)
                     try {
                         Thread.sleep(NOTIFIER_TIME_LIMIT);
                     } catch (InterruptedException ie) {
-                        if (_logger.isLoggable(Level.FINEST)) {
-                            _logger.log(Level.FINEST, Thread.currentThread().getName() + " interrupted.", ie);
+                        if (_logger.isTraceEnabled()) {
+                            _logger.trace(Thread.currentThread().getName() + " interrupted.", ie);
                         }
 
                         cancel(th);
@@ -161,8 +162,8 @@ public class SpaceDataEventDispatcher implements IConsumerObject<RemoteEventBusP
                     return;
                 }
             } catch (Exception ex) {
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, "Notification failed. ", ex);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error("Notification failed. ", ex);
                 }
 
                 cancel(th, ex);
@@ -172,8 +173,8 @@ public class SpaceDataEventDispatcher implements IConsumerObject<RemoteEventBusP
     }
 
     private void cancel(NotifyTemplateHolder template, Exception ex) {
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Notification failed: " + ex + " ; removing notification template.");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Notification failed: " + ex + " ; removing notification template.");
 
         cancel(template);
     }
@@ -189,8 +190,8 @@ public class SpaceDataEventDispatcher implements IConsumerObject<RemoteEventBusP
                         template.getClassName(), template.getSpaceItemType(),
                         false /*fromReplication*/, true /*origin*/, false /* isFromGateway */);
             } catch (UnknownLeaseException e) {
-                if (_logger.isLoggable(Level.FINEST))
-                    _logger.log(Level.FINEST, Thread.currentThread().getName() + " fail to cancel lease.", e);
+                if (_logger.isTraceEnabled())
+                    _logger.trace(Thread.currentThread().getName() + " fail to cancel lease.", e);
             }
         }
     }

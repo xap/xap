@@ -30,8 +30,9 @@ import com.j_spaces.kernel.IStoredListIterator;
 import com.j_spaces.kernel.StoredListFactory;
 
 import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * abstract class- infra' for time-based eviction strategy
@@ -40,7 +41,7 @@ import java.util.logging.Logger;
  * @since 9.1
  */
 public abstract class TimeBasedSpaceEvictionStrategy extends SpaceEvictionStrategy {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_CACHE);
     private final static long TIMEBASED_EVICTION_MIN_FORCE_EXPIRATION_INTERVAL = 500;
     private final static long SHORT_LIVED_ENTRY_INTERVAL_LIMIT = 1;
     private final static long CELLS_GRANULARITY_INTERVAL = 10 * 1000;
@@ -343,19 +344,19 @@ public abstract class TimeBasedSpaceEvictionStrategy extends SpaceEvictionStrate
                         if (_shouldDie)
                             break;
 
-                        if (_logger.isLoggable(Level.FINEST))
-                            _logger.finest(this.getName() + " - woke up for reaping.");
+                        if (_logger.isTraceEnabled())
+                            _logger.trace(this.getName() + " - woke up for reaping.");
 
                         _evicted = reapExpiredEntries(_force, reapMainList);
                         signalEndCycle();
                     } catch (Exception e) {
-                        if (_logger.isLoggable(Level.SEVERE))
-                            _logger.log(Level.SEVERE, this.getName() + " - caught Exception", e);
+                        if (_logger.isErrorEnabled())
+                            _logger.error(this.getName() + " - caught Exception", e);
                     }
                 }
             } finally {
-                if (_logger.isLoggable(Level.FINE))
-                    _logger.fine(this.getName() + " terminated.");
+                if (_logger.isDebugEnabled())
+                    _logger.debug(this.getName() + " terminated.");
             }
         }
 
@@ -376,25 +377,25 @@ public abstract class TimeBasedSpaceEvictionStrategy extends SpaceEvictionStrate
                         long fixedRateDelay = _nextExpirationTimeInterval - SystemTime.timeMillis();
 
                         if (fixedRateDelay <= 0) {
-                            if (_logger.isLoggable(Level.FINEST))
-                                _logger.finest("Skipped fallAsleep since fixedRateDelay=" + fixedRateDelay);
+                            if (_logger.isTraceEnabled())
+                                _logger.trace("Skipped fallAsleep since fixedRateDelay=" + fixedRateDelay);
                             _nextExpirationTimeInterval = SystemTime.timeMillis();
                             return shouldProcessMainList();
                         }
 
-                        if (_logger.isLoggable(Level.FINEST))
-                            _logger.finest("fallAsleep - going to wait fixedRateDelay=" + fixedRateDelay);
+                        if (_logger.isTraceEnabled())
+                            _logger.trace("fallAsleep - going to wait fixedRateDelay=" + fixedRateDelay);
                         wait(fixedRateDelay);
                         if (_force) {
-                            if (_logger.isLoggable(Level.FINEST))
-                                _logger.finest("TimeBased Eviction reaper was forcibly waken up");
+                            if (_logger.isTraceEnabled())
+                                _logger.trace("TimeBased Eviction reaper was forcibly waken up");
                             _nextExpirationTimeInterval = SystemTime.timeMillis();
                         }
                         return shouldProcessMainList();
                     }
                 } catch (InterruptedException ie) {
-                    if (_logger.isLoggable(Level.FINEST))
-                        _logger.log(Level.FINEST, this.getName() + " interrupted.", ie);
+                    if (_logger.isTraceEnabled())
+                        _logger.trace(this.getName() + " interrupted.", ie);
 
                     _shouldDie = true;
                     interrupt();

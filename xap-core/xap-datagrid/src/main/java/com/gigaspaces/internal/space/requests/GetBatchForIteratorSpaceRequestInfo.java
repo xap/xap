@@ -25,7 +25,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.UUID;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Alon Shoham
@@ -35,7 +36,7 @@ import java.util.logging.Logger;
 public class GetBatchForIteratorSpaceRequestInfo extends AbstractSpaceRequestInfo {
     private static final long serialVersionUID = 1L;
 
-    private static final Logger _devLogger = Logger.getLogger(Constants.LOGGER_DEV);
+    private static final Logger _devLogger = LoggerFactory.getLogger(Constants.LOGGER_DEV);
 
     private ITemplatePacket _templatePacket;
     private UUID _iteratorId;

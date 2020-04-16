@@ -24,7 +24,7 @@ import com.j_spaces.kernel.SystemProperties;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
+
 
 /**
  * SynchronizeReplicaDataProducer copies all the entries in space and all the notifications
@@ -47,8 +47,8 @@ public class SynchronizeReplicaDataProducer
             SpaceCopyReplicaParameters parameters) {
         ArrayList<ISingleStageReplicaDataProducer<? extends IExecutableSpaceReplicaData>> dataProducers = new ArrayList<ISingleStageReplicaDataProducer<? extends IExecutableSpaceReplicaData>>();
         dataProducers.add(new SpaceTypeReplicaDataProducer(_engine));
-        if (_logger.isLoggable(Level.FINEST))
-            _logger.finest(_engine.getReplicationNode() + "created SpaceTypeReplicaDataProducer");
+        if (_logger.isTraceEnabled())
+            _logger.trace(_engine.getReplicationNode() + "created SpaceTypeReplicaDataProducer");
         for (ITemplatePacket templatePacket : parameters.getTemplatePackets()) {
             // create unique EntryReplicaProducer that deals with direct persistency sync list
             if (parameters.getSynchronizationListFetcher() != null) {
@@ -56,14 +56,14 @@ public class SynchronizeReplicaDataProducer
             } else {
                 dataProducers.add(new EntryReplicaProducer(_engine, parameters, templatePacket, _requestContext));
             }
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest(_engine.getReplicationNode() + "created EntryReplicaProducer for templatePacket " + templatePacket);
+            if (_logger.isTraceEnabled())
+                _logger.trace(_engine.getReplicationNode() + "created EntryReplicaProducer for templatePacket " + templatePacket);
         }
 
         if (parameters.isCopyNotifyTemplates()) {
             dataProducers.add(new NotifyTemplateReplicaProducer(_engine, _requestContext));
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest(_engine.getReplicationNode() + "created NotifyTemplateReplicaProducer");
+            if (_logger.isTraceEnabled())
+                _logger.trace(_engine.getReplicationNode() + "created NotifyTemplateReplicaProducer");
         }
         return dataProducers;
     }

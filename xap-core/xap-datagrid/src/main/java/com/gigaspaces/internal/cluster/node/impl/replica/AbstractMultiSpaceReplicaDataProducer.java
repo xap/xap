@@ -23,7 +23,8 @@ import com.gigaspaces.logger.Constants;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -36,7 +37,7 @@ import java.util.logging.Logger;
 public abstract class AbstractMultiSpaceReplicaDataProducer
         implements ISpaceReplicaDataProducer<IExecutableSpaceReplicaData> {
 
-    protected final static Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
+    protected final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
 
     private final List<ISingleStageReplicaDataProducer<? extends IExecutableSpaceReplicaData>> _dataProducers;
     protected final Object _requestContext;

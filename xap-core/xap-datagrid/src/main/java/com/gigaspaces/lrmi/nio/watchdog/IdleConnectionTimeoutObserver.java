@@ -22,8 +22,9 @@ import com.gigaspaces.lrmi.nio.watchdog.Watchdog.ClientWatchedObject;
 import com.gigaspaces.lrmi.nio.watchdog.Watchdog.WatchedObject;
 
 import java.util.Collection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -35,7 +36,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class IdleConnectionTimeoutObserver
         implements TimeoutObserver {
-    final static private Logger _logger = Logger.getLogger(Constants.LOGGER_LRMI_WATCHDOG);
+    final static private Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_WATCHDOG);
 
     // Number of retries to reach the server before closing connection
     final private int _retries;
@@ -80,8 +81,8 @@ public class IdleConnectionTimeoutObserver
                     clientWatched.startWatch();
 
                 } else {
-                    if (_logger.isLoggable(Level.FINEST)) {
-                        _logger.finest("Closing idle connection to " + cPeer.getConnectionURL());
+                    if (_logger.isTraceEnabled()) {
+                        _logger.trace("Closing idle connection to " + cPeer.getConnectionURL());
                     }
 
                     // Connection is idle - close it

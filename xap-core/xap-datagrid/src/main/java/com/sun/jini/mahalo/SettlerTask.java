@@ -30,8 +30,9 @@ import net.jini.core.transaction.server.TransactionManager;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A <code>SettlerTask</code> is scheduled task, which causes an unsettled transaction to settle.
@@ -86,7 +87,7 @@ public class SettlerTask extends RetryTask implements TransactionConstants {
     }
 
     public boolean tryOnce() {
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.entering(operationsLogger, SettlerTask.class, "tryOnce");
         }
         try {
@@ -95,8 +96,8 @@ public class SettlerTask extends RetryTask implements TransactionConstants {
 
             attempt++;
 
-            if (transactionsLogger.isLoggable(Level.FINEST)) {
-                transactionsLogger.log(Level.FINEST,
+            if (transactionsLogger.isTraceEnabled()) {
+                transactionsLogger.trace(
                         "Attempting to settle transaction id: {0}",
                         tid);
             }
@@ -113,40 +114,40 @@ public class SettlerTask extends RetryTask implements TransactionConstants {
                     break;
 
                 default:
-                    if (transactionsLogger.isLoggable(Level.WARNING)) {
-                        transactionsLogger.log(Level.WARNING,
+                    if (transactionsLogger.isWarnEnabled()) {
+                        transactionsLogger.warn(
                                 "Attempting to settle transaction in an invalid state: {0}",
                                 new Integer(state));
                     }
             }
 
         } catch (NoSuchObjectException nsoe) {
-            if (transactionsLogger.isLoggable(Level.WARNING)) {
-                transactionsLogger.log(Level.WARNING,
+            if (transactionsLogger.isWarnEnabled()) {
+                transactionsLogger.warn(
                         "Unable to settle recovered transaction", nsoe);
             }
 //TODO -ignore?	    
         } catch (TransactionException te) {
-            if (transactionsLogger.isLoggable(Level.FINE)) {
-                transactionsLogger.log(Level.FINE,
+            if (transactionsLogger.isDebugEnabled()) {
+                transactionsLogger.debug(
                         "Unable to settle recovered transaction", te);
             }
 //TODO -ignore?	    
         } catch (RemoteException re) {
             //try again
-            if (operationsLogger.isLoggable(Level.FINER)) {
+            if (operationsLogger.isDebugEnabled()) {
                 LogUtils.exiting(operationsLogger, SettlerTask.class,"tryOnce", Boolean.valueOf(false));
             }
             return false;
         }
 
-        if (transactionsLogger.isLoggable(Level.FINEST)) {
-            transactionsLogger.log(Level.FINEST,
+        if (transactionsLogger.isTraceEnabled()) {
+            transactionsLogger.trace(
                     "Transaction id {0} was settled",
                     tid);
         }
 
-        if (operationsLogger.isLoggable(Level.FINER)) {
+        if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, SettlerTask.class, "tryOnce", Boolean.valueOf(true));
         }
 

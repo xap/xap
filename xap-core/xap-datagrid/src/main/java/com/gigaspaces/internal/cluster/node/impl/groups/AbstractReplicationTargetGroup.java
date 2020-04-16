@@ -43,13 +43,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public abstract class AbstractReplicationTargetGroup
         implements IReplicationTargetGroup, IReplicationGroupHistory {
-    protected final static Logger _loggerReplica = Logger.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
+    protected final static Logger _loggerReplica = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
     protected final Logger _specificLogger;
 
     private final IReplicationRouter _replicationRouter;
@@ -80,7 +81,7 @@ public abstract class AbstractReplicationTargetGroup
         _spaceReplicaStates = new HashMap<String, SpaceReplicaState>();
         _groupChannelHistory = createGroupHistory();
         _groupHistory = new EventsTracer<String>(_groupConfig.getHistoryLength());
-        _specificLogger = Logger.getLogger(Constants.LOGGER_REPLICATION_GROUP
+        _specificLogger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_GROUP
                 + "." + _groupConfig.getName());
     }
 
@@ -159,8 +160,8 @@ public abstract class AbstractReplicationTargetGroup
             channel.onChannelBacklogDropped(getGroupName(),
                     memberState,
                     listener);
-        } else if (_specificLogger.isLoggable(Level.WARNING))
-            _specificLogger.warning("Received channel backlog dropped notification from a wrong source ["
+        } else if (_specificLogger.isWarnEnabled())
+            _specificLogger.warn("Received channel backlog dropped notification from a wrong source ["
                     + sourceMemberLookupName
                     + ", "
                     + sourceUniqueId
@@ -331,13 +332,13 @@ public abstract class AbstractReplicationTargetGroup
         getCorrespondingChannel(sourceMemberLookupName, sourceUniqueId);
 
         try {
-            if (_specificLogger.isLoggable(Level.FINEST))
-                _specificLogger.finest("incoming replication of unreliable operation: " + operation);
+            if (_specificLogger.isTraceEnabled())
+                _specificLogger.trace("incoming replication of unreliable operation: " + operation);
 
             operation.execute(sourceMemberLookupName, getReplicationInFacade());
         } catch (Exception e) {
-            if (_specificLogger.isLoggable(Level.WARNING))
-                _specificLogger.log(Level.WARNING,
+            if (_specificLogger.isWarnEnabled())
+                _specificLogger.warn(
                         "error occurred while processing operation "
                                 + operation,
                         e);
@@ -415,26 +416,26 @@ public abstract class AbstractReplicationTargetGroup
             AbstractReplicationTargetChannel channel = _channels.get(sourceMemberLookupName);
 
             if (channel == null) {
-                if (_loggerReplica.isLoggable(Level.WARNING)) {
-                    _loggerReplica.warning(_replicationRouter.getMyLookupName()
+                if (_loggerReplica.isWarnEnabled()) {
+                    _loggerReplica.warn(_replicationRouter.getMyLookupName()
                             + " received synchronization done signal from source with no open channel ["
                             + sourceMemberLookupName + "]");
                 }
             } else if (!channel.getSourceUniqueId().equals(sourceUniqueId)) {
-                if (_loggerReplica.isLoggable(Level.WARNING))
-                    _loggerReplica.warning(_replicationRouter.getMyLookupName()
+                if (_loggerReplica.isWarnEnabled())
+                    _loggerReplica.warn(_replicationRouter.getMyLookupName()
                             + " received synchronization done signal from source with wrong id ["
                             + sourceMemberLookupName + "] expected id [" + channel.getSourceUniqueId() + "] actual [" + sourceUniqueId + "]");
             }
 
-            if (_loggerReplica.isLoggable(Level.FINE))
-                _loggerReplica.fine(_replicationRouter.getMyLookupName()
+            if (_loggerReplica.isDebugEnabled())
+                _loggerReplica.debug(_replicationRouter.getMyLookupName()
                         + " synchronization done with source ["
                         + sourceMemberLookupName + "]");
             spaceReplicaState.updateSynchronizationDone();
         } else {
-            if (_loggerReplica.isLoggable(Level.WARNING))
-                _loggerReplica.warning(_replicationRouter.getMyLookupName()
+            if (_loggerReplica.isWarnEnabled())
+                _loggerReplica.warn(_replicationRouter.getMyLookupName()
                         + " received synchronization done signal when there's no pending synchronization in progress ["
                         + sourceMemberLookupName + "]");
         }

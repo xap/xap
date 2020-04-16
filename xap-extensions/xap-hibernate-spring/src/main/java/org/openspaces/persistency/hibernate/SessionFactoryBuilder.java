@@ -26,8 +26,9 @@ import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.cfg.Configuration;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -49,7 +50,7 @@ public class SessionFactoryBuilder {
      *
      */
     private static final String ANNOTATION_CONFIGURATION_CLASS = "org.hibernate.cfg.AnnotationConfiguration";
-    private final static Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT);
+    private final static Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_PERSISTENT);
 
 
     /**
@@ -71,8 +72,8 @@ public class SessionFactoryBuilder {
             } catch (Exception e) {
                 // if both methods failed - log first exception
                 // and throw the second
-                if (_logger.isLoggable(Level.SEVERE)) {
-                    _logger.log(Level.SEVERE, "Failed to configure using hibernate annotations.", t);
+                if (_logger.isErrorEnabled()) {
+                    _logger.error("Failed to configure using hibernate annotations.", t);
 
                 }
 
@@ -87,7 +88,7 @@ public class SessionFactoryBuilder {
         String namingStrategyClass = config.getProperty(HIBERNATE_NAMING_STRATEGY);
 
         if (namingStrategyClass != null) {
-            _logger.log(Level.WARNING, "Definition of naming strategy [" +
+            _logger.warn("Definition of naming strategy [" +
                              HIBERNATE_NAMING_STRATEGY + "] found, it's unsupported " +
                              "since hibernate 5.x used, please use instead either [" +
                              HIBERNATE_IMPLICIT_NAMING_STRATEGY  + "] or [" +

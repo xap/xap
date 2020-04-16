@@ -33,8 +33,9 @@ import java.rmi.ServerException;
 import java.rmi.UnexpectedException;
 import java.rmi.UnknownHostException;
 import java.rmi.UnmarshalException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -45,7 +46,7 @@ import java.util.logging.Logger;
 @com.gigaspaces.api.InternalApi
 public class ThrowableConstants {
 
-    final static Logger logger = Logger.getLogger("com.sun.jini.constants");
+    final static Logger logger = LoggerFactory.getLogger("com.sun.jini.constants");
 
     /**
      * Value returned by <code>retryable</code> to indicate that the
@@ -108,8 +109,8 @@ public class ThrowableConstants {
      * <code>null</code>
      */
     public static int retryable(Throwable t) {
-        if (logger.isLoggable(Level.FINEST)) {
-            logger.log(Level.FINEST, "Inside ThrowableConstants.retryable() ", t);
+        if (logger.isTraceEnabled()) {
+            logger.trace("Inside ThrowableConstants.retryable() ", t);
         }
         if (t == null)
             throw new NullPointerException("Must pass a non-null Throwable");

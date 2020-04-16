@@ -35,8 +35,9 @@ import net.jini.lease.LeaseRenewalEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Dan Kilman
@@ -83,8 +84,8 @@ public class DurableNotificationReplicationNodeStateListener
             if (_disconnectionMonitorInProgress)
                 return;
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Starting disconnection monitoring");
+            if (_logger.isDebugEnabled())
+                _logger.debug("Starting disconnection monitoring");
 
             _disconnectionMonitorInProgress = true;
             _asyncHandler = _asyncProvider.start(new DisconnectionMonitorAsyncCallable(), 1000, "DurableNotificationDisconnectionMonitor", false);
@@ -123,8 +124,8 @@ public class DurableNotificationReplicationNodeStateListener
             if (_channelClosed)
                 return;
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Target channel source disconnected, member name: " + sourceMemberName);
+            if (_logger.isDebugEnabled())
+                _logger.debug("Target channel source disconnected, member name: " + sourceMemberName);
 
             // Get current time and partition:
             final long currTime = SystemTime.timeMillis();
@@ -148,8 +149,8 @@ public class DurableNotificationReplicationNodeStateListener
             if (_channelClosed)
                 return;
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.log(Level.FINE, "Target channel connected, member name: " + sourceMemberName);
+            if (_logger.isDebugEnabled())
+                _logger.debug("Target channel connected, member name: " + sourceMemberName);
 
             final int partitionId = extractPartitionId(sourceMemberName);
             _disconnectedPartitions.remove(partitionId);
@@ -198,8 +199,8 @@ public class DurableNotificationReplicationNodeStateListener
             _channelClosed = true;
         }
 
-        if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE, "Sending disconnection notification and closing listener");
+        if (_logger.isDebugEnabled())
+            _logger.debug("Sending disconnection notification and closing listener");
 
         // We spawn a new thread because the lease cancel is mapped to closing the enpoint which in turn will unregister
         // this replication target which will close the async hanlder at the server side which belongs to this channel
@@ -264,19 +265,19 @@ public class DurableNotificationReplicationNodeStateListener
                 _disconnectTime = updateDisconnectTime();
 
                 if (isAllConnected()) {
-                    if (_logger.isLoggable(Level.FINER))
-                        _logger.log(Level.FINER, "From monitor: all partitions connected, stable state restored");
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("From monitor: all partitions connected, stable state restored");
 
                     _disconnectionMonitorInProgress = false;
                     return CycleResult.TERMINATE;
                 } else if (isHealthy()) {
-                    if (_logger.isLoggable(Level.FINER))
-                        _logger.log(Level.FINER, "From monitor: Not all partitions are alive yet, rechecking");
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("From monitor: Not all partitions are alive yet, rechecking");
 
                     return CycleResult.IDLE_CONTINUE;
                 } else {
-                    if (_logger.isLoggable(Level.FINER))
-                        _logger.log(Level.FINER, "From monitor: Maximum disconnection time elapsed, closing registration");
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("From monitor: Maximum disconnection time elapsed, closing registration");
 
                     notifyClientListenerAndCloseStateListener();
 

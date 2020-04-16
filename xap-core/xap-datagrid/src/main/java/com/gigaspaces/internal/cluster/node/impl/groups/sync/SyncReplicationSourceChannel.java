@@ -46,7 +46,7 @@ import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
+
 
 
 @com.gigaspaces.api.InternalApi
@@ -134,8 +134,8 @@ public class SyncReplicationSourceChannel
                 return replicateAsync(packets);
             }
         } catch (RemoteException e) {
-            if (_specificLogger.isLoggable(Level.FINE)) {
-                _specificLogger.log(Level.FINE,
+            if (_specificLogger.isDebugEnabled()) {
+                _specificLogger.debug(
                         "Caught remote exception during synchronous execution",
                         e);
             }
@@ -143,8 +143,8 @@ public class SyncReplicationSourceChannel
             moveToAsyncIfNeeded();
             return CompletedFuture.INSTANCE;
         } catch (RuntimeException unexpectedException) {
-            if (_specificLogger.isLoggable(Level.SEVERE)) {
-                _specificLogger.log(Level.SEVERE,
+            if (_specificLogger.isErrorEnabled()) {
+                _specificLogger.error(
                         "Error in replication while replicating ["
                                 + ReplicationLogUtils.packetsToLogString(context)
                                 + "], the replication will be resent until the error is resolved",
@@ -153,8 +153,8 @@ public class SyncReplicationSourceChannel
             moveToAsyncIfNeeded();
             throw unexpectedException;
         } catch (Error unexpectedError) {
-            if (_specificLogger.isLoggable(Level.SEVERE)) {
-                _specificLogger.log(Level.SEVERE,
+            if (_specificLogger.isErrorEnabled()) {
+                _specificLogger.error(
                         "Error in replication while replicating ["
                                 + ReplicationLogUtils.packetsToLogString(context)
                                 + "], the replication will be resent until the error is resolved",
@@ -172,8 +172,8 @@ public class SyncReplicationSourceChannel
         if (t instanceof RemoteException)
             return;
 
-        if (_specificLogger.isLoggable(Level.SEVERE)) {
-            _specificLogger.log(Level.SEVERE,
+        if (_specificLogger.isErrorEnabled()) {
+            _specificLogger.error(
                     "Error in replication while replicating ["
                             + packet + "]",
                     t);
@@ -188,8 +188,8 @@ public class SyncReplicationSourceChannel
         if (t instanceof RemoteException)
             return;
 
-        if (_specificLogger.isLoggable(Level.SEVERE)) {
-            _specificLogger.log(Level.SEVERE,
+        if (_specificLogger.isErrorEnabled()) {
+            _specificLogger.error(
                     "Error in replication while replication ["
                             + packets + "]",
                     t);
@@ -214,16 +214,16 @@ public class SyncReplicationSourceChannel
                 return replicateBatch(packets);
             }
         } catch (RemoteException e) {
-            if (_specificLogger.isLoggable(Level.FINE)) {
-                _specificLogger.log(Level.FINE,
+            if (_specificLogger.isDebugEnabled()) {
+                _specificLogger.debug(
                         "Caught remote exception during synchronous execution",
                         e);
             }
             // Do nothing, async dispatcher will send this packets
             moveToAsyncIfNeeded();
         } catch (RuntimeException unexpectedException) {
-            if (_specificLogger.isLoggable(Level.SEVERE)) {
-                _specificLogger.log(Level.SEVERE,
+            if (_specificLogger.isErrorEnabled()) {
+                _specificLogger.error(
                         "Error in replication while replicating ["
                                 + ReplicationLogUtils.packetsToLogString(context)
                                 + "]",
@@ -231,8 +231,8 @@ public class SyncReplicationSourceChannel
             }
             moveToAsyncIfNeeded(unexpectedException);
         } catch (Error unexpectedError) {
-            if (_specificLogger.isLoggable(Level.SEVERE)) {
-                _specificLogger.log(Level.SEVERE,
+            if (_specificLogger.isErrorEnabled()) {
+                _specificLogger.error(
                         "Error in replication while replicating ["
                                 + ReplicationLogUtils.packetsToLogString(context)
                                 + "]",
@@ -301,20 +301,20 @@ public class SyncReplicationSourceChannel
                     && (_asyncMinimalCompletionMarker == null || _asyncMinimalCompletionMarker.isMarkerReached())) {
                 if (fromSyncCaller) {
                     IMarker currentMarker = _groupBacklog.getCurrentMarker(getMemberName());
-                    if (_specificLogger.isLoggable(Level.FINER))
-                        _specificLogger.finer("moved to sync state from backlog marked position "
+                    if (_specificLogger.isDebugEnabled())
+                        _specificLogger.debug("moved to sync state from backlog marked position "
                                 + currentMarker);
                     _beginOfSyncStateMarker = currentMarker;
                 } else {
-                    if (_specificLogger.isLoggable(Level.FINER))
-                        _specificLogger.finer("restored sync state");
+                    if (_specificLogger.isDebugEnabled())
+                        _specificLogger.debug("restored sync state");
                 }
                 if (_unresolvedError != null) {
                     String msg = "pending error ["
                             + _unresolvedError.getMessage()
                             + "] was resolved, channel synchronous mode is restored";
                     logEventInHistory(msg);
-                    if (_specificLogger.isLoggable(Level.INFO))
+                    if (_specificLogger.isInfoEnabled())
                         _specificLogger.info(msg);
                 } else {
                     logEventInHistory("restored sync state");
@@ -349,8 +349,8 @@ public class SyncReplicationSourceChannel
                         + ") minimal async completion marked position "
                         + currentMarker;
                 logEventInHistory(msg);
-                if (_specificLogger.isLoggable(Level.FINE))
-                    _specificLogger.fine(msg);
+                if (_specificLogger.isDebugEnabled())
+                    _specificLogger.debug(msg);
                 _throttleController.suggestThroughPut(sampleTPBefore);
                 _asyncMinimalCompletionMarker = currentMarker;
                 _unresolvedError = error;
@@ -362,7 +362,7 @@ public class SyncReplicationSourceChannel
                     msg = "channel changed to asynchronous mode until it will resolve the error ["
                             + error.getMessage() + "]";
                     logEventInHistory(msg);
-                    if (_specificLogger.isLoggable(Level.INFO))
+                    if (_specificLogger.isInfoEnabled())
                         _specificLogger.info(msg);
                 }
             }
@@ -446,8 +446,8 @@ public class SyncReplicationSourceChannel
                 // since there are already sync
                 // threads executing the following packets
                 if (currentMarker != null && currentMarker.isMarkerReached()) {
-                    if (_specificLogger.isLoggable(Level.FINER))
-                        _specificLogger.finer("async state handler reached its end marker ["
+                    if (_specificLogger.isDebugEnabled())
+                        _specificLogger.debug("async state handler reached its end marker ["
                                 + currentMarker + "]");
                     // If channel was synchronizing this will signal it is done
                     if (isSynchronizing()) {
@@ -455,8 +455,8 @@ public class SyncReplicationSourceChannel
                             signalSynchronizingDone();
                             _beginOfSyncStateMarker = null;
                         } catch (RemoteException e) {
-                            if (_specificLogger.isLoggable(Level.FINE))
-                                _specificLogger.log(Level.FINE,
+                            if (_specificLogger.isDebugEnabled())
+                                _specificLogger.debug(
                                         "AsyncDispatcher error while signaling synchronization is done.",
                                         e);
                             // If we got disconnection here, the channel will
@@ -490,22 +490,22 @@ public class SyncReplicationSourceChannel
                 // in order to allow the
                 // packets to change their state due to the delay
                 replicateBatchDelayed(packets);
-                if (_specificLogger.isLoggable(Level.FINEST))
-                    _specificLogger.finest("async state handler replicated "
+                if (_specificLogger.isTraceEnabled())
+                    _specificLogger.trace("async state handler replicated "
                             + packets.size() + " packets");
                 // Keep the async runner running
                 return CycleResult.CONTINUE;
             } catch (RemoteException e) {
-                if (_specificLogger.isLoggable(Level.FINE))
-                    _specificLogger.log(Level.FINE,
+                if (_specificLogger.isDebugEnabled())
+                    _specificLogger.debug(
                             "AsyncDispatcher cycle error.",
                             e);
                 // Do nothing channel is disconnected
                 // Keep the async runner running
                 return CycleResult.IDLE_CONTINUE;
             } catch (Throwable t) {
-                if (_specificLogger.isLoggable(Level.FINER)) {
-                    _specificLogger.log(Level.FINER,
+                if (_specificLogger.isDebugEnabled()) {
+                    _specificLogger.debug(
                             "AsyncDispatcher cycle error while replicating "
                                     + packets
                                     + "."
@@ -518,8 +518,8 @@ public class SyncReplicationSourceChannel
         }
 
         private CycleResult moveToSyncStateUponEmptyBacklog(IBacklogMemberState state) {
-            if (_specificLogger.isLoggable(Level.FINER))
-                _specificLogger.finer("async state handler reached end of backlog, backlog state "
+            if (_specificLogger.isDebugEnabled())
+                _specificLogger.debug("async state handler reached end of backlog, backlog state "
                         + state.toLogMessage());
             // No remaining packets, restore sync state
             moveToSyncIfNeeded(false);
@@ -528,8 +528,8 @@ public class SyncReplicationSourceChannel
                 try {
                     signalSynchronizingDone();
                 } catch (RemoteException e) {
-                    if (_specificLogger.isLoggable(Level.FINE))
-                        _specificLogger.log(Level.FINE,
+                    if (_specificLogger.isDebugEnabled())
+                        _specificLogger.debug(
                                 "AsyncDispatcher error while signaling synchronization is done.",
                                 e);
                     // If failed to signal, restore async state
@@ -547,14 +547,14 @@ public class SyncReplicationSourceChannel
             try {
                 dispatchBacklogDropped(state);
             } catch (RemoteException e) {
-                if (_specificLogger.isLoggable(Level.FINE)) {
-                    _specificLogger.log(Level.FINE,
+                if (_specificLogger.isDebugEnabled()) {
+                    _specificLogger.debug(
                             "Caught remote exception while asynchronous dispatcher notifies target of backlog dropped",
                             e);
                 }
             } catch (Throwable t) {
-                if (_specificLogger.isLoggable(Level.SEVERE)) {
-                    _specificLogger.log(Level.SEVERE,
+                if (_specificLogger.isErrorEnabled()) {
+                    _specificLogger.error(
                             "Error in replication when attempting notify target of backlog dropped",
                             t);
                 }

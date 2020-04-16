@@ -43,7 +43,7 @@ import net.jini.core.transaction.UnknownTransactionException;
 import net.jini.core.transaction.server.TransactionParticipantDataImpl;
 
 import java.util.Iterator;
-import java.util.logging.Level;
+
 
 
 @com.gigaspaces.api.InternalApi
@@ -88,8 +88,8 @@ public class ReplicationPacketDataConsumer
     }
 
     private AbstractDataConsumeErrorResult createErrorResult(Throwable e, IReplicationInContext context) {
-        if (context.getContextLogger().isLoggable(Level.FINEST))
-            context.getContextLogger().finest("received error result when consuming incoming replication [" + e + "], creating corresponding error result");
+        if (context.getContextLogger().isTraceEnabled())
+            context.getContextLogger().trace("received error result when consuming incoming replication [" + e + "], creating corresponding error result");
 
         if (e instanceof UnknownTypeException)
             return new UnknownTypeConsumeResult(((UnknownTypeException) e).getUnknownClassName(), (UnknownTypeException) e);
@@ -116,8 +116,8 @@ public class ReplicationPacketDataConsumer
             IReplicationInContext context, IExecutableReplicationPacketData<?> data, IDataConsumeFix fix)
             throws Exception {
         if (fix instanceof AbstractDataConsumeFix) {
-            if (context.getContextLogger().isLoggable(Level.FINEST))
-                context.getContextLogger().finest("applying fix [" + fix.getClass().getName() + "], due previous to consumption error");
+            if (context.getContextLogger().isTraceEnabled())
+                context.getContextLogger().trace("applying fix [" + fix.getClass().getName() + "], due previous to consumption error");
 
             // Apply the fix
             return ((AbstractDataConsumeFix) fix).fix(context, _fixFacade, this, data);

@@ -23,12 +23,13 @@ import com.j_spaces.kernel.SystemProperties;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class JConsoleUtilities {
-    private static final Logger _logger = Logger.getLogger(com.gigaspaces.logger.Constants.LOGGER_COMMON);
+    private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_COMMON);
 
     private static final String JCONSOLE_PLUGIN_TOPTHREADS_FILE_PATH;
 
@@ -67,14 +68,14 @@ public class JConsoleUtilities {
                 try {
                     int interval = Integer.parseInt(property);
                     commandArray.add("-interval=" + interval);
-                    if (_logger.isLoggable(Level.FINE)) {
-                        _logger.log(Level.FINE, "Passed by system property [" +
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Passed by system property [" +
                                 SystemProperties.JCONSOLE_INTERVAL +
                                 "] jconsole interval parameter:" + interval);
                     }
                 } catch (NumberFormatException nfe) {
-                    if (_logger.isLoggable(Level.SEVERE)) {
-                        _logger.severe("jconsole interval parameter passed by system property [" +
+                    if (_logger.isErrorEnabled()) {
+                        _logger.error("jconsole interval parameter passed by system property [" +
                                 SystemProperties.JCONSOLE_INTERVAL + "] is not a number, " +
                                 "jconsole will be run with its default interval parameter");
                     }
@@ -109,8 +110,8 @@ public class JConsoleUtilities {
             }
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "all jconsole parameters:" + commandArray);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("all jconsole parameters:" + commandArray);
         }
 
         return commandArray.toArray(new String[commandArray.size()]);
@@ -150,8 +151,8 @@ public class JConsoleUtilities {
 //        commandArray.add( "--console" );
 //        commandArray.add( "suppress" );
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "all jvisualvm parameters:" + commandArray);
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("all jvisualvm parameters:" + commandArray);
         }
 
         return commandArray.toArray(new String[commandArray.size()]);

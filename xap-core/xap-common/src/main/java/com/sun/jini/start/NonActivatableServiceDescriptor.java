@@ -40,8 +40,9 @@ import java.security.Permission;
 import java.security.Policy;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class used to launch shared, non-activatable, in-process services. Clients construct this object
@@ -483,7 +484,7 @@ public class NonActivatableServiceDescriptor
         // Create custom class loader that preserves codebase annotations
         Thread curThread = Thread.currentThread();
         ClassLoader oldClassLoader = curThread.getContextClassLoader();
-        logger.log(Level.FINEST, "Saved current context class loader: {0}",
+        logger.trace("Saved current context class loader: {0}",
                 oldClassLoader);
         
         /* hack to disable ActivateWrapper.ExportClassLoader - see comment below */
@@ -501,10 +502,10 @@ public class NonActivatableServiceDescriptor
 		    ClassLoaderUtil.getImportCodebaseURLs(getImportCodebase()),
 		    ClassLoaderUtil.getCodebaseURLs(getExportCodebase()),
 		    oldClassLoader);
-	    logger.log(Level.FINEST, "Created ExportClassLoader: {0}", 
+	    logger.trace("Created ExportClassLoader: {0}", 
 		newClassLoader);
         } catch (IOException ioe) {
-            logger.log(Level.SEVERE, "Could not create class loader with classpath={0} and codebase={1}",
+            logger.error("Could not create class loader with classpath={0} and codebase={1}",
 	        new Object[] {getImportCodebase(), getExportCodebase()});
             throw ioe;
         } 
@@ -521,7 +522,7 @@ public class NonActivatableServiceDescriptor
                 globalPolicy =
                         new AggregatePolicyProvider(initialGlobalPolicy);
                 Policy.setPolicy(globalPolicy);
-                logger.log(Level.FINEST,
+                logger.trace(
                         "Global policy set: {0}", globalPolicy);
             }
 
@@ -546,25 +547,25 @@ public class NonActivatableServiceDescriptor
             globalPolicy.setPolicy(newClassLoader, split_service_policy);
         }
 
-        logger.finest("Attempting to get implementation class");
+        logger.trace("Attempting to get implementation class");
         Class implClass = null;
         implClass =
                 Class.forName(getImplClassName(), false, newClassLoader);
-        logger.finest("Setting context class loader");
+        logger.trace("Setting context class loader");
         curThread.setContextClassLoader(newClassLoader);
 
         try {
-            logger.finest("Attempting to get implementation constructor");
+            logger.trace("Attempting to get implementation constructor");
             Constructor constructor =
                     implClass.getDeclaredConstructor(actTypes);
-            logger.log(Level.FINEST,
+            logger.trace(
                     "Obtained implementation constructor: {0}",
                     constructor);
             constructor.setAccessible(true);
             impl =
                     constructor.newInstance(
                             new Object[]{getServerConfigArgs(), lifeCycle});
-            logger.log(Level.FINEST,
+            logger.trace(
                     "Obtained implementation instance: {0}", impl);
             if (impl instanceof ServiceProxyAccessor) {
                 proxy = ((ServiceProxyAccessor) impl).getServiceProxy();
@@ -574,7 +575,7 @@ public class NonActivatableServiceDescriptor
                 proxy = null; // just for insurance
             }
 
-            logger.log(Level.FINEST, "Proxy =  {0}", proxy);
+            logger.trace("Proxy =  {0}", proxy);
             curThread.setContextClassLoader(oldClassLoader);
 //TODO - factor in code integrity for MO
             proxy = (new MarshalledObject(proxy)).get();

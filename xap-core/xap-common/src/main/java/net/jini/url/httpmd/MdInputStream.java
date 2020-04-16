@@ -22,8 +22,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.security.MessageDigest;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An input stream that checks the contents of another input stream against a message digest. The
@@ -39,7 +40,7 @@ class MdInputStream extends InputStream {
      * Logger.
      */
     private static final Logger logger =
-            Logger.getLogger("net.jini.url.httpmd");
+            LoggerFactory.getLogger("net.jini.url.httpmd");
 
     /**
      * The size buffer to use when skipping input.
@@ -127,7 +128,7 @@ class MdInputStream extends InputStream {
         if (failed != null) {
             WrongMessageDigestException exception =
                     new WrongMessageDigestException(failed);
-            logger.log(Level.FINE, "Incorrect message digest", exception);
+            logger.debug("Incorrect message digest", exception);
             throw exception;
         }
     }

@@ -23,7 +23,8 @@ import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.logger.Constants;
 
 import java.util.List;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class ReplicationLogUtils {
@@ -53,28 +54,28 @@ public class ReplicationLogUtils {
     }
 
     public static Logger createOutgoingChannelSpecificLogger(String myLookupName, String targetLookupName, String groupName) {
-        return Logger.getLogger(Constants.LOGGER_REPLICATION_CHANNEL
+        return LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_CHANNEL
                 + ".out." + toShortLookupName(myLookupName)
                 + "." + toShortGroupName(groupName) + "."
                 + toShortLookupName(targetLookupName));
     }
 
     public static Logger createIncomingChannelSpecificLogger(String myLookupName, String targetLookupName, String groupName) {
-        return Logger.getLogger(Constants.LOGGER_REPLICATION_CHANNEL
+        return LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_CHANNEL
                 + ".in." + toShortLookupName(myLookupName)
                 + "." + toShortGroupName(groupName) + "."
                 + toShortLookupName(targetLookupName));
     }
 
     public static Logger createChannelSpecificLogger(String myLookupName, String targetLookupName, String groupName) {
-        return Logger.getLogger(Constants.LOGGER_REPLICATION_CHANNEL
+        return LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_CHANNEL
                 + "." + toShortLookupName(myLookupName)
                 + "." + toShortGroupName(groupName) + "."
                 + toShortLookupName(targetLookupName));
     }
 
     public static Logger createChannelSpecificVerboseLogger(String myLookupName, String targetLookupName, String groupName) {
-        return Logger.getLogger(Constants.LOGGER_REPLICATION_CHANNEL_VERBOSE
+        return LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_CHANNEL_VERBOSE
                 + "." + toShortLookupName(myLookupName)
                 + "." + toShortGroupName(groupName) + "."
                 + toShortLookupName(targetLookupName));

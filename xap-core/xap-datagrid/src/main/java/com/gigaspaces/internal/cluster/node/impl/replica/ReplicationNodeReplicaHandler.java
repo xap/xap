@@ -48,8 +48,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -61,7 +62,7 @@ import java.util.logging.Logger;
  */
 @com.gigaspaces.api.InternalApi
 public class ReplicationNodeReplicaHandler {
-    protected final static Logger _logger = Logger.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
+    protected final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_REPLICATION_REPLICA);
 
     private final ReplicationNode _replicationNode;
     private final ISpaceReplicaDataProducerBuilder<? extends ISpaceReplicaData> _replicaDataProducerBuilder;
@@ -98,8 +99,8 @@ public class ReplicationNodeReplicaHandler {
         try {
             String channelName = XapExtensions.getInstance().getReplicationUtils().toChannelName(requesterLookupName);
 
-            if (_logger.isLoggable(Level.FINE))
-                _logger.fine(_replicationNode.getLogPrefix()
+            if (_logger.isDebugEnabled())
+                _logger.debug(_replicationNode.getLogPrefix()
                         + "new incoming replica request from "
                         + channelName + ", request details "
                         + replicaRequestPacket);
@@ -147,8 +148,8 @@ public class ReplicationNodeReplicaHandler {
                             replicaRequestPacket.isSynchronizeRequest()));
             // We use integer as ID, all external components are ambivalent to that
             // and use object
-            if (_logger.isLoggable(Level.FINER))
-                _logger.finer(_replicationNode.getLogPrefix()
+            if (_logger.isDebugEnabled())
+                _logger.debug(_replicationNode.getLogPrefix()
                         + "new replica request from " + channelName
                         + ", received context id " + contextId);
             return contextId;
@@ -194,8 +195,8 @@ public class ReplicationNodeReplicaHandler {
         int batchSize = Integer.getInteger(SystemProperties.REPLICATION_BLOBSTORE_SYNC_LIST_BATCH_SIZE,
                 SystemProperties.REPLICATION_BLOBSTORE_SYNC_LIST_BATCH_SIZE_DEFAULT);
         DirectPersistencySyncListFetcher fetcher = params.getSynchronizationListFetcher();
-        if (_logger.isLoggable(Level.FINEST)) {
-            _logger.finest(_replicationNode.getLogPrefix() + "fetching sync list from backup, batch size is " + batchSize);
+        if (_logger.isTraceEnabled()) {
+            _logger.trace(_replicationNode.getLogPrefix() + "fetching sync list from backup, batch size is " + batchSize);
         }
         DirectPersistencySyncListBatch batch;
         do {
@@ -211,8 +212,8 @@ public class ReplicationNodeReplicaHandler {
             final Object context, int batchSize) {
         _lock.lock();
         try {
-            if (_logger.isLoggable(Level.FINEST))
-                _logger.finest(_replicationNode.getLogPrefix() + "context ["
+            if (_logger.isTraceEnabled())
+                _logger.trace(_replicationNode.getLogPrefix() + "context ["
                         + context + "] get next replica batch request");
             final ReplicaRequestData replicaData = getReplicaContext(context);
             final ISynchronizationCallback syncCallback = new ISynchronizationCallback() {
@@ -229,8 +230,8 @@ public class ReplicationNodeReplicaHandler {
                         // this can happen because the data set is not fully locked
                         // while recovering
                         if (duplicateUid) {
-                            if (_logger.isLoggable(Level.FINEST))
-                                _logger.finest(_replicationNode.getLogPrefix()
+                            if (_logger.isTraceEnabled())
+                                _logger.trace(_replicationNode.getLogPrefix()
                                         + "context [" + context
                                         + "] filtered replica data [" + data
                                         + "] due to duplicate uid ["
@@ -272,8 +273,8 @@ public class ReplicationNodeReplicaHandler {
                 result.setFifoId(replicaData.nextFifoBatchId());
             }
 
-            if (!result.isEmpty() && _logger.isLoggable(Level.FINEST))
-                _logger.finest(_replicationNode.getLogPrefix()
+            if (!result.isEmpty() && _logger.isTraceEnabled())
+                _logger.trace(_replicationNode.getLogPrefix()
                         + "context [" + context
                         + "] returning batch " + result);
 
@@ -312,15 +313,15 @@ public class ReplicationNodeReplicaHandler {
 
         CurrentStageInfo currentStage = replicaData.getProducer().nextReplicaStage();
         if (currentStage.isLastStage()) {
-            if (_logger.isLoggable(Level.FINER))
-                _logger.finer(_replicationNode.getLogPrefix() + "context ["
+            if (_logger.isDebugEnabled())
+                _logger.debug(_replicationNode.getLogPrefix() + "context ["
                         + context + "] all stages completed, closing request");
             replicaData.getProducer().close(false /*forced*/);
 
             //Clear sync list in direct persistency when recovery is over
             if (_replicationNode.getDirectPesistencySyncHandler() != null) {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.finer(_replicationNode.getLogPrefix() + "clearing direct persistency sync list");
+                if (_logger.isDebugEnabled())
+                    _logger.debug(_replicationNode.getLogPrefix() + "clearing direct persistency sync list");
                 _replicationNode.getDirectPesistencySyncHandler().afterRecovery();
             }
 
@@ -328,8 +329,8 @@ public class ReplicationNodeReplicaHandler {
             if (replicaData.isSynchronizeReplica())
                 _replicationNode.getReplicationSourceGroup(replicaData.getGroupName()).synchronizationCopyStageDone(replicaData.getOriginLookupName());
             _activeReplicaProcesses.remove(context);
-        } else if (_logger.isLoggable(Level.FINER))
-            _logger.finer(_replicationNode.getLogPrefix() + "context ["
+        } else if (_logger.isDebugEnabled())
+            _logger.debug(_replicationNode.getLogPrefix() + "context ["
                     + context + "] completed stage [" + currentStage.getStageName() + "] moving to next stage [" + currentStage.getNextStageName() + "]");
         return currentStage;
     }
@@ -340,8 +341,8 @@ public class ReplicationNodeReplicaHandler {
         if (_spaceEngine != null && _spaceEngine.getLeaseManager().isCurrentLeaseReaperThread())
         {
             if (!_lock.tryLock()) {
-                if (_logger.isLoggable(Level.FINER))
-                    _logger.finer("LeaseManager thread-->clearStaleReplicas: No need in  clearing stale replicas done by shutdowm thread");
+                if (_logger.isDebugEnabled())
+                    _logger.debug("LeaseManager thread-->clearStaleReplicas: No need in  clearing stale replicas done by shutdowm thread");
                 return;
             }
         }
@@ -350,8 +351,8 @@ public class ReplicationNodeReplicaHandler {
             _lock.lock();
         }
         try {
-            if (_logger.isLoggable(Level.FINER))
-                _logger.finer("clearing stale replicas, last touched before "
+            if (_logger.isDebugEnabled())
+                _logger.debug("clearing stale replicas, last touched before "
                         + expirationTime);
 
             clearReplicas(expirationTime);
@@ -371,11 +372,11 @@ public class ReplicationNodeReplicaHandler {
                 Entry<Object, ReplicaRequestData> entry = iterator.next();
                 ReplicaRequestData replicaRequestData = entry.getValue();
                 if (forcedExpirationTime == 0L || replicaRequestData.getLastTouched() <= forcedExpirationTime) {
-                    if (forcedExpirationTime != 0L && _logger.isLoggable(Level.FINER))
-                        _logger.finer("clearing stale replica [" + entry.getKey()
+                    if (forcedExpirationTime != 0L && _logger.isDebugEnabled())
+                        _logger.debug("clearing stale replica [" + entry.getKey()
                                 + "]" + replicaRequestData);
                     if (forcedExpirationTime == 0L)
-                        _logger.warning("forced clearing of replica [" + entry.getKey()
+                        _logger.warn("forced clearing of replica [" + entry.getKey()
                                 + "]" + replicaRequestData);
 
                     try {
@@ -393,8 +394,8 @@ public class ReplicationNodeReplicaHandler {
                             sourceGroup.stopSynchronization(replicaRequestData.getOriginLookupName());
                         }
                     } catch (Exception e) {
-                        if (_logger.isLoggable(Level.WARNING))
-                            _logger.log(Level.WARNING,
+                        if (_logger.isWarnEnabled())
+                            _logger.warn(
                                     "error while clearing stale/forced replica ["
                                             + entry.getKey() + "]"
                                             + replicaRequestData,
@@ -444,15 +445,15 @@ public class ReplicationNodeReplicaHandler {
 
     public void initFifoBatchesHandler() {
         this._fifoBatchesHandler = new SpaceReplicaFifoBatchesHandler(_replicationNode);
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine(_replicationNode.getLogPrefix() + "created fifoBatchesHandler");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(_replicationNode.getLogPrefix() + "created fifoBatchesHandler");
         }
     }
 
     public void clearFifoBatchesHandler() {
         this._fifoBatchesHandler = null;
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.fine(_replicationNode.getLogPrefix() + "cleared fifoBatchesHandler");
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(_replicationNode.getLogPrefix() + "cleared fifoBatchesHandler");
         }
     }
 

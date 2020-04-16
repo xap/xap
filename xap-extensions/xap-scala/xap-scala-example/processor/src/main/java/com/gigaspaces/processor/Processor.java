@@ -20,7 +20,8 @@ import com.gigaspaces.common.Data;
 
 import org.openspaces.events.adapter.SpaceDataEvent;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The processor simulates work done no un-processed Data object. The processData accepts a Data
@@ -29,7 +30,7 @@ import java.util.logging.Logger;
  */
 public class Processor {
 
-    Logger log = Logger.getLogger(this.getClass().getName());
+    Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
     private long workDuration = 100;
 
