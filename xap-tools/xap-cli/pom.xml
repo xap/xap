@@ -5,7 +5,7 @@
     <parent>
         <artifactId>xap</artifactId>
         <groupId>org.gigaspaces</groupId>
-        <version>15.5.0-SNAPSHOT</version>
+        <version>15.5.0-m3-thu-3</version>
         <relativePath>../../</relativePath>
     </parent>
 
