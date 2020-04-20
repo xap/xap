@@ -97,9 +97,7 @@ public class SettlerTask extends RetryTask implements TransactionConstants {
             attempt++;
 
             if (transactionsLogger.isTraceEnabled()) {
-                transactionsLogger.trace(
-                        "Attempting to settle transaction id: {0}",
-                        tid);
+                transactionsLogger.trace("Attempting to settle transaction id: {}", tid);
             }
 
             int state = txnmgr.getState(tid);
@@ -115,9 +113,7 @@ public class SettlerTask extends RetryTask implements TransactionConstants {
 
                 default:
                     if (transactionsLogger.isWarnEnabled()) {
-                        transactionsLogger.warn(
-                                "Attempting to settle transaction in an invalid state: {0}",
-                                new Integer(state));
+                        transactionsLogger.warn("Attempting to settle transaction in an invalid state: {}", state);
                     }
             }
 
@@ -142,9 +138,7 @@ public class SettlerTask extends RetryTask implements TransactionConstants {
         }
 
         if (transactionsLogger.isTraceEnabled()) {
-            transactionsLogger.trace(
-                    "Transaction id {0} was settled",
-                    tid);
+            transactionsLogger.trace("Transaction id {} was settled", tid);
         }
 
         if (operationsLogger.isDebugEnabled()) {

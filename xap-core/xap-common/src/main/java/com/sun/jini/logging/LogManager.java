@@ -153,10 +153,7 @@ public class LogManager extends java.util.logging.LogManager {
                         try {
                             readConfiguration();
                             interval = getInterval();
-                            logger.debug(
-                                    "logging config file reread complete," +
-                                            " new interval is {0}",
-                                    new Long(interval));
+                            logger.debug("logging config file reread complete, new interval is {}", interval);
                         } catch (Throwable t) {
                             try {
                                 logger.warn(

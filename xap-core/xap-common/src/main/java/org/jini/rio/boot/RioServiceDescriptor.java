@@ -271,9 +271,7 @@ public class RioServiceDescriptor implements ServiceDescriptor {
                 globalPolicy = new AggregatePolicyProvider(initialGlobalPolicy);
                 Policy.setPolicy(globalPolicy);
                 if (logger.isTraceEnabled())
-                    logger.trace(
-                            "Global policy set: {0}",
-                            globalPolicy);
+                    logger.trace("Global policy set: {}", globalPolicy);
             }
             final String policy = getPolicy();
             if (policy != null) {
@@ -306,16 +304,12 @@ public class RioServiceDescriptor implements ServiceDescriptor {
                 logger.trace("Attempting to get implementation constructor");
             Constructor constructor = implClass.getDeclaredConstructor(actTypes);
             if (logger.isTraceEnabled())
-                logger.trace(
-                        "Obtained implementation constructor: {0}",
-                        constructor);
+                logger.trace("Obtained implementation constructor: {}", constructor);
             constructor.setAccessible(true);
             impl = constructor.newInstance(new Object[]{getServerConfigArgs(),
                     lifeCycle});
             if (logger.isTraceEnabled())
-                logger.trace(
-                        "Obtained implementation instance: {0}",
-                        impl);
+                logger.trace("Obtained implementation instance: {}", impl);
             if (impl instanceof ServiceProxyAccessor) {
                 proxy = ((ServiceProxyAccessor) impl).getServiceProxy();
             } else if (impl instanceof ProxyAccessor) {
@@ -327,7 +321,7 @@ public class RioServiceDescriptor implements ServiceDescriptor {
                 proxy = servicePreparer.prepareProxy(proxy);
             }
             if (logger.isTraceEnabled())
-                logger.trace("Proxy =  {0}", proxy);
+                logger.trace("Proxy =  {}", proxy);
             currentThread.setContextClassLoader(currentClassLoader);
             //TODO - factor in code integrity for MO
             // Don't do that, we end up with different class loaders because
