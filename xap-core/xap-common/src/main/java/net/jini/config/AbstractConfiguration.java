@@ -339,27 +339,19 @@ public abstract class AbstractConfiguration implements Configuration {
                                 Utilities.typeString(resultType));
             }
             if (logger.isDebugEnabled()) {
-                logger.debug(
-                        "{0}, component {1}, name {2}" +
-                                "{3,choice,0#|1#, data {4}}: returns {5}",
-                        new Object[]{
-                                this, component, name,
-                                new Double(data == NO_DATA ? 0 : 1), data, result
-                        });
+                logger.debug("{}, component {}, name {}, data {}: returns {}",
+                        this, component, name, data, result);
             }
             return result;
         } catch (NoSuchEntryException e) {
             if (defaultValue == NO_DEFAULT) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug(
-                            "{0}, component {1}, name {2}: entry not found",
-                            new Object[]{this, component, name});
+                    logger.debug("{}, component {}, name {}: entry not found", this, component, name);
                 }
                 throw e;
             } else {
                 if (logger.isDebugEnabled()) {
-                    logger.debug("{0}, component {1}, name {2}: returns default {3}",
-                            new Object[]{this, component, name, defaultValue});
+                    logger.debug("{}, component {}, name {}: returns default {}", this, component, name, defaultValue);
                 }
                 return defaultValue;
             }

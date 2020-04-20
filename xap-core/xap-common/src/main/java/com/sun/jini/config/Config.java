@@ -163,9 +163,7 @@ public class Config {
 
         if (result == null) {
             if (logger.isDebugEnabled()) {
-                logger.debug(
-                        "{0}, component {1}, name {2}: cannot be null",
-                        new Object[]{config, component, name});
+                logger.debug("{}, component {}, name {}: cannot be null", config, component, name);
             }
 
             throw new ConfigurationException("entry for component " +
@@ -255,11 +253,8 @@ public class Config {
 
         if (!inRange(rslt, min, max)) {
             if (logger.isDebugEnabled()) {
-                logger.debug(
-                        "{0}, component {1}, name {2}: entry is out of range, " +
-                                "value: {3}, valid range: {4}:{5}",
-                        new Object[]{config, component, name, new Long(rslt),
-                                new Long(min), new Long(max)});
+                logger.debug("{}, component {}, name {}: entry is out of range, value: {}, valid range: {}:{}",
+                        config, component, name, rslt, min, max);
             }
 
             throw new ConfigurationException("entry for component " +
@@ -314,11 +309,8 @@ public class Config {
 
         if (!inRange(rslt, min, max)) {
             if (logger.isDebugEnabled()) {
-                logger.debug(
-                        "{0}, component {1}, name {2}: entry is out of range, " +
-                                "value: {3}, valid range: {4}:{5}",
-                        new Object[]{config, component, name, new Integer(rslt),
-                                new Integer(min), new Integer(max)});
+                logger.debug("{}, component {}, name {}: entry is out of range, value: {}, valid range: {}:{}",
+                        config, component, name, rslt, min, max);
             }
 
             throw new ConfigurationException("entry for component " +
@@ -373,11 +365,8 @@ public class Config {
 
         if (!inRange(rslt, min, max)) {
             if (logger.isDebugEnabled()) {
-                logger.debug(
-                        "{0}, component {1}, name {2}: entry is out of range, " +
-                                "value: {3}, valid range: {4}:{5}",
-                        new Object[]{config, component, name, new Float(rslt),
-                                new Float(min), new Float(max)});
+                logger.debug("{}, component {}, name {}: entry is out of range, value: {}, valid range: {}:{}",
+                        config, component, name, rslt, min, max);
             }
 
             throw new ConfigurationException("entry for component " +

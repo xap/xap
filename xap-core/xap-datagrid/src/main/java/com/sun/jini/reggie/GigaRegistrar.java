@@ -1371,7 +1371,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         public void run() {
 
             if (logger.isDebugEnabled()) {
-                logger.debug("Notifying listener {0} of event {1}", new Object[]{reg.listener, reg.eventID});
+                logger.debug("Notifying listener {} of event {}", reg.listener, reg.eventID);
             }
 
             boolean requeue = false;
@@ -2472,8 +2472,8 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             ready.check();
             ServiceRegistration reg = registerDo(nitem, leaseDuration);
             if (logger.isDebugEnabled()) {
-                logger.debug("registered instance of {0} as {1} with lease of {2} ms", new Object[]{
-                                nitem.serviceType.getName(), reg.getServiceID(), (reg.getLease().getExpiration() - SystemTime.timeMillis())});
+                logger.debug("registered instance of {} as {} with lease of {} ms",
+                                nitem.serviceType.getName(), reg.getServiceID(), (reg.getLease().getExpiration() - SystemTime.timeMillis()));
             }
             return reg;
         } finally {
@@ -2673,9 +2673,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             RegistrarEventRegistration reg = notifyDo(
                     tmpl, transitions, listener, handback, leaseDuration, notifyType);
             if (logger.isDebugEnabled()) {
-                logger.debug("registered event listener {0} as {1}", new Object[]{
-                                listener,
-                                ((ReferentUuid) reg.getLease()).getReferentUuid()});
+                logger.debug("registered event listener {} as {}", listener, ((ReferentUuid) reg.getLease()).getReferentUuid());
             }
             return reg;
         } finally {
@@ -2902,7 +2900,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             cancelServiceLeaseDo(serviceID, leaseID);
             queueEvents();
             if (logger.isDebugEnabled()) {
-                logger.debug("cancelled service registration {0}", new Object[]{serviceID});
+                logger.debug("cancelled service registration {}", serviceID);
             }
         } finally {
             concurrentObj.writeUnlock();
@@ -2957,7 +2955,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             ready.check();
             cancelEventLeaseDo(eventID, leaseID);
             if (logger.isDebugEnabled()) {
-                logger.debug("cancelled event registration {0}", new Object[]{leaseID});
+                logger.debug("cancelled event registration {}", leaseID);
             }
         } finally {
             concurrentObj.writeUnlock();
@@ -3041,9 +3039,9 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                         continue;
                     }
                     if (regIDs[i] instanceof ServiceID) {
-                        logger.debug("cancelled service registration {0}", new Object[]{regIDs[i]});
+                        logger.debug("cancelled service registration {}", regIDs[i]);
                     } else {
-                        logger.debug("cancelled event registration {0}", new Object[]{leaseIDs[i]});
+                        logger.debug("cancelled event registration {}", leaseIDs[i]);
                     }
                 }
             }
@@ -3200,7 +3198,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             }
             lookupGroups = dgm.getGroups();
             if (logger.isDebugEnabled()) {
-                logger.debug("added lookup groups {0}", new Object[]{Arrays.asList(groups)});
+                logger.debug("added lookup groups {}", Arrays.asList(groups));
             }
         } finally {
             lookupGroupsRWL.writeLock().unlock();
@@ -3230,7 +3228,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             dgm.removeGroups(groups);
             lookupGroups = dgm.getGroups();
             if (logger.isDebugEnabled()) {
-                logger.debug("removed lookup groups {0}", new Object[]{Arrays.asList(groups)});
+                logger.debug("removed lookup groups {}", Arrays.asList(groups));
             }
         } finally {
             lookupGroupsRWL.writeLock().unlock();
@@ -3263,8 +3261,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             }
             lookupGroups = dgm.getGroups();
             if (logger.isDebugEnabled()) {
-                logger.debug("set lookup groups {0}", new Object[]{
-                                (groups != null) ? Arrays.asList(groups) : null});
+                logger.debug("set lookup groups {}", (groups != null) ? Arrays.asList(groups) : null);
             }
         } finally {
             lookupGroupsRWL.writeLock().unlock();
@@ -3322,7 +3319,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             dlm.addLocators(locators);
             lookupLocators = dlm.getLocators();
             if (logger.isDebugEnabled()) {
-                logger.debug("added lookup locators {0}", new Object[]{Arrays.asList(locators)});
+                logger.debug("added lookup locators {}", Arrays.asList(locators));
             }
         } finally {
             lookupLocatorsRWL.writeLock().unlock();
@@ -3355,7 +3352,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             dlm.removeLocators(locators);
             lookupLocators = dlm.getLocators();
             if (logger.isDebugEnabled()) {
-                logger.debug("removed lookup locators {0}", new Object[]{Arrays.asList(locators)});
+                logger.debug("removed lookup locators {}", Arrays.asList(locators));
             }
         } finally {
             lookupLocatorsRWL.writeLock().unlock();
@@ -3388,7 +3385,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             dlm.setLocators(locators);
             lookupLocators = dlm.getLocators();
             if (logger.isDebugEnabled()) {
-                logger.debug("set lookup locators {0}", new Object[]{Arrays.asList(locators)});
+                logger.debug("set lookup locators {}", Arrays.asList(locators));
             }
         } finally {
             lookupLocatorsRWL.writeLock().unlock();
@@ -3423,7 +3420,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 }
             }
             if (logger.isDebugEnabled()) {
-                logger.debug("added member groups {0}", new Object[]{Arrays.asList(groups)});
+                logger.debug("added member groups {}", Arrays.asList(groups));
             }
         } finally {
             memberGroupRWL.writeLock().unlock();
@@ -3460,7 +3457,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 }
             }
             if (logger.isDebugEnabled()) {
-                logger.debug("removed member groups {0}", new Object[]{Arrays.asList(groups)});
+                logger.debug("removed member groups {}", Arrays.asList(groups));
             }
         } finally {
             memberGroupRWL.writeLock().unlock();
@@ -3517,7 +3514,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 }
             }
             if (logger.isDebugEnabled()) {
-                logger.debug("set member groups {0}", new Object[]{Arrays.asList(groups)});
+                logger.debug("set member groups {}", Arrays.asList(groups));
             }
         } finally {
             memberGroupRWL.writeLock().unlock();
@@ -3596,7 +3593,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 }
             }
             if (logger.isDebugEnabled()) {
-                logger.debug("changed unicast discovery port to {0}", new Object[]{unicaster.port});
+                logger.debug("changed unicast discovery port to {}", unicaster.port);
             }
         } finally {
             unicastPortRWL.writeLock().unlock();
@@ -4791,8 +4788,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 logger.error("no network interfaces detected");
             }
         } else if (logger.isDebugEnabled()) {
-            logger.debug("multicasting on interfaces {0}",
-                    new Object[]{Arrays.asList(multicastInterfaces)});
+            logger.debug("multicasting on interfaces {}", Arrays.asList(multicastInterfaces));
         }
 
         try {

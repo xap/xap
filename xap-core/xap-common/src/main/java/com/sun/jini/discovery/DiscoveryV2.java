@@ -112,7 +112,7 @@ class DiscoveryV2 extends Discovery {
             }
         }
         if (logger.isTraceEnabled()) {
-            logger.trace("returning {0}", new Object[]{disco});
+            logger.trace("returning {}", disco);
         }
         return disco;
     }
@@ -135,7 +135,7 @@ class DiscoveryV2 extends Discovery {
         providers[UNICAST_DISCOVERY_SERVER] = asList(uds);
         DiscoveryV2 disco = new DiscoveryV2(providers);
         if (logger.isTraceEnabled()) {
-            logger.trace("returning {0}", new Object[]{disco});
+            logger.trace("returning {}", disco);
         }
         return disco;
     }
@@ -179,8 +179,7 @@ class DiscoveryV2 extends Discovery {
                 // encode data
                 mre.encodeMulticastRequest(request, db, absc);
                 if (logger.isTraceEnabled()) {
-                    logger.trace("encoded {0} using {1}, {2}",
-                            new Object[]{request, mre, absc});
+                    logger.trace("encoded {} using {}, {}", request, mre, absc);
                 }
                 return db.getDatagrams();
             }
@@ -241,8 +240,7 @@ class DiscoveryV2 extends Discovery {
             req = mrd.decodeMulticastRequest(buf, constraints, checker);
         }
         if (logger.isTraceEnabled()) {
-            logger.trace("decoded {0} using {1}, {2}, {3}",
-                    new Object[]{req, mrd, constraints, checker});
+            logger.trace("decoded {} using {}, {}, {}", req, mrd, constraints, checker);
         }
         return req;
     }
@@ -288,8 +286,7 @@ class DiscoveryV2 extends Discovery {
                 // encode data
                 mae.encodeMulticastAnnouncement(announcement, db, absc);
                 if (logger.isTraceEnabled()) {
-                    logger.trace("encoded {0} using {1}, {2}",
-                            new Object[]{announcement, mae, absc});
+                    logger.trace("encoded {} using {}, {}", announcement, mae, absc);
                 }
                 return db.getDatagrams();
             }
@@ -349,8 +346,7 @@ class DiscoveryV2 extends Discovery {
             ann = mad.decodeMulticastAnnouncement(buf, constraints);
         }
         if (logger.isTraceEnabled()) {
-            logger.trace("decoded {0} using {1}, {2}",
-                    new Object[]{ann, mad, constraints});
+            logger.trace("decoded {} using {}, {}", ann, mad, constraints);
         }
         return ann;
     }
@@ -456,8 +452,7 @@ class DiscoveryV2 extends Discovery {
                 socket, constraints, defaultLoader, verifierLoader, context,
                 (ByteBuffer) outBuf.flip(), (ByteBuffer) inBuf.flip());
         if (logger.isTraceEnabled()) {
-            logger.trace("received {0} using {1}, {2}",
-                    new Object[]{resp, udc, constraints});
+            logger.trace("received {} using {}, {}", resp, udc, constraints);
         }
         return resp;
     }
@@ -529,8 +524,7 @@ class DiscoveryV2 extends Discovery {
                 response, socket, constraints, checker, context,
                 (ByteBuffer) inBuf.flip(), (ByteBuffer) outBuf.flip());
         if (logger.isTraceEnabled()) {
-            logger.trace("sent {0} using {1}, {2}, {3}",
-                    new Object[]{response, uds, constraints, checker});
+            logger.trace("sent {} using {}, {}, {}", response, uds, constraints, checker);
         }
     }
 
@@ -569,9 +563,7 @@ class DiscoveryV2 extends Discovery {
                 }
             }
             if (!used) {
-                logger.warn(
-                        "unusable format provider {0}",
-                        new Object[]{obj});
+                logger.warn("unusable format provider {}", obj);
             }
         }
         return providers;
@@ -583,10 +575,7 @@ class DiscoveryV2 extends Discovery {
             DiscoveryFormatProvider p = (DiscoveryFormatProvider) i.next();
             Long fid = new Long(computeFormatID(p.getFormatName()));
             if (map.keySet().contains(fid)) {
-                logger.warn(
-                        "ignoring provider {0} ({1}) with " +
-                                "conflicting format ID {2}",
-                        new Object[]{p, p.getFormatName(), fid});
+                logger.warn("ignoring provider {} ({}) with conflicting format ID {}", p, p.getFormatName(), fid);
                 continue;
             }
             map.put(fid, p);

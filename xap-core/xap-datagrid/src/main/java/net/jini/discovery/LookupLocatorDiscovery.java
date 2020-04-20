@@ -474,23 +474,15 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
                     loggerStats.trace("Unicast Lookup took [" + (SystemTime.timeMillis() - startTime) + "ms]");
                 }
                 time = SystemTime.timeMillis();//mark the time of discovery
-                logger.info("Connected to LUS using locator {0}:{1,number,#}", new Object[]{
-                        l.getHost(),
-                        l.getPort()});
+                logger.info("Connected to LUS using locator {}:{}", l.getHost(), l.getPort());
                 return true;
             } catch (Throwable throwable) {
 
                 final int currTryIndx = tryIndx;
                 setNextTryTime();//discovery failed; try again even later
 
-                logger.warn(
-                        "{0} - using unicast locator {1}:{2,number,#} - delay next lookup by {3} ms",
-                        new Object[]{
-                                throwable,
-                                l.getHost(),
-                                l.getPort(),
-                                sleepTime[currTryIndx]
-                        });
+                logger.warn("{} - using unicast locator {}:{} - delay next lookup by {} ms",
+                        throwable, l.getHost(), l.getPort(), sleepTime[currTryIndx]);
 
                 return false;
             }
@@ -539,8 +531,7 @@ public class LookupLocatorDiscovery implements DiscoveryManagement,
             /* Proxy preparation */
             proxy = (ServiceRegistrar) registrarPreparer.prepareProxy
                     (resp.getRegistrar());
-            logger.trace("LookupLocatorDiscovery - prepared "
-                    + "lookup service proxy: {0}", proxy);
+            logger.trace("LookupLocatorDiscovery - prepared lookup service proxy: {}", proxy);
             memberGroups = resp.getGroups();
         }//end doUnicastDiscovery
 

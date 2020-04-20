@@ -937,7 +937,7 @@ public class LeaseRenewalManager {
                         listener, renewalRTT),
                 now);
         calcActualRenews(now);
-        logger.debug("Added lease {0}", lease);
+        logger.debug("Added lease {}", lease);
     }
 
     /**
@@ -1033,7 +1033,7 @@ public class LeaseRenewalManager {
         if (!removeLeaseInRenew(e))
             leases.remove(e);
         calcActualRenews();
-        logger.debug("Removed lease {0}", lease);
+        logger.debug("Removed lease {}", lease);
     }
 
     /**
@@ -1232,11 +1232,10 @@ public class LeaseRenewalManager {
     private void logExpiration(Entry e) {
         if (e.renewalsDone()) {
             logger.debug(
-                    "Reached desired expiration for lease {0}",
+                    "Reached desired expiration for lease {}",
                     e.lease);
         } else {
-            logger.debug(
-                    "Lease {0} expired before reaching desired expiration", e.lease);
+            logger.debug("Lease {} expired before reaching desired expiration", e.lease);
         }
     }
 
@@ -1251,11 +1250,11 @@ public class LeaseRenewalManager {
         try {
             if (bList.size() == 1) {
                 Entry e = bList.get(0);
-                logger.debug("Renewing lease {0}", e.lease);
+                logger.debug("Renewing lease {}", e.lease);
                 e.lease.renew(e.getRenewDuration(now));
             } else {
                 LeaseMap batchLeaseMap = createBatchLeaseMap(bList, now);
-                logger.debug("Renewing leases {0}", batchLeaseMap);
+                logger.debug("Renewing leases {}", batchLeaseMap);
                 batchLeaseMap.renewAll();
             }
         } catch (LeaseMapException ex) {

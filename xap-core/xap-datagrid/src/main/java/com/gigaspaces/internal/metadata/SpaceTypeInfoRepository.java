@@ -140,7 +140,7 @@ public class SpaceTypeInfoRepository extends AbstractClassRepository<SpaceTypeIn
                 loadPath(subFiles[i], xmlMap);
         } else if (file.getName().endsWith(".gs.xml")) {
             if (_logger.isDebugEnabled())
-                _logger.debug("Scanning for type metadata info at [{0}].", file.getAbsolutePath());
+                _logger.debug("Scanning for type metadata info at [{}].", file.getAbsolutePath());
 
             FileInputStream inputStream = null;
             try {
