@@ -531,7 +531,7 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                                     " original codebase: \"" + codebase + "\")", e);
                     if (logger.isDebugEnabled()) {
                         LogUtils.throwing(logger, PreferredClassProvider.class, "loadClass", cnfe,
-                                "class \"{0}\" not found, could not obtain preferred value", name);
+                                "class \"{}\" not found, could not obtain preferred value", name);
                     }
                     throw cnfe;
                 }
@@ -583,7 +583,7 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                                 " (no security manager: codebase loader disabled)", e);
                 if (logger.isDebugEnabled()) {
                     LogUtils.throwing(logger, PreferredClassProvider.class, "loadClass", cnfe,
-                            "class \"{0}\" not found via thread context class loader (no security manager)", name);
+                            "class \"{}\" not found via thread context class loader (no security manager)", name);
                 }
                 throw cnfe;
             } else if (secEx != null) {
@@ -593,20 +593,20 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
 		 */
                 if (logger.isDebugEnabled()) {
                     LogUtils.throwing(logger, PreferredClassProvider.class, "loadClass", e,
-                            "class \"{0}\" not found via thread context class loader (access to codebase loader denied)", name);
+                            "class \"{}\" not found via thread context class loader (access to codebase loader denied)", name);
                 }
                 ClassNotFoundException cnfe =
                         new ClassNotFoundException(e.getMessage() +
                                 " (access to codebase loader denied)", secEx);
                 if (logger.isDebugEnabled()) {
                     LogUtils.throwing(logger, PreferredClassProvider.class, "loadClass", cnfe,
-                            "class \"{0}\" not found via thread context class loader (access to codebase loader denied)", name);
+                            "class \"{}\" not found via thread context class loader (access to codebase loader denied)", name);
                 }
                 throw cnfe;
             } else {
                 if (logger.isDebugEnabled()) {
                     LogUtils.throwing(logger, PreferredClassProvider.class, "loadClass", e,
-                            "class \"{0}\" not found via codebase loader", name);
+                            "class \"{}\" not found via codebase loader", name);
                 }
                 throw e;
             }
@@ -1152,7 +1152,7 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                                 " original codebase: \"" + codebase + "\")", e);
                 if (logger.isDebugEnabled()) {
                     LogUtils.throwing(logger, PreferredClassProvider.class, "loadProxyClass", cnfe,
-                            "class \"{0}\" not found, could not obtain preferred value", interfaceNames[p]);
+                            "class \"{}\" not found, could not obtain preferred value", interfaceNames[p]);
                 }
                 throw cnfe;
             }
@@ -1212,7 +1212,7 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                 ClassLoader current = getClassLoader(cl);
                 if (logger.isTraceEnabled()) {
                     logger.trace(LogUtils.format(PreferredClassProvider.class, "loadProxyClass",
-                            "non-public interface \"{0}\" defined by {1}", interfaces[i], current));
+                            "non-public interface \"{}\" defined by {}", interfaces[i], current));
                 }
                 if (!useNonpublic[0]) {
                     nonpublic = current;

@@ -59,7 +59,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Supplies objects needed to configure applications, such as {@link Exporter} or {@link
@@ -2130,7 +2129,7 @@ public class ConfigurationFile extends AbstractConfiguration {
         }
         if (logger.isDebugEnabled()) {
             String message = LogUtils.format(this.getClass(), "getEntryType",
-                    "{0}, component {1}, name {2}: throws", this, component, name);
+                    "{}, component {}, name {}: throws", this, component, name);
             logger.debug(message, configEx);
 
         }

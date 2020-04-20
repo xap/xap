@@ -373,7 +373,7 @@ public abstract class AbstractConfiguration implements Configuration {
         }
         if (logger.isDebugEnabled()) {
             LogUtils.throwing(logger, this.getClass(), "getEntry", configEx,
-                    "{0}, component {1}, name {2}{3,choice,0#|1#, data {4}}: throws",
+                    "{}, component {}, name {}{}, data {}: throws",
                     this, component, name, new Double(data == NO_DATA ? 0 : 1), data);
         }
         throw configEx;

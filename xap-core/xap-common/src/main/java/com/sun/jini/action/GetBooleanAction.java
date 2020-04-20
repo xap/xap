@@ -89,7 +89,7 @@ public class GetBooleanAction implements PrivilegedAction {
         } catch (SecurityException e) {
             if (logger.isDebugEnabled()) {
                 LogUtils.throwing(logger, GetBooleanAction.class, "run", e,
-                        "security exception reading \"{0}\", returning false", theProp);
+                        "security exception reading \"{}\", returning false", theProp);
             }
             return Boolean.FALSE;
         }
