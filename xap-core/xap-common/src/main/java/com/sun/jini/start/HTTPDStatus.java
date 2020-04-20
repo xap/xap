@@ -71,8 +71,7 @@ public class HTTPDStatus {
      */
     public static void httpdWarning(String codebase) {
         if (codebase == null) {
-            logger.warn("Problem accessing desired URL[{0}]: {1}.",
-                    new Object[]{codebase, "Codebase is null"});
+            logger.warn("Problem accessing desired URL[{}]: {}.", codebase, "Codebase is null");
             return;
         }
         StringTokenizer st = new StringTokenizer(codebase, " ");
@@ -86,18 +85,17 @@ public class HTTPDStatus {
                 //Skip file check for directories
                 if (fileName == null ||
                         fileName.endsWith("/")) {
-                    logger.trace("Skipping file check for: {0}", url);
+                    logger.trace("Skipping file check for: {}", url);
                 } else {
                     try {
                         drainStream(u.openStream());
                     } catch (Exception ioe) {
-                        logger.warn("Problem accessing desired URL[{0}]: {1}.",
-                                new Object[]{url, ioe.toString()});
+                        logger.warn("Problem accessing desired URL[{}]: {}.", url, ioe.toString());
                         logger.trace("Associated exception:", ioe);
                     }
                 }
             } catch (MalformedURLException e) {
-                logger.warn("Unknown protocol for URL: {0} may cause problems", url);
+                logger.warn("Unknown protocol for URL: {} may cause problems", url);
                 logger.trace("Associated exception:", e);
             }
         }

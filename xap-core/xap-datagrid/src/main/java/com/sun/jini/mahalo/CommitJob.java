@@ -127,8 +127,7 @@ public class CommitJob extends Job implements TransactionConstants {
         //with it on account of being recovered from a log
 
         if (logger.isTraceEnabled()) {
-            logger.trace(
-                    "CommitJob:doWork committing handle: {0}", handle);
+            logger.trace("CommitJob:doWork committing handle: {}", handle);
         }
 
         int vote = handle.getPrepState();
@@ -309,9 +308,7 @@ public class CommitJob extends Job implements TransactionConstants {
         }
 
         if (logger.isTraceEnabled()) {
-            logger.trace(
-                    "CommitJob:computeResult {0} participants COMMITTED",
-                    new Integer(count));
+            logger.trace("CommitJob:computeResult {} participants COMMITTED", count);
         }
 
         return new Integer(COMMITTED);

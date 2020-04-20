@@ -158,7 +158,7 @@ class DiscoveryV1 extends Discovery {
         } while (!groups.isEmpty());
 
         if (logger.isTraceEnabled()) {
-            logger.trace("encoded {0}", new Object[]{request});
+            logger.trace("encoded {}", request);
         }
         return (DatagramPacket[])
                 packets.toArray(new DatagramPacket[packets.size()]);
@@ -230,7 +230,7 @@ class DiscoveryV1 extends Discovery {
             MulticastRequest req =
                     new MulticastRequest(host, port, groups, ids);
             if (logger.isTraceEnabled()) {
-                logger.trace("decoded {0}", new Object[]{req});
+                logger.trace("decoded {}", req);
             }
             return req;
 
@@ -323,8 +323,7 @@ class DiscoveryV1 extends Discovery {
         } while (!groups.isEmpty());
 
         if (logger.isTraceEnabled()) {
-            logger.trace("encoded {0}",
-                    new Object[]{announcement});
+            logger.trace("encoded {}", announcement);
         }
         return (DatagramPacket[])
                 packets.toArray(new DatagramPacket[packets.size()]);
@@ -378,7 +377,7 @@ class DiscoveryV1 extends Discovery {
             MulticastAnnouncement ann =
                     new MulticastAnnouncement(-1, host, port, groups, id);
             if (logger.isTraceEnabled()) {
-                logger.trace("decoded {0}", new Object[]{ann});
+                logger.trace("decoded {}", ann);
             }
             return ann;
 
@@ -440,7 +439,7 @@ class DiscoveryV1 extends Discovery {
             UnicastResponse resp =
                     new UnicastResponse(host, port, groups, reg);
             if (logger.isTraceEnabled()) {
-                logger.trace("received {0}", new Object[]{resp});
+                logger.trace("received {}", resp);
             }
             return resp;
 
@@ -484,7 +483,7 @@ class DiscoveryV1 extends Discovery {
 
         oout.flush();
         if (logger.isTraceEnabled()) {
-            logger.trace("sent {0}", new Object[]{response});
+            logger.trace("sent {}", response);
         }
     }
 

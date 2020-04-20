@@ -421,13 +421,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
             throws MalformedURLException, ClassNotFoundException {
         checkInitialized();
         if (logger.isDebugEnabled()) {
-            logger.debug(
-                    "name=\"{0}\", codebase={1}, defaultLoader={2}",
-                    new Object[]{
-                            name,
-                            codebase != null ? "\"" + codebase + "\"" : null,
-                            defaultLoader
-                    });
+            logger.debug("name=\"{}\", codebase={}, defaultLoader={}",
+                    name, codebase != null ? "\"" + codebase + "\"" : null, defaultLoader);
         }
 
         URL[] codebaseURLs = pathToURLs(codebase);    // may be null
@@ -463,9 +458,7 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
             try {
                 Class c = Class.forName(name, false, defaultLoader);
                 if (logger.isTraceEnabled()) {
-                    logger.trace("class \"{0}\" found " +
-                                    "via defaultLoader, defined by {1}",
-                            new Object[]{name, getClassLoader(c)});
+                    logger.trace("class \"{}\" found via defaultLoader, defined by {}", name, getClassLoader(c));
                 }
                 return c;
             } catch (ClassNotFoundException e) {
@@ -478,8 +471,7 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
 	 */
         ClassLoader contextLoader = getRMIContextClassLoader();
         if (logger.isTraceEnabled()) {
-            logger.trace(
-                    "(thread context class loader: {0})", contextLoader);
+            logger.trace("(thread context class loader: {})", contextLoader);
         }
         ClassLoader codebaseLoader = lookupLoader(codebaseURLs, contextLoader);
 
@@ -492,9 +484,7 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
             try {
                 Class c = Class.forName(name, false, defaultLoader);
                 if (logger.isTraceEnabled()) {
-                    logger.trace("class \"{0}\" found " +
-                                    "via defaultLoader, defined by {1}",
-                            new Object[]{name, getClassLoader(c)});
+                    logger.trace("class \"{}\" found via defaultLoader, defined by {}", name, getClassLoader(c));
                 }
                 return c;
             } catch (ClassNotFoundException e) {
@@ -540,9 +530,7 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
                 try {
                     Class c = Class.forName(name, false, defaultLoader);
                     if (logger.isTraceEnabled()) {
-                        logger.trace("class \"{0}\" found " +
-                                        "via defaultLoader, defined by {1}",
-                                new Object[]{name, getClassLoader(c)});
+                        logger.trace("class \"{}\" found via defaultLoader, defined by {}", name, getClassLoader(c));
                     }
                     return c;
                 } catch (ClassNotFoundException e) {
@@ -561,19 +549,13 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
             if (logger.isTraceEnabled()) {
                 String message;
                 if (sm == null) {
-                    message = "class \"{0}\" found " +
-                            " via thread context class loader " +
-                            " (no security manager), defined by {1}";
+                    message = "class \"{}\" found  via thread context class loader  (no security manager), defined by {}";
                 } else if (secEx != null) {
-                    message = "class \"{0}\" found " +
-                            " via thread context class loader " +
-                            " (access to codebase loader denied), defined by {1}";
+                    message = "class \"{}\" found  via thread context class loader (access to codebase loader denied), defined by {}";
                 } else {
-                    message = "class \"{0}\" found " +
-                            "via codebase loader, defined by {1}";
+                    message = "class \"{}\" found via codebase loader, defined by {}";
                 }
-                logger.trace(message,
-                        new Object[]{name, getClassLoader(c)});
+                logger.trace(message, name, getClassLoader(c));
             }
             return c;
         } catch (ClassNotFoundException e) {
@@ -914,13 +896,10 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
             throws MalformedURLException, ClassNotFoundException {
         checkInitialized();
         if (logger.isDebugEnabled()) {
-            logger.debug(
-                    "interfaces={0}, codebase={1}, defaultLoader={2}",
-                    new Object[]{
-                            Arrays.asList(interfaceNames),
-                            codebase != null ? "\"" + codebase + "\"" : null,
-                            defaultLoader
-                    });
+            logger.debug("interfaces={}, codebase={}, defaultLoader={}",
+                    Arrays.asList(interfaceNames),
+                    codebase != null ? "\"" + codebase + "\"" : null,
+                    defaultLoader);
         }
 
         URL[] codebaseURLs = pathToURLs(codebase);    // may be null
@@ -931,8 +910,7 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
 	 */
         ClassLoader contextLoader = getRMIContextClassLoader();
         if (logger.isTraceEnabled()) {
-            logger.trace(
-                    "(thread context class loader: {0})", contextLoader);
+            logger.trace("(thread context class loader: {})", contextLoader);
         }
         ClassLoader codebaseLoader = lookupLoader(codebaseURLs, contextLoader);
 
@@ -1066,13 +1044,13 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
     private static String getProxySuccessLogMessage(SecurityManager sm,
                                                     SecurityException secEx) {
         if (sm == null) {
-            return "(no security manager) proxy class defined by {0}";
+            return "(no security manager) proxy class defined by {}";
         } else if (secEx != null) {
             return
                     "(access to codebase loader denied) " +
-                            "proxy class defined by {0}";
+                            "proxy class defined by {}";
         } else {
-            return "proxy class defined by {0}";
+            return "proxy class defined by {}";
         }
     }
 
@@ -1106,11 +1084,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
             for (int i = 0; i < definingLoaders.length; i++) {
                 definingLoaders[i] = getClassLoader(classObjs[i]);
             }
-            logger.trace(
-                    "proxy interfaces loaded via {0}, defined by {1}",
-                    new Object[]{
-                            interfaceLoaderName, Arrays.asList(definingLoaders)
-                    });
+            logger.trace("proxy interfaces loaded via {}, defined by {}",
+                    interfaceLoaderName, Arrays.asList(definingLoaders));
         }
 
         if (!nonpublic[0]) {
@@ -1341,14 +1316,8 @@ public class PreferredClassProvider extends RMIClassLoaderSpi {
             if (Arrays.equals(pathURLs, ancestorURLs)) {
                 if (logger.isTraceEnabled()) {
                     logger.trace(
-                            "using an existing ancestor class loader " +
-                                    "which serves the requested codebase urls: {0}, " +
-                                    "urls: {1}",
-                            new Object[]{
-                                    ancestor,
-                                    (ancestorURLs != null ?
-                                            Arrays.asList(ancestorURLs) : null)
-                            });
+                            "using an existing ancestor class loader which serves the requested codebase urls: {}, urls: {}",
+                                    ancestor, (ancestorURLs != null ? Arrays.asList(ancestorURLs) : null));
                 }
 
                 return ancestor;

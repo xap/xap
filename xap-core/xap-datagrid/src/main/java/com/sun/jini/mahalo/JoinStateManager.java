@@ -212,8 +212,7 @@ class JoinStateManager extends LogHandler {
                         TxnManager.MAHALO, "lookupLocatorPreparer",
                         ProxyPreparer.class, defaultPreparer);
         if (initlogger.isDebugEnabled()) {
-            initlogger.debug("lookupLocatorPreparer: {0}",
-                    lookupLocatorPreparer);
+            initlogger.debug("lookupLocatorPreparer: {}", lookupLocatorPreparer);
         }
 //TODO - defer creation of default LDM
         dm = (DiscoveryManagement)
@@ -222,7 +221,7 @@ class JoinStateManager extends LogHandler {
                         new LookupDiscoveryManager(
                                 LookupGroups.none(), null, null, config));
         if (initlogger.isDebugEnabled()) {
-            initlogger.debug("discoveryManager: {0}", dm);
+            initlogger.debug("discoveryManager: {}", dm);
         }
 
         if (dm instanceof DiscoveryGroupManagement) {
@@ -269,7 +268,7 @@ class JoinStateManager extends LogHandler {
                             "initialLookupGroups", String[].class,
                             BootUtil.toArray(SystemInfo.singleton().lookup().groups()));
             if (initlogger.isDebugEnabled()) {
-                initlogger.debug("Obtaining initial groups: {0}",
+                initlogger.debug("Obtaining initial groups: {}",
                         (groups == null ?
                                 Arrays.asList(new String[]{"<ALL_GROUPS>"}) :
                                 Arrays.asList(groups)));
@@ -279,15 +278,13 @@ class JoinStateManager extends LogHandler {
                             "initialLookupLocators", LookupLocator[].class,
                             toLookupLocators(System.getProperty(SystemProperties.JINI_LUS_LOCATORS, "")));
             if (initlogger.isDebugEnabled()) {
-                initlogger.debug("Obtaining initial locators: {0}",
-                        Arrays.asList(locators));
+                initlogger.debug("Obtaining initial locators: {}", Arrays.asList(locators));
             }
             final Entry[] cAttrs = (Entry[])
                     Config.getNonNullEntry(config, TxnManager.MAHALO,
                             "initialLookupAttributes", Entry[].class, new Entry[0]);
             if (initlogger.isDebugEnabled()) {
-                initlogger.debug("Obtaining initial attributes: {0}",
-                        Arrays.asList(cAttrs));
+                initlogger.debug("Obtaining initial attributes: {}", Arrays.asList(cAttrs));
             }
             if (cAttrs.length == 0) {
                 attributes = baseAttributes;
@@ -299,8 +296,7 @@ class JoinStateManager extends LogHandler {
                         baseAttributes.length, cAttrs.length);
             }
             if (initlogger.isTraceEnabled()) {
-                initlogger.trace("Combined attributes: {0}",
-                        Arrays.asList(attributes));
+                initlogger.trace("Combined attributes: {}", Arrays.asList(attributes));
             }
 
         } else {
@@ -308,8 +304,7 @@ class JoinStateManager extends LogHandler {
              * use recoveredLookupLocatorPreparer
              */
             if (initlogger.isTraceEnabled()) {
-                initlogger.trace("Recovered locators: {0}",
-                        Arrays.asList(locators));
+                initlogger.trace("Recovered locators: {}", Arrays.asList(locators));
             }
             if (locators.length > 0) {
                 final ProxyPreparer recoveredLookupLocatorPreparer =
@@ -318,8 +313,7 @@ class JoinStateManager extends LogHandler {
                                 "recoveredLookupLocatorPreparer", ProxyPreparer.class,
                                 defaultPreparer);
                 if (initlogger.isDebugEnabled()) {
-                    initlogger.debug("recoveredLookupLocatorPreparer: {0}",
-                            recoveredLookupLocatorPreparer);
+                    initlogger.debug("recoveredLookupLocatorPreparer: {}", recoveredLookupLocatorPreparer);
                 }
                 final List prepared = new java.util.LinkedList();
                 for (int i = 0; i < locators.length; i++) {
@@ -329,9 +323,7 @@ class JoinStateManager extends LogHandler {
                     } catch (Throwable t) {
                         if (initlogger.isDebugEnabled()) {
                             initlogger.debug(
-                                    "Exception re-preparing LookupLocator: {0}. "
-                                            + "Dropping locator.",
-                                    locators[i]);
+                                    "Exception re-preparing LookupLocator: {}. Dropping locator.", locators[i]);
                         }
                         if (initlogger.isDebugEnabled()) {
                             initlogger.debug(

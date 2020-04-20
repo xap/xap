@@ -505,29 +505,25 @@ public class TxnManagerImpl /*extends RemoteServer*/
                             TxnManager.MAHALO, "activationSystemPreparer",
                             ProxyPreparer.class, new BasicProxyPreparer());
             if (initLogger.isDebugEnabled()) {
-                initLogger.debug("activationSystemPreparer: {0}",
-                        activationSystemPreparer);
+                initLogger.debug("activationSystemPreparer: {}", activationSystemPreparer);
             }
             activationSystem =
                     (ActivationSystem) activationSystemPreparer.prepareProxy(
                             ActivationGroup.getSystem());
             if (initLogger.isDebugEnabled()) {
-                initLogger.debug("Prepared activation system is: {0}",
-                        activationSystem);
+                initLogger.debug("Prepared activation system is: {}", activationSystem);
             }
             ProxyPreparer activationIdPreparer =
                     (ProxyPreparer) Config.getNonNullEntry(config,
                             TxnManager.MAHALO, "activationIdPreparer",
                             ProxyPreparer.class, new BasicProxyPreparer());
             if (initLogger.isDebugEnabled()) {
-                initLogger.debug("activationIdPreparer: {0}",
-                        activationIdPreparer);
+                initLogger.debug("activationIdPreparer: {}", activationIdPreparer);
             }
             activationID = (ActivationID) activationIdPreparer.prepareProxy(
                     activationID);
             if (initLogger.isDebugEnabled()) {
-                initLogger.debug("Prepared activationID is: {0}",
-                        activationID);
+                initLogger.debug("Prepared activationID is: {}", activationID);
             }
             activationPrepared = true;
             exporter = (Exporter) Config.getNonNullEntry(config,
@@ -535,14 +531,14 @@ public class TxnManagerImpl /*extends RemoteServer*/
             exporter = new ActivationExporter(activationID, exporter);
             if (initLogger.isDebugEnabled()) {
                 initLogger.debug(
-                        "Activatable service exporter is: {0}", exporter);
+                        "Activatable service exporter is: {}", exporter);
             }
         } else {
             exporter = (Exporter) Config.getNonNullEntry(config,
                     TxnManager.MAHALO, "serverExporter", Exporter.class);
             if (initLogger.isDebugEnabled()) {
                 initLogger.debug(
-                        "Non-activatable service exporter is: {0}", exporter);
+                        "Non-activatable service exporter is: {}", exporter);
             }
         }
 
@@ -551,16 +547,14 @@ public class TxnManagerImpl /*extends RemoteServer*/
                         TxnManager.MAHALO, "recoveredParticipantPreparer",
                         ProxyPreparer.class, new BasicProxyPreparer());
         if (initLogger.isDebugEnabled()) {
-            initLogger.debug("Recovered participant preparer is: {0}",
-                    recoveredParticipantPreparer);
+            initLogger.debug("Recovered participant preparer is: {}", recoveredParticipantPreparer);
         }
         if (persistent) {
             participantPreparer = (ProxyPreparer) Config.getNonNullEntry(config,
                     TxnManager.MAHALO, "participantPreparer", ProxyPreparer.class,
                     new BasicProxyPreparer());
             if (initLogger.isDebugEnabled()) {
-                initLogger.debug("Participant preparer is: {0}",
-                        participantPreparer);
+                initLogger.debug("Participant preparer is: {}", participantPreparer);
             }
         }
         // Create lease policy -- used by recovery logic, below??
@@ -569,8 +563,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
                 LeasePeriodPolicy.class,
                 new SystemTimeFixedLeasePeriodPolicy(3 * HOURS, 1 * HOURS));
         if (initLogger.isDebugEnabled()) {
-            initLogger.debug("leasePeriodPolicy is: {0}",
-                    txnLeasePeriodPolicy);
+            initLogger.debug("leasePeriodPolicy is: {}", txnLeasePeriodPolicy);
         }
 
         if (persistent) {
@@ -578,8 +571,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
                     (String) Config.getNonNullEntry(config,
                             TxnManager.MAHALO, "persistenceDirectory", String.class);
             if (initLogger.isDebugEnabled()) {
-                initLogger.debug("Persistence directory is: {0}",
-                        persistenceDirectory);
+                initLogger.debug("Persistence directory is: {}", persistenceDirectory);
             }
         } else { // just for insurance
             persistenceDirectory = null;
@@ -612,7 +604,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         _dummyLeaseUuid = new Uuid(topUuid.getLeastSignificantBits(),
                 -1);
         if (initLogger.isTraceEnabled()) {
-            initLogger.trace("Uuid is: {0}", topUuid);
+            initLogger.trace("Uuid is: {}", topUuid);
         }
 
         if (persistent) {
@@ -625,21 +617,21 @@ public class TxnManagerImpl /*extends RemoteServer*/
         }
         serverStub = (TxnManager) exporter.export(this);
         if (initLogger.isTraceEnabled()) {
-            initLogger.trace("Server stub: {0}", serverStub);
+            initLogger.trace("Server stub: {}", serverStub);
         }
         txnMgrLocalProxy = TxnMgrProxy.create(serverStub, this, topUuid);
         // Create the proxy that will be registered in the lookup service
         txnMgrProxy =
                 TxnMgrProxy.create(serverStub, this, topUuid);
         if (initLogger.isTraceEnabled()) {
-            initLogger.trace("Service proxy is: {0}",
+            initLogger.trace("Service proxy is: {}",
                     txnMgrProxy);
         }
         // Create the admin proxy for this service
         txnMgrAdminProxy =
                 TxnMgrAdminProxy.create(serverStub, topUuid);
         if (initLogger.isTraceEnabled()) {
-            initLogger.trace("Service admin proxy is: {0}",
+            initLogger.trace("Service admin proxy is: {}",
                     txnMgrAdminProxy);
         }
         if (initLogger.isTraceEnabled()) {
@@ -693,9 +685,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             while (iter.hasNext()) {
                 txn = (TxnManagerTransaction) iter.next();
                 if (initLogger.isTraceEnabled()) {
-                    initLogger.trace(
-                            "Restoring transient state for txn id: {0}",
-                            new Long(((ServerTransaction) txn.getTransaction()).id));
+                    initLogger.trace("Restoring transient state for txn id: {}", txn.getTransaction().id);
                 }
                 try {
                     txn.restoreTransientState(recoveredParticipantPreparer);
@@ -761,7 +751,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
         if (startupLogger.isInfoEnabled()) {
             final double duration = (System.currentTimeMillis() - startTime) / 1000d;
-            startupLogger.info("Started Mahalo (duration={0}): {1}", new Object[]{duration, this});
+            startupLogger.info("Started Mahalo (duration={}): {}", duration, this);
         }
         readyState.ready();
 
@@ -799,8 +789,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
 
 
         if (finest_tr_logger) {
-            transactionsLogger.trace(
-                    "Transaction ID is: {0}", new Long(tid));
+            transactionsLogger.trace("Transaction ID is: {}", tid);
         }
 
         txntr = new TxnManagerTransaction(
@@ -831,8 +820,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         }
 
         if (finest_tr_logger) {
-            transactionsLogger.trace(
-                    "Created new TxnManagerTransaction ID is: {0}", new Long(tid));
+            transactionsLogger.trace("Created new TxnManagerTransaction ID is: {}", tid);
         }
 
         if (externalXid != null) {
@@ -960,8 +948,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
                             participantPreparer.prepareProxy(part);
 
         if (finest_par_logger) {
-            participantLogger.trace(
-                    "prepared participant: {0}", preparedTarget);
+            participantLogger.trace("prepared participant: {}", preparedTarget);
         }
 
         TxnManagerTransaction txntr = _txns.get(id);
@@ -1005,8 +992,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         TransactionParticipant preparedTarget = part;
 
         if (participantLogger.isTraceEnabled()) {
-            participantLogger.trace(
-                    "prepared participant: {0}", preparedTarget);
+            participantLogger.trace("prepared participant: {}", preparedTarget);
         }
 
         TxnManagerTransaction txntr = _txns.get(id);
@@ -1116,8 +1102,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
         TxnManagerTransaction txntr = _txns.get(id);
 
         if (finest_tr_logger) {
-            transactionsLogger.trace(
-                    "Retrieved TxnManagerTransaction: {0}", txntr);
+            transactionsLogger.trace("Retrieved TxnManagerTransaction: {}", txntr);
         }
 
         if (txntr == null)
@@ -1130,8 +1115,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             _tidToExternalXid.remove(txntr.getTransaction().id);
 
         if (finest_tr_logger) {
-            transactionsLogger.trace(
-                    "Committed transaction id {0}", id);
+            transactionsLogger.trace("Committed transaction id {}", id);
         }
         if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "commit");
@@ -1207,8 +1191,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
                 _txns.get(id);
 
         if (transactionsLogger.isTraceEnabled()) {
-            transactionsLogger.trace(
-                    "Retrieved TxnManagerTransaction: {0}", txntr);
+            transactionsLogger.trace("Retrieved TxnManagerTransaction: {}", txntr);
         }
 	/*
 	 * Since lease cancellation process sets expiration to 0
@@ -1226,8 +1209,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             _tidToExternalXid.remove(txntr.getTransaction().id);
 
         if (transactionsLogger.isTraceEnabled()) {
-            transactionsLogger.trace(
-                    "aborted transaction id {0}", id);
+            transactionsLogger.trace("aborted transaction id {}", id);
         }
         if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TxnManagerImpl.class, "abort");
@@ -1311,9 +1293,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
             LogUtils.entering(operationsLogger, TxnManagerImpl.class, "settleTxns");
         }
         if (transactionsLogger.isTraceEnabled()) {
-            transactionsLogger.trace(
-                    "Settling {0} transactions.",
-                    new Integer(unsettledtxns.size()));
+            transactionsLogger.trace("Settling {} transactions.", unsettledtxns.size());
         }
 
         int numtxns = 0;
@@ -1352,8 +1332,7 @@ public class TxnManagerImpl /*extends RemoteServer*/
                 throw new InterruptedException("settleTxns interrupted");
 
             if (transactionsLogger.isTraceEnabled()) {
-                transactionsLogger.trace(
-                        "Added SettlerTask for tid {0}", tid);
+                transactionsLogger.trace("Added SettlerTask for tid {}", tid);
             }
         }
         // Not reachable

@@ -1244,8 +1244,7 @@ public class JoinManager {
                         proxys[i]
                                 = (ServiceRegistrar) registrarPreparer.prepareProxy
                                 (proxys[i]);
-                        log("JoinManager - discovered "
-                                        + "lookup service proxy prepared: {0}",
+                        log("JoinManager - discovered " + "lookup service proxy prepared: {}",
                                 proxys[i]);
                     } catch (Exception e1) {
                         log(LogLevel.INFO, "failure preparing discovered ServiceRegistrar proxy", e1);

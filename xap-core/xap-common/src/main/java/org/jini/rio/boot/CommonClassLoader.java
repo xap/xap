@@ -107,11 +107,7 @@ public class CommonClassLoader extends CustomURLClassLoader implements Component
                     buffer.append(", ");
                 buffer.append(urls[i].toExternalForm());
             }
-            logger.trace(
-                    "Context ClassLoader={0} URLs={1}",
-                    new Object[]{cl.toString(),
-                            buffer.toString()
-                    });
+            logger.trace("Context ClassLoader={} URLs={}", cl.toString(), buffer.toString());
         }
         return (urls);
     }
