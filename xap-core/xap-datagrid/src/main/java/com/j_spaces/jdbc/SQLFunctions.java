@@ -40,6 +40,7 @@ public class SQLFunctions {
         builtInFunctions.put("FLOOR", new FloorSqlFunction());
         builtInFunctions.put("CHAR_LENGTH", new CharLengthSqlFunction());
         builtInFunctions.put("LOWER", new LowerSqlFunction());
+        builtInFunctions.put("UCASE", new UpperSqlFunction());
         builtInFunctions.put("UPPER", new UpperSqlFunction());
         builtInFunctions.put("APPEND", new AppendSqlFunction());
         builtInFunctions.put("CONCAT", new ConcatSqlFunction());
@@ -47,6 +48,7 @@ public class SQLFunctions {
         builtInFunctions.put("TO_NUMBER", new ToNumberSqlFunction());
         builtInFunctions.put("TO_CHAR", new ToCharSqlFunction());
         builtInFunctions.put("CONTAINS_KEY", new ContainsKeySqlFunction());
+        builtInFunctions.put("LOCATE", new LocateSqlFunction());
     }
 
     public SQLFunctions(Map<String, SqlFunction> userFunctions) {
@@ -77,4 +79,4 @@ public class SQLFunctions {
     }
 }
 
-
+//builtInFunctions.put("LCASE", new LowerSqlFunction());
