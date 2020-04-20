@@ -22,7 +22,7 @@ import java.io.StringWriter;
 import java.util.StringJoiner;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.MessageFormatter;
 
 @com.gigaspaces.api.InternalApi
 public class LogUtils {
@@ -53,13 +53,19 @@ public class LogUtils {
         return message + " [Duration = " + duration + "ms]";
     }
 
+    public static String format(String message, Object ... args) {
+        if (args == null || args.length == 0)
+            return message;
+        return MessageFormatter.arrayFormat(message, args, null).getMessage();
+    }
+
     public static String format(Class<?> sourceClass, String sourceMethod, String format, Object ... params) {
         if (format == null || format.isEmpty())
             return sourceClass.getName() + "#" + sourceMethod;
         if (params == null || params.length == 0)
             return sourceClass.getName() + "#" + sourceMethod + ": " + format;
         else
-            return sourceClass.getName() + "#" + sourceMethod + ": " + java.text.MessageFormat.format(format, params);
+            return sourceClass.getName() + "#" + sourceMethod + ": " + format(format, params);
     }
 
     public static void throwing(Logger logger, Class<?> sourceClass, String sourceMethod, Throwable thrown) {

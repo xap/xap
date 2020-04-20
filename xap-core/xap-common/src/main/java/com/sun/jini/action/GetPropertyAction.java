@@ -104,7 +104,7 @@ public class GetPropertyAction implements PrivilegedAction {
         } catch (SecurityException e) {
             if (logger.isDebugEnabled()) {
                 LogUtils.throwing(logger, GetPropertyAction.class, "run", e,
-                        "security exception reading \"{0}\", returning {1}", theProp, defaultVal);
+                        "security exception reading \"{}\", returning {}", theProp, defaultVal);
             }
         }
         return defaultVal;

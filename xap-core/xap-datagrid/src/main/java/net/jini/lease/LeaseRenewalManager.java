@@ -1308,11 +1308,11 @@ public class LeaseRenewalManager {
                     e.delayRenew();
                     leases.put(e, e);
                     if (logger.isDebugEnabled()) {
-                        LogUtils.throwing(logger, LeaseRenewalManager.class, "renewAll", e.ex, "Indefinite exception while renewing lease {0}", e.lease);
+                        LogUtils.throwing(logger, LeaseRenewalManager.class, "renewAll", e.ex, "Indefinite exception while renewing lease {}", e.lease);
                     }
                 } else {
                     if (logger.isDebugEnabled()) {
-                        LogUtils.throwing(logger, LeaseRenewalManager.class, "renewAll", e.ex, "Lease renewal failed for lease {0}", e.lease);
+                        LogUtils.throwing(logger, LeaseRenewalManager.class, "renewAll", e.ex, "Lease renewal failed for lease {}", e.lease);
                     }
                     if (e.listener != null) {
 			/*

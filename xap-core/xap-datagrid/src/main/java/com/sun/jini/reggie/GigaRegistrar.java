@@ -1561,7 +1561,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 if (!(e instanceof InterruptedIOException) &&
                         logger.isDebugEnabled()) {
                     LogUtils.throwing(logger, getClass(), "run", e,
-                            "exception decoding multicast request from {0}:{1}", datagram.getAddress(), datagram.getPort());
+                            "exception decoding multicast request from {}:{}", datagram.getAddress(), datagram.getPort());
                 }
                 return;
             }
@@ -1574,7 +1574,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     if (!(e instanceof InterruptedIOException) &&
                             logger.isDebugEnabled()) {
                         LogUtils.throwing(logger, getClass(), "run", e,
-                                "exception decoding multicast request from {0}:{1}", datagram.getAddress(), datagram.getPort());
+                                "exception decoding multicast request from {}:{}", datagram.getAddress(), datagram.getPort());
                     }
                     return;
                 }
@@ -1641,7 +1641,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     }
                 } catch (UnknownHostException e) {
                     if (logger.isInfoEnabled()) {
-                        LogUtils.throwing(LogLevel.INFO, logger, getClass(), "run", e, "failed to resolve host {0}; connection will still be attempted", host);
+                        LogUtils.throwing(LogLevel.INFO, logger, getClass(), "run", e, "failed to resolve host {}; connection will still be attempted", host);
                     }
                 }
                 long deadline = DiscoveryConstraints.process(
@@ -1667,7 +1667,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                         return;
                     } catch (Exception e) {
                         if (logger.isDebugEnabled()) {
-                            LogUtils.throwing(logger, getClass(), "run", e, "exception responding to {0}:{1}", anAddr, port);
+                            LogUtils.throwing(logger, getClass(), "run", e, "exception responding to {}:{}", anAddr, port);
                         }
                     }
                     timeLeft = deadline - System.currentTimeMillis();
@@ -1679,7 +1679,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 }
             } catch (Exception e) {
                 if (logger.isInfoEnabled()) {
-                    LogUtils.throwing(LogLevel.INFO, logger, getClass(), "run", e, "failed to respond to {0} on port {1}", Arrays.asList(addr), port);
+                    LogUtils.throwing(LogLevel.INFO, logger, getClass(), "run", e, "failed to respond to {} on port {}", Arrays.asList(addr), port);
                 }
             }
         }
@@ -1744,7 +1744,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
             } catch (Exception e) {
                 if (logger.isDebugEnabled()) {
                     LogUtils.throwing(logger, getClass(), "run", e,
-                            "exception handling unicast discovery from {0}:{1}", socket.getInetAddress(), socket.getPort());
+                            "exception handling unicast discovery from {}:{}", socket.getInetAddress(), socket.getPort());
                 }
             }
         }
@@ -2065,7 +2065,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     } catch (IOException e) {
                         failedInterfaces.add(nic);
                         if (failureLogLevel.isEnabled(logger))
-                            LogUtils.throwing(failureLogLevel, logger, getClass(), "<init>", e, "exception enabling {0}", nic);
+                            LogUtils.throwing(failureLogLevel, logger, getClass(), "<init>", e, "exception enabling {}", nic);
                     }
                 }
                 if (logger.isDebugEnabled())
@@ -2416,7 +2416,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                         logger.trace(LogUtils.formatDuration(startTime, "send() - setNetworkInterface() for nic " + nic));
                 } catch (SocketException e) {
                     if (failureLogLevel.isEnabled(logger)) {
-                        LogUtils.throwing(failureLogLevel, logger, getClass(), "send", e, "exception setting {0}", nic);
+                        LogUtils.throwing(failureLogLevel, logger, getClass(), "send", e, "exception setting {}", nic);
                     }
                     if (logger.isTraceEnabled())
                         logger.trace(LogUtils.formatDuration(startTime, "send() - setNetworkInterface() failed for nic " + nic));
@@ -2431,7 +2431,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                 } catch (IOException e) {
                     if (nic != null) {
                         if (failureLogLevel.isEnabled(logger)) {
-                            LogUtils.throwing(failureLogLevel, logger, getClass(), "send", e, "exception sending packet on {0}", nic);
+                            LogUtils.throwing(failureLogLevel, logger, getClass(), "send", e, "exception sending packet on {}", nic);
                         }
                     } else {
                         failureLogLevel.log(logger, "exception sending packet on default interface", e);
@@ -3972,7 +3972,7 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
                     throw (RuntimeException) e;
                 }
                 if (logger.isWarnEnabled()) {
-                    LogUtils.throwing(LogLevel.WARNING, logger, GigaRegistrar.class, "prepareLocators", e, "failed to prepare lookup locator {0}", locator);
+                    LogUtils.throwing(LogLevel.WARNING, logger, GigaRegistrar.class, "prepareLocators", e, "failed to prepare lookup locator {}", locator);
                 }
             }
         }

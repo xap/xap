@@ -719,7 +719,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 } catch (Exception e) {
                     if (logger.isWarnEnabled()) {
                         LogUtils.throwing(LogLevel.WARNING, logger, getClass(), "prepareListener", e,
-                                "failed to prepare event listener {0}", listener);
+                                "failed to prepare event listener {}", listener);
                     }
                     listener = null;
                 }
@@ -2084,7 +2084,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 if (!(e instanceof InterruptedIOException) &&
                         logger.isDebugEnabled()) {
                     LogUtils.throwing(logger, getClass(), "run", e,
-                            "exception decoding multicast request from {0}:{1}", datagram.getAddress(), datagram.getPort());
+                            "exception decoding multicast request from {}:{}", datagram.getAddress(), datagram.getPort());
                 }
                 return;
             }
@@ -2096,7 +2096,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 } catch (Exception e) {
                     if (!(e instanceof InterruptedIOException) &&
                             logger.isDebugEnabled()) {
-                        LogUtils.throwing(logger, getClass(), "run", e, "exception decoding multicast request from {0}:{1}",
+                        LogUtils.throwing(logger, getClass(), "run", e, "exception decoding multicast request from {}:{}",
                                 datagram.getAddress(), datagram.getPort());
                     }
                     return;
@@ -2164,7 +2164,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 } catch (UnknownHostException e) {
                     if (logger.isInfoEnabled()) {
                         LogUtils.throwing(LogLevel.INFO, logger, getClass(), "run", e,
-                                "failed to resolve host {0}; connection will still be attempted", host);
+                                "failed to resolve host {}; connection will still be attempted", host);
                     }
                 }
                 long deadline = DiscoveryConstraints.process(
@@ -2190,7 +2190,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                         return;
                     } catch (Exception e) {
                         if (logger.isDebugEnabled()) {
-                            LogUtils.throwing(logger, getClass(), "run", e, "exception responding to {0}:{1}", addr[i], port);
+                            LogUtils.throwing(logger, getClass(), "run", e, "exception responding to {}:{}", addr[i], port);
                         }
                     }
                     timeLeft = deadline - System.currentTimeMillis();
@@ -2202,7 +2202,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 }
             } catch (Exception e) {
                 if (logger.isInfoEnabled()) {
-                    LogUtils.throwing(LogLevel.INFO, logger, getClass(), "run", e, "failed to respond to {0} on port {1}", Arrays.asList(addr), port);
+                    LogUtils.throwing(LogLevel.INFO, logger, getClass(), "run", e, "failed to respond to {} on port {}", Arrays.asList(addr), port);
                 }
             }
         }
@@ -2259,7 +2259,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             } catch (Exception e) {
                 if (logger.isDebugEnabled()) {
                     LogUtils.throwing(logger, getClass(), "run", e,
-                            "exception handling unicast discovery from {0}:{1}", socket.getInetAddress(), socket.getPort());
+                            "exception handling unicast discovery from {}:{}", socket.getInetAddress(), socket.getPort());
                 }
             }
         }
@@ -2505,7 +2505,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                     } catch (IOException e) {
                         failedInterfaces.add(nic);
                         if (failureLogLevel.isEnabled(logger)) {
-                            LogUtils.throwing(failureLogLevel, logger, getClass(), "<init>", e, "exception enabling {0}", nic);
+                            LogUtils.throwing(failureLogLevel, logger, getClass(), "<init>", e, "exception enabling {}", nic);
                         }
                     }
                 }
@@ -2828,7 +2828,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                     socket.setNetworkInterface(nic);
                 } catch (SocketException e) {
                     if (failureLogLevel.isEnabled(logger)) {
-                        LogUtils.throwing(failureLogLevel, logger, getClass(), "send", e, "exception setting {0}", nic);
+                        LogUtils.throwing(failureLogLevel, logger, getClass(), "send", e, "exception setting {}", nic);
                     }
                     return;
                 }
@@ -2841,7 +2841,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 } catch (IOException e) {
                     if (nic != null) {
                         if (failureLogLevel.isEnabled(logger)) {
-                            LogUtils.throwing(failureLogLevel, logger, getClass(), "send", e, "exception sending packet on {0}", nic);
+                            LogUtils.throwing(failureLogLevel, logger, getClass(), "send", e, "exception sending packet on {}", nic);
                         }
                     } else {
                         failureLogLevel.log(logger, "exception sending packet on default interface", e);
@@ -3996,7 +3996,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 }
                 if (logger.isWarnEnabled()) {
                     LogUtils.throwing(LogLevel.WARNING, logger, RegistrarImpl.class, "prepareLocators", e,
-                            "failed to prepare lookup locator {0}", locators[i]);
+                            "failed to prepare lookup locator {}", locators[i]);
                 }
             }
         }

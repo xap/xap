@@ -187,7 +187,7 @@ public final class Security {
                 "object is not trusted: " + obj);
         if (trustLogger.isDebugEnabled()) {
             LogUtils.throwing(trustLogger, Security.class, "verifyObjectTrust", e,
-                    "no verifier trusts {0}", obj);
+                    "no verifier trusts {}", obj);
         }
         throw e;
     }
@@ -251,7 +251,7 @@ public final class Security {
             if (integrityLogger.isDebugEnabled()) {
                 LogUtils.throwing(integrityLogger,
                         Security.class, "verifyCodebaseIntegrity", e,
-                        "no verifier verifies {0}", urls[i]);
+                        "no verifier verifies {}", urls[i]);
             }
             throw e;
         }
@@ -307,7 +307,7 @@ public final class Security {
             });
             if (integrityLogger.isDebugEnabled()) {
                 integrityLogger.debug(LogUtils.format(Security.class, "verifyCodebaseIntegrity",
-                        "integrity verifiers {0}", list));
+                        "integrity verifiers {}", list));
             }
             verifiers = (IntegrityVerifier[]) list.toArray(
                     new IntegrityVerifier[list.size()]);
@@ -731,7 +731,7 @@ public final class Security {
                 });
                 if (trustLogger.isDebugEnabled()) {
                     trustLogger.debug(LogUtils.format(Security.class, "verifyObjectTrust",
-                            "trust verifiers {0}", list));
+                            "trust verifiers {}", list));
                 }
                 verifiers = (TrustVerifier[]) list.toArray(
                         new TrustVerifier[list.size()]);
@@ -764,7 +764,7 @@ public final class Security {
                             !(e instanceof SecurityException));
                     if (trustLogger.isDebugEnabled()) {
                         LogUtils.throwing(trustLogger, this.getClass(), "isTrustedObject", e,
-                                "{0} checking {1} throws", verifiers[i], obj);
+                                "{} checking {} throws", verifiers[i], obj);
                     }
                     if (rethrow) {
                         throw (RuntimeException) e;
@@ -775,7 +775,7 @@ public final class Security {
             if (ex != null) {
                 if (trustLogger.isDebugEnabled()) {
                     LogUtils.throwing(trustLogger, this.getClass(), "isTrustedObject", ex,
-                            "checking {0} throws", obj);
+                            "checking {} throws", obj);
                 }
                 if (ex instanceof RemoteException) {
                     throw (RemoteException) ex;
@@ -783,7 +783,7 @@ public final class Security {
                 throw (SecurityException) ex;
             }
             if (trustLogger.isDebugEnabled()) {
-                trustLogger.debug("no verifier trusts {0}", obj);
+                trustLogger.debug("no verifier trusts {}", obj);
             }
             return false;
         }

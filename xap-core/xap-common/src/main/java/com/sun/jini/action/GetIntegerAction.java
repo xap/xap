@@ -126,7 +126,7 @@ public class GetIntegerAction implements PrivilegedAction {
         } catch (SecurityException e) {
             if (logger.isDebugEnabled()) {
                 LogUtils.throwing(logger, GetIntegerAction.class, "run", e,
-                        "security exception reading \"{0}\", returning {1}", theProp, defaultValue());
+                        "security exception reading \"{}\", returning {}", theProp, defaultValue());
             }
         }
         return defaultValue();
