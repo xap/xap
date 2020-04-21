@@ -18,7 +18,7 @@ package com.gigaspaces.internal.events.durable;
 
 import com.gigaspaces.cluster.replication.IncomingReplicationOutOfSyncException;
 import com.gigaspaces.events.EventSessionConfig;
-import com.gigaspaces.internal.cluster.PartitionToGrainsMap;
+import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.cluster.node.IReplicationNodeStateListener;
 import com.gigaspaces.internal.cluster.node.impl.backlog.IBacklogMemberState;
 import com.gigaspaces.internal.cluster.node.impl.config.ReplicationNodeMode;
@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Dan Kilman
@@ -54,7 +53,7 @@ public class DurableNotificationReplicationNodeStateListener
     private final DurableNotificationLease _lease;
     private final LeaseListener _leaseListener;
     private final IAsyncHandlerProvider _asyncProvider;
-    private final PartitionToGrainsMap _grainsMap;
+    private final PartitionToChunksMap _chunksMap;
     private final int _partitionId;
 
     private final Object _lock = new Object();
@@ -69,12 +68,12 @@ public class DurableNotificationReplicationNodeStateListener
     public DurableNotificationReplicationNodeStateListener(
             EventSessionConfig config,
             DurableNotificationLease lease,
-            IAsyncHandlerProvider asyncProvider, PartitionToGrainsMap grainsMap, int partitionId) {
+            IAsyncHandlerProvider asyncProvider, PartitionToChunksMap chunksMap, int partitionId) {
         _logger = lease.getLogger();
         _lease = lease;
         _config = config;
         _asyncProvider = asyncProvider;
-        _grainsMap = grainsMap;
+        _chunksMap = chunksMap;
         _partitionId = partitionId;
         _leaseListener = _config.getLeaseListener();
         _disconnectedPartitions = populateDisconnectedPartitions();
@@ -182,7 +181,7 @@ public class DurableNotificationReplicationNodeStateListener
         Map<Integer, Long> result = new HashMap<Integer, Long>();
 
         int startIndex = _partitionId == PartitionedClusterUtils.NO_PARTITION ? 0 : _partitionId;
-        int endIndex = _partitionId == PartitionedClusterUtils.NO_PARTITION ? (_grainsMap.getNumOfPartitions() - 1) : _partitionId;
+        int endIndex = _partitionId == PartitionedClusterUtils.NO_PARTITION ? (_chunksMap.getNumOfPartitions() - 1) : _partitionId;
 
         for (int i = startIndex; i <= endIndex; i++) {
             long currentTime = SystemTime.timeMillis();

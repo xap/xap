@@ -1,8 +1,8 @@
 package com.gigaspaces.internal.server.space;
 
 import com.gigaspaces.attribute_store.AttributeStore;
-import com.gigaspaces.internal.cluster.PartitionToGrainsMap;
-import com.gigaspaces.internal.exceptions.GrainsMapMissingException;
+import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.exceptions.ChunksMapMissingException;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryException;
 import com.gigaspaces.logger.Constants;
@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
 import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ATTRIBUET_STORE_HANDLER_CLASS_NAME;
 import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ZOKEEPER_CLIENT_CLASS_NAME;
 
-public class ZookeeperGrainsMapHandler implements Closeable {
+public class ZookeeperChunksMapHandler implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(Constants.LOGGER_ZOOKEEPER);
     private final String serviceName;
@@ -28,7 +28,7 @@ public class ZookeeperGrainsMapHandler implements Closeable {
     private final ExecutorService singleThreadExecutorService = Executors.newFixedThreadPool(1);
     private ZookeeperClient zookeeperClient;
 
-    public ZookeeperGrainsMapHandler(String serviceName, SpaceConfig spaceConfig) {
+    public ZookeeperChunksMapHandler(String serviceName, SpaceConfig spaceConfig) {
         this.serviceName = serviceName;
         this.attributeStoreKey = toPath(serviceName);
         this.attributeStore = createZooKeeperAttributeStore(spaceConfig);
@@ -63,9 +63,9 @@ public class ZookeeperGrainsMapHandler implements Closeable {
         }
     }
 
-    public void addListener(SpaceConfig spaceConfig) throws GrainsMapMissingException {
+    public void addListener(SpaceConfig spaceConfig) throws ChunksMapMissingException {
         zookeeperClient = createZooKeeperClient(spaceConfig);
-        int currentGen = this.getGrainsMap().getGeneration();
+        int currentGen = this.getChunksMap().getGeneration();
         zookeeperClient.addConnectionStateListener(new ReconnectTask(currentGen, spaceConfig), singleThreadExecutorService);
     }
 
@@ -85,38 +85,38 @@ public class ZookeeperGrainsMapHandler implements Closeable {
         }
     }
 
-    public PartitionToGrainsMap getGrainsMap() throws GrainsMapMissingException {
+    public PartitionToChunksMap getChunksMap() throws ChunksMapMissingException {
         try {
             String generation = attributeStore.get(attributeStoreKey + "/generation");
             if(generation == null){
-                throw new GrainsMapMissingException();
+                throw new ChunksMapMissingException();
             }
             byte[] bytes = attributeStore.getBytes(attributeStoreKey + "/" + generation);
             return IOUtils.readObject(new ObjectInputStream(new ByteArrayInputStream(bytes)));
         } catch (IOException e) {
             if (logger.isErrorEnabled())
-                logger.error("Failed to get grains map", e);
+                logger.error("Failed to get chunks map", e);
             throw new DirectPersistencyRecoveryException("Failed to start [" + (serviceName)
                     + "] Failed to create attribute store.");
         } catch (ClassNotFoundException e) {
             if (logger.isErrorEnabled())
-                logger.error("Failed to get grains map", e);
+                logger.error("Failed to get chunks map", e);
             throw new DirectPersistencyRecoveryException("Failed to start [" + (serviceName)
-                    + "] Failed deserialize grains map");
+                    + "] Failed deserialize chunks map");
         }
     }
 
-    public void setGrainsMap(PartitionToGrainsMap grainsMap) {
+    public void setChunksMap(PartitionToChunksMap chunksMap) {
         try {
-            int generation = grainsMap.getGeneration();
+            int generation = chunksMap.getGeneration();
             attributeStore.set(attributeStoreKey + "/" + "generation", String.valueOf(generation));
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-            IOUtils.writeObject(objectOutputStream, grainsMap);
+            IOUtils.writeObject(objectOutputStream, chunksMap);
             attributeStore.setBytes(attributeStoreKey + "/" + generation, byteArrayOutputStream.toByteArray());
         } catch (IOException e) {
             if (logger.isErrorEnabled())
-                logger.error("Failed to get grains map", e);
+                logger.error("Failed to get chunks map", e);
             throw new DirectPersistencyRecoveryException("Failed to start [" + (serviceName)
                     + "] Failed to create attribute store.");
         }
@@ -149,16 +149,16 @@ public class ZookeeperGrainsMapHandler implements Closeable {
 
         @Override
         public void run() {
-            PartitionToGrainsMap map;
+            PartitionToChunksMap map;
             try {
-                map = getGrainsMap();
-            } catch (GrainsMapMissingException e) {
-                logger.error("Failed to find grains map in zk",e);
+                map = getChunksMap();
+            } catch (ChunksMapMissingException e) {
+                logger.error("Failed to find chunks map in zk",e);
                 return;
             }
             if (map.getGeneration() > this.currentGeneration) {
-                logger.warn(spaceConfig.getContainerName() + " is at grains map generation " + this.currentGeneration + " but current generation in Zookeeper is " + map.getGeneration());
-                spaceConfig.getClusterInfo().setGrainsMap(map);
+                logger.warn(spaceConfig.getContainerName() + " is at chunks map generation " + this.currentGeneration + " but current generation in Zookeeper is " + map.getGeneration());
+                spaceConfig.getClusterInfo().setChunksMap(map);
                 this.currentGeneration = map.getGeneration();
             }
         }

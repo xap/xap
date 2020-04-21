@@ -31,7 +31,7 @@ import com.gigaspaces.internal.client.spaceproxy.operations.RegisterEntryTypeDes
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceOperationRequest;
 import com.gigaspaces.internal.client.spaceproxy.router.SpaceProxyRouter;
 import com.gigaspaces.internal.client.spaceproxy.transaction.SpaceProxyTransactionManager;
-import com.gigaspaces.internal.cluster.PartitionToGrainsMap;
+import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
@@ -85,7 +85,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.rmi.RemoteException;
 import java.security.SecureRandom;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -614,7 +613,7 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
         }
     }
 
-    public SpaceProxyRouter updateProxyRouter(SpaceProxyRouter oldRouter, PartitionToGrainsMap grainsMap){
+    public SpaceProxyRouter updateProxyRouter(SpaceProxyRouter oldRouter, PartitionToChunksMap chunksMap){
         if(this._proxyRouter != oldRouter){
             return _proxyRouter;
         }
@@ -622,7 +621,7 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
             if(this._proxyRouter != oldRouter){
                 return _proxyRouter;
             }
-            this._proxySettings = this._proxySettings.cloneAndUpdate(grainsMap);
+            this._proxySettings = this._proxySettings.cloneAndUpdate(chunksMap);
             this._proxyRouter = new SpaceProxyRouter(this);
             return this._proxyRouter;
         }
@@ -670,7 +669,7 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
                     spaceContext.setQuiesceToken(token);
             }
             spaceRequest.setSpaceContext(spaceContext);
-            spaceRequest.setGrainsMapGeneration(getProxyRouter().getGrainsMapGeneration());
+            spaceRequest.setChunksMapGeneration(getProxyRouter().getChunksMapGeneration());
         } catch (com.gigaspaces.security.SecurityException e) {
             spaceRequest.setRemoteOperationExecutionError(e);
             return false;

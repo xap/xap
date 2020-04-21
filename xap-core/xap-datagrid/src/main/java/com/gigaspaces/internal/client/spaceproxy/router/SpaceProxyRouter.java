@@ -161,7 +161,7 @@ public class SpaceProxyRouter {
         return new SpacePartitionedClusterRemoteOperationRouter(spaceProxy.getName(),
                 partitions,
                 clusterInfo.isBroadcastDisabled(),
-                partitionedCluster, clusterInfo.getGrainsMap(), spaceProxy);
+                partitionedCluster, clusterInfo.getChunksMap(), spaceProxy);
     }
 
     private Properties loadConfig(Properties properties, SpaceClusterInfo clusterInfo) {
@@ -276,8 +276,8 @@ public class SpaceProxyRouter {
         return _defaultSpaceContext;
     }
 
-    public int getGrainsMapGeneration() {
-        return _clusterInfo.getGrainsMap().getGeneration();
+    public int getChunksMapGeneration() {
+        return _clusterInfo.getChunksMap().getGeneration();
     }
 
     public void setQuiesceToken(QuiesceToken token) {

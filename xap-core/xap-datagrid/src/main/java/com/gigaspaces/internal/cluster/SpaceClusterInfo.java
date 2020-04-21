@@ -64,7 +64,7 @@ public class SpaceClusterInfo implements Externalizable {
     private boolean clustered;
     private String clusterName;
     private String clusterSchema;
-    private PartitionToGrainsMap grainsMap;
+    private PartitionToChunksMap chunksMap;
     private boolean replicated;
     private boolean primaryElectionAvailable;
     private boolean activeActive;
@@ -133,12 +133,12 @@ public class SpaceClusterInfo implements Externalizable {
         return broadcastDisabled;
     }
 
-    public SpaceClusterInfo cloneAndUpdate(PartitionToGrainsMap newGrainsMap){
+    public SpaceClusterInfo cloneAndUpdate(PartitionToChunksMap newChunksMap){
         SpaceClusterInfo newClusterInfo = new SpaceClusterInfo();
         newClusterInfo.clustered = this.clustered;
         newClusterInfo.clusterName = this.clusterName;
         newClusterInfo.clusterSchema = this.clusterSchema;
-        newClusterInfo.grainsMap = newGrainsMap;
+        newClusterInfo.chunksMap = newChunksMap;
         newClusterInfo.replicated = this.replicated;
         newClusterInfo.primaryElectionAvailable = this.primaryElectionAvailable;
         newClusterInfo.activeActive = this.activeActive;
@@ -148,7 +148,7 @@ public class SpaceClusterInfo implements Externalizable {
         newClusterInfo.hasReplicationTargets = this.hasReplicationTargets;
 
         //TODO next stage - need to changed these fields based on new topology
-        newClusterInfo.numOfPartitions = newGrainsMap.getNumOfPartitions();
+        newClusterInfo.numOfPartitions = newChunksMap.getNumOfPartitions();
         newClusterInfo.membersNames = this.membersNames;
         newClusterInfo.numOfBackups = this.numOfBackups;
         newClusterInfo.partitions = this.partitions;
@@ -178,8 +178,8 @@ public class SpaceClusterInfo implements Externalizable {
         return numOfPartitions;
     }
 
-    public PartitionToGrainsMap getGrainsMap() {
-        return grainsMap;
+    public PartitionToChunksMap getChunksMap() {
+        return chunksMap;
     }
 
     public int getNumberOfBackups() {
@@ -253,8 +253,8 @@ public class SpaceClusterInfo implements Externalizable {
         return clusterSchema;
     }
 
-    public void setGrainsMap(PartitionToGrainsMap grainsMap) {
-        this.grainsMap = grainsMap;
+    public void setChunksMap(PartitionToChunksMap chunksMap) {
+        this.chunksMap = chunksMap;
     }
 
     private static String getLoadBalancingPolicy(ClusterPolicy clusterPolicy) {
@@ -384,7 +384,7 @@ public class SpaceClusterInfo implements Externalizable {
         if (loadBalancerType != SpaceProxyLoadBalancerType.STICKY)
             out.writeByte(loadBalancerType.getCode());
         if(version.greaterOrEquals(PlatformLogicalVersion.v15_5_0)) {
-            IOUtils.writeObject(out, grainsMap);
+            IOUtils.writeObject(out, chunksMap);
         }
     }
 
@@ -424,7 +424,7 @@ public class SpaceClusterInfo implements Externalizable {
         this.syncReplication = (flags & FLAG_SYNC_REPLICATION) != 0;
         this.hasReplicationTargets = (flags & FLAG_HAS_REPLICATION_TARGETS) != 0;
         if(version.greaterOrEquals(PlatformLogicalVersion.v15_5_0)) {
-            this.grainsMap = IOUtils.readObject(in);
+            this.chunksMap = IOUtils.readObject(in);
         }
         initialize();
     }

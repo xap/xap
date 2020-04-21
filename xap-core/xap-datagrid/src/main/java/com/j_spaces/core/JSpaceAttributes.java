@@ -18,7 +18,7 @@ package com.j_spaces.core;
 
 import com.gigaspaces.datasource.SQLDataProvider;
 import com.gigaspaces.datasource.SpaceDataSource;
-import com.gigaspaces.internal.cluster.PartitionToGrainsMap;
+import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.server.space.SpaceInstanceConfig;
 import com.gigaspaces.internal.utils.StringUtils;
@@ -1426,9 +1426,9 @@ public class JSpaceAttributes
         this._clusterInfo = _clusterInfo;
     }
 
-    public SpaceConfig cloneAndUpdate(PartitionToGrainsMap grainsMap) {
+    public SpaceConfig cloneAndUpdate(PartitionToChunksMap chunksMap) {
         SpaceConfig newSpaceConfig = (SpaceConfig) this.clone();
-        newSpaceConfig.setClusterInfo(this._clusterInfo.cloneAndUpdate(grainsMap));
+        newSpaceConfig.setClusterInfo(this._clusterInfo.cloneAndUpdate(chunksMap));
         return newSpaceConfig;
     }
 

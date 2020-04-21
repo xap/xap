@@ -17,7 +17,7 @@
 package com.gigaspaces.internal.remoting.routing.partitioned;
 
 import com.gigaspaces.async.AsyncFutureListener;
-import com.gigaspaces.internal.cluster.PartitionToGrainsMap;
+import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.quiesce.QuiesceTokenProviderImpl;
 import com.gigaspaces.internal.remoting.RemoteOperationFutureListener;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -48,7 +47,7 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
     private final RemoteOperationsExecutorsCluster _partitionedCluster;
     private final CyclicAtomicInteger[] _roundRobinPreciseIndexes;
     private final boolean _broadcastDisabled;
-    private PartitionToGrainsMap _grainsMap;
+    private PartitionToChunksMap _chunksMap;
     private int _roundRobinApproxIndex = 0;
 
 
@@ -57,10 +56,10 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
                                                    CoordinatorFactory coordinatorFactory,
                                                    boolean broadcastDisabled,
                                                    int numberOfPerciseRoundRobingOperations,
-                                                   RemoteOperationsExecutorsCluster partitionedCluster, PartitionToGrainsMap grainsMap) {
+                                                   RemoteOperationsExecutorsCluster partitionedCluster, PartitionToChunksMap chunksMap) {
         super(name);
         this._partitions = partitions;
-        this._grainsMap = grainsMap;
+        this._chunksMap = chunksMap;
         this._listenerFactory = coordinatorFactory;
         this._broadcastDisabled = broadcastDisabled;
         this._partitionedCluster = partitionedCluster;
@@ -80,12 +79,12 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
         return _partitions;
     }
 
-    public PartitionToGrainsMap getGrainsMap() {
-        return _grainsMap;
+    public PartitionToChunksMap getChunksMap() {
+        return _chunksMap;
     }
 
-    public void setGrainsMap(PartitionToGrainsMap grainsMap){
-        this._grainsMap = grainsMap;
+    public void setChunksMap(PartitionToChunksMap chunksMap){
+        this._chunksMap = chunksMap;
     }
 
     public RemoteOperationRouter getPartitionRouter(int partitionId) {
@@ -211,7 +210,7 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
     private <T extends RemoteOperationResult> void executeSingle(RemoteOperationRequest<T> request, boolean oneway)
             throws InterruptedException {
         Object routingValue = request.getPartitionedClusterRoutingValue(this);
-        int partitionId = PartitionedClusterUtils.getPartitionId(routingValue, _grainsMap);
+        int partitionId = PartitionedClusterUtils.getPartitionId(routingValue, _chunksMap);
         if (partitionId == PartitionedClusterUtils.NO_PARTITION) {
             request.setRemoteOperationExecutionError(new RemoteOperationRouterException("Cannot execute operation on partitioned cluster without routing value"));
             return;
@@ -224,7 +223,7 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
 
     private <T extends RemoteOperationResult> void executeSingleAsync(RemoteOperationRequest<T> request, RemoteOperationFutureListener<T> listener) {
         Object routingValue = request.getPartitionedClusterRoutingValue(this);
-        int partitionId = PartitionedClusterUtils.getPartitionId(routingValue, _grainsMap);
+        int partitionId = PartitionedClusterUtils.getPartitionId(routingValue, _chunksMap);
         if (partitionId == PartitionedClusterUtils.NO_PARTITION) {
             request.setRemoteOperationExecutionError(new RemoteOperationRouterException("Cannot execute operation on partitioned cluster without routing value"));
             if (listener != null)

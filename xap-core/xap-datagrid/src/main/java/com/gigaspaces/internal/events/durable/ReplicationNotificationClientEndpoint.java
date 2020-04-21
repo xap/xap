@@ -63,7 +63,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Dan Kilman
@@ -120,7 +119,7 @@ public class ReplicationNotificationClientEndpoint {
         _stateListener = new DurableNotificationReplicationNodeStateListener(sessionConfig,
                 _lease,
                 _asyncProvider,
-                _remoteSpace.getSpaceClusterInfo().getGrainsMap(),
+                _remoteSpace.getSpaceClusterInfo().getChunksMap(),
                 _partitionId);
         _notificationReplicationNode = createReplicationNode();
         _spaceUID = registerNotificationReplicationNode();
@@ -184,7 +183,7 @@ public class ReplicationNotificationClientEndpoint {
     }
 
     private int getPartitionId() {
-        return PartitionedClusterUtils.getPartitionId((_templatePacket).getRoutingFieldValue(), _remoteSpace.getSpaceClusterInfo().getGrainsMap());
+        return PartitionedClusterUtils.getPartitionId((_templatePacket).getRoutingFieldValue(), _remoteSpace.getSpaceClusterInfo().getChunksMap());
     }
 
     public void close() {

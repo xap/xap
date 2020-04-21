@@ -44,7 +44,7 @@ import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
 import com.gigaspaces.internal.client.spaceproxy.executors.SystemTask;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectRequest;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectResult;
-import com.gigaspaces.internal.cluster.PartitionToGrainsMap;
+import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersistencyBackupSyncIteratorHandler;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersistencySyncListBatch;
@@ -54,7 +54,7 @@ import com.gigaspaces.internal.cluster.node.replica.ISpaceSynchronizeReplicaStat
 import com.gigaspaces.internal.cluster.node.replica.ISpaceSynchronizeResult;
 import com.gigaspaces.internal.document.DocumentObjectConverterInternal;
 import com.gigaspaces.internal.exceptions.BatchQueryException;
-import com.gigaspaces.internal.exceptions.GrainsMapMissingException;
+import com.gigaspaces.internal.exceptions.ChunksMapMissingException;
 import com.gigaspaces.internal.exceptions.WriteResultImpl;
 import com.gigaspaces.internal.extension.XapExtensions;
 import com.gigaspaces.internal.jvm.JVMDetails;
@@ -257,7 +257,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private volatile DirectPersistencyRecoveryHelper _directPersistencyRecoveryHelper;
 
     private final ZookeeperLastPrimaryHandler zookeeperLastPrimaryHandler;
-    private ZookeeperGrainsMapHandler zookeeperGrainsMapHandler;
+    private ZookeeperChunksMapHandler zookeeperChunksMapHandler;
 
     private final Map<Class<? extends SystemTask>, SpaceActionExecutor> executorMap = XapExtensions.getInstance().getActionExecutors();
 
@@ -324,20 +324,20 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private SpaceClusterInfo createClusterInfo() {
         SpaceClusterInfo clusterInfo = new SpaceClusterInfo(_jspaceAttr, _spaceMemberName);
         if (useZooKeeper()) {
-            zookeeperGrainsMapHandler = new ZookeeperGrainsMapHandler(_spaceName, _spaceConfig);
+            zookeeperChunksMapHandler = new ZookeeperChunksMapHandler(_spaceName, _spaceConfig);
             try {
-                PartitionToGrainsMap map = zookeeperGrainsMapHandler.getGrainsMap();
-                clusterInfo.setGrainsMap(map);
+                PartitionToChunksMap map = zookeeperChunksMapHandler.getChunksMap();
+                clusterInfo.setChunksMap(map);
                 return clusterInfo;
-            }catch (GrainsMapMissingException e){
-                _logger.warn("Failed to find grains map in zk - creating map locally",e);
+            }catch (ChunksMapMissingException e){
+                _logger.warn("Failed to find chunks map in zk - creating map locally",e);
             }
         }
 
-        zookeeperGrainsMapHandler = null;
-        PartitionToGrainsMap grainsMap = new PartitionToGrainsMap(clusterInfo.getNumberOfPartitions(), 0);
-        grainsMap.init();
-        clusterInfo.setGrainsMap(grainsMap);
+        zookeeperChunksMapHandler = null;
+        PartitionToChunksMap chunksMap = new PartitionToChunksMap(clusterInfo.getNumberOfPartitions(), 0);
+        chunksMap.init();
+        clusterInfo.setChunksMap(chunksMap);
         return clusterInfo;
     }
 
@@ -693,8 +693,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 zookeeperLastPrimaryHandler.closeZooKeeperAttributeStore();
             }
 
-            if (zookeeperGrainsMapHandler != null) {
-                zookeeperGrainsMapHandler.close();
+            if (zookeeperChunksMapHandler != null) {
+                zookeeperChunksMapHandler.close();
             }
 
             if (_qp != null)
@@ -3120,8 +3120,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             _clusterFailureDetector = initClusterFailureDetector(_clusterPolicy);
             _engine = new SpaceEngine(this);
-            if (zookeeperGrainsMapHandler != null) {
-                zookeeperGrainsMapHandler.addListener(_spaceConfig);
+            if (zookeeperChunksMapHandler != null) {
+                zookeeperChunksMapHandler.addListener(_spaceConfig);
             }
             if (isLookupServiceEnabled)
                 registerLookupService();

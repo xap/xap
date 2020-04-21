@@ -16,7 +16,7 @@
 
 package com.gigaspaces.internal.remoting.routing.partitioned;
 
-import com.gigaspaces.internal.cluster.PartitionToGrainsMap;
+import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.j_spaces.kernel.SystemProperties;
 
 /**
@@ -27,18 +27,18 @@ import com.j_spaces.kernel.SystemProperties;
 public class PartitionedClusterUtils {
     public static final int NO_PARTITION = -1;
     private static final boolean PRECISE_LONG_ROUTING = !Boolean.getBoolean("com.gs.disable-precise-long-routing");
-    private static final boolean GRAINS_ROUTING = SystemProperties.getBoolean(SystemProperties.GRAINS_SPACE_ROUTING, false);
+    private static final boolean CHUNKS_ROUTING = SystemProperties.getBoolean(SystemProperties.CHUNKS_SPACE_ROUTING, false);
 
     private PartitionedClusterUtils() {
     }
 
-    public static int getPartitionId(Object routingValue, PartitionToGrainsMap grainsMap) {
+    public static int getPartitionId(Object routingValue, PartitionToChunksMap chunksMap) {
         if (routingValue == null)
             return NO_PARTITION;
         if (routingValue instanceof Long && PRECISE_LONG_ROUTING) {
-            return  GRAINS_ROUTING ? grainsMap.getPartitionId((safeAbs((Long) routingValue))) : (int) (safeAbs((Long) routingValue) % grainsMap.getNumOfPartitions());
+            return  CHUNKS_ROUTING ? chunksMap.getPartitionId((safeAbs((Long) routingValue))) : (int) (safeAbs((Long) routingValue) % chunksMap.getNumOfPartitions());
         }
-        return GRAINS_ROUTING ? grainsMap.getPartitionId(safeAbs(routingValue.hashCode())) : safeAbs(routingValue.hashCode()) % grainsMap.getNumOfPartitions();
+        return CHUNKS_ROUTING ? chunksMap.getPartitionId(safeAbs(routingValue.hashCode())) : safeAbs(routingValue.hashCode()) % chunksMap.getNumOfPartitions();
     }
 
     public static int safeAbs(int value) {

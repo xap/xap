@@ -21,7 +21,7 @@ import com.gigaspaces.async.AsyncFutureListener;
 import com.gigaspaces.async.AsyncResult;
 import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
 import com.gigaspaces.internal.client.spaceproxy.router.SpaceClusterRemoteOperationRouter;
-import com.gigaspaces.internal.exceptions.GrainsMapGenerationException;
+import com.gigaspaces.internal.exceptions.ChunksMapGenerationException;
 import com.gigaspaces.internal.remoting.RemoteOperationFutureListener;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
@@ -153,9 +153,9 @@ public class ClusterRemoteOperationRouter extends AbstractRemoteOperationRouter 
                 return request.processUnknownTypeException(positions) ? ExecutionStatus.RETRY_SAME : ExecutionStatus.COMPLETED;
             }
 
-            if (executionException instanceof GrainsMapGenerationException){
+            if (executionException instanceof ChunksMapGenerationException){
                 SpaceProxyImpl spaceProxy = ((SpaceClusterRemoteOperationRouter) this).getSpaceProxy();
-                spaceProxy.updateProxyRouter(spaceProxy.getProxyRouter(), ((GrainsMapGenerationException) executionException).getNewMap());
+                spaceProxy.updateProxyRouter(spaceProxy.getProxyRouter(), ((ChunksMapGenerationException) executionException).getNewMap());
             }
         }
         request.setRemoteOperationResult(result);
