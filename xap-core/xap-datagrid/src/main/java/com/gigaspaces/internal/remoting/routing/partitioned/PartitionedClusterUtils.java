@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.remoting.routing.partitioned;
 
 import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.j_spaces.kernel.SystemProperties;
 
 /**
@@ -27,7 +28,7 @@ import com.j_spaces.kernel.SystemProperties;
 public class PartitionedClusterUtils {
     public static final int NO_PARTITION = -1;
     private static final boolean PRECISE_LONG_ROUTING = !Boolean.getBoolean("com.gs.disable-precise-long-routing");
-    private static final boolean CHUNKS_ROUTING = SystemProperties.getBoolean(SystemProperties.CHUNKS_SPACE_ROUTING, false);
+    private static final boolean CHUNKS_ROUTING = GsEnv.propertyBoolean(SystemProperties.CHUNKS_SPACE_ROUTING).get(true);
 
     private PartitionedClusterUtils() {
     }
