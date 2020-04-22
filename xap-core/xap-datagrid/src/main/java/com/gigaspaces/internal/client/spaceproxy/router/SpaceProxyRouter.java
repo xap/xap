@@ -66,11 +66,13 @@ public class SpaceProxyRouter {
     private final RemoteSpaceProxyLocator _proxyLocator;
     private final boolean isGateway;
     private final boolean isSecured;
+    private final boolean isChunksRouting;
     private final QuiesceTokenProviderImpl quiesceTokenProvider;
 
     public SpaceProxyRouter(SpaceProxyImpl spaceProxy) {
         this._logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACEPROXY_ROUTER + '.' + spaceProxy.getName());
         this._clusterInfo = spaceProxy.getSpaceClusterInfo();
+        this.isChunksRouting = _clusterInfo.isChunksRouting();
         this.isGateway = spaceProxy.isGatewayProxy();
         this.isSecured = spaceProxy.isSecured();
         this.quiesceTokenProvider = new QuiesceTokenProviderImpl();
@@ -161,7 +163,7 @@ public class SpaceProxyRouter {
         return new SpacePartitionedClusterRemoteOperationRouter(spaceProxy.getName(),
                 partitions,
                 clusterInfo.isBroadcastDisabled(),
-                partitionedCluster, clusterInfo.getChunksMap(), spaceProxy);
+                partitionedCluster, clusterInfo, spaceProxy);
     }
 
     private Properties loadConfig(Properties properties, SpaceClusterInfo clusterInfo) {
@@ -285,8 +287,8 @@ public class SpaceProxyRouter {
     }
 
     private void updateDefaultSpaceContext(QuiesceToken token) {
-        this._defaultSpaceContext = isSecured || isGateway || token != null
-                ? new SpaceContext(isGateway) : null;
+        this._defaultSpaceContext = isSecured || isGateway || token != null || isChunksRouting
+                ? new SpaceContext(isGateway, getChunksMapGeneration()) : null;
         if (token != null) {
             _defaultSpaceContext.setQuiesceToken(token);
         }

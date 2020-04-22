@@ -18,7 +18,7 @@ package com.gigaspaces.internal.client.spaceproxy.router;
 
 import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpacePreciseDistributionGroupingCodes;
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.remoting.routing.clustered.RemoteOperationsExecutorsCluster;
 import com.gigaspaces.internal.remoting.routing.partitioned.CoordinatorFactory;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterRemoteOperationRouter;
@@ -35,13 +35,13 @@ public class SpacePartitionedClusterRemoteOperationRouter extends PartitionedClu
     public SpacePartitionedClusterRemoteOperationRouter(String name,
                                                         SpaceProxyRemoteOperationRouter[] partitions,
                                                         boolean broadcastDisabled,
-                                                        RemoteOperationsExecutorsCluster partitionedCluster, PartitionToChunksMap chunksMap, SpaceProxyImpl spaceProxy) {
+                                                        RemoteOperationsExecutorsCluster partitionedCluster, SpaceClusterInfo clusterInfo, SpaceProxyImpl spaceProxy) {
         super(name,
                 partitions,
                 new CoordinatorFactory(),
                 broadcastDisabled,
                 SpacePreciseDistributionGroupingCodes.NUMBER_OF_GROUPS,
-                partitionedCluster, chunksMap);
+                partitionedCluster, clusterInfo);
         this.spaceProxy = spaceProxy;
     }
 

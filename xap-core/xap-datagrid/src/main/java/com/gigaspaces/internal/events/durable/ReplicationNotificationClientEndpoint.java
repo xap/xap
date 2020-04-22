@@ -119,7 +119,7 @@ public class ReplicationNotificationClientEndpoint {
         _stateListener = new DurableNotificationReplicationNodeStateListener(sessionConfig,
                 _lease,
                 _asyncProvider,
-                _remoteSpace.getSpaceClusterInfo().getChunksMap(),
+                _remoteSpace.getSpaceClusterInfo(),
                 _partitionId);
         _notificationReplicationNode = createReplicationNode();
         _spaceUID = registerNotificationReplicationNode();
@@ -183,7 +183,7 @@ public class ReplicationNotificationClientEndpoint {
     }
 
     private int getPartitionId() {
-        return PartitionedClusterUtils.getPartitionId((_templatePacket).getRoutingFieldValue(), _remoteSpace.getSpaceClusterInfo().getChunksMap());
+        return PartitionedClusterUtils.getPartitionId((_templatePacket).getRoutingFieldValue(), _remoteSpace.getSpaceClusterInfo());
     }
 
     public void close() {

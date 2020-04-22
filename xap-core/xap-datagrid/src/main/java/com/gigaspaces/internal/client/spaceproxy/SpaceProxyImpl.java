@@ -669,7 +669,6 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
                     spaceContext.setQuiesceToken(token);
             }
             spaceRequest.setSpaceContext(spaceContext);
-            spaceRequest.setChunksMapGeneration(getProxyRouter().getChunksMapGeneration());
         } catch (com.gigaspaces.security.SecurityException e) {
             spaceRequest.setRemoteOperationExecutionError(e);
             return false;

@@ -74,7 +74,7 @@ public class SpaceClusterInfo implements Externalizable {
     private int numOfBackups;
     private transient SpaceClusterPartitionInfo[] partitions;
     private SpaceProxyLoadBalancerType loadBalancerType;
-    private final Map<String, SpaceCustomComponent> customComponents = new HashMap<String, SpaceCustomComponent>();
+    private Map<String, SpaceCustomComponent> customComponents = new HashMap<>();
     private boolean syncReplication;
     private MirrorServiceConfig mirrorServiceConfig;
     private boolean hasReplicationTargets;
@@ -117,6 +117,26 @@ public class SpaceClusterInfo implements Externalizable {
         initialize();
     }
 
+    public SpaceClusterInfo(SpaceClusterInfo clusterInfo) {
+        this.clustered = clusterInfo.clustered;
+        this.clusterName = clusterInfo.clusterName;
+        this.clusterSchema = clusterInfo.clusterSchema;
+        this.replicated = clusterInfo.replicated;
+        this.primaryElectionAvailable = clusterInfo.primaryElectionAvailable;
+        this.activeActive = clusterInfo.activeActive;
+        this.broadcastDisabled= clusterInfo.broadcastDisabled;
+        this.loadBalancerType = clusterInfo.loadBalancerType;
+        this.syncReplication = clusterInfo.syncReplication;
+        this.hasReplicationTargets = clusterInfo.hasReplicationTargets;
+        this.numOfPartitions = clusterInfo.numOfPartitions;
+        this.membersNames = clusterInfo.membersNames;
+        this.numOfBackups = clusterInfo.numOfBackups;
+        this.partitions = clusterInfo.partitions;
+        this.customComponents = clusterInfo.customComponents;
+        this.mirrorServiceConfig = clusterInfo.mirrorServiceConfig;
+    }
+
+
     private void initialize() {
         this.partitions = generatePartitionsInfo(clusterName, numOfPartitions, numOfBackups);
     }
@@ -134,32 +154,13 @@ public class SpaceClusterInfo implements Externalizable {
     }
 
     public SpaceClusterInfo cloneAndUpdate(PartitionToChunksMap newChunksMap){
-        SpaceClusterInfo newClusterInfo = new SpaceClusterInfo();
-        newClusterInfo.clustered = this.clustered;
-        newClusterInfo.clusterName = this.clusterName;
-        newClusterInfo.clusterSchema = this.clusterSchema;
+        SpaceClusterInfo newClusterInfo = new SpaceClusterInfo(this);
         newClusterInfo.chunksMap = newChunksMap;
-        newClusterInfo.replicated = this.replicated;
-        newClusterInfo.primaryElectionAvailable = this.primaryElectionAvailable;
-        newClusterInfo.activeActive = this.activeActive;
-        newClusterInfo.broadcastDisabled= this.broadcastDisabled;
-        newClusterInfo.loadBalancerType = this.loadBalancerType;
-        newClusterInfo.syncReplication = this.syncReplication;
-        newClusterInfo.hasReplicationTargets = this.hasReplicationTargets;
-
-        //TODO next stage - need to changed these fields based on new topology
-        newClusterInfo.numOfPartitions = newChunksMap.getNumOfPartitions();
-        newClusterInfo.membersNames = this.membersNames;
-        newClusterInfo.numOfBackups = this.numOfBackups;
-        newClusterInfo.partitions = this.partitions;
-        if (!this.customComponents.isEmpty()) {
-            for (SpaceCustomComponent component : this.customComponents.values()) {
-                if (component instanceof Serializable) {
-                    newClusterInfo.customComponents.put(component.getSpaceComponentKey(), component);
-                }
-            }
-        }
-        newClusterInfo.mirrorServiceConfig = this.mirrorServiceConfig;
+//        TODO next stage - need to changed these fields based on new topology
+//        newClusterInfo.numOfPartitions
+//        newClusterInfo.membersNames
+//        newClusterInfo.numOfBackups
+//        newClusterInfo.partitions
         return newClusterInfo;
     }
 
@@ -223,6 +224,10 @@ public class SpaceClusterInfo implements Externalizable {
 
     public void setCustomComponent(SpaceCustomComponent component) {
         customComponents.put(component.getSpaceComponentKey(), component);
+    }
+
+    public void setNumOfPartitions(int numOfPartitions) {
+        this.numOfPartitions = numOfPartitions;
     }
 
     public boolean isSyncReplicationEnabled() {
@@ -427,5 +432,17 @@ public class SpaceClusterInfo implements Externalizable {
             this.chunksMap = IOUtils.readObject(in);
         }
         initialize();
+    }
+
+    public boolean isChunksRouting() {
+        return this.chunksMap != null;
+    }
+
+    public int getPartitionId(int routingValue) {
+        return this.chunksMap.getPartitionId(routingValue);
+    }
+
+    public int getPartitionId(long routingValue) {
+        return this.chunksMap.getPartitionId(routingValue);
     }
 }

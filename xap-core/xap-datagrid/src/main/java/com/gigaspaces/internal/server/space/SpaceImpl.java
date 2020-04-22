@@ -54,6 +54,7 @@ import com.gigaspaces.internal.cluster.node.replica.ISpaceSynchronizeReplicaStat
 import com.gigaspaces.internal.cluster.node.replica.ISpaceSynchronizeResult;
 import com.gigaspaces.internal.document.DocumentObjectConverterInternal;
 import com.gigaspaces.internal.exceptions.BatchQueryException;
+import com.gigaspaces.internal.exceptions.ChunksMapGenerationException;
 import com.gigaspaces.internal.exceptions.ChunksMapMissingException;
 import com.gigaspaces.internal.exceptions.WriteResultImpl;
 import com.gigaspaces.internal.extension.XapExtensions;
@@ -89,6 +90,7 @@ import com.gigaspaces.internal.transport.AbstractProjectionTemplate;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.transport.ITransportPacket;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.internal.utils.ReplaceInFileUtils;
 import com.gigaspaces.internal.utils.concurrent.GSThreadFactory;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
@@ -184,7 +186,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
-
 
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_BLOB_STORE;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_PROP;
@@ -323,21 +324,18 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     private SpaceClusterInfo createClusterInfo() {
         SpaceClusterInfo clusterInfo = new SpaceClusterInfo(_jspaceAttr, _spaceMemberName);
-        if (useZooKeeper()) {
+        if (useZooKeeper() && GsEnv.propertyBoolean(SystemProperties.CHUNKS_SPACE_ROUTING).get(true)) {
             zookeeperChunksMapHandler = new ZookeeperChunksMapHandler(_spaceName, _spaceConfig);
             try {
-                PartitionToChunksMap map = zookeeperChunksMapHandler.getChunksMap();
-                clusterInfo.setChunksMap(map);
+                clusterInfo.setChunksMap(zookeeperChunksMapHandler.getChunksMap());
                 return clusterInfo;
             }catch (ChunksMapMissingException e){
                 _logger.warn("Failed to find chunks map in zk - creating map locally",e);
+                PartitionToChunksMap chunksMap = new PartitionToChunksMap(clusterInfo.getNumberOfPartitions(), 0);
+                chunksMap.init();
+                clusterInfo.setChunksMap(chunksMap);
             }
         }
-
-        zookeeperChunksMapHandler = null;
-        PartitionToChunksMap chunksMap = new PartitionToChunksMap(clusterInfo.getNumberOfPartitions(), 0);
-        chunksMap.init();
-        clusterInfo.setChunksMap(chunksMap);
         return clusterInfo;
     }
 
@@ -593,6 +591,17 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         } catch (RuntimeException ex) {
             throw logException(ex);
         }
+
+        if(sc != null && this.getClusterInfo().isChunksRouting()) {
+            int spaceGeneration = getClusterInfo().getChunksMap().getGeneration();
+            if (sc.getChunksMapGeneration() != spaceGeneration) {
+                ChunksMapGenerationException exception = new ChunksMapGenerationException("chunks map generation of client is " + sc.getChunksMapGeneration()
+                        + " but partition " + getPartitionId() + " is at generation " + spaceGeneration);
+                exception.setNewMap(getClusterInfo().getChunksMap());
+                throw exception;
+            }
+        }
+
     }
 
     private void assertAvailable()

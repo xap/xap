@@ -52,7 +52,7 @@ public class ScatterGatherOperationFutureListener<T extends RemoteOperationResul
     }
 
     public int getPartitionIdByHashcode(Object value) {
-        return PartitionedClusterUtils.getPartitionId(value, _router.getChunksMap());
+        return PartitionedClusterUtils.getPartitionId(value, _router.getClusterInfo());
     }
 
     public int getNextDistributionPartitionId() {

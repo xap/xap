@@ -19,6 +19,7 @@ package com.gigaspaces.internal.remoting;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterExecutionType;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterRemoteOperationRouter;
 import com.gigaspaces.lrmi.nio.LRMIMethodTrackingIdProvider;
+import com.j_spaces.core.SpaceContext;
 
 import java.util.List;
 
@@ -51,12 +52,12 @@ public interface RemoteOperationRequest<TResult extends RemoteOperationResult> e
 
     int getPreciseDistributionGroupingCode();
 
+    SpaceContext getSpaceContext();
+
     RemoteOperationRequest<TResult> createCopy(int targetPartitionId);
 
     boolean processPartitionResult(TResult remoteOperationResult, List<TResult> previousResults, int numOfPartitions);
 
     boolean isDedicatedPoolRequired();
-
-    int getChunksMapGeneration();
 
 }

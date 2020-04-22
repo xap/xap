@@ -41,7 +41,6 @@ public abstract class SpaceOperationRequest<TResult extends SpaceOperationResult
 
     // TODO: consider merging SpaceContext with Request
     private SpaceContext _spaceContext;
-    private int _chunksMapGeneration;
     private transient TResult _remoteOperationResult;
 
     @Override
@@ -102,16 +101,9 @@ public abstract class SpaceOperationRequest<TResult extends SpaceOperationResult
         _spaceContext = spaceContext;
     }
 
-    public void setChunksMapGeneration(int chunksMapGeneration) {
-        _chunksMapGeneration = chunksMapGeneration;
-    }
-
+    @Override
     public SpaceContext getSpaceContext() {
         return _spaceContext;
-    }
-
-    public int getChunksMapGeneration() {
-        return _chunksMapGeneration;
     }
 
     @Override
@@ -140,9 +132,6 @@ public abstract class SpaceOperationRequest<TResult extends SpaceOperationResult
             if (_spaceContext != null)
                 IOUtils.writeObject(out, _spaceContext);
         }
-        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_5_0)){
-            out.writeShort(_chunksMapGeneration);
-        }
     }
 
     @Override
@@ -152,9 +141,6 @@ public abstract class SpaceOperationRequest<TResult extends SpaceOperationResult
         if (flags != 0) {
             if ((flags & FLAG_SPACE_CONTEXT) != 0)
                 this._spaceContext = IOUtils.readObject(in);
-        }
-        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_5_0)){
-            this._chunksMapGeneration =  in.readShort();
         }
     }
 
