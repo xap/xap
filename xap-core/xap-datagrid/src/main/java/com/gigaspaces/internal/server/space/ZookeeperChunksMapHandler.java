@@ -28,39 +28,36 @@ public class ZookeeperChunksMapHandler implements Closeable {
     private final ExecutorService singleThreadExecutorService = Executors.newFixedThreadPool(1);
     private ZookeeperClient zookeeperClient;
 
-    public ZookeeperChunksMapHandler(String serviceName, SpaceConfig spaceConfig) {
+    public ZookeeperChunksMapHandler(String serviceName, AttributeStore attributeStore) {
         this.serviceName = serviceName;
         this.attributeStoreKey = toPath(serviceName);
-        this.attributeStore = createZooKeeperAttributeStore(spaceConfig);
+        this.attributeStore = attributeStore;
+    }
+
+    public ZookeeperChunksMapHandler(String serviceName) {
+        this.serviceName = serviceName;
+        this.attributeStoreKey = toPath(serviceName);
+        this.attributeStore = createZooKeeperAttributeStore();
     }
 
 
-    public static String toPath(String spaceName) {
-        return "xap/spaces/" + spaceName + "/chunks";
-    }
-
-
-    private AttributeStore createZooKeeperAttributeStore(SpaceConfig spaceConfig) {
-
+    private AttributeStore createZooKeeperAttributeStore() {
         try {
-            if (spaceConfig == null) {
-                //noinspection unchecked
-                Constructor constructor = ClassLoaderHelper.loadLocalClass(ATTRIBUET_STORE_HANDLER_CLASS_NAME)
-                        .getConstructor(String.class);
-                return (AttributeStore) constructor.newInstance("");
+            //noinspection unchecked
+            Constructor constructor = ClassLoaderHelper.loadLocalClass(ATTRIBUET_STORE_HANDLER_CLASS_NAME)
+                    .getConstructor(String.class);
+            return (AttributeStore) constructor.newInstance("");
 
-            } else {
-                //noinspection unchecked
-                Constructor constructor = ClassLoaderHelper.loadLocalClass(ATTRIBUET_STORE_HANDLER_CLASS_NAME)
-                        .getConstructor(String.class, SpaceConfig.class);
-                return (AttributeStore) constructor.newInstance("", spaceConfig);
-            }
         } catch (Exception e) {
             if (logger.isErrorEnabled())
                 logger.error("Failed to create attribute store ");
-            throw new DirectPersistencyRecoveryException("Failed to start [" + (serviceName)
+            throw new DirectPersistencyRecoveryException("Failed to start [" + serviceName
                     + "] Failed to create attribute store.");
         }
+    }
+
+    public static String toPath(String spaceName) {
+        return "xap/spaces/" + spaceName + "/chunks";
     }
 
     public void addListener(SpaceConfig spaceConfig) throws ChunksMapMissingException {

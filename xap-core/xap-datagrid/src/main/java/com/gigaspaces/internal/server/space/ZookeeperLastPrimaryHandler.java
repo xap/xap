@@ -1,15 +1,9 @@
 package com.gigaspaces.internal.server.space;
 
 import com.gigaspaces.attribute_store.AttributeStore;
-import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryException;
-import com.j_spaces.core.admin.SpaceConfig;
-import com.j_spaces.kernel.ClassLoaderHelper;
-
-import java.io.IOException;
-import java.lang.reflect.Constructor;
 import org.slf4j.Logger;
 
-import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ATTRIBUET_STORE_HANDLER_CLASS_NAME;
+import java.io.IOException;
 
 /**
  * Created by tamirs
@@ -20,31 +14,15 @@ public class ZookeeperLastPrimaryHandler {
     private static final String SEPARATOR = "~";
 
     private final Logger _logger;
-    private final SpaceImpl _spaceImpl;
     private final String _attributeStoreKey;
     private final String attributeStoreValue;
     private final AttributeStore _attributeStore;
 
-    public ZookeeperLastPrimaryHandler(SpaceImpl spaceImpl, Logger logger) {
+    public ZookeeperLastPrimaryHandler(SpaceImpl spaceImpl, AttributeStore attributeStore, Logger logger) {
         this._logger = logger;
-        this._spaceImpl = spaceImpl;
         this._attributeStoreKey = toPath(spaceImpl.getName(), String.valueOf(spaceImpl.getPartitionIdOneBased()));
         this.attributeStoreValue = toId(spaceImpl.getInstanceId(), spaceImpl.getSpaceUuid().toString());
-        this._attributeStore = createZooKeeperAttributeStore();
-    }
-
-    private AttributeStore createZooKeeperAttributeStore() {
-        try {
-            //noinspection unchecked
-            Constructor constructor = ClassLoaderHelper.loadLocalClass(ATTRIBUET_STORE_HANDLER_CLASS_NAME)
-                    .getConstructor(String.class, SpaceConfig.class);
-            return (AttributeStore) constructor.newInstance("", _spaceImpl.getConfig());
-        } catch (Exception e) {
-            if (_logger.isErrorEnabled())
-                _logger.error("Failed to create attribute store ");
-            throw new DirectPersistencyRecoveryException("Failed to start [" + (_spaceImpl.getServiceName())
-                    + "] Failed to create attribute store.");
-        }
+        this._attributeStore = attributeStore;
     }
 
     public void closeZooKeeperAttributeStore() {
