@@ -415,7 +415,8 @@ public class ConfigurationFile extends AbstractConfiguration {
                     if (line == null) {
                         break;
                     }
-                    logger.debug("Adding prohibited method: {}", line);
+                    logger.debug("Adding prohibited method: {0}",
+                            line);
                     prohibitedMethods.add(line);
                 }
             }
@@ -1832,7 +1833,7 @@ public class ConfigurationFile extends AbstractConfiguration {
                 }
             }
         }
-        logger.debug("created {}", this);
+        logger.debug("created {0}", this);
     }
 
     /**
@@ -1922,7 +1923,7 @@ public class ConfigurationFile extends AbstractConfiguration {
         this.cl = nonNullLoaderSupplied ? cl
                 : (ClassLoader) Security.doPrivileged(contextClassLoader);
         new Parser(reader, options);
-        logger.debug("created {}", this);
+        logger.debug("created {0}", this);
     }
 
     /**
@@ -2099,7 +2100,8 @@ public class ConfigurationFile extends AbstractConfiguration {
         if (entry == null || entry.isPrivate) {
             if (logger.isDebugEnabled()) {
                 logger.debug(
-                        "entry for component {}, name {} not found in {}", component, name, this);
+                        "entry for component {0}, name {1} not found in {2}",
+                        new Object[]{component, name, this});
             }
             oopsNoSuchEntry("entry not found for component " + component +
                     ", name " + name);
@@ -2108,7 +2110,9 @@ public class ConfigurationFile extends AbstractConfiguration {
         try {
             Class result = entry.resolve(null);
             if (logger.isDebugEnabled()) {
-                logger.debug("{}, component {}, name {}: returns {}", this, component, name, result);
+                logger.debug(
+                        "{0}, component {1}, name {2}: returns {3}",
+                        new Object[]{this, component, name, result});
             }
             return result;
         } catch (ConfigurationException e) {

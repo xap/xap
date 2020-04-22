@@ -152,7 +152,9 @@ public abstract class Job {
 
         if (tmp != null) {
             if (logger.isTraceEnabled()) {
-                logger.trace("Job:scheduleTasks with {} tasks", tmp.length);
+                logger.trace(
+                        "Job:scheduleTasks with {0} tasks",
+                        new Integer(tmp.length));
             }
 
             results = new Object[tmp.length];
@@ -169,7 +171,9 @@ public abstract class Job {
                     tasks.put(tmp[i], new Integer(i));
                     pool.add(tmp[i]);
                     if (logger.isTraceEnabled()) {
-                        logger.trace("Job:scheduleTasks added {} to thread pool", tmp[i]);
+                        logger.trace(
+                                "Job:scheduleTasks added {0} to thread pool",
+                                tmp[i]);
                     }
                     attempts[i] = 0;
                 }
@@ -187,7 +191,9 @@ public abstract class Job {
 
         try {
             if (logger.isTraceEnabled()) {
-                logger.trace("Job:awaitPending waiting for {} items", pending);
+                logger.trace(
+                        "Job:awaitPending waiting for {0} items",
+                        new Integer(pending));
             }
 
             if (waitFor == Long.MAX_VALUE) {
@@ -220,7 +226,9 @@ public abstract class Job {
 
         if (pending <= 0) {
             if (logger.isTraceEnabled()) {
-                logger.trace("Job:setPending notifying, pending = {}", pending);
+                logger.trace(
+                        "Job:setPending notifying, pending = {0}",
+                        new Integer(pending));
             }
             notifyAll();
         }
@@ -231,7 +239,9 @@ public abstract class Job {
 
         if (pending <= 0) {
             if (logger.isTraceEnabled()) {
-                logger.trace("Job:decrementPending notifying, pending = {}", pending);
+                logger.trace(
+                        "Job:decrementPending notifying, pending = {0}",
+                        new Integer(pending));
             }
             notifyAll();
         }
@@ -278,7 +288,9 @@ public abstract class Job {
         synchronized (results) {
             if (results[position.intValue()] == null) {
                 if (logger.isTraceEnabled()) {
-                    logger.trace("Job:reportDone who = {}, param = {}", who, param);
+                    logger.trace(
+                            "Job:reportDone who = {0}, param = {1}",
+                            new Object[]{who, param});
                 }
                 results[position.intValue()] = param;
                 decrementPending();

@@ -117,7 +117,8 @@ final class ProxyVerifier implements TrustVerifier, Serializable {
             otherServerProxy = (RemoteMethodControl) obj;
             inputProxyID = proxyID;
         } else {
-            logger.trace("Object {} is not a supported type", obj);
+            logger.trace("Object {0} is not a supported type",
+                    obj);
             return false;
         }
 

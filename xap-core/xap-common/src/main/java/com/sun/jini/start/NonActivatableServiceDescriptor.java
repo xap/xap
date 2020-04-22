@@ -484,7 +484,8 @@ public class NonActivatableServiceDescriptor
         // Create custom class loader that preserves codebase annotations
         Thread curThread = Thread.currentThread();
         ClassLoader oldClassLoader = curThread.getContextClassLoader();
-        logger.trace("Saved current context class loader: {}", oldClassLoader);
+        logger.trace("Saved current context class loader: {0}",
+                oldClassLoader);
         
         /* hack to disable ActivateWrapper.ExportClassLoader - see comment below */
         ClassLoader newClassLoader = oldClassLoader;
@@ -501,9 +502,11 @@ public class NonActivatableServiceDescriptor
 		    ClassLoaderUtil.getImportCodebaseURLs(getImportCodebase()),
 		    ClassLoaderUtil.getCodebaseURLs(getExportCodebase()),
 		    oldClassLoader);
-	    logger.trace("Created ExportClassLoader: {}",  newClassLoader);
+	    logger.trace("Created ExportClassLoader: {0}", 
+		newClassLoader);
         } catch (IOException ioe) {
-            logger.error("Could not create class loader with classpath={} and codebase={}", getImportCodebase(), getExportCodebase());
+            logger.error("Could not create class loader with classpath={0} and codebase={1}",
+	        new Object[] {getImportCodebase(), getExportCodebase()});
             throw ioe;
         } 
 */
@@ -519,7 +522,8 @@ public class NonActivatableServiceDescriptor
                 globalPolicy =
                         new AggregatePolicyProvider(initialGlobalPolicy);
                 Policy.setPolicy(globalPolicy);
-                logger.trace("Global policy set: {}", globalPolicy);
+                logger.trace(
+                        "Global policy set: {0}", globalPolicy);
             }
 
             Policy service_policy =
@@ -554,12 +558,15 @@ public class NonActivatableServiceDescriptor
             logger.trace("Attempting to get implementation constructor");
             Constructor constructor =
                     implClass.getDeclaredConstructor(actTypes);
-            logger.trace("Obtained implementation constructor: {}", constructor);
+            logger.trace(
+                    "Obtained implementation constructor: {0}",
+                    constructor);
             constructor.setAccessible(true);
             impl =
                     constructor.newInstance(
                             new Object[]{getServerConfigArgs(), lifeCycle});
-            logger.trace("Obtained implementation instance: {}", impl);
+            logger.trace(
+                    "Obtained implementation instance: {0}", impl);
             if (impl instanceof ServiceProxyAccessor) {
                 proxy = ((ServiceProxyAccessor) impl).getServiceProxy();
             } else if (impl instanceof ProxyAccessor) {
@@ -568,7 +575,7 @@ public class NonActivatableServiceDescriptor
                 proxy = null; // just for insurance
             }
 
-            logger.trace("Proxy =  {}", proxy);
+            logger.trace("Proxy =  {0}", proxy);
             curThread.setContextClassLoader(oldClassLoader);
 //TODO - factor in code integrity for MO
             proxy = (new MarshalledObject(proxy)).get();

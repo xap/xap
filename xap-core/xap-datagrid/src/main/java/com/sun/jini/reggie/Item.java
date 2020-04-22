@@ -112,7 +112,8 @@ public class Item implements Serializable, Cloneable {
             try {
                 svc = RemoteObject.toStub((Remote) svc);
                 if (logger.isDebugEnabled()) {
-                    logger.debug("replacing {} with {}", item.service, svc);
+                    logger.debug("replacing {0} with {1}",
+                            new Object[]{item.service, svc});
                 }
             } catch (NoSuchObjectException e) {
             }

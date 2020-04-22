@@ -139,7 +139,8 @@ public class MultiLogManager
             directory = directory.concat(File.separator);
 
         if (persistenceLogger.isTraceEnabled()) {
-            persistenceLogger.trace("directory = {}", directory);
+            persistenceLogger.trace(
+                    "directory = {0}", directory);
         }
 
         File tmpfile = new File(directory);
@@ -150,7 +151,8 @@ public class MultiLogManager
             if (!tmpfile.exists())
                 if (!tmpfile.mkdirs())
                     if (persistenceLogger.isErrorEnabled()) {
-                        persistenceLogger.error("Could not create {}", tmpfile);
+                        persistenceLogger.error(
+                                "Could not create {0}", tmpfile);
                     }
 //TODO - ignore???		    
         } catch (SecurityException se) {
@@ -183,12 +185,16 @@ public class MultiLogManager
                                 directory + LOG_FILE + cookie,
                                 cookie, logMgrRef);
                 if (persistenceLogger.isTraceEnabled()) {
-                    persistenceLogger.trace("Created ClientLog: {}", directory + LOG_FILE + cookie);
+                    persistenceLogger.trace(
+                            "Created ClientLog: {0}",
+                            directory + LOG_FILE + cookie);
                 }
                 prev = logByID.put(key, cl);
             }
             if (persistenceLogger.isTraceEnabled()) {
-                persistenceLogger.trace("Currently managing {} logs.", logByID.size());
+                persistenceLogger.trace(
+                        "Currently managing {0} logs.",
+                        new Integer(logByID.size()));
             }
 
         }
@@ -197,7 +203,9 @@ public class MultiLogManager
                     + cookie + ") -- internal table corrupt?");
 
         if (persistenceLogger.isTraceEnabled()) {
-            persistenceLogger.trace("Using ClientLog {} for cookie {}", cl, cookie);
+            persistenceLogger.trace(
+                    "Using ClientLog {0} for cookie {1}",
+                    new Object[]{cl, new Long(cookie)});
         }
 
         if (operationsLogger.isDebugEnabled()) {
@@ -216,11 +224,15 @@ public class MultiLogManager
             if (destroyed)
                 return;
             if (persistenceLogger.isTraceEnabled()) {
-                persistenceLogger.trace("Releasing ClientLog for cookie {}", cookie);
+                persistenceLogger.trace(
+                        "Releasing ClientLog for cookie {0}",
+                        new Long(cookie));
             }
             prev = logByID.remove(new Long(cookie));
             if (persistenceLogger.isTraceEnabled()) {
-                persistenceLogger.trace("Currently managing {} logs.", logByID.size());
+                persistenceLogger.trace(
+                        "Currently managing {0} logs.",
+                        new Integer(logByID.size()));
             }
         }
 
@@ -266,7 +278,8 @@ public class MultiLogManager
                 logName = directory + filenames[i];
                 log = new SimpleLogFile(logName, logMgrRef);
                 if (persistenceLogger.isTraceEnabled()) {
-                    persistenceLogger.trace("Recovering log: {}", logName);
+                    persistenceLogger.trace(
+                            "Recovering log: {0}", logName);
                 }
                 try {
                     log.recover(client);
@@ -342,7 +355,8 @@ public class MultiLogManager
                             slf.invalidate();
                         else {
                             if (persistenceLogger.isTraceEnabled()) {
-                                persistenceLogger.trace("Observed a null log file entry for: {}", slf);
+                                persistenceLogger.trace(
+                                        "Observed a null log file entry for: {0}", slf);
                             }
                         }
                     } catch (LogException le) {

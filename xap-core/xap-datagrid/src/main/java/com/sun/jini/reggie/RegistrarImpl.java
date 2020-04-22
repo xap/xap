@@ -2000,7 +2000,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
          */
         public void run() {
             if (logger.isDebugEnabled()) {
-                logger.debug("notifying listener {} of event {}", reg.listener, reg.eventID);
+                logger.debug("notifying listener {0} of event {1}", new Object[]{reg.listener, reg.eventID});
             }
             try {
                 reg.listener.notify(new RegistrarEvent(proxy, reg.eventID,
@@ -2304,7 +2304,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                         addLogRecord(new ServiceLeaseCancelledLogObj(
                                 reg.item.serviceID, reg.leaseID));
                         if (logger.isDebugEnabled()) {
-                            logger.debug("expired service registration {}", reg.item.serviceID);
+                            logger.debug("expired service registration {0}", new Object[]{reg.item.serviceID});
                         }
                     }
                     queueEvents();
@@ -2353,7 +2353,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                         }
                         deleteEvent(reg);
                         if (logger.isDebugEnabled()) {
-                            logger.debug("expired event registration {} for {}", reg.leaseID, reg.listener);
+                            logger.debug("expired event registration {0} for {1}", new Object[]{reg.leaseID, reg.listener});
                         }
                     }
                     try {
@@ -2611,7 +2611,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                     LogLevel level = multicastInterfacesSpecified ? LogLevel.INFO : LogLevel.DEBUG;
                     if (level.isEnabled(logger)) {
                         if (nic != null) {
-                            level.log(logger, "enabled {}", nic);
+                            level.log(logger, "enabled {0}", new Object[]{nic});
                         } else {
                             level.log(logger, "enabled default interface");
                         }
@@ -2948,7 +2948,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             ready.check();
             ServiceRegistration reg = registerDo(nitem, leaseDuration);
             if (logger.isDebugEnabled()) {
-                logger.debug("registered instance of {} as {}", nitem.serviceType.getName(), reg.getServiceID());
+                logger.debug("registered instance of {0} as {1}", new Object[]{
+                                nitem.serviceType.getName(), reg.getServiceID()});
             }
             return reg;
         } finally {
@@ -3005,7 +3006,10 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             RegistrarEventRegistration reg = notifyDo(
                     tmpl, transitions, listener, handback, leaseDuration, notifyType);
             if (logger.isDebugEnabled()) {
-                logger.debug("registered event listener {} as {}", listener, ((ReferentUuid) reg.getLease()).getReferentUuid());
+                logger.debug("registered event listener {0} as {1}", new Object[]{
+                                listener,
+                                ((ReferentUuid) reg.getLease()).getReferentUuid()
+                        });
             }
             return reg;
         } finally {
@@ -3127,7 +3131,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             addLogRecord(new ServiceLeaseCancelledLogObj(serviceID, leaseID));
             queueEvents();
             if (logger.isDebugEnabled()) {
-                logger.debug("cancelled service registration {}", serviceID);
+                logger.debug("cancelled service registration {0}", new Object[]{serviceID});
             }
         } finally {
             concurrentObj.writeUnlock();
@@ -3158,7 +3162,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             cancelEventLeaseDo(eventID, leaseID);
             addLogRecord(new EventLeaseCancelledLogObj(eventID, leaseID));
             if (logger.isDebugEnabled()) {
-                logger.debug("cancelled event registration {}", leaseID);
+                logger.debug("cancelled event registration {0}", new Object[]{leaseID});
             }
         } finally {
             concurrentObj.writeUnlock();
@@ -3208,9 +3212,9 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                         continue;
                     }
                     if (regIDs[i] instanceof ServiceID) {
-                        logger.debug("cancelled service registration {}", regIDs[i]);
+                        logger.debug("cancelled service registration {0}", new Object[]{regIDs[i]});
                     } else {
-                        logger.debug("cancelled event registration {}", leaseIDs[i]);
+                        logger.debug("cancelled event registration {0}", new Object[]{leaseIDs[i]});
                     }
                 }
             }
@@ -3297,7 +3301,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             lookupGroups = dgm.getGroups();
             addLogRecord(new LookupGroupsChangedLogObj(lookupGroups));
             if (logger.isDebugEnabled()) {
-                logger.debug("added lookup groups {}", Arrays.asList(groups));
+                logger.debug("added lookup groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             concurrentObj.writeUnlock();
@@ -3315,7 +3319,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             lookupGroups = dgm.getGroups();
             addLogRecord(new LookupGroupsChangedLogObj(lookupGroups));
             if (logger.isDebugEnabled()) {
-                logger.debug("removed lookup groups {}", Arrays.asList(groups));
+                logger.debug("removed lookup groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             concurrentObj.writeUnlock();
@@ -3336,7 +3340,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             lookupGroups = dgm.getGroups();
             addLogRecord(new LookupGroupsChangedLogObj(lookupGroups));
             if (logger.isDebugEnabled()) {
-                logger.debug("set lookup groups {}", (groups != null) ? Arrays.asList(groups) : null);
+                logger.debug("set lookup groups {0}", new Object[]{
+                                (groups != null) ? Arrays.asList(groups) : null});
             }
         } finally {
             concurrentObj.writeUnlock();
@@ -3369,7 +3374,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             lookupLocators = dlm.getLocators();
             addLogRecord(new LookupLocatorsChangedLogObj(lookupLocators));
             if (logger.isDebugEnabled()) {
-                logger.debug("added lookup locators {}", Arrays.asList(locators));
+                logger.debug("added lookup locators {0}", new Object[]{Arrays.asList(locators)});
             }
         } finally {
             concurrentObj.writeUnlock();
@@ -3390,7 +3395,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             lookupLocators = dlm.getLocators();
             addLogRecord(new LookupLocatorsChangedLogObj(lookupLocators));
             if (logger.isDebugEnabled()) {
-                logger.debug("removed lookup locators {}", Arrays.asList(locators));
+                logger.debug("removed lookup locators {0}", new Object[]{Arrays.asList(locators)});
             }
         } finally {
             concurrentObj.writeUnlock();
@@ -3411,7 +3416,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             lookupLocators = dlm.getLocators();
             addLogRecord(new LookupLocatorsChangedLogObj(lookupLocators));
             if (logger.isDebugEnabled()) {
-                logger.debug("set lookup locators {}", Arrays.asList(locators));
+                logger.debug("set lookup locators {0}", new Object[]{Arrays.asList(locators)});
             }
         } finally {
             concurrentObj.writeUnlock();
@@ -3434,7 +3439,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             }
             addLogRecord(new MemberGroupsChangedLogObj(memberGroups));
             if (logger.isDebugEnabled()) {
-                logger.debug("added member groups {}", Arrays.asList(groups));
+                logger.debug("added member groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             concurrentObj.writeUnlock();
@@ -3459,7 +3464,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             }
             addLogRecord(new MemberGroupsChangedLogObj(memberGroups));
             if (logger.isDebugEnabled()) {
-                logger.debug("removed member groups {}", Arrays.asList(groups));
+                logger.debug("removed member groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             concurrentObj.writeUnlock();
@@ -3491,7 +3496,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 }
             }
             if (logger.isDebugEnabled()) {
-                logger.debug("set member groups {}", Arrays.asList(groups));
+                logger.debug("set member groups {0}", new Object[]{Arrays.asList(groups)});
             }
         } finally {
             concurrentObj.writeUnlock();
@@ -3545,7 +3550,7 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
             }
             addLogRecord(new UnicastPortSetLogObj(port));
             if (logger.isDebugEnabled()) {
-                logger.debug("changed unicast discovery port to {}", unicaster.port);
+                logger.debug("changed unicast discovery port to {0}", new Object[]{unicaster.port});
             }
         } finally {
             concurrentObj.writeUnlock();
@@ -4493,7 +4498,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
 
             log = new ReliableLog(persistenceDirectory, new LocalLogHandler());
             if (logger.isDebugEnabled()) {
-                logger.debug("using persistence directory {}", persistenceDirectory);
+                logger.debug("using persistence directory {0}",
+                        new Object[]{persistenceDirectory});
             }
             inRecovery = true;
             log.recover();
@@ -4618,7 +4624,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
                 logger.error("no network interfaces detected");
             }
         } else if (logger.isDebugEnabled()) {
-            logger.debug("multicasting on interfaces {}", Arrays.asList(multicastInterfaces));
+            logger.debug("multicasting on interfaces {0}",
+                    new Object[]{Arrays.asList(multicastInterfaces)});
         }
 
         try {
@@ -4739,7 +4746,10 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
         }
         snapshotter.start();
         if (logger.isInfoEnabled()) {
-            logger.info("started Reggie: {}, {}, {}", myServiceID, Arrays.asList(memberGroups), myLocator);
+            logger.info("started Reggie: {0}, {1}, {2}",
+                    new Object[]{myServiceID,
+                            Arrays.asList(memberGroups),
+                            myLocator});
         }
         ready.ready();
     }
@@ -5659,7 +5669,8 @@ class RegistrarImpl implements Registrar, ProxyAccessor, ServerProxyTrust {
         try {
             log.update(rec, true);
             if (logger.isDebugEnabled()) {
-                logger.debug("wrote log record {}", rec);
+                logger.debug("wrote log record {0}",
+                        new Object[]{rec});
             }
             if (++logFileSize >= persistenceSnapshotThreshold) {
                 int snapshotSize = serviceByID.size() + eventByID.size();

@@ -345,18 +345,19 @@ public class ActivateWrapper implements Remote, Serializable {
                     new Object[]{id, data});
 
             ActivateDesc desc = (ActivateDesc) data.get();
-            logger.trace("ActivateDesc: {}", desc);
+            logger.trace("ActivateDesc: {0}", desc);
 
             Thread t = Thread.currentThread();
             ClassLoader ccl = t.getContextClassLoader();
-            logger.trace("Saved current context class loader: {}", ccl);
+            logger.trace("Saved current context class loader: {0}",
+                    ccl);
 
             ExportClassLoader cl = null;
             try {
                 cl = new ExportClassLoader(desc.importLocation,
                         desc.exportLocation,
                         ccl);
-                logger.trace("Created ExportClassLoader: {}", cl);
+                logger.trace("Created ExportClassLoader: {0}", cl);
             } catch (Exception e) {
                 LogUtils.throwing(logger, ActivateWrapper.class, "ActivateWrapper", e);
                 throw e;
@@ -375,7 +376,8 @@ public class ActivateWrapper implements Remote, Serializable {
                     globalPolicy =
                             new AggregatePolicyProvider(initialGlobalPolicy);
                     Policy.setPolicy(globalPolicy);
-                    logger.trace("Global policy set: {}", globalPolicy);
+                    logger.trace(
+                            "Global policy set: {0}", globalPolicy);
                 }
                 Policy service_policy =
                         getServicePolicyProvider(
@@ -396,27 +398,33 @@ public class ActivateWrapper implements Remote, Serializable {
                         null, /* Principal[] */
                         new Permission[]{new AllPermission()});
                 globalPolicy.setPolicy(cl, split_service_policy);
-                logger.trace("Added policy to set: {}", desc.policy);
+                logger.trace(
+                        "Added policy to set: {0}", desc.policy);
             }
 
             boolean initialize = false;
             Class ac = Class.forName(desc.className, initialize, cl);
-            logger.trace("Obtained implementation class: {}", ac);
+            logger.trace("Obtained implementation class: {0}", ac);
 
             t.setContextClassLoader(cl);
 
             try {
-                logger.trace("Set new context class loader: {}", cl);
+                logger.trace(
+                        "Set new context class loader: {0}", cl);
                 Constructor constructor =
                         ac.getDeclaredConstructor(actTypes);
-                logger.trace("Obtained implementation constructor: {}", constructor);
+                logger.trace(
+                        "Obtained implementation constructor: {0}",
+                        constructor);
                 constructor.setAccessible(true);
                 impl =
                         constructor.newInstance(new Object[]{id, desc.data});
-                logger.trace("Obtained implementation instance: {}", impl);
+                logger.trace(
+                        "Obtained implementation instance: {0}", impl);
             } finally {
                 t.setContextClassLoader(ccl);
-                logger.trace("Context class loader reset to: {}", ccl);
+                logger.trace("Context class loader reset to: {0}",
+                        ccl);
             }
         } catch (Exception e) {
             LogUtils.throwing(logger, ActivateWrapper.class, "ActivateWrapper", e);
@@ -433,7 +441,8 @@ public class ActivateWrapper implements Remote, Serializable {
         Object impl_proxy = impl;
         if (impl instanceof ProxyAccessor) {
             impl_proxy = ((ProxyAccessor) impl).getProxy();
-            logger.trace("Obtained implementation proxy: {}", impl_proxy);
+            logger.trace(
+                    "Obtained implementation proxy: {0}", impl_proxy);
             if (impl_proxy == null) {
                 throw new InvalidObjectException(
                         "Implementation's getProxy() returned null");
@@ -476,7 +485,8 @@ public class ActivateWrapper implements Remote, Serializable {
                         data,
                         restart
                 );
-        logger.trace("Registering descriptor with activation: {}", adesc);
+        logger.trace(
+                "Registering descriptor with activation: {0}", adesc);
 
         ActivationID aid = sys.registerObject(adesc);
 
@@ -499,7 +509,8 @@ public class ActivateWrapper implements Remote, Serializable {
             // Create ProtectionDomain for given codesource
             cs = new CodeSource(urls[i], certs);
             pd = new ProtectionDomain(cs, null, null, null);
-            logger.trace("Checking protection domain: {}", pd);
+            logger.trace(
+                    "Checking protection domain: {0}", pd);
 
             // Check if current domain allows desired permission
             if (!pd.implies(perm)) {
@@ -541,16 +552,23 @@ public class ActivateWrapper implements Remote, Serializable {
         Policy servicePolicyWrapper = null;
         if (servicePolicyProvider != null) {
             Class sp = Class.forName(servicePolicyProvider);
-            logger.trace("Obtained custom service policy implementation class: {}", sp);
+            logger.trace(
+                    "Obtained custom service policy implementation class: {0}", sp);
             Constructor constructor =
                     sp.getConstructor(policyTypes);
-            logger.trace("Obtained custom service policy implementation constructor: {}", constructor);
+            logger.trace(
+                    "Obtained custom service policy implementation constructor: {0}",
+                    constructor);
             servicePolicyWrapper = (Policy)
                     constructor.newInstance(new Object[]{service_policy});
-            logger.trace("Obtained custom service policy implementation instance: {}", servicePolicyWrapper);
+            logger.trace(
+                    "Obtained custom service policy implementation instance: {0}",
+                    servicePolicyWrapper);
         } else {
             servicePolicyWrapper = new DynamicPolicyProvider(service_policy);
-            logger.trace("Using default service policy implementation instance: {}", servicePolicyWrapper);
+            logger.trace(
+                    "Using default service policy implementation instance: {0}",
+                    servicePolicyWrapper);
         }
         return servicePolicyWrapper;
     }

@@ -266,7 +266,7 @@ public class ProxyTrustVerifier implements TrustVerifier {
                 return null;
             }
         }
-        logger.debug("{} has ProxyTrustIterator", obj);
+        logger.debug("{0} has ProxyTrustIterator", obj);
         SecurityContext rsc = uosc.getContext();
         ProxyTrustIterator iter;
         try {
@@ -285,7 +285,8 @@ public class ProxyTrustVerifier implements TrustVerifier {
             obj = null;
             try {
                 obj = restrictedNext(iter, rsc);
-                logger.debug("ProxyTrustIterator produces {}", obj);
+                logger.debug("ProxyTrustIterator produces {0}",
+                        obj);
                 if (!(obj instanceof ProxyTrust)) {
                     TrustVerifier verifier = getVerifier(obj, ctx, mc, uosc);
                     if (verifier != null) {
@@ -296,7 +297,7 @@ public class ProxyTrustVerifier implements TrustVerifier {
                         obj = ((RemoteMethodControl) obj).setConstraints(mc);
                         TrustVerifier verifier =
                                 ((ProxyTrust) obj).getProxyVerifier();
-                        logger.debug("verifier is {}", verifier);
+                        logger.debug("verifier is {0}", verifier);
                         return verifier;
                     } else if (Proxy.isProxyClass(obj.getClass()) &&
                             getMethod(obj) == null &&
@@ -467,7 +468,7 @@ public class ProxyTrustVerifier implements TrustVerifier {
         if (obj == null) {
             return null;
         }
-        logger.debug("trying derivative bootstrap proxy {}", obj);
+        logger.debug("trying derivative bootstrap proxy {0}", obj);
         if (!isTrusted(obj, ctx)) {
             return null;
         }
@@ -508,7 +509,7 @@ public class ProxyTrustVerifier implements TrustVerifier {
                         e);
             }
         }
-        logger.debug("verifier is {}", verifier);
+        logger.debug("verifier is {0}", verifier);
         return verifier;
     }
 

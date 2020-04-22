@@ -349,7 +349,8 @@ class TxnManagerTransaction
 
         try {
             if (transactionsLogger.isTraceEnabled()) {
-                transactionsLogger.trace("Adding ParticipantHandle: {}", handle);
+                transactionsLogger.trace(
+                        "Adding ParticipantHandle: {0}", handle);
             }
             _parts.put(handle, handle);
         } catch (Exception e) {
@@ -731,7 +732,9 @@ class TxnManagerTransaction
             ClientLog log = logmgr.logFor(str.id);
 
             if (transactionsLogger.isTraceEnabled()) {
-                transactionsLogger.trace("{} TransactionParticipants have joined", phs.length);
+                transactionsLogger.trace(
+                        "{0} TransactionParticipants have joined",
+                        new Integer(phs.length));
             }
 
             //If commit is called after recovery, do not
@@ -872,7 +875,9 @@ class TxnManagerTransaction
             }
 
             if (transactionsLogger.isTraceEnabled()) {
-                transactionsLogger.trace("Voting result: {}", TxnConstants.getName(result.intValue()));
+                transactionsLogger.trace(
+                        "Voting result: {0}",
+                        TxnConstants.getName(result.intValue()));
             }
 
             switch (result.intValue()) {
@@ -1571,7 +1576,9 @@ class TxnManagerTransaction
         if (vect == null)
 
             if (transactionsLogger.isTraceEnabled()) {
-                transactionsLogger.trace("Retrieved {} participants", 0);
+                transactionsLogger.trace(
+                        "Retrieved {0} participants",
+                        new Integer(0));
             }
 
         if (operationsLogger.isDebugEnabled()) {
@@ -1591,7 +1598,8 @@ class TxnManagerTransaction
             return "No participants";
 
         if (transactionsLogger.isTraceEnabled()) {
-            transactionsLogger.trace("{} participants joined", phs.length);
+            transactionsLogger.trace(
+                    "{0} participants joined", new Integer(phs.length));
         }
         StringBuilder sb = new StringBuilder(phs.length + " Participants: ");
 
@@ -1630,7 +1638,9 @@ class TxnManagerTransaction
         for (int i = 0; i < handles.length; i++) {
             handles[i].restoreTransientState(preparer);
             if (transactionsLogger.isTraceEnabled()) {
-                transactionsLogger.trace("Restored transient state for {}", handles[i]);
+                transactionsLogger.trace(
+                        "Restored transient state for {0}",
+                        handles[i]);
             }
         }
 

@@ -145,7 +145,8 @@ public class AbortJob extends Job implements TransactionConstants {
             //exists in the log which was used for recovery...
 
             if (logger.isTraceEnabled()) {
-                logger.trace("AbortJob:doWork aborting handle: {}", handle);
+                logger.trace(
+                        "AbortJob:doWork aborting handle: {0}", handle);
             }
             int vote = 0;
 
@@ -317,7 +318,9 @@ public class AbortJob extends Job implements TransactionConstants {
         }
 
         if (logger.isTraceEnabled()) {
-            logger.trace("AbortJob:computeResult {} participants ABORTED", count);
+            logger.trace(
+                    "AbortJob:computeResult {0} participants ABORTED",
+                    new Integer(count));
         }
 
         return new Integer(ABORTED);

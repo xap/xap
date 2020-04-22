@@ -237,7 +237,10 @@ public final class Security {
             for (int j = 0; j < verifiers.length; j++) {
                 if (verifiers[j].providesIntegrity(urls[i])) {
                     if (integrityLogger.isDebugEnabled()) {
-                        integrityLogger.debug("{} verifies {}", verifiers[j], urls[i]);
+                        integrityLogger.debug(
+                                "{0} verifies {1}",
+                                new Object[]{verifiers[j],
+                                        urls[i]});
                     }
                     continue outer;
                 }
@@ -546,10 +549,11 @@ public final class Security {
         }
         ((DynamicPolicy) policy).grant(cl, principals, permissions);
         if (policyLogger.isDebugEnabled()) {
-            policyLogger.debug("granted {} to {}, {}",
+            policyLogger.debug("granted {0} to {1}, {2}",
+                    new Object[]{
                             (permissions != null) ? Arrays.asList(permissions) : null,
                             (cl != null) ? cl.getName() : null,
-                            (principals != null) ? Arrays.asList(principals) : null);
+                            (principals != null) ? Arrays.asList(principals) : null});
         }
     }
 
@@ -595,11 +599,12 @@ public final class Security {
 
         dpolicy.grant(toClass, principals, permissions);
         if (policyLogger.isDebugEnabled()) {
-            policyLogger.debug("granted {} from {} to {}, {}",
+            policyLogger.debug("granted {0} from {1} to {2}, {3}",
+                    new Object[]{
                             (permissions != null) ? Arrays.asList(permissions) : null,
                             fromClass.getName(),
                             toClass.getName(),
-                            (principals != null) ? Arrays.asList(principals) : null);
+                            (principals != null) ? Arrays.asList(principals) : null});
         }
     }
 
@@ -748,7 +753,9 @@ public final class Security {
                 try {
                     if (verifiers[i].isTrustedObject(obj, this)) {
                         if (trustLogger.isDebugEnabled()) {
-                            trustLogger.debug("{} trusts {}", verifiers[i], obj);
+                            trustLogger.debug(
+                                    "{0} trusts {1}",
+                                    new Object[]{verifiers[i], obj});
                         }
                         return true;
                     }

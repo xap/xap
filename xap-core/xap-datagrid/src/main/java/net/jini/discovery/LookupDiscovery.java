@@ -850,7 +850,8 @@ public class LookupDiscovery implements DiscoveryManagement,
         private void retryBadNics() {
             if (retryNics == null) return;//no failed NICs to retry
             if (!retryNics.isEmpty()) {
-                String recoveredStr = "network interface has recovered from previous failure: {}";
+                String recoveredStr = "network interface has recovered "
+                        + "from previous failure: {0}";
                 ArrayList tmpList = (ArrayList) retryNics.clone();
                 retryNics.clear();
                 for (int i = 0; i < tmpList.size(); i++) {
@@ -1531,14 +1532,14 @@ public class LookupDiscovery implements DiscoveryManagement,
                 if (((req instanceof Socket) ||
                         (req instanceof LookupLocator)) &&
                         logger.isDebugEnabled()) {
-                    String format = this.getClass().getName() + "#run: exception occurred during unicast discovery to {}:{} with constraints {}";
+                    String format = this.getClass().getName() + "#run: exception occurred during unicast discovery to {0}:{1,number,#} with constraints {2}";
                     String message;
                     if (req instanceof Socket) {
                         Socket sock = (Socket) req;
-                        message = LogUtils.format(format, sock.getInetAddress().getHostName(), sock.getPort(), rawUnicastDiscoveryConstraints);
+                        message = java.text.MessageFormat.format(format, sock.getInetAddress().getHostName(), sock.getPort(), rawUnicastDiscoveryConstraints);
                     } else {
                         LookupLocator loc = (LookupLocator) req;
-                        message = LogUtils.format(format, loc.getHost(), loc.getPort(), rawUnicastDiscoveryConstraints);
+                        message = java.text.MessageFormat.format(format, loc.getHost(), loc.getPort(), rawUnicastDiscoveryConstraints);
                     }
                     logger.info(message, e);
                 } else {
@@ -2195,7 +2196,9 @@ public class LookupDiscovery implements DiscoveryManagement,
             final ServiceRegistrar srcReg = resp.getRegistrar();
             ServiceRegistrar prepReg = (ServiceRegistrar) registrarPreparer.prepareProxy(srcReg);
             if (logger.isTraceEnabled()) {
-                logger.trace("LookupDiscovery - prepared lookup service proxy: {}", prepReg);
+                logger.trace("LookupDiscovery - "
+                                + "prepared lookup service proxy: {0}",
+                        prepReg);
             }
             if (prepReg != srcReg) {
                 resp = new UnicastResponse(resp.getHost(),
@@ -2727,7 +2730,9 @@ public class LookupDiscovery implements DiscoveryManagement,
                 } else {//(nics.length > 0), use the given specific list
                     nicsToUse = NICS_USE_LIST;
                     if (logger.isDebugEnabled()) {
-                        logger.debug("LookupDiscovery - multicast network interface(s): {}", Arrays.asList(nics));
+                        logger.debug(
+                                "LookupDiscovery - multicast network "
+                                        + "interface(s): {0}", Arrays.asList(nics));
                     }//endif
                 }//endif
             }//endif
@@ -2751,7 +2756,7 @@ public class LookupDiscovery implements DiscoveryManagement,
                     nics = BootUtil.getNetworkInterfaces();
                     nicsToUse = NICS_USE_ALL;
                     if (logger.isDebugEnabled()) {
-                        logger.debug("LookupDiscovery - multicast network interface(s): {}", Arrays.toString(nics));
+                        logger.debug("LookupDiscovery - multicast network interface(s): {0}", Arrays.toString(nics));
                     }//endif
                 }
             }

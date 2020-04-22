@@ -316,7 +316,8 @@ public class ServiceStarter {
                     results[i].result != null &&
                     NonActivatableServiceDescriptor.class.equals(
                             results[i].descriptor.getClass())) {
-                logger.trace("Storing ref to: {}", results[i].result);
+                logger.trace("Storing ref to: {0}",
+                        results[i].result);
                 transient_service_refs.add(results[i].result);
             }
         }
@@ -339,9 +340,12 @@ public class ServiceStarter {
                         "Exception creating service.",
                         results[i].exception);
                 logger.warn(
-                        "Associated service descriptor [{}]: {}", i, results[i].descriptor);
+                        "Associated service descriptor [{0}]: {1}",
+                        new Object[]{new Integer(i),
+                                results[i].descriptor});
             } else if (results[i].descriptor == null) {
-                logger.warn("Service descriptor [{}] was null.", i);
+                logger.warn(
+                        "Service descriptor [{0}] was null.", new Integer(i));
             }
         }
         LogUtils.exiting(logger, ServiceStarter.class, "checkResultFailures");

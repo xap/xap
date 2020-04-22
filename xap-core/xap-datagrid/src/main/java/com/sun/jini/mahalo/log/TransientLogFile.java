@@ -98,7 +98,7 @@ public class TransientLogFile implements Log {
         }
         if (persistenceLogger.isTraceEnabled()) {
             persistenceLogger.trace(
-                    "(ignored) write called for cookie: {}", cookie);
+                    "(ignored) write called for cookie: {0}", new Long(cookie));
         }
         if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, TransientLogFile.class, "write");
@@ -114,7 +114,8 @@ public class TransientLogFile implements Log {
         }
 
         if (persistenceLogger.isTraceEnabled()) {
-            persistenceLogger.trace("Calling logMgr to release cookie: {}", cookie);
+            persistenceLogger.trace(
+                    "Calling logMgr to release cookie: {0}", new Long(cookie));
         }
         logMgr.release(cookie);
 
@@ -134,7 +135,8 @@ public class TransientLogFile implements Log {
             LogUtils.entering(operationsLogger, MultiLogManager.class, "recover", client);
         }
         if (persistenceLogger.isTraceEnabled()) {
-            persistenceLogger.trace("(ignored) Recovering for: {}", cookie);
+            persistenceLogger.trace(
+                    "(ignored) Recovering for: {0}", new Long(cookie));
         }
         if (operationsLogger.isDebugEnabled()) {
             LogUtils.exiting(operationsLogger, MultiLogManager.class, "recover");

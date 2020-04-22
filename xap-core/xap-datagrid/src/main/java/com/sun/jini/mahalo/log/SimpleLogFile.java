@@ -257,7 +257,8 @@ public class SimpleLogFile implements Log {
             outfile.getFD().sync();
 
             if (persistenceLogger.isTraceEnabled()) {
-                persistenceLogger.trace("Wrote: {}", rec);
+                persistenceLogger.trace(
+                        "Wrote: {0}", rec);
             }
         } catch (InvalidClassException ice) {
             if (persistenceLogger.isWarnEnabled()) {
@@ -299,7 +300,8 @@ public class SimpleLogFile implements Log {
         }
 
         if (persistenceLogger.isTraceEnabled()) {
-            persistenceLogger.trace("Invalidating log for cookie: {}", cookie);
+            persistenceLogger.trace(
+                    "Invalidating log for cookie: {0}", new Long(cookie));
         }
 
         if (valid) {
@@ -313,7 +315,8 @@ public class SimpleLogFile implements Log {
         try {
             if (out != null) {
                 if (persistenceLogger.isTraceEnabled()) {
-                    persistenceLogger.trace("Closing log file for: {}", cookie);
+                    persistenceLogger.trace(
+                            "Closing log file for: {0}", new Long(cookie));
                 }
                 out.close(); // calls outfile.close()
             }
@@ -327,7 +330,8 @@ public class SimpleLogFile implements Log {
         try {
             File fl = new File(name);
             if (persistenceLogger.isTraceEnabled()) {
-                persistenceLogger.trace("Deleting log file for: {}", cookie);
+                persistenceLogger.trace(
+                        "Deleting log file for: {0}", new Long(cookie));
             }
             if (!fl.delete()) {
                 if (persistenceLogger.isDebugEnabled()) {
@@ -369,7 +373,8 @@ public class SimpleLogFile implements Log {
         ArrayList recList = new ArrayList();
         try {
             if (persistenceLogger.isTraceEnabled()) {
-                persistenceLogger.trace("Recovering from: {}", name);
+                persistenceLogger.trace(
+                        "Recovering from: {0}", name);
             }
             in = new HeaderlessObjectInputStream(
                     new BufferedInputStream(
@@ -389,7 +394,9 @@ public class SimpleLogFile implements Log {
                         update = false;
                         done = true; // bad log ... skip it
                         if (persistenceLogger.isDebugEnabled()) {
-                            persistenceLogger.debug("Log for cookie {} contained a null record object", cookie);
+                            persistenceLogger.debug(
+                                    "Log for cookie {0} contained a null "
+                                            + "record object", new Long(cookie));
                         }
                     }
                 }

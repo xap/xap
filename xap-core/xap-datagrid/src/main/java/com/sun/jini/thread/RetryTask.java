@@ -99,7 +99,9 @@ public abstract class RetryTask implements TaskManager.Task, TimeConstants {
                 long at = retryTime();    // ... try, try again
 
                 if (logger.isTraceEnabled()) {
-                    logger.trace("retry of {} in {} ms", this, at - SystemTime.timeMillis());
+                    logger.trace("retry of {0} in {1} ms",
+                            new Object[]{this,
+                                    new Long(at - SystemTime.timeMillis())});
                 }
 
                 if (retry == null)    // only create it if we need to

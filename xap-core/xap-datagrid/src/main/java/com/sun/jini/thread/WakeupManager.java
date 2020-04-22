@@ -592,7 +592,7 @@ public class WakeupManager {
                         }
 
                         if (logger.isTraceEnabled()) {
-                            logger.trace("timeToNextEvent:{}",
+                            logger.trace("timeToNextEvent:{0}",
                                     (timeToNextEvent == Long.MAX_VALUE ?
                                             "Long.MAX_VALUE" :
                                             Long.toString(timeToNextEvent)));

@@ -1850,21 +1850,22 @@ public class ServiceDiscoveryManager {
                 } else {//gap in event sequence, request snapshot
                     t = new LookupTask(lookupCacheClassLoader, reg, taskSeqN++);
                     if (logger.isDebugEnabled()) {
-                        logger.debug("notifyServiceMap - GAP in event sequence "
-                                + "[serviceRegistrar={}], "
-                                + "[serviceItem={}, "
-                                + "serviceID={}], "
-                                + "[eventSource={}, "
-                                + "eventID={}, "
-                                + "oldSeqN={}, "
-                                + "newSeqN={}]",
-                                reg == null ? null : reg.proxy,
+                        String msg = "notifyServiceMap - GAP in event sequence "
+                                + "[serviceRegistrar={0}], "
+                                + "[serviceItem={1}, "
+                                + "serviceID={2}], "
+                                + "[eventSource={3}, "
+                                + "eventID={4,number,#}, "
+                                + "oldSeqN={5,number,#}, "
+                                + "newSeqN={6,number,#}]";
+                        Object[] params = new Object[]{reg == null ? null : reg.proxy,
                                 item.service,
                                 sid,
                                 eventSource,
-                                eventID,
-                                prevSeqNo,
-                                seqNo);
+                                new Long(eventID),
+                                new Long(prevSeqNo),
+                                new Long(seqNo)};
+                        logger.debug(msg, params);
                     }//endif
                 }//endif
                 cacheTaskMgr.add(t);
@@ -2416,7 +2417,9 @@ public class ServiceDiscoveryManager {
                     proxys[i]
                             = (ServiceRegistrar) registrarPreparer.prepareProxy
                             (proxys[i]);
-                    logger.trace("ServiceDiscoveryManager - discovered lookup service proxy prepared: {}", proxys[i]);
+                    logger.trace("ServiceDiscoveryManager - "
+                                    + "discovered lookup service proxy prepared: {0}",
+                            proxys[i]);
                 } catch (Exception e1) {
                     logger.info(
                             "failure preparing discovered ServiceRegistrar "
@@ -3093,7 +3096,8 @@ public class ServiceDiscoveryManager {
         }
         int len = proxys.length;
         if (logger.isTraceEnabled()) {
-            logger.trace("query {} lookup service(s) for template: {} max-matches: {}", len, tmpl, maxMatches);
+            logger.trace("query {0} lookup service(s) for template: {1} max-matches: {2}",
+                    new Object[]{len, tmpl, maxMatches});
         }
         ArrayList sItemSet = new ArrayList(len);
         if (len > 0) {
@@ -3451,7 +3455,8 @@ public class ServiceDiscoveryManager {
 		 */
         Lease eventLease = e.getLease();
         eventLease = (Lease) eventLeasePreparer.prepareProxy(eventLease);
-        logger.trace("ServiceDiscoveryManager - proxy to event registration lease prepared: {}", eventLease);
+        logger.trace("ServiceDiscoveryManager - proxy to event "
+                + "registration lease prepared: {0}", eventLease);
 		/* Management the lease on the event registration */
         leaseRenewalMgr.renewFor(eventLease,
                 duration,
