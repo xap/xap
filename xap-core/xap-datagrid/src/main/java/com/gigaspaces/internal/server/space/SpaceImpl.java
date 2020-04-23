@@ -351,10 +351,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 clusterInfo.setChunksMap(zookeeperChunksMapHandler.getChunksMap());
                 return clusterInfo;
             }catch (ChunksMapMissingException e){
-                _logger.warn("Failed to find chunks map in zk - creating map locally",e);
-                PartitionToChunksMap chunksMap = new PartitionToChunksMap(clusterInfo.getNumberOfPartitions(), 0);
-                chunksMap.init();
-                clusterInfo.setChunksMap(chunksMap);
+                _logger.warn("Failed to find chunks map in zk - disabling chunks space routing",e);
             }
         }
         return clusterInfo;
