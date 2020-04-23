@@ -613,17 +613,16 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
         }
     }
 
-    public SpaceProxyRouter updateProxyRouter(SpaceProxyRouter oldRouter, PartitionToChunksMap chunksMap){
+    public void updateProxyRouter(SpaceProxyRouter oldRouter, PartitionToChunksMap chunksMap){
         if(this._proxyRouter != oldRouter){
-            return _proxyRouter;
+            return;
         }
         synchronized (_spaceInitializeLock) {
             if(this._proxyRouter != oldRouter){
-                return _proxyRouter;
+                return;
             }
             this._proxySettings = this._proxySettings.cloneAndUpdate(chunksMap);
             this._proxyRouter = new SpaceProxyRouter(this);
-            return this._proxyRouter;
         }
     }
 
