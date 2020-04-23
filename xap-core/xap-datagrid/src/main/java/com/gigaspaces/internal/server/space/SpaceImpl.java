@@ -45,7 +45,6 @@ import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
 import com.gigaspaces.internal.client.spaceproxy.executors.SystemTask;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectRequest;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectResult;
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersistencyBackupSyncIteratorHandler;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersistencySyncListBatch;
@@ -716,8 +715,12 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 _leaderSelector.terminate();
             }
 
-            if (zookeeperLastPrimaryHandler != null) {
-                zookeeperLastPrimaryHandler.closeZooKeeperAttributeStore();
+            if (attributeStore != null) {
+                try {
+                    attributeStore.close();
+                } catch (Exception e) {
+                    _logger.warn("Failed to close ZooKeeperAttributeStore", e);
+                }
             }
 
             if (zookeeperChunksMapHandler != null) {

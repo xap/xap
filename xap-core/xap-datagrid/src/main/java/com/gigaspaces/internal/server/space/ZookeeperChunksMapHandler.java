@@ -122,12 +122,8 @@ public class ZookeeperChunksMapHandler implements Closeable {
     @Override
     public void close() throws IOException {
         try {
-            attributeStore.close();
-        } catch (Exception e) {
-            logger.warn("Failed to close ZooKeeperAttributeStore", e);
-        }
-        try {
             if (zookeeperClient != null){
+                singleThreadExecutorService.shutdownNow();
                 zookeeperClient.close();
             }
         } catch (Exception e) {
