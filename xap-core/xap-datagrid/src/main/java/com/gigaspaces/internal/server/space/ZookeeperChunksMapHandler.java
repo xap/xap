@@ -127,7 +127,9 @@ public class ZookeeperChunksMapHandler implements Closeable {
             logger.warn("Failed to close ZooKeeperAttributeStore", e);
         }
         try {
-            zookeeperClient.close();
+            if (zookeeperClient != null){
+                zookeeperClient.close();
+            }
         } catch (Exception e) {
             logger.warn("Failed to close ZookeeperClient", e);
         }
