@@ -68,4 +68,8 @@ public class MetricPattern {
     public String getValue() {
         return value;
     }
+
+    public String getPattern() {
+        return pattern;
+    }
 }

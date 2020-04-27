@@ -17,15 +17,10 @@
 package com.gigaspaces.metrics;
 
 import com.gigaspaces.internal.os.OSStatistics;
-import com.gigaspaces.internal.os.OshiOSDetailsProbe;
-import com.gigaspaces.internal.os.OshiOSStatisticsProbe;
-import com.gigaspaces.internal.os.sigar.SigarOSDetailsProbe;
-import com.gigaspaces.internal.os.sigar.SigarOSStatisticsProbe;
 import com.gigaspaces.internal.oshi.OshiChecker;
 import com.gigaspaces.internal.oshi.OshiGaugeUtils;
 import com.gigaspaces.internal.oshi.OshiUtils;
 import com.gigaspaces.internal.sigar.SigarChecker;
-import com.gigaspaces.internal.sigar.SigarHolder;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.ConnectionPool;
@@ -33,36 +28,19 @@ import com.gigaspaces.lrmi.LRMIRuntime;
 import com.gigaspaces.lrmi.nio.CPeer;
 import com.gigaspaces.lrmi.nio.Reader;
 import com.gigaspaces.lrmi.nio.Writer;
-import com.gigaspaces.metrics.factories.JvmMemoryMetricFactory;
-import com.gigaspaces.metrics.factories.JvmRuntimeMetricFactory;
-import com.gigaspaces.metrics.factories.JvmThreadMetricFactory;
-import com.gigaspaces.metrics.factories.SigarCpuMetricFactory;
-import com.gigaspaces.metrics.factories.SigarMemoryMetricFactory;
-import com.gigaspaces.metrics.factories.SigarNetworkMetricFactory;
-import com.gigaspaces.metrics.factories.SigarProcessMetricFactory;
-import com.gigaspaces.metrics.factories.SigarSwapMetricFactory;
+import com.gigaspaces.metrics.factories.*;
 import com.gigaspaces.start.SystemBoot;
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.kernel.threadpool.DynamicThreadPoolExecutor;
 import com.sun.jini.thread.TaskManager;
-import org.hyperic.sigar.Sigar;
-import oshi.hardware.CentralProcessor;
-import oshi.hardware.GlobalMemory;
-import oshi.util.Util;
-
-import java.io.Closeable;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.Closeable;
+import java.net.URL;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * @author Niv Ingberg
@@ -80,11 +58,17 @@ public class MetricManager implements Closeable {
     private MetricPatternSet patternSet;
     private Map<String, MetricSampler> samplers;
 
+    private final MetricFlagsState metricFlagsState;
+
     public static synchronized MetricManager acquire() {
         if (instance == null)
             instance = new MetricManager();
         refCount++;
         return instance;
+    }
+
+    public MetricFlagsState getMetricFlagsState(){
+        return metricFlagsState;
     }
 
     private static synchronized boolean release() {
@@ -96,19 +80,36 @@ public class MetricManager implements Closeable {
         return false;
     }
 
-    public boolean isMetricReporterDefined( String metricReporterClassName ){
-        boolean retValue = false;
-        for( MetricSampler metricSampler : samplers.values() ){
+    public boolean isMetricReporterDefined(String metricReporterClassName) {
+        for (MetricSampler metricSampler : samplers.values()) {
             Collection<MetricReporter> reporters = metricSampler.getReporters();
-            for( MetricReporter metricReporter : reporters ){
-                if( metricReporter.getClass().getName().equals( metricReporterClassName ) ){
-                    retValue = true;
-                    break;
+            for (MetricReporter metricReporter : reporters) {
+                if (metricReporter.getClass().getName().equals(metricReporterClassName)) {
+                    return true;
                 }
             }
         }
 
-        return retValue;
+        return false;
+    }
+
+    public MetricReporter getMetricReporter(String samplerName, String metricReporterClassName) {
+        for (MetricSampler metricSampler : samplers.values()) {
+            if (metricSampler.getName().equals(samplerName)) {
+                Collection<MetricReporter> reporters = metricSampler.getReporters();
+                for (MetricReporter metricReporter : reporters) {
+                    if (metricReporter.getClass().getName().equals(metricReporterClassName)) {
+                        return metricReporter;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public List<MetricPattern> getMetricPatterns(){
+        return patternSet != null ? patternSet.getPatterns() : null;
     }
 
     public static void reloadIfStarted() {
@@ -133,14 +134,16 @@ public class MetricManager implements Closeable {
                 }
             }
 
-            Map<String, String> processTags = new HashMap<String, String>();
+            Map<String, String> processTags = new HashMap<>();
             processTags.put("process_name", processName);
             registerProcessMetrics(processTags);
         }
+
+        metricFlagsState = new MetricFlagsState( this );
     }
 
     public List<MetricRegistrator> registerProcessMetrics(Map<String, String> tags) {
-        List<MetricRegistrator> registrators = new ArrayList<MetricRegistrator>();
+        List<MetricRegistrator> registrators = new ArrayList<>();
         registrators.add(registerProcessMetricsInternal(tags));
         registrators.add(registerJvmMetrics(tags));
         registrators.add(registerLrmiMetrics(createRegistrator("lrmi", tags)));
@@ -163,10 +166,10 @@ public class MetricManager implements Closeable {
             this.patternSet = config.getPatternSet();
 
             // load new samplers:
-            final Map<String, MetricSampler> newSamplers = new HashMap<String, MetricSampler>();
+            final Map<String, MetricSampler> newSamplers = new HashMap<>();
             for (MetricSamplerConfig samplerConfig : config.getSamplersConfig().values()) {
                 // create reporters for each sampler:
-                List<MetricReporter> reporters = new ArrayList<MetricReporter>();
+                List<MetricReporter> reporters = new ArrayList<>();
                 for (Map.Entry<String, MetricReporterFactory> entry : config.getReportersFactories().entrySet())
                     reporters.add(createReporter(entry.getKey(), entry.getValue()));
                 newSamplers.put(samplerConfig.getName(), new MetricSampler(samplerConfig, reporters));
@@ -185,6 +188,17 @@ public class MetricManager implements Closeable {
     }
 
     public static String getConfigFilePath() {
+        String configResource = System.getProperty("com.gigaspaces.metrics.config.resource");
+        if (StringUtils.hasLength(configResource)) {
+            URL systemResource = ClassLoader.getSystemResource(configResource);
+            if (systemResource != null) {
+                return systemResource.getFile();
+            }
+            if (logger.isDebugEnabled()) {
+                logger.debug("metrics.xml was not found using configured resource path: " + configResource);
+            }
+        }
+
         String result = System.getProperty("com.gigaspaces.metrics.config");
         if (!StringUtils.hasLength(result)) {
             result = SystemLocations.singleton().config("metrics").resolve("metrics.xml").toString();
@@ -193,7 +207,7 @@ public class MetricManager implements Closeable {
     }
 
     private MetricTags initDefaultTags() {
-        Map<String, Object> tags = new HashMap<String, Object>();
+        Map<String, Object> tags = new HashMap<>();
         tags.put("host", SystemInfo.singleton().network().getHost().getHostName());
         tags.put("ip", SystemInfo.singleton().network().getHost().getHostAddress());
         tags.put("pid", String.valueOf(SystemInfo.singleton().os().processId()));
@@ -255,7 +269,7 @@ public class MetricManager implements Closeable {
 
     public Map<String,Object> getSnapshotsByPrefix( Collection<String> prefixes ) {
         synchronized (lock) {
-            Map<String, Object> resultsMap = new HashMap<String, Object>();
+            Map<String, Object> resultsMap = new HashMap<>();
             for (String prefix : prefixes) {
                 for (MetricSampler sampler : samplers.values()) {
                     resultsMap.putAll(sampler.getSnapshotsByPrefix(prefix));
@@ -302,7 +316,7 @@ public class MetricManager implements Closeable {
         final SigarNetworkMetricFactory networkFactory = new SigarNetworkMetricFactory();
         Collection<String> netInterfacesNames = getNetworkNames(networkFactory);
         for (String name : netInterfacesNames) {
-            Map<String, String> newTags = new HashMap<String, String>();
+            Map<String, String> newTags = new HashMap<>();
             newTags.put("nic", name);
             MetricRegistrator networkRegistrator = ((InternalMetricRegistrator) registrator).extend("network", newTags, Collections.EMPTY_MAP);
             networkRegistrator.register("rx-bytes", networkFactory.createRxBytesGauge(name));
@@ -341,7 +355,7 @@ public class MetricManager implements Closeable {
 
         OSStatistics.OSNetInterfaceStats[] netInterfaceStats = OshiUtils.calcNetStats();
         for(OSStatistics.OSNetInterfaceStats interfaceStats : netInterfaceStats){
-            Map<String, String> newTags = new HashMap<String, String>();
+            Map<String, String> newTags = new HashMap<>();
             newTags.put("nic", interfaceStats.getName());
             MetricRegistrator networkRegistrator = ((InternalMetricRegistrator) registrator).extend("network", newTags, Collections.EMPTY_MAP);
             networkRegistrator.register("rx-bytes", OshiGaugeUtils.createRxBytesGauge(interfaceStats));
@@ -436,5 +450,44 @@ public class MetricManager implements Closeable {
                 return taskManager.getTotalTasks();
             }
         });
+    }
+
+    public static class MetricFlagsState{
+
+        private boolean dataIndexHitsMetricEnabled = true;
+        private boolean dataReadCountsMetricEnabled = true;
+        private boolean dataTypesMetricEnabled = true;
+
+        private MetricFlagsState( MetricManager metricManager ) {
+            List<MetricPattern> metricPatterns = metricManager.getMetricPatterns();
+            for( MetricPattern metricPattern : metricPatterns ){
+                if( metricPattern.getValue().equals(  "off" ) ){
+                    String pattern = metricPattern.getPattern();
+                    switch ( pattern ){
+                        case "space_data_index-hits-total":
+                            dataIndexHitsMetricEnabled = false;
+                            break;
+                        case "space_data_read-count":
+                            dataReadCountsMetricEnabled = false;
+                            break;
+                        case "space_data_data-types":
+                            dataTypesMetricEnabled = false;
+                            break;
+                    }
+                }
+            }
+        }
+
+        public boolean isDataIndexHitsMetricEnabled() {
+            return dataIndexHitsMetricEnabled;
+        }
+
+        public boolean isDataTypesMetricEnabled() {
+            return dataTypesMetricEnabled;
+        }
+
+        public boolean isDataReadCountsMetricEnabled() {
+            return dataReadCountsMetricEnabled;
+        }
     }
 }

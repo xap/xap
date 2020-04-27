@@ -20,22 +20,12 @@ import com.gigaspaces.internal.utils.concurrent.GSThreadFactory;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.metrics.internal.GaugeContextProvider;
 import com.gigaspaces.metrics.internal.InternalGauge;
-
-import java.io.Closeable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.Closeable;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * @author Niv Ingberg
@@ -61,7 +51,7 @@ public class MetricSampler implements Closeable {
         this.name = config.getName();
         this.logger = LoggerFactory.getLogger(Constants.LOGGER_METRICS_SAMPLER + '.' + name);
         this.registry = new MetricRegistry(name);
-        this.contextProviders = Collections.newSetFromMap(new ConcurrentHashMap<GaugeContextProvider, Boolean>());
+        this.contextProviders = Collections.newSetFromMap(new ConcurrentHashMap<>());
         this.samplingRate = config.getSamplingRate();
         this.batchSize = config.getBatchSize();
         this.reporters = reporters;
@@ -171,11 +161,15 @@ public class MetricSampler implements Closeable {
         return registry;
     }
 
+    public String getName() {
+        return name;
+    }
+
     private class Sampler implements Runnable {
         private final List<MetricRegistrySnapshot> buffer;
 
         private Sampler() {
-            this.buffer = new ArrayList<MetricRegistrySnapshot>(batchSize);
+            this.buffer = new ArrayList<>(batchSize);
         }
 
         @Override

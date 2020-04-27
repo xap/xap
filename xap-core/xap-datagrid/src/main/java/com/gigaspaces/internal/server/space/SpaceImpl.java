@@ -2323,6 +2323,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     private void updateObjectTypeReadCounts(AnswerHolder answerHolder, ITemplatePacket template) {
 
+        if(!_engine.getMetricManager().getMetricFlagsState().isDataReadCountsMetricEnabled()){
+            return;
+        }
+
         if( answerHolder == null ){
             //answerHolder is null when read returns empty result
             return;

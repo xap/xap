@@ -59,4 +59,8 @@ public abstract class AbstractCompoundIndexScanner implements IQueryIndexScanner
         indexScanners = IOUtils.readObject(in);
     }
 
+    @Override
+    public boolean isExtendsAbstractQueryIndex() {
+        return false;
+    }
 }

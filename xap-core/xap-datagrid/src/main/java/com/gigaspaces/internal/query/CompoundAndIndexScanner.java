@@ -85,18 +85,23 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
         IndexChoiceNode fatherNode = null;
         IndexChoiceNode choiceNode = null;
         String shortestIndexName = "";
-        boolean isExplainPlan = context.getExplainPlanContext() != null;
+        final boolean isExplainPlan = context.getExplainPlanContext() != null;
+        final boolean trackIndexHits = context.getIndexMetricsContext() != null;
         if(isExplainPlan){
             fatherNode = context.getExplainPlanContext().getFatherNode();
             choiceNode = new IndexChoiceNode("AND");
             context.getExplainPlanContext().getSingleExplainPlan().addScanIndexChoiceNode(typeData.getClassName(), choiceNode);
         }
 
-
         // Iterate over custom indexes to find shortest potential match list:
         for (IQueryIndexScanner queryIndex : indexScanners) {
             // Get entries in space that match the indexed value in the query (a.k.a potential match list):
             IObjectsList result;
+
+            if (trackIndexHits && queryIndex.isExtendsAbstractQueryIndex()) {
+                context.getIndexMetricsContext().setIgnoreUpdates(true);
+            }
+
             if (isExplainPlan){
                 IndexChoiceNode prevFather = context.getExplainPlanContext().getFatherNode();
                 context.getExplainPlanContext().setFatherNode(choiceNode);
@@ -104,6 +109,10 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
                 context.getExplainPlanContext().setFatherNode(prevFather);
             }else {
                 result = queryIndex.getIndexedEntriesByType(context, typeData, template, latestIndexToConsider);
+            }
+
+            if (trackIndexHits && queryIndex.isExtendsAbstractQueryIndex()) {
+                context.getIndexMetricsContext().setIgnoreUpdates(false);
             }
 
             if (result == IQueryIndexScanner.RESULT_IGNORE_INDEX) {
@@ -129,7 +138,7 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
 
                 if (!wasUids) {
                     shortestExtendedIndexMatch = (IScanListIterator<IEntryCacheInfo>) result;
-                    if (isExplainPlan) {
+                    if (isExplainPlan || trackIndexHits) {
                         shortestIndexName = queryIndex.getIndexName();
                     }
                 }
@@ -151,7 +160,7 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
             // If the potential match list is shorter than the shortest match list so far, keep it:
             if (shortestPotentialMatchList == null || potentialMatchListSize <= shortestPotentialMatchList.size()){
                 shortestPotentialMatchList = potentialMatchList;
-                if(isExplainPlan){
+                if(isExplainPlan || trackIndexHits){
                     shortestIndexName = queryIndex.getIndexName();
                 }
             }
@@ -167,9 +176,15 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
                     intersectedList = addToIntersectedList(context, intersectedList, shortestExtendedIndexMatch, template.isFifoTemplate(), false/*shortest*/, typeData);
                 return intersectedList;
             }
+
             if (isExplainPlan){
                 addChosenIndex(context, typeData, fatherNode, choiceNode, shortestIndexName);
             }
+
+            if (trackIndexHits) {
+                context.getIndexMetricsContext().addChosenIndex(shortestIndexName);
+            }
+
             return shortestPotentialMatchList;
         }
 
@@ -182,6 +197,11 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
             if (isExplainPlan){
                 addChosenIndex(context, typeData, fatherNode, choiceNode, shortestIndexName);
             }
+
+            if (trackIndexHits) {
+                context.getIndexMetricsContext().addChosenIndex(shortestIndexName);
+            }
+
             return shortestExtendedIndexMatch;
         }
         if(isExplainPlan){

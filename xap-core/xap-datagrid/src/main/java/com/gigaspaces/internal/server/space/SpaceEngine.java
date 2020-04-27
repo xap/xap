@@ -71,7 +71,9 @@ import com.gigaspaces.internal.server.metadata.AddTypeDescResult;
 import com.gigaspaces.internal.server.metadata.AddTypeDescResultType;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.events.SpaceDataEventManager;
-import com.gigaspaces.internal.server.space.iterator.*;
+import com.gigaspaces.internal.server.space.iterator.ServerIteratorInfo;
+import com.gigaspaces.internal.server.space.iterator.ServerIteratorRequestInfo;
+import com.gigaspaces.internal.server.space.iterator.ServerIteratorsManager;
 import com.gigaspaces.internal.server.space.metadata.ServerTypeDesc;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.space.operations.WriteEntriesResult;
@@ -106,13 +108,13 @@ import com.j_spaces.core.Constants.SpaceProxy;
 import com.j_spaces.core.admin.SpaceRuntimeInfo;
 import com.j_spaces.core.admin.TemplateInfo;
 import com.j_spaces.core.cache.*;
-import com.j_spaces.core.cache.context.Context;
-import com.j_spaces.core.cache.blobStore.IBlobStoreEntryHolder;
 import com.j_spaces.core.cache.blobStore.BlobStoreEntryHolder;
 import com.j_spaces.core.cache.blobStore.BlobStoreRefEntryCacheInfo;
+import com.j_spaces.core.cache.blobStore.IBlobStoreEntryHolder;
 import com.j_spaces.core.cache.blobStore.optimizations.BlobStoreOperationOptimizations;
 import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.blobStore.storage.preFetch.BlobStorePreFetchIteratorBasedHandler;
+import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.client.*;
 import com.j_spaces.core.cluster.*;
 import com.j_spaces.core.exception.internal.EngineInternalSpaceException;
@@ -142,15 +144,14 @@ import net.jini.core.transaction.server.TransactionConstants;
 import net.jini.core.transaction.server.TransactionManager;
 import net.jini.space.InternalSpaceException;
 import net.jini.space.JavaSpace;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.Xid;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.Engine.*;
@@ -298,6 +299,7 @@ public class SpaceEngine implements ISpaceModeListener {
         _entryArrivedFactory = new EntryArrivedPacketsFactory();
         _localViewRegistrations = new LocalViewRegistrations(getFullSpaceName());
         _metricManager = MetricManager.acquire();
+
         _metricRegistrator = createSpaceRegistrator(spaceImpl);
         // ********** Finished initializing independent components **********
 
@@ -409,6 +411,15 @@ public class SpaceEngine implements ISpaceModeListener {
         return createSpaceRegistrator( spaceImpl, dataTypeTags );
     }
 
+    private MetricRegistrator createDataTypeSpaceRegistrator(final SpaceImpl spaceImpl, String dataTypeName, String index) {
+
+        Map<String, String> dataTypeTags = new HashMap<>(2);
+        dataTypeTags.put( "data_type_name", dataTypeName );
+        dataTypeTags.put( "index", index );
+
+        return createSpaceRegistrator( spaceImpl, dataTypeTags );
+    }
+
     private MetricRegistrator createSpaceRegistrator(final SpaceImpl spaceImpl) {
         return createSpaceRegistrator(spaceImpl, Collections.emptyMap() );
     }
@@ -436,7 +447,7 @@ public class SpaceEngine implements ISpaceModeListener {
                 } catch (RemoteException e) {
                     active = false;
                 }
-                return Boolean.valueOf(active);
+                return active;
             }
         });
         return _metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, tags, dynamicTags);
@@ -6288,6 +6299,10 @@ public class SpaceEngine implements ISpaceModeListener {
         return _serverIteratorsManager;
     }
 
+    public MetricManager getMetricManager() {
+        return _metricManager;
+    }
+
     /**
      * XTN CONFLICT CHECK INDICATOR.
      */
@@ -7170,12 +7185,29 @@ public class SpaceEngine implements ISpaceModeListener {
         return _metricRegistrator;
     }
 
-    public MetricRegistrator getDataTypeReadCountMetricRegistrator( String dataTypeName ) {
+    public MetricRegistrator getDataTypeMetricRegistrar(String dataTypeName) {
 
         MetricRegistrator metricRegistrator = _dataTypesMetricRegistrators.get( dataTypeName );
         if( metricRegistrator == null ){
             MetricRegistrator newMetricRegistrator = createDataTypeSpaceRegistrator( _spaceImpl, dataTypeName );
             MetricRegistrator existingMetricRegistrator = _dataTypesMetricRegistrators.putIfAbsent(dataTypeName, newMetricRegistrator);
+            metricRegistrator = existingMetricRegistrator != null ? existingMetricRegistrator : newMetricRegistrator;
+        }
+
+        return metricRegistrator;
+    }
+
+    private static String getDataTypeIndexKey(String dataTypeName, String index){
+        return dataTypeName + '.' + index;
+    }
+
+    public MetricRegistrator getDataTypeMetricRegistrar(String dataTypeName, String index ) {
+
+        final String indexKey = getDataTypeIndexKey( dataTypeName, index );
+        MetricRegistrator metricRegistrator = _dataTypesMetricRegistrators.get( indexKey );
+        if( metricRegistrator == null ){
+            MetricRegistrator newMetricRegistrator = createDataTypeSpaceRegistrator( _spaceImpl, dataTypeName, index );
+            MetricRegistrator existingMetricRegistrator = _dataTypesMetricRegistrators.putIfAbsent( indexKey, newMetricRegistrator);
             metricRegistrator = existingMetricRegistrator != null ? existingMetricRegistrator : newMetricRegistrator;
         }
 

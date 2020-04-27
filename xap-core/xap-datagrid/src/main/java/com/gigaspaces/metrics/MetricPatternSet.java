@@ -19,6 +19,7 @@ package com.gigaspaces.metrics;
 import com.gigaspaces.internal.utils.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,7 +33,7 @@ public class MetricPatternSet {
 
     public MetricPatternSet(String separator) {
         this.separator = separator;
-        this.patterns = new ArrayList<MetricPattern>();
+        this.patterns = new ArrayList<>();
     }
 
     public String getSeparator() {
@@ -66,5 +67,9 @@ public class MetricPatternSet {
         if (currPattern.getJokers() > newPattern.getJokers())
             return newPattern;
         return currPattern;
+    }
+
+    public List<MetricPattern> getPatterns(){
+        return Collections.unmodifiableList( patterns );
     }
 }

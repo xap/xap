@@ -72,4 +72,6 @@ public interface IQueryIndexScanner extends Externalizable
     boolean isUidsScanner();
 
     IObjectsList getIndexedEntriesByType(Context context, TypeData typeData, ITemplateHolder template, int latestIndexToConsider);
+
+    boolean isExtendsAbstractQueryIndex();
 }
