@@ -18,6 +18,8 @@ package com.gigaspaces.utils.jdbc;
 
 import com.gigaspaces.classloader.CustomURLClassLoader;
 import com.gigaspaces.start.ClasspathBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -38,6 +40,7 @@ public class DatabaseMetaDataReader implements Closeable {
     private final Connection connection;
     private final DatabaseMetaData metaData;
     private final URLClassLoader driverClassLoader;
+    private final Logger logger = LoggerFactory.getLogger(DatabaseMetaDataReader.class);
 
     public DatabaseMetaDataReader(String url, Properties properties) throws SQLException {
         this(builder(url).properties(properties));
@@ -85,7 +88,10 @@ public class DatabaseMetaDataReader implements Closeable {
     public List<TableInfo> getTables(TableQuery query) throws SQLException {
         List<TableInfo> result = new ArrayList<>();
         for (TableId id : getTablesIds(query)) {
-            result.add(getTableInfo(id));
+            TableInfo tableInfo = getTableInfo(id);
+            if(tableInfo != null) {
+                result.add(tableInfo);
+            }
         }
         return result;
     }
@@ -114,8 +120,15 @@ public class DatabaseMetaDataReader implements Closeable {
         return result;
     }
 
-    public TableInfo getTableInfo(TableId table) throws SQLException {
-        return new TableInfo(table, getTableColumns(table), getTablePrimaryKey(table), getTableIndexes(table));
+    public TableInfo getTableInfo(TableId table) {
+        try {
+            return new TableInfo(table, getTableColumns(table), getTablePrimaryKey(table), getTableIndexes(table));
+        } catch (SQLException e) {
+            logger.warn("Table "+table+" SQL state: "+e.getSQLState()+" "+e.getErrorCode(),e);
+        } catch (Exception t) {
+            logger.warn("Table "+table+" "+t.getMessage(),t);
+        }
+        return null;
     }
 
     public List<ColumnInfo> getTableColumns(TableId table) throws SQLException {
