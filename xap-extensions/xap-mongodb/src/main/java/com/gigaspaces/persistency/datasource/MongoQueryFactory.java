@@ -113,7 +113,7 @@ public class MongoQueryFactory {
                                             Object[] parameters, SpaceTypeDescriptor spaceTypeDescriptor) {
 
         SpaceDocumentMapper<DBObject> mapper = new DefaultSpaceDocumentMapper(
-                spaceTypeDescriptor);
+                spaceTypeDescriptor, false);
 
         DBObject obj = (DBObject) JSON.parse(parsedQuery);
 

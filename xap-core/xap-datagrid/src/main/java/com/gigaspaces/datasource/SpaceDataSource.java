@@ -137,4 +137,15 @@ public abstract class SpaceDataSource {
         return true;
     }
 
+    protected Integer numberOfInstances;
+
+    protected Integer instanceId;
+
+    public void setNumberOfInstances(Integer numberOfInstances) {
+        this.numberOfInstances = numberOfInstances;
+    }
+
+    public void setInstanceId(Integer instanceId) {
+        this.instanceId = instanceId;
+    }
 }

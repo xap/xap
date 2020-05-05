@@ -104,9 +104,15 @@ public class DefaultSpaceDocumentMapper implements
 
     private final PojoRepository repository = new PojoRepository();
     private final SpaceTypeDescriptor spaceTypeDescriptor;
+    private final boolean prefferPojo;
 
     public DefaultSpaceDocumentMapper(SpaceTypeDescriptor spaceTypeDescriptor) {
+        this(spaceTypeDescriptor, true);
+    }
+
+    public DefaultSpaceDocumentMapper(SpaceTypeDescriptor spaceTypeDescriptor, boolean prefferPojo) {
         this.spaceTypeDescriptor = spaceTypeDescriptor;
+        this.prefferPojo = prefferPojo;
     }
 
     private byte type(Class c) {
@@ -148,10 +154,11 @@ public class DefaultSpaceDocumentMapper implements
 
         String type = (String) bson.get(Constants.TYPE);
 
-        if (isDocument(type))
-            return toSpaceDocument(bson);
+        if (prefferPojo && isPojo(type)) {
+            return toPojo(bson);
+        }
 
-        return toPojo(bson);
+        return toSpaceDocument(bson);
     }
 
     private Object toPojo(DBObject bson) {
@@ -243,14 +250,13 @@ public class DefaultSpaceDocumentMapper implements
         return document;
     }
 
-    private boolean isDocument(String className) {
+    private boolean isPojo(String className) {
         try {
             Class.forName(className);
-            return false;
+            return true;
         } catch (ClassNotFoundException e) {
+            return false;
         }
-
-        return true;
     }
 
     public Object fromDBObject(Object value) {
