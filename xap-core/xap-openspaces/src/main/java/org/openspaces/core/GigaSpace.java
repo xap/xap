@@ -33,6 +33,8 @@ import com.gigaspaces.client.TakeModifiers;
 import com.gigaspaces.client.WriteModifiers;
 import com.gigaspaces.client.iterator.SpaceIterator;
 import com.gigaspaces.client.iterator.SpaceIteratorConfiguration;
+import com.gigaspaces.datasource.SpaceDataSourceLoadRequest;
+import com.gigaspaces.datasource.SpaceDataSourceLoadResult;
 import com.gigaspaces.events.DataEventSession;
 import com.gigaspaces.events.EventSessionConfig;
 import com.gigaspaces.query.ISpaceQuery;
@@ -45,6 +47,7 @@ import com.j_spaces.core.LeaseContext;
 
 import net.jini.core.transaction.Transaction;
 
+import net.jini.core.transaction.TransactionException;
 import org.openspaces.core.exception.ExceptionTranslator;
 import org.openspaces.core.executor.DistributedTask;
 import org.openspaces.core.executor.Task;
@@ -52,6 +55,7 @@ import org.openspaces.core.transaction.TransactionProvider;
 import org.springframework.dao.DataAccessException;
 
 import java.io.Serializable;
+import java.rmi.RemoteException;
 import java.util.concurrent.Future;
 
 /**
@@ -2992,4 +2996,15 @@ public interface GigaSpace {
      * @since 10.1.0
      */
     <T> ISpaceQuery<T> prepareTemplate(Object template);
+
+    /**
+     * Loads data from a {@link com.gigaspaces.datasource.SpaceDataSource} on demand
+     * The Space data source is created with {@link com.gigaspaces.datasource.SpaceDataSourceFactory}
+     * Loaded data can be adapted using the {@link com.gigaspaces.datasource.SpaceTypeSchemaAdapter}
+     * @param spaceDataSourceLoadRequest  {@link SpaceDataSourceLoadRequest}
+     * @return A future containing the details of the load operation affect which arrived
+     *      * asynchronously.
+     * @since 15.5.0
+     */
+    AsyncFuture<SpaceDataSourceLoadResult> asyncLoad(SpaceDataSourceLoadRequest spaceDataSourceLoadRequest);
 }

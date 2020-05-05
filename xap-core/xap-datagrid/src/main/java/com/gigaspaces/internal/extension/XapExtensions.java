@@ -16,6 +16,8 @@
 
 package com.gigaspaces.internal.extension;
 
+import com.gigaspaces.internal.client.spaceproxy.executors.SpaceDataSourceLoadTask;
+import com.gigaspaces.internal.server.space.executors.SpaceDataSourceLoadExecutor;
 import com.gigaspaces.internal.client.spaceproxy.executors.*;
 import com.gigaspaces.internal.cluster.node.impl.ReplicationUtils;
 import com.gigaspaces.internal.cluster.node.impl.config.ReplicationNodeConfigBuilder;
@@ -68,6 +70,7 @@ public class XapExtensions {
         registerSystemTaskExecutor(SinglePartitionGetBatchForIteratorSpaceTask.class, new SpaceGetBatchForIteratorExecutor());
         registerSystemTaskExecutor(CloseIteratorDistributedSpaceTask.class, new SpaceCloseIteratorExecutor());
         registerSystemTaskExecutor(RenewIteratorLeaseDistributedSpaceTask.class, new SpaceRenewIteratorLeaseExecutor());
+        registerSystemTaskExecutor(SpaceDataSourceLoadTask.class, new SpaceDataSourceLoadExecutor());
     }
 
     public ReplicationRouterBuilderFactory getReplicationRouterBuilderFactory() {
