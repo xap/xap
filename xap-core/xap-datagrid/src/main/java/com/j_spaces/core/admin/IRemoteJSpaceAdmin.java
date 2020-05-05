@@ -255,4 +255,11 @@ public interface IRemoteJSpaceAdmin extends Remote {
      * @throws RemoteException if a communication error occurs
      */
     SpaceInstanceRemoteClassLoaderInfo getSpaceInstanceRemoteClassLoaderInfo() throws RemoteException;
+
+    /**
+     * trigger read of chunks map from zk and update clusterInfo
+     *
+     * @throws RemoteException if a communication error occurs
+     */
+    void updateChunksMap() throws RemoteException;
 }

@@ -16,8 +16,10 @@
 
 package com.gigaspaces.internal.remoting.routing.clustered;
 
+import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.cluster.SpaceProxyLoadBalancerType;
+import com.gigaspaces.internal.exceptions.ChunksMapGenerationException;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.routing.RemoteOperationRouterException;
 import com.gigaspaces.internal.utils.concurrent.CompetitionExecutor;
@@ -27,18 +29,13 @@ import com.gigaspaces.internal.utils.concurrent.TimedCompetitionExecutor;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.exception.ClosedResourceException;
-
-import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.rmi.RemoteException;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Niv Ingberg
@@ -57,7 +54,30 @@ public class RemoteOperationsExecutorsCluster {
     private final IAsyncHandlerProvider _asyncHandlerProvider;
     private final RemoteOperationsExecutorProxyLocator _proxyLocator;
     private final SpaceProxyLoadBalancingStrategy _loadBalancer;
+    private SpaceProxyImpl _spaceProxy;
     private boolean _closed;
+
+    public RemoteOperationsExecutorsCluster(SpaceProxyImpl spaceProxy, String name, SpaceClusterInfo clusterInfo, int partitionId,
+                                            Collection<String> members, RemoteOperationsExecutorsClusterConfig config,
+                                            IAsyncHandlerProvider asyncHandlerProvider, RemoteOperationsExecutorProxyLocator proxyLocator,
+                                            RemoteOperationsExecutorProxy defaultMember) {
+        this._logger = LoggerFactory.getLogger(Constants.LOGGER_SPACEPROXY_ROUTER_LOOKUP + '.' + name);
+        this._lock = new Object();
+        this._name = name;
+        this._clusterInfo = clusterInfo;
+        this._partitionId = partitionId;
+        this._partitionName = _partitionId == -1 ? name : name + '#' + (partitionId + 1);
+        this._members = new HashMap<String, RemoteOperationsExecutorProxy>();
+        for (String member : members)
+            this._members.put(member, null);
+        this._config = config;
+        this._asyncHandlerProvider = asyncHandlerProvider;
+        this._proxyLocator = proxyLocator;
+        this._loadBalancer = createLoadBalancer(config, members, defaultMember);
+        this._spaceProxy = spaceProxy;
+        if (config.getLoadBalancerType() == SpaceProxyLoadBalancerType.ROUND_ROBIN)
+            refreshDisconnectedMembers();
+    }
 
     public RemoteOperationsExecutorsCluster(String name, SpaceClusterInfo clusterInfo, int partitionId,
                                             Collection<String> members, RemoteOperationsExecutorsClusterConfig config,
@@ -119,7 +139,7 @@ public class RemoteOperationsExecutorsCluster {
         if (timeout <= 0)
             throw new IllegalArgumentException("Timeout must be bigger than 0, got: " + timeout);
 
-        final boolean timeBased = timeout > 0;
+        final boolean timeBased = true;
         MemberLocatorTask[] tasks;
         synchronized (_lock) {
             validateNotClosed();
@@ -139,15 +159,39 @@ public class RemoteOperationsExecutorsCluster {
 
         final String competitionName = (activeOnly ? "Active" : "Available") + "MemberLocator" + "_" + _partitionName;
         final long competitionInterval = _config.getActiveServerLookupSamplingInterval();
-        CompetitionExecutor<MemberLocatorTask> competition = new TimedCompetitionExecutor<MemberLocatorTask>(tasks,
-                timeout,
-                competitionName,
-                _asyncHandlerProvider,
-                competitionInterval);
+        CompetitionExecutor<CompetitiveTask> competition;
+        if(this.getClusterInfo().isChunksRouting()) {
+            CompetitiveTask[] taskToExecute = new CompetitiveTask[tasks.length + 1];
+            System.arraycopy(tasks, 0, taskToExecute, 0, tasks.length);
+            taskToExecute[tasks.length] = new CheckRoutingGenerationTask(this._name, _clusterInfo.getChunksMap().getGeneration());
+            competition = new TimedCompetitionExecutor<>(taskToExecute,
+                    timeout,
+                    competitionName,
+                    _asyncHandlerProvider,
+                    competitionInterval);
+        } else {
+            competition = new TimedCompetitionExecutor<>(tasks,
+                    timeout,
+                    competitionName,
+                    _asyncHandlerProvider,
+                    competitionInterval);
+        }
 
         try {
-            MemberLocatorTask winner = competition.await(timeout, TimeUnit.MILLISECONDS);
-            return winner == null ? null : winner.getProxy();
+            CompetitiveTask winner = competition.await(timeout, TimeUnit.MILLISECONDS);
+            if (winner != null){
+                if(winner instanceof  MemberLocatorTask){
+                    return ((MemberLocatorTask) winner).getProxy();
+                }
+
+                if (this.getClusterInfo().isChunksRouting() && winner instanceof CheckRoutingGenerationTask) {
+                    int oldGeneration = this.getClusterInfo().getChunksMap().getGeneration();
+                    this._spaceProxy.updateProxyRouter(_spaceProxy.getProxyRouter(), ((CheckRoutingGenerationTask) winner).getNewMap());
+                    throw new ChunksMapGenerationException("chunks map generation of client is " + oldGeneration
+                            + " but server is at generation " + this._spaceProxy.getProxyRouter().getChunksMapGeneration());
+                }
+            }
+            return  null;
         } catch (ExecutionException e) {
             if (e.getCause() instanceof ClosedResourceException)
                 throw (ClosedResourceException) e.getCause();

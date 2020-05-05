@@ -2728,7 +2728,7 @@ public class SpaceEngine implements ISpaceModeListener {
     }
 
     private ProtectiveModeException createExceptionIfRoutingValueDoesntMatchesCurrentPartition(Object routingValue, IServerTypeDesc typeDesc, String operation) {
-        int partitionIdZeroBased = PartitionedClusterUtils.getPartitionId(routingValue, _clusterInfo);
+        int partitionIdZeroBased = PartitionedClusterUtils.getPartitionId(routingValue, this.getSpaceImpl().getClusterInfo());
         if (partitionIdZeroBased != getPartitionIdZeroBased()) {
             if (ProtectiveMode.shouldIgnoreWrongRoutingProtectiveMode(typeDesc.getTypeName()))
                 return null;

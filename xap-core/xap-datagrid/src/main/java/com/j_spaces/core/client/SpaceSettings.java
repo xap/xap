@@ -166,6 +166,9 @@ public class SpaceSettings implements Externalizable, Cloneable {
         try {
             SpaceSettings newSpaceSettings = (SpaceSettings) super.clone();
             newSpaceSettings._spaceConfig = _spaceConfig.cloneAndUpdate(chunksMap);
+            String totalMembers = newSpaceSettings._spaceURL.getProperty("total_members");
+            String[] split = totalMembers.split(",");
+            newSpaceSettings._spaceURL.setProperty("total_members",chunksMap.getNumOfPartitions()+","+split[1]);
             return newSpaceSettings;
         } catch (CloneNotSupportedException e) {
             throw new IllegalStateException("Failed to clone a cloneable object");

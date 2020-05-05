@@ -111,6 +111,11 @@ public class JSpaceAdminImpl extends ServiceAdminImpl
         return ((IRemoteJSpaceAdmin) m_service).getSpaceInstanceRemoteClassLoaderInfo();
     }
 
+    @Override
+    public void updateChunksMap() throws RemoteException {
+        ((IRemoteJSpaceAdmin) m_service).updateChunksMap();
+    }
+
     public String getName() throws RemoteException {
         return ((IRemoteJSpaceAdmin) m_service).getName();
     }

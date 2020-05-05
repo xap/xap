@@ -45,7 +45,8 @@ public class RestServiceFactory extends ServiceFactory {
                 .appendOptionalJars("jetty/xap-jetty")
                 .appendOptionalJars("jackson")
                 .appendOptionalJars("metrics")
-                .appendOptionalJars("jdbc");
+                .appendOptionalJars("jdbc")
+                .appendPlatformJars("zookeeper");
 
     }
 }

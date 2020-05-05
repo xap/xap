@@ -647,4 +647,9 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     public void demote(long maxSuspendTime, TimeUnit unit, SpaceContext sc) throws DemoteFailedException, RemoteException {
         getProxy().demote(maxSuspendTime, unit, sc);
     }
+
+    @Override
+    public void updateChunksMap() throws RemoteException {
+        ((IInternalRemoteJSpaceAdmin) getProxy()).updateChunksMap();
+    }
 }

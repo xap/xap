@@ -33,13 +33,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Niv Ingberg
@@ -128,10 +122,7 @@ public class SpaceClusterInfo implements Externalizable {
         this.loadBalancerType = clusterInfo.loadBalancerType;
         this.syncReplication = clusterInfo.syncReplication;
         this.hasReplicationTargets = clusterInfo.hasReplicationTargets;
-        this.numOfPartitions = clusterInfo.numOfPartitions;
-        this.membersNames = clusterInfo.membersNames;
         this.numOfBackups = clusterInfo.numOfBackups;
-        this.partitions = clusterInfo.partitions;
         this.customComponents = clusterInfo.customComponents;
         this.mirrorServiceConfig = clusterInfo.mirrorServiceConfig;
     }
@@ -156,11 +147,12 @@ public class SpaceClusterInfo implements Externalizable {
     public SpaceClusterInfo cloneAndUpdate(PartitionToChunksMap newChunksMap){
         SpaceClusterInfo newClusterInfo = new SpaceClusterInfo(this);
         newClusterInfo.chunksMap = newChunksMap;
-//        TODO next stage - need to changed these fields based on new topology
-//        newClusterInfo.numOfPartitions
-//        newClusterInfo.membersNames
-//        newClusterInfo.numOfBackups
-//        newClusterInfo.partitions
+        newClusterInfo.numOfPartitions = newChunksMap.getNumOfPartitions();
+        newClusterInfo.partitions = generatePartitionsInfo(newClusterInfo.clusterName, newClusterInfo.numOfPartitions, newClusterInfo.numOfBackups);
+        newClusterInfo.membersNames = new ArrayList<>();
+        for (SpaceClusterPartitionInfo partition : newClusterInfo.partitions) {
+            newClusterInfo.membersNames.addAll(partition.members);
+        }
         return newClusterInfo;
     }
 

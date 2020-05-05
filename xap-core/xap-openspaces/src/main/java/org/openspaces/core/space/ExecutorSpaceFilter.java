@@ -55,7 +55,7 @@ public class ExecutorSpaceFilter implements ISpaceFilter {
 
     private final Map<Class, Object> tasksGigaSpaceInjectionMap = new CopyOnUpdateMap<Class, Object>();
     private final AbstractSpaceFactoryBean spaceFactoryBean;
-    private final ClusterInfo clusterInfo;
+    private ClusterInfo clusterInfo;
     private IJSpace space;
     private GigaSpace gigaSpace;
     private final Object lock = new Object();
@@ -177,6 +177,12 @@ public class ExecutorSpaceFilter implements ISpaceFilter {
             return true;
         }
         return obj.getClass().isAnnotationPresent(AutowireTask.class);
+    }
+
+    public void updateSpace(IJSpace space) {
+        this.space = space;
+        this.clusterInfo.setNumberOfInstances(space.getDirectProxy().getSpaceClusterInfo().getNumberOfPartitions());
+        this.gigaSpace = new GigaSpaceConfigurer(space).gigaSpace();
     }
 
     private SpaceRemotingServiceExporter getServiceExporter(ApplicationContext applicationContext) {

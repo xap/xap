@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.remoting.routing.partitioned;
 
+import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 
 /**
@@ -37,6 +38,15 @@ public class PartitionedClusterUtils {
             return clusterInfo.isChunksRouting() ? clusterInfo.getPartitionId((safeAbs((Long) routingValue))) : (int) (safeAbs((Long) routingValue) % clusterInfo.getNumberOfPartitions());
         }
         return clusterInfo.isChunksRouting() ? clusterInfo.getPartitionId(safeAbs(routingValue.hashCode())) : safeAbs(routingValue.hashCode()) % clusterInfo.getNumberOfPartitions();
+    }
+
+    public static int getPartitionId(Object routingValue, PartitionToChunksMap map) {
+        if (routingValue == null)
+            return NO_PARTITION;
+        if (routingValue instanceof Long && PRECISE_LONG_ROUTING) {
+            return  map.getPartitionId((safeAbs((Long) routingValue)));
+        }
+        return map.getPartitionId(safeAbs(routingValue.hashCode()));
     }
 
     public static int safeAbs(int value) {

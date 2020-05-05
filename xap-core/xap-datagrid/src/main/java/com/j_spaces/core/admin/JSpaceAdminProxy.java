@@ -427,4 +427,9 @@ public class JSpaceAdminProxy
     public Map<String, LocalViewDetails> getLocalViewDetails() throws RemoteException {
         return ((IInternalRemoteJSpaceAdmin) adminImpl).getLocalViewDetails();
     }
+
+    @Override
+    public void updateChunksMap() throws RemoteException {
+        ((IInternalRemoteJSpaceAdmin) adminImpl).updateChunksMap();
+    }
 }

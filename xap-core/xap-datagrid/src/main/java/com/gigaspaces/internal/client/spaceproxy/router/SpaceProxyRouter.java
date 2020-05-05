@@ -128,7 +128,7 @@ public class SpaceProxyRouter {
     private SpaceProxyRemoteOperationRouter createClusteredRouter(SpaceProxyImpl spaceProxy, List<String> membersNames,
                                                                   RemoteOperationsExecutorsClusterConfig config) {
         final RemoteOperationsExecutorProxy defaultProxy = new RemoteOperationsExecutorProxy(spaceProxy.getRemoteMemberName(), spaceProxy.getRemoteJSpace(), quiesceTokenProvider);
-        final RemoteOperationsExecutorsCluster cluster = new RemoteOperationsExecutorsCluster(spaceProxy.getName(), _clusterInfo, -1,
+        final RemoteOperationsExecutorsCluster cluster = new RemoteOperationsExecutorsCluster(spaceProxy, spaceProxy.getName(), _clusterInfo, -1,
                 membersNames, config, _asyncHandlerProvider, _proxyLocator, defaultProxy);
         return new SpaceClusterRemoteOperationRouter(cluster, _postponedAsyncOperationsQueue, spaceProxy);
     }
@@ -142,14 +142,14 @@ public class SpaceProxyRouter {
             if (isEmbeddedPartition(members, embeddedMemberName))
                 partitions[i] = new SpaceEmbeddedRemoteOperationRouter(spaceProxy, i, quiesceTokenProvider);
             else {
-                RemoteOperationsExecutorsCluster cluster = new RemoteOperationsExecutorsCluster(spaceProxy.getName(),
+                RemoteOperationsExecutorsCluster cluster = new RemoteOperationsExecutorsCluster(spaceProxy, spaceProxy.getName(),
                         clusterInfo, i, members, config, _asyncHandlerProvider, _proxyLocator, null);
                 partitions[i] = new SpaceClusterRemoteOperationRouter(cluster, _postponedAsyncOperationsQueue,
                         spaceProxy);
             }
         }
 
-        RemoteOperationsExecutorsCluster partitionedCluster = new RemoteOperationsExecutorsCluster(spaceProxy.getName(),
+        RemoteOperationsExecutorsCluster partitionedCluster = new RemoteOperationsExecutorsCluster(spaceProxy, spaceProxy.getName(),
                 clusterInfo,
                 PartitionedClusterUtils.NO_PARTITION,
                 clusterInfo.getMembersNames(),

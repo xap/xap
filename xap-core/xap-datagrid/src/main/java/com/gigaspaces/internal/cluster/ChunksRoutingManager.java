@@ -4,6 +4,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,10 +62,10 @@ public class ChunksRoutingManager implements Externalizable {
     }
 
     public void addNewMap(PartitionToChunksMap chunksMap) {
-        if(chunksMap.getGeneration() < currentGeneration){
-            throw new IllegalStateException("cannot set map as latest, map.generation = "+chunksMap.getGeneration()+" while currentGeneration = "+currentGeneration+", map:\n"+chunksMap);
-        }
         maps.put(chunksMap.getGeneration(), chunksMap);
-        currentGeneration = chunksMap.getGeneration();
+    }
+
+    public void updateGeneration(){
+        currentGeneration = Collections.max(maps.keySet());
     }
 }
