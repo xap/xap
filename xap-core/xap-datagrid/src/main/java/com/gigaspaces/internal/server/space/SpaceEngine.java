@@ -3931,17 +3931,27 @@ public class SpaceEngine implements ISpaceModeListener {
 
             // perform anti-starvation random scan
             int actual = 0;
+            boolean actualSetFromIterator = false;
+            boolean isServerIterator = template.isServerIterator();
+            ServerIteratorInfo serverIteratorInfo = isServerIterator ? template.getServerIteratorInfo() : null;
+            if(isServerIterator && serverIteratorInfo.getActualTypePosition() != -1){
+                actualSetFromIterator = true;
+                actual = serverIteratorInfo.getActualTypePosition();
+            }
             if (subTypes.length > 1) {
                 int size = subTypes.length - 1;
                 // random start
-                if (!template.isFifoSearch())
+                if (!template.isFifoSearch() && !actualSetFromIterator) {
                     actual = _random.nextInt(size);// (int) (Math.random() * size);
+                }
             }
-
-            for (int k = 0; k < subTypes.length; k++, actual++) {
+            int k = isServerIterator ? serverIteratorInfo.getTypeScanIteration() : 0;
+            for (;k < subTypes.length; k++, actual++) {
                 if (actual >= subTypes.length)
                     actual = 0;
-
+                if(isServerIterator){
+                    serverIteratorInfo.setActualTypePosition(actual).setTypeScanIteration(k);
+                }
                 getMatchedEntriesAndOperateSA_Type(context,
                         template,
                         subTypes[actual], makeWaitForInfo);
@@ -3978,11 +3988,11 @@ public class SpaceEngine implements ISpaceModeListener {
         String alreadyMatchedIndexPath = toScan.getAlreadyMatchedIndexPath();
         boolean checkResultSize = 0 < _resultsSizeLimit && !template.isReturnOnlyUid() && template.isReadMultiple();
         int resultSizeOverflow = 0;
+        boolean hasNext = false;
         try {
             //can we use blob-store prefetch ?
             toScan = BlobStorePreFetchIteratorBasedHandler.createPreFetchIterIfRelevant(context, _cacheManager, toScan, template, _logger);
-
-            while (toScan.hasNext()) {
+            while (hasNext = toScan.hasNext()) {
                 IEntryCacheInfo pEntry = toScan.next();
                 if (pEntry == null) {
                     continue;
@@ -4007,8 +4017,17 @@ public class SpaceEngine implements ISpaceModeListener {
                 }
             }
         } finally {
-            // scan ended, release resource
-            toScan.releaseScan();
+            if( template.isServerIterator()){
+                if(!hasNext){
+                    toScan.releaseScan();
+                    template.getServerIteratorInfo().setScanListIterator(null);
+                }
+            }
+            else{
+                // scan ended, release resource
+                toScan.releaseScan();
+            }
+
             if (context.isPendingExpiredEntriesExist() && _cacheManager.getTemplatesManager().anyNotifyLeaseTemplates()) {
                 try {
                     _leaseManager.forceLeaseReaperCycle(false);
@@ -4086,11 +4105,15 @@ public class SpaceEngine implements ISpaceModeListener {
         if (toScan == null)
             return;
 
-        if (!toScan.isIterator())
+        if (!toScan.isIterator()) {
             getMatchedEntriesAndOperateSA_Entry(context,
                     template,
                     true /*needMatch*/, -1 /*indexPos*/, null, SystemTime.timeMillis(),
                     toScan.next(), makeWaitForInfo, entryTypeDesc);
+            if(template.isServerIterator()){
+                template.getServerIteratorInfo().setScanListIterator(null);
+            }
+        }
         else
             getMatchedEntriesAndOperateSA_Scan(context,
                     template,

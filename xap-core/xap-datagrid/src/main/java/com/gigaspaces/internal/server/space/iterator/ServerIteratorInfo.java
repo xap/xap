@@ -3,6 +3,7 @@ package com.gigaspaces.internal.server.space.iterator;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.core.GetBatchForIteratorException;
 import com.j_spaces.core.cache.IEntryCacheInfo;
+import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.list.IScanListIterator;
 
 import java.util.UUID;
@@ -17,6 +18,8 @@ public class ServerIteratorInfo {
     private volatile int storedBatchNumber;
     private volatile long expirationTime;
     private volatile boolean active;
+    private volatile int actualTypePosition;
+    private volatile int typeScanIteration;
 
     public ServerIteratorInfo(UUID uuid, int batchSize, long maxInactiveDuration) {
         this.uuid = uuid;
@@ -25,6 +28,7 @@ public class ServerIteratorInfo {
         this.storedBatchNumber = 0;
         this.expirationTime = System.currentTimeMillis() + maxInactiveDuration;
         this.active = true;
+        this.actualTypePosition = -1;
     }
 
     public UUID getUuid() {
@@ -76,6 +80,32 @@ public class ServerIteratorInfo {
 
     public ServerIteratorInfo setActive(boolean active) {
         this.active = active;
+        if(!active && this.scanListIterator != null) {
+            try {
+                this.scanListIterator.releaseScan();
+                this.scanListIterator = null;
+            } catch (SAException e) {
+                e.printStackTrace();
+            }
+        }
+        return this;
+    }
+
+    public int getActualTypePosition() {
+        return actualTypePosition;
+    }
+
+    public ServerIteratorInfo setActualTypePosition(int actualTypePosition) {
+        this.actualTypePosition = actualTypePosition;
+        return this;
+    }
+
+    public int getTypeScanIteration() {
+        return typeScanIteration;
+    }
+
+    public ServerIteratorInfo setTypeScanIteration(int typeScanIteration) {
+        this.typeScanIteration = typeScanIteration;
         return this;
     }
 
