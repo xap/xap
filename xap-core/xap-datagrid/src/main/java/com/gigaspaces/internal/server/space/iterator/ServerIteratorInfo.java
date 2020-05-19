@@ -1,9 +1,13 @@
 package com.gigaspaces.internal.server.space.iterator;
 
+import com.gigaspaces.SpaceRuntimeException;
+import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.core.GetBatchForIteratorException;
 import com.j_spaces.core.cache.IEntryCacheInfo;
+import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.list.IScanListIterator;
+import com.j_spaces.kernel.list.CircularNumerator;
 
 import java.util.UUID;
 
@@ -17,6 +21,7 @@ public class ServerIteratorInfo {
     private volatile int storedBatchNumber;
     private volatile long expirationTime;
     private volatile boolean active;
+    private volatile CircularNumerator<IServerTypeDesc> subTypesCircularNumerator;
 
     public ServerIteratorInfo(UUID uuid, int batchSize, long maxInactiveDuration) {
         this.uuid = uuid;
@@ -74,8 +79,24 @@ public class ServerIteratorInfo {
         return active;
     }
 
-    public ServerIteratorInfo setActive(boolean active) {
-        this.active = active;
+    private void deactivate() {
+        this.active = false;
+        if(this.scanListIterator != null) {
+            try {
+                this.scanListIterator.releaseScan();
+                this.scanListIterator = null;
+            } catch (SAException e) {
+                throw new SpaceRuntimeException("Failed to close scan list iterator ", e);
+            }
+        }
+    }
+
+    public CircularNumerator<IServerTypeDesc> getSubTypesCircularNumerator() {
+        return subTypesCircularNumerator;
+    }
+
+    public ServerIteratorInfo setSubTypesCircularNumerator(CircularNumerator<IServerTypeDesc> subTypesCircularNumerator) {
+        this.subTypesCircularNumerator = subTypesCircularNumerator;
         return this;
     }
 
@@ -108,7 +129,7 @@ public class ServerIteratorInfo {
         synchronized (lock){
             if(!isActive())
                 return false;
-            setActive(false);
+            deactivate();
             return true;
         }
     }
@@ -129,7 +150,7 @@ public class ServerIteratorInfo {
             return false;
         synchronized(lock){
             if(isCandidateForExpiration()){
-                setActive(false);
+                deactivate();
                 return true;
             }
             return false;

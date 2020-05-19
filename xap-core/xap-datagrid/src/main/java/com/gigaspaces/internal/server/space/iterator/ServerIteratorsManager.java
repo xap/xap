@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import com.j_spaces.core.sadapter.SAException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
