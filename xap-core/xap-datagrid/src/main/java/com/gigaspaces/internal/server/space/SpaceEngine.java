@@ -3932,7 +3932,7 @@ public class SpaceEngine implements ISpaceModeListener {
             // perform anti-starvation random scan
             CircularNumerator<IServerTypeDesc> subTypesCircularNumerator = template.isServerIterator() ? template.getServerIteratorInfo().getSubTypesCircularNumerator() : null;
             if(subTypesCircularNumerator == null) {
-                int start =  template.isFifoSearch() || subTypes.length == 1 ? 0 : new Random().nextInt(subTypes.length - 1);
+                int start =  template.isFifoSearch() || subTypes.length == 1 ? 0 : new Random().nextInt(subTypes.length);
                 subTypesCircularNumerator = new CircularNumerator<>(subTypes, start);
                 if(template.isServerIterator())
                     template.getServerIteratorInfo().setSubTypesCircularNumerator(subTypesCircularNumerator);
