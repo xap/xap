@@ -28,6 +28,9 @@ import com.j_spaces.kernel.SystemProperties;
 import net.jini.core.lease.Lease;
 import net.jini.core.transaction.Transaction;
 
+import java.util.Arrays;
+import java.util.HashMap;
+
 @com.gigaspaces.api.InternalApi
 public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
     public final Object[] entries;
@@ -67,20 +70,120 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
         this.leases = leases;
         this.timeout = timeout;
 
-        entryPackets = new IEntryPacket[entries.length];
+
+
+//        entryPackets = new IEntryPacket[entries.length];
+//
+//        for (int i = 0; i < entries.length; i++) {
+//            if (entries[i] == null)
+//                throw new IllegalArgumentException("entry number " + i + " is null");
+//            ObjectType objectType = ObjectType.fromObject(entries[i]);
+//
+//            entryPackets[i] = toEntryPacket(spaceProxy, entries[i], objectType);
+//
+//            if (entryPackets[i].getTypeName() == null)
+//                throw new IllegalArgumentException("Cannot write null-class Entry- entry number " + i);
+//            if (UpdateModifiers.isPartialUpdate(this.modifiers) && entryPackets[i].getDynamicProperties() != null)
+//                throw new UnsupportedOperationException("Partial update is not supported for dynamic properties.");
+//        }
+
+
+        //LinkedList<IEntryPacket> entryPacketLinkedList = new LinkedList<>();
+        //ArrayList<IEntryPacket> entryPacketLinkedList = new ArrayList<>();
+
+//        boolean isDuplicateAllowed = false;
+//        HashMap<Object, Integer> map = new HashMap<>();
+//
+//        entryPackets = new IEntryPacket[entries.length];
+//
+//
+//        for (int i = 0; i < entries.length; i++) {
+//            if (entries[i] == null)
+//                throw new IllegalArgumentException("entry number " + i + " is null");
+//            ObjectType objectType = ObjectType.fromObject(entries[i]);
+//
+//            IEntryPacket entryPacket = toEntryPacket(spaceProxy, entries[i], objectType);
+//            entryPacketLinkedList.add(entryPacket);
+//
+//            if (entryPacket.getTypeName() == null)
+//                throw new IllegalArgumentException("Cannot write null-class Entry- entry number " + i);
+//            if (UpdateModifiers.isPartialUpdate(this.modifiers) && entryPacket.getDynamicProperties() != null)
+//                throw new UnsupportedOperationException("Partial update is not supported for dynamic properties.");
+//
+//
+//        }
+//
+//
+//        if (!isDuplicateAllowed) {
+//
+////            ListIterator<IEntryPacket> listIterator = entryPacketLinkedList.listIterator();
+////            while (listIterator.hasNext()){
+////
+////            }
+//
+//
+//            for (int i = 0; i < entryPacketLinkedList.size(); i++) {
+//                IEntryPacket entryPacket = entryPacketLinkedList.get(i);
+//                if (!map.containsKey(entryPacket.getID())) {
+//                    map.put(entryPacket.getID(), i);
+//                } else {
+//                    Integer firstIdx = map.get(entryPacket.getID());
+//                    entryPacketLinkedList.set(firstIdx, entryPacket);
+//                    entryPacketLinkedList.remove(i);
+//                    --i;
+//                }
+//            }
+//        }
+//
+//        entryPackets = new IEntryPacket[entryPacketLinkedList.size()];
+//        entryPacketLinkedList.toArray(entryPackets);
+//
+//        for(IEntryPacket entryPacket : entryPacketLinkedList){
+//            System.out.println(entryPacket.getID() + ", ");
+//        }
+
+
+        IEntryPacket[] tmpEntryPackets = new IEntryPacket[entries.length];
+        HashMap<Object, Integer> entryPacketsIdsMap = new HashMap<>();
+        boolean isDuplicateAllowed = false;
+        int j = 0;
+
         for (int i = 0; i < entries.length; i++) {
             if (entries[i] == null)
                 throw new IllegalArgumentException("entry number " + i + " is null");
             ObjectType objectType = ObjectType.fromObject(entries[i]);
 
-            entryPackets[i] = toEntryPacket(spaceProxy, entries[i], objectType);
+            IEntryPacket entryPacket = toEntryPacket(spaceProxy, entries[i], objectType);
 
-            if (entryPackets[i].getTypeName() == null)
+            if (entryPacket.getTypeName() == null)
                 throw new IllegalArgumentException("Cannot write null-class Entry- entry number " + i);
-            if (UpdateModifiers.isPartialUpdate(this.modifiers) && entryPackets[i].getDynamicProperties() != null)
+            if (UpdateModifiers.isPartialUpdate(this.modifiers) && entryPacket.getDynamicProperties() != null)
                 throw new UnsupportedOperationException("Partial update is not supported for dynamic properties.");
+
+            if(isDuplicateAllowed) {
+                tmpEntryPackets[i] = entryPacket;
+            }
+            else {
+                if (!entryPacketsIdsMap.containsKey(entryPacket.getID())) {
+                    tmpEntryPackets[j] = entryPacket;
+                    entryPacketsIdsMap.put(entryPacket.getID(), j);
+                    ++j;
+                } else {
+                    Integer firstIdx = entryPacketsIdsMap.get(entryPacket.getID());
+                    tmpEntryPackets[firstIdx] = entryPacket;
+                }
+            }
+        }
+
+        if (tmpEntryPackets.length == j){
+            entryPackets = tmpEntryPackets;
+        } else {
+            entryPackets = Arrays.copyOf(tmpEntryPackets, j);
         }
     }
+
+
+
 
     public LeaseContext<?>[] convertWriteResults(IDirectSpaceProxy spaceProxy, LeaseContext<?>[] result) {
         //handle the case when result is null - no return value modifier+local cache
