@@ -20,6 +20,7 @@ import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ObjectType;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.j_spaces.core.Constants;
 import com.j_spaces.core.LeaseContext;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.UpdateModifiers;
@@ -27,6 +28,9 @@ import com.j_spaces.kernel.SystemProperties;
 
 import net.jini.core.lease.Lease;
 import net.jini.core.transaction.Transaction;
+
+import java.util.Arrays;
+import java.util.HashMap;
 
 @com.gigaspaces.api.InternalApi
 public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
@@ -67,18 +71,59 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
         this.leases = leases;
         this.timeout = timeout;
 
-        entryPackets = new IEntryPacket[entries.length];
+        IEntryPacket[] tmpEntryPackets = new IEntryPacket[entries.length];
+        HashMap<Object, Integer> entryPacketsIdsMap = null;
+
+        boolean isDuplicateUIDsWithRocksDBAllowed = Boolean.parseBoolean(spaceProxy.getDirectProxy().getProxySettings().getSpaceAttributes().
+                getProperty(Constants.Engine.FULL_ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS));
+
+
+        if (isDuplicateUIDsWithRocksDBAllowed) {
+            if (UpdateModifiers.isPartialUpdate(this.modifiers)){
+                throw new UnsupportedOperationException("Partial update is not supported when duplicate UIDs are allowed.");
+            }
+            entryPacketsIdsMap = new HashMap<>();
+            if (UpdateModifiers.isWriteOnly(this.modifiers)) {
+                isDuplicateUIDsWithRocksDBAllowed = false;
+            }
+        }
+        int counter = 0;
+
         for (int i = 0; i < entries.length; i++) {
             if (entries[i] == null)
                 throw new IllegalArgumentException("entry number " + i + " is null");
             ObjectType objectType = ObjectType.fromObject(entries[i]);
 
-            entryPackets[i] = toEntryPacket(spaceProxy, entries[i], objectType);
+            IEntryPacket entryPacket = toEntryPacket(spaceProxy, entries[i], objectType);
 
-            if (entryPackets[i].getTypeName() == null)
+            if (entryPacket.getTypeName() == null)
                 throw new IllegalArgumentException("Cannot write null-class Entry- entry number " + i);
-            if (UpdateModifiers.isPartialUpdate(this.modifiers) && entryPackets[i].getDynamicProperties() != null)
+            if (UpdateModifiers.isPartialUpdate(this.modifiers) && entryPacket.getDynamicProperties() != null)
                 throw new UnsupportedOperationException("Partial update is not supported for dynamic properties.");
+
+            if(!isDuplicateUIDsWithRocksDBAllowed) {
+                tmpEntryPackets[i] = entryPacket;
+            }
+
+            else {
+                Object entryPacketUID = entryPacket.getUID();
+                if (entryPacketUID == null || !entryPacketsIdsMap.containsKey(entryPacketUID)) {
+                    if (entryPacketUID != null) {
+                        entryPacketsIdsMap.put(entryPacketUID, counter);
+                    }
+                    tmpEntryPackets[counter] = entryPacket;
+                    ++counter;
+                } else {
+                    Integer firstIdx = entryPacketsIdsMap.get(entryPacketUID);
+                    tmpEntryPackets[firstIdx] = entryPacket;
+                }
+            }
+        }
+
+        if (!isDuplicateUIDsWithRocksDBAllowed || tmpEntryPackets.length == counter){
+            entryPackets = tmpEntryPackets;
+        } else {
+            entryPackets = Arrays.copyOf(tmpEntryPackets, counter);
         }
     }
 
