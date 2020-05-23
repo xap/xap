@@ -118,6 +118,7 @@ import com.gigaspaces.security.directory.CredentialsProvider;
 import com.gigaspaces.security.directory.CredentialsProviderHelper;
 import com.gigaspaces.security.service.SecurityInterceptor;
 import com.gigaspaces.server.space.suspend.SuspendType;
+import com.gigaspaces.start.ProductType;
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.time.SystemTime;
 import com.gigaspaces.utils.Pair;
@@ -193,9 +194,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 
-import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_BLOB_STORE;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_PROP;
+import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ATTRIBUET_STORE_HANDLER_CLASS_NAME;
+import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP;
 import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER_CLASS_NAME;
 import static com.j_spaces.core.Constants.LeaseManager.*;
 
@@ -2920,7 +2921,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             //FIX for GS-11826
             //Cause to SpaceConfig initialization if cachePolicy is BlobStore and devices still were not initialized
             if (_spaceConfig != null
-                    && _spaceConfig.getCachePolicy().equals(Constants.CacheManager.CACHE_POLICY_BLOB_STORE)
+                    && _spaceConfig.getCachePolicy().equals(CACHE_POLICY_BLOB_STORE)
                     && _spaceConfig.getBlobStoreDevices() == null) {
                 _spaceConfig = null;
             }
@@ -2991,6 +2992,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         spaceConfig.setEngineMemoryGCBeforeShortageEnabled(configReader.getSpaceProperty(
                 Engine.ENGINE_MEMORY_GC_BEFORE_MEMORY_SHORTAGE_PROP, Engine.ENGINE_MEMORY_GC_BEFORE_MEMORY_SHORTAGE_DEFAULT));
 
+        setOrUpdateBlobstoreRocksDBAllowDuplicateUIDs(spaceConfig, configReader);
+
         // Serialization type
         String serilType = configReader.getSpaceProperty(Engine.ENGINE_SERIALIZATION_TYPE_PROP, Engine.ENGINE_SERIALIZATION_TYPE_DEFAULT);
         if (serilType != null)
@@ -3052,7 +3055,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         final String defaultCachePolicyValue = isPersitent ? String.valueOf(
                 CacheManager.CACHE_POLICY_LRU) : String.valueOf(CacheManager.CACHE_POLICY_ALL_IN_CACHE);
 
-        spaceConfig.setCachePolicy(configReader.getSpaceProperty(CacheManager.CACHE_POLICY_PROP, defaultCachePolicyValue));
+        spaceConfig.setCachePolicy(configReader.getSpaceProperty(CACHE_POLICY_PROP, defaultCachePolicyValue));
 
         spaceConfig.setClusterConfigURL(configReader.getSpaceProperty(Cluster.CLUSTER_CONFIG_URL_PROP, Cluster.CLUSTER_CONFIG_URL_DEFAULT, false));
         spaceConfig.setClustered(configReader.getBooleanSpaceProperty(Cluster.IS_CLUSTER_SPACE_PROP, Cluster.IS_CLUSTER_SPACE_DEFAULT));
@@ -3858,4 +3861,23 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             throw new IllegalStateException("Nothing to update, CHUNKS_SPACE_ROUTING is disabled");
         }
     }
+
+    private void setOrUpdateBlobstoreRocksDBAllowDuplicateUIDs(SpaceConfig spaceConfig, SpaceConfigReader spaceConfigReader) {
+        String rocksDBStoreHandlerClassName = "com.gigaspaces.blobstore.rocksdb.RocksDBBlobStoreHandler";
+        String isDuplicateUIDsAllowed = "false";
+
+        Object blobstoreDataPolicy = getCustomProperties().get(CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP);
+        if (blobstoreDataPolicy != null){
+            if (blobstoreDataPolicy.getClass().getName().equals(rocksDBStoreHandlerClassName)){
+                String blobstoreRocksDBAllowDuplicateUIDs = spaceConfigReader.getSpaceProperty(Engine.ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS, Engine.ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS_DEFAULT);
+                if (!blobstoreRocksDBAllowDuplicateUIDs.equals(Engine.ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS_DEFAULT)){
+                    isDuplicateUIDsAllowed = blobstoreRocksDBAllowDuplicateUIDs;
+                } else if (PlatformVersion.getInstance().getProductType().equals(ProductType.InsightEdge)) {
+                    isDuplicateUIDsAllowed = "true";
+                }
+            }
+        }
+        spaceConfig.setBlobstoreRocksDBAllowDuplicateUIDs(isDuplicateUIDsAllowed);
+    }
+
 }
