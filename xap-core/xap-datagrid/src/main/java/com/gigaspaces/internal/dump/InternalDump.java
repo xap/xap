@@ -45,4 +45,6 @@ public interface InternalDump {
     void addPrefix(String prefix);
 
     void removePrefix();
+
+    void setHeapReportJson(String heapReportJson);
 }

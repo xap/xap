@@ -40,15 +40,23 @@ public class InternalDumpResult implements Serializable {
 
     private final InternalDumpProcessorFailedException[] failedProcessors;
 
-    public InternalDumpResult(String name, String fullPath, FileInfo[] files, InternalDumpProcessorFailedException[] failedProcessors) {
+    private final String heapReportJson;
+
+
+    public InternalDumpResult(String name, String fullPath, FileInfo[] files, InternalDumpProcessorFailedException[] failedProcessors, String heapReportJson) {
         this.name = name;
         this.fullPath = fullPath;
         this.files = files;
         this.failedProcessors = failedProcessors;
+        this.heapReportJson = heapReportJson;
     }
 
     public String getName() {
         return this.name;
+    }
+
+    public String getHeapReportJson() {
+        return heapReportJson;
     }
 
     public String getFullPath() {
