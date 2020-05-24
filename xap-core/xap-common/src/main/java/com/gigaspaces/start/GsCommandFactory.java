@@ -82,6 +82,8 @@ public class GsCommandFactory {
         appendGsClasspath();
         //fix for GS-13546
         command.classpathWithJars(locations().libPlatform("service-grid"));
+        if (JavaUtils.greaterOrEquals(9))
+            command.classpathWithJars(locations().libPlatform("javax"));
         command.classpathWithJars(locations().libPlatform("zookeeper"));
         appendSpringClassPath();
         postClasspath();
@@ -97,6 +99,8 @@ public class GsCommandFactory {
         appendGsClasspath();
         //fix for GS-13546
         command.classpathWithJars(locations().libPlatform("service-grid"));
+        if (JavaUtils.greaterOrEquals(9))
+            command.classpathWithJars(locations().libPlatform("javax"));
 //        command.classpathFromPath(locations().libPlatform("oshi"));
         command.classpathWithJars(locations().libPlatform("zookeeper"));
         postClasspath();
