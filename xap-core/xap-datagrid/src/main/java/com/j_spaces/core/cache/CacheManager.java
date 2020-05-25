@@ -103,15 +103,14 @@ import com.j_spaces.kernel.list.*;
 import com.j_spaces.kernel.locks.*;
 import net.jini.core.transaction.server.ServerTransaction;
 import net.jini.space.InternalSpaceException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.Engine.UPDATE_NO_LEASE;
@@ -4434,14 +4433,22 @@ public class CacheManager extends AbstractCacheManager
                 //check the return type - can be extended iterator
                 if (result != null && result.isIterator()) {
                     if (uidsIter == null) {
-                        resultOIS = (IScanListIterator<IEntryCacheInfo>) result;
+                        final IScanListIterator resultScan = (IScanListIterator<IEntryCacheInfo>) result;
                         if (index.isUidsScanner()) {
-                            uidsIter = (ScanUidsIterator) resultOIS;
+                            uidsIter = (ScanUidsIterator) resultScan;
                             uidsSize = uidsIter.size();
+                        }
+                        if (resultScan.hasSize()) {
+                            if (resultOIS == null || resultScan.size() < resultOIS.size()) {
+                                resultOIS = resultScan;
+                            }
+                        } else {
+                            //can't compare, override with last result (might not be the optimal approach)
+                            resultOIS = resultScan;
                         }
 
                         if (context.isIndicesIntersectionEnabled()) {
-                            intersectedList = addToIntersectedList(context, intersectedList, resultOIS, template.isFifoTemplate(), false/*shortest*/, entryType);
+                            intersectedList = addToIntersectedList(context, intersectedList, resultScan, template.isFifoTemplate(), false/*shortest*/, entryType);
                         }
                         // Log index usage
                         if (_logger.isTraceEnabled()) {
@@ -4474,7 +4481,7 @@ public class CacheManager extends AbstractCacheManager
         }
 
         //if single index and is a lucene index
-        if (GS_13953_ENABLED && indexUsed && numberOfCustomIndexes == 1
+        if (GS_13953_ENABLED && indexUsed
                 && resultOIS != null && resultOIS.isExtensionIndex()) {
             //Remove already traversed paths of first custom index
             final String customIndexName = customQuery.getCustomIndexes().get(0).getIndexName();

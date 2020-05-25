@@ -18,7 +18,6 @@ package org.openspaces.textsearch;
 
 import com.gigaspaces.SpaceRuntimeException;
 import com.gigaspaces.query.extension.QueryExtensionEntryIterator;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.search.IndexSearcher;
@@ -60,5 +59,10 @@ public class LuceneQueryExtensionEntryIterator extends QueryExtensionEntryIterat
         } catch (IOException e) {
             throw new SpaceRuntimeException("Failed to get next item", e);
         }
+    }
+
+    @Override
+    public int size() {
+        return scores.length;
     }
 }

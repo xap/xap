@@ -83,4 +83,10 @@ public interface IScanListIterator<T>
     {
         throw new RuntimeException("internal error-invalid usage");
     }
+
+    /**
+     * @return true if the iterator knows its size, and size() can be called.
+     */
+    default boolean hasSize() { return false;}
+    default int size() { return Integer.MAX_VALUE;}
 }

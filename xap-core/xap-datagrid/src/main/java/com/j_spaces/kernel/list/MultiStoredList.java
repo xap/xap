@@ -17,12 +17,10 @@
 package com.j_spaces.kernel.list;
 
 import com.j_spaces.core.sadapter.SAException;
+import com.j_spaces.kernel.ICollection;
 import com.j_spaces.kernel.IStoredList;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -253,4 +251,30 @@ public class MultiStoredList<T>
         return true;
     }
 
+    @Override //TODO optimize by counting in add/constructor
+    public boolean hasSize() {
+        Iterator<IObjectsList> iterator = _uniqueLists.iterator();
+        while (iterator.hasNext()) {
+            IObjectsList next = iterator.next();
+            if (! (next instanceof ICollection)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int size() {
+        int size = 0;
+        Iterator<IObjectsList> iterator = _uniqueLists.iterator();
+        while (iterator.hasNext()) {
+            IObjectsList next = iterator.next();
+            if (next instanceof ICollection) {
+                size += ((ICollection) next).size();
+            } else {
+                return Integer.MAX_VALUE;
+            }
+        }
+        return size;
+    }
 }
