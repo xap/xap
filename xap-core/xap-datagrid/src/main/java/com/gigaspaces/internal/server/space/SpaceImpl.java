@@ -344,7 +344,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     private SpaceClusterInfo createClusterInfo() {
         SpaceClusterInfo clusterInfo = new SpaceClusterInfo(_jspaceAttr, _spaceMemberName);
-        if (useZooKeeper() && GsEnv.propertyBoolean(SystemProperties.CHUNKS_SPACE_ROUTING).get(true)) {
+        if (useZooKeeper() && GsEnv.propertyBoolean(SystemProperties.CHUNKS_SPACE_ROUTING).get(false)) {
             zookeeperChunksMapHandler = new ZookeeperChunksMapHandler(_spaceName, attributeStore);
             try {
                 clusterInfo.setChunksMap(zookeeperChunksMapHandler.initChunksMap(clusterInfo.getNumberOfPartitions()));
