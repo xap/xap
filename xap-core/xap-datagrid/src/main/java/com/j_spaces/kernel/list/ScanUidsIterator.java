@@ -101,6 +101,12 @@ public class ScanUidsIterator
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public boolean hasSize() {
+        return true;
+    }
+
+    @Override
     public int  size()
     {
         return _uids.length > 1? ((_uids.length -1) * WEIGHT_GT_1 + 1) : _uids.length;

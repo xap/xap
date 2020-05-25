@@ -104,4 +104,8 @@ public interface IEntryCacheInfo extends EvictableServerEntry, IObjectInfo<IEntr
 
     IServerTypeDesc getServerTypeDesc();
 
+    @Override
+    default boolean hasSize() { return false; }
+    @Override
+    default int size() { return Integer.MAX_VALUE; }
 }
