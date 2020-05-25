@@ -60,13 +60,11 @@ import com.j_spaces.kernel.IObjectInfo;
 import com.j_spaces.kernel.IStoredList;
 import com.j_spaces.kernel.IStoredListIterator;
 import com.j_spaces.kernel.locks.ILockObject;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -1204,11 +1202,6 @@ public class BlobStoreRefEntryCacheInfo
 
     @Override
     public void dump(Logger logger, String msg) {
-    }
-
-    @Override
-    public int size() {
-        return 1;
     }
 
     @Override

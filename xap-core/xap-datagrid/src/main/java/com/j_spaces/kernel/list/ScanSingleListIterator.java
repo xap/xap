@@ -68,6 +68,16 @@ public class ScanSingleListIterator<T>
 
     }
 
+    @Override
+    public boolean hasSize() {
+        return true;
+    }
+
+    @Override
+    public int size() {
+        return _list.size();
+    }
+
     /*
      * @see java.util.Iterator#hasNext()
      */

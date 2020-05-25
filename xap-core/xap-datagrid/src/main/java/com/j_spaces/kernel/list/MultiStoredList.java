@@ -17,6 +17,7 @@
 package com.j_spaces.kernel.list;
 
 import com.j_spaces.core.sadapter.SAException;
+import com.j_spaces.kernel.ICollection;
 import com.j_spaces.kernel.IStoredList;
 
 import java.util.HashSet;
@@ -253,4 +254,21 @@ public class MultiStoredList<T>
         return true;
     }
 
+    @Override
+    public boolean hasSize() {
+        return true;
+    }
+
+    @Override
+    public int size() {
+        int size = 0;
+        for (IObjectsList next : _multiList) {
+            if (next instanceof ICollection) {
+                size += ((ICollection) next).size();
+            } else {
+                return Integer.MAX_VALUE;
+            }
+        }
+        return size;
+    }
 }

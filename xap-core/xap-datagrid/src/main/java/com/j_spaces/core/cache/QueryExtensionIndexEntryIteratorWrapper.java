@@ -118,4 +118,14 @@ public class QueryExtensionIndexEntryIteratorWrapper implements IScanListIterato
     public boolean isIterator() {
         return true;
     }
+
+    @Override
+    public boolean hasSize() {
+        return true;
+    }
+
+    @Override
+    public int size() {
+        return iterator.size();
+    }
 }

@@ -4441,9 +4441,8 @@ public class CacheManager extends AbstractCacheManager
 
         final ICustomQuery customQuery = template.getCustomQuery();
         boolean indexUsed = false;
-        int numberOfCustomIndexes = 0;
+        String nameOfChosenCustomIndex = null;
         if (customQuery != null && customQuery.getCustomIndexes() != null) {
-            numberOfCustomIndexes = customQuery.getCustomIndexes().size();
             for (IQueryIndexScanner index : customQuery.getCustomIndexes()) {
                 // Get entries in space that match the indexed value in the query (a.k.a potential match list):
                 IObjectsList result = index.getIndexedEntriesByType(context, entryType, template, latestIndexToConsider);
@@ -4468,14 +4467,24 @@ public class CacheManager extends AbstractCacheManager
                 //check the return type - can be extended iterator
                 if (result != null && result.isIterator()) {
                     if (uidsIter == null) {
-                        resultOIS = (IScanListIterator<IEntryCacheInfo>) result;
+                        final IScanListIterator resultScan = (IScanListIterator<IEntryCacheInfo>) result;
                         if (index.isUidsScanner()) {
-                            uidsIter = (ScanUidsIterator) resultOIS;
+                            uidsIter = (ScanUidsIterator) resultScan;
                             uidsSize = uidsIter.size();
+                        }
+                        if (resultScan.hasSize()) {
+                            if (resultOIS == null || resultScan.size() < resultOIS.size()) {
+                                resultOIS = resultScan;
+                                nameOfChosenCustomIndex = index.getIndexName();
+                            }
+                        } else {
+                            //can't compare, override with last result (might not be the optimal approach)
+                            resultOIS = resultScan;
+                            nameOfChosenCustomIndex = index.getIndexName();
                         }
 
                         if (context.isIndicesIntersectionEnabled()) {
-                            intersectedList = addToIntersectedList(context, intersectedList, resultOIS, template.isFifoTemplate(), false/*shortest*/, entryType);
+                            intersectedList = addToIntersectedList(context, intersectedList, resultScan, template.isFifoTemplate(), false/*shortest*/, entryType);
                         }
                         // Log index usage
                         if (_logger.isTraceEnabled()) {
@@ -4506,16 +4515,16 @@ public class CacheManager extends AbstractCacheManager
                 // check if the minimal index needs to be updated
                 if (resultSL == null || resultSL.size() > entriesVector.size()) {
                     resultSL = entriesVector;
+                    nameOfChosenCustomIndex = index.getIndexName();
                 }
             }
         }
 
         //if single index and is a lucene index
-        if (GS_13953_ENABLED && indexUsed && numberOfCustomIndexes == 1
+        if (GS_13953_ENABLED && indexUsed && nameOfChosenCustomIndex != null
                 && resultOIS != null && resultOIS.isExtensionIndex()) {
             //Remove already traversed paths of first custom index
-            final String customIndexName = customQuery.getCustomIndexes().get(0).getIndexName();
-            ((QueryExtensionIndexEntryIteratorWrapper) resultOIS).setAlreadyMatchedIndexPath(customIndexName);
+            ((QueryExtensionIndexEntryIteratorWrapper) resultOIS).setAlreadyMatchedIndexPath(nameOfChosenCustomIndex);
             return resultOIS;
         }
 

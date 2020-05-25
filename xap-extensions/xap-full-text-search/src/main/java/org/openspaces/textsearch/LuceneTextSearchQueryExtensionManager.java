@@ -24,7 +24,6 @@ import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtensions;
 import com.gigaspaces.server.SpaceServerEntry;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -40,15 +39,14 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -226,6 +224,7 @@ public class LuceneTextSearchQueryExtensionManager extends QueryExtensionManager
         try {
             LuceneTextSearchTypeIndex typeIndex = _luceneHolderMap.get(typeName);
             Analyzer analyzer = typeIndex.getAnalyzerForPath(path);
+            //TODO - check performance of: return new ComplexPhraseQueryParser(path, analyzer).parse(path+":"+operand);
             return new QueryParser(path, analyzer).parse(path + ":" + operand);
         } catch (ParseException e) {
             throw new IllegalArgumentException("Couldn't create full text search query for path=" + path + " operationName=" + operationName + " operand=" + operand, e);

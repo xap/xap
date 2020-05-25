@@ -34,10 +34,9 @@ import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.IObjectInfo;
 import com.j_spaces.kernel.IStoredList;
 import com.j_spaces.kernel.IStoredListIterator;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class MemoryBasedEntryCacheInfo implements IEntryCacheInfo {
@@ -291,10 +290,6 @@ public class MemoryBasedEntryCacheInfo implements IEntryCacheInfo {
     }
 
     public void dump(Logger logger, String msg) {
-    }
-
-    public int size() {
-        return 1;
     }
 
     public boolean isEmpty() {
