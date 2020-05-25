@@ -394,7 +394,7 @@ public class QuiesceHandler {
         suspendTypeChangeListeners.remove(listener);
     }
 
-    public Guard getGuard() {
+    Guard getGuard() {
         return _guard;
     }
 
