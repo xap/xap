@@ -653,6 +653,7 @@ public interface Constants {
         String CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_CLASS_PROP = "engine.blobstore_storage_handler";
 
         String CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP = "engine.blobstore_storage_handler_instance";
+        String CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_TYPE_PROP = "engine.blobstore_storage_handler_type";
 
         String BLOBSTORE_ENABLE_UNSAFE_ENDPOINT_PROP = "blobstore.enable_unsafe_sync_endpoint";
         String FULL_BLOBSTORE_ENABLE_UNSAFE_ENDPOINT_PROP = SPACE_CONFIG_PREFIX + BLOBSTORE_ENABLE_UNSAFE_ENDPOINT_PROP;

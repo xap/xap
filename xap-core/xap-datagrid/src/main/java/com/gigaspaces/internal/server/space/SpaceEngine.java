@@ -648,6 +648,10 @@ public class SpaceEngine implements ISpaceModeListener {
         if (blobStoreDataPolicy != null)
             properties.put(CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP, blobStoreDataPolicy);
 
+        final Object blobStoreTypeClass = spaceAttr.getCustomProperties().get(CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_TYPE_PROP);
+        if (blobStoreTypeClass != null)
+            properties.put(Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_TYPE_PROP, blobStoreTypeClass);
+
         final Object blobStoreDataPolicyClass = spaceAttr.getCustomProperties().get(CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_CLASS_PROP);
         if (blobStoreDataPolicyClass != null)
             properties.put(CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_CLASS_PROP, blobStoreDataPolicyClass);

@@ -38,6 +38,7 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
     public final long lease;
     public final long[] leases;
     public final long timeout;
+    private boolean isDuplicateUIDWithRocksDBEnabled;
 
     @SuppressWarnings("deprecation")
     private final static boolean oneWaySystemProperty = Boolean.getBoolean(SystemProperties.ONE_WAY_WRITE);
@@ -70,83 +71,10 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
         this.leases = leases;
         this.timeout = timeout;
 
-
-
-//        entryPackets = new IEntryPacket[entries.length];
-//
-//        for (int i = 0; i < entries.length; i++) {
-//            if (entries[i] == null)
-//                throw new IllegalArgumentException("entry number " + i + " is null");
-//            ObjectType objectType = ObjectType.fromObject(entries[i]);
-//
-//            entryPackets[i] = toEntryPacket(spaceProxy, entries[i], objectType);
-//
-//            if (entryPackets[i].getTypeName() == null)
-//                throw new IllegalArgumentException("Cannot write null-class Entry- entry number " + i);
-//            if (UpdateModifiers.isPartialUpdate(this.modifiers) && entryPackets[i].getDynamicProperties() != null)
-//                throw new UnsupportedOperationException("Partial update is not supported for dynamic properties.");
-//        }
-
-
-        //LinkedList<IEntryPacket> entryPacketLinkedList = new LinkedList<>();
-        //ArrayList<IEntryPacket> entryPacketLinkedList = new ArrayList<>();
-
-//        boolean isDuplicateAllowed = false;
-//        HashMap<Object, Integer> map = new HashMap<>();
-//
-//        entryPackets = new IEntryPacket[entries.length];
-//
-//
-//        for (int i = 0; i < entries.length; i++) {
-//            if (entries[i] == null)
-//                throw new IllegalArgumentException("entry number " + i + " is null");
-//            ObjectType objectType = ObjectType.fromObject(entries[i]);
-//
-//            IEntryPacket entryPacket = toEntryPacket(spaceProxy, entries[i], objectType);
-//            entryPacketLinkedList.add(entryPacket);
-//
-//            if (entryPacket.getTypeName() == null)
-//                throw new IllegalArgumentException("Cannot write null-class Entry- entry number " + i);
-//            if (UpdateModifiers.isPartialUpdate(this.modifiers) && entryPacket.getDynamicProperties() != null)
-//                throw new UnsupportedOperationException("Partial update is not supported for dynamic properties.");
-//
-//
-//        }
-//
-//
-//        if (!isDuplicateAllowed) {
-//
-////            ListIterator<IEntryPacket> listIterator = entryPacketLinkedList.listIterator();
-////            while (listIterator.hasNext()){
-////
-////            }
-//
-//
-//            for (int i = 0; i < entryPacketLinkedList.size(); i++) {
-//                IEntryPacket entryPacket = entryPacketLinkedList.get(i);
-//                if (!map.containsKey(entryPacket.getID())) {
-//                    map.put(entryPacket.getID(), i);
-//                } else {
-//                    Integer firstIdx = map.get(entryPacket.getID());
-//                    entryPacketLinkedList.set(firstIdx, entryPacket);
-//                    entryPacketLinkedList.remove(i);
-//                    --i;
-//                }
-//            }
-//        }
-//
-//        entryPackets = new IEntryPacket[entryPacketLinkedList.size()];
-//        entryPacketLinkedList.toArray(entryPackets);
-//
-//        for(IEntryPacket entryPacket : entryPacketLinkedList){
-//            System.out.println(entryPacket.getID() + ", ");
-//        }
-
-
         IEntryPacket[] tmpEntryPackets = new IEntryPacket[entries.length];
         HashMap<Object, Integer> entryPacketsIdsMap = new HashMap<>();
-        boolean isDuplicateAllowed = false;
-        int j = 0;
+        isDuplicateUIDWithRocksDBEnabled = isDuplicateUidEnabled(spaceProxy);
+        int counter = 0;
 
         for (int i = 0; i < entries.length; i++) {
             if (entries[i] == null)
@@ -160,14 +88,14 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
             if (UpdateModifiers.isPartialUpdate(this.modifiers) && entryPacket.getDynamicProperties() != null)
                 throw new UnsupportedOperationException("Partial update is not supported for dynamic properties.");
 
-            if(isDuplicateAllowed) {
+            if(!isDuplicateUIDWithRocksDBEnabled) {
                 tmpEntryPackets[i] = entryPacket;
             }
             else {
                 if (!entryPacketsIdsMap.containsKey(entryPacket.getID())) {
-                    tmpEntryPackets[j] = entryPacket;
-                    entryPacketsIdsMap.put(entryPacket.getID(), j);
-                    ++j;
+                    tmpEntryPackets[counter] = entryPacket;
+                    entryPacketsIdsMap.put(entryPacket.getID(), counter);
+                    ++counter;
                 } else {
                     Integer firstIdx = entryPacketsIdsMap.get(entryPacket.getID());
                     tmpEntryPackets[firstIdx] = entryPacket;
@@ -175,15 +103,12 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
             }
         }
 
-        if (tmpEntryPackets.length == j){
+        if (!isDuplicateUIDWithRocksDBEnabled || tmpEntryPackets.length == counter){
             entryPackets = tmpEntryPackets;
         } else {
-            entryPackets = Arrays.copyOf(tmpEntryPackets, j);
+            entryPackets = Arrays.copyOf(tmpEntryPackets, counter);
         }
     }
-
-
-
 
     public LeaseContext<?>[] convertWriteResults(IDirectSpaceProxy spaceProxy, LeaseContext<?>[] result) {
         //handle the case when result is null - no return value modifier+local cache
@@ -203,5 +128,14 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
             result = null;
 
         return result;
+    }
+
+    private boolean isDuplicateUidEnabled(ISpaceProxy spaceProxy){
+        String rocksDBClassName = "com.gigaspaces.blobstore.rocksdb.RocksDBBlobStoreHandler";
+        if (!rocksDBClassName.equals(spaceProxy.getDirectProxy().getProxySettings().getCustomProperties().getProperty("engine.blobstore_storage_handler_type"))){
+            return false;
+        }
+        String isDuplicateUidWithRocksDBEnabled = System.getProperty("com.gs.rocksdb-blobstore.duplicate.uid.enabled");
+        return isDuplicateUidWithRocksDBEnabled == null?  false : isDuplicateUidWithRocksDBEnabled.equals("true");
     }
 }
