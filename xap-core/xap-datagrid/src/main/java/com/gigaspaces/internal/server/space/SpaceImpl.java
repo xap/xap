@@ -3836,7 +3836,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     @Override
     public void updateChunksMap() throws RemoteException {
-        if (useZooKeeper() && GsEnv.propertyBoolean(SystemProperties.CHUNKS_SPACE_ROUTING).get(true)) {
+        if (useZooKeeper() && GsEnv.propertyBoolean(SystemProperties.CHUNKS_SPACE_ROUTING).get(false)) {
             synchronized (this){
                 PartitionToChunksMap newMap = zookeeperChunksMapHandler.getChunksMap();
                 this._clusterInfo = this._clusterInfo.cloneAndUpdate(newMap);
