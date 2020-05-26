@@ -1,7 +1,12 @@
 package com.gigaspaces.internal.jvm;
 
 import com.gigaspaces.api.InternalApi;
+import com.gigaspaces.internal.utils.LazySingleton;
+import com.sun.management.HotSpotDiagnosticMXBean;
+import com.sun.management.VMOption;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.management.ManagementFactory;
 
 @InternalApi
@@ -11,6 +16,7 @@ public class JavaUtils {
     private static final int JAVA_VERSION_MAJOR = parseJavaMajorVersion(VERSION);
     private static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("win");
     private static final boolean isOsx = System.getProperty("os.name").toLowerCase().startsWith("mac os x");
+    private static final LazySingleton<HotSpotDiagnosticMXBean> hotSpotDiagnosticMXBean = new LazySingleton<>(JavaUtils::initHotspotMBean);
 
     /**
      * Starting Java 9, format is: MAJOR.MINOR.SECURITY, where trailing 0 are omitted.
@@ -47,6 +53,35 @@ public class JavaUtils {
 
     public static boolean isOsx() {
         return isOsx;
+    }
+
+    /**
+     * Dumps the heap, note generally you only want live objects (does garage collection first)
+     * @param filename - name of the file
+     * @param live - only live or include uncollected objects
+     * @throws IOException - thrown if there is an error
+     */
+    public static void dumpHeap(String filename, boolean live) throws IOException {
+        hotSpotDiagnosticMXBean.getOrCreate().dumpHeap(filename, live);
+    }
+
+    public static VMOption getVMOption(String name) {
+        return hotSpotDiagnosticMXBean.getOrCreate().getVMOption(name);
+    }
+
+    public static boolean useCompressedOops() {
+        VMOption vmOption = getVMOption("UseCompressedOops");
+        String val = vmOption != null ? vmOption.getValue() : null;
+        return Boolean.parseBoolean(val);
+    }
+
+    private static HotSpotDiagnosticMXBean initHotspotMBean()  {
+        try {
+            return ManagementFactory.newPlatformMXBeanProxy(ManagementFactory.getPlatformMBeanServer(),
+                    "com.sun.management:type=HotSpotDiagnostic", HotSpotDiagnosticMXBean.class);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public static void main(String[] args) {
