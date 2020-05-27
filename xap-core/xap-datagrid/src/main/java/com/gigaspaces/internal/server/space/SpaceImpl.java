@@ -62,7 +62,7 @@ import com.gigaspaces.internal.extension.XapExtensions;
 import com.gigaspaces.internal.jvm.JVMDetails;
 import com.gigaspaces.internal.jvm.JVMHelper;
 import com.gigaspaces.internal.jvm.JVMStatistics;
-import com.gigaspaces.internal.jvm.MemoryUsageEstimator;
+import com.gigaspaces.internal.jvm.HeapUsageEstimator;
 import com.gigaspaces.internal.lrmi.stubs.LRMISpaceImpl;
 import com.gigaspaces.internal.lrmi.stubs.LRMIStubHandlerImpl;
 import com.gigaspaces.internal.metadata.ITypeDesc;
@@ -239,7 +239,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private final IStubHandler _stubHandler;
     private final DemoteHandler _demoteHandler;
     private final HttpServer _httpServer;
-    private final MemoryUsageEstimator _memoryUsageEstimator = new MemoryUsageEstimator();
+    private final HeapUsageEstimator _heapUsageEstimator = new HeapUsageEstimator();
 
     private SpaceClusterInfo _clusterInfo;
     private SpaceConfig _spaceConfig;

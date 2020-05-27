@@ -18,7 +18,7 @@ import java.util.List;
  * @since 15.5
  */
 @InternalApi
-public class MemoryUsageEstimator {
+public class HeapUsageEstimator {
 
     private final String desc;
     private final int arrayHeaderSize;
@@ -27,11 +27,11 @@ public class MemoryUsageEstimator {
     private final int referenceSize;
     private final int superclassFieldPadding;
 
-    public MemoryUsageEstimator() {
+    public HeapUsageEstimator() {
         this(Builder.auto());
     }
 
-    private MemoryUsageEstimator(Builder builder) {
+    private HeapUsageEstimator(Builder builder) {
         this.desc = builder.desc;
         this.arrayHeaderSize = builder.arrayHeaderSize;
         this.objectHeaderSize = builder.objectHeaderSize;
@@ -137,8 +137,8 @@ public class MemoryUsageEstimator {
         private int referenceSize;
         private int superclassFieldPadding;
 
-        public MemoryUsageEstimator build() {
-            return new MemoryUsageEstimator(this);
+        public HeapUsageEstimator build() {
+            return new HeapUsageEstimator(this);
         }
 
         public Builder desc(String desc) {
@@ -226,7 +226,7 @@ public class MemoryUsageEstimator {
     }
 
     public static void main(String[] args) {
-        MemoryUsageEstimator calc = Builder.auto64bit().build();
+        HeapUsageEstimator calc = Builder.auto64bit().build();
         System.out.println(calc.sizeOfInstance(Object.class));
         System.out.println(calc.sizeOfInstance(Integer.class));
         System.out.println(calc.sizeOfInstance(Long.class));
