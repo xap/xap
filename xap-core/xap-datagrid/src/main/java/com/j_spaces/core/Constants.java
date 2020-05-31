@@ -361,7 +361,6 @@ public interface Constants {
 
         String ENGINE_MEMORY_USAGE_RETRY_COUNT_DEFAULT = "5";
 
-
         String ENGINE_MEMORY_USAGE_RETRY_COUNT_PROP = "engine.memory_usage.retry_count";
         String FULL_ENGINE_MEMORY_USAGE_RETRY_COUNT_PROP = SPACE_CONFIG_PREFIX + ENGINE_MEMORY_USAGE_RETRY_COUNT_PROP;
 
@@ -425,6 +424,9 @@ public interface Constants {
         String ENGINE_DEMOTE_COMPLETION_EVENT_TIMEOUT = "engine.demote.completion-event-timeout";
         String ENGINE_DEMOTE_COMPLETION_EVENT_TIMEOUT_DEFAULT = "5s";
 
+        String ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID = "engine.blobstore.rocksdb.enable_duplicate_uid";
+        String FULL_ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID = SPACE_CONFIG_PREFIX + ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID;
+        String ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID_DEFAULT = "auto";
 
 
     }
@@ -653,7 +655,6 @@ public interface Constants {
         String CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_CLASS_PROP = "engine.blobstore_storage_handler";
 
         String CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP = "engine.blobstore_storage_handler_instance";
-        String CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_TYPE_PROP = "engine.blobstore_storage_handler_type";
 
         String BLOBSTORE_ENABLE_UNSAFE_ENDPOINT_PROP = "blobstore.enable_unsafe_sync_endpoint";
         String FULL_BLOBSTORE_ENABLE_UNSAFE_ENDPOINT_PROP = SPACE_CONFIG_PREFIX + BLOBSTORE_ENABLE_UNSAFE_ENDPOINT_PROP;

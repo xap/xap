@@ -38,7 +38,6 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
     public final long lease;
     public final long[] leases;
     public final long timeout;
-    private boolean isDuplicateUIDWithRocksDBEnabled;
 
     @SuppressWarnings("deprecation")
     private final static boolean oneWaySystemProperty = Boolean.getBoolean(SystemProperties.ONE_WAY_WRITE);
@@ -73,7 +72,10 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
 
         IEntryPacket[] tmpEntryPackets = new IEntryPacket[entries.length];
         HashMap<Object, Integer> entryPacketsIdsMap = new HashMap<>();
-        isDuplicateUIDWithRocksDBEnabled = isDuplicateUidEnabled(spaceProxy);
+
+        boolean isDuplicateUIDWithRocksDBEnabled = Boolean.parseBoolean(spaceProxy.getDirectProxy().getProxySettings().getSpaceAttributes().
+                getProperty("space-config.engine.blobstore.rocksdb.enable_duplicate_uid"));
+
         int counter = 0;
 
         for (int i = 0; i < entries.length; i++) {
@@ -128,14 +130,5 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
             result = null;
 
         return result;
-    }
-
-    private boolean isDuplicateUidEnabled(ISpaceProxy spaceProxy){
-        String rocksDBClassName = "com.gigaspaces.blobstore.rocksdb.RocksDBBlobStoreHandler";
-        if (!rocksDBClassName.equals(spaceProxy.getDirectProxy().getProxySettings().getCustomProperties().getProperty("engine.blobstore_storage_handler_type"))){
-            return false;
-        }
-        String isDuplicateUidWithRocksDBEnabled = System.getProperty("com.gs.rocksdb-blobstore.duplicate.uid.enabled");
-        return isDuplicateUidWithRocksDBEnabled == null?  false : isDuplicateUidWithRocksDBEnabled.equals("true");
     }
 }
