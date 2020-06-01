@@ -74,7 +74,8 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
         IEntryPacket[] tmpEntryPackets = new IEntryPacket[entries.length];
         HashMap<Object, Integer> entryPacketsIdsMap = new HashMap<>();
 
-        boolean isDuplicateUIDWithRocksDBEnabled = true;
+        boolean isDuplicateUIDWithRocksDBEnabled = Boolean.parseBoolean(spaceProxy.getDirectProxy().getProxySettings().getSpaceAttributes().
+                getProperty(Constants.Engine.FULL_ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID));
 
         int counter = 0;
 
