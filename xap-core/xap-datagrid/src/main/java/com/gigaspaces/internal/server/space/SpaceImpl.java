@@ -192,8 +192,6 @@ import java.util.concurrent.atomic.LongAdder;
 
 import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ATTRIBUET_STORE_HANDLER_CLASS_NAME;
-import static com.j_spaces.core.Constants.Engine.ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID;
-import static com.j_spaces.core.Constants.Engine.ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID_DEFAULT;
 import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER_CLASS_NAME;
 import static com.j_spaces.core.Constants.LeaseManager.*;
 
@@ -3834,16 +3832,14 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         Object blobstoreDataPolicy = getCustomProperties().get(CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP);
         if (blobstoreDataPolicy != null){
             if (blobstoreDataPolicy.getClass().getName().equals(rocksDBStoreHandlerClassName)){
-                Object blobstoreRocksDBEnableDuplicateUID = spaceConfigReader.getSpaceProperty(ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID, null);
-                if (blobstoreRocksDBEnableDuplicateUID != null){
+                Object blobstoreRocksDBEnableDuplicateUID = spaceConfigReader.getSpaceProperty(Engine.ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID, Engine.ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID_DEFAULT);
+                if (!blobstoreRocksDBEnableDuplicateUID.equals(Engine.ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID_DEFAULT)){
                     isDuplicateUIDEnabled = blobstoreRocksDBEnableDuplicateUID.toString();
                 } else if (PlatformVersion.getInstance().getProductType().equals(ProductType.InsightEdge)) {
                     isDuplicateUIDEnabled = "true";
                 }
             }
         }
-
         spaceConfig.setDuplicateUID(isDuplicateUIDEnabled);
-        //spaceConfig.setDuplicateUID("true");
     }
 }
