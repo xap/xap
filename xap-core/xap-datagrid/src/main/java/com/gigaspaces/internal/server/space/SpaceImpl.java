@@ -2980,7 +2980,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         spaceConfig.setEngineMemoryGCBeforeShortageEnabled(configReader.getSpaceProperty(
                 Engine.ENGINE_MEMORY_GC_BEFORE_MEMORY_SHORTAGE_PROP, Engine.ENGINE_MEMORY_GC_BEFORE_MEMORY_SHORTAGE_DEFAULT));
 
-        setBlobstoreRocksDBDuplicateUID(spaceConfig, configReader);
+        setOrUpdateBlobstoreRocksDBEnableDuplicateUID(spaceConfig, configReader);
 
         // Serialization type
         String serilType = configReader.getSpaceProperty(Engine.ENGINE_SERIALIZATION_TYPE_PROP, Engine.ENGINE_SERIALIZATION_TYPE_DEFAULT);
@@ -3827,21 +3827,21 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         _quiesceHandler.removeSpaceSuspendTypeListener(listener);
     }
 
-    private void setBlobstoreRocksDBDuplicateUID(SpaceConfig spaceConfig, SpaceConfigReader spaceConfigReader) {
+    private void setOrUpdateBlobstoreRocksDBEnableDuplicateUID(SpaceConfig spaceConfig, SpaceConfigReader spaceConfigReader) {
         String rocksDBStoreHandlerClassName = "com.gigaspaces.blobstore.rocksdb.RocksDBBlobStoreHandler";
         String isDuplicateUIDEnabled = "false";
 
         Object blobstoreDataPolicy = getCustomProperties().get(CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP);
         if (blobstoreDataPolicy != null){
             if (blobstoreDataPolicy.getClass().getName().equals(rocksDBStoreHandlerClassName)){
-                Object blobstoreRocksDBEnableDuplicateUID = spaceConfigReader.getSpaceProperty(Engine.ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID, Engine.ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID_DEFAULT);
+                String blobstoreRocksDBEnableDuplicateUID = spaceConfigReader.getSpaceProperty(Engine.ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID, Engine.ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID_DEFAULT);
                 if (!blobstoreRocksDBEnableDuplicateUID.equals(Engine.ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID_DEFAULT)){
-                    isDuplicateUIDEnabled = blobstoreRocksDBEnableDuplicateUID.toString();
+                    isDuplicateUIDEnabled = blobstoreRocksDBEnableDuplicateUID;
                 } else if (PlatformVersion.getInstance().getProductType().equals(ProductType.InsightEdge)) {
                     isDuplicateUIDEnabled = "true";
                 }
             }
         }
-        spaceConfig.setDuplicateUID(isDuplicateUIDEnabled);
+        spaceConfig.setBlobstoreRocksDBEnableDuplicateUID(isDuplicateUIDEnabled);
     }
 }

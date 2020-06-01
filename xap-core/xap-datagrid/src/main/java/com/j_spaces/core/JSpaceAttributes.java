@@ -86,7 +86,6 @@ import static com.j_spaces.core.Constants.Engine.ENGINE_MEMORY_USAGE_WR_ONLY_CHE
 import static com.j_spaces.core.Constants.Engine.ENGINE_MIN_THREADS_DEFAULT;
 import static com.j_spaces.core.Constants.Engine.ENGINE_NOTIFIER_RETRIES_DEFAULT;
 import static com.j_spaces.core.Constants.Engine.ENGINE_SERIALIZATION_TYPE_DEFAULT;
-import static com.j_spaces.core.Constants.Engine.ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID_DEFAULT;
 import static com.j_spaces.core.Constants.Engine.FULL_ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID;
 import static com.j_spaces.core.Constants.Engine.FULL_ENGINE_MAX_THREADS_PROP;
 import static com.j_spaces.core.Constants.Engine.FULL_ENGINE_MEMORY_EXPLICIT_GC_PROP;
@@ -684,12 +683,7 @@ public class JSpaceAttributes
                 String.valueOf(SpaceProxy.OldRouter.RETRY_CONNECTION_DEFAULT));
     }
 
-    public String getDuplicateUID(){
-        return getProperty(FULL_ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID, ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID_DEFAULT);
-    }
-
-
-    public void setDuplicateUID(String isEnabled){
+    public void setBlobstoreRocksDBEnableDuplicateUID(String isEnabled){
         this.setProperty(FULL_ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID, isEnabled);
     }
 

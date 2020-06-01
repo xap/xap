@@ -20,6 +20,7 @@ import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ObjectType;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.j_spaces.core.Constants;
 import com.j_spaces.core.LeaseContext;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.UpdateModifiers;
@@ -74,7 +75,7 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
         HashMap<Object, Integer> entryPacketsIdsMap = new HashMap<>();
 
         boolean isDuplicateUIDWithRocksDBEnabled = Boolean.parseBoolean(spaceProxy.getDirectProxy().getProxySettings().getSpaceAttributes().
-                getProperty("space-config.engine.blobstore.rocksdb.enable_duplicate_uid"));
+                getProperty(Constants.Engine.FULL_ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID));
 
         int counter = 0;
 
