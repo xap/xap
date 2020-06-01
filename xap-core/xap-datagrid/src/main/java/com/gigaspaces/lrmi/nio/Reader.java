@@ -23,13 +23,13 @@ import com.gigaspaces.internal.io.GSByteArrayInputStream;
 import com.gigaspaces.internal.io.MarshalContextClearedException;
 import com.gigaspaces.internal.io.MarshalInputStream;
 import com.gigaspaces.logger.Constants;
+import com.gigaspaces.lrmi.LRMIUtilities;
 import com.gigaspaces.lrmi.SmartByteBufferCache;
 import com.gigaspaces.lrmi.nio.SystemRequestHandler.SystemRequestContext;
 import com.gigaspaces.lrmi.nio.filters.IOFilterException;
 import com.gigaspaces.lrmi.nio.filters.IOFilterManager;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.kernel.SystemProperties;
-
 import sun.misc.BASE64Encoder;
 
 import java.io.IOException;
@@ -234,7 +234,9 @@ public class Reader {
         Selector tempSelector = null;
         SelectionKey tmpKey = null;
         _headerBuffer.clear();
+        int originalSoTimeout = 0;
         try {
+            originalSoTimeout = LRMIUtilities.getAndSetSocketTimeout(_socketChannel, LRMIUtilities.READ_BLOCK_TIMEOUT);
             while (bytesRead < 4) {
                 int bRead = _socketChannel.read(_headerBuffer);
                 if (bRead == -1) // EOF
@@ -274,6 +276,8 @@ public class Reader {
                 }
             }
         } finally {
+            LRMIUtilities.getAndSetSocketTimeout(_socketChannel, originalSoTimeout);
+
             if (tmpKey != null) {
                 tmpKey.cancel();
                 tmpKey = null;
@@ -317,6 +321,7 @@ public class Reader {
         int bRead;
 
         try {
+            originalSoTimeout = LRMIUtilities.getAndSetSocketTimeout(_socketChannel, LRMIUtilities.READ_BLOCK_TIMEOUT);
             while (bytesRead < dataLength) {
                 ByteBuffer workingBuffer = buffer;
                 if (shouldUseSlidingWindow) {
@@ -360,6 +365,8 @@ public class Reader {
                 }
             }
         } finally {
+            LRMIUtilities.getAndSetSocketTimeout(_socketChannel, originalSoTimeout);
+
             if (tmpKey != null)
                 tmpKey.cancel();
 
