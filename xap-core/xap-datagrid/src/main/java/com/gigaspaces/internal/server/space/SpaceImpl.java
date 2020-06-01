@@ -2980,7 +2980,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         spaceConfig.setEngineMemoryGCBeforeShortageEnabled(configReader.getSpaceProperty(
                 Engine.ENGINE_MEMORY_GC_BEFORE_MEMORY_SHORTAGE_PROP, Engine.ENGINE_MEMORY_GC_BEFORE_MEMORY_SHORTAGE_DEFAULT));
 
-        setOrUpdateBlobstoreRocksDBEnableDuplicateUID(spaceConfig, configReader);
+        setOrUpdateBlobstoreRocksDBAllowDuplicateUIDs(spaceConfig, configReader);
 
         // Serialization type
         String serilType = configReader.getSpaceProperty(Engine.ENGINE_SERIALIZATION_TYPE_PROP, Engine.ENGINE_SERIALIZATION_TYPE_DEFAULT);
@@ -3827,21 +3827,21 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         _quiesceHandler.removeSpaceSuspendTypeListener(listener);
     }
 
-    private void setOrUpdateBlobstoreRocksDBEnableDuplicateUID(SpaceConfig spaceConfig, SpaceConfigReader spaceConfigReader) {
+    private void setOrUpdateBlobstoreRocksDBAllowDuplicateUIDs(SpaceConfig spaceConfig, SpaceConfigReader spaceConfigReader) {
         String rocksDBStoreHandlerClassName = "com.gigaspaces.blobstore.rocksdb.RocksDBBlobStoreHandler";
-        String isDuplicateUIDEnabled = "false";
+        String isDuplicateUIDsAllowed = "false";
 
         Object blobstoreDataPolicy = getCustomProperties().get(CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP);
         if (blobstoreDataPolicy != null){
             if (blobstoreDataPolicy.getClass().getName().equals(rocksDBStoreHandlerClassName)){
-                String blobstoreRocksDBEnableDuplicateUID = spaceConfigReader.getSpaceProperty(Engine.ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID, Engine.ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID_DEFAULT);
-                if (!blobstoreRocksDBEnableDuplicateUID.equals(Engine.ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID_DEFAULT)){
-                    isDuplicateUIDEnabled = blobstoreRocksDBEnableDuplicateUID;
+                String blobstoreRocksDBAllowDuplicateUIDs = spaceConfigReader.getSpaceProperty(Engine.ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS, Engine.ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS_DEFAULT);
+                if (!blobstoreRocksDBAllowDuplicateUIDs.equals(Engine.ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS_DEFAULT)){
+                    isDuplicateUIDsAllowed = blobstoreRocksDBAllowDuplicateUIDs;
                 } else if (PlatformVersion.getInstance().getProductType().equals(ProductType.InsightEdge)) {
-                    isDuplicateUIDEnabled = "true";
+                    isDuplicateUIDsAllowed = "true";
                 }
             }
         }
-        spaceConfig.setBlobstoreRocksDBEnableDuplicateUID(isDuplicateUIDEnabled);
+        spaceConfig.setBlobstoreRocksDBAllowDuplicateUIDs(isDuplicateUIDsAllowed);
     }
 }

@@ -72,11 +72,16 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
         this.timeout = timeout;
 
         IEntryPacket[] tmpEntryPackets = new IEntryPacket[entries.length];
-        HashMap<Object, Integer> entryPacketsIdsMap = new HashMap<>();
+        HashMap<Object, Integer> entryPacketsIdsMap = null;
 
-        boolean isDuplicateUIDWithRocksDBEnabled = Boolean.parseBoolean(spaceProxy.getDirectProxy().getProxySettings().getSpaceAttributes().
-                getProperty(Constants.Engine.FULL_ENGINE_BLOBSTORE_ROCKSDB_ENABLE_DUPLICATE_UID));
-
+        boolean isDuplicateUIDsWithRocksDBAllowed = Boolean.parseBoolean(spaceProxy.getDirectProxy().getProxySettings().getSpaceAttributes().
+                getProperty(Constants.Engine.FULL_ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS));
+        if (isDuplicateUIDsWithRocksDBAllowed) {
+            if (UpdateModifiers.isPartialUpdate(this.modifiers)){
+                throw new UnsupportedOperationException("Partial update is not supported when duplicate UIDs are allowed.");
+            }
+            entryPacketsIdsMap = new HashMap<>();
+        }
         int counter = 0;
 
         for (int i = 0; i < entries.length; i++) {
@@ -91,22 +96,26 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
             if (UpdateModifiers.isPartialUpdate(this.modifiers) && entryPacket.getDynamicProperties() != null)
                 throw new UnsupportedOperationException("Partial update is not supported for dynamic properties.");
 
-            if(!isDuplicateUIDWithRocksDBEnabled) {
+            if(!isDuplicateUIDsWithRocksDBAllowed) {
                 tmpEntryPackets[i] = entryPacket;
             }
+
             else {
-                if (!entryPacketsIdsMap.containsKey(entryPacket.getID())) {
+                Object entryPacketID = entryPacket.getID();
+                if (entryPacketID == null || !entryPacketsIdsMap.containsKey(entryPacketID)) {
+                    if (entryPacketID != null) {
+                        entryPacketsIdsMap.put(entryPacketID, counter);
+                    }
                     tmpEntryPackets[counter] = entryPacket;
-                    entryPacketsIdsMap.put(entryPacket.getID(), counter);
                     ++counter;
                 } else {
-                    Integer firstIdx = entryPacketsIdsMap.get(entryPacket.getID());
+                    Integer firstIdx = entryPacketsIdsMap.get(entryPacketID);
                     tmpEntryPackets[firstIdx] = entryPacket;
                 }
             }
         }
 
-        if (!isDuplicateUIDWithRocksDBEnabled || tmpEntryPackets.length == counter){
+        if (!isDuplicateUIDsWithRocksDBAllowed || tmpEntryPackets.length == counter){
             entryPackets = tmpEntryPackets;
         } else {
             entryPackets = Arrays.copyOf(tmpEntryPackets, counter);
