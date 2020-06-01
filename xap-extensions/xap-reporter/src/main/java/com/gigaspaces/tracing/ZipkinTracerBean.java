@@ -3,11 +3,17 @@ package com.gigaspaces.tracing;
 import brave.Tracing;
 import brave.opentracing.BraveTracer;
 import com.ecwid.consul.v1.ConsulClient;
+import com.ecwid.consul.v1.ConsulRawClient;
 import com.ecwid.consul.v1.Response;
 import com.ecwid.consul.v1.kv.model.GetValue;
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.start.manager.ManagerClusterType;
 import io.opentracing.util.GlobalTracer;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
 import zipkin2.Span;
 import zipkin2.reporter.AsyncReporter;
 import zipkin2.reporter.okhttp3.OkHttpSender;
@@ -31,6 +37,24 @@ public class ZipkinTracerBean {
     private boolean startActive = false;
     private String serviceName;
     private String zipkinUrl = "http://zipkin.service.consul:9411";
+
+    public ConsulClient getClient(String agentHost) {
+        try {
+
+            SSLContextBuilder builder = new SSLContextBuilder();
+            builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+                    builder.build());
+            CloseableHttpClient customHttpClient = HttpClients.custom().setSSLSocketFactory(
+                    sslsf).build();
+            ConsulRawClient rawClient = new ConsulRawClient(agentHost, customHttpClient);
+
+
+            return new ConsulClient(rawClient);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private ZipkinTracerBean() {
         if (GlobalTracer.isRegistered()) throw new IllegalArgumentException("GlobalTracer already exists");
@@ -78,7 +102,7 @@ public class ZipkinTracerBean {
         if (useConsul) {
 
             thread = new Thread(new Runnable() {
-                private final ConsulClient client = new ConsulClient("localhost");
+                private final ConsulClient client = getClient("https://localhost:8500");
 
                 @Override
                 public void run() {

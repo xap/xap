@@ -45,8 +45,17 @@
         <dependency>
             <groupId>com.ecwid.consul</groupId>
             <artifactId>consul-api</artifactId>
-            <version>1.4.4</version>
+            <version>1.4.5</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>4.4.9</version>
+        </dependency>
     </dependencies>
 </project>
