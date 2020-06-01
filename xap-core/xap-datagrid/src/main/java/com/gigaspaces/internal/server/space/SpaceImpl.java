@@ -190,7 +190,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 
-import static com.j_spaces.core.Constants.CacheManager.*;
+import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_BLOB_STORE;
+import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_PROP;
+import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP;
 import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ATTRIBUET_STORE_HANDLER_CLASS_NAME;
 import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER_CLASS_NAME;
 import static com.j_spaces.core.Constants.LeaseManager.*;
@@ -2907,7 +2909,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             //FIX for GS-11826
             //Cause to SpaceConfig initialization if cachePolicy is BlobStore and devices still were not initialized
             if (_spaceConfig != null
-                    && _spaceConfig.getCachePolicy().equals(Constants.CacheManager.CACHE_POLICY_BLOB_STORE)
+                    && _spaceConfig.getCachePolicy().equals(CACHE_POLICY_BLOB_STORE)
                     && _spaceConfig.getBlobStoreDevices() == null) {
                 _spaceConfig = null;
             }
@@ -3041,7 +3043,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         final String defaultCachePolicyValue = isPersitent ? String.valueOf(
                 CacheManager.CACHE_POLICY_LRU) : String.valueOf(CacheManager.CACHE_POLICY_ALL_IN_CACHE);
 
-        spaceConfig.setCachePolicy(configReader.getSpaceProperty(CacheManager.CACHE_POLICY_PROP, defaultCachePolicyValue));
+        spaceConfig.setCachePolicy(configReader.getSpaceProperty(CACHE_POLICY_PROP, defaultCachePolicyValue));
 
         spaceConfig.setClusterConfigURL(configReader.getSpaceProperty(Cluster.CLUSTER_CONFIG_URL_PROP, Cluster.CLUSTER_CONFIG_URL_DEFAULT, false));
         spaceConfig.setClustered(configReader.getBooleanSpaceProperty(Cluster.IS_CLUSTER_SPACE_PROP, Cluster.IS_CLUSTER_SPACE_DEFAULT));
