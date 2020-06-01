@@ -20,12 +20,7 @@
 
 package com.gigaspaces.lrmi;
 
-import com.gigaspaces.annotation.lrmi.AsyncRemoteCall;
-import com.gigaspaces.annotation.lrmi.CallBackRemoteCall;
-import com.gigaspaces.annotation.lrmi.CustomTracking;
-import com.gigaspaces.annotation.lrmi.LivenessPriority;
-import com.gigaspaces.annotation.lrmi.MonitoringPriority;
-import com.gigaspaces.annotation.lrmi.OneWayRemoteCall;
+import com.gigaspaces.annotation.lrmi.*;
 import com.gigaspaces.internal.io.GSByteArrayInputStream;
 import com.gigaspaces.internal.io.GSByteArrayOutputStream;
 import com.gigaspaces.internal.io.MarshalInputStream;
@@ -37,9 +32,10 @@ import com.gigaspaces.logger.Constants;
 import com.gigaspaces.management.transport.ConnectionEndpointDetails;
 import com.j_spaces.kernel.ClassLoaderHelper;
 import com.j_spaces.kernel.SystemProperties;
-
 import net.jini.export.UseStubCache;
 import net.jini.security.Security;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.SocketException;
@@ -47,16 +43,7 @@ import java.nio.channels.SocketChannel;
 import java.rmi.Remote;
 import java.security.PrivilegedAction;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
 
 
 /**
@@ -437,6 +424,7 @@ public class LRMIUtilities {
     final static public boolean KEEP_ALIVE_MODE = Boolean.valueOf(System.getProperty(SystemProperties.LRMI_TCP_KEEP_ALIVE, String.valueOf(SystemProperties.LRMI_TCP_KEEP_ALIVE_DEFAULT)));
     final static public boolean TCP_NO_DELAY_MODE = Boolean.valueOf(System.getProperty(SystemProperties.LRMI_TCP_NO_DELAY, String.valueOf(SystemProperties.LRMI_TCP_NO_DELAY_DEFAULT)));
     final static public Integer TRAFFIC_CLASS = Integer.getInteger(SystemProperties.LRMI_TCP_TRAFFIC_CLASS);
+    final static public int READ_BLOCK_TIMEOUT = Integer.getInteger(SystemProperties.LRMI_READ_BLOCK_TIMEOUT, 0);
 
     private static final long KILO = 1024;
     private static final long MEGA = KILO * KILO;
@@ -498,6 +486,19 @@ public class LRMIUtilities {
                     _logger.warn("Failed setting traffic class [" + TRAFFIC_CLASS + "]", e);
                 }
             }
+    }
+
+    /**
+     * With this option set to a non-zero timeout, a read() call on the InputStream associated with
+     * this Socket will block for only this amount of time. Default is zero (indefinite).
+     *
+     * @return the previous timeout associated with this socket.
+     * @throws SocketException
+     */
+    public static int getAndSetSocketTimeout(SocketChannel sockChannel, int timeout) throws SocketException {
+        int soTimeout = sockChannel.socket().getSoTimeout();
+        sockChannel.socket().setSoTimeout(timeout);
+        return soTimeout;
     }
 
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.##");
