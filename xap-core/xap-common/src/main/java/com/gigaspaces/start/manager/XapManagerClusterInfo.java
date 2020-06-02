@@ -80,8 +80,8 @@ public class XapManagerClusterInfo {
         return parseServersEnvVar( var );
     }
 
-    public static Collection<XapManagerConfig> parseServersEnvVar( String serversEnvVar ) {
-        final Collection<XapManagerConfig> result = new ArrayList<XapManagerConfig>();
+    public static List<XapManagerConfig> parseServersEnvVar( String serversEnvVar ) {
+        final List<XapManagerConfig> result = new ArrayList<XapManagerConfig>();
         if (serversEnvVar != null && !serversEnvVar.isEmpty()) {
             final String[] tokens = serversEnvVar.split(",");
             for (String token : tokens) {
