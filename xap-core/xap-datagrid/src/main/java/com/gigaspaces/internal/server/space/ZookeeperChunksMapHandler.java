@@ -1,6 +1,7 @@
 package com.gigaspaces.internal.server.space;
 
 import com.gigaspaces.attribute_store.AttributeStore;
+import com.gigaspaces.attribute_store.SharedLock;
 import com.gigaspaces.internal.cluster.ChunksRoutingManager;
 import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.exceptions.ChunksMapMissingException;
@@ -8,51 +9,31 @@ import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryException;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.admin.SpaceConfig;
-import com.j_spaces.kernel.ClassLoaderHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.lang.reflect.Constructor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ATTRIBUET_STORE_HANDLER_CLASS_NAME;
-import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ZOKEEPER_CLIENT_CLASS_NAME;
+import java.util.concurrent.TimeUnit;
 
 public class ZookeeperChunksMapHandler implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(Constants.LOGGER_ZOOKEEPER);
-    private final String serviceName;
+    private final String puName;
     private final String attributeStoreKey;
     private final AttributeStore attributeStore;
     private final ExecutorService singleThreadExecutorService = Executors.newFixedThreadPool(1);
-    private ZookeeperClient zookeeperClient;
 
-    public ZookeeperChunksMapHandler(String serviceName, AttributeStore attributeStore) {
-        this.serviceName = serviceName;
-        this.attributeStoreKey = toPath(serviceName);
+
+    public ZookeeperChunksMapHandler(String puName, AttributeStore attributeStore) {
+        this.puName = puName;
+        this.attributeStoreKey = toPath(puName);
         this.attributeStore = attributeStore;
     }
 
-    public static String toPath(String spaceName) {
-        return "xap/spaces/" + spaceName + "/chunks";
-    }
-
-    private ZookeeperClient createZooKeeperClient(SpaceConfig spaceConfig) {
-
-        try {
-            //noinspection unchecked
-            Constructor constructor = ClassLoaderHelper.loadLocalClass(ZOKEEPER_CLIENT_CLASS_NAME)
-                    .getConstructor(SpaceConfig.class);
-            return (ZookeeperClient) constructor.newInstance(spaceConfig);
-
-        } catch (Exception e) {
-            if (logger.isErrorEnabled())
-                logger.error("Failed to create zookeeper client");
-            throw new DirectPersistencyRecoveryException("Failed to start [" + (serviceName)
-                    + "] Failed to create zookeeper client.");
-        }
+    public static String toPath(String puName) {
+        return "xap/pus/" + puName + "/chunks";
     }
 
     private ChunksRoutingManager toManager(byte[] bytes) throws IOException, ClassNotFoundException {
@@ -69,22 +50,36 @@ public class ZookeeperChunksMapHandler implements Closeable {
         return byteArrayOutputStream.toByteArray();
     }
 
-    public void addListener(SpaceConfig spaceConfig) {
-        zookeeperClient = createZooKeeperClient(spaceConfig);
+    public void addListener(ZookeeperClient zookeeperClient, SpaceConfig spaceConfig) {
         zookeeperClient.addConnectionStateListener(new ReconnectTask(spaceConfig), singleThreadExecutorService);
     }
 
     PartitionToChunksMap initChunksMap(int numberOfPartitions) throws ChunksMapMissingException {
         try {
-            PartitionToChunksMap chunksMap = new PartitionToChunksMap(numberOfPartitions, 0);
-            chunksMap.init();
-            ChunksRoutingManager chunksRoutingManager = new ChunksRoutingManager(chunksMap);
-            if (attributeStore.initFirst(attributeStoreKey, toByteArray(chunksRoutingManager))) {
-                logger.info("init op succeeded");
-                return chunksMap;
+            ChunksRoutingManager routingManager = getChunksRoutingManager();
+            if (routingManager == null) {
+                SharedLock lock = attributeStore.getSharedLock(com.j_spaces.core.Constants.Space.spaceLockPath(puName));
+                if (lock.acquire(30, TimeUnit.SECONDS)) {
+                    ChunksRoutingManager manager = getChunksRoutingManager();
+                    if (manager == null) {
+                        PartitionToChunksMap chunksMap = new PartitionToChunksMap(numberOfPartitions, 0);
+                        chunksMap.init();
+                        ChunksRoutingManager chunksRoutingManager = new ChunksRoutingManager(chunksMap);
+                        logger.info("Creating map");
+                        setRoutingManager(chunksRoutingManager);
+                        lock.release();
+                        return chunksMap;
+                    } else {
+                        logger.info("Map already exist");
+                        lock.release();
+                        return manager.getLastestMap();
+                    }
+                } else {
+                    throw new ChunksMapMissingException("failed to acquire space lock in 30 seconds");
+                }
             } else {
-                logger.info("init op failed - getting map");
-                return getChunksMap();
+                logger.info("Map already exist");
+                return routingManager.getLastestMap();
             }
         } catch (Exception e) {
             if (logger.isErrorEnabled())
@@ -100,12 +95,12 @@ public class ZookeeperChunksMapHandler implements Closeable {
         } catch (IOException e) {
             if (logger.isErrorEnabled())
                 logger.error("Failed to get chunks manager", e);
-            throw new DirectPersistencyRecoveryException("Failed to start [" + (serviceName)
+            throw new DirectPersistencyRecoveryException("Failed to start [" + (puName)
                     + "] Failed to create attribute store.");
         } catch (ClassNotFoundException e) {
             if (logger.isErrorEnabled())
                 logger.error("Failed to get chunks manager", e);
-            throw new DirectPersistencyRecoveryException("Failed to start [" + (serviceName)
+            throw new DirectPersistencyRecoveryException("Failed to start [" + (puName)
                     + "] Failed deserialize chunks manager");
         }
     }
@@ -118,7 +113,7 @@ public class ZookeeperChunksMapHandler implements Closeable {
         } catch (IOException e) {
             if (logger.isErrorEnabled())
                 logger.error("Failed to get chunks manager", e);
-            throw new DirectPersistencyRecoveryException("Failed to start [" + (serviceName)
+            throw new DirectPersistencyRecoveryException("Failed to start [" + (puName)
                     + "] Failed to create attribute store.");
         } catch (ClassNotFoundException e) {
             if (logger.isErrorEnabled())
@@ -132,12 +127,12 @@ public class ZookeeperChunksMapHandler implements Closeable {
         } catch (IOException e) {
             if (logger.isErrorEnabled())
                 logger.error("Failed to get chunks manager", e);
-            throw new DirectPersistencyRecoveryException("Failed to start [" + (serviceName)
+            throw new DirectPersistencyRecoveryException("Failed to start [" + (puName)
                     + "] Failed to create attribute store.");
         } catch (ClassNotFoundException e) {
             if (logger.isErrorEnabled())
                 logger.error("Failed to get chunks manager", e);
-            throw new DirectPersistencyRecoveryException("Failed to start [" + (serviceName)
+            throw new DirectPersistencyRecoveryException("Failed to start [" + (puName)
                     + "] Failed deserialize chunks manager");
         }
     }
@@ -148,21 +143,14 @@ public class ZookeeperChunksMapHandler implements Closeable {
         } catch (IOException e) {
             if (logger.isErrorEnabled())
                 logger.error("Failed to get chunks manager", e);
-            throw new DirectPersistencyRecoveryException("Failed to start [" + (serviceName)
+            throw new DirectPersistencyRecoveryException("Failed to start [" + (puName)
                     + "] Failed to create attribute store.");
         }
     }
 
     @Override
     public void close() throws IOException {
-        try {
-            if (zookeeperClient != null) {
-                singleThreadExecutorService.shutdownNow();
-                zookeeperClient.close();
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to close ZookeeperClient", e);
-        }
+        singleThreadExecutorService.shutdownNow();
     }
 
     void removePath() {

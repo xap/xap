@@ -59,10 +59,10 @@ import com.gigaspaces.internal.exceptions.ChunksMapGenerationException;
 import com.gigaspaces.internal.exceptions.ChunksMapMissingException;
 import com.gigaspaces.internal.exceptions.WriteResultImpl;
 import com.gigaspaces.internal.extension.XapExtensions;
+import com.gigaspaces.internal.jvm.HeapUsageEstimator;
 import com.gigaspaces.internal.jvm.JVMDetails;
 import com.gigaspaces.internal.jvm.JVMHelper;
 import com.gigaspaces.internal.jvm.JVMStatistics;
-import com.gigaspaces.internal.jvm.HeapUsageEstimator;
 import com.gigaspaces.internal.lrmi.stubs.LRMISpaceImpl;
 import com.gigaspaces.internal.lrmi.stubs.LRMIStubHandlerImpl;
 import com.gigaspaces.internal.metadata.ITypeDesc;
@@ -71,6 +71,7 @@ import com.gigaspaces.internal.os.OSDetails;
 import com.gigaspaces.internal.os.OSHelper;
 import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
+import com.gigaspaces.internal.quiesce.InternalQuiesceDetails;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
 import com.gigaspaces.internal.server.space.demote.DemoteHandler;
@@ -197,6 +198,7 @@ import java.util.concurrent.atomic.LongAdder;
 import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ATTRIBUET_STORE_HANDLER_CLASS_NAME;
 import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP;
+import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ZOOKEEPER_CLIENT_CLASS_NAME;
 import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER_CLASS_NAME;
 import static com.j_spaces.core.Constants.LeaseManager.*;
 
@@ -266,9 +268,12 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     //direct-persistency recovery
     private volatile DirectPersistencyRecoveryHelper _directPersistencyRecoveryHelper;
 
+    private final ZKCollocatedClientConfig zkConfig;
     private final AttributeStore attributeStore;
+    private ZookeeperClient zookeeperClient;
     private final ZookeeperLastPrimaryHandler zookeeperLastPrimaryHandler;
     private ZookeeperChunksMapHandler zookeeperChunksMapHandler;
+    private ZookeeperQuiesceHandler zookeeperQuiesceHandler;
 
     private final Map<Class<? extends SystemTask>, SpaceActionExecutor> executorMap = XapExtensions.getInstance().getActionExecutors();
 
@@ -291,12 +296,14 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         this._nodeName = _instanceId.equals("0") ? spaceName : spaceName + "." + _instanceId;
         this._logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE + "." + _nodeName);
         this._operationLogger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE_OPERATIONS + "." + _nodeName);
+        this._configReader = new SpaceConfigReader(_spaceMemberName);
+
+        this.zkConfig = useZooKeeper() ? createZKCollocatedClientConfig() : null;
         this.attributeStore = useZooKeeper() ? createZooKeeperAttributeStore() : null;
-        this._clusterInfo = createClusterInfo();
+        this._clusterInfo = createClusterInfo(customProperties.getProperty("metrics.pu_name"));
         this._secondary = isSecondary;
 
         this._deployPath = _customProperties.getProperty("deployPath");
-        this._configReader = new SpaceConfigReader(_spaceMemberName);
 
         this._isLusRegEnabled = Boolean.valueOf(JProperties.getContainerProperty(
                 containerName, Constants.LookupManager.LOOKUP_ENABLED_PROP,
@@ -311,8 +318,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         this._containerProxyRemote = container != null ? container.getContainerProxy() : null;
         this._securityInterceptor = securityEnabled ? new SecurityInterceptor(spaceName, customProperties, true) : null;
         this._embeddedCredentialsProvider = securityEnabled ? extractCredentials(customProperties, spaceConfig) : null;
-        //init quiesce handler before startInternal to ensure no operations will arrive before handler is initialized
-        this._quiesceHandler = new QuiesceHandler(this, getQuiesceStateChangedEvent(customProperties));
         this._demoteHandler = new DemoteHandler(this);
         this._stubHandler = new LRMIStubHandlerImpl();
 
@@ -323,9 +328,15 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         boolean useZooKeeper = useZooKeeper();
         if(useZooKeeper){
             zookeeperLastPrimaryHandler = new ZookeeperLastPrimaryHandler(this, attributeStore, _logger);
+            zookeeperQuiesceHandler = new ZookeeperQuiesceHandler(customProperties.getProperty("metrics.pu_name"), attributeStore);
         } else {
             zookeeperLastPrimaryHandler = null;
         }
+
+
+        //init quiesce handler before startInternal to ensure no operations will arrive before handler is initialized
+        this._quiesceHandler = createQuiesceHandler(customProperties);
+
         startInternal();
 
         // TODO RMI connections are not blocked
@@ -333,25 +344,49 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             initSpaceStartupStateManager();
     }
 
+    private ZKCollocatedClientConfig createZKCollocatedClientConfig() {
+        Properties props = JProperties.getSpaceProperties(_configReader.getFullSpaceName());
+        return new ZKCollocatedClientConfig(props);
+    }
+
+    public ZKCollocatedClientConfig getZkConfig() {
+        return zkConfig;
+    }
+
     private AttributeStore createZooKeeperAttributeStore() {
         try {
             //noinspection unchecked
             Constructor constructor = ClassLoaderHelper.loadLocalClass(ATTRIBUET_STORE_HANDLER_CLASS_NAME)
-                    .getConstructor(String.class);
-            return (AttributeStore) constructor.newInstance("");
+                    .getConstructor(String.class, ZKCollocatedClientConfig.class);
+            return (AttributeStore) constructor.newInstance("", zkConfig);
 
         } catch (Exception e) {
             if (_logger.isErrorEnabled())
-                _logger.error("Failed to create attribute store ");
+                _logger.error("Failed to create attribute store ",e);
             throw new DirectPersistencyRecoveryException("Failed to start [" + _spaceName
                     + "] Failed to create attribute store.");
         }
     }
 
-    private SpaceClusterInfo createClusterInfo() {
+    private ZookeeperClient createZooKeeperClient() {
+        try {
+            //noinspection unchecked
+            Constructor constructor = ClassLoaderHelper.loadLocalClass(ZOOKEEPER_CLIENT_CLASS_NAME)
+                    .getConstructor(ZKCollocatedClientConfig.class);
+            return (ZookeeperClient) constructor.newInstance(zkConfig);
+
+        } catch (Exception e) {
+            if (_logger.isErrorEnabled())
+                _logger.error("Failed to create zookeeper client",e);
+            throw new DirectPersistencyRecoveryException("Failed to start [" + (_spaceName)
+                    + "] Failed to create zookeeper client.");
+        }
+    }
+
+    private SpaceClusterInfo createClusterInfo(String puName) {
         SpaceClusterInfo clusterInfo = new SpaceClusterInfo(_jspaceAttr, _spaceMemberName);
         if (useZooKeeper() && GsEnv.propertyBoolean(SystemProperties.CHUNKS_SPACE_ROUTING).get(false)) {
-            zookeeperChunksMapHandler = new ZookeeperChunksMapHandler(_spaceName, attributeStore);
+            zookeeperChunksMapHandler = new ZookeeperChunksMapHandler(puName, attributeStore);
             try {
                 clusterInfo.setChunksMap(zookeeperChunksMapHandler.initChunksMap(clusterInfo.getNumberOfPartitions()));
                 return clusterInfo;
@@ -503,14 +538,24 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         return (m_adminImpl != null ? m_adminImpl.getProxy() : null);
     }
 
-    private QuiesceStateChangedEvent getQuiesceStateChangedEvent(Properties customProperties) {
-        QuiesceStateChangedEvent result = null;
-        if (customProperties.containsKey("quiesce.token")) {
+    private QuiesceHandler createQuiesceHandler(Properties customProperties) {
+        QuiesceStateChangedEvent event = null;
+        if(useZooKeeper()){
+            InternalQuiesceDetails details = zookeeperQuiesceHandler.getUpdatedQuiesceDetails();
+            if(details != null && details.getStatus().equals(QuiesceState.QUIESCED)) {
+                event = new QuiesceStateChangedEvent(QuiesceState.QUIESCED, details.getToken(), details.getDescription());
+                QuiesceHandler handler = new QuiesceHandler(this, event);
+                zookeeperQuiesceHandler.updateInstanceState(details);
+                return handler;
+            }
+        } else if (customProperties.containsKey("quiesce.token")) {
             String token = customProperties.getProperty("quiesce.token");
             String description = customProperties.getProperty("quiesce.description");
-            result = new QuiesceStateChangedEvent(QuiesceState.QUIESCED, new DefaultQuiesceToken(token), description);
+            event = new QuiesceStateChangedEvent(QuiesceState.QUIESCED, new DefaultQuiesceToken(token), description);
+            return new QuiesceHandler(this, event);
         }
-        return result;
+
+        return new QuiesceHandler(this, event);
     }
 
     public static String extractInstanceIdFromContainerName(String containerName) {
@@ -721,17 +766,26 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 _leaderSelector.terminate();
             }
 
-            if (attributeStore != null) {
-                try {
-                    attributeStore.close();
+
+            if(zookeeperClient != null){
+                try{
+                    zookeeperClient.close();
                 } catch (Exception e) {
-                    _logger.warn("Failed to close ZooKeeperAttributeStore", e);
+                    _logger.warn("Failed to close zookeeperClient", e);
+                }
+            }
+
+            if (zookeeperQuiesceHandler != null) {
+                try {
+                    zookeeperQuiesceHandler.close();
+                } catch (Exception e) {
+                    _logger.warn("Failed to close zookeeperQuiesceHandler", e);
                 }
             }
 
             if (zookeeperChunksMapHandler != null) {
-                //TODO- need to make sure this doesnt happen on scale in instance termination
                 try{
+                    //TODO- need to not delete map and handle leftover map on startup
                     if(!this._quiesceHandler.isQuiesced()) {
                         zookeeperChunksMapHandler.removePath();
                     }
@@ -739,6 +793,15 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                     _logger.warn("Failed to delete "+attributeStore, e);
                 }
                 zookeeperChunksMapHandler.close();
+            }
+
+
+            if (attributeStore != null) {
+                try {
+                    attributeStore.close();
+                } catch (Exception e) {
+                    _logger.warn("Failed to close ZooKeeperAttributeStore", e);
+                }
             }
 
             if (_qp != null)
@@ -3170,8 +3233,14 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             _clusterFailureDetector = initClusterFailureDetector(_clusterPolicy);
             _engine = new SpaceEngine(this);
+
+            if (useZooKeeper()) {
+                zookeeperClient = createZooKeeperClient();
+                zookeeperQuiesceHandler.addListener(zookeeperClient, _quiesceHandler);
+            }
+
             if (zookeeperChunksMapHandler != null && _clusterInfo.isChunksRouting()) {
-                zookeeperChunksMapHandler.addListener(_spaceConfig);
+                zookeeperChunksMapHandler.addListener(zookeeperClient, _spaceConfig);
             }
             if (isLookupServiceEnabled)
                 registerLookupService();

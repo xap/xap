@@ -110,6 +110,11 @@ public class PropertiesFileAttributeStore implements AttributeStore, Serializabl
         }
     }
 
+    @Override
+    public SharedLock getSharedLock(String key) {
+        throw new UnsupportedOperationException("only supported in ZooKeeperAttributeStore.class");
+    }
+
     public <T> T withProperties(PropertiesHandler<T> propertiesHandler) throws IOException {
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")) {
             FileChannel fileChannel = randomAccessFile.getChannel();
@@ -161,9 +166,5 @@ public class PropertiesFileAttributeStore implements AttributeStore, Serializabl
     }
 
 
-    @Override
-    public boolean initFirst(String key, byte[] value) throws Exception {
-        throw new UnsupportedOperationException("only supported in ZooKeeperAttributeStore.class");
-    }
 
 }

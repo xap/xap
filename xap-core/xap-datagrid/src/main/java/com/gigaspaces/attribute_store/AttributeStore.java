@@ -35,5 +35,5 @@ public interface AttributeStore extends Closeable {
 
     String remove(String key) throws IOException;
 
-    boolean initFirst(String key, byte[] value) throws Exception;
+    SharedLock getSharedLock(String key);
 }
