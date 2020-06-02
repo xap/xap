@@ -76,7 +76,7 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
 
         boolean isDuplicateUIDsWithRocksDBAllowed = Boolean.parseBoolean(spaceProxy.getDirectProxy().getProxySettings().getSpaceAttributes().
                 getProperty(Constants.Engine.FULL_ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS));
-        isDuplicateUIDsWithRocksDBAllowed = true;
+
 
         if (isDuplicateUIDsWithRocksDBAllowed) {
             if (UpdateModifiers.isPartialUpdate(this.modifiers)){
@@ -103,15 +103,15 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
             }
 
             else {
-                Object entryPacketID = entryPacket.getID();
-                if (entryPacketID == null || !entryPacketsIdsMap.containsKey(entryPacketID)) {
-                    if (entryPacketID != null) {
-                        entryPacketsIdsMap.put(entryPacketID, counter);
+                Object entryPacketUID = entryPacket.getUID();
+                if (entryPacketUID == null || !entryPacketsIdsMap.containsKey(entryPacketUID)) {
+                    if (entryPacketUID != null) {
+                        entryPacketsIdsMap.put(entryPacketUID, counter);
                     }
                     tmpEntryPackets[counter] = entryPacket;
                     ++counter;
                 } else {
-                    Integer firstIdx = entryPacketsIdsMap.get(entryPacketID);
+                    Integer firstIdx = entryPacketsIdsMap.get(entryPacketUID);
                     tmpEntryPackets[firstIdx] = entryPacket;
                 }
             }
