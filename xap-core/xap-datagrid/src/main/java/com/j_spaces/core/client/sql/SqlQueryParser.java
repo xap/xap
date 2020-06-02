@@ -18,7 +18,6 @@ package com.j_spaces.core.client.sql;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.query.explainplan.ExplainPlan;
-import com.gigaspaces.internal.utils.collections.ConcurrentSoftCache;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.jdbc.AbstractDMLQuery;
@@ -39,12 +38,12 @@ import org.slf4j.LoggerFactory;
 /**
  * The parser manager is responsible for handling statements and calling the SqlParser for parsing
  * and creating Query objects. ParserManager also maintains the statements cache in a {@link
- * ConcurrentSoftCache}
+ * QueryCache}
  */
 public abstract class SqlQueryParser {
     // logger
     private final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
-    private final QueryCache _queryCache = new QueryCache();
+    private final QueryCache _queryCache = QueryCache.create();
     private final ThreadLocal<SqlParser> _parser = new ThreadLocal<SqlParser>();
 
 

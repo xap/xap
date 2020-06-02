@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-
 package com.gigaspaces.internal.utils.collections;
 
-import java.lang.ref.SoftReference;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import com.j_spaces.jdbc.Query;
+import com.j_spaces.jdbc.QueryCache;
 
+import java.lang.ref.SoftReference;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Soft reference concurrent cache. It uses a ConcurrentHashMap and a soft reference for the
@@ -43,118 +41,30 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Deprecated
 @com.gigaspaces.api.InternalApi
-public class ConcurrentSoftCache<Key, Value>
-        implements Map<Key, Value> {
+public class ConcurrentSoftCache extends QueryCache {
     // Concurrent map to store the values with soft double reference
-    protected final ConcurrentHashMap<Key, SoftReference<DoubleRef<Key, Value>>> _map;
+    protected final ConcurrentHashMap<String, SoftReference<DoubleRef<String, Query>>> _map = new ConcurrentHashMap<>();
 
-    /**
-     * Default constructor. Constructs a new empty cache.
-     */
-    public ConcurrentSoftCache() {
-        _map = new ConcurrentHashMap<Key, SoftReference<DoubleRef<Key, Value>>>();
+    @Override
+    public void addQueryToCache(String statement, Query query) {
+        _map.put(statement, reference(statement, query));
     }
 
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#put
-     */
-    public Value put(Key key, Value value) {
-        return dereference(_map.put(key, reference(key, value)));
+    @Override
+    public Query getQueryFromCache(String statement) {
+        return dereference(_map.get(statement));
     }
 
-
-    /**
-     * Returns the value to which the specified key is mapped in this table.
-     *
-     * @param key a key in the table.
-     * @return the value to which the key is mapped in this table; <tt>null</tt> if the key is not
-     * mapped to any value in this table or it was already garbage collected.
-     * @throws NullPointerException if the key is <tt>null</tt>.
-     */
-    public Value get(Object key) {
-        return dereference(_map.get(key));
-    }
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#remove(java.lang.Object)
-     */
-    public Value remove(Object key) {
-        return dereference(_map.remove(key));
-    }
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#containsKey()
-     */
-    public boolean containsKey(Object key) {
-        return _map.containsKey(key);
-    }
-
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#isEmpty()
-     */
-    public boolean isEmpty() {
-        return _map.isEmpty();
-    }
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#keySet()
-     */
-    public Set<Key> keySet() {
-        return _map.keySet();
-    }
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#size()
-     */
-    public int size() {
-        return _map.size();
-    }
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#clear()
-     */
+    @Override
     public void clear() {
         _map.clear();
-    }
-
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#containsValue(java.lang.Object)
-     */
-    public boolean containsValue(Object value) {
-        throw new UnsupportedOperationException();
-    }
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#entrySet()
-     */
-    public Set<java.util.Map.Entry<Key, Value>> entrySet() {
-        throw new UnsupportedOperationException();
-    }
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#putAll(java.util.Map)
-     */
-    public void putAll(Map<? extends Key, ? extends Value> t) {
-        throw new UnsupportedOperationException();
-
-    }
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#values()
-     */
-    public Collection<Value> values() {
-        throw new UnsupportedOperationException();
     }
 
     /**
      * Create a soft double reference to the object
      */
-    private SoftReference<DoubleRef<Key, Value>> reference(Key key, Value value) {
-        return new SoftReference<DoubleRef<Key, Value>>(new DoubleRef<Key, Value>(key,
-                value));
+    private <Key, Value> SoftReference<DoubleRef<Key, Value>> reference(Key key, Value value) {
+        return new SoftReference<>(new DoubleRef<>(key, value));
     }
 
     /**
@@ -162,7 +72,7 @@ public class ConcurrentSoftCache<Key, Value>
      *
      * @return the value referenced by ref
      */
-    private Value dereference(SoftReference<DoubleRef<Key, Value>> ref) {
+    private <Key, Value> Value dereference(SoftReference<DoubleRef<Key, Value>> ref) {
         if (ref == null)
             return null;
 
@@ -206,8 +116,5 @@ public class ConcurrentSoftCache<Key, Value>
             // in case of multi threaded access
             _map.remove(_key, _value);
         }
-
-
     }
-
 }

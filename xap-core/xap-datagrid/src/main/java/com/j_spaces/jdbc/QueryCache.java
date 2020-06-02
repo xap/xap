@@ -30,39 +30,39 @@ import java.util.Map;
  * @since 6.1
  */
 @com.gigaspaces.api.InternalApi
-public class QueryCache {
-    /**
-     *
-     */
-    private Map<String, Query> _statementCache;
+public abstract class QueryCache {
 
-    /**
-     *
-     */
-    public QueryCache() {
+    public static QueryCache create() {
         String val = System.getProperty(SystemProperties.ENABLE_BOUNDED_QUERY_CACHE);
-        boolean isCacheBounded = new Boolean(val != null ? val : SystemProperties.ENABLE_BOUNDED_QUERY_CACHE_DEFAULT);
-        _statementCache = isCacheBounded ? new ConcurrentBoundedCache<String, Query>() : new ConcurrentSoftCache<String, Query>();
+        boolean isCacheBounded = Boolean.parseBoolean(val != null ? val : SystemProperties.ENABLE_BOUNDED_QUERY_CACHE_DEFAULT);
+        if (isCacheBounded) {
+            long upperBound = Long.getLong(SystemProperties.BOUNDED_QUERY_CACHE_SIZE, SystemProperties.BOUNDED_QUERY_CACHE_SIZE_DEFAULT);
+            boolean warnWhenFull = val == null; // If implicit config, warn when full to ensure user's aware of potential problem
+            return upperBound != 0 ? new ConcurrentBoundedCache(upperBound, warnWhenFull) : new EmptyCache();
+        } else {
+            return new ConcurrentSoftCache();
+        }
     }
 
-    public void addQueryToCache(String statement, Query query) {
-        _statementCache.put(statement, query);
+    public abstract void addQueryToCache(String statement, Query query);
+
+    public abstract Query getQueryFromCache(String statement);
+
+    public abstract void clear();
+
+    private static class EmptyCache extends QueryCache {
+
+        @Override
+        public void addQueryToCache(String statement, Query query) {
+        }
+
+        @Override
+        public Query getQueryFromCache(String statement) {
+            return null;
+        }
+
+        @Override
+        public void clear() {
+        }
     }
-
-    // return the query from the cache, it may be null though, so the caller
-    // method should check
-    public Query getQueryFromCache(String statement) {
-        return _statementCache.get(statement);
-    }
-
-
-    /**
-     *
-     */
-    public void clear() {
-        _statementCache.clear();
-
-    }
-
-
 }

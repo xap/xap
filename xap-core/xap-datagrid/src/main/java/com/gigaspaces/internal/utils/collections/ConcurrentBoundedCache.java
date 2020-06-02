@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-
 package com.gigaspaces.internal.utils.collections;
 
+import com.j_spaces.jdbc.Query;
+import com.j_spaces.jdbc.QueryCache;
 import com.j_spaces.kernel.SystemProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.ref.SoftReference;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-
 
 /**
  * Concurrent bounded cache. It uses a ConcurrentHashMap and a counter to set the upper bound to the
@@ -37,166 +35,47 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 10.1.0
  */
 @com.gigaspaces.api.InternalApi
-public class ConcurrentBoundedCache<Key, Value>
-        implements Map<Key, Value> {
+public class ConcurrentBoundedCache extends QueryCache {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     // Concurrent map to store the values
-    protected volatile ConcurrentHashMap<Key, SoftReference<Value>> _map;
-    protected AtomicInteger approximateSize = new AtomicInteger(0);
-    protected static final Object clearLock = new Object();
-    protected static final Object lazyLock = new Object();
-    protected final static long upperBound = Long.getLong(SystemProperties.BOUNDED_QUERY_CACHE_SIZE, SystemProperties.BOUNDED_QUERY_CACHE_SIZE_DEFAULT);
-    protected final static boolean enabled = upperBound > 0;
+    private final ConcurrentHashMap<String, SoftReference<Query>> _map;
+    private final AtomicInteger approximateSize = new AtomicInteger(0);
+    private final Object clearLock = new Object();
+    private final long upperBound;
+    private final boolean warnWhenFull;
 
-    /**
-     * Default constructor. Constructs a new empty cache.
-     */
-    public ConcurrentBoundedCache() {
+    public ConcurrentBoundedCache(long upperBound, boolean warnWhenFull) {
+        this.upperBound = upperBound;
+        this.warnWhenFull = warnWhenFull;
+        this._map = new ConcurrentHashMap<>();
     }
 
-    /**
-     * Lazy initialization of the map
-     */
-    private void initialize() {
-        if (_map == null) {
-            synchronized (lazyLock) {
-                if (_map == null) {
-                    _map = new ConcurrentHashMap<Key, SoftReference<Value>>();
-                }
-            }
-        }
-    }
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#put
-     * Note: if upperBound is reached, clear the cache
-     */
-    public Value put(Key key, Value value) {
-        if (!enabled)
-            return null;
-        initialize();
-        SoftReference<Value> prev;
+    @Override
+    public void addQueryToCache(String statement, Query query) {
         if (approximateSize.getAndIncrement() >= upperBound) {
             synchronized (clearLock) {
                 if (approximateSize.get() >= upperBound) {
+                    if (warnWhenFull) {
+                        logger.warn("Cache is being evicted because it exceeded max capacity {}. Consider increasing cache size with the {} system property, or using an unbound cache with the {} system property",
+                                upperBound, SystemProperties.BOUNDED_QUERY_CACHE_SIZE, SystemProperties.ENABLE_BOUNDED_QUERY_CACHE);
+                    }
                     clear();
                     approximateSize.set(1);
                 }
             }
         }
-        SoftReference<Value> wrappedValue = new SoftReference<Value>(value);
-        prev = _map.putIfAbsent(key, wrappedValue);
-        if (prev != null) {
-            return prev.get();
-        } else {
-            return null;
-        }
+        _map.putIfAbsent(statement, new SoftReference<>(query));
     }
 
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#get
-     */
-    public Value get(Object key) {
-        if (!enabled)
-            return null;
-        initialize();
-        SoftReference<Value> valueSoftReference = _map.get(key);
-        if (valueSoftReference != null) {
-            return valueSoftReference.get();
-        } else {
-            return null;
-        }
+    @Override
+    public Query getQueryFromCache(String statement) {
+        SoftReference<Query> result = _map.get(statement);
+        return result != null ? result.get() : null;
     }
 
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#remove
-     */
-    public Value remove(Object key) {
-        if (!enabled)
-            return null;
-        initialize();
-        SoftReference<Value> remove = _map.remove(key);
-        approximateSize.decrementAndGet();
-        if (remove != null) {
-            return remove.get();
-        } else {
-            return null;
-        }
-    }
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#containsKey()
-     */
-    public boolean containsKey(Object key) {
-        if (!enabled)
-            return false;
-        return _map.containsKey(key);
-    }
-
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap##isEmpty()
-     */
-    public boolean isEmpty() {
-        if (!enabled)
-            return true;
-        return _map.isEmpty();
-    }
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap##keySet()
-     */
-    public Set<Key> keySet() {
-        if (!enabled)
-            return Collections.emptySet();
-        return _map.keySet();
-    }
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap##size()
-     */
-    public int size() {
-        if (!enabled)
-            return 0;
-        return _map.size();
-    }
-
-    /*
-     * @see java.util.concurrent.ConcurrentHashMap#clear()
-     */
+    @Override
     public void clear() {
-        if (!enabled)
-            return;
-        _map = new ConcurrentHashMap<Key, SoftReference<Value>>();
+        _map.clear();
         approximateSize.set(0);
     }
-
-    /*
-     * Unsupported
-     */
-    public boolean containsValue(Object value) {
-        throw new UnsupportedOperationException();
-    }
-
-    /*
-     * Unsupported
-     */
-    public Set<java.util.Map.Entry<Key, Value>> entrySet() {
-        throw new UnsupportedOperationException();
-    }
-
-    /*
-     * Unsupported
-     */
-    public void putAll(Map<? extends Key, ? extends Value> t) {
-        throw new UnsupportedOperationException();
-
-    }
-
-    /*
-     * Unsupported
-     */
-    public Collection<Value> values() {
-        throw new UnsupportedOperationException();
-    }
-
 }

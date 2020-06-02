@@ -71,7 +71,7 @@ public class QueryHandler {
         _spaceCluster = (ISpaceProxy) spaceCluster;
         _spaceRegular = (ISpaceProxy) spaceRegular;
         this.securityInterceptor = securityInterceptor;
-        _queryCache = new QueryCache();
+        _queryCache = QueryCache.create();
         _config = config;
     }
 
