@@ -76,7 +76,7 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
 
         boolean isDuplicateUIDsWithRocksDBAllowed = Boolean.parseBoolean(spaceProxy.getDirectProxy().getProxySettings().getSpaceAttributes().
                 getProperty(Constants.Engine.FULL_ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS));
-
+        isDuplicateUIDsWithRocksDBAllowed = true;
 
         if (isDuplicateUIDsWithRocksDBAllowed) {
             if (UpdateModifiers.isPartialUpdate(this.modifiers)){
