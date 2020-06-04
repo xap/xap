@@ -23,7 +23,8 @@ public enum PredefinedSystemMetrics {
     SPACE_OPERATIONS_READ_TOTAL("space_operations_read-total"),
     SPACE_OPERATIONS_READ_MULTIPLE_TOTAL("space_operations_read-multiple-total"),
     SPACE_BLOBSTORE_CACHE_HIT_PERCENT("space_blobstore_cache-hit-percent"),
-    SPACE_DATA_READ_COUNT( "space_data_read-count" );
+    SPACE_DATA_READ_COUNT( "space_data_read-count" ),
+    SPACE_DATA_INDEX_HITS_TOTAL( "space_data_index-hits-total" );
 
     private final String metricName;
     private final String tableName;
