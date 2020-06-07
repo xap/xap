@@ -4202,9 +4202,6 @@ public class CacheManager extends AbstractCacheManager
             final int potentialMatchListSize = potentialMatchList == null ? 0 : potentialMatchList.size();
             // no entries with the corresponding template value exist - so return null
             if (potentialMatchListSize == 0) {
-                if( context.getIndexMetricsContext() != null ){
-                    context.getIndexMetricsContext().addChosenIndex( index.getIndexDefinition().getName() );
-                }
                 return null;
             }
 
@@ -4338,9 +4335,6 @@ public class CacheManager extends AbstractCacheManager
 
             // If the potential match list is empty, there's no need to continue:
             if (potentialMatchListSize == 0) {
-                if( context.getIndexMetricsContext() != null ){
-                    context.getIndexMetricsContext().addChosenIndex( queryIndex.getIndexName() );
-                }
                 return null;
             }
 
