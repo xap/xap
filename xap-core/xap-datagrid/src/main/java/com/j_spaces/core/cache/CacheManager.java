@@ -4077,6 +4077,9 @@ public class CacheManager extends AbstractCacheManager
         if (primaryKey != null && primaryKey.getPos() < numOfFields && latestIndexToConsider >= primaryKey.getIndexCreationNumber()) {
             Object templateValue = primaryKey.getIndexValueForTemplate(template.getEntryData());
             if (templateValue != null) {
+                if( context.getIndexMetricsContext() != null ) {
+                    context.getIndexMetricsContext().addChosenIndex( primaryKey.getIndexDefinition().getName() );
+                }
                 if (typeData.disableIdIndexForEntries(primaryKey))
                     return getPEntryByUid(typeData.generateUid(templateValue));
                 else
@@ -4178,6 +4181,7 @@ public class CacheManager extends AbstractCacheManager
         }
 
         final TypeDataIndex[] indexes = typeData.getIndexes();
+        String shortestPotentialIndexName = null;
         for (TypeDataIndex index : indexes) {
             if (index.getPos() >= numOfFields)
                 break;
@@ -4197,8 +4201,12 @@ public class CacheManager extends AbstractCacheManager
             final IStoredList<IEntryCacheInfo> potentialMatchList = index.getIndexEntries(templateValue);
             final int potentialMatchListSize = potentialMatchList == null ? 0 : potentialMatchList.size();
             // no entries with the corresponding template value exist - so return null
-            if (potentialMatchListSize == 0)
+            if (potentialMatchListSize == 0) {
+                if( context.getIndexMetricsContext() != null ){
+                    context.getIndexMetricsContext().addChosenIndex( index.getIndexDefinition().getName() );
+                }
                 return null;
+            }
 
             if (shortestPotentialMatchListSize == 1 && !context.isIndicesIntersectionEnabled())
                 continue; //already have a good match
@@ -4210,12 +4218,17 @@ public class CacheManager extends AbstractCacheManager
             if (potentialMatchListSize <= shortestPotentialMatchListSize) {
                 shortestPotentialMatchListSize = potentialMatchListSize;
                 shortestPotentialMatchList = potentialMatchList;
+                shortestPotentialIndexName = index.getIndexDefinition().getName();
                 if (template.isFifoGroupPoll())
                     context.setFifoGroupIndexUsedInFifoGroupScan(shortestPotentialMatchList, index);
             }
 
             if (!shortestPotentialMatchList.isMultiObjectCollection() && !context.isIndicesIntersectionEnabled())
                 break;
+        }
+
+        if( shortestPotentialIndexName != null && context.getIndexMetricsContext() != null ){
+            context.getIndexMetricsContext().addChosenIndex( shortestPotentialIndexName );
         }
 
         if (_logger.isTraceEnabled())
@@ -4303,7 +4316,7 @@ public class CacheManager extends AbstractCacheManager
             return shortestPotentialMatchList;
         }
 
-
+        String shortestPotentialIndexName = null;
         MultiIntersectedStoredList<IEntryCacheInfo> intersectedList = context.getChosenIntersectedList(false);
         // Iterate over custom indexes to find shortest potential match list:
         for (IQueryIndexScanner queryIndex : customIndexes) {
@@ -4322,17 +4335,29 @@ public class CacheManager extends AbstractCacheManager
 
             final IStoredList<IEntryCacheInfo> potentialMatchList = (IStoredList<IEntryCacheInfo>) result;
             final int potentialMatchListSize = potentialMatchList == null ? 0 : potentialMatchList.size();
+
             // If the potential match list is empty, there's no need to continue:
-            if (potentialMatchListSize == 0)
+            if (potentialMatchListSize == 0) {
+                if( context.getIndexMetricsContext() != null ){
+                    context.getIndexMetricsContext().addChosenIndex( queryIndex.getIndexName() );
+                }
                 return null;
+            }
+
             if (context.isIndicesIntersectionEnabled())
                 intersectedList = addToIntersectedList(context, intersectedList, potentialMatchList, template.isFifoTemplate(), potentialMatchListSize <= shortestPotentialMatchList.size()/*shortest*/, typeData);
             // If the potential match list is shorter than the shortest match list so far, keep it:
-            if (potentialMatchListSize <= shortestPotentialMatchList.size())
+            if (potentialMatchListSize <= shortestPotentialMatchList.size()) {
                 shortestPotentialMatchList = potentialMatchList;
+                shortestPotentialIndexName = queryIndex.getIndexName();
+            }
 
             if (!shortestPotentialMatchList.isMultiObjectCollection() && !context.isIndicesIntersectionEnabled())
                 break;
+        }
+
+        if( shortestPotentialIndexName != null && context.getIndexMetricsContext() != null ){
+            context.getIndexMetricsContext().addChosenIndex( shortestPotentialIndexName );
         }
 
         if (context.isIndicesIntersectionEnabled())
