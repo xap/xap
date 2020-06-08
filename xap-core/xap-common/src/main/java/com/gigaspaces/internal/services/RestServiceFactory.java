@@ -42,6 +42,7 @@ public class RestServiceFactory extends ServiceFactory {
                 .appendLibRequiredJars(ClassLoaderType.COMMON)
                 .appendLibRequiredJars(ClassLoaderType.SERVICE)
                 .appendOptionalJars("jetty")
+                .appendOptionalJars("spring")
                 .appendOptionalJars("jetty/xap-jetty")
                 .appendOptionalJars("jackson")
                 .appendOptionalJars("metrics")

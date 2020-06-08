@@ -167,7 +167,11 @@ public class JettyManagerRestLauncher implements Closeable {
 
         for (File file : warFiles) {
             WebAppContext webApp = new WebAppContext();
-            webApp.setContextPath(getContextPath(file));
+            String contextPath = getContextPath(file);
+            webApp.setContextPath(contextPath);
+            if (contextPath.equals("/") && Boolean.getBoolean("com.gs.security.enabled")) {
+                webApp.setInitParameter("spring.profiles.active", "gs-ops-manager-secured");
+            }
             webApp.setWar(file.getAbsolutePath());
             webApp.setThrowUnavailableOnStartupException(true);
             handler.addHandler(webApp);
