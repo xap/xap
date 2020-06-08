@@ -1,11 +1,8 @@
 package com.gigaspaces.client.iterator;
 
 import com.gigaspaces.client.ReadModifiers;
-import com.gigaspaces.internal.utils.GsEnv;
 
 import java.time.Duration;
-import static com.j_spaces.kernel.SystemProperties.SPACE_ITERATOR_TYPE;
-import static com.j_spaces.kernel.SystemProperties.SPACE_ITERATOR_TYPE_DEFAULT;
 
 /**
  * Configuration class for {@link SpaceIterator}
@@ -17,9 +14,8 @@ public class SpaceIteratorConfiguration {
         return 1000;
     }
     public static Duration getDefaultMaxInactiveDuration() { return Duration.ofMinutes(1);}
-    private static final SpaceIteratorType defaultIteratorType = SpaceIteratorType.valueOf(GsEnv.property(SPACE_ITERATOR_TYPE).get(SPACE_ITERATOR_TYPE_DEFAULT));
 
-    private SpaceIteratorType iteratorType = defaultIteratorType;
+    private SpaceIteratorType iteratorType;
     private int batchSize = getDefaultBatchSize();
     private Duration maxInactiveDuration = null;
     private ReadModifiers readModifiers;
