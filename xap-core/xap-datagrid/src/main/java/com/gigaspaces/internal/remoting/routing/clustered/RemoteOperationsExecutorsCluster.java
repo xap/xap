@@ -163,7 +163,7 @@ public class RemoteOperationsExecutorsCluster {
         if(this.getClusterInfo().isChunksRouting()) {
             CompetitiveTask[] taskToExecute = new CompetitiveTask[tasks.length + 1];
             System.arraycopy(tasks, 0, taskToExecute, 0, tasks.length);
-            taskToExecute[tasks.length] = new CheckRoutingGenerationTask(this._name, _clusterInfo.getChunksMap().getGeneration());
+            taskToExecute[tasks.length] = new CheckRoutingGenerationTask(_spaceProxy, _clusterInfo.getChunksMap().getGeneration());
             competition = new TimedCompetitionExecutor<>(taskToExecute,
                     timeout,
                     competitionName,

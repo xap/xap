@@ -19,6 +19,7 @@ package com.gigaspaces.internal.remoting;
 import com.gigaspaces.annotation.lrmi.AsyncRemoteCall;
 import com.gigaspaces.annotation.lrmi.CustomTracking;
 import com.gigaspaces.annotation.lrmi.OneWayRemoteCall;
+import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 
 import java.rmi.RemoteException;
 
@@ -30,6 +31,8 @@ public interface RemoteOperationsExecutor {
     boolean isActive() throws RemoteException;
 
     boolean isActiveAndNotSuspended() throws RemoteException;
+
+    PartitionToChunksMap checkChunkMapGeneration(int clientGeneration);
 
     /***
      * @since 9.0.1

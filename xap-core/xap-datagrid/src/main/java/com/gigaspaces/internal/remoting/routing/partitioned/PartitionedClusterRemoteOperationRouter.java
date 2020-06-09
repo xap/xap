@@ -349,6 +349,17 @@ public class PartitionedClusterRemoteOperationRouter extends AbstractRemoteOpera
         return getAvailableMember(false, _partitionedCluster.getConfig().getActiveServerLookupTimeout());
     }
 
+
+    public RemoteOperationsExecutorProxy getAnyAvailableCachedMember() {
+        for (int i = 0; i < getNumOfPartitions(); i++) {
+            RemoteOperationsExecutorProxy member = getPartitionRouter(i).getCachedMember();
+
+            if (RemoteOperationsExecutorProxy.isAvailable(member, false))
+                return member;
+        }
+        return null;
+    }
+
     @Override
     public RemoteOperationsExecutorProxy getAnyActiveMember() {
         return getAvailableMember(true, _partitionedCluster.getConfig().getActiveServerLookupTimeout());

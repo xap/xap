@@ -292,4 +292,8 @@ public class SpaceProxyRouter {
         }
         quiesceTokenProvider.setToken(token);
     }
+
+    public SpaceProxyRemoteOperationRouter getOperationRouter() {
+        return this._router;
+    }
 }

@@ -300,7 +300,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
         this.zkConfig = useZooKeeper() ? createZKCollocatedClientConfig() : null;
         this.attributeStore = useZooKeeper() ? createZooKeeperAttributeStore() : null;
-        this._clusterInfo = createClusterInfo(customProperties.getProperty("metrics.pu_name"));
+        this._clusterInfo = createClusterInfo(customProperties.getProperty("clusterInfo.name"));
         this._secondary = isSecondary;
 
         this._deployPath = _customProperties.getProperty("deployPath");
@@ -328,7 +328,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         boolean useZooKeeper = useZooKeeper();
         if(useZooKeeper){
             zookeeperLastPrimaryHandler = new ZookeeperLastPrimaryHandler(this, attributeStore, _logger);
-            zookeeperQuiesceHandler = new ZookeeperQuiesceHandler(customProperties.getProperty("metrics.pu_name"), attributeStore);
+            zookeeperQuiesceHandler = new ZookeeperQuiesceHandler(customProperties.getProperty("clusterInfo.name"), attributeStore);
         } else {
             zookeeperLastPrimaryHandler = null;
         }
@@ -1984,6 +1984,13 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     @Override
     public Boolean isActiveAsync() throws RemoteException {
         return isActive() ? Boolean.TRUE : Boolean.FALSE;
+    }
+
+    @Override
+    public PartitionToChunksMap checkChunkMapGeneration(int clientGeneration) {
+        return this._clusterInfo.getChunksMap().getGeneration() != clientGeneration ?
+                this._clusterInfo.getChunksMap() : null;
+
     }
 
     @Override
