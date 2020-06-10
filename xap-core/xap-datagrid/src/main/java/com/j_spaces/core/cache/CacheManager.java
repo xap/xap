@@ -4610,13 +4610,12 @@ public class CacheManager extends AbstractCacheManager
                         indexUsed = true;
                         if (resultOIS == null || entryType.isBlobStoreClass()) {
                             final Object rangeValue = template.getRangeValue(pos);
-                            final boolean isInclusive = rangeValue == null ? false : template.getRangeInclusion(pos);
+                            final boolean isInclusive = rangeValue != null && template.getRangeInclusion(pos);
                             //range limit passed- query with "up to" range
                             //NOTE! - currently we support only range "up-to" inclusive
                             IScanListIterator<IEntryCacheInfo> originalOIS = resultOIS;
                             resultOIS = index.getExtendedIndexForScanning().establishScan(templateValue,
                                     extendedMatchCode, rangeValue, isInclusive);
-                            resultSL = entriesVector;
                             if (resultOIS == null)
                                 return null;  //no values
 
@@ -4625,13 +4624,17 @@ public class CacheManager extends AbstractCacheManager
                                     context.getExplainPlanContext().setMatch(new IndexChoiceNode("MATCH"));
                                     context.getExplainPlanContext().getSingleExplainPlan().addScanIndexChoiceNode(entryType.getClassName(), context.getExplainPlanContext().getMatch());
                                 }
-                                int indexSize = entriesVector == null ? 0 : entriesVector.size();
+                                int indexSize = -1; //unknown size
                                 IndexInfo indexInfo = new IndexInfo(entryType.getProperty(pos).getName(), indexSize, index.getIndexType(), templateValue, ExplainPlanUtil.getQueryOperator(extendedMatchCode));
                                 context.getExplainPlanContext().getMatch().addOption(indexInfo);
-                                context.getExplainPlanContext().getMatch().setChosen(indexInfo);
+                                if (resultSL == null && uidsSize == Integer.MAX_VALUE) {
+                                    context.getExplainPlanContext().getMatch().setChosen(indexInfo);
+                                }
                             }
 
-                            selectedShortestIndex = entryType.getProperty(pos).getName();
+                            if (resultSL == null && uidsSize == Integer.MAX_VALUE) {
+                                selectedShortestIndex = entryType.getProperty(pos).getName();
+                            }
 
                             if (context.isIndicesIntersectionEnabled())
                                 intersectedList = addToIntersectedList(context, intersectedList, resultOIS, template.isFifoTemplate(), false/*shortest*/, entryType);
