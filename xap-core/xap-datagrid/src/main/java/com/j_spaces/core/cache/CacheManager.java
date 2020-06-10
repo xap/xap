@@ -4398,8 +4398,10 @@ public class CacheManager extends AbstractCacheManager
                 if (result == IQueryIndexScanner.RESULT_IGNORE_INDEX) {
                     context.setBlobStoreUsePureIndexesAccess(false);
                     continue;
-                } else {
-                    indexUsed = true;
+                }
+
+                if (result == IQueryIndexScanner.RESULT_NO_MATCH) {
+                    return null;
                 }
 
                 if (_logger.isLoggable(Level.FINEST)) {
@@ -4408,11 +4410,6 @@ public class CacheManager extends AbstractCacheManager
                         compound_selection = result;
                         compound_name = index.getIndexName();
                     }
-                }
-
-                if (result == IQueryIndexScanner.RESULT_NO_MATCH) {
-
-                    return null;
                 }
 
                 //check the return type - can be extended iterator
@@ -4426,6 +4423,7 @@ public class CacheManager extends AbstractCacheManager
                         _logger.log(Level.FINEST, "EXTENDED-INDEX '" + index.getIndexName() + "' has been used for type [" +
                                 entryType.getClassName() + "]");
                     }
+                    indexUsed = true;
                     continue;
                 }
 
@@ -4439,6 +4437,8 @@ public class CacheManager extends AbstractCacheManager
                 if (entriesVector == null) {
                     return null; //no values matching the index value
                 }
+
+                indexUsed = true;
 
                 if (context.isIndicesIntersectionEnabled()) {
                     intersectedList = addToIntersectedList(context, intersectedList, entriesVector, template.isFifoTemplate(), false/*shortest*/, entryType);
@@ -4546,7 +4546,6 @@ public class CacheManager extends AbstractCacheManager
                             IScanListIterator<IEntryCacheInfo> originalOIS = resultOIS;
                             resultOIS = index.getExtendedIndexForScanning().establishScan(templateValue,
                                     extendedMatchCode, rangeValue, isInclusive);
-                            resultSL = entriesVector;
                             if (resultOIS == null)
                                 return null;  //no values
 
@@ -4555,10 +4554,12 @@ public class CacheManager extends AbstractCacheManager
                                     context.getExplainPlanContext().setMatch(new IndexChoiceNode("MATCH"));
                                     context.getExplainPlanContext().getSingleExplainPlan().addScanIndexChoiceNode(entryType.getClassName(), context.getExplainPlanContext().getMatch());
                                 }
-                                int indexSize = entriesVector == null ? 0 : entriesVector.size();
+                                int indexSize = -1; //unknown size
                                 IndexInfo indexInfo = new IndexInfo(entryType.getProperty(pos).getName(), indexSize, index.getIndexType(), templateValue, ExplainPlanUtil.getQueryOperator(extendedMatchCode));
                                 context.getExplainPlanContext().getMatch().addOption(indexInfo);
-                                context.getExplainPlanContext().getMatch().setChosen(indexInfo);
+                                if (resultSL == null) { //not set yet, consider last as chosen
+                                    context.getExplainPlanContext().getMatch().setChosen(indexInfo);
+                                }
                             }
 
                             if (context.isIndicesIntersectionEnabled())
