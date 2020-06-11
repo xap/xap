@@ -18,9 +18,9 @@ package com.gigaspaces.internal.metadata;
 
 import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.entry.VirtualEntry;
+import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.metadata.SpaceMetadataException;
-import com.j_spaces.core.client.ClientUIDHandler;
 
 import net.jini.core.lease.Lease;
 
@@ -99,7 +99,7 @@ public class VirtualEntryIntrospector<T extends VirtualEntry> extends AbstractTy
 
         // generate the uid from the id property and the type's name:
         if (id != null)
-            return ClientUIDHandler.createUIDFromName(id.toString(), _typeDesc.getTypeName());
+            return SpaceUidFactory.createUidFromTypeAndId(_typeDesc, id);
 
         throw new SpaceMetadataException("SpaceId(autogenerate=false) property value cannot be null.");
     }

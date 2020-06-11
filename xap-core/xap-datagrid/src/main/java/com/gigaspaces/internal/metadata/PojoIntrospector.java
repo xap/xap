@@ -21,12 +21,12 @@ import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.converter.ConversionException;
 import com.gigaspaces.internal.reflection.IConstructor;
 import com.gigaspaces.internal.reflection.IParamsConstructor;
+import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.metadata.SpaceMetadataException;
 import com.gigaspaces.metadata.SpaceMetadataValidationException;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.IGSEntry;
-import com.j_spaces.core.client.ClientUIDHandler;
 
 import net.jini.core.lease.Lease;
 
@@ -395,7 +395,7 @@ public class PojoIntrospector<T> extends AbstractTypeIntrospector<T> {
 
         // generate the uid from the id property and the type's name:
         if (id != null)
-            return ClientUIDHandler.createUIDFromName(id.toString(), getType().getName());
+            return SpaceUidFactory.createUidFromTypeAndId(getTypeDesc(), id);
 
         throw new SpaceMetadataException("SpaceId(autoGenerate=false) property value cannot be null.");
     }

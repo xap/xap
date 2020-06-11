@@ -1017,8 +1017,7 @@ public class SpaceEngine implements ISpaceModeListener {
             else {
                 templatePackets[i] = TemplatePacketFactory.createIdPacket(ids[i], idsQueryPacket.getRouting(i), 0, typeDesc, template.getQueryResultType(), null);
                 if (supportsNonBlobStorePrefetch)
-                    templatePackets[i].setUID(_uidFactory.createUidFromTypeAndId(typeDesc.getTypeName(),
-                            ids[i].toString(), false));
+                    templatePackets[i].setUID(SpaceUidFactory.generateUid(typeDesc.getTypeUidPrefix(), ids[i].toString()));
             }
             templatePackets[i].setOperationID(template.getOperationID());
         }
@@ -7081,7 +7080,7 @@ public class SpaceEngine implements ISpaceModeListener {
                         uid = generateUid();
                 } else {
                     if (idValue != null)
-                        uid = ClientUIDHandler.createUIDFromName(idValue.toString(), typeDesc.getTypeName());
+                        uid = SpaceUidFactory.createUidFromTypeAndId(typeDesc, idValue);
                     else
                         throw new ConversionException("SpaceId(autogenerate=false) field value can't be null.");
                 }

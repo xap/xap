@@ -79,6 +79,11 @@ public class InactiveTypeDesc implements ITypeDesc {
     }
 
     @Override
+    public String getTypeUidPrefix() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public String getTypeSimpleName() {
         return StringUtils.getSuffix(_className, ".");
     }

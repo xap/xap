@@ -19,6 +19,7 @@ package com.gigaspaces.internal.server.storage;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
+import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.LeaseManager;
@@ -26,7 +27,6 @@ import com.j_spaces.core.XtnEntry;
 import com.j_spaces.core.cache.EntryCacheInfoFactory;
 import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.blobStore.BlobStoreEntryHolder;
-import com.j_spaces.core.client.ClientUIDHandler;
 import com.j_spaces.kernel.IObjectInfo;
 import com.j_spaces.kernel.IStoredList;
 
@@ -79,9 +79,8 @@ public class EntryHolderFactory {
         if (entryPacket.getUID() != null)
             uid = entryPacket.getUID();
         else //generate UID from Primary key
-            uid = ClientUIDHandler.createUIDFromName(
-                    entryPacket.getPropertyValue(typeDesc.getTypeDesc().getDefaultPropertyName()).toString(),
-                    entryPacket.getTypeName());
+            uid = SpaceUidFactory.createUidFromTypeAndId(typeDesc.getTypeDesc(),
+                    entryPacket.getPropertyValue(typeDesc.getTypeDesc().getDefaultPropertyName()));
 
         int version = entryPacket.getVersion();
         ITransactionalEntryData entryData = createEntryData(entryPacket, entryDataType,

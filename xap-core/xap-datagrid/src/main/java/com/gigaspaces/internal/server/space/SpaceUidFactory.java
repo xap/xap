@@ -16,7 +16,7 @@
 
 package com.gigaspaces.internal.server.space;
 
-import com.gigaspaces.internal.utils.collections.CopyOnUpdateMap;
+import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.time.SystemTime;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class SpaceUidFactory {
     private static final boolean DISABLE_UID_SUFFIX = Boolean.getBoolean("com.gs.disable-uid-suffix");
     public static final String SUFFIX = DISABLE_UID_SUFFIX ? "" : "^0^0";
-    private static final int MAX_NUM_CLASSES_CACHED = 500;
     public static final char SEPARATOR = '^';
     public static final String PREFIX_AUTO = "A";
     public static final String PREFIX_MANUAL = "M";
@@ -35,8 +34,6 @@ public class SpaceUidFactory {
     private String _timeStamp;
     private String _prefix;
 
-    private final CopyOnUpdateMap<String, String> _typeUidFactoryCache;
-
     public SpaceUidFactory() {
         this(null);
     }
@@ -44,7 +41,6 @@ public class SpaceUidFactory {
     public SpaceUidFactory(String memberId) {
         _memberId = memberId != null ? memberId : "0";
         _counter = new AtomicLong();
-        _typeUidFactoryCache = new CopyOnUpdateMap<String, String>();
         reset();
     }
 
@@ -82,19 +78,17 @@ public class SpaceUidFactory {
         return _prefix.concat(Long.toString(id));
     }
 
-    public String createUidFromTypeAndId(String typeName, String id, boolean validate) {
-        if (validate && id.indexOf(SEPARATOR) != -1)
+    public static String createUidFromTypeAndId(ITypeDesc typeDesc, Object idValue) {
+        String id = idValue.toString();
+        if (id.indexOf(SEPARATOR) != -1)
             throw new RuntimeException("Invalid UID creation request: UID can not contains the character '" + SEPARATOR + "'.");
+        return generateUid(typeDesc.getTypeUidPrefix(), id);
+    }
 
-        String prefix = _typeUidFactoryCache.get(typeName);
-        if (prefix == null) {
-            prefix = generateTypePrefix(typeName);
-            if (_typeUidFactoryCache.size() > MAX_NUM_CLASSES_CACHED)
-                _typeUidFactoryCache.clear();
-            _typeUidFactoryCache.put(typeName, prefix);
-        }
-
-        return generateUid(prefix, id);
+    public static String createUidFromTypeAndId(String typeName, String id) {
+        if (id.indexOf(SEPARATOR) != -1)
+            throw new RuntimeException("Invalid UID creation request: UID can not contains the character '" + SEPARATOR + "'.");
+        return generateUid(generateTypePrefix(typeName), id);
     }
 
     public static Integer extractPartitionId(String uid) {

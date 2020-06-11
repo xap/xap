@@ -102,4 +102,5 @@ public interface ITypeDesc extends SpaceTypeDescriptor, IDotnetTypeDescDetails, 
 
     String getPrimitivePropertiesWithoutNullValues();
 
+    String getTypeUidPrefix();
 }

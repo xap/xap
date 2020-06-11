@@ -20,7 +20,6 @@ import com.gigaspaces.internal.query.explainplan.IndexChoiceNode;
 import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.TypeDataIndex;
 import com.j_spaces.core.cache.context.Context;
-import com.j_spaces.core.client.ClientUIDHandler;
 import com.j_spaces.kernel.list.IObjectsList;
 
 import java.io.IOException;

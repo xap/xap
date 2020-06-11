@@ -19,11 +19,6 @@ package com.j_spaces.core.client;
 import com.gigaspaces.annotation.pojo.SpaceId;
 import com.gigaspaces.internal.server.space.SpaceUidFactory;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * This Class enables the client to create entry UIDs by rendering a free-string , and to extract
  * the free-string from a UID.
@@ -36,8 +31,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Deprecated
 
 public class ClientUIDHandler {
-    private static final SpaceUidFactory _factory = new SpaceUidFactory();
-
     private ClientUIDHandler() {
     }
 
@@ -58,7 +51,6 @@ public class ClientUIDHandler {
         if (typeName == null)
             throw new RuntimeException("CreateUIDFromName: a non-null string must be supplied for className.");
 
-        final String uid = _factory.createUidFromTypeAndId(typeName, name.toString(), true);
-        return uid.length() == 0 ? null : uid;
+        return SpaceUidFactory.createUidFromTypeAndId(typeName, name.toString());
     }
 }

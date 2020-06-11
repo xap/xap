@@ -20,6 +20,7 @@ import com.gigaspaces.annotation.pojo.FifoSupport;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.io.CustomClassLoaderObjectInputStream;
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.utils.ReflectionUtils;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
@@ -104,6 +105,7 @@ public class TypeDesc implements ITypeDesc {
     private transient Class<? extends ExternalEntry> _externalEntryWrapperClass;
     private transient ITypeIntrospector<? extends ExternalEntry> _externalEntryIntrospector;
     private transient boolean _autoGenerateRouting;
+    private transient String _typeUidPrefix;
 
     //  wrapper class name is kept on the space so it can be passed to the proxies, even if the class is not available on the space side 
     // note: document class name and class can be different if the class can't be loaded by the space
@@ -321,6 +323,11 @@ public class TypeDesc implements ITypeDesc {
 
     public String getTypeName() {
         return _typeName;
+    }
+
+    @Override
+    public String getTypeUidPrefix() {
+        return _typeUidPrefix;
     }
 
     @Override
@@ -969,6 +976,7 @@ public class TypeDesc implements ITypeDesc {
 
     private void initializeV9_0_0() {
         _typeSimpleName = StringUtils.getSuffix(_typeName, ".");
+        _typeUidPrefix = SpaceUidFactory.generateTypePrefix(_typeName);
         _idPropertyPos = indexOfProperty(_fixedProperties, _idPropertyName);
         // map properties names to positions:
         _fixedPropertiesMap = new HashMap<String, Integer>();

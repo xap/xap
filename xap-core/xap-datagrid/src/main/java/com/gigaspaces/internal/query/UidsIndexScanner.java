@@ -15,18 +15,12 @@
  */
 package com.gigaspaces.internal.query;
 
-import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.query.explainplan.IndexChoiceNode;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
-import com.j_spaces.core.cache.CacheManager;
-import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.TypeDataIndex;
 import com.j_spaces.core.cache.context.Context;
-import com.j_spaces.core.client.ClientUIDHandler;
-import com.j_spaces.kernel.IStoredList;
 import com.j_spaces.kernel.list.IObjectsList;
-import com.j_spaces.kernel.list.MultiStoredList;
 import com.j_spaces.kernel.list.ScanUidsIterator;
 
 import java.io.IOException;
