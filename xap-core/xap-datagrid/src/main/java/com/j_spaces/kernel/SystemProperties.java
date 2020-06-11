@@ -78,13 +78,6 @@ public class SystemProperties extends CommonSystemProperties {
     public final static String URL = "com.gs.url";
 
     /**
-     * When set to true the UID created by the {@link com.j_spaces.core.client.ClientUIDHandler} is
-     * composed out of a serialized representation of the "name". This way the name can be extracted
-     * directly from the UID.
-     */
-    public final static String SER_UID = "com.gs.serUID";
-
-    /**
      * Determines the FIFO notify queue size.
      */
     public final static String NOTIFY_FIFO_QUEUE = "com.gs.fifo_notify.queue";

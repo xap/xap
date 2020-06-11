@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-
 package com.j_spaces.core.client;
 
 import com.gigaspaces.annotation.pojo.SpaceId;
-import com.gigaspaces.internal.io.MarshObjectConvertor;
 import com.gigaspaces.internal.server.space.SpaceUidFactory;
-import com.j_spaces.kernel.SystemProperties;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -46,8 +42,6 @@ public class ClientUIDHandler {
     private static final String GET_UID_METHOD_NAME = "__getUID";
     private static final Class<?>[] GET_UID_METHOD_NAME_PARAM = new Class[0];
     private static final Object[] GET_UID_METHOD_NAME_ARGS = new Object[0];
-    private static final boolean _serUID = Boolean.getBoolean(SystemProperties.SER_UID);
-    private static final MarshObjectConvertor mc = new MarshObjectConvertor();
 
     static {
         try {
@@ -77,19 +71,8 @@ public class ClientUIDHandler {
         if (typeName == null)
             throw new RuntimeException("CreateUIDFromName: a non-null string must be supplied for className.");
 
-        String basicName;
-        boolean validate;
-        if (_serUID) {
-            try {
-                basicName = new String(mc.toBinary(name), "ISO-8859-1");
-                validate = false;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            basicName = getUID(name);
-            validate = true;
-        }
+        String basicName = getUID(name);
+        boolean validate = true;
 
         final String uid = _factory.createUidFromTypeAndId(typeName, basicName, validate);
         return uid.length() == 0 ? null : uid;
