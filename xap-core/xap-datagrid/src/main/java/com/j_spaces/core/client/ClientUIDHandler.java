@@ -37,19 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ClientUIDHandler {
     private static final SpaceUidFactory _factory = new SpaceUidFactory();
-    private static final Method DUMMY_METHOD;
-    private static final Map<Class<?>, Method> GET_UID_MAP = new ConcurrentHashMap<Class<?>, Method>();
-    private static final String GET_UID_METHOD_NAME = "__getUID";
-    private static final Class<?>[] GET_UID_METHOD_NAME_PARAM = new Class[0];
-    private static final Object[] GET_UID_METHOD_NAME_ARGS = new Object[0];
-
-    static {
-        try {
-            DUMMY_METHOD = Object.class.getMethod("toString", new Class[0]);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     private ClientUIDHandler() {
     }
@@ -71,38 +58,7 @@ public class ClientUIDHandler {
         if (typeName == null)
             throw new RuntimeException("CreateUIDFromName: a non-null string must be supplied for className.");
 
-        String basicName = getUID(name);
-        boolean validate = true;
-
-        final String uid = _factory.createUidFromTypeAndId(typeName, basicName, validate);
+        final String uid = _factory.createUidFromTypeAndId(typeName, name.toString(), true);
         return uid.length() == 0 ? null : uid;
-    }
-
-    private static String getUID(Object name) {
-        if (name instanceof String)
-            return (String) name;
-
-        Class<?> cls = name.getClass(); // Looking for __getUID()
-        Method method = GET_UID_MAP.get(cls);
-        if (method == null) {
-            try {
-                method = cls.getMethod(GET_UID_METHOD_NAME, GET_UID_METHOD_NAME_PARAM);
-            } catch (NoSuchMethodException e) {
-                method = DUMMY_METHOD;
-            }
-            GET_UID_MAP.put(cls, method);
-        }
-
-        if (method == DUMMY_METHOD)
-            return name.toString();
-
-        try {
-            return (String) method.invoke(name, GET_UID_METHOD_NAME_ARGS);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } // Strange error can't really happen
-        catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
     }
 }
