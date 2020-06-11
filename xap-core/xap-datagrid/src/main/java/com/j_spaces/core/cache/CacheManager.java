@@ -4375,7 +4375,6 @@ public class CacheManager extends AbstractCacheManager
      * are no matches.
      */
     public Object getEntriesMinIndexExtended(Context context, TypeData entryType, int numOfFields, ITemplateHolder template) {
-//        boolean isExplainPlan = template instanceof TemplateHolder && (((TemplateHolder) template).getSingleExplainPlan() != null);
         if (template instanceof TemplateHolder && (((TemplateHolder) template).getExplainPlan() != null)) {
             SingleExplainPlan singleExplainPlan = ((TemplateHolder) template).getExplainPlan();
             singleExplainPlan.setPartitionId(Integer.toString(getEngine().getPartitionIdOneBased()));
@@ -4448,8 +4447,10 @@ public class CacheManager extends AbstractCacheManager
                 if (result == IQueryIndexScanner.RESULT_IGNORE_INDEX) {
                     context.setBlobStoreUsePureIndexesAccess(false);
                     continue;
-                } else {
-                    indexUsed = true;
+                }
+
+                if (result == IQueryIndexScanner.RESULT_NO_MATCH) {
+                    return null;
                 }
 
                 if (_logger.isTraceEnabled() && index.getIndexName() != null) {
@@ -4458,11 +4459,6 @@ public class CacheManager extends AbstractCacheManager
                         compound_selection = result;
                         compound_name = index.getIndexName();
                     }
-                }
-
-                if (result == IQueryIndexScanner.RESULT_NO_MATCH) {
-
-                    return null;
                 }
 
                 //check the return type - can be extended iterator
@@ -4483,6 +4479,7 @@ public class CacheManager extends AbstractCacheManager
                                     entryType.getClassName() + "]");
                         }
                     }
+                    indexUsed = true;
                     continue;
                 }
 
@@ -4496,6 +4493,8 @@ public class CacheManager extends AbstractCacheManager
                 if (entriesVector == null) {
                     return null; //no values matching the index value
                 }
+
+                indexUsed = true;
 
                 if (context.isIndicesIntersectionEnabled()) {
                     intersectedList = addToIntersectedList(context, intersectedList, entriesVector, template.isFifoTemplate(), false/*shortest*/, entryType);
@@ -4518,7 +4517,7 @@ public class CacheManager extends AbstractCacheManager
 
         if (resultSL == null || (resultSL.size() > MIN_SIZE_TO_PERFORM_EXPLICIT_PROPERTIES_INDEX_SCAN_
                 && uidsSize > MIN_SIZE_TO_PERFORM_EXPLICIT_PROPERTIES_INDEX_SCAN_)
-                || (entryType.isBlobStoreClass() && resultSL != null && resultSL.size() > 0)) {
+                || (entryType.isBlobStoreClass() && resultSL.size() > 0)) {
             final TypeDataIndex[] indexes = entryType.getIndexes();
             String selectedShortestIndex = null;
             for (TypeDataIndex<Object> index : indexes) {
