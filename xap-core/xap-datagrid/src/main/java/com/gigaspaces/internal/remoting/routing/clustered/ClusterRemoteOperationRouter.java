@@ -156,6 +156,8 @@ public class ClusterRemoteOperationRouter extends AbstractRemoteOperationRouter 
             if (executionException instanceof ChunksMapGenerationException){
                 SpaceProxyImpl spaceProxy = ((SpaceClusterRemoteOperationRouter) this).getSpaceProxy();
                 spaceProxy.updateProxyRouter(spaceProxy.getProxyRouter(), ((ChunksMapGenerationException) executionException).getNewMap());
+                request.setRemoteOperationExecutionError(new RemoteException(executionException.getMessage(), executionException));
+                return ExecutionStatus.COMPLETED;
             }
         }
         request.setRemoteOperationResult(result);

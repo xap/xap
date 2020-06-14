@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.remoting.routing.clustered;
 
+import com.gigaspaces.internal.exceptions.ChunksMapGenerationException;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.routing.RemoteOperationRouterException;
 
@@ -71,6 +72,9 @@ public abstract class SpaceProxyLoadBalancingStrategy {
                     request.setRemoteOperationExecutionError(new RemoteException(timeoutErrorMessage));
                 }
                 return activeProxy;
+            }catch (ChunksMapGenerationException e){
+                request.setRemoteOperationExecutionError(new RemoteException(e.getMessage(), e));
+                return null;
             } catch (RemoteOperationRouterException e) {
                 request.setRemoteOperationExecutionError(e);
                 return null;
