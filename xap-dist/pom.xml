@@ -92,6 +92,10 @@
             <artifactId>xap-mongodb</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.gigaspaces</groupId>
+            <artifactId>xap-kafka</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
         </dependency>
@@ -103,10 +107,6 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.gigaspaces</groupId>-->
-            <!--<artifactId>xap-jetty-8</artifactId>-->
-        <!--</dependency>-->
         <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-jetty</artifactId>
