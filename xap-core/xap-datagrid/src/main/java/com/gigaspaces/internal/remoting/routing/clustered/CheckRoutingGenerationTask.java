@@ -34,22 +34,21 @@ public class CheckRoutingGenerationTask implements com.gigaspaces.internal.utils
         try {
             RemoteOperationsExecutorProxy executorProxy = ((SpacePartitionedClusterRemoteOperationRouter) this.spaceProxy.getProxyRouter().getOperationRouter()).getAnyAvailableCachedMember();
             if (executorProxy == null) {
-                logger.info("couldn't find any cached member");
+                logger.debug("couldn't find any cached member");
                 return false;
             }
             PartitionToChunksMap chunksMap = executorProxy.getExecutor().checkChunkMapGeneration(clientGeneration);
             if (chunksMap == null) {
-                logger.info("generation is ok");
+                logger.debug("generation is ok");
                 this.isLatestGeneration = true;
                 return false;
             } else {
-                logger.info("generation changed");
+                logger.debug("generation changed");
                 this.newMap = chunksMap;
                 return true;
             }
         } catch (Exception e){
-            logger.info("exception thrown", e);
-            e.printStackTrace();
+            logger.error("exception thrown in CheckRoutingGenerationTask", e);
             return false;
         }
     }
