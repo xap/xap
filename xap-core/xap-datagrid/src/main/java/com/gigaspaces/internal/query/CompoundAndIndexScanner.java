@@ -205,9 +205,12 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
             return shortestExtendedIndexMatch;
         }
         if(isExplainPlan){
-            choiceNode.setChosen(choiceNode.getOptions().get(0));
-            fatherNode.addOption(choiceNode.getOptions().get(0));
-            fatherNode.setChosen(new UnionIndexInfo(fatherNode.getOptions()));
+            IndexInfo firstOption = choiceNode.getOptions().get(0);
+            fatherNode.addOption(firstOption);
+            if (firstOption.isUsable()) {
+                choiceNode.setChosen(firstOption);
+                fatherNode.setChosen(new UnionIndexInfo(fatherNode.getOptions()));
+            }
 
         }
         return IQueryIndexScanner.RESULT_IGNORE_INDEX;

@@ -16,9 +16,9 @@
 package com.gigaspaces.internal.query.explainplan;
 
 import com.gigaspaces.api.ExperimentalApi;
-import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.IntegerObjectMap;
+import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 
@@ -186,6 +186,7 @@ public class ExplainPlanImpl implements ExplainPlan {
     }
 
     private String getSelectedDesc(IndexInfo indexInfo) {
+        if (indexInfo == null) return "N/A";
         if (indexInfo instanceof UnionIndexInfo) {
             final List<IndexInfo> options = ((UnionIndexInfo) indexInfo).getOptions();
             if (options.size() == 0)
