@@ -94,9 +94,9 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
         }
 
         // Iterate over custom indexes to find shortest potential match list:
+        IObjectsList result = null;
         for (IQueryIndexScanner queryIndex : indexScanners) {
             // Get entries in space that match the indexed value in the query (a.k.a potential match list):
-            IObjectsList result;
 
             if (trackIndexHits && queryIndex.isExtendsAbstractQueryIndex()) {
                 context.getIndexMetricsContext().setIgnoreUpdates(true);
@@ -205,9 +205,12 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
             return shortestExtendedIndexMatch;
         }
         if(isExplainPlan){
-            choiceNode.setChosen(choiceNode.getOptions().get(0));
-            fatherNode.addOption(choiceNode.getOptions().get(0));
-            fatherNode.setChosen(new UnionIndexInfo(fatherNode.getOptions()));
+            IndexInfo firstOption = choiceNode.getOptions().get(0);
+            fatherNode.addOption(firstOption);
+            if (firstOption.isUsable()) {
+                choiceNode.setChosen(firstOption);
+                fatherNode.setChosen(new UnionIndexInfo(fatherNode.getOptions()));
+            }
 
         }
         return IQueryIndexScanner.RESULT_IGNORE_INDEX;
