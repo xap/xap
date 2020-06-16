@@ -273,7 +273,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private ZookeeperClient zookeeperClient;
     private final ZookeeperLastPrimaryHandler zookeeperLastPrimaryHandler;
     private ZookeeperChunksMapHandler zookeeperChunksMapHandler;
-    private ZookeeperQuiesceHandler zookeeperQuiesceHandler;
 
     private final Map<Class<? extends SystemTask>, SpaceActionExecutor> executorMap = XapExtensions.getInstance().getActionExecutors();
 
@@ -328,14 +327,13 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         boolean useZooKeeper = useZooKeeper();
         if(useZooKeeper){
             zookeeperLastPrimaryHandler = new ZookeeperLastPrimaryHandler(this, attributeStore, _logger);
-            zookeeperQuiesceHandler = new ZookeeperQuiesceHandler(customProperties.getProperty("clusterInfo.name"), attributeStore);
         } else {
             zookeeperLastPrimaryHandler = null;
         }
 
 
         //init quiesce handler before startInternal to ensure no operations will arrive before handler is initialized
-        this._quiesceHandler = createQuiesceHandler(customProperties);
+        this._quiesceHandler = new QuiesceHandler(this, getQuiesceStateChangedEvent(customProperties));
 
         startInternal();
 
@@ -539,24 +537,14 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         return (m_adminImpl != null ? m_adminImpl.getProxy() : null);
     }
 
-    private QuiesceHandler createQuiesceHandler(Properties customProperties) {
-        QuiesceStateChangedEvent event = null;
-        if(useZooKeeper()){
-            InternalQuiesceDetails details = zookeeperQuiesceHandler.getUpdatedQuiesceDetails();
-            if(details != null && details.getStatus().equals(QuiesceState.QUIESCED)) {
-                event = new QuiesceStateChangedEvent(QuiesceState.QUIESCED, details.getToken(), details.getDescription());
-                QuiesceHandler handler = new QuiesceHandler(this, event);
-                zookeeperQuiesceHandler.updateInstanceState(details);
-                return handler;
-            }
-        } else if (customProperties.containsKey("quiesce.token")) {
+    private QuiesceStateChangedEvent getQuiesceStateChangedEvent(Properties customProperties) {
+        QuiesceStateChangedEvent result = null;
+        if (customProperties.containsKey("quiesce.token")) {
             String token = customProperties.getProperty("quiesce.token");
             String description = customProperties.getProperty("quiesce.description");
-            event = new QuiesceStateChangedEvent(QuiesceState.QUIESCED, new DefaultQuiesceToken(token), description);
-            return new QuiesceHandler(this, event);
+            result = new QuiesceStateChangedEvent(QuiesceState.QUIESCED, new DefaultQuiesceToken(token), description);
         }
-
-        return new QuiesceHandler(this, event);
+        return result;
     }
 
     public static String extractInstanceIdFromContainerName(String containerName) {
@@ -776,13 +764,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 }
             }
 
-            if (zookeeperQuiesceHandler != null) {
-                try {
-                    zookeeperQuiesceHandler.close();
-                } catch (Exception e) {
-                    _logger.warn("Failed to close zookeeperQuiesceHandler", e);
-                }
-            }
 
             if (zookeeperChunksMapHandler != null) {
                 zookeeperChunksMapHandler.close();
@@ -3234,12 +3215,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             _clusterFailureDetector = initClusterFailureDetector(_clusterPolicy);
             _engine = new SpaceEngine(this);
 
-            if (useZooKeeper()) {
-                zookeeperClient = createZooKeeperClient();
-                zookeeperQuiesceHandler.addListener(zookeeperClient, _quiesceHandler);
-            }
-
             if (zookeeperChunksMapHandler != null && _clusterInfo.isChunksRouting()) {
+                zookeeperClient = createZooKeeperClient();
                 zookeeperChunksMapHandler.addListener(zookeeperClient, _spaceConfig);
             }
             if (isLookupServiceEnabled)
