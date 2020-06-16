@@ -7,7 +7,9 @@ import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.start.SystemLocations;
 import com.gigaspaces.start.manager.XapManagerConfig;
 import com.j_spaces.kernel.SystemProperties;
-
+import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;
+import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -16,6 +18,8 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.webapp.WebInfConfiguration;
 import org.openspaces.core.util.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractXmlApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 
@@ -26,11 +30,10 @@ import java.io.IOException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.List;
 
 /**
  * @author Yohana Khoury
@@ -58,6 +61,8 @@ public class JettyManagerRestLauncher implements Closeable {
      */
     @SuppressWarnings("WeakerAccess")
     public JettyManagerRestLauncher() {
+        System.setProperty("org.apache.jasper.compiler.disablejsr199","true");
+
         try {
             final XapManagerConfig config = SystemInfo.singleton().getManagerClusterInfo().getCurrServer();
             if (config == null) {
@@ -172,6 +177,13 @@ public class JettyManagerRestLauncher implements Closeable {
             if (contextPath.equals("/") && Boolean.getBoolean("com.gs.security.enabled")) {
                 webApp.setInitParameter("spring.profiles.active", "gs-ops-manager-secured");
             }
+
+            //Enable JSP support
+            webApp.setAttribute("org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern",
+                    ".*/[^/]*servlet-api-[^/]*\\.jar$|.*/javax.servlet.jsp.jstl-.*\\.jar$|.*/.*taglibs*\\.jar$");
+            webApp.setAttribute("org.eclipse.jetty.containerInitializers", jspInitializers());
+            webApp.addBean(new ServletContainerInitializersStarter(webApp), true);
+
             webApp.setWar(file.getAbsolutePath());
             webApp.setThrowUnavailableOnStartupException(true);
             handler.addHandler(webApp);
@@ -239,5 +251,14 @@ public class JettyManagerRestLauncher implements Closeable {
         }
         if (this.application != null)
             this.application.destroy();
+    }
+
+    private List<ContainerInitializer> jspInitializers()
+    {
+        JettyJasperInitializer sci = new JettyJasperInitializer();
+        ContainerInitializer initializer = new ContainerInitializer(sci, null);
+        List<ContainerInitializer> initializers = new ArrayList<ContainerInitializer>();
+        initializers.add(initializer);
+        return initializers;
     }
 }
