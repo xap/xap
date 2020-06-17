@@ -178,7 +178,7 @@ public class JSpaceAttributes
     // public String m_dcacheConfigName;
     private JSpaceAttributes _dCacheProperties;
     private ClusterPolicy _clusterPolicy;
-    private SpaceClusterInfo _clusterInfo;
+    private volatile SpaceClusterInfo _clusterInfo;
     private FiltersInfo[] _filtersInfo;
 
 
@@ -1427,8 +1427,10 @@ public class JSpaceAttributes
         return _clusterInfo;
     }
 
-    public void setClusterInfo(SpaceClusterInfo _clusterInfo) {
-        this._clusterInfo = _clusterInfo;
+    public void setClusterInfo(SpaceClusterInfo newClusterInfo) {
+        if (this._clusterInfo != newClusterInfo) {
+            this._clusterInfo = newClusterInfo;
+        }
     }
 
     public SpaceConfig cloneAndUpdate(PartitionToChunksMap chunksMap) {

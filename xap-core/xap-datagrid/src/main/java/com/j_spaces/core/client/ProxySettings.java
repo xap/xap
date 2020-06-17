@@ -253,4 +253,9 @@ public class ProxySettings implements Externalizable {
         SpaceSettings newSpaceSettings = this._spaceSettings.cloneAndUpdate(chunksMap);
         return new ProxySettings(this._remoteSpace, newSpaceSettings);
     }
+
+    public ProxySettings cloneAndUpdate(SpaceClusterInfo newClusterInfo) {
+        SpaceSettings newSpaceSettings = this._spaceSettings.cloneAndUpdate(newClusterInfo);
+        return new ProxySettings(this._remoteSpace, newSpaceSettings);
+    }
 }

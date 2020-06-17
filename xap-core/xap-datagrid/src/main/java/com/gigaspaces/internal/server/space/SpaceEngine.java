@@ -157,7 +157,7 @@ import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.Engine.*;
 
 @com.gigaspaces.api.InternalApi
-public class SpaceEngine implements ISpaceModeListener {
+public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedListener {
 
 
     private final Logger _logger;
@@ -179,7 +179,7 @@ public class SpaceEngine implements ISpaceModeListener {
     private final String _containerName;
     private final String _fullSpaceName;
     private final ClusterPolicy _clusterPolicy;
-    private final SpaceClusterInfo _clusterInfo;
+    private volatile SpaceClusterInfo _clusterInfo;
 
     // Independent components
     private final Random _random;
@@ -367,6 +367,7 @@ public class SpaceEngine implements ISpaceModeListener {
         if (!_isLocalCache)
             registerSpaceMetrics(_metricRegistrator);
         _serverIteratorsManager = new ServerIteratorsManager(_spaceImpl.getPartitionId());
+        spaceImpl.registerToClusterInfoChangedEvent(this);
     }
 
     private void blobStoreOverrideConfig(SpaceImpl spaceImpl) {
@@ -6300,6 +6301,11 @@ public class SpaceEngine implements ISpaceModeListener {
 
     public MetricManager getMetricManager() {
         return _metricManager;
+    }
+
+    @Override
+    public void afterClusterInfoChange(SpaceClusterInfo clusterInfo) {
+        this._clusterInfo = clusterInfo;
     }
 
     /**

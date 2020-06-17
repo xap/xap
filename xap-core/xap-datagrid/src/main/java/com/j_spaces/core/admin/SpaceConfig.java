@@ -17,6 +17,8 @@
 
 package com.j_spaces.core.admin;
 
+import com.gigaspaces.internal.cluster.SpaceClusterInfo;
+import com.gigaspaces.internal.server.space.IClusterInfoChangedListener;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.JSpaceAttributes;
@@ -40,7 +42,7 @@ import java.util.concurrent.ConcurrentMap;
  * @see com.j_spaces.core.admin.IRemoteJSpaceAdmin#getConfig()
  **/
 
-public class SpaceConfig extends JSpaceAttributes {
+public class SpaceConfig extends JSpaceAttributes implements IClusterInfoChangedListener {
     private String _spaceName;
     private String _containerName;
     private String _fullSpaceName;
@@ -223,6 +225,11 @@ public class SpaceConfig extends JSpaceAttributes {
      */
     public String getContainerName() {
         return _containerName;
+    }
+
+    @Override
+    public void afterClusterInfoChange(SpaceClusterInfo clusterInfo) {
+        this.setClusterInfo(clusterInfo);
     }
 
     /* Bit map for serialization */

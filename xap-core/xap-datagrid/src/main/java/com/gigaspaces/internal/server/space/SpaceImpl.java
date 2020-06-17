@@ -71,7 +71,6 @@ import com.gigaspaces.internal.os.OSDetails;
 import com.gigaspaces.internal.os.OSHelper;
 import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
-import com.gigaspaces.internal.quiesce.InternalQuiesceDetails;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
 import com.gigaspaces.internal.server.space.demote.DemoteHandler;
@@ -185,8 +184,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
@@ -197,7 +194,6 @@ import java.util.concurrent.atomic.LongAdder;
 
 import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ATTRIBUET_STORE_HANDLER_CLASS_NAME;
-import static com.j_spaces.core.Constants.CacheManager.CACHE_MANAGER_BLOBSTORE_STORAGE_HANDLER_PROP;
 import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ZOOKEEPER_CLIENT_CLASS_NAME;
 import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER_CLASS_NAME;
 import static com.j_spaces.core.Constants.LeaseManager.*;
@@ -239,6 +235,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private final Object _cleanedLock = new Object();
     private final PrimarySpaceModeListeners primarySpaceModeListeners = new PrimarySpaceModeListeners();
     private final CompositeSpaceModeListener _internalSpaceModesListeners = new CompositeSpaceModeListener();
+    private final ClusterInfoChangedListeners clusterInfoChangedListeners = new ClusterInfoChangedListeners();
     private final IStubHandler _stubHandler;
     private final DemoteHandler _demoteHandler;
     private final HttpServer _httpServer;
@@ -383,7 +380,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     private SpaceClusterInfo createClusterInfo(String puName) {
         SpaceClusterInfo clusterInfo = new SpaceClusterInfo(_jspaceAttr, _spaceMemberName);
-        if (useZooKeeper() && GsEnv.propertyBoolean(SystemProperties.CHUNKS_SPACE_ROUTING).get(false)) {
+        if (isChunksRouting()) {
             zookeeperChunksMapHandler = new ZookeeperChunksMapHandler(puName, attributeStore);
             try {
                 clusterInfo.setChunksMap(zookeeperChunksMapHandler.initChunksMap(clusterInfo.getNumberOfPartitions(),
@@ -778,6 +775,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 }
             }
 
+            if(!clusterInfoChangedListeners.isEmpty()){
+                clusterInfoChangedListeners.clear();
+            }
+
             if (_qp != null)
                 _qp.close();
 
@@ -995,6 +996,16 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     public int getPartitionId() {
         return _clusterInfo.getPartitionOfMember(getServiceName()) ;
+    }
+
+    public void registerToClusterInfoChangedEvent(IClusterInfoChangedListener listener) {
+        if(isChunksRouting()){
+            this.clusterInfoChangedListeners.addListener(listener);
+        }
+    }
+
+    public boolean isChunksRouting() {
+        return useZooKeeper() && GsEnv.propertyBoolean(SystemProperties.CHUNKS_SPACE_ROUTING).get(false);
     }
 
     /**
@@ -2987,6 +2998,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             if (schemaFilePath != null)
                 _spaceConfig.setSchemaPath(schemaFilePath);
             initSpaceConfig(_spaceConfig, _configReader, schemaFilePath);
+            this.registerToClusterInfoChangedEvent(_spaceConfig);
         }
 
         return _spaceConfig;
@@ -3891,21 +3903,11 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     @Override
     public void updateChunksMap() {
-        if (useZooKeeper() && GsEnv.propertyBoolean(SystemProperties.CHUNKS_SPACE_ROUTING).get(false)) {
+        if (isChunksRouting()) {
             synchronized (this){
                 PartitionToChunksMap newMap = zookeeperChunksMapHandler.getChunksMap(this._clusterInfo.getPartitionOfMember(_spaceMemberName) + 1);
                 this._clusterInfo = this._clusterInfo.cloneAndUpdate(newMap);
-                this._spaceConfig.setClusterInfo(this._clusterInfo);
-                this._taskProxy.updateProxyRouter(_taskProxy.getProxyRouter(),newMap);
-                ISpaceFilter filter = this._engine.getFilterManager().getFilterObject("InjectionExecutorFilter");
-                Method setter;
-                try {
-                    setter = filter.getClass().getMethod("updateSpace", IJSpace.class);
-                    setter.invoke(filter, ((IJSpace) this._taskProxy));
-                } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                    throw  new RuntimeException(e);
-                }
-
+                this.clusterInfoChangedListeners.afterClusterInfoChange(this._clusterInfo);
             }
         } else {
             throw new IllegalStateException("Nothing to update, CHUNKS_SPACE_ROUTING is disabled");
