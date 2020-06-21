@@ -7,7 +7,7 @@ import com.ecwid.consul.v1.ConsulRawClient;
 import com.ecwid.consul.v1.Response;
 import com.ecwid.consul.v1.kv.model.GetValue;
 import com.gigaspaces.start.SystemInfo;
-import com.gigaspaces.start.manager.ManagerClusterType;
+import com.gigaspaces.admin.ManagerClusterType;
 import io.opentracing.util.GlobalTracer;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;

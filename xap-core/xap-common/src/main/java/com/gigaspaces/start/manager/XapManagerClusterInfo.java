@@ -1,6 +1,7 @@
 package com.gigaspaces.start.manager;
 
 import com.gigaspaces.CommonSystemProperties;
+import com.gigaspaces.admin.ManagerClusterType;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.logger.Constants;
 
