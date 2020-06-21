@@ -39,7 +39,7 @@ public class FlatEntryData extends AbstractEntryData {
     }
 
     private FlatEntryData(Object[] fieldsValues, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime,
-                          boolean cloneXtnInfo, AbstractEntryData other, boolean createEmptyTxnInfoIfNon) {
+                          boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
         super(entryTypeDesc, version, expirationTime, cloneXtnInfo, other, createEmptyTxnInfoIfNon);
         this._fieldsValues = fieldsValues;
         this._dynamicProperties = dynamicProperties;

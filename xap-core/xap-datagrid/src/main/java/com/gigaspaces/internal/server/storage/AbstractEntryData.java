@@ -18,6 +18,7 @@
 package com.gigaspaces.internal.server.storage;
 
 import com.gigaspaces.entry.VirtualEntry;
+import com.gigaspaces.internal.lease.LeaseUtils;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.SpacePropertyInfo;
@@ -47,8 +48,6 @@ import java.util.Map;
  * @since 7.0
  */
 public abstract class AbstractEntryData implements ITransactionalEntryData {
-    private static final long DUMMY_TTL_FOR_EXPIRED_ENTRIES = 1;
-
     protected final EntryTypeDesc _entryTypeDesc;
     protected final int _versionID;
     protected final long _expirationTime;
@@ -61,29 +60,24 @@ public abstract class AbstractEntryData implements ITransactionalEntryData {
         this._entryTxnInfo = createEmptyTxnInfoIfNon ? new EntryXtnInfo() : null;
     }
 
-    protected AbstractEntryData(EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean cloneXtnInfo, AbstractEntryData other, boolean createEmptyTxnInfoIfNon) {
+    protected AbstractEntryData(EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
         this._entryTypeDesc = entryTypeDesc;
         this._versionID = version;
         this._expirationTime = expirationTime;
-        if (cloneXtnInfo && other._entryTxnInfo != null) {
-            this._entryTxnInfo = new EntryXtnInfo(other._entryTxnInfo);
-        } else {
-            if (other._entryTxnInfo != null) {
-                this._entryTxnInfo = other._entryTxnInfo;
-            } else {
-                if (createEmptyTxnInfoIfNon)
-                    this._entryTxnInfo = new EntryXtnInfo();
-                else
-                    this._entryTxnInfo = null;
-            }
-        }
-
+        this._entryTxnInfo = copyTxnInfo(other.getEntryXtnInfo(), cloneXtnInfo, createEmptyTxnInfoIfNon);
     }
 
-    protected AbstractEntryData(AbstractEntryData other, EntryXtnInfo xtnInfo) {
-        this._entryTypeDesc = other._entryTypeDesc;
-        this._versionID = other._versionID;
-        this._expirationTime = other._expirationTime;
+    private static EntryXtnInfo copyTxnInfo(EntryXtnInfo otherEntryTxnInfo, boolean cloneXtnInfo, boolean createEmptyTxnInfoIfNon) {
+        if (otherEntryTxnInfo != null) {
+            return cloneXtnInfo ? new EntryXtnInfo(otherEntryTxnInfo) : otherEntryTxnInfo;
+        }
+        return createEmptyTxnInfoIfNon ? new EntryXtnInfo() : null;
+    }
+
+    protected AbstractEntryData(ITransactionalEntryData other, EntryXtnInfo xtnInfo) {
+        this._entryTypeDesc = other.getEntryTypeDesc();
+        this._versionID = other.getVersion();
+        this._expirationTime = other.getExpirationTime();
         this._entryTxnInfo = xtnInfo;
     }
 
@@ -120,14 +114,12 @@ public abstract class AbstractEntryData implements ITransactionalEntryData {
     }
 
     public long getTimeToLive(boolean useDummyIfRelevant) {
-        return getTimeToLive(_expirationTime, useDummyIfRelevant);
+        return LeaseUtils.getTimeToLive(_expirationTime, useDummyIfRelevant);
     }
 
     public static long getTimeToLive(long expirationTime, boolean useDummyIfRelevant) {
-        final long timeToLive = expirationTime != Long.MAX_VALUE ? (expirationTime - SystemTime.timeMillis()) : expirationTime;
-        return (useDummyIfRelevant && timeToLive <= 0 && expirationTime != Long.MAX_VALUE) ? DUMMY_TTL_FOR_EXPIRED_ENTRIES : timeToLive;
+        return LeaseUtils.getTimeToLive(expirationTime, useDummyIfRelevant);
     }
-
 
     public EntryXtnInfo getEntryXtnInfo() {
         return _entryTxnInfo;

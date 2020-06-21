@@ -18,6 +18,7 @@ package com.gigaspaces.internal.server.storage;
 
 import com.gigaspaces.client.protective.ProtectiveMode;
 import com.gigaspaces.client.protective.ProtectiveModeException;
+import com.gigaspaces.internal.lease.LeaseUtils;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.query.ICustomQuery;
@@ -159,7 +160,7 @@ public class TemplateEntryData implements IEntryData {
 
     @Override
     public long getTimeToLive(boolean useDummyIfRelevant) {
-        return AbstractEntryData.getTimeToLive(_expirationTime, useDummyIfRelevant);
+        return LeaseUtils.getTimeToLive(_expirationTime, useDummyIfRelevant);
     }
 
     @Override
