@@ -15,7 +15,9 @@
  */
 package com.sun.jini.reggie;
 
+import com.gigaspaces.admin.ManagerClusterInfo;
 import com.gigaspaces.admin.cli.RuntimeInfo;
+import com.gigaspaces.admin.manager.ManagerClusterInfoProvider;
 import com.gigaspaces.internal.backport.java.util.concurrent.FastConcurrentSkipListMap;
 import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
 import com.gigaspaces.internal.jmx.JMXUtilities;
@@ -172,7 +174,7 @@ import javax.security.auth.login.LoginException;
  * @author Sun Microsystems, Inc.
  */
 @com.gigaspaces.api.InternalApi
-public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust, NIOInfoProvider, OSInfoProvider, JVMInfoProvider, InternalLogProvider {
+public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust, NIOInfoProvider, OSInfoProvider, JVMInfoProvider, InternalLogProvider, ManagerClusterInfoProvider {
 
     /**
      * Maximum minMax lease duration for both services and events
@@ -703,6 +705,11 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         } finally {
             concurrentObj.readUnlock();
         }
+    }
+
+    @Override
+    public ManagerClusterInfo getManagerClusterInfo() {
+        return SystemInfo.singleton().getManagerClusterInfo();
     }
 
     private final static class SvcRegExpirationKey implements Comparable {
