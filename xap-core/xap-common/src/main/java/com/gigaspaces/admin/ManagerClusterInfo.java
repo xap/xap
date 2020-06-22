@@ -12,6 +12,11 @@ import java.util.List;
 public interface ManagerClusterInfo extends Serializable {
 
     /**
+     * Returns the manager cluster type.
+     */
+    ManagerClusterType getManagerClusterType();
+
+    /**
      * Returns the list of manager instances (empty list if no managers).
      */
     List<ManagerInstanceInfo> getManagers();
