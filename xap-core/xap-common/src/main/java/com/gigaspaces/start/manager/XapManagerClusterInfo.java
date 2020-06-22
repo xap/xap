@@ -42,18 +42,23 @@ public class XapManagerClusterInfo implements ManagerClusterInfo, Externalizable
     }
 
     public XapManagerClusterInfo(InetAddress currHost) {
-        this(parse(System.getProperties(), System.getenv()), currHost);
+        this(System.getProperties(), System.getenv(), currHost);
     }
 
     public XapManagerClusterInfo(String host, InetAddress currHost) {
-        this(Collections.singletonList(XapManagerConfig.parse(host)), currHost);
+        this(parseManagerClusterType(System.getenv()), Collections.singletonList(XapManagerConfig.parse(host)), currHost);
     }
 
     public XapManagerClusterInfo(Properties sysProps, Map<String, String> env) {
-        this(parse(sysProps, env), null);
+        this(sysProps, env, null);
     }
 
-    private XapManagerClusterInfo(List<XapManagerConfig> servers, InetAddress currHost) {
+    private XapManagerClusterInfo(Properties sysProps, Map<String, String> env, InetAddress currHost) {
+        this(parseManagerClusterType(env), parse(sysProps, env), currHost);
+    }
+
+    private XapManagerClusterInfo(ManagerClusterType managerClusterType, List<XapManagerConfig> servers, InetAddress currHost) {
+        this.managerClusterType = managerClusterType;
         if (servers.size() != 0 && servers.size() != 1 && servers.size() != 3)
             throw new UnsupportedOperationException("Unsupported xap manager cluster size: " + servers.size());
         this.servers = Collections.unmodifiableList(servers);
@@ -62,8 +67,6 @@ public class XapManagerClusterInfo implements ManagerClusterInfo, Externalizable
         if (currServer != null) {
             System.setProperty(CommonSystemProperties.MANAGER_REST_URL, currServer.getAdminRestUrl());
         }
-
-        this.managerClusterType = GsEnv.getOptional(MANAGER_CLUSTER_TYPE_ENV_VAR_SUFFIX).map(ManagerClusterType::valueOf).orElse(ManagerClusterType.SERVICE_GRID);
     }
 
     private static List<String> initHosts(List<XapManagerConfig> servers) {
@@ -74,6 +77,7 @@ public class XapManagerClusterInfo implements ManagerClusterInfo, Externalizable
         return Collections.unmodifiableList(hosts);
     }
 
+    @Override
     public ManagerClusterType getManagerClusterType() {
         return managerClusterType;
     }
@@ -103,6 +107,10 @@ public class XapManagerClusterInfo implements ManagerClusterInfo, Externalizable
         return Arrays.toString(servers.toArray());
     }
 
+    private static ManagerClusterType parseManagerClusterType(Map<String, String> env) {
+        return ManagerClusterType.valueOf(GsEnv.get(MANAGER_CLUSTER_TYPE_ENV_VAR_SUFFIX, ManagerClusterType.SERVICE_GRID.name(), env));
+    }
+
     private static List<XapManagerConfig> parse(Properties sysProps, Map<String, String> env) {
         final List<XapManagerConfig> shortList = parseShort(sysProps, env);
         final List<XapManagerConfig> fullList = parseFull(sysProps, env);
@@ -113,13 +121,9 @@ public class XapManagerClusterInfo implements ManagerClusterInfo, Externalizable
 
     private static List<XapManagerConfig> parseShort(Properties sysProps, Map<String, String> env) {
         final String var = get(SERVERS_PROPERTY, SERVERS_ENV_VAR_SUFFIX, sysProps, env);
-        return parseServersEnvVar(var);
-    }
-
-    public static List<XapManagerConfig> parseServersEnvVar( String serversEnvVar ) {
         final List<XapManagerConfig> result = new ArrayList<XapManagerConfig>();
-        if (serversEnvVar != null && !serversEnvVar.isEmpty()) {
-            final String[] tokens = serversEnvVar.split(",");
+        if (var != null && !var.isEmpty()) {
+            final String[] tokens = var.split(",");
             for (String token : tokens) {
                 result.add(XapManagerConfig.parse(token));
             }
