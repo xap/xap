@@ -1,19 +1,31 @@
 package com.gigaspaces.start.manager;
 
 import com.gigaspaces.CommonSystemProperties;
+import com.gigaspaces.admin.ManagerInstanceInfo;
+import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.utils.GsEnv;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Map;
 import java.util.Properties;
 
-public class XapManagerConfig {
+public class XapManagerConfig implements ManagerInstanceInfo, Externalizable {
+    private static final long serialVersionUID = 1L;
+
     // List of servers.
     // Each server has a host, and a map of component-to-port
-    private final String host;
-    private final Properties properties;
+    private String host;
+    private Properties properties;
 
     private static final String DEFAULT_REST = GsEnv.property(CommonSystemProperties.MANAGER_REST_PORT).get("8090");
     private static final boolean SSL_ENABLED = Boolean.getBoolean(CommonSystemProperties.MANAGER_REST_SSL_ENABLED);
+
+    // Required for Externalizable
+    public XapManagerConfig() {
+    }
 
     public XapManagerConfig(String host) {
         this(host, new Properties());
@@ -40,6 +52,7 @@ public class XapManagerConfig {
         return new XapManagerConfig(host, properties);
     }
 
+    @Override
     public String getHost() {
         return host;
     }
@@ -80,5 +93,17 @@ public class XapManagerConfig {
         }
 
         return result;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        BootIOUtils.writeString(out, host);
+        BootIOUtils.writeProperties(out, properties);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        this.host = BootIOUtils.readString(in);
+        this.properties = BootIOUtils.readProperties(in);
     }
 }

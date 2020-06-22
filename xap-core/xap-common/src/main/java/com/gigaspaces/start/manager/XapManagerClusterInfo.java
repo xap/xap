@@ -1,10 +1,17 @@
 package com.gigaspaces.start.manager;
 
 import com.gigaspaces.CommonSystemProperties;
+import com.gigaspaces.admin.ManagerClusterInfo;
 import com.gigaspaces.admin.ManagerClusterType;
+import com.gigaspaces.admin.ManagerInstanceInfo;
+import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.logger.Constants;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.net.InetAddress;
 import java.util.*;
 
@@ -12,7 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.net.util.IPAddressUtil;
 
-public class XapManagerClusterInfo {
+public class XapManagerClusterInfo implements ManagerClusterInfo, Externalizable {
+    private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(Constants.LOGGER_MANAGER);
 
     public static final String SERVERS_PROPERTY = "com.gs.manager.servers";
@@ -23,22 +31,33 @@ public class XapManagerClusterInfo {
     private static final String MANAGER_CLUSTER_TYPE_ENV_VAR_SUFFIX = "MANAGER_CLUSTER_TYPE";
     public static final String MANAGER_CLUSTER_TYPE_ENV_VAR = "GS_"+MANAGER_CLUSTER_TYPE_ENV_VAR_SUFFIX;
 
-    private final XapManagerConfig currServer;
-    private final XapManagerConfig[] servers;
-    private final ManagerClusterType managerClusterType;
+    private transient XapManagerConfig currServer;
+    private List<XapManagerConfig> servers;
+    private List<String> hosts;
+    private ManagerClusterType managerClusterType;
+    private transient String zookeeperConnectionString;
+
+    // Required for externalizable
+    public XapManagerClusterInfo() {
+    }
 
     public XapManagerClusterInfo(InetAddress currHost) {
-        this(parse(), currHost);
+        this(parse(System.getProperties(), System.getenv()), currHost);
     }
 
     public XapManagerClusterInfo(String host, InetAddress currHost) {
         this(Collections.singletonList(XapManagerConfig.parse(host)), currHost);
     }
 
-    private XapManagerClusterInfo(Collection<XapManagerConfig> servers, InetAddress currHost) {
+    public XapManagerClusterInfo(Properties sysProps, Map<String, String> env) {
+        this(parse(sysProps, env), null);
+    }
+
+    private XapManagerClusterInfo(List<XapManagerConfig> servers, InetAddress currHost) {
         if (servers.size() != 0 && servers.size() != 1 && servers.size() != 3)
             throw new UnsupportedOperationException("Unsupported xap manager cluster size: " + servers.size());
-        this.servers = servers.toArray(new XapManagerConfig[servers.size()]);
+        this.servers = Collections.unmodifiableList(servers);
+        this.hosts = initHosts(servers);
         this.currServer = findManagerByHost(currHost);
         if (currServer != null) {
             System.setProperty(CommonSystemProperties.MANAGER_REST_URL, currServer.getAdminRestUrl());
@@ -47,16 +66,32 @@ public class XapManagerClusterInfo {
         this.managerClusterType = GsEnv.getOptional(MANAGER_CLUSTER_TYPE_ENV_VAR_SUFFIX).map(ManagerClusterType::valueOf).orElse(ManagerClusterType.SERVICE_GRID);
     }
 
+    private static List<String> initHosts(List<XapManagerConfig> servers) {
+        if (servers.isEmpty())
+            return Collections.emptyList();
+        List<String> hosts = new ArrayList<>(servers.size());
+        servers.forEach(s -> hosts.add(s.getHost()));
+        return Collections.unmodifiableList(hosts);
+    }
+
     public ManagerClusterType getManagerClusterType() {
         return managerClusterType;
     }
 
-    public XapManagerConfig[] getServers() {
+    public List<XapManagerConfig> getServers() {
         return servers;
     }
 
+    public List<String> getHosts() {
+        return hosts;
+    }
+
     public boolean isEmpty() {
-        return servers.length == 0;
+        return servers.isEmpty();
+    }
+
+    public int size() {
+        return servers.size();
     }
 
     public XapManagerConfig getCurrServer() {
@@ -65,20 +100,20 @@ public class XapManagerClusterInfo {
 
     @Override
     public String toString() {
-        return Arrays.toString(servers);
+        return Arrays.toString(servers.toArray());
     }
 
-    private static Collection<XapManagerConfig> parse() {
-        final Collection<XapManagerConfig> shortList = parseShort();
-        final Collection<XapManagerConfig> fullList = parseFull();
+    private static List<XapManagerConfig> parse(Properties sysProps, Map<String, String> env) {
+        final List<XapManagerConfig> shortList = parseShort(sysProps, env);
+        final List<XapManagerConfig> fullList = parseFull(sysProps, env);
         if (shortList.size() != 0 && fullList.size() != 0)
             throw new IllegalStateException("Ambiguous XAP manager cluster configuration (short and full)");
         return shortList.size() != 0 ? shortList : fullList;
     }
 
-    private static Collection<XapManagerConfig> parseShort() {
-        final String var = get(SERVERS_PROPERTY, SERVERS_ENV_VAR_SUFFIX);
-        return parseServersEnvVar( var );
+    private static List<XapManagerConfig> parseShort(Properties sysProps, Map<String, String> env) {
+        final String var = get(SERVERS_PROPERTY, SERVERS_ENV_VAR_SUFFIX, sysProps, env);
+        return parseServersEnvVar(var);
     }
 
     public static List<XapManagerConfig> parseServersEnvVar( String serversEnvVar ) {
@@ -92,10 +127,10 @@ public class XapManagerClusterInfo {
         return result;
     }
 
-    private static Collection<XapManagerConfig> parseFull() {
-        final Collection<XapManagerConfig> result = new ArrayList<XapManagerConfig>();
+    private static List<XapManagerConfig> parseFull(Properties sysProps, Map<String, String> env) {
+        final List<XapManagerConfig> result = new ArrayList<XapManagerConfig>();
         for (int i=1 ; i < 10 ; i++) {
-            final String var = get(SERVER_PROPERTY + "." + i, SERVER_ENV_VAR_SUFFIX + "_" + i);
+            final String var = get(SERVER_PROPERTY + "." + i, SERVER_ENV_VAR_SUFFIX + "_" + i, sysProps, env);
             if (var != null && var.length() != 0)
                 result.add(parse(var));
             else
@@ -111,16 +146,16 @@ public class XapManagerClusterInfo {
         return result;
     }
 
-    private static String get(String sysProp, String envVarSuffix) {
-        String result = System.getProperty(sysProp);
+    private static String get(String sysProp, String envVarSuffix, Properties sysProps, Map<String, String> env) {
+        String result = sysProps.getProperty(sysProp);
         if (result != null) {
             if (logger.isDebugEnabled())
                 logger.debug("Loaded config from system property " + sysProp + "=" + result);
             return result;
         }
-        String envVar = GsEnv.key(envVarSuffix);
+        String envVar = GsEnv.key(envVarSuffix, env);
         if (envVar != null) {
-            result = System.getenv(envVar);
+            result = env.get(envVar);
             if (logger.isDebugEnabled())
                 logger.debug("Loaded config from environment variable " + envVar + "=" + result);
             return result;
@@ -129,6 +164,8 @@ public class XapManagerClusterInfo {
     }
 
     private XapManagerConfig findManagerByHost(InetAddress currHost) {
+        if (currHost == null)
+            return null;
         XapManagerConfig result = null;
         for (XapManagerConfig server : servers) {
             if (server.getHost().equals(currHost.getHostName()) ||
@@ -137,9 +174,9 @@ public class XapManagerClusterInfo {
                 result = server;
             }
         }
-        if (result == null && servers.length == 1) {
-            if (servers[0].getHost().equals("localhost") || servers[0].getHost().equals("127.0.0.1")){
-                result = servers[0];
+        if (result == null && servers.size() == 1) {
+            if (servers.get(0).getHost().equals("localhost") || servers.get(0).getHost().equals("127.0.0.1")){
+                result = servers.get(0);
             }
         }
         if (logger.isDebugEnabled()) {
@@ -156,5 +193,51 @@ public class XapManagerClusterInfo {
             s = s.substring(1, s.length()-1);
         }
         return IPAddressUtil.textToNumericFormatV6(s);
+    }
+
+    @Override
+    public List<ManagerInstanceInfo> getManagers() {
+        return (List)servers;
+    }
+
+    @Override
+    public String getZookeeperConnectionString() {
+        if (zookeeperConnectionString == null) {
+            zookeeperConnectionString = initZookeeperConnectionString(getManagers(), "2181");
+        }
+        return zookeeperConnectionString;
+    }
+
+    private static String initZookeeperConnectionString(Collection<ManagerInstanceInfo> managers, String port) {
+        if (managers.isEmpty())
+            return null;
+        StringJoiner sj = new StringJoiner(",");
+        for (ManagerInstanceInfo manager : managers) {
+            sj.add(manager.getHost() + ":" + port);
+        }
+        return sj.toString();
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        BootIOUtils.writeString(out, managerClusterType.name());
+        out.writeInt(servers.size());
+        for (XapManagerConfig server : servers) {
+            server.writeExternal(out);
+        }
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        this.managerClusterType = Enum.valueOf(ManagerClusterType.class, BootIOUtils.readString(in));
+        int numOfServers = in.readInt();
+        List<XapManagerConfig> servers = new ArrayList<>(numOfServers);
+        for (int i = 0; i < numOfServers; i++) {
+            XapManagerConfig server = new XapManagerConfig();
+            server.readExternal(in);
+            servers.add(server);
+        }
+        this.servers = Collections.unmodifiableList(servers);
+        this.hosts = initHosts(this.servers);
     }
 }
