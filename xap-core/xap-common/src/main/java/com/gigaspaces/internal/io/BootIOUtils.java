@@ -85,6 +85,19 @@ public class BootIOUtils {
         }
     }
 
+    public static void writeProperties(ObjectOutput out, Properties properties) throws IOException {
+        if (properties == null)
+            out.writeInt(-1);
+        else {
+            int length = properties.size();
+            out.writeInt(length);
+            for (Entry<Object, Object> entry : properties.entrySet()) {
+                writeString(out, (String) entry.getKey());
+                writeString(out, (String) entry.getValue());
+            }
+        }
+    }
+
     public static void writeString(ObjectOutput out, String s)
             throws IOException {
         if (s == null)
@@ -113,6 +126,23 @@ public class BootIOUtils {
         }
 
         return map;
+    }
+
+    public static Properties readProperties(ObjectInput in)
+            throws IOException, ClassNotFoundException {
+        Properties properties = null;
+
+        int length = in.readInt();
+        if (length >= 0) {
+            properties = new Properties();
+            for (int i = 0; i < length; i++) {
+                String key = readString(in);
+                String value = readString(in);
+                properties.setProperty(key, value);
+            }
+        }
+
+        return properties;
     }
 
     public static String readString(ObjectInput in) throws IOException,

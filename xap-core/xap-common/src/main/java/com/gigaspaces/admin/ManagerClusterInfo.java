@@ -1,5 +1,6 @@
 package com.gigaspaces.admin;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -8,7 +9,7 @@ import java.util.List;
  * @author Niv Ingberg
  * @since 15.5
  */
-public interface ManagerClusterInfo {
+public interface ManagerClusterInfo extends Serializable {
 
     /**
      * Returns the list of manager instances (empty list if no managers).

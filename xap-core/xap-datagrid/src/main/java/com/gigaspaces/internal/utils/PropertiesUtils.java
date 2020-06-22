@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.utils;
 
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -68,5 +69,13 @@ public class PropertiesUtils {
             return defaultValue;
 
         return Enum.valueOf(enumType, value);
+    }
+
+    public static Properties fromMap(Map<String, String> map) {
+        if (map == null)
+            return null;
+        Properties properties = new Properties();
+        map.forEach((k, v) -> properties.setProperty(k, v));
+        return properties;
     }
 }

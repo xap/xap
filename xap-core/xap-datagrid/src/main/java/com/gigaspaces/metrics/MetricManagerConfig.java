@@ -170,7 +170,7 @@ public class MetricManagerConfig {
                 if (managerClusterInfo.isEmpty()) {
                     logger.debug("Skipping default metrics ui reporter - manager not configured");
                 } else {
-                    String firstHost = managerClusterInfo.getServers()[0].getHost();
+                    String firstHost = managerClusterInfo.getServers().get(0).getHost();
                     logger.debug("Creating default metrics ui reporter to first manager: " + firstHost);
                     MetricReporterFactory factory = toFactory("hsqldb", null);
                     Properties properties = new Properties();
