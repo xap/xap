@@ -44,7 +44,6 @@
         <module>xap-core/xap-openspaces</module>
         <module>xap-examples/hello-world</module>
         <module>xap-examples/hola-mundo</module>
-        <module>xap-extensions/xap-scala</module>
         <module>xap-extensions/xap-jms</module>
         <module>xap-extensions/xap-rest</module>
         <module>xap-extensions/xap-rest-spring</module>
@@ -122,12 +121,6 @@
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-asm</artifactId>
-                <version>${project.version}</version>
-                <scope>compile</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.gigaspaces</groupId>
-                <artifactId>xap-scala-core</artifactId>
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>
