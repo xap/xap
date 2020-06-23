@@ -6,10 +6,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 
 public class PartitionToChunksMap implements Externalizable {
@@ -31,6 +28,86 @@ public class PartitionToChunksMap implements Externalizable {
         for (int i = 1; i <= this.numOfPartitions; i++) {
             this.partitionsToChunksMap.put(i, new TreeSet<>());
         }
+    }
+
+    public static ScalePlan scaleOutMap(PartitionToChunksMap currentMap, int factor) {
+        ScalePlan scalePlan = new ScalePlan();
+        scalePlan.initScaleOutPlan(currentMap, factor);
+        PartitionToChunksMap newMap = new PartitionToChunksMap(currentMap.getNumOfPartitions() + factor, currentMap.getGeneration() + 1);
+        HashMap<Integer, Integer> newChunksCountPerPartition = getChunksCountPerPartitionMap(newMap);
+        int newPartitionId = currentMap.getNumOfPartitions() + 1;
+        for (Map.Entry<Integer, Set<Integer>> partitionMapping : currentMap.getPartitionsToChunksMap().entrySet()) {
+            int currentPartitionId = partitionMapping.getKey();
+            int oldPartitionAssignments = 0;
+            for (Integer chunk : partitionMapping.getValue()) {
+                if (oldPartitionAssignments < newChunksCountPerPartition.get(currentPartitionId)) {
+                    newMap.getPartitionsToChunksMap().get(currentPartitionId).add(chunk);
+                    newMap.getChunksToPartitionMap().put(chunk, currentPartitionId);
+                    oldPartitionAssignments++;
+                } else {
+                    if (newMap.getPartitionsToChunksMap().get(newPartitionId).size() == newChunksCountPerPartition.get(newPartitionId) && newPartitionId < newMap.getNumOfPartitions()) {
+                        newPartitionId++;
+                    }
+                    newMap.getPartitionsToChunksMap().get(newPartitionId).add(chunk);
+                    newMap.getChunksToPartitionMap().put(chunk, newPartitionId);
+                    Map<Integer, Set<Integer>> partitionPlan = scalePlan.getPlans().get(currentPartitionId);
+                    if (!partitionPlan.containsKey(newPartitionId)) {
+                        partitionPlan.put(newPartitionId, new HashSet<>());
+                    }
+                    partitionPlan.get(newPartitionId).add(chunk);
+                }
+            }
+        }
+        scalePlan.setNewMap(newMap);
+        return scalePlan;
+    }
+
+    public static ScalePlan scaleInMap(PartitionToChunksMap currentMap, int factor) {
+        ScalePlan scalePlan = new ScalePlan();
+        scalePlan.initScaleInPlan(currentMap, factor);
+        int newPartitionCount = currentMap.getNumOfPartitions() - factor;
+        PartitionToChunksMap newMap = new PartitionToChunksMap(newPartitionCount, currentMap.getGeneration() + 1);
+        HashMap<Integer, Integer> newChunksCountPerPartition = getChunksCountPerPartitionMap(newMap);
+        int remainingPartitionId = 1;
+        for (Map.Entry<Integer, Set<Integer>> partitionMapping : currentMap.getPartitionsToChunksMap().entrySet()) {
+            int currentPartitionId = partitionMapping.getKey();
+            if (currentPartitionId <= newMap.getNumOfPartitions()) {
+                newMap.getPartitionsToChunksMap().get(currentPartitionId).addAll(partitionMapping.getValue());
+                for (Integer chunk : partitionMapping.getValue()) {
+                    newMap.getChunksToPartitionMap().put(chunk, currentPartitionId);
+                }
+            } else {
+                for (Integer chunk : partitionMapping.getValue()) {
+                    if (newMap.getPartitionsToChunksMap().get(remainingPartitionId).size() == newChunksCountPerPartition.get(remainingPartitionId) && remainingPartitionId < newMap.getNumOfPartitions()) {
+                        remainingPartitionId++;
+                    }
+                    newMap.getPartitionsToChunksMap().get(remainingPartitionId).add(chunk);
+                    newMap.getChunksToPartitionMap().put(chunk, remainingPartitionId);
+                    Map<Integer, Set<Integer>> partitionPlan = scalePlan.getPlans().get(currentPartitionId);
+                    if (!partitionPlan.containsKey(remainingPartitionId)) {
+                        partitionPlan.put(remainingPartitionId, new HashSet<>());
+                    }
+                    partitionPlan.get(remainingPartitionId).add(chunk);
+                }
+            }
+        }
+
+
+        scalePlan.setNewMap(newMap);
+        return scalePlan;
+    }
+
+    private static HashMap<Integer, Integer> getChunksCountPerPartitionMap(PartitionToChunksMap newMap) {
+        HashMap<Integer, Integer> newChunksCountPerPartition = new HashMap<>(newMap.getNumOfPartitions());
+        int newChunksPerPartition = PartitionToChunksMap.CHUNKS_COUNT / newMap.getNumOfPartitions();
+        int newLeftover = PartitionToChunksMap.CHUNKS_COUNT % newMap.getNumOfPartitions();
+        for (int i = 1; i <= newMap.getNumOfPartitions(); i++) {
+            newChunksCountPerPartition.put(i, newChunksPerPartition);
+        }
+        for (int i = 0, index = 1; i < newLeftover; i++, index++) {
+            newChunksCountPerPartition.put(index, newChunksCountPerPartition.get(index) + 1);
+        }
+        return newChunksCountPerPartition;
     }
 
     public void init() {
@@ -135,61 +212,5 @@ public class PartitionToChunksMap implements Externalizable {
 
     public Map<Integer, Integer> getChunksToPartitionMap() {
         return chunksToPartitionMap;
-    }
-
-    public static ScalePlan scaleOutMap(PartitionToChunksMap currentMap, int factor) {
-        ScalePlan scalePlan = new ScalePlan();
-        scalePlan.initScaleOutPlan(currentMap, factor);
-        PartitionToChunksMap newMap = new PartitionToChunksMap(currentMap.getNumOfPartitions() + factor, currentMap.getGeneration() + 1);
-        int newChunksPerPartition = PartitionToChunksMap.CHUNKS_COUNT / newMap.getNumOfPartitions();
-        int newPartitionsAssignments = 0;
-        int newPartitionsBeginningIndex = currentMap.getNumOfPartitions() + 1;
-        for (Map.Entry<Integer, Set<Integer>> partitionMapping : currentMap.getPartitionsToChunksMap().entrySet()) {
-            Integer partition = partitionMapping.getKey();
-            int oldPartitionAssignments = 0;
-            for (Integer chunk : partitionMapping.getValue()) {
-                if (oldPartitionAssignments < newChunksPerPartition) {
-                    newMap.getPartitionsToChunksMap().get(partition).add(chunk);
-                    newMap.getChunksToPartitionMap().put(chunk, partition);
-                    oldPartitionAssignments++;
-                } else {
-                    int newPartitionIndex = newPartitionsBeginningIndex + (newPartitionsAssignments % factor);
-                    newMap.getPartitionsToChunksMap().get(newPartitionIndex).add(chunk);
-                    newMap.getChunksToPartitionMap().put(chunk, newPartitionIndex);
-                    newPartitionsAssignments++;
-                    scalePlan.getPlans().get(partition).get(newPartitionIndex).add(chunk);
-                }
-            }
-        }
-        scalePlan.setNewMap(newMap);
-        return scalePlan;
-    }
-
-    public static ScalePlan scaleInMap(PartitionToChunksMap currentMap, int factor) {
-        ScalePlan scalePlan = new ScalePlan();
-        scalePlan.initScaleInPlan(currentMap, factor);
-        int newPartitionCount = currentMap.getNumOfPartitions() - factor;
-        PartitionToChunksMap newMap = new PartitionToChunksMap(newPartitionCount, currentMap.getGeneration() + 1);
-        int remainingPartitionsAssignments = 0;
-        for (Map.Entry<Integer, Set<Integer>> partitionMapping : currentMap.getPartitionsToChunksMap().entrySet()) {
-            Integer partition = partitionMapping.getKey();
-            if (partition <= newMap.getNumOfPartitions()) {
-                newMap.getPartitionsToChunksMap().get(partition).addAll(partitionMapping.getValue());
-                for (Integer chunk : partitionMapping.getValue()) {
-                    newMap.getChunksToPartitionMap().put(chunk, partition);
-                }
-            } else {
-                for (Integer chunk : partitionMapping.getValue()) {
-                    int newPartitionIndex = 1 + (remainingPartitionsAssignments % newPartitionCount);
-                    newMap.getPartitionsToChunksMap().get(newPartitionIndex).add(chunk);
-                    newMap.getChunksToPartitionMap().put(chunk, newPartitionIndex);
-                    remainingPartitionsAssignments++;
-                    scalePlan.getPlans().get(partition).get(newPartitionIndex).add(chunk);
-                }
-            }
-
-        }
-        scalePlan.setNewMap(newMap);
-        return scalePlan;
     }
 }

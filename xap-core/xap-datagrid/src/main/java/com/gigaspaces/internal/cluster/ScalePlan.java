@@ -22,9 +22,6 @@ public class ScalePlan implements Externalizable {
         this.plans = new HashMap<>(currentMap.getNumOfPartitions());
         for (int i = 1; i <= currentMap.getNumOfPartitions(); i++) {
             this.plans.put(i, new HashMap<>(factor));
-            for (int j = currentMap.getNumOfPartitions() + 1; j <= currentMap.getNumOfPartitions() + factor; j++) {
-                this.plans.get(i).put(j, new HashSet<>());
-            }
         }
     }
 
@@ -33,9 +30,6 @@ public class ScalePlan implements Externalizable {
         this.plans = new HashMap<>(currentMap.getNumOfPartitions());
         for (int i = currentMap.getNumOfPartitions(); i > currentMap.getNumOfPartitions() - factor; i--) {
             this.plans.put(i, new HashMap<>(factor));
-            for (int j = 1; j <= currentMap.getNumOfPartitions() - factor; j++) {
-                this.plans.get(i).put(j, new HashSet<>());
-            }
         }
     }
 
@@ -69,7 +63,7 @@ public class ScalePlan implements Externalizable {
         for (Map.Entry<Integer, Map<Integer, Set<Integer>>> partitionPlan : plans.entrySet()) {
             sb.append("Partition ").append(partitionPlan.getKey()).append(":");
             for (Map.Entry<Integer, Set<Integer>> copyPlan : partitionPlan.getValue().entrySet()) {
-                sb.append("\t\n").append("move ").append(copyPlan.getValue().size()).append(" entries to partition ").append(copyPlan.getKey());
+                sb.append("\t\n").append("move ").append(copyPlan.getValue().size()).append(" chunks to partition ").append(copyPlan.getKey());
             }
             sb.append("\n");
         }
