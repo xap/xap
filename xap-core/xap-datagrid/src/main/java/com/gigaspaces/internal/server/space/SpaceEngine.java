@@ -1264,6 +1264,10 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         context.setReadByIdsInfo(readByIdsInfo);
         context.setPrefetchedNonBlobStoreEntries(prefetchedNonBlobStoreEntries);
 
+        if(take && Modifiers.contains(operationModifiers,Modifiers.BACKUP_ONLY)){
+            context.setBackupOnly();
+        }
+
         if (ifExists)
             _coreProcessor.handleDirectReadIEOrTakeIESA(context, tHolder, fromReplication, origin);
         else

@@ -59,6 +59,7 @@ public class ReplicationOutContext extends AbstractResource
     // blobstore related fields
     private int _blobstoreReplicationBulkId;
     private boolean _blobstorePendingReplicationBulk; // indicates a blobstore bulk is flushed and waiting for replication
+    private boolean _backupOnly;
 
     public IReplicationGroupOutContext getGroupContext(String groupName) {
         if (isSingleGroupParticipant()) {
@@ -89,6 +90,7 @@ public class ReplicationOutContext extends AbstractResource
         _directPersistencyHandler = null;
         _blobstoreReplicationBulkId = 0;
         _blobstorePendingReplicationBulk = false;
+        _backupOnly = false;
     }
 
     public void setGroupContext(IReplicationGroupOutContext groupContext) {
@@ -296,6 +298,15 @@ public class ReplicationOutContext extends AbstractResource
     @Override
     public void blobstorePendingReplicationBulk() {
         _blobstorePendingReplicationBulk = true;
+    }
+
+
+    public boolean isBackupOnly() {
+        return _backupOnly;
+    }
+
+    public void setBackupOnly(boolean backupOnly) {
+        _backupOnly = backupOnly;
     }
 
     @Override

@@ -119,6 +119,13 @@ public interface Constants {
         }
     }
 
+    public interface ChunksRouting{
+        public static final String CHUNKS_SPACE_ROUTING = "com.gs.chunks-space-routing";
+        public static final boolean CHUNKS_SPACE_ROUTING_DEFAULT = false;
+        public static final String CHUNKS_SPACE_ROUTING_COUNT = "com.gs.chunks-space-routing.count";
+        public static final int CHUNKS_SPACE_ROUTING_COUNT_DEFAULT = 4096;
+    }
+
     public interface QueryProcessorInfo {
         String PREFIX = "QueryProcessor.";
 

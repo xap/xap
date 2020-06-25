@@ -42,4 +42,8 @@ public interface IReplicationPacketEntryData extends Externalizable, ISwapExtern
 
     boolean containsFullEntryData();
 
+    default boolean isBackupOnly(){
+        return false;
+    }
+
 }

@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.cluster.node.impl.groups;
 
 import com.gigaspaces.internal.cluster.node.handlers.IReplicationInFacade;
+import com.gigaspaces.internal.cluster.node.impl.config.GroupConfig;
 import com.gigaspaces.internal.cluster.node.impl.filters.IReplicationInFilter;
 import com.gigaspaces.internal.cluster.node.impl.processlog.IReplicationProcessLogExceptionHandlerBuilder;
 import com.gigaspaces.internal.cluster.node.impl.router.IReplicationRouter;
@@ -30,4 +31,6 @@ public interface IReplicationDynamicTargetGroupBuilder {
             IReplicationInFacade replicationInFacade,
             IReplicationProcessLogExceptionHandlerBuilder exceptionHandlerBuilder,
             IReplicationInFilter inFilter, IReplicationTargetGroupStateListener stateListener);
+
+    GroupConfig getGroupConfig();
 }

@@ -26,6 +26,8 @@ import com.gigaspaces.internal.cluster.node.impl.packets.data.ITransactionalExec
 import com.gigaspaces.internal.cluster.node.impl.packets.data.ReplicationPacketDataMediator;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.ObjectTypes;
 import com.j_spaces.core.cluster.ReplicationOperationType;
@@ -42,6 +44,7 @@ public class WriteReplicationPacketData
         extends SingleReplicationPacketData
         implements IReplicationTransactionalPacketEntryData {
     private static final long serialVersionUID = 1L;
+    private boolean _backupOnly;
     private transient long _expirationTime;
 
 
@@ -54,8 +57,13 @@ public class WriteReplicationPacketData
     }
 
     public WriteReplicationPacketData(IEntryPacket entry, boolean fromGateway, long expirationTime) {
+        this(entry,fromGateway,expirationTime,false);
+    }
+
+    public WriteReplicationPacketData(IEntryPacket entry, boolean fromGateway, long expirationTime, boolean backupOnly) {
         super(entry, fromGateway);
         _expirationTime = expirationTime;
+        _backupOnly= backupOnly;
     }
 
     public void execute(IReplicationInContext context,
@@ -106,22 +114,40 @@ public class WriteReplicationPacketData
     }
 
     @Override
+    public boolean isBackupOnly() {
+        return _backupOnly;
+    }
+
+    @Override
     public void readExternal(ObjectInput in) throws IOException,
             ClassNotFoundException {
         super.readExternal(in);
         _expirationTime = !getEntryPacket().isExternalizableEntryPacket() && getEntryPacket().getTTL() != Long.MAX_VALUE ? getEntryPacket().getTTL() + SystemTime.timeMillis() : Long.MAX_VALUE;
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_5_0)){
+            _backupOnly = in.readBoolean();
+        }
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_5_0)){
+            out.writeBoolean(_backupOnly);
+        }
     }
 
     @Override
     public void writeToSwap(ObjectOutput out) throws IOException {
         super.writeToSwap(out);
         out.writeLong(_expirationTime);
+        out.writeBoolean(_backupOnly);
     }
 
     @Override
     public void readFromSwap(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readFromSwap(in);
         _expirationTime = in.readLong();
+        _backupOnly = in.readBoolean();
     }
 
     public long getExpirationTime() {

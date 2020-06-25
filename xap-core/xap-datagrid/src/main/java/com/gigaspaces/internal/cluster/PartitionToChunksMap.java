@@ -1,6 +1,8 @@
 package com.gigaspaces.internal.cluster;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.internal.utils.GsEnv;
+import com.j_spaces.core.Constants;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -10,7 +12,7 @@ import java.util.*;
 
 
 public class PartitionToChunksMap implements Externalizable {
-    public static final int CHUNKS_COUNT = 4096;
+    public static final int CHUNKS_COUNT = GsEnv.propertyInt(Constants.ChunksRouting.CHUNKS_SPACE_ROUTING_COUNT).get(Constants.ChunksRouting.CHUNKS_SPACE_ROUTING_COUNT_DEFAULT);
     private static final long serialVersionUID = 1L;
     private int generation;
     private Map<Integer, Set<Integer>> partitionsToChunksMap;

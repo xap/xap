@@ -160,7 +160,7 @@ public class RemoteOperationsExecutorsCluster {
         final String competitionName = (activeOnly ? "Active" : "Available") + "MemberLocator" + "_" + _partitionName;
         final long competitionInterval = _config.getActiveServerLookupSamplingInterval();
         CompetitionExecutor<CompetitiveTask> competition;
-        if(this.getClusterInfo().isChunksRouting()) {
+        if(this.getClusterInfo().isChunksRouting() && this._spaceProxy.isClustered()) {
             CompetitiveTask[] taskToExecute = new CompetitiveTask[tasks.length + 1];
             System.arraycopy(tasks, 0, taskToExecute, 0, tasks.length);
             taskToExecute[tasks.length] = new CheckRoutingGenerationTask(_spaceProxy, _clusterInfo.getChunksMap().getGeneration());

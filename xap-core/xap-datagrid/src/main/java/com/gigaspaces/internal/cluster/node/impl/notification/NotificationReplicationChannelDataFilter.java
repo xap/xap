@@ -130,6 +130,10 @@ public class NotificationReplicationChannelDataFilter extends ReliableAsyncChann
     @Override
     public ReplicationChannelEntryDataFilterResult filterBeforeReplicatingEntryData(IReplicationPacketEntryData packetEntryData, PlatformLogicalVersion targetLogicalVersion, IReplicationPacketEntryDataContentExtractor contentExtractor, Logger contextLogger, IReplicationPacketData<?> data) {
 
+        if(packetEntryData.isBackupOnly()){
+            return ReplicationChannelEntryDataFilterResult.FILTER_DATA;
+        }
+
         boolean isUnmatched = false;
         ReplicationChannelEntryDataFilterResult result = ReplicationChannelEntryDataFilterResult.FILTER_DATA;
 

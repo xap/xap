@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.cluster.node.impl.config;
 
 import com.gigaspaces.internal.cluster.node.impl.GroupMapping;
+import com.gigaspaces.internal.cluster.node.impl.IReplicationNodeBuilder;
 import com.gigaspaces.internal.cluster.node.impl.IReplicationNodePluginFacade;
 import com.gigaspaces.internal.cluster.node.impl.ReplicationNode;
 import com.gigaspaces.internal.cluster.node.impl.filters.IReplicationInFilter;
@@ -26,12 +27,16 @@ import com.gigaspaces.internal.cluster.node.impl.filters.ISpaceCopyReplicaOutFil
 import com.gigaspaces.internal.cluster.node.impl.groups.IReplicationDynamicTargetGroupBuilder;
 import com.gigaspaces.internal.cluster.node.impl.groups.IReplicationSourceGroupBuilder;
 import com.gigaspaces.internal.cluster.node.impl.groups.IReplicationStaticTargetGroupBuilder;
+import com.gigaspaces.internal.cluster.node.impl.groups.reliableasync.ReliableAsyncSingleOriginReplicationTargetGroupBuilder;
 import com.gigaspaces.internal.utils.StringUtils;
+import com.j_spaces.core.filters.ReplicationStatistics;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -150,6 +155,92 @@ public class ReplicationNodeConfig {
             default:
                 throw new IllegalArgumentException();
         }
+    }
+
+
+    /***
+     *  When new partition is introduces by scale out we search for another partition IReplicationDynamicTargetGroupBuilder
+     *  and to clone and create a IReplicationDynamicTargetGroupBuilder for the new partition
+     *  primary-backup-reliable-async-mirror-
+     * @param groupName
+     * @param nodeMode
+     * @param nodeBuilder
+     * @return config builder for the new partition
+     */
+    public IReplicationDynamicTargetGroupBuilder createMatchingTargetGroupBuilder(
+            String groupName, ReplicationNodeMode nodeMode, IReplicationNodeBuilder nodeBuilder) {
+        Collection<IReplicationDynamicTargetGroupBuilder> relevantDynList;
+        switch (nodeMode) {
+            case ACTIVE:
+                relevantDynList = _activeDynamicTargetGroupsBuilders;
+                break;
+            case PASSIVE:
+                relevantDynList = _passiveDynamicTargetGroupsBuilders;
+                break;
+            case ALWAYS:
+                relevantDynList = _alwaysDynamicTargetGroupsBuilders;
+                break;
+            default:
+                throw new IllegalArgumentException();
+        }
+
+        IReplicationDynamicTargetGroupBuilder matchingBuilder = null;
+        String nameWithoutPartitionNumber;
+        String newPartitionId;
+        Pattern groupNamePattern = Pattern.compile("(.*)-(\\d+)");
+        Matcher matcher = groupNamePattern.matcher(groupName);
+        if(matcher.matches()){
+            nameWithoutPartitionNumber = matcher.group(1);
+            newPartitionId = matcher.group(2);
+        }else {
+            throw new IllegalArgumentException("could not extract pure group name from "+groupName);
+        }
+
+        Pattern pattern = Pattern.compile("\\("+nameWithoutPartitionNumber+"-\\d+\\)\\|\\("+Pattern.quote("(.*):")+".*\\d+\\)");
+        for (IReplicationDynamicTargetGroupBuilder builder : relevantDynList) {
+            String originalTemplate = builder.getGroupNameTemplate();
+            if(pattern.matcher(originalTemplate).matches()){
+                matchingBuilder = builder;
+                break;
+            }
+        }
+
+        if(matchingBuilder != null){
+            GroupConfig groupConfig = matchingBuilder.getGroupConfig();
+            String[] names = groupConfig.getMembersLookupNames();
+            String[] newNames = new String[names.length];
+            Pattern memberNamePattern = Pattern.compile("(.*?)(\\d+)(.*)");
+            for (int i = 0; i < names.length; i++) {
+                Matcher memberMatcher = memberNamePattern.matcher(names[i]);
+                if (memberMatcher.matches()) {
+                    newNames[i] = memberMatcher.group(1) + newPartitionId + memberMatcher.group(3);
+                } else {
+                    throw new IllegalArgumentException("couldn't generate new partition member name from " + names[i]);
+                }
+            }
+
+            Pattern templatePattern = Pattern.compile("\\((.*?)(\\d+)\\)\\|\\((.*?)(\\d+)\\)");
+            Matcher templateMatcher = templatePattern.matcher(matchingBuilder.getGroupNameTemplate());
+            String newTemplate;
+            if(templateMatcher.matches()) {
+                newTemplate = "("+templateMatcher.group(1)+newPartitionId+")|"+templateMatcher.group(3)+newPartitionId+")";
+            }else {
+                throw new IllegalArgumentException("couldn't generate new group name template from " + matchingBuilder.getGroupNameTemplate());
+            }
+
+            TargetGroupConfig targetGroupConfig = new TargetGroupConfig("NOT SET",
+                    null,
+                    ReplicationStatistics.ReplicationMode.MIRROR, newNames);
+            ReliableAsyncSingleOriginReplicationTargetGroupBuilder mirrorGroupBuilder = new ReliableAsyncSingleOriginReplicationTargetGroupBuilder(targetGroupConfig);
+            mirrorGroupBuilder.setGroupNameTemplate(newTemplate);
+            mirrorGroupBuilder.setProcessLogBuilder(nodeBuilder.getReplicationProcessLogBuilder());
+            addDynamicTargetGroupBuilder(mirrorGroupBuilder,
+                    ReplicationNodeMode.ACTIVE);
+            addDynamicTargetGroupBuilder(mirrorGroupBuilder, nodeMode);
+            return mirrorGroupBuilder;
+        }
+
+        return null;
     }
 
     public IReplicationDynamicTargetGroupBuilder getMatchingTargetGroupBuilder(

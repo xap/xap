@@ -115,6 +115,10 @@ public class ViewReplicationChannelDataFilter extends ReliableAsyncChannelDataFi
 
     @Override
     public ReplicationChannelEntryDataFilterResult filterBeforeReplicatingEntryData(IReplicationPacketEntryData entryData, PlatformLogicalVersion targetLogicalVersion, IReplicationPacketEntryDataContentExtractor contentExtractor, Logger contextLogger, IReplicationPacketData data) {
+        if(entryData.isBackupOnly()){
+            return ReplicationChannelEntryDataFilterResult.FILTER_DATA;
+        }
+
         switch (entryData.getOperationType()) {
             case WRITE:
             case REMOVE_ENTRY:
