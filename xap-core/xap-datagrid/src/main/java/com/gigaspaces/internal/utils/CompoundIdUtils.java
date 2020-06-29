@@ -1,16 +1,23 @@
 package com.gigaspaces.internal.utils;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class CompoundIdUtils {
-    public static String getCompoundId(List<Object> list){
-        String result = list.stream().filter(Objects::nonNull)
-                .map(Object::toString)
-                .collect(Collectors.joining("_"));
-
-        return result.isEmpty() ? null : result;
+    public static String getCompoundIdToString(Object... objects){
+        boolean allNull = true;
+        for (Object object : objects) {
+            if (object != null) {
+                allNull = false;
+                break;
+            }
+        }
+        return allNull ? null : Arrays.toString(objects);
     }
+//boolean allNull = Arrays.stream(objects).noneMatch(Objects::nonNull);
+
+    public static int getCompoundIdHashCode(Object... objects) {
+        return Objects.hash(objects);
+    }
+
 }
