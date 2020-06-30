@@ -20,4 +20,8 @@ public class CompoundIdUtils {
         return Objects.hash(objects);
     }
 
+
+    public static boolean getCompoundIdEquals(Object[] otherObjects,Object[] myObjects){
+        return Arrays.equals(otherObjects,myObjects);
+    }
 }
