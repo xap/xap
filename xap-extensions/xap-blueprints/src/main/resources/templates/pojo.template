@@ -34,4 +34,33 @@ public class {{className}} {
         this.{{fieldName}} = {{fieldName}};
     }
 {{/properties}}
+
+{{#compoundKeyClass}}
+{{#annotations}}
+    {{&.}}
+{{/annotations}}
+    @Embeddable
+    public static class Key extends CompoundSpaceId {
+
+        public Key() {
+            super({{properties.size}});
+        }
+
+        public Key({{getPropertiesAsStringWithType}}) {
+            super({{getPropertiesAsString}});
+        }
+{{#properties}}
+
+{{#annotations}}
+        {{&.}}
+{{/annotations}}
+        public {{typeName}} get{{name}}() {
+            return ({{typeName}}) getValue({{index}});
+        }
+        public void set{{name}}({{typeName}} {{fieldName}}) {
+            setValue({{index}},{{fieldName}});
+        }
+{{/properties}}
+    }
+{{/compoundKeyClass}}
 }
