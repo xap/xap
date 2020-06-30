@@ -32,4 +32,5 @@ public class Person {
     public void setauto-generate(long auto-generate) {
         this.auto-generate = auto-generate;
     }
+
 }
