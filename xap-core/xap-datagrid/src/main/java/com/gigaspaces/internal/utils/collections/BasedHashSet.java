@@ -163,18 +163,18 @@ public class BasedHashSet<E>
      * @see java.util.Set#toArray()
      */
     public Object[] toArray() {
-        throw new UnsupportedOperationException();
+        return map.keySet().toArray();
     }
 
     /*
      * @see java.util.Set#toArray(T[])
      */
     public <T> T[] toArray(T[] a) {
-        throw new UnsupportedOperationException();
+        return map.keySet().toArray(a);
     }
 
     @Override
     public String toString() {
-        return map.toString();
+        return map.keySet().toString();
     }
 }
