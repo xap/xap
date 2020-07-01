@@ -1,10 +1,12 @@
 package org.openspaces.persistency.kafka;
 
 import com.gigaspaces.sync.SpaceSynchronizationEndpoint;
+import org.openspaces.persistency.space.GigaSpaceSynchronizationEndpoint;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+import java.util.Map;
 import java.util.Properties;
 
 public class KafkaSpaceSynchronizationEndpointBeanFactory implements FactoryBean<KafkaSpaceSynchronizationEndpoint>, InitializingBean, DisposableBean {
@@ -30,8 +32,12 @@ public class KafkaSpaceSynchronizationEndpointBeanFactory implements FactoryBean
         return true;
     }
 
-    public void setSpaceSynchronizationEndpoint(SpaceSynchronizationEndpoint synchronizationEndpoint) {
-        configurer.spaceSynchronizationEndpoint(synchronizationEndpoint);
+    public void setPrimaryEndpoint(SpaceSynchronizationEndpoint synchronizationEndpoint) {
+        configurer.primaryEndpoint(synchronizationEndpoint);
+    }
+
+    public void setSecondaryEndpoints(Map<String,SpaceSynchronizationEndpoint> secondaryEndpoints) {
+        configurer.secondaryEndpoints(secondaryEndpoints);
     }
 
     public void setKafkaProperties(Properties kafkaProperties){
