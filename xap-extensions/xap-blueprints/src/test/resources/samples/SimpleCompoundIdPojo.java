@@ -1,7 +1,7 @@
 package com.gigaspaces.demo;
 
-import com.gigaspaces.annotation.pojo.*;
 import com.gigaspaces.config.CompoundIdBase;
+import com.gigaspaces.annotation.pojo.*;
 import javax.persistence.*;
 
 /**
@@ -18,7 +18,7 @@ public class SimpleCompoundIdPojo {
     public SimpleCompoundIdPojo() {
     }
 
-    @SpaceId(autoGenerate = false)
+    @SpaceId
     @EmbeddedId
     public Key getKey() {
         return key;
@@ -44,30 +44,30 @@ public class SimpleCompoundIdPojo {
     }
 
     @Embeddable
-    public static class Key extends CompoundIdBase {
+    public static class Key extends CompoundKey {
 
         public Key() {
-            super(new Object[2]);
+            super(2);
         }
 
         public Key(String fieldKey1, String fieldKey2) {
-            super(new Object[]{ fieldKey1,fieldKey2 });
+            super(fieldKey1,fieldKey2);
         }
 
         @Column(name = "FIELDKEY1")
         public String getFieldKey1() {
-            return (String) getValues()[0];
+            return (String) getValue(0);
         }
         public void setFieldKey1(String fieldKey1) {
-            getValues()[0] = fieldKey1;
+            setValue(0,fieldKey1);
         }
 
         @Column(name = "FIELDKEY2")
         public String getFieldKey2() {
-            return (String) getValues()[1];
+            return (String) getValue(1);
         }
         public void setFieldKey2(String fieldKey2) {
-            getValues()[1] = fieldKey2;
+            setValue(1,fieldKey2);
         }
     }
 }

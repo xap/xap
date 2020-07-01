@@ -40,14 +40,14 @@ public class {{className}} {
     {{&.}}
 {{/compoundKeyClass.annotations}}
     @Embeddable
-    public static class Key extends CompoundIdBase {
+    public static class Key extends CompoundKey {
 
         public {{compoundKeyClass.className}}() {
-            super(new Object[{{compoundKeyClass.properties.size}}]);
+            super({{compoundKeyClass.properties.size}});
         }
 
         public Key({{compoundKeyClass.getPropertiesAsStringWithType}}) {
-            super(new Object[]{ {{compoundKeyClass.getPropertiesAsString}} });
+            super({{compoundKeyClass.getPropertiesAsString}});
         }
 {{#compoundKeyClass.properties}}
 
@@ -55,10 +55,10 @@ public class {{className}} {
         {{&.}}
 {{/annotations}}
         public {{typeName}} get{{name}}() {
-            return ({{typeName}}) getValues()[{{index}}];
+            return ({{typeName}}) getValue({{index}});
         }
         public void set{{name}}({{typeName}} {{fieldName}}) {
-            getValues()[{{index}}] = {{fieldName}};
+            setValue({{index}},{{fieldName}});
         }
 {{/compoundKeyClass.properties}}
     }

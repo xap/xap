@@ -46,6 +46,8 @@ public class PojoInfoTestCase {
         simpleCompoundIdPojo.getCompoundKeyClass().addPropertyWithAnnotation("FieldKey1", String.class,"@Column(name = \"FIELDKEY1\")");
         simpleCompoundIdPojo.getCompoundKeyClass().addPropertyWithAnnotation("FieldKey2", String.class,"@Column(name = \"FIELDKEY2\")");
 
+        simpleCompoundIdPojo.addImport("com.gigaspaces.annotation.pojo.*");
+        simpleCompoundIdPojo.addImport("javax.persistence.*");
         String actual = simpleCompoundIdPojo.generate();
         System.out.println("actual=" +actual);
         System.out.println("expected=" +expected);

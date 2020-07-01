@@ -1,7 +1,6 @@
 package org.gigaspaces.blueprints.java;
 
 import com.github.mustachejava.util.DecoratedCollection;
-import com.github.mustachejava.util.*;
 import org.gigaspaces.blueprints.TemplateUtils;
 
 import java.io.IOException;
@@ -22,6 +21,7 @@ public class PojoInfo {
         this.className = className;
         this.packageName = packageName;
         this.hasCompoundKey = false;
+//        PojoInfo()
     }
 
     public PojoInfo(String className, String packageName, boolean hasCompoundKey) {
@@ -29,16 +29,14 @@ public class PojoInfo {
         this.packageName = packageName;
         this.hasCompoundKey = hasCompoundKey;
         if(hasCompoundKey) {
-            createCompoudKeyClass(packageName);
+            createCompoundKeyClass(packageName);
         }
     }
 
-    private void createCompoudKeyClass(String packageName) {
+    private void createCompoundKeyClass(String packageName) {
         this.compoundKeyClass = new PojoInfo("Key", packageName);
         this.addPropertyWithAutoGenerateFalseAndEmbedded("Key", "Key");
-        this.addImport("com.gigaspaces.annotation.pojo.*");
         this.addImport("com.gigaspaces.config.CompoundIdBase");
-        this.addImport("javax.persistence.*");
     }
 
     public String generate() throws IOException {
@@ -88,10 +86,6 @@ public class PojoInfo {
         return properties;
     }
 
-    public DecoratedCollection<PropertyInfo> getDecoratedProperties() {
-        return new DecoratedCollection<>(properties);
-    }
-
     public PropertyInfo addProperty(String name, Class<?> type) {
         return addPropertyImpl(name, type);
     }
@@ -136,7 +130,7 @@ public class PojoInfo {
 
     public PojoInfo addPropertyWithAutoGenerateFalseAndEmbedded(String name, String simpleTypeName) {
         PropertyInfo propertyInfo = addPropertyImpl(name, simpleTypeName);
-        propertyInfo.annotations.add("@SpaceId(autoGenerate = false)");
+        propertyInfo.annotations.add("@SpaceId");
         propertyInfo.annotations.add("@EmbeddedId");
 
         return this;
