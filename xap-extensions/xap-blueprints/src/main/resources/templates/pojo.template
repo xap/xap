@@ -34,4 +34,33 @@ public class {{className}} {
         this.{{fieldName}} = {{fieldName}};
     }
 {{/properties}}
+
+{{#hasCompoundKey}}
+{{#compoundKeyClass.annotations}}
+    {{&.}}
+{{/compoundKeyClass.annotations}}
+    @Embeddable
+    public static class Key extends CompoundIdBase {
+
+        public {{compoundKeyClass.className}}() {
+            super(new Object[{{compoundKeyClass.properties.size}}]);
+        }
+
+        public Key({{compoundKeyClass.getPropertiesAsStringWithType}}) {
+            super(new Object[]{ {{compoundKeyClass.getPropertiesAsString}} });
+        }
+{{#compoundKeyClass.properties}}
+
+{{#annotations}}
+        {{&.}}
+{{/annotations}}
+        public {{typeName}} get{{name}}() {
+            return ({{typeName}}) getValues()[{{index}}];
+        }
+        public void set{{name}}({{typeName}} {{fieldName}}) {
+            getValues()[{{index}}] = {{fieldName}};
+        }
+{{/compoundKeyClass.properties}}
+    }
+{{/hasCompoundKey}}
 }
