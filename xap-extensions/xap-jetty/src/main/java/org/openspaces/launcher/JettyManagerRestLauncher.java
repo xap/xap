@@ -153,6 +153,15 @@ public class JettyManagerRestLauncher implements Closeable {
         });
     }
 
+    private String toSessionId(File file) {
+        String fileName = file.getName();
+        if (fileName.indexOf(".") > 0) {
+            fileName = fileName.substring(0, fileName.lastIndexOf("."));
+        }
+
+        return "GigaSpaces_" + fileName.replace(" ","_").toUpperCase();
+    }
+
     private void initWebApps(Server server) {
         ContextHandlerCollection handler = new ContextHandlerCollection();
         File webApps = SystemLocations.singleton().libPlatform("manager").resolve("webapps").toFile();
@@ -177,6 +186,7 @@ public class JettyManagerRestLauncher implements Closeable {
             if (contextPath.equals("/") && Boolean.getBoolean("com.gs.security.enabled")) {
                 webApp.setInitParameter("spring.profiles.active", "gs-ops-manager-secured");
             }
+            webApp.getSessionHandler().setSessionCookie(toSessionId(file));
 
             //Enable JSP support
             webApp.setAttribute("org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern",
