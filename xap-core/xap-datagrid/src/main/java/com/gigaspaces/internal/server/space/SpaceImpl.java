@@ -3687,7 +3687,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     @Override
     public ITypeDesc getClassDescriptor(String className) throws RemoteException {
-        beforeOperation(false, true /*checkQuiesceMode*/, null);
+        beforeOperation(false, false /*checkQuiesceMode*/, null);
 
         try {
             return _engine.getClassTypeInfo(className);
