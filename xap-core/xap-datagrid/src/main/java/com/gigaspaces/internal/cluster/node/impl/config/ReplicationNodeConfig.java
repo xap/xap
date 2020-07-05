@@ -193,7 +193,7 @@ public class ReplicationNodeConfig {
             nameWithoutPartitionNumber = matcher.group(1);
             newPartitionId = matcher.group(2);
         }else {
-            throw new IllegalArgumentException("could not extract pure group name from "+groupName);
+            return null;
         }
 
         Pattern pattern = Pattern.compile("\\("+nameWithoutPartitionNumber+"-\\d+\\)\\|\\("+Pattern.quote("(.*):")+".*\\d+\\)");
