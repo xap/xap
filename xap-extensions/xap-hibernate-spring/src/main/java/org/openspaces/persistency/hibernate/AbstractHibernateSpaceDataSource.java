@@ -19,6 +19,7 @@ package org.openspaces.persistency.hibernate;
 import com.gigaspaces.datasource.DataIterator;
 import com.gigaspaces.datasource.SpaceDataSource;
 import com.gigaspaces.internal.client.spaceproxy.metadata.TypeDescFactory;
+import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.j_spaces.kernel.ClassLoaderHelper;
 
@@ -34,11 +35,10 @@ import org.openspaces.persistency.hibernate.iterator.HibernateProxyRemoverIterat
 import org.openspaces.persistency.patterns.ManagedEntriesSpaceDataSource;
 import org.openspaces.persistency.support.ConcurrentMultiDataIterator;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import javax.persistence.metamodel.EntityType;
 
@@ -239,15 +239,39 @@ public abstract class AbstractHibernateSpaceDataSource extends ManagedEntriesSpa
         if (num == null || instanceId == null) {
             return;
         }
-        String query = "MOD(?," + num + ") = " + (instanceId - 1);
-        // go through the initial load entries, check for matching queries, make queries for managed entries with a
-        // numeric routing field (unless a query already exists)
-        for (String type : initialLoadEntries) {
-            if ((managedTypes == null || managedTypes.contains(type)) && !initialLoadQueries.containsKey(type)) {
-                processInitialLoadEntry(type, query);
+        if(clusterInfo.getChunks() != null){
+            String prefix = "MOD(?,"+PartitionToChunksMap.CHUNKS_COUNT+") IN (";
+            List<String> allQueries = clusterInfo.getChunks().stream().map(Object::toString).collect(Collectors.toList());
+            int pageSize = 100;
+            Stream<String> queriesStream = IntStream.range(0, (allQueries.size() + pageSize - 1) / pageSize)
+                    .mapToObj(i -> allQueries.subList(i * pageSize, Math.min(pageSize * (i + 1), allQueries.size())))
+                    .map(list -> prefix + String.join(",", list) + ")");
+
+            for (String type : initialLoadEntries) {
+                if ((managedTypes == null || managedTypes.contains(type)) && !initialLoadChunksRoutingQueries.containsKey(type)) {
+                    // there's no query for this type yet
+                    SpaceTypeDescriptor typeDesc = initialLoadEntriesTypeDescs.get(type);
+                    List<String> queries = queriesStream.map(query -> createInitialLoadQuery(typeDesc, query)).collect(Collectors.toList());
+                    // add new initial load query for this type.
+                    if (!queries.isEmpty()) {
+                        initialLoadChunksRoutingQueries.put(type, queries);
+                    }
+                }
+            }
+        } else {
+            // MOD(id,2) = 1
+            //MOD(<routingProperty>,numberOfPartitions) = partitionId
+            String query = "MOD(?," + num + ") = " + (instanceId - 1);
+            // go through the initial load entries, check for matching queries, make queries for managed entries with a
+            // numeric routing field (unless a query already exists)
+            for (String type : initialLoadEntries) {
+                if ((managedTypes == null || managedTypes.contains(type)) && !initialLoadQueries.containsKey(type)) {
+                    processInitialLoadEntry(type, query);
+                }
             }
         }
     }
+
 
     private void processInitialLoadEntry(String type, String query) {
         // there's no query for this type yet

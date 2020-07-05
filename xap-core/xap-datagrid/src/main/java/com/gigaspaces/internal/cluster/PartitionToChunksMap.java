@@ -156,7 +156,7 @@ public class PartitionToChunksMap implements Externalizable {
 
     @Override
     public String toString() {
-        StringBuilder stringBuilder = new StringBuilder("Cluster Map\n");
+        StringBuilder stringBuilder = new StringBuilder("Cluster Map [generation = "+this.getGeneration()+"]\n");
         for (Map.Entry<Integer, Set<Integer>> entry : partitionsToChunksMap.entrySet()) {
             stringBuilder.append("[").append(entry.getKey()).append("] ---> ");
             if (!entry.getValue().isEmpty()) {

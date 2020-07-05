@@ -3551,6 +3551,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             }
         }
 
+        this._spaceImpl.removeClusterInfoChangedListener(this);
+
         _dataTypesMetricRegistrators.clear();
     }
 

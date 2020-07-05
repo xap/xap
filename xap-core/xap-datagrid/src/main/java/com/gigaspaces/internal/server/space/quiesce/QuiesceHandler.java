@@ -85,6 +85,14 @@ public class QuiesceHandler {
         return hasGuard(currGuard, Status.QUIESCED);
     }
 
+
+    //TODO - change when moving to special suspend type
+    public boolean isHorizontalScale() {
+        // Concurrency: snapshot volatile _guard into local variable
+        final Guard currGuard = _guard;
+        return hasGuard(currGuard, Status.QUIESCED) && currGuard.getException().getMessage().contains("SCALE");
+    }
+
     //disable any non-admin op if q mode on
     public void checkAllowedOp(QuiesceToken operationToken) {
         if (_supported) {
@@ -209,6 +217,10 @@ public class QuiesceHandler {
                 }
                 throw exception;
             }
+        }
+
+        public QuiesceException getException() {
+            return exception;
         }
 
         boolean supersedes(Guard otherGuard) {

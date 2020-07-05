@@ -912,6 +912,10 @@ public class CacheManager extends AbstractCacheManager
      * Load the data from the database
      */
     private void loadDataFromDB(Context context, SpaceConfigReader configReader) throws SAException {
+        if(this.getEngine().getSpaceImpl().getQuiesceHandler().isHorizontalScale()){
+            return;
+        }
+
         InitialLoadInfo initialLoadInfo = new InitialLoadInfo(_logger, _logRecoveryProcess, _recoveryLogInterval);
         if (isBlobStoreCachePolicy())
             initialLoadInfo.setBlobStoreFifoInitialLoader(new BlobStoreFifoInitialLoader());

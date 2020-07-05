@@ -999,14 +999,16 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     }
 
     public void registerToClusterInfoChangedEvent(IClusterInfoChangedListener listener) {
-        if(isChunksRouting()){
-            this.clusterInfoChangedListeners.addListener(listener);
-        }
+        this.clusterInfoChangedListeners.addListener(listener);
     }
 
     private boolean isChunksRouting() {
         boolean isMirrorService = _configReader.getBooleanSpaceProperty(Mirror.MIRROR_SERVICE_ENABLED_PROP, Mirror.MIRROR_SERVICE_ENABLED_DEFAULT);
         return !isMirrorService && useZooKeeper() && GsEnv.propertyBoolean(ChunksRouting.CHUNKS_SPACE_ROUTING).get(ChunksRouting.CHUNKS_SPACE_ROUTING_DEFAULT);
+    }
+
+    public void removeClusterInfoChangedListener(IClusterInfoChangedListener listener) {
+        this.clusterInfoChangedListeners.removeListener(listener);
     }
 
     /**

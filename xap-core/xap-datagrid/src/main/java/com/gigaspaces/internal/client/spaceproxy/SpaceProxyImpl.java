@@ -143,6 +143,10 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
         } catch (SecurityException se) {
             _clientLogger.info("Failed to set time provider system property", se);
         }
+
+        if (getSpaceImplIfEmbedded() != null) {
+            this.getSpaceImplIfEmbedded().registerToClusterInfoChangedEvent(this);
+        }
     }
 
     private SpaceProxyImpl getOrCreateProxy(boolean isClustered) {
@@ -508,6 +512,10 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
 
         // close the lookup finder (cleans it). Will not be closed when running within the GSC since we want to share it
         LookupFinder.close();
+
+        if(this.getSpaceImplIfEmbedded() != null){
+            this.getSpaceImplIfEmbedded().removeClusterInfoChangedListener(this);
+        }
     }
 
     @Override
@@ -610,9 +618,6 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
                 return _proxyRouter;
             _proxyRouter = new SpaceProxyRouter(this);
             _initializedNewRouter = true;
-            if(getSpaceImplIfEmbedded() != null){
-                this.getSpaceImplIfEmbedded().registerToClusterInfoChangedEvent(this);
-            }
             return _proxyRouter;
         }
     }

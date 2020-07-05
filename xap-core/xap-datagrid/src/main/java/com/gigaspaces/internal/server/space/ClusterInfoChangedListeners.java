@@ -31,4 +31,8 @@ public class ClusterInfoChangedListeners {
     public boolean isEmpty() {
         return listeners.isEmpty();
     }
+
+    public void removeListener(IClusterInfoChangedListener listener) {
+        this.listeners.remove(listener);
+    }
 }

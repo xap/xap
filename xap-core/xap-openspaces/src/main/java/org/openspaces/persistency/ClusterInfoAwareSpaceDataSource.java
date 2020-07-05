@@ -37,6 +37,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,7 +50,8 @@ public abstract class ClusterInfoAwareSpaceDataSource extends SpaceDataSource im
 
     protected String[] initialLoadQueryScanningBasePackages = null;
     protected ClusterInfo clusterInfo;
-    protected Map<String, String> initialLoadQueries = new HashMap<String, String>();
+    protected Map<String, String> initialLoadQueries = new HashMap<>();
+    protected Map<String, List<String>> initialLoadChunksRoutingQueries = new HashMap<>();
     protected boolean augmentInitialLoadEntries = true;
 
     public void setInitialLoadQueryScanningBasePackages(String[] initialLoadQueryScanningBasePackages) {
