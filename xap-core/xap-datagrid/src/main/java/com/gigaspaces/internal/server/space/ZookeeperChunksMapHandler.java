@@ -62,19 +62,21 @@ public class ZookeeperChunksMapHandler implements Closeable {
             if (routingManager == null || isWrongPartitionCount(numberOfPartitions, routingManager, this.partitionId)) {
                 SharedLock lock = attributeStore.getSharedLock(com.j_spaces.core.Constants.Space.spaceLockPath(puName));
                 if (lock.acquire(30, TimeUnit.SECONDS)) {
-                    ChunksRoutingManager manager = getChunksRoutingManager();
-                    if (manager == null || isWrongPartitionCount(numberOfPartitions, manager, partitionId)) {
-                        PartitionToChunksMap chunksMap = new PartitionToChunksMap(numberOfPartitions, 0);
-                        chunksMap.init();
-                        ChunksRoutingManager chunksRoutingManager = new ChunksRoutingManager(chunksMap);
-                        logger.info("Creating map");
-                        setRoutingManager(chunksRoutingManager);
+                    try {
+                        ChunksRoutingManager manager = getChunksRoutingManager();
+                        if (manager == null || isWrongPartitionCount(numberOfPartitions, manager, partitionId)) {
+                            PartitionToChunksMap chunksMap = new PartitionToChunksMap(numberOfPartitions, 0);
+                            chunksMap.init();
+                            ChunksRoutingManager chunksRoutingManager = new ChunksRoutingManager(chunksMap);
+                            logger.info("Creating map");
+                            setRoutingManager(chunksRoutingManager);
+                            return chunksMap;
+                        } else {
+                            logger.info("Map already exist");
+                            return manager.getMapForPartition(partitionId);
+                        }
+                    } finally {
                         lock.release();
-                        return chunksMap;
-                    } else {
-                        logger.info("Map already exist");
-                        lock.release();
-                        return manager.getMapForPartition(partitionId);
                     }
                 } else {
                     throw new ChunksMapMissingException("failed to acquire space lock in 30 seconds");
