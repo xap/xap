@@ -1,5 +1,7 @@
 package org.openspaces.launcher;
 
+import com.gigaspaces.internal.utils.GsEnv;
+import com.j_spaces.kernel.SystemProperties;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -8,8 +10,8 @@ public class JettyUtils {
 
     public static ServerConnector createConnector(Server server, String host, int port, SslContextFactory sslContextFactory) {
         ServerConnector connector = sslContextFactory == null
-                ? new ServerConnector(server)
-                : new ServerConnector(server, toConnectionFactories(sslContextFactory, port));
+                ? new ServerConnector(server, toConnectionFactories(port))
+                : new ServerConnector(server, toSSLConnectionFactories(sslContextFactory, port));
         if (host != null) {
             connector.setHost(host);
         }
@@ -18,7 +20,20 @@ public class JettyUtils {
         return connector;
     }
 
-    private static ConnectionFactory[] toConnectionFactories(SslContextFactory sslContextFactory, int port) {
+    private static ConnectionFactory[] toConnectionFactories(int port) {
+        // HTTP Configuration
+        HttpConfiguration http_config = new HttpConfiguration();
+        Integer requestHeaderSize = GsEnv.propertyInt(SystemProperties.JETTY_LAUNCHER_REQUEST_HEADER_SIZE).get();
+        if (requestHeaderSize != null) {
+            http_config.setRequestHeaderSize(requestHeaderSize);
+        }
+
+        return new ConnectionFactory[]{
+                new HttpConnectionFactory(http_config)
+        };
+    }
+
+    private static ConnectionFactory[] toSSLConnectionFactories(SslContextFactory sslContextFactory, int port) {
         sslContextFactory.setExcludeCipherSuites(
                 new String[]{
                         "SSL_RSA_WITH_DES_CBC_SHA",
@@ -30,12 +45,15 @@ public class JettyUtils {
                         "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA"
                 });
 
-        // HTTP Configuration
+        // HTTPS Configuration
         HttpConfiguration http_config = new HttpConfiguration();
         http_config.setSecureScheme("https");
         http_config.setSecurePort(port);
         http_config.setOutputBufferSize(32768);
-//        http_config.setRequestHeaderSize(8192);
+        Integer requestHeaderSize = GsEnv.propertyInt(SystemProperties.JETTY_LAUNCHER_REQUEST_HEADER_SIZE).get();
+        if (requestHeaderSize != null) {
+            http_config.setRequestHeaderSize(requestHeaderSize);
+        }
 //        http_config.setResponseHeaderSize(8192);
         http_config.setSendServerVersion(true);
         http_config.setSendDateHeader(false);
