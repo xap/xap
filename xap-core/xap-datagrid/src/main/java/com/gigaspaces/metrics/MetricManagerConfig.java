@@ -16,15 +16,17 @@
 
 package com.gigaspaces.metrics;
 
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.xml.XmlParser;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.metrics.reporters.ConsoleReporterFactory;
 import com.gigaspaces.metrics.reporters.FileReporterFactory;
-
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.start.manager.XapManagerClusterInfo;
 import com.j_spaces.kernel.SystemProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -32,10 +34,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -178,8 +176,8 @@ public class MetricManagerConfig {
                     properties.setProperty("dbname", "metricsdb");
                     properties.setProperty("username", "sa");
                     properties.setProperty("password", "");
-                    properties.setProperty("host", firstHost);
-                    properties.setProperty("port", "9101");
+                    properties.setProperty("host", GsEnv.property("com.gs.ui.metrics.db.host").get( firstHost ));
+                    properties.setProperty("port", GsEnv.property("com.gs.ui.metrics.db.port").get( "9101" ));
                     factory.load(properties);
                     reportersFactories.put("ui", factory);
                 }

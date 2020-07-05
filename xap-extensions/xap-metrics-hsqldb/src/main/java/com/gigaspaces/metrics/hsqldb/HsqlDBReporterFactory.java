@@ -16,7 +16,6 @@
 
 package com.gigaspaces.metrics.hsqldb;
 
-import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.metrics.MetricReporter;
 import com.gigaspaces.metrics.MetricReporterFactory;
 
@@ -29,8 +28,6 @@ import java.util.Properties;
 public class HsqlDBReporterFactory extends MetricReporterFactory<MetricReporter> {
 
     private static final String DEFAULT_DRIVER_CLASS_NAME = "org.hsqldb.jdbc.JDBCDriver";
-    private static final String DEFAULT_PORT = String.valueOf(9101);
-    public static final String PORT = GsEnv.property("com.gs.ui.metrics.db.port").get( DEFAULT_PORT );
     private static final String DEFAULT_DBTYPE_STRING = "VARCHAR(300)";
 
     private String dbName;
@@ -49,7 +46,7 @@ public class HsqlDBReporterFactory extends MetricReporterFactory<MetricReporter>
         setDbName(properties.getProperty("dbname"));
         setDriverClassName(properties.getProperty("driverClassName", DEFAULT_DRIVER_CLASS_NAME));
         setHost(properties.getProperty("host"));
-        setPort( PORT );
+        setPort( properties.getProperty("port") );
         setUsername(properties.getProperty("username"));
         setPassword(properties.getProperty("password"));
         setDbTypeString(properties.getProperty("dbTypeString", DEFAULT_DBTYPE_STRING));
