@@ -61,9 +61,7 @@ public class ZookeeperChunksMapHandler implements Closeable {
             ChunksRoutingManager routingManager = getChunksRoutingManager();
             this.partitionId = partitionId;
             if (routingManager == null || isWrongPartitionCount(numberOfPartitions, routingManager, this.partitionId)) {
-                SharedLock lock = attributeStore.getSharedLock(com.j_spaces.core.Constants.Space.spaceLockPath(puName));
-                try {
-                    lock.acquire(30, TimeUnit.SECONDS);
+                try (SharedLock lock = attributeStore.acquireLock(com.j_spaces.core.Constants.Space.spaceLockPath(puName), 30, TimeUnit.SECONDS)) {
                     ChunksRoutingManager manager = getChunksRoutingManager();
                     if (manager == null || isWrongPartitionCount(numberOfPartitions, manager, partitionId)) {
                         PartitionToChunksMap chunksMap = new PartitionToChunksMap(numberOfPartitions, 0);
@@ -78,8 +76,6 @@ public class ZookeeperChunksMapHandler implements Closeable {
                     }
                 } catch (TimeoutException e) {
                     throw new ChunksMapMissingException("failed to acquire space lock in 30 seconds");
-                } finally {
-                    lock.close();
                 }
             } else {
                 logger.info("Map already exist");
