@@ -16,6 +16,7 @@ import java.io.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ZookeeperChunksMapHandler implements Closeable {
 
@@ -61,25 +62,24 @@ public class ZookeeperChunksMapHandler implements Closeable {
             this.partitionId = partitionId;
             if (routingManager == null || isWrongPartitionCount(numberOfPartitions, routingManager, this.partitionId)) {
                 SharedLock lock = attributeStore.getSharedLock(com.j_spaces.core.Constants.Space.spaceLockPath(puName));
-                if (lock.acquire(30, TimeUnit.SECONDS)) {
-                    try {
-                        ChunksRoutingManager manager = getChunksRoutingManager();
-                        if (manager == null || isWrongPartitionCount(numberOfPartitions, manager, partitionId)) {
-                            PartitionToChunksMap chunksMap = new PartitionToChunksMap(numberOfPartitions, 0);
-                            chunksMap.init();
-                            ChunksRoutingManager chunksRoutingManager = new ChunksRoutingManager(chunksMap);
-                            logger.info("Creating map");
-                            setRoutingManager(chunksRoutingManager);
-                            return chunksMap;
-                        } else {
-                            logger.info("Map already exist");
-                            return manager.getMapForPartition(partitionId);
-                        }
-                    } finally {
-                        lock.release();
+                try {
+                    lock.acquire(30, TimeUnit.SECONDS);
+                    ChunksRoutingManager manager = getChunksRoutingManager();
+                    if (manager == null || isWrongPartitionCount(numberOfPartitions, manager, partitionId)) {
+                        PartitionToChunksMap chunksMap = new PartitionToChunksMap(numberOfPartitions, 0);
+                        chunksMap.init();
+                        ChunksRoutingManager chunksRoutingManager = new ChunksRoutingManager(chunksMap);
+                        logger.info("Creating map");
+                        setRoutingManager(chunksRoutingManager);
+                        return chunksMap;
+                    } else {
+                        logger.info("Map already exist");
+                        return manager.getMapForPartition(partitionId);
                     }
-                } else {
+                } catch (TimeoutException e) {
                     throw new ChunksMapMissingException("failed to acquire space lock in 30 seconds");
+                } finally {
+                    lock.release();
                 }
             } else {
                 logger.info("Map already exist");
