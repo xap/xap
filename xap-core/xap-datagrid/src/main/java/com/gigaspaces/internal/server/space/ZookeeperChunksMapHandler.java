@@ -79,7 +79,7 @@ public class ZookeeperChunksMapHandler implements Closeable {
                 } catch (TimeoutException e) {
                     throw new ChunksMapMissingException("failed to acquire space lock in 30 seconds");
                 } finally {
-                    lock.release();
+                    lock.close();
                 }
             } else {
                 logger.info("Map already exist");
