@@ -22,15 +22,14 @@ public class PojoInfoTestCase {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test
-    public void testEmptyInitialLoad() throws IOException {
-        String expected = BootIOUtils.readAsString(BootIOUtils.getResourcePath("samples/Person.java"));
-        PojoInfo personPojoInfo = new PojoInfo("Person", "com.gigaspaces.demo");
-        personPojoInfo.addProperty("id", int.class);
-        personPojoInfo.addProperty("name", String.class);
-        personPojoInfo.addPropertyWithAutoGenerate("auto-generate", long.class);
-    }
-
+//    @Test
+//    public void testEmptyInitialLoad() throws IOException {
+//        String expected = BootIOUtils.readAsString(BootIOUtils.getResourcePath("samples/Person.java"));
+//        PojoInfo personPojoInfo = new PojoInfo("Person", "com.gigaspaces.demo");
+//        personPojoInfo.addProperty("id", int.class);
+//        personPojoInfo.addProperty("name", String.class);
+//        personPojoInfo.addPropertyWithAutoGenerate("auto-generate", long.class);
+//    }
 
     @Test
     public void basicCompoundId() throws IOException {
@@ -53,4 +52,6 @@ public class PojoInfoTestCase {
         System.out.println("expected=" +expected);
         Assert.assertEquals(expected, actual);
     }
+
+
 }

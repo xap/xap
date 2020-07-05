@@ -35,21 +35,21 @@ public class {{className}} {
     }
 {{/properties}}
 
-{{#hasCompoundKey}}
-{{#compoundKeyClass.annotations}}
+{{#compoundKeyClass}}
+{{#annotations}}
     {{&.}}
-{{/compoundKeyClass.annotations}}
+{{/annotations}}
     @Embeddable
-    public static class Key extends CompoundKey {
+    public static class Key extends CompoundSpaceId {
 
-        public {{compoundKeyClass.className}}() {
-            super({{compoundKeyClass.properties.size}});
+        public Key() {
+            super({{properties.size}});
         }
 
-        public Key({{compoundKeyClass.getPropertiesAsStringWithType}}) {
-            super({{compoundKeyClass.getPropertiesAsString}});
+        public Key({{getPropertiesAsStringWithType}}) {
+            super({{getPropertiesAsString}});
         }
-{{#compoundKeyClass.properties}}
+{{#properties}}
 
 {{#annotations}}
         {{&.}}
@@ -60,7 +60,7 @@ public class {{className}} {
         public void set{{name}}({{typeName}} {{fieldName}}) {
             setValue({{index}},{{fieldName}});
         }
-{{/compoundKeyClass.properties}}
+{{/properties}}
     }
-{{/hasCompoundKey}}
+{{/compoundKeyClass}}
 }

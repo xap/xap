@@ -1,16 +1,13 @@
 package org.gigaspaces.blueprints.java;
 
-import com.github.mustachejava.util.DecoratedCollection;
 import org.gigaspaces.blueprints.TemplateUtils;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class PojoInfo {
-    private final String className;
-    private final String packageName;
-    private final boolean hasCompoundKey;
+    private String className;
+    private String packageName;
     private PojoInfo compoundKeyClass;
     private final Set<String> imports = new LinkedHashSet<>();
     private final Set<String> warnings = new LinkedHashSet<>();
@@ -20,14 +17,11 @@ public class PojoInfo {
     public PojoInfo(String className, String packageName) {
         this.className = className;
         this.packageName = packageName;
-        this.hasCompoundKey = false;
-//        PojoInfo()
     }
 
     public PojoInfo(String className, String packageName, boolean hasCompoundKey) {
         this.className = className;
         this.packageName = packageName;
-        this.hasCompoundKey = hasCompoundKey;
         if(hasCompoundKey) {
             createCompoundKeyClass(packageName);
         }
@@ -35,8 +29,8 @@ public class PojoInfo {
 
     private void createCompoundKeyClass(String packageName) {
         this.compoundKeyClass = new PojoInfo("Key", packageName);
-        this.addPropertyWithAutoGenerateFalseAndEmbedded("Key", "Key");
-        this.addImport("com.gigaspaces.config.CompoundIdBase");
+        this.addCompoundKeyProperty("Key", "Key");
+        this.addImport("com.gigaspaces.entry.CompoundSpaceId");
     }
 
     public String generate() throws IOException {
@@ -90,10 +84,6 @@ public class PojoInfo {
         return addPropertyImpl(name, type);
     }
 
-    public boolean hasCompoundKey(){
-        return hasCompoundKey;
-    }
-
     public PropertyInfo addPropertyWithAnnotation(String name, Class<?> type, String annotation) {
         PropertyInfo propertyInfo = addPropertyImpl(name, type);
         propertyInfo.annotations.add(annotation);
@@ -119,21 +109,17 @@ public class PojoInfo {
         if (typePackage != null && !typePackage.getName().equals("java.lang"))
             imports.add(typePackage.getName() + ".*");
         return propertyInfo;
-
     }
 
-    public PojoInfo addPropertyWithAutoGenerate(String name, Class<?> type) {
+    public void addPropertyWithAutoGenerate(String name, Class<?> type) {
         PropertyInfo propertyInfo = addPropertyImpl(name, type);
         propertyInfo.annotations.add("@SpaceId(autoGenerate=true)");
-        return this;
     }
 
-    public PojoInfo addPropertyWithAutoGenerateFalseAndEmbedded(String name, String simpleTypeName) {
+    public void addCompoundKeyProperty(String name, String simpleTypeName) {
         PropertyInfo propertyInfo = addPropertyImpl(name, simpleTypeName);
         propertyInfo.annotations.add("@SpaceId");
         propertyInfo.annotations.add("@EmbeddedId");
-
-        return this;
     }
 
     public String getPropertiesAsString(){
@@ -196,7 +182,7 @@ public class PojoInfo {
         }
     }
 
-    private static String toCamelCase(String s) {
+    public static String toCamelCase(String s) {
         if (s.toUpperCase().equals(s))
             return s.toLowerCase();
         return s.substring(0, 1).toLowerCase() + s.substring(1);

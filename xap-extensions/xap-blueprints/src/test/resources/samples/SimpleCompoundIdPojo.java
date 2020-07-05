@@ -1,6 +1,6 @@
 package com.gigaspaces.demo;
 
-import com.gigaspaces.config.CompoundIdBase;
+import com.gigaspaces.entry.CompoundSpaceId;
 import com.gigaspaces.annotation.pojo.*;
 import javax.persistence.*;
 
@@ -44,7 +44,7 @@ public class SimpleCompoundIdPojo {
     }
 
     @Embeddable
-    public static class Key extends CompoundKey {
+    public static class Key extends CompoundSpaceId {
 
         public Key() {
             super(2);
