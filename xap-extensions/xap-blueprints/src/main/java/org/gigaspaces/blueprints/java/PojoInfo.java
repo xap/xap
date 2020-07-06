@@ -19,10 +19,10 @@ public class PojoInfo {
         this.packageName = packageName;
     }
 
-    public PojoInfo(String className, String packageName, boolean hasCompoundKey) {
+    public PojoInfo(String className, String packageName, boolean hasCompoundId) {
         this.className = className;
         this.packageName = packageName;
-        if(hasCompoundKey) {
+        if(hasCompoundId) {
             createCompoundKeyClass(packageName);
         }
     }
