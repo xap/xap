@@ -18,8 +18,6 @@ package com.gigaspaces.attribute_store;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author yechiel
@@ -37,11 +35,5 @@ public interface AttributeStore extends Closeable {
 
     String remove(String key) throws IOException;
 
-    SharedLock getSharedLock(String key);
-
-    default SharedLock acquireLock(String key, long time, TimeUnit unit) throws IOException, TimeoutException {
-        SharedLock sharedLock = getSharedLock(key);
-        sharedLock.acquire(time, unit);
-        return sharedLock;
-    }
+    SharedLockProvider getSharedLockProvider();
 }

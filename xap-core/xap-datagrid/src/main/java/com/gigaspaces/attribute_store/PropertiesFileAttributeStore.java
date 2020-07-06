@@ -111,8 +111,8 @@ public class PropertiesFileAttributeStore implements AttributeStore, Serializabl
     }
 
     @Override
-    public SharedLock getSharedLock(String key) {
-        throw new UnsupportedOperationException("only supported in ZooKeeperAttributeStore.class");
+    public SharedLockProvider getSharedLockProvider() {
+        throw new UnsupportedOperationException("This attribute store does not support shared locks");
     }
 
     public <T> T withProperties(PropertiesHandler<T> propertiesHandler) throws IOException {
