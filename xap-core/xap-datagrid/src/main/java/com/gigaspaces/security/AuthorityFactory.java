@@ -62,6 +62,33 @@ public final class AuthorityFactory {
     }
 
     /**
+     * Creates an {@link Authority} instance out its short (or long) name String representation.
+     * Calls {@link #create(String)} if short representation is not matched.
+     * @param authority An authority String representation
+     * @return An authority instance
+     * @since 15.5
+     */
+    public static Authority valueOf(String authority) {
+        switch (authority) {
+            case "MANAGE_GRID":  return valueOf(GridPrivilege.MANAGE_GRID);
+            case "MANAGE_PU":    return valueOf(GridPrivilege.MANAGE_PU);
+            case "PROVISION_PU": return valueOf(GridPrivilege.PROVISION_PU);
+            case "MONITOR_JVM":  return valueOf(MonitorPrivilege.MONITOR_JVM);
+            case "MONITOR_PU":   return valueOf(MonitorPrivilege.MONITOR_PU);
+            case "SPACE_ALTER":  return valueOf(SpacePrivilege.ALTER);
+            case "SPACE_CREATE":   return valueOf(SpacePrivilege.CREATE);
+            case "SPACE_EXECUTE":   return valueOf(SpacePrivilege.EXECUTE);
+            case "SPACE_READ":   return valueOf(SpacePrivilege.READ);
+            case "SPACE_WRITE":   return valueOf(SpacePrivilege.WRITE);
+            case "SPACE_TAKE":   return valueOf(SpacePrivilege.TAKE);
+        }
+        if (authority.startsWith("SPACE_")) {
+            return create("SpacePrivilege " + authority.substring("SPACE_".length()));
+        }
+        return create(authority);
+    }
+
+    /**
      * Converts Privilege to Authority
      * @param privilege
      * @return an Authority encapsulating this privilege
