@@ -17,16 +17,11 @@
 
 package com.gigaspaces.security;
 
-import com.gigaspaces.security.authorities.Constants;
-import com.gigaspaces.security.authorities.GridAuthority;
+import com.gigaspaces.security.authorities.*;
 import com.gigaspaces.security.authorities.GridAuthority.GridPrivilege;
-import com.gigaspaces.security.authorities.MonitorAuthority;
 import com.gigaspaces.security.authorities.MonitorAuthority.MonitorPrivilege;
-import com.gigaspaces.security.authorities.RoleAuthority;
 import com.gigaspaces.security.authorities.RoleAuthority.RolePrivilege;
-import com.gigaspaces.security.authorities.SpaceAuthority;
 import com.gigaspaces.security.authorities.SpaceAuthority.SpacePrivilege;
-import com.gigaspaces.security.authorities.SystemAuthority;
 import com.gigaspaces.security.authorities.SystemAuthority.SystemPrivilege;
 
 /**
@@ -64,5 +59,25 @@ public final class AuthorityFactory {
         }
 
         throw new IllegalArgumentException("Unknown authority type; Could not create an Authority from: " + authority);
+    }
+
+    /**
+     * Converts Privilege to Authority
+     * @param privilege
+     * @return an Authority encapsulating this privilege
+     * @since 15.5
+     */
+    public static Authority valueOf(Privilege privilege) {
+        if (privilege instanceof GridPrivilege) {
+            return new GridAuthority((GridPrivilege) privilege);
+        } else if (privilege instanceof MonitorPrivilege) {
+            return new MonitorAuthority(((MonitorPrivilege) privilege));
+        } else if (privilege instanceof SpacePrivilege) {
+            return new SpaceAuthority(((SpacePrivilege) privilege));
+        } else if (privilege instanceof SystemPrivilege) {
+            return new SystemAuthority((SystemPrivilege) privilege);
+        }
+
+        throw new IllegalArgumentException("unknown privilege " + privilege);
     }
 }
