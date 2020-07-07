@@ -5,6 +5,7 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+import java.util.Collection;
 import java.util.Map;
 
 public class GigaSpaceSynchronizationEndpointBeanFactory implements FactoryBean<GigaSpaceSynchronizationEndpoint>, InitializingBean{
@@ -15,7 +16,7 @@ public class GigaSpaceSynchronizationEndpointBeanFactory implements FactoryBean<
         return new GigaSpaceSynchronizationEndpointConfigurer();
     }
 
-    public void setSpaceTypeSchemaAdapters(Map<String, SpaceTypeSchemaAdapter> spaceTypeSchemaAdapters){
+    public void setSpaceTypeSchemaAdapters(Collection<SpaceTypeSchemaAdapter> spaceTypeSchemaAdapters){
         configurer.spaceTypeSchemaAdapters(spaceTypeSchemaAdapters);
     }
 

@@ -5,6 +5,7 @@ import org.openspaces.core.GigaSpace;
 import org.openspaces.core.GigaSpaceConfigurer;
 import org.openspaces.core.space.UrlSpaceConfigurer;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,8 +15,8 @@ public class GigaSpaceSynchronizationEndpointConfigurer {
     private String lookupLocators;
     private Map<String, SpaceTypeSchemaAdapter> spaceTypeSchemaAdapters = new HashMap<>();
 
-    public GigaSpaceSynchronizationEndpointConfigurer spaceTypeSchemaAdapters(Map<String, SpaceTypeSchemaAdapter> spaceTypeSchemaAdapters) {
-        this.spaceTypeSchemaAdapters = spaceTypeSchemaAdapters;
+    public GigaSpaceSynchronizationEndpointConfigurer spaceTypeSchemaAdapters(Collection<SpaceTypeSchemaAdapter> spaceTypeSchemaAdapters) {
+        spaceTypeSchemaAdapters.forEach(this::accept);
         return this;
     }
 
@@ -35,7 +36,7 @@ public class GigaSpaceSynchronizationEndpointConfigurer {
     }
 
     public GigaSpaceSynchronizationEndpointConfigurer addSpaceTypeSchemaAdapter(SpaceTypeSchemaAdapter spaceTypeSchemaAdapter){
-        spaceTypeSchemaAdapters.put(spaceTypeSchemaAdapter.getTypeName(), spaceTypeSchemaAdapter);
+        accept(spaceTypeSchemaAdapter);
         return this;
     }
 
@@ -49,5 +50,9 @@ public class GigaSpaceSynchronizationEndpointConfigurer {
             urlSpaceConfigurer.lookupGroups(lookupGroups);
         GigaSpace targetSpace = new GigaSpaceConfigurer(urlSpaceConfigurer).create();
         return new GigaSpaceSynchronizationEndpoint(targetSpace, spaceTypeSchemaAdapters);
+    }
+
+    private void accept(SpaceTypeSchemaAdapter spaceTypeSchemaAdapter) {
+        this.spaceTypeSchemaAdapters.put(spaceTypeSchemaAdapter.getTypeName(), spaceTypeSchemaAdapter);
     }
 }
