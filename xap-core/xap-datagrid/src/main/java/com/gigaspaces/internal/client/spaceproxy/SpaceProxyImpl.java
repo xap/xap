@@ -34,6 +34,7 @@ import com.gigaspaces.internal.client.spaceproxy.transaction.SpaceProxyTransacti
 import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.internal.server.space.IClusterInfoChangedListener;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.admin.demote.DemoteFailedException;
@@ -99,7 +100,7 @@ import org.slf4j.LoggerFactory;
  * @since 2.0
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProxyVersionProvider, MarshalPivotProvider {
+public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProxyVersionProvider, MarshalPivotProvider, IClusterInfoChangedListener {
     private static final long serialVersionUID = 1L;
 
     private static final Logger _clientLogger = LoggerFactory.getLogger(Constants.LOGGER_CLIENT);
@@ -115,7 +116,7 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
     private final SpaceProxyDataEventsManager _dataEventsManager;
 
     private boolean _initializedNewRouter;
-    private SpaceProxyRouter _proxyRouter;
+    private volatile SpaceProxyRouter _proxyRouter;
     private volatile boolean closed = false;
 
     public SpaceProxyImpl(DirectSpaceProxyFactoryImpl factory, ProxySettings proxySettings) {
@@ -609,10 +610,18 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
                 return _proxyRouter;
             _proxyRouter = new SpaceProxyRouter(this);
             _initializedNewRouter = true;
+            if(getSpaceImplIfEmbedded() != null){
+                this.getSpaceImplIfEmbedded().registerToClusterInfoChangedEvent(this);
+            }
             return _proxyRouter;
         }
     }
 
+    /***
+     * Used in client side to update all proxy components with the new map
+     * @param chunksMap
+     * @return
+     */
     public void updateProxyRouter(SpaceProxyRouter oldRouter, PartitionToChunksMap chunksMap){
         if(this._proxyRouter != oldRouter){
             return;
@@ -622,6 +631,29 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
                 return;
             }
             this._proxySettings = this._proxySettings.cloneAndUpdate(chunksMap);
+            this._proxyRouter = new SpaceProxyRouter(this);
+        }
+    }
+
+    @Override
+    public void afterClusterInfoChange(SpaceClusterInfo clusterInfo) {
+        this.updateProxyRouter(this._proxyRouter, clusterInfo);
+    }
+
+    /***
+     * Used in server side to update all collocated proxies
+     * @param newClusterInfo
+     * @return
+     */
+    private void updateProxyRouter(SpaceProxyRouter oldRouter, SpaceClusterInfo newClusterInfo){
+        if(this._proxyRouter != oldRouter){
+            return;
+        }
+        synchronized (_spaceInitializeLock) {
+            if(this._proxyRouter != oldRouter){
+                return;
+            }
+            this._proxySettings = this._proxySettings.cloneAndUpdate(newClusterInfo);
             this._proxyRouter = new SpaceProxyRouter(this);
         }
     }
@@ -741,4 +773,5 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
         SpaceContext spaceContext = getSecurityManager().acquireContext(remoteJSpace, credentialsProvider);
         remoteJSpace.demote(maxSuspendTime, timeUnit, spaceContext);
     }
+
 }

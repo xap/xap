@@ -66,6 +66,7 @@
         <module>xap-tools/xap-cli</module>
         <module>xap-dist</module>
         <module>xap-extensions/xap-reporter</module>
+        <module>xap-extensions/xap-kafka</module>
     </modules>
 
     <dependencies>
@@ -254,6 +255,12 @@
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-mongodb</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.gigaspaces</groupId>
+                <artifactId>xap-kafka</artifactId>
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>

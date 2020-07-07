@@ -78,7 +78,7 @@ public class MongoInitialDataLoadIterator implements DataIterator<Object> {
 
         DBObject query = mongoSpaceDataSource.getInitialQuery(typeDescriptor);
 
-        this.pojoMapper = new DefaultSpaceDocumentMapper(typeDescriptor);
+        this.pojoMapper = new DefaultSpaceDocumentMapper(typeDescriptor, mongoClient.prefferPojo());
 
         return mongoClient.getCollection(typeDescriptor.getTypeName()).find(query);
     }

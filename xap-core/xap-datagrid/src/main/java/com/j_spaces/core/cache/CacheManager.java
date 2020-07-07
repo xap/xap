@@ -5425,6 +5425,7 @@ public class CacheManager extends AbstractCacheManager
         ReplicationOutContext typedContext = (ReplicationOutContext) replicationContext;
         typedContext.setOperationID(context.getOperationID());
         typedContext.setFromGateway(context.isFromGateway());
+        typedContext.setBackupOnly(context.isBackupOnly());
     }
 
     private void updateReplicationContextForTransaction(IReplicationOutContext replicationContext,

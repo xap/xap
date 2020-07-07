@@ -16,23 +16,11 @@
 package com.gigaspaces.internal.query.explainplan;
 
 import com.gigaspaces.api.ExperimentalApi;
-import com.gigaspaces.internal.query.AbstractQueryIndex;
-import com.gigaspaces.internal.query.CompoundAndCustomQuery;
-import com.gigaspaces.internal.query.CompoundContainsItemsCustomQuery;
-import com.gigaspaces.internal.query.CompoundOrCustomQuery;
-import com.gigaspaces.internal.query.ExactValueIndexScanner;
-import com.gigaspaces.internal.query.IContainsItemsCustomQuery;
-import com.gigaspaces.internal.query.ICustomQuery;
-import com.gigaspaces.internal.query.InValueIndexScanner;
-import com.gigaspaces.internal.query.NotRegexIndexScanner;
-import com.gigaspaces.internal.query.NullValueIndexScanner;
-import com.gigaspaces.internal.query.RangeIndexScanner;
-import com.gigaspaces.internal.query.RegexIndexScanner;
+import com.gigaspaces.internal.query.*;
 import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.TypeDataIndex;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.CompositeRange;
-import com.j_spaces.jdbc.builder.range.ContainsCompositeRange;
 import com.j_spaces.jdbc.builder.range.Range;
 
 import java.util.ArrayList;
@@ -67,7 +55,6 @@ public class ExplainPlanUtil {
             return new IndexInfo(abstractIndexScanner.getIndexName(), size, index.getIndexType(), abstractIndexScanner.getIndexValue(), QueryOperator.EQ, usable);
         }
         if (abstractIndexScanner instanceof InValueIndexScanner) {
-            ((InValueIndexScanner) abstractIndexScanner).get_indexInValueSet();
             return new IndexInfo(abstractIndexScanner.getIndexName(), size, index.getIndexType(), ((InValueIndexScanner) abstractIndexScanner).get_indexInValueSet(), QueryOperator.IN, usable);
         }
         if (abstractIndexScanner instanceof NotRegexIndexScanner) {
@@ -166,7 +153,7 @@ public class ExplainPlanUtil {
         List<ICustomQuery> finalSubqueries = new ArrayList<ICustomQuery>();
         finalSubqueries.addAll(subQueries);
         for (ICustomQuery subQuery : subQueries) {
-            if (subQuery instanceof ContainsCompositeRange || subQuery instanceof CompositeRange) {
+            if (subQuery instanceof CompositeRange) {
                 finalSubqueries.remove(subQuery);
                 finalSubqueries.addAll(getSubQueries(subQuery));
             }

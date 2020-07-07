@@ -59,7 +59,7 @@ public class MongoSqlQueryDataIterator implements DataIterator<Object> {
         this.client = client;
         this.query = query;
         this.pojoMapper = new DefaultSpaceDocumentMapper(
-                query.getTypeDescriptor());
+                query.getTypeDescriptor(), client.prefferPojo());
     }
 
     public boolean hasNext() {
@@ -86,7 +86,7 @@ public class MongoSqlQueryDataIterator implements DataIterator<Object> {
         if (query.supportsAsSQLQuery())
             q = MongoQueryFactory.create(query);
         else if (query.supportsTemplateAsDocument()) {
-            Map m = new DefaultSpaceDocumentMapper(query.getTypeDescriptor())
+            Map m = new DefaultSpaceDocumentMapper(query.getTypeDescriptor(), client.prefferPojo())
                     .toDBObject(query.getTemplateAsDocument()).toMap();
 
             q = BasicDBObjectBuilder.start(m);

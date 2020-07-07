@@ -32,14 +32,14 @@ public class DefaultMongoDataIterator implements DataIterator<Object> {
     private DBCursor iterator;
     private SpaceDocumentMapper<DBObject> mapper;
 
-    public DefaultMongoDataIterator(DBCursor iterator, SpaceTypeDescriptor typeDescriptor) {
+    public DefaultMongoDataIterator(DBCursor iterator, SpaceTypeDescriptor typeDescriptor, boolean prefferPojo) {
         if (iterator == null)
             throw new IllegalArgumentException("iterator can not be null");
         if (typeDescriptor == null)
             throw new IllegalArgumentException("typeDescriptor can not be null");
 
         this.iterator = iterator;
-        this.mapper = new DefaultSpaceDocumentMapper(typeDescriptor);
+        this.mapper = new DefaultSpaceDocumentMapper(typeDescriptor, prefferPojo);
     }
 
     public boolean hasNext() {

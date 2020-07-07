@@ -95,8 +95,8 @@ public class JettyLauncher extends WebLauncher {
 
         webAppContext.addServlet(jspServletHolder(), "*.jsp");
 
-        // GS-10830 - change default setSessionCookie (in order to change "JSESSIONID")
-        webAppContext.getSessionHandler().setSessionCookie(SessionHandler.__DefaultSessionCookie + "_GigaSpaces_" + UUID.randomUUID());
+        // Use Unique name for app
+        webAppContext.getSessionHandler().setSessionCookie("GigaSpaces_" + config.getName().replace(" ", "_").toUpperCase());
 
         webAppContext.getSessionHandler().addEventListener( new HttpSessionListener() {
             @Override

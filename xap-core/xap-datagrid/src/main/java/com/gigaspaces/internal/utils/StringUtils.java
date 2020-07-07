@@ -521,6 +521,19 @@ public abstract class StringUtils {
         return s.substring(lastIndexOf + separator.length(), s.length());
     }
 
+    public static String getFileName(String path, boolean removeExtension) {
+        String name = getSuffix(path, "/");
+        if (name == path) {
+            name = getSuffix(path, "\\");
+        }
+        if (removeExtension) {
+            int pos = name.lastIndexOf(".");
+            if (pos != -1)
+                name = name.substring(0, pos);
+        }
+        return name;
+    }
+
     public static String getCurrentStackTrace() {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         StringBuilder sb = new StringBuilder();

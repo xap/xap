@@ -64,6 +64,10 @@ public class MongoSpaceDataSource extends SpaceDataSource {
         }
         this.mongoClient = mongoClient;
         this.clusterInfo = clusterInfo;
+        if(clusterInfo != null){
+            setNumberOfInstances(clusterInfo.getNumberOfInstances());
+            setInstanceId(clusterInfo.getInstanceId());
+        }
     }
 
     public void close() throws IOException {
@@ -105,17 +109,17 @@ public class MongoSpaceDataSource extends SpaceDataSource {
     public DBObject getInitialQuery(SpaceTypeDescriptor typeDescriptor) {
         DBObject query = new BasicDBObject();
         String routingPropertyName = typeDescriptor.getRoutingPropertyName();
-        if (clusterInfo != null && clusterInfo.getNumberOfInstances() > 1 && routingPropertyName != null) {
+        if(routingPropertyName == null || numberOfInstances == null || instanceId == null)
+            return query;
+        if (numberOfInstances > 1) {
             SpacePropertyDescriptor routingPropDesc = typeDescriptor.getFixedProperty(routingPropertyName);
             if (Integer.class.isAssignableFrom(routingPropDesc.getType())) {
                 ArrayList l = new ArrayList();
-                l.add(clusterInfo.getNumberOfInstances());
-                l.add(clusterInfo.getInstanceId() - 1);
-
+                l.add(numberOfInstances);
+                l.add(instanceId - 1);
                 query.put(routingPropertyName, new BasicDBObject("$mod", l));
             }
         }
-
         return query;
     }
 
@@ -134,7 +138,7 @@ public class MongoSpaceDataSource extends SpaceDataSource {
         if (logger.isDebugEnabled())
             logger.debug("MongoSpaceDataSource.getById(" + idQuery + ")");
 
-        SpaceDocumentMapper<DBObject> mapper = new DefaultSpaceDocumentMapper(idQuery.getTypeDescriptor());
+        SpaceDocumentMapper<DBObject> mapper = new DefaultSpaceDocumentMapper(idQuery.getTypeDescriptor(), mongoClient.prefferPojo());
 
         BasicDBObjectBuilder documentBuilder = BasicDBObjectBuilder.start().add(Constants.ID_PROPERTY, mapper.toObject(idQuery.getId()));
 
@@ -163,6 +167,6 @@ public class MongoSpaceDataSource extends SpaceDataSource {
 
         DBCursor results = mongoCollection.find(document);
 
-        return new DefaultMongoDataIterator(results, idsQuery.getTypeDescriptor());
+        return new DefaultMongoDataIterator(results, idsQuery.getTypeDescriptor(), mongoClient.prefferPojo());
     }
 }

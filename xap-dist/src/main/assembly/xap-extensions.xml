@@ -129,6 +129,15 @@
 
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
+            <outputDirectory>product/lib/optional/kafka</outputDirectory>
+            <includes>
+                <include>org.gigaspaces:xap-kafka</include>
+            </includes>
+            <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+        </dependencySet>
+
+        <dependencySet>
+            <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>product/lib/optional/hibernate</outputDirectory>
             <includes>
                 <include>org.gigaspaces:xap-hibernate-spring</include>

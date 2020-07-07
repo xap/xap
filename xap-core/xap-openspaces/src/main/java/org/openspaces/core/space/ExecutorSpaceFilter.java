@@ -179,11 +179,6 @@ public class ExecutorSpaceFilter implements ISpaceFilter {
         return obj.getClass().isAnnotationPresent(AutowireTask.class);
     }
 
-    public void updateSpace(IJSpace space) {
-        this.space = space;
-        this.clusterInfo.setNumberOfInstances(space.getDirectProxy().getSpaceClusterInfo().getNumberOfPartitions());
-        this.gigaSpace = new GigaSpaceConfigurer(space).gigaSpace();
-    }
 
     private SpaceRemotingServiceExporter getServiceExporter(ApplicationContext applicationContext) {
         if (serviceExporter != null)

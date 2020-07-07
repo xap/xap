@@ -45,6 +45,7 @@ public class RemoveReplicationPacketData
     private static final long serialVersionUID = 1L;
     private boolean _fullEntryPacket;
     private transient IEntryData _entryData;
+    private boolean _backupOnly;
 
 
     public RemoveReplicationPacketData() {
@@ -56,9 +57,14 @@ public class RemoveReplicationPacketData
     }
 
     public RemoveReplicationPacketData(IEntryPacket entry, boolean fromGateway, IEntryData entryData, boolean fullEntryPacket) {
+        this(entry, fromGateway, entryData, fullEntryPacket, false);
+    }
+
+    public RemoveReplicationPacketData(IEntryPacket entry, boolean fromGateway, IEntryData entryData, boolean fullEntryPacket, boolean backupOnly) {
         super(entry, fromGateway);
         _entryData = entryData;
         _fullEntryPacket = fullEntryPacket;
+        _backupOnly = backupOnly;
     }
 
     public void execute(IReplicationInContext context,
@@ -134,6 +140,8 @@ public class RemoveReplicationPacketData
         super.writeExternal(out);
         if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v9_1_0))
             out.writeBoolean(_fullEntryPacket);
+        if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_5_0))
+            out.writeBoolean(_backupOnly);
     }
 
     @Override
@@ -142,11 +150,18 @@ public class RemoveReplicationPacketData
     }
 
     @Override
+    public boolean isBackupOnly() {
+        return _backupOnly;
+    }
+
+    @Override
     public void readExternal(ObjectInput in) throws IOException,
             ClassNotFoundException {
         super.readExternal(in);
         if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v9_1_0))
             _fullEntryPacket = in.readBoolean();
+        if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_5_0))
+            _backupOnly = in.readBoolean();
     }
 
     @Override
@@ -154,6 +169,7 @@ public class RemoveReplicationPacketData
         super.writeToSwap(out);
         out.writeBoolean(_fullEntryPacket);
         serializeEntryData(_entryData, out);
+        out.writeBoolean(_backupOnly);
     }
 
     @Override
@@ -162,6 +178,7 @@ public class RemoveReplicationPacketData
         super.readFromSwap(in);
         _fullEntryPacket = in.readBoolean();
         _entryData = deserializeEntryData(in);
+        _backupOnly = in.readBoolean();
     }
 
 }

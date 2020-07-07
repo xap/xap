@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.cluster.node.impl.groups.reliableasync;
 
 import com.gigaspaces.internal.cluster.node.handlers.IReplicationInFacade;
+import com.gigaspaces.internal.cluster.node.impl.config.GroupConfig;
 import com.gigaspaces.internal.cluster.node.impl.config.TargetGroupConfig;
 import com.gigaspaces.internal.cluster.node.impl.filters.IReplicationInFilter;
 import com.gigaspaces.internal.cluster.node.impl.groups.IReplicationDynamicTargetGroupBuilder;
@@ -85,6 +86,11 @@ public class ReliableAsyncSingleOriginReplicationTargetGroupBuilder
                 replicationInFacade,
                 exceptionHandlerBuilder,
                 stateListener);
+    }
+
+    @Override
+    public GroupConfig getGroupConfig() {
+        return this._groupConfig;
     }
 
     @Override

@@ -123,6 +123,10 @@ public class IOUtils {
         _codeCache.put(serializer.getCode(), serializer);
     }
 
+    public static boolean isArchive(String fileName) {
+        return fileName.endsWith(".zip") || fileName.endsWith(".jar") || fileName.endsWith(".war");
+    }
+
     /**
      * Creates an object from a byte buffer.
      **/

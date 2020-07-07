@@ -100,7 +100,7 @@ public class ReplicationPacketDataProducer
             case WRITE:
                 return createWriteReplicationPacket(entryHolder,
                         replicationOutContext.getOperationID(),
-                        replicationOutContext.isFromGateway());
+                        replicationOutContext.isFromGateway(), replicationOutContext.isBackupOnly());
             case UPDATE:
                 return createUpdateReplicationPacket(entryHolder,
                         replicationOutContext.getOperationID(),
@@ -117,7 +117,7 @@ public class ReplicationPacketDataProducer
             case REMOVE_ENTRY:
                 return (IExecutableReplicationPacketData<?>) createRemoveReplicationPacket(entryHolder,
                         replicationOutContext.getOperationID(),
-                        replicationOutContext.isFromGateway());
+                        replicationOutContext.isFromGateway(), replicationOutContext.isBackupOnly());
 
             case INSERT_NOTIFY_TEMPLATE:
                 return createInsertNotifyReplicationPacket((NotifyTemplateHolder) entryHolder,
@@ -200,7 +200,7 @@ public class ReplicationPacketDataProducer
                     case SpaceOperations.WRITE:
                         singlePacket = createWriteReplicationPacket(entryHolder,
                                 replicationOutContext.getOperationIDs()[i],
-                                replicationOutContext.isFromGateway());
+                                replicationOutContext.isFromGateway(), false);
                         break;
 
                     case SpaceOperations.UPDATE:
@@ -230,7 +230,7 @@ public class ReplicationPacketDataProducer
                     case SpaceOperations.TAKE_IE:
                         singlePacket = (IReplicationTransactionalPacketEntryData) createRemoveReplicationPacket(entryHolder,
                                 replicationOutContext.getOperationIDs()[i],
-                                replicationOutContext.isFromGateway());
+                                replicationOutContext.isFromGateway(), false);
 
                         break;
 
@@ -320,11 +320,11 @@ public class ReplicationPacketDataProducer
 
     private WriteReplicationPacketData createWriteReplicationPacket(
             IEntryHolder entryHolder, OperationID operationID,
-            boolean fromGateway) {
+            boolean fromGateway, boolean backupOnly) {
         IEntryPacket entryPacket = EntryPacketFactory.createFullPacketForReplication(entryHolder,
                 operationID);
 
-        return new WriteReplicationPacketData(entryPacket, fromGateway, entryHolder.getEntryData().getExpirationTime());
+        return new WriteReplicationPacketData(entryPacket, fromGateway, entryHolder.getEntryData().getExpirationTime(), backupOnly);
 
     }
 
@@ -413,14 +413,14 @@ public class ReplicationPacketDataProducer
 
     private IReplicationPacketEntryData createRemoveReplicationPacket(
             IEntryHolder entryHolder, OperationID operationID,
-            boolean fromGateway) {
+            boolean fromGateway, boolean backupOnly) {
         if (_replicateFullTake)
             return createFullRemoveReplicationPacket(entryHolder, operationID, fromGateway);
         if (_replicateToTargetWithExternalDatasource
                 && !entryHolder.isTransient())
             return createRemoveReplicationPacketForPersistency(entryHolder,
                     operationID,
-                    fromGateway);
+                    fromGateway, backupOnly);
 
         return createRemoveByUIDReplicationPacket(entryHolder, operationID, fromGateway);
 
@@ -446,11 +446,11 @@ public class ReplicationPacketDataProducer
     }
 
     private RemoveReplicationPacketData createRemoveReplicationPacketForPersistency(
-            IEntryHolder entryHolder, OperationID operationID, boolean originGateway) {
+            IEntryHolder entryHolder, OperationID operationID, boolean originGateway, boolean backupOnly) {
 
         IEntryPacket template = EntryPacketFactory.createRemovePacketForPersistency(entryHolder, operationID);
 
-        return new RemoveReplicationPacketData(template, originGateway, entryHolder.getEntryData(), false);
+        return new RemoveReplicationPacketData(template, originGateway, entryHolder.getEntryData(), false, backupOnly);
     }
 
     private SingleReplicationPacketData createInsertNotifyReplicationPacket(

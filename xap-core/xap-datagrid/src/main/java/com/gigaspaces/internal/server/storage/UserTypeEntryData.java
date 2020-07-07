@@ -44,7 +44,7 @@ public class UserTypeEntryData extends AbstractEntryData {
     }
 
     private UserTypeEntryData(Object data, EntryTypeDesc entryTypeDesc,
-                              int version, long expirationTime, boolean cloneXtnInfo, AbstractEntryData other, boolean createEmptyTxnInfoIfNon) {
+                              int version, long expirationTime, boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
         super(entryTypeDesc, version, expirationTime, cloneXtnInfo, other, createEmptyTxnInfoIfNon);
         this._data = data;
         this._indexedPropertiesValues = initIndexedPropertiesValues();

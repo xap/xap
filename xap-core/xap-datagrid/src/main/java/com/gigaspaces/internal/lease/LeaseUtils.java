@@ -34,6 +34,7 @@ import java.util.Map;
 @com.gigaspaces.api.InternalApi
 public class LeaseUtils {
     public static final long DISCARD_LEASE = -1;
+    private static final long DUMMY_TTL_FOR_EXPIRED_ENTRIES = 1;
 
     public static long toExpiration(long duration) {
         long expiration = duration + SystemTime.timeMillis();
@@ -43,6 +44,11 @@ public class LeaseUtils {
     public static long safeAdd(long x, long y) {
         // Safe way to express: x + y > Long.MAX_VALUE ? Long.MAX_VALUE : x + y;
         return x > Long.MAX_VALUE - y ? Long.MAX_VALUE : x + y;
+    }
+
+    public static long getTimeToLive(long expirationTime, boolean useDummyIfRelevant) {
+        final long timeToLive = expirationTime != Long.MAX_VALUE ? (expirationTime - SystemTime.timeMillis()) : expirationTime;
+        return (useDummyIfRelevant && timeToLive <= 0 && expirationTime != Long.MAX_VALUE) ? DUMMY_TTL_FOR_EXPIRED_ENTRIES : timeToLive;
     }
 
     public static Map<SpaceLease, Throwable> updateBatch(IDirectSpaceProxy spaceProxy, LeaseUpdateBatch batch) {

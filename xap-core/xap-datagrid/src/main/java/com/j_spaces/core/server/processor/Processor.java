@@ -61,10 +61,7 @@ import com.j_spaces.core.cache.XtnData;
 import com.j_spaces.core.cache.blobStore.IBlobStoreRefCacheInfo;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.blobStore.IBlobStoreEntryHolder;
-import com.j_spaces.core.client.EntryAlreadyInSpaceException;
-import com.j_spaces.core.client.EntryNotInSpaceException;
-import com.j_spaces.core.client.ReadModifiers;
-import com.j_spaces.core.client.UpdateModifiers;
+import com.j_spaces.core.client.*;
 import com.j_spaces.core.cluster.ReplicationOperationType;
 import com.j_spaces.core.fifo.FifoBackgroundDispatcher;
 import com.j_spaces.core.fifo.FifoBackgroundRequest;
@@ -308,6 +305,9 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
                 if (_engine.isReplicated())
                     shouldReplicate = _engine.shouldReplicate(ReplicationOperationType.WRITE, typeDesc, false, fromReplication);
 
+                if(Modifiers.contains(modifiers,Modifiers.BACKUP_ONLY)){
+                    context.setBackupOnly();
+                }
                 try {
                     _cacheManager.insertEntry(context, entry, shouldReplicate, origin, supplied_uid);
                 } catch (EntryAlreadyInSpaceException ex_) {

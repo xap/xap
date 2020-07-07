@@ -251,6 +251,7 @@ public class Context {
     private  boolean _inMemoryRecovery;
 
     private IndexMetricsContext indexMetricsContext;
+    private boolean _backupOnly;
 
     public Context() {
     }
@@ -483,6 +484,7 @@ public class Context {
         _onMatchUid = null;
         _inMemoryRecovery = false;
         indexMetricsContext = null;
+        _backupOnly=false;
     }
 
     public void setOnMatchUid(String uid)
@@ -1250,5 +1252,13 @@ public class Context {
 
     public void setIndexMetricsContext(IndexMetricsContext indexMetricsContext) {
         this.indexMetricsContext = indexMetricsContext;
+    }
+
+    public void setBackupOnly() {
+        this._backupOnly = true;
+    }
+
+    public boolean isBackupOnly(){
+        return this._backupOnly;
     }
 }

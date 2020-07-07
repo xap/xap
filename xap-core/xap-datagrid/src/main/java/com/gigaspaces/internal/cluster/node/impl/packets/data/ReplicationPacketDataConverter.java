@@ -418,7 +418,7 @@ public class ReplicationPacketDataConverter {
                 writeOperation.isTransient(),
                 metadata.getRequiredQueryResultType());
 
-        return new WriteReplicationPacketData(entryPacket, writeOperation.isFromGateway(), writeOperation.getExpirationTime());
+        return new WriteReplicationPacketData(entryPacket, writeOperation.isFromGateway(), writeOperation.getExpirationTime(), false);
     }
 
 

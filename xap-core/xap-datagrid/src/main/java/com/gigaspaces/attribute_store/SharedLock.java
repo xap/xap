@@ -1,8 +1,6 @@
 package com.gigaspaces.attribute_store;
 
-import java.util.concurrent.TimeUnit;
+import java.io.Closeable;
 
-public interface SharedLock {
-    boolean	acquire(long time, TimeUnit unit) throws Exception;
-    void release() throws Exception;
+public interface SharedLock extends Closeable {
 }

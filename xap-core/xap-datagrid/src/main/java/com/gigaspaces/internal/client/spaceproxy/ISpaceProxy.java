@@ -23,7 +23,6 @@ import com.gigaspaces.client.ChangeResult;
 import com.gigaspaces.client.ChangeSet;
 import com.gigaspaces.events.NotifyInfo;
 import com.gigaspaces.executor.SpaceTask;
-import com.gigaspaces.internal.client.SpaceIteratorBatchResult;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.ReadTakeEntriesUidsResult;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.ReadTakeByIdsProxyActionInfo;
@@ -46,7 +45,6 @@ import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
 
 import java.rmi.RemoteException;
-import java.util.UUID;
 import java.util.concurrent.Future;
 
 /**

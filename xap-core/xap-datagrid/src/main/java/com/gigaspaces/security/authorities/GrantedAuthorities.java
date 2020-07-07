@@ -155,4 +155,16 @@ public final class GrantedAuthorities implements Serializable {
     public boolean isUserInRole(String role) {
         return roles.contains(role);
     }
+
+    /**
+     * @return all populated authorities belonging to this authenticated user
+     * @since 15.5
+     */
+    public Authority[] getAuthorities() {
+        ArrayList<Authority> list = new ArrayList<>();
+        for (List<Authority> authorities : authorityMap.values()) {
+            list.addAll(authorities);
+        }
+        return list.toArray(new Authority[0]);
+    }
 }

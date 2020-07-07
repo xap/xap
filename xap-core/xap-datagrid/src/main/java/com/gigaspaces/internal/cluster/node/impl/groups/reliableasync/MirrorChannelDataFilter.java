@@ -41,6 +41,10 @@ public class MirrorChannelDataFilter
     }
 
     public ReplicationChannelEntryDataFilterResult filterBeforeReplicatingEntryData(IReplicationPacketEntryData entryData, PlatformLogicalVersion targetLogicalVersion, IReplicationPacketEntryDataContentExtractor contentExtractor, Logger contextLogger, IReplicationPacketData data) {
+        if(entryData.isBackupOnly()){
+            return ReplicationChannelEntryDataFilterResult.FILTER_DATA;
+        }
+
         if (entryData.isTransient())
             return ReplicationChannelEntryDataFilterResult.FILTER_DATA;
 

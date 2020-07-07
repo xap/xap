@@ -2,6 +2,7 @@ package com.gigaspaces.internal.server.space;
 
 import com.gigaspaces.attribute_store.AttributeStore;
 import com.gigaspaces.attribute_store.SharedLock;
+import com.gigaspaces.attribute_store.SharedLockProvider;
 import com.gigaspaces.internal.cluster.ChunksRoutingManager;
 import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.exceptions.ChunksMapMissingException;
@@ -16,6 +17,7 @@ import java.io.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ZookeeperChunksMapHandler implements Closeable {
 
@@ -23,6 +25,7 @@ public class ZookeeperChunksMapHandler implements Closeable {
     private final String puName;
     private final String attributeStoreKey;
     private final AttributeStore attributeStore;
+    private final SharedLockProvider sharedLockProvider;
     private final ExecutorService singleThreadExecutorService = Executors.newFixedThreadPool(1);
     private int partitionId;
 
@@ -31,6 +34,7 @@ public class ZookeeperChunksMapHandler implements Closeable {
         this.puName = puName;
         this.attributeStoreKey = toPath(puName);
         this.attributeStore = attributeStore;
+        this.sharedLockProvider = attributeStore.getSharedLockProvider();
     }
 
     public static String toPath(String puName) {
@@ -60,8 +64,7 @@ public class ZookeeperChunksMapHandler implements Closeable {
             ChunksRoutingManager routingManager = getChunksRoutingManager();
             this.partitionId = partitionId;
             if (routingManager == null || isWrongPartitionCount(numberOfPartitions, routingManager, this.partitionId)) {
-                SharedLock lock = attributeStore.getSharedLock(com.j_spaces.core.Constants.Space.spaceLockPath(puName));
-                if (lock.acquire(30, TimeUnit.SECONDS)) {
+                try (SharedLock lock = sharedLockProvider.acquire(com.j_spaces.core.Constants.Space.spaceLockPath(puName), 30, TimeUnit.SECONDS)) {
                     ChunksRoutingManager manager = getChunksRoutingManager();
                     if (manager == null || isWrongPartitionCount(numberOfPartitions, manager, partitionId)) {
                         PartitionToChunksMap chunksMap = new PartitionToChunksMap(numberOfPartitions, 0);
@@ -69,14 +72,12 @@ public class ZookeeperChunksMapHandler implements Closeable {
                         ChunksRoutingManager chunksRoutingManager = new ChunksRoutingManager(chunksMap);
                         logger.info("Creating map");
                         setRoutingManager(chunksRoutingManager);
-                        lock.release();
                         return chunksMap;
                     } else {
                         logger.info("Map already exist");
-                        lock.release();
                         return manager.getMapForPartition(partitionId);
                     }
-                } else {
+                } catch (TimeoutException e) {
                     throw new ChunksMapMissingException("failed to acquire space lock in 30 seconds");
                 }
             } else {

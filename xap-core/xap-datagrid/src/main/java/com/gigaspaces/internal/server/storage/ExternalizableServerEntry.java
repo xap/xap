@@ -18,6 +18,7 @@ package com.gigaspaces.internal.server.storage;
 
 import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.internal.lease.LeaseUtils;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.gigaspaces.internal.metadata.ITypeDesc;
@@ -186,7 +187,7 @@ public class ExternalizableServerEntry implements IEntryData, Externalizable, IC
 
     @Override
     public long getTimeToLive(boolean useDummyIfRelevant) {
-        return AbstractEntryData.getTimeToLive(_expirationTime, useDummyIfRelevant);
+        return LeaseUtils.getTimeToLive(_expirationTime, useDummyIfRelevant);
     }
 
     @Override

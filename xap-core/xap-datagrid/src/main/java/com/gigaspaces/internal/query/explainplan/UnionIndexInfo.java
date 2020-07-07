@@ -47,8 +47,12 @@ public class UnionIndexInfo extends IndexInfo {
     private void initialize(List<IndexInfo> options) {
         StringBuilder name = new StringBuilder("[");
         Integer size = 0;
+        boolean usable = (options.size() == 0);
         if (options.size() > 0) {
             for (IndexInfo option : options) {
+                if (option.isUsable()) {
+                    usable = true;
+                }
                 String optionName = "(" + option.getName() + " " + option.getOperator() + " " + option.getValue() + ")";
                 name.append(optionName).append(", ");
                 if (option.getSize() < 0){
@@ -64,7 +68,7 @@ public class UnionIndexInfo extends IndexInfo {
         name.append("]");
         setName(name.toString());
         setSize(size);
-        setUsable(true);
+        setUsable(usable);
     }
 
     @Override

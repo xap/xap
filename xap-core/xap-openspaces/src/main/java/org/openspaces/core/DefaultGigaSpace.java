@@ -38,12 +38,15 @@ import com.gigaspaces.client.TakeModifiers;
 import com.gigaspaces.client.WriteModifiers;
 import com.gigaspaces.client.iterator.SpaceIterator;
 import com.gigaspaces.client.iterator.SpaceIteratorConfiguration;
+import com.gigaspaces.datasource.SpaceDataSourceLoadRequest;
+import com.gigaspaces.datasource.SpaceDataSourceLoadResult;
 import com.gigaspaces.events.DataEventSession;
 import com.gigaspaces.events.DataEventSessionFactory;
 import com.gigaspaces.events.EventSessionConfig;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.cache.ISpaceCache;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.internal.client.spaceproxy.executors.SpaceDataSourceLoadTask;
 import com.gigaspaces.internal.utils.ObjectUtils;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.query.ISpaceQuery;
@@ -59,6 +62,7 @@ import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.util.GlobalTracer;
 import net.jini.core.transaction.Transaction;
+import net.jini.core.transaction.TransactionException;
 import org.openspaces.core.exception.DefaultExceptionTranslator;
 import org.openspaces.core.exception.ExceptionTranslator;
 import org.openspaces.core.executor.DistributedTask;
@@ -1698,5 +1702,14 @@ public class DefaultGigaSpace implements GigaSpace, InternalGigaSpace {
     public void close() throws IOException {
         if (implicitTxProvider)
             txProvider.close();
+    }
+
+    @Override
+    public AsyncFuture<SpaceDataSourceLoadResult> asyncLoad(SpaceDataSourceLoadRequest spaceDataSourceLoadRequest) {
+        try {
+            return space.getDirectProxy().execute(new SpaceDataSourceLoadTask(spaceDataSourceLoadRequest), null, null, null);
+        } catch (Exception e) {
+            throw exTranslator.translate(e);
+        }
     }
 }

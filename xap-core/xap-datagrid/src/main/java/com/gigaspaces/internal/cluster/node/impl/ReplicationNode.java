@@ -61,6 +61,7 @@ import com.gigaspaces.internal.cluster.node.impl.groups.NoSuchReplicationGroupEx
 import com.gigaspaces.internal.cluster.node.impl.groups.ReplicationNodeGroupsHolder;
 import com.gigaspaces.internal.cluster.node.impl.packets.ReplicaRequestPacket;
 import com.gigaspaces.internal.cluster.node.impl.processlog.DefaultProcessLogExceptionHandlerBuilder;
+import com.gigaspaces.internal.cluster.node.impl.processlog.IReplicationProcessLogBuilder;
 import com.gigaspaces.internal.cluster.node.impl.processlog.IReplicationProcessLogExceptionHandlerBuilder;
 import com.gigaspaces.internal.cluster.node.impl.replica.CurrentStageInfo;
 import com.gigaspaces.internal.cluster.node.impl.replica.ISpaceReplicaData;
@@ -772,8 +773,13 @@ public class ReplicationNode
             // groups.
             IReplicationDynamicTargetGroupBuilder matchingGroupBuilder = _replicationNodeConfig.getMatchingTargetGroupBuilder(groupName,
                     getNodeMode());
-            if (matchingGroupBuilder == null)
-                throw e;
+            if (matchingGroupBuilder == null){
+                matchingGroupBuilder = _replicationNodeConfig.createMatchingTargetGroupBuilder(groupName,
+                        getNodeMode(), this._nodeBuilder);
+                if(matchingGroupBuilder == null){
+                    throw e;
+                }
+            }
 
             IReplicationTargetGroup dynamicGroup = matchingGroupBuilder.createDynamicGroup(groupName,
                     _replicationRouter,

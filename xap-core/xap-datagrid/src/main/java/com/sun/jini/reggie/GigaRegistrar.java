@@ -15,6 +15,7 @@
  */
 package com.sun.jini.reggie;
 
+import com.gigaspaces.admin.ManagerClusterInfo;
 import com.gigaspaces.admin.cli.RuntimeInfo;
 import com.gigaspaces.internal.backport.java.util.concurrent.FastConcurrentSkipListMap;
 import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
@@ -703,6 +704,11 @@ public class GigaRegistrar implements Registrar, ProxyAccessor, ServerProxyTrust
         } finally {
             concurrentObj.readUnlock();
         }
+    }
+
+    @Override
+    public ManagerClusterInfo getManagerClusterInfo() {
+        return SystemInfo.singleton().getManagerClusterInfo();
     }
 
     private final static class SvcRegExpirationKey implements Comparable {

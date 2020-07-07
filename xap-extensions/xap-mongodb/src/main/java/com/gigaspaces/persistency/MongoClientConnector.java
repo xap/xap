@@ -78,16 +78,25 @@ public class MongoClientConnector {
     private final MongoClient client;
     private final String dbName;
     private final IndexBuilder indexBuilder;
+    private final boolean prefferPojo;
 
     // TODO: shadi must add documentation
     private static final Map<String, SpaceTypeDescriptorContainer> types = new ConcurrentHashMap<String, SpaceTypeDescriptorContainer>();
     private static final Map<String, SpaceDocumentMapper<DBObject>> mappingCache = new ConcurrentHashMap<String, SpaceDocumentMapper<DBObject>>();
 
     public MongoClientConnector(MongoClient client, String db) {
+        this(client, db, true);
+    }
 
+    public MongoClientConnector(MongoClient client, String db, boolean prefferPojo) {
         this.client = client;
         this.dbName = db;
         this.indexBuilder = new IndexBuilder(this);
+        this.prefferPojo = prefferPojo;
+    }
+
+    public boolean prefferPojo() {
+        return prefferPojo;
     }
 
     public void close() throws IOException {
@@ -266,13 +275,13 @@ public class MongoClientConnector {
         indexBuilder.ensureIndexes(addIndexData);
     }
 
-    private static SpaceDocumentMapper<DBObject> getMapper(
+    private SpaceDocumentMapper<DBObject> getMapper(
             SpaceTypeDescriptor typeDescriptor) {
 
         SpaceDocumentMapper<DBObject> mapper = mappingCache.get(typeDescriptor
                 .getTypeName());
         if (mapper == null) {
-            mapper = new DefaultSpaceDocumentMapper(typeDescriptor);
+            mapper = new DefaultSpaceDocumentMapper(typeDescriptor, prefferPojo);
             mappingCache.put(typeDescriptor.getTypeName(), mapper);
         }
 

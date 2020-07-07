@@ -802,10 +802,10 @@ public class SystemProperties extends CommonSystemProperties {
     public static final String QUERY_PROCESSOR_CLUSTER_LOOKUP_TIMEOUT = "com.gs.queryProcessor.cluster-lookup-timeout";
     public static final long QUERY_PROCESSOR_CLUSTER_LOOKUP_TIMEOUT_DEFAULT = 15000; //in milliseconds
 
+    public static final String JETTY_LAUNCHER_REQUEST_HEADER_SIZE = "com.gs.jetty-launcher.request-header-size";
+
     //GS-13424 java 9 support: VisualVM is not part of JDK 9
     public static final String VISUAL_VM_LAUNCH_FILE_PATH = "com.gs.visualvm.binary";
-
-    public static final String CHUNKS_SPACE_ROUTING = "com.gs.chunks-space-routing";
 
     private static final Map<String, String> defaultValues = initDefaultValues();
 

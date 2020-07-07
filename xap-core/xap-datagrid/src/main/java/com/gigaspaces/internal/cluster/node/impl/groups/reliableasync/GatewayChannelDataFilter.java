@@ -42,6 +42,10 @@ public class GatewayChannelDataFilter extends ReliableAsyncChannelDataFilter {
         if (entryData.isFromGateway())
             return ReplicationChannelEntryDataFilterResult.FILTER_PACKET;
 
+        if(entryData.isBackupOnly()){
+            return ReplicationChannelEntryDataFilterResult.FILTER_DATA;
+        }
+
         switch (entryData.getOperationType()) {
             case WRITE:
             case UPDATE:

@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.log;
 
+import com.gigaspaces.admin.ManagerClusterInfo;
 import com.gigaspaces.annotation.lrmi.MonitoringPriority;
 import com.gigaspaces.log.LogEntries;
 import com.gigaspaces.log.LogEntryMatcher;
@@ -31,4 +32,14 @@ public interface InternalLogProvider extends Remote {
 
     @MonitoringPriority
     LogEntries logEntriesDirect(LogEntryMatcher matcher) throws RemoteException, IOException;
+
+    /**
+     * Returns cluster manager info for relevant services.
+     * NOTE: This method was added here to preserve backwards compatibility (adding a new interface breaks backwards).
+     * It is only implemented by GigaRegistrar.
+     * @since 15.5
+     */
+    default ManagerClusterInfo getManagerClusterInfo() throws RemoteException {
+        throw new UnsupportedOperationException();
+    }
 }
