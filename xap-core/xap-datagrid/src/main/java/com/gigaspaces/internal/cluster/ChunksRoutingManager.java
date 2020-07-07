@@ -34,6 +34,14 @@ public class ChunksRoutingManager implements Externalizable {
         this.maps = maps;
     }
 
+    public void setPartitionGenerationMap(Map<Integer, Integer> partitionGenerationMap) {
+        this.partitionGenerationMap = partitionGenerationMap;
+    }
+
+    public void setCurrentGeneration(int currentGeneration) {
+        this.currentGeneration = currentGeneration;
+    }
+
     public PartitionToChunksMap getMapForPartition(int partitionId) {
         Integer partitionGeneration = this.partitionGenerationMap.get(partitionId);
         return partitionGeneration == null ? null : this.getMaps().get(partitionGeneration);
@@ -87,6 +95,22 @@ public class ChunksRoutingManager implements Externalizable {
 
     public void updateGeneration(){
         currentGeneration = Collections.max(maps.keySet());
+    }
+
+    public ChunksRoutingManager deepCopy(){
+        ChunksRoutingManager copy = new ChunksRoutingManager();
+        Map<Integer, PartitionToChunksMap> maps = new HashMap<>(this.maps.size());
+        for (Map.Entry<Integer, PartitionToChunksMap> mapEntry : this.maps.entrySet()) {
+            maps.put(mapEntry.getKey(),mapEntry.getValue());
+        }
+        copy.setMaps(maps);
+        Map <Integer,Integer> partitionGenerationMap = new HashMap<>(this.partitionGenerationMap.size());
+        for (Map.Entry<Integer, Integer> entry : this.partitionGenerationMap.entrySet()) {
+            partitionGenerationMap.put(entry.getKey(),entry.getValue());
+        }
+        copy.setPartitionGenerationMap(partitionGenerationMap);
+        copy.setCurrentGeneration(this.currentGeneration);
+        return copy;
     }
 
     @Override
