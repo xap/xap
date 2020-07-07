@@ -1,12 +1,10 @@
 package org.openspaces.persistency.space;
 
 import com.gigaspaces.datasource.SpaceTypeSchemaAdapter;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 import java.util.Collection;
-import java.util.Map;
 
 public class GigaSpaceSynchronizationEndpointBeanFactory implements FactoryBean<GigaSpaceSynchronizationEndpoint>, InitializingBean{
     private GigaSpaceSynchronizationEndpointConfigurer configurer = getConfigurer();
