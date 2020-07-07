@@ -108,15 +108,6 @@ public interface Constants {
     public interface Space {
         String FULL_SPACE_STATE = SPACE_CONFIG_PREFIX + "space_state";
         String SPACE_CONFIG = "space-config";
-        static String spaceLockPath(String puName){
-            return "/xap/pus/" +puName;
-        }
-    }
-
-    public interface Quiesce {
-        static String quiescePath(String puName) {
-            return "xap/pus/" + puName + "/quiesce_state";
-        }
     }
 
     public interface ChunksRouting{

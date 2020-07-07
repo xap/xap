@@ -8,6 +8,7 @@ import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.exceptions.ChunksMapMissingException;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryException;
+import com.gigaspaces.internal.zookeeper.ZNodePathFactory;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.admin.SpaceConfig;
 import org.slf4j.Logger;
@@ -32,13 +33,13 @@ public class ZookeeperChunksMapHandler implements Closeable {
 
     public ZookeeperChunksMapHandler(String puName, AttributeStore attributeStore) {
         this.puName = puName;
-        this.attributeStoreKey = toPath(puName);
+        this.attributeStoreKey = getZkPath(puName);
         this.attributeStore = attributeStore;
         this.sharedLockProvider = attributeStore.getSharedLockProvider();
     }
 
-    public static String toPath(String puName) {
-        return "xap/pus/" + puName + "/chunks";
+    public static String getZkPath(String puName) {
+        return ZNodePathFactory.processingUnit(puName, "chunks");
     }
 
     private ChunksRoutingManager toManager(byte[] bytes) throws IOException, ClassNotFoundException {
@@ -64,7 +65,7 @@ public class ZookeeperChunksMapHandler implements Closeable {
             ChunksRoutingManager routingManager = getChunksRoutingManager();
             this.partitionId = partitionId;
             if (routingManager == null || isWrongPartitionCount(numberOfPartitions, routingManager, this.partitionId)) {
-                try (SharedLock lock = sharedLockProvider.acquire(com.j_spaces.core.Constants.Space.spaceLockPath(puName), 30, TimeUnit.SECONDS)) {
+                try (SharedLock lock = sharedLockProvider.acquire(ZNodePathFactory.processingUnit(puName), 30, TimeUnit.SECONDS)) {
                     ChunksRoutingManager manager = getChunksRoutingManager();
                     if (manager == null || isWrongPartitionCount(numberOfPartitions, manager, partitionId)) {
                         PartitionToChunksMap chunksMap = new PartitionToChunksMap(numberOfPartitions, 0);
