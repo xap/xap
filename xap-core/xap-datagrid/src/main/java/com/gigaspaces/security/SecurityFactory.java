@@ -18,16 +18,11 @@
 package com.gigaspaces.security;
 
 import com.j_spaces.kernel.SystemProperties;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.util.Properties;
 
 /**
  * A factory for creating an {@link SecurityManager} and locating of security properties file by
@@ -198,7 +193,9 @@ public class SecurityFactory {
         }
 
         //could not locate, try to locate default file
-        if (resourceAsStream == null) {
+        //only if security properties file is not configured
+        final boolean propertyNotDef = (null == System.getProperty(SystemProperties.SECURITY_PROPERTIES_FILE));
+        if (resourceAsStream == null && propertyNotDef) {
             //look for security.properties
             resourceName = DEFAULT_SECURITY_RESOURCE;
             resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourceName);
