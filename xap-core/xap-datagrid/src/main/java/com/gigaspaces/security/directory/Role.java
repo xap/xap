@@ -48,7 +48,7 @@ public class Role implements RoleDetails {
         this.role = role;
         this.authorities = new Authority[authorities.length];
         for (int i = 0; i < authorities.length; ++i) {
-            this.authorities[i] = AuthorityFactory.create(authorities[i]);
+            this.authorities[i] = AuthorityFactory.valueOf(authorities[i]);
         }
     }
 

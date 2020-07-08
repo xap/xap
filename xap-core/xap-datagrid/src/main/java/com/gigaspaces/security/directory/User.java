@@ -54,7 +54,7 @@ public class User implements UserDetails {
         this.password = password;
         this.authorities = new Authority[authorities.length];
         for (int i = 0; i < authorities.length; ++i) {
-            this.authorities[i] = AuthorityFactory.create(authorities[i]);
+            this.authorities[i] = AuthorityFactory.valueOf(authorities[i]);
         }
     }
 

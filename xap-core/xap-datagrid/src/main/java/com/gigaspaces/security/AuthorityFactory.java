@@ -39,26 +39,10 @@ public final class AuthorityFactory {
      *
      * @param authority An authority String representation.
      * @return An authority instance.
+     * @deprecated since 15.5 - use {@link #valueOf(String)} instead.
      */
     public static Authority create(String authority) {
-        String[] split = authority.split(Constants.DELIM);
-        if (split.length < 2) {
-            throw new IllegalArgumentException("Illegal Authority format: " + authority);
-        }
-        String privilege = split[Constants.PRIVILEGE_NAME_POS];
-        if (RolePrivilege.class.getSimpleName().equals(privilege)) {
-            return RoleAuthority.valueOf(authority);
-        } else if (SystemPrivilege.class.getSimpleName().equals(privilege)) {
-            return SystemAuthority.valueOf(authority);
-        } else if (SpacePrivilege.class.getSimpleName().equals(privilege)) {
-            return SpaceAuthority.valueOf(authority);
-        } else if (GridPrivilege.class.getSimpleName().equals(privilege)) {
-            return GridAuthority.valueOf(authority);
-        } else if (MonitorPrivilege.class.getSimpleName().equals(privilege)) {
-            return MonitorAuthority.valueOf(authority);
-        }
-
-        throw new IllegalArgumentException("Unknown authority type; Could not create an Authority from: " + authority);
+        return valueOf(authority);
     }
 
     /**
@@ -83,9 +67,38 @@ public final class AuthorityFactory {
             case "SPACE_TAKE":   return valueOf(SpacePrivilege.TAKE);
         }
         if (authority.startsWith("SPACE_")) {
-            return create("SpacePrivilege " + authority.substring("SPACE_".length()));
+            return _valueOfWithClassPrefix("SpacePrivilege " + authority.substring("SPACE_".length()));
         }
-        return create(authority);
+        return _valueOfWithClassPrefix(authority);
+    }
+
+    /**
+     * Internal API - backwards full syntax support including privilege class name.
+     * Used to be the implementation of {@link #create(String)}.
+     *
+     * @param authority the authority String with Class Prefix
+     * @return an authority instance
+     * @since 15.5
+     */
+    private static Authority _valueOfWithClassPrefix(String authority) {
+        String[] split = authority.split(Constants.DELIM);
+        if (split.length < 2) {
+            throw new IllegalArgumentException("Illegal Authority format: " + authority);
+        }
+        String privilege = split[Constants.PRIVILEGE_NAME_POS];
+        if (RolePrivilege.class.getSimpleName().equals(privilege)) {
+            return RoleAuthority.valueOf(authority);
+        } else if (SystemPrivilege.class.getSimpleName().equals(privilege)) {
+            return SystemAuthority.valueOf(authority);
+        } else if (SpacePrivilege.class.getSimpleName().equals(privilege)) {
+            return SpaceAuthority.valueOf(authority);
+        } else if (GridPrivilege.class.getSimpleName().equals(privilege)) {
+            return GridAuthority.valueOf(authority);
+        } else if (MonitorPrivilege.class.getSimpleName().equals(privilege)) {
+            return MonitorAuthority.valueOf(authority);
+        }
+
+        throw new IllegalArgumentException("Unknown authority type; Could not create an Authority from: " + authority);
     }
 
     /**
