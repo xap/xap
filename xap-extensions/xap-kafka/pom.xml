@@ -14,7 +14,6 @@
     <packaging>jar</packaging>
     <properties>
         <kafka.version>2.4.1</kafka.version>
-        <scala.version>2.11</scala.version>
         <commons.lang.version>2.6</commons.lang.version>
         <junit.version>4.11</junit.version>
     </properties>
@@ -25,7 +24,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_${scala.version}</artifactId>
+            <artifactId>kafka-clients</artifactId>
             <version>${kafka.version}</version>
         </dependency>
         <dependency>
