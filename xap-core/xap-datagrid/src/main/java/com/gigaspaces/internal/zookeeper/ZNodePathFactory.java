@@ -34,6 +34,10 @@ public class ZNodePathFactory {
         return path(PUS, puName, component, partitionId, elements);
     }
 
+    public static String space(String spaceName) {
+        return path(SPACES, spaceName);
+    }
+
     public static String space(String spaceName, String component, int partitionId, String ... elements) {
         return path(SPACES, spaceName, component, partitionId, elements);
     }
