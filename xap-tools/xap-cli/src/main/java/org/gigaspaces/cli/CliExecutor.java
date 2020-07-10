@@ -2,7 +2,6 @@ package org.gigaspaces.cli;
 
 import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.internal.utils.GsEnv;
-
 import com.gigaspaces.start.SystemLocations;
 import org.jline.reader.*;
 import org.jline.reader.impl.DefaultParser;
@@ -149,7 +148,7 @@ public class CliExecutor {
         return e instanceof CliCommandException ? ((CliCommandException)e).getExitCode() : 1;
     }
 
-    private static CommandLine toCommandLine(Object command) {
+    private static CommandLine toCommandLine(Object command) throws Exception {
         CommandLine cmd = new CommandLine(command);
         if (command instanceof SubCommandContainer) {
             for (Map.Entry<String, Object> entry : ((SubCommandContainer) command).getSubCommands().getCommands().entrySet()) {

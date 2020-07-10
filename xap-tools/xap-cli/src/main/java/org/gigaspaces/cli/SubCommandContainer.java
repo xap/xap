@@ -1,5 +1,5 @@
 package org.gigaspaces.cli;
 
 public interface SubCommandContainer {
-    CommandsSet getSubCommands();
+    CommandsSet getSubCommands() throws Exception;
 }
