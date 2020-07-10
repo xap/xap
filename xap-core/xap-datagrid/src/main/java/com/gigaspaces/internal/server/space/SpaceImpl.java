@@ -352,8 +352,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             //noinspection unchecked
             Constructor constructor = ClassLoaderHelper.loadLocalClass(ATTRIBUET_STORE_HANDLER_CLASS_NAME)
-                    .getConstructor(String.class, ZKCollocatedClientConfig.class);
-            return (AttributeStore) constructor.newInstance("", zkConfig);
+                    .getConstructor(ZKCollocatedClientConfig.class);
+            return (AttributeStore) constructor.newInstance(zkConfig);
 
         } catch (Exception e) {
             if (_logger.isErrorEnabled())
