@@ -28,8 +28,6 @@ import com.j_spaces.jdbc.builder.SQLQueryTemplatePacket;
 
 import java.time.Duration;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +42,6 @@ public class CursorEntryPacketIterator implements IEntryPacketIterator {
     private final ISpaceProxy _spaceProxy;
     private final long _serverLookupTimeout;
     private final ITemplatePacket _queryPacket;
-    private final List<IEntryPacket> _buffer;
     private Iterator<IEntryPacket> _bufferIterator;
     private boolean _closed;
     private SpaceIteratorBatchResultsManager _spaceIteratorBatchResultsManager;
@@ -65,7 +62,6 @@ public class CursorEntryPacketIterator implements IEntryPacketIterator {
         this._spaceProxy = spaceProxy;
         this._serverLookupTimeout = _spaceProxy.getDirectProxy().getProxyRouter().getConfig().getActiveServerLookupTimeout();
         this._queryPacket = toTemplatePacket(query);
-        this._buffer = new LinkedList<>();
         this._spaceIteratorBatchResultsManager = new SpaceIteratorBatchResultsManager(_spaceProxy, batchSize, spaceIteratorConfiguration.getReadModifiers().getCode(), _queryPacket, maxInactiveDuration.toMillis());
         this._bufferIterator = getNextBatch();
     }
@@ -140,22 +136,18 @@ public class CursorEntryPacketIterator implements IEntryPacketIterator {
                 while (_bufferIterator.hasNext())
                     _bufferIterator.next();
             }
-            _buffer.clear();
             _spaceIteratorBatchResultsManager.close();
         }
     }
 
     private Iterator<IEntryPacket> getNextBatch() throws SpaceIteratorException {
-        _buffer.clear();
         try {
             Object[] entries =  _spaceIteratorBatchResultsManager.getNextBatch(_serverLookupTimeout);
             if(entries == null)
                 return null;
             if (_logger.isDebugEnabled())
                 _logger.debug("getNextBatch returns with a buffer of " + entries.length + " entries.");
-            for (Object entry : entries)
-                _buffer.add((IEntryPacket) entry);
-            return _buffer.iterator();
+            return ArrayIterator.wrap(entries);
         } catch (InterruptedException e) {
             processNextBatchFailure(e);
         }
@@ -166,5 +158,30 @@ public class CursorEntryPacketIterator implements IEntryPacketIterator {
         if (_logger.isErrorEnabled())
             _logger.error("Failed to get next data batch for iterator.", e);
 
+    }
+
+    private static class ArrayIterator<T> implements Iterator<T> {
+        private final Object[] array;
+        private int pos;
+
+        public static <T> ArrayIterator<T> wrap(Object[] array) {
+            if (array == null)
+                return null;
+            return new ArrayIterator<>(array);
+        }
+
+        private ArrayIterator(Object[] array) {
+            this.array = array;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return pos < array.length;
+        }
+
+        @Override
+        public T next() {
+            return (T)array[pos++];
+        }
     }
 }
