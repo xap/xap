@@ -151,4 +151,8 @@ public class PUDetails implements Externalizable {
             details[i] = in.readObject();
         }
     }
+
+    public void setClusterInfo(ClusterInfo clusterInfo) {
+        this.clusterInfo = clusterInfo;
+    }
 }

@@ -21,6 +21,8 @@ public class ScalableClusterInfo extends ClusterInfo implements Externalizable {
     public ScalableClusterInfo() {
     }
 
+
+
     /**
      * Constructs a new Scalable Cluster info
      *
@@ -62,6 +64,7 @@ public class ScalableClusterInfo extends ClusterInfo implements Externalizable {
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
+        IOUtils.writeString(out, getName());
         IOUtils.writeString(out, getSchema());
         writeNullableInt(out, getInstanceId());
         writeNullableInt(out, getBackupId());
@@ -80,6 +83,7 @@ public class ScalableClusterInfo extends ClusterInfo implements Externalizable {
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        setName(IOUtils.readString(in));
         setSchema(IOUtils.readString(in));
         setInstanceId(readNullableInt(in));
         setBackupId(readNullableInt(in));
