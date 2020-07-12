@@ -18,7 +18,6 @@
 package org.openspaces.core.cluster;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * Holds cluster related information. Beans within the Spring context (or processing unit context)
@@ -45,7 +44,7 @@ import java.util.List;
  */
 public class ClusterInfo implements Cloneable, Serializable {
 
-    private static final long serialVersionUID = -118705742407213814L;
+    private static final long serialVersionUID = -128705742407213814L;
 
     private String schema;
 
@@ -58,8 +57,6 @@ public class ClusterInfo implements Cloneable, Serializable {
     private Integer numberOfBackups;
 
     private String name;
-
-    private List<Integer> chunks;
 
     /**
      * Constructs a new cluster info with null values on all the fields
@@ -186,14 +183,6 @@ public class ClusterInfo implements Cloneable, Serializable {
         return this;
     }
 
-    public List<Integer> getChunks() {
-        return chunks;
-    }
-
-    public void setChunks(List<Integer> chunks) {
-        this.chunks = chunks;
-    }
-
     /**
      * Returns the logical name of the cluster.
      */
@@ -281,5 +270,13 @@ public class ClusterInfo implements Cloneable, Serializable {
         sb.append("instanceId[").append(instanceId).append("] ");
         sb.append("backupId[").append(backupId).append("]");
         return sb.toString();
+    }
+
+    public boolean supportsHorizontalScale() {
+        return false;
+    }
+
+    public ScalableClusterInfo getScalableClusterInfo() {
+        throw new UnsupportedOperationException();
     }
 }
