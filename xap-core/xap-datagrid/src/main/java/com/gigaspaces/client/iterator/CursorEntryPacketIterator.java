@@ -18,6 +18,7 @@
 package com.gigaspaces.client.iterator;
 
 import com.gigaspaces.client.iterator.cursor.SpaceIteratorBatchResultsManager;
+import com.gigaspaces.client.iterator.internal.ArrayIterator;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ObjectType;
 import com.gigaspaces.internal.transport.IEntryPacket;
@@ -160,28 +161,4 @@ public class CursorEntryPacketIterator implements IEntryPacketIterator {
 
     }
 
-    private static class ArrayIterator<T> implements Iterator<T> {
-        private final Object[] array;
-        private int pos;
-
-        public static <T> ArrayIterator<T> wrap(Object[] array) {
-            if (array == null)
-                return null;
-            return new ArrayIterator<>(array);
-        }
-
-        private ArrayIterator(Object[] array) {
-            this.array = array;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return pos < array.length;
-        }
-
-        @Override
-        public T next() {
-            return (T)array[pos++];
-        }
-    }
 }
