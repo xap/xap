@@ -27,16 +27,26 @@ import java.util.List;
  */
 public class IndexInfo {
     private final String name;
+    private String orderType;
     private final List<String> columns = new ArrayList<>();
     private final boolean nonUnique;
 
-    public IndexInfo(String name, boolean nonUnique) {
+    public IndexInfo(String name, String orderType, boolean nonUnique) {
         this.name = name;
+        this.orderType = orderType;
         this.nonUnique = nonUnique;
     }
 
     public String getName() {
         return name;
+    }
+
+    public String getOrderType() {
+        return orderType;
+    }
+
+    public void setOrderType(String orderType) {
+        this.orderType = orderType;
     }
 
     public List<String> getColumns() {

@@ -158,9 +158,10 @@ public class DatabaseMetaDataReader implements Closeable {
                 String indexName = rs.getString("INDEX_NAME");
                 if (!result.containsKey(indexName)) {
                     boolean nonUnique = rs.getBoolean("NON_UNIQUE");
-                    result.put(indexName, new IndexInfo(indexName, nonUnique));
+                    result.put(indexName, new IndexInfo(indexName, "EQUAL", nonUnique));
                 }
                 result.get(indexName).getColumns().add(rs.getString("COLUMN_NAME"));
+
             }
         }
         return new ArrayList<>(result.values());
@@ -236,4 +237,5 @@ public class DatabaseMetaDataReader implements Closeable {
             return this;
         }
     }
+
 }
