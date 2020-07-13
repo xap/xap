@@ -20,24 +20,27 @@ public class MongoSpaceDataSourceFactory implements SpaceDataSourceFactory {
         return _db;
     }
 
-    public void setDb(String db) {
+    public MongoSpaceDataSourceFactory db(String db) {
         this._db = db;
+        return this;
     }
 
     public String getHost() {
         return _host;
     }
 
-    public void setHost(String host) {
+    public MongoSpaceDataSourceFactory host(String host) {
         this._host = host;
+        return this;
     }
 
     public int getPort() {
         return _port;
     }
 
-    public void setPort(int port) {
+    public MongoSpaceDataSourceFactory port(int port) {
         this._port = port;
+        return this;
     }
 
     public SpaceDataSource create() {
