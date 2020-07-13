@@ -68,8 +68,7 @@ public class ZookeeperChunksMapHandler implements Closeable {
                 try (SharedLock lock = sharedLockProvider.acquire(ZNodePathFactory.processingUnit(puName), 30, TimeUnit.SECONDS)) {
                     ChunksRoutingManager manager = getChunksRoutingManager();
                     if (manager == null || isWrongPartitionCount(numberOfPartitions, manager, partitionId)) {
-                        PartitionToChunksMap chunksMap = new PartitionToChunksMap(numberOfPartitions, 0);
-                        chunksMap.init();
+                        PartitionToChunksMap chunksMap = new PartitionToChunksMap(numberOfPartitions);
                         ChunksRoutingManager chunksRoutingManager = new ChunksRoutingManager(chunksMap);
                         logger.info("Creating map");
                         setRoutingManager(chunksRoutingManager);

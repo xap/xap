@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ChunksRoutingManager implements Externalizable {
+    private static final long serialVersionUID = 1L;
+
     private Map<Integer, PartitionToChunksMap> maps;
     private Map <Integer,Integer> partitionGenerationMap;
     private int currentGeneration;

@@ -10,16 +10,25 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
 
-
 public class PartitionToChunksMap implements Externalizable {
-    public static final int CHUNKS_COUNT = GsEnv.propertyInt(Constants.ChunksRouting.CHUNKS_SPACE_ROUTING_COUNT).get(Constants.ChunksRouting.CHUNKS_SPACE_ROUTING_COUNT_DEFAULT);
     private static final long serialVersionUID = 1L;
+    public static final int CHUNKS_COUNT = GsEnv.propertyInt(Constants.ChunksRouting.CHUNKS_SPACE_ROUTING_COUNT).get(Constants.ChunksRouting.CHUNKS_SPACE_ROUTING_COUNT_DEFAULT);
+
     private int generation;
     private Map<Integer, Set<Integer>> partitionsToChunksMap;
     private Map<Integer, Integer> chunksToPartitionMap;
     private int numOfPartitions;
 
     public PartitionToChunksMap() {
+    }
+
+    public PartitionToChunksMap(int partitions) {
+        this(partitions, 0);
+        for (int chunk = 0; chunk < CHUNKS_COUNT; chunk++) {
+            int partitionId = (chunk % partitions) + 1;
+            partitionsToChunksMap.get(partitionId).add(chunk);
+            chunksToPartitionMap.put(chunk, partitionId);
+        }
     }
 
     public PartitionToChunksMap(int partitions, int generation) {
@@ -110,18 +119,6 @@ public class PartitionToChunksMap implements Externalizable {
             newChunksCountPerPartition.put(index, newChunksCountPerPartition.get(index) + 1);
         }
         return newChunksCountPerPartition;
-    }
-
-    public void init() {
-        for (int i = 0; i < CHUNKS_COUNT; i++) {
-            int partitionId = (i % numOfPartitions) + 1;
-            addChunk(partitionId, i);
-            chunksToPartitionMap.put(i, partitionId);
-        }
-    }
-
-    private void addChunk(int partitionId, int chunk) {
-        partitionsToChunksMap.get(partitionId).add(chunk);
     }
 
     public int getNumOfPartitions() {
