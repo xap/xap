@@ -23,27 +23,36 @@ public class KafkaSpaceSynchronizationEndpoint extends SpaceSynchronizationEndpo
 
     private final Producer<String, EndpointData> kafkaProducer;
     private final String topic;
-    private final ExecutorService executorService;
+    private ExecutorService executorService;
 
     public KafkaSpaceSynchronizationEndpoint(SpaceSynchronizationEndpoint primaryEndpoint, Map<String, SpaceSynchronizationEndpoint> secondaryEndpoints, Properties kafkaProps, String topic) {
         this.topic = topic;
         this.kafkaProducer = new KafkaProducer<>(initKafkaProducerProperties(kafkaProps));
         Properties consumerProperties = initConsumerProperties(kafkaProps);
-        SpaceSynchronizationEndpointKafkaWriter primaryEndpointKafkaWriter = new SpaceSynchronizationEndpointKafkaWriter(primaryEndpoint, consumerProperties, topic, PRIMARY_GROUP);
-        Map<String, SpaceSynchronizationEndpointKafkaWriter> secondaryEndpointsKafkaWriters = new HashMap<>();
-        if(secondaryEndpoints != null) {
-            for (Map.Entry<String, SpaceSynchronizationEndpoint> entry : secondaryEndpoints.entrySet()) {
-                SpaceSynchronizationEndpointKafkaWriter secondaryWriter = new SpaceSynchronizationEndpointKafkaWriter(entry.getValue(), consumerProperties, topic, entry.getKey() + "-group");
-                if (secondaryWriter.getStartingPoint() == null) {
-                    secondaryWriter.setStartingPoint(primaryEndpointKafkaWriter.getStartingPoint());
-                }
-                secondaryEndpointsKafkaWriters.put(entry.getKey(), secondaryWriter);
+        boolean hasPrimaryEndpoint = primaryEndpoint != null;
+        boolean hasSecondaryEndpoints = secondaryEndpoints != null && secondaryEndpoints.size() > 0;
+        if(!hasPrimaryEndpoint){
+            if(hasSecondaryEndpoints) {
+                throw new IllegalStateException("Cannot add secondary consumer endpoints without primary consumer endpoint");
+            }
+            else{
+                if(logger.isWarnEnabled())
+                    logger.warn("Kafka sync endpoint has no consumer endpoints configured, data will only be persisted to Kafka");
             }
         }
-        this.executorService = Executors.newFixedThreadPool((secondaryEndpoints != null ? secondaryEndpoints.size() : 0) + 1, new GSThreadFactory());
-        executorService.submit(primaryEndpointKafkaWriter);
-        for(SpaceSynchronizationEndpointKafkaWriter secondaryWriter: secondaryEndpointsKafkaWriters.values()){
-            executorService.submit(secondaryWriter);
+        else {
+            this.executorService = Executors.newFixedThreadPool(1 + (hasSecondaryEndpoints ? secondaryEndpoints.size() : 0), new GSThreadFactory());
+            SpaceSynchronizationEndpointKafkaWriter primaryEndpointKafkaWriter = new SpaceSynchronizationEndpointKafkaWriter(primaryEndpoint, consumerProperties, topic, PRIMARY_GROUP);
+            executorService.submit(primaryEndpointKafkaWriter);
+            if (hasSecondaryEndpoints) {
+                for (Map.Entry<String, SpaceSynchronizationEndpoint> entry : secondaryEndpoints.entrySet()) {
+                    SpaceSynchronizationEndpointKafkaWriter secondaryWriter = new SpaceSynchronizationEndpointKafkaWriter(entry.getValue(), consumerProperties, topic, entry.getKey() + "-group");
+                    if (secondaryWriter.getStartingPoint() == null) {
+                        secondaryWriter.setStartingPoint(primaryEndpointKafkaWriter.getStartingPoint());
+                    }
+                    executorService.submit(secondaryWriter);
+                }
+            }
         }
     }
 
@@ -107,6 +116,8 @@ public class KafkaSpaceSynchronizationEndpoint extends SpaceSynchronizationEndpo
     }
 
     public void close() {
-        executorService.shutdownNow();
+        kafkaProducer.close();
+        if(executorService != null)
+            executorService.shutdownNow();
     }
 }
