@@ -17,6 +17,7 @@
 
 package com.gigaspaces.query.aggregators;
 
+import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.query.RawEntry;
 
 import java.util.Collection;
@@ -62,6 +63,8 @@ public abstract class SpaceEntriesAggregatorContext {
     public abstract void applyProjectionTemplate(RawEntry entry);
 
     protected abstract Object getPathValueImpl(String path);
+
+    public abstract ITypeDesc getTypeDescriptor();
 
     protected void aggregate() {
         if (pathCache != null)

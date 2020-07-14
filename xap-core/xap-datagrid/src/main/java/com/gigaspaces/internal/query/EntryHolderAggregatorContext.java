@@ -82,4 +82,9 @@ public class EntryHolderAggregatorContext extends SpaceEntriesAggregatorContext 
             return uid;
         return entryData.getPathValue(path);
     }
+
+    @Override
+    public ITypeDesc getTypeDescriptor() {
+        return entryData.getEntryTypeDesc().getTypeDesc();
+    }
 }

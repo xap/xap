@@ -1,4 +1,4 @@
-package com.gigaspaces.internal;
+package com.gigaspaces.internal.cluster;
 
 import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.cluster.ScalePlan;
