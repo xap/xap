@@ -28,6 +28,9 @@ public class PartitionedClusterUtils {
     public static final int NO_PARTITION = -1;
     private static final boolean PRECISE_LONG_ROUTING = !Boolean.getBoolean("com.gs.disable-precise-long-routing");
 
+    public static final String CHUNK_ROUTING_PROPERTY = "pu.chunk-routing";
+    public static final String CHUNK_ROUTING_DEFAULT = "false";
+
     private PartitionedClusterUtils() {
     }
 

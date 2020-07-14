@@ -56,7 +56,6 @@ import com.gigaspaces.internal.cluster.node.replica.ISpaceSynchronizeResult;
 import com.gigaspaces.internal.document.DocumentObjectConverterInternal;
 import com.gigaspaces.internal.exceptions.BatchQueryException;
 import com.gigaspaces.internal.exceptions.ChunksMapGenerationException;
-import com.gigaspaces.internal.exceptions.ChunksMapMissingException;
 import com.gigaspaces.internal.exceptions.WriteResultImpl;
 import com.gigaspaces.internal.extension.XapExtensions;
 import com.gigaspaces.internal.jvm.HeapUsageEstimator;
@@ -73,6 +72,7 @@ import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
+import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterUtils;
 import com.gigaspaces.internal.server.space.demote.DemoteHandler;
 import com.gigaspaces.internal.server.space.executors.SpaceActionExecutor;
 import com.gigaspaces.internal.server.space.iterator.ServerIteratorRequestInfo;
@@ -241,6 +241,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private final HttpServer _httpServer;
     private final HeapUsageEstimator _heapUsageEstimator = new HeapUsageEstimator();
 
+    private final String _puName;
+    private final boolean _scalable;
     private SpaceClusterInfo _clusterInfo;
     private SpaceConfig _spaceConfig;
     private SpaceEngine _engine;
@@ -294,9 +296,21 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         this._operationLogger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE_OPERATIONS + "." + _nodeName);
         this._configReader = new SpaceConfigReader(_spaceMemberName);
 
-        this.zkConfig = useZooKeeper() ? createZKCollocatedClientConfig() : null;
-        this.attributeStore = useZooKeeper() ? createZooKeeperAttributeStore() : null;
-        this._clusterInfo = createClusterInfo(customProperties.getProperty("clusterInfo.name"));
+        boolean hasZk = useZooKeeper();
+        this.zkConfig = hasZk ? createZKCollocatedClientConfig() : null;
+        this.attributeStore = hasZk ? createZooKeeperAttributeStore() : null;
+        this._puName = customProperties.getProperty("clusterInfo.name");
+        this._scalable = !isMirror() && Boolean.parseBoolean(customProperties.getProperty("clusterInfo.supportsHorizontalScale"));
+        this._clusterInfo = new SpaceClusterInfo(_jspaceAttr, _spaceMemberName);
+        if (_scalable) {
+            zookeeperChunksMapHandler = new ZookeeperChunksMapHandler(_puName, attributeStore);
+            try {
+                _clusterInfo.setChunksMap(zookeeperChunksMapHandler.getChunksRoutingManager().getMapForPartition(getPartitionIdOneBased()));
+            } catch (IOException e) {
+                throw new UncheckedIOException("Failed to find chunks map in zk - disabling chunks space routing", e);
+            }
+        }
+
         this._secondary = isSecondary;
 
         this._deployPath = _customProperties.getProperty("deployPath");
@@ -321,12 +335,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             initClassLoadersManager(spaceConfig.getSupportCodeChange(), spaceConfig.getMaxClassLoaders());
         }
 
-        boolean useZooKeeper = useZooKeeper();
-        if(useZooKeeper){
-            zookeeperLastPrimaryHandler = new ZookeeperLastPrimaryHandler(this, attributeStore, _logger);
-        } else {
-            zookeeperLastPrimaryHandler = null;
-        }
+        zookeeperLastPrimaryHandler = hasZk ? new ZookeeperLastPrimaryHandler(this, attributeStore, _logger) : null;
 
 
         //init quiesce handler before startInternal to ensure no operations will arrive before handler is initialized
@@ -376,21 +385,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             throw new DirectPersistencyRecoveryException("Failed to start [" + (_spaceName)
                     + "] Failed to create zookeeper client.");
         }
-    }
-
-    private SpaceClusterInfo createClusterInfo(String puName) {
-        SpaceClusterInfo clusterInfo = new SpaceClusterInfo(_jspaceAttr, _spaceMemberName);
-        if (isChunksRouting()) {
-            zookeeperChunksMapHandler = new ZookeeperChunksMapHandler(puName, attributeStore);
-            try {
-                clusterInfo.setChunksMap(zookeeperChunksMapHandler.initChunksMap(clusterInfo.getNumberOfPartitions(),
-                        clusterInfo.getPartitionOfMember(_spaceMemberName) + 1));
-                return clusterInfo;
-            }catch (ChunksMapMissingException e){
-                _logger.warn("Failed to find chunks map in zk - disabling chunks space routing",e);
-            }
-        }
-        return clusterInfo;
     }
 
     private HttpServer initWebServerIfNeeded() throws CreateException {
@@ -1002,9 +996,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         this.clusterInfoChangedListeners.addListener(listener);
     }
 
-    private boolean isChunksRouting() {
-        boolean isMirrorService = _configReader.getBooleanSpaceProperty(Mirror.MIRROR_SERVICE_ENABLED_PROP, Mirror.MIRROR_SERVICE_ENABLED_DEFAULT);
-        return !isMirrorService && useZooKeeper() && GsEnv.propertyBoolean(ChunksRouting.CHUNKS_SPACE_ROUTING).get(ChunksRouting.CHUNKS_SPACE_ROUTING_DEFAULT);
+    private boolean isMirror() {
+        return _configReader.getBooleanSpaceProperty(Mirror.MIRROR_SERVICE_ENABLED_PROP, Mirror.MIRROR_SERVICE_ENABLED_DEFAULT);
     }
 
     public void removeClusterInfoChangedListener(IClusterInfoChangedListener listener) {
@@ -3232,7 +3225,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
             if (zookeeperChunksMapHandler != null && _clusterInfo.isChunksRouting()) {
                 zookeeperClient = createZooKeeperClient();
-                zookeeperChunksMapHandler.addListener(zookeeperClient, _spaceConfig);
+                zookeeperChunksMapHandler.addListener(zookeeperClient, _spaceConfig, getPartitionIdOneBased());
             }
             if (isLookupServiceEnabled)
                 registerLookupService();
@@ -3906,11 +3899,15 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     @Override
     public void updateChunksMap() {
-        if (isChunksRouting()) {
+        if (_scalable) {
             synchronized (this){
-                PartitionToChunksMap newMap = zookeeperChunksMapHandler.getChunksMap(this._clusterInfo.getPartitionOfMember(_spaceMemberName) + 1);
-                this._clusterInfo = this._clusterInfo.cloneAndUpdate(newMap);
-                this.clusterInfoChangedListeners.afterClusterInfoChange(this._clusterInfo);
+                try {
+                    PartitionToChunksMap newMap = zookeeperChunksMapHandler.getChunksRoutingManager().getMapForPartition(getPartitionIdOneBased());
+                    this._clusterInfo = this._clusterInfo.cloneAndUpdate(newMap);
+                    this.clusterInfoChangedListeners.afterClusterInfoChange(this._clusterInfo);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
             }
         } else {
             throw new IllegalStateException("Nothing to update, CHUNKS_SPACE_ROUTING is disabled");

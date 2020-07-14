@@ -12,7 +12,7 @@ import java.util.LinkedHashSet;
 public class ScalableClusterInfo extends ClusterInfo implements Externalizable {
     private static final long serialVersionUID = 1L;
 
-    private short generation;
+    private int generation;
     private Collection<Integer> chunks;
 
     /**
@@ -46,20 +46,17 @@ public class ScalableClusterInfo extends ClusterInfo implements Externalizable {
         return this;
     }
 
-    public short getGeneration() {
-        return generation;
+    public void initChunksInfo(int generation, Collection<Integer> chunks) {
+        this.generation = generation;
+        this.chunks = chunks;
     }
 
-    public void setGeneration(short generation) {
-        this.generation = generation;
+    public int getGeneration() {
+        return generation;
     }
 
     public Collection<Integer> getChunks() {
         return chunks;
-    }
-
-    public void setChunks(Collection<Integer> chunks) {
-        this.chunks = chunks;
     }
 
     @Override
@@ -70,7 +67,7 @@ public class ScalableClusterInfo extends ClusterInfo implements Externalizable {
         writeNullableInt(out, getBackupId());
         writeNullableInt(out, getNumberOfInstances());
         writeNullableInt(out, getNumberOfBackups());
-        out.writeShort(generation);
+        out.writeInt(generation);
         if (chunks == null)
             out.writeShort(-1);
         else {
@@ -89,7 +86,7 @@ public class ScalableClusterInfo extends ClusterInfo implements Externalizable {
         setBackupId(readNullableInt(in));
         setNumberOfInstances(readNullableInt(in));
         setNumberOfBackups(readNullableInt(in));
-        this.generation = in.readShort();
+        this.generation = in.readInt();
         short numOfChunks = in.readShort();
         if (numOfChunks != -1) {
             chunks = new LinkedHashSet<>(numOfChunks);
