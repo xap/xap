@@ -91,8 +91,9 @@ public class ChunksRoutingManager implements Externalizable {
         return maps.get(currentGeneration);
     }
 
-    public void addNewMap(PartitionToChunksMap chunksMap) {
+    public ChunksRoutingManager addNewMap(PartitionToChunksMap chunksMap) {
         maps.put(chunksMap.getGeneration(), chunksMap);
+        return this;
     }
 
     public void updateGeneration(){

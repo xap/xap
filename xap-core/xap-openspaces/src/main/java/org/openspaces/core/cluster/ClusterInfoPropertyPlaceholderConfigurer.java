@@ -60,6 +60,7 @@ public class ClusterInfoPropertyPlaceholderConfigurer extends PropertyPlaceholde
     public static final String RUNNING_NUMBER_OFFEST_1_PROP = "clusterInfo.runningNumberOffset1";
     public static final String SUFFIX_PROP = "clusterInfo.suffix";
     public static final String NAME_PROP = "clusterInfo.name";
+    public static final String SCALE_PROP = "clusterInfo.supportsHorizontalScale";
 
     public static Properties createProperties(ClusterInfo clusterInfo) {
         Properties properties = new Properties();
@@ -73,6 +74,7 @@ public class ClusterInfoPropertyPlaceholderConfigurer extends PropertyPlaceholde
             properties.setProperty(RUNNING_NUMBER_OFFEST_1_PROP, toPropertyValue(clusterInfo.getRunningNumberOffset1()));
             properties.setProperty(SUFFIX_PROP, toPropertyValue(clusterInfo.getSuffix()));
             properties.setProperty(NAME_PROP, toPropertyValue(clusterInfo.getName()));
+            properties.setProperty(SCALE_PROP, toPropertyValue(clusterInfo.supportsHorizontalScale()));
         } else {
             properties.setProperty(NUMBER_OF_INSTANCES_PROP, "");
             properties.setProperty(NUMBER_OF_BACKUPS_PROP, "");
@@ -83,6 +85,7 @@ public class ClusterInfoPropertyPlaceholderConfigurer extends PropertyPlaceholde
             properties.setProperty(RUNNING_NUMBER_OFFEST_1_PROP, "");
             properties.setProperty(SUFFIX_PROP, "");
             properties.setProperty(NAME_PROP, "");
+            properties.setProperty(SCALE_PROP, "");
         }
         return properties;
     }
