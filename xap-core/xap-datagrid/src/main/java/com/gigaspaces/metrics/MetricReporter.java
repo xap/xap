@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class MetricReporter implements Closeable {
 
-    private final Map<MetricTagsSnapshot, Map<String, String>> metricsNamesCache = new ConcurrentHashMap<MetricTagsSnapshot, Map<String, String>>();
+    private final Map<MetricTagsSnapshot, Map<String, String>> metricsNamesCache = new ConcurrentHashMap<>();
 
     protected MetricReporter(MetricReporterFactory factory) {
     }
@@ -38,6 +38,8 @@ public abstract class MetricReporter implements Closeable {
     public void report(List<MetricRegistrySnapshot> snapshots) {
         for (MetricRegistrySnapshot snapshot : snapshots)
             report(snapshot);
+
+        flush();
     }
 
     protected void report(MetricRegistrySnapshot snapshot) {
@@ -54,13 +56,16 @@ public abstract class MetricReporter implements Closeable {
         throw new UnsupportedOperationException("Not Implemented");
     }
 
+    public void flush() {
+    }
+
     public void close() {
     }
 
     public String getMetricNameForReport(String metricName, MetricTagsSnapshot tags) {
         Map<String, String> taggedCache = metricsNamesCache.get(tags);
         if (taggedCache == null) {
-            taggedCache = new ConcurrentHashMap<String, String>();
+            taggedCache = new ConcurrentHashMap<>();
             metricsNamesCache.put(tags, taggedCache);
         }
 

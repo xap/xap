@@ -19,15 +19,13 @@ package com.gigaspaces.metrics.influxdb;
 import com.gigaspaces.metrics.MetricRegistrySnapshot;
 import com.gigaspaces.metrics.MetricReporter;
 import com.gigaspaces.metrics.MetricTagsSnapshot;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.NumberFormat;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -66,11 +64,6 @@ public class InfluxDBReporter extends MetricReporter {
         if (protocol.equalsIgnoreCase("udp"))
             return new InfluxDBUdpDispatcher(factory);
         throw new IllegalArgumentException("Unsupported InfluxDB Reporter protocol: " + protocol);
-    }
-
-    public void report(List<MetricRegistrySnapshot> snapshots) {
-        super.report(snapshots);
-        flush();
     }
 
     @Override
@@ -176,7 +169,8 @@ public class InfluxDBReporter extends MetricReporter {
             throw new IllegalArgumentException("Unsupported value class: " + value.getClass().getName());
     }
 
-    private void flush() {
+    @Override
+    public void flush() {
         if (buffer.length() != 0) {
             buffer.setLength(buffer.length() - END_OF_METRIC.length());
             dispatcher.send(buffer.toString());

@@ -22,17 +22,11 @@ import com.gigaspaces.metrics.MetricReporter;
 import com.gigaspaces.metrics.MetricTagsSnapshot;
 import com.gigaspaces.metrics.influxdb.InfluxDBDispatcher;
 import com.gigaspaces.metrics.influxdb.InfluxDBReporterFactory;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Niv Ingberg
@@ -60,7 +54,7 @@ public class InfluxDBReporter extends MetricReporter {
     private final JSONStringBuilder json = new JSONStringBuilder();
     private final Point singlePoint = new Point();
     private final List<Point> singlePointList = Collections.singletonList(singlePoint);
-    private final Set<String> processedMetrics = new HashSet<String>();
+    private final Set<String> processedMetrics = new HashSet<>();
     private final MultiPointList multiPointList = new MultiPointList();
 
     public InfluxDBReporter(InfluxDBReporterFactory factory) {
@@ -86,6 +80,7 @@ public class InfluxDBReporter extends MetricReporter {
         super.close();
     }
 
+    @Override
     public void report(List<MetricRegistrySnapshot> snapshots) {
         if (snapshots.size() == 1)
             process(snapshots.get(0));
@@ -176,7 +171,8 @@ public class InfluxDBReporter extends MetricReporter {
         }
     }
 
-    private void flush() {
+    @Override
+    public void flush() {
         if (json.length() != 0) {
             finalizeReport();
             dispatcher.send(json.toString());
@@ -291,7 +287,7 @@ public class InfluxDBReporter extends MetricReporter {
     }
 
     private class MultiPointList {
-        private final ArrayList<Point> list = new ArrayList<Point>();
+        private final ArrayList<Point> list = new ArrayList<>();
         private final ObjectPool<Point> pool;
 
         public MultiPointList() {

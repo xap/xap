@@ -18,14 +18,13 @@
 package com.gigaspaces.metrics;
 
 import com.gigaspaces.logger.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv Ingberg
@@ -44,7 +43,7 @@ public class MetricRegistry {
     public MetricRegistry(String name) {
         this.name = name;
         this.logger = LoggerFactory.getLogger(Constants.LOGGER_METRICS_REGISTRY + '.' + name);
-        this.groups = new ConcurrentHashMap<MetricTags, MetricGroup>();
+        this.groups = new ConcurrentHashMap<>();
     }
 
     public String getName() {
@@ -123,14 +122,17 @@ public class MetricRegistry {
     public Map<String, Object> getSnapshotsByPrefix(String prefix) {
 
         synchronized (groups) {
-            Map<String,Object> metricsSnapshot = new HashMap<String, Object>();
+            Map<String,Object> metricsSnapshot = new HashMap<>();
             for( MetricGroup group : groups.values() ) {
                 if (group != null) {
                     Map<String, Metric> metricsFilteredByPrefix = group.getByPrefix(prefix);
                     Set<Map.Entry<String, Metric>> entries = metricsFilteredByPrefix.entrySet();
                     for (Map.Entry<String, Metric> entry : entries) {
                         try {
-                            metricsSnapshot.put(entry.getKey(), getMetricSnapshot( entry.getValue() ));
+                            Object metricSnapshotValue = getMetricSnapshot(entry.getValue());
+                            if( metricSnapshotValue != null ) {
+                                metricsSnapshot.put(entry.getKey(), metricSnapshotValue);
+                            }
                         } catch (Exception e) {
                             if (logger.isDebugEnabled()) {
                                 logger.debug(e.toString(), e);
@@ -164,7 +166,7 @@ public class MetricRegistry {
     }
 
     public MetricRegistrySnapshot snapshot(long timestamp) {
-        Map<MetricTagsSnapshot, MetricGroupSnapshot> groupsSnapshots = new HashMap<MetricTagsSnapshot, MetricGroupSnapshot>(groups.size());
+        Map<MetricTagsSnapshot, MetricGroupSnapshot> groupsSnapshots = new HashMap<>(groups.size());
         for (Map.Entry<MetricTags, MetricGroup> groupEntry : groups.entrySet())
             groupsSnapshots.put(groupEntry.getKey().snapshot(), groupEntry.getValue().snapshot());
         return new MetricRegistrySnapshot(timestamp, groupsSnapshots);

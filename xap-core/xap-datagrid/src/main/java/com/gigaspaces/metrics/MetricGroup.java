@@ -28,10 +28,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @com.gigaspaces.api.InternalApi
 public class MetricGroup {
-    private final Map<String, Metric> metrics = new ConcurrentHashMap<String, Metric>();
-    private final ConcurrentHashMap<String, Gauge> gauges = new ConcurrentHashMap<String, Gauge>();
-    private final ConcurrentHashMap<String, LongCounter> counters = new ConcurrentHashMap<String, LongCounter>();
-    private final ConcurrentHashMap<String, ThroughputMetric> tpMetrics = new ConcurrentHashMap<String, ThroughputMetric>();
+    private final Map<String, Metric> metrics = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Gauge> gauges = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, LongCounter> counters = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ThroughputMetric> tpMetrics = new ConcurrentHashMap<>();
 
     Map<String, Metric> getMetrics() {
         return metrics;
@@ -62,10 +62,13 @@ public class MetricGroup {
     }
 
     public MetricGroupSnapshot snapshot() {
-        Map<String, Object> metricsValues = new HashMap<String, Object>(gauges.size() + counters.size() + tpMetrics.size());
+        Map<String, Object> metricsValues = new HashMap<>(gauges.size() + counters.size() + tpMetrics.size());
         for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
             try {
-                metricsValues.put(entry.getKey(), entry.getValue().getValue());
+                Object value = entry.getValue().getValue();
+                if( value != null ) {
+                    metricsValues.put(entry.getKey(), value);
+                }
             } catch (Exception e) {
                 // TODO: Consider logging this exception.
             }
@@ -90,7 +93,7 @@ public class MetricGroup {
     }
 
     public void removeByPrefix(String prefix) {
-        Collection<String> metricsToRemove = new ArrayList<String>();
+        Collection<String> metricsToRemove = new ArrayList<>();
         for (String name : metrics.keySet())
             if (name.startsWith(prefix))
                 metricsToRemove.add(name);
@@ -100,7 +103,7 @@ public class MetricGroup {
     }
 
     public Map<String, Metric> getByPrefix(String prefix) {
-        Map<String, Metric> metricsToReturn = new HashMap<String, Metric>();
+        Map<String, Metric> metricsToReturn = new HashMap<>();
         for (Map.Entry<String, Metric> entry : metrics.entrySet()) {
             String name = entry.getKey();
             if (name.startsWith(prefix)) {

@@ -15,6 +15,7 @@
  */
 package com.j_spaces.core;
 
+import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceEngine;
@@ -59,6 +60,11 @@ public class SpaceMetricsRegistrationUtils {
                     @Override
                     public Long getValue() {
                         SpaceImpl spaceImpl = spaceEngine.getSpaceImpl();
+                        SpaceMode spaceMode = spaceImpl.getSpaceMode();
+                        if( spaceMode != SpaceMode.PRIMARY ){
+                            return null;
+                        }
+
                         LongAdder objectTypeReadCounts = spaceImpl.getObjectTypeReadCounts(typeName);
                         return objectTypeReadCounts == null ? 0 : objectTypeReadCounts.longValue();
                     }
@@ -70,6 +76,10 @@ public class SpaceMetricsRegistrationUtils {
                 spaceEngine.getDataTypeMetricRegistrar(typeName).register(registrator.toPath("data", "data-types"), new Gauge<Integer>() {
                     @Override
                     public Integer getValue() {
+                        SpaceMode spaceMode = spaceEngine.getSpaceImpl().getSpaceMode();
+                        if( spaceMode != SpaceMode.PRIMARY ){
+                            return null;
+                        }
                         return cacheManager.getNumberOfEntries(typeName, true);
                     }
                 });
@@ -87,6 +97,10 @@ public class SpaceMetricsRegistrationUtils {
                         spaceEngine.getDataTypeMetricRegistrar(typeName, index).register(registrator.toPath("data", "index-hits-total"), new Gauge<Long>() {
                             @Override
                             public Long getValue() {
+                                SpaceMode spaceMode = spaceEngine.getSpaceImpl().getSpaceMode();
+                                if( spaceMode != SpaceMode.PRIMARY ){
+                                    return null;
+                                }
                                 Map<String, LongAdder> indexesMap = dataTypesIndexesHits.get(typeName);
                                 LongAdder indexHits = indexesMap.get(index);
                                 return indexHits == null ? 0 : indexHits.longValue();
