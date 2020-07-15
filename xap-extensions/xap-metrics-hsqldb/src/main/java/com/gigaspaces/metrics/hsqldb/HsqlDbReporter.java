@@ -128,24 +128,20 @@ public class HsqlDbReporter extends MetricReporter {
         }
         catch( Throwable t ){
             _logger
-                    .error("Failed to insert row [{}] using values [{}]", insertSQL,
-                            Arrays.toString(values.toArray(new Object[0])), t);
+                    .error("Failed to insert row [{}] using values [{}] to table [{}]", insertSQL,
+                            Arrays.toString(values.toArray(new Object[0])), tableName, t);
         }
     }
 
     @Override
-    public void flush() {
+    protected void flush() {
 
         for(PreparedStatement statement : statementsForBatch){
             try {
                 statement.executeBatch();
             }
-            catch( BatchUpdateException batchUpdateException ){
-                //_logger.info( "Update counts of are : " + Arrays.toString( batchUpdateException.getUpdateCounts() ) );
-                _logger.error( "Failed to insert row to table due to " + batchUpdateException.toString(), batchUpdateException );
-            }
             catch (SQLException sqlException) {
-                _logger.error( "Failed to insert row due to " + sqlException.toString(), sqlException );
+                _logger.error( "Failed to insert row to table using statement " + statement + " due to ", sqlException );
             }
         }
 

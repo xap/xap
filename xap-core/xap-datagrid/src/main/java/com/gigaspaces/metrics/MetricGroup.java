@@ -66,6 +66,7 @@ public class MetricGroup {
         for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
             try {
                 Object value = entry.getValue().getValue();
+                //value can be null when metric should not be recorded to db ( for example dataTypeIndexHit metric of backup space )
                 if( value != null ) {
                     metricsValues.put(entry.getKey(), value);
                 }

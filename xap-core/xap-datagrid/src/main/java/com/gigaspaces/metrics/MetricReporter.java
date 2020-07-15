@@ -56,7 +56,10 @@ public abstract class MetricReporter implements Closeable {
         throw new UnsupportedOperationException("Not Implemented");
     }
 
-    public void flush() {
+    /**
+     * This method called from method {@link #report(List) }
+     */
+    protected void flush() {
     }
 
     public void close() {

@@ -170,7 +170,7 @@ public class InfluxDBReporter extends MetricReporter {
     }
 
     @Override
-    public void flush() {
+    protected void flush() {
         if (buffer.length() != 0) {
             buffer.setLength(buffer.length() - END_OF_METRIC.length());
             dispatcher.send(buffer.toString());

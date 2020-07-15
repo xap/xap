@@ -130,6 +130,7 @@ public class MetricRegistry {
                     for (Map.Entry<String, Metric> entry : entries) {
                         try {
                             Object metricSnapshotValue = getMetricSnapshot(entry.getValue());
+                            //value can be null when metric should not be recorded to db ( for example dataTypeIndexHit metric of backup space )
                             if( metricSnapshotValue != null ) {
                                 metricsSnapshot.put(entry.getKey(), metricSnapshotValue);
                             }

@@ -172,7 +172,7 @@ public class InfluxDBReporter extends MetricReporter {
     }
 
     @Override
-    public void flush() {
+    protected void flush() {
         if (json.length() != 0) {
             finalizeReport();
             dispatcher.send(json.toString());
