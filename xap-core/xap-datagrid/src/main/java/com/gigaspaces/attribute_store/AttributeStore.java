@@ -16,8 +16,10 @@
 
 package com.gigaspaces.attribute_store;
 
-import java.io.Closeable;
-import java.io.IOException;
+import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.internal.quiesce.InternalQuiesceDetails;
+
+import java.io.*;
 
 /**
  * @author yechiel
@@ -32,6 +34,25 @@ public interface AttributeStore extends Closeable {
     byte[] getBytes(String key) throws IOException;
 
     byte[] setBytes(String key, byte[] value) throws IOException;
+
+    default <T> T getObject(String key) throws IOException {
+        byte[] bytes = getBytes(key);
+        if (bytes == null || bytes.length == 0)
+            return null;
+        try {
+            return IOUtils.readObject(new ObjectInputStream(new ByteArrayInputStream(bytes)));
+        } catch (ClassNotFoundException e) {
+            throw new IOException("Failed to deserialize InternalQuiesceDetails", e);
+        }
+    }
+
+    default <T> void setObject(String key, T value) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+        IOUtils.writeObject(objectOutputStream, value);
+        byte[] bytes = byteArrayOutputStream.toByteArray();
+        setBytes(key, bytes);
+    }
 
     String remove(String key) throws IOException;
 

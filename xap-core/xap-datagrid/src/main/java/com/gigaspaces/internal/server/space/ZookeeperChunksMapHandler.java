@@ -3,7 +3,6 @@ package com.gigaspaces.internal.server.space;
 import com.gigaspaces.attribute_store.AttributeStore;
 import com.gigaspaces.internal.cluster.ChunksRoutingManager;
 import com.gigaspaces.internal.cluster.PartitionToChunksMap;
-import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.zookeeper.ZNodePathFactory;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.admin.SpaceConfig;
@@ -16,24 +15,17 @@ import java.util.concurrent.Executors;
 
 public class ZookeeperChunksMapHandler implements Closeable {
 
-    private final String puName;
+    private final String puZkPath;
     private final AttributeStore attributeStore;
     private final ExecutorService executorService = Executors.newFixedThreadPool(1);
 
     public ZookeeperChunksMapHandler(String puName, AttributeStore attributeStore) {
-        this.puName = puName;
+        this.puZkPath = getZkPath(puName);
         this.attributeStore = attributeStore;
     }
 
-    private static String getZkPath(String puName) {
+    public static String getZkPath(String puName) {
         return ZNodePathFactory.processingUnit(puName, "chunks");
-    }
-
-    private static byte[] toByteArray(ChunksRoutingManager chunksRoutingManager) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-        IOUtils.writeObject(objectOutputStream, chunksRoutingManager);
-        return byteArrayOutputStream.toByteArray();
     }
 
     public void addListener(ZookeeperClient zookeeperClient, SpaceConfig spaceConfig, int partitionId) {
@@ -41,26 +33,7 @@ public class ZookeeperChunksMapHandler implements Closeable {
     }
 
     public ChunksRoutingManager getChunksRoutingManager() throws IOException {
-        return getChunksRoutingManager(puName, attributeStore);
-    }
-
-    public void setChunksRoutingManager(ChunksRoutingManager manager) throws IOException {
-        setChunksRoutingManager(puName, attributeStore, manager);
-    }
-
-    public static ChunksRoutingManager getChunksRoutingManager(String puName, AttributeStore attributeStore)
-            throws IOException {
-        try {
-            byte[] bytes = attributeStore.getBytes(getZkPath(puName));
-            return bytes != null && bytes.length != 0 ? IOUtils.readObject(new ObjectInputStream(new ByteArrayInputStream(bytes))) : null;
-        } catch (ClassNotFoundException e) {
-            throw new IOException("Failed deserialize chunks manager for [" + puName + "]", e);
-        }
-    }
-
-    public static void setChunksRoutingManager(String puName, AttributeStore attributeStore, ChunksRoutingManager manager)
-            throws IOException {
-        attributeStore.setBytes(getZkPath(puName), toByteArray(manager));
+        return attributeStore.getObject(puZkPath);
     }
 
     @Override
