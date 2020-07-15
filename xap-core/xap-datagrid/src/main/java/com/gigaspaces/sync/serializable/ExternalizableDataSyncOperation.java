@@ -14,8 +14,7 @@ import java.util.Arrays;
 @InternalApi
 public class ExternalizableDataSyncOperation implements Externalizable, DataSyncOperation {
     private static final long serialVersionUID = 6617861583815580942L;
-    private boolean supportsObject,supportsDocument,supportsTypeDescriptor,supportsGetSpaceId;
-    private Object dataAsObject;
+    private boolean supportsDocument,supportsTypeDescriptor,supportsGetSpaceId;
     private SpaceDocument dataAsDocument;
     private ITypeDesc spaceTypeDescriptor;
     private Object spaceId;
@@ -26,12 +25,9 @@ public class ExternalizableDataSyncOperation implements Externalizable, DataSync
     }
 
     public ExternalizableDataSyncOperation(DataSyncOperation dataSyncOperation) {
-        supportsObject = dataSyncOperation.supportsDataAsObject();
         supportsDocument = dataSyncOperation.supportsDataAsDocument();
         supportsGetSpaceId = dataSyncOperation.supportsGetSpaceId();
         supportsTypeDescriptor = dataSyncOperation.supportsGetTypeDescriptor();
-        if(supportsObject)
-            dataAsObject = dataSyncOperation.getDataAsObject();
         if(supportsDocument)
             dataAsDocument = dataSyncOperation.getDataAsDocument();
         if(supportsGetSpaceId)
@@ -49,7 +45,7 @@ public class ExternalizableDataSyncOperation implements Externalizable, DataSync
 
     @Override
     public String getUid() {
-        return null;
+        return uid;
     }
 
     @Override
@@ -59,7 +55,7 @@ public class ExternalizableDataSyncOperation implements Externalizable, DataSync
 
     @Override
     public Object getDataAsObject() {
-        return dataAsObject;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -79,7 +75,7 @@ public class ExternalizableDataSyncOperation implements Externalizable, DataSync
 
     @Override
     public boolean supportsDataAsObject() {
-        return supportsObject;
+        return false;
     }
 
     @Override
@@ -94,12 +90,9 @@ public class ExternalizableDataSyncOperation implements Externalizable, DataSync
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeBoolean(supportsObject);
         out.writeBoolean(supportsDocument);
         out.writeBoolean(supportsGetSpaceId);
         out.writeBoolean(supportsTypeDescriptor);
-        if(supportsObject)
-            out.writeObject(dataAsObject);
         if(supportsDocument)
             out.writeObject(dataAsDocument);
         if(supportsGetSpaceId)
@@ -112,12 +105,9 @@ public class ExternalizableDataSyncOperation implements Externalizable, DataSync
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        supportsObject = in.readBoolean();
         supportsDocument = in.readBoolean();
         supportsGetSpaceId = in.readBoolean();
         supportsTypeDescriptor = in.readBoolean();
-        if(supportsObject)
-            dataAsObject = in.readObject();
         if(supportsDocument)
             dataAsDocument = (SpaceDocument) in.readObject();
         if(supportsGetSpaceId)
