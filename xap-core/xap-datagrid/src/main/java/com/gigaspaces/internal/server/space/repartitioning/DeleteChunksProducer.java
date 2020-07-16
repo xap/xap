@@ -2,7 +2,6 @@ package com.gigaspaces.internal.server.space.repartitioning;
 
 import com.gigaspaces.internal.cluster.PartitionToChunksMap;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterUtils;
-import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregator;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregatorContext;
 import org.slf4j.Logger;
@@ -14,16 +13,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
-public class CopyChunksAggregator extends SpaceEntriesAggregator<CopyChunksResponseInfo> {
+public class DeleteChunksProducer extends SpaceEntriesAggregator<DeleteChunksResponseInfo> {
 
     public static Logger logger = LoggerFactory.getLogger("org.openspaces.admin.internal.pu.scale_horizontal.ScaleManager");
 
     private PartitionToChunksMap newMap;
-    private Map<Integer, List<IEntryPacket>> batchMap;
+    private Map<String, List<Object>> batchMap;
     private BlockingQueue<Batch> queue;
     private int batchSize;
 
-    CopyChunksAggregator(PartitionToChunksMap newMap, BlockingQueue<Batch> queue, int batchSize) {
+    DeleteChunksProducer(PartitionToChunksMap newMap, BlockingQueue<Batch> queue, int batchSize) {
         this.newMap = newMap;
         this.batchSize = batchSize;
         this.queue = queue;
@@ -40,15 +39,18 @@ public class CopyChunksAggregator extends SpaceEntriesAggregator<CopyChunksRespo
         Object routingValue = context.getPathValue(context.getTypeDescriptor().getRoutingPropertyName());
         int newPartitionId = PartitionedClusterUtils.getPartitionId(routingValue, newMap) + 1;
         if (newPartitionId != context.getPartitionId() + 1) {
-            if (batchMap.containsKey(newPartitionId)) {
-                List<IEntryPacket> entries = batchMap.get(newPartitionId);
-                entries.add((IEntryPacket) context.getRawEntry());
-                if (entries.size() == batchSize) {
+            Object idValue = context.getPathValue(context.getTypeDescriptor().getIdPropertyName());
+            String type = context.getTypeDescriptor().getTypeName();
+
+            if (batchMap.containsKey(type)) {
+                List<Object> ids = batchMap.get(type);
+                ids.add(idValue);
+                if (ids.size() == batchSize) {
                     try {
-                        queue.put(new Batch(newPartitionId, entries));
-                        batchMap.remove(newPartitionId);
+                        queue.put(new DeleteBatch(type, ids));
+                        batchMap.remove(type);
                     } catch (Exception e) {
-                        if(logger.isDebugEnabled()){
+                        if (logger.isDebugEnabled()) {
                             logger.debug("Exception in aggregator while trying to put batch in queue");
                             e.printStackTrace();
                         }
@@ -57,26 +59,32 @@ public class CopyChunksAggregator extends SpaceEntriesAggregator<CopyChunksRespo
                 }
 
             } else {
-                ArrayList<IEntryPacket> entries = new ArrayList<>(batchSize);
-                entries.add((IEntryPacket) context.getRawEntry());
-                batchMap.put(newPartitionId, entries);
+                ArrayList<Object> ids = new ArrayList<>(batchSize);
+                ids.add(idValue);
+                batchMap.put(type, ids);
             }
         }
     }
 
 
     @Override
-    public CopyChunksResponseInfo getIntermediateResult() {
-        for (Map.Entry<Integer, List<IEntryPacket>> entry : batchMap.entrySet()) {
-            if (entry.getValue().size() != 0) {
-                queue.add(new Batch(entry.getKey(), entry.getValue()));
+    public DeleteChunksResponseInfo getIntermediateResult() {
+        for (Map.Entry<String, List<Object>> entry : batchMap.entrySet()) {
+            try {
+                queue.put(new DeleteBatch(entry.getKey(), entry.getValue()));
+            } catch (Exception e) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Exception in aggregator while trying to put batch in queue");
+                    e.printStackTrace();
+                }
+                throw new RuntimeException(e);
             }
         }
         return null;
     }
 
     @Override
-    public void aggregateIntermediateResult(CopyChunksResponseInfo partitionResult) {
+    public void aggregateIntermediateResult(DeleteChunksResponseInfo partitionResult) {
 
     }
 }

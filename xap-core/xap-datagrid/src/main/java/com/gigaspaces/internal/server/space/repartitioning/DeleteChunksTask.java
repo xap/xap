@@ -13,17 +13,15 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.List;
-import java.util.Map;
 
-public class CopyChunksTask extends SystemDistributedTask<SpaceResponseInfo> implements Externalizable {
+public class DeleteChunksTask extends SystemDistributedTask<SpaceResponseInfo> implements Externalizable {
+    private DeleteChunksRequestInfo requestInfo;
 
-    private CopyChunksRequestInfo requestInfo;
-
-    public CopyChunksTask() {
+    public DeleteChunksTask() {
     }
 
-    public CopyChunksTask(PartitionToChunksMap newMap, String spaceName, Map<Integer, String> instanceIds, QuiesceToken token) {
-        this.requestInfo = new CopyChunksRequestInfo(newMap, spaceName, instanceIds, token);
+    public DeleteChunksTask(PartitionToChunksMap newMap, QuiesceToken token) {
+        this.requestInfo = new DeleteChunksRequestInfo(newMap, token);
     }
 
     @Override
@@ -38,7 +36,7 @@ public class CopyChunksTask extends SystemDistributedTask<SpaceResponseInfo> imp
             if (asyncResult.getException() != null) {
                 throw asyncResult.getException();
             }
-            CopyChunksResponseInfo result = (CopyChunksResponseInfo) asyncResult.getResult();
+            DeleteChunksResponseInfo result = (DeleteChunksResponseInfo) asyncResult.getResult();
             if (result.getException() != null) {
                 throw result.getException();
             }

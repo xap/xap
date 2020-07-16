@@ -24,7 +24,9 @@ import com.gigaspaces.internal.cluster.node.impl.config.ReplicationNodeConfigBui
 import com.gigaspaces.internal.cluster.node.impl.router.ReplicationRouterBuilderFactory;
 import com.gigaspaces.internal.server.space.executors.*;
 import com.gigaspaces.internal.server.space.repartitioning.CopyChunksTask;
+import com.gigaspaces.internal.server.space.repartitioning.DeleteChunksTask;
 import com.gigaspaces.internal.server.space.repartitioning.SpaceCopyChunksExecutor;
+import com.gigaspaces.internal.server.space.repartitioning.SpaceDeleteChunksExecutor;
 import com.gigaspaces.internal.utils.XapRuntimeReporter;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.j_spaces.core.client.SpaceFinderListener;
@@ -74,6 +76,7 @@ public class XapExtensions {
         registerSystemTaskExecutor(RenewIteratorLeaseDistributedSpaceTask.class, new SpaceRenewIteratorLeaseExecutor());
         registerSystemTaskExecutor(SpaceDataSourceLoadTask.class, new SpaceDataSourceLoadExecutor());
         registerSystemTaskExecutor(CopyChunksTask.class, new SpaceCopyChunksExecutor());
+        registerSystemTaskExecutor(DeleteChunksTask.class, new SpaceDeleteChunksExecutor());
     }
 
     public ReplicationRouterBuilderFactory getReplicationRouterBuilderFactory() {

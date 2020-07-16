@@ -1,6 +1,7 @@
 package com.gigaspaces.internal.server.space.repartitioning;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.internal.space.responses.SpaceResponseInfo;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -8,28 +9,28 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CompoundCopyChunksResponse extends CopyChunksResponseInfo {
+public class CompoundChunksResponse implements SpaceResponseInfo {
 
-    private List<CopyChunksResponseInfo> responses;
+    private List<SpaceResponseInfo> responses;
 
-    public CompoundCopyChunksResponse() {
+    public CompoundChunksResponse() {
     }
 
-    void addResponse(CopyChunksResponseInfo responseInfo) {
+    void addResponse(SpaceResponseInfo responseInfo) {
         if (this.responses == null) {
             this.responses = new ArrayList<>();
         }
         this.responses.add(responseInfo);
     }
 
-    public List<CopyChunksResponseInfo> getResponses() {
+    public List<SpaceResponseInfo> getResponses() {
         return responses;
     }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         IOUtils.writeInt(out, responses.size());
-        for (CopyChunksResponseInfo response : responses) {
+        for (SpaceResponseInfo response : responses) {
             IOUtils.writeObject(out, response);
         }
 

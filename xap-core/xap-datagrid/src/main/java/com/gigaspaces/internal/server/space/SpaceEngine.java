@@ -4862,7 +4862,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             }
         }
         boolean anyNotityTakeTemplates = _cacheManager.getTemplatesManager().anyNotifyTakeTemplates();
-        if (anyNotityTakeTemplates) {
+        if (anyNotityTakeTemplates && !context.isBackupOnly()) {
             IEntryHolder notifytake_eh = template.getXidOriginatedTransaction() != null ?
                     entry.createCopy() : entry;
             boolean fifoNotify = !called_remove &&

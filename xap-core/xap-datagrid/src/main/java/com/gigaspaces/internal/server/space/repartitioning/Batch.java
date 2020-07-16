@@ -6,20 +6,6 @@ import java.util.List;
 
 class Batch {
 
-    static Batch EMPTY_BATCH = new Batch(-1, null);
-    private final int partitionId;
-    private final List<IEntryPacket> entries;
+    static Batch EMPTY_BATCH = new Batch();
 
-    Batch(int partitionId, List<IEntryPacket> entries) {
-        this.partitionId = partitionId;
-        this.entries = entries;
-    }
-
-    public int getPartitionId() {
-        return partitionId;
-    }
-
-    public List<IEntryPacket> getEntries() {
-        return entries;
-    }
 }

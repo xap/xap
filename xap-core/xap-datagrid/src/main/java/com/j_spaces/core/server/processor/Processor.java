@@ -204,7 +204,8 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
              * Only if at least one template exists in cache -
              * Inform to all waited templates about new written packet.
              **/
-            if (_cacheManager.getTemplatesManager().anyNonNotifyTemplates() || _cacheManager.getTemplatesManager().anyNotifyWriteTemplates()) {
+            if (_cacheManager.getTemplatesManager().anyNonNotifyTemplates() ||
+                    (_cacheManager.getTemplatesManager().anyNotifyWriteTemplates()) && !context.isBackupOnly()) {
                 EntryArrivedPacket ea = _engine.getEntryArrivedPacketsFactory().getPacket(context.getOperationID(), entry,
                         entry.getXidOriginatedTransaction(), !doNotNotifyListeners, original_eh, fromReplication);
                 _engine.getProcessorWG().enqueueBlocked(ea);
@@ -671,6 +672,9 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
 
         try {
             context = _cacheManager.getCacheContext();
+            if(context.isBackupOnly()){
+                return;
+            }
             context.setFromReplication(packet.isFromReplication());
             context.setOperationID(packet.getOperationID());
             context.setOperationVisibilityTime(packet.getCreationTime());
