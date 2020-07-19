@@ -3,9 +3,6 @@ package com.gigaspaces.internal.cluster;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Map;
-import java.util.Set;
-
 public class PartitionToChunksMapScaleOutTest {
 
     @Test
@@ -96,9 +93,9 @@ public class PartitionToChunksMapScaleOutTest {
     }
     private String toShortString(PartitionToChunksMap map) {
         StringBuilder stringBuilder = new StringBuilder("Cluster Map\n");
-        for (Map.Entry<Integer, Set<Integer>> entry : map.getPartitionsToChunksMap().entrySet()) {
-            stringBuilder.append("[").append(entry.getKey()).append("] ---> ");
-            stringBuilder.append(entry.getValue().size());
+        for (int partition = 1; partition <= map.getNumOfPartitions(); partition++) {
+            stringBuilder.append("[").append(partition).append("] ---> ");
+            stringBuilder.append(map.getPartitionChunks(partition).size());
             stringBuilder.append("\n");
         }
         return stringBuilder.toString();

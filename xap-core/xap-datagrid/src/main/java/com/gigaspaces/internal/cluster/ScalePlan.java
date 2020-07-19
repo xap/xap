@@ -5,27 +5,37 @@ import java.util.*;
 public class ScalePlan {
 
     private final PartitionToChunksMap currentMap;
-    private PartitionToChunksMap newMap;
+    private final PartitionToChunksMap newMap;
     private final Map<Integer, Map<Integer, Set<Integer>>> plans;
 
+    public static Map<Integer, Set<Integer>> createPartitionChunksMap(int numOfPartitions) {
+        Map<Integer, Set<Integer>> partitionsToChunksMap = new HashMap<>(numOfPartitions);
+        for (int i = 1; i <= numOfPartitions; i++) {
+            partitionsToChunksMap.put(i, new TreeSet<>());
+        }
+        return partitionsToChunksMap;
+    }
+
     public static ScalePlan createScaleOutPlan(PartitionToChunksMap currentMap, int factor) {
-        ScalePlan scalePlan = new ScalePlan(currentMap).initScaleOutPlan(factor);
-        PartitionToChunksMap newMap = new PartitionToChunksMap(currentMap.getNumOfPartitions() + factor, currentMap.getGeneration() + 1);
-        Map<Integer, Integer> newChunksCountPerPartition = getChunksCountPerPartitionMap(newMap);
-        int newPartitionId = currentMap.getNumOfPartitions() + 1;
+        int currPartitionCount = currentMap.getNumOfPartitions();
+        int newPartitionCount = currPartitionCount + factor;
+        Map<Integer, Map<Integer, Set<Integer>>> plans = initPlans(factor, 1, currPartitionCount);
+        Map<Integer, Set<Integer>> newMap = createPartitionChunksMap(newPartitionCount);
+        Map<Integer, Integer> newChunksCountPerPartition = getChunksCountPerPartitionMap(newPartitionCount);
+        int newPartitionId = currPartitionCount + 1;
         for (Map.Entry<Integer, Set<Integer>> partitionMapping : currentMap.getPartitionsToChunksMap().entrySet()) {
             int currentPartitionId = partitionMapping.getKey();
             int oldPartitionAssignments = 0;
             for (Integer chunk : partitionMapping.getValue()) {
                 if (oldPartitionAssignments < newChunksCountPerPartition.get(currentPartitionId)) {
-                    newMap.getPartitionsToChunksMap().get(currentPartitionId).add(chunk);
+                    newMap.get(currentPartitionId).add(chunk);
                     oldPartitionAssignments++;
                 } else {
-                    if (newMap.getPartitionsToChunksMap().get(newPartitionId).size() == newChunksCountPerPartition.get(newPartitionId) && newPartitionId < newMap.getNumOfPartitions()) {
+                    if (newMap.get(newPartitionId).size() == newChunksCountPerPartition.get(newPartitionId) && newPartitionId < newPartitionCount) {
                         newPartitionId++;
                     }
-                    newMap.getPartitionsToChunksMap().get(newPartitionId).add(chunk);
-                    Map<Integer, Set<Integer>> partitionPlan = scalePlan.plans.get(currentPartitionId);
+                    newMap.get(newPartitionId).add(chunk);
+                    Map<Integer, Set<Integer>> partitionPlan = plans.get(currentPartitionId);
                     if (!partitionPlan.containsKey(newPartitionId)) {
                         partitionPlan.put(newPartitionId, new HashSet<>());
                     }
@@ -33,27 +43,27 @@ public class ScalePlan {
                 }
             }
         }
-        scalePlan.newMap = newMap;
-        return scalePlan;
+        return new ScalePlan(currentMap, new PartitionToChunksMap(newMap, currentMap.getGeneration() + 1), plans);
     }
 
     public static ScalePlan createScaleInPlan(PartitionToChunksMap currentMap, int factor) {
-        ScalePlan scalePlan = new ScalePlan(currentMap).initScaleInPlan(factor);
-        int newPartitionCount = currentMap.getNumOfPartitions() - factor;
-        PartitionToChunksMap newMap = new PartitionToChunksMap(newPartitionCount, currentMap.getGeneration() + 1);
-        Map<Integer, Integer> newChunksCountPerPartition = getChunksCountPerPartitionMap(newMap);
+        int currPartitionCount = currentMap.getNumOfPartitions();
+        int newPartitionCount = currPartitionCount - factor;
+        Map<Integer, Map<Integer, Set<Integer>>> plans = initPlans(factor, newPartitionCount + 1, currPartitionCount);
+        Map<Integer, Set<Integer>> newMap = createPartitionChunksMap(newPartitionCount);
+        Map<Integer, Integer> newChunksCountPerPartition = getChunksCountPerPartitionMap(newPartitionCount);
         int remainingPartitionId = 1;
         for (Map.Entry<Integer, Set<Integer>> partitionMapping : currentMap.getPartitionsToChunksMap().entrySet()) {
             int currentPartitionId = partitionMapping.getKey();
-            if (currentPartitionId <= newMap.getNumOfPartitions()) {
-                newMap.getPartitionsToChunksMap().get(currentPartitionId).addAll(partitionMapping.getValue());
+            if (currentPartitionId <= newPartitionCount) {
+                newMap.get(currentPartitionId).addAll(partitionMapping.getValue());
             } else {
                 for (Integer chunk : partitionMapping.getValue()) {
-                    if (newMap.getPartitionsToChunksMap().get(remainingPartitionId).size() == newChunksCountPerPartition.get(remainingPartitionId) && remainingPartitionId < newMap.getNumOfPartitions()) {
+                    if (newMap.get(remainingPartitionId).size() == newChunksCountPerPartition.get(remainingPartitionId) && remainingPartitionId < newPartitionCount) {
                         remainingPartitionId++;
                     }
-                    newMap.getPartitionsToChunksMap().get(remainingPartitionId).add(chunk);
-                    Map<Integer, Set<Integer>> partitionPlan = scalePlan.plans.get(currentPartitionId);
+                    newMap.get(remainingPartitionId).add(chunk);
+                    Map<Integer, Set<Integer>> partitionPlan = plans.get(currentPartitionId);
                     if (!partitionPlan.containsKey(remainingPartitionId)) {
                         partitionPlan.put(remainingPartitionId, new HashSet<>());
                     }
@@ -62,27 +72,21 @@ public class ScalePlan {
             }
         }
 
-        scalePlan.newMap = newMap;
-        return scalePlan;
+        return new ScalePlan(currentMap, new PartitionToChunksMap(newMap, currentMap.getGeneration() + 1), plans);
     }
 
-    private ScalePlan(PartitionToChunksMap currentMap) {
+    private ScalePlan(PartitionToChunksMap currentMap, PartitionToChunksMap newMap, Map<Integer, Map<Integer, Set<Integer>>> plans) {
         this.currentMap = currentMap;
-        this.plans = new HashMap<>(currentMap.getNumOfPartitions());
+        this.newMap = newMap;
+        this.plans = plans;
     }
 
-    private ScalePlan initScaleOutPlan(int factor) {
-        for (int i = 1; i <= currentMap.getNumOfPartitions(); i++) {
-            this.plans.put(i, new HashMap<>(factor));
+    private static Map<Integer, Map<Integer, Set<Integer>>> initPlans(int factor, int from, int to) {
+        Map<Integer, Map<Integer, Set<Integer>>> result = new HashMap<>();
+        for (int i = from; i <= to; i++) {
+            result.put(i, new HashMap<>(factor));
         }
-        return this;
-    }
-
-    private ScalePlan initScaleInPlan(int factor) {
-        for (int i = currentMap.getNumOfPartitions(); i > currentMap.getNumOfPartitions() - factor; i--) {
-            this.plans.put(i, new HashMap<>(factor));
-        }
-        return this;
+        return result;
     }
 
     public PartitionToChunksMap getCurrentMap() {
@@ -97,11 +101,11 @@ public class ScalePlan {
         return plans;
     }
 
-    private static Map<Integer, Integer> getChunksCountPerPartitionMap(PartitionToChunksMap newMap) {
-        Map<Integer, Integer> newChunksCountPerPartition = new HashMap<>(newMap.getNumOfPartitions());
-        int newChunksPerPartition = PartitionToChunksMap.CHUNKS_COUNT / newMap.getNumOfPartitions();
-        int newLeftover = PartitionToChunksMap.CHUNKS_COUNT % newMap.getNumOfPartitions();
-        for (int i = 1; i <= newMap.getNumOfPartitions(); i++) {
+    private static Map<Integer, Integer> getChunksCountPerPartitionMap(int numOfPartitions) {
+        Map<Integer, Integer> newChunksCountPerPartition = new HashMap<>(numOfPartitions);
+        int newChunksPerPartition = PartitionToChunksMap.CHUNKS_COUNT / numOfPartitions;
+        int newLeftover = PartitionToChunksMap.CHUNKS_COUNT % numOfPartitions;
+        for (int i = 1; i <= numOfPartitions; i++) {
             newChunksCountPerPartition.put(i, newChunksPerPartition);
         }
         for (int i = 0, index = 1; i < newLeftover; i++, index++) {

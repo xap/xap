@@ -31,12 +31,13 @@ public class PartitionToChunksMap implements Externalizable {
     }
 
     public PartitionToChunksMap(int partitions, int generation) {
+        this(ScalePlan.createPartitionChunksMap(partitions == 0 ? 1 : partitions), generation);
+    }
+
+    public PartitionToChunksMap(Map<Integer, Set<Integer>> partitionsToChunksMap, int generation) {
         this.generation = generation;
-        this.numOfPartitions = partitions == 0 ? 1 : partitions;
-        this.partitionsToChunksMap = new HashMap<>(this.numOfPartitions);
-        for (int i = 1; i <= this.numOfPartitions; i++) {
-            this.partitionsToChunksMap.put(i, new TreeSet<>());
-        }
+        this.numOfPartitions = partitionsToChunksMap.size();
+        this.partitionsToChunksMap = partitionsToChunksMap;
     }
 
     public int getGeneration() {
@@ -80,6 +81,11 @@ public class PartitionToChunksMap implements Externalizable {
     public Map<Integer, Set<Integer>> getPartitionsToChunksMap() {
         return partitionsToChunksMap;
     }
+
+    public Set<Integer> getPartitionChunks(int partition) {
+        return partitionsToChunksMap.get(partition);
+    }
+
 
     private static Map<Integer, Integer> initChunksToPartitionMap(Map<Integer, Set<Integer>> partitionsToChunksMap) {
         Map<Integer, Integer> result = new HashMap<>();
