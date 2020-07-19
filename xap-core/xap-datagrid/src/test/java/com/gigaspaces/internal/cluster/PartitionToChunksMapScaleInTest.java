@@ -1,12 +1,7 @@
 package com.gigaspaces.internal.cluster;
 
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
-import com.gigaspaces.internal.cluster.ScalePlan;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Map;
-import java.util.Set;
 
 public class PartitionToChunksMapScaleInTest {
 
@@ -77,9 +72,10 @@ public class PartitionToChunksMapScaleInTest {
     }
     private String toShortString(PartitionToChunksMap map) {
         StringBuilder stringBuilder = new StringBuilder("Cluster Map\n");
-        for (Map.Entry<Integer, Set<Integer>> entry : map.getPartitionsToChunksMap().entrySet()) {
-            stringBuilder.append("[").append(entry.getKey()).append("] ---> ");
-            stringBuilder.append(entry.getValue().size());
+        int numOfPartitions = map.getNumOfPartitions();
+        for (int partition=1 ; partition <= numOfPartitions ; partition++) {
+            stringBuilder.append("[").append(partition).append("] ---> ");
+            stringBuilder.append(map.getPartitionChunks(partition).size());
             stringBuilder.append("\n");
         }
         return stringBuilder.toString();
