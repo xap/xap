@@ -42,7 +42,7 @@ public class CacheContextFactory {
 
     public CacheContextFactory(@SuppressWarnings("UnusedParameters") CacheManager cacheManager, String fullSpaceName) {
         _fullSpaceName = fullSpaceName;
-        _createdContexts = Collections.synchronizedSet(new WeakHashSet<Context>());
+        _createdContexts = Collections.synchronizedSet(new WeakHashSet<>());
     }
 
     /**
@@ -112,11 +112,18 @@ public class CacheContextFactory {
             for (Context context : _createdContexts) {
                 while (context.isActive()) {
                     try {
+                        //noinspection BusyWait
                         Thread.sleep(100);
                     } catch (InterruptedException ignored) {
                     }
-                    if ((0 < closeMaxWait) && (0 < (System.currentTimeMillis() - endTime))) {
-                        CacheManager.getLogger().warn(_fullSpaceName + ": not all cache context closed, forced exit, owning thread is " + context.getOwningThreadName());
+                    // wait time is zero
+                    if (closeMaxWait <= 0) {
+                        CacheManager.getLogger().warn(_fullSpaceName + ": not all cache context closed, forced exit, owning thread is " + context.getOwningThreadName() + ", wait time is zero");
+                        return;
+                    }
+                    // waited enough
+                    if (0 < (System.currentTimeMillis() - endTime)) {
+                        CacheManager.getLogger().warn(_fullSpaceName + ": not all cache context closed, forced exit, owning thread is " + context.getOwningThreadName() + ", waited enough");
                         return;
                     }
                 }
