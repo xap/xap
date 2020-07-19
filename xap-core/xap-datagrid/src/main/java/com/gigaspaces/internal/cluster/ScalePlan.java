@@ -1,60 +1,113 @@
 package com.gigaspaces.internal.cluster;
 
-import com.gigaspaces.internal.io.IOUtils;
-
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.*;
 
-public class ScalePlan implements Externalizable {
+public class ScalePlan {
 
-    private PartitionToChunksMap currentMap;
+    private final PartitionToChunksMap currentMap;
     private PartitionToChunksMap newMap;
-    private Map<Integer, Map<Integer, Set<Integer>>> plans;
+    private final Map<Integer, Map<Integer, Set<Integer>>> plans;
 
-    public ScalePlan() {
+    public static ScalePlan createScaleOutPlan(PartitionToChunksMap currentMap, int factor) {
+        ScalePlan scalePlan = new ScalePlan(currentMap).initScaleOutPlan(factor);
+        PartitionToChunksMap newMap = new PartitionToChunksMap(currentMap.getNumOfPartitions() + factor, currentMap.getGeneration() + 1);
+        Map<Integer, Integer> newChunksCountPerPartition = getChunksCountPerPartitionMap(newMap);
+        int newPartitionId = currentMap.getNumOfPartitions() + 1;
+        for (Map.Entry<Integer, Set<Integer>> partitionMapping : currentMap.getPartitionsToChunksMap().entrySet()) {
+            int currentPartitionId = partitionMapping.getKey();
+            int oldPartitionAssignments = 0;
+            for (Integer chunk : partitionMapping.getValue()) {
+                if (oldPartitionAssignments < newChunksCountPerPartition.get(currentPartitionId)) {
+                    newMap.getPartitionsToChunksMap().get(currentPartitionId).add(chunk);
+                    oldPartitionAssignments++;
+                } else {
+                    if (newMap.getPartitionsToChunksMap().get(newPartitionId).size() == newChunksCountPerPartition.get(newPartitionId) && newPartitionId < newMap.getNumOfPartitions()) {
+                        newPartitionId++;
+                    }
+                    newMap.getPartitionsToChunksMap().get(newPartitionId).add(chunk);
+                    Map<Integer, Set<Integer>> partitionPlan = scalePlan.plans.get(currentPartitionId);
+                    if (!partitionPlan.containsKey(newPartitionId)) {
+                        partitionPlan.put(newPartitionId, new HashSet<>());
+                    }
+                    partitionPlan.get(newPartitionId).add(chunk);
+                }
+            }
+        }
+        scalePlan.newMap = newMap;
+        return scalePlan;
     }
 
-    public void initScaleOutPlan(PartitionToChunksMap currentMap, int factor) {
+    public static ScalePlan createScaleInPlan(PartitionToChunksMap currentMap, int factor) {
+        ScalePlan scalePlan = new ScalePlan(currentMap).initScaleInPlan(factor);
+        int newPartitionCount = currentMap.getNumOfPartitions() - factor;
+        PartitionToChunksMap newMap = new PartitionToChunksMap(newPartitionCount, currentMap.getGeneration() + 1);
+        Map<Integer, Integer> newChunksCountPerPartition = getChunksCountPerPartitionMap(newMap);
+        int remainingPartitionId = 1;
+        for (Map.Entry<Integer, Set<Integer>> partitionMapping : currentMap.getPartitionsToChunksMap().entrySet()) {
+            int currentPartitionId = partitionMapping.getKey();
+            if (currentPartitionId <= newMap.getNumOfPartitions()) {
+                newMap.getPartitionsToChunksMap().get(currentPartitionId).addAll(partitionMapping.getValue());
+            } else {
+                for (Integer chunk : partitionMapping.getValue()) {
+                    if (newMap.getPartitionsToChunksMap().get(remainingPartitionId).size() == newChunksCountPerPartition.get(remainingPartitionId) && remainingPartitionId < newMap.getNumOfPartitions()) {
+                        remainingPartitionId++;
+                    }
+                    newMap.getPartitionsToChunksMap().get(remainingPartitionId).add(chunk);
+                    Map<Integer, Set<Integer>> partitionPlan = scalePlan.plans.get(currentPartitionId);
+                    if (!partitionPlan.containsKey(remainingPartitionId)) {
+                        partitionPlan.put(remainingPartitionId, new HashSet<>());
+                    }
+                    partitionPlan.get(remainingPartitionId).add(chunk);
+                }
+            }
+        }
+
+        scalePlan.newMap = newMap;
+        return scalePlan;
+    }
+
+    private ScalePlan(PartitionToChunksMap currentMap) {
         this.currentMap = currentMap;
         this.plans = new HashMap<>(currentMap.getNumOfPartitions());
+    }
+
+    private ScalePlan initScaleOutPlan(int factor) {
         for (int i = 1; i <= currentMap.getNumOfPartitions(); i++) {
             this.plans.put(i, new HashMap<>(factor));
         }
+        return this;
     }
 
-    public void initScaleInPlan(PartitionToChunksMap currentMap, int factor) {
-        this.currentMap = currentMap;
-        this.plans = new HashMap<>(currentMap.getNumOfPartitions());
+    private ScalePlan initScaleInPlan(int factor) {
         for (int i = currentMap.getNumOfPartitions(); i > currentMap.getNumOfPartitions() - factor; i--) {
             this.plans.put(i, new HashMap<>(factor));
         }
+        return this;
     }
 
     public PartitionToChunksMap getCurrentMap() {
         return currentMap;
     }
 
-    public void setCurrentMap(PartitionToChunksMap currentMap) {
-        this.currentMap = currentMap;
-    }
-
     public PartitionToChunksMap getNewMap() {
         return newMap;
-    }
-
-    public void setNewMap(PartitionToChunksMap newMap) {
-        this.newMap = newMap;
     }
 
     public Map<Integer, Map<Integer, Set<Integer>>> getPlans() {
         return plans;
     }
 
-    public void setPlans(Map<Integer, Map<Integer, Set<Integer>>> plans) {
-        this.plans = plans;
+    private static Map<Integer, Integer> getChunksCountPerPartitionMap(PartitionToChunksMap newMap) {
+        Map<Integer, Integer> newChunksCountPerPartition = new HashMap<>(newMap.getNumOfPartitions());
+        int newChunksPerPartition = PartitionToChunksMap.CHUNKS_COUNT / newMap.getNumOfPartitions();
+        int newLeftover = PartitionToChunksMap.CHUNKS_COUNT % newMap.getNumOfPartitions();
+        for (int i = 1; i <= newMap.getNumOfPartitions(); i++) {
+            newChunksCountPerPartition.put(i, newChunksPerPartition);
+        }
+        for (int i = 0, index = 1; i < newLeftover; i++, index++) {
+            newChunksCountPerPartition.put(index, newChunksCountPerPartition.get(index) + 1);
+        }
+        return newChunksCountPerPartition;
     }
 
     @Override
@@ -69,48 +122,4 @@ public class ScalePlan implements Externalizable {
         }
         return sb.toString();
     }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        IOUtils.writeObject(out, currentMap);
-        IOUtils.writeObject(out, newMap);
-        IOUtils.writeShort(out, ((short) plans.size()));
-        for (Map.Entry<Integer, Map<Integer, Set<Integer>>> entry : plans.entrySet()) {
-            IOUtils.writeShort(out, entry.getKey().shortValue());
-            IOUtils.writeShort(out, ((short) entry.getValue().size()));
-            for (Map.Entry<Integer, Set<Integer>> integerSetEntry : entry.getValue().entrySet()) {
-                IOUtils.writeShort(out, integerSetEntry.getKey().shortValue());
-                IOUtils.writeShort(out, ((short) integerSetEntry.getValue().size()));
-                for (Integer chunk : integerSetEntry.getValue()) {
-                    IOUtils.writeShort(out, chunk.shortValue());
-                }
-            }
-        }
-
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        this.currentMap = IOUtils.readObject(in);
-        this.newMap = IOUtils.readObject(in);
-        int mapSize = IOUtils.readShort(in);
-        this.plans = new HashMap<>(mapSize);
-        for (int i = 0; i < mapSize; i++) {
-            int oldPartition = IOUtils.readShort(in);
-            int innerMapSize  = IOUtils.readShort(in);;
-            HashMap<Integer, Set<Integer>> oldPartitionPlan = new HashMap<>(innerMapSize);
-            for (int j = 0; j < innerMapSize; j++) {
-                int newPartition  = IOUtils.readShort(in);
-                int setSize = IOUtils.readShort(in);
-                HashSet<Integer> newPartitionPlan = new HashSet<>(setSize);
-                for (int k = 0; k < setSize; k++) {
-                    newPartitionPlan.add((int) IOUtils.readShort(in));
-                }
-                oldPartitionPlan.put(newPartition,newPartitionPlan);
-            }
-            plans.put(oldPartition, oldPartitionPlan);
-        }
-    }
-
-
 }

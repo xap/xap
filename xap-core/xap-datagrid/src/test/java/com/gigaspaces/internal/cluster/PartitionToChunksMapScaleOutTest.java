@@ -12,7 +12,7 @@ public class PartitionToChunksMapScaleOutTest {
     public void testScaleOneToTwo() {
         int numberOfPartitions = 1;
         PartitionToChunksMap map = new PartitionToChunksMap(numberOfPartitions);
-        ScalePlan plan = PartitionToChunksMap.scaleOutMap(map, 1);
+        ScalePlan plan = ScalePlan.createScaleOutPlan(map, 1);
         printPlan(plan);
         Assert.assertEquals(2048, plan.getPlans().get(1).get(2).size());
     }
@@ -21,7 +21,7 @@ public class PartitionToChunksMapScaleOutTest {
     public void testScaleTwoToThree() {
         int numberOfPartitions = 2;
         PartitionToChunksMap map = new PartitionToChunksMap(numberOfPartitions);
-        ScalePlan plan = PartitionToChunksMap.scaleOutMap(map, 1);
+        ScalePlan plan = ScalePlan.createScaleOutPlan(map, 1);
         printPlan(plan);
         Assert.assertEquals(682, plan.getPlans().get(1).get(3).size());
         Assert.assertEquals(683, plan.getPlans().get(2).get(3).size());
@@ -31,7 +31,7 @@ public class PartitionToChunksMapScaleOutTest {
     public void testScaleTwoToFour() {
         int numberOfPartitions = 2;
         PartitionToChunksMap map = new PartitionToChunksMap(numberOfPartitions);
-        ScalePlan plan = PartitionToChunksMap.scaleOutMap(map, 2);
+        ScalePlan plan = ScalePlan.createScaleOutPlan(map, 2);
         printPlan(plan);
         Assert.assertEquals(1024, plan.getPlans().get(1).get(3).size());
         Assert.assertEquals(1024, plan.getPlans().get(2).get(4).size());
@@ -41,7 +41,7 @@ public class PartitionToChunksMapScaleOutTest {
     public void testScaleTwoToFive() {
         int numberOfPartitions = 2;
         PartitionToChunksMap map = new PartitionToChunksMap(numberOfPartitions);
-        ScalePlan plan = PartitionToChunksMap.scaleOutMap(map, 3);
+        ScalePlan plan = ScalePlan.createScaleOutPlan(map, 3);
         printPlan(plan);
         Assert.assertEquals(819, plan.getPlans().get(1).get(3).size());
         Assert.assertEquals(409, plan.getPlans().get(1).get(4).size());
@@ -53,7 +53,7 @@ public class PartitionToChunksMapScaleOutTest {
     public void testScaleTwoToSix() {
         int numberOfPartitions = 2;
         PartitionToChunksMap map = new PartitionToChunksMap(numberOfPartitions);
-        ScalePlan plan = PartitionToChunksMap.scaleOutMap(map, 4);
+        ScalePlan plan = ScalePlan.createScaleOutPlan(map, 4);
         printPlan(plan);
         Assert.assertEquals(683, plan.getPlans().get(1).get(3).size());
         Assert.assertEquals(682, plan.getPlans().get(1).get(4).size());
@@ -66,7 +66,7 @@ public class PartitionToChunksMapScaleOutTest {
     public void testScaleThreeToFive() {
         int numberOfPartitions = 3;
         PartitionToChunksMap map = new PartitionToChunksMap(numberOfPartitions);
-        ScalePlan plan = PartitionToChunksMap.scaleOutMap(map, 2);
+        ScalePlan plan = ScalePlan.createScaleOutPlan(map, 2);
         printPlan(plan);
         Assert.assertEquals(546, plan.getPlans().get(1).get(4).size());
         Assert.assertEquals(273, plan.getPlans().get(2).get(4).size());
@@ -78,7 +78,7 @@ public class PartitionToChunksMapScaleOutTest {
     public void testScaleThreeToSeven() {
         int numberOfPartitions = 3;
         PartitionToChunksMap map = new PartitionToChunksMap(numberOfPartitions);
-        ScalePlan plan = PartitionToChunksMap.scaleOutMap(map, 4);
+        ScalePlan plan = ScalePlan.createScaleOutPlan(map, 4);
         printPlan(plan);
         Assert.assertEquals(585, plan.getPlans().get(1).get(4).size());
         Assert.assertEquals(195, plan.getPlans().get(1).get(5).size());
