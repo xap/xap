@@ -2,11 +2,14 @@ package org.openspaces.persistency.space;
 
 import com.gigaspaces.datasource.SpaceTypeSchemaAdapter;
 import com.gigaspaces.document.SpaceDocument;
+import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
+import com.gigaspaces.query.IdQuery;
 import com.gigaspaces.sync.*;
 import org.openspaces.core.GigaSpace;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class GigaSpaceSynchronizationEndpoint extends SpaceSynchronizationEndpoint {
@@ -20,12 +23,12 @@ public class GigaSpaceSynchronizationEndpoint extends SpaceSynchronizationEndpoi
 
     @Override
     public void onTransactionSynchronization(TransactionData transactionData) {
-        targetSpace.writeMultiple(adaptDataSyncOperations(transactionData.getTransactionParticipantDataItems()));
+        processEndpointData(transactionData.getTransactionParticipantDataItems());
     }
 
     @Override
     public void onOperationsBatchSynchronization(OperationsBatchData batchData) {
-        targetSpace.writeMultiple(adaptDataSyncOperations(batchData.getBatchDataItems()));
+        processEndpointData(batchData.getBatchDataItems());
     }
 
     @Override
@@ -38,8 +41,48 @@ public class GigaSpaceSynchronizationEndpoint extends SpaceSynchronizationEndpoi
         targetSpace.getTypeManager().registerTypeDescriptor(adaptSpaceTypeDescriptor(introduceTypeData));
     }
 
-    private SpaceDocument[] adaptDataSyncOperations(DataSyncOperation[] dataSyncOperations){
-        return Arrays.stream(dataSyncOperations).map(this::adaptSingleDataSyncOperation).toArray(SpaceDocument[]::new);
+    private void processEndpointData(DataSyncOperation[] dataSyncOperations){
+        List<SpaceDocument> adapted = new ArrayList<>();
+        for (int i = 0; i < dataSyncOperations.length; i++) {
+            DataSyncOperation operation = dataSyncOperations[i];
+            if(isWriteOperation(operation)){
+                //Accumulate write operations until encountering a remove operation
+                adapted.add(adaptSingleDataSyncOperation(operation));
+                continue;
+            }
+            //Encountered a remove operation, flush the write operations
+            if (!adapted.isEmpty()) {
+                targetSpace.writeMultiple(adapted.toArray());
+                adapted.clear();
+            }
+            processRemoveOperation(operation);
+        }
+        //In case all operations were write
+        if (!adapted.isEmpty())
+            targetSpace.writeMultiple(adapted.toArray());
+    }
+
+    private void processRemoveOperation(DataSyncOperation operation){
+        String idPropertyName = operation.getTypeDescriptor().getIdPropertyName();
+        String routingPropertyName = operation.getTypeDescriptor().getRoutingPropertyName();
+        Object id = operation.getDataAsDocument().getProperty(idPropertyName);
+        Object routing = operation.getDataAsDocument().getProperty(routingPropertyName);
+        IdQuery<SpaceDocument> idQuery = new IdQuery<>(operation.getTypeDescriptor().getTypeName(), id, routing);
+        targetSpace.takeById(idQuery);
+    }
+
+    private boolean isWriteOperation(DataSyncOperation dataSyncOperation){
+        switch (dataSyncOperation.getDataSyncOperationType()){
+            case WRITE:
+            case UPDATE:
+            case PARTIAL_UPDATE:
+            case CHANGE:
+                return true;
+            case REMOVE:
+            case REMOVE_BY_UID:
+                return false;
+        }
+        return false;
     }
 
     private SpaceDocument adaptSingleDataSyncOperation(DataSyncOperation dataSyncOperation) {
