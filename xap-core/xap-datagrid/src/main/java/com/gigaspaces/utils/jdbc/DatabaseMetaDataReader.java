@@ -122,7 +122,8 @@ public class DatabaseMetaDataReader implements Closeable {
 
     public TableInfo getTableInfo(TableId table) {
         try {
-            return new TableInfo(table, getTableColumns(table), getTablePrimaryKey(table), getTableIndexes(table));
+            List<String> tablePrimaryKey = getTablePrimaryKey(table);
+            return new TableInfo(table, getTableColumns(table), tablePrimaryKey, getTableIndexes(table,tablePrimaryKey));
         } catch (SQLException e) {
             logger.warn("Table "+table+" SQL state: "+e.getSQLState()+" "+e.getErrorCode(),e);
         } catch (Exception t) {
@@ -151,7 +152,7 @@ public class DatabaseMetaDataReader implements Closeable {
         return result;
     }
 
-    public List<IndexInfo> getTableIndexes(TableId table) throws SQLException {
+    public List<IndexInfo> getTableIndexes(TableId table,List<String> tablePrimaryKey) throws SQLException {
         Map<String, IndexInfo> result = new LinkedHashMap<>();
         try (ResultSet rs = metaData.getIndexInfo(table.getCatalog(), table.getSchema(), table.getName(), false, false)) {
             while (rs.next()) {
@@ -160,11 +161,36 @@ public class DatabaseMetaDataReader implements Closeable {
                     boolean nonUnique = rs.getBoolean("NON_UNIQUE");
                     result.put(indexName, new IndexInfo(indexName, "EQUAL", nonUnique));
                 }
-                result.get(indexName).getColumns().add(rs.getString("COLUMN_NAME"));
+                List<String> columns = result.get(indexName).getColumns();
+                columns.add(rs.getString("COLUMN_NAME"));
+                if( columns.size() > 1){
+                    result.get(indexName).setIndexType("compound");
 
+                } else if(columns.size() == 1 && isColumnNestedInPrimaryKey(columns,tablePrimaryKey)) {
+                    result.get(indexName).setIndexType("nested");
+
+                }
+
+                if(isColumnsArePrimaryKey(columns,tablePrimaryKey)){
+                    result.get(indexName).setIndexType("regular");
+
+                }
             }
         }
         return new ArrayList<>(result.values());
+    }
+
+    private boolean isColumnsArePrimaryKey(List<String> columns, List<String> tablePrimaryKey) {
+        HashSet<String> columnsSet = new HashSet<>(columns);
+        HashSet<String> primaryColumnSet = new HashSet<>(tablePrimaryKey);
+        return columnsSet.equals(primaryColumnSet);
+    }
+
+    private boolean isColumnNestedInPrimaryKey(List<String> columns, List<String> tablePrimaryKey) {
+        String column = columns.get(0) ;
+        HashSet<String> primaryColumnSet = new HashSet<>(tablePrimaryKey);
+
+        return primaryColumnSet.contains(column);
     }
 
     public static class Builder {
