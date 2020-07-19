@@ -16,7 +16,7 @@ public class PartitionToChunksMap implements Externalizable {
 
     private int generation;
     private Map<Integer, Set<Integer>> partitionsToChunksMap;
-    private Map<Integer, Integer> chunksToPartitionMap;
+    private transient Map<Integer, Integer> chunksToPartitionMap;
     private int numOfPartitions;
 
     public PartitionToChunksMap() {
@@ -27,7 +27,6 @@ public class PartitionToChunksMap implements Externalizable {
         for (int chunk = 0; chunk < CHUNKS_COUNT; chunk++) {
             int partitionId = (chunk % partitions) + 1;
             partitionsToChunksMap.get(partitionId).add(chunk);
-            chunksToPartitionMap.put(chunk, partitionId);
         }
     }
 
@@ -35,7 +34,6 @@ public class PartitionToChunksMap implements Externalizable {
         this.generation = generation;
         this.numOfPartitions = partitions == 0 ? 1 : partitions;
         this.partitionsToChunksMap = new HashMap<>(this.numOfPartitions);
-        this.chunksToPartitionMap = new HashMap<>(CHUNKS_COUNT);
         for (int i = 1; i <= this.numOfPartitions; i++) {
             this.partitionsToChunksMap.put(i, new TreeSet<>());
         }
@@ -53,14 +51,12 @@ public class PartitionToChunksMap implements Externalizable {
             for (Integer chunk : partitionMapping.getValue()) {
                 if (oldPartitionAssignments < newChunksCountPerPartition.get(currentPartitionId)) {
                     newMap.getPartitionsToChunksMap().get(currentPartitionId).add(chunk);
-                    newMap.getChunksToPartitionMap().put(chunk, currentPartitionId);
                     oldPartitionAssignments++;
                 } else {
                     if (newMap.getPartitionsToChunksMap().get(newPartitionId).size() == newChunksCountPerPartition.get(newPartitionId) && newPartitionId < newMap.getNumOfPartitions()) {
                         newPartitionId++;
                     }
                     newMap.getPartitionsToChunksMap().get(newPartitionId).add(chunk);
-                    newMap.getChunksToPartitionMap().put(chunk, newPartitionId);
                     Map<Integer, Set<Integer>> partitionPlan = scalePlan.getPlans().get(currentPartitionId);
                     if (!partitionPlan.containsKey(newPartitionId)) {
                         partitionPlan.put(newPartitionId, new HashSet<>());
@@ -84,16 +80,12 @@ public class PartitionToChunksMap implements Externalizable {
             int currentPartitionId = partitionMapping.getKey();
             if (currentPartitionId <= newMap.getNumOfPartitions()) {
                 newMap.getPartitionsToChunksMap().get(currentPartitionId).addAll(partitionMapping.getValue());
-                for (Integer chunk : partitionMapping.getValue()) {
-                    newMap.getChunksToPartitionMap().put(chunk, currentPartitionId);
-                }
             } else {
                 for (Integer chunk : partitionMapping.getValue()) {
                     if (newMap.getPartitionsToChunksMap().get(remainingPartitionId).size() == newChunksCountPerPartition.get(remainingPartitionId) && remainingPartitionId < newMap.getNumOfPartitions()) {
                         remainingPartitionId++;
                     }
                     newMap.getPartitionsToChunksMap().get(remainingPartitionId).add(chunk);
-                    newMap.getChunksToPartitionMap().put(chunk, remainingPartitionId);
                     Map<Integer, Set<Integer>> partitionPlan = scalePlan.getPlans().get(currentPartitionId);
                     if (!partitionPlan.containsKey(remainingPartitionId)) {
                         partitionPlan.put(remainingPartitionId, new HashSet<>());
@@ -121,6 +113,10 @@ public class PartitionToChunksMap implements Externalizable {
         return newChunksCountPerPartition;
     }
 
+    public int getGeneration() {
+        return generation;
+    }
+
     public int getNumOfPartitions() {
         return numOfPartitions;
     }
@@ -131,24 +127,19 @@ public class PartitionToChunksMap implements Externalizable {
 
     public int getPartitionId(int routingValue) {
         int chunk = routingValue % CHUNKS_COUNT;
-        return getPartitionIdImpl(chunk);
+        return getPartitionByChunk(chunk);
     }
 
     public int getPartitionId(long routingValue) {
         int chunk = (int) (routingValue % CHUNKS_COUNT);
-        return getPartitionIdImpl(chunk);
+        return getPartitionByChunk(chunk);
     }
 
-    private int getPartitionIdImpl(int chunk) {
+    private int getPartitionByChunk(int chunk) {
+        if (chunksToPartitionMap == null) {
+            chunksToPartitionMap = initChunksToPartitionMap(partitionsToChunksMap);
+        }
         return chunksToPartitionMap.get(chunk) - 1;
-    }
-
-    public int getGeneration() {
-        return generation;
-    }
-
-    public void setGeneration(int generation) {
-        this.generation = generation;
     }
 
     @Override
@@ -162,6 +153,16 @@ public class PartitionToChunksMap implements Externalizable {
             stringBuilder.append("\n");
         }
         return stringBuilder.toString();
+    }
+
+    public Map<Integer, Set<Integer>> getPartitionsToChunksMap() {
+        return partitionsToChunksMap;
+    }
+
+    private static Map<Integer, Integer> initChunksToPartitionMap(Map<Integer, Set<Integer>> partitionsToChunksMap) {
+        Map<Integer, Integer> result = new HashMap<>();
+        partitionsToChunksMap.forEach((partition, chunks) -> chunks.forEach(chunk -> result.put(chunk, partition)));
+        return result;
     }
 
     @Override
@@ -188,7 +189,6 @@ public class PartitionToChunksMap implements Externalizable {
         generation = IOUtils.readShort(in);
         numOfPartitions = IOUtils.readShort(in);
         partitionsToChunksMap = new HashMap<>(numOfPartitions);
-        chunksToPartitionMap = new HashMap<>(CHUNKS_COUNT);
         for (int i = 0; i < numOfPartitions; i++) {
             int key = IOUtils.readShort(in);
             Set<Integer> set = null;
@@ -198,18 +198,9 @@ public class PartitionToChunksMap implements Externalizable {
                 for (int j = 0; j < length; j++) {
                     int chunk = IOUtils.readShort(in);
                     set.add(chunk);
-                    chunksToPartitionMap.put(chunk, key);
                 }
             }
             partitionsToChunksMap.put(key, set);
         }
-    }
-
-    public Map<Integer, Set<Integer>> getPartitionsToChunksMap() {
-        return partitionsToChunksMap;
-    }
-
-    public Map<Integer, Integer> getChunksToPartitionMap() {
-        return chunksToPartitionMap;
     }
 }
