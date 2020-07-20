@@ -37,24 +37,10 @@ import com.j_spaces.core.client.ExternalEntry;
 import com.j_spaces.core.client.MetaDataEntry;
 import com.j_spaces.kernel.ClassLoaderHelper;
 import com.j_spaces.kernel.SystemProperties;
-
 import net.jini.core.entry.Entry;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 /**
  * @author Niv Ingberg
@@ -102,12 +88,14 @@ public class TypeDesc implements ITypeDesc {
     private transient int _idPropertyPos;
     private transient int _defaultPropertyPos;
     private transient int _routingPropertyPos;
+
     private transient Class<? extends ExternalEntry> _externalEntryWrapperClass;
     private transient ITypeIntrospector<? extends ExternalEntry> _externalEntryIntrospector;
     private transient boolean _autoGenerateRouting;
     private transient String _typeUidPrefix;
 
-    //  wrapper class name is kept on the space so it can be passed to the proxies, even if the class is not available on the space side 
+
+    //  wrapper class name is kept on the space so it can be passed to the proxies, even if the class is not available on the space side
     // note: document class name and class can be different if the class can't be loaded by the space
     // in this case the class will be SpaceDocument and class name will hold the actual type
     private String _documentWrapperClassName;
@@ -183,6 +171,42 @@ public class TypeDesc implements ITypeDesc {
         validateAndUpdateSequenceNumberInfo(sequenceNumberPropertyName);
         initializeV9_0_0();
         addFifoGroupingIndexesIfNeeded(_indexes, _fifoGroupingName, _fifoGroupingIndexes);
+    }
+
+    public TypeDesc cloneWithoutObjectClass( TypeDesc typeDesc, EntryType entryType ) {
+
+        TypeDesc newTypeDesc = new TypeDesc();
+        newTypeDesc._objectType = entryType;
+
+        newTypeDesc._typeName = typeDesc.getTypeName();
+        newTypeDesc._codeBase = typeDesc.getCodeBase();
+        newTypeDesc._superTypesNames = typeDesc.getSuperClassesNames();
+        newTypeDesc._fixedProperties = typeDesc.getProperties();
+        newTypeDesc._supportsDynamicProperties = typeDesc.supportsDynamicProperties();
+        newTypeDesc._indexes = typeDesc.getIndexes();
+        newTypeDesc._idPropertyName = typeDesc.getIdPropertyName();
+        newTypeDesc._autoGenerateId = typeDesc.isAutoGenerateId();
+        newTypeDesc._documentWrapperClassName = typeDesc.getDocumentWrapperClassName();
+        newTypeDesc._dotnetDocumentWrapperTypeName = typeDesc.getDotnetDocumentWrapperTypeName();
+        newTypeDesc._dotnetDynamicPropertiesStorageType = typeDesc.getDotnetDynamicPropertiesStorageType();
+        newTypeDesc._defaultPropertyName = typeDesc.getDefaultPropertyName();
+        newTypeDesc._routingPropertyName = typeDesc.getRoutingPropertyName();
+        newTypeDesc._fifoGroupingName = typeDesc.getFifoGroupingPropertyPath();
+        newTypeDesc._fifoGroupingIndexes = typeDesc.getFifoGroupingIndexesPaths();
+
+        newTypeDesc._systemType = typeDesc.isSystemType();
+        newTypeDesc._fifoSupport = typeDesc.getFifoSupport();
+        newTypeDesc._replicable = typeDesc.isReplicable();
+        newTypeDesc._supportsOptimisticLocking = typeDesc.supportsOptimisticLocking();
+        newTypeDesc._storageType = typeDesc.getStorageType();
+
+        newTypeDesc._externalEntryWrapperClass = typeDesc.getExternalEntryWrapperClass();
+        newTypeDesc._blobstoreEnabled = typeDesc.isBlobstoreEnabled();
+        newTypeDesc.queryExtensionsInfo = typeDesc.getQueryExtensions();
+
+        newTypeDesc.initializeV9_0_0();
+
+        return newTypeDesc;
     }
 
     private void updateDefaultStorageType() {
@@ -1353,5 +1377,13 @@ public class TypeDesc implements ITypeDesc {
             default:
                 throw new IllegalStateException("Unsupported introspector code: " + code);
         }
+    }
+
+    public String getDocumentWrapperClassName() {
+        return _documentWrapperClassName;
+    }
+
+    public Class<? extends ExternalEntry> getExternalEntryWrapperClass() {
+        return _externalEntryWrapperClass;
     }
 }

@@ -163,6 +163,11 @@ public class JSpaceAdminProxy
         return ((IInternalRemoteJSpaceAdmin) adminImpl).getClassDescriptor(className);
     }
 
+    @Override
+    public ITypeDesc getClassDescriptor(String className, boolean asVirtualType) throws RemoteException {
+        return ((IInternalRemoteJSpaceAdmin) adminImpl).getClassDescriptor(className, asVirtualType);
+    }
+
     public BasicTypeInfo getClassTypeInfo(String className) throws RemoteException {
         return ((IRemoteJSpaceAdmin) adminImpl).getClassTypeInfo(className);
     }

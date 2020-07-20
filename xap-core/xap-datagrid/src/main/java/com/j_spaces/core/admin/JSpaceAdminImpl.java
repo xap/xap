@@ -157,6 +157,11 @@ public class JSpaceAdminImpl extends ServiceAdminImpl
         return ((IInternalRemoteJSpaceAdmin) m_service).getClassDescriptor(className);
     }
 
+    @Override
+    public ITypeDesc getClassDescriptor(String className, boolean asVirtualType) throws RemoteException {
+        return ((IInternalRemoteJSpaceAdmin) m_service).getClassDescriptor(className, asVirtualType);
+    }
+
     public BasicTypeInfo getClassTypeInfo(String className) throws RemoteException {
         return ((IRemoteJSpaceAdmin) m_service).getClassTypeInfo(className);
     }

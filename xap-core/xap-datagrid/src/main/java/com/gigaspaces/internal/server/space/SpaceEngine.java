@@ -63,6 +63,7 @@ import com.gigaspaces.internal.datasource.EDSAdapter;
 import com.gigaspaces.internal.lrmi.stubs.LRMISpaceImpl;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.internal.metadata.TypeDesc;
 import com.gigaspaces.internal.metadata.converter.ConversionException;
 import com.gigaspaces.internal.query.EntryHolderAggregatorContext;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
@@ -129,8 +130,8 @@ import com.j_spaces.core.server.processor.*;
 import com.j_spaces.core.transaction.TransactionHandler;
 import com.j_spaces.kernel.ClassLoaderHelper;
 import com.j_spaces.kernel.*;
-import com.j_spaces.kernel.list.IScanListIterator;
 import com.j_spaces.kernel.list.CircularNumerator;
+import com.j_spaces.kernel.list.IScanListIterator;
 import com.j_spaces.kernel.locks.ILockObject;
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.lease.Lease;
@@ -6614,12 +6615,22 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
      * get the basic class info from the space directory.
      */
     public ITypeDesc getClassTypeInfo(String className) {
+        return getClassTypeInfo(className, false);
+    }
+
+    public ITypeDesc getClassTypeInfo(String className, boolean asVirtualType ) {
         if (className == null)
             throw new RuntimeException("getClassTypeInfo : invalid class name (null)");
 
         final IServerTypeDesc severTTE = _typeManager.getServerTypeDesc(className);
-        if (severTTE != null)
-            return severTTE.getTypeDesc();
+        if (severTTE != null) {
+            ITypeDesc iTypeDesc = severTTE.getTypeDesc();
+            if( asVirtualType && iTypeDesc instanceof TypeDesc ) {
+                TypeDesc typeDesc = ( TypeDesc )iTypeDesc;
+                return typeDesc.cloneWithoutObjectClass( typeDesc, EntryType.DOCUMENT_JAVA );
+            }
+            return iTypeDesc;
+        }
 
         return null;
     }

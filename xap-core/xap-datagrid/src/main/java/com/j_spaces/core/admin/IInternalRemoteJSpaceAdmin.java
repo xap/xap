@@ -243,6 +243,26 @@ public interface IInternalRemoteJSpaceAdmin extends IRemoteJSpaceAdmin, NIOInfoP
      */
     public ITypeDesc getClassDescriptor(String className) throws RemoteException;
 
+
+    /**
+     * Get the basic class information from the space directory.
+     *
+     * <pre><code>
+     * <b>Usage:</b>
+     *   com.j_spaces.core.client.BasicTypeInfo classInfo
+     * 	= spaceAdmin.getClassTypeInfo( className );
+     *
+     *   String[] fieldNames = classInfo.m_FieldsNames;
+     *   String[] fieldTypes = classInfo.m_FieldsTypes;
+     * </code></pre>
+     *
+     * @param className - The name of the class to retrieve the information from.
+     * @param asVirtualType
+     * @return BasicTypeInfo - Which provides class information.
+     * @throws RemoteException if a communication error occurs
+     */
+    public ITypeDesc getClassDescriptor(String className, boolean asVirtualType) throws RemoteException;
+
     /**
      * Forcefully make this space to be primary
      */

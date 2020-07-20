@@ -218,6 +218,11 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     }
 
     @Override
+    public ITypeDesc getClassDescriptor(String className, boolean asVirtualType) throws RemoteException {
+        return ((IInternalRemoteJSpaceAdmin) getProxy()).getClassDescriptor(className, asVirtualType);
+    }
+
+    @Override
     public BasicTypeInfo getClassTypeInfo(String className) throws RemoteException {
         return ((IRemoteJSpaceAdmin) getProxy()).getClassTypeInfo(className);
     }

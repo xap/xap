@@ -72,7 +72,6 @@ import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
-import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterUtils;
 import com.gigaspaces.internal.server.space.demote.DemoteHandler;
 import com.gigaspaces.internal.server.space.executors.SpaceActionExecutor;
 import com.gigaspaces.internal.server.space.iterator.ServerIteratorRequestInfo;
@@ -93,7 +92,6 @@ import com.gigaspaces.internal.transport.AbstractProjectionTemplate;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.transport.ITransportPacket;
-import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.internal.utils.ReplaceInFileUtils;
 import com.gigaspaces.internal.utils.concurrent.GSThreadFactory;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
@@ -3683,10 +3681,14 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     @Override
     public ITypeDesc getClassDescriptor(String className) throws RemoteException {
-        beforeOperation(false, false /*checkQuiesceMode*/, null);
+        return getClassDescriptor(className, false);
+    }
 
+    @Override
+    public ITypeDesc getClassDescriptor(String className, boolean asVirtualType) throws RemoteException {
+        beforeOperation(false, false /*checkQuiesceMode*/, null);
         try {
-            return _engine.getClassTypeInfo(className);
+            return _engine.getClassTypeInfo(className, asVirtualType);
         } catch (Exception ex) {
             throw new RemoteException(ex.getMessage(), ex);
         }
