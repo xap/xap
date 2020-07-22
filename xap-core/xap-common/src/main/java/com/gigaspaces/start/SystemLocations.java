@@ -22,10 +22,11 @@ import java.util.Map;
 public class SystemLocations {
 
     private static final SystemLocations instance = new SystemLocations();
-
     public static SystemLocations singleton() {
         return instance;
     }
+
+
 
     private final Path home;
     private final String homeFwdSlash;
@@ -44,6 +45,8 @@ public class SystemLocations {
     private final Path deploy;
     private final Path sparkHome;
     private final Path userProductHome;
+    private final Path tools;
+    private final Path toolsCli;
 
     private SystemLocations() {
         this.home = initHome();
@@ -62,6 +65,8 @@ public class SystemLocations {
         this.deploy = GsEnv.propertyPath("com.gs.deploy").getAndInit(home.resolve("deploy"));
         this.userProductHome = Paths.get(System.getProperty("user.home"), ".gigaspaces");
         this.sparkHome = fromEnvVar("SPARK_HOME", home.resolve("insightedge").resolve("spark"));
+        this.tools = GsEnv.propertyPath("com.gigaspaces.tools").get(home.resolve("tools"));
+        this.toolsCli = GsEnv.propertyPath("com.gigaspaces.tools.cli").get(tools.resolve("cli"));
         System.setProperty("spark.home", sparkHome.toString());
     }
 
@@ -252,5 +257,21 @@ public class SystemLocations {
 
     public Path userProductHome() {
         return userProductHome;
+    }
+
+    public Path tools() {
+        return tools;
+    }
+
+    public Path tools(String subpath) {
+        return tools.resolve(subpath);
+    }
+
+    public Path toolsCli() {
+        return toolsCli;
+    }
+
+    public Path toolsCli(String subpath) {
+        return toolsCli.resolve(subpath);
     }
 }
