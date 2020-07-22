@@ -1,7 +1,7 @@
 package com.gigaspaces.internal.server.space.repartitioning;
 
 import com.gigaspaces.admin.quiesce.QuiesceToken;
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.space.requests.SpaceRequestInfo;
 import com.j_spaces.core.SpaceContext;
@@ -12,10 +12,10 @@ import java.io.ObjectOutput;
 
 public class DeleteChunksRequestInfo implements SpaceRequestInfo {
 
-    private PartitionToChunksMap newMap;
+    private ClusterTopology newMap;
     private QuiesceToken token;
 
-    DeleteChunksRequestInfo(PartitionToChunksMap newMap, QuiesceToken token) {
+    DeleteChunksRequestInfo(ClusterTopology newMap, QuiesceToken token) {
         this.newMap = newMap;
         this.token = token;
     }
@@ -23,7 +23,7 @@ public class DeleteChunksRequestInfo implements SpaceRequestInfo {
     public DeleteChunksRequestInfo() {
     }
 
-    public PartitionToChunksMap getNewMap() {
+    public ClusterTopology getNewMap() {
         return newMap;
     }
 

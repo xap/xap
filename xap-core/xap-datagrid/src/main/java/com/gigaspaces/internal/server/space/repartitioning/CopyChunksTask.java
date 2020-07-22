@@ -3,7 +3,7 @@ package com.gigaspaces.internal.server.space.repartitioning;
 import com.gigaspaces.admin.quiesce.QuiesceToken;
 import com.gigaspaces.async.AsyncResult;
 import com.gigaspaces.internal.client.spaceproxy.executors.SystemDistributedTask;
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.space.requests.SpaceRequestInfo;
 import com.gigaspaces.internal.space.responses.SpaceResponseInfo;
@@ -22,7 +22,7 @@ public class CopyChunksTask extends SystemDistributedTask<SpaceResponseInfo> imp
     public CopyChunksTask() {
     }
 
-    public CopyChunksTask(PartitionToChunksMap newMap, String spaceName, Map<Integer, String> instanceIds, QuiesceToken token) {
+    public CopyChunksTask(ClusterTopology newMap, String spaceName, Map<Integer, String> instanceIds, QuiesceToken token) {
         this.requestInfo = new CopyChunksRequestInfo(newMap, spaceName, instanceIds, token);
     }
 

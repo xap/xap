@@ -2,10 +2,12 @@ package com.gigaspaces.internal.cluster;
 
 import java.util.*;
 
+import static com.gigaspaces.internal.cluster.ClusterTopology.CHUNKS_COUNT;
+
 public class ScalePlan {
 
-    private final PartitionToChunksMap currentMap;
-    private final PartitionToChunksMap newMap;
+    private final ClusterTopology currentMap;
+    private final ClusterTopology newMap;
     private final Map<Integer, Map<Integer, Set<Integer>>> plans;
 
     public static Map<Integer, Set<Integer>> createPartitionChunksMap(int numOfPartitions) {
@@ -16,14 +18,27 @@ public class ScalePlan {
         return partitionsToChunksMap;
     }
 
-    public static ScalePlan createScaleOutPlan(PartitionToChunksMap currentMap, int factor) {
-        int currPartitionCount = currentMap.getNumOfPartitions();
+    public static Map<Integer, Set<Integer>> createAndInitPartitionChunksMap(int numOfPartitions) {
+        Map<Integer, Set<Integer>> map = createPartitionChunksMap(numOfPartitions);
+        initPartitionChunksMap(numOfPartitions, map);
+        return map;
+    }
+
+    private static void initPartitionChunksMap(int numOfPartitions, Map<Integer, Set<Integer>> map) {
+        for (int chunk = 0; chunk < CHUNKS_COUNT; chunk++) {
+            int partitionId = (chunk % numOfPartitions) + 1;
+            map.get(partitionId).add(chunk);
+        }
+    }
+
+    public static ScalePlan createScaleOutPlan(ClusterTopology currentTopology, int factor) {
+        int currPartitionCount = currentTopology.getNumberOfInstances();
         int newPartitionCount = currPartitionCount + factor;
         Map<Integer, Map<Integer, Set<Integer>>> plans = initPlans(factor, 1, currPartitionCount);
         Map<Integer, Set<Integer>> newMap = createPartitionChunksMap(newPartitionCount);
         Map<Integer, Integer> newChunksCountPerPartition = getChunksCountPerPartitionMap(newPartitionCount);
         int newPartitionId = currPartitionCount + 1;
-        for (Map.Entry<Integer, Set<Integer>> partitionMapping : currentMap.getPartitionsToChunksMap().entrySet()) {
+        for (Map.Entry<Integer, Set<Integer>> partitionMapping : currentTopology.getPartitionsToChunksMap().entrySet()) {
             int currentPartitionId = partitionMapping.getKey();
             int oldPartitionAssignments = 0;
             for (Integer chunk : partitionMapping.getValue()) {
@@ -43,17 +58,19 @@ public class ScalePlan {
                 }
             }
         }
-        return new ScalePlan(currentMap, new PartitionToChunksMap(newMap, currentMap.getGeneration() + 1), plans);
+        ClusterTopology newTopology = currentTopology.copy().setGeneration(currentTopology.getGeneration()+1)
+                .setNumOfInstances(newPartitionCount).setPartitionsToChunksMap(newMap);
+        return new ScalePlan(currentTopology, newTopology, plans);
     }
 
-    public static ScalePlan createScaleInPlan(PartitionToChunksMap currentMap, int factor) {
-        int currPartitionCount = currentMap.getNumOfPartitions();
+    public static ScalePlan createScaleInPlan(ClusterTopology currentTopology, int factor) {
+        int currPartitionCount = currentTopology.getNumberOfInstances();
         int newPartitionCount = currPartitionCount - factor;
         Map<Integer, Map<Integer, Set<Integer>>> plans = initPlans(factor, newPartitionCount + 1, currPartitionCount);
         Map<Integer, Set<Integer>> newMap = createPartitionChunksMap(newPartitionCount);
         Map<Integer, Integer> newChunksCountPerPartition = getChunksCountPerPartitionMap(newPartitionCount);
         int remainingPartitionId = 1;
-        for (Map.Entry<Integer, Set<Integer>> partitionMapping : currentMap.getPartitionsToChunksMap().entrySet()) {
+        for (Map.Entry<Integer, Set<Integer>> partitionMapping : currentTopology.getPartitionsToChunksMap().entrySet()) {
             int currentPartitionId = partitionMapping.getKey();
             if (currentPartitionId <= newPartitionCount) {
                 newMap.get(currentPartitionId).addAll(partitionMapping.getValue());
@@ -72,10 +89,12 @@ public class ScalePlan {
             }
         }
 
-        return new ScalePlan(currentMap, new PartitionToChunksMap(newMap, currentMap.getGeneration() + 1), plans);
+        ClusterTopology newTopology = currentTopology.copy().setGeneration(currentTopology.getGeneration()+1)
+                .setNumOfInstances(newPartitionCount).setPartitionsToChunksMap(newMap);
+        return new ScalePlan(currentTopology, newTopology, plans);
     }
 
-    private ScalePlan(PartitionToChunksMap currentMap, PartitionToChunksMap newMap, Map<Integer, Map<Integer, Set<Integer>>> plans) {
+    private ScalePlan(ClusterTopology currentMap, ClusterTopology newMap, Map<Integer, Map<Integer, Set<Integer>>> plans) {
         this.currentMap = currentMap;
         this.newMap = newMap;
         this.plans = plans;
@@ -89,11 +108,11 @@ public class ScalePlan {
         return result;
     }
 
-    public PartitionToChunksMap getCurrentMap() {
+    public ClusterTopology getCurrentMap() {
         return currentMap;
     }
 
-    public PartitionToChunksMap getNewMap() {
+    public ClusterTopology getNewMap() {
         return newMap;
     }
 
@@ -103,8 +122,8 @@ public class ScalePlan {
 
     private static Map<Integer, Integer> getChunksCountPerPartitionMap(int numOfPartitions) {
         Map<Integer, Integer> newChunksCountPerPartition = new HashMap<>(numOfPartitions);
-        int newChunksPerPartition = PartitionToChunksMap.CHUNKS_COUNT / numOfPartitions;
-        int newLeftover = PartitionToChunksMap.CHUNKS_COUNT % numOfPartitions;
+        int newChunksPerPartition = CHUNKS_COUNT / numOfPartitions;
+        int newLeftover = CHUNKS_COUNT % numOfPartitions;
         for (int i = 1; i <= numOfPartitions; i++) {
             newChunksCountPerPartition.put(i, newChunksPerPartition);
         }

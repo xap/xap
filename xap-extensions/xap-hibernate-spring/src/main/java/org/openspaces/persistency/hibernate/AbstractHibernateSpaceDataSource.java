@@ -19,7 +19,7 @@ package org.openspaces.persistency.hibernate;
 import com.gigaspaces.datasource.DataIterator;
 import com.gigaspaces.datasource.SpaceDataSource;
 import com.gigaspaces.internal.client.spaceproxy.metadata.TypeDescFactory;
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.j_spaces.kernel.ClassLoaderHelper;
 
@@ -242,7 +242,7 @@ public abstract class AbstractHibernateSpaceDataSource extends ManagedEntriesSpa
         if(clusterInfo.supportsHorizontalScale()
                 && clusterInfo.getScalableClusterInfo().getGeneration() != 0
                 && clusterInfo.getScalableClusterInfo().getChunks() != null){
-            String prefix = "MOD(?,"+PartitionToChunksMap.CHUNKS_COUNT+") IN (";
+            String prefix = "MOD(?,"+ ClusterTopology.CHUNKS_COUNT +") IN (";
             List<String> allQueries = clusterInfo.getScalableClusterInfo().getChunks().stream().map(Object::toString).collect(Collectors.toList());
             int pageSize = 100;
             Stream<String> queriesStream = IntStream.range(0, (allQueries.size() + pageSize - 1) / pageSize)

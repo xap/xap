@@ -163,7 +163,7 @@ public class RemoteOperationsExecutorsCluster {
         if(this.getClusterInfo().isChunksRouting() && this._spaceProxy.isClustered()) {
             CompetitiveTask[] taskToExecute = new CompetitiveTask[tasks.length + 1];
             System.arraycopy(tasks, 0, taskToExecute, 0, tasks.length);
-            taskToExecute[tasks.length] = new CheckRoutingGenerationTask(_spaceProxy, _clusterInfo.getChunksMap().getGeneration());
+            taskToExecute[tasks.length] = new CheckRoutingGenerationTask(_spaceProxy, _clusterInfo.getTopology().getGeneration());
             competition = new TimedCompetitionExecutor<>(taskToExecute,
                     timeout,
                     competitionName,
@@ -185,7 +185,7 @@ public class RemoteOperationsExecutorsCluster {
                 }
 
                 if (this.getClusterInfo().isChunksRouting() && winner instanceof CheckRoutingGenerationTask) {
-                    int oldGeneration = this.getClusterInfo().getChunksMap().getGeneration();
+                    int oldGeneration = this.getClusterInfo().getTopology().getGeneration();
                     this._spaceProxy.updateProxyRouter(_spaceProxy.getProxyRouter(), ((CheckRoutingGenerationTask) winner).getNewMap());
                     throw new ChunksMapGenerationException("chunks map generation of client is " + oldGeneration
                             + " but server is at generation " + this._spaceProxy.getProxyRouter().getChunksMapGeneration());

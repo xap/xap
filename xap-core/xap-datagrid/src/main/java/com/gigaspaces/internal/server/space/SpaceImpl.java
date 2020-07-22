@@ -45,7 +45,8 @@ import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
 import com.gigaspaces.internal.client.spaceproxy.executors.SystemTask;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectRequest;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectResult;
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.cluster.ClusterTopologyState;
+import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersistencyBackupSyncIteratorHandler;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersistencySyncListBatch;
@@ -269,7 +270,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private final AttributeStore attributeStore;
     private ZookeeperClient zookeeperClient;
     private final ZookeeperLastPrimaryHandler zookeeperLastPrimaryHandler;
-    private ZookeeperChunksMapHandler zookeeperChunksMapHandler;
+    private ZookeeperTopologyHandler zookeeperTopologyHandler;
 
     private final Map<Class<? extends SystemTask>, SpaceActionExecutor> executorMap = XapExtensions.getInstance().getActionExecutors();
 
@@ -301,9 +302,11 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         this._scalable = !isMirror() && Boolean.parseBoolean(customProperties.getProperty("clusterInfo.supportsHorizontalScale"));
         this._clusterInfo = new SpaceClusterInfo(_jspaceAttr, _spaceMemberName);
         if (_scalable) {
-            zookeeperChunksMapHandler = new ZookeeperChunksMapHandler(_puName, attributeStore);
+            zookeeperTopologyHandler = new ZookeeperTopologyHandler(_puName, attributeStore);
             try {
-                _clusterInfo.setChunksMap(zookeeperChunksMapHandler.getChunksRoutingManager().getMapForPartition(getPartitionIdOneBased()));
+                ClusterTopologyState state = zookeeperTopologyHandler.getClusterTopologyState();
+                ClusterTopology topology = zookeeperTopologyHandler.getClusterTopology(state.getGenerationForPartition(getPartitionIdOneBased()));
+                _clusterInfo.setTopology(topology);
             } catch (IOException e) {
                 throw new UncheckedIOException("Failed to find chunks map in zk - disabling chunks space routing", e);
             }
@@ -639,11 +642,11 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         }
 
         if(sc != null && this.getClusterInfo().isChunksRouting()) {
-            int spaceGeneration = getClusterInfo().getChunksMap().getGeneration();
+            int spaceGeneration = getClusterInfo().getTopology().getGeneration();
             if (sc.getChunksMapGeneration() != spaceGeneration) {
                 ChunksMapGenerationException exception = new ChunksMapGenerationException("chunks map generation of client is " + sc.getChunksMapGeneration()
                         + " but partition " + getPartitionId() + " is at generation " + spaceGeneration);
-                exception.setNewMap(getClusterInfo().getChunksMap());
+                exception.setNewMap(getClusterInfo().getTopology());
                 throw exception;
             }
         }
@@ -754,8 +757,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             }
 
 
-            if (zookeeperChunksMapHandler != null) {
-                zookeeperChunksMapHandler.close();
+            if (zookeeperTopologyHandler != null) {
+                zookeeperTopologyHandler.close();
             }
 
 
@@ -1973,9 +1976,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     }
 
     @Override
-    public PartitionToChunksMap checkChunkMapGeneration(int clientGeneration) {
-        return this._clusterInfo.getChunksMap().getGeneration() != clientGeneration ?
-                this._clusterInfo.getChunksMap() : null;
+    public ClusterTopology checkChunkMapGeneration(int clientGeneration) {
+        return this._clusterInfo.getTopology().getGeneration() != clientGeneration ?
+                this._clusterInfo.getTopology() : null;
 
     }
 
@@ -3221,9 +3224,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             _clusterFailureDetector = initClusterFailureDetector(_clusterPolicy);
             _engine = new SpaceEngine(this);
 
-            if (zookeeperChunksMapHandler != null && _clusterInfo.isChunksRouting()) {
+            if (zookeeperTopologyHandler != null && _clusterInfo.isChunksRouting()) {
                 zookeeperClient = createZooKeeperClient();
-                zookeeperChunksMapHandler.addListener(zookeeperClient, _spaceConfig, getPartitionIdOneBased());
+                zookeeperTopologyHandler.addListener(zookeeperClient, _spaceConfig, getPartitionIdOneBased());
             }
             if (isLookupServiceEnabled)
                 registerLookupService();
@@ -3904,8 +3907,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         if (_scalable) {
             synchronized (this){
                 try {
-                    PartitionToChunksMap newMap = zookeeperChunksMapHandler.getChunksRoutingManager().getMapForPartition(getPartitionIdOneBased());
-                    this._clusterInfo = this._clusterInfo.cloneAndUpdate(newMap);
+                    ClusterTopologyState state = zookeeperTopologyHandler.getClusterTopologyState();
+                    ClusterTopology topology = zookeeperTopologyHandler.getClusterTopology(state.getGenerationForPartition(getPartitionIdOneBased()));
+                    this._clusterInfo = this._clusterInfo.cloneAndUpdate(topology);
                     this.clusterInfoChangedListeners.afterClusterInfoChange(this._clusterInfo);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);

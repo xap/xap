@@ -70,7 +70,7 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
                 return;
             }
             if(_logger.isDebugEnabled())
-                _logger.debug("Initializing space iterator batch task in all " + _clusterInfo.getChunksMap().getNumOfPartitions() + " partitions");
+                _logger.debug("Initializing space iterator batch task in all " + _clusterInfo.getTopology().getNumberOfInstances() + " partitions");
             triggerBatchTaskInAllPartitions();
         } catch (RemoteException | TransactionException e) {
             throw new SpaceRuntimeException("Failed to initialize iterator", e);

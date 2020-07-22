@@ -20,7 +20,7 @@
 package com.j_spaces.core.client;
 
 import com.gigaspaces.config.lrmi.ITransportConfig;
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.j_spaces.core.IJSpaceContainer;
 import com.j_spaces.core.IStubHandler;
@@ -163,13 +163,13 @@ public class SpaceSettings implements Externalizable, Cloneable {
         return _exportedTransportConfig;
     }
 
-    SpaceSettings cloneAndUpdate(PartitionToChunksMap chunksMap) {
+    SpaceSettings cloneAndUpdate(ClusterTopology chunksMap) {
         try {
             SpaceSettings newSpaceSettings = (SpaceSettings) super.clone();
             newSpaceSettings._spaceConfig = _spaceConfig.cloneAndUpdate(chunksMap);
             String totalMembers = newSpaceSettings._spaceURL.getProperty("total_members");
             String[] split = totalMembers.split(",");
-            newSpaceSettings._spaceURL.setProperty("total_members",chunksMap.getNumOfPartitions()+","+split[1]);
+            newSpaceSettings._spaceURL.setProperty("total_members",chunksMap.getNumberOfInstances()+","+split[1]);
             return newSpaceSettings;
         } catch (CloneNotSupportedException e) {
             throw new IllegalStateException("Failed to clone a cloneable object");

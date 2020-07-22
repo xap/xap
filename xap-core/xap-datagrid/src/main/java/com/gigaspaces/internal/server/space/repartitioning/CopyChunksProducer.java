@@ -1,6 +1,6 @@
 package com.gigaspaces.internal.server.space.repartitioning;
 
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregator;
@@ -18,12 +18,12 @@ public class CopyChunksProducer extends SpaceEntriesAggregator<CopyChunksRespons
 
     public static Logger logger = LoggerFactory.getLogger("org.openspaces.admin.internal.pu.scale_horizontal.ScaleManager");
 
-    private PartitionToChunksMap newMap;
+    private ClusterTopology newMap;
     private Map<Integer, List<IEntryPacket>> batchMap;
     private BlockingQueue<Batch> queue;
     private int batchSize;
 
-    CopyChunksProducer(PartitionToChunksMap newMap, BlockingQueue<Batch> queue, int batchSize) {
+    CopyChunksProducer(ClusterTopology newMap, BlockingQueue<Batch> queue, int batchSize) {
         this.newMap = newMap;
         this.batchSize = batchSize;
         this.queue = queue;

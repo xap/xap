@@ -277,7 +277,7 @@ public class SpaceProxyRouter {
     }
 
     public int getChunksMapGeneration() {
-        return _clusterInfo.isChunksRouting() ? _clusterInfo.getChunksMap().getGeneration() : 0;
+        return _clusterInfo.isChunksRouting() ? _clusterInfo.getTopology().getGeneration() : 0;
     }
 
     public void setQuiesceToken(QuiesceToken token) {

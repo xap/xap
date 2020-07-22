@@ -1,7 +1,7 @@
 package com.gigaspaces.internal.server.space.repartitioning;
 
 import com.gigaspaces.admin.quiesce.QuiesceToken;
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.space.requests.SpaceRequestInfo;
 import com.j_spaces.core.SpaceContext;
@@ -15,7 +15,7 @@ import java.util.Map;
 public class CopyChunksRequestInfo implements SpaceRequestInfo {
 
     private SpaceContext context;
-    private PartitionToChunksMap newMap;
+    private ClusterTopology newMap;
     private String spaceName;
     private Map<Integer, String> instanceIds;
     private QuiesceToken token;
@@ -23,14 +23,14 @@ public class CopyChunksRequestInfo implements SpaceRequestInfo {
     public CopyChunksRequestInfo() {
     }
 
-    CopyChunksRequestInfo(PartitionToChunksMap newMap, String spaceName, Map<Integer, String> instanceIds, QuiesceToken token) {
+    CopyChunksRequestInfo(ClusterTopology newMap, String spaceName, Map<Integer, String> instanceIds, QuiesceToken token) {
         this.newMap = newMap;
         this.spaceName = spaceName;
         this.instanceIds = instanceIds;
         this.token = token;
     }
 
-    public PartitionToChunksMap getNewMap() {
+    public ClusterTopology getNewMap() {
         return newMap;
     }
 

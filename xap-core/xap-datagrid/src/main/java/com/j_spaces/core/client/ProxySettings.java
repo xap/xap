@@ -17,7 +17,7 @@
 package com.j_spaces.core.client;
 
 import com.gigaspaces.config.lrmi.ITransportConfig;
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.lrmi.stubs.LRMISpaceImpl;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
@@ -82,7 +82,7 @@ public class ProxySettings implements Externalizable {
         this._uuidHashCode = _spaceSettings.getUuid().hashCode();
         this._clusterInfo = spaceSettings.getSpaceConfig().getClusterInfo();
         this._nonClusterInfo = _clusterInfo.isClustered() ? new SpaceClusterInfo(null, _memberName) : _clusterInfo;
-        this._nonClusterInfo.setChunksMap(_clusterInfo.getChunksMap());
+        this._nonClusterInfo.setTopology(_clusterInfo.getTopology());
         this._isCollocated = RemoteStub.isCollocatedStub(_remoteSpace);
         if (_remoteSpace instanceof LRMISpaceImpl) {
             LRMISpaceImpl lrmiSpaceImpl = (LRMISpaceImpl) _remoteSpace;
@@ -249,7 +249,7 @@ public class ProxySettings implements Externalizable {
         return clustered ? _clusterInfo : _nonClusterInfo;
     }
 
-    public ProxySettings cloneAndUpdate(PartitionToChunksMap chunksMap) {
+    public ProxySettings cloneAndUpdate(ClusterTopology chunksMap) {
         SpaceSettings newSpaceSettings = this._spaceSettings.cloneAndUpdate(chunksMap);
         return new ProxySettings(this._remoteSpace, newSpaceSettings);
     }

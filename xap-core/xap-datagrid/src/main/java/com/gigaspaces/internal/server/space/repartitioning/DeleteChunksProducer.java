@@ -1,6 +1,7 @@
 package com.gigaspaces.internal.server.space.repartitioning;
 
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.cluster.ClusterTopology;
+import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterUtils;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregator;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregatorContext;
@@ -17,12 +18,12 @@ public class DeleteChunksProducer extends SpaceEntriesAggregator<DeleteChunksRes
 
     public static Logger logger = LoggerFactory.getLogger("org.openspaces.admin.internal.pu.scale_horizontal.ScaleManager");
 
-    private PartitionToChunksMap newMap;
+    private ClusterTopology newMap;
     private Map<String, List<Object>> batchMap;
     private BlockingQueue<Batch> queue;
     private int batchSize;
 
-    DeleteChunksProducer(PartitionToChunksMap newMap, BlockingQueue<Batch> queue, int batchSize) {
+    DeleteChunksProducer(ClusterTopology newMap, BlockingQueue<Batch> queue, int batchSize) {
         this.newMap = newMap;
         this.batchSize = batchSize;
         this.queue = queue;

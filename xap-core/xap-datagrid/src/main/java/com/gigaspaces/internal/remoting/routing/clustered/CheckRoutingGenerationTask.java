@@ -2,7 +2,7 @@ package com.gigaspaces.internal.remoting.routing.clustered;
 
 import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
 import com.gigaspaces.internal.client.spaceproxy.router.SpacePartitionedClusterRemoteOperationRouter;
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.cluster.ClusterTopology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +12,7 @@ public class CheckRoutingGenerationTask implements com.gigaspaces.internal.utils
     private final SpaceProxyImpl spaceProxy;
     private final int clientGeneration;
     private boolean isLatestGeneration;
-    private PartitionToChunksMap newMap;
+    private ClusterTopology newMap;
 
 
     CheckRoutingGenerationTask(SpaceProxyImpl executorProxy, int clientCurrentGeneration) {
@@ -25,7 +25,7 @@ public class CheckRoutingGenerationTask implements com.gigaspaces.internal.utils
         return isLatestGeneration;
     }
 
-    public PartitionToChunksMap getNewMap() {
+    public ClusterTopology getNewMap() {
         return newMap;
     }
 
@@ -37,7 +37,7 @@ public class CheckRoutingGenerationTask implements com.gigaspaces.internal.utils
                 logger.debug("couldn't find any cached member");
                 return false;
             }
-            PartitionToChunksMap chunksMap = executorProxy.getExecutor().checkChunkMapGeneration(clientGeneration);
+            ClusterTopology chunksMap = executorProxy.getExecutor().checkChunkMapGeneration(clientGeneration);
             if (chunksMap == null) {
                 logger.debug("generation is ok");
                 this.isLatestGeneration = true;

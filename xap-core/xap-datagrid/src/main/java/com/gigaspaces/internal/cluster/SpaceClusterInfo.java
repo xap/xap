@@ -58,7 +58,7 @@ public class SpaceClusterInfo implements Externalizable {
     private boolean clustered;
     private String clusterName;
     private String clusterSchema;
-    private PartitionToChunksMap chunksMap;
+    private ClusterTopology topology;
     private boolean replicated;
     private boolean primaryElectionAvailable;
     private boolean activeActive;
@@ -144,10 +144,10 @@ public class SpaceClusterInfo implements Externalizable {
         return broadcastDisabled;
     }
 
-    public SpaceClusterInfo cloneAndUpdate(PartitionToChunksMap newChunksMap){
+    public SpaceClusterInfo cloneAndUpdate(ClusterTopology newChunksMap){
         SpaceClusterInfo newClusterInfo = new SpaceClusterInfo(this);
-        newClusterInfo.chunksMap = newChunksMap;
-        newClusterInfo.numOfPartitions = newChunksMap.getNumOfPartitions();
+        newClusterInfo.topology = newChunksMap;
+        newClusterInfo.numOfPartitions = newChunksMap.getNumberOfInstances();
         newClusterInfo.partitions = generatePartitionsInfo(newClusterInfo.clusterName, newClusterInfo.numOfPartitions, newClusterInfo.numOfBackups);
         newClusterInfo.membersNames = new ArrayList<>();
         for (SpaceClusterPartitionInfo partition : newClusterInfo.partitions) {
@@ -171,8 +171,8 @@ public class SpaceClusterInfo implements Externalizable {
         return numOfPartitions;
     }
 
-    public PartitionToChunksMap getChunksMap() {
-        return chunksMap;
+    public ClusterTopology getTopology() {
+        return topology;
     }
 
     public int getNumberOfBackups() {
@@ -250,8 +250,8 @@ public class SpaceClusterInfo implements Externalizable {
         return clusterSchema;
     }
 
-    public void setChunksMap(PartitionToChunksMap chunksMap) {
-        this.chunksMap = chunksMap;
+    public void setTopology(ClusterTopology topology) {
+        this.topology = topology;
     }
 
     private static String getLoadBalancingPolicy(ClusterPolicy clusterPolicy) {
@@ -381,7 +381,7 @@ public class SpaceClusterInfo implements Externalizable {
         if (loadBalancerType != SpaceProxyLoadBalancerType.STICKY)
             out.writeByte(loadBalancerType.getCode());
         if(version.greaterOrEquals(PlatformLogicalVersion.v15_5_0)) {
-            IOUtils.writeObject(out, chunksMap);
+            IOUtils.writeObject(out, topology);
         }
     }
 
@@ -421,20 +421,20 @@ public class SpaceClusterInfo implements Externalizable {
         this.syncReplication = (flags & FLAG_SYNC_REPLICATION) != 0;
         this.hasReplicationTargets = (flags & FLAG_HAS_REPLICATION_TARGETS) != 0;
         if(version.greaterOrEquals(PlatformLogicalVersion.v15_5_0)) {
-            this.chunksMap = IOUtils.readObject(in);
+            this.topology = IOUtils.readObject(in);
         }
         initialize();
     }
 
     public boolean isChunksRouting() {
-        return this.chunksMap != null;
+        return this.topology != null;
     }
 
     public int getPartitionId(int routingValue) {
-        return this.chunksMap.getPartitionId(routingValue);
+        return this.topology.getPartitionId(routingValue);
     }
 
     public int getPartitionId(long routingValue) {
-        return this.chunksMap.getPartitionId(routingValue);
+        return this.topology.getPartitionId(routingValue);
     }
 }

@@ -26,7 +26,7 @@ import com.gigaspaces.grid.zone.GridZoneProvider;
 import com.gigaspaces.internal.client.spaceproxy.DirectSpaceProxyFactoryImpl;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectRequest;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectResult;
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersistencySyncListBatch;
 import com.gigaspaces.internal.cluster.node.impl.router.spacefinder.IReplicationConnectionProxy;
 import com.gigaspaces.internal.jvm.JVMDetails;
@@ -635,7 +635,7 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     }
 
     @Override
-    public PartitionToChunksMap checkChunkMapGeneration(int clientGeneration) {
+    public ClusterTopology checkChunkMapGeneration(int clientGeneration) {
         return getProxy().checkChunkMapGeneration(clientGeneration);
     }
 

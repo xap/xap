@@ -3,7 +3,7 @@ package com.gigaspaces.internal.server.space.repartitioning;
 import com.gigaspaces.admin.quiesce.QuiesceToken;
 import com.gigaspaces.async.AsyncResult;
 import com.gigaspaces.internal.client.spaceproxy.executors.SystemDistributedTask;
-import com.gigaspaces.internal.cluster.PartitionToChunksMap;
+import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.space.requests.SpaceRequestInfo;
 import com.gigaspaces.internal.space.responses.SpaceResponseInfo;
@@ -20,7 +20,7 @@ public class DeleteChunksTask extends SystemDistributedTask<SpaceResponseInfo> i
     public DeleteChunksTask() {
     }
 
-    public DeleteChunksTask(PartitionToChunksMap newMap, QuiesceToken token) {
+    public DeleteChunksTask(ClusterTopology newMap, QuiesceToken token) {
         this.requestInfo = new DeleteChunksRequestInfo(newMap, token);
     }
 
