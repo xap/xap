@@ -47,7 +47,8 @@ public class RestServiceFactory extends ServiceFactory {
                 .appendOptionalJars("jackson")
                 .appendOptionalJars("metrics")
                 .appendOptionalJars("jdbc")
-                .appendPlatformJars("zookeeper");
+                .appendPlatformJars("zookeeper")
+                .appendAny(SystemLocations.singleton().toolsCli());
 
     }
 }
