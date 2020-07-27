@@ -19,6 +19,7 @@ package com.gigaspaces.utils.jdbc;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 
 /**
  * Encapsulates information on a table's column.
@@ -29,10 +30,12 @@ import java.sql.SQLException;
 public class ColumnInfo {
     private final String name;
     private final JDBCType type;
+    private final String sampleValue;
 
-    ColumnInfo(ResultSet rs) throws SQLException {
+    ColumnInfo(ResultSet rs,  Map<String,String> sampleData) throws SQLException {
         this.name = rs.getString("COLUMN_NAME");
         this.type = JDBCType.valueOf(rs.getInt("DATA_TYPE"));
+        this.sampleValue = sampleData.get(name);
     }
 
     public String getName() {
@@ -41,5 +44,9 @@ public class ColumnInfo {
 
     public JDBCType getType() {
         return type;
+    }
+
+    public String getSampleValue() {
+        return sampleValue;
     }
 }

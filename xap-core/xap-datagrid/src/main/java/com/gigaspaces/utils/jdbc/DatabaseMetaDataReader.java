@@ -30,6 +30,8 @@ import java.nio.file.Path;
 import java.sql.*;
 import java.util.*;
 
+import static com.gigaspaces.internal.server.space.SpaceUidFactory.SEPARATOR;
+
 /**
  * API for reading metadata from a database using JDBC.
  *
@@ -123,7 +125,19 @@ public class DatabaseMetaDataReader implements Closeable {
     public TableInfo getTableInfo(TableId table) {
         try {
             List<String> tablePrimaryKey = getTablePrimaryKey(table);
-            return new TableInfo(table, getTableColumns(table), tablePrimaryKey, getTableIndexes(table,tablePrimaryKey));
+            //get one row result set use use - beforeFirst /first
+            Map<String,String> oneRowData = new HashMap<>();
+            boolean isUIDColumnExist = false;
+            try (Statement statement = connection.createStatement()) {
+                try (ResultSet rs = statement.executeQuery("SELECT * FROM " + table.getName() + " limit 1")) {
+                    if (rs.next()) {
+                        oneRowData = getOneDataRow(rs);
+                        isUIDColumnExist = getIsUIDColumnExist(rs, tablePrimaryKey);
+                    }
+                }
+            }
+
+            return new TableInfo(table, getTableColumns(table,oneRowData), tablePrimaryKey, getTableIndexes(table,tablePrimaryKey) , isUIDColumnExist);
         } catch (SQLException e) {
             logger.warn("Table "+table+" SQL state: "+e.getSQLState()+" "+e.getErrorCode(),e);
         } catch (Exception t) {
@@ -132,11 +146,12 @@ public class DatabaseMetaDataReader implements Closeable {
         return null;
     }
 
-    public List<ColumnInfo> getTableColumns(TableId table) throws SQLException {
+    public List<ColumnInfo> getTableColumns(TableId table, Map<String,String> sampleDataMap) throws SQLException {
         List<ColumnInfo> result = new ArrayList<>();
         try (ResultSet rs = metaData.getColumns(table.getCatalog(), table.getSchema(), table.getName(), "%")) {
             while (rs.next()) {
-                result.add(new ColumnInfo(rs));
+
+                result.add(new ColumnInfo(rs,sampleDataMap));
             }
         }
         return result;
@@ -191,6 +206,45 @@ public class DatabaseMetaDataReader implements Closeable {
         HashSet<String> primaryColumnSet = new HashSet<>(tablePrimaryKey);
 
         return primaryColumnSet.contains(column);
+    }
+
+    private boolean getIsUIDColumnExist(ResultSet rs, List<String> tablePrimaryKey) {
+        boolean isUIDColumnExist = false;
+
+        try {
+
+            for (String primaryKey : tablePrimaryKey) {
+                String value = String.valueOf(rs.getObject(primaryKey));
+
+                if (value.indexOf(SEPARATOR) != -1) {
+                    isUIDColumnExist = true;
+                    break;
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return isUIDColumnExist;
+    }
+
+
+    private Map<String,String> getOneDataRow(ResultSet rs) {
+
+        Map<String,String> sampleDataByColumn = new HashMap<>();
+        try {
+
+            for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
+
+                sampleDataByColumn.put(rs.getMetaData().getColumnName(i+1), String.valueOf(rs.getObject(i + 1)));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return sampleDataByColumn;
     }
 
     public static class Builder {

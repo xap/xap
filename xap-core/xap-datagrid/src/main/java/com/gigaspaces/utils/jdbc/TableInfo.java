@@ -29,12 +29,14 @@ public class TableInfo {
     private final List<ColumnInfo> columns;
     private final List<String> primaryKey;
     private final List<IndexInfo> indexes;
+    private final boolean isUIDColumnExist;
 
-    TableInfo(TableId id, List<ColumnInfo> columns, List<String> primaryKey, List<IndexInfo> indexes) {
+    TableInfo(TableId id, List<ColumnInfo> columns, List<String> primaryKey, List<IndexInfo> indexes, boolean isUIDColumnExist) {
         this.id = id;
         this.columns = columns;
         this.primaryKey = primaryKey;
         this.indexes = indexes;
+        this.isUIDColumnExist = isUIDColumnExist;
     }
 
     public TableId getId() {
@@ -51,5 +53,9 @@ public class TableInfo {
 
     public List<IndexInfo> getIndexes() {
         return indexes;
+    }
+
+    public boolean isUIDColumnExist() {
+        return isUIDColumnExist;
     }
 }
