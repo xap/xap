@@ -67,6 +67,10 @@ public class ResponsePacket implements Serializable, Iterable<IEntryPacket> {
         this.resultEntry = resultEntry;
     }
 
+    Collection<IEntryPacket> getResultSet() {
+        return this.resultSet;
+    }
+
     @Override
     public String toString() {
 

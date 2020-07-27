@@ -131,7 +131,7 @@ public class GPreparedStatement extends GStatement implements PreparedStatement 
         ResponsePacket response = connection.sendPreparedStatement(sql, _preparedValuesCollection.getCurrentValues());
         //after the statement was sent and checked, we can return the result
         if (response.getResultEntry() != null) {
-            buildResultSet(response.getResultEntry());
+            buildResultSet(response);
             return true;
         } else {
             updateCount = response.getIntResult();
@@ -398,7 +398,7 @@ public class GPreparedStatement extends GStatement implements PreparedStatement 
         } else {
             ResponsePacket response = connection.sendPreparedStatement(sql, _preparedValuesCollection.getCurrentValues());
             //	query was sent and checked
-            buildResultSet(response.getResultEntry()); //build the ResultSet
+            buildResultSet(response); //build the ResultSet
         }
         return resultSet;
     }

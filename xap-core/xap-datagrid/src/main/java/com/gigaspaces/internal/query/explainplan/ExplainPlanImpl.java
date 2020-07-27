@@ -37,6 +37,9 @@ public class ExplainPlanImpl implements ExplainPlan {
     private final Map<String,SingleExplainPlan> plans = new HashMap<String, SingleExplainPlan>();
     private final IntegerObjectMap<String> indexInfoDescCache = CollectionsFactory.getInstance().createIntegerObjectMap();
 
+    /**
+     * @param query can be null
+     */
     public ExplainPlanImpl(SQLQuery query) {
         this.query = query;
     }
@@ -73,14 +76,14 @@ public class ExplainPlanImpl implements ExplainPlan {
     @Override
     public String toString() {
         TextReportFormatter report = new TextReportFormatter();
-        report.line("******************** Explain plan report ********************");
+        report.line(ExplainPlanUtil.REPORT_START);
         append(report);
-        report.line("*************************************************************");
+        report.line(ExplainPlanUtil.REPORT_END);
         return report.toString();
     }
 
     protected void append(TextReportFormatter report) {
-        report.line("Query: " + query.toString());
+        report.line("Query: " + query );
         if (plans.isEmpty()) {
             report.line("Not executed yet");
         } else {

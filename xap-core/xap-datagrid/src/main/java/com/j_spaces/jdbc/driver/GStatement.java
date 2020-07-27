@@ -17,20 +17,15 @@
 package com.j_spaces.jdbc.driver;
 
 import com.gigaspaces.logger.Constants;
+import com.j_spaces.jdbc.ExplainPlanResponsePacket;
 import com.j_spaces.jdbc.ResponsePacket;
 import com.j_spaces.jdbc.ResultEntry;
-
-import java.sql.BatchUpdateException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The Statement implementation using a GConnection and a GResultSet
@@ -303,7 +298,7 @@ public class GStatement implements Statement {
 
         ResponsePacket packet = connection.sendStatement(sql);
         if (packet.getResultEntry() != null) {
-            buildResultSet(packet.getResultEntry());
+            buildResultSet(packet);
             return true;
         } else {
             updateCount = packet.getIntResult();
@@ -410,13 +405,20 @@ public class GStatement implements Statement {
 
         ResponsePacket response = connection.sendStatement(sql);
         //query was sent and checked
-        buildResultSet(response.getResultEntry()); //build the ResultSet
+        buildResultSet(response); //build the ResultSet
         return resultSet;
     }
 
     //translate the result entry to a GResultSet
-    protected void buildResultSet(ResultEntry entry) {
-        resultSet = new GResultSet(this, entry);
+    protected void buildResultSet(ResponsePacket response) {
+        ResultEntry entry = response.getResultEntry();
+        if( response instanceof ExplainPlanResponsePacket ){
+            resultSet = new ExplainPlanGResultSet(this, entry,
+                        ((ExplainPlanResponsePacket)response).getExplainPlan() );
+        }
+        else {
+            resultSet = new GResultSet(this, entry);
+        }
     }
 
     public boolean isClosed() throws SQLException {

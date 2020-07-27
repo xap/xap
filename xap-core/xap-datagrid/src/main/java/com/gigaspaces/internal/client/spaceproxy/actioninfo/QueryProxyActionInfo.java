@@ -27,10 +27,7 @@ import com.j_spaces.core.client.ReadModifiers;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.jdbc.builder.SQLQueryTemplatePacket;
 import com.j_spaces.map.Envelope;
-
 import net.jini.core.transaction.Transaction;
-
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

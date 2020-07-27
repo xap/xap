@@ -20,30 +20,26 @@ import com.gigaspaces.client.transaction.ITransactionManagerProvider;
 import com.gigaspaces.client.transaction.TransactionManagerProviderFactory;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.exceptions.BatchQueryException;
+import com.gigaspaces.internal.query.explainplan.ExplainPlanImpl;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.security.service.SecurityInterceptor;
 import com.j_spaces.core.IJSpace;
+import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.jdbc.driver.GConnection;
 import com.j_spaces.jdbc.parser.grammar.SqlParser;
 import com.j_spaces.jdbc.request.SetAutoCommitRequest;
 import com.j_spaces.jdbc.request.SetTransaction;
 import com.j_spaces.jdbc.request.SetUseSingleSpace;
-
 import net.jini.core.lease.LeaseDeniedException;
-import net.jini.core.transaction.CannotCommitException;
-import net.jini.core.transaction.Transaction;
-import net.jini.core.transaction.TransactionException;
-import net.jini.core.transaction.TransactionFactory;
-import net.jini.core.transaction.UnknownTransactionException;
+import net.jini.core.transaction.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * QueryHandler executes the JDBC  statements set by the {@link GConnection}. For each statement the
@@ -94,8 +90,20 @@ public class QueryHandler {
                 attachTransaction(session, query);
                 query.setSession(session);
                 query.setSecurityInterceptor(securityInterceptor);
+
+                if( query instanceof SelectQuery &&
+                    request.getModifiers() != null &&
+                    Modifiers.contains( request.getModifiers(), Modifiers.EXPLAIN_PLAN ) &&
+                    ( ( SelectQuery )query ).getExplainPlan() == null ){
+
+                    ( ( SelectQuery )query ).setExplainPlan( new ExplainPlanImpl( null ) );
+                }
                 response = query.executeOnSpace(space,
                         session.getTransaction());
+                if( query instanceof AbstractDMLQuery && ((AbstractDMLQuery)query ).getExplainPlan() != null ){
+                    response = new ExplainPlanResponsePacket( response, ((AbstractDMLQuery)query ).getExplainPlan().toString() );
+                }
+
                 session.setUnderTransaction(request.getStatement());
                 commitForcedTransaction(query, session);
                 break;
@@ -186,7 +194,7 @@ public class QueryHandler {
             }
             // Clone the query  to avoid concurrency issues
             else if (query instanceof AbstractDMLQuery) {
-                query = (Query) ((AbstractDMLQuery) query).clone();
+                query = ((AbstractDMLQuery) query).clone();
             }
 
             return query;

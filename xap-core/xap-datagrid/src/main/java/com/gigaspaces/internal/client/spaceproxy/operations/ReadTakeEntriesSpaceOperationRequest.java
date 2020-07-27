@@ -31,23 +31,17 @@ import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.utils.Textualizer;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.client.ReadModifiers;
-
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
 
 /**
  * @author idan
@@ -396,7 +390,7 @@ public class ReadTakeEntriesSpaceOperationRequest extends SpaceOperationRequest<
     }
 
     private void processExplainPlan(SpaceOperationResult result) {
-        if (result != null && result.getExplainPlan() != null) {
+        if (result != null && result.getExplainPlan() != null && explainPlan != null) {
             explainPlan.aggregate(result.getExplainPlan());
         }
     }
