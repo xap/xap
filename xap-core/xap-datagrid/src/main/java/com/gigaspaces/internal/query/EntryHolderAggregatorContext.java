@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.query;
 
+import com.gigaspaces.api.InternalApi;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
@@ -86,5 +87,10 @@ public class EntryHolderAggregatorContext extends SpaceEntriesAggregatorContext 
     @Override
     public ITypeDesc getTypeDescriptor() {
         return entryData.getEntryTypeDesc().getTypeDesc();
+    }
+
+    @InternalApi
+    public IEntryData getEntryData() {
+        return entryData;
     }
 }
