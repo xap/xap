@@ -16,14 +16,13 @@
 
 package com.gigaspaces.internal.query;
 
-import com.gigaspaces.api.InternalApi;
-import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.transport.EntryPacketFactory;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregator;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregatorContext;
+import com.gigaspaces.server.ServerEntry;
 
 import java.util.List;
 
@@ -77,20 +76,7 @@ public class EntryHolderAggregatorContext extends SpaceEntriesAggregatorContext 
     }
 
     @Override
-    protected Object getPathValueImpl(String path) {
-        final ITypeDesc typeDesc = entryData.getEntryTypeDesc().getTypeDesc();
-        if (typeDesc.isAutoGenerateId() && typeDesc.getIdPropertyName().equals(path))
-            return uid;
-        return entryData.getPathValue(path);
-    }
-
-    @Override
-    public ITypeDesc getTypeDescriptor() {
-        return entryData.getEntryTypeDesc().getTypeDesc();
-    }
-
-    @InternalApi
-    public IEntryData getEntryData() {
+    public ServerEntry getServerEntry() {
         return entryData;
     }
 }

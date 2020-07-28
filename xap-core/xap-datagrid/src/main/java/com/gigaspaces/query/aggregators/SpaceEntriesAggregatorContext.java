@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package com.gigaspaces.query.aggregators;
 
-import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.query.RawEntry;
+import com.gigaspaces.metadata.SpaceTypeDescriptor;
+import com.gigaspaces.server.ServerEntry;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -62,9 +61,24 @@ public abstract class SpaceEntriesAggregatorContext {
 
     public abstract void applyProjectionTemplate(RawEntry entry);
 
-    protected abstract Object getPathValueImpl(String path);
+    protected Object getPathValueImpl(String path) {
+        final SpaceTypeDescriptor typeDesc = getTypeDescriptor();
+        if (typeDesc.isAutoGenerateId() && typeDesc.getIdPropertyName().equals(path))
+            return getEntryUid();
+        return getServerEntry().getPathValue(path);
+    }
 
-    public abstract ITypeDesc getTypeDescriptor();
+    /**
+     * @since 15.5
+     */
+    public abstract ServerEntry getServerEntry();
+
+    /**
+     * @since 15.5
+     */
+    public SpaceTypeDescriptor getTypeDescriptor() {
+        return getServerEntry().getSpaceTypeDescriptor();
+    }
 
     protected void aggregate() {
         if (pathCache != null)
