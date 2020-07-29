@@ -20,6 +20,7 @@ import com.gigaspaces.query.extension.SpaceQueryExtension;
 
 import org.apache.lucene.analysis.Analyzer;
 
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -34,6 +35,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @SpaceQueryExtension(providerClass = LuceneTextSearchQueryExtensionProvider.class)
 @Target({METHOD, TYPE})
 @Retention(RUNTIME)
+@Repeatable(value = SpaceTextAnalyzers.class)
 public @interface SpaceTextAnalyzer {
 
     Class<? extends Analyzer> analyzer();

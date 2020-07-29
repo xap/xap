@@ -18,6 +18,7 @@ package org.openspaces.textsearch;
 
 import com.gigaspaces.query.extension.SpaceQueryExtension;
 
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -31,6 +32,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @SpaceQueryExtension(providerClass = LuceneTextSearchQueryExtensionProvider.class)
 @Target(METHOD)
 @Retention(RUNTIME)
+@Repeatable(value = SpaceTextIndexes.class)
 public @interface SpaceTextIndex {
 
     String path() default "";

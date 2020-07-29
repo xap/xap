@@ -19,6 +19,7 @@ package com.gigaspaces.annotation.pojo;
 
 import com.gigaspaces.metadata.index.SpaceIndexType;
 
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -57,6 +58,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target(METHOD)
 @Retention(RUNTIME)
+@Repeatable(value = SpaceIndexes.class)
 public @interface SpaceIndex {
     public static final String EMPTY = "";
 

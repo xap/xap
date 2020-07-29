@@ -16,11 +16,13 @@
 
 package com.gigaspaces.internal.metadata.annotations;
 
+import com.gigaspaces.annotation.pojo.SpaceIndexes;
 import com.gigaspaces.internal.query.valuegetter.ISpaceValueGetter;
 import com.gigaspaces.metadata.index.SpaceIndexType;
 import com.gigaspaces.server.ServerEntry;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -45,6 +47,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target(ElementType.TYPE)
 @Retention(RUNTIME)
+@Repeatable(value = CustomSpaceIndexes.class)
 public @interface CustomSpaceIndex {
     public final static String EMPTY_VALUE = "";
 

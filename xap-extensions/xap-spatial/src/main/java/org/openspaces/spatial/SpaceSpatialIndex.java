@@ -16,10 +16,12 @@
 
 package org.openspaces.spatial;
 
+import com.gigaspaces.internal.metadata.annotations.CustomSpaceIndexes;
 import com.gigaspaces.query.extension.SpaceQueryExtension;
 
 import org.openspaces.spatial.spi.LuceneSpatialQueryExtensionProvider;
 
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -33,6 +35,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @SpaceQueryExtension(providerClass = LuceneSpatialQueryExtensionProvider.class)
 @Target(METHOD)
 @Retention(RUNTIME)
+@Repeatable(value = SpaceSpatialIndexes.class)
 public @interface SpaceSpatialIndex {
     /**
      * Defines the index property path. The path specifies which property path is indexed. If none
