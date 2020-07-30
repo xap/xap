@@ -102,10 +102,13 @@ public class SystemInfo {
         private XapLookup(XapManagerClusterInfo managerClusterInfo) {
             setGroups(System.getProperty(LOOKUP_GROUPS_SYS_PROP, GsEnv.get("LOOKUP_GROUPS")));
             String explicitLocators = System.getProperty(LOOKUP_LOCATORS_SYS_PROP, GsEnv.get("LOOKUP_LOCATORS"));
-            String managerLocators = toLocators(managerClusterInfo);
-            if (!BootIOUtils.isEmpty(managerLocators) && !BootIOUtils.isEmpty(explicitLocators) && !managerLocators.equals(explicitLocators))
-                throw new IllegalStateException("Ambiguous locators: Manager locators: [" + managerLocators +"], explicit locators: [" + explicitLocators + "]");
-            setLocators(!managerLocators.isEmpty() ? managerLocators : explicitLocators);
+//            String managerLocators = toLocators(managerClusterInfo);
+//            if (!BootIOUtils.isEmpty(managerLocators) && !BootIOUtils.isEmpty(explicitLocators) && !managerLocators.equals(explicitLocators))
+//                throw new IllegalStateException("Ambiguous locators: Manager locators: [" + managerLocators +"], explicit locators: [" + explicitLocators + "]");
+//            setLocators(!managerLocators.isEmpty() ? managerLocators : explicitLocators);
+
+             // PLX-39563, PLX-68245: Allow standalone xap witness
+             setLocators(BootIOUtils.isEmpty(explicitLocators) ? toLocators(managerClusterInfo) : explicitLocators);
         }
 
         private static String toLocators(XapManagerClusterInfo managerClusterInfo) {
