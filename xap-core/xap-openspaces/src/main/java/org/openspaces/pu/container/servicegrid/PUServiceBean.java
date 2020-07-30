@@ -48,6 +48,8 @@ import java.util.Map;
  */
 public interface PUServiceBean extends NIOInfoProvider, OSInfoProvider, JVMInfoProvider, GridZoneProvider, Remote, ServiceState, ServiceProxyAccessor, Service, QuiesceAware {
 
+    void updateClusterInfo();
+
     /**
      * Should this member be checked to see if it is alive or not.
      */

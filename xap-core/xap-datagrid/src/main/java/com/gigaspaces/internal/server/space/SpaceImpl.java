@@ -3900,7 +3900,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     }
 
     @Override
-    public void updateChunksMap() {
+    public void updateClusterInfo() {
         if (_scalable) {
             synchronized (this){
                 try {

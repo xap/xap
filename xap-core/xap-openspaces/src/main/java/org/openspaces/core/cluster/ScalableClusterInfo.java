@@ -59,6 +59,17 @@ public class ScalableClusterInfo extends ClusterInfo implements Externalizable {
         return chunks;
     }
 
+    public ScalableClusterInfo copy(){
+        ScalableClusterInfo clusterInfo = new ScalableClusterInfo();
+        clusterInfo.setBackupId(getBackupId());
+        clusterInfo.setInstanceId(getInstanceId());
+        clusterInfo.setNumberOfBackups(getNumberOfBackups());
+        clusterInfo.setNumberOfInstances(getNumberOfInstances());
+        clusterInfo.setSchema(getSchema());
+        clusterInfo.setName(getName());
+        return clusterInfo;
+    }
+
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         IOUtils.writeString(out, getName());
@@ -91,7 +102,7 @@ public class ScalableClusterInfo extends ClusterInfo implements Externalizable {
         if (numOfChunks != -1) {
             chunks = new LinkedHashSet<>(numOfChunks);
             for (short i = 0 ; i < numOfChunks ; i++) {
-                chunks.add(Integer.valueOf(in.readShort()));
+                chunks.add((int) in.readShort());
             }
         }
     }
@@ -99,11 +110,11 @@ public class ScalableClusterInfo extends ClusterInfo implements Externalizable {
     private static final int INT_NULL_VALUE = -1;
 
     private static void writeNullableInt(ObjectOutput out, Integer value) throws IOException {
-        out.writeInt(value != null ? value.intValue() : INT_NULL_VALUE);
+        out.writeInt(value != null ? value : INT_NULL_VALUE);
     }
 
     private static Integer readNullableInt(ObjectInput in) throws IOException {
         int value = in.readInt();
-        return value != INT_NULL_VALUE ? Integer.valueOf(value) : null;
+        return value != INT_NULL_VALUE ? value : null;
     }
 }

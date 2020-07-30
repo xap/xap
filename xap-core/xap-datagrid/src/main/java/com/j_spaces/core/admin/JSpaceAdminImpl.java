@@ -112,8 +112,8 @@ public class JSpaceAdminImpl extends ServiceAdminImpl
     }
 
     @Override
-    public void updateChunksMap() throws RemoteException {
-        ((IRemoteJSpaceAdmin) m_service).updateChunksMap();
+    public void updateClusterInfo() throws RemoteException {
+        ((IRemoteJSpaceAdmin) m_service).updateClusterInfo();
     }
 
     public String getName() throws RemoteException {

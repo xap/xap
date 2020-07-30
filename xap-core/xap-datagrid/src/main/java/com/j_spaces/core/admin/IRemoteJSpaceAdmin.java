@@ -261,5 +261,5 @@ public interface IRemoteJSpaceAdmin extends Remote {
      *
      * @throws RemoteException if a communication error occurs
      */
-    void updateChunksMap() throws RemoteException;
+    void updateClusterInfo() throws RemoteException;
 }
