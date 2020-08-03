@@ -38,7 +38,7 @@ public class HsqlDbReporter extends MetricReporter {
     private final SharedJdbcConnectionWrapper connectionWrapper;
     private final String dbTypeString;
     private final Map<String,PreparedStatement> _preparedStatements = new HashMap<>();
-    private final Set<PreparedStatement> statementsForBatch = new HashSet<>();
+    private final Set<PreparedStatement> statementsForBatch = new LinkedHashSet<>();
 
     private final static String EXCEPTION_MESSAGE_MISSING_OBJECT = "user lacks privilege or object not found: ";
 
