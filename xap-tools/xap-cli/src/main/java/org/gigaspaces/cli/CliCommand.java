@@ -32,8 +32,8 @@ public abstract class CliCommand implements Callable<Object> {
 
     @Override
     public Object call() throws Exception {
-        beforeExecute();
         try {
+            beforeExecute();
             execute();
         } catch (Exception e) {
             if (LOGGER.isTraceEnabled()) {
@@ -52,7 +52,7 @@ public abstract class CliCommand implements Callable<Object> {
         LOGGER = LoggerFactory.getLogger(Constants.LOGGER_CLI);
     }
 
-    protected void beforeExecute() {
+    protected void beforeExecute() throws CliCommandException {
     }
 
     protected abstract void execute() throws Exception;
