@@ -12,54 +12,68 @@
     </parent>
 
     <dependencies>
+        <!-- Compile dependencies (packaged in processing unit jar via shade plugin) -->
         <dependency>
             <groupId>{{project.groupId}}</groupId>
             <artifactId>{{project.artifactId}}-model</artifactId>
             <version>${project.version}</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
             <version>${hibernate.version}</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>${db.driver.groupId}</groupId>
             <artifactId>${db.driver.artifactId}</artifactId>
             <version>${db.driver.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <!-- Provided dependencies (included in GigaSpaces container) -->
+        <dependency>
+            <groupId>org.gigaspaces</groupId>
+            <artifactId>xap-openspaces</artifactId>
+            <version>${gs.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.gigaspaces</groupId>
+            <artifactId>xap-hibernate-spring</artifactId>
+            <version>${gs.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
-    <profiles>
-        <profile>
-            <id>package-dependencies</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <version>3.2.0</version>
-                        <executions>
-                            <execution>
-                                <id>package-dependencies</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <configuration>
-                                    <finalName>classes</finalName>
-                                    <appendAssemblyId>false</appendAssemblyId>
-                                    <attach>false</attach>
-                                    <descriptors>
-                                        <descriptor>src/assembly/dependencies.xml</descriptor>
-                                    </descriptors>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <transformers>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                    </transformers>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/MANIFEST.MF</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
