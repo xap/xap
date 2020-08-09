@@ -12,15 +12,18 @@
     </parent>
 
     <dependencies>
+        <!-- Provided dependencies (included in GigaSpaces container) -->
         <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-openspaces</artifactId>
             <version>${gs.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-hibernate-spring</artifactId>
             <version>${gs.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>
