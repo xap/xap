@@ -1,2 +1,2 @@
 @echo off
-call mvn package -DskipTests
+call mvn package %*
