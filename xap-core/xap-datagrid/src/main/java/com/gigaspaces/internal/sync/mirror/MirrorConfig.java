@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 final public class MirrorConfig {
     private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_MIRROR_REPLICATION);
 
-    private static final int DEFAULT_NUM_OF_PARTITIONS = 100;
+    private static final int DEFAULT_NUM_OF_PARTITIONS = 1;
     private static final int DEFAULT_BACKUPS_PER_PARTITION = 1;
     public static final long DIST_TX_WAIT_TIMEOUT = 60000;
     public static final long DIST_TX_WAIT_FOR_OPERATIONS = -1;
@@ -88,14 +88,8 @@ final public class MirrorConfig {
                         StringUtils.NEW_LINE);
             }
         }
-        boolean hasPartitionCount = configReader.containsSpaceProperty(Mirror.MIRROR_SERVICE_CLUSTER_PARTITIONS_COUNT);
         _partitionsCount = configReader.getIntSpaceProperty(Mirror.MIRROR_SERVICE_CLUSTER_PARTITIONS_COUNT, String.valueOf(DEFAULT_NUM_OF_PARTITIONS));
-        boolean hasMembersPerPartition = configReader.containsSpaceProperty(Mirror.MIRROR_SERVICE_CLUSTER_BACKUPS_PER_PARTITION);
         _backupsPerPartition = configReader.getIntSpaceProperty(Mirror.MIRROR_SERVICE_CLUSTER_BACKUPS_PER_PARTITION, String.valueOf(DEFAULT_BACKUPS_PER_PARTITION));
-        if (!hasPartitionCount || !hasMembersPerPartition) {
-            if (_logger.isWarnEnabled())
-                _logger.warn("No cluster configuration was defined for mirror - using default configuration - supports upto " + DEFAULT_NUM_OF_PARTITIONS + " partitions and exactly " + DEFAULT_BACKUPS_PER_PARTITION + " " + (DEFAULT_BACKUPS_PER_PARTITION == 1 ? "backup" : "backups") + " per partition.");
-        }
 
         final String timeoutBeforePartialCommit = configReader.getSpaceProperty(Mirror.MIRROR_DISTRIBUTED_TRANSACTION_TIMEOUT,
                 null);
