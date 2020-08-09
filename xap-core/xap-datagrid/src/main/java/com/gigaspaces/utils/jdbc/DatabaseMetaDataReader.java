@@ -122,6 +122,15 @@ public class DatabaseMetaDataReader implements Closeable {
         return result;
     }
 
+    private String getSqlQueryByDbType (String tableName) throws SQLException {
+        switch (this.metaData.getDatabaseProductName()) {
+            case "Microsoft SQL Server":
+                return "SELECT TOP 1 * FROM " + tableName;
+            default:
+                return "SELECT * FROM " + tableName + " limit 1";
+        }
+    }
+
     public TableInfo getTableInfo(TableId table) {
         try {
             List<String> tablePrimaryKey = getTablePrimaryKey(table);
@@ -129,11 +138,13 @@ public class DatabaseMetaDataReader implements Closeable {
             Map<String,String> oneRowData = new HashMap<>();
             boolean isUIDColumnExist = false;
             try (Statement statement = connection.createStatement()) {
-                try (ResultSet rs = statement.executeQuery("SELECT * FROM " + table.getName() + " limit 1")) {
+                try (ResultSet rs = statement.executeQuery(getSqlQueryByDbType(table.getName()))) {
                     if (rs.next()) {
                         oneRowData = getOneDataRow(rs);
                         isUIDColumnExist = getIsUIDColumnExist(rs, tablePrimaryKey);
                     }
+                } catch (SQLException e) {
+                    logger.warn("Could not perform sql query on "+table+" SQL state: "+e.getSQLState()+" "+e.getErrorCode(),e);
                 }
             }
 
