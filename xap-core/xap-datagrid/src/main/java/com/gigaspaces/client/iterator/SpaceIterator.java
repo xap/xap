@@ -48,7 +48,7 @@ public class SpaceIterator<T> implements Iterator<T>, Iterable<T>, Closeable {
         }
         SpaceIteratorType iteratorType = spaceIteratorConfiguration.getIteratorType();
         if (iteratorType == null) {
-            iteratorType = spaceProxy.isEmbedded() ? SpaceIteratorType.PREFETCH_UIDS : defaultIteratorType;
+            iteratorType = defaultIteratorType;
         }
         if(iteratorType.equals(SpaceIteratorType.PREFETCH_UIDS) && spaceIteratorConfiguration.getMaxInactiveDuration() != null){
             throw new UnsupportedOperationException("Setting the maxInactiveDuration value in not supported for space iterator of type " + iteratorType.toString());

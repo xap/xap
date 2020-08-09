@@ -21,12 +21,13 @@ import org.slf4j.LoggerFactory;
  * @since 15.2.0
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceIteratorBatchResultsManager {
+public class SpaceIteratorBatchResultsManager implements SpaceIteratorBatchProvider {
     private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_GSITERATOR);
     private enum ResultStatus {NORMAL, LAST_BATCH, FAILED, ILLEGAL_BATCH_NUMBER};
     private final Map<Integer, SpaceIteratorBatchResult> _partitionIteratorBatchResults;
     private final SpaceIteratorBatchResultProvider _spaceIteratorBatchResultProvider;
     private final ScheduledExecutorService _scheduler;
+    private final long _serverLookupTimeout;
     private int _activePartitions;
 
     public SpaceIteratorBatchResultsManager(ISpaceProxy spaceProxy, int batchSize, int readModifiers, ITemplatePacket queryPacket, long maxInactiveDuration){
@@ -34,6 +35,7 @@ public class SpaceIteratorBatchResultsManager {
         this._spaceIteratorBatchResultProvider = new SpaceIteratorBatchResultProvider(spaceProxy, batchSize, readModifiers, queryPacket, UUID.randomUUID(), maxInactiveDuration);
         this._activePartitions = this._spaceIteratorBatchResultProvider.getInitialNumberOfActivePartitions();
         this._scheduler = Executors.newScheduledThreadPool(1);
+        this._serverLookupTimeout = spaceProxy.getDirectProxy().getProxyRouter().getConfig().getActiveServerLookupTimeout();
         initRenewLeaseTask(maxInactiveDuration/2);
     }
 
@@ -47,22 +49,23 @@ public class SpaceIteratorBatchResultsManager {
         }, delay, delay, TimeUnit.MILLISECONDS);
     }
 
-    public Object[] getNextBatch(long timeout) throws InterruptedException, SpaceIteratorException {
+    @Override
+    public Object[] getNextBatch() throws InterruptedException, SpaceIteratorException {
         if(isFinished()){
             tryFinish();
             if (_logger.isDebugEnabled())
                 _logger.debug("Space Iterator has finished successfully.");
             return null;
         }
-        SpaceIteratorBatchResult spaceIteratorBatchResult = _spaceIteratorBatchResultProvider.consumeBatch(timeout);
+        SpaceIteratorBatchResult spaceIteratorBatchResult = _spaceIteratorBatchResultProvider.consumeBatch(_serverLookupTimeout);
         if (spaceIteratorBatchResult == null)
-            throw new SpaceIteratorException("Did not find any batch for iterator " + _spaceIteratorBatchResultProvider.getUuid() + " under " + timeout + " milliseconds");
+            throw new SpaceIteratorException("Did not find any batch for iterator " + _spaceIteratorBatchResultProvider.getUuid() + " under " + _serverLookupTimeout + " milliseconds");
         SpaceIteratorBatchResult previous = _partitionIteratorBatchResults.put(spaceIteratorBatchResult.getPartitionId(), spaceIteratorBatchResult);
         switch (inspectBatchResults(previous, spaceIteratorBatchResult)){
             case ILLEGAL_BATCH_NUMBER:
-                return handleIllegalBatchNumber(spaceIteratorBatchResult,timeout);
+                return handleIllegalBatchNumber(spaceIteratorBatchResult);
             case FAILED:
-                return handleFailedBatchResult(spaceIteratorBatchResult, timeout);
+                return handleFailedBatchResult(spaceIteratorBatchResult);
             case LAST_BATCH:
                 return handleLastBatchResult(spaceIteratorBatchResult);
             case NORMAL:
@@ -101,21 +104,21 @@ public class SpaceIteratorBatchResultsManager {
         return current.getBatchNumber() - previous.getBatchNumber() != 1;
     }
 
-    private Object[] handleIllegalBatchNumber(SpaceIteratorBatchResult spaceIteratorBatchResult, long timeout) throws InterruptedException {
+    private Object[] handleIllegalBatchNumber(SpaceIteratorBatchResult spaceIteratorBatchResult) throws InterruptedException {
         if (_logger.isWarnEnabled())
             _logger.warn("Space Iterator batch result " + spaceIteratorBatchResult + " batch number is illegal");
         deactivatePartition(spaceIteratorBatchResult);
-        return getNextBatch(timeout);
+        return getNextBatch();
     }
 
-    private Object[] handleFailedBatchResult(SpaceIteratorBatchResult spaceIteratorBatchResult, long timeout) throws InterruptedException {
+    private Object[] handleFailedBatchResult(SpaceIteratorBatchResult spaceIteratorBatchResult) throws InterruptedException {
         if (_logger.isWarnEnabled())
             _logger.warn("Space Iterator batch result failed with exception: " + spaceIteratorBatchResult.getException().getMessage());
         Exception exception = spaceIteratorBatchResult.getException();
         if(!(exception instanceof GetBatchForIteratorException) && exception instanceof RuntimeException)
             throw (RuntimeException) exception;
         deactivatePartition(spaceIteratorBatchResult);
-        return getNextBatch(timeout);
+        return getNextBatch();
     }
 
     private Object[] handleLastBatchResult(SpaceIteratorBatchResult spaceIteratorBatchResult){
@@ -147,6 +150,7 @@ public class SpaceIteratorBatchResultsManager {
         _activePartitions--;
     }
 
+    @Override
     public void close() {
         _partitionIteratorBatchResults.clear();
         _spaceIteratorBatchResultProvider.close();

@@ -17,6 +17,8 @@
 
 package com.gigaspaces.client.iterator;
 
+import com.gigaspaces.client.iterator.cursor.EmbeddedSpaceIteratorBatchResultsManager;
+import com.gigaspaces.client.iterator.cursor.SpaceIteratorBatchProvider;
 import com.gigaspaces.client.iterator.cursor.SpaceIteratorBatchResultsManager;
 import com.gigaspaces.client.iterator.internal.ArrayIterator;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
@@ -41,11 +43,10 @@ import org.slf4j.LoggerFactory;
 public class CursorEntryPacketIterator implements IEntryPacketIterator {
     private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_GSITERATOR);
     private final ISpaceProxy _spaceProxy;
-    private final long _serverLookupTimeout;
     private final ITemplatePacket _queryPacket;
     private Iterator<IEntryPacket> _bufferIterator;
     private boolean _closed;
-    private SpaceIteratorBatchResultsManager _spaceIteratorBatchResultsManager;
+    private final SpaceIteratorBatchProvider _spaceIteratorBatchResultsManager;
 
     public CursorEntryPacketIterator(ISpaceProxy spaceProxy, Object query, SpaceIteratorConfiguration spaceIteratorConfiguration) {
         if (spaceProxy == null)
@@ -61,9 +62,10 @@ public class CursorEntryPacketIterator implements IEntryPacketIterator {
         if (_logger.isDebugEnabled())
             _logger.debug("SpaceIterator initialized with batchSize=" + batchSize);
         this._spaceProxy = spaceProxy;
-        this._serverLookupTimeout = _spaceProxy.getDirectProxy().getProxyRouter().getConfig().getActiveServerLookupTimeout();
         this._queryPacket = toTemplatePacket(query);
-        this._spaceIteratorBatchResultsManager = new SpaceIteratorBatchResultsManager(_spaceProxy, batchSize, spaceIteratorConfiguration.getReadModifiers().getCode(), _queryPacket, maxInactiveDuration.toMillis());
+        this._spaceIteratorBatchResultsManager = spaceProxy.isEmbedded()
+                ? new EmbeddedSpaceIteratorBatchResultsManager(spaceProxy, batchSize, spaceIteratorConfiguration.getReadModifiers().getCode(), _queryPacket, maxInactiveDuration.toMillis())
+                : new SpaceIteratorBatchResultsManager(spaceProxy, batchSize, spaceIteratorConfiguration.getReadModifiers().getCode(), _queryPacket, maxInactiveDuration.toMillis());
         this._bufferIterator = getNextBatch();
     }
 
@@ -143,7 +145,7 @@ public class CursorEntryPacketIterator implements IEntryPacketIterator {
 
     private Iterator<IEntryPacket> getNextBatch() throws SpaceIteratorException {
         try {
-            Object[] entries =  _spaceIteratorBatchResultsManager.getNextBatch(_serverLookupTimeout);
+            Object[] entries =  _spaceIteratorBatchResultsManager.getNextBatch();
             if(entries == null)
                 return null;
             if (_logger.isDebugEnabled())
