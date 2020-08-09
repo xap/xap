@@ -47,9 +47,11 @@ public class BeanLevelPropertiesBeansConfig {
 
     @PostConstruct
     public void initialize() {
-        if (beanLevelProperties != null && environment instanceof ConfigurableEnvironment) {
+        if (environment instanceof ConfigurableEnvironment) {
             MutablePropertySources propertySources = ((ConfigurableEnvironment) environment).getPropertySources();
-            propertySources.addFirst(new PropertiesPropertySource("beanLevelProperties", beanLevelProperties.getContextProperties()));
+            if (beanLevelProperties != null) {
+                propertySources.addFirst(new PropertiesPropertySource("beanLevelProperties", beanLevelProperties.getContextProperties()));
+            }
             ClassPathResource resource = findExistingResource("gs-service-config.yaml", "service.properties");
             if (resource != null) {
                 try {
