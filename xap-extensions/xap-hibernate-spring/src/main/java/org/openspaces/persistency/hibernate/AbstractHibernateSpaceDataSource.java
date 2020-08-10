@@ -239,11 +239,11 @@ public abstract class AbstractHibernateSpaceDataSource extends ManagedEntriesSpa
         if (num == null || instanceId == null) {
             return;
         }
-        if(clusterInfo.supportsHorizontalScale()
-                && clusterInfo.getScalableClusterInfo().getGeneration() != 0
-                && clusterInfo.getScalableClusterInfo().getChunks() != null){
+        if(clusterInfo.supportsDynamicPartitioning()
+                && clusterInfo.getGeneration() != 0
+                && clusterInfo.getDynamicPartitionInfo().getChunks() != null){
             String prefix = "MOD(?,"+ ClusterTopology.CHUNKS_COUNT +") IN (";
-            List<String> allQueries = clusterInfo.getScalableClusterInfo().getChunks().stream().map(Object::toString).collect(Collectors.toList());
+            List<String> allQueries = clusterInfo.getDynamicPartitionInfo().getChunks().stream().map(Object::toString).collect(Collectors.toList());
             int pageSize = 100;
             Stream<String> queriesStream = IntStream.range(0, (allQueries.size() + pageSize - 1) / pageSize)
                     .mapToObj(i -> allQueries.subList(i * pageSize, Math.min(pageSize * (i + 1), allQueries.size())))

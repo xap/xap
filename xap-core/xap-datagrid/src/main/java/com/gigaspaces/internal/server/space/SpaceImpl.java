@@ -299,7 +299,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         this.zkConfig = hasZk ? createZKCollocatedClientConfig() : null;
         this.attributeStore = hasZk ? createZooKeeperAttributeStore() : null;
         this._puName = customProperties.getProperty("clusterInfo.name");
-        this._scalable = !isMirror() && Boolean.parseBoolean(customProperties.getProperty("clusterInfo.supportsHorizontalScale"));
+        this._scalable = !isMirror() && Boolean.parseBoolean(customProperties.getProperty("clusterInfo.supportsDynamicRepartitioning"));
         this._clusterInfo = new SpaceClusterInfo(_jspaceAttr, _spaceMemberName);
         if (_scalable) {
             zookeeperTopologyHandler = new ZookeeperTopologyHandler(_puName, attributeStore);
