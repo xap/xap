@@ -18,12 +18,12 @@ import java.util.*;
  * @since 12.3
  * @author Rotem Herzberg
  */
-@Command(name="run", header = "Run a standalone Processing Unit")
+@Command(name="run", header = "Run a standalone Service on the local host")
 public class PuRunCommand extends AbstractRunCommand implements ContinuousCommand {
 
-    @Parameters(index = "0", description = "Relative/absolute path of a Processing Unit directory or archive file")
+    @Parameters(index = "0", description = "Relative/absolute path of a Service directory or archive file")
     protected File path;
-    @Option(names = {"--partitions" }, description = "Specify the number of partitions for the Processing Unit")
+    @Option(names = {"--partitions" }, description = "Specify the number of partitions for the Service")
     protected int partitions;
     @Option(names = {"--ha" }, description = "High availability (add one backup per partition)")
     protected boolean ha;

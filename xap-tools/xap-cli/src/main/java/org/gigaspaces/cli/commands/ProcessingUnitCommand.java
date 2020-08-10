@@ -5,7 +5,7 @@ import org.gigaspaces.cli.CommandsSet;
 import org.gigaspaces.cli.SubCommandContainer;
 import picocli.CommandLine.*;
 
-@Command(name="pu", header = "List of available commands for Processing Unit operations")
+@Command(name="service", aliases = {"pu"}, header = "List of available commands for Processing Unit operations")
 public class ProcessingUnitCommand extends CliCommand implements SubCommandContainer {
 
     @Override
