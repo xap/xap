@@ -126,6 +126,8 @@ public class DatabaseMetaDataReader implements Closeable {
         switch (this.metaData.getDatabaseProductName()) {
             case "Microsoft SQL Server":
                 return "SELECT TOP 1 * FROM " + tableName;
+            case "Oracle":
+                return "SELECT * FROM " + tableName+" where rowNum <= 1";
             default:
                 return "SELECT * FROM " + tableName + " limit 1";
         }
