@@ -82,6 +82,23 @@ public class ClusterInfo implements Cloneable, Serializable {
         this.numberOfBackups = numberOfBackups;
     }
 
+    protected ClusterInfo(ClusterInfoBuilder builder) {
+        this.name = builder.getName();
+        this.schema = builder.getSchema();
+        this.numberOfInstances = builder.getNumberOfInstances();
+        this.numberOfBackups = builder.getNumberOfBackups();
+        this.instanceId = builder.getInstanceId();
+        this.backupId = builder.getBackupId();
+    }
+
+    /**
+     * Gets the generation of the cluster topology
+     * @since 15.5
+     */
+    public int getGeneration() {
+        return 0;
+    }
+
     /**
      * Returns the schema the cluster operates under. Usually maps to a Space cluster schema. Can
      * have <code>null</code> value which means that it was not set.
@@ -249,15 +266,26 @@ public class ClusterInfo implements Cloneable, Serializable {
         return getName() + "_" + getSuffix();
     }
 
+    public boolean supportsDynamicPartitioning() {
+        return getDynamicPartitionInfo() != null;
+    }
+
+    public DynamicPartitionInfo getDynamicPartitionInfo() {
+        return null;
+    }
+
     public ClusterInfo copy() {
-        ClusterInfo clusterInfo = new ClusterInfo();
-        clusterInfo.setBackupId(getBackupId());
-        clusterInfo.setInstanceId(getInstanceId());
-        clusterInfo.setNumberOfBackups(getNumberOfBackups());
-        clusterInfo.setNumberOfInstances(getNumberOfInstances());
-        clusterInfo.setSchema(getSchema());
-        clusterInfo.setName(getName());
-        return clusterInfo;
+        return copy(new ClusterInfo());
+    }
+
+    protected ClusterInfo copy(ClusterInfo copy) {
+        copy.setBackupId(getBackupId());
+        copy.setInstanceId(getInstanceId());
+        copy.setNumberOfBackups(getNumberOfBackups());
+        copy.setNumberOfInstances(getNumberOfInstances());
+        copy.setSchema(getSchema());
+        copy.setName(getName());
+        return this;
     }
 
     @Override
@@ -270,13 +298,5 @@ public class ClusterInfo implements Cloneable, Serializable {
         sb.append("instanceId[").append(instanceId).append("] ");
         sb.append("backupId[").append(backupId).append("]");
         return sb.toString();
-    }
-
-    public boolean supportsHorizontalScale() {
-        return false;
-    }
-
-    public ScalableClusterInfo getScalableClusterInfo() {
-        throw new UnsupportedOperationException();
     }
 }
