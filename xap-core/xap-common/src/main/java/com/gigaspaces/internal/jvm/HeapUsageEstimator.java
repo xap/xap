@@ -56,6 +56,10 @@ public class HeapUsageEstimator {
         return superclassFieldPadding;
     }
 
+    public int getReferenceSize() {
+        return referenceSize;
+    }
+
     /**
      * @return The size of the provided instance as defined by the detected MemoryLayoutSpecification. For an array this
      * is dependent on the size of the array, but for an object this is fixed for all instances
