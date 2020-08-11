@@ -23,6 +23,7 @@ import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.dump.InternalDump;
 import com.gigaspaces.internal.dump.InternalDumpProcessor;
 import com.gigaspaces.internal.dump.InternalDumpProcessorFailedException;
+import com.gigaspaces.internal.server.space.quiesce.QuiesceHandler;
 import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.metrics.BeanMetricManager;
@@ -300,7 +301,10 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
 
         // Register the suspendTypeListener (for reacting to suspendTypeChanges) only if this container is listening on embedded space
         if (embedded) {
-            gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler().addSpaceSuspendTypeListener(suspendTypeListener);
+            QuiesceHandler quiesceHandler = gigaSpace.getSpace().getDirectProxy().getSpaceImplIfEmbedded().getQuiesceHandler();
+            quiesced = quiesceHandler.isOn();
+            suspendTypeListener = new SuspendTypeInternalListener();
+            quiesceHandler.addSpaceSuspendTypeListener(suspendTypeListener);
         }
 
         if (registerSpaceModeListener) {
@@ -907,7 +911,11 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
         @Override
         public void onSuspendTypeChanged(SuspendType suspendType) {
             logger.info(message("SuspendType was updated to " + suspendType));
-            if (suspendType != SuspendType.NONE) {
+            boolean suspended = suspendType != SuspendType.NONE;
+            if (quiesced == suspended)
+                return;
+            quiesced = suspended;
+            if (suspended) {
                 if (logger.isDebugEnabled())
                     logger.debug(message("SuspendType was updated to " + suspendType) + ", stopping...");
                 // if container was running before calling quiesce it should resume working after unquiesce
