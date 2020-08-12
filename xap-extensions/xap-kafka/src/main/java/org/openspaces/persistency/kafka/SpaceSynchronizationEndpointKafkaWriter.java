@@ -180,6 +180,7 @@ public class SpaceSynchronizationEndpointKafkaWriter implements Runnable{
             } catch (Exception e) {
                 if(logger.isWarnEnabled())
                     logger.warn("Caught exception while committing Kafka message consumption: " + e.getMessage());
+                    logger.warn("Exception stacktrace: " + Arrays.toString(e.getStackTrace()));
                 Thread.sleep(1000);
             }
         }
