@@ -256,11 +256,6 @@ public class MultiStoredList<T>
 
     @Override
     public boolean hasSize() {
-        for (IObjectsList next : _multiList) {
-            if (!(next instanceof ICollection)) {
-                return false;
-            }
-        }
         return true;
     }
 
