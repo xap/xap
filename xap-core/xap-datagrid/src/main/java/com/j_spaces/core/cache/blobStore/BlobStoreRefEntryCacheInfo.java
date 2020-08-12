@@ -1205,16 +1205,6 @@ public class BlobStoreRefEntryCacheInfo
     }
 
     @Override
-    public boolean hasSize() {
-        return true;
-    }
-
-    @Override
-    public int size() {
-        return 1;
-    }
-
-    @Override
     public boolean isEmpty() {
         return false;
     }

@@ -292,15 +292,6 @@ public class MemoryBasedEntryCacheInfo implements IEntryCacheInfo {
     public void dump(Logger logger, String msg) {
     }
 
-    @Override
-    public boolean hasSize() {
-        return true;
-    }
-
-    public int size() {
-        return 1;
-    }
-
     public boolean isEmpty() {
         return false;
     }
