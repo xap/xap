@@ -16,15 +16,8 @@
 
 package com.gigaspaces.internal.sigar;
 
-import com.gigaspaces.internal.io.BootIOUtils;
-import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.start.SystemBoot;
-
-import org.hyperic.sigar.ProcState;
 import org.hyperic.sigar.Sigar;
-import org.hyperic.sigar.SigarException;
-
-import java.util.*;
 
 /**
  * @author kimchy
@@ -58,95 +51,5 @@ public class SigarHolder {
 
     private SigarHolder(Sigar sigar) {
         this.sigar = sigar;
-    }
-
-    public boolean kill(long pid, long timeout, boolean recursive) throws SigarException {
-        Set<Long> pids = new LinkedHashSet<>();
-        pids.add(pid);
-        if (recursive) {
-            pids.addAll(getDescendants(pid));
-        }
-
-        // Ask nicely, let process(s) a chance to shutdown gracefully:
-        if (killAll(pids, "SIGTERM"))
-            return true;
-
-        // Wait for process(s) to terminate:
-        try {
-            if (BootIOUtils.waitFor(() -> pruneTerminated(pids), timeout, 100))
-                return true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
-        }
-
-        // force kill remaining process(s) (except on windows - not supported)
-        if (JavaUtils.isWindows())
-            return false;
-        return killAll(pids, "SIGKILL");
-    }
-
-    private boolean killAll(Set<Long> pids, String signal) throws SigarException {
-        for (Long currPid : pids) {
-            kill(currPid, signal);
-        }
-        return pruneTerminated(pids);
-    }
-
-    private Map<Long, ProcState> getAllProcesses() throws SigarException {
-        final Map<Long, ProcState> result = new HashMap<>();
-        for (final long pid : sigar.getProcList()) {
-            try {
-                result.put(pid, sigar.getProcState(pid));
-            } catch (SigarException e) {
-                //logger.warn("While scanning for child processes of process " + ppid + ", could not read process state of Process: " + pid + ". Ignoring.", e);
-            }
-        }
-        return result;
-    }
-
-    private Set<Long> getDescendants(long ppid) throws SigarException {
-        Set<Long> result = new LinkedHashSet<>();
-        Map<Long, ProcState> processes = getAllProcesses();
-        processes.remove(ppid);
-        while (true) {
-            int sizeBefore = result.size();
-            Iterator<Map.Entry<Long, ProcState>> iterator = processes.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<Long, ProcState> entry = iterator.next();
-                if (result.contains(entry.getValue().getPpid())) {
-                    result.add(entry.getKey());
-                    iterator.remove();
-                }
-            }
-            int sizeAfter = result.size();
-            if (sizeAfter == sizeBefore)
-                return result;
-        }
-    }
-
-    private boolean pruneTerminated(Set<Long> pids) {
-        pids.removeIf(pid -> !isAlive(pid));
-        return pids.isEmpty();
-    }
-
-    private void kill(long pid, String signal) throws SigarException {
-        try {
-            sigar.kill(pid, signal);
-        } catch (SigarException e) {
-            // If the signal could not be sent because the process has already terminated, that's ok for us.
-            if (isAlive(pid))
-                throw e;
-        }
-    }
-
-    private boolean isAlive(long pid) {
-        try {
-            //sigar.getProcState(pid) is not used because its unstable.
-            sigar.getProcTime(pid);
-            return true;
-        } catch (SigarException e) {
-            return false;
-        }
     }
 }
