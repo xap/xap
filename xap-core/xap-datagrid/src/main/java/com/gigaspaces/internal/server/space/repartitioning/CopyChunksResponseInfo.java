@@ -51,6 +51,15 @@ public class CopyChunksResponseInfo implements SpaceResponseInfo {
     }
 
     @Override
+    public String toString() {
+        return "CopyChunksResponseInfo{" +
+                "partitionId=" + partitionId +
+                ", exception=" + exception +
+                ", movedToPartition=" + movedToPartition +
+                '}';
+    }
+
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         IOUtils.writeInt(out, partitionId);
         IOUtils.writeObject(out, exception);
