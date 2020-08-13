@@ -293,10 +293,6 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
 
         doInitialize();
 
-        if (!activeWhenPrimary) {
-            doStart();
-        }
-
         boolean embedded = !SpaceUtils.isRemoteProtocol(gigaSpace.getSpace());
 
         // Register the suspendTypeListener (for reacting to suspendTypeChanges) only if this container is listening on embedded space
@@ -305,6 +301,10 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             quiesced = quiesceHandler.isOn();
             suspendTypeListener = new SuspendTypeInternalListener();
             quiesceHandler.addSpaceSuspendTypeListener(suspendTypeListener);
+        }
+
+        if (!activeWhenPrimary) {
+            doStart();
         }
 
         if (registerSpaceModeListener) {
