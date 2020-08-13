@@ -37,7 +37,7 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
         return new OSDetails(uid,
                 operatingSystem.getManufacturer(),
                 FormatUtil.formatBytes(operatingSystem.getBitness()),
-                operatingSystem.getVersion().getBuildNumber(),
+                operatingSystem.getVersionInfo().getBuildNumber(),
                 hardwareAbstractionLayer.getProcessor().getLogicalProcessorCount(),
                 virtualMemory.getSwapTotal(),
                 memory.getTotal(),
@@ -50,13 +50,12 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
 
     private OSDetails.OSNetInterfaceDetails[] getOSNetInterfacesDetailsArray() throws SocketException {
 
-        NetworkIF[] networkIFs = oshiSystemInfo.getHardware().getNetworkIFs();
+        List<NetworkIF> networkIFs = oshiSystemInfo.getHardware().getNetworkIFs();
         OSDetails.OSNetInterfaceDetails[] netInterfaceConfigArray = new
-                OSDetails.OSNetInterfaceDetails[networkIFs.length];
+                OSDetails.OSNetInterfaceDetails[networkIFs.size()];
 
-        for (int index = 0; index < networkIFs.length; index++) {
-            NetworkIF networkIF = networkIFs[index];
-            NetworkInterface netInterface = networkIF.queryNetworkInterface();
+        for (int index = 0; index < netInterfaceConfigArray.length; index++) {
+            NetworkInterface netInterface = networkIFs.get(index).queryNetworkInterface();
 
             String addr = ParseUtil.byteArrayToHexString(netInterface.getHardwareAddress());
             String name = netInterface.getName();
@@ -74,11 +73,11 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
     }
 
     private OSDetails.OSNetInterfaceDetails[] getOSNetDetails() throws SocketException {
-        NetworkIF[] networkIFs = oshiSystemInfo.getHardware().getNetworkIFs();
-        OSDetails.OSNetInterfaceDetails[] interfacesList = new OSDetails.OSNetInterfaceDetails[networkIFs.length];
+        List<NetworkIF> networkIFs = oshiSystemInfo.getHardware().getNetworkIFs();
+        OSDetails.OSNetInterfaceDetails[] interfacesList = new OSDetails.OSNetInterfaceDetails[networkIFs.size()];
 
-        for(int i=0;i<networkIFs.length;i++) {
-            NetworkInterface networkInterface = networkIFs[i].queryNetworkInterface();
+        for(int i=0;i<interfacesList.length;i++) {
+            NetworkInterface networkInterface = networkIFs.get(i).queryNetworkInterface();
 
             byte[] hwAddress = networkInterface.getHardwareAddress();
             String hardwareAddressStr=translateByteArrayToHwAddress(hwAddress);
@@ -114,9 +113,9 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
     private OSDetails.OSVendorDetails getVendorDetails(){
         return new OSDetails.OSVendorDetails(
                 oshiSystemInfo.getOperatingSystem().getFamily(),
-                oshiSystemInfo.getOperatingSystem().getVersion().getCodeName(),
+                oshiSystemInfo.getOperatingSystem().getVersionInfo().getCodeName(),
                 oshiSystemInfo.getOperatingSystem().getManufacturer(),
-                oshiSystemInfo.getOperatingSystem().getVersion().getVersion());
+                oshiSystemInfo.getOperatingSystem().getVersionInfo().getVersion());
     }
 
     private String translateByteArrayToHwAddress(byte[] hardwareAddress){

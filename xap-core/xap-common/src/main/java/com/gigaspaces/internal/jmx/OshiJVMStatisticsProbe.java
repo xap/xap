@@ -54,7 +54,7 @@ public class OshiJVMStatisticsProbe  implements JVMStatisticsProbe {
                 threadMXBean.getPeakThreadCount(),
                 gcCollectionCount,
                 gcCollectionTime,
-                osProcess.calculateCpuPercent(),
+                osProcess.getProcessCpuLoadCumulative(),
                 osProcess.getKernelTime() + osProcess.getUserTime(),
                 System.currentTimeMillis());
     }

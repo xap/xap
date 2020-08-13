@@ -8,6 +8,7 @@ import oshi.hardware.NetworkIF;
 import oshi.hardware.VirtualMemory;
 
 import java.net.NetworkInterface;
+import java.util.List;
 
 public class OshiUtils {
 
@@ -30,12 +31,12 @@ public class OshiUtils {
     }
 
     public static OSStatistics.OSNetInterfaceStats[] calcNetStats() {
-        NetworkIF[] networkIFs = oshiSystemInfo.getHardware().getNetworkIFs();
+        List<NetworkIF> networkIFs = oshiSystemInfo.getHardware().getNetworkIFs();
         OSStatistics.OSNetInterfaceStats[] netInterfaceConfigArray = new
-                OSStatistics.OSNetInterfaceStats[networkIFs.length];
+                OSStatistics.OSNetInterfaceStats[networkIFs.size()];
 
-        for (int index = 0; index < networkIFs.length; index++) {
-            NetworkIF networkIF = networkIFs[index];
+        for (int index = 0; index < netInterfaceConfigArray.length; index++) {
+            NetworkIF networkIF = networkIFs.get(index);
             NetworkInterface netInterface = networkIF.queryNetworkInterface();
 
             OSStatistics.OSNetInterfaceStats netInterfaceStats = new OSStatistics.OSNetInterfaceStats(networkIF.getName(),
