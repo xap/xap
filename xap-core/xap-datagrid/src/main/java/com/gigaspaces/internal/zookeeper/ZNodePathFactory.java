@@ -27,8 +27,8 @@ public class ZNodePathFactory {
         return path(PUS, puName);
     }
 
-    public static String lockName(String name) {
-        return path(LOCKS, name);
+    public static String lockPuName(String name) {
+        return path(LOCKS,PUS, name);
     }
 
     public static String processingUnit(String puName, String component) {
