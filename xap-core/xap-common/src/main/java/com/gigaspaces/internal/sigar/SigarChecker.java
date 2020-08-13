@@ -18,7 +18,6 @@ package com.gigaspaces.internal.sigar;
 
 import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.internal.jvm.JavaUtils;
-import com.gigaspaces.internal.os.ProcessKiller;
 
 /**
  * @author Niv Ingberg
@@ -32,7 +31,7 @@ public class SigarChecker {
     private static boolean initEnabled() {
         String enabled = System.getProperty(CommonSystemProperties.SIGAR_ENABLED, "");
         if (enabled.isEmpty()) {
-            return JavaUtils.isWindows() && JavaUtils.greaterOrEquals(9) ? false : true;
+            return JavaUtils.isWindows() ? false : true;
         } else {
             return Boolean.parseBoolean(enabled);
         }
@@ -44,23 +43,5 @@ public class SigarChecker {
         } catch (Throwable t) {
             return false;
         }
-    }
-
-    public static ProcessKiller createProcessKiller() {
-        return new ProcessKiller() {
-            @Override
-            public String getName() {
-                return "Sigar";
-            }
-
-            @Override
-            public boolean kill(long pid, long timeout, boolean recursive) {
-                try {
-                    return SigarHolder.singleton().kill(pid, timeout, recursive);
-                } catch (Throwable e) {
-                    throw new RuntimeException("Failed to kill process " + pid + ": " + e.getMessage(), e);
-                }
-            }
-        };
     }
 }
