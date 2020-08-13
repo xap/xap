@@ -29,11 +29,14 @@ public class CopyChunksConsumer implements Runnable {
 
     @Override
     public void run() {
+        logger.error("Starting Copy chunk producer thread");
         while (!Thread.currentThread().isInterrupted()) {
             WriteBatch writeBatch = null;
             try {
                 Batch batch = batchQueue.poll(5, TimeUnit.SECONDS);
+                logger.info("Copy chunk producer thread polled new new batch");
                 if (batch == Batch.EMPTY_BATCH) {
+                    logger.info("Copy chunk producer thread exiting due to empty marker");
                     return;
                 }
                 if (batch != null) {
@@ -47,15 +50,16 @@ public class CopyChunksConsumer implements Runnable {
                 responseInfo.setException(new IOException("Copy chunks consumer thread was interrupted", e));
                 Thread.currentThread().interrupt();
                 return;
-            } catch (RemoteException | TransactionException e) {
+            } catch (Exception e) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Consumer thread caught exception");
                     e.printStackTrace();
                 }
                 responseInfo.setException(new IOException("Caught exception while trying to write to partition " +
-                        writeBatch.getPartitionId(), e));
+                        (writeBatch != null ? writeBatch.getPartitionId() : ""),e));
                 return;
             }
         }
+        logger.error("Copy chunk producer thread was interrupted");
     }
 }

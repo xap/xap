@@ -60,6 +60,7 @@ public class SpaceCopyChunksExecutor extends SpaceActionExecutor {
             executorService.shutdown();
             executorService.awaitTermination(5, TimeUnit.MINUTES);
         } catch (Exception e) {
+            logger.error("Copy chunks executor failed", e);
             throw new RuntimeException("Copy chunks executor failed", e);
         }
         return responseInfo;
