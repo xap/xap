@@ -16,6 +16,7 @@
 
 package com.gigaspaces.datasource;
 
+import com.gigaspaces.cluster.PartitionRoutingInfo;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.metadata.SpaceTypeDescriptorBuilder;
@@ -33,6 +34,25 @@ import java.util.List;
  * @since 9.1.1
  */
 public abstract class SpaceDataSource {
+    private PartitionRoutingInfo partitionRoutingInfo;
+
+    /**
+     * Gets the current partition routing info (if exists) to optimize initial load
+     * @since 15.5
+     */
+    public PartitionRoutingInfo getPartitionRoutingInfo() {
+        return partitionRoutingInfo;
+    }
+
+    /**
+     * Sets the current partition routing info (if exists)
+     * @param partitionRoutingInfo
+     * @since 15.5
+     */
+    public void setPartitionRoutingInfo(PartitionRoutingInfo partitionRoutingInfo) {
+        this.partitionRoutingInfo = partitionRoutingInfo;
+    }
+
     /**
      * This method is invoked on space initialization (before {@link #initialDataLoad()} is invoked)
      * and is used for introducing data types kept in the data source to the space. <p>Please note
@@ -135,17 +155,5 @@ public abstract class SpaceDataSource {
      */
     public boolean supportsInheritance() {
         return true;
-    }
-
-    protected Integer numberOfInstances;
-
-    protected Integer instanceId;
-
-    public void setNumberOfInstances(Integer numberOfInstances) {
-        this.numberOfInstances = numberOfInstances;
-    }
-
-    public void setInstanceId(Integer instanceId) {
-        this.instanceId = instanceId;
     }
 }

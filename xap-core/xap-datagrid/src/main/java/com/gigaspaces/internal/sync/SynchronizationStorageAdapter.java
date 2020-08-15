@@ -194,6 +194,7 @@ public class SynchronizationStorageAdapter implements IStorageAdapter {
         if (template.isTransient() || _mirrorService)
             return null;
 
+        _spaceDataSource.setPartitionRoutingInfo(_engine.getPartitionRoutingInfo());
         final DataIterator<SpaceTypeDescriptor> metadataIterator = _spaceDataSource.initialMetadataLoad();
         if (metadataIterator != null) {
             try {

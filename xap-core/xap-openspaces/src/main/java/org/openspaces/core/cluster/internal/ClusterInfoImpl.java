@@ -3,7 +3,7 @@ package org.openspaces.core.cluster.internal;
 import com.gigaspaces.internal.io.IOUtils;
 import org.openspaces.core.cluster.ClusterInfo;
 import org.openspaces.core.cluster.ClusterInfoBuilder;
-import org.openspaces.core.cluster.DynamicPartitionInfo;
+import com.gigaspaces.cluster.DynamicPartitionInfo;
 
 import java.io.Externalizable;
 import java.io.IOException;

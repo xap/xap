@@ -24,6 +24,8 @@ import com.gigaspaces.client.protective.ProtectiveMode;
 import com.gigaspaces.client.protective.ProtectiveModeException;
 import com.gigaspaces.client.transaction.local.LocalTransactionManagerImpl;
 import com.gigaspaces.client.transaction.xa.GSServerTransaction;
+import com.gigaspaces.cluster.DynamicPartitionInfo;
+import com.gigaspaces.cluster.PartitionRoutingInfo;
 import com.gigaspaces.cluster.activeelection.ISpaceComponentsHandler;
 import com.gigaspaces.cluster.activeelection.ISpaceModeListener;
 import com.gigaspaces.cluster.activeelection.SpaceMode;
@@ -35,6 +37,9 @@ import com.gigaspaces.events.NotifyInfo;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.metadata.TypeDescFactory;
+import com.gigaspaces.internal.cluster.ClusterTopology;
+import com.gigaspaces.internal.cluster.DynamicPartitionInfoImpl;
+import com.gigaspaces.internal.cluster.PartitionRoutingInfoImpl;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.cluster.node.IReplicationNode;
 import com.gigaspaces.internal.cluster.node.IReplicationNodeAdmin;
@@ -6839,6 +6844,21 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
      */
     public int getNumberOfPartitions() {
         return _clusterInfo.getNumberOfPartitions();
+    }
+
+    public PartitionRoutingInfo getPartitionRoutingInfo() {
+        int partitions = getNumberOfPartitions();
+        if (partitions == 0)
+            return null;
+
+        int partitionId = getPartitionIdOneBased();
+        ClusterTopology topology = getClusterInfo().getTopology();
+        int generation = topology != null ? topology.getGeneration() : 0;
+        DynamicPartitionInfo dynamicPartitionInfo = topology != null
+                ? new DynamicPartitionInfoImpl(topology.getPartitionChunks(partitionId))
+                : null;
+
+        return new PartitionRoutingInfoImpl(generation, partitions, partitionId, dynamicPartitionInfo);
     }
 
     /**

@@ -1,7 +1,7 @@
-package org.openspaces.core.cluster.internal;
+package com.gigaspaces.internal.cluster;
 
 import com.gigaspaces.api.InternalApi;
-import org.openspaces.core.cluster.DynamicPartitionInfo;
+import com.gigaspaces.cluster.DynamicPartitionInfo;
 
 import java.io.Externalizable;
 import java.io.IOException;

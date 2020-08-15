@@ -21,8 +21,7 @@ public class SpaceDataSourceLoadExecutor extends SpaceActionExecutor {
     public SpaceResponseInfo execute(SpaceImpl space, SpaceRequestInfo spaceRequestInfo) {
         DataSourceLoadSpaceRequestInfo requestInfo = (DataSourceLoadSpaceRequestInfo) spaceRequestInfo;
         DataSourceLoadSpaceResponseInfo responseInfo = new DataSourceLoadSpaceResponseInfo();
-        Integer numberOfInstances = space.getEngine().getNumberOfPartitions(), instanceId = space.getPartitionIdOneBased();
-        SpaceDataSource spaceDataSource = requestInfo.getSpaceDataSource(numberOfInstances,instanceId);
+        SpaceDataSource spaceDataSource = requestInfo.getSpaceDataSource(space.getEngine().getPartitionRoutingInfo());
         if (spaceDataSource != null){
             DataIterator<SpaceTypeDescriptor> metaDataIterator = spaceDataSource.initialMetadataLoad();
             if(metaDataIterator!= null) {

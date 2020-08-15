@@ -1,5 +1,6 @@
 package org.openspaces.core.cluster;
 
+import com.gigaspaces.cluster.DynamicPartitionInfo;
 import org.openspaces.core.cluster.internal.ClusterInfoImpl;
 
 public class ClusterInfoBuilder {
