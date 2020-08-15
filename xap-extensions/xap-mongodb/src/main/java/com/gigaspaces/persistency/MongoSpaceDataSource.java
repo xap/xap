@@ -16,12 +16,14 @@
 
 package com.gigaspaces.persistency;
 
+import com.gigaspaces.cluster.PartitionRoutingInfo;
 import com.gigaspaces.datasource.DataIterator;
 import com.gigaspaces.datasource.DataIteratorAdapter;
 import com.gigaspaces.datasource.DataSourceIdQuery;
 import com.gigaspaces.datasource.DataSourceIdsQuery;
 import com.gigaspaces.datasource.DataSourceQuery;
 import com.gigaspaces.datasource.SpaceDataSource;
+import com.gigaspaces.internal.cluster.PartitionRoutingInfoImpl;
 import com.gigaspaces.metadata.SpacePropertyDescriptor;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.persistency.datasource.DefaultMongoDataIterator;
@@ -64,9 +66,12 @@ public class MongoSpaceDataSource extends SpaceDataSource {
         }
         this.mongoClient = mongoClient;
         this.clusterInfo = clusterInfo;
-        if(clusterInfo != null){
-            setNumberOfInstances(clusterInfo.getNumberOfInstances());
-            setInstanceId(clusterInfo.getInstanceId());
+        if(clusterInfo != null && clusterInfo.getNumberOfInstances() != null){
+            setPartitionRoutingInfo(new PartitionRoutingInfoImpl(
+                    clusterInfo.getGeneration(),
+                    clusterInfo.getNumberOfInstances(),
+                    clusterInfo.getInstanceId(),
+                    clusterInfo.getDynamicPartitionInfo()));
         }
     }
 
@@ -108,17 +113,18 @@ public class MongoSpaceDataSource extends SpaceDataSource {
 
     public DBObject getInitialQuery(SpaceTypeDescriptor typeDescriptor) {
         DBObject query = new BasicDBObject();
-        String routingPropertyName = typeDescriptor.getRoutingPropertyName();
-        if(routingPropertyName == null || numberOfInstances == null || instanceId == null)
+        PartitionRoutingInfo partitionRoutingInfo = getPartitionRoutingInfo();
+        if (partitionRoutingInfo == null || partitionRoutingInfo.getNumOfPartitions() == 1)
             return query;
-        if (numberOfInstances > 1) {
-            SpacePropertyDescriptor routingPropDesc = typeDescriptor.getFixedProperty(routingPropertyName);
-            if (Integer.class.isAssignableFrom(routingPropDesc.getType())) {
-                ArrayList l = new ArrayList();
-                l.add(numberOfInstances);
-                l.add(instanceId - 1);
-                query.put(routingPropertyName, new BasicDBObject("$mod", l));
-            }
+        String routingPropertyName = typeDescriptor.getRoutingPropertyName();
+        if(routingPropertyName == null)
+            return query;
+        SpacePropertyDescriptor routingPropDesc = typeDescriptor.getFixedProperty(routingPropertyName);
+        if (Integer.class.isAssignableFrom(routingPropDesc.getType())) {
+            ArrayList<Object> l = new ArrayList<>();
+            l.add(partitionRoutingInfo.getNumOfPartitions());
+            l.add(partitionRoutingInfo.getPartitionId() - 1);
+            query.put(routingPropertyName, new BasicDBObject("$mod", l));
         }
         return query;
     }

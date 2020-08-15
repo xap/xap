@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.space.requests;
 
 import com.gigaspaces.async.AsyncResult;
+import com.gigaspaces.cluster.PartitionRoutingInfo;
 import com.gigaspaces.datasource.SpaceDataSource;
 import com.gigaspaces.datasource.SpaceDataSourceFactory;
 import com.gigaspaces.datasource.SpaceDataSourceLoadResult;
@@ -56,10 +57,9 @@ public class DataSourceLoadSpaceRequestInfo extends AbstractSpaceRequestInfo {
     public DataSourceLoadSpaceRequestInfo() {
     }
 
-    public SpaceDataSource getSpaceDataSource(Integer numOfInstances, Integer instanceId) {
+    public SpaceDataSource getSpaceDataSource(PartitionRoutingInfo partitionRoutingInfo) {
         SpaceDataSource spaceDataSource = spaceDataSourceFactory.create();
-        spaceDataSource.setNumberOfInstances(numOfInstances);
-        spaceDataSource.setInstanceId(instanceId);
+        spaceDataSource.setPartitionRoutingInfo(partitionRoutingInfo);
         return new SchemaAdapterSpaceDataSource(spaceDataSource, new SpaceTypeSchemaAdapterContainer(adaptersMap));
     }
 

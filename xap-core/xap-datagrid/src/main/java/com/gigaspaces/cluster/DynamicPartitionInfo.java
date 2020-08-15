@@ -1,4 +1,4 @@
-package org.openspaces.core.cluster;
+package com.gigaspaces.cluster;
 
 import java.io.Serializable;
 import java.util.Collection;
