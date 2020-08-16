@@ -1,5 +1,7 @@
 package com.gigaspaces.internal.server.space.repartitioning;
 
+import java.util.concurrent.TimeoutException;
+
 public class CopyBarrier {
 
     private int totalThreads;
@@ -29,6 +31,10 @@ public class CopyBarrier {
 
         if (exception != null) {
             throw exception;
+        }
+
+        if(count < totalThreads){//timed out
+            throw new TimeoutException("Timeout while waiting for copy consumers , "+count+" out of "+totalThreads+" finished successfully");
         }
     }
 }
