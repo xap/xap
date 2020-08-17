@@ -18,6 +18,7 @@ package com.gigaspaces.internal.remoting.routing.partitioned;
 
 import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
+import com.gigaspaces.internal.utils.GsEnv;
 
 /**
  * @author Niv Ingberg
@@ -29,7 +30,7 @@ public class PartitionedClusterUtils {
     private static final boolean PRECISE_LONG_ROUTING = !Boolean.getBoolean("com.gs.disable-precise-long-routing");
 
     public static final String DYNAMIC_PARTITIONING_PROPERTY = "pu.dynamic-partitioning";
-    public static final String DYNAMIC_PARTITIONING_DEFAULT = "false";
+    public static final String DYNAMIC_PARTITIONING_DEFAULT = GsEnv.property("com.gs.pu.dynamic-partitioning").get("false");
 
     private PartitionedClusterUtils() {
     }
