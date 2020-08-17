@@ -76,7 +76,7 @@ public class SpaceSynchronizationEndpointKafkaWriter implements Runnable{
                     break;
                 }
                 if(logger.isWarnEnabled())
-                    logger.warn("Caught exception while consuming Kafka records: " + e.getMessage());
+                    logger.warn("Caught exception while consuming Kafka records" ,e);
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException interruptedException) {
