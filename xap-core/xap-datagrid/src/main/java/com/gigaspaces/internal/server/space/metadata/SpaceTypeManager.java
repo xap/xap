@@ -29,6 +29,7 @@ import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceConfigReader;
 import com.gigaspaces.internal.server.space.SpaceInstanceConfig;
 import com.gigaspaces.internal.transport.ITransportPacket;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.metadata.SpaceMetadataException;
@@ -67,7 +68,7 @@ public class SpaceTypeManager {
     private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_TYPEMANAGER);
     private static final boolean SUPPORT_CHECKSUM = Boolean.parseBoolean(
             System.getProperty(SystemProperties.TYPE_CHECKSUM_VALIDATION, SystemProperties.TYPE_CHECKSUM_VALIDATION_DEFAULT));
-
+    private static final boolean DELETE_ON_DROP = GsEnv.propertyBoolean(SystemProperties.TYPE_DELETE_ON_DROP).get(false);
 
     private final TypeDescFactory _typeDescFactory;
     private volatile Map<String, IServerTypeDesc> _typeMap;
@@ -424,6 +425,11 @@ public class SpaceTypeManager {
 
             for (IServerTypeDescListener listener : _typeDescListeners)
                 listener.onTypeDeactivated(typeDesc);
+
+            if (DELETE_ON_DROP) {
+                typeMapCopy.remove(typeDesc.getTypeName());
+                typeDesc.getSuperTypes()[1].removeSubType(typeDesc);
+            }
 
             // volatile - exchange references to the new updated type table
             _typeMap = typeMapCopy;

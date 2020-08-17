@@ -187,6 +187,16 @@ public class ServerTypeDesc implements IServerTypeDesc {
             this._superTypes[1].addSubType(subType);
     }
 
+    @Override
+    public void removeSubType(IServerTypeDesc subType) {
+        if (subType.getSuperTypes()[1] == this)
+            this._subTypes = removeItemFromArray(_subTypes, subType);
+        this._assignableTypes = removeItemFromArray(_assignableTypes, subType);
+
+        if (this._superTypes.length > 1)
+            this._superTypes[1].removeSubType(subType);
+    }
+
     private static <T> T[] prependItemToArray(T[] source, T[] target, T newFirstItem) {
         target[0] = newFirstItem;
         System.arraycopy(source, 0, target, 1, source.length);
@@ -197,6 +207,30 @@ public class ServerTypeDesc implements IServerTypeDesc {
         IServerTypeDesc[] target = new IServerTypeDesc[source.length + 1];
         target[source.length] = newLastItem;
         System.arraycopy(source, 0, target, 0, source.length);
+        return target;
+    }
+
+    private static <T> int indexOf(T[] array, T item) {
+        for (int i = 0; i < array.length; i++) {
+            if (array[i].equals(item)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static IServerTypeDesc[] removeItemFromArray(IServerTypeDesc[] source, IServerTypeDesc old) {
+        int oldPos = indexOf(source, old);
+        if (oldPos == -1)
+            return source;
+
+        IServerTypeDesc[] target = new IServerTypeDesc[source.length - 1];
+        int pos = 0;
+        for (int i = 0; i < source.length; i++) {
+            if (i != oldPos) {
+                target[pos++] = source[i];
+            }
+        }
         return target;
     }
 

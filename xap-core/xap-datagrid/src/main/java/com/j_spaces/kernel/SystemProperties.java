@@ -436,6 +436,8 @@ public class SystemProperties extends CommonSystemProperties {
     public final static String TYPE_CHECKSUM_VALIDATION = "com.gs.type.checksum-validation";
     public final static String TYPE_CHECKSUM_VALIDATION_DEFAULT = "true";
 
+    public final static String TYPE_DELETE_ON_DROP = "com.gs.type.delete-on-drop";
+
     public final static String GS_PROTOCOL = "com.gs.protocol";
     public final static String GS_PROTOCOL_DEFAULT = Constants.LRMIStubHandler.LRMI_DEFAULT_PROTOCOL;
 
