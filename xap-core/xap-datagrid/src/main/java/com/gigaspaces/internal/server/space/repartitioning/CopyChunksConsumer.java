@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 public class CopyChunksConsumer implements Runnable {
 
-    public static Logger logger = LoggerFactory.getLogger("org.openspaces.admin.internal.pu.scale_horizontal.ScaleManager");
+    public static Logger logger = LoggerFactory.getLogger(CopyChunksConsumer.class);
 
     private Map<Integer, ISpaceProxy> proxyMap;
     private BlockingQueue<Batch> batchQueue;

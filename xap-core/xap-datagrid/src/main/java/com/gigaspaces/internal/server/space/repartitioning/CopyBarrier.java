@@ -1,40 +1,41 @@
 package com.gigaspaces.internal.server.space.repartitioning;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class CopyBarrier {
 
     private int totalThreads;
-    private int count;
-    private Exception exception;
+    private volatile Exception exception;
+    private CountDownLatch countDownLatch;
 
-    public CopyBarrier(int totalThreads) {
+    CopyBarrier(int totalThreads) {
+        this.countDownLatch = new CountDownLatch(totalThreads);
         this.totalThreads = totalThreads;
     }
 
-    public synchronized void complete() {
-        count++;
-        notifyAll();
+    public void complete() {
+        countDownLatch.countDown();
     }
 
-    public synchronized void completeExceptionally(Exception e) {
-        count++;
+    void completeExceptionally(Exception e) {
         exception = e;
-        notifyAll();
+        while (countDownLatch.getCount() > 0) {
+            countDownLatch.countDown();
+        }
     }
 
-    public synchronized void await(long milis) throws Exception {
-        long start = System.currentTimeMillis();
-        while (count < totalThreads && exception == null && System.currentTimeMillis() - start < milis) {
-            wait(milis);
-        }
+    public void await(long millis) throws Exception {
+
+        boolean await = countDownLatch.await(millis, TimeUnit.MILLISECONDS);
 
         if (exception != null) {
             throw exception;
         }
 
-        if(count < totalThreads){//timed out
-            throw new TimeoutException("Timeout while waiting for copy consumers , "+count+" out of "+totalThreads+" finished successfully");
+        if (!await) {//timed out
+            throw new TimeoutException("Timeout while waiting for copy consumers , " + (totalThreads - countDownLatch.getCount()) + " out of " + totalThreads + " finished successfully");
         }
     }
 }
