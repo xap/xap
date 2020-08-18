@@ -18,7 +18,6 @@ package com.gigaspaces.client.iterator.cursor;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.StringJoiner;
 
 public class SpaceIteratorException
         extends RuntimeException {
@@ -41,8 +40,15 @@ public class SpaceIteratorException
 
     @Override
     public String getMessage() {
-        StringJoiner sj = new StringJoiner(",", super.getMessage() + "[", "]");
-        _exceptions.values().forEach(e -> sj.add(e.toString()));
-        return sj.toString();
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(super.getMessage());
+        stringBuilder.append("[");
+        for(Exception e: _exceptions.values()){
+            stringBuilder.append(e.toString());
+            stringBuilder.append(",");
+        }
+        stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
+        stringBuilder.append("]");
+        return stringBuilder.toString();
     }
 }
