@@ -388,8 +388,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         if (useZooKeeper() && GsEnv.propertyBoolean(SystemProperties.CHUNKS_SPACE_ROUTING).get(false)) {
             zookeeperChunksMapHandler = new ZookeeperChunksMapHandler(puName, attributeStore);
             try {
-                clusterInfo.setChunksMap(zookeeperChunksMapHandler.initChunksMap(clusterInfo.getNumberOfPartitions(),
-                        clusterInfo.getPartitionOfMember(_spaceMemberName) + 1));
+                clusterInfo.setChunksMap(zookeeperChunksMapHandler.initChunksMap(clusterInfo.getNumberOfPartitions()));
                 return clusterInfo;
             }catch (ChunksMapMissingException e){
                 _logger.warn("Failed to find chunks map in zk - disabling chunks space routing",e);
@@ -785,6 +784,14 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             }
 
             if (zookeeperChunksMapHandler != null) {
+                try{
+                    //TODO- need to not delete map and handle leftover map on startup
+                    if(!this._quiesceHandler.isQuiesced()) {
+                        zookeeperChunksMapHandler.removePath();
+                    }
+                }catch (Exception e){
+                    _logger.warn("Failed to delete "+attributeStore, e);
+                }
                 zookeeperChunksMapHandler.close();
             }
 
@@ -3909,7 +3916,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     public void updateChunksMap() throws RemoteException {
         if (useZooKeeper() && GsEnv.propertyBoolean(SystemProperties.CHUNKS_SPACE_ROUTING).get(false)) {
             synchronized (this){
-                PartitionToChunksMap newMap = zookeeperChunksMapHandler.getChunksMap(this._clusterInfo.getPartitionOfMember(_spaceMemberName) + 1);
+                PartitionToChunksMap newMap = zookeeperChunksMapHandler.getChunksMap();
                 this._clusterInfo = this._clusterInfo.cloneAndUpdate(newMap);
                 this._spaceConfig.setClusterInfo(this._clusterInfo);
                 this._taskProxy.updateProxyRouter(_taskProxy.getProxyRouter(),newMap);

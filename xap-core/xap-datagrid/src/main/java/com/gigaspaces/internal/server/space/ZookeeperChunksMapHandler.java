@@ -24,7 +24,6 @@ public class ZookeeperChunksMapHandler implements Closeable {
     private final String attributeStoreKey;
     private final AttributeStore attributeStore;
     private final ExecutorService singleThreadExecutorService = Executors.newFixedThreadPool(1);
-    private int partitionId;
 
 
     public ZookeeperChunksMapHandler(String puName, AttributeStore attributeStore) {
@@ -55,15 +54,14 @@ public class ZookeeperChunksMapHandler implements Closeable {
         zookeeperClient.addConnectionStateListener(new ReconnectTask(spaceConfig), singleThreadExecutorService);
     }
 
-    PartitionToChunksMap initChunksMap(int numberOfPartitions, int partitionId) throws ChunksMapMissingException {
+    PartitionToChunksMap initChunksMap(int numberOfPartitions) throws ChunksMapMissingException {
         try {
             ChunksRoutingManager routingManager = getChunksRoutingManager();
-            this.partitionId = partitionId;
-            if (routingManager == null || isWrongPartitionCount(numberOfPartitions, routingManager, this.partitionId)) {
+            if (routingManager == null) {
                 SharedLock lock = attributeStore.getSharedLock(com.j_spaces.core.Constants.Space.spaceLockPath(puName));
                 if (lock.acquire(30, TimeUnit.SECONDS)) {
                     ChunksRoutingManager manager = getChunksRoutingManager();
-                    if (manager == null || isWrongPartitionCount(numberOfPartitions, manager, partitionId)) {
+                    if (manager == null) {
                         PartitionToChunksMap chunksMap = new PartitionToChunksMap(numberOfPartitions, 0);
                         chunksMap.init();
                         ChunksRoutingManager chunksRoutingManager = new ChunksRoutingManager(chunksMap);
@@ -74,14 +72,14 @@ public class ZookeeperChunksMapHandler implements Closeable {
                     } else {
                         logger.info("Map already exist");
                         lock.release();
-                        return manager.getMapForPartition(partitionId);
+                        return manager.getLastestMap();
                     }
                 } else {
                     throw new ChunksMapMissingException("failed to acquire space lock in 30 seconds");
                 }
             } else {
                 logger.info("Map already exist");
-                return routingManager.getMapForPartition(partitionId);
+                return routingManager.getLastestMap();
             }
         } catch (Exception e) {
             if (logger.isErrorEnabled())
@@ -90,15 +88,10 @@ public class ZookeeperChunksMapHandler implements Closeable {
         }
     }
 
-    private boolean isWrongPartitionCount(int numberOfPartitions, ChunksRoutingManager routingManager, int partitionId) {
-        PartitionToChunksMap partitionMap = routingManager.getMapForPartition(partitionId);
-        return partitionMap == null || partitionMap.getNumOfPartitions() != numberOfPartitions;
-    }
-
-    PartitionToChunksMap getChunksMap(int partitionId) {
+    public PartitionToChunksMap getChunksMap() {
         try {
             ChunksRoutingManager chunksRoutingManager = toManager(attributeStore.getBytes(attributeStoreKey));
-            return chunksRoutingManager.getMapForPartition(partitionId);
+            return chunksRoutingManager.getLastestMap();
         } catch (IOException e) {
             if (logger.isErrorEnabled())
                 logger.error("Failed to get chunks manager", e);
@@ -180,7 +173,7 @@ public class ZookeeperChunksMapHandler implements Closeable {
         @Override
         public void run() {
             PartitionToChunksMap map;
-            map = getChunksMap(partitionId);
+            map = getChunksMap();
             int currentGeneration = spaceConfig.getClusterInfo().getChunksMap().getGeneration();
             if (map.getGeneration() > currentGeneration) {
                 logger.warn(spaceConfig.getContainerName() + " is at chunks map generation " + currentGeneration + " but current generation in Zookeeper is " + map.getGeneration());

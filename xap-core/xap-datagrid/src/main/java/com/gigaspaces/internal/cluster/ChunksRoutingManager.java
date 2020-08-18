@@ -10,7 +10,6 @@ import java.util.Map;
 
 public class ChunksRoutingManager implements Externalizable {
     private Map<Integer, PartitionToChunksMap> maps;
-    private Map <Integer,Integer> partitionGenerationMap;
     private int currentGeneration;
 
     public ChunksRoutingManager() {
@@ -20,10 +19,6 @@ public class ChunksRoutingManager implements Externalizable {
         this.currentGeneration = chunksMap.getGeneration();
         maps = new HashMap<>();
         maps.put(chunksMap.getGeneration(),chunksMap);
-        partitionGenerationMap = new HashMap<>(chunksMap.getNumOfPartitions());
-        for (int i = 1; i <= chunksMap.getNumOfPartitions(); i++) {
-            partitionGenerationMap.put(i,chunksMap.getGeneration());
-        }
     }
 
     public Map<Integer, PartitionToChunksMap> getMaps() {
@@ -34,17 +29,12 @@ public class ChunksRoutingManager implements Externalizable {
         this.maps = maps;
     }
 
-    public PartitionToChunksMap getMapForPartition(int partitionId) {
-        Integer partitionGeneration = this.partitionGenerationMap.get(partitionId);
-        return partitionGeneration == null ? null : this.getMaps().get(partitionGeneration);
+    public int getCurrentGeneration() {
+        return currentGeneration;
     }
 
-    public void setPartitionGeneration(int partitionId, int generation) {
-        this.partitionGenerationMap.put(partitionId,generation);
-    }
-
-    public void deletePartitionGeneration(int partitionId){
-        this.partitionGenerationMap.remove(partitionId);
+    public void setCurrentGeneration(int currentGeneration) {
+        this.currentGeneration = currentGeneration;
     }
 
     @Override
@@ -53,11 +43,6 @@ public class ChunksRoutingManager implements Externalizable {
         out.writeShort(maps.size());
         for (PartitionToChunksMap map : maps.values()) {
             out.writeObject(map);
-        }
-        out.writeShort(partitionGenerationMap.size());
-        for (Map.Entry<Integer, Integer> entry : partitionGenerationMap.entrySet()) {
-            out.writeShort(entry.getKey());
-            out.writeShort(entry.getValue());
         }
     }
 
@@ -69,11 +54,6 @@ public class ChunksRoutingManager implements Externalizable {
         for (int i = 0; i < count; i++) {
             PartitionToChunksMap map = (PartitionToChunksMap) in.readObject();
             maps.put(map.getGeneration(),map);
-        }
-        int size = in.readShort();
-        partitionGenerationMap = new HashMap<>(size);
-        for (int i = 0; i < size; i++) {
-            partitionGenerationMap.put((int) in.readShort(), (int)in.readShort());
         }
     }
 
@@ -87,14 +67,5 @@ public class ChunksRoutingManager implements Externalizable {
 
     public void updateGeneration(){
         currentGeneration = Collections.max(maps.keySet());
-    }
-
-    @Override
-    public String toString() {
-        return "ChunksRoutingManager{" +
-                "maps=" + maps +
-                ", partitionGenerationMap=" + partitionGenerationMap +
-                ", currentGeneration=" + currentGeneration +
-                '}';
     }
 }
