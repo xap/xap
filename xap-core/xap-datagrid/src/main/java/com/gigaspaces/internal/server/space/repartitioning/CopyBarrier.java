@@ -6,9 +6,9 @@ import java.util.concurrent.TimeoutException;
 
 public class CopyBarrier {
 
-    private int totalThreads;
+    private final int totalThreads;
     private volatile Exception exception;
-    private CountDownLatch countDownLatch;
+    private final CountDownLatch countDownLatch;
 
     CopyBarrier(int totalThreads) {
         this.countDownLatch = new CountDownLatch(totalThreads);
