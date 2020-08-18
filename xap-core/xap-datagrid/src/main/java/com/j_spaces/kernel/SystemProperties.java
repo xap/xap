@@ -211,13 +211,6 @@ public class SystemProperties extends CommonSystemProperties {
     public final static String LRMI_CONNECT_TIMEOUT_DEFAULT = "30s";
 
     /**
-     * read() call on Socket will block for only this amount of time (in milliseconds),
-     * or indefinite (timeout=0) by default.
-     * @Since 15.5
-     */
-    public static final String LRMI_READ_BLOCK_TIMEOUT = "com.gs.transport_protocol.lrmi.read-block-timeout";
-
-    /**
      * Sets the maximum queue length for incoming connection indications.
      */
     public final static String LRMI_ACCEPT_BACKLOG = "com.gs.transport_protocol.lrmi.accpet-backlog";
