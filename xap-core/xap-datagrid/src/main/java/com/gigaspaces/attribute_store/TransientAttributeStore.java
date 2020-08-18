@@ -45,7 +45,7 @@ public class TransientAttributeStore implements AttributeStore, Serializable {
     }
 
     @Override
-    public SharedLock getSharedLock(String key) {
+    public boolean initFirst(String key, byte[] value) throws Exception {
         throw new UnsupportedOperationException("only supported in ZooKeeperAttributeStore.class");
     }
 
