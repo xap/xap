@@ -454,9 +454,9 @@ public class MetricManager implements Closeable {
 
     public static class MetricFlagsState{
 
-        private boolean dataIndexHitsMetricEnabled = false;
+        private boolean dataIndexHitsMetricEnabled = true;
         private boolean dataReadCountsMetricEnabled = true;
-        private boolean dataTypesMetricEnabled = true;
+        private boolean dataTypesMetricEnabled = false;
 
         private MetricFlagsState( MetricManager metricManager ) {
             List<MetricPattern> metricPatterns = metricManager.getMetricPatterns();
