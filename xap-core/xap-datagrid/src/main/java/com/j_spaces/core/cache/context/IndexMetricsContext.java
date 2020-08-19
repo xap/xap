@@ -15,10 +15,9 @@
  */
 package com.j_spaces.core.cache.context;
 
-import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
-
-import java.util.HashSet;
-import java.util.Set;
+import com.gigaspaces.internal.query.IQueryIndexScanner;
+import com.gigaspaces.metrics.LongCounter;
+import com.j_spaces.core.cache.TypeData;
 
 /**
  * Allows storing index hits
@@ -28,27 +27,26 @@ import java.util.Set;
 @com.gigaspaces.api.InternalApi
 public class IndexMetricsContext {
 
-    private final Set<String> chosenIndex = new HashSet<>(); //key is indexName
     private boolean ignoreUpdates;
-    private final IServerTypeDesc serverTypeDesc;
+    private final TypeData typeData;
 
-    public IndexMetricsContext(IServerTypeDesc serverTypeDesc) {
-        this.serverTypeDesc = serverTypeDesc;
+    public IndexMetricsContext(TypeData typeData) {
+        this.typeData = typeData;
     }
 
     public void setIgnoreUpdates(boolean ignoreUpdates) {
         this.ignoreUpdates = ignoreUpdates;
     }
 
-    public void addChosenIndex(String indexName) {
+    public void addChosenIndex(IQueryIndexScanner index) {
         if (!ignoreUpdates) {
-            chosenIndex.add(indexName);
+            typeData.getIndex(index.getIndexName()).getUsageCounter().inc();
         }
     }
 
-    public void updateDataTypeIndexUsage() {
-        for (String indexName : chosenIndex) {
-            serverTypeDesc.getIndexCounter(indexName).inc();
+    public void addChosenIndex(LongCounter indexCounter) {
+        if (!ignoreUpdates) {
+            indexCounter.inc();
         }
     }
 }

@@ -22,8 +22,6 @@ import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.metadata.InactiveTypeDesc;
 import com.gigaspaces.metrics.LongCounter;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,7 +46,6 @@ public class ServerTypeDesc implements IServerTypeDesc {
 
     private volatile boolean _maybeOutdated;
     private LongCounter _readCounter;
-    private Map<String, LongCounter> _indexCounters;
 
     public ServerTypeDesc(int typeId, String typeName) {
         this(typeId, typeName, null, null);
@@ -64,7 +61,6 @@ public class ServerTypeDesc implements IServerTypeDesc {
         this._isRootType = typeName.equals(ROOT_TYPE_NAME);
         this._superTypes = initSuperTypes(superType);
         this._readCounter = new LongCounter();
-        this._indexCounters = new HashMap<>();
         if (typeDesc == null)
             typeDesc = createInactiveTypeDesc(typeName, _superTypes);
         setTypeDesc(typeDesc);
@@ -156,7 +152,6 @@ public class ServerTypeDesc implements IServerTypeDesc {
         ServerTypeDesc copy = new ServerTypeDesc(this._typeId, this._typeName, this._typeDesc, superType, this._serverTypeDescCode);
         copy._inactive = this._inactive;
         copy._readCounter = this._readCounter;
-        copy._indexCounters = this._indexCounters;
         IServerTypeDesc oldServerTypeDesc = _codesRepo.put(this._serverTypeDescCode, copy);
         if(oldServerTypeDesc != null){
             oldServerTypeDesc.setMaybeOutdated();
@@ -264,17 +259,5 @@ public class ServerTypeDesc implements IServerTypeDesc {
     @Override
     public LongCounter getReadCounter() {
         return _readCounter;
-    }
-
-    @Override
-    public LongCounter initIndexCounter(String indexName) {
-        LongCounter result = new LongCounter();
-        _indexCounters.put(indexName, result);
-        return result;
-    }
-
-    @Override
-    public LongCounter getIndexCounter(String indexName) {
-        return _indexCounters.get(indexName);
     }
 }

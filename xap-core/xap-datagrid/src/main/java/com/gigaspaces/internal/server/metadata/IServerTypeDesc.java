@@ -64,8 +64,4 @@ public interface IServerTypeDesc {
     void setMaybeOutdated();
 
     LongCounter getReadCounter();
-
-    LongCounter initIndexCounter(String indexName);
-
-    LongCounter getIndexCounter(String indexName);
 }
