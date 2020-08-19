@@ -16,26 +16,19 @@
 package com.j_spaces.core;
 
 import com.gigaspaces.cluster.activeelection.SpaceMode;
-import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.gigaspaces.metrics.Gauge;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.j_spaces.core.cache.CacheManager;
-import com.j_spaces.core.cache.context.IndexMetricsContext;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.LongAdder;
 
 /**
  * @since 15.5.0
  */
 public class SpaceMetricsRegistrationUtils {
-
-    //key = typeName, value = map<index name, hits>
-    private Map<String, Map<String, LongAdder>> dataTypesIndexesHits = new ConcurrentHashMap<>();
 
     private final SpaceEngine spaceEngine;
     private final CacheManager cacheManager;
@@ -74,25 +67,10 @@ public class SpaceMetricsRegistrationUtils {
 
             // register index-hits
             if( spaceEngine.getMetricManager().getMetricFlagsState().isDataIndexHitsMetricEnabled() ) {
-                ITypeDesc typeDesc = serverTypeDesc.getTypeDesc();
-                Map<String, SpaceIndex> indexes = typeDesc.getIndexes();
+                Map<String, SpaceIndex> indexes = serverTypeDesc.getTypeDesc().getIndexes();
                 if (indexes != null && !indexes.isEmpty()) {
-                    //add type to dataTypes indexes hits map
-                    dataTypesIndexesHits.put(typeName, new ConcurrentHashMap<>());
-
                     for (String index : indexes.keySet()) {
-                        spaceEngine.getDataTypeMetricRegistrar(typeName, index).register(registrator.toPath("data", "index-hits-total"), new Gauge<Long>() {
-                            @Override
-                            public Long getValue() {
-                                SpaceMode spaceMode = spaceEngine.getSpaceImpl().getSpaceMode();
-                                if( spaceMode != SpaceMode.PRIMARY ){
-                                    return null;
-                                }
-                                Map<String, LongAdder> indexesMap = dataTypesIndexesHits.get(typeName);
-                                LongAdder indexHits = indexesMap.get(index);
-                                return indexHits == null ? 0 : indexHits.longValue();
-                            }
-                        });
+                        spaceEngine.getDataTypeMetricRegistrar(typeName, index).register(registrator.toPath("data", "index-hits-total"), serverTypeDesc.initIndexCounter(index));
                     }
                 }
             }
@@ -115,39 +93,13 @@ public class SpaceMetricsRegistrationUtils {
         if( spaceEngine.getMetricManager().getMetricFlagsState().isDataIndexHitsMetricEnabled() ) {
             IServerTypeDesc serverTypeDesc = spaceEngine.getTypeTableEntry(typeName);
             if (serverTypeDesc != null) {
-                ITypeDesc typeDesc = serverTypeDesc.getTypeDesc();
-                Map<String, SpaceIndex> indexes = typeDesc.getIndexes();
+                Map<String, SpaceIndex> indexes = serverTypeDesc.getTypeDesc().getIndexes();
                 if (indexes != null && !indexes.isEmpty()) {
                     for (String index : indexes.keySet()) {
                         spaceEngine.getDataTypeMetricRegistrar(typeName, index).unregisterByPrefix(registrator.toPath("data", "index-hits-total"));
                     }
                 }
             }
-        }
-    }
-
-    public void updateDataTypeIndexUsage(IndexMetricsContext indexMetricsContext) {
-
-        if (indexMetricsContext.isEmpty()) {
-            return;
-        }
-
-        String typeName = indexMetricsContext.getDataTypeName();
-        Map<String, LongAdder> indexesMap = dataTypesIndexesHits.get(typeName);
-        if (indexesMap == null) {
-            return;
-        }
-
-        for (String indexName : indexMetricsContext.getChosenIndexes()) {
-            LongAdder currentIndexHitCount = indexesMap.get(indexName);
-            if (currentIndexHitCount == null) {
-                currentIndexHitCount = new LongAdder();
-                LongAdder prev = indexesMap.putIfAbsent(indexName, currentIndexHitCount);
-                if (prev != null) {
-                    currentIndexHitCount = prev;
-                }
-            }
-            currentIndexHitCount.add(1);
         }
     }
 }

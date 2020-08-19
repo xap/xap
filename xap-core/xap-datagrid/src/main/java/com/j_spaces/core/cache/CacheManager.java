@@ -1829,7 +1829,7 @@ public class CacheManager extends AbstractCacheManager
             context.setDisableBlobStorePreFetching(true);
 
         if ( _engine.getMetricManager().getMetricFlagsState().isDataIndexHitsMetricEnabled()) {
-            context.setIndexMetricsContext(new IndexMetricsContext(currServerTypeDesc.getTypeName()));
+            context.setIndexMetricsContext(new IndexMetricsContext(currServerTypeDesc));
         }
 
         IScanListIterator<IEntryCacheInfo> result;
@@ -1839,7 +1839,7 @@ public class CacheManager extends AbstractCacheManager
             result = typeData == null ? null : getScannableEntriesMinIndexExtended(context, typeData, numOfFields, template);
 
         if (context.getIndexMetricsContext() != null) {
-            _spaceMetricsRegistrationUtils.updateDataTypeIndexUsage(context.getIndexMetricsContext());
+            context.getIndexMetricsContext().updateDataTypeIndexUsage();
         }
 
         return result;

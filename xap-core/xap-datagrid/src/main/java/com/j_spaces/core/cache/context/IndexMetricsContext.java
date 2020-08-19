@@ -15,7 +15,8 @@
  */
 package com.j_spaces.core.cache.context;
 
-import java.util.Collections;
+import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,12 +28,12 @@ import java.util.Set;
 @com.gigaspaces.api.InternalApi
 public class IndexMetricsContext {
 
-    private Set<String> chosenIndex = new HashSet<>(); //key is indexName
+    private final Set<String> chosenIndex = new HashSet<>(); //key is indexName
     private boolean ignoreUpdates;
-    private String dataTypeName;
+    private final IServerTypeDesc serverTypeDesc;
 
-    public IndexMetricsContext(String dataTypeName) {
-        this.dataTypeName = dataTypeName;
+    public IndexMetricsContext(IServerTypeDesc serverTypeDesc) {
+        this.serverTypeDesc = serverTypeDesc;
     }
 
     public void setIgnoreUpdates(boolean ignoreUpdates) {
@@ -40,25 +41,14 @@ public class IndexMetricsContext {
     }
 
     public void addChosenIndex(String indexName) {
-        if (!isIgnoreUpdates()) {
+        if (!ignoreUpdates) {
             chosenIndex.add(indexName);
         }
     }
 
-    /** @return true if no index was chosen */
-    public boolean isEmpty() {
-        return chosenIndex.isEmpty();
-    }
-
-    public Set<String> getChosenIndexes() {
-        return Collections.unmodifiableSet(chosenIndex);
-    }
-
-    public boolean isIgnoreUpdates() {
-        return ignoreUpdates;
-    }
-
-    public String getDataTypeName() {
-        return dataTypeName;
+    public void updateDataTypeIndexUsage() {
+        for (String indexName : chosenIndex) {
+            serverTypeDesc.getIndexCounter(indexName).inc();
+        }
     }
 }
