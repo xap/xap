@@ -1243,6 +1243,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 operationModifiers, isFifoOperation, fromReplication);
 
         tHolder.setAnswerHolder(new AnswerHolder());
+        tHolder.getAnswerHolder().setServerTypeDesc(typeDesc);
         tHolder.setNonBlockingRead(isNonBlockingReadForOperation(tHolder));
         tHolder.setID(template.getID());
 
@@ -1966,6 +1967,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         else {
             tHolder.setAnswerHolder(new AnswerHolder());
         }
+        tHolder.getAnswerHolder().setServerTypeDesc(typeDesc);
         tHolder.setNonBlockingRead(isNonBlockingReadForOperation(tHolder));
         tHolder.setID(template.getID());
         tHolder.setBatchOperationContext(batchOperationContext);

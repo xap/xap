@@ -19,7 +19,6 @@ import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceEngine;
-import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.gigaspaces.metrics.Gauge;
 import com.gigaspaces.metrics.MetricRegistrator;
@@ -56,19 +55,7 @@ public class SpaceMetricsRegistrationUtils {
 
             // register read-count
             if( spaceEngine.getMetricManager().getMetricFlagsState().isDataReadCountsMetricEnabled() ) {
-                spaceEngine.getDataTypeMetricRegistrar(typeName).register(registrator.toPath("data", "read-count"), new Gauge<Long>() {
-                    @Override
-                    public Long getValue() {
-                        SpaceImpl spaceImpl = spaceEngine.getSpaceImpl();
-                        SpaceMode spaceMode = spaceImpl.getSpaceMode();
-                        if( spaceMode != SpaceMode.PRIMARY ){
-                            return null;
-                        }
-
-                        LongAdder objectTypeReadCounts = spaceImpl.getObjectTypeReadCounts(typeName);
-                        return objectTypeReadCounts == null ? 0 : objectTypeReadCounts.longValue();
-                    }
-                });
+                spaceEngine.getDataTypeMetricRegistrar(typeName).register(registrator.toPath("data", "read-count"), serverTypeDesc.getReadCounter());
             }
 
             // register data-types
