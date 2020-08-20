@@ -21,6 +21,7 @@ import com.gigaspaces.internal.oshi.OshiChecker;
 import com.gigaspaces.internal.oshi.OshiGaugeUtils;
 import com.gigaspaces.internal.oshi.OshiUtils;
 import com.gigaspaces.internal.sigar.SigarChecker;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.ConnectionPool;
@@ -454,9 +455,9 @@ public class MetricManager implements Closeable {
 
     public static class MetricFlagsState{
 
-        private boolean dataIndexHitsMetricEnabled = true;
-        private boolean dataReadCountsMetricEnabled = true;
-        private boolean dataTypesMetricEnabled = true;
+        private boolean dataIndexHitsMetricEnabled = GsEnv.propertyBoolean("com.gs.metrics.space_data_index-hits-total.enabled").get(true);
+        private boolean dataReadCountsMetricEnabled = GsEnv.propertyBoolean("com.gs.metrics.space_data_read-count.enabled").get(true);
+        private boolean dataTypesMetricEnabled = GsEnv.propertyBoolean("com.gs.metrics.space_data_data-types.enabled").get(true);
 
         private MetricFlagsState( MetricManager metricManager ) {
             List<MetricPattern> metricPatterns = metricManager.getMetricPatterns();
