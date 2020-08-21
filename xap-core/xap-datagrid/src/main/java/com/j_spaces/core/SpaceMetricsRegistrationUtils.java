@@ -72,6 +72,7 @@ public class SpaceMetricsRegistrationUtils {
                     if (v.getIndexType().isIndexed())
                         spaceEngine.getDataTypeMetricRegistrar(typeName, k).register(registrator.toPath("data", "index-hits-total"), typeData.getIndex(k).getUsageCounter());
                 });
+                spaceEngine.getDataTypeMetricRegistrar(typeName, "_gs_uid").register(registrator.toPath("data", "index-hits-total"), typeData.getUidUsageCounter());
             }
         }
     }
