@@ -67,10 +67,11 @@ public class SpaceMetricsRegistrationUtils {
         // register index-hits
         if( metricFlagsState.isDataIndexHitsMetricEnabled() ) {
             Map<String, SpaceIndex> indexes = serverTypeDesc.getTypeDesc().getIndexes();
-            if (indexes != null && !indexes.isEmpty()) {
-                for (String index : indexes.keySet()) {
-                    spaceEngine.getDataTypeMetricRegistrar(typeName, index).register(registrator.toPath("data", "index-hits-total"), typeData.getIndex(index).getUsageCounter());
-                }
+            if (indexes != null) {
+                indexes.forEach((k, v) -> {
+                    if (v.getIndexType().isIndexed())
+                        spaceEngine.getDataTypeMetricRegistrar(typeName, k).register(registrator.toPath("data", "index-hits-total"), typeData.getIndex(k).getUsageCounter());
+                });
             }
         }
     }
