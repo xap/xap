@@ -17,6 +17,7 @@ package com.gigaspaces.internal.query;
 
 import com.gigaspaces.internal.query.explainplan.IndexChoiceNode;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.gigaspaces.metrics.LongCounter;
 import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.TypeDataIndex;
 import com.j_spaces.core.cache.context.Context;
@@ -132,7 +133,7 @@ public class UidsIndexScanner  extends AbstractQueryIndex {
     public boolean  isUidsScanner() {return true;}
 
     @Override
-    public void trackIndexUsage(TypeData typeData) {
-        typeData.getUidUsageCounter().inc();
+    public LongCounter getIndexUsageCounter(TypeData typeData) {
+        return typeData.getUidUsageCounter();
     }
 }

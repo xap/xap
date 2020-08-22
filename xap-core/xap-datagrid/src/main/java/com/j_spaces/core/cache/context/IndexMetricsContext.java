@@ -19,6 +19,9 @@ import com.gigaspaces.internal.query.IQueryIndexScanner;
 import com.gigaspaces.metrics.LongCounter;
 import com.j_spaces.core.cache.TypeData;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Allows storing index hits
  *
@@ -29,6 +32,7 @@ public class IndexMetricsContext {
 
     private boolean ignoreUpdates;
     private final TypeData typeData;
+    private final Set<LongCounter> indexSet = new HashSet<>();
 
     public IndexMetricsContext(TypeData typeData) {
         this.typeData = typeData;
@@ -40,13 +44,18 @@ public class IndexMetricsContext {
 
     public void addChosenIndex(IQueryIndexScanner index) {
         if (!ignoreUpdates) {
-            index.trackIndexUsage(typeData);
+            trackUsage(index.getIndexUsageCounter(typeData));
         }
     }
 
     public void addChosenIndex(LongCounter indexCounter) {
         if (!ignoreUpdates) {
-            indexCounter.inc();
+            trackUsage(indexCounter);
         }
+    }
+
+    private void trackUsage(LongCounter indexCounter) {
+        if (indexCounter != null && indexSet.add(indexCounter))
+            indexCounter.inc();
     }
 }

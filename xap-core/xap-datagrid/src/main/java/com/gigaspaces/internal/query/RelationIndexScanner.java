@@ -113,12 +113,8 @@ public class RelationIndexScanner extends AbstractQueryIndex {
     }
 
     @Override
-    public void trackIndexUsage(TypeData typeData) {
+    public LongCounter getIndexUsageCounter(TypeData typeData) {
         QueryExtensionIndexManagerWrapper handler = typeData.getCacheManager().getQueryExtensionManager(namespace);
-        if (handler != null) {
-            LongCounter usageCounter = handler.getIndexedPathsUsageCounters(typeName).get(path);
-            if (usageCounter != null)
-                usageCounter.inc();
-        }
+        return handler != null ? handler.getIndexedPathsUsageCounters(typeName).get(path) : null;
     }
 }
