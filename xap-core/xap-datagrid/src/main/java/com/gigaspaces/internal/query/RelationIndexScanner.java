@@ -18,6 +18,7 @@ package com.gigaspaces.internal.query;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.gigaspaces.metrics.LongCounter;
 import com.j_spaces.core.cache.QueryExtensionIndexManagerWrapper;
 import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.TypeDataIndex;
@@ -109,5 +110,15 @@ public class RelationIndexScanner extends AbstractQueryIndex {
 
     public boolean supportsTemplateIndex() {
         return false;
+    }
+
+    @Override
+    public void trackIndexUsage(TypeData typeData) {
+        QueryExtensionIndexManagerWrapper handler = typeData.getCacheManager().getQueryExtensionManager(namespace);
+        if (handler != null) {
+            LongCounter usageCounter = handler.getIndexedPathsUsageCounters(typeName).get(path);
+            if (usageCounter != null)
+                usageCounter.inc();
+        }
     }
 }

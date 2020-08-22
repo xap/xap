@@ -17,6 +17,7 @@
 package org.openspaces.textsearch;
 
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
+import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
@@ -45,11 +46,13 @@ public class LuceneTextSearchTypeIndex implements Closeable {
     private final int maxUncommittedChanges;
     private final AtomicInteger uncommittedChanges = new AtomicInteger(0);
     protected final LuceneTextSearchConfiguration luceneConfig;
+    private final Map<String, LongCounter> indexMap;
     private Map<String, Analyzer> _fieldAnalyzers;
 
     public LuceneTextSearchTypeIndex(LuceneTextSearchConfiguration luceneConfig, String namespace, SpaceTypeDescriptor typeDescriptor) throws IOException {
         this.luceneConfig = luceneConfig;
         this.directory = luceneConfig.getDirectory(typeDescriptor.getTypeName() + File.separator + "entries");
+        this.indexMap = createFieldIndexes(typeDescriptor);
         this.indexWriter = new IndexWriter(directory, new IndexWriterConfig(createAnalyzer(luceneConfig, typeDescriptor))
                 .setOpenMode(IndexWriterConfig.OpenMode.CREATE));
         this.queryExtensionInfo = typeDescriptor.getQueryExtensions().getByNamespace(namespace);
@@ -107,9 +110,23 @@ public class LuceneTextSearchTypeIndex implements Closeable {
         return analyzerMap;
     }
 
+    private Map<String, LongCounter> createFieldIndexes(SpaceTypeDescriptor typeDescriptor) {
+        Map<String, LongCounter> indexMap = new HashMap<>();
+        TypeQueryExtension type = typeDescriptor.getQueryExtensions().getByNamespace(LuceneTextSearchQueryExtensionProvider.NAMESPACE);
+        for (String path : type.getPaths()) {
+            if (type.isIndexed(path)) {
+                indexMap.put(path, new LongCounter());
+            }
+        }
+        return indexMap;
+    }
+
     private void addAnalyzer(Map<String, Analyzer> analyzerMap, String path, Class clazz) {
         Analyzer analyzer = LuceneTextSearchConfiguration.createAnalyzer(clazz);
         analyzerMap.put(path, analyzer);
     }
 
+    public Map<String, LongCounter> getIndexMap() {
+        return indexMap;
+    }
 }

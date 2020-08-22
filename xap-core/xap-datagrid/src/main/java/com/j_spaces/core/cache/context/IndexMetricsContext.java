@@ -40,11 +40,7 @@ public class IndexMetricsContext {
 
     public void addChosenIndex(IQueryIndexScanner index) {
         if (!ignoreUpdates) {
-            if (index.isUidsScanner()) {
-                typeData.getUidUsageCounter().inc();
-            } else {
-                typeData.getIndex(index.getIndexName()).getUsageCounter().inc();
-            }
+            index.trackIndexUsage(typeData);
         }
     }
 

@@ -23,6 +23,7 @@ import com.gigaspaces.metrics.Gauge;
 import com.gigaspaces.metrics.MetricManager;
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.j_spaces.core.cache.CacheManager;
+import com.j_spaces.core.cache.QueryExtensionIndexManagerWrapper;
 import com.j_spaces.core.cache.TypeData;
 
 import java.util.Map;
@@ -73,6 +74,10 @@ public class SpaceMetricsRegistrationUtils {
                         spaceEngine.getDataTypeMetricRegistrar(typeName, k).register(registrator.toPath("data", "index-hits-total"), typeData.getIndex(k).getUsageCounter());
                 });
                 spaceEngine.getDataTypeMetricRegistrar(typeName, "_gs_uid").register(registrator.toPath("data", "index-hits-total"), typeData.getUidUsageCounter());
+            }
+            for (QueryExtensionIndexManagerWrapper foreignQueriesHandler : typeData.getForeignQueriesHandlers()) {
+                foreignQueriesHandler.getIndexedPathsUsageCounters(typeName).forEach((k, v) ->
+                        spaceEngine.getDataTypeMetricRegistrar(typeName, k).register(registrator.toPath("data", "index-hits-total"), v));
             }
         }
     }

@@ -130,4 +130,9 @@ public class UidsIndexScanner  extends AbstractQueryIndex {
 
     @Override
     public boolean  isUidsScanner() {return true;}
+
+    @Override
+    public void trackIndexUsage(TypeData typeData) {
+        typeData.getUidUsageCounter().inc();
+    }
 }
