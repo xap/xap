@@ -67,13 +67,13 @@ public class SpaceMetricsRegistrationUtils {
 
         // register index-hits
         if( metricFlagsState.isDataIndexHitsMetricEnabled() ) {
+            spaceEngine.getDataTypeMetricRegistrar(typeName, "_gs_uid").register(registrator.toPath("data", "index-hits-total"), typeData.getUidUsageCounter());
             Map<String, SpaceIndex> indexes = serverTypeDesc.getTypeDesc().getIndexes();
             if (indexes != null) {
                 indexes.forEach((k, v) -> {
                     if (v.getIndexType().isIndexed())
                         spaceEngine.getDataTypeMetricRegistrar(typeName, k).register(registrator.toPath("data", "index-hits-total"), typeData.getIndex(k).getUsageCounter());
                 });
-                spaceEngine.getDataTypeMetricRegistrar(typeName, "_gs_uid").register(registrator.toPath("data", "index-hits-total"), typeData.getUidUsageCounter());
             }
             for (QueryExtensionIndexManagerWrapper foreignQueriesHandler : typeData.getForeignQueriesHandlers()) {
                 foreignQueriesHandler.getIndexedPathsUsageCounters(typeName).forEach((k, v) ->
@@ -82,8 +82,8 @@ public class SpaceMetricsRegistrationUtils {
         }
     }
 
-    public void unregisterSpaceDataTypeMetrics(String typeName) {
-
+    public void unregisterSpaceDataTypeMetrics(IServerTypeDesc typeDesc, TypeData typeData) {
+        final String typeName = typeDesc.getTypeName();
         final MetricRegistrator registrator = spaceEngine.getMetricRegistrator();
 
         //unregister read-count
@@ -96,14 +96,16 @@ public class SpaceMetricsRegistrationUtils {
         }
         //unregister index-hits
         if( spaceEngine.getMetricManager().getMetricFlagsState().isDataIndexHitsMetricEnabled() ) {
-            IServerTypeDesc serverTypeDesc = spaceEngine.getTypeTableEntry(typeName);
-            if (serverTypeDesc != null) {
-                Map<String, SpaceIndex> indexes = serverTypeDesc.getTypeDesc().getIndexes();
-                if (indexes != null && !indexes.isEmpty()) {
-                    for (String index : indexes.keySet()) {
-                        spaceEngine.getDataTypeMetricRegistrar(typeName, index).unregisterByPrefix(registrator.toPath("data", "index-hits-total"));
-                    }
+            spaceEngine.getDataTypeMetricRegistrar(typeName, "_gs_uid").unregisterByPrefix(registrator.toPath("data", "index-hits-total"));
+            Map<String, SpaceIndex> indexes = typeDesc.getTypeDesc().getIndexes();
+            if (indexes != null && !indexes.isEmpty()) {
+                for (String index : indexes.keySet()) {
+                    spaceEngine.getDataTypeMetricRegistrar(typeName, index).unregisterByPrefix(registrator.toPath("data", "index-hits-total"));
                 }
+            }
+            for (QueryExtensionIndexManagerWrapper foreignQueriesHandler : typeData.getForeignQueriesHandlers()) {
+                foreignQueriesHandler.getIndexedPathsUsageCounters(typeName).forEach((k, v) ->
+                        spaceEngine.getDataTypeMetricRegistrar(typeName, k).unregisterByPrefix(registrator.toPath("data", "index-hits-total")));
             }
         }
     }

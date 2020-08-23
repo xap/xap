@@ -2985,8 +2985,7 @@ public class CacheManager extends AbstractCacheManager
      * method is protected through the space Default Security Filter. Admin permissions required to
      * execute this request successfully.
      **/
-    private void dropClass(IServerTypeDesc typeDesc) {
-        final TypeData typeData = _typeDataMap.get(typeDesc);
+    private void dropClass(IServerTypeDesc typeDesc, TypeData typeData) {
         if (typeData != null) {
             Context context = null;
             try {
@@ -5466,8 +5465,9 @@ public class CacheManager extends AbstractCacheManager
 
         @Override
         public void onTypeDeactivated(IServerTypeDesc typeDesc) {
-            unregisterTypeMetrics(typeDesc.getTypeName());
-            dropClass(typeDesc);
+            TypeData typeData = _typeDataMap.get(typeDesc);
+            unregisterTypeMetrics(typeDesc, typeData);
+            dropClass(typeDesc, typeData);
         }
 
         /* Note: This method is invoked in a synchronized context. */
@@ -5539,16 +5539,17 @@ public class CacheManager extends AbstractCacheManager
             }
         }
 
-        private void unregisterTypeMetrics(final String typeName) {
+        private void unregisterTypeMetrics(IServerTypeDesc typeDesc, TypeData typeData) {
+            String typeName = typeDesc.getTypeName();
             final String metricTypeName = typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) ? "total" : typeName;
             final MetricRegistrator registrator = _engine.getMetricRegistrator();
             registrator.unregisterByPrefix(registrator.toPath("data", "entries", metricTypeName));
             registrator.unregisterByPrefix(registrator.toPath("data", "notify-templates", metricTypeName));
 
-            _spaceMetricsRegistrationUtils.unregisterSpaceDataTypeMetrics( typeName );
+            _spaceMetricsRegistrationUtils.unregisterSpaceDataTypeMetrics(typeDesc, typeData);
 
             if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && isBlobStoreCachePolicy()) {
-                short typeDescCode = _typeManager.getServerTypeDesc(typeName).getServerTypeDescCode();
+                short typeDescCode = typeDesc.getServerTypeDescCode();
                 if (getBlobStoreStorageHandler().getOffHeapCache() != null) {
                     getBlobStoreStorageHandler().getOffHeapCache().unregister(typeName, typeDescCode);
                 }
