@@ -16,6 +16,7 @@
 
 package com.gigaspaces.cluster.activeelection;
 
+import com.gigaspaces.cluster.activeelection.core.ActiveElectionException;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryException;
 import com.gigaspaces.lrmi.LRMIUtilities;
@@ -332,6 +333,8 @@ public abstract class LeaderSelectorHandler implements LeaderSelector {
     }
 
     public void forceMoveToPrimary() throws RemoteException {
+        setLastError(new ActiveElectionException("force stop"));
+        moveToUnusable();
     }
 
 }
