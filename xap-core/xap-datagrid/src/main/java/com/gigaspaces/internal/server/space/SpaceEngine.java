@@ -156,7 +156,6 @@ import org.slf4j.LoggerFactory;
 import javax.transaction.xa.Xid;
 import java.rmi.RemoteException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import static com.j_spaces.core.Constants.CacheManager.*;
@@ -193,7 +192,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
     private final LocalViewRegistrations _localViewRegistrations;
     private final MetricManager _metricManager;
     private final MetricRegistrator _metricRegistrator;
-    private final Map<String,MetricRegistrator> _dataTypesMetricRegistrators = new ConcurrentHashMap<>();
 
     // Components which depend only on spaceImpl and configuration
     private final SpaceConfigReader _configReader;
@@ -306,7 +304,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         _localViewRegistrations = new LocalViewRegistrations(getFullSpaceName());
         _metricManager = MetricManager.acquire();
 
-        _metricRegistrator = createSpaceRegistrator(spaceImpl);
+        _metricRegistrator = createSpaceRegistrator(Collections.emptyMap());
         // ********** Finished initializing independent components **********
 
         // ********** Start initializing components which depend only on spaceImpl and configuration **********
@@ -410,38 +408,17 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         }
     }
 
-    private MetricRegistrator createDataTypeSpaceRegistrator(final SpaceImpl spaceImpl, String dataTypeName) {
-
-        Map<String, String> dataTypeTags = new HashMap<>(1);
-        dataTypeTags.put( "data_type_name", dataTypeName );
-
-        return createSpaceRegistrator( spaceImpl, dataTypeTags );
-    }
-
-    private MetricRegistrator createDataTypeSpaceRegistrator(final SpaceImpl spaceImpl, String dataTypeName, String index) {
-
-        Map<String, String> dataTypeTags = new HashMap<>(2);
-        dataTypeTags.put( "data_type_name", dataTypeName );
-        dataTypeTags.put( "index", index );
-
-        return createSpaceRegistrator( spaceImpl, dataTypeTags );
-    }
-
-    private MetricRegistrator createSpaceRegistrator(final SpaceImpl spaceImpl) {
-        return createSpaceRegistrator(spaceImpl, Collections.emptyMap() );
-    }
-
-    private MetricRegistrator createSpaceRegistrator(final SpaceImpl spaceImpl, Map<String, String> additionalTags ) {
+    public MetricRegistrator createSpaceRegistrator(Map<String, String> additionalTags) {
         // Create space tags:
         final String prefix = "metrics.";
         final Map<String, String> tags = new HashMap<String, String>();
-        for (Map.Entry<Object, Object> property : spaceImpl.getCustomProperties().entrySet()) {
+        for (Map.Entry<Object, Object> property : _spaceImpl.getCustomProperties().entrySet()) {
             String name = (String) property.getKey();
             if (name.startsWith(prefix))
                 tags.put(name.substring(prefix.length()), (String) property.getValue());
         }
-        tags.put("space_name", spaceImpl.getName());
-        tags.put("space_instance_id", spaceImpl.getInstanceId());
+        tags.put("space_name", _spaceImpl.getName());
+        tags.put("space_instance_id", _spaceImpl.getInstanceId());
         tags.putAll( additionalTags );
         // Create space dynamic tags:
         Map<String, DynamicMetricTag> dynamicTags = new HashMap<String, DynamicMetricTag>();
@@ -450,7 +427,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             public Object getValue() {
                 boolean active;
                 try {
-                    active = spaceImpl.isActive();
+                    active = _spaceImpl.isActive();
                 } catch (RemoteException e) {
                     active = false;
                 }
@@ -3553,15 +3530,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         if (_metricManager != null)
             _metricManager.close();
 
-        if( !_dataTypesMetricRegistrators.isEmpty() ){
-            for( MetricRegistrator metricRegistrator : _dataTypesMetricRegistrators.values() ){
-                metricRegistrator.clear();
-            }
-        }
-
         this._spaceImpl.removeClusterInfoChangedListener(this);
-
-        _dataTypesMetricRegistrators.clear();
     }
 
 
@@ -7227,35 +7196,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
     public MetricRegistrator getMetricRegistrator() {
         return _metricRegistrator;
-    }
-
-    public MetricRegistrator getDataTypeMetricRegistrar(String dataTypeName) {
-
-        MetricRegistrator metricRegistrator = _dataTypesMetricRegistrators.get( dataTypeName );
-        if( metricRegistrator == null ){
-            MetricRegistrator newMetricRegistrator = createDataTypeSpaceRegistrator( _spaceImpl, dataTypeName );
-            MetricRegistrator existingMetricRegistrator = _dataTypesMetricRegistrators.putIfAbsent(dataTypeName, newMetricRegistrator);
-            metricRegistrator = existingMetricRegistrator != null ? existingMetricRegistrator : newMetricRegistrator;
-        }
-
-        return metricRegistrator;
-    }
-
-    private static String getDataTypeIndexKey(String dataTypeName, String index){
-        return dataTypeName + '.' + index;
-    }
-
-    public MetricRegistrator getDataTypeMetricRegistrar(String dataTypeName, String index ) {
-
-        final String indexKey = getDataTypeIndexKey( dataTypeName, index );
-        MetricRegistrator metricRegistrator = _dataTypesMetricRegistrators.get( indexKey );
-        if( metricRegistrator == null ){
-            MetricRegistrator newMetricRegistrator = createDataTypeSpaceRegistrator( _spaceImpl, dataTypeName, index );
-            MetricRegistrator existingMetricRegistrator = _dataTypesMetricRegistrators.putIfAbsent( indexKey, newMetricRegistrator);
-            metricRegistrator = existingMetricRegistrator != null ? existingMetricRegistrator : newMetricRegistrator;
-        }
-
-        return metricRegistrator;
     }
 
     public void registerLocalView(ITemplatePacket[] queryPackets, Collection<SpaceQueryDetails> queryDescriptions,
