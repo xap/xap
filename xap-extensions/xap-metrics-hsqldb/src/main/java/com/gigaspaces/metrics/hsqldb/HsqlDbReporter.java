@@ -153,11 +153,11 @@ public class HsqlDbReporter extends MetricReporter {
             try {
                 statement.executeBatch();
             }
-            catch (SQLTransientConnectionException | SQLNonTransientConnectionException e){
+/*            catch (SQLTransientConnectionException | SQLNonTransientConnectionException e){
                 _logger.warn( "Failed to insert row to table using statement [{}] while executing batch", statement);
                 handleConnectionError( connectionWrapper.getOrCreateConnection() );
                 return;
-            }
+            }*/
             catch (SQLException sqlException) {
                 _logger.error( "Failed to insert row to table using statement " + statement + " due to ", sqlException );
             }
