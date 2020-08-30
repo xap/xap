@@ -19,7 +19,6 @@ package org.openspaces.spatial.spi;
 import com.gigaspaces.SpaceRuntimeException;
 import com.gigaspaces.internal.io.FileUtils;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
-import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.query.extension.QueryExtensionEntryIterator;
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
@@ -223,10 +222,5 @@ public class LuceneSpatialQueryExtensionManager extends QueryExtensionManager {
 
         ft.freeze();
         return ft;
-    }
-
-    @Override
-    public Map<String, LongCounter> getIndexedPathsUsageCounters(String typeName) {
-        return _luceneHolderMap.get(typeName).getIndexMap();
     }
 }

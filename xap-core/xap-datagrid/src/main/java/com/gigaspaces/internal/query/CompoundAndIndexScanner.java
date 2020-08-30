@@ -84,7 +84,7 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
 
         IndexChoiceNode fatherNode = null;
         IndexChoiceNode choiceNode = null;
-        IQueryIndexScanner shortestIndex = null;
+        String shortestIndexName = "";
         final boolean isExplainPlan = context.getExplainPlanContext() != null;
         final boolean trackIndexHits = context.getIndexMetricsContext() != null;
         if(isExplainPlan){
@@ -139,7 +139,7 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
                 if (!wasUids) {
                     shortestExtendedIndexMatch = (IScanListIterator<IEntryCacheInfo>) result;
                     if (isExplainPlan || trackIndexHits) {
-                        shortestIndex = queryIndex;
+                        shortestIndexName = queryIndex.getIndexName();
                     }
                 }
                 continue;
@@ -161,7 +161,7 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
             if (shortestPotentialMatchList == null || potentialMatchListSize <= shortestPotentialMatchList.size()){
                 shortestPotentialMatchList = potentialMatchList;
                 if(isExplainPlan || trackIndexHits){
-                    shortestIndex = queryIndex;
+                    shortestIndexName = queryIndex.getIndexName();
                 }
             }
             if (!shortestPotentialMatchList.isMultiObjectCollection() && !context.isIndicesIntersectionEnabled())
@@ -178,11 +178,11 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
             }
 
             if (isExplainPlan){
-                addChosenIndex(context, typeData, fatherNode, choiceNode, shortestIndex != null ? shortestIndex.getIndexName() : "");
+                addChosenIndex(context, typeData, fatherNode, choiceNode, shortestIndexName);
             }
 
-            if (trackIndexHits && shortestIndex != null) {
-                context.getIndexMetricsContext().addChosenIndex(shortestIndex);
+            if (trackIndexHits) {
+                context.getIndexMetricsContext().addChosenIndex(shortestIndexName);
             }
 
             return shortestPotentialMatchList;
@@ -195,11 +195,11 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
             }
 
             if (isExplainPlan){
-                addChosenIndex(context, typeData, fatherNode, choiceNode, shortestIndex != null ? shortestIndex.getIndexName() : null);
+                addChosenIndex(context, typeData, fatherNode, choiceNode, shortestIndexName);
             }
 
-            if (trackIndexHits && shortestIndex != null) {
-                context.getIndexMetricsContext().addChosenIndex(shortestIndex);
+            if (trackIndexHits) {
+                context.getIndexMetricsContext().addChosenIndex(shortestIndexName);
             }
 
             return shortestExtendedIndexMatch;

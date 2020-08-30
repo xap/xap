@@ -1829,7 +1829,7 @@ public class CacheManager extends AbstractCacheManager
             context.setDisableBlobStorePreFetching(true);
 
         if ( _engine.getMetricManager().getMetricFlagsState().isDataIndexHitsMetricEnabled()) {
-            context.setIndexMetricsContext(new IndexMetricsContext(typeData));
+            context.setIndexMetricsContext(new IndexMetricsContext(currServerTypeDesc.getTypeName()));
         }
 
         IScanListIterator<IEntryCacheInfo> result;
@@ -1837,6 +1837,10 @@ public class CacheManager extends AbstractCacheManager
             result = typeData == null ? null : getScannableEntriesMinIndex(context, typeData, numOfFields, template);
         else
             result = typeData == null ? null : getScannableEntriesMinIndexExtended(context, typeData, numOfFields, template);
+
+        if (context.getIndexMetricsContext() != null) {
+            _spaceMetricsRegistrationUtils.updateDataTypeIndexUsage(context.getIndexMetricsContext());
+        }
 
         return result;
     }
@@ -2985,7 +2989,8 @@ public class CacheManager extends AbstractCacheManager
      * method is protected through the space Default Security Filter. Admin permissions required to
      * execute this request successfully.
      **/
-    private void dropClass(IServerTypeDesc typeDesc, TypeData typeData) {
+    private void dropClass(IServerTypeDesc typeDesc) {
+        final TypeData typeData = _typeDataMap.get(typeDesc);
         if (typeData != null) {
             Context context = null;
             try {
@@ -4077,7 +4082,7 @@ public class CacheManager extends AbstractCacheManager
             Object templateValue = primaryKey.getIndexValueForTemplate(template.getEntryData());
             if (templateValue != null) {
                 if( context.getIndexMetricsContext() != null ) {
-                    context.getIndexMetricsContext().addChosenIndex( primaryKey.getUsageCounter() );
+                    context.getIndexMetricsContext().addChosenIndex( primaryKey.getIndexDefinition().getName() );
                 }
                 if (typeData.disableIdIndexForEntries(primaryKey))
                     return getPEntryByUid(typeData.generateUid(templateValue));
@@ -4180,7 +4185,7 @@ public class CacheManager extends AbstractCacheManager
         }
 
         final TypeDataIndex[] indexes = typeData.getIndexes();
-        TypeDataIndex shortestPotentialIndex = null;
+        String shortestPotentialIndexName = null;
         for (TypeDataIndex index : indexes) {
             if (index.getPos() >= numOfFields)
                 break;
@@ -4214,7 +4219,7 @@ public class CacheManager extends AbstractCacheManager
             if (potentialMatchListSize <= shortestPotentialMatchListSize) {
                 shortestPotentialMatchListSize = potentialMatchListSize;
                 shortestPotentialMatchList = potentialMatchList;
-                shortestPotentialIndex = index;
+                shortestPotentialIndexName = index.getIndexDefinition().getName();
                 if (template.isFifoGroupPoll())
                     context.setFifoGroupIndexUsedInFifoGroupScan(shortestPotentialMatchList, index);
             }
@@ -4223,8 +4228,8 @@ public class CacheManager extends AbstractCacheManager
                 break;
         }
 
-        if( shortestPotentialIndex != null && context.getIndexMetricsContext() != null ){
-            context.getIndexMetricsContext().addChosenIndex(shortestPotentialIndex.getUsageCounter());
+        if( shortestPotentialIndexName != null && context.getIndexMetricsContext() != null ){
+            context.getIndexMetricsContext().addChosenIndex( shortestPotentialIndexName );
         }
 
         if (_logger.isTraceEnabled())
@@ -4312,7 +4317,7 @@ public class CacheManager extends AbstractCacheManager
             return shortestPotentialMatchList;
         }
 
-        IQueryIndexScanner shortestPotentialIndex = null;
+        String shortestPotentialIndexName = null;
         MultiIntersectedStoredList<IEntryCacheInfo> intersectedList = context.getChosenIntersectedList(false);
         // Iterate over custom indexes to find shortest potential match list:
         for (IQueryIndexScanner queryIndex : customIndexes) {
@@ -4342,15 +4347,15 @@ public class CacheManager extends AbstractCacheManager
             // If the potential match list is shorter than the shortest match list so far, keep it:
             if (potentialMatchListSize <= shortestPotentialMatchList.size()) {
                 shortestPotentialMatchList = potentialMatchList;
-                shortestPotentialIndex = queryIndex;
+                shortestPotentialIndexName = queryIndex.getIndexName();
             }
 
             if (!shortestPotentialMatchList.isMultiObjectCollection() && !context.isIndicesIntersectionEnabled())
                 break;
         }
 
-        if( shortestPotentialIndex != null && context.getIndexMetricsContext() != null ){
-            context.getIndexMetricsContext().addChosenIndex( shortestPotentialIndex );
+        if( shortestPotentialIndexName != null && context.getIndexMetricsContext() != null ){
+            context.getIndexMetricsContext().addChosenIndex( shortestPotentialIndexName );
         }
 
         if (context.isIndicesIntersectionEnabled())
@@ -4414,7 +4419,7 @@ public class CacheManager extends AbstractCacheManager
                     context.getExplainPlanContext().getMatch().setChosen(indexInfo);
                 }
                 if( context.getIndexMetricsContext() != null ) {
-                    context.getIndexMetricsContext().addChosenIndex(primaryKey.getUsageCounter());
+                    context.getIndexMetricsContext().addChosenIndex(entryType.getProperty(primaryKey.getPos()).getName());
                 }
                 return pEntryByUid;
 
@@ -4527,7 +4532,7 @@ public class CacheManager extends AbstractCacheManager
                 && uidsSize > MIN_SIZE_TO_PERFORM_EXPLICIT_PROPERTIES_INDEX_SCAN_)
                 || (entryType.isBlobStoreClass() && resultSL.size() > 0)) {
             final TypeDataIndex[] indexes = entryType.getIndexes();
-            TypeDataIndex selectedShortestIndex = null;
+            String selectedShortestIndex = null;
             for (TypeDataIndex<Object> index : indexes) {
                 int pos = index.getPos();
                 if (pos >= numOfFields)
@@ -4564,7 +4569,7 @@ public class CacheManager extends AbstractCacheManager
                                 context.getExplainPlanContext().getMatch().addOption(indexInfo);
                                 context.getExplainPlanContext().getMatch().setChosen(indexInfo);
                             }
-                            selectedShortestIndex = index;
+                            selectedShortestIndex = entryType.getProperty(pos).getName();
                             resultSL = entriesVector;
                         }
                         break; //evaluate
@@ -4593,7 +4598,7 @@ public class CacheManager extends AbstractCacheManager
                         if (resultSL == null || resultSL.size() > entriesVector.size()) {
                             handleExplainPlanMatchCodes(true, context, entryType, index, pos, templateValue, entriesVector);
                             resultSL = entriesVector;
-                            selectedShortestIndex = index;
+                            selectedShortestIndex = entryType.getProperty(pos).getName();
                         } else {
                             handleExplainPlanMatchCodes(false, context, entryType, index, pos, templateValue, entriesVector);
                         }
@@ -4640,7 +4645,7 @@ public class CacheManager extends AbstractCacheManager
                             }
 
                             if (resultSL == null && uidsSize == Integer.MAX_VALUE) {
-                                selectedShortestIndex = index;
+                                selectedShortestIndex = entryType.getProperty(pos).getName();
                             }
 
                             if (context.isIndicesIntersectionEnabled())
@@ -4653,7 +4658,7 @@ public class CacheManager extends AbstractCacheManager
             } // for
 
             if (context.getIndexMetricsContext() != null && selectedShortestIndex != null) {
-                context.getIndexMetricsContext().addChosenIndex(selectedShortestIndex.getUsageCounter());
+                context.getIndexMetricsContext().addChosenIndex(selectedShortestIndex);
             }
 
             if (ProtectiveMode.isQueryWithoutIndexProtectionEnabled() && !indexUsed && !ignoreOrderedIndexes) {
@@ -5465,9 +5470,8 @@ public class CacheManager extends AbstractCacheManager
 
         @Override
         public void onTypeDeactivated(IServerTypeDesc typeDesc) {
-            TypeData typeData = _typeDataMap.get(typeDesc);
-            unregisterTypeMetrics(typeDesc, typeData);
-            dropClass(typeDesc, typeData);
+            unregisterTypeMetrics(typeDesc.getTypeName());
+            dropClass(typeDesc);
         }
 
         /* Note: This method is invoked in a synchronized context. */
@@ -5502,14 +5506,14 @@ public class CacheManager extends AbstractCacheManager
                 _typeDataMap.put(serverTypeDesc, typeData);
 
                 if (!_engine.isLocalCache())
-                    registerTypeMetrics(serverTypeDesc, typeData);
+                    registerTypeMetrics(serverTypeDesc);
                 if (_logger.isDebugEnabled())
                     _logger.debug("Created new TypeData for type " + serverTypeDesc.getTypeName() +
                             " [typeId=" + serverTypeDesc.getTypeId() + "]");
             }
         }
 
-        private void registerTypeMetrics(final IServerTypeDesc serverTypeDesc, TypeData typeData) {
+        private void registerTypeMetrics(final IServerTypeDesc serverTypeDesc) {
             short typeDescCode = serverTypeDesc.getServerTypeDescCode();
             final String typeName = serverTypeDesc.getTypeName();
             final String metricTypeName = typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) ? "total" : typeName;
@@ -5527,9 +5531,7 @@ public class CacheManager extends AbstractCacheManager
                 }
             });
 
-            if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME)) {
-                _spaceMetricsRegistrationUtils.registerSpaceDataTypeMetrics(serverTypeDesc, typeData, _engine.getMetricManager().getMetricFlagsState());
-            }
+            _spaceMetricsRegistrationUtils.registerSpaceDataTypeMetrics( serverTypeDesc );
 
             if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && isBlobStoreCachePolicy()) {
                 if (getBlobStoreStorageHandler().getOffHeapCache() != null)
@@ -5539,17 +5541,16 @@ public class CacheManager extends AbstractCacheManager
             }
         }
 
-        private void unregisterTypeMetrics(IServerTypeDesc typeDesc, TypeData typeData) {
-            String typeName = typeDesc.getTypeName();
+        private void unregisterTypeMetrics(final String typeName) {
             final String metricTypeName = typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) ? "total" : typeName;
             final MetricRegistrator registrator = _engine.getMetricRegistrator();
             registrator.unregisterByPrefix(registrator.toPath("data", "entries", metricTypeName));
             registrator.unregisterByPrefix(registrator.toPath("data", "notify-templates", metricTypeName));
 
-            _spaceMetricsRegistrationUtils.unregisterSpaceDataTypeMetrics(typeDesc, typeData);
+            _spaceMetricsRegistrationUtils.unregisterSpaceDataTypeMetrics( typeName );
 
             if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && isBlobStoreCachePolicy()) {
-                short typeDescCode = typeDesc.getServerTypeDescCode();
+                short typeDescCode = _typeManager.getServerTypeDesc(typeName).getServerTypeDescCode();
                 if (getBlobStoreStorageHandler().getOffHeapCache() != null) {
                     getBlobStoreStorageHandler().getOffHeapCache().unregister(typeName, typeDescCode);
                 }

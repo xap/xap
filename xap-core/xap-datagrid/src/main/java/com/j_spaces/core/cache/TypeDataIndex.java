@@ -36,7 +36,6 @@ import com.gigaspaces.internal.utils.collections.economy.HashEntryHandlerSpaceEn
 import com.gigaspaces.internal.utils.collections.economy.IEconomyConcurrentMap;
 import com.gigaspaces.metadata.index.ISpaceIndex;
 import com.gigaspaces.metadata.index.SpaceIndexType;
-import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.server.ServerEntry;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.cache.fifoGroup.FifoGroupsMainIndexExtention;
@@ -73,11 +72,6 @@ public class TypeDataIndex<K> {
     private final SpaceIndexType _indexType;
 
     private final ISpaceIndex _indexDefinition;
-    private final LongCounter usageCounter = new LongCounter();
-
-    public LongCounter getUsageCounter() {
-        return usageCounter;
-    }
 
     //in case index is not unique
     private final ConcurrentMap<Object, IStoredList<IEntryCacheInfo>> _nonUniqueEntriesStore;

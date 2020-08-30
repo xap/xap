@@ -15,10 +15,7 @@
  */
 package com.j_spaces.core.cache.context;
 
-import com.gigaspaces.internal.query.IQueryIndexScanner;
-import com.gigaspaces.metrics.LongCounter;
-import com.j_spaces.core.cache.TypeData;
-
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,32 +27,38 @@ import java.util.Set;
 @com.gigaspaces.api.InternalApi
 public class IndexMetricsContext {
 
+    private Set<String> chosenIndex = new HashSet<>(); //key is indexName
     private boolean ignoreUpdates;
-    private final TypeData typeData;
-    private final Set<LongCounter> indexSet = new HashSet<>();
+    private String dataTypeName;
 
-    public IndexMetricsContext(TypeData typeData) {
-        this.typeData = typeData;
+    public IndexMetricsContext(String dataTypeName) {
+        this.dataTypeName = dataTypeName;
     }
 
     public void setIgnoreUpdates(boolean ignoreUpdates) {
         this.ignoreUpdates = ignoreUpdates;
     }
 
-    public void addChosenIndex(IQueryIndexScanner index) {
-        if (!ignoreUpdates) {
-            trackUsage(index.getIndexUsageCounter(typeData));
+    public void addChosenIndex(String indexName) {
+        if (!isIgnoreUpdates()) {
+            chosenIndex.add(indexName);
         }
     }
 
-    public void addChosenIndex(LongCounter indexCounter) {
-        if (!ignoreUpdates) {
-            trackUsage(indexCounter);
-        }
+    /** @return true if no index was chosen */
+    public boolean isEmpty() {
+        return chosenIndex.isEmpty();
     }
 
-    private void trackUsage(LongCounter indexCounter) {
-        if (indexCounter != null && indexSet.add(indexCounter))
-            indexCounter.inc();
+    public Set<String> getChosenIndexes() {
+        return Collections.unmodifiableSet(chosenIndex);
+    }
+
+    public boolean isIgnoreUpdates() {
+        return ignoreUpdates;
+    }
+
+    public String getDataTypeName() {
+        return dataTypeName;
     }
 }

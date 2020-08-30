@@ -19,7 +19,6 @@ package org.openspaces.textsearch;
 import com.gigaspaces.SpaceRuntimeException;
 import com.gigaspaces.internal.io.FileUtils;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
-import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.query.extension.QueryExtensionEntryIterator;
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
@@ -217,11 +216,6 @@ public class LuceneTextSearchQueryExtensionManager extends QueryExtensionManager
         } catch (IOException e) {
             throw new SpaceRuntimeException("Failed to scan index", e);
         }
-    }
-
-    @Override
-    public Map<String, LongCounter> getIndexedPathsUsageCounters(String typeName) {
-        return _luceneHolderMap.get(typeName).getIndexMap();
     }
 
     protected Query createQuery(String typeName, String path, String operationName, Object operand) {

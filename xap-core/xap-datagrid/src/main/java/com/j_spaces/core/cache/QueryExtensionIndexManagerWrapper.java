@@ -17,7 +17,6 @@
 package com.j_spaces.core.cache;
 
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
-import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.query.extension.QueryExtensionEntryIterator;
 import com.gigaspaces.query.extension.QueryExtensionManager;
 import com.gigaspaces.query.extension.QueryExtensionProvider;
@@ -25,7 +24,6 @@ import com.gigaspaces.query.extension.QueryExtensionRuntimeInfo;
 import com.gigaspaces.server.SpaceServerEntry;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -95,10 +93,6 @@ public class QueryExtensionIndexManagerWrapper {
     public QueryExtensionIndexEntryIteratorWrapper scanIndex(String typeName, String path, String operation, Object subject) {
         final QueryExtensionEntryIterator iterator = manager.queryByIndex(typeName, path, operation, subject);
         return new QueryExtensionIndexEntryIteratorWrapper(this, iterator);
-    }
-
-    public Map<String, LongCounter> getIndexedPathsUsageCounters(String typeName) {
-        return manager.getIndexedPathsUsageCounters(typeName);
     }
 
     public SpaceServerEntryImpl getByUid(String uid) {

@@ -17,12 +17,10 @@
 package com.gigaspaces.query.extension;
 
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
-import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.server.SpaceServerEntry;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * handler of foreign indexes and query-executers
@@ -49,6 +47,4 @@ public abstract class QueryExtensionManager implements Closeable {
     public abstract void removeEntry(SpaceTypeDescriptor typeDescriptor, String uid, int version);
 
     public abstract QueryExtensionEntryIterator queryByIndex(String typeName, String path, String operation, Object operand);
-
-    public abstract Map<String, LongCounter> getIndexedPathsUsageCounters(String typeName);
 }

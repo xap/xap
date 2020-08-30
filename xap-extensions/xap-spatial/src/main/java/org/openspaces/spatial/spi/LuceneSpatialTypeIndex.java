@@ -17,7 +17,6 @@
 package org.openspaces.spatial.spi;
 
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
-import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -28,8 +27,6 @@ import org.apache.lucene.store.Directory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LuceneSpatialTypeIndex implements Closeable {
@@ -38,7 +35,6 @@ public class LuceneSpatialTypeIndex implements Closeable {
     private final TypeQueryExtension queryExtensionInfo;
     private final int maxUncommittedChanges;
     private final AtomicInteger uncommittedChanges = new AtomicInteger(0);
-    private final Map<String, LongCounter> indexMap;
 
     public LuceneSpatialTypeIndex(LuceneSpatialConfiguration luceneConfig, String namespace, SpaceTypeDescriptor typeDescriptor) throws IOException {
         this.directory = luceneConfig.getDirectory(typeDescriptor.getTypeName() + File.separator + "entries");
@@ -46,7 +42,6 @@ public class LuceneSpatialTypeIndex implements Closeable {
                 .setOpenMode(IndexWriterConfig.OpenMode.CREATE));
         this.queryExtensionInfo = typeDescriptor.getQueryExtensions().getByNamespace(namespace);
         this.maxUncommittedChanges = luceneConfig.getMaxUncommittedChanges();
-        this.indexMap = createFieldIndexes(typeDescriptor, namespace);
     }
 
     @Override
@@ -71,20 +66,5 @@ public class LuceneSpatialTypeIndex implements Closeable {
             uncommittedChanges.set(0);
             indexWriter.commit();
         }
-    }
-
-    public Map<String, LongCounter> getIndexMap() {
-        return indexMap;
-    }
-
-    private Map<String, LongCounter> createFieldIndexes(SpaceTypeDescriptor typeDescriptor, String nameSpace) {
-        Map<String, LongCounter> indexMap = new HashMap<>();
-        TypeQueryExtension type = typeDescriptor.getQueryExtensions().getByNamespace(nameSpace);
-        for (String path : type.getPaths()) {
-            if (type.isIndexed(path)) {
-                indexMap.put(path, new LongCounter());
-            }
-        }
-        return indexMap;
     }
 }

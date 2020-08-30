@@ -20,7 +20,6 @@ import com.gigaspaces.admin.quiesce.QuiesceException;
 import com.gigaspaces.client.protective.ProtectiveModeException;
 import com.gigaspaces.events.GSEventRegistration;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
-import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.operations.WriteEntriesResult;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.core.client.EntryNotInSpaceException;
@@ -39,7 +38,7 @@ import net.jini.space.InternalSpaceException;
 @com.gigaspaces.api.InternalApi
 public class AnswerHolder {
     private SingleExplainPlan _SingleExplainPlan;
-    private IServerTypeDesc serverTypeDesc;
+
     public AnswerHolder() {
 
     }
@@ -144,13 +143,5 @@ public class AnswerHolder {
 
     public SingleExplainPlan getExplainPlan() {
         return _SingleExplainPlan;
-    }
-
-    public IServerTypeDesc getServerTypeDesc() {
-        return serverTypeDesc;
-    }
-
-    public void setServerTypeDesc(IServerTypeDesc serverTypeDesc) {
-        this.serverTypeDesc = serverTypeDesc;
     }
 }
