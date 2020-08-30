@@ -17,7 +17,9 @@
 package com.gigaspaces.internal.query;
 
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.gigaspaces.metrics.LongCounter;
 import com.j_spaces.core.cache.TypeData;
+import com.j_spaces.core.cache.TypeDataIndex;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.kernel.list.IObjectsList;
 
@@ -74,4 +76,15 @@ public interface IQueryIndexScanner extends Externalizable
     IObjectsList getIndexedEntriesByType(Context context, TypeData typeData, ITemplateHolder template, int latestIndexToConsider);
 
     boolean isExtendsAbstractQueryIndex();
+
+    default LongCounter getIndexUsageCounter(TypeData typeData) {
+        String indexName = getIndexName();
+        if (indexName != null) {
+            TypeDataIndex<?> typeDataIndex = typeData.getIndex(indexName);
+            if (typeDataIndex != null) {
+                return typeDataIndex.getUsageCounter();
+            }
+        }
+        return null;
+    }
 }
