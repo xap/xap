@@ -38,7 +38,7 @@ public class HsqlDbReporter extends MetricReporter {
     private final SharedJdbcConnectionWrapper connectionWrapper;
     private final String dbTypeString;
     private final Map<String,PreparedStatement> _preparedStatements = new HashMap<>();
-    private final Set<PreparedStatement> statementsForBatch = new LinkedHashSet<>();
+    private final Set<PreparedStatement> _statementsForBatch = new LinkedHashSet<>();
 
     private final static String EXCEPTION_MESSAGE_MISSING_OBJECT = "user lacks privilege or object not found: ";
 
@@ -106,7 +106,7 @@ public class HsqlDbReporter extends MetricReporter {
             _logger.trace("Before adding insert to batch [{}]", insertSQL);
             statement.addBatch();
             _logger.trace("After adding insert to batch [{}]", insertSQL);
-            statementsForBatch.add( statement );
+            _statementsForBatch.add( statement );
         } catch (SQLSyntaxErrorException e) {
             String message = e.getMessage();
             _logger.debug("Report to {} failed: {}", tableName, message);
@@ -149,21 +149,28 @@ public class HsqlDbReporter extends MetricReporter {
     @Override
     protected void flush() {
 
-        for(PreparedStatement statement : statementsForBatch){
+        for(PreparedStatement statement : _statementsForBatch){
             try {
                 statement.executeBatch();
+            }
+            catch (SQLTransientConnectionException | SQLNonTransientConnectionException e){
+                _logger.warn( "Failed to insert row to table using statement [{}] while executing batch", statement, e);
+                handleConnectionError( connectionWrapper.getOrCreateConnection() );
+                return;
             }
             catch (SQLException sqlException) {
                 _logger.error( "Failed to insert row to table using statement " + statement + " due to ", sqlException );
             }
         }
 
-         statementsForBatch.clear();
+         _statementsForBatch.clear();
     }
 
     private void handleConnectionError(Connection connection) {
+        _logger.info( "Reset connection to HSQLDB due to connection error" );
         connectionWrapper.resetConnection(connection);
         _preparedStatements.clear();
+        _statementsForBatch.clear();
     }
 
     private PreparedStatement getOrCreatePreparedStatement(String sql, Connection connection) throws SQLException {
