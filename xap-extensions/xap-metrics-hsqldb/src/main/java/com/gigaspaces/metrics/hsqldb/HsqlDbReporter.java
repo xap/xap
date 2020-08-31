@@ -154,7 +154,7 @@ public class HsqlDbReporter extends MetricReporter {
                 statement.executeBatch();
             }
             catch (SQLTransientConnectionException | SQLNonTransientConnectionException e){
-                _logger.warn( "Failed to insert row to table using statement [{}] while executing batch", statement);
+                _logger.warn( "Failed to insert row to table using statement [{}] while executing batch", statement, e);
                 handleConnectionError( connectionWrapper.getOrCreateConnection() );
                 return;
             }
@@ -167,6 +167,7 @@ public class HsqlDbReporter extends MetricReporter {
     }
 
     private void handleConnectionError(Connection connection) {
+        _logger.info( "Reset connection to HSQLDB due to connection error" );
         connectionWrapper.resetConnection(connection);
         _preparedStatements.clear();
         _statementsForBatch.clear();
