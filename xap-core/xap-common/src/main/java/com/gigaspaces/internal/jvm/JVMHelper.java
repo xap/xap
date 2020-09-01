@@ -16,11 +16,9 @@
 
 package com.gigaspaces.internal.jvm;
 
-import com.gigaspaces.internal.jmx.OshiJVMDetailsProbe;
 import com.gigaspaces.internal.jmx.OshiJVMStatisticsProbe;
 import com.gigaspaces.internal.jvm.jmx.JMXJVMDetailsProbe;
 import com.gigaspaces.internal.jvm.jmx.JMXJVMStatisticsProbe;
-import com.gigaspaces.internal.jvm.sigar.SigarJVMDetailsProbe;
 import com.gigaspaces.internal.jvm.sigar.SigarJVMStatisticsProbe;
 import com.gigaspaces.internal.oshi.OshiChecker;
 import com.gigaspaces.internal.sigar.SigarChecker;
@@ -49,33 +47,16 @@ public class JVMHelper {
     }
 
     private static JVMDetailsProbe initJVMDetailsProbe() {
-
         String detailsProbeClass = System.getProperty("gs.admin.jvm.probe.details");
         if (detailsProbeClass != null)
             return tryCreateInstance(detailsProbeClass);
-
-        if(OshiChecker.isAvailable()){
-            OshiJVMDetailsProbe oshiJVMDetailsProbe = new OshiJVMDetailsProbe();
-            oshiJVMDetailsProbe.probeDetails();
-            return oshiJVMDetailsProbe;
-        } else if (SigarChecker.isAvailable()) {
-            try {
-                JVMDetailsProbe result = new SigarJVMDetailsProbe();
-                result.probeDetails();
-                return result;
-            } catch (Throwable t) {
-                LogHelper.log(_loggerName, Level.FINE, "Trying to load sigar failed", t);
-                // ignore, no sigar
-            }
-        }
 
         try {
             JVMDetailsProbe result = new JMXJVMDetailsProbe();
             result.probeDetails();
             return result;
         } catch (Throwable t) {
-            LogHelper.log(_loggerName, Level.FINE, "Trying to load sigar failed", t);
-            // ignore, no sigar
+            LogHelper.log(_loggerName, Level.FINE, "Trying to load JMXJVMDetailsProbe failed", t);
         }
 
         return null;
