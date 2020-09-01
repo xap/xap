@@ -15,9 +15,9 @@
  */
 package com.j_spaces.core;
 
-import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceEngine;
+import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.gigaspaces.metrics.Gauge;
 import com.gigaspaces.metrics.LongCounter;
@@ -35,10 +35,12 @@ public class SpaceMetricsRegistrationUtils {
 
     private final SpaceEngine spaceEngine;
     private final CacheManager cacheManager;
+    private final SpaceImpl spaceImpl;
 
     public SpaceMetricsRegistrationUtils(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
         this.spaceEngine = cacheManager.getEngine();
+        this.spaceImpl = spaceEngine.getSpaceImpl();
     }
 
     public void registerSpaceDataTypeMetrics(IServerTypeDesc serverTypeDesc, TypeData typeData, MetricManager.MetricFlagsState metricFlagsState) {
@@ -47,7 +49,7 @@ public class SpaceMetricsRegistrationUtils {
 
         // register read-count
         if( metricFlagsState.isDataReadCountsMetricEnabled() ) {
-            spaceEngine.getDataTypeMetricRegistrar(typeName).register("read-count", serverTypeDesc.getReadCounter());
+            spaceEngine.getDataTypeMetricRegistrar(typeName).register("read-count", wrapPrimaryOnly(serverTypeDesc.getReadCounter()));
         }
 
         // register data-types
@@ -55,11 +57,7 @@ public class SpaceMetricsRegistrationUtils {
             spaceEngine.getDataTypeMetricRegistrar(typeName).register("data-types", new Gauge<Integer>() {
                 @Override
                 public Integer getValue() {
-                    SpaceMode spaceMode = spaceEngine.getSpaceImpl().getSpaceMode();
-                    if( spaceMode != SpaceMode.PRIMARY ){
-                        return null;
-                    }
-                    return cacheManager.getNumberOfEntries(typeName, true);
+                    return spaceImpl.isPrimary() ? cacheManager.getNumberOfEntries(typeName, true) : null;
                 }
             });
         }
@@ -106,6 +104,18 @@ public class SpaceMetricsRegistrationUtils {
     }
 
     private void registerIndexUsageMetric(String typeName, String indexName, LongCounter usageCounter) {
-        spaceEngine.getDataTypeMetricRegistrar(typeName, indexName).register("index-hits-total", usageCounter);
+        spaceEngine.getDataTypeMetricRegistrar(typeName, indexName).register("index-hits-total", wrapPrimaryOnly(usageCounter));
+    }
+
+    /**
+     * Wrap the counter to return values only for primary, to reduce resource usage for backups.
+     */
+    private Gauge<Long> wrapPrimaryOnly(LongCounter counter) {
+        return new Gauge<Long>() {
+            @Override
+            public Long getValue() {
+                return spaceImpl.isPrimary() ? counter.getCount() : null;
+            }
+        };
     }
 }
