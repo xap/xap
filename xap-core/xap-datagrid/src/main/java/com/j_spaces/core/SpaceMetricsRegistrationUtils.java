@@ -15,152 +15,107 @@
  */
 package com.j_spaces.core;
 
-import com.gigaspaces.cluster.activeelection.SpaceMode;
-import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.gigaspaces.metrics.Gauge;
-import com.gigaspaces.metrics.MetricRegistrator;
+import com.gigaspaces.metrics.LongCounter;
+import com.gigaspaces.metrics.MetricManager;
 import com.j_spaces.core.cache.CacheManager;
-import com.j_spaces.core.cache.context.IndexMetricsContext;
+import com.j_spaces.core.cache.QueryExtensionIndexManagerWrapper;
+import com.j_spaces.core.cache.TypeData;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.LongAdder;
 
 /**
  * @since 15.5.0
  */
 public class SpaceMetricsRegistrationUtils {
 
-    //key = typeName, value = map<index name, hits>
-    private Map<String, Map<String, LongAdder>> dataTypesIndexesHits = new ConcurrentHashMap<>();
-
     private final SpaceEngine spaceEngine;
     private final CacheManager cacheManager;
+    private final SpaceImpl spaceImpl;
 
     public SpaceMetricsRegistrationUtils(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
         this.spaceEngine = cacheManager.getEngine();
+        this.spaceImpl = spaceEngine.getSpaceImpl();
     }
 
-    public void registerSpaceDataTypeMetrics(IServerTypeDesc serverTypeDesc) {
+    public void registerSpaceDataTypeMetrics(IServerTypeDesc serverTypeDesc, TypeData typeData, MetricManager.MetricFlagsState metricFlagsState) {
 
-        String typeName = serverTypeDesc.getTypeName();
+        final String typeName = serverTypeDesc.getTypeName();
 
-        if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME)) {
+        // register read-count
+        if( metricFlagsState.isDataReadCountsMetricEnabled() ) {
+            spaceEngine.getDataTypeMetricRegistrar(typeName).register("read-count", wrapPrimaryOnly(serverTypeDesc.getReadCounter()));
+        }
 
-            final MetricRegistrator registrator = spaceEngine.getMetricRegistrator();
-
-            // register read-count
-            if( spaceEngine.getMetricManager().getMetricFlagsState().isDataReadCountsMetricEnabled() ) {
-                spaceEngine.getDataTypeMetricRegistrar(typeName).register(registrator.toPath("data", "read-count"), new Gauge<Long>() {
-                    @Override
-                    public Long getValue() {
-                        SpaceImpl spaceImpl = spaceEngine.getSpaceImpl();
-                        SpaceMode spaceMode = spaceImpl.getSpaceMode();
-                        if( spaceMode != SpaceMode.PRIMARY ){
-                            return null;
-                        }
-
-                        LongAdder objectTypeReadCounts = spaceImpl.getObjectTypeReadCounts(typeName);
-                        return objectTypeReadCounts == null ? 0 : objectTypeReadCounts.longValue();
-                    }
-                });
-            }
-
-            // register data-types
-            if( spaceEngine.getMetricManager().getMetricFlagsState().isDataTypesMetricEnabled() ) {
-                spaceEngine.getDataTypeMetricRegistrar(typeName).register(registrator.toPath("data", "data-types"), new Gauge<Integer>() {
-                    @Override
-                    public Integer getValue() {
-                        SpaceMode spaceMode = spaceEngine.getSpaceImpl().getSpaceMode();
-                        if( spaceMode != SpaceMode.PRIMARY ){
-                            return null;
-                        }
-                        return cacheManager.getNumberOfEntries(typeName, true);
-                    }
-                });
-            }
-
-            // register index-hits
-            if( spaceEngine.getMetricManager().getMetricFlagsState().isDataIndexHitsMetricEnabled() ) {
-                ITypeDesc typeDesc = serverTypeDesc.getTypeDesc();
-                Map<String, SpaceIndex> indexes = typeDesc.getIndexes();
-                if (indexes != null && !indexes.isEmpty()) {
-                    //add type to dataTypes indexes hits map
-                    dataTypesIndexesHits.put(typeName, new ConcurrentHashMap<>());
-
-                    for (String index : indexes.keySet()) {
-                        spaceEngine.getDataTypeMetricRegistrar(typeName, index).register(registrator.toPath("data", "index-hits-total"), new Gauge<Long>() {
-                            @Override
-                            public Long getValue() {
-                                SpaceMode spaceMode = spaceEngine.getSpaceImpl().getSpaceMode();
-                                if( spaceMode != SpaceMode.PRIMARY ){
-                                    return null;
-                                }
-                                Map<String, LongAdder> indexesMap = dataTypesIndexesHits.get(typeName);
-                                LongAdder indexHits = indexesMap.get(index);
-                                return indexHits == null ? 0 : indexHits.longValue();
-                            }
-                        });
-                    }
+        // register data-types
+        if( metricFlagsState.isDataTypesMetricEnabled() ) {
+            spaceEngine.getDataTypeMetricRegistrar(typeName).register("data-types", new Gauge<Integer>() {
+                @Override
+                public Integer getValue() {
+                    return spaceImpl.isPrimary() ? cacheManager.getNumberOfEntries(typeName, true) : null;
                 }
+            });
+        }
+
+        // register index-hits
+        if( metricFlagsState.isDataIndexHitsMetricEnabled() ) {
+            registerIndexUsageMetric(typeName, "_gs_uid", typeData.getUidUsageCounter());
+            Map<String, SpaceIndex> indexes = serverTypeDesc.getTypeDesc().getIndexes();
+            if (indexes != null) {
+                indexes.forEach((k, v) -> {
+                    if (v.getIndexType().isIndexed())
+                        registerIndexUsageMetric(typeName, k, typeData.getIndex(k).getUsageCounter());
+                });
+            }
+            for (QueryExtensionIndexManagerWrapper foreignQueriesHandler : typeData.getForeignQueriesHandlers()) {
+                foreignQueriesHandler.getIndexedPathsUsageCounters(typeName).forEach((k, v) ->
+                        registerIndexUsageMetric(typeName, k, v));
             }
         }
     }
 
-    public void unregisterSpaceDataTypeMetrics(String typeName) {
+    public void unregisterSpaceDataTypeMetrics(IServerTypeDesc typeDesc, TypeData typeData) {
+        final String typeName = typeDesc.getTypeName();
 
-        final MetricRegistrator registrator = spaceEngine.getMetricRegistrator();
-
-        //unregister read-count
-        if( spaceEngine.getMetricManager().getMetricFlagsState().isDataReadCountsMetricEnabled() ) {
-            spaceEngine.getDataTypeMetricRegistrar(typeName).unregisterByPrefix(registrator.toPath("data", "read-count"));
-        }
-        //unregister data-types
-        if( spaceEngine.getMetricManager().getMetricFlagsState().isDataTypesMetricEnabled() ) {
-            spaceEngine.getDataTypeMetricRegistrar(typeName).unregisterByPrefix(registrator.toPath("data", "data-types"));
+        MetricManager.MetricFlagsState metricFlagsState = spaceEngine.getMetricManager().getMetricFlagsState();
+        //unregister read-count + data-types
+        if (metricFlagsState.isDataReadCountsMetricEnabled() || metricFlagsState.isDataTypesMetricEnabled()) {
+            spaceEngine.clearDataTypeMetricRegistrarIfExists(typeName);
         }
         //unregister index-hits
-        if( spaceEngine.getMetricManager().getMetricFlagsState().isDataIndexHitsMetricEnabled() ) {
-            IServerTypeDesc serverTypeDesc = spaceEngine.getTypeTableEntry(typeName);
-            if (serverTypeDesc != null) {
-                ITypeDesc typeDesc = serverTypeDesc.getTypeDesc();
-                Map<String, SpaceIndex> indexes = typeDesc.getIndexes();
-                if (indexes != null && !indexes.isEmpty()) {
-                    for (String index : indexes.keySet()) {
-                        spaceEngine.getDataTypeMetricRegistrar(typeName, index).unregisterByPrefix(registrator.toPath("data", "index-hits-total"));
-                    }
+        if (metricFlagsState.isDataIndexHitsMetricEnabled()) {
+            spaceEngine.clearDataTypeMetricRegistrarIfExists(typeName, "_gs_uid");
+            Map<String, SpaceIndex> indexes = typeDesc.getTypeDesc().getIndexes();
+            if (indexes != null && !indexes.isEmpty()) {
+                for (String index : indexes.keySet()) {
+                    spaceEngine.clearDataTypeMetricRegistrarIfExists(typeName, index);
                 }
+            }
+            for (QueryExtensionIndexManagerWrapper foreignQueriesHandler : typeData.getForeignQueriesHandlers()) {
+                foreignQueriesHandler.getIndexedPathsUsageCounters(typeName).forEach((k, v) ->
+                        spaceEngine.clearDataTypeMetricRegistrarIfExists(typeName, k));
             }
         }
     }
 
-    public void updateDataTypeIndexUsage(IndexMetricsContext indexMetricsContext) {
+    private void registerIndexUsageMetric(String typeName, String indexName, LongCounter usageCounter) {
+        spaceEngine.getDataTypeMetricRegistrar(typeName, indexName).register("index-hits-total", wrapPrimaryOnly(usageCounter));
+    }
 
-        if (indexMetricsContext.isEmpty()) {
-            return;
-        }
-
-        String typeName = indexMetricsContext.getDataTypeName();
-        Map<String, LongAdder> indexesMap = dataTypesIndexesHits.get(typeName);
-        if (indexesMap == null) {
-            return;
-        }
-
-        for (String indexName : indexMetricsContext.getChosenIndexes()) {
-            LongAdder currentIndexHitCount = indexesMap.get(indexName);
-            if (currentIndexHitCount == null) {
-                currentIndexHitCount = new LongAdder();
-                LongAdder prev = indexesMap.putIfAbsent(indexName, currentIndexHitCount);
-                if (prev != null) {
-                    currentIndexHitCount = prev;
-                }
+    /**
+     * Wrap the counter to return values only for primary, to reduce resource usage for backups.
+     */
+    private Gauge<Long> wrapPrimaryOnly(LongCounter counter) {
+        return new Gauge<Long>() {
+            @Override
+            public Long getValue() {
+                return spaceImpl.isPrimary() ? counter.getCount() : null;
             }
-            currentIndexHitCount.add(1);
-        }
+        };
     }
 }
