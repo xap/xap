@@ -24,19 +24,7 @@ import com.gigaspaces.internal.query.predicate.comparison.InSpacePredicate;
 import com.gigaspaces.internal.query.predicate.comparison.NotEqualsSpacePredicate;
 import com.gigaspaces.internal.query.predicate.comparison.NotRegexSpacePredicate;
 import com.gigaspaces.internal.query.predicate.comparison.RegexSpacePredicate;
-import com.j_spaces.jdbc.builder.range.CompositeRange;
-import com.j_spaces.jdbc.builder.range.ContainsItemValueRange;
-import com.j_spaces.jdbc.builder.range.ContainsValueRange;
-import com.j_spaces.jdbc.builder.range.EqualValueRange;
-import com.j_spaces.jdbc.builder.range.FunctionCallDescription;
-import com.j_spaces.jdbc.builder.range.InRange;
-import com.j_spaces.jdbc.builder.range.IsNullRange;
-import com.j_spaces.jdbc.builder.range.NotEqualValueRange;
-import com.j_spaces.jdbc.builder.range.NotNullRange;
-import com.j_spaces.jdbc.builder.range.NotRegexRange;
-import com.j_spaces.jdbc.builder.range.RegexRange;
-import com.j_spaces.jdbc.builder.range.RelationRange;
-import com.j_spaces.jdbc.builder.range.SegmentRange;
+import com.j_spaces.jdbc.builder.range.*;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -87,6 +75,15 @@ public enum QueryTypes {
 
     public static QueryOperationNode getNode(ICustomQuery customQuery) {
         QueryTypes queryType = queryTypes.get(customQuery.getClass());
+        if( queryType == null ){
+            if( customQuery instanceof UidsRange ){
+                UidsRange uidsRange = (UidsRange)customQuery;
+                String equalValueFunc = createFunctionString(uidsRange.getFunctionCallDescription(), (uidsRange.getPath()) );
+                return new RangeNode(uidsRange.getPath(), uidsRange.getInValues(), QueryOperator.EQ, equalValueFunc);
+            }
+            return null;
+        }
+
         switch (queryType) {
             case COMPOUND_CONTAINS_ITEMS_CUSTOM_QUERY:
                 return new QueryJunctionNode("CONTAINS");
@@ -217,7 +214,8 @@ public enum QueryTypes {
         int num = functionCallDescription.getNumberOfArguments();
         for (int i = 0; i < num; i++) {
             if (functionCallDescription.getArgument(i) != null) {
-                res.append(functionCallDescription.getArgument(i) + ",");
+                res.append(functionCallDescription.getArgument(i) );
+                res.append(',');
             }
         }
         res.deleteCharAt(res.length() - 1);
