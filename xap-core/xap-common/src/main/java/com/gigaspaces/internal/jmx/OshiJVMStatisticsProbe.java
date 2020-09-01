@@ -3,7 +3,6 @@ package com.gigaspaces.internal.jmx;
 import com.gigaspaces.internal.jvm.JVMStatistics;
 import com.gigaspaces.internal.jvm.JVMStatisticsProbe;
 import com.gigaspaces.internal.oshi.OshiChecker;
-import oshi.SystemInfo;
 import oshi.software.os.OSProcess;
 import oshi.software.os.OperatingSystem;
 import java.lang.management.*;
@@ -23,8 +22,7 @@ public class OshiJVMStatisticsProbe  implements JVMStatisticsProbe {
         runtimeMXBean = ManagementFactory.getRuntimeMXBean();
         memoryMXBean = ManagementFactory.getMemoryMXBean();
         threadMXBean = ManagementFactory.getThreadMXBean();
-        SystemInfo oshiSystemInfo = OshiChecker.getSystemInfo();
-        oshiOperatingSystem = oshiSystemInfo.getOperatingSystem();
+        oshiOperatingSystem = OshiChecker.getOperatingSystem();
     }
 
     public JVMStatistics probeStatistics() {

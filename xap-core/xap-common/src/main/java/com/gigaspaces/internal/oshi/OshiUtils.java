@@ -12,8 +12,7 @@ import java.util.List;
 
 public class OshiUtils {
 
-    public static SystemInfo oshiSystemInfo = OshiChecker.getSystemInfo();
-    public final static GlobalMemory memory = oshiSystemInfo.getHardware().getMemory();
+    public final static GlobalMemory memory = OshiChecker.getHardware().getMemory();
 
     public static double getUsedMemoryPerc(GlobalMemory memory) {
         long usedMemory = getActualUsedMemory(memory);
@@ -31,7 +30,7 @@ public class OshiUtils {
     }
 
     public static OSStatistics.OSNetInterfaceStats[] calcNetStats() {
-        List<NetworkIF> networkIFs = oshiSystemInfo.getHardware().getNetworkIFs();
+        List<NetworkIF> networkIFs = OshiChecker.getHardware().getNetworkIFs();
         OSStatistics.OSNetInterfaceStats[] netInterfaceConfigArray = new
                 OSStatistics.OSNetInterfaceStats[networkIFs.size()];
 

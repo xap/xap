@@ -9,7 +9,6 @@ import oshi.hardware.VirtualMemory;
 import oshi.software.os.OSFileStore;
 import oshi.software.os.OperatingSystem;
 import oshi.util.FormatUtil;
-import oshi.util.ParseUtil;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.ArrayList;
@@ -20,7 +19,6 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
     private static final String uid = SystemInfo.singleton().network().getHost().getHostAddress();
     private static final String localHostAddress = SystemInfo.singleton().network().getHost().getHostAddress();
     private static final String localHostName = SystemInfo.singleton().network().getHost().getHostName();
-    private static final oshi.SystemInfo oshiSystemInfo = OshiChecker.getSystemInfo();
 
     @Override
     public OSDetails probeDetails() throws Exception {
@@ -28,8 +26,8 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
             return new OSDetails();
         }
 
-        OperatingSystem operatingSystem = oshiSystemInfo.getOperatingSystem();
-        HardwareAbstractionLayer hardwareAbstractionLayer = oshiSystemInfo.getHardware();
+        OperatingSystem operatingSystem = OshiChecker.getOperatingSystem();
+        HardwareAbstractionLayer hardwareAbstractionLayer = OshiChecker.getHardware();
 
         GlobalMemory memory = hardwareAbstractionLayer.getMemory();
         VirtualMemory virtualMemory = memory.getVirtualMemory();
@@ -48,32 +46,8 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
 
     }
 
-    private OSDetails.OSNetInterfaceDetails[] getOSNetInterfacesDetailsArray() throws SocketException {
-
-        List<NetworkIF> networkIFs = oshiSystemInfo.getHardware().getNetworkIFs();
-        OSDetails.OSNetInterfaceDetails[] netInterfaceConfigArray = new
-                OSDetails.OSNetInterfaceDetails[networkIFs.size()];
-
-        for (int index = 0; index < netInterfaceConfigArray.length; index++) {
-            NetworkInterface netInterface = networkIFs.get(index).queryNetworkInterface();
-
-            String addr = ParseUtil.byteArrayToHexString(netInterface.getHardwareAddress());
-            String name = netInterface.getName();
-            String description = netInterface.getDisplayName();
-            if (description == null) {
-                //can happen on Windows when the network interface has no description
-                description = String.valueOf(name);
-            }
-            OSDetails.OSNetInterfaceDetails netInterfaceConfig =
-                    new OSDetails.OSNetInterfaceDetails(addr, name, description);
-            netInterfaceConfigArray[index] = netInterfaceConfig;
-        }
-
-        return netInterfaceConfigArray;
-    }
-
     private OSDetails.OSNetInterfaceDetails[] getOSNetDetails() throws SocketException {
-        List<NetworkIF> networkIFs = oshiSystemInfo.getHardware().getNetworkIFs();
+        List<NetworkIF> networkIFs = OshiChecker.getHardware().getNetworkIFs();
         OSDetails.OSNetInterfaceDetails[] interfacesList = new OSDetails.OSNetInterfaceDetails[networkIFs.size()];
 
         for(int i=0;i<interfacesList.length;i++) {
@@ -93,14 +67,9 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
         return interfacesList;
     }
 
-
-
     private OSDetails.OSDriveDetails[] getOSDriveDetailsArray(){
         List<OSDetails.OSDriveDetails> drives = new ArrayList<>();
-
-        OperatingSystem operatingSystem = oshiSystemInfo.getOperatingSystem();
-
-        for (OSFileStore drive :operatingSystem.getFileSystem().getFileStores()) {
+        for (OSFileStore drive : OshiChecker.getOperatingSystem().getFileSystem().getFileStores()) {
             if(drive.getDescription().equals("Local Disk") ||
                     drive.getDescription().equals("Network Drive")) {
 
@@ -111,11 +80,12 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
     }
 
     private OSDetails.OSVendorDetails getVendorDetails(){
+        OperatingSystem os = OshiChecker.getOperatingSystem();
         return new OSDetails.OSVendorDetails(
-                oshiSystemInfo.getOperatingSystem().getFamily(),
-                oshiSystemInfo.getOperatingSystem().getVersionInfo().getCodeName(),
-                oshiSystemInfo.getOperatingSystem().getManufacturer(),
-                oshiSystemInfo.getOperatingSystem().getVersionInfo().getVersion());
+                os.getFamily(),
+                os.getVersionInfo().getCodeName(),
+                os.getManufacturer(),
+                os.getVersionInfo().getVersion());
     }
 
     private String translateByteArrayToHwAddress(byte[] hardwareAddress){

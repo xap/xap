@@ -3,22 +3,18 @@ package com.gigaspaces.internal.oshi;
 import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.metrics.Gauge;
 
-import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.GlobalMemory;
 import oshi.hardware.VirtualMemory;
 import oshi.software.os.OSProcess;
-import oshi.software.os.OperatingSystem;
 
 public class OshiGaugeUtils {
 
-    public final static SystemInfo oshiSystemInfo = OshiChecker.getSystemInfo();
-    public final static CentralProcessor processor = oshiSystemInfo.getHardware().getProcessor();
-    public final static GlobalMemory memory = oshiSystemInfo.getHardware().getMemory();
+    public final static CentralProcessor processor = OshiChecker.getHardware().getProcessor();
+    public final static GlobalMemory memory = OshiChecker.getHardware().getMemory();
     public final static VirtualMemory virtualMemory = memory.getVirtualMemory();
-    public final static OperatingSystem operatingSystem = oshiSystemInfo.getOperatingSystem();
-    public final static int pid = operatingSystem.getProcessId();
-    public final static OSProcess osProcess = operatingSystem.getProcess(pid);
+    public final static int pid = OshiChecker.getOperatingSystem().getProcessId();
+    public final static OSProcess osProcess = OshiChecker.getOperatingSystem().getProcess(pid);
 
     public static Gauge<Double> getCpuPercGauge() {
         return new Gauge<Double>() {
@@ -200,7 +196,7 @@ public class OshiGaugeUtils {
             @Override
             public Double getValue() throws Exception {
 
-                OSProcess osProcessLocal = operatingSystem.getProcess(pid);
+                OSProcess osProcessLocal = OshiChecker.getOperatingSystem().getProcess(pid);
                 long currentCpuTime = System.currentTimeMillis();
                 long currentCpuTotal = osProcessLocal.getKernelTime() + osProcessLocal.getUserTime();
 
