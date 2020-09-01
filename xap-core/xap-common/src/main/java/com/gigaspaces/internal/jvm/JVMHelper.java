@@ -33,33 +33,24 @@ import java.util.logging.Level;
 public class JVMHelper {
     private static final String _loggerName = "com.gigaspaces.jvm";
 
-    private static final JVMDetailsProbe _detailsProbe;
-    private static final JVMStatisticsProbe _statisticsProbe;
-    private static final JVMDetails NA_DETAILS = new JVMDetails();
     private static final JVMStatistics NA_STATISTICS = new JVMStatistics();
+    private static final JVMStatisticsProbe _statisticsProbe = initJVMStatisticsProbe();
 
     // we cache the details, since they never change
-    private static JVMDetails details;
+    private static final JVMDetails details = initDetails();
 
-    static {
-        _statisticsProbe = initJVMStatisticsProbe();
-        _detailsProbe = initJVMDetailsProbe();
-    }
-
-    private static JVMDetailsProbe initJVMDetailsProbe() {
+    private static JVMDetails initDetails() {
         String detailsProbeClass = System.getProperty("gs.admin.jvm.probe.details");
-        if (detailsProbeClass != null)
-            return tryCreateInstance(detailsProbeClass);
-
-        try {
-            JVMDetailsProbe result = new JMXJVMDetailsProbe();
-            result.probeDetails();
-            return result;
-        } catch (Throwable t) {
-            LogHelper.log(_loggerName, Level.FINE, "Trying to load JMXJVMDetailsProbe failed", t);
+        JVMDetailsProbe probe = detailsProbeClass != null ? tryCreateInstance(detailsProbeClass) : new JMXJVMDetailsProbe();
+        if (probe != null) {
+            try {
+                return probe.probeDetails();
+            } catch (RuntimeException e) {
+                LogHelper.log(_loggerName, Level.FINE, "Failed to get JVM details from " + probe.getClass(), e);
+            }
         }
 
-        return null;
+        return new JVMDetails(); // N/A
     }
 
     private static JVMStatisticsProbe initJVMStatisticsProbe() {
@@ -104,33 +95,18 @@ public class JVMHelper {
         }
     }
 
-
     public static JVMDetails getDetails() {
-        if (_detailsProbe == null)
-            return NA_DETAILS;
-
-        try {
-            if (details != null)
-                return details;
-
-            details = _detailsProbe.probeDetails();
-            return details;
-        } catch (Exception e) {
-            LogHelper.log(_loggerName, Level.FINE, "Failed to get configuration", e);
-            return NA_DETAILS;
-        }
+        return details;
     }
 
     public static JVMStatistics getStatistics() {
-        if (_statisticsProbe == null)
-            return NA_STATISTICS;
-
         try {
-            return _statisticsProbe.probeStatistics();
+            if (_statisticsProbe != null)
+                return _statisticsProbe.probeStatistics();
         } catch (Exception e) {
             LogHelper.log(_loggerName, Level.FINE, "Failed to get stats", e);
-            return NA_STATISTICS;
         }
+        return NA_STATISTICS;
     }
 
     public static void initStaticCotr() {
