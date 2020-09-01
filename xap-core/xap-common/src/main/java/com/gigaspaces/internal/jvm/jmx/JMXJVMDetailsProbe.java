@@ -34,7 +34,7 @@ public class JMXJVMDetailsProbe implements JVMDetailsProbe {
     private static final String uid = UUID.randomUUID().toString(); // TODO I think we can get the actual vmid
     private static final RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
     private static final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
-    private static final long pid = JavaUtils.findProcessId();
+    private static final long pid = JavaUtils.getPid();
 
     public JVMDetails probeDetails() {
         return new JVMDetails(uid, runtimeMXBean.getVmName(), JavaUtils.getVersion(), JavaUtils.getVendor(),

@@ -436,7 +436,7 @@ public class RollingFileHandler extends StreamHandler {
             } else if (propertyName.equals(HOST_PROP)) {
                 return XapNetworkInfo.getInstance().getHostId();
             } else if (propertyName.equals(PID_PROP)) {
-                return "" + JavaUtils.findProcessId();
+                return "" + JavaUtils.getPid();
             } else if (propertyName.startsWith(DATE_PROP)) {
                 return getCurrDate(propertyName);
             } else {

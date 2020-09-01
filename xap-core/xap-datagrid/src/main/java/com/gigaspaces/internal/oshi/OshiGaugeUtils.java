@@ -1,5 +1,6 @@
 package com.gigaspaces.internal.oshi;
 
+import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.metrics.Gauge;
 
@@ -10,11 +11,11 @@ import oshi.software.os.OSProcess;
 
 public class OshiGaugeUtils {
 
-    public final static CentralProcessor processor = OshiChecker.getHardware().getProcessor();
-    public final static GlobalMemory memory = OshiChecker.getHardware().getMemory();
-    public final static VirtualMemory virtualMemory = memory.getVirtualMemory();
-    public final static int pid = OshiChecker.getOperatingSystem().getProcessId();
-    public final static OSProcess osProcess = OshiChecker.getOperatingSystem().getProcess(pid);
+    private final static CentralProcessor processor = OshiChecker.getHardware().getProcessor();
+    private final static GlobalMemory memory = OshiChecker.getHardware().getMemory();
+    private final static VirtualMemory virtualMemory = memory.getVirtualMemory();
+    private final static long pid = JavaUtils.getPid();
+    private final static OSProcess osProcess = OshiChecker.getProcessInfo(pid);
 
     public static Gauge<Double> getCpuPercGauge() {
         return new Gauge<Double>() {
@@ -196,7 +197,7 @@ public class OshiGaugeUtils {
             @Override
             public Double getValue() throws Exception {
 
-                OSProcess osProcessLocal = OshiChecker.getOperatingSystem().getProcess(pid);
+                OSProcess osProcessLocal = OshiChecker.getProcessInfo(pid);
                 long currentCpuTime = System.currentTimeMillis();
                 long currentCpuTotal = osProcessLocal.getKernelTime() + osProcessLocal.getUserTime();
 
