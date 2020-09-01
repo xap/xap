@@ -146,7 +146,7 @@ public abstract class AbstractQueryIndex implements IQueryIndexScanner {
         }
 
         if( context.getIndexMetricsContext() != null ) {
-            context.getIndexMetricsContext().addChosenIndex(this.getIndexName());
+            context.getIndexMetricsContext().addChosenIndex(this);
         }
 
         return entriesByIndex;

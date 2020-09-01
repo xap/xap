@@ -258,8 +258,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private SpaceComponentManager _componentManager;
     private RecoveryManager _recoveryManager;
     private QueryProcessor _qp;
-    //key is data type name, value is current read count per type
-    private Map<String,LongAdder> objectTypeReadCounts = new ConcurrentHashMap<>();
 
     private volatile ClusterFailureDetector _clusterFailureDetector;
 
@@ -2385,22 +2383,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         }
 
         String typeName = template.getTypeName();
-        if( typeName != null ){
-            LongAdder currentReadCount = objectTypeReadCounts.get( typeName );
-            if( currentReadCount == null ){
-                currentReadCount = new LongAdder();
-                LongAdder prev = objectTypeReadCounts.putIfAbsent(typeName, currentReadCount);
-                if (prev != null) {
-                    currentReadCount = prev;
-                }
-            }
-
-            currentReadCount.add( answerHolder._numOfEntriesMatched );
+        if (typeName != null) {
+            answerHolder.getServerTypeDesc().getReadCounter().inc(answerHolder._numOfEntriesMatched);
         }
-    }
-
-    public LongAdder getObjectTypeReadCounts( String typeName ) {
-        return objectTypeReadCounts.getOrDefault( typeName, null );
     }
 
     public static void applyEntryPacketOutFilter(IEntryPacket entryPacket, int modifiers, AbstractProjectionTemplate projectionTemplate) {
