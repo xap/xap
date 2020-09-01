@@ -62,4 +62,6 @@ public interface IServerTypeDesc {
     boolean isMaybeOutdated();
 
     void setMaybeOutdated();
+
+    LongCounter getReadCounter();
 }
