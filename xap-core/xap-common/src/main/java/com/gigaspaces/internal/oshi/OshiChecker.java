@@ -5,16 +5,11 @@ import oshi.SystemInfo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import oshi.hardware.HardwareAbstractionLayer;
-import oshi.software.os.OSProcess;
-import oshi.software.os.OperatingSystem;
 
 public class OshiChecker {
 
     private static final Logger logger = LoggerFactory.getLogger(OshiChecker.class.getName());
     private static final SystemInfo systemInfo = initSystemInfo();
-    private static final OperatingSystem operatingSystem = systemInfo != null ? systemInfo.getOperatingSystem() : null;
-    private static final HardwareAbstractionLayer hardware = systemInfo != null ? systemInfo.getHardware() : null;
 
     private static SystemInfo initSystemInfo() {
         String enabledProperty = System.getProperty(CommonSystemProperties.OSHI_ENABLED, "");
@@ -50,15 +45,7 @@ public class OshiChecker {
         return systemInfo != null;
     }
 
-    public static OperatingSystem getOperatingSystem() {
-        return operatingSystem;
-    }
-
-    public static OSProcess getProcessInfo(long pid) {
-        return operatingSystem.getProcess((int) pid);
-    }
-
-    public static HardwareAbstractionLayer getHardware() {
-        return hardware;
+    public static SystemInfo getSystemInfo() {
+        return systemInfo;
     }
 }

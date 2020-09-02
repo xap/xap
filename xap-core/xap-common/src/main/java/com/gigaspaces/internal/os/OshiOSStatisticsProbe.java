@@ -1,14 +1,13 @@
 package com.gigaspaces.internal.os;
 
-import com.gigaspaces.internal.oshi.OshiChecker;
 import com.gigaspaces.internal.oshi.OshiUtils;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.GlobalMemory;
 
 public class OshiOSStatisticsProbe implements OSStatisticsProbe {
-    CentralProcessor processor = OshiChecker.getHardware().getProcessor();
+    GlobalMemory memory = OshiUtils.getHardware().getMemory();
+    CentralProcessor processor = OshiUtils.getHardware().getProcessor();
     long[] oldCpuTicks = processor.getSystemCpuLoadTicks();
-    GlobalMemory memory = OshiChecker.getHardware().getMemory();
 
     @Override
     public OSStatistics probeStatistics() throws Exception {

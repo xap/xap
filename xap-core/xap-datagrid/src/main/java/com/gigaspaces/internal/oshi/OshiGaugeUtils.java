@@ -1,21 +1,17 @@
 package com.gigaspaces.internal.oshi;
 
-import com.gigaspaces.internal.jvm.JavaUtils;
 import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.metrics.Gauge;
 
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.GlobalMemory;
 import oshi.hardware.VirtualMemory;
-import oshi.software.os.OSProcess;
 
 public class OshiGaugeUtils {
 
-    private final static CentralProcessor processor = OshiChecker.getHardware().getProcessor();
-    private final static GlobalMemory memory = OshiChecker.getHardware().getMemory();
+    private final static CentralProcessor processor = OshiUtils.getHardware().getProcessor();
+    private final static GlobalMemory memory = OshiUtils.getHardware().getMemory();
     private final static VirtualMemory virtualMemory = memory.getVirtualMemory();
-    private final static long pid = JavaUtils.getPid();
-    private final static OSProcess osProcess = OshiChecker.getProcessInfo(pid);
 
     public static Gauge<Double> getCpuPercGauge() {
         return new Gauge<Double>() {
@@ -173,48 +169,6 @@ public class OshiGaugeUtils {
             @Override
             public Long getValue() throws Exception {
                 return osNetInterfaceStats.getTxDropped();
-            }
-        };
-    }
-
-    public static Gauge<Long> createProcessCpuTotalTimeGauge() {
-        return new Gauge<Long>() {
-            @Override
-            public Long getValue() throws Exception {
-                return osProcess.getKernelTime() + osProcess.getUserTime();
-            }
-        };
-    }
-
-    public static Gauge<Double> createProcessUsedCpuInPercentGauge() {
-
-        return new Gauge<Double>() {
-
-            public long previousCpuTime;
-            public long previousCpuTotal;
-            public double previousCpuPerc;
-
-            @Override
-            public Double getValue() throws Exception {
-
-                OSProcess osProcessLocal = OshiChecker.getProcessInfo(pid);
-                long currentCpuTime = System.currentTimeMillis();
-                long currentCpuTotal = osProcessLocal.getKernelTime() + osProcessLocal.getUserTime();
-
-                double cpuPerc = previousCpuPerc;
-
-                long timeDelta = currentCpuTime - previousCpuTime;
-                long totalDelta = currentCpuTotal - previousCpuTotal;
-
-                if( timeDelta > 0 && totalDelta >= 0 ) {
-                    cpuPerc = Math.min ( ((double) totalDelta) / timeDelta, 1.0 );
-                }
-
-                previousCpuTime = currentCpuTime;
-                previousCpuTotal = currentCpuTotal;
-                previousCpuPerc = cpuPerc;
-
-                return cpuPerc;
             }
         };
     }

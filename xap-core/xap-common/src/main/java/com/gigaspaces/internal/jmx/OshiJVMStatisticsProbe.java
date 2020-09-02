@@ -3,8 +3,8 @@ package com.gigaspaces.internal.jmx;
 import com.gigaspaces.internal.jvm.JVMStatistics;
 import com.gigaspaces.internal.jvm.JVMStatisticsProbe;
 import com.gigaspaces.internal.jvm.JavaUtils;
-import com.gigaspaces.internal.oshi.OshiChecker;
-import oshi.software.os.OSProcess;
+import com.gigaspaces.internal.oshi.OshiUtils;
+
 import java.lang.management.*;
 import java.util.List;
 
@@ -30,10 +30,11 @@ public class OshiJVMStatisticsProbe  implements JVMStatisticsProbe {
             }
         }
 
-        OSProcess osProcess = OshiChecker.getProcessInfo(pid);
-
-        return new JVMStatistics(System.currentTimeMillis(),
-                runtimeMXBean.getUptime(),
+        long currTime = System.currentTimeMillis();
+        long uptime = runtimeMXBean.getUptime();
+        long totalCpuTime = OshiUtils.getProcessCpuTime(pid);
+        return new JVMStatistics(currTime,
+                uptime,
                 memoryMXBean.getHeapMemoryUsage().getCommitted(),
                 memoryMXBean.getHeapMemoryUsage().getUsed(),
                 memoryMXBean.getNonHeapMemoryUsage().getCommitted(),
@@ -42,8 +43,8 @@ public class OshiJVMStatisticsProbe  implements JVMStatisticsProbe {
                 threadMXBean.getPeakThreadCount(),
                 gcCollectionCount,
                 gcCollectionTime,
-                osProcess.getProcessCpuLoadCumulative(),
-                osProcess.getKernelTime() + osProcess.getUserTime(),
-                System.currentTimeMillis());
+                totalCpuTime / (double) uptime,
+                totalCpuTime,
+                currTime);
     }
 }

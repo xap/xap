@@ -372,13 +372,16 @@ public class MetricManager implements Closeable {
 
     private MetricRegistrator registerProcessMetricsInternal(Map<String, String> tags) {
         MetricRegistrator registrator = createRegistrator("process", tags);
-        if(OshiChecker.isAvailable()){
-            registrator.register(registrator.toPath("cpu", "time-total"), OshiGaugeUtils.createProcessCpuTotalTimeGauge());
-            registrator.register(registrator.toPath("cpu", "used-percent"), OshiGaugeUtils.createProcessUsedCpuInPercentGauge());
-        } else if (!SigarChecker.isAvailable()) {
-            logger.info("Skipping process metrics registration - Sigar is not available");
+        ProcessMetricFactory factory;
+        if (OshiChecker.isAvailable()) {
+            factory = new OshiProcessMetricFactory();
+        } else if (SigarChecker.isAvailable()) {
+            factory = new SigarProcessMetricFactory();
         } else {
-            final SigarProcessMetricFactory factory = new SigarProcessMetricFactory();
+            factory = null;
+            logger.info("Skipping process metrics registration - Sigar/Oshi is not available");
+        }
+        if (factory !=  null) {
             registrator.register(registrator.toPath("cpu", "time-total"), factory.createProcessCpuTotalTimeGauge());
             registrator.register(registrator.toPath("cpu", "used-percent"), factory.createProcessUsedCpuInPercentGauge());
         }

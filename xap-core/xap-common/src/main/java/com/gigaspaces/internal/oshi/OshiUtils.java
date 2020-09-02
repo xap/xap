@@ -1,18 +1,30 @@
 package com.gigaspaces.internal.oshi;
 
 import com.gigaspaces.internal.os.OSStatistics;
-import oshi.SystemInfo;
-import oshi.hardware.CentralProcessor;
-import oshi.hardware.GlobalMemory;
-import oshi.hardware.NetworkIF;
-import oshi.hardware.VirtualMemory;
+import oshi.hardware.*;
+import oshi.software.os.OSProcess;
+import oshi.software.os.OperatingSystem;
 
 import java.net.NetworkInterface;
 import java.util.List;
 
 public class OshiUtils {
 
-    public final static GlobalMemory memory = OshiChecker.getHardware().getMemory();
+    private static final OperatingSystem operatingSystem = OshiChecker.getSystemInfo().getOperatingSystem();
+    private static final HardwareAbstractionLayer hardware = OshiChecker.getSystemInfo().getHardware();
+
+    public static OperatingSystem getOperatingSystem() {
+        return operatingSystem;
+    }
+
+    public static HardwareAbstractionLayer getHardware() {
+        return hardware;
+    }
+
+    public static long getProcessCpuTime(long pid) {
+        OSProcess process = operatingSystem.getProcess((int) pid);
+        return process.getKernelTime() + process.getUserTime();
+    }
 
     public static double getUsedMemoryPerc(GlobalMemory memory) {
         long usedMemory = getActualUsedMemory(memory);
@@ -30,7 +42,7 @@ public class OshiUtils {
     }
 
     public static OSStatistics.OSNetInterfaceStats[] calcNetStats() {
-        List<NetworkIF> networkIFs = OshiChecker.getHardware().getNetworkIFs();
+        List<NetworkIF> networkIFs = hardware.getNetworkIFs();
         OSStatistics.OSNetInterfaceStats[] netInterfaceConfigArray = new
                 OSStatistics.OSNetInterfaceStats[networkIFs.size()];
 

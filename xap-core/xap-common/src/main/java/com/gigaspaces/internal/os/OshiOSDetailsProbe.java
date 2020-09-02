@@ -1,6 +1,6 @@
 package com.gigaspaces.internal.os;
 
-import com.gigaspaces.internal.oshi.OshiChecker;
+import com.gigaspaces.internal.oshi.OshiUtils;
 import com.gigaspaces.start.SystemInfo;
 import oshi.hardware.GlobalMemory;
 import oshi.hardware.HardwareAbstractionLayer;
@@ -19,6 +19,8 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
     private static final String uid = SystemInfo.singleton().network().getHost().getHostAddress();
     private static final String localHostAddress = SystemInfo.singleton().network().getHost().getHostAddress();
     private static final String localHostName = SystemInfo.singleton().network().getHost().getHostName();
+    private static final OperatingSystem operatingSystem = OshiUtils.getOperatingSystem();
+    private static final HardwareAbstractionLayer hardware = OshiUtils.getHardware();
 
     @Override
     public OSDetails probeDetails() throws Exception {
@@ -26,17 +28,14 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
             return new OSDetails();
         }
 
-        OperatingSystem operatingSystem = OshiChecker.getOperatingSystem();
-        HardwareAbstractionLayer hardwareAbstractionLayer = OshiChecker.getHardware();
-
-        GlobalMemory memory = hardwareAbstractionLayer.getMemory();
+        GlobalMemory memory = hardware.getMemory();
         VirtualMemory virtualMemory = memory.getVirtualMemory();
 
         return new OSDetails(uid,
                 operatingSystem.getManufacturer(),
                 FormatUtil.formatBytes(operatingSystem.getBitness()),
                 operatingSystem.getVersionInfo().getBuildNumber(),
-                hardwareAbstractionLayer.getProcessor().getLogicalProcessorCount(),
+                hardware.getProcessor().getLogicalProcessorCount(),
                 virtualMemory.getSwapTotal(),
                 memory.getTotal(),
                 localHostName, localHostAddress,
@@ -47,7 +46,7 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
     }
 
     private OSDetails.OSNetInterfaceDetails[] getOSNetDetails() throws SocketException {
-        List<NetworkIF> networkIFs = OshiChecker.getHardware().getNetworkIFs();
+        List<NetworkIF> networkIFs = hardware.getNetworkIFs();
         OSDetails.OSNetInterfaceDetails[] interfacesList = new OSDetails.OSNetInterfaceDetails[networkIFs.size()];
 
         for(int i=0;i<interfacesList.length;i++) {
@@ -69,7 +68,7 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
 
     private OSDetails.OSDriveDetails[] getOSDriveDetailsArray(){
         List<OSDetails.OSDriveDetails> drives = new ArrayList<>();
-        for (OSFileStore drive : OshiChecker.getOperatingSystem().getFileSystem().getFileStores()) {
+        for (OSFileStore drive : operatingSystem.getFileSystem().getFileStores()) {
             if(drive.getDescription().equals("Local Disk") ||
                     drive.getDescription().equals("Network Drive")) {
 
@@ -80,12 +79,11 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
     }
 
     private OSDetails.OSVendorDetails getVendorDetails(){
-        OperatingSystem os = OshiChecker.getOperatingSystem();
         return new OSDetails.OSVendorDetails(
-                os.getFamily(),
-                os.getVersionInfo().getCodeName(),
-                os.getManufacturer(),
-                os.getVersionInfo().getVersion());
+                operatingSystem.getFamily(),
+                operatingSystem.getVersionInfo().getCodeName(),
+                operatingSystem.getManufacturer(),
+                operatingSystem.getVersionInfo().getVersion());
     }
 
     private String translateByteArrayToHwAddress(byte[] hardwareAddress){
