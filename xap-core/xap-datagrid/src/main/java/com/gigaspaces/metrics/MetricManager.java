@@ -17,6 +17,8 @@
 package com.gigaspaces.metrics;
 
 import com.gigaspaces.internal.os.OSStatistics;
+import com.gigaspaces.internal.os.ProcessCpuSampler;
+import com.gigaspaces.internal.os.ProcessCpuSamplerFactory;
 import com.gigaspaces.internal.oshi.OshiChecker;
 import com.gigaspaces.internal.oshi.OshiGaugeUtils;
 import com.gigaspaces.internal.oshi.OshiUtils;
@@ -373,8 +375,9 @@ public class MetricManager implements Closeable {
     private MetricRegistrator registerProcessMetricsInternal(Map<String, String> tags) {
         MetricRegistrator registrator = createRegistrator("process", tags);
         ProcessMetricFactory factory;
-        if (OshiChecker.isAvailable()) {
-            factory = new OshiProcessMetricFactory();
+        ProcessCpuSampler cpuSampler = ProcessCpuSamplerFactory.create();
+        if (cpuSampler.sampleTotalCpuTime() != cpuSampler.NA) {
+            factory = new DefaultProcessMetricFactory(cpuSampler);
         } else if (SigarChecker.isAvailable()) {
             factory = new SigarProcessMetricFactory();
         } else {

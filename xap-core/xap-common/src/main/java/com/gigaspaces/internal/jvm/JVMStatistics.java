@@ -61,13 +61,6 @@ public class JVMStatistics implements Externalizable {
 
     public JVMStatistics(long timestamp, long uptime,
                          long memoryHeapCommitted, long memoryHeapUsed, long memoryNonHeapCommitted, long memoryNonHeapUsed,
-                         int threadCount, int peakThreadCount, long gcCollectionCount, long gcCollectionTime) {
-        this(timestamp, uptime, memoryHeapCommitted, memoryHeapUsed, memoryNonHeapCommitted, memoryNonHeapUsed,
-                threadCount, peakThreadCount, gcCollectionCount, gcCollectionTime, -1, -1, -1);
-    }
-
-    public JVMStatistics(long timestamp, long uptime,
-                         long memoryHeapCommitted, long memoryHeapUsed, long memoryNonHeapCommitted, long memoryNonHeapUsed,
                          int threadCount, int peakThreadCount, long gcCollectionCount, long gcCollectionTime,
                          double cpuPerc, long cpuTotal, long cpuTime) {
         this.timestamp = timestamp;

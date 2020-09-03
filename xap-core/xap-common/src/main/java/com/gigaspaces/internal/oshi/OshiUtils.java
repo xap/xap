@@ -21,11 +21,6 @@ public class OshiUtils {
         return hardware;
     }
 
-    public static long getProcessCpuTime(long pid) {
-        OSProcess process = operatingSystem.getProcess((int) pid);
-        return process.getKernelTime() + process.getUserTime();
-    }
-
     public static double getUsedMemoryPerc(GlobalMemory memory) {
         long usedMemory = getActualUsedMemory(memory);
 

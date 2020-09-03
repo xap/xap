@@ -16,11 +16,11 @@
 
 package com.gigaspaces.internal.jvm;
 
-import com.gigaspaces.internal.jmx.OshiJVMStatisticsProbe;
 import com.gigaspaces.internal.jvm.jmx.JMXJVMDetailsProbe;
 import com.gigaspaces.internal.jvm.jmx.JMXJVMStatisticsProbe;
 import com.gigaspaces.internal.jvm.sigar.SigarJVMStatisticsProbe;
-import com.gigaspaces.internal.oshi.OshiChecker;
+import com.gigaspaces.internal.os.ProcessCpuSampler;
+import com.gigaspaces.internal.os.ProcessCpuSamplerFactory;
 import com.gigaspaces.internal.sigar.SigarChecker;
 import com.gigaspaces.logger.LogHelper;
 
@@ -59,11 +59,8 @@ public class JVMHelper {
         if (statisticsProbeClass != null)
             return tryCreateInstance(statisticsProbeClass);
 
-        if(OshiChecker.isAvailable()){
-            OshiJVMStatisticsProbe oshiJVMStatisticsProbe = new OshiJVMStatisticsProbe();
-            oshiJVMStatisticsProbe.probeStatistics();
-            return oshiJVMStatisticsProbe;
-        } else if (SigarChecker.isAvailable()) {
+        ProcessCpuSampler cpuSampler = ProcessCpuSamplerFactory.create();
+        if (cpuSampler.sampleTotalCpuTime() == cpuSampler.NA && SigarChecker.isAvailable()) {
             try {
                 JVMStatisticsProbe result = new SigarJVMStatisticsProbe();
                 result.probeStatistics();
@@ -75,12 +72,11 @@ public class JVMHelper {
         }
 
         try {
-            JVMStatisticsProbe result = new JMXJVMStatisticsProbe();
+            JVMStatisticsProbe result = new JMXJVMStatisticsProbe(cpuSampler);
             result.probeStatistics();
             return result;
         } catch (Throwable t) {
             LogHelper.log(_loggerName, Level.FINE, "Trying to load JMX failed", t);
-            // ignore, no sigar
         }
 
         return null;
