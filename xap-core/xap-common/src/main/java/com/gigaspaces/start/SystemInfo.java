@@ -203,7 +203,7 @@ public class SystemInfo {
     }
 
     public static class XapOperatingSystem {
-        private final long processId = JavaUtils.findProcessId();
+        private final long processId = JavaUtils.getPid();
         private final boolean isWindows = JavaUtils.isWindows();
 
         public long processId() {

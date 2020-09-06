@@ -21,5 +21,5 @@ package com.gigaspaces.internal.jvm;
  */
 public interface JVMDetailsProbe {
 
-    JVMDetails probeDetails() throws Exception;
+    JVMDetails probeDetails();
 }

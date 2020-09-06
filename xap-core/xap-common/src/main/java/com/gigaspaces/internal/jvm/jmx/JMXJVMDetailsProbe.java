@@ -31,28 +31,10 @@ import java.util.UUID;
 @com.gigaspaces.api.InternalApi
 public class JMXJVMDetailsProbe implements JVMDetailsProbe {
 
-    private static final String uid;
-
-    private static RuntimeMXBean runtimeMXBean;
-
-    private static MemoryMXBean memoryMXBean;
-
-    private static long pid;
-
-    static {
-        uid = UUID.randomUUID().toString(); // TODO I think we can get the actual vmid
-        runtimeMXBean = ManagementFactory.getRuntimeMXBean();
-        memoryMXBean = ManagementFactory.getMemoryMXBean();
-
-        // returns the <process id>@<host>
-        String pid = runtimeMXBean.getName();
-        try {
-            pid = pid.split("@")[0];
-            JMXJVMDetailsProbe.pid = Long.parseLong(pid);
-        } catch (Exception e) {
-            JMXJVMDetailsProbe.pid = -1;
-        }
-    }
+    private static final String uid = UUID.randomUUID().toString(); // TODO I think we can get the actual vmid
+    private static final RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+    private static final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+    private static final long pid = JavaUtils.getPid();
 
     public JVMDetails probeDetails() {
         return new JVMDetails(uid, runtimeMXBean.getVmName(), JavaUtils.getVersion(), JavaUtils.getVendor(),
