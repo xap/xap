@@ -3,8 +3,11 @@ package com.gigaspaces.internal.oshi;
 import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.metrics.Gauge;
 
+import com.gigaspaces.metrics.MetricRegistrator;
+import com.gigaspaces.metrics.internal.GaugeContextProvider;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.GlobalMemory;
+import oshi.hardware.NetworkIF;
 import oshi.hardware.VirtualMemory;
 
 public class OshiGaugeUtils {
@@ -101,74 +104,76 @@ public class OshiGaugeUtils {
         };
     }
 
-    public static Gauge<Long> createRxBytesGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
+    public static void registerNetworkMetrics(NetworkIF networkIF, MetricRegistrator networkRegistrator) {
+        GaugeContextProvider<OSStatistics.OSNetInterfaceStats> context = new GaugeContextProvider<OSStatistics.OSNetInterfaceStats>() {
+            @Override
+            protected OSStatistics.OSNetInterfaceStats loadValue() {
+                networkIF.updateAttributes();
+                return OshiUtils.getStats(networkIF);
+            }
+        };
+        networkRegistrator.register("rx-bytes", createRxBytesGauge(context));
+        networkRegistrator.register("tx-bytes", createTxBytesGauge(context));
+        networkRegistrator.register("rx-packets", createRxPacketsGauge(context));
+        networkRegistrator.register("tx-packets", createTxPacketsGauge(context));
+        networkRegistrator.register("rx-errors", createRxErrorsGauge(context));
+        networkRegistrator.register("tx-errors", createTxErrorsGauge(context));
+        // dropped stats are deprecated and only partially supported by Oshi
+        //networkRegistrator.register("rx-dropped", createRxDroppedGauge(context));
+        //networkRegistrator.register("tx-dropped", createTxDroppedGauge(context));
+
+    }
+
+    private static Gauge<Long> createRxBytesGauge(GaugeContextProvider<OSStatistics.OSNetInterfaceStats> context) {
         return new Gauge<Long>() {
             @Override
             public Long getValue() throws Exception {
-                return osNetInterfaceStats.getRxBytes();
+                return context.get().getRxBytes();
             }
         };
     }
 
-    public static Gauge<Long> createTxBytesGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
+    private static Gauge<Long> createTxBytesGauge(GaugeContextProvider<OSStatistics.OSNetInterfaceStats> context) {
         return new Gauge<Long>() {
             @Override
             public Long getValue() throws Exception {
-                return osNetInterfaceStats.getTxBytes();
+                return context.get().getTxBytes();
             }
         };
     }
 
-    public static Gauge<Long> createRxPacketsGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
+    private static Gauge<Long> createRxPacketsGauge(GaugeContextProvider<OSStatistics.OSNetInterfaceStats> context) {
         return new Gauge<Long>() {
             @Override
             public Long getValue() throws Exception {
-                return osNetInterfaceStats.getRxPackets();
+                return context.get().getRxPackets();
             }
         };
     }
 
-    public static Gauge<Long> createTxPacketsGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
+    private static Gauge<Long> createTxPacketsGauge(GaugeContextProvider<OSStatistics.OSNetInterfaceStats> context) {
         return new Gauge<Long>() {
             @Override
             public Long getValue() throws Exception {
-                return osNetInterfaceStats.getTxPackets();
+                return context.get().getTxPackets();
             }
         };
     }
 
-    public static Gauge<Long> createRxErrorsGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
+    private static Gauge<Long> createRxErrorsGauge(GaugeContextProvider<OSStatistics.OSNetInterfaceStats> context) {
         return new Gauge<Long>() {
             @Override
             public Long getValue() throws Exception {
-                return osNetInterfaceStats.getRxErrors();
+                return context.get().getRxErrors();
             }
         };
     }
 
-    public static Gauge<Long> createTxErrorsGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
+    private static Gauge<Long> createTxErrorsGauge(GaugeContextProvider<OSStatistics.OSNetInterfaceStats> context) {
         return new Gauge<Long>() {
             @Override
             public Long getValue() throws Exception {
-                return osNetInterfaceStats.getTxErrors();
-            }
-        };
-    }
-
-    public static Gauge<Long> createRxDroppedGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
-        return new Gauge<Long>() {
-            @Override
-            public Long getValue() throws Exception {
-                return osNetInterfaceStats.getRxDropped();
-            }
-        };
-    }
-
-    public static Gauge<Long> createTxDroppedGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
-        return new Gauge<Long>() {
-            @Override
-            public Long getValue() throws Exception {
-                return osNetInterfaceStats.getTxDropped();
+                return context.get().getTxErrors();
             }
         };
     }

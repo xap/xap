@@ -46,24 +46,13 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
     }
 
     private OSDetails.OSNetInterfaceDetails[] getOSNetDetails() throws SocketException {
-        List<NetworkIF> networkIFs = hardware.getNetworkIFs();
-        OSDetails.OSNetInterfaceDetails[] interfacesList = new OSDetails.OSNetInterfaceDetails[networkIFs.size()];
-
-        for(int i=0;i<interfacesList.length;i++) {
-            NetworkInterface networkInterface = networkIFs.get(i).queryNetworkInterface();
-
-            byte[] hwAddress = networkInterface.getHardwareAddress();
-            String hardwareAddressStr=translateByteArrayToHwAddress(hwAddress);
-            String name = networkInterface.getName();
-            String displayName = networkInterface.getDisplayName();
-
-            OSDetails.OSNetInterfaceDetails osNetInterfaceDetails =
-                    new OSDetails.OSNetInterfaceDetails(hardwareAddressStr, name, displayName);
-
-            //add network interface details to list
-            interfacesList[i] =osNetInterfaceDetails;
+        List<OSDetails.OSNetInterfaceDetails> result = new ArrayList<>();
+        for (NetworkIF networkIF : OshiUtils.getNetworkIFs()) {
+            OSDetails.OSNetInterfaceDetails nicDetails = OSDetails.OSNetInterfaceDetails.of(networkIF.queryNetworkInterface());
+            if (nicDetails != null)
+                result.add(nicDetails);
         }
-        return interfacesList;
+        return result.toArray(new OSDetails.OSNetInterfaceDetails[0]);
     }
 
     private OSDetails.OSDriveDetails[] getOSDriveDetailsArray(){
@@ -84,29 +73,5 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
                 operatingSystem.getVersionInfo().getCodeName(),
                 operatingSystem.getManufacturer(),
                 operatingSystem.getVersionInfo().getVersion());
-    }
-
-    private String translateByteArrayToHwAddress(byte[] hardwareAddress){
-        String hardwareAddressStr = "";
-
-
-        for (int index = 0; index < hardwareAddress.length; index++) {
-            int val = hardwareAddress[index];
-            if (val < 0) {
-                val = 256 + val;
-            }
-
-            String hexStr = Integer.toString(val, 16).toUpperCase();
-            //add zero if this is only one char
-            if (hexStr.length() == 1) {
-                hexStr = 0 + hexStr;
-            }
-
-            hardwareAddressStr += hexStr;
-            if (index < hardwareAddress.length - 1) {
-                hardwareAddressStr += ":";
-            }
-        }
-        return hardwareAddressStr;
     }
 }

@@ -23,7 +23,7 @@ public class OshiOSStatisticsProbe implements OSStatisticsProbe {
                 systemCpuLoadBetweenTicks,
                 OshiUtils.getActualUsedMemory(memory),
                 OshiUtils.getUsedMemoryPerc(memory),
-                OshiUtils.calcNetStats());
+                OshiUtils.calcNetStats(OshiUtils.getNetworkIFs()));
     }
 
 }
