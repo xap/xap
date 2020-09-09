@@ -2,9 +2,7 @@ package com.gigaspaces.internal.utils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -69,6 +67,32 @@ public class GsEnv {
                 result.put(key, value);
             }
         }
+        return result;
+    }
+
+    public static Map<String, String> getPropertiesWithPrefix(String sysPropPrefix) {
+        return getPropertiesWithPrefix(sysPropPrefix, System.getProperties(), env);
+    }
+
+    public static Map<String, String> getPropertiesWithPrefix(String sysPropPrefix, Properties sysProps, Map<String, String> env) {
+        Map<String, String> result = new HashMap<>();
+        // Search for environment variables with prefix and append:
+        String envPrefix = toEnvKey(sysPropPrefix);
+        String gsPrefix= GS_ENV_PREFIX + envPrefix;
+        String xapPrefix = XAP_ENV_PREFIX + envPrefix;
+        env.forEach((k, v) -> {
+            if (k.startsWith(gsPrefix)) {
+                result.put(k.substring(gsPrefix.length()).toLowerCase(), v);
+            } else if (k.startsWith(xapPrefix)) {
+                result.put(k.substring(xapPrefix.length()).toLowerCase(), v);
+            }
+        });
+        // Search for system properties with prefix and append (overrides env var if exists):
+        sysProps.forEach((k, v) -> {
+            String key = (String) k;
+            if (key.startsWith(sysPropPrefix))
+                result.put(key.substring(sysPropPrefix.length()), (String) v);
+        });
         return result;
     }
 

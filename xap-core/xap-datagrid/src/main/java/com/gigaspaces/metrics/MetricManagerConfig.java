@@ -162,6 +162,7 @@ public class MetricManagerConfig {
     }
 
     public void loadDefaults() {
+        GsEnv.getPropertiesWithPrefix("com.gs.metric.").forEach(patterns::add);
         if (!reportersFactories.containsKey("ui")) {
             if (Boolean.parseBoolean(System.getProperty(SystemProperties.UI_ENABLED, "true"))) {
                 XapManagerClusterInfo managerClusterInfo = SystemInfo.singleton().getManagerClusterInfo();

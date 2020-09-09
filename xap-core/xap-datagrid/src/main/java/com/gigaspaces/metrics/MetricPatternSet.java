@@ -18,9 +18,9 @@ package com.gigaspaces.metrics;
 
 import com.gigaspaces.internal.utils.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.StringJoiner;
 
 /**
  * @author Niv Ingberg
@@ -29,11 +29,10 @@ import java.util.List;
 @com.gigaspaces.api.InternalApi
 public class MetricPatternSet {
     private final String separator;
-    private final List<MetricPattern> patterns;
+    private final Map<String, MetricPattern> patterns = new LinkedHashMap<>();
 
     public MetricPatternSet(String separator) {
         this.separator = separator;
-        this.patterns = new ArrayList<>();
     }
 
     public String getSeparator() {
@@ -41,13 +40,13 @@ public class MetricPatternSet {
     }
 
     public void add(String pattern, String sampler) {
-        patterns.add(new MetricPattern(pattern, sampler, this));
+        patterns.put(pattern, new MetricPattern(pattern, sampler, this));
     }
 
     public String findBestMatch(String s) {
         MetricPattern p1 = new MetricPattern(s, null, this);
         MetricPattern result = null;
-        for (MetricPattern pattern : patterns) {
+        for (MetricPattern pattern : patterns.values()) {
             if (p1.match(pattern))
                 result = bestMatch(result, pattern);
         }
@@ -69,7 +68,14 @@ public class MetricPatternSet {
         return currPattern;
     }
 
-    public List<MetricPattern> getPatterns(){
-        return Collections.unmodifiableList( patterns );
+    public MetricPattern getPattern(String pattern) {
+        return patterns.get(pattern);
+    }
+
+    @Override
+    public String toString() {
+        StringJoiner sj = new StringJoiner(", ");
+        patterns.forEach((k, v) -> sj.add(k + " => " + v.getValue()));
+        return sj.toString();
     }
 }
