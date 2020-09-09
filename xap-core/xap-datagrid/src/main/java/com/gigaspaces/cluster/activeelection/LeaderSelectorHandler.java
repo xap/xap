@@ -20,7 +20,8 @@ import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryException;
 import com.gigaspaces.lrmi.LRMIUtilities;
 import com.j_spaces.core.cluster.ReplicationPolicy;
-import com.j_spaces.core.exception.SpaceAlreadyStoppedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.rmi.RemoteException;
 import java.util.Iterator;
@@ -28,9 +29,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -275,9 +273,15 @@ public abstract class LeaderSelectorHandler implements LeaderSelector {
     protected void moveToUnusable() {
         //stop the space , so it won't be accessed by clients and replication
         try {
+            _logger.info("Unhealthy Space: STARTED -> STOPPED");
             _space.stopInternal();
-        } catch (SpaceAlreadyStoppedException e) {
+            Executors.newSingleThreadExecutor().submit(() -> {
+                _logger.info("Unhealthy Space: STOPPED -> ABORTED");
+                _space.shutdown(true, false);
+                return null;
+            });
         } catch (RemoteException e) {
+            _logger.warn("Failed to move Space to STOPPED state", e);
         }
     }
 
