@@ -23,7 +23,6 @@ import com.gigaspaces.start.SystemInfo;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -98,69 +97,18 @@ public class JMXOSDetailsProbe implements OSDetailsProbe {
     }
 
     private OSNetInterfaceDetails[] retrieveOSNetInterfaceDetails() {
-        OSNetInterfaceDetails[] osNetInterfaceDetailsArray = null;
-
         try {
-            Class networkInterfaceClass = Class.forName("java.net.NetworkInterface");
-            Method method = networkInterfaceClass.getMethod("getHardwareAddress");
-
-            Enumeration<NetworkInterface> networkInterfacesEnum =
-                    NetworkInterface.getNetworkInterfaces();
-            List<OSNetInterfaceDetails> interfacesList =
-                    new ArrayList<OSNetInterfaceDetails>();
-
+            Enumeration<NetworkInterface> networkInterfacesEnum = NetworkInterface.getNetworkInterfaces();
+            List<OSNetInterfaceDetails> interfacesList = new ArrayList<>();
             while (networkInterfacesEnum.hasMoreElements()) {
-                NetworkInterface networkInterface = networkInterfacesEnum.nextElement();
-
-                byte[] hardwareAddress = (byte[]) method.invoke(networkInterface);
-
-                if (hardwareAddress != null) {
-                    String hardwareAddressStr = "";
-
-
-                    for (int index = 0; index < hardwareAddress.length; index++) {
-                        int val = hardwareAddress[index];
-                        if (val < 0) {
-                            val = 256 + val;
-                        }
-
-                        String hexStr = Integer.toString(val, 16).toUpperCase();
-                        //add zero if this is only one char
-                        if (hexStr.length() == 1) {
-                            hexStr = 0 + hexStr;
-                        }
-
-                        hardwareAddressStr += hexStr;
-                        if (index < hardwareAddress.length - 1) {
-                            hardwareAddressStr += ":";
-                        }
-                    }
-
-                    String name = networkInterface.getName();
-                    String displayName = networkInterface.getDisplayName();
-
-                    OSNetInterfaceDetails osNetInterfaceDetails =
-                            new OSNetInterfaceDetails(hardwareAddressStr, name, displayName);
-
-                    //add network interface details to list
-                    interfacesList.add(osNetInterfaceDetails);
-                }
+                NetworkInterface nic = networkInterfacesEnum.nextElement();
+                OSNetInterfaceDetails nicDetails = OSNetInterfaceDetails.of(nic);
+                if (nicDetails != null)
+                    interfacesList.add(nicDetails);
             }
-
-            osNetInterfaceDetailsArray =
-                    interfacesList.toArray(new OSNetInterfaceDetails[0]);
-        } catch (ClassNotFoundException ce) {
-
-        } catch (NoSuchMethodException me) {
-
-        } catch (IllegalAccessException ae) {
-
-        } catch (InvocationTargetException te) {
-
+            return interfacesList.toArray(new OSNetInterfaceDetails[0]);
         } catch (SocketException se) {
-
+            return null;
         }
-
-        return osNetInterfaceDetailsArray;
     }
 }

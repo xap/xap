@@ -20,6 +20,8 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 
 /**
  * @author kimchy
@@ -220,6 +222,11 @@ public class OSDetails implements Externalizable {
             this.description = description;
         }
 
+        public static OSNetInterfaceDetails of(NetworkInterface nic) throws SocketException {
+            byte[] hardwareAddress = nic.getHardwareAddress();
+            return hardwareAddress != null ? new OSNetInterfaceDetails(parseHardwareAddress(hardwareAddress), nic.getName(), nic.getDisplayName()) : null;
+        }
+
         public String getAddress() {
             return address;
         }
@@ -243,6 +250,29 @@ public class OSDetails implements Externalizable {
             address = in.readUTF();
             name = in.readUTF();
             description = in.readUTF();
+        }
+
+        private static String parseHardwareAddress(byte[] hardwareAddress) {
+            String hardwareAddressStr = "";
+
+            for (int index = 0; index < hardwareAddress.length; index++) {
+                int val = hardwareAddress[index];
+                if (val < 0) {
+                    val = 256 + val;
+                }
+
+                String hexStr = Integer.toString(val, 16).toUpperCase();
+                //add zero if this is only one char
+                if (hexStr.length() == 1) {
+                    hexStr = 0 + hexStr;
+                }
+
+                hardwareAddressStr += hexStr;
+                if (index < hardwareAddress.length - 1) {
+                    hardwareAddressStr += ":";
+                }
+            }
+            return hardwareAddressStr;
         }
     }
 

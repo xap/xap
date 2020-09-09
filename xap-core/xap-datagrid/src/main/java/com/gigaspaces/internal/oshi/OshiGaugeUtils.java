@@ -3,22 +3,18 @@ package com.gigaspaces.internal.oshi;
 import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.metrics.Gauge;
 
-import oshi.SystemInfo;
+import com.gigaspaces.metrics.MetricRegistrator;
+import com.gigaspaces.metrics.internal.GaugeContextProvider;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.GlobalMemory;
+import oshi.hardware.NetworkIF;
 import oshi.hardware.VirtualMemory;
-import oshi.software.os.OSProcess;
-import oshi.software.os.OperatingSystem;
 
 public class OshiGaugeUtils {
 
-    public final static SystemInfo oshiSystemInfo = OshiChecker.getSystemInfo();
-    public final static CentralProcessor processor = oshiSystemInfo.getHardware().getProcessor();
-    public final static GlobalMemory memory = oshiSystemInfo.getHardware().getMemory();
-    public final static VirtualMemory virtualMemory = memory.getVirtualMemory();
-    public final static OperatingSystem operatingSystem = oshiSystemInfo.getOperatingSystem();
-    public final static int pid = operatingSystem.getProcessId();
-    public final static OSProcess osProcess = operatingSystem.getProcess(pid);
+    private final static CentralProcessor processor = OshiUtils.getHardware().getProcessor();
+    private final static GlobalMemory memory = OshiUtils.getHardware().getMemory();
+    private final static VirtualMemory virtualMemory = memory.getVirtualMemory();
 
     public static Gauge<Double> getCpuPercGauge() {
         return new Gauge<Double>() {
@@ -108,116 +104,76 @@ public class OshiGaugeUtils {
         };
     }
 
-    public static Gauge<Long> createRxBytesGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
+    public static void registerNetworkMetrics(NetworkIF networkIF, MetricRegistrator networkRegistrator) {
+        GaugeContextProvider<OSStatistics.OSNetInterfaceStats> context = new GaugeContextProvider<OSStatistics.OSNetInterfaceStats>() {
+            @Override
+            protected OSStatistics.OSNetInterfaceStats loadValue() {
+                networkIF.updateAttributes();
+                return OshiUtils.getStats(networkIF);
+            }
+        };
+        networkRegistrator.register("rx-bytes", createRxBytesGauge(context));
+        networkRegistrator.register("tx-bytes", createTxBytesGauge(context));
+        networkRegistrator.register("rx-packets", createRxPacketsGauge(context));
+        networkRegistrator.register("tx-packets", createTxPacketsGauge(context));
+        networkRegistrator.register("rx-errors", createRxErrorsGauge(context));
+        networkRegistrator.register("tx-errors", createTxErrorsGauge(context));
+        // dropped stats are deprecated and only partially supported by Oshi
+        //networkRegistrator.register("rx-dropped", createRxDroppedGauge(context));
+        //networkRegistrator.register("tx-dropped", createTxDroppedGauge(context));
+
+    }
+
+    private static Gauge<Long> createRxBytesGauge(GaugeContextProvider<OSStatistics.OSNetInterfaceStats> context) {
         return new Gauge<Long>() {
             @Override
             public Long getValue() throws Exception {
-                return osNetInterfaceStats.getRxBytes();
+                return context.get().getRxBytes();
             }
         };
     }
 
-    public static Gauge<Long> createTxBytesGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
+    private static Gauge<Long> createTxBytesGauge(GaugeContextProvider<OSStatistics.OSNetInterfaceStats> context) {
         return new Gauge<Long>() {
             @Override
             public Long getValue() throws Exception {
-                return osNetInterfaceStats.getTxBytes();
+                return context.get().getTxBytes();
             }
         };
     }
 
-    public static Gauge<Long> createRxPacketsGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
+    private static Gauge<Long> createRxPacketsGauge(GaugeContextProvider<OSStatistics.OSNetInterfaceStats> context) {
         return new Gauge<Long>() {
             @Override
             public Long getValue() throws Exception {
-                return osNetInterfaceStats.getRxPackets();
+                return context.get().getRxPackets();
             }
         };
     }
 
-    public static Gauge<Long> createTxPacketsGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
+    private static Gauge<Long> createTxPacketsGauge(GaugeContextProvider<OSStatistics.OSNetInterfaceStats> context) {
         return new Gauge<Long>() {
             @Override
             public Long getValue() throws Exception {
-                return osNetInterfaceStats.getTxPackets();
+                return context.get().getTxPackets();
             }
         };
     }
 
-    public static Gauge<Long> createRxErrorsGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
+    private static Gauge<Long> createRxErrorsGauge(GaugeContextProvider<OSStatistics.OSNetInterfaceStats> context) {
         return new Gauge<Long>() {
             @Override
             public Long getValue() throws Exception {
-                return osNetInterfaceStats.getRxErrors();
+                return context.get().getRxErrors();
             }
         };
     }
 
-    public static Gauge<Long> createTxErrorsGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
+    private static Gauge<Long> createTxErrorsGauge(GaugeContextProvider<OSStatistics.OSNetInterfaceStats> context) {
         return new Gauge<Long>() {
             @Override
             public Long getValue() throws Exception {
-                return osNetInterfaceStats.getTxErrors();
-            }
-        };
-    }
-
-    public static Gauge<Long> createRxDroppedGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
-        return new Gauge<Long>() {
-            @Override
-            public Long getValue() throws Exception {
-                return osNetInterfaceStats.getRxDropped();
-            }
-        };
-    }
-
-    public static Gauge<Long> createTxDroppedGauge(OSStatistics.OSNetInterfaceStats osNetInterfaceStats) {
-        return new Gauge<Long>() {
-            @Override
-            public Long getValue() throws Exception {
-                return osNetInterfaceStats.getTxDropped();
-            }
-        };
-    }
-
-    public static Gauge<Long> createProcessCpuTotalTimeGauge() {
-        return new Gauge<Long>() {
-            @Override
-            public Long getValue() throws Exception {
-                return osProcess.getKernelTime() + osProcess.getUserTime();
-            }
-        };
-    }
-
-    public static Gauge<Double> createProcessUsedCpuInPercentGauge() {
-
-        return new Gauge<Double>() {
-
-            public long previousCpuTime;
-            public long previousCpuTotal;
-            public double previousCpuPerc;
-
-            @Override
-            public Double getValue() throws Exception {
-
-                OSProcess osProcessLocal = operatingSystem.getProcess(pid);
-                long currentCpuTime = System.currentTimeMillis();
-                long currentCpuTotal = osProcessLocal.getKernelTime() + osProcessLocal.getUserTime();
-
-                double cpuPerc = previousCpuPerc;
-
-                long timeDelta = currentCpuTime - previousCpuTime;
-                long totalDelta = currentCpuTotal - previousCpuTotal;
-
-                if( timeDelta > 0 && totalDelta >= 0 ) {
-                    cpuPerc = Math.min ( ((double) totalDelta) / timeDelta, 1.0 );
-                }
-
-                previousCpuTime = currentCpuTime;
-                previousCpuTotal = currentCpuTotal;
-                previousCpuPerc = cpuPerc;
-
-                return cpuPerc;
+                return context.get().getTxErrors();
             }
         };
     }
