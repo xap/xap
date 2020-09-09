@@ -191,7 +191,7 @@ public class MetricManager implements Closeable {
     }
 
     public static String getConfigFilePath() {
-        String configResource = System.getProperty("com.gigaspaces.metrics.config.resource");
+        String configResource = GsEnv.property("com.gigaspaces.metrics.config.resource").get();
         if (StringUtils.hasLength(configResource)) {
             URL systemResource = ClassLoader.getSystemResource(configResource);
             if (systemResource != null) {
@@ -202,7 +202,7 @@ public class MetricManager implements Closeable {
             }
         }
 
-        String result = System.getProperty("com.gigaspaces.metrics.config");
+        String result = GsEnv.property("com.gigaspaces.metrics.config").get();
         if (!StringUtils.hasLength(result)) {
             result = SystemLocations.singleton().config("metrics").resolve("metrics.xml").toString();
         }
