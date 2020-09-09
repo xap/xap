@@ -18,12 +18,9 @@ package com.gigaspaces.internal.jvm.jmx;
 
 import com.gigaspaces.internal.jvm.JVMStatistics;
 import com.gigaspaces.internal.jvm.JVMStatisticsProbe;
+import com.gigaspaces.internal.os.ProcessCpuSampler;
 
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.RuntimeMXBean;
-import java.lang.management.ThreadMXBean;
+import java.lang.management.*;
 import java.util.List;
 
 /**
@@ -32,16 +29,13 @@ import java.util.List;
 @com.gigaspaces.api.InternalApi
 public class JMXJVMStatisticsProbe implements JVMStatisticsProbe {
 
-    private static RuntimeMXBean runtimeMXBean;
+    private static final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+    private static final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+    private static final long startTime = ManagementFactory.getRuntimeMXBean().getStartTime();
+    private final ProcessCpuSampler cpuSampler;
 
-    private static MemoryMXBean memoryMXBean;
-
-    private static ThreadMXBean threadMXBean;
-
-    static {
-        runtimeMXBean = ManagementFactory.getRuntimeMXBean();
-        memoryMXBean = ManagementFactory.getMemoryMXBean();
-        threadMXBean = ManagementFactory.getThreadMXBean();
+    public JMXJVMStatisticsProbe(ProcessCpuSampler cpuSampler) {
+        this.cpuSampler = cpuSampler;
     }
 
     public JVMStatistics probeStatistics() {
@@ -58,9 +52,22 @@ public class JMXJVMStatisticsProbe implements JVMStatisticsProbe {
                 gcCollectionTime += tmp;
             }
         }
-        return new JVMStatistics(System.currentTimeMillis(), runtimeMXBean.getUptime(),
-                memoryMXBean.getHeapMemoryUsage().getCommitted(), memoryMXBean.getHeapMemoryUsage().getUsed(),
-                memoryMXBean.getNonHeapMemoryUsage().getCommitted(), memoryMXBean.getNonHeapMemoryUsage().getUsed(),
-                threadMXBean.getThreadCount(), threadMXBean.getPeakThreadCount(), gcCollectionCount, gcCollectionTime);
+
+        MemoryUsage heapMemoryUsage = memoryMXBean.getHeapMemoryUsage();
+        MemoryUsage nonHeapMemoryUsage = memoryMXBean.getNonHeapMemoryUsage();
+
+        long currTime = System.currentTimeMillis();
+        long uptime = currTime - startTime;
+        long totalCpuTime = cpuSampler.sampleTotalCpuTime();
+        double cpuPerc = cpuSampler.getCpuLoadCumulative(totalCpuTime, uptime);
+        long cpuSampleTime = totalCpuTime != cpuSampler.NA ? currTime : cpuSampler.NA;
+        return new JVMStatistics(currTime, uptime,
+                heapMemoryUsage.getCommitted(), heapMemoryUsage.getUsed(),
+                nonHeapMemoryUsage.getCommitted(), nonHeapMemoryUsage.getUsed(),
+                threadMXBean.getThreadCount(), threadMXBean.getPeakThreadCount(),
+                gcCollectionCount, gcCollectionTime,
+                cpuPerc,
+                totalCpuTime,
+                cpuSampleTime);
     }
 }

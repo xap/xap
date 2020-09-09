@@ -17,6 +17,7 @@ public class JavaUtils {
     private static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("win");
     private static final boolean isOsx = System.getProperty("os.name").toLowerCase().startsWith("mac os x");
     private static final LazySingleton<HotSpotDiagnosticMXBean> hotSpotDiagnosticMXBean = new LazySingleton<>(JavaUtils::initHotspotMBean);
+    private static final LazySingleton<Long> pid = new LazySingleton<>(JavaUtils::findProcessId);
 
     /**
      * Starting Java 9, format is: MAJOR.MINOR.SECURITY, where trailing 0 are omitted.
@@ -106,8 +107,11 @@ public class JavaUtils {
         return VENDOR;
     }
 
+    public static long getPid() {
+        return pid.getOrCreate();
+    }
 
-    public static long findProcessId() {
+    private static long findProcessId() {
         String name = ManagementFactory.getRuntimeMXBean().getName();
         int pos = name.indexOf('@');
         if (pos < 1)

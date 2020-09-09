@@ -45,7 +45,7 @@ public class OshiChecker {
         return systemInfo != null;
     }
 
-    public static SystemInfo getSystemInfo(){
+    public static SystemInfo getSystemInfo() {
         return systemInfo;
     }
 }

@@ -1,18 +1,29 @@
 package com.gigaspaces.internal.oshi;
 
 import com.gigaspaces.internal.os.OSStatistics;
-import oshi.SystemInfo;
-import oshi.hardware.CentralProcessor;
-import oshi.hardware.GlobalMemory;
-import oshi.hardware.NetworkIF;
-import oshi.hardware.VirtualMemory;
+import com.gigaspaces.internal.utils.LazySingleton;
+import oshi.hardware.*;
+import oshi.software.os.OperatingSystem;
 
-import java.net.NetworkInterface;
+import java.util.List;
 
 public class OshiUtils {
 
-    public static SystemInfo oshiSystemInfo = OshiChecker.getSystemInfo();
-    public final static GlobalMemory memory = oshiSystemInfo.getHardware().getMemory();
+    private static final OperatingSystem operatingSystem = OshiChecker.getSystemInfo().getOperatingSystem();
+    private static final HardwareAbstractionLayer hardware = OshiChecker.getSystemInfo().getHardware();
+    private static final LazySingleton<List<NetworkIF>> networkIFs = new LazySingleton<>(hardware::getNetworkIFs);
+
+    public static OperatingSystem getOperatingSystem() {
+        return operatingSystem;
+    }
+
+    public static HardwareAbstractionLayer getHardware() {
+        return hardware;
+    }
+
+    public static List<NetworkIF> getNetworkIFs() {
+        return networkIFs.getOrCreate();
+    }
 
     public static double getUsedMemoryPerc(GlobalMemory memory) {
         long usedMemory = getActualUsedMemory(memory);
@@ -29,25 +40,26 @@ public class OshiUtils {
         return virtualMemory.getSwapTotal() - virtualMemory.getSwapUsed();
     }
 
-    public static OSStatistics.OSNetInterfaceStats[] calcNetStats() {
-        NetworkIF[] networkIFs = oshiSystemInfo.getHardware().getNetworkIFs();
+    public static OSStatistics.OSNetInterfaceStats[] calcNetStats(List<NetworkIF> networkIFs) {
         OSStatistics.OSNetInterfaceStats[] netInterfaceConfigArray = new
-                OSStatistics.OSNetInterfaceStats[networkIFs.length];
+                OSStatistics.OSNetInterfaceStats[networkIFs.size()];
 
-        for (int index = 0; index < networkIFs.length; index++) {
-            NetworkIF networkIF = networkIFs[index];
-            NetworkInterface netInterface = networkIF.queryNetworkInterface();
-
-            OSStatistics.OSNetInterfaceStats netInterfaceStats = new OSStatistics.OSNetInterfaceStats(networkIF.getName(),
-                    networkIF.getBytesRecv(), networkIF.getBytesSent(),
-                    networkIF.getPacketsRecv(), networkIF.getPacketsSent(),
-                    networkIF.getInErrors(), networkIF.getOutErrors(),
-                    -1,-1
-                    //this data is missing in Oshi - we deprecated it from the API
-            );
-            netInterfaceConfigArray[index] = netInterfaceStats;
+        for (int index = 0; index < netInterfaceConfigArray.length; index++) {
+            NetworkIF networkIF = networkIFs.get(index);
+            networkIF.updateAttributes();
+            netInterfaceConfigArray[index] = getStats(networkIF);
         }
         return netInterfaceConfigArray;
+    }
+
+    public static OSStatistics.OSNetInterfaceStats getStats(NetworkIF networkIF) {
+        return new OSStatistics.OSNetInterfaceStats(networkIF.getName(),
+                networkIF.getBytesRecv(), networkIF.getBytesSent(),
+                networkIF.getPacketsRecv(), networkIF.getPacketsSent(),
+                networkIF.getInErrors(), networkIF.getOutErrors(),
+                -1,-1
+                //this data is missing in Oshi - we deprecated it from the API
+        );
     }
 
     public static double getSystemCpuLoadBetweenTicks(long[] oldTicks,long[] newTicks) {

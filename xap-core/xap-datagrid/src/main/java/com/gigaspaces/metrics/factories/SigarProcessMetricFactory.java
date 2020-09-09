@@ -31,7 +31,7 @@ import org.hyperic.sigar.SigarException;
  * @since 10.1
  */
 
-public class SigarProcessMetricFactory {
+public class SigarProcessMetricFactory implements ProcessMetricFactory {
 
     private static final int processors = Runtime.getRuntime().availableProcessors();
 
@@ -55,6 +55,7 @@ public class SigarProcessMetricFactory {
         context.reset();
     }
 
+    @Override
     public Gauge<Long> createProcessCpuTotalTimeGauge() {
         return new InternalGauge<Long>(context) {
             @Override
@@ -64,6 +65,7 @@ public class SigarProcessMetricFactory {
         };
     }
 
+    @Override
     public Gauge<Double> createProcessUsedCpuInPercentGauge() {
         return new InternalGauge<Double>(context) {
             @Override
