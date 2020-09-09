@@ -111,10 +111,6 @@ public class MetricManager implements Closeable {
         return null;
     }
 
-    public List<MetricPattern> getMetricPatterns(){
-        return patternSet != null ? patternSet.getPatterns() : null;
-    }
-
     public static void reloadIfStarted() {
         MetricManager currInstance = instance;
         if (currInstance != null)
@@ -144,7 +140,7 @@ public class MetricManager implements Closeable {
             registerProcessMetrics(processTags);
         }
 
-        metricFlagsState = new MetricFlagsState( this );
+        metricFlagsState = new MetricFlagsState();
     }
 
     public List<MetricRegistrator> registerProcessMetrics(Map<String, String> tags) {
@@ -169,6 +165,8 @@ public class MetricManager implements Closeable {
             MetricManagerConfig config = MetricManagerConfig.loadFromXml(getConfigFilePath());
             config.loadDefaults();
             this.patternSet = config.getPatternSet();
+            if (logger.isDebugEnabled())
+                logger.debug("Patterns: {}", patternSet.toString());
 
             // load new samplers:
             final Map<String, MetricSampler> newSamplers = new HashMap<>();
@@ -247,6 +245,34 @@ public class MetricManager implements Closeable {
         return patternSet.getSeparator();
     }
 
+    public String toPath(String ... names) {
+        return toPath(names, names.length);
+    }
+
+    public String toPath(String[] names, int limit) {
+        if (limit == 1)
+            return names[0];
+        StringJoiner sj = new StringJoiner(getSeparator());
+        for (int i = 0; i < limit; i++) {
+            sj.add(names[i]);
+        }
+        return sj.toString();
+    }
+
+    public boolean isEnabled(String ... patternTokens) {
+        int length = patternTokens.length;
+        MetricPattern metricPattern = null;
+        while (length > 0 && metricPattern == null) {
+            metricPattern = patternSet.getPattern(toPath(patternTokens, length));
+            length--;
+        }
+        boolean result = metricPattern == null || !metricPattern.getValue().equals("off");
+        if (logger.isDebugEnabled())
+            logger.debug("isEnabled({}) = {}", toPath(patternTokens), result);
+        return result;
+    }
+
+
     void register(String metricName, MetricTags tags, Metric metric) {
         synchronized (lock) {
             register(metricName, tags, metric, samplers);
@@ -255,6 +281,7 @@ public class MetricManager implements Closeable {
 
     private void register(String metricName, MetricTags tags, Metric metric, Map<String, MetricSampler> samplers) {
         String samplerName = patternSet.findBestMatch(metricName);
+        logger.debug("Registering metric {} to sampler {}", metricName, samplerName);
         samplers.get(samplerName).register(metricName, tags, metric);
     }
 
@@ -447,31 +474,10 @@ public class MetricManager implements Closeable {
         });
     }
 
-    public static class MetricFlagsState{
-
-        private boolean dataIndexHitsMetricEnabled = GsEnv.propertyBoolean("com.gs.metrics.space_data_index-hits-total.enabled").get(true);
-        private boolean dataReadCountsMetricEnabled = GsEnv.propertyBoolean("com.gs.metrics.space_data_read-count.enabled").get(true);
-        private boolean dataTypesMetricEnabled = GsEnv.propertyBoolean("com.gs.metrics.space_data_data-types.enabled").get(true);
-
-        private MetricFlagsState( MetricManager metricManager ) {
-            List<MetricPattern> metricPatterns = metricManager.getMetricPatterns();
-            for( MetricPattern metricPattern : metricPatterns ){
-                if( metricPattern.getValue().equals(  "off" ) ){
-                    String pattern = metricPattern.getPattern();
-                    switch ( pattern ){
-                        case "space_data_index-hits-total":
-                            dataIndexHitsMetricEnabled = false;
-                            break;
-                        case "space_data_read-count":
-                            dataReadCountsMetricEnabled = false;
-                            break;
-                        case "space_data_data-types":
-                            dataTypesMetricEnabled = false;
-                            break;
-                    }
-                }
-            }
-        }
+    public class MetricFlagsState {
+        private final boolean dataIndexHitsMetricEnabled = isEnabled("space", "data", "index-hits-total");
+        private final boolean dataReadCountsMetricEnabled = isEnabled("space", "data", "read-count");
+        private final boolean dataTypesMetricEnabled = isEnabled("space", "data", "data-types");
 
         public boolean isDataIndexHitsMetricEnabled() {
             return dataIndexHitsMetricEnabled;

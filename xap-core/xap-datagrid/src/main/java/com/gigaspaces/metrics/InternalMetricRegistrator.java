@@ -45,10 +45,7 @@ public class InternalMetricRegistrator extends MetricRegistrator {
 
     @Override
     public String toPath(String... names) {
-        String result = names[0];
-        for (int i = 1; i < names.length; i++)
-            result += metricManager.getSeparator() + names[i];
-        return result;
+        return metricManager.toPath(names);
     }
 
     @Override
