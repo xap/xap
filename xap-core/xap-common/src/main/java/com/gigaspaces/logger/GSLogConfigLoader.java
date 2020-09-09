@@ -17,7 +17,7 @@
 package com.gigaspaces.logger;
 
 import com.gigaspaces.CommonSystemProperties;
-import com.gigaspaces.start.SystemInfo;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.start.SystemLocations;
 
 import java.io.ByteArrayInputStream;
@@ -267,6 +267,7 @@ public class GSLogConfigLoader {
                 }
             }
         }
+        GsEnv.getPropertiesWithPrefix("com.gs.log.").forEach(_props::setProperty);
     }
 
     /*
