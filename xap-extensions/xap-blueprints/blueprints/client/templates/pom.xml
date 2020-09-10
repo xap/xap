@@ -12,6 +12,7 @@
         <maven.compiler.target>{{java.version}}</maven.compiler.target>
         <gs.version>{{gs.version}}</gs.version>
         <junit.version>{{junit.version}}</junit.version>
+        <slf4j.version>{{slf4j.version}}</slf4j.version>
     </properties>
 
     <repositories>
@@ -31,6 +32,12 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
