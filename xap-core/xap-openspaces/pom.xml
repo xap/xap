@@ -81,6 +81,14 @@
             <version>1.0.0.Final</version>
         </dependency>
 
+        <!-- Starting java 11 javax annotations are not bundled with JRE -->
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+            <version>1.3.2</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- spring dependencies identified by mvn dependency:analyze must be <scope>compile</scope>
              otherwise PUs that depend no this pom will have compilation problems -->
         <dependency>
