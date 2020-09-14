@@ -916,6 +916,11 @@ public interface Constants {
         }
     }
 
+    public interface CuratorClient {
+        String CURATOR_CLIENT_TIMEOUT = "com.gs.zookeeper.curator-client.timeout";
+        String CURATOR_CLIENT_TIMEOUT_DEFAULT = "10000";
+    }
+
     public interface LeaderSelector {
         String LEADER_SELECTOR_HANDLER_CLASS_NAME = "org.openspaces.zookeeper.leader_selector.ZooKeeperBasedLeaderSelectorHandler";
 
