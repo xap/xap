@@ -30,7 +30,13 @@ public class PartitionedClusterUtils {
     private static final boolean PRECISE_LONG_ROUTING = !Boolean.getBoolean("com.gs.disable-precise-long-routing");
 
     public static final String DYNAMIC_PARTITIONING_PROPERTY = "pu.dynamic-partitioning";
-    public static final String DYNAMIC_PARTITIONING_DEFAULT = GsEnv.property("com.gs.pu.dynamic-partitioning").get("false");
+    private static final boolean DYNAMIC_PARTITIONING_DEFAULT = GsEnv.propertyBoolean("com.gs.pu.dynamic-partitioning").get(false);
+
+    public static boolean isDynamicPartitioningEnabled(String propValue, boolean isPartitioned) {
+        if (propValue != null)
+            return Boolean.parseBoolean(propValue);
+        return isPartitioned ? DYNAMIC_PARTITIONING_DEFAULT : false;
+    }
 
     private PartitionedClusterUtils() {
     }
