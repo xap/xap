@@ -120,7 +120,7 @@ public class HsqlDbReporter extends MetricReporter {
                 }
                 addMissingColumns(con, tableName, clonedTags);
             } else {
-                _logger.error("Failed to insert row [{}] using values [{}]" , insertSQL,
+                _logger.warn("Failed to insert row [{}] using values [{}]" , insertSQL,
                               Arrays.toString(values.toArray(new Object[0])), e);
             }
         } catch (SQLTransientConnectionException | SQLNonTransientConnectionException e){
@@ -135,13 +135,13 @@ public class HsqlDbReporter extends MetricReporter {
             }
             else {
                 _logger
-                    .error("Failed to insert row [{}] using values [{}]", insertSQL,
+                    .warn("Failed to insert row [{}] using values [{}]", insertSQL,
                            Arrays.toString(values.toArray(new Object[0])), e);
             }
         }
         catch( Throwable t ){
             _logger
-                    .error("Failed to insert row [{}] using values [{}] to table [{}]", insertSQL,
+                    .warn("Failed to insert row [{}] using values [{}] to table [{}]", insertSQL,
                             Arrays.toString(values.toArray(new Object[0])), tableName, t);
         }
     }
@@ -159,7 +159,7 @@ public class HsqlDbReporter extends MetricReporter {
                 return;
             }
             catch (SQLException sqlException) {
-                _logger.error( "Failed to insert row to table using statement " + statement + " due to ", sqlException );
+                _logger.warn("Failed to insert row to table using statement [{}]", statement, sqlException);
             }
         }
 
@@ -275,14 +275,14 @@ public class HsqlDbReporter extends MetricReporter {
                 } catch (SQLSyntaxErrorException e) {
                     //since sometimes at teh same times can be fet attempts to add the same column to the same table
                     if (e.getMessage() == null || !e.getMessage().contains("object name already exists in statement")) {
-                        _logger.error("Failed to execute add column query [{}]", sql, e);
+                        _logger.warn("Failed to execute add column query [{}]", sql, e);
                     }
                 } catch (SQLException e) {
-                    _logger.error("Failed to execute add column query: [{}]", sql, e);
+                    _logger.warn("Failed to execute add column query: [{}]", sql, e);
                 }
             });
         } catch (SQLException e) {
-            _logger.error("Failed to add missing columns to table {}", tableName, e);
+            _logger.warn("Failed to add missing columns to table {}", tableName, e);
         }
     }
 
