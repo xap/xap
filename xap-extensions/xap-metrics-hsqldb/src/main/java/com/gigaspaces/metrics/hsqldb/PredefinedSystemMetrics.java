@@ -25,7 +25,6 @@ public enum PredefinedSystemMetrics implements TableColumnNames {
     SPACE_OPERATIONS_UPDATE_TP("space_operations_update-tp", Arrays.asList( TIME_COLUMN_NAME, VALUE_COLUMN_NAME, PU_NAME_COLUMN_NAME, SPACE_ACTIVE_COLUMN_NAME ) ),
     SPACE_OPERATIONS_AFTER_LISTENER_TRIGGER_TP("space_operations_after-listener-trigger-tp", Arrays.asList( TIME_COLUMN_NAME, VALUE_COLUMN_NAME, PU_NAME_COLUMN_NAME, SPACE_ACTIVE_COLUMN_NAME ) ),
     SPACE_OPERATIONS_BEFORE_LISTENER_TRIGGER_TP("space_operations_before-listener-trigger-tp", Arrays.asList( TIME_COLUMN_NAME, VALUE_COLUMN_NAME, PU_NAME_COLUMN_NAME, SPACE_ACTIVE_COLUMN_NAME ) ),
-    SPACE_OPERATIONS_REGISTER_LISTENER_TP("space_operations_register-listener-tp", Arrays.asList( TIME_COLUMN_NAME, VALUE_COLUMN_NAME, PU_NAME_COLUMN_NAME, SPACE_ACTIVE_COLUMN_NAME ) ),
     SPACE_BLOBSTORE_OFF_HEAP_USED_BYTES_TOTAL("space_blobstore_off-heap_used-bytes_total"),
     SPACE_BLOBSTORE_OFF_HEAP_USED_PERCENT("space_blobstore_off-heap_used-percent"),
     SPACE_OPERATIONS_READ_TOTAL("space_operations_read-total"),
