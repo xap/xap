@@ -45,8 +45,8 @@ import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
 import com.gigaspaces.internal.client.spaceproxy.executors.SystemTask;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectRequest;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectResult;
-import com.gigaspaces.internal.cluster.ClusterTopologyState;
 import com.gigaspaces.internal.cluster.ClusterTopology;
+import com.gigaspaces.internal.cluster.ClusterTopologyState;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersistencyBackupSyncIteratorHandler;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersistencySyncListBatch;
@@ -189,7 +189,6 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.LongAdder;
 
 import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ATTRIBUET_STORE_HANDLER_CLASS_NAME;
@@ -1485,6 +1484,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                     if (_logger.isInfoEnabled()) {
                         long duration = SystemTime.timeMillis() - syncStartTime;
                         _logger.info("Synchronization completed [duration=" + JSpaceUtilities.formatMillis(duration) + "]");
+                        _logger.info("starts to sleep for 3 minutes");
+                        Thread.sleep(1000 * 60 * 3);
+                        _logger.info("After sleeping for 3 minutes");
                     }
                 }
             } catch (TimeoutException e) {
