@@ -17,6 +17,7 @@
 
 package com.gigaspaces.metrics.factories;
 
+import com.gigaspaces.internal.os.ProcessCpuSampler;
 import com.gigaspaces.internal.sigar.SigarHolder;
 import com.gigaspaces.metrics.Gauge;
 import com.gigaspaces.metrics.internal.GaugeContextProvider;
@@ -67,28 +68,8 @@ public class SigarProcessMetricFactory implements ProcessMetricFactory {
         return new InternalGauge<Double>(context) {
             @Override
             public Double getValue() {
-                return validate(context.get().getPercent() / numberOfCores());
+                return validate(context.get().getPercent() / ProcessCpuSampler.cores);
             }
         };
     }
-
-    public Gauge<Double> createProcessCpuLoadGauge() {
-        return new InternalGauge<Double>(context) {
-            private long prevTotal = context.get().getTotal();
-            private long prevTime = context.get().getStartTime();
-
-            @Override
-            public Double getValue() {
-                final ProcCpu procCpu = context.get();
-                final double cpuTime = (double)(procCpu.getTotal() - prevTotal);
-                final long elapsedTime = procCpu.getLastTime() - prevTime;
-                final double result = (cpuTime / elapsedTime) / numberOfCores();
-                prevTotal = procCpu.getTotal();
-                prevTime = procCpu.getLastTime();
-                return result;
-            }
-        };
-    }
-
-
 }
