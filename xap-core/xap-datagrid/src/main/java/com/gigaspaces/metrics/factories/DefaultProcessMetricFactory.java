@@ -46,8 +46,10 @@ public class DefaultProcessMetricFactory implements ProcessMetricFactory {
                 final long currCpuTime = context.get();
 
                 long timeDiff = currTime - previousTime;
-                long cpuTimeDiff = currCpuTime - previousCpuTime;
-                double currCpuPerc = timeDiff > 0 && cpuTimeDiff >= 0 ? Math.min(((double) cpuTimeDiff) / timeDiff, 1.0) : previousCpuPerc;
+                double cpuTimeDiff = currCpuTime - previousCpuTime;
+                double currCpuPerc = timeDiff > 0 && cpuTimeDiff >= 0 ?
+                        (cpuTimeDiff / timeDiff) / numberOfCores()
+                        : previousCpuPerc;
 
                 previousTime = currTime;
                 previousCpuTime = currCpuTime;
@@ -56,5 +58,9 @@ public class DefaultProcessMetricFactory implements ProcessMetricFactory {
                 return currCpuPerc;
             }
         };
+    }
+
+    public void reset() {
+        context.reset();
     }
 }

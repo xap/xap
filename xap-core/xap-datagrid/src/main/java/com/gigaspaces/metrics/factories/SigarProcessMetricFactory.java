@@ -21,7 +21,6 @@ import com.gigaspaces.internal.sigar.SigarHolder;
 import com.gigaspaces.metrics.Gauge;
 import com.gigaspaces.metrics.internal.GaugeContextProvider;
 import com.gigaspaces.metrics.internal.InternalGauge;
-
 import org.hyperic.sigar.ProcCpu;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
@@ -32,8 +31,6 @@ import org.hyperic.sigar.SigarException;
  */
 
 public class SigarProcessMetricFactory implements ProcessMetricFactory {
-
-    private static final int processors = Runtime.getRuntime().availableProcessors();
 
     private final SigarProcessCpuWrapper context = new SigarProcessCpuWrapper();
 
@@ -70,7 +67,7 @@ public class SigarProcessMetricFactory implements ProcessMetricFactory {
         return new InternalGauge<Double>(context) {
             @Override
             public Double getValue() {
-                return validate(context.get().getPercent() * 100 / processors);
+                return validate(context.get().getPercent() / numberOfCores());
             }
         };
     }
@@ -83,9 +80,9 @@ public class SigarProcessMetricFactory implements ProcessMetricFactory {
             @Override
             public Double getValue() {
                 final ProcCpu procCpu = context.get();
-                final double cpuTime = procCpu.getTotal() - prevTotal;
+                final double cpuTime = (double)(procCpu.getTotal() - prevTotal);
                 final long elapsedTime = procCpu.getLastTime() - prevTime;
-                final double result = cpuTime / elapsedTime * 100 / processors;
+                final double result = (cpuTime / elapsedTime) / numberOfCores();
                 prevTotal = procCpu.getTotal();
                 prevTime = procCpu.getLastTime();
                 return result;
