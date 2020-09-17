@@ -16,6 +16,8 @@
 
 package com.gigaspaces.internal.jvm;
 
+import com.gigaspaces.internal.os.ProcessCpuSampler;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -137,7 +139,7 @@ public class JVMStatistics implements Externalizable {
             return -1;
         }
 
-        return Math.min( ((double) totalDelta)/timeDelta, 1.0 );
+        return ((double)totalDelta /timeDelta)/ ProcessCpuSampler.cores;
     }
 
     private long getCpuTotal() {
