@@ -18,6 +18,7 @@ package com.gigaspaces.metrics;
 
 import com.gigaspaces.internal.os.ProcessCpuSampler;
 import com.gigaspaces.internal.os.ProcessCpuSamplerFactory;
+import com.gigaspaces.internal.os.oshi.OshiProcessCpuSampler;
 import com.gigaspaces.internal.oshi.OshiChecker;
 import com.gigaspaces.internal.oshi.OshiGaugeUtils;
 import com.gigaspaces.internal.oshi.OshiUtils;
@@ -44,6 +45,8 @@ import java.io.Closeable;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author Niv Ingberg
@@ -405,6 +408,45 @@ public class MetricManager implements Closeable {
             registrator.register(registrator.toPath("cpu", "used-percent"), factory.createProcessUsedCpuInPercentGauge());
         }
         return registrator;
+    }
+
+    public static void main(String[] args) throws Exception {
+        ProcessMetricFactory oshi = new DefaultProcessMetricFactory(new OshiProcessCpuSampler());
+        ProcessMetricFactory sigar = new SigarProcessMetricFactory();
+        Gauge<Double> oshiGauge = oshi.createProcessUsedCpuInPercentGauge();
+        Gauge<Double> sigarGauge = sigar.createProcessUsedCpuInPercentGauge();
+
+        Runnable runnable = () -> {
+            double load = 0.8;
+            final long duration = 100000;
+
+            long startTime = System.currentTimeMillis();
+            try {
+                // Loop for the given duration
+                while (System.currentTimeMillis() - startTime < duration) {
+                    // Every 100ms, sleep for the percentage of unladen time
+                    if (System.currentTimeMillis() % 100 == 0) {
+                        Thread.sleep((long) Math.floor((1 - load) * 100));
+                    }
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            System.out.println("done calculating");
+        };
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        int nCPUs = 5;
+        for (int i=0; ; i++) {
+            if (i < nCPUs) {
+                executorService.submit(runnable);
+            }
+            System.out.println(" oshi = " + (100.0*oshiGauge.getValue()));
+            System.out.println(" sigar= " + (100.0*sigarGauge.getValue()));
+            oshi.reset();
+            sigar.reset();
+            Thread.sleep(1000);
+        }
     }
 
     private MetricRegistrator registerJvmMetrics(Map<String, String> tags) {

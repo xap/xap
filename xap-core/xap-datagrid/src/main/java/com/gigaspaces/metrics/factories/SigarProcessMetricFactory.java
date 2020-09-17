@@ -21,7 +21,6 @@ import com.gigaspaces.internal.sigar.SigarHolder;
 import com.gigaspaces.metrics.Gauge;
 import com.gigaspaces.metrics.internal.GaugeContextProvider;
 import com.gigaspaces.metrics.internal.InternalGauge;
-
 import org.hyperic.sigar.ProcCpu;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
@@ -70,7 +69,8 @@ public class SigarProcessMetricFactory implements ProcessMetricFactory {
         return new InternalGauge<Double>(context) {
             @Override
             public Double getValue() {
-                return validate(context.get().getPercent() * 100 / processors);
+//                return validate(context.get().getPercent() * 100 / processors);
+                return validate(context.get().getPercent());
             }
         };
     }

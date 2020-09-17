@@ -10,4 +10,6 @@ public interface ProcessMetricFactory {
     Gauge<Long> createProcessCpuTotalTimeGauge();
 
     Gauge<Double> createProcessUsedCpuInPercentGauge();
+
+    public void reset();
 }
