@@ -12,8 +12,10 @@ import com.gigaspaces.metrics.internal.InternalGauge;
 public class DefaultProcessMetricFactory implements ProcessMetricFactory {
 
     private final GaugeContextProvider<Long> context;
+    private ProcessCpuSampler sampler;
 
     public DefaultProcessMetricFactory(ProcessCpuSampler sampler) {
+        this.sampler = sampler;
         this.context = new GaugeContextProvider<Long>() {
             @Override
             protected Long loadValue() {
@@ -47,7 +49,8 @@ public class DefaultProcessMetricFactory implements ProcessMetricFactory {
 
                 long timeDiff = currTime - previousTime;
                 long cpuTimeDiff = currCpuTime - previousCpuTime;
-                double currCpuPerc = timeDiff > 0 && cpuTimeDiff >= 0 ? Math.min(((double) cpuTimeDiff) / timeDiff, 1.0) : previousCpuPerc;
+                double cpuPerc = sampler.getCpuLoadCumulative(cpuTimeDiff, timeDiff);
+                double currCpuPerc = cpuPerc > 0 ? cpuPerc : previousCpuPerc;
 
                 previousTime = currTime;
                 previousCpuTime = currCpuTime;
@@ -56,5 +59,9 @@ public class DefaultProcessMetricFactory implements ProcessMetricFactory {
                 return currCpuPerc;
             }
         };
+    }
+
+    public void reset() {
+        context.reset();
     }
 }

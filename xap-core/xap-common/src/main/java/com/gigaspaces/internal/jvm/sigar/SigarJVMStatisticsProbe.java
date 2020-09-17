@@ -18,17 +18,13 @@ package com.gigaspaces.internal.jvm.sigar;
 
 import com.gigaspaces.internal.jvm.JVMStatistics;
 import com.gigaspaces.internal.jvm.JVMStatisticsProbe;
+import com.gigaspaces.internal.os.ProcessCpuSampler;
 import com.gigaspaces.internal.sigar.SigarHolder;
-
 import org.hyperic.sigar.ProcCpu;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.RuntimeMXBean;
-import java.lang.management.ThreadMXBean;
+import java.lang.management.*;
 import java.util.List;
 
 /**
@@ -78,7 +74,7 @@ public class SigarJVMStatisticsProbe implements JVMStatisticsProbe {
 
             ProcCpu procCpu = sigar.getProcCpu(sigar.getPid());
 
-            cpuPerc = procCpu.getPercent();
+            cpuPerc = procCpu.getPercent() / ProcessCpuSampler.cores;
             cpuTotal = procCpu.getTotal();
             cpuTime = System.currentTimeMillis();
 
