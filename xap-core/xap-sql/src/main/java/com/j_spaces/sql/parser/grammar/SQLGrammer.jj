@@ -1,0 +1,640 @@
+options {
+STATIC = false;
+UNICODE_INPUT=true;
+//DEBUG_PARSER = true;
+}
+PARSER_BEGIN(SqlParser)
+
+package com.j_spaces.sql.parser.grammar;
+
+import java.io.Reader;
+import com.j_spaces.sql.parser.*;
+import java.util.ArrayList;
+import java.util.List;
+
+@SuppressWarnings("Convert2Diamond")
+public class SqlParser {
+
+    private int conditionIndex = 0;
+    private int preparedIndex = 1;
+	// TOKEN_EXTENDS=com.j_spaces.jdbc.parser.SerializableToken
+    public static void main(String[] args) {
+//        String input = "select\nmax";
+//        SqlParser parser = new SqlParser(new java.io.StringReader(input));
+        SqlParser parser = new SqlParser(System.in);
+        while(true) {
+            try {
+                Exp exp = parser.parseStatement();
+                System.out.println("exp received and parsed:");
+                System.out.println(exp);
+            }catch (Exception e)
+            {
+                System.err.println("Caught Exception - error in statement");
+                e.printStackTrace();
+                parser.ReInit(System.in);
+                System.exit(-1);
+            }
+        }
+    }
+
+    public void reset(Reader reader)
+	{
+  		conditionIndex=0;
+		ReInit(reader);
+	}
+    private String literalToString(Token token){
+        return token.image.substring(1, token.image.length() - 1);
+    }
+    private String literalToDate(Token token){
+        return token.image.substring(1, token.image.length() - 1);
+    }
+    private long literalToLong(Token token, boolean neg){
+        return (neg ? -1 : 1) * Long.parseLong(token.image.substring(0,token.image.length() - 1));
+    }
+    private int literalToInt(Token token, boolean neg){
+        return (neg ? -1 : 1) *  Integer.parseInt(token.image);
+    }
+    private int literalToInt(Token token){
+        return Integer.parseInt(token.image);
+    }
+    private float literalToFloat(Token token, boolean neg){
+        return (neg ? -1 : 1) *  Float.parseFloat(token.image);
+    }
+}
+
+
+
+PARSER_END(SqlParser)
+
+
+SKIP:
+{
+    " "
+  | "\n"
+  | "\r"
+  | "\t"
+}
+
+TOKEN [IGNORE_CASE]:  /* Keywords */
+{
+   < ALTER: "alter" >
+  | < ADD: "add" > 
+  | < ALL: "all" >
+  | < AND: "and" >
+  | < ASC: "asc" >
+  | < AVG: "avg" >
+  | < BETWEEN: "between" >
+  | < BY: "by" >
+  | < CREATE: "create" >
+  | < CALL: "call" >
+  | < DROP: "drop" >
+  | < DEFAULT_NULL: "default null" >
+  | < DESC: "desc" >
+  | < DISTINCT: "distinct" >
+  | < END: "end" >
+  | < FROM: "from" >
+  | < GROUP: "group" >
+  | < IN: "in" >
+  | < IS: "is" >
+  | < LIKE: "like" >
+  | < RLIKE: "rlike" >
+  | < NOT: "not" >
+  | < NULL: "null" >
+  | < OR: "or" >
+  | < ORDER: "order" >
+  | < SELECT: "select" >
+  | < SUBSTR: "substr" >
+  | < SYSDATE: "sysdate" >
+  | < WHERE: "where" >
+  | < DELETE: "delete" >
+  | < EXCEPTION: "exception" >
+  | < ROWNUM: "rownum" >
+  | < INDEX: "index" >
+  | < INSERT: "insert" >
+  | < INTO: "into" >
+  | < SET: "set" >
+  | < TABLE: "table" >
+  | < FOR_UPDATE: "for update" >
+  | < UPDATE: "update" >
+  | < UNION: "union" >
+  | < VALUES: "values" >
+  | < COMMIT: "commit" >
+  | < ROLLBACK: "rollback" >
+  | < PRIMARY_KEY: "primary key" >
+  | < PARTITION_BY: "partition by" >
+  | < UID: "uid" >
+  | < USING: "using">
+  | < AS: "as" >
+  | < NULLS_LAST: "nulls last" >
+  | < NULLS_FIRST: "nulls first" >
+
+	  // Data types,
+	
+	| <DATE:        "date">
+	| <DATETIME:    "datetime">
+	| <TIME:        "time">
+	| <FLOAT:       "float">
+	| <REAL:		"real">
+	| <DOUBLE:      "double">
+	| <NUMBER:      "number">
+	| <DECIMAL:     "decimal">
+	| <NUMERIC:     "numeric">
+	| <BOOLEAN:     "boolean">
+	| <INTEGER:     "integer">
+	| <VARCHAR:     "varchar">
+	| <VARCHAR2:    "varchar2">
+	| <CHAR:		"char">
+	| <LONG: 		"long">
+	| <CLOB:		"clob">
+	| <BLOB:		"blob">
+	| <EMPTY_CLOB:	"empty_clob()">
+	| <EMPTY_BLOB:	"empty_blob()">
+	| <LOB:			"lob">
+    | <INT:			"int">
+    | <TIMESTAMP:   "timestamp">
+    | <LONGVARCHAR: "longvarchar">
+    | <TINYINT: 	"tinyint">
+    | <SMALLINT:	"smallint">
+    | <BIGINT:		"bigint">
+	| <BIT:			"bit">
+    
+}
+
+TOKEN [IGNORE_CASE]:
+{
+    < BOOLEAN_LITERAL: "true" | "false" >
+}
+
+TOKEN:  /* Identifiers */
+{
+    <IDENTIFIER: <LETTER> ( "." | "*" | "_" | "`" |<LETTER> | <DIGIT> )* >
+  | <ESC_IDENTIFIER: "`" <IDENTIFIER> "`" >
+  | < #LETTER: ["_","A"-"Z", "a"-"z"] >
+  | < #DIGIT: ["0"-"9"] >
+  | <RELATION: <LETTER> (<LETTER> | <DIGIT>)* ":" (<LETTER> | <DIGIT>)+ >
+}
+
+TOKEN:  /* Literals */
+{
+  	< INTEGER_LITERAL: (["0"-"9"])+ >
+  |	< LONG_LITERAL: (["0"-"9"])+"L" >
+  | < FLOATING_POINT_LITERAL:
+        (["0"-"9"])+ "." (["0"-"9"])+ (<EXPONENT>)?
+        | "." (["0"-"9"])+ (<EXPONENT>)?
+        | (["0"-"9"])+ <EXPONENT>
+        | (["0"-"9"])+ (<EXPONENT>)?
+    >
+  | < #EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+ >
+  | < DATE_LITERAL : "'" (["0"-"3"]["0"-"9"])"/"(["0"-"1"]["0"-"9"])"/"(["0"-"9"]["0"-"9"]["0"-"9"]["0"-"9"]) "'">
+  | < STRING_LITERAL: "'" (~["'"])* ( "''" (~["'"])* )* "'" >
+}
+
+
+TOKEN:  /* Separators and operators */
+{
+    < ASSIGN: ":=" >
+  | < CONCAT: "||" >
+  | < SEMICOLON: ";" >
+  | < DOT: "." >
+  | < ROWTYPE: "%ROWTYPE" >
+  | < TILDE: "~" >
+  | < LESS: "<" >
+  | < LESSEQUAL: "<=" >
+  | < GREATER: ">" >
+  | < GREATEREQUAL: ">=" >
+  | < EQUAL: "=" >
+  | < NOTEQUAL: "!=" >
+  | < NOTEQUAL2: "<>" >
+  | < JOINPLUS: "(+)" >
+  | < OPENPAREN: "(" >
+  | < CLOSEPAREN: ")" >
+  | < OPENBRACKET: "[" >
+  | < CLOSEBRACKET: "]" >
+  | < ASTERISK: "*" >
+  | < COMMA: "," >
+  | < SLASH: "/" >
+  | < PLUS: "+" >
+  | < MINUS: "-" >
+  | < QUESTIONMARK: "?" >
+  | < OPENBRAKET: "{" >
+  | < CLOSEBRAKET: "}" >
+  | < COLLECTION_CONTAINS: "[*]" >
+ 
+}
+
+
+Exp parseStatement():
+{ Exp exp;
+}
+{
+   exp = selectSql() (<SEMICOLON>|<EOF>)
+  { return exp; }
+}
+
+
+Select selectSql():
+{
+    SelectQuantifier quantifier = null;
+    SelectColumns selectColumns = null;
+    List<TableName> tableNames = null;
+    Exp where = null;
+    preparedIndex = 1;
+    List<SelectColumn> groupBy= new ArrayList<SelectColumn>();
+    List<OrderByColumn> orderBy = new ArrayList<OrderByColumn>();
+    boolean forUpdate = false;
+}
+{
+   <SELECT>
+   quantifier = selectQuantifier()
+   [<OPENPAREN>]
+   selectColumns = selectColumns()
+   [<CLOSEPAREN>]
+   <FROM>
+   tableNames = selectTables()
+   [<WHERE> where = expression()]
+   [groupBy = groupBy()]
+   [orderBy = orderBy()]
+   [<FOR_UPDATE> { forUpdate = true; }]
+   { return new Select(quantifier, selectColumns, tableNames, where, groupBy, orderBy, forUpdate); }
+}
+
+
+Exp expression():
+{
+  Exp exp = null;
+  List<Exp> exps = new ArrayList<Exp>();
+}
+{
+      exp = andExpression() { exps.add(exp) ;}
+      (<OR> exp = andExpression() { exps.add(exp); })*
+      {
+      	return exps.size() == 1 ? exp : new Or(exps);
+      }
+}
+
+Exp andExpression():
+{
+  Exp exp = null;
+  List<Exp> exps = new ArrayList<Exp>();
+}
+{
+      exp = simpleExpression() { exps.add(exp) ;}
+      (<AND> exp = simpleExpression() { exps.add(exp); })*
+      {
+      	return exps.size() == 1 ? exp : new And(exps);
+      }
+}
+
+Exp simpleExpression():
+{
+  Exp exp = null;
+}
+{
+     ( LOOKAHEAD(2) exp =  condition()
+     | LOOKAHEAD(2) <OPENPAREN> exp = expression() <CLOSEPAREN>)
+    { return exp; }
+}
+
+Exp condition():
+{
+    Exp left = null;
+    Cond cond = null;
+}
+{
+      left = rowNumCond() { return left; }
+    | left = conditionNode() cond = conditionRight(left) { return cond; }
+}
+
+Cond conditionRight(Exp left):
+{
+    Cond cond = null;
+}
+{
+     LOOKAHEAD(2) cond = condOp(left)        { return cond; }
+    | LOOKAHEAD(2) cond = condIn(left)       { return cond; }
+    | LOOKAHEAD(2) cond = condIsNull(left)   { return cond; }
+    | LOOKAHEAD(2) cond = condBetween(left)  { return cond; }
+    | LOOKAHEAD(2) cond = condRelation(left)  { return cond; }
+}
+
+CondRelation condRelation(Exp exp):
+{
+   Token rel = null;
+}
+{
+    rel = <RELATION>  <QUESTIONMARK> { return new CondRelation(exp, rel.image, new PreparedLit(preparedIndex++)); }
+}
+
+CondBetween condBetween(Exp exp):
+{
+   Exp left = null;
+   Exp right = null;
+}
+{
+    <BETWEEN> left = conditionNode() <AND> right = conditionNode() { return new CondBetween(exp, left, right); }
+}
+
+CondIsNull condIsNull(Exp left):
+{}
+{
+       LOOKAHEAD(2) <IS> <NULL>          { return new CondIsNull(left, false); }
+  	 | LOOKAHEAD(2) <IS> <NOT> <NULL>    { return new CondIsNull(left, true); }
+}
+
+CondIn condIn(Exp left):
+{
+   boolean neg = false;
+   CondIn res = null;
+}
+{
+     [<NOT> { neg = true; }] <IN> <OPENPAREN> res = condInExpr(left, neg)<CLOSEPAREN>{ return res; }
+}
+
+CondIn condInExpr(Exp left, boolean neg):
+{
+    Exp right = null;
+    List<Exp> list = null;
+}
+{
+      right = selectSql() { return new CondInSelect(left, neg, right); }
+    | list = paramsList() { return new CondInList(left, neg, list); }
+}
+
+Exp rowNumCond():
+{
+   Token token = null;
+   Token end = null;
+}
+{
+    <ROWNUM> (
+        	<EQUAL> token = <INTEGER_LITERAL>  { return new CondRowNum("=", literalToInt(token)) ;}
+          | <LESS>  token = <INTEGER_LITERAL>  { return new CondRowNumRange(1, literalToInt(token) - 1) ;}
+          | <LESSEQUAL> token = <INTEGER_LITERAL>  { return new CondRowNumRange(1, literalToInt(token)) ;}
+          | <GREATER>  token = <INTEGER_LITERAL>   { return new CondRowNumRange(literalToInt(token) + 1, Integer.MAX_VALUE); }
+          | <GREATEREQUAL> token = <INTEGER_LITERAL> { return new CondRowNumRange(literalToInt(token), Integer.MAX_VALUE); }
+          | <OPENPAREN>  token = <INTEGER_LITERAL> "," end = <INTEGER_LITERAL> <CLOSEPAREN>
+            { return new CondRowNumRange(literalToInt(token), literalToInt(end)); }
+    )
+}
+CondOp condOp(Exp left):
+{
+   Token op = null;
+   Exp right = null;
+}
+{
+     (
+          op = <EQUAL>
+        | op = <LESS>
+        | op = <LESSEQUAL>
+        | op = <GREATER>
+        | op = <GREATEREQUAL>
+        | op = <NOTEQUAL>
+        | op = <NOTEQUAL2>
+        | op = <LIKE>
+        | op = <NOT> <LIKE>
+        | op = <RLIKE>
+
+     )
+     right = conditionNode()
+     { return new CondOp(left, op.image, right); }
+}
+
+
+CollectionPath collectionPath():
+{
+  List<CollectionPathElement> elements = new ArrayList<CollectionPathElement>();
+  String element = null;
+}
+{
+    <COLLECTION_CONTAINS> { elements.add(Contains.INSTANCE); }
+    (<DOT> element = identifier() { elements.add(new PathElement(element)); } ( <COLLECTION_CONTAINS> { elements.add(Contains.INSTANCE); } )? )*
+    { return new CollectionPath(elements); }
+}
+
+Exp conditionNode():
+{
+    Token functionName = null;
+    List<Exp> params = null;
+    Exp res = null;
+    String tableRef = null;
+}
+{
+      LOOKAHEAD(2) functionName = <IDENTIFIER> <OPENPAREN> params = paramsList()  <CLOSEPAREN> { return new FunctionCall(functionName.image, params); }
+    | LOOKAHEAD(2) <OPENPAREN> res = selectSql() <CLOSEPAREN> { return res; }
+    | tableRef = identifier() { return new TableRef(tableRef) ; }
+    | res = literal() { return res; }
+    | res = collectionPath() { return res; }
+}
+
+List<Exp> paramsList():
+{
+    List<Exp> params = new ArrayList<Exp>();
+    Exp param = null;
+}
+{
+    param = param() { params.add(param);}
+    ("," param = param() { params.add(param); })*
+    { return params; }
+}
+
+
+Exp param():
+{
+    Exp param = null;
+    String identifier = null;
+}
+{
+      param = literal()          { return param; }
+    | identifier = identifier()  { return new TableRef(identifier); }
+}
+
+
+Literal literal():
+{
+	Token token = null;
+	boolean neg = false;
+}
+{
+      LOOKAHEAD(2) ["-" {neg = true;}] token = <INTEGER_LITERAL>           { return new IntLit(literalToInt(token, neg)); }
+    | LOOKAHEAD(2) ["-" {neg = true;}] token = <LONG_LITERAL>              { return new LongLit(literalToLong(token, neg)); }
+    | LOOKAHEAD(2) ["-" {neg = true;}] token = <FLOATING_POINT_LITERAL>    { return new FloatLit(literalToFloat(token, neg)); }
+    | token = <STRING_LITERAL>                                             { return new StringLit(literalToString(token)); }
+    | token = <QUESTIONMARK>                                               { return new PreparedLit(preparedIndex++); }
+    | token = <BOOLEAN_LITERAL>                                            { return new BooleanLit(Boolean.parseBoolean(token.image)); }
+    | token = <DATE_LITERAL>                                               { return new DateLit(literalToDate(token)); }
+    | token = <NULL>                                                       { return NullLit.INSTANCE; }
+}
+
+
+List<TableName> selectTables():
+{
+  TableName tableName = null;
+  List<TableName> result = new ArrayList<TableName>();
+}
+{
+    tableName = selectTable() { result.add(tableName); }
+    ("," tableName = selectTable() { result.add(tableName); })*
+    { return result; }
+}
+
+TableName selectTable():
+{
+  String table = null;
+  String alias = null;
+}
+{
+    table = className() [ alias = identifier() ]
+    { return new TableName(table, alias); }
+}
+
+
+String className():
+{
+    StringBuilder builder = new StringBuilder();
+    String elm = null;
+}
+{
+    elm = identifier() {builder.append(elm);}
+    (("." {builder.append(".");} |"$" {builder.append("$");})
+      elm = identifier() {builder.append(elm);})*
+    { return builder.toString(); }
+}
+
+SelectQuantifier selectQuantifier():
+{}
+{
+   <DISTINCT> { return DistinctQuantifier.INSTANCE; }
+   | <ALL>    { return AllQuantifier.INSTANCE; }
+   | { return NoneQuantifier.INSTANCE; }
+}
+
+
+List<SelectColumn> groupBy():
+{
+    List<SelectColumn> selectColumns = null;
+}
+{
+    <GROUP> <BY> selectColumns = listOfSelecColumns()  { return selectColumns; }
+}
+
+
+List<SelectColumn> listOfSelecColumns():
+{
+    List<SelectColumn> selectColumns = new ArrayList<SelectColumn>();
+	SelectColumn col = null;
+}
+{
+    col = selectColumn() {selectColumns.add(col); }
+    (<COMMA> col = selectColumn() {selectColumns.add(col); })*
+
+    { return selectColumns; }
+
+}
+
+SelectColumns selectColumns():
+{
+    List<SelectColumn> selectColumns = null;
+}
+{
+     <ASTERISK>  { return AllColumns.INSTANCE; }
+    |
+    selectColumns = listOfSelecColumns()  { return new SomeColumns(selectColumns); }
+}
+
+
+List<OrderByColumn> orderBy():
+{
+    List<OrderByColumn> res = null;
+}
+{
+    <ORDER> <BY> res = orderByList() { return res; }
+}
+
+List<OrderByColumn> orderByList():
+{
+    OrderByColumn current = null;
+    List<OrderByColumn> res = new ArrayList<OrderByColumn>();
+}
+{
+    current = orderByCol() { res.add(current); }
+    ("," current = orderByCol() { res.add(current); })*
+    { return res; }
+}
+
+OrderByColumn orderByCol():
+{
+    OrderByDirection dir = OrderByDirection.ASC;
+    OrderByNulls nulls = OrderByNulls.NOTHING;
+    SelectColumn current = null;
+}
+{
+    current = selectColumn()
+    [ (<ASC> { dir =  OrderByDirection.ASC; } | <DESC> { dir =  OrderByDirection.DESC; }) ]
+    [ (<NULLS_LAST> { nulls =  OrderByNulls.NULLS_LAST; } | <NULLS_FIRST> { nulls =  OrderByNulls.NULLS_FIRST; }) ]
+    { return new OrderByColumn(current, dir, nulls);}
+}
+
+SelectColumn selectColumn():
+{
+    SelectColumn col = null;
+}
+{
+
+      LOOKAHEAD(4) col = uuidColumn() { return col; }
+    | LOOKAHEAD(4) col = function() { return col; }
+    | LOOKAHEAD(4) col = columnLiteral() { return col;}
+    | LOOKAHEAD(4) col = aColumn() { return col;}
+}
+
+SelectColumn uuidColumn():
+{
+	    String alias = null;
+}
+{
+    <UID> ([<AS>] alias = identifier())?
+    { return new UIDColumn(alias); }
+}
+
+FunctionColumn function():
+{
+	    String name = null;
+	    SelectColumn col = null;
+	    String alias = null;
+}
+{
+   name = identifier() "(" col = selectColumn()  ")" ([<AS>] alias = identifier())? { return new FunctionColumn(name, col, alias); }
+}
+
+SelectColumn columnLiteral():
+{
+	    Literal exp = null;
+	    String alias = null;
+}
+{
+    exp = literal() ([<AS>] alias = identifier())?
+    { return new LiteralColumn(exp, alias); }
+}
+
+SelectColumn aColumn():
+{
+	    String name = null;
+	    String alias = null;
+}
+{
+    name = identifier() ([<AS>] alias = identifier())?
+    { return new AColumn(name, alias); }
+}
+
+
+String identifier() :
+{
+	Token id = null;
+}
+{
+ 	  id = <IDENTIFIER>  { return id.image; }
+	| id = <ESC_IDENTIFIER> { return literalToString(id); }
+}
+
+
+
+    
