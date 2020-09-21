@@ -22,6 +22,7 @@ import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.space.actions.GetTypeDescriptorActionInfo;
 import com.gigaspaces.internal.space.requests.AddTypeIndexesRequestInfo;
 import com.gigaspaces.internal.space.requests.RegisterTypeDescriptorRequestInfo;
+import com.gigaspaces.internal.space.requests.UnregisterTypeDescriptorRequestInfo;
 import com.gigaspaces.metadata.SpaceMetadataException;
 import com.gigaspaces.metadata.index.AddTypeIndexesResult;
 
@@ -42,6 +43,9 @@ public abstract class TypeDescriptorActionsProxyExecutor<TSpaceProxy extends ISp
             throws RemoteException;
 
     public abstract AsyncFuture<AddTypeIndexesResult> asyncAddIndexes(TSpaceProxy spaceProxy, AddTypeIndexesRequestInfo requestInfo)
+            throws RemoteException;
+
+    public abstract void unregisterTypeDescriptor(TSpaceProxy spaceProxy, UnregisterTypeDescriptorRequestInfo actionInfo)
             throws RemoteException;
 
     protected static void assertEquivalent(ITypeDesc typeDesc1, ITypeDesc typeDesc2) {

@@ -16,6 +16,7 @@
 
 package org.openspaces.core;
 
+import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.async.AsyncFuture;
 import com.gigaspaces.async.AsyncFutureListener;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
@@ -63,6 +64,33 @@ public interface GigaSpaceTypeManager {
      * Creates a type descriptor for the specified type and registers it in the space.
      */
     void registerTypeDescriptor(Class<?> type);
+
+    /**
+     * Unregisters the specified type from the space.
+     * All entries of that type will be removed from the space.
+     * All notify listeners of that type will be removed from the space without dispatching notifications.
+     * <p>Note: This API is experimental with the following limitations, and possibly more:
+     * <ol>
+     * <li> <b>Concrete types:</b> When a concrete type (POJO, scala case class, etc.) is unregistered, its java class is
+     * not unloaded from the server. This means you cannot register a modified version of that type.</li>
+     * <li> <b>Subtypes:</b> A type with subtypes cannot be unregistered - you must first explicitly unregister all
+     * subtypes</li>
+     * <li> <b>High availability:</b> This operation is not replicated. As a workaround, you should demote
+     * all primary instances and unregister the type again, to purge it from all instances.</li>
+     * <li> <b>Mirror: </b> This operation is not replicated. As a workaround you should manually remove
+     * the type from the underlying data store.</li>
+     * <li> <b>WAN Gateway:</b>> This operation is not replicated. As a workaround you should remove
+     * the type from the target cluster(s).</li>
+     * <li> <b>memoryXtend:</b> TODO (off-heap? persistent?)</li>
+     * <li> <b>Atomicity:</b> This operation is not carried out atomically across the cluster. Consider using quiesce for atomicity</li>
+     * </ol>
+     * </p>
+     *
+     * @param typeName Name of type to unregister
+     * @since 15.5.1
+     */
+    //@ExperimentalApi
+    //void unregisterTypeDescriptor(String typeName);
 
     /**
      * Adds the specified index to the specified type.

@@ -65,6 +65,7 @@ public class XapExtensions {
     private XapExtensions() {
         registerSystemTaskExecutor(GetTypeDescriptorTask.class, new SpaceGetTypeDescriptorExecutor());
         registerSystemTaskExecutor(RegisterTypeDescriptorTask.class, new SpaceRegisterTypeDescriptorExecutor());
+        registerSystemTaskExecutor(UnregisterTypeDescriptorTask.class, new SpaceUnregisterTypeDescriptorExecutor());
         registerSystemTaskExecutor(AddTypeIndexesTask.class, new SpaceAddTypeIndexesExecutor());
         registerSystemTaskExecutor(RegisterReplicationLocalViewTask.class, new SpaceRegisterReplicationLocalViewExecutor());
         registerSystemTaskExecutor(UnregisterReplicationLocalViewTask.class, new SpaceUnregisterReplicationLocalViewExecutor());

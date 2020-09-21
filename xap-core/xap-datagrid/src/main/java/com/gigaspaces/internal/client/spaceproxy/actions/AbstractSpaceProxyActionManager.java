@@ -34,6 +34,7 @@ import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.space.actions.GetTypeDescriptorActionInfo;
 import com.gigaspaces.internal.space.requests.AddTypeIndexesRequestInfo;
 import com.gigaspaces.internal.space.requests.RegisterTypeDescriptorRequestInfo;
+import com.gigaspaces.internal.space.requests.UnregisterTypeDescriptorRequestInfo;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.metadata.index.AddTypeIndexesResult;
 import com.gigaspaces.metadata.index.SpaceIndex;
@@ -115,6 +116,11 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
     public void dropClass(String className)
             throws RemoteException, DropClassException {
         _adminAction.dropClass(_spaceProxy, className);
+    }
+
+    public void unregisterTypeDescriptor(String typeName) throws RemoteException {
+        UnregisterTypeDescriptorRequestInfo actionInfo = new UnregisterTypeDescriptorRequestInfo(typeName);
+        _typeDescriptorActionsExecutor.unregisterTypeDescriptor(_spaceProxy, actionInfo);
     }
 
     public int clear(Object template, Transaction txn, int modifiers)

@@ -82,6 +82,20 @@ public class DefaultGigaSpaceTypeManager implements GigaSpaceTypeManager {
         }
     }
 
+    // This API is experimental and should not be used in production.
+    //@Override
+    public void unregisterTypeDescriptor(String typeName) {
+        try {
+            // Validate:
+            if (typeName == null || typeName.length() == 0)
+                throw new IllegalArgumentException("Argument cannot be null or empty - 'typeName'.");
+            // Execute:
+            space.unregisterTypeDescriptor(typeName);
+        } catch (Exception e) {
+            throw exTranslator.translate(e);
+        }
+    }
+
     public AsyncFuture<AddTypeIndexesResult> asyncAddIndex(String typeName, SpaceIndex index) {
         return asyncAddIndexes(typeName, new SpaceIndex[]{index}, null);
     }

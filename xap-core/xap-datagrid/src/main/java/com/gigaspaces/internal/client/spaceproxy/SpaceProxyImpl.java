@@ -416,6 +416,8 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
     public void directDropClass(String className) {
         //finished OK - now delete class definition from proxy
         getTypeManager().deleteTypeDesc(className);
+        // Potential optimization: consider somehow clearing only queries of dropped type.
+        getQueryManager().clean();
     }
 
     @Override
