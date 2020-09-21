@@ -41,6 +41,7 @@ import com.gigaspaces.server.ServerEntry;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.cache.fifoGroup.FifoGroupsMainIndexExtention;
 import com.j_spaces.core.cache.fifoGroup.IFifoGroupsIndexExtention;
+import com.j_spaces.core.cache.offheap.OffHeapUniqueEntriesStore;
 import com.j_spaces.core.client.DuplicateIndexValueException;
 import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.kernel.IObjectInfo;
@@ -173,6 +174,9 @@ public class TypeDataIndex<K> {
             if (_useEconomyHashMap) {
                 this._uniqueEntriesStore = index.isUnique() ? new EconomyConcurrentHashMap<Object, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry(pos)) : null;
                 this._nonUniqueEntriesStore = new EconomyConcurrentHashMap<Object, IStoredList<IEntryCacheInfo>>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry<Object>(pos));
+            } else if (System.getenv("OFFHEAP_INDEX").equalsIgnoreCase("true")){
+                this._uniqueEntriesStore = index.isUnique() ? new OffHeapUniqueEntriesStore(cacheManager) : null;
+                this._nonUniqueEntriesStore = new ConcurrentHashMap<Object, IStoredList<IEntryCacheInfo>>(16, 0.75f, numOfCHMSegents);
             } else {
                 this._uniqueEntriesStore = index.isUnique() ? new ConcurrentHashMap<Object, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents) : null;
                 this._nonUniqueEntriesStore = new ConcurrentHashMap<Object, IStoredList<IEntryCacheInfo>>(16, 0.75f, numOfCHMSegents);

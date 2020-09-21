@@ -10,11 +10,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-public class OffHeapConcurrentMap<K, V> implements ConcurrentMap<K, V> {
+public class OffHeapObjectStringMap implements ConcurrentMap<Object, String> {
     private OffHeapIndexDriverJNI offHeapIndexDriverJNI = new OffHeapIndexDriverJNI();
     private long pMap;
 
-    public OffHeapConcurrentMap() {
+    public OffHeapObjectStringMap() {
         this.pMap = offHeapIndexDriverJNI.createMap(100, false);
     }
 
@@ -36,16 +36,16 @@ public class OffHeapConcurrentMap<K, V> implements ConcurrentMap<K, V> {
     }
 
     @Override
-    public V get(Object key) {
+    public String get(Object key) {
         byte[] keyBytes = getBytesFromObject(key);
         ObjectKey objectKey = new ObjectKey(key.hashCode(), keyBytes, keyBytes.length, "");
         ObjectValue value = offHeapIndexDriverJNI.get(pMap, objectKey);
-        return value == null ? null : (V) getObjectFromBytes(value.data);
+        return value == null ? null : (String) getObjectFromBytes(value.data);
     }
 
 
     @Override
-    public V put(K key, V value) {
+    public String put(Object key, String value) {
         byte[] keyBytes = getBytesFromObject(key);
         byte[] valueBytes = getBytesFromObject(value);
         ObjectKey objectKey = new ObjectKey(key.hashCode(), keyBytes, keyBytes.length, "");
@@ -54,15 +54,15 @@ public class OffHeapConcurrentMap<K, V> implements ConcurrentMap<K, V> {
                 , objectKey
                 , objectValue);
 
-        return previousValue == null ? null : (V) getObjectFromBytes(previousValue.data);
+        return previousValue == null ? null : (String) getObjectFromBytes(previousValue.data);
 
     }
 
     @Override
-    public V remove(Object key) {
+    public String remove(Object key) {
         byte[] keyBytes = getBytesFromObject(key);
         ObjectValue value = offHeapIndexDriverJNI.erase(pMap, new ObjectKey(key.hashCode(), keyBytes, keyBytes.length, ""));
-        return value == null ? null : (V) getObjectFromBytes(value.data);
+        return value == null ? null : (String) getObjectFromBytes(value.data);
     }
 
     @Override
@@ -73,21 +73,21 @@ public class OffHeapConcurrentMap<K, V> implements ConcurrentMap<K, V> {
     }
 
     @Override
-    public V replace(K key, V value) {
+    public String replace(Object key, String value) {
         byte[] keyBytes = getBytesFromObject(key);
         byte[] valueBytes = getBytesFromObject(value);
         ObjectValue result = offHeapIndexDriverJNI.replace(pMap, new ObjectKey(key.hashCode(), keyBytes, keyBytes.length, ""), new ObjectValue(valueBytes, valueBytes.length, ""));
-        return result == null ? null : (V) getObjectFromBytes(result.data);
+        return result == null ? null : (String) getObjectFromBytes(result.data);
 
     }
 
     @Override
-    public boolean replace(K key, V oldValue, V newValue) {
+    public boolean replace(Object key, String oldValue, String newValue) {
         byte[] keyBytes = getBytesFromObject(key);
         byte[] oldValueBytes = getBytesFromObject(oldValue);
         byte[] newValueBytes = getBytesFromObject(newValue);
         return offHeapIndexDriverJNI.replace(pMap, new ObjectKey(key.hashCode()
-                , keyBytes, keyBytes.length, "")
+                        , keyBytes, keyBytes.length, "")
                 , new ObjectValue(oldValueBytes, oldValueBytes.length, "")
                 , new ObjectValue(newValueBytes, newValueBytes.length, ""));
     }
@@ -97,12 +97,21 @@ public class OffHeapConcurrentMap<K, V> implements ConcurrentMap<K, V> {
     }
 
     @Override
-    public boolean containsValue(Object value) {
-        throw new UnsupportedOperationException();
+    protected void finalize() throws Throwable {
+        freeMap();
     }
 
     @Override
-    public V putIfAbsent(K key, V value) {
+    public String putIfAbsent(Object key, String value) {
+        if (!this.containsKey(key))
+            return this.put(key, value);
+        else
+            return this.get(key);
+    }
+
+
+    @Override
+    public boolean containsValue(Object value) {
         throw new UnsupportedOperationException();
     }
 
@@ -112,22 +121,22 @@ public class OffHeapConcurrentMap<K, V> implements ConcurrentMap<K, V> {
     }
 
     @Override
-    public void putAll(Map<? extends K, ? extends V> map) {
+    public void putAll(Map<? extends Object, ? extends String> map) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Set<K> keySet() {
+    public Set<Object> keySet() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Collection<V> values() {
+    public Collection<String> values() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Set<Entry<K, V>> entrySet() {
+    public Set<Entry<Object, String>> entrySet() {
         throw new UnsupportedOperationException();
     }
 
