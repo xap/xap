@@ -68,7 +68,7 @@ public class SpaceTypeManager {
     private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_TYPEMANAGER);
     private static final boolean SUPPORT_CHECKSUM = Boolean.parseBoolean(
             System.getProperty(SystemProperties.TYPE_CHECKSUM_VALIDATION, SystemProperties.TYPE_CHECKSUM_VALIDATION_DEFAULT));
-    private static final boolean DELETE_ON_DROP = GsEnv.propertyBoolean(SystemProperties.TYPE_DELETE_ON_DROP).get(false);
+    private static final boolean DELETE_ON_DROP = GsEnv.propertyBoolean(SystemProperties.TYPE_DELETE_ON_DROP).get(true);
 
     private final TypeDescFactory _typeDescFactory;
     private volatile Map<String, IServerTypeDesc> _typeMap;

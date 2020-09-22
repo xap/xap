@@ -175,6 +175,11 @@ public abstract class AbstractSpaceProxy implements ISpaceProxy {
         _actionManager.dropClass(className);
     }
 
+    @Override
+    public void unregisterTypeDescriptor(String typeName) throws RemoteException {
+        _actionManager.unregisterTypeDescriptor(typeName);
+    }
+
     @SuppressWarnings("deprecation")
     public void clear(Object template, Transaction txn)
             throws RemoteException, TransactionException, UnusableEntryException {
