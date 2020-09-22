@@ -63,11 +63,10 @@ class SqlParserTest {
                     CondInList(CollectionPath(listOf(Contains, PathElement("foo"), Contains, PathElement("bar"))), false, listOf(IntLit(1), IntLit(2)))),
             "select * from a where rownum = 1 group by foo" to Select(NoneQuantifier, AllColumns, listOf(TableName("a")),
                     CondRowNum("=", 1), listOf(AColumn("foo"))),
-//            OrderByColumn(col=AColumn(name=foo, alias=null), direction=ASC, nulls=NOTHING)
             "select * from a where rownum = 1 order by foo asc" to Select(NoneQuantifier, AllColumns, listOf(TableName("a")),
                     CondRowNum("=", 1), listOf(), listOf(OrderByColumn(AColumn("foo")))),
-            "select * from a where foo between 5 and b for update" to Select(NoneQuantifier, AllColumns, listOf(TableName("a")),
-                    CondBetween(TableRef("foo"), IntLit(5), TableRef("b")), listOf(), listOf(), true),
+            "select * from a where foo between 5 and c for update" to Select(NoneQuantifier, AllColumns, listOf(TableName("a")),
+                    CondBetween(TableRef("foo"), IntLit(5), TableRef("c")), listOf(), listOf(), true),
 
             )
 
@@ -76,8 +75,8 @@ class SqlParserTest {
             .map { (input, expected) ->
                 DynamicTest.dynamicTest("when I parse '$input' then I get $expected") {
                     val parser = SqlParser(input.reader())
-                    val statement = parser.parseStatement()
-                    Assert.assertEquals(expected, statement)
+                    val expr = parser.parseStatement()
+                    Assert.assertEquals(expected, expr)
                 }
             }
 

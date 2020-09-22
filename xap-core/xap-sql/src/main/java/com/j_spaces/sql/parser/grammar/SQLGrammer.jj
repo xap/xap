@@ -19,7 +19,7 @@ public class SqlParser {
     private int preparedIndex = 1;
 	// TOKEN_EXTENDS=com.j_spaces.jdbc.parser.SerializableToken
     public static void main(String[] args) {
-//        String input = "select\nmax";
+//        String input = "select\n max";
 //        SqlParser parser = new SqlParser(new java.io.StringReader(input));
         SqlParser parser = new SqlParser(System.in);
         while(true) {
@@ -262,26 +262,26 @@ Select selectSql():
 Exp expression():
 {
   Exp exp = null;
-  List<Exp> exps = new ArrayList<Exp>();
+  List<Exp> expressions = new ArrayList<Exp>();
 }
 {
-      exp = andExpression() { exps.add(exp) ;}
-      (<OR> exp = andExpression() { exps.add(exp); })*
+      exp = andExpression() { expressions.add(exp) ;}
+      (<OR> exp = andExpression() { expressions.add(exp); })*
       {
-      	return exps.size() == 1 ? exp : new Or(exps);
+      	return expressions.size() == 1 ? exp : new Or(expressions);
       }
 }
 
 Exp andExpression():
 {
   Exp exp = null;
-  List<Exp> exps = new ArrayList<Exp>();
+  List<Exp> expressions = new ArrayList<Exp>();
 }
 {
-      exp = simpleExpression() { exps.add(exp) ;}
-      (<AND> exp = simpleExpression() { exps.add(exp); })*
+      exp = simpleExpression() { expressions.add(exp) ;}
+      (<AND> exp = simpleExpression() { expressions.add(exp); })*
       {
-      	return exps.size() == 1 ? exp : new And(exps);
+      	return expressions.size() == 1 ? exp : new And(expressions);
       }
 }
 

@@ -48,13 +48,14 @@ data class PreparedLit(val pos: Int) : Literal()
 object NullLit : Literal()
 
 data class CollectionPath(val path: List<CollectionPathElement>) : Literal()
+
 sealed class CollectionPathElement
 object Contains : CollectionPathElement()
 data class PathElement(val path: String) : CollectionPathElement()
 
 
-data class And(val exps: List<Exp>) : Exp()
-data class Or(val exps: List<Exp>) : Exp()
+data class And(val expressions: List<Exp>) : Exp()
+data class Or(val expressions: List<Exp>) : Exp()
 data class TableRef(val name: String) : Exp()
 data class FunctionCall(val name: String, val args: List<Exp>) : Exp()
 
@@ -68,4 +69,4 @@ data class CondBetween(val exp: Exp, val left: Exp, val right: Exp) : Cond()
 
 sealed class CondIn : Cond()
 data class CondInSelect(val exp1: Exp, val neg: Boolean, val exp2: Exp) : CondIn()
-data class CondInList(val exp1: Exp, val neg: Boolean, val exps: List<Exp>) : CondIn()
+data class CondInList(val exp1: Exp, val neg: Boolean, val expressions: List<Exp>) : CondIn()
