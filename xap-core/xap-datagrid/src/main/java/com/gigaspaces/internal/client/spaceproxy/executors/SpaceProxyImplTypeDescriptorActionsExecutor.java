@@ -24,6 +24,7 @@ import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.space.actions.GetTypeDescriptorActionInfo;
 import com.gigaspaces.internal.space.requests.AddTypeIndexesRequestInfo;
 import com.gigaspaces.internal.space.requests.RegisterTypeDescriptorRequestInfo;
+import com.gigaspaces.internal.space.requests.UnregisterTypeDescriptorRequestInfo;
 import com.gigaspaces.internal.space.responses.AddTypeIndexesResponseInfo;
 import com.gigaspaces.metadata.SpaceMetadataException;
 import com.gigaspaces.metadata.index.AddTypeIndexesResult;
@@ -31,6 +32,7 @@ import com.gigaspaces.metadata.index.AddTypeIndexesResult;
 import net.jini.core.transaction.TransactionException;
 
 import java.rmi.RemoteException;
+import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +54,24 @@ public class SpaceProxyImplTypeDescriptorActionsExecutor extends TypeDescriptorA
     public void registerTypeDescriptor(SpaceProxyImpl spaceProxy, RegisterTypeDescriptorRequestInfo requestInfo)
             throws RemoteException {
         spaceProxy.getTypeManager().registerTypeDesc(requestInfo.typeDescriptor);
+    }
+
+    @Override
+    public void unregisterTypeDescriptor(SpaceProxyImpl spaceProxy, UnregisterTypeDescriptorRequestInfo requestInfo)
+            throws RemoteException {
+        try {
+            // Unregister type from all instances
+            AsyncFuture<?> future = spaceProxy.execute(new UnregisterTypeDescriptorTask(requestInfo), null, null, null);
+            future.get();
+            //drop internal class definitions
+            spaceProxy.directDropClass(requestInfo.typeName);
+        } catch (InterruptedException e) {
+            throw new SpaceMetadataException("Interrupted while unregistering type [" + requestInfo.typeName + "]", e);
+        } catch (ExecutionException e) {
+            throw new SpaceMetadataException("Failed to unregister type [" + requestInfo.typeName + "]", e.getCause());
+        } catch (TransactionException e) {
+            throw new SpaceMetadataException("Failed to unregister type [" + requestInfo.typeName + "]", e);
+        }
     }
 
     @Override

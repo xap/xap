@@ -263,4 +263,6 @@ public interface ISpaceProxy extends IJSpace, ActionMaker, SecuredService, IDotn
     <T> Future<ChangeResult<T>> asyncChange(Object template, ChangeSet changeSet, Transaction txn, long timeout, ChangeModifiers modifiers, AsyncFutureListener<ChangeResult<T>> listener) throws RemoteException;
 
     AggregationResult aggregate(Object template, AggregationSet aggregationSet, Transaction txn, int readModifiers) throws RemoteException, TransactionException, InterruptedException;
+
+    void unregisterTypeDescriptor(String typeName) throws RemoteException;
 }
