@@ -109,7 +109,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.j_spaces.core.Constants.CacheManager.*;
@@ -139,7 +138,8 @@ public class CacheManager extends AbstractCacheManager
     /**
      * <K:UID, V:PEntry>
      */
-    private final ConcurrentMap<String, IEntryCacheInfo> _entries;
+    //private final ConcurrentMap<String, IEntryCacheInfo> _entries;
+    private final Map<String, IEntryCacheInfo> _entries;
 
     private final SpaceEngine _engine;
     private final ClusterPolicy _clusterPolicy;
@@ -373,9 +373,18 @@ public class CacheManager extends AbstractCacheManager
         _cacheSize = new AtomicInteger(0);
         int numOfCHMSegents = Integer.getInteger(SystemProperties.CACHE_MANAGER_HASHMAP_SEGMENTS, SystemProperties.CACHE_MANAGER_HASHMAP_SEGMENTS_DEFAULT);
 
-        _entries = (_typeDataFactory.useEconomyHashMap() || (isBlobStoreCachePolicy() && _USE_UIDS_ECONOMY_HASH_MAP_FOR_BLOBSTORE_))
-                ? new EconomyConcurrentHashMap<String, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry(IEntryCacheInfo.UID_HASH_INDICATOR))
-                : new ConcurrentHashMap<String, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents);
+
+        if (true){ //newstate
+            _entries = (_typeDataFactory.useEconomyHashMap() || (isBlobStoreCachePolicy() && _USE_UIDS_ECONOMY_HASH_MAP_FOR_BLOBSTORE_))
+                    ? new EconomyConcurrentHashMap<String, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry(IEntryCacheInfo.UID_HASH_INDICATOR))
+                      : new ConcurrentHashMap<String, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents);
+        } else {
+            _entries = (_typeDataFactory.useEconomyHashMap() || (isBlobStoreCachePolicy() && _USE_UIDS_ECONOMY_HASH_MAP_FOR_BLOBSTORE_))
+                    ? new EconomyConcurrentHashMap<String, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry(IEntryCacheInfo.UID_HASH_INDICATOR))
+                    : new HashMap<String, IEntryCacheInfo>(16, 0.75f);
+        }
+
+
 
         _cacheContextFactory = new CacheContextFactory(this, engine.getFullSpaceName());
         _templatesManager = new TemplatesManager(this, numNotifyFifoThreads, numNonNotifyFifoThreads);

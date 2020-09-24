@@ -24,10 +24,10 @@ package com.j_spaces.core.cache;
  * to you by GigaSpaces.
  *******************************************************************************/
 
-import com.gigaspaces.internal.backport.java.util.concurrent.FastConcurrentSkipListMap;
 import com.j_spaces.kernel.IStoredList;
 
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
+import java.util.NavigableMap;
 
 /**
  * Created by yechielf on 09/08/2015.
@@ -36,11 +36,18 @@ public interface IExtendedEntriesIndex<K, V> extends IExtendedIndex<K, V> {
 
     IStoredList<IEntryCacheInfo> getIndexEntries(K indexValue);
 
-    ConcurrentMap<Object, IStoredList<IEntryCacheInfo>> getNonUniqueEntriesStore();
+//    ConcurrentMap<Object, IStoredList<IEntryCacheInfo>> getNonUniqueEntriesStore();
+//
+//    ConcurrentMap<Object, IEntryCacheInfo> getUniqueEntriesStore();
+//
+//    FastConcurrentSkipListMap<Object, IStoredList<IEntryCacheInfo>> getOrderedStore();
 
-    ConcurrentMap<Object, IEntryCacheInfo> getUniqueEntriesStore();
+    Map<Object, IStoredList<IEntryCacheInfo>> getNonUniqueEntriesStore();
 
-    FastConcurrentSkipListMap<Object, IStoredList<IEntryCacheInfo>> getOrderedStore();
+    Map<Object, IEntryCacheInfo> getUniqueEntriesStore();
+
+    NavigableMap<Object, IStoredList<IEntryCacheInfo>> getOrderedStore();
+
 
     void onUpdate(IEntryCacheInfo eci);
 

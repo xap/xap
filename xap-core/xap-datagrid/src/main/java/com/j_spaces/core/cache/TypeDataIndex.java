@@ -38,7 +38,6 @@ import com.gigaspaces.metadata.index.ISpaceIndex;
 import com.gigaspaces.metadata.index.SpaceIndexType;
 import com.gigaspaces.metrics.LongCounter;
 import com.gigaspaces.server.ServerEntry;
-import com.j_spaces.core.Constants;
 import com.j_spaces.core.cache.fifoGroup.FifoGroupsMainIndexExtention;
 import com.j_spaces.core.cache.fifoGroup.IFifoGroupsIndexExtention;
 import com.j_spaces.core.client.DuplicateIndexValueException;
@@ -48,13 +47,11 @@ import com.j_spaces.kernel.IStoredList;
 import com.j_spaces.kernel.StoredListFactory;
 import com.j_spaces.kernel.SystemProperties;
 import com.j_spaces.kernel.list.IScanListIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class TypeDataIndex<K> {
@@ -79,10 +76,15 @@ public class TypeDataIndex<K> {
         return usageCounter;
     }
 
+//    //in case index is not unique
+//    private final ConcurrentMap<Object, IStoredList<IEntryCacheInfo>> _nonUniqueEntriesStore;
+//    //in case index is unique
+//    private final ConcurrentMap<Object, IEntryCacheInfo> _uniqueEntriesStore;
+
     //in case index is not unique
-    private final ConcurrentMap<Object, IStoredList<IEntryCacheInfo>> _nonUniqueEntriesStore;
+    private final Map<Object, IStoredList<IEntryCacheInfo>> _nonUniqueEntriesStore;
     //in case index is unique
-    private final ConcurrentMap<Object, IEntryCacheInfo> _uniqueEntriesStore;
+    private final Map<Object, IEntryCacheInfo> _uniqueEntriesStore;
 
 
     //basic indexes for templates
@@ -174,8 +176,13 @@ public class TypeDataIndex<K> {
                 this._uniqueEntriesStore = index.isUnique() ? new EconomyConcurrentHashMap<Object, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry(pos)) : null;
                 this._nonUniqueEntriesStore = new EconomyConcurrentHashMap<Object, IStoredList<IEntryCacheInfo>>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry<Object>(pos));
             } else {
-                this._uniqueEntriesStore = index.isUnique() ? new ConcurrentHashMap<Object, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents) : null;
-                this._nonUniqueEntriesStore = new ConcurrentHashMap<Object, IStoredList<IEntryCacheInfo>>(16, 0.75f, numOfCHMSegents);
+                if (true){
+                    this._uniqueEntriesStore = index.isUnique() ? new HashMap<Object, IEntryCacheInfo>(16, 0.75f) : null;
+                    this._nonUniqueEntriesStore = new HashMap<Object, IStoredList<IEntryCacheInfo>>(16, 0.75f);
+                } else {
+                    this._uniqueEntriesStore = index.isUnique() ? new ConcurrentHashMap<Object, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents) : null;
+                    this._nonUniqueEntriesStore = new ConcurrentHashMap<>(16, 0.75f ,numOfCHMSegents);
+                }
             }
         } else {
             this._uniqueEntriesStore = null;
@@ -190,7 +197,11 @@ public class TypeDataIndex<K> {
         _NNullTemplates = StoredListFactory.createConcurrentSegmentedList(true/* supportFifoPerSegment*/,1 /* inputNumOfSegments*/,true /* padded*/);
 
         if (_indexType.isOrdered()) {
-            _concurrentExtendedIndex = new ExtendedIndexHandler<K>(this);
+            if (true){
+                _concurrentExtendedIndex = new ReadOnlyExtendedIndexHandler<>(this);
+            } else {
+                _concurrentExtendedIndex = new ExtendedIndexHandler<K>(this);
+            }
 
             m_Notify_GT_Index = new TemplatesExtendedIndexHandler<K>(this);
             m_RT_GT_Index = new TemplatesExtendedIndexHandler<K>(this);
@@ -273,8 +284,8 @@ public class TypeDataIndex<K> {
 
 
     /* (non-Javadoc)
-    * @see com.j_spaces.core.cache.TypeDataIndex#isUniqueIndex()
-    */
+     * @see com.j_spaces.core.cache.TypeDataIndex#isUniqueIndex()
+     */
     public boolean isUniqueIndex() {
         return _unique;
     }
@@ -306,8 +317,8 @@ public class TypeDataIndex<K> {
     }
 
     /* (non-Javadoc)
-    * @see com.j_spaces.core.cache.TypeDataIndex#markIndexValue(boolean)
-    */
+     * @see com.j_spaces.core.cache.TypeDataIndex#markIndexValue(boolean)
+     */
     public void markIndexValue(boolean unique) {
         if (unique)
             _estimatedUniqueNonNullValues++;
@@ -320,8 +331,8 @@ public class TypeDataIndex<K> {
     }
 
     /* (non-Javadoc)
-    * @see com.j_spaces.core.cache.TypeDataIndex#assumeUniqueValue()
-    */
+     * @see com.j_spaces.core.cache.TypeDataIndex#assumeUniqueValue()
+     */
     public boolean assumeUniqueValue() {
         int estimatedNumNonNullValues = _estimatedNumNonNullValues;
         int estimatedUniqueNonNullValues = _estimatedUniqueNonNullValues;
@@ -330,8 +341,8 @@ public class TypeDataIndex<K> {
     }
 
     /* (non-Javadoc)
-    * @see com.j_spaces.core.cache.TypeDataIndex#getIndexValue(com.gigaspaces.server.IServerEntry)
-    */
+     * @see com.j_spaces.core.cache.TypeDataIndex#getIndexValue(com.gigaspaces.server.IServerEntry)
+     */
     public Object getIndexValue(ServerEntry entry) {
         return entry.getFixedPropertyValue(_position);
     }
@@ -348,10 +359,26 @@ public class TypeDataIndex<K> {
     }
 
 
+//    /**
+//     * @return the entries
+//     */
+//    public ConcurrentMap<Object, IStoredList<IEntryCacheInfo>> getNonUniqueEntriesStore() {
+//        return isThinExtendedIndex() ? _concurrentExtendedIndex.getNonUniqueEntriesStore() : _nonUniqueEntriesStore;
+//    }
+//
+//
+//    /**
+//     * @return the uniqueIndex
+//     */
+//    public ConcurrentMap<Object, IEntryCacheInfo> getUniqueEntriesStore() {
+//        return isThinExtendedIndex() ? _concurrentExtendedIndex.getUniqueEntriesStore() : _uniqueEntriesStore;
+//    }
+
+
     /**
      * @return the entries
      */
-    public ConcurrentMap<Object, IStoredList<IEntryCacheInfo>> getNonUniqueEntriesStore() {
+    public Map<Object, IStoredList<IEntryCacheInfo>> getNonUniqueEntriesStore() {
         return isThinExtendedIndex() ? _concurrentExtendedIndex.getNonUniqueEntriesStore() : _nonUniqueEntriesStore;
     }
 
@@ -359,7 +386,7 @@ public class TypeDataIndex<K> {
     /**
      * @return the uniqueIndex
      */
-    public ConcurrentMap<Object, IEntryCacheInfo> getUniqueEntriesStore() {
+    public Map<Object, IEntryCacheInfo> getUniqueEntriesStore() {
         return isThinExtendedIndex() ? _concurrentExtendedIndex.getUniqueEntriesStore() : _uniqueEntriesStore;
     }
 
@@ -427,7 +454,7 @@ public class TypeDataIndex<K> {
                         oi = pEntry;
                         break;
                     }
-                    //unique index supported for ID field with autogenerate=false  and for defined index                    
+                    //unique index supported for ID field with autogenerate=false  and for defined index
                     if (other.isRemovingOrRemoved() || other.isDeleted()) {//removing entry - help out
                         getUniqueEntriesStore().remove(fieldValue, other); //help remove
                     } else {
@@ -513,7 +540,7 @@ public class TypeDataIndex<K> {
             if (isExtendedIndex()) {
 
                 try {
-                    if (!isThinExtendedIndex())
+                    if (!isThinExtendedIndex()) //todo- note: also ordered
                         oi = _concurrentExtendedIndex.insertEntryIndexedField(pEntry, fieldValue, pType, alreadyCloned);
                     if (backRefs != null)
                         backRefs.add(oi); //if thin we insert same backref not to break existing code
@@ -565,7 +592,8 @@ public class TypeDataIndex<K> {
     private void removeNonUniqueIndexedField(IEntryHolder eh, K fieldValue,
                                              IEntryCacheInfo pEntry, IObjectInfo oi) {
         while (true) {
-            ConcurrentMap<Object, IStoredList<IEntryCacheInfo>> store = getNonUniqueEntriesStore();
+            //ConcurrentMap<Object, IStoredList<IEntryCacheInfo>> store = getNonUniqueEntriesStore();
+            Map<Object, IStoredList<IEntryCacheInfo>> store = getNonUniqueEntriesStore();
             IStoredList<IEntryCacheInfo> entries = store.get(fieldValue);
             if (entries == null /*&& isObjectSerialization*/)
                 throw new RuntimeException("Entry Class: " + eh.getClassName() +
@@ -723,16 +751,16 @@ public class TypeDataIndex<K> {
                 _concurrentExtendedIndex.removeEntryIndexedField(eh, fieldValue, pEntry, oi);
         }
     }
-    
-    
-    
-    
+
+
+
+
     /*
      * index (one or more) where added to the type
      * reindex the entry accordingly
-     * 
+     *
      * NOTE=========   dropping indexes is currently not supported
-     * 
+     *
      */
 
     static void reindexEntry(CacheManager cacheManager, IEntryCacheInfo entryCacheInfo, TypeData typeData) {
@@ -1544,7 +1572,7 @@ public class TypeDataIndex<K> {
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    //++++++++++++++ index searching methods of templates according to entry 
+    //++++++++++++++ index searching methods of templates according to entry
 
     /**
      * add, to the result of getTemplatesMinIndex, the extended-search templates. extended search
