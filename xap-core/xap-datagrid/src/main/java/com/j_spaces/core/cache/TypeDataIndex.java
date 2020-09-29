@@ -174,7 +174,7 @@ public class TypeDataIndex<K> {
             if (_useEconomyHashMap) {
                 this._uniqueEntriesStore = index.isUnique() ? new EconomyConcurrentHashMap<Object, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry(pos)) : null;
                 this._nonUniqueEntriesStore = new EconomyConcurrentHashMap<Object, IStoredList<IEntryCacheInfo>>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry<Object>(pos));
-            } else if (System.getenv("OFFHEAP_INDEX").equalsIgnoreCase("true")){
+            } else if (Boolean.parseBoolean(System.getProperty("gs.off-heap-index", "false"))){
                 this._uniqueEntriesStore = index.isUnique() ? new OffHeapUniqueEntriesStore(cacheManager) : null;
                 this._nonUniqueEntriesStore = new ConcurrentHashMap<Object, IStoredList<IEntryCacheInfo>>(16, 0.75f, numOfCHMSegents);
             } else {
