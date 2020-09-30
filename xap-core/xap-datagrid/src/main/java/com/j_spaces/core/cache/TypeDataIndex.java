@@ -176,7 +176,7 @@ public class TypeDataIndex<K> {
                 this._uniqueEntriesStore = index.isUnique() ? new EconomyConcurrentHashMap<Object, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry(pos)) : null;
                 this._nonUniqueEntriesStore = new EconomyConcurrentHashMap<Object, IStoredList<IEntryCacheInfo>>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry<Object>(pos));
             } else {
-                if (true){
+                if (System.getProperty("memory-optimization").equals("true")){
                     this._uniqueEntriesStore = index.isUnique() ? new HashMap<Object, IEntryCacheInfo>(16, 0.75f) : null;
                     this._nonUniqueEntriesStore = new HashMap<Object, IStoredList<IEntryCacheInfo>>(16, 0.75f);
                 } else {
@@ -197,7 +197,7 @@ public class TypeDataIndex<K> {
         _NNullTemplates = StoredListFactory.createConcurrentSegmentedList(true/* supportFifoPerSegment*/,1 /* inputNumOfSegments*/,true /* padded*/);
 
         if (_indexType.isOrdered()) {
-            if (true){
+            if (System.getProperty("memory-optimization").equals("true")){
                 _concurrentExtendedIndex = new ReadOnlyExtendedIndexHandler<>(this);
             } else {
                 _concurrentExtendedIndex = new ExtendedIndexHandler<K>(this);

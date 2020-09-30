@@ -374,14 +374,16 @@ public class CacheManager extends AbstractCacheManager
         int numOfCHMSegents = Integer.getInteger(SystemProperties.CACHE_MANAGER_HASHMAP_SEGMENTS, SystemProperties.CACHE_MANAGER_HASHMAP_SEGMENTS_DEFAULT);
 
 
-        if (true){ //newstate
-            _entries = (_typeDataFactory.useEconomyHashMap() || (isBlobStoreCachePolicy() && _USE_UIDS_ECONOMY_HASH_MAP_FOR_BLOBSTORE_))
-                    ? new EconomyConcurrentHashMap<String, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry(IEntryCacheInfo.UID_HASH_INDICATOR))
-                      : new ConcurrentHashMap<String, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents);
-        } else {
+        if (System.getProperty("memory-optimization").equals("true")){
+            System.out.println("in true");
             _entries = (_typeDataFactory.useEconomyHashMap() || (isBlobStoreCachePolicy() && _USE_UIDS_ECONOMY_HASH_MAP_FOR_BLOBSTORE_))
                     ? new EconomyConcurrentHashMap<String, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry(IEntryCacheInfo.UID_HASH_INDICATOR))
                     : new HashMap<String, IEntryCacheInfo>(16, 0.75f);
+        } else {
+            System.out.println("in false");
+            _entries = (_typeDataFactory.useEconomyHashMap() || (isBlobStoreCachePolicy() && _USE_UIDS_ECONOMY_HASH_MAP_FOR_BLOBSTORE_))
+                    ? new EconomyConcurrentHashMap<String, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry(IEntryCacheInfo.UID_HASH_INDICATOR))
+                    : new ConcurrentHashMap<String, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents);
         }
 
 
