@@ -322,7 +322,7 @@ DeleteQuery deleteSqlQuery():
 SelectQuery countSqlQuery():
 {
     SelectQuery query = new SelectQuery();
-    ExpNode exp = null;	
+    ExpNode exp = null;
 }
 {
     (
@@ -337,7 +337,7 @@ SelectQuery countSqlQuery():
      	selectC.setFunctionName(SqlConstants.COUNT);
         query.setAggFunction(true);
      	query.addColumn(selectC);
-     	
+
     	query.setExpTree(exp);
     	return query;
     }
@@ -572,18 +572,7 @@ void selectColumnList(SelectQuery query):
   Token value = null;
   SelectColumn selectC = null;}
 { 
-	 [LOOKAHEAD(2) id() "."]
-     (
-       (selectC = getSelectColumn(query)    	
-     	|<ASTERISK>  { selectC = new SelectColumn("*");  }
-     	| <UID> { selectC = new SelectColumn("UID");   } 
- 	    | value = <STRING_LITERAL> selectC = getSelectColumn(query) { selectC.setValue(value.image); }
- 	    )
-     	{  if ( selectC != null) {
-  	   	     query.addColumn(selectC);
-  	   	  }
-  	 	}
-       | LOOKAHEAD(2) function((SelectQuery)query))
+	 selectColumn(query)
      ("," [LOOKAHEAD(2) id() "."]
 	    ( ( selectC = getSelectColumn(query)
 	     |<ASTERISK>  { selectC = new SelectColumn("*");  }
@@ -600,6 +589,26 @@ void selectColumnList(SelectQuery query):
 	  )*
 	  
 	   {query.addAbsentCol();}
+}
+
+void selectColumn(SelectQuery query):
+{
+  Token column = null;
+  Token value = null;
+  SelectColumn selectC = null;}
+{
+	 [LOOKAHEAD(2) id() "."]
+     (
+       (selectC = getSelectColumn(query)
+     	|<ASTERISK>  { selectC = new SelectColumn("*");  }
+     	| <UID> { selectC = new SelectColumn("UID");   }
+ 	    | value = <STRING_LITERAL> selectC = getSelectColumn(query) { selectC.setValue(value.image); }
+ 	    )
+     	{  if ( selectC != null) {
+  	   	     query.addColumn(selectC);
+  	   	  }
+  	 	}
+       | LOOKAHEAD(2) function((SelectQuery)query))
 }
 
 void columnListWithValues(UpdateQuery query) :

@@ -26,6 +26,7 @@ public class SqlParserTest {
 
             , /*barak*/ "select * from a, b"
             , /*barak*/ "select * from (select a from b) as a, b"
+                , /*barak*/ "SELECT foo(TICKER) from a"
 //            , "SELECT *\n" +
 //                    "FROM (SELECT REPLACE(x.TICKER, ' ELEC ', ' ') as TICKER,\n" +
 //                    "      MAX(CRNCY) AS CRNCY,\n" +
