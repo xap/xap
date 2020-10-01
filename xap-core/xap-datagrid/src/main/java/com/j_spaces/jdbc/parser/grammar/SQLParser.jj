@@ -52,6 +52,13 @@ public class SqlParser {
 		ReInit(reader);
 	}
 
+    private String getString(Token token){
+        if(token == null){
+            return null;
+        }else{
+            return token.image;
+        }
+    }
 }
 
 PARSER_END(SqlParser)
@@ -774,12 +781,15 @@ Object param():
 //retrieve a list of tables in a select query
 void selectTableList(SelectQuery query):
 { String table = null; 
-  Token alias = null;}
+  Token alias = null;
+  Query fromQuery = null;
+}
 {
     (table = className()) [ alias = id() ]
     {query.addTableWithAlias(table, ((alias == null) ? null : alias.image)); alias = null; }
     ("," (table = className()) [ alias = id() ]
     {query.addTableWithAlias(table, ((alias == null) ? null : alias.image)); alias = null; })*
+    | "(" fromQuery = selectSql() ")" [<AS> alias = id()]  { query.setFromQuery(fromQuery, getString(alias)); }
 }
 
 void tableNameWithOptionalAlias(AbstractDMLQuery query):
