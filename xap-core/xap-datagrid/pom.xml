@@ -69,6 +69,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>5.7.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
             <version>1.9.0</version>
@@ -118,7 +124,33 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${project.build.sourceDirectory}/com/j_spaces/jdbc/parser/grammar</directory>
+                            <includes>
+                                <include>SqlParser.java</include>
+                                <include>ParseException.java</include>
+                                <include>SimpleCharStream.java</include>
+                                <include>SqlParserConstants.java</include>
+                                <include>SqlParserTokenManager.java</include>
+                                <include>Token.java</include>
+                                <include>TokenMgrError.java</include>
+                            </includes>
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
+                        <fileset>
+                            <directory>${project.basedir}</directory>
+                            <includes>
+                                <include>*.hprof</include>
+                            </includes>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>javacc-maven-plugin</artifactId>
@@ -142,6 +174,11 @@
                 <configuration>
                     <excludePackageNames>*.internal.*</excludePackageNames>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M5</version>
             </plugin>
         </plugins>
     </build>
