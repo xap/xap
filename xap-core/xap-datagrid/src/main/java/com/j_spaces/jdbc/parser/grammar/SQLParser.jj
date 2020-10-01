@@ -624,16 +624,16 @@ SelectColumn getSelectColumnOrFunction(String fname, AbstractDMLQuery query):
        	col = new SelectColumn(id, alias);
         return col;
     }
-
 }
 
 FunctionCallColumn varArgFunctionCall(String fname):
 {
-
+   List params = null;
 }
 {
-  <OPENPAREN> <CLOSEPAREN> { return new FunctionCallColumn(fname); }
+  <OPENPAREN> params = createFunctionParams() <CLOSEPAREN> { return new FunctionCallColumn(fname, params); }
 }
+
 
 SelectColumn getSelectColumn(AbstractDMLQuery query):
 {

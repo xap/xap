@@ -27,7 +27,11 @@ public class SqlParserTest {
 //
 //            , /*barak*/ "select * from a, b"
 //            , /*barak*/ "select * from (select a from b) as a, b"
-            /*barak*/ "SELECT foo() from a"
+            /*barak*/ "SELECT REPLACE(x.TICKER, ' ELEC ', ' ') as TICKER," +
+                    "MAX(DATA_RECEIVED_TIMESTAMP) AS DATA_RECEIVED_TIMESTAMP,\n" +
+                    "MAX(CRNCY) AS CRNCY\n" +
+                    "FROM BPIPE_RT.REAL_TIME_FUTURES as x\n"
+
 //            , "SELECT *\n" +
 //                    "FROM (SELECT REPLACE(x.TICKER, ' ELEC ', ' ') as TICKER,\n" +
 //                    "      MAX(CRNCY) AS CRNCY,\n" +
