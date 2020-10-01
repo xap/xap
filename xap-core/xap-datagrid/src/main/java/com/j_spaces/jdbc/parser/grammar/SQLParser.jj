@@ -800,8 +800,11 @@ Object classNameOrSelect():
 }
 {
    clsName = className() { return clsName; }
-   |  "(" fromQuery = selectSql() ")" { return fromQuery; }
+   |
+   "(" fromQuery = selectSql() ")"
+   { return fromQuery; }
 }
+
 void tableNameWithOptionalAlias(AbstractDMLQuery query):
 { String tableName = null; Token tableAlias = null; }
 {
