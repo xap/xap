@@ -1,6 +1,9 @@
 options {
 STATIC = false;
 UNICODE_INPUT=true;
+DEBUG_PARSER=true;
+// DEBUG_LOOKAHEAD=true;
+// DEBUG_TOKEN_MANAGER=true;
 }
 PARSER_BEGIN(SqlParser)
 
@@ -573,33 +576,23 @@ void selectColumnList(SelectQuery query):
   SelectColumn selectC = null;}
 { 
 	 selectColumn(query)
-     ("," [LOOKAHEAD(2) id() "."]
-	    ( ( selectC = getSelectColumn(query)
-	     |<ASTERISK>  { selectC = new SelectColumn("*");  }
-	     | <UID> { selectC = new SelectColumn("UID");  }
- 	    
- 	    | value = <STRING_LITERAL> selectC = getSelectColumn(query) { selectC.setValue(value.image); }
-	     
-	      ) 
-	     { if ( selectC != null) {
-  	   	     query.addColumn(selectC);
-  	   	   }
-	  	 }
-	  	| LOOKAHEAD(2) function((SelectQuery)query))
-	  )*
+     ("," selectColumn(query) )*
 	  
 	   {query.addAbsentCol();}
 }
+
 
 void selectColumn(SelectQuery query):
 {
   Token column = null;
   Token value = null;
-  SelectColumn selectC = null;}
+  SelectColumn selectC = null;
+  Token fname = null;
+  }
 {
 	 [LOOKAHEAD(2) id() "."]
      (
-       (selectC = getSelectColumn(query)
+        LOOKAHEAD(2) (fname = id() selectC = getSelectColumnOrFunction(getString(fname), query)
      	|<ASTERISK>  { selectC = new SelectColumn("*");  }
      	| <UID> { selectC = new SelectColumn("UID");   }
  	    | value = <STRING_LITERAL> selectC = getSelectColumn(query) { selectC.setValue(value.image); }
@@ -610,6 +603,60 @@ void selectColumn(SelectQuery query):
   	 	}
        | LOOKAHEAD(2) function((SelectQuery)query))
 }
+
+SelectColumn getSelectColumnOrFunction(String fname, AbstractDMLQuery query):
+{
+  String id = null;
+  SelectColumn col = null;
+  Token t = null;
+  String alias = null;
+  FunctionCallColumn fcall = null;
+}
+{
+
+    fcall = varArgFunctionCall(fname) ([<AS>] t = id())? { fcall.setAlias(getString(t)); return fcall; }
+    |
+	// Optional Column-Alias
+	([< AS >] t = id() { alias = t.image; })?
+
+    {
+        id = QueryProcessor.getDefaultConfig().isParserCaseSensitivity()? fname : fname.toUpperCase();
+       	col = new SelectColumn(id, alias);
+        return col;
+    }
+
+}
+
+FunctionCallColumn varArgFunctionCall(String fname):
+{
+
+}
+{
+  <OPENPAREN> <CLOSEPAREN> { return new FunctionCallColumn(fname); }
+}
+
+SelectColumn getSelectColumn(AbstractDMLQuery query):
+{
+  String id = null;
+  SelectColumn col = null;
+  Token t = null;
+  String alias = null;
+}
+{
+    t = id()
+    {
+    	id = QueryProcessor.getDefaultConfig().isParserCaseSensitivity()? t.image : t.image.toUpperCase();
+    }
+
+	// Optional Column-Alias
+	([< AS >] t = id() { alias = t.image; })?
+
+    {
+       	col = new SelectColumn(id, alias);
+        return col;
+    }
+}
+
 
 void columnListWithValues(UpdateQuery query) :
 { 
@@ -623,7 +670,6 @@ void columnListWithValues(UpdateQuery query) :
     	query.setUpdatedValues(newValues);
     }
 }
-
 
 void setColumnValue(UpdateQuery updateQuery, ArrayList<LiteralNode> newValues) :
 { Token column, newValue ; 
@@ -664,13 +710,16 @@ void setColumnValue(UpdateQuery updateQuery, ArrayList<LiteralNode> newValues) :
 void function(SelectQuery query):
 {Token token = null;
  SelectColumn selectC = null;
- String alias = null;}
+ String alias = null;
+ }
 {
 	(<SUM> { selectC = new SelectColumn(); selectC.setSum(true);selectC.setFunctionName(SqlConstants.SUM); query.setAggFunction(true); }
 	|<COUNT> { selectC = new SelectColumn(); selectC.setCount(true);selectC.setFunctionName(SqlConstants.COUNT); query.setAggFunction(true); }  
 	|<MAX> { selectC = new SelectColumn(); selectC.setFunctionName(SqlConstants.MAX); query.setAggFunction(true); }
 	|<MIN> { selectC = new SelectColumn(); selectC.setFunctionName(SqlConstants.MIN); query.setAggFunction(true);}
-	|<AVG> { selectC = new SelectColumn(); selectC.setFunctionName(SqlConstants.AVG); query.setAggFunction(true); }) 
+	|<AVG> { selectC = new SelectColumn(); selectC.setFunctionName(SqlConstants.AVG); query.setAggFunction(true); }
+	)
+
 	
 	<OPENPAREN>
 		(<ASTERISK> {selectC.setName("*"); query.addColumn(selectC);}
@@ -927,28 +976,6 @@ OrderColumn createOrderColumn(AbstractDMLQuery query):
        	return new OrderColumn(id, alias);       	
     } 
 }
-SelectColumn getSelectColumn(AbstractDMLQuery query):
-{
-  String id = null;
-  SelectColumn col = null;
-  Token t = null;
-  String alias = null;
-}
-{    
-    t = id() 
-    {
-    	id = QueryProcessor.getDefaultConfig().isParserCaseSensitivity()? t.image : t.image.toUpperCase();         
-    }
-
-	// Optional Column-Alias
-	([< AS >] t = id() { alias = t.image; })?
-	
-    {
-       	col = new SelectColumn(id, alias);       	
-        return col;
-    } 
-}
-
 ExpNode SqlExpression(AbstractDMLQuery query):
 {
 ExpNode exp1;
