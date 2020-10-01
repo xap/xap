@@ -42,29 +42,18 @@ import com.j_spaces.jdbc.executor.JoinedQueryExecutor;
 import com.j_spaces.jdbc.executor.QueryExecutor;
 import com.j_spaces.jdbc.parser.ExpNode;
 import com.j_spaces.jdbc.parser.RowNumNode;
-import com.j_spaces.jdbc.query.ArrayListResult;
-import com.j_spaces.jdbc.query.IQueryResultSet;
-import com.j_spaces.jdbc.query.ProjectedResultSet;
-import com.j_spaces.jdbc.query.QueryColumnData;
-import com.j_spaces.jdbc.query.QueryTableData;
-
+import com.j_spaces.jdbc.query.*;
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.lease.LeaseDeniedException;
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
 import net.jini.core.transaction.TransactionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
 
 
 /**
@@ -100,6 +89,19 @@ public class SelectQuery extends AbstractDMLQuery {
 
     public SelectQuery() {
         super();
+    }
+
+
+    public void addTableWithAlias(Object table, String alias) {
+        if (table instanceof String) {
+            super.addTableWithAlias((String) table, alias);
+        } else {
+            //@todo barak, handle the case where table is select (Query)
+        }
+    }
+
+    public void setJoins(List<Join> joins) {
+        //@todo barak, handle query with joins
     }
 
     /**

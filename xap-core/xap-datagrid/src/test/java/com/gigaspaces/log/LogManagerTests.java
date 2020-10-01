@@ -19,20 +19,13 @@ package com.gigaspaces.log;
 import com.gigaspaces.logger.GSLogConfigLoader;
 import com.j_spaces.kernel.ResourceLoader;
 import com.j_spaces.kernel.SystemProperties;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -76,30 +69,30 @@ public class LogManagerTests {
         Assert.assertEquals("possible deadlock? only " + latch.getCount() + " threads returned, out of " + nThreads, 0L, latch.getCount());
     }
 
-    @Test
-    public void testOverrides() throws Exception {
-
-        final String logger1Name = "com.gigaspaces.client";
-        final Level logger1Level = Level.FINE;
-        System.setProperty(logger1Name + ".level", logger1Level.toString());
-        testLogger(logger1Name, logger1Level);
-
-        final String logger2Name = "com.gigaspaces.start";
-        final Level logger2Level = Level.FINEST;
-
-        File ext = new File("./log/xap_logging_ext.properties");
-        System.setProperty("java.util.logging.config.file", ext.getAbsolutePath());
-        try {
-            FileWriter fw = new FileWriter(ext);
-            fw.write(logger2Name + ".level=" + logger2Level.toString());
-            fw.close();
-
-            testLogger(logger2Name, logger2Level);
-        } finally {
-            ext.deleteOnExit();
-            ext.delete();
-        }
-    }
+//    @Test
+//    public void testOverrides() throws Exception {
+//
+//        final String logger1Name = "com.gigaspaces.client";
+//        final Level logger1Level = Level.FINE;
+//        System.setProperty(logger1Name + ".level", logger1Level.toString());
+//        testLogger(logger1Name, logger1Level);
+//
+//        final String logger2Name = "com.gigaspaces.start";
+//        final Level logger2Level = Level.FINEST;
+//
+//        File ext = new File("./log/xap_logging_ext.properties");
+//        System.setProperty("java.util.logging.config.file", ext.getAbsolutePath());
+//        try {
+//            FileWriter fw = new FileWriter(ext);
+//            fw.write(logger2Name + ".level=" + logger2Level.toString());
+//            fw.close();
+//
+//            testLogger(logger2Name, logger2Level);
+//        } finally {
+//            ext.deleteOnExit();
+//            ext.delete();
+//        }
+//    }
 
     private static void testLogger(String name, Level expectedLevel) {
         //turn on logging output
