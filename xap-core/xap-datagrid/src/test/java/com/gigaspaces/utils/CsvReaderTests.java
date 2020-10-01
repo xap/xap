@@ -3,6 +3,7 @@ package com.gigaspaces.utils;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.metadata.SpaceTypeDescriptorBuilder;
+import org.hamcrest.core.StringContains;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -16,8 +17,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.hamcrest.core.StringContains;
 
 public class CsvReaderTests {
     @Test
@@ -52,7 +51,7 @@ public class CsvReaderTests {
         Assert.assertEquals(String.class, typeDescriptor.getFixedProperty("name").getType());
         Assert.assertEquals(LocalDate.class, typeDescriptor.getFixedProperty("birthday").getType());
         Assert.assertEquals(boolean.class, typeDescriptor.getFixedProperty("native").getType());
-        Assert.assertEquals(Object.class, typeDescriptor.getFixedProperty("_spaceId").getType());
+        Assert.assertEquals(String.class, typeDescriptor.getFixedProperty("_spaceId").getType());
     }
 
     @Test
