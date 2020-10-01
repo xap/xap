@@ -780,18 +780,28 @@ Object param():
 
 //retrieve a list of tables in a select query
 void selectTableList(SelectQuery query):
-{ String table = null; 
+{ Object table = null;
   Token alias = null;
-  Query fromQuery = null;
 }
 {
-    (table = className()) [ alias = id() ]
+    (table = classNameOrSelect()) [<AS>] [alias = id() ]
     {query.addTableWithAlias(table, ((alias == null) ? null : alias.image)); alias = null; }
-    ("," (table = className()) [ alias = id() ]
+    ("," (table = classNameOrSelect()) [<AS>] [ alias = id() ]
     {query.addTableWithAlias(table, ((alias == null) ? null : alias.image)); alias = null; })*
-    | "(" fromQuery = selectSql() ")" [<AS> alias = id()]  { query.setFromQuery(fromQuery, getString(alias)); }
 }
 
+/**
+* Can be string for className or Query for select in select
+*/
+Object classNameOrSelect():
+{
+      String clsName = null;
+      Query fromQuery = null;
+}
+{
+   clsName = className() { return clsName; }
+   |  "(" fromQuery = selectSql() ")" { return fromQuery; }
+}
 void tableNameWithOptionalAlias(AbstractDMLQuery query):
 { String tableName = null; Token tableAlias = null; }
 {

@@ -92,8 +92,12 @@ public class SelectQuery extends AbstractDMLQuery {
     }
 
 
-    public void setFromQuery(Query fromQuery, String alias) {
-        //@todo barak
+    public void addTableWithAlias(Object table, String alias) {
+        if (table instanceof String) {
+            super.addTableWithAlias((String) table, alias);
+        } else {
+            //@todo barak, handle the case where table is select (Query)
+        }
     }
 
     /**

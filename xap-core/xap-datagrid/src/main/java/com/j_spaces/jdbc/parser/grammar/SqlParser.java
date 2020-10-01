@@ -30,85 +30,37 @@ public class SqlParser implements SqlParserConstants {
                 Query query = parser.parseStatement();
                 System.out.println("Query received and parsed: " );
                 System.out.println(query);
-            }catch (Exception e)
-            {
-                System.err.println("Caught Exception - error in query");
-                e.printStackTrace();
-                parser.ReInit(System.in);
-                System.exit(-1);
+            } catch (Exception e) {
+              System.err.println("Caught Exception - error in query");
+              e.printStackTrace();
+              parser.ReInit(System.in);
+              System.exit(-1);
             }
         }
     }
 
-  public void reset(Reader reader) {
-    conditionIndex = 0;
-    ReInit(reader);
+  static {
+    jj_la1_init_0();
+    jj_la1_init_1();
+    jj_la1_init_2();
+    jj_la1_init_3();
   }
 
-  final private int[] jj_la1 = new int[158];
+  final private int[] jj_la1 = new int[159];
+  /**
+   * Generated Token Manager.
+   */
+  public SqlParserTokenManager token_source;
 
-  // start statement methods
-  final public Query parseStatement() throws ParseException {
-    Query query;
-    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-      case SELECT:
-        query = selectSql();
-        break;
-      case DELETE:
-        query = deleteSql();
-      break;
-    case INSERT:
-      query = insertSql();
-      break;
-    case UPDATE:
-      query = updateSql();
-      break;
-    case CREATE:
-      query = createTable();
-      break;
-    case DROP:
-      query = dropTable();
-      break;
-    case ALTER:
-      query = alterTable();
-      break;
-    case COMMIT:
-    case ROLLBACK:
-      query = commit();
-      break;
-    case CALL:
-      query = executeProcedure();
-      break;
-    default:
-      jj_la1[0] = jj_gen;
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case SEMICOLON:
-      jj_consume_token(SEMICOLON);
-      break;
-    case 0:
-      jj_consume_token(0);
-      break;
-    default:
-      jj_la1[1] = jj_gen;
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
-    {if (true) return query;}
-    throw new Error("Missing return statement in function");
-  }
-
-/* statement methods */
+  /* statement methods */
   final public Query selectSql() throws ParseException {
-  SelectQuery query;
-  ExpNode exp = null;
+    SelectQuery query;
+    ExpNode exp = null;
     jj_consume_token(SELECT);
-                query = new SelectQuery();
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case ALL:
-    case DISTINCT:
+    query = new SelectQuery();
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case ALL:
+      case DISTINCT:
       setQuantifier(query);
       break;
     default:
@@ -1225,62 +1177,41 @@ ColumnNode createColumnNode(AbstractDMLQuery query,String columnFunc):
     java.util.List params = new java.util.ArrayList();
     Object param;
     param = param();
-        params.add(param);
+    params.add(param);
     label_8:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case 125:
-        ;
-        break;
-      default:
-        jj_la1[60] = jj_gen;
-        break label_8;
+        case 125:
+          ;
+          break;
+        default:
+          jj_la1[60] = jj_gen;
+          break label_8;
       }
       jj_consume_token(125);
       param = param();
-        params.add(param);
+      params.add(param);
     }
-       {if (true) return params;}
+    {
+      if (true) return params;
+    }
     throw new Error("Missing return statement in function");
   }
 
-  final public Object param() throws ParseException {
-  Token parameter;
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case STRING_LITERAL:
-      parameter = jj_consume_token(STRING_LITERAL);
-                                   {if (true) return new String(parameter.image.substring(1, parameter.image.length() - 1));}
-      break;
-    case INTEGER_LITERAL:
-      parameter = jj_consume_token(INTEGER_LITERAL);
-                                       {if (true) return new Integer(parameter.image);}
-      break;
-    case LONG_LITERAL:
-      parameter = jj_consume_token(LONG_LITERAL);
-                                    {if (true) return new Long(parameter.image.substring(0, parameter.image.length() - 1));}
-      break;
-    case FLOATING_POINT_LITERAL:
-      parameter = jj_consume_token(FLOATING_POINT_LITERAL);
-                                              {if (true) return (new Float(parameter.image));}
-      break;
-    case QUESTIONMARK:
-      parameter = jj_consume_token(QUESTIONMARK);
-                                    {if (true) return new PreparedNode(null,++conditionIndex);}
-      break;
-    case IDENTIFIER:
-    case ESC_IDENTIFIER:
-      parameter = id();
-                          String id =  (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? parameter.image : parameter.image.toUpperCase();
-    {
-      if (true) return new ColumnNode(id);
-    }
-    break;
-      default:
-        jj_la1[61] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
-    }
-    throw new Error("Missing return statement in function");
+  /**
+   * Current token.
+   */
+  public Token token;
+  /**
+   * Next token.
+   */
+  public Token jj_nt;
+
+  /**
+   * Constructor with InputStream.
+   */
+  public SqlParser(java.io.InputStream stream) {
+    this(stream, null);
   }
 
   /**
@@ -1296,7 +1227,7 @@ ColumnNode createColumnNode(AbstractDMLQuery query,String columnFunc):
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 158; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 159; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -1309,14 +1240,8 @@ ColumnNode createColumnNode(AbstractDMLQuery query,String columnFunc):
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 158; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 159; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
-  }
-
-  final public void tableName(AbstractDMLQuery query) throws ParseException {
-    String table = null;
-    table = className();
-    query.setTableName(table);
   }
 
   /**
@@ -1327,24 +1252,29 @@ ColumnNode createColumnNode(AbstractDMLQuery query,String columnFunc):
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 158; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 159; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
   private static void jj_la1_init_0() {
-    jj_la1_0 = new int[]{0xe020, 0x1, 0x40080, 0x0, 0x0, 0x0, 0x200000, 0x80000000, 0x0, 0x4000, 0x1, 0x0, 0x200000, 0x80000000, 0x0, 0x0, 0x1, 0x0, 0x200000, 0x80000000, 0x0, 0x1, 0x0, 0x1000, 0x0, 0x0, 0x0, 0x0, 0x10000000, 0x0, 0x0, 0x10000, 0x0, 0x0, 0x10000000, 0x0, 0x0, 0x10000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x40080, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20000000, 0xc000400, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20000000, 0x0, 0x0, 0x0, 0x0, 0x20000000, 0x0, 0x20200, 0x20200, 0x0, 0x0, 0x0, 0x20200, 0x20200, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x40000000, 0x100, 0x0, 0x100, 0x0, 0x0, 0x0, 0x0, 0x11400800, 0x0, 0x11000000, 0x10000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x13c00800, 0x0, 0x13000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x11000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x10000000, 0x11000000, 0x10000000, 0x0, 0x0, 0x0, 0x11400800, 0x11000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20000000, 0x0, 0x0, 0x0, 0x20000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,};
+    jj_la1_0 = new int[]{0xe020, 0x1, 0x40080, 0x0, 0x0, 0x0, 0x200000, 0x80000000, 0x0, 0x4000, 0x1, 0x0, 0x200000, 0x80000000, 0x0, 0x0, 0x1, 0x0, 0x200000, 0x80000000, 0x0, 0x1, 0x0, 0x1000, 0x0, 0x0, 0x0, 0x0, 0x10000000, 0x0, 0x0, 0x10000, 0x0, 0x0, 0x10000000, 0x0, 0x0, 0x10000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x40080, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20000000, 0xc000400, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20000000, 0x0, 0x0, 0x0, 0x0, 0x20000000, 0x0, 0x20200, 0x20200, 0x0, 0x0, 0x0, 0x20200, 0x20200, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x40000000, 0x100, 0x0, 0x100, 0x0, 0x0, 0x0, 0x0, 0x11400800, 0x0, 0x11000000, 0x10000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x13c00800, 0x0, 0x13000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x11000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x10000000, 0x11000000, 0x10000000, 0x0, 0x0, 0x0, 0x11400800, 0x11000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20000000, 0x0, 0x0, 0x0, 0x20000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,};
   }
 
   private static void jj_la1_init_1() {
-    jj_la1_1 = new int[]{0xc8441, 0x0, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x4000, 0x0, 0x0, 0x100, 0x0, 0x0, 0x4000, 0x100, 0x0, 0x100, 0x0, 0x0, 0x4000, 0x0, 0x10, 0x0, 0x10, 0x0, 0x0, 0x20001, 0x0, 0x100200, 0x100200, 0x0, 0x0, 0x0, 0x0, 0x100200, 0x100200, 0x0, 0x300000, 0x0, 0xc0000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x400000, 0x400000, 0x0, 0x400000, 0x400000, 0x0, 0x0, 0x0, 0x24, 0x0, 0x1000000, 0x1000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x6000000, 0x6000000, 0x0, 0x0, 0x0, 0x6000000, 0x6000000, 0x1000000, 0x1000000, 0x1000000, 0x1000000, 0x0, 0x0, 0x100, 0x0, 0x100, 0x0, 0x0, 0x0, 0x0, 0x100, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xf8000000, 0x0, 0x0, 0x0, 0x100, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x8, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x8,};
+    jj_la1_1 = new int[]{0xc8441, 0x0, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x4000, 0x0, 0x0, 0x100, 0x0, 0x0, 0x4000, 0x100, 0x0, 0x100, 0x0, 0x0, 0x4000, 0x0, 0x10, 0x0, 0x10, 0x0, 0x0, 0x20001, 0x0, 0x100200, 0x100200, 0x0, 0x0, 0x0, 0x0, 0x100200, 0x100200, 0x0, 0x300000, 0x0, 0xc0000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x400000, 0x400000, 0x0, 0x400000, 0x400000, 0x0, 0x0, 0x0, 0x24, 0x0, 0x1000000, 0x1000000, 0x0, 0x0, 0x0, 0x1000000, 0x0, 0x0, 0x1000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x6000000, 0x6000000, 0x0, 0x0, 0x0, 0x6000000, 0x6000000, 0x1000000, 0x1000000, 0x1000000, 0x1000000, 0x0, 0x0, 0x100, 0x0, 0x100, 0x0, 0x0, 0x0, 0x0, 0x100, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xf8000000, 0x0, 0x0, 0x0, 0x100, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x8, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x8,};
   }
 
   private static void jj_la1_init_2() {
-    jj_la1_2 = new int[]{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3000000, 0x0, 0x0, 0x0, 0x3000000, 0x0, 0x3000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3000000, 0x0, 0x0, 0xe3000000, 0x0, 0xe3000000, 0xe3000000, 0x0, 0x0, 0x3000000, 0x3000000, 0x0, 0x3000000, 0x3000000, 0x0, 0x0, 0xe301b000, 0x0, 0x3000000, 0x0, 0x3000000, 0x3000000, 0x0, 0xe3000000, 0x3000000, 0x0, 0x3000000, 0x0, 0x3000000, 0x3000000, 0x0, 0x0, 0x0, 0x1b000, 0x0, 0x0, 0x0, 0x0, 0x1b000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3000000, 0x0, 0x3000000, 0x0, 0x0, 0x3000000, 0x0, 0x3000000, 0x0, 0x0, 0x0, 0x10000000, 0x3000000, 0x10000000, 0x0, 0x0, 0x0, 0xc0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20020, 0x0, 0xfe0fff, 0x3000000, 0x0, 0x10000000, 0x3000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x18000, 0x3000000, 0x10000000, 0x0, 0x0, 0x0, 0x18000, 0x0, 0x0, 0x10000000, 0x0, 0x0, 0x0, 0x0, 0x10000000, 0x10000000, 0x0, 0x0, 0x0, 0x18000, 0x0, 0xe001b000, 0x0, 0x0, 0x0, 0x1b000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x18000, 0x0,};
+    jj_la1_2 = new int[]{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3000000, 0x0, 0x0, 0x0, 0x3000000, 0x0, 0x3000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3000000, 0x0, 0x0, 0xe3000000, 0x0, 0xe3000000, 0xe3000000, 0x0, 0x0, 0x3000000, 0x3000000, 0x0, 0x3000000, 0x3000000, 0x0, 0x0, 0xe301b000, 0x0, 0x3000000, 0x0, 0x3000000, 0x3000000, 0x0, 0xe3000000, 0x0, 0x3000000, 0x0, 0x0, 0x3000000, 0x3000000, 0x3000000, 0x0, 0x0, 0x0, 0x1b000, 0x0, 0x0, 0x0, 0x0, 0x1b000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3000000, 0x0, 0x3000000, 0x0, 0x0, 0x3000000, 0x0, 0x3000000, 0x0, 0x0, 0x0, 0x10000000, 0x3000000, 0x10000000, 0x0, 0x0, 0x0, 0xc0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20020, 0x0, 0xfe0fff, 0x3000000, 0x0, 0x10000000, 0x3000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x18000, 0x3000000, 0x10000000, 0x0, 0x0, 0x0, 0x18000, 0x0, 0x0, 0x10000000, 0x0, 0x0, 0x0, 0x0, 0x10000000, 0x10000000, 0x0, 0x0, 0x0, 0x18000, 0x0, 0xe001b000, 0x0, 0x0, 0x0, 0x1b000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x18000, 0x0,};
   }
 
   private static void jj_la1_init_3() {
-    jj_la1_3 = new int[]{0x0, 0x20, 0x0, 0x20000, 0x40000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20, 0x20000, 0x0, 0x0, 0x0, 0x20000, 0x20, 0x20000, 0x0, 0x0, 0x0, 0x20, 0x0, 0x0, 0x0, 0x20000, 0x40000, 0x20000, 0x0, 0x0, 0x0, 0x0, 0x20000000, 0x20000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20000000, 0x0, 0x2000002, 0x20000000, 0x2000002, 0x2000002, 0x0, 0x20000000, 0x200002, 0x200002, 0x20000000, 0x200002, 0x200002, 0x20000000, 0x1000000, 0x2000002, 0x0, 0x200000, 0x0, 0x0, 0x0, 0x20000000, 0x2000002, 0x0, 0x20000000, 0x0, 0x0, 0x20000, 0x0, 0x1000000, 0x1000000, 0x1000000, 0x2000002, 0x20000000, 0x1000000, 0x1000000, 0x1000000, 0x2000002, 0x20000000, 0x0, 0x0, 0x0, 0x0, 0x20000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20000, 0x0, 0x20000, 0x10000000, 0x40, 0x10000000, 0x1002fe00, 0x0, 0x2fe00, 0x0, 0x40000040, 0x40000040, 0x0, 0x20000, 0x20000, 0x20000000, 0x20000, 0x20000, 0x0, 0x20000, 0x0, 0x0, 0x23e00, 0x1000fe00, 0x0, 0xfe00, 0x1000000, 0x1000000, 0x1000000, 0x1800000, 0x1800000, 0x2000002, 0x20004, 0x2fe00, 0x1000000, 0x1000000, 0x1000000, 0x2000002, 0x4, 0x0, 0xfe00, 0x0, 0x10000000, 0x40, 0x10000000, 0x2fe00, 0xfe00, 0x1000000, 0x1000000, 0x1000000, 0x2000002, 0x4, 0x3000002, 0x1000000, 0x1000000, 0x1000000, 0x2000002, 0x20000000, 0x1000000, 0x1000000, 0x1000000, 0x1800000, 0x1800000, 0x2000002, 0x4,};
+    jj_la1_3 = new int[]{0x0, 0x20, 0x0, 0x20000, 0x40000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20, 0x20000, 0x0, 0x0, 0x0, 0x20000, 0x20, 0x20000, 0x0, 0x0, 0x0, 0x20, 0x0, 0x0, 0x0, 0x20000, 0x40000, 0x20000, 0x0, 0x0, 0x0, 0x0, 0x20000000, 0x20000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20000000, 0x0, 0x2000002, 0x20000000, 0x2000002, 0x2000002, 0x0, 0x20000000, 0x200002, 0x200002, 0x20000000, 0x200002, 0x200002, 0x20000000, 0x1000000, 0x2000002, 0x0, 0x200000, 0x0, 0x0, 0x0, 0x20000000, 0x2000002, 0x0, 0x0, 0x20000000, 0x0, 0x0, 0x20000, 0x0, 0x1000000, 0x1000000, 0x1000000, 0x2000002, 0x20000000, 0x1000000, 0x1000000, 0x1000000, 0x2000002, 0x20000000, 0x0, 0x0, 0x0, 0x0, 0x20000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20000, 0x0, 0x20000, 0x10000000, 0x40, 0x10000000, 0x1002fe00, 0x0, 0x2fe00, 0x0, 0x40000040, 0x40000040, 0x0, 0x20000, 0x20000, 0x20000000, 0x20000, 0x20000, 0x0, 0x20000, 0x0, 0x0, 0x23e00, 0x1000fe00, 0x0, 0xfe00, 0x1000000, 0x1000000, 0x1000000, 0x1800000, 0x1800000, 0x2000002, 0x20004, 0x2fe00, 0x1000000, 0x1000000, 0x1000000, 0x2000002, 0x4, 0x0, 0xfe00, 0x0, 0x10000000, 0x40, 0x10000000, 0x2fe00, 0xfe00, 0x1000000, 0x1000000, 0x1000000, 0x2000002, 0x4, 0x3000002, 0x1000000, 0x1000000, 0x1000000, 0x2000002, 0x20000000, 0x1000000, 0x1000000, 0x1000000, 0x1800000, 0x1800000, 0x2000002, 0x4,};
+  }
+
+  public void reset(Reader reader) {
+    conditionIndex = 0;
+    ReInit(reader);
   }
 
   private String getString(Token token) {
@@ -1355,96 +1285,217 @@ ColumnNode createColumnNode(AbstractDMLQuery query,String columnFunc):
     }
   }
 
+  // start statement methods
+  final public Query parseStatement() throws ParseException {
+    Query query;
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case SELECT:
+        query = selectSql();
+        break;
+      case DELETE:
+        query = deleteSql();
+        break;
+      case INSERT:
+        query = insertSql();
+        break;
+      case UPDATE:
+        query = updateSql();
+        break;
+      case CREATE:
+        query = createTable();
+        break;
+      case DROP:
+        query = dropTable();
+        break;
+      case ALTER:
+        query = alterTable();
+        break;
+      case COMMIT:
+      case ROLLBACK:
+        query = commit();
+        break;
+      case CALL:
+        query = executeProcedure();
+        break;
+      default:
+        jj_la1[0] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+    }
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case SEMICOLON:
+        jj_consume_token(SEMICOLON);
+        break;
+      case 0:
+        jj_consume_token(0);
+        break;
+      default:
+        jj_la1[1] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+    }
+    {
+      if (true) return query;
+    }
+    throw new Error("Missing return statement in function");
+  }
+
+  final public Object param() throws ParseException {
+    Token parameter;
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case STRING_LITERAL:
+        parameter = jj_consume_token(STRING_LITERAL);
+      {
+        if (true) return new String(parameter.image.substring(1, parameter.image.length() - 1));
+      }
+      break;
+      case INTEGER_LITERAL:
+        parameter = jj_consume_token(INTEGER_LITERAL);
+                                       {if (true) return new Integer(parameter.image);}
+      break;
+    case LONG_LITERAL:
+      parameter = jj_consume_token(LONG_LITERAL);
+                                    {if (true) return new Long(parameter.image.substring(0, parameter.image.length() - 1));}
+      break;
+    case FLOATING_POINT_LITERAL:
+      parameter = jj_consume_token(FLOATING_POINT_LITERAL);
+    {
+      if (true) return (new Float(parameter.image));
+    }
+    break;
+      case QUESTIONMARK:
+        parameter = jj_consume_token(QUESTIONMARK);
+      {
+        if (true) return new PreparedNode(null, ++conditionIndex);
+      }
+      break;
+      case IDENTIFIER:
+      case ESC_IDENTIFIER:
+        parameter = id();
+        String id = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? parameter.image : parameter.image.toUpperCase();
+      {
+        if (true) return new ColumnNode(id);
+      }
+      break;
+      default:
+        jj_la1[61] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+    }
+    throw new Error("Missing return statement in function");
+  }
+
   //retrieve a list of tables in a select query
   final public void selectTableList(SelectQuery query) throws ParseException {
-    String table = null;
+    Object table = null;
     Token alias = null;
+    table = classNameOrSelect();
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case AS:
+        jj_consume_token(AS);
+        break;
+      default:
+        jj_la1[62] = jj_gen;
+        ;
+    }
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case IDENTIFIER:
+      case ESC_IDENTIFIER:
+        alias = id();
+        break;
+      default:
+        jj_la1[63] = jj_gen;
+        ;
+    }
+    query.addTableWithAlias(table, ((alias == null) ? null : alias.image));
+    alias = null;
+    label_9:
+    while (true) {
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case 125:
+          ;
+          break;
+        default:
+          jj_la1[64] = jj_gen;
+          break label_9;
+      }
+      jj_consume_token(125);
+      table = classNameOrSelect();
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case AS:
+          jj_consume_token(AS);
+          break;
+        default:
+          jj_la1[65] = jj_gen;
+          ;
+      }
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case IDENTIFIER:
+        case ESC_IDENTIFIER:
+          alias = id();
+          break;
+        default:
+          jj_la1[66] = jj_gen;
+          ;
+      }
+      query.addTableWithAlias(table, ((alias == null) ? null : alias.image));
+      alias = null;
+    }
+  }
+
+  /**
+   * Can be string for className or Query for select in select
+   */
+  final public Object classNameOrSelect() throws ParseException {
+    String clsName = null;
     Query fromQuery = null;
     switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
       case IDENTIFIER:
       case ESC_IDENTIFIER:
-        table = className();
-        switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-          case IDENTIFIER:
-          case ESC_IDENTIFIER:
-            alias = id();
-            break;
-          default:
-            jj_la1[62] = jj_gen;
-            ;
-        }
-        query.addTableWithAlias(table, ((alias == null) ? null : alias.image));
-        alias = null;
-        label_9:
-        while (true) {
-          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-            case 125:
-              ;
-              break;
-            default:
-              jj_la1[63] = jj_gen;
-              break label_9;
-          }
-          jj_consume_token(125);
-          table = className();
-          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-            case IDENTIFIER:
-            case ESC_IDENTIFIER:
-              alias = id();
-              break;
-            default:
-              jj_la1[64] = jj_gen;
-              ;
-          }
-          query.addTableWithAlias(table, ((alias == null) ? null : alias.image));
-          alias = null;
-        }
+        className();
         break;
       case OPENPAREN:
         jj_consume_token(OPENPAREN);
         fromQuery = selectSql();
         jj_consume_token(CLOSEPAREN);
-        switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-          case AS:
-            jj_consume_token(AS);
-            alias = id();
-            break;
-          default:
-            jj_la1[65] = jj_gen;
-            ;
-        }
-        query.setFromQuery(fromQuery, getString(alias));
         break;
       default:
-        jj_la1[66] = jj_gen;
+        jj_la1[67] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
     }
   }
 
   final public void tableNameWithOptionalAlias(AbstractDMLQuery query) throws ParseException {
-  String tableName = null; Token tableAlias = null;
+    String tableName = null;
+    Token tableAlias = null;
     tableName = className();
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case IDENTIFIER:
-    case ESC_IDENTIFIER:
-      tableAlias = id();
-      break;
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case IDENTIFIER:
+      case ESC_IDENTIFIER:
+        tableAlias = id();
+        break;
       default:
-      jj_la1[67] = jj_gen;
-      ;
+        jj_la1[68] = jj_gen;
+        ;
     }
-          query.addTableWithAlias(tableName, ((tableAlias == null)? null : tableAlias.image));
+    query.addTableWithAlias(tableName, ((tableAlias == null) ? null : tableAlias.image));
+  }
+
+  final public void tableName(AbstractDMLQuery query) throws ParseException {
+    String table = null;
+    table = className();
+    query.setTableName(table);
   }
 
   final public void insertValuesList(InsertQuery insertQuery) throws ParseException {
-  Token t = null;
-String negative = "";
-ArrayList<LiteralNode> list = new ArrayList<LiteralNode>();
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case QUESTIONMARK:
-      t = jj_consume_token(QUESTIONMARK);
-                              insertQuery.setPrepared(true); list.add(new PreparedNode(null));
+    Token t = null;
+    String negative = "";
+    ArrayList<LiteralNode> list = new ArrayList<LiteralNode>();
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case QUESTIONMARK:
+        t = jj_consume_token(QUESTIONMARK);
+        insertQuery.setPrepared(true); list.add(new PreparedNode(null));
       break;
     case TRUE:
       jj_consume_token(TRUE);
@@ -1458,52 +1509,52 @@ ArrayList<LiteralNode> list = new ArrayList<LiteralNode>();
       jj_consume_token(NULL);
                                                     list.add(new LiteralNode(null));
       break;
-    case EMPTY_CLOB:
-      jj_consume_token(EMPTY_CLOB);
-                                     list.add(new LiteralNode(new Clob("")));
-      break;
-    case EMPTY_BLOB:
-      jj_consume_token(EMPTY_BLOB);
-                                     list.add(new LiteralNode(new Blob(new byte[0])));
-      break;
-    case STRING_LITERAL:
-      t = jj_consume_token(STRING_LITERAL);
-                             list.add(new LiteralNode(new String(t.image.substring(1,t.image.length()-1))));
-      break;
+      case EMPTY_CLOB:
+        jj_consume_token(EMPTY_CLOB);
+        list.add(new LiteralNode(new Clob("")));
+        break;
+      case EMPTY_BLOB:
+        jj_consume_token(EMPTY_BLOB);
+        list.add(new LiteralNode(new Blob(new byte[0])));
+        break;
+      case STRING_LITERAL:
+        t = jj_consume_token(STRING_LITERAL);
+        list.add(new LiteralNode(new String(t.image.substring(1, t.image.length() - 1))));
+        break;
       default:
-      jj_la1[71] = jj_gen;
-      if (jj_2_7(2)) {
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case MINUS:
-          jj_consume_token(MINUS);
-                             negative = "-";
+        jj_la1[72] = jj_gen;
+        if (jj_2_7(2)) {
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case MINUS:
+              jj_consume_token(MINUS);
+              negative = "-";
           break;
-          default:
-          jj_la1[68] = jj_gen;
+        default:
+          jj_la1[69] = jj_gen;
           ;
         }
         t = jj_consume_token(INTEGER_LITERAL);
                                                                        list.add(new LiteralNode(negative + t.image));
-      } else if (jj_2_8(2)) {
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case MINUS:
-          jj_consume_token(MINUS);
-                             negative = "-";
+        } else if (jj_2_8(2)) {
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case MINUS:
+              jj_consume_token(MINUS);
+              negative = "-";
           break;
-          default:
-          jj_la1[69] = jj_gen;
+        default:
+          jj_la1[70] = jj_gen;
           ;
         }
         t = jj_consume_token(LONG_LITERAL);
-                                                                    list.add(new LiteralNode(negative + t.image.substring(0,t.image.length()-1)));
-      } else if (jj_2_9(2)) {
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case MINUS:
-          jj_consume_token(MINUS);
-                             negative = "-";
+                                                                    list.add(new LiteralNode(negative + t.image.substring(0,t.image.length() - 1)));
+        } else if (jj_2_9(2)) {
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case MINUS:
+              jj_consume_token(MINUS);
+              negative = "-";
           break;
-          default:
-          jj_la1[70] = jj_gen;
+        default:
+          jj_la1[71] = jj_gen;
           ;
         }
         t = jj_consume_token(FLOATING_POINT_LITERAL);
@@ -1513,15 +1564,15 @@ ArrayList<LiteralNode> list = new ArrayList<LiteralNode>();
         throw new ParseException();
       }
     }
-                                                                                                                                 negative="";
+    negative = "";
     label_10:
     while (true) {
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case 125:
-        ;
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case 125:
+          ;
         break;
-        default:
-        jj_la1[72] = jj_gen;
+      default:
+        jj_la1[73] = jj_gen;
         break label_10;
       }
       jj_consume_token(125);
@@ -1542,52 +1593,52 @@ ArrayList<LiteralNode> list = new ArrayList<LiteralNode>();
         jj_consume_token(NULL);
                                                   list.add(new LiteralNode(null));
         break;
-      case EMPTY_CLOB:
-        jj_consume_token(EMPTY_CLOB);
-                                     list.add(new LiteralNode(new Clob("")));
-        break;
-      case EMPTY_BLOB:
-        jj_consume_token(EMPTY_BLOB);
-                                     list.add(new LiteralNode(new Blob(new byte[0])));
-        break;
-      case STRING_LITERAL:
-        t = jj_consume_token(STRING_LITERAL);
-                             list.add(new LiteralNode(new String(t.image.substring(1,t.image.length()-1))));
-        break;
+        case EMPTY_CLOB:
+          jj_consume_token(EMPTY_CLOB);
+          list.add(new LiteralNode(new Clob("")));
+          break;
+        case EMPTY_BLOB:
+          jj_consume_token(EMPTY_BLOB);
+          list.add(new LiteralNode(new Blob(new byte[0])));
+          break;
+        case STRING_LITERAL:
+          t = jj_consume_token(STRING_LITERAL);
+          list.add(new LiteralNode(new String(t.image.substring(1, t.image.length() - 1))));
+          break;
         default:
-        jj_la1[76] = jj_gen;
-        if (jj_2_10(2)) {
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-          case MINUS:
-            jj_consume_token(MINUS);
-                             negative = "-";
-            break;
-            default:
-            jj_la1[73] = jj_gen;
+          jj_la1[77] = jj_gen;
+          if (jj_2_10(2)) {
+            switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+              case MINUS:
+                jj_consume_token(MINUS);
+                negative = "-";
+                break;
+          default:
+            jj_la1[74] = jj_gen;
             ;
           }
           t = jj_consume_token(INTEGER_LITERAL);
                                                                        list.add(new LiteralNode(negative + t.image));
-        } else if (jj_2_11(2)) {
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-          case MINUS:
-            jj_consume_token(MINUS);
-                             negative = "-";
-            break;
-            default:
-            jj_la1[74] = jj_gen;
+          } else if (jj_2_11(2)) {
+            switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+              case MINUS:
+                jj_consume_token(MINUS);
+                negative = "-";
+                break;
+          default:
+            jj_la1[75] = jj_gen;
             ;
           }
           t = jj_consume_token(LONG_LITERAL);
-                                                                    list.add(new LiteralNode(negative + t.image.substring(0,t.image.length()-1)));
-        } else if (jj_2_12(2)) {
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-          case MINUS:
-            jj_consume_token(MINUS);
-                             negative = "-";
-            break;
-            default:
-            jj_la1[75] = jj_gen;
+                                                                    list.add(new LiteralNode(negative + t.image.substring(0,t.image.length() - 1)));
+          } else if (jj_2_12(2)) {
+            switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+              case MINUS:
+                jj_consume_token(MINUS);
+                negative = "-";
+                break;
+          default:
+            jj_la1[76] = jj_gen;
             ;
           }
           t = jj_consume_token(FLOATING_POINT_LITERAL);
@@ -1611,12 +1662,12 @@ ArrayList<LiteralNode> list = new ArrayList<LiteralNode>();
                                                         list.add(groupColumn);
     label_11:
     while (true) {
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case 125:
-        ;
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case 125:
+          ;
         break;
-        default:
-        jj_la1[77] = jj_gen;
+      default:
+        jj_la1[78] = jj_gen;
         break label_11;
       }
       jj_consume_token(125);
@@ -1634,105 +1685,105 @@ ArrayList<LiteralNode> list = new ArrayList<LiteralNode>();
     jj_consume_token(BY);
     orderColumn = createOrderColumn(query);
                         list.add(orderColumn);
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case ASC:
-    case DESC:
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    switch ((jj_ntk==-1) ? jj_ntk() : jj_ntk) {
       case ASC:
-        jj_consume_token(ASC);
-                     orderColumn.setDesc(false);
-        break;
       case DESC:
-        jj_consume_token(DESC);
-                                                            orderColumn.setDesc(true);
-        break;
-        default:
-          jj_la1[78] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
+        switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+          case ASC:
+            jj_consume_token(ASC);
+            orderColumn.setDesc(false);
+            break;
+          case DESC:
+            jj_consume_token(DESC);
+            orderColumn.setDesc(true);
+            break;
+          default:
+            jj_la1[79] = jj_gen;
+            jj_consume_token(-1);
+            throw new ParseException();
       }
       break;
-      default:
-      jj_la1[79] = jj_gen;
+    default:
+      jj_la1[80] = jj_gen;
       ;
     }
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case NULLS_LAST:
-    case NULLS_FIRST:
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case NULLS_LAST:
-        jj_consume_token(NULLS_LAST);
-                          orderColumn.setNullsLast(true);
-        break;
       case NULLS_FIRST:
-        jj_consume_token(NULLS_FIRST);
-                                                                            orderColumn.setNullsLast(false);
-        break;
-        default:
-          jj_la1[80] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
+        switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+          case NULLS_LAST:
+            jj_consume_token(NULLS_LAST);
+            orderColumn.setNullsLast(true);
+            break;
+          case NULLS_FIRST:
+            jj_consume_token(NULLS_FIRST);
+            orderColumn.setNullsLast(false);
+            break;
+          default:
+            jj_la1[81] = jj_gen;
+            jj_consume_token(-1);
+            throw new ParseException();
       }
       break;
-      default:
-      jj_la1[81] = jj_gen;
+    default:
+      jj_la1[82] = jj_gen;
       ;
     }
     label_12:
     while (true) {
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case 125:
-        ;
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case 125:
+          ;
         break;
-        default:
-        jj_la1[82] = jj_gen;
+      default:
+        jj_la1[83] = jj_gen;
         break label_12;
       }
       jj_consume_token(125);
       orderColumn = createOrderColumn(query);
                         list.add(orderColumn);
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case ASC:
-      case DESC:
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      switch ((jj_ntk==-1)?jj_ntk() : jj_ntk) {
         case ASC:
-          jj_consume_token(ASC);
-                  orderColumn.setDesc(false);
-          break;
         case DESC:
-          jj_consume_token(DESC);
-                                                         orderColumn.setDesc(true);
-          break;
-          default:
-            jj_la1[83] = jj_gen;
-          jj_consume_token(-1);
-          throw new ParseException();
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case ASC:
+              jj_consume_token(ASC);
+              orderColumn.setDesc(false);
+              break;
+            case DESC:
+              jj_consume_token(DESC);
+              orderColumn.setDesc(true);
+              break;
+            default:
+              jj_la1[84] = jj_gen;
+              jj_consume_token(-1);
+              throw new ParseException();
         }
         break;
-        default:
-        jj_la1[84] = jj_gen;
+      default:
+        jj_la1[85] = jj_gen;
         ;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case NULLS_LAST:
-      case NULLS_FIRST:
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
         case NULLS_LAST:
-          jj_consume_token(NULLS_LAST);
-                          orderColumn.setNullsLast(true);
-          break;
         case NULLS_FIRST:
-          jj_consume_token(NULLS_FIRST);
-                                                                            orderColumn.setNullsLast(false);
-          break;
-          default:
-            jj_la1[85] = jj_gen;
-          jj_consume_token(-1);
-          throw new ParseException();
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case NULLS_LAST:
+              jj_consume_token(NULLS_LAST);
+              orderColumn.setNullsLast(true);
+              break;
+            case NULLS_FIRST:
+              jj_consume_token(NULLS_FIRST);
+              orderColumn.setNullsLast(false);
+              break;
+            default:
+              jj_la1[86] = jj_gen;
+              jj_consume_token(-1);
+              throw new ParseException();
         }
         break;
-        default:
-        jj_la1[86] = jj_gen;
+      default:
+        jj_la1[87] = jj_gen;
         ;
       }
     }
@@ -1748,21 +1799,21 @@ ArrayList<LiteralNode> list = new ArrayList<LiteralNode>();
         id = QueryProcessor.getDefaultConfig().isParserCaseSensitivity()? t.image : t.image.toUpperCase();
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case AS:
-    case IDENTIFIER:
-    case ESC_IDENTIFIER:
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case AS:
-        jj_consume_token(AS);
-        break;
-        default:
-        jj_la1[87] = jj_gen;
-        ;
-      }
-      t = id();
-                             alias = t.image;
+      case IDENTIFIER:
+      case ESC_IDENTIFIER:
+        switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+          case AS:
+            jj_consume_token(AS);
+            break;
+          default:
+            jj_la1[88] = jj_gen;
+            ;
+        }
+        t = id();
+        alias = t.image;
       break;
-      default:
-      jj_la1[88] = jj_gen;
+    default:
+      jj_la1[89] = jj_gen;
       ;
     }
         {if (true) return new OrderColumn(id, alias);}
@@ -1778,21 +1829,21 @@ ArrayList<LiteralNode> list = new ArrayList<LiteralNode>();
         id = QueryProcessor.getDefaultConfig().isParserCaseSensitivity()? t.image : t.image.toUpperCase();
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case AS:
-    case IDENTIFIER:
-    case ESC_IDENTIFIER:
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case AS:
-        jj_consume_token(AS);
-        break;
-        default:
-        jj_la1[89] = jj_gen;
-        ;
-      }
-      t = id();
-                             alias = t.image;
+      case IDENTIFIER:
+      case ESC_IDENTIFIER:
+        switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+          case AS:
+            jj_consume_token(AS);
+            break;
+          default:
+            jj_la1[90] = jj_gen;
+            ;
+        }
+        t = id();
+        alias = t.image;
       break;
-      default:
-      jj_la1[90] = jj_gen;
+    default:
+      jj_la1[91] = jj_gen;
       ;
     }
         col = new SelectColumn(id, alias);
@@ -1806,12 +1857,12 @@ ExpNode exp2;
     exp1 = SqlAndExpression(query);
     label_13:
     while (true) {
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case OR:
-        ;
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case OR:
+          ;
         break;
-        default:
-        jj_la1[91] = jj_gen;
+      default:
+        jj_la1[92] = jj_gen;
         break label_13;
       }
       jj_consume_token(OR);
@@ -1828,12 +1879,12 @@ ExpNode exp2;
     exp1 = SqlSimpleExpression(query);
     label_14:
     while (true) {
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case AND:
-        ;
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case AND:
+          ;
         break;
-        default:
-        jj_la1[92] = jj_gen;
+      default:
+        jj_la1[93] = jj_gen;
         break label_14;
       }
       jj_consume_token(AND);
@@ -1845,20 +1896,20 @@ ExpNode exp2;
   }
 
   final public ExpNode SqlSimpleExpression(AbstractDMLQuery query) throws ParseException {
-        ExpNode exp;
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case ROWNUM:
-    case IDENTIFIER:
-    case ESC_IDENTIFIER:
-      exp = condition(query);
-      break;
-    case OPENPAREN:
-      jj_consume_token(OPENPAREN);
-      exp = SqlExpression(query);
-      jj_consume_token(CLOSEPAREN);
-      break;
+    ExpNode exp;
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case ROWNUM:
+      case IDENTIFIER:
+      case ESC_IDENTIFIER:
+        exp = condition(query);
+        break;
+      case OPENPAREN:
+        jj_consume_token(OPENPAREN);
+        exp = SqlExpression(query);
+        jj_consume_token(CLOSEPAREN);
+        break;
       default:
-        jj_la1[93] = jj_gen;
+        jj_la1[94] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1872,37 +1923,19 @@ ExpNode exp2;
     exp1 = SqlContainsItemSimpleExpression(query);
     label_15:
     while (true) {
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
         case AND:
           ;
-          break;
-        default:
-          jj_la1[94] = jj_gen;
-          break label_15;
+        break;
+      default:
+        jj_la1[95] = jj_gen;
+        break label_15;
       }
       jj_consume_token(AND);
       exp2 = SqlContainsItemSimpleExpression(query);
-      exp1 = new AndNode(exp1, exp2);
+        exp1 =  new AndNode(exp1,exp2);
     }
-    {
-      if (true) return exp1;
-    }
-    throw new Error("Missing return statement in function");
-  }
-
-  final public ExpNode relationNode(AbstractDMLQuery query, ColumnNode columnNode) throws ParseException {
-    ValueNode valueNode = null;
-    ExpNode res = null;
-    Token rel = null;
-    Token t;
-    rel = jj_consume_token(RELATION);
-    t = jj_consume_token(QUESTIONMARK);
-    query.setPrepared(true);
-    valueNode = new PreparedNode(null, ++conditionIndex);
-    res = new RelationNode(columnNode, rel.image, valueNode);
-    {
-      if (true) return res;
-    }
+        {if (true) return exp1;}
     throw new Error("Missing return statement in function");
   }
 
@@ -1920,12 +1953,783 @@ ExpNode exp2;
         jj_consume_token(CLOSEPAREN);
         break;
       default:
-        jj_la1[95] = jj_gen;
+        jj_la1[96] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
     }
     {
       if (true) return exp;
+    }
+    throw new Error("Missing return statement in function");
+  }
+
+//handle one condition insinde contains, NOTE-currently no nested contains
+  final public ExpNode containtsItemSimpleCondition(AbstractDMLQuery query) throws ParseException {
+    Token t, table1 = null, table2 = null, addup = null, operator = null;
+    ColumnNode columnNode1 = null, columnNode2 = null;
+
+    ValueNode valueNode = null;
+    String negative = "";
+    ExpNode expNode = null;
+    Token startIndex, endIndex;
+    short templateMatchCode = TemplateMatchCodes.EQ;
+    StringBuilder columnPath = null;
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case ROWNUM:
+        jj_consume_token(ROWNUM);
+      {
+        if (true) throw new ParseException("ROWNUM not supported inside contains");
+      }
+      break;
+      case IDENTIFIER:
+      case ESC_IDENTIFIER:
+        columnNode1 = createColumnNode(query, null);
+
+        switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+          case COLLECTION_CONTAINS:
+            jj_consume_token(COLLECTION_CONTAINS);
+            query.setContainsQuery(true);
+            columnPath = new StringBuilder(columnNode1.toString());
+            columnPath.append("[*]");
+            label_16:
+            while (true) {
+              switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+                case COLLECTION_CONTAINS:
+                  ;
+                  break;
+                default:
+                  jj_la1[97] = jj_gen;
+                  break label_16;
+              }
+              jj_consume_token(COLLECTION_CONTAINS);
+              columnPath.append("[*]");
+            }
+            label_17:
+            while (true) {
+              switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+                case DOT:
+                  ;
+                  break;
+                default:
+                  jj_la1[98] = jj_gen;
+                  break label_17;
+              }
+              jj_consume_token(DOT);
+              t = id();
+              String columnNameSuffix = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? t.image : t.image.toUpperCase();
+              columnPath.append(".");
+              columnPath.append(columnNameSuffix);
+              label_18:
+              while (true) {
+                switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+                  case COLLECTION_CONTAINS:
+                    ;
+                    break;
+                  default:
+                    jj_la1[99] = jj_gen;
+                    break label_18;
+                }
+                jj_consume_token(COLLECTION_CONTAINS);
+                columnPath.append("[*]");
+              }
+            }
+            expNode = containtsItemSimpleConditionImpl(query, columnPath, columnNode1, true);
+            break;
+          case BETWEEN:
+          case IN:
+          case LIKE:
+          case NOT:
+          case RELATION:
+          case LESS:
+          case LESSEQUAL:
+          case GREATER:
+          case GREATEREQUAL:
+          case EQUAL:
+          case NOTEQUAL:
+          case NOTEQUAL2:
+          case OPENPAREN:
+            expNode = containtsItemSimpleConditionImpl(query, columnPath, columnNode1, false);
+            break;
+          default:
+            jj_la1[100] = jj_gen;
+            jj_consume_token(-1);
+            throw new ParseException();
+        }
+      {
+        if (true) return expNode;
+      }
+      break;
+      default:
+        jj_la1[101] = jj_gen;
+      jj_consume_token(-1);
+      throw new ParseException();
+    }
+    throw new Error("Missing return statement in function");
+  }
+
+//handle one condition inside contains
+  final public ExpNode containtsItemSimpleConditionImpl(AbstractDMLQuery query, StringBuilder columnPath, ColumnNode columnNode1, boolean insideInternalContains) throws ParseException {
+    ExpNode expNode = null;
+    if (jj_2_13(2)) {
+      expNode = containsInItemNode(query, columnNode1, columnPath);
+    } else if (jj_2_14(2)) {
+      expNode = containsBetweenItemNode(query, columnNode1, columnPath);
+    } else {
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case LIKE:
+        case NOT:
+        case RELATION:
+        case LESS:
+        case LESSEQUAL:
+        case GREATER:
+        case GREATEREQUAL:
+        case EQUAL:
+        case NOTEQUAL:
+        case NOTEQUAL2:
+        case OPENPAREN:
+          expNode = containsSimpleItemNode(query, columnNode1, columnPath, insideInternalContains);
+          break;
+        default:
+          jj_la1[102] = jj_gen;
+          jj_consume_token(-1);
+        throw new ParseException();
+      }
+    }
+       {if (true) return expNode;}
+    throw new Error("Missing return statement in function");
+  }
+
+  final public ExpNode SqlInClause(AbstractDMLQuery query) throws ParseException {
+    ExpNode exp;
+    boolean notIn = false;
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case NOT:
+        jj_consume_token(NOT);
+        notIn = true;
+        break;
+      default:
+        jj_la1[103] = jj_gen;
+        ;
+    }
+    jj_consume_token(IN);
+    jj_consume_token(OPENPAREN);
+    exp = inExprOrList(query, notIn);
+    jj_consume_token(CLOSEPAREN);
+    {if (true) return exp;}
+    throw new Error("Missing return statement in function");
+  }
+
+  final public String className() throws ParseException {
+  StringBuffer buffer = new StringBuffer();
+  Token name = null;
+    name = id();
+                     buffer.append(name.image);
+    label_19:
+    while (true) {
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case DOT:
+        case 126:
+          ;
+        break;
+      default:
+        jj_la1[104] = jj_gen;
+        break label_19;
+      }
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case DOT:
+          jj_consume_token(DOT);
+          buffer.append(".");
+          break;
+        case 126:
+          jj_consume_token(126);
+          buffer.append("$");
+          break;
+        default:
+          jj_la1[105] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
+      name = id();
+                           buffer.append(name.image);
+    }
+         String classname = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? buffer.toString() : buffer.toString().toUpperCase();
+         {if (true) return classname;}
+    throw new Error("Missing return statement in function");
+  }
+
+  final public String sqlType() throws ParseException {
+    Token param, param2 = null;
+    try {
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case VARCHAR:
+        case VARCHAR2:
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case VARCHAR:
+              jj_consume_token(VARCHAR);
+              break;
+            case VARCHAR2:
+              jj_consume_token(VARCHAR2);
+              break;
+            default:
+              jj_la1[106] = jj_gen;
+              jj_consume_token(-1);
+              throw new ParseException();
+          }
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case OPENPAREN:
+              jj_consume_token(OPENPAREN);
+              jj_consume_token(INTEGER_LITERAL);
+              jj_consume_token(CLOSEPAREN);
+              break;
+            default:
+              jj_la1[107] = jj_gen;
+              ;
+          }
+        {
+          if (true) return String.class.getName();
+        }
+        break;
+        case CHAR:
+          jj_consume_token(CHAR);
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case OPENPAREN:
+              jj_consume_token(OPENPAREN);
+              jj_consume_token(INTEGER_LITERAL);
+              jj_consume_token(CLOSEPAREN);
+              break;
+            default:
+              jj_la1[108] = jj_gen;
+              ;
+          }
+        {
+          if (true) return String.class.getName();
+        }
+        break;
+        case DATE:
+          jj_consume_token(DATE);
+        {
+          if (true) return Date.class.getName();
+        }
+        break;
+        case DATETIME:
+          jj_consume_token(DATETIME);
+        {
+          if (true) return Timestamp.class.getName();
+        }
+        break;
+        case NUMBER:
+          jj_consume_token(NUMBER);
+          jj_consume_token(OPENPAREN);
+          param = jj_consume_token(INTEGER_LITERAL);
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case 125:
+              jj_consume_token(125);
+              param2 = jj_consume_token(INTEGER_LITERAL);
+              break;
+            default:
+              jj_la1[109] = jj_gen;
+              ;
+          }
+          jj_consume_token(CLOSEPAREN);
+          if (param2 != null && !param2.image.equals("0")) {
+            if (true) return Double.class.getName();
+          }
+          int p = Integer.parseInt(param.image);
+          if (p < 10) {
+            if (true) return Integer.class.getName();
+          } else {
+            if (true) return Long.class.getName();
+          }
+          break;
+        case TIME:
+          jj_consume_token(TIME);
+        {
+          if (true) return Time.class.getName();
+        }
+        break;
+        case FLOAT:
+          jj_consume_token(FLOAT);
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case OPENPAREN:
+              jj_consume_token(OPENPAREN);
+              jj_consume_token(INTEGER_LITERAL);
+              jj_consume_token(CLOSEPAREN);
+              break;
+            default:
+              jj_la1[110] = jj_gen;
+              ;
+          }
+        {
+          if (true) return Float.class.getName();
+        }
+        break;
+        case REAL:
+          jj_consume_token(REAL);
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case OPENPAREN:
+              jj_consume_token(OPENPAREN);
+              jj_consume_token(INTEGER_LITERAL);
+              jj_consume_token(CLOSEPAREN);
+              break;
+            default:
+              jj_la1[111] = jj_gen;
+              ;
+          }
+        {
+          if (true) return Float.class.getName();
+        }
+        break;
+        case DOUBLE:
+          jj_consume_token(DOUBLE);
+        {
+          if (true) return Double.class.getName();
+        }
+        break;
+        case BOOLEAN:
+          jj_consume_token(BOOLEAN);
+        {
+          if (true) return Boolean.class.getName();
+        }
+        break;
+        case INTEGER:
+        case INT:
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case INTEGER:
+              jj_consume_token(INTEGER);
+              break;
+            case INT:
+              jj_consume_token(INT);
+              break;
+            default:
+              jj_la1[112] = jj_gen;
+              jj_consume_token(-1);
+              throw new ParseException();
+          }
+        {
+          if (true) return Integer.class.getName();
+        }
+        break;
+        case LONG:
+          jj_consume_token(LONG);
+        {
+          if (true) return Long.class.getName();
+        }
+        break;
+        case BLOB:
+          jj_consume_token(BLOB);
+        {
+          if (true) return Blob.class.getName();
+        }
+        break;
+        case CLOB:
+          jj_consume_token(CLOB);
+        {
+          if (true) return Clob.class.getName();
+        }
+        break;
+        case TIMESTAMP:
+          jj_consume_token(TIMESTAMP);
+        {
+          if (true) return Timestamp.class.getName();
+        }
+        break;
+        case DECIMAL:
+          jj_consume_token(DECIMAL);
+        {
+          if (true) return BigDecimal.class.getName();
+        }
+        break;
+        case NUMERIC:
+          jj_consume_token(NUMERIC);
+        {
+          if (true) return BigDecimal.class.getName();
+        }
+        break;
+        case LONGVARCHAR:
+          jj_consume_token(LONGVARCHAR);
+        {
+          if (true) return String.class.getName();
+        }
+        break;
+        case TINYINT:
+          jj_consume_token(TINYINT);
+        {
+          if (true) return Byte.class.getName();
+        }
+        break;
+        case SMALLINT:
+          jj_consume_token(SMALLINT);
+        {
+          if (true) return Short.class.getName();
+        }
+        break;
+        case BIGINT:
+          jj_consume_token(BIGINT);
+        {
+          if (true) return Long.class.getName();
+        }
+        break;
+        case BIT:
+          jj_consume_token(BIT);
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case OPENPAREN:
+              jj_consume_token(OPENPAREN);
+              jj_consume_token(INTEGER_LITERAL);
+              jj_consume_token(CLOSEPAREN);
+              break;
+            default:
+              jj_la1[113] = jj_gen;
+              ;
+          }
+        {
+          if (true) return String.class.getName();
+        }
+        break;
+        default:
+          jj_la1[114] = jj_gen;
+        jj_consume_token(-1);
+          throw new ParseException();
+      }
+    } catch (ParseException p) {
+                {if (true) throw new ParseException("unknown sql data type");}
+    }
+    throw new Error("Missing return statement in function");
+  }
+
+  final public Token id() throws ParseException {
+    Token id = null;
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case IDENTIFIER:
+        id = jj_consume_token(IDENTIFIER);
+      {
+        if (true) return id;
+      }
+      break;
+      case ESC_IDENTIFIER:
+        id = jj_consume_token(ESC_IDENTIFIER);
+        String idStr = id.image.substring(1, id.image.length() - 1);
+        id.image = idStr;
+      {
+        if (true) return id;
+      }
+      break;
+      default:
+        jj_la1[115] = jj_gen;
+      jj_consume_token(-1);
+      throw new ParseException();
+    }
+    throw new Error("Missing return statement in function");
+  }
+
+//handle one condition, and add it to the Query object
+final public ExpNode condition(AbstractDMLQuery query) throws ParseException {
+  Token t, table1 = null, table2 = null, addup = null, operator = null ;
+  ColumnNode columnNode1 = null, columnNode2 = null;
+
+  ValueNode valueNode = null;
+  String negative = "";
+  ExpNode expNode = null;
+  Query innerQuery = null;
+  RowNumNode rowNum;
+  Token startIndex,endIndex;
+  switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case ROWNUM:
+      jj_consume_token(ROWNUM);
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+        case EQUAL:
+          jj_consume_token(EQUAL);
+          t = jj_consume_token(INTEGER_LITERAL);
+          int temp = Integer.parseInt(t.image);
+          rowNum= new RowNumNode(temp,temp);
+          break;
+        case LESS:
+          jj_consume_token(LESS);
+          t = jj_consume_token(INTEGER_LITERAL);
+          temp = Integer.parseInt(t.image);
+          rowNum= new RowNumNode(1, temp-1);
+          break;
+        case LESSEQUAL:
+          jj_consume_token(LESSEQUAL);
+          t = jj_consume_token(INTEGER_LITERAL);
+          temp = Integer.parseInt(t.image);
+          rowNum= new RowNumNode(1, temp);
+          break;
+        case GREATER:
+          jj_consume_token(GREATER);
+          t = jj_consume_token(INTEGER_LITERAL);
+          temp = Integer.parseInt(t.image);
+          rowNum= new RowNumNode(temp+1,Integer.MAX_VALUE);
+          break;
+        case GREATEREQUAL:
+          jj_consume_token(GREATEREQUAL);
+          t = jj_consume_token(INTEGER_LITERAL);
+          temp = Integer.parseInt(t.image);
+          rowNum = new RowNumNode(temp, Integer.MAX_VALUE);
+          break;
+        case OPENPAREN:
+          jj_consume_token(OPENPAREN);
+          startIndex = jj_consume_token(INTEGER_LITERAL);
+          jj_consume_token(125);
+          endIndex = jj_consume_token(INTEGER_LITERAL);
+          jj_consume_token(CLOSEPAREN);
+          rowNum = new RowNumNode(Integer.parseInt(startIndex.image), Integer.parseInt(endIndex.image));
+          break;
+        default:
+          jj_la1[116] = jj_gen;
+          jj_consume_token(-1);
+          throw new ParseException();
+      }
+      if( query.getRownum() != null) {if (true) throw new ParseException("Can't define more than a single condition for rownum. To specify range use rownum(from,to)");}
+      query.setRownum(rowNum);
+    {if (true) return null;}
+    break;
+    case IDENTIFIER:
+    case ESC_IDENTIFIER:
+      columnNode1 = createColumnNode(query,null);
+
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+        case COLLECTION_CONTAINS:
+          expNode = containsNode(query,columnNode1);
+          break;
+        case IS:
+          expNode = isNullNode(query,columnNode1);
+          break;
+        case BETWEEN:
+          expNode = betweenNode(query,columnNode1);
+          break;
+        case IN:
+        case LIKE:
+        case RLIKE:
+        case NOT:
+        case LESS:
+        case LESSEQUAL:
+        case GREATER:
+        case GREATEREQUAL:
+        case EQUAL:
+        case NOTEQUAL:
+        case NOTEQUAL2:
+          expNode = conditionNode(query, columnNode1);
+          break;
+        case RELATION:
+          expNode = relationNode(query, columnNode1);
+          break;
+        default:
+          jj_la1[117] = jj_gen;
+          jj_consume_token(-1);
+          throw new ParseException();
+      }
+    {
+      if (true) return expNode;
+    }
+    break;
+    default:
+      jj_la1[118] = jj_gen;
+      jj_consume_token(-1);
+      throw new ParseException();
+  }
+  throw new Error("Missing return statement in function");
+}
+
+  final public ExpNode relationNode(AbstractDMLQuery query, ColumnNode columnNode) throws ParseException {
+    ValueNode valueNode = null;
+    ExpNode res = null;
+    Token rel = null;
+    Token t;
+    rel = jj_consume_token(RELATION);
+    t = jj_consume_token(QUESTIONMARK);
+    query.setPrepared(true);
+    valueNode = new PreparedNode(null, ++conditionIndex);
+    res = new RelationNode(columnNode, rel.image, valueNode);
+    {
+      if (true) return res;
+    }
+    throw new Error("Missing return statement in function");
+  }
+
+  final public ExpNode conditionNode(AbstractDMLQuery query, ColumnNode columnNode1) throws ParseException {
+    Token t, addup = null, operator = null;
+    ValueNode valueNode = null;
+    ExpNode expNode = null;
+    String negative = "";
+    Query innerQuery = null;
+    ColumnNode columnNode2 = null;
+    if (jj_2_18(2)) {
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+        case EQUAL:
+          jj_consume_token(EQUAL);
+          expNode = new EqualNode();
+          break;
+        case LESS:
+          jj_consume_token(LESS);
+          expNode = new LTNode();
+          break;
+        case LESSEQUAL:
+          jj_consume_token(LESSEQUAL);
+          expNode = new LTENode();
+          break;
+        case GREATER:
+          jj_consume_token(GREATER);
+          expNode = new GTNode();
+          break;
+        case GREATEREQUAL:
+          jj_consume_token(GREATEREQUAL);
+          expNode = new GTENode();
+          break;
+        case NOTEQUAL:
+          jj_consume_token(NOTEQUAL);
+          expNode = new NotEqualNode();
+          break;
+        case NOTEQUAL2:
+          jj_consume_token(NOTEQUAL2);
+          expNode = new NotEqualNode();
+          break;
+        case LIKE:
+          jj_consume_token(LIKE);
+          expNode = new LikeNode();
+          break;
+        case NOT:
+          jj_consume_token(NOT);
+          jj_consume_token(LIKE);
+          expNode = new NotLikeNode();
+          break;
+        case RLIKE:
+          jj_consume_token(RLIKE);
+          expNode = new RLikeNode();
+          break;
+        default:
+          jj_la1[119] = jj_gen;
+          jj_consume_token(-1);
+          throw new ParseException();
+      }
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+        case QUESTIONMARK:
+          t = jj_consume_token(QUESTIONMARK);
+          query.setPrepared(true); valueNode = new PreparedNode(null,++conditionIndex);
+          break;
+        case STRING_LITERAL:
+          t = jj_consume_token(STRING_LITERAL);
+          valueNode = new LiteralNode(new String(t.image.substring(1, t.image.length() - 1)));
+          break;
+        case TRUE:
+          t = jj_consume_token(TRUE);
+          valueNode = new LiteralNode(Boolean.TRUE);
+          break;
+        case FALSE:
+          t = jj_consume_token(FALSE);
+          valueNode = new LiteralNode(Boolean.FALSE);
+          break;
+        default:
+          jj_la1[125] = jj_gen;
+          if (jj_2_15(2)) {
+            switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+              case MINUS:
+                jj_consume_token(MINUS);
+                negative = "-";
+                break;
+              default:
+                jj_la1[120] = jj_gen;
+                ;
+            }
+            t = jj_consume_token(INTEGER_LITERAL);
+            valueNode = new LiteralNode(negative + t.image);
+          } else if (jj_2_16(2)) {
+            switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+              case MINUS:
+                jj_consume_token(MINUS);
+                negative = "-";
+                break;
+              default:
+                jj_la1[121] = jj_gen;
+                ;
+            }
+            t = jj_consume_token(LONG_LITERAL);
+            valueNode = new LiteralNode(negative + t.image.substring(0,t.image.length() - 1));
+          } else if (jj_2_17(2)) {
+            switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+              case MINUS:
+                jj_consume_token(MINUS);
+                negative = "-";
+                break;
+              default:
+                jj_la1[122] = jj_gen;
+                ;
+            }
+            t = jj_consume_token(FLOATING_POINT_LITERAL);
+            valueNode = new LiteralNode(negative + t.image);
+          } else {
+            switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+              case DATE_LITERAL:
+                t = jj_consume_token(DATE_LITERAL);
+                valueNode = new LiteralNode(t.image);
+                break;
+              case SYSDATE:
+                jj_consume_token(SYSDATE);
+                switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+                  case PLUS:
+                  case MINUS:
+                    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+                      case PLUS:
+                        operator = jj_consume_token(PLUS);
+                        break;
+                      case MINUS:
+                        operator = jj_consume_token(MINUS);
+                        break;
+                      default:
+                        jj_la1[123] = jj_gen;
+                        jj_consume_token(-1);
+                        throw new ParseException();
+                    }
+                    addup = jj_consume_token(INTEGER_LITERAL);
+                    break;
+                  default:
+                    jj_la1[124] = jj_gen;
+                    ;
+                }
+                Calendar cal = Calendar.getInstance();
+                if (addup != null) {
+                  if (operator.image.equals("+"))
+                    cal.add(Calendar.DATE,Integer.parseInt(addup.image));
+                  else if (operator.image.equals("-"))
+                    cal.add(Calendar.DATE,-(Integer.parseInt(addup.image)));
+                }
+                valueNode = new LiteralNode(new java.sql.Timestamp(cal.getTime().getTime()));
+                break;
+              case OPENPAREN:
+                jj_consume_token(OPENPAREN);
+                innerQuery = selectSql();
+                valueNode = new InnerQueryNode((SelectQuery) innerQuery);
+                query.setContainsSubQueries(true);
+                jj_consume_token(CLOSEPAREN);
+                break;
+              case IDENTIFIER:
+              case ESC_IDENTIFIER:
+                columnNode2 = createColumnNode(query, null);
+
+                break;
+              default:
+                jj_la1[126] = jj_gen;
+                jj_consume_token(-1);
+                throw new ParseException();
+            }
+          }
+      }
+    } else if (jj_2_19(2)) {
+      expNode = SqlInClause(query);
+      expNode.setLeftChild(columnNode1);
+      {if (true) return expNode;
+      }
+    } else {
+      jj_consume_token(-1);
+      throw new ParseException();
+    }
+    expNode.setLeftChild(columnNode1);
+    if (columnNode2 == null)
+      expNode.setRightChild(valueNode);
+    else {
+      expNode.setRightChild(columnNode2);
+    }
+    {
+      if (true) return expNode;
     }
     throw new Error("Missing return statement in function");
   }
@@ -1969,104 +2773,151 @@ ExpNode exp2;
     throw new Error("Missing return statement in function");
   }
 
-  //handle one condition insinde contains, NOTE-currently no nested contains
-  final public ExpNode containtsItemSimpleCondition(AbstractDMLQuery query) throws ParseException {
+  final public ExpNode containsSimpleItemNode(AbstractDMLQuery query, ColumnNode columnNode1, StringBuilder columnPath, boolean insideInternalContains) throws ParseException {
     Token t, table1 = null, table2 = null, addup = null, operator = null;
-    ColumnNode columnNode1 = null, columnNode2 = null;
+    ColumnNode columnNode2 = null;
 
     ValueNode valueNode = null;
     String negative = "";
     ExpNode expNode = null;
     Token startIndex,endIndex;
     short templateMatchCode = TemplateMatchCodes.EQ;
-    StringBuilder columnPath = null;
+    ContainsItemNode containsItems =null;
+    Token rel = null;
+    String relation = null;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case ROWNUM:
-        jj_consume_token(ROWNUM);
-      {if (true) throw new ParseException("ROWNUM not supported inside contains");}
-      break;
-      case IDENTIFIER:
-      case ESC_IDENTIFIER:
-        columnNode1 = createColumnNode(query,null);
-
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-          case COLLECTION_CONTAINS:
-            jj_consume_token(COLLECTION_CONTAINS);
-            query.setContainsQuery(true);
-            columnPath = new StringBuilder(columnNode1.toString());
-            columnPath.append("[*]");
-            label_16:
-            while (true) {
-              switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-                case COLLECTION_CONTAINS:
-                  ;
-                  break;
-                default:
-                  jj_la1[96] = jj_gen;
-                  break label_16;
-              }
-              jj_consume_token(COLLECTION_CONTAINS);
-              columnPath.append("[*]");
-            }
-            label_17:
-            while (true) {
-              switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-                case DOT:
-                  ;
-                  break;
-                default:
-                  jj_la1[97] = jj_gen;
-                  break label_17;
-              }
-              jj_consume_token(DOT);
-              t = id();
-              String columnNameSuffix = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? t.image : t.image.toUpperCase();
-              columnPath.append(".");
-              columnPath.append(columnNameSuffix);
-              label_18:
-              while (true) {
-                switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-                  case COLLECTION_CONTAINS:
-                    ;
-                    break;
-                  default:
-                    jj_la1[98] = jj_gen;
-                    break label_18;
-                }
-                jj_consume_token(COLLECTION_CONTAINS);
-                columnPath.append("[*]");
-              }
-            }
-            expNode = containtsItemSimpleConditionImpl(query, columnPath, columnNode1, true);
-            break;
-          case BETWEEN:
-          case IN:
-          case LIKE:
-          case NOT:
-          case RELATION:
-          case LESS:
-          case LESSEQUAL:
-          case GREATER:
-          case GREATEREQUAL:
-          case EQUAL:
-          case NOTEQUAL:
-          case NOTEQUAL2:
-          case OPENPAREN:
-            expNode = containtsItemSimpleConditionImpl(query, columnPath, columnNode1, false);
-            break;
-          default:
-            jj_la1[99] = jj_gen;
-            jj_consume_token(-1);
-            throw new ParseException();
+      case EQUAL:
+        jj_consume_token(EQUAL);
+        templateMatchCode = TemplateMatchCodes.EQ;
+        break;
+      case LESS:
+        jj_consume_token(LESS);
+        templateMatchCode = TemplateMatchCodes.LT;
+        break;
+      case LESSEQUAL:
+        jj_consume_token(LESSEQUAL);
+        templateMatchCode = TemplateMatchCodes.LE;
+        break;
+      case GREATER:
+        jj_consume_token(GREATER);
+        templateMatchCode = TemplateMatchCodes.GT;
+        break;
+      case GREATEREQUAL:
+        jj_consume_token(GREATEREQUAL);
+        templateMatchCode = TemplateMatchCodes.GE;
+        break;
+      case NOTEQUAL:
+        jj_consume_token(NOTEQUAL);
+        templateMatchCode = TemplateMatchCodes.NE;
+        break;
+      case NOTEQUAL2:
+        jj_consume_token(NOTEQUAL2);
+        templateMatchCode = TemplateMatchCodes.NE;
+        break;
+      case LIKE:
+        jj_consume_token(LIKE);
+        templateMatchCode = TemplateMatchCodes.REGEX;
+        break;
+      case NOT:
+        jj_consume_token(NOT);
+        jj_consume_token(LIKE);
+        templateMatchCode = TemplateMatchCodes.NOT_REGEX;
+        break;
+      case RELATION:
+        rel = jj_consume_token(RELATION);
+        templateMatchCode = TemplateMatchCodes.RELATION;
+        relation = rel.image;
+        break;
+      case OPENPAREN:
+        jj_consume_token(OPENPAREN);
+        columnNode1.setName(columnPath.toString());
+        valueNode = new ContainsItemsRootNode(SqlContainsItemExpression(query), columnPath.toString(), columnNode1);
+        jj_consume_token(CLOSEPAREN);
+        if (insideInternalContains) {
+          if (true) return new ContainsItemNode(columnNode1, valueNode, templateMatchCode);
         }
+
       {
-        if (true) return expNode;
+        if (true) throw new ParseException("invalid token inside contains conditions");
       }
       break;
       default:
-        jj_la1[100] = jj_gen;
+        jj_la1[127] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
+    }
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case QUESTIONMARK:
+        t = jj_consume_token(QUESTIONMARK);
+        query.setPrepared(true); valueNode = new PreparedNode(null,++conditionIndex);
+        break;
+      case STRING_LITERAL:
+        t = jj_consume_token(STRING_LITERAL);
+        valueNode = new LiteralNode(new String(t.image.substring(1, t.image.length() - 1)));
+        break;
+      case TRUE:
+        t = jj_consume_token(TRUE);
+        valueNode = new LiteralNode(Boolean.TRUE);
+        break;
+      case FALSE:
+        t = jj_consume_token(FALSE);
+        valueNode = new LiteralNode(Boolean.FALSE);
+        break;
+      default:
+        jj_la1[131] = jj_gen;
+        if (jj_2_22(2)) {
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case MINUS:
+              jj_consume_token(MINUS);
+              negative = "-";
+              break;
+            default:
+              jj_la1[128] = jj_gen;
+              ;
+          }
+          t = jj_consume_token(INTEGER_LITERAL);
+          valueNode = new LiteralNode(new Integer(negative + t.image));
+        } else if (jj_2_23(2)) {
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case MINUS:
+              jj_consume_token(MINUS);
+              negative = "-";
+              break;
+            default:
+              jj_la1[129] = jj_gen;
+              ;
+          }
+          t = jj_consume_token(LONG_LITERAL);
+          valueNode = new LiteralNode(negative + t.image.substring(0,t.image.length() - 1));
+        } else if (jj_2_24(2)) {
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case MINUS:
+              jj_consume_token(MINUS);
+              negative = "-";
+              break;
+            default:
+              jj_la1[130] = jj_gen;
+              ;
+          }
+          t = jj_consume_token(FLOATING_POINT_LITERAL);
+          valueNode = new LiteralNode(negative + t.image);
+        } else {
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case DATE_LITERAL:
+              t = jj_consume_token(DATE_LITERAL);
+              valueNode = new LiteralNode(t.image);
+              break;
+            default:
+              jj_la1[132] = jj_gen;
+              jj_consume_token(-1);
+              throw new ParseException();
+          }
+        }
+    }
+    if (columnPath != null)
+      columnNode1.setName(columnPath.toString());
+    {
+      if (true) return new ContainsItemNode(columnNode1, valueNode, templateMatchCode, relation);
     }
     throw new Error("Missing return statement in function");
   }
@@ -2088,820 +2939,16 @@ ExpNode exp2;
     throw new Error("Missing return statement in function");
   }
 
-  //handle one condition inside contains
-  final public ExpNode containtsItemSimpleConditionImpl(AbstractDMLQuery query, StringBuilder columnPath, ColumnNode columnNode1, boolean insideInternalContains) throws ParseException {
-    ExpNode expNode = null;
-    if (jj_2_13(2)) {
-      expNode = containsInItemNode(query, columnNode1, columnPath);
-    } else if (jj_2_14(2)) {
-      expNode = containsBetweenItemNode(query, columnNode1, columnPath);
-    } else {
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case LIKE:
-        case NOT:
-        case RELATION:
-        case LESS:
-        case LESSEQUAL:
-        case GREATER:
-        case GREATEREQUAL:
-        case EQUAL:
-        case NOTEQUAL:
-        case NOTEQUAL2:
-        case OPENPAREN:
-          expNode = containsSimpleItemNode(query,columnNode1,columnPath,insideInternalContains);
-          break;
-        default:
-          jj_la1[101] = jj_gen;
-          jj_consume_token(-1);
-          throw new ParseException();
-      }
-    }
-    {
-      if (true) return expNode;
-    }
-    throw new Error("Missing return statement in function");
-  }
-
-  final public AndNode containsBetweenNode(AbstractDMLQuery query, ColumnNode columnNode1, String column) throws ParseException {
-    ValueNode gteValue, lteValue;
-    jj_consume_token(BETWEEN);
-    gteValue = getBetweenValueNode(query);
-    jj_consume_token(AND);
-    lteValue = getBetweenValueNode(query);
-    columnNode1.setName(column);
-    ExpNode gteNode = new ContainsNode(columnNode1, gteValue, TemplateMatchCodes.GE);
-    ExpNode lteNode = new ContainsNode(columnNode1, lteValue, TemplateMatchCodes.LE);
-
-    {
-      if (true) return new AndNode(gteNode, lteNode);
-    }
-    throw new Error("Missing return statement in function");
-  }
-
-  final public ExpNode SqlInClause(AbstractDMLQuery query) throws ParseException {
-    ExpNode exp;
+  final public ExpNode containsInItemNode(AbstractDMLQuery query, ColumnNode columnNode1, StringBuilder columnPath) throws ParseException {
+    ExpNode inNode;
     boolean notIn = false;
     switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
       case NOT:
         jj_consume_token(NOT);
         notIn = true;
-        break;
-      default:
-      jj_la1[102] = jj_gen;
-      ;
-    }
-    jj_consume_token(IN);
-    jj_consume_token(OPENPAREN);
-    exp = inExprOrList(query,notIn);
-    jj_consume_token(CLOSEPAREN);
-        {if (true) return exp;}
-    throw new Error("Missing return statement in function");
-  }
-
-  final public String className() throws ParseException {
-  StringBuffer buffer = new StringBuffer();
-  Token name = null;
-    name = id();
-                     buffer.append(name.image);
-    label_19:
-    while (true) {
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case DOT:
-      case 126:
-        ;
-        break;
-        default:
-        jj_la1[103] = jj_gen;
-        break label_19;
-      }
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case DOT:
-        jj_consume_token(DOT);
-                buffer.append(".");
-        break;
-      case 126:
-        jj_consume_token(126);
-                                          buffer.append("$");
-        break;
-        default:
-          jj_la1[104] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
-      }
-      name = id();
-                           buffer.append(name.image);
-    }
-         String classname = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? buffer.toString() : buffer.toString().toUpperCase();
-         {if (true) return classname;}
-    throw new Error("Missing return statement in function");
-  }
-
-  final public String sqlType() throws ParseException {
-    Token param, param2=null;
-    try {
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case VARCHAR:
-        case VARCHAR2:
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-            case VARCHAR:
-              jj_consume_token(VARCHAR);
-              break;
-            case VARCHAR2:
-              jj_consume_token(VARCHAR2);
-              break;
-            default:
-              jj_la1[105] = jj_gen;
-              jj_consume_token(-1);
-              throw new ParseException();
-          }
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-            case OPENPAREN:
-              jj_consume_token(OPENPAREN);
-              jj_consume_token(INTEGER_LITERAL);
-              jj_consume_token(CLOSEPAREN);
-              break;
-            default:
-              jj_la1[106] = jj_gen;
-              ;
-          }
-        {if (true) return String.class.getName();}
-        break;
-        case CHAR:
-          jj_consume_token(CHAR);
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-            case OPENPAREN:
-              jj_consume_token(OPENPAREN);
-              jj_consume_token(INTEGER_LITERAL);
-              jj_consume_token(CLOSEPAREN);
-              break;
-            default:
-              jj_la1[107] = jj_gen;
-              ;
-          }
-        {if (true) return String.class.getName();}
-        break;
-        case DATE:
-          jj_consume_token(DATE);
-        {if (true) return Date.class.getName();}
-        break;
-        case DATETIME:
-          jj_consume_token(DATETIME);
-        {if (true) return Timestamp.class.getName();}
-        break;
-        case NUMBER:
-          jj_consume_token(NUMBER);
-          jj_consume_token(OPENPAREN);
-          param = jj_consume_token(INTEGER_LITERAL);
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-            case 125:
-              jj_consume_token(125);
-              param2 = jj_consume_token(INTEGER_LITERAL);
-              break;
-            default:
-              jj_la1[108] = jj_gen;
-              ;
-          }
-          jj_consume_token(CLOSEPAREN);
-          if (param2 != null && !param2.image.equals("0")) {if (true) return Double.class.getName();}
-          int p = Integer.parseInt(param.image);
-          if (p < 10) {if (true) return Integer.class.getName();} else {if (true) return Long.class.getName();}
-          break;
-        case TIME:
-          jj_consume_token(TIME);
-        {if (true) return Time.class.getName();}
-        break;
-        case FLOAT:
-          jj_consume_token(FLOAT);
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-            case OPENPAREN:
-              jj_consume_token(OPENPAREN);
-              jj_consume_token(INTEGER_LITERAL);
-              jj_consume_token(CLOSEPAREN);
-              break;
-            default:
-              jj_la1[109] = jj_gen;
-              ;
-          }
-        {if (true) return Float.class.getName();}
-        break;
-        case REAL:
-          jj_consume_token(REAL);
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-            case OPENPAREN:
-              jj_consume_token(OPENPAREN);
-              jj_consume_token(INTEGER_LITERAL);
-              jj_consume_token(CLOSEPAREN);
-              break;
-            default:
-              jj_la1[110] = jj_gen;
-              ;
-          }
-        {if (true) return Float.class.getName();}
-        break;
-        case DOUBLE:
-          jj_consume_token(DOUBLE);
-        {if (true) return Double.class.getName();}
-        break;
-        case BOOLEAN:
-          jj_consume_token(BOOLEAN);
-        {if (true) return Boolean.class.getName();}
-        break;
-        case INTEGER:
-        case INT:
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-            case INTEGER:
-              jj_consume_token(INTEGER);
-              break;
-            case INT:
-              jj_consume_token(INT);
-              break;
-            default:
-              jj_la1[111] = jj_gen;
-              jj_consume_token(-1);
-              throw new ParseException();
-          }
-        {if (true) return Integer.class.getName();}
-        break;
-        case LONG:
-          jj_consume_token(LONG);
-        {if (true) return Long.class.getName();}
-        break;
-        case BLOB:
-          jj_consume_token(BLOB);
-        {if (true) return Blob.class.getName();}
-        break;
-        case CLOB:
-          jj_consume_token(CLOB);
-        {if (true) return Clob.class.getName();}
-        break;
-        case TIMESTAMP:
-          jj_consume_token(TIMESTAMP);
-        {if (true) return Timestamp.class.getName();}
-        break;
-        case DECIMAL:
-          jj_consume_token(DECIMAL);
-        {if (true) return BigDecimal.class.getName();}
-        break;
-        case NUMERIC:
-          jj_consume_token(NUMERIC);
-        {if (true) return BigDecimal.class.getName();}
-        break;
-        case LONGVARCHAR:
-          jj_consume_token(LONGVARCHAR);
-        {if (true) return String.class.getName();}
-        break;
-        case TINYINT:
-          jj_consume_token(TINYINT);
-        {if (true) return Byte.class.getName();}
-        break;
-        case SMALLINT:
-          jj_consume_token(SMALLINT);
-        {if (true) return Short.class.getName();}
-        break;
-        case BIGINT:
-          jj_consume_token(BIGINT);
-        {if (true) return Long.class.getName();}
-        break;
-        case BIT:
-          jj_consume_token(BIT);
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-            case OPENPAREN:
-              jj_consume_token(OPENPAREN);
-              jj_consume_token(INTEGER_LITERAL);
-              jj_consume_token(CLOSEPAREN);
-              break;
-            default:
-              jj_la1[112] = jj_gen;
-              ;
-          }
-        {if (true) return String.class.getName();
-        }
-        break;
-        default:
-          jj_la1[113] = jj_gen;
-          jj_consume_token(-1);
-          throw new ParseException();
-      }
-    } catch (ParseException p) {
-      {
-        if (true) throw new ParseException("unknown sql data type");
-      }
-    }
-    throw new Error("Missing return statement in function");
-  }
-
-  final public ExpNode containsIsNullNode(AbstractDMLQuery query, ColumnNode columnNode1, String columnPath) throws ParseException {
-    IsNullNode valueNode = null;
-    jj_consume_token(IS);
-    jj_consume_token(NULL);
-    //comment
-    valueNode = new IsNullNode(columnNode1, new LiteralNode(null));
-    columnNode1.setName(columnPath);
-    {
-      if (true) return new ContainsNode(columnNode1, valueNode, TemplateMatchCodes.IS_NULL);
-    }
-    throw new Error("Missing return statement in function");
-  }
-
-  final public ExpNode containsIsNotNullNode(AbstractDMLQuery query, ColumnNode columnNode1, String columnPath) throws ParseException {
-    IsNullNode valueNode = null;
-    jj_consume_token(IS);
-    jj_consume_token(NOT);
-    jj_consume_token(NULL);
-    //comment
-    valueNode = new IsNullNode(columnNode1, new LiteralNode(null));
-    valueNode.setNot(true);
-    columnNode1.setName(columnPath);
-    {
-      if (true) return new ContainsNode(columnNode1, valueNode, TemplateMatchCodes.NOT_NULL);
-    }
-    throw new Error("Missing return statement in function");
-  }
-
-  final public ExpNode containsMultipleNode(AbstractDMLQuery query, ColumnNode columnNode1, String columnPath) throws ParseException {
-    ValueNode valueNode = null;
-    jj_consume_token(OPENPAREN);
-    columnNode1.setName(columnPath);
-    valueNode = new ContainsItemsRootNode(SqlContainsItemExpression(query), columnPath, columnNode1);
-    jj_consume_token(CLOSEPAREN);
-    {
-      if (true) return new ContainsItemNode(columnNode1, valueNode, TemplateMatchCodes.EQ);
-    }
-    throw new Error("Missing return statement in function");
-  }
-
-  final public Token id() throws ParseException {
-    Token id = null;
-    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-      case IDENTIFIER:
-        id = jj_consume_token(IDENTIFIER);
-      {
-        if (true) return id;
-      }
       break;
-      case ESC_IDENTIFIER:
-        id = jj_consume_token(ESC_IDENTIFIER);
-                String idStr = id.image.substring(1,id.image.length()-1);
-        id.image=idStr;
-        {if (true) return id;
-        }
-      break;
-      default:
-        jj_la1[114] = jj_gen;
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
-    throw new Error("Missing return statement in function");
-  }
-
-//handle one condition, and add it to the Query object
-  final public ExpNode condition(AbstractDMLQuery query) throws ParseException {
-  Token t, table1 = null, table2 = null, addup = null, operator = null ;
-        ColumnNode columnNode1 = null, columnNode2 = null;
-
-        ValueNode valueNode = null;
-        String negative = "";
-        ExpNode expNode = null;
-        Query innerQuery = null;
-        RowNumNode rowNum;
-        Token startIndex,endIndex;
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case ROWNUM:
-      jj_consume_token(ROWNUM);
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case EQUAL:
-        jj_consume_token(EQUAL);
-        t = jj_consume_token(INTEGER_LITERAL);
-                                                 int temp = Integer.parseInt(t.image);
-                                                                                 rowNum= new RowNumNode(temp,temp);
-        break;
-      case LESS:
-        jj_consume_token(LESS);
-        t = jj_consume_token(INTEGER_LITERAL);
-                                         temp = Integer.parseInt(t.image);
-                                                                                 rowNum= new RowNumNode(1, temp-1);
-        break;
-      case LESSEQUAL:
-        jj_consume_token(LESSEQUAL);
-        t = jj_consume_token(INTEGER_LITERAL);
-                                              temp = Integer.parseInt(t.image);
-                                                                                          rowNum= new RowNumNode(1, temp);
-        break;
-      case GREATER:
-        jj_consume_token(GREATER);
-        t = jj_consume_token(INTEGER_LITERAL);
-                                              temp = Integer.parseInt(t.image);
-                                                                                          rowNum= new RowNumNode(temp+1,Integer.MAX_VALUE);
-        break;
-      case GREATEREQUAL:
-        jj_consume_token(GREATEREQUAL);
-        t = jj_consume_token(INTEGER_LITERAL);
-                                                temp = Integer.parseInt(t.image);
-                                                                                            rowNum= new RowNumNode(temp,Integer.MAX_VALUE);
-        break;
-      case OPENPAREN:
-        jj_consume_token(OPENPAREN);
-        startIndex = jj_consume_token(INTEGER_LITERAL);
-        jj_consume_token(125);
-        endIndex = jj_consume_token(INTEGER_LITERAL);
-        jj_consume_token(CLOSEPAREN);
-                rowNum= new RowNumNode(Integer.parseInt(startIndex.image),Integer.parseInt(endIndex.image));
-        break;
-        default:
-          jj_la1[115] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
-      }
-            if( query.getRownum() != null)
-                        {if (true) throw new ParseException("Can't define more than a single condition for rownum. To specify range use rownum(from,to)");}
-                query.setRownum(rowNum);
-                {if (true) return null;}
-      break;
-    case IDENTIFIER:
-    case ESC_IDENTIFIER:
-      columnNode1 = createColumnNode(query,null);
-
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case COLLECTION_CONTAINS:
-        expNode = containsNode(query,columnNode1);
-        break;
-      case IS:
-        expNode = isNullNode(query,columnNode1);
-        break;
-      case BETWEEN:
-        expNode = betweenNode(query,columnNode1);
-        break;
-      case IN:
-      case LIKE:
-      case RLIKE:
-      case NOT:
-      case LESS:
-      case LESSEQUAL:
-      case GREATER:
-      case GREATEREQUAL:
-      case EQUAL:
-      case NOTEQUAL:
-      case NOTEQUAL2:
-        expNode = conditionNode(query,columnNode1);
-        break;
-      case RELATION:
-        expNode = relationNode(query, columnNode1);
-        break;
-        default:
-          jj_la1[116] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
-      }
-        {if (true) return expNode;
-        }
-    break;
-      default:
-        jj_la1[117] = jj_gen;
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
-    throw new Error("Missing return statement in function");
-  }
-
-  final public ExpNode conditionNode(AbstractDMLQuery query,ColumnNode columnNode1) throws ParseException {
-        Token t, addup = null, operator = null ;
-        ValueNode valueNode = null;
-        ExpNode expNode = null;
-        String negative = "";
-        Query innerQuery = null;
-        ColumnNode columnNode2 = null;
-    if (jj_2_18(2)) {
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case EQUAL:
-        jj_consume_token(EQUAL);
-                                  expNode = new EqualNode();
-        break;
-      case LESS:
-        jj_consume_token(LESS);
-                                          expNode = new LTNode();
-        break;
-      case LESSEQUAL:
-        jj_consume_token(LESSEQUAL);
-                                  expNode = new LTENode();
-        break;
-      case GREATER:
-        jj_consume_token(GREATER);
-                                  expNode = new GTNode();
-        break;
-      case GREATEREQUAL:
-        jj_consume_token(GREATEREQUAL);
-                                  expNode = new GTENode();
-        break;
-      case NOTEQUAL:
-        jj_consume_token(NOTEQUAL);
-                                  expNode = new NotEqualNode();
-        break;
-      case NOTEQUAL2:
-        jj_consume_token(NOTEQUAL2);
-                                  expNode = new NotEqualNode();
-        break;
-      case LIKE:
-        jj_consume_token(LIKE);
-                                  expNode = new LikeNode();
-        break;
-      case NOT:
-        jj_consume_token(NOT);
-        jj_consume_token(LIKE);
-                                  expNode = new NotLikeNode();
-        break;
-      case RLIKE:
-        jj_consume_token(RLIKE);
-                                  expNode = new RLikeNode();
-        break;
-        default:
-          jj_la1[118] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
-      }
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case QUESTIONMARK:
-        t = jj_consume_token(QUESTIONMARK);
-                                     query.setPrepared(true); valueNode = new PreparedNode(null,++conditionIndex);
-        break;
-      case STRING_LITERAL:
-        t = jj_consume_token(STRING_LITERAL);
-                                         valueNode = new LiteralNode(new String(t.image.substring(1,t.image.length()-1)));
-        break;
-      case TRUE:
-        t = jj_consume_token(TRUE);
-                               valueNode = new LiteralNode(Boolean.TRUE);
-        break;
-      case FALSE:
-        t = jj_consume_token(FALSE);
-                               valueNode = new LiteralNode(Boolean.FALSE);
-        break;
-        default:
-        jj_la1[124] = jj_gen;
-        if (jj_2_15(2)) {
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-          case MINUS:
-            jj_consume_token(MINUS);
-                                         negative = "-";
-            break;
-            default:
-            jj_la1[119] = jj_gen;
-            ;
-          }
-          t = jj_consume_token(INTEGER_LITERAL);
-                                                                                   valueNode = new LiteralNode(negative + t.image);
-        } else if (jj_2_16(2)) {
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-          case MINUS:
-            jj_consume_token(MINUS);
-                                         negative = "-";
-            break;
-            default:
-            jj_la1[120] = jj_gen;
-            ;
-          }
-          t = jj_consume_token(LONG_LITERAL);
-                                                                                valueNode = new LiteralNode(negative + t.image.substring(0,t.image.length()-1));
-        } else if (jj_2_17(2)) {
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-          case MINUS:
-            jj_consume_token(MINUS);
-                                         negative = "-";
-            break;
-            default:
-            jj_la1[121] = jj_gen;
-            ;
-          }
-          t = jj_consume_token(FLOATING_POINT_LITERAL);
-                                                                                          valueNode = new LiteralNode(negative + t.image);
-        } else {
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-          case DATE_LITERAL:
-            t = jj_consume_token(DATE_LITERAL);
-                                      valueNode = new LiteralNode(t.image);
-            break;
-          case SYSDATE:
-            jj_consume_token(SYSDATE);
-            switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-            case PLUS:
-            case MINUS:
-              switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-              case PLUS:
-                operator = jj_consume_token(PLUS);
-                break;
-              case MINUS:
-                operator = jj_consume_token(MINUS);
-                break;
-                default:
-                  jj_la1[122] = jj_gen;
-                  jj_consume_token(-1);
-                throw new ParseException();
-              }
-              addup = jj_consume_token(INTEGER_LITERAL);
-              break;
-              default:
-              jj_la1[123] = jj_gen;
-              ;
-            }
-                        Calendar cal = Calendar.getInstance();
-                        if (addup != null) {
-                                if (operator.image.equals("+"))
-                                        cal.add(Calendar.DATE,Integer.parseInt(addup.image));
-                                else if (operator.image.equals("-"))
-                                        cal.add(Calendar.DATE,-(Integer.parseInt(addup.image)));
-                        }
-                        valueNode = new LiteralNode(new java.sql.Timestamp(cal.getTime().getTime()));
-            break;
-          case OPENPAREN:
-            jj_consume_token(OPENPAREN);
-            innerQuery = selectSql();
-                  valueNode = new InnerQueryNode((SelectQuery)innerQuery); query.setContainsSubQueries(true);
-            jj_consume_token(CLOSEPAREN);
-            break;
-          case IDENTIFIER:
-          case ESC_IDENTIFIER:
-            columnNode2 = createColumnNode(query,null);
-
-            break;
-            default:
-              jj_la1[125] = jj_gen;
-            jj_consume_token(-1);
-            throw new ParseException();
-          }
-        }
-      }
-    } else if (jj_2_19(2)) {
-      expNode = SqlInClause(query);
-                          expNode.setLeftChild(columnNode1);
-                          {if (true) return expNode;}
-    } else {
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
-      expNode.setLeftChild(columnNode1);
-     if ( columnNode2 == null )
-        expNode.setRightChild(valueNode);
-     else {
-        expNode.setRightChild(columnNode2);
-     }
-     {if (true) return expNode;}
-    throw new Error("Missing return statement in function");
-  }
-
-  final public ExpNode containsSimpleItemNode(AbstractDMLQuery query,ColumnNode columnNode1,StringBuilder columnPath, boolean insideInternalContains) throws ParseException {
-Token t, table1 = null, table2 = null, addup = null, operator = null ;
-        ColumnNode columnNode2 = null;
-
-        ValueNode valueNode = null;
-        String negative = "";
-        ExpNode expNode = null;
-        Token startIndex,endIndex;
-        short templateMatchCode = TemplateMatchCodes.EQ;
-        ContainsItemNode containsItems =null;
-        Token rel = null;
-        String relation = null;
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case EQUAL:
-      jj_consume_token(EQUAL);
-                  templateMatchCode = TemplateMatchCodes.EQ;
-      break;
-    case LESS:
-      jj_consume_token(LESS);
-                   templateMatchCode = TemplateMatchCodes.LT;
-      break;
-    case LESSEQUAL:
-      jj_consume_token(LESSEQUAL);
-                        templateMatchCode = TemplateMatchCodes.LE;
-      break;
-    case GREATER:
-      jj_consume_token(GREATER);
-                      templateMatchCode = TemplateMatchCodes.GT;
-      break;
-    case GREATEREQUAL:
-      jj_consume_token(GREATEREQUAL);
-                           templateMatchCode = TemplateMatchCodes.GE;
-      break;
-    case NOTEQUAL:
-      jj_consume_token(NOTEQUAL);
-                       templateMatchCode = TemplateMatchCodes.NE;
-      break;
-    case NOTEQUAL2:
-      jj_consume_token(NOTEQUAL2);
-                        templateMatchCode = TemplateMatchCodes.NE;
-      break;
-    case LIKE:
-      jj_consume_token(LIKE);
-                          templateMatchCode = TemplateMatchCodes.REGEX;
-      break;
-    case NOT:
-      jj_consume_token(NOT);
-      jj_consume_token(LIKE);
-                          templateMatchCode = TemplateMatchCodes.NOT_REGEX;
-      break;
-    case RELATION:
-      rel = jj_consume_token(RELATION);
-                             templateMatchCode = TemplateMatchCodes.RELATION;
-                             relation = rel.image;
-      break;
-    case OPENPAREN:
-      jj_consume_token(OPENPAREN);
-                  columnNode1.setName(columnPath.toString());
-                  valueNode = new ContainsItemsRootNode(SqlContainsItemExpression(query),columnPath.toString(),columnNode1);
-      jj_consume_token(CLOSEPAREN);
-                                if ( insideInternalContains)
-                         {if (true) return new ContainsItemNode(columnNode1,valueNode,templateMatchCode);}
-
-                                 {if (true) throw new ParseException("invalid token inside contains conditions");
-                                 }
-    break;
-      default:
-        jj_la1[126] = jj_gen;
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case QUESTIONMARK:
-      t = jj_consume_token(QUESTIONMARK);
-                                     query.setPrepared(true); valueNode = new PreparedNode(null,++conditionIndex);
-      break;
-    case STRING_LITERAL:
-      t = jj_consume_token(STRING_LITERAL);
-                                         valueNode = new LiteralNode(new String(t.image.substring(1,t.image.length()-1)));
-      break;
-    case TRUE:
-      t = jj_consume_token(TRUE);
-                               valueNode = new LiteralNode(Boolean.TRUE);
-      break;
-    case FALSE:
-      t = jj_consume_token(FALSE);
-                               valueNode = new LiteralNode(Boolean.FALSE);
-      break;
-      default:
-      jj_la1[130] = jj_gen;
-      if (jj_2_22(2)) {
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case MINUS:
-          jj_consume_token(MINUS);
-                                         negative = "-";
-          break;
-          default:
-          jj_la1[127] = jj_gen;
-          ;
-        }
-        t = jj_consume_token(INTEGER_LITERAL);
-                                                                                   valueNode = new LiteralNode(new Integer(negative + t.image));
-      } else if (jj_2_23(2)) {
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case MINUS:
-          jj_consume_token(MINUS);
-                                         negative = "-";
-          break;
-          default:
-          jj_la1[128] = jj_gen;
-          ;
-        }
-        t = jj_consume_token(LONG_LITERAL);
-                                                                                valueNode = new LiteralNode(negative + t.image.substring(0,t.image.length()-1));
-      } else if (jj_2_24(2)) {
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case MINUS:
-          jj_consume_token(MINUS);
-                                         negative = "-";
-          break;
-          default:
-          jj_la1[129] = jj_gen;
-          ;
-        }
-        t = jj_consume_token(FLOATING_POINT_LITERAL);
-                                                                                          valueNode = new LiteralNode(negative + t.image);
-      } else {
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case DATE_LITERAL:
-          t = jj_consume_token(DATE_LITERAL);
-                                      valueNode = new LiteralNode(t.image);
-          break;
-          default:
-            jj_la1[131] = jj_gen;
-          jj_consume_token(-1);
-          throw new ParseException();
-        }
-      }
-    }
-                if (columnPath != null)
-                         columnNode1.setName(columnPath.toString());
-                        {if (true) return new ContainsItemNode(columnNode1, valueNode, templateMatchCode, relation);}
-    throw new Error("Missing return statement in function");
-  }
-
-  final public ExpNode containsInItemNode(AbstractDMLQuery query,ColumnNode columnNode1,StringBuilder columnPath) throws ParseException {
-    ExpNode inNode;
-        boolean notIn = false;
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case NOT:
-      jj_consume_token(NOT);
-              notIn = true;
-      break;
-      default:
-      jj_la1[132] = jj_gen;
+    default:
+      jj_la1[133] = jj_gen;
       ;
     }
     jj_consume_token(IN);
@@ -2913,66 +2960,6 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
                         inNode.setLeftChild(columnNode1);
 
                         {if (true) return new ContainsItemNode(columnNode1, inNode, TemplateMatchCodes.IN);}
-    throw new Error("Missing return statement in function");
-  }
-
-  final public ExpNode containsSimpleNode(AbstractDMLQuery query,ColumnNode columnNode1,String column) throws ParseException {
-        ValueNode valueNode = null;
-        short templateMatchCode = TemplateMatchCodes.EQ;
-        Token rel = null;
-        Token t = null;
-        String relation = null;
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case EQUAL:
-      jj_consume_token(EQUAL);
-                          templateMatchCode = TemplateMatchCodes.EQ;
-      break;
-    case LESS:
-      jj_consume_token(LESS);
-                           templateMatchCode = TemplateMatchCodes.LT;
-      break;
-    case LESSEQUAL:
-      jj_consume_token(LESSEQUAL);
-                                templateMatchCode = TemplateMatchCodes.LE;
-      break;
-    case GREATER:
-      jj_consume_token(GREATER);
-                              templateMatchCode = TemplateMatchCodes.GT;
-      break;
-    case GREATEREQUAL:
-      jj_consume_token(GREATEREQUAL);
-                                   templateMatchCode = TemplateMatchCodes.GE;
-      break;
-    case NOTEQUAL:
-      jj_consume_token(NOTEQUAL);
-                               templateMatchCode = TemplateMatchCodes.NE;
-      break;
-    case NOTEQUAL2:
-      jj_consume_token(NOTEQUAL2);
-                                templateMatchCode = TemplateMatchCodes.NE;
-      break;
-    case LIKE:
-      jj_consume_token(LIKE);
-                              templateMatchCode = TemplateMatchCodes.REGEX;
-      break;
-    case NOT:
-      jj_consume_token(NOT);
-      jj_consume_token(LIKE);
-                              templateMatchCode = TemplateMatchCodes.NOT_REGEX;
-      break;
-    case RELATION:
-      rel = jj_consume_token(RELATION);
-                             templateMatchCode = TemplateMatchCodes.RELATION;
-                             relation = rel.image;
-      break;
-      default:
-        jj_la1[133] = jj_gen;
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
-    valueNode = valueNode(query);
-                columnNode1.setName(column);
-                {if (true) return new ContainsNode(columnNode1, valueNode, templateMatchCode, relation);}
     throw new Error("Missing return statement in function");
   }
 
@@ -3235,85 +3222,6 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     finally { jj_save(36, xla); }
   }
 
-  private boolean jj_3R_89() {
-    if (jj_scan_token(DATE_LITERAL)) return true;
-    return false;
-  }
-
-  private boolean jj_3_37() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_72()) jj_scanpos = xsp;
-    if (jj_scan_token(FLOATING_POINT_LITERAL)) return true;
-    return false;
-  }
-
-  private boolean jj_3_36() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_71()) jj_scanpos = xsp;
-    if (jj_scan_token(LONG_LITERAL)) return true;
-    return false;
-  }
-
-  private boolean jj_3_35() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_70()) jj_scanpos = xsp;
-    if (jj_scan_token(INTEGER_LITERAL)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_88() {
-    if (jj_scan_token(FALSE)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_87() {
-    if (jj_scan_token(TRUE)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_85() {
-    if (jj_scan_token(QUESTIONMARK)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_86() {
-    if (jj_scan_token(STRING_LITERAL)) return true;
-    return false;
-  }
-
-  final public ExpNode containsInNode(AbstractDMLQuery query, ColumnNode columnNode1, String column) throws ParseException {
-    ExpNode inNode;
-    boolean notIn = false;
-    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-      case NOT:
-        jj_consume_token(NOT);
-        notIn = true;
-        break;
-      default:
-        jj_la1[134] = jj_gen;
-        ;
-    }
-    jj_consume_token(IN);
-    jj_consume_token(OPENPAREN);
-    inNode = inExprOrList(query, notIn);
-    jj_consume_token(CLOSEPAREN);
-    columnNode1.setName(column);
-    inNode.setLeftChild(columnNode1);
-
-    {
-      if (true) return new ContainsNode(columnNode1, inNode, TemplateMatchCodes.IN);
-    }
-    throw new Error("Missing return statement in function");
-  }
-
-  private boolean jj_3R_91() {
-    if (jj_3R_25()) return true;
-    return false;
-  }
-
   private boolean jj_3R_81() {
     Token xsp;
     xsp = jj_scanpos;
@@ -3332,8 +3240,8 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     if (jj_3_37()) {
     jj_scanpos = xsp;
     if (jj_3R_89()) {
-    jj_scanpos = xsp;
-    if (jj_3R_90()) return true;
+      jj_scanpos = xsp;
+      if (jj_3R_90()) return true;
     }
     }
     }
@@ -3351,6 +3259,22 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     return false;
   }
 
+  final public AndNode containsBetweenNode(AbstractDMLQuery query, ColumnNode columnNode1, String column) throws ParseException {
+    ValueNode gteValue, lteValue;
+    jj_consume_token(BETWEEN);
+    gteValue = getBetweenValueNode(query);
+    jj_consume_token(AND);
+    lteValue = getBetweenValueNode(query);
+    columnNode1.setName(column);
+    ExpNode gteNode = new ContainsNode(columnNode1, gteValue, TemplateMatchCodes.GE);
+    ExpNode lteNode = new ContainsNode(columnNode1, lteValue, TemplateMatchCodes.LE);
+
+    {
+      if (true) return new AndNode(gteNode, lteNode);
+    }
+    throw new Error("Missing return statement in function");
+  }
+
   private boolean jj_3_20() {
     if (jj_scan_token(IS)) return true;
     if (jj_scan_token(NULL)) return true;
@@ -3365,6 +3289,68 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
   private boolean jj_3R_69() {
     if (jj_scan_token(MINUS)) return true;
     return false;
+  }
+
+  final public ExpNode containsSimpleNode(AbstractDMLQuery query, ColumnNode columnNode1, String column) throws ParseException {
+    ValueNode valueNode = null;
+    short templateMatchCode = TemplateMatchCodes.EQ;
+    Token rel = null;
+    Token t = null;
+    String relation = null;
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case EQUAL:
+        jj_consume_token(EQUAL);
+        templateMatchCode = TemplateMatchCodes.EQ;
+        break;
+      case LESS:
+        jj_consume_token(LESS);
+        templateMatchCode = TemplateMatchCodes.LT;
+        break;
+      case LESSEQUAL:
+        jj_consume_token(LESSEQUAL);
+        templateMatchCode = TemplateMatchCodes.LE;
+        break;
+      case GREATER:
+        jj_consume_token(GREATER);
+        templateMatchCode = TemplateMatchCodes.GT;
+        break;
+      case GREATEREQUAL:
+        jj_consume_token(GREATEREQUAL);
+        templateMatchCode = TemplateMatchCodes.GE;
+        break;
+      case NOTEQUAL:
+        jj_consume_token(NOTEQUAL);
+        templateMatchCode = TemplateMatchCodes.NE;
+        break;
+      case NOTEQUAL2:
+        jj_consume_token(NOTEQUAL2);
+        templateMatchCode = TemplateMatchCodes.NE;
+        break;
+      case LIKE:
+        jj_consume_token(LIKE);
+        templateMatchCode = TemplateMatchCodes.REGEX;
+        break;
+      case NOT:
+        jj_consume_token(NOT);
+        jj_consume_token(LIKE);
+        templateMatchCode = TemplateMatchCodes.NOT_REGEX;
+        break;
+      case RELATION:
+        rel = jj_consume_token(RELATION);
+        templateMatchCode = TemplateMatchCodes.RELATION;
+        relation = rel.image;
+        break;
+      default:
+        jj_la1[134] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+    }
+    valueNode = valueNode(query);
+    columnNode1.setName(column);
+    {
+      if (true) return new ContainsNode(columnNode1, valueNode, templateMatchCode, relation);
+    }
+    throw new Error("Missing return statement in function");
   }
 
   private boolean jj_3R_68() {
@@ -3430,6 +3416,31 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     return false;
   }
 
+  final public ExpNode containsInNode(AbstractDMLQuery query, ColumnNode columnNode1, String column) throws ParseException {
+    ExpNode inNode;
+    boolean notIn = false;
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case NOT:
+        jj_consume_token(NOT);
+        notIn = true;
+        break;
+      default:
+        jj_la1[135] = jj_gen;
+        ;
+    }
+    jj_consume_token(IN);
+    jj_consume_token(OPENPAREN);
+    inNode = inExprOrList(query, notIn);
+    jj_consume_token(CLOSEPAREN);
+    columnNode1.setName(column);
+    inNode.setLeftChild(columnNode1);
+
+    {
+      if (true) return new ContainsNode(columnNode1, inNode, TemplateMatchCodes.IN);
+    }
+    throw new Error("Missing return statement in function");
+  }
+
   final public ExpNode containsNode(AbstractDMLQuery query, ColumnNode columnNode1) throws ParseException {
     Token t;
     ValueNode valueNode = null;
@@ -3448,7 +3459,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
           ;
           break;
         default:
-          jj_la1[135] = jj_gen;
+          jj_la1[136] = jj_gen;
           break label_20;
       }
       jj_consume_token(COLLECTION_CONTAINS);
@@ -3461,7 +3472,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
           ;
           break;
         default:
-          jj_la1[136] = jj_gen;
+          jj_la1[137] = jj_gen;
           break label_21;
       }
       jj_consume_token(DOT);
@@ -3476,7 +3487,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
             ;
             break;
           default:
-            jj_la1[137] = jj_gen;
+            jj_la1[138] = jj_gen;
             break label_22;
         }
         jj_consume_token(COLLECTION_CONTAINS);
@@ -3502,7 +3513,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
         expNode = containsMultipleNode(query, columnNode1, columnPath.toString());
         break;
       default:
-        jj_la1[138] = jj_gen;
+        jj_la1[139] = jj_gen;
         if (jj_2_25(2)) {
           expNode = containsIsNullNode(query, columnNode1, columnPath.toString());
         } else if (jj_2_26(2)) {
@@ -3512,58 +3523,8 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
           throw new ParseException();
         }
     }
-    {
-      if (true) return expNode;
-    }
+    {if (true) return expNode;}
     throw new Error("Missing return statement in function");
-  }
-
-  final public ExpNode containsSingleNode(AbstractDMLQuery query, ColumnNode columnNode1, String column) throws ParseException {
-    ExpNode expNode = null;
-    if (jj_2_27(2)) {
-      expNode = containsInNode(query, columnNode1, column);
-    } else if (jj_2_28(2)) {
-      expNode = containsBetweenNode(query, columnNode1, column);
-    } else {
-      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-        case LIKE:
-        case NOT:
-        case RELATION:
-        case LESS:
-        case LESSEQUAL:
-        case GREATER:
-        case GREATEREQUAL:
-        case EQUAL:
-        case NOTEQUAL:
-        case NOTEQUAL2:
-          expNode = containsSimpleNode(query, columnNode1, column);
-          break;
-        default:
-          jj_la1[139] = jj_gen;
-          jj_consume_token(-1);
-          throw new ParseException();
-      }
-    }
-    {
-      if (true) return expNode;
-    }
-    throw new Error("Missing return statement in function");
-  }
-
-  private boolean jj_3R_82() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_6()) {
-      jj_scanpos = xsp;
-      if (jj_3R_91()) return true;
-    }
-    return false;
-  }
-
-  private boolean jj_3_6() {
-    if (jj_scan_token(IDENTIFIER)) return true;
-    if (jj_scan_token(OPENPAREN)) return true;
-    return false;
   }
 
   private boolean jj_3R_83() {
@@ -3596,6 +3557,34 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     if (jj_3R_37()) jj_scanpos = xsp;
     if (jj_scan_token(FLOATING_POINT_LITERAL)) return true;
     return false;
+  }
+
+  final public ExpNode containsIsNullNode(AbstractDMLQuery query, ColumnNode columnNode1, String columnPath) throws ParseException {
+    IsNullNode valueNode = null;
+    jj_consume_token(IS);
+    jj_consume_token(NULL);
+    //comment
+    valueNode = new IsNullNode(columnNode1, new LiteralNode(null));
+    columnNode1.setName(columnPath);
+    {
+      if (true) return new ContainsNode(columnNode1, valueNode, TemplateMatchCodes.IS_NULL);
+    }
+    throw new Error("Missing return statement in function");
+  }
+
+  final public ExpNode containsIsNotNullNode(AbstractDMLQuery query, ColumnNode columnNode1, String columnPath) throws ParseException {
+    IsNullNode valueNode = null;
+    jj_consume_token(IS);
+    jj_consume_token(NOT);
+    jj_consume_token(NULL);
+    //comment
+    valueNode = new IsNullNode(columnNode1, new LiteralNode(null));
+    valueNode.setNot(true);
+    columnNode1.setName(columnPath);
+    {
+      if (true) return new ContainsNode(columnNode1, valueNode, TemplateMatchCodes.NOT_NULL);
+    }
+    throw new Error("Missing return statement in function");
   }
 
   private boolean jj_3_16() {
@@ -3800,6 +3789,18 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     return false;
   }
 
+  final public ExpNode containsMultipleNode(AbstractDMLQuery query, ColumnNode columnNode1, String columnPath) throws ParseException {
+    ValueNode valueNode = null;
+    jj_consume_token(OPENPAREN);
+    columnNode1.setName(columnPath);
+    valueNode = new ContainsItemsRootNode(SqlContainsItemExpression(query), columnPath, columnNode1);
+    jj_consume_token(CLOSEPAREN);
+    {
+      if (true) return new ContainsItemNode(columnNode1, valueNode, TemplateMatchCodes.EQ);
+    }
+    throw new Error("Missing return statement in function");
+  }
+
   private boolean jj_3R_79() {
     if (jj_scan_token(AVG)) return true;
     return false;
@@ -3810,14 +3811,36 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     return false;
   }
 
-  private boolean jj_3R_77() {
-    if (jj_scan_token(MAX)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_76() {
-    if (jj_scan_token(COUNT)) return true;
-    return false;
+  final public ExpNode containsSingleNode(AbstractDMLQuery query, ColumnNode columnNode1, String column) throws ParseException {
+    ExpNode expNode = null;
+    if (jj_2_27(2)) {
+      expNode = containsInNode(query, columnNode1, column);
+    } else if (jj_2_28(2)) {
+      expNode = containsBetweenNode(query, columnNode1, column);
+    } else {
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case LIKE:
+        case NOT:
+        case RELATION:
+        case LESS:
+        case LESSEQUAL:
+        case GREATER:
+        case GREATEREQUAL:
+        case EQUAL:
+        case NOTEQUAL:
+        case NOTEQUAL2:
+          expNode = containsSimpleNode(query, columnNode1, column);
+          break;
+        default:
+          jj_la1[140] = jj_gen;
+          jj_consume_token(-1);
+          throw new ParseException();
+      }
+    }
+    {
+      if (true) return expNode;
+    }
+    throw new Error("Missing return statement in function");
   }
 
   final public ValueNode valueNode(AbstractDMLQuery query) throws ParseException {
@@ -3843,7 +3866,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
         valueNode = new LiteralNode(Boolean.FALSE);
         break;
       default:
-        jj_la1[143] = jj_gen;
+        jj_la1[144] = jj_gen;
         if (jj_2_29(2)) {
           switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
             case MINUS:
@@ -3851,7 +3874,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
               negative = "-";
               break;
             default:
-              jj_la1[140] = jj_gen;
+              jj_la1[141] = jj_gen;
               ;
           }
           t = jj_consume_token(INTEGER_LITERAL);
@@ -3863,7 +3886,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
               negative = "-";
               break;
             default:
-              jj_la1[141] = jj_gen;
+              jj_la1[142] = jj_gen;
               ;
           }
           t = jj_consume_token(LONG_LITERAL);
@@ -3875,7 +3898,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
               negative = "-";
               break;
             default:
-              jj_la1[142] = jj_gen;
+              jj_la1[143] = jj_gen;
               ;
           }
           t = jj_consume_token(FLOATING_POINT_LITERAL);
@@ -3887,7 +3910,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
               valueNode = new LiteralNode(t.image);
               break;
             default:
-              jj_la1[144] = jj_gen;
+              jj_la1[145] = jj_gen;
               jj_consume_token(-1);
               throw new ParseException();
           }
@@ -3899,16 +3922,183 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     throw new Error("Missing return statement in function");
   }
 
+  private boolean jj_3R_77() {
+    if (jj_scan_token(MAX)) return true;
+    return false;
+  }
+
+  final public ExpNode inExprOrList(AbstractDMLQuery query, boolean isNot) throws ParseException {
+    Query innerQuery = null;
+    ExpNode expNode = null;
+    HashSet<LiteralNode> valuelist;
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case SELECT:
+        innerQuery = selectSql();
+        if (isNot) {
+          expNode = new NotInNode();
+        } else {
+          expNode = new InNode();
+        }
+        query.setContainsSubQueries(true);
+        expNode.setRightChild(new InnerQueryNode((SelectQuery) innerQuery));
+      {
+        if (true) return expNode;
+      }
+      break;
+      case NULL:
+      case EMPTY_CLOB:
+      case EMPTY_BLOB:
+      case TRUE:
+      case FALSE:
+      case INTEGER_LITERAL:
+      case LONG_LITERAL:
+      case FLOATING_POINT_LITERAL:
+      case STRING_LITERAL:
+      case MINUS:
+      case QUESTIONMARK:
+        valuelist = inValueList(query);
+        if (isNot) {
+          expNode = new NotInNode();
+          ((NotInNode) expNode).setValuesList(valuelist);
+        } else {
+          expNode = new InNode();
+          ((InNode) expNode).setValuesList(valuelist);
+        }
+      {
+        if (true) return expNode;
+      }
+      break;
+      default:
+        jj_la1[146] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+    }
+    throw new Error("Missing return statement in function");
+  }
+
+  private boolean jj_3R_76() {
+    if (jj_scan_token(COUNT)) return true;
+    return false;
+  }
+
+  final public LiteralNode parseInValue(AbstractDMLQuery query) throws ParseException {
+    Token t = null;
+    LiteralNode value = null;
+    String negative = "";
+    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+      case TRUE:
+        t = jj_consume_token(TRUE);
+        value = new LiteralNode(Boolean.TRUE);
+        break;
+      case FALSE:
+        jj_consume_token(FALSE);
+        value = new LiteralNode(Boolean.FALSE);
+        break;
+      case NULL:
+        jj_consume_token(NULL);
+        value = new LiteralNode(null);
+        break;
+      case EMPTY_CLOB:
+        jj_consume_token(EMPTY_CLOB);
+        value = new LiteralNode(new Clob(""));
+        break;
+      case EMPTY_BLOB:
+        jj_consume_token(EMPTY_BLOB);
+        value = new LiteralNode(new Blob(new byte[0]));
+        break;
+      case QUESTIONMARK:
+        jj_consume_token(QUESTIONMARK);
+        query.setPrepared(true);
+        value = new PreparedNode(null, ++conditionIndex);
+        break;
+      case STRING_LITERAL:
+        t = jj_consume_token(STRING_LITERAL);
+        value = new LiteralNode(new String(t.image.substring(1, t.image.length() - 1)));
+        break;
+      default:
+        jj_la1[150] = jj_gen;
+        if (jj_2_32(2)) {
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case MINUS:
+              jj_consume_token(MINUS);
+              negative = "-";
+              break;
+            default:
+              jj_la1[147] = jj_gen;
+              ;
+          }
+          t = jj_consume_token(INTEGER_LITERAL);
+          value = new LiteralNode(negative + t.image);
+        } else if (jj_2_33(2)) {
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case MINUS:
+              jj_consume_token(MINUS);
+              negative = "-";
+              break;
+            default:
+              jj_la1[148] = jj_gen;
+              ;
+          }
+          t = jj_consume_token(LONG_LITERAL);
+          value = new LiteralNode(negative + t.image.substring(0, t.image.length() - 1));
+        } else if (jj_2_34(2)) {
+          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+            case MINUS:
+              jj_consume_token(MINUS);
+              negative = "-";
+              break;
+            default:
+              jj_la1[149] = jj_gen;
+              ;
+          }
+          t = jj_consume_token(FLOATING_POINT_LITERAL);
+          value = new LiteralNode(negative + t.image);
+        } else {
+          jj_consume_token(-1);
+          throw new ParseException();
+        }
+    }
+    {
+      if (true) return value;
+    }
+    throw new Error("Missing return statement in function");
+  }
+
   private boolean jj_3R_75() {
     if (jj_scan_token(SUM)) return true;
     return false;
+  }
+
+  final public HashSet<LiteralNode> inValueList(AbstractDMLQuery query) throws ParseException {
+    LiteralNode value = null;
+    HashSet<LiteralNode> list = new HashSet<LiteralNode>();
+    value = parseInValue(query);
+    list.add(value);
+    label_23:
+    while (true) {
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case 125:
+          ;
+          break;
+        default:
+          jj_la1[151] = jj_gen;
+          break label_23;
+      }
+      jj_consume_token(125);
+      value = parseInValue(query);
+      list.add(value);
+    }
+    {
+      if (true) return list;
+    }
+    throw new Error("Missing return statement in function");
   }
 
   private boolean jj_3R_26() {
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3R_75()) {
-    jj_scanpos = xsp;
+      jj_scanpos = xsp;
     if (jj_3R_76()) {
     jj_scanpos = xsp;
     if (jj_3R_77()) {
@@ -3920,35 +4110,6 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     }
     }
     }
-    if (jj_scan_token(OPENPAREN)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_32() {
-    if (jj_scan_token(MINUS)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_80() {
-    if (jj_scan_token(NOT)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_31() {
-    if (jj_scan_token(MINUS)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_30() {
-    if (jj_scan_token(MINUS)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_33() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_80()) jj_scanpos = xsp;
-    if (jj_scan_token(IN)) return true;
     if (jj_scan_token(OPENPAREN)) return true;
     return false;
   }
@@ -4082,17 +4243,6 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     return false;
   }
 
-  private boolean jj_3_4() {
-    if (jj_3R_25()) return true;
-    if (jj_scan_token(DOT)) return true;
-    return false;
-  }
-
-  private boolean jj_3_3() {
-    if (jj_3R_26()) return true;
-    return false;
-  }
-
   private boolean jj_3_26() {
     if (jj_3R_61()) return true;
     return false;
@@ -4108,55 +4258,6 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     return false;
   }
 
-  final public ExpNode inExprOrList(AbstractDMLQuery query, boolean isNot) throws ParseException {
-    Query innerQuery = null;
-    ExpNode expNode = null;
-    HashSet<LiteralNode> valuelist;
-    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-      case SELECT:
-        innerQuery = selectSql();
-        if (isNot) {
-          expNode = new NotInNode();
-        } else {
-          expNode = new InNode();
-        }
-        query.setContainsSubQueries(true);
-        expNode.setRightChild(new InnerQueryNode((SelectQuery) innerQuery));
-      {
-        if (true) return expNode;
-      }
-      break;
-      case NULL:
-      case EMPTY_CLOB:
-      case EMPTY_BLOB:
-      case TRUE:
-      case FALSE:
-      case INTEGER_LITERAL:
-      case LONG_LITERAL:
-      case FLOATING_POINT_LITERAL:
-      case STRING_LITERAL:
-      case MINUS:
-      case QUESTIONMARK:
-        valuelist = inValueList(query);
-        if (isNot) {
-          expNode = new NotInNode();
-          ((NotInNode) expNode).setValuesList(valuelist);
-        } else {
-          expNode = new InNode();
-          ((InNode) expNode).setValuesList(valuelist);
-        }
-      {
-        if (true) return expNode;
-      }
-      break;
-      default:
-        jj_la1[145] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
-    }
-    throw new Error("Missing return statement in function");
-  }
-
   private boolean jj_3R_73() {
     if (jj_scan_token(IDENTIFIER)) return true;
     return false;
@@ -4166,129 +4267,6 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     if (jj_scan_token(IS)) return true;
     if (jj_scan_token(NULL)) return true;
     return false;
-  }
-
-  private boolean jj_3R_25() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_73()) {
-      jj_scanpos = xsp;
-      if (jj_3R_74()) return true;
-    }
-    return false;
-  }
-
-  final public LiteralNode parseInValue(AbstractDMLQuery query) throws ParseException {
-    Token t = null;
-    LiteralNode value = null;
-    String negative = "";
-    switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-      case TRUE:
-        t = jj_consume_token(TRUE);
-        value = new LiteralNode(Boolean.TRUE);
-        break;
-      case FALSE:
-        jj_consume_token(FALSE);
-        value = new LiteralNode(Boolean.FALSE);
-        break;
-      case NULL:
-        jj_consume_token(NULL);
-        value = new LiteralNode(null);
-        break;
-      case EMPTY_CLOB:
-        jj_consume_token(EMPTY_CLOB);
-        value = new LiteralNode(new Clob(""));
-        break;
-      case EMPTY_BLOB:
-        jj_consume_token(EMPTY_BLOB);
-        value = new LiteralNode(new Blob(new byte[0]));
-        break;
-      case QUESTIONMARK:
-        jj_consume_token(QUESTIONMARK);
-        query.setPrepared(true);
-        value = new PreparedNode(null, ++conditionIndex);
-        break;
-      case STRING_LITERAL:
-        t = jj_consume_token(STRING_LITERAL);
-        value = new LiteralNode(new String(t.image.substring(1, t.image.length() - 1)));
-        break;
-      default:
-        jj_la1[149] = jj_gen;
-        if (jj_2_32(2)) {
-          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-            case MINUS:
-              jj_consume_token(MINUS);
-              negative = "-";
-              break;
-            default:
-              jj_la1[146] = jj_gen;
-              ;
-          }
-          t = jj_consume_token(INTEGER_LITERAL);
-          value = new LiteralNode(negative + t.image);
-        } else if (jj_2_33(2)) {
-          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-            case MINUS:
-              jj_consume_token(MINUS);
-              negative = "-";
-              break;
-            default:
-              jj_la1[147] = jj_gen;
-              ;
-          }
-          t = jj_consume_token(LONG_LITERAL);
-          value = new LiteralNode(negative + t.image.substring(0, t.image.length() - 1));
-        } else if (jj_2_34(2)) {
-          switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-            case MINUS:
-              jj_consume_token(MINUS);
-              negative = "-";
-              break;
-            default:
-              jj_la1[148] = jj_gen;
-              ;
-          }
-          t = jj_consume_token(FLOATING_POINT_LITERAL);
-          value = new LiteralNode(negative + t.image);
-        } else {
-          jj_consume_token(-1);
-          throw new ParseException();
-        }
-    }
-    {
-      if (true) return value;
-    }
-    throw new Error("Missing return statement in function");
-  }
-
-  private boolean jj_3R_72() {
-    if (jj_scan_token(MINUS)) return true;
-    return false;
-  }
-
-  final public HashSet<LiteralNode> inValueList(AbstractDMLQuery query) throws ParseException {
-    LiteralNode value = null;
-    HashSet<LiteralNode> list = new HashSet<LiteralNode>();
-    value = parseInValue(query);
-    list.add(value);
-    label_23:
-    while (true) {
-      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-        case 125:
-          ;
-          break;
-        default:
-          jj_la1[150] = jj_gen;
-          break label_23;
-      }
-      jj_consume_token(125);
-      value = parseInValue(query);
-      list.add(value);
-    }
-    {
-      if (true) return list;
-    }
-    throw new Error("Missing return statement in function");
   }
 
   final public ValueNode getBetweenValueNode(AbstractDMLQuery query) throws ParseException {
@@ -4314,7 +4292,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
         valueNode = new LiteralNode(Boolean.FALSE);
         break;
       default:
-        jj_la1[156] = jj_gen;
+        jj_la1[157] = jj_gen;
         if (jj_2_35(2)) {
           switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
             case MINUS:
@@ -4322,7 +4300,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
               negative = "-";
               break;
             default:
-              jj_la1[151] = jj_gen;
+              jj_la1[152] = jj_gen;
               ;
           }
           t = jj_consume_token(INTEGER_LITERAL);
@@ -4334,7 +4312,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
               negative = "-";
               break;
             default:
-              jj_la1[152] = jj_gen;
+              jj_la1[153] = jj_gen;
               ;
           }
           t = jj_consume_token(LONG_LITERAL);
@@ -4346,7 +4324,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
               negative = "-";
               break;
             default:
-              jj_la1[153] = jj_gen;
+              jj_la1[154] = jj_gen;
               ;
           }
           t = jj_consume_token(FLOATING_POINT_LITERAL);
@@ -4370,14 +4348,14 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
                       operator = jj_consume_token(MINUS);
                       break;
                     default:
-                      jj_la1[154] = jj_gen;
+                      jj_la1[155] = jj_gen;
                       jj_consume_token(-1);
                       throw new ParseException();
                   }
                   addup = jj_consume_token(INTEGER_LITERAL);
                   break;
                 default:
-                  jj_la1[155] = jj_gen;
+                  jj_la1[156] = jj_gen;
                   ;
               }
               Calendar cal = Calendar.getInstance();
@@ -4390,7 +4368,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
               valueNode = new LiteralNode(new java.sql.Timestamp(cal.getTime().getTime()));
               break;
             default:
-              jj_la1[157] = jj_gen;
+              jj_la1[158] = jj_gen;
               jj_consume_token(-1);
               throw new ParseException();
           }
@@ -4407,43 +4385,39 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     return false;
   }
 
-  /**
-   * Generated Token Manager.
-   */
-  public SqlParserTokenManager token_source;
-  SimpleCharStream jj_input_stream;
-  /**
-   * Current token.
-   */
-  public Token token;
-  /**
-   * Next token.
-   */
-  public Token jj_nt;
-  private int jj_ntk;
-  private Token jj_scanpos, jj_lastpos;
-  private int jj_la;
-  private int jj_gen;
+  private boolean jj_3R_91() {
+    if (jj_3R_25()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_72() {
+    if (jj_scan_token(MINUS)) return true;
+    return false;
+  }
 
   private boolean jj_3R_36() {
     if (jj_scan_token(MINUS)) return true;
     return false;
   }
 
-  static private int[] jj_la1_0;
-  static private int[] jj_la1_1;
-  static private int[] jj_la1_2;
-  static private int[] jj_la1_3;
-
-  static {
-    jj_la1_init_0();
-    jj_la1_init_1();
-    jj_la1_init_2();
-    jj_la1_init_3();
-  }
-
   private boolean jj_3R_35() {
     if (jj_scan_token(MINUS)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_82() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_6()) {
+      jj_scanpos = xsp;
+      if (jj_3R_91()) return true;
+    }
+    return false;
+  }
+
+  private boolean jj_3_6() {
+    if (jj_scan_token(IDENTIFIER)) return true;
+    if (jj_scan_token(OPENPAREN)) return true;
     return false;
   }
 
@@ -4453,11 +4427,88 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     return false;
   }
 
+  private boolean jj_3R_32() {
+    if (jj_scan_token(MINUS)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_80() {
+    if (jj_scan_token(NOT)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_31() {
+    if (jj_scan_token(MINUS)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_30() {
+    if (jj_scan_token(MINUS)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_33() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_80()) jj_scanpos = xsp;
+    if (jj_scan_token(IN)) return true;
+    if (jj_scan_token(OPENPAREN)) return true;
+    return false;
+  }
+
+  private boolean jj_3_4() {
+    if (jj_3R_25()) return true;
+    if (jj_scan_token(DOT)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_25() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_73()) {
+      jj_scanpos = xsp;
+      if (jj_3R_74()) return true;
+    }
+    return false;
+  }
+
+  private boolean jj_3_3() {
+    if (jj_3R_26()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_71() {
+    if (jj_scan_token(MINUS)) return true;
+    return false;
+  }
+
+  SimpleCharStream jj_input_stream;
+
+  private boolean jj_3R_70() {
+    if (jj_scan_token(MINUS)) return true;
+    return false;
+  }
+
   private boolean jj_3_1() {
     if (jj_scan_token(OPENPAREN)) return true;
     if (jj_3R_24()) return true;
     return false;
   }
+
+  private int jj_ntk;
+  private Token jj_scanpos, jj_lastpos;
+  private int jj_la;
+  private int jj_gen;
+
+  private boolean jj_3R_90() {
+    if (jj_scan_token(SYSDATE)) return true;
+    return false;
+  }
+
+  static private int[] jj_la1_0;
+  static private int[] jj_la1_1;
+  static private int[] jj_la1_2;
+  static private int[] jj_la1_3;
 
   private boolean jj_3_2() {
     if (jj_3R_25()) return true;
@@ -4465,19 +4516,56 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     return false;
   }
 
+  private boolean jj_3R_89() {
+    if (jj_scan_token(DATE_LITERAL)) return true;
+    return false;
+  }
+
+  private boolean jj_3_37() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_72()) jj_scanpos = xsp;
+    if (jj_scan_token(FLOATING_POINT_LITERAL)) return true;
+    return false;
+  }
+
+  private boolean jj_3_36() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_71()) jj_scanpos = xsp;
+    if (jj_scan_token(LONG_LITERAL)) return true;
+    return false;
+  }
+
+  private boolean jj_3_35() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_70()) jj_scanpos = xsp;
+    if (jj_scan_token(INTEGER_LITERAL)) return true;
+    return false;
+  }
+
   final private JJCalls[] jj_2_rtns = new JJCalls[37];
   private boolean jj_rescan = false;
   private int jj_gc = 0;
 
-  /**
-   * Constructor with InputStream.
-   */
-  public SqlParser(java.io.InputStream stream) {
-    this(stream, null);
+  private boolean jj_3R_88() {
+    if (jj_scan_token(FALSE)) return true;
+    return false;
   }
 
-  private boolean jj_3R_71() {
-    if (jj_scan_token(MINUS)) return true;
+  private boolean jj_3R_87() {
+    if (jj_scan_token(TRUE)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_85() {
+    if (jj_scan_token(QUESTIONMARK)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_86() {
+    if (jj_scan_token(STRING_LITERAL)) return true;
     return false;
   }
 
@@ -4486,16 +4574,6 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
    */
   public void ReInit(java.io.InputStream stream) {
     ReInit(stream, null);
-  }
-
-  private boolean jj_3R_70() {
-    if (jj_scan_token(MINUS)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_90() {
-    if (jj_scan_token(SYSDATE)) return true;
-    return false;
   }
 
   /**
@@ -4511,7 +4589,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 158; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 159; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -4522,7 +4600,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 158; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 159; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -4532,7 +4610,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 158; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 159; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -4649,7 +4727,7 @@ Token t, table1 = null, table2 = null, addup = null, operator = null ;
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 158; i++) {
+    for (int i = 0; i < 159; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1 << j)) != 0) {
