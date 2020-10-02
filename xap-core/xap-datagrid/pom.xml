@@ -130,9 +130,15 @@
                 <configuration>
                     <filesets>
                         <fileset>
-                            <directory>${project.build.sourceDirectory}</directory>
+                            <directory>${project.build.sourceDirectory}/com/j_spaces/jdbc/parser/grammar</directory>
                             <includes>
-                                <include>**/SqlParser.java</include>
+                                <include>SqlParser.java</include>
+                                <include>ParseException.java</include>
+                                <include>SimpleCharStream.java</include>
+                                <include>SqlParserConstants.java</include>
+                                <include>SqlParserTokenManager.java</include>
+                                <include>Token.java</include>
+                                <include>TokenMgrError.java</include>
                             </includes>
                             <followSymlinks>false</followSymlinks>
                         </fileset>
