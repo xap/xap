@@ -100,6 +100,10 @@ public class SelectQuery extends AbstractDMLQuery {
         }
     }
 
+    public void setJoins(List<Join> joins) {
+        //@todo barak, handle query with joins
+    }
+
     /**
      * @return list of aggregated functions in query
      */

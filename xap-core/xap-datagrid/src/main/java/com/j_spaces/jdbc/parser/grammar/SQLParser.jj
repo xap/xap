@@ -131,6 +131,12 @@ TOKEN [IGNORE_CASE]:  /* Keywords */
   | < AS: "as" >
   | < NULLS_LAST: "nulls last" >
   | < NULLS_FIRST: "nulls first" >
+  | < INNER: "inner" >
+  | < LEFT: "left" >
+  | < RIGHT: "right" >
+  | < FULL: "full" >
+  | < JOIN: "join" >
+  | < ON: "on" >
 
 	  // Data types,
 	
@@ -243,7 +249,7 @@ Query parseStatement():
 
 /* statement methods */
 
-Query selectSql():
+SelectQuery selectSql():
 { SelectQuery query;
   ExpNode exp = null;
 }
@@ -256,7 +262,8 @@ Query selectSql():
          <FROM>
          selectTableList(query)
          [<WHERE> exp = SqlExpression(query)]
-         [ groupBy(query)]
+         [joins(query)]
+         [groupBy(query)]
          [orderBy(query)]
          [<FOR_UPDATE> { query.setForUpdate(true); }]
     )
@@ -264,9 +271,33 @@ Query selectSql():
     	query.setExpTree(exp);
     	return query;
     }
-
 }
 
+void joins(SelectQuery query):
+{
+    Join join = null;
+    List<Join> joins = new ArrayList<Join>();
+}
+{
+    join = join() { joins.add(join); }
+    (join = join() { joins.add(join); })*
+    { query.setJoins(joins); }
+}
+
+Join join():
+{
+   Token type = null;
+   SelectQuery query = null;
+   ExpNode exp = null;
+   Token alias = null;
+}
+{
+    (type = <INNER> | type = <LEFT> | type = <RIGHT> | type = <FULL>) <JOIN>
+    <OPENPAREN> query = selectSql() <CLOSEPAREN>
+    ([<AS>] alias = id())?
+    <ON> exp = SqlExpression(query) /* maybe we should pass the parent here as well ? */
+    { return new Join(getString(type), query, exp, getString(alias)); }
+}
 // handle SQLQuery syntax (no from clause)
 AbstractDMLQuery readMultipleQuery():
  {

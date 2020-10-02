@@ -27,17 +27,20 @@ public class SqlParserTest {
 //
 //            , /*barak*/ "select * from a, b"
 //            , /*barak*/ "select * from (select a from b) as a, b"
-            /*barak*/ "SELECT REPLACE(x.TICKER, ' ELEC ', ' ') as TICKER," +
-                    "MAX(DATA_RECEIVED_TIMESTAMP) AS DATA_RECEIVED_TIMESTAMP,\n" +
-                    "MAX(CRNCY) AS CRNCY\n" +
-                    "FROM BPIPE_RT.REAL_TIME_FUTURES as x\n"
+//            /*barak*/ "SELECT REPLACE(x.TICKER, ' ELEC ', ' ') as TICKER," +
+//                    "MAX(DATA_RECEIVED_TIMESTAMP) AS DATA_RECEIVED_TIMESTAMP,\n" +
+//                    "MAX(CRNCY) AS CRNCY\n" +
+//                    "FROM BPIPE_RT.REAL_TIME_FUTURES as x\n"
+//            /*barak*/ "SELECT * FROM A GROUP BY X"
+//            /*barak*/ "select * from (select * from a as x INNER JOIN (SELECT * from b) as y ON foo = bar)"
 
-//            , "SELECT *\n" +
+
+//            "SELECT *\n" +
 //                    "FROM (SELECT REPLACE(x.TICKER, ' ELEC ', ' ') as TICKER,\n" +
 //                    "      MAX(CRNCY) AS CRNCY,\n" +
 //                    "      MAX(DATA_RECEIVED_TIMESTAMP) AS DATA_RECEIVED_TIMESTAMP\n" +
 //                    "      FROM BPIPE_RT.REAL_TIME_FUTURES as x\n" +
-//                    "             INNER JOIN (SELECT TICKER, MAX(DATA_RECEIVED_TIMESTAMP) AS MAX_TIMESTAMP\n" +
+//                    "      INNER JOIN (SELECT TICKER, MAX(DATA_RECEIVED_TIMESTAMP) AS MAX_TIMESTAMP\n" +
 //                    "                         FROM BPIPE_RT.REAL_TIME_FUTURES\n" +
 //                    "                         WHERE CRNCY IS NOT NULL\n" +
 //                    "                         GROUP BY TICKER) as y ON x.DATA_RECEIVED_TIMESTAMP = MAX_TIMESTAMP and x.TICKER = y.TICKER\n" +
@@ -50,8 +53,7 @@ public class SqlParserTest {
 //                    "                           ON x.CURRENCY_CODE = y.CURRENCY_CODE AND x.DDATE = y.DDATE) FX\n" +
 //                    "         ON RT.CRNCY = FX.CURRENCY_CODE AND CRNCY IS NOT NULL\n" +
 //                    "ORDER BY DATA_RECEIVED_TIMESTAMP;\n"
-
-//            , "SELECT REPLACE(x.PARSEKYABLE_DES_SOURCE, ' ELEC ', ' ') AS TICKER, MAX(PX_YEST_CLOSE) as PX_YEST_CLOSE, MAX(x.DBTIMESTAMP) as DBTIMESTAMP\n" +
+//             "SELECT REPLACE(x.PARSEKYABLE_DES_SOURCE, ' ELEC ', ' ') AS TICKER, MAX(PX_YEST_CLOSE) as PX_YEST_CLOSE, MAX(x.DBTIMESTAMP) as DBTIMESTAMP\n" +
 //                    "FROM BLOOMBERG_FUTURES.SHARE_FUTURES_PRICING_RPX as x\n" +
 //                    "       INNER JOIN (SELECT PARSEKYABLE_DES_SOURCE, MAX(DBTIMESTAMP) as MAX_TIMESTAMP\n" +
 //                    "                   FROM BLOOMBERG_FUTURES.SHARE_FUTURES_PRICING_RPX\n" +
