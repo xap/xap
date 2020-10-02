@@ -100,16 +100,26 @@ public interface SqlParserConstants {
   int UNION = 48;
   /** RegularExpression Id. */
   int VALUES = 49;
-  /** RegularExpression Id. */
-  int COMMIT = 50;
-  /** RegularExpression Id. */
-  int ROLLBACK = 51;
-  /** RegularExpression Id. */
-  int PRIMARY_KEY = 52;
-  /** RegularExpression Id. */
-  int PARTITION_BY = 53;
-  /** RegularExpression Id. */
-  int UID = 54;
+    /**
+     * RegularExpression Id.
+     */
+    int COMMIT = 50;
+    /**
+     * RegularExpression Id.
+     */
+    int ROLLBACK = 51;
+    /**
+     * RegularExpression Id.
+     */
+    int PRIMARY_KEY = 52;
+    /**
+     * RegularExpression Id.
+     */
+    int PARTITION_BY = 53;
+    /**
+     * RegularExpression Id.
+     */
+    int UID = 54;
     /**
      * RegularExpression Id.
      */
@@ -446,16 +456,16 @@ public interface SqlParserConstants {
             "\"end\"",
             "\"from\"",
             "\"group\"",
-    "\"in\"",
-    "\"is\"",
-    "\"like\"",
-    "\"rlike\"",
-    "\"max\"",
-    "\"min\"",
-    "\"not\"",
-    "\"null\"",
-    "\"or\"",
-    "\"order\"",
+            "\"in\"",
+            "\"is\"",
+            "\"like\"",
+            "\"rlike\"",
+            "\"max\"",
+            "\"min\"",
+            "\"not\"",
+            "\"null\"",
+            "\"or\"",
+            "\"order\"",
     "\"select\"",
     "\"substr\"",
     "\"sum\"",

@@ -1,7 +1,7 @@
 options {
 STATIC = false;
 UNICODE_INPUT=true;
-DEBUG_PARSER=true;
+// DEBUG_PARSER=true;
 // DEBUG_LOOKAHEAD=true;
 // DEBUG_TOKEN_MANAGER=true;
 }
@@ -60,6 +60,14 @@ public class SqlParser {
             return null;
         }else{
             return token.image;
+        }
+    }
+    private Integer getInteger(Token token){
+        String s = getString(token);
+        if(s == null){
+           return null;
+        }else{
+            return Integer.parseInt(s);
         }
     }
 }
@@ -261,8 +269,8 @@ SelectQuery selectSql():
         [<CLOSEPAREN>]
          <FROM>
          selectTableList(query)
-         [<WHERE> exp = SqlExpression(query)]
          [joins(query)]
+         [<WHERE> exp = SqlExpression(query)]
          [groupBy(query)]
          [orderBy(query)]
          [<FOR_UPDATE> { query.setForUpdate(true); }]
@@ -672,6 +680,8 @@ SelectColumn getSelectColumn(AbstractDMLQuery query):
   SelectColumn col = null;
   Token t = null;
   String alias = null;
+  FunctionCallColumn fcall = null;
+
 }
 {
     t = id()
@@ -679,12 +689,20 @@ SelectColumn getSelectColumn(AbstractDMLQuery query):
     	id = QueryProcessor.getDefaultConfig().isParserCaseSensitivity()? t.image : t.image.toUpperCase();
     }
 
+    [fcall = varArgFunctionCall(getString(t))]
+
+
 	// Optional Column-Alias
 	([< AS >] t = id() { alias = t.image; })?
 
     {
-       	col = new SelectColumn(id, alias);
-        return col;
+        if(fcall != null){
+              fcall.setAlias(getString(t));
+              return fcall;
+        }else{
+            col = new SelectColumn(id, alias);
+            return col;
+        }
     }
 }
 
@@ -799,6 +817,8 @@ ColumnNode createColumnNode(AbstractDMLQuery query,String columnFunc):
  ColumnNode columnNode = null;
  Token t, function = null;
  java.util.List params;
+ Token number = null;
+ Token op = null;
  }
  {
     LOOKAHEAD(2) function = <IDENTIFIER> <OPENPAREN> params = createFunctionParams()  <CLOSEPAREN> {
@@ -825,9 +845,9 @@ ColumnNode createColumnNode(AbstractDMLQuery query,String columnFunc):
         columnNode.setFunctionCallDescription(new com.j_spaces.jdbc.builder.range.FunctionCallDescription(function.image, columnIndex, args));
         return columnNode;
     }
- 	|(t = id() {
+ 	|(t = id() [(op = <PLUS> | op = <MINUS>) number = <INTEGER_LITERAL> ] {
     	 String id =  (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? t.image : t.image.toUpperCase();
-    	 columnNode = new ColumnNode(id);
+    	 columnNode = new ColumnNode(id, getString(op), getInteger(number));
     })
 
     {return columnNode;}
