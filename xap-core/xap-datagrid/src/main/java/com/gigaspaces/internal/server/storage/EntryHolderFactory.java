@@ -128,8 +128,23 @@ public class EntryHolderFactory {
         final long lease = (expiration > 0 || keepExpiration) ? expiration : LeaseManager.toAbsoluteTime(entryPacket.getTTL());
 
         if (entryDataType == EntryDataType.FLAT)
-            return new FlatEntryData(entryPacket.getFieldValues(), entryPacket.getDynamicProperties(),
-                    entryTypeDesc, version, lease, createXtnEntryInfo);
+            if (Boolean.parseBoolean(System.getProperty("gs.serialized-fields", "false"))) {
+                if (entryPacket.getDynamicProperties() == null || entryPacket.getDynamicProperties().isEmpty()) {
+                    return new SerializedEntryData(entryPacket.getFieldValues(),
+                            entryTypeDesc, version, lease, createXtnEntryInfo);
+                } else {
+                    throw new UnsupportedOperationException("gs.serialized-fields does not support dynamic properties");
+                }
+            } else if (Boolean.parseBoolean(System.getProperty("gs.kryo-fields", "false"))) {
+                if (entryPacket.getDynamicProperties() == null || entryPacket.getDynamicProperties().isEmpty()) {
+                    return new KryoEntryData(entryPacket.getFieldValues(), entryTypeDesc, version, lease, createXtnEntryInfo);
+                } else {
+                    throw new UnsupportedOperationException("gs.kryo-fields does not support dynamic properties");
+                }
+            } else {
+                return new FlatEntryData(entryPacket.getFieldValues(), entryPacket.getDynamicProperties(),
+                        entryTypeDesc, version, lease, createXtnEntryInfo);
+            }
 
         return new UserTypeEntryData(entryPacket.toObject(entryType), entryTypeDesc, version, lease, createXtnEntryInfo);
     }
