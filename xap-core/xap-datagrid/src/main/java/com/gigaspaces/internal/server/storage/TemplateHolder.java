@@ -57,7 +57,6 @@ import net.jini.core.transaction.server.ServerTransaction;
 
 import java.util.*;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class represents a template in a J-Space. Each instance of this class contains a reference
@@ -733,12 +732,12 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
             if ( ( this.isMatchByID() && !isChangeQuery() ) || this.isEmptyTemplate())
                 res = shadowEntryData == null ? MatchResult.MASTER : MatchResult.MASTER_AND_SHADOW;
             else {
-                boolean masterMatch = _templateData.match(cacheManager, masterEntryData, skipAlreadyMatchedFixedPropertyIndex, skipAlreadyMatchedIndexPath, regexCache);
+                boolean masterMatch = _templateData.match(cacheManager, masterEntryData, skipAlreadyMatchedFixedPropertyIndex, skipAlreadyMatchedIndexPath, regexCache, context);
 
                 if (shadowEntryData == null)
                     res = masterMatch ? MatchResult.MASTER : MatchResult.NONE;
                 else {
-                    boolean shadowMatch = _templateData.match(cacheManager, shadowEntryData, skipAlreadyMatchedFixedPropertyIndex, skipAlreadyMatchedIndexPath, regexCache);
+                    boolean shadowMatch = _templateData.match(cacheManager, shadowEntryData, skipAlreadyMatchedFixedPropertyIndex, skipAlreadyMatchedIndexPath, regexCache, context);
 
                     if (masterMatch)
                         res = shadowMatch ? MatchResult.MASTER_AND_SHADOW : MatchResult.MASTER;

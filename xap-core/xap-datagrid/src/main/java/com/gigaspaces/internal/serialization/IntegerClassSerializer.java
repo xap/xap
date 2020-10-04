@@ -16,6 +16,8 @@
 
 package com.gigaspaces.internal.serialization;
 
+import com.gigaspaces.internal.io.IOUtils;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -39,6 +41,6 @@ public class IntegerClassSerializer implements IClassSerializer<Integer> {
 
     public void write(ObjectOutput out, Integer obj)
             throws IOException {
-        out.writeInt(obj.intValue());
+        out.writeInt(obj);
     }
 }

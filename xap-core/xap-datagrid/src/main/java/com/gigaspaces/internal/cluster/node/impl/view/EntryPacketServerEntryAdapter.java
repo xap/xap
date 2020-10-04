@@ -20,7 +20,6 @@ import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.query.valuegetter.SpaceEntryPathGetter;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
 import com.gigaspaces.internal.server.storage.EntryDataType;
@@ -28,7 +27,6 @@ import com.gigaspaces.internal.server.storage.ICustomTypeDescLoader;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.metadata.SpaceMetadataException;
-import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.j_spaces.core.LeaseManager;
 import com.j_spaces.core.UnknownTypeException;
 
@@ -69,7 +67,7 @@ public class EntryPacketServerEntryAdapter implements IEntryData, ICustomTypeDes
     }
 
     @Override
-    public SpaceTypeDescriptor getSpaceTypeDescriptor() {
+    public ITypeDesc getSpaceTypeDescriptor() {
         return _entryPacket.getTypeDescriptor();
     }
 
@@ -77,29 +75,6 @@ public class EntryPacketServerEntryAdapter implements IEntryData, ICustomTypeDes
     public Object getFixedPropertyValue(int position) {
         return _entryPacket.getFieldValue(position);
     }
-
-    @Override
-    public Object getPropertyValue(String name) {
-        ITypeDesc typeDesc = _entryPacket.getTypeDescriptor();
-        int pos = typeDesc.getFixedPropertyPosition(name);
-        if (pos != -1)
-            return getFixedPropertyValue(pos);
-
-        if (typeDesc.supportsDynamicProperties()) {
-            Map<String, Object> dynamicProperties = _entryPacket.getDynamicProperties();
-            return dynamicProperties != null ? dynamicProperties.get(name) : null;
-        }
-
-        throw new IllegalArgumentException("Unknown property name '" + name + "'");
-    }
-
-    @Override
-    public Object getPathValue(String path) {
-        if (!path.contains("."))
-            return getPropertyValue(path);
-        return new SpaceEntryPathGetter(path).getValue(this);
-    }
-
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
@@ -144,11 +119,6 @@ public class EntryPacketServerEntryAdapter implements IEntryData, ICustomTypeDes
     }
 
     @Override
-    public int getNumOfFixedProperties() {
-        return _entryPacket.getTypeDescriptor().getNumOfFixedProperties();
-    }
-
-    @Override
     public void setFixedPropertyValue(int index, Object value) {
         _entryPacket.setFieldValue(index, value);
     }
@@ -177,21 +147,4 @@ public class EntryPacketServerEntryAdapter implements IEntryData, ICustomTypeDes
     public void setDynamicProperties(Map<String, Object> dynamicProperties) {
         _entryPacket.setDynamicProperties(dynamicProperties);
     }
-
-    @Override
-    public void setDynamicPropertyValue(String propertyName, Object value) {
-        Map<String, Object> dynamicProperties = _entryPacket.getDynamicProperties();
-        if (dynamicProperties == null)
-            dynamicProperties = new DocumentProperties();
-        dynamicProperties.put(propertyName, value);
-        _entryPacket.setDynamicProperties(dynamicProperties);
-    }
-
-    @Override
-    public void unsetDynamicPropertyValue(String propertyName) {
-        Map<String, Object> dynamicProperties = _entryPacket.getDynamicProperties();
-        if (dynamicProperties != null)
-            dynamicProperties.remove(propertyName);
-    }
-
 }

@@ -32,83 +32,63 @@ import java.util.Map;
  * @since 7.0
  */
 @com.gigaspaces.api.InternalApi
-public class UserTypeEntryData extends AbstractEntryData {
+public class UserTypeEntryData implements ITransactionalEntryData {
+    private final EntryTypeDesc _entryTypeDesc;
+    private final int _versionID;
+    private final long _expirationTime;
+    private final EntryXtnInfo _entryTxnInfo;
     private final Object _data;
     private final Object[] _indexedPropertiesValues;
 
-    public UserTypeEntryData(Object data, EntryTypeDesc entryTypeDesc,
-                             int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon);
+    public UserTypeEntryData(Object data, EntryTypeDesc entryTypeDesc, int version, long expirationTime,
+                              EntryXtnInfo entryXtnInfo) {
+        this._entryTypeDesc = entryTypeDesc;
+        this._versionID = version;
+        this._expirationTime = expirationTime;
+        this._entryTxnInfo = entryXtnInfo;
         this._data = data;
         this._indexedPropertiesValues = initIndexedPropertiesValues();
     }
 
-    private UserTypeEntryData(Object data, EntryTypeDesc entryTypeDesc,
-                              int version, long expirationTime, boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, cloneXtnInfo, other, createEmptyTxnInfoIfNon);
-        this._data = data;
-        this._indexedPropertiesValues = initIndexedPropertiesValues();
-    }
-
-    private UserTypeEntryData(UserTypeEntryData other, EntryXtnInfo xtnInfo) {
-        super(other, xtnInfo);
-        this._data = other._data;
-        this._indexedPropertiesValues = other._indexedPropertiesValues;
+    @Override
+    public EntryTypeDesc getEntryTypeDesc() {
+        return _entryTypeDesc;
     }
 
     @Override
-    public ITransactionalEntryData createCopyWithoutTxnInfo() {
-        return new UserTypeEntryData(this._data, this._entryTypeDesc,
-                this._versionID, this._expirationTime, false);
+    public int getVersion() {
+        return _versionID;
     }
 
     @Override
-    public ITransactionalEntryData createCopyWithoutTxnInfo(long newExpirationTime) {
-        return new UserTypeEntryData(this._data, this._entryTypeDesc,
-                this._versionID, newExpirationTime, false);
+    public long getExpirationTime() {
+        return _expirationTime;
     }
 
     @Override
-    public ITransactionalEntryData createCopyWithTxnInfo(int newVersion, long newExpirationTime) {
-        return new UserTypeEntryData(this._data, this._entryTypeDesc,
-                newVersion, newExpirationTime, true, this, false);
-    }
-
-    public ITransactionalEntryData createCopyWithTxnInfo(Object data, boolean createEmptyTxnInfoIfNon) {
-        return new UserTypeEntryData(data, this._entryTypeDesc, this._versionID, this._expirationTime, true, this, createEmptyTxnInfoIfNon);
+    public EntryXtnInfo getEntryXtnInfo() {
+        return _entryTxnInfo;
     }
 
     @Override
-    public ITransactionalEntryData createCopyWithTxnInfo(boolean createEmptyTxnInfoIfNon) {
-        return new UserTypeEntryData(this._data, this._entryTypeDesc, this._versionID, this._expirationTime, true, this, createEmptyTxnInfoIfNon);
+    public ITransactionalEntryData createCopy(int newVersion, long newExpiration, EntryXtnInfo newEntryXtnInfo, boolean shallowCloneData) {
+        Object data = this._data;
+        if (shallowCloneData) {
+            IEntryPacket entryPacket = EntryPacketFactory.createFromObject(_data, _entryTypeDesc.getTypeDesc(), _entryTypeDesc.getEntryType(), true);
+            data = entryPacket.toObject(_entryTypeDesc.getEntryType());
+            _entryTypeDesc.getIntrospector().setVersion(data, newVersion);
+        }
+        return new UserTypeEntryData(data, this._entryTypeDesc, newVersion, newExpiration, newEntryXtnInfo);
     }
 
     @Override
-    public ITransactionalEntryData createCopy(boolean cloneXtnInfo, IEntryData newEntryData, long newExpirationTime) {
+    public ITransactionalEntryData createCopy(IEntryData newEntryData, long newExpirationTime) {
         if (newEntryData instanceof UserTypeEntryData) {
             UserTypeEntryData other = (UserTypeEntryData) newEntryData;
-            return new UserTypeEntryData(other._data, other._entryTypeDesc, other._versionID, newExpirationTime, cloneXtnInfo, this, false);
+            return new UserTypeEntryData(other._data, other._entryTypeDesc, other._versionID, newExpirationTime,
+                    copyTxnInfo(false, false));
         } else
             throw new InternalSpaceException("Unable to create copy of IEntryData - unsupported type " + newEntryData.getClass().getName());
-    }
-
-    @Override
-    public ITransactionalEntryData createCopyWithSuppliedTxnInfo(EntryXtnInfo ex) {
-        return new UserTypeEntryData(this, ex);
-    }
-
-    @Override
-    public ITransactionalEntryData createShallowClonedCopyWithSuppliedVersion(int versionID) {
-        return createShallowClonedCopyWithSuppliedVersionAndExpiration(versionID, getExpirationTime());
-
-    }
-
-    @Override
-    public ITransactionalEntryData createShallowClonedCopyWithSuppliedVersionAndExpiration(int versionID, long expirationTime) {
-        IEntryPacket entryPacket = EntryPacketFactory.createFromObject(_data, _entryTypeDesc.getTypeDesc(), _entryTypeDesc.getEntryType(), true);
-        Object clonedData = entryPacket.toObject(_entryTypeDesc.getEntryType());
-        _entryTypeDesc.getIntrospector().setVersion(clonedData, versionID);
-        return new UserTypeEntryData(clonedData, _entryTypeDesc, versionID, expirationTime, false /*createEmptyTxnInfoIfNon*/);
     }
 
     @Override
@@ -118,11 +98,6 @@ public class UserTypeEntryData extends AbstractEntryData {
 
     public Object getUserObject() {
         return _data;
-    }
-
-    @Override
-    public int getNumOfFixedProperties() {
-        return _entryTypeDesc.getTypeDesc().getNumOfFixedProperties();
     }
 
     @Override

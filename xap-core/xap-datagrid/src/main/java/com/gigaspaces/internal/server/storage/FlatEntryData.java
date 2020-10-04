@@ -20,6 +20,7 @@ import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.j_spaces.core.server.transaction.EntryXtnInfo;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,84 +29,59 @@ import java.util.Map;
  * @since 7.0
  */
 @com.gigaspaces.api.InternalApi
-public class FlatEntryData extends AbstractEntryData {
+public class FlatEntryData implements ITransactionalEntryData {
+    private final EntryTypeDesc _entryTypeDesc;
+    private final int _versionID;
+    private final long _expirationTime;
+    private final EntryXtnInfo _entryTxnInfo;
     private final Object[] _fieldsValues;
     private Map<String, Object> _dynamicProperties;
 
-    public FlatEntryData(Object[] fieldsValues, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon);
+    public FlatEntryData(Object[] fieldsValues, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
+        this._entryTypeDesc = entryTypeDesc;
+        this._versionID = version;
+        this._expirationTime = expirationTime;
+        this._entryTxnInfo = entryXtnInfo;
         this._fieldsValues = fieldsValues;
         this._dynamicProperties = dynamicProperties;
     }
 
-    private FlatEntryData(Object[] fieldsValues, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime,
-                          boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, cloneXtnInfo, other, createEmptyTxnInfoIfNon);
-        this._fieldsValues = fieldsValues;
-        this._dynamicProperties = dynamicProperties;
-    }
-
-    private FlatEntryData(FlatEntryData other, EntryXtnInfo xtnInfo) {
-        super(other, xtnInfo);
-        this._fieldsValues = other._fieldsValues;
-        this._dynamicProperties = other._dynamicProperties;
-
+    @Override
+    public EntryTypeDesc getEntryTypeDesc() {
+        return _entryTypeDesc;
     }
 
     @Override
-    public ITransactionalEntryData createCopyWithoutTxnInfo() {
-        return new FlatEntryData(this._fieldsValues, this._dynamicProperties, this._entryTypeDesc, this._versionID, this._expirationTime, false);
+    public int getVersion() {
+        return _versionID;
     }
 
     @Override
-    public ITransactionalEntryData createCopyWithoutTxnInfo(long newExpirationTime) {
-        return new FlatEntryData(this._fieldsValues, this._dynamicProperties, this._entryTypeDesc, this._versionID, newExpirationTime, false);
+    public long getExpirationTime() {
+        return _expirationTime;
     }
 
     @Override
-    public ITransactionalEntryData createCopyWithTxnInfo(int versionID, long newExpirationTime) {
-        return new FlatEntryData(this._fieldsValues, this._dynamicProperties, this._entryTypeDesc, versionID, newExpirationTime, true, this, false);
+    public EntryXtnInfo getEntryXtnInfo() {
+        return _entryTxnInfo;
     }
 
     @Override
-    public ITransactionalEntryData createShallowClonedCopyWithSuppliedVersion(int versionID) {
-        return createShallowClonedCopyWithSuppliedVersionAndExpiration(versionID, _expirationTime);
+    public ITransactionalEntryData createCopy(int newVersion, long newExpiration, EntryXtnInfo newEntryXtnInfo, boolean shallowCloneData) {
+        Object[] fieldValues = shallowCloneData ? Arrays.copyOf(_fieldsValues, _fieldsValues.length) : _fieldsValues;
+        Map<String, Object> dynamicProperties = shallowCloneData && _dynamicProperties != null ? new HashMap<>(_dynamicProperties) : _dynamicProperties;
+        return new FlatEntryData(fieldValues, dynamicProperties, this._entryTypeDesc, newVersion, newExpiration, newEntryXtnInfo);
     }
 
     @Override
-    public ITransactionalEntryData createShallowClonedCopyWithSuppliedVersionAndExpiration(int versionID, long expirationTime) {
-        Object[] clonedfieldsValues = new Object[_fieldsValues.length];
-        System.arraycopy(_fieldsValues, 0, clonedfieldsValues, 0, _fieldsValues.length);
-
-        Map<String, Object> clonedDynamicProperties = _dynamicProperties != null ? new HashMap<String, Object>(_dynamicProperties) : null;
-
-        return new FlatEntryData(clonedfieldsValues, clonedDynamicProperties, this._entryTypeDesc, versionID, expirationTime, true, this, false);
-
-    }
-
-    @Override
-    public ITransactionalEntryData createCopyWithTxnInfo(boolean createEmptyTxnInfoIfNon) {
-        return new FlatEntryData(this._fieldsValues, this._dynamicProperties, this._entryTypeDesc, this._versionID, this._expirationTime, true, this, createEmptyTxnInfoIfNon);
-    }
-
-    @Override
-    public ITransactionalEntryData createCopy(boolean cloneXtnInfo, IEntryData newEntryData, long newExpirationTime) {
-        return new FlatEntryData(newEntryData.getFixedPropertiesValues(), newEntryData.getDynamicProperties(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime, cloneXtnInfo, this, false);
-    }
-
-    @Override
-    public ITransactionalEntryData createCopyWithSuppliedTxnInfo(EntryXtnInfo ex) {
-        return new FlatEntryData(this, ex);
+    public ITransactionalEntryData createCopy(IEntryData newEntryData, long newExpirationTime) {
+        return new FlatEntryData(newEntryData.getFixedPropertiesValues(), newEntryData.getDynamicProperties(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime,
+                copyTxnInfo(false, false));
     }
 
     @Override
     public EntryDataType getEntryDataType() {
         return EntryDataType.FLAT;
-    }
-
-    @Override
-    public int getNumOfFixedProperties() {
-        return _fieldsValues.length;
     }
 
     @Override
@@ -150,14 +126,7 @@ public class FlatEntryData extends AbstractEntryData {
     }
 
     @Override
-    public void unsetDynamicPropertyValue(String propertyName) {
-        if (_dynamicProperties != null)
-            _dynamicProperties.remove(propertyName);
-    }
-
-    @Override
     public void setDynamicProperties(Map<String, Object> dynamicProperties) {
         _dynamicProperties = dynamicProperties;
     }
-
 }

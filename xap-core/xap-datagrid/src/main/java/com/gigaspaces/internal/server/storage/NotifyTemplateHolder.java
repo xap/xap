@@ -262,9 +262,9 @@ public class NotifyTemplateHolder extends TemplateHolder {
                     oldEntryPacket = TemplatePacketFactory.createUidPacket(oldEntryHolder.getUID(), oldEntryHolder.getEntryData().getVersion());
                 }
             } else {
-                entryPacket = EntryPacketFactory.createFullPacket(entryHolder, this);
+                entryPacket = EntryPacketFactory.createFullPacket(null, entryHolder, this);
                 if (notifyType.equals(NotifyActionType.NOTIFY_UNMATCHED) || (oldEntryHolder != null && (_notifyInfo.isReturnPrevValue()))) {
-                    oldEntryPacket = EntryPacketFactory.createFullPacket(oldEntryHolder, this);
+                    oldEntryPacket = EntryPacketFactory.createFullPacket(null, oldEntryHolder, this);
                 }
             }
             entryPacket.setOperationID(operationID);

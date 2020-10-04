@@ -133,7 +133,7 @@ public class EntryAdapter extends CacheEntry {
         if (hasDummyTTE())
             return TemplatePacketFactory.createEmptyPacket(_typeDesc);
 
-        return EntryPacketFactory.createFullPacket(_entryHolder, null, _entryHolder.getUidToOperateBy());
+        return EntryPacketFactory.createFullPacket(null, _entryHolder, null, _entryHolder.getUidToOperateBy());
     }
 
     /**

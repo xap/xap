@@ -15,7 +15,7 @@
         <spring.security.version>5.1.5.RELEASE</spring.security.version>
         <junit.version>4.12</junit.version>
         <jetty.version>9.4.22.v20191022</jetty.version>
-        <gs.build-name>15.5.0-m1-ci-0</gs.build-name>
+        <gs.build-name>15.8.0-m1-ci-0</gs.build-name>
         <gs.git-tag>Unspecified</gs.git-tag>
         <gs.git-sha.xap>unspecified</gs.git-sha.xap>
         <xap.git.branch>master</xap.git.branch>

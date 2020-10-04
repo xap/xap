@@ -49,7 +49,7 @@ public class SpaceValueGettersTests {
         Map<String, Object> dynamicProperties = null;
 
         ITypeDesc typeDesc = createMockTypeDesc(names);
-        ServerEntry entry = new FlatEntryData(values, dynamicProperties, typeDesc.getEntryTypeDesc(EntryType.DOCUMENT_JAVA), 0, 0, false);
+        ServerEntry entry = new FlatEntryData(values, dynamicProperties, typeDesc.getEntryTypeDesc(EntryType.DOCUMENT_JAVA), 0, 0, null);
 
         for (int i = 0; i < names.length; i++)
             testSpaceEntryPropertyGetter(names[i], entry, values[i]);
@@ -73,7 +73,7 @@ public class SpaceValueGettersTests {
         Map<String, Object> dynamicProperties = null;
 
         ITypeDesc typeDesc = createMockTypeDesc(names);
-        ServerEntry entry = new FlatEntryData(values, dynamicProperties, typeDesc.getEntryTypeDesc(EntryType.DOCUMENT_JAVA), 0, 0, false);
+        ServerEntry entry = new FlatEntryData(values, dynamicProperties, typeDesc.getEntryTypeDesc(EntryType.DOCUMENT_JAVA), 0, 0, null);
 
         testSpaceEntryPathGetter("name.first", entry, "kermit");
         testSpaceEntryPathGetter("name.last", entry, "the frog");
@@ -102,7 +102,7 @@ public class SpaceValueGettersTests {
         Map<String, Object> dynamicProperties = null;
 
         ITypeDesc typeDesc = createMockTypeDesc(names);
-        ServerEntry entry = new FlatEntryData(values, dynamicProperties, typeDesc.getEntryTypeDesc(EntryType.DOCUMENT_JAVA), 0, 0, false);
+        ServerEntry entry = new FlatEntryData(values, dynamicProperties, typeDesc.getEntryTypeDesc(EntryType.DOCUMENT_JAVA), 0, 0, null);
 
         for (int i = 0; i < names.length; i++)
             testValueGetterSpacePredicate(names[i], entry, new EqualsSpacePredicate(values[i]), new NotEqualsSpacePredicate(values[i]));
@@ -150,7 +150,7 @@ public class SpaceValueGettersTests {
         return new TypeDesc(className, codeBase, superClasses, properties, supportsDynamicProperties,
                 indexes, identifierPropertyName, idAutoGenerate, defaultPropertyName, routingPropertyName, null, null,
                 isSystemType, fifoMode, replicable, supportsOptimisticLocking, StorageType.OBJECT, entryType,
-                objectClass, ExternalEntry.class, SpaceDocument.class, null, DotNetStorageType.NULL, false, null, null);
+                objectClass, ExternalEntry.class, SpaceDocument.class, null, DotNetStorageType.NULL, false, null, null,null);
     }
 
     public static class Name {

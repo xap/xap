@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.server.storage;
 
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
@@ -27,6 +28,7 @@ import com.j_spaces.core.XtnEntry;
 import com.j_spaces.core.cache.EntryCacheInfoFactory;
 import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.blobStore.BlobStoreEntryHolder;
+import com.j_spaces.core.server.transaction.EntryXtnInfo;
 import com.j_spaces.kernel.IObjectInfo;
 import com.j_spaces.kernel.IStoredList;
 
@@ -126,11 +128,19 @@ public class EntryHolderFactory {
         final EntryTypeDesc entryTypeDesc = entryPacket.getTypeDescriptor().getEntryTypeDesc(entryType);
         final int version = versionID > 0 ? versionID : entryPacket.getVersion();
         final long lease = (expiration > 0 || keepExpiration) ? expiration : LeaseManager.toAbsoluteTime(entryPacket.getTTL());
+        final EntryXtnInfo entryXtnInfo = createXtnEntryInfo ? new EntryXtnInfo() : null;
 
-        if (entryDataType == EntryDataType.FLAT)
-            return new FlatEntryData(entryPacket.getFieldValues(), entryPacket.getDynamicProperties(),
-                    entryTypeDesc, version, lease, createXtnEntryInfo);
+        if (entryDataType == EntryDataType.FLAT) {
+            ClassBinaryStorageAdapter adapter = (entryTypeDesc.getTypeDesc()).getClassBinaryStorageAdapter();
+            if (adapter != null) {
+                return new BinaryEntryData(entryPacket.getFieldValues(),entryPacket.getDynamicProperties(),
+                        entryTypeDesc, version, lease, entryXtnInfo);
+            } else {
+                return new FlatEntryData(entryPacket.getFieldValues(), entryPacket.getDynamicProperties(),
+                        entryTypeDesc, version, lease, entryXtnInfo);
+            }
+        }
 
-        return new UserTypeEntryData(entryPacket.toObject(entryType), entryTypeDesc, version, lease, createXtnEntryInfo);
+        return new UserTypeEntryData(entryPacket.toObject(entryType), entryTypeDesc, version, lease, entryXtnInfo);
     }
 }

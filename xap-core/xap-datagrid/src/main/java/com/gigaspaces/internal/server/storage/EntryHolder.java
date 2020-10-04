@@ -79,7 +79,7 @@ public class EntryHolder extends AbstractSpaceItem implements IEntryHolder {
                 getEntryData().getEntryTypeDesc(),
                 1 /*versionID*/,
                 Long.MAX_VALUE, /* expirationTime */
-                false);
+                null);
         EntryHolder dummy = new EntryHolder(this.getServerTypeDesc(), this.getUID(), this.getSCN(),
                 this.isTransient(), ed);
         dummy.setDeleted(true);
@@ -115,7 +115,7 @@ public class EntryHolder extends AbstractSpaceItem implements IEntryHolder {
     }
 
     public void updateEntryData(IEntryData newEntryData, long expirationTime) {
-        _entryData = _entryData.createCopy(false, newEntryData, expirationTime);
+        _entryData = _entryData.createCopy(newEntryData, expirationTime);
     }
 
     @Override
@@ -171,7 +171,7 @@ public class EntryHolder extends AbstractSpaceItem implements IEntryHolder {
     }
 
     public void restoreUpdateXtnRollback(IEntryData entryData) {
-        ITransactionalEntryData newed = _entryData.createCopy(false, entryData, entryData.getExpirationTime());
+        ITransactionalEntryData newed = _entryData.createCopy(entryData, entryData.getExpirationTime());
         EntryXtnInfo ex = null;
         if (((ITransactionalEntryData) entryData).getEntryXtnInfo() != null)
             ex = new EntryXtnInfo(_entryData.getEntryXtnInfo());

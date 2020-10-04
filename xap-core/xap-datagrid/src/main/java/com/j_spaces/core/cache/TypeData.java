@@ -23,10 +23,7 @@ import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.MatchTarget;
 import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.server.space.metadata.TypeDataFactory;
-import com.gigaspaces.internal.server.storage.IEntryData;
-import com.gigaspaces.internal.server.storage.IEntryHolder;
-import com.gigaspaces.internal.server.storage.ITemplateHolder;
-import com.gigaspaces.internal.server.storage.ShadowEntryHolder;
+import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.metadata.StorageType;
 import com.gigaspaces.metadata.index.CompoundIndex;
 import com.gigaspaces.metadata.index.ISpaceCompoundIndexSegment;
@@ -1186,7 +1183,7 @@ public class TypeData {
 
     /**
      * update the entry refs in  cache when there is an updating xtn, we keep the master entry and
-     * shadow entry as one object pointing at eatch other so we cant remove the original index
+     * shadow entry as one object pointing at each other so we cant remove the original index
      * references
      *
      * @param pEntry       TODO
@@ -1200,7 +1197,7 @@ public class TypeData {
             shadowEh.incrementNumOfUpdates();
             //there is an update but the entry is previously updated under this xtn
             IEntryData shadowEntryData = shadowEh.getEntryData();
-            boolean double_update = shadowEntryData.getFixedPropertiesValues() != oldEntryData.getFixedPropertiesValues();
+            boolean double_update = !isEqualProperties(shadowEntryData, oldEntryData);
             if (hasIndexes()) {
                 int refpos = 1;
                 ArrayList<IObjectInfo<IEntryCacheInfo>> deletedBackRefs = pEntry.getBackRefs();
@@ -1257,6 +1254,14 @@ public class TypeData {
                 xtnEntry.getXtnData().removeRewrittenEntryIndication(pEntry.getUID());
                 throw ex_thrown;
             }
+        }
+    }
+
+    private boolean isEqualProperties(IEntryData shadow, IEntryData old) {
+        if (!(shadow instanceof BinaryEntryData)) {
+            return shadow.getFixedPropertiesValues() == old.getFixedPropertiesValues();
+        } else {
+            return ((BinaryEntryData) shadow).getSerializedFields() == ((BinaryEntryData) old).getSerializedFields();
         }
     }
 

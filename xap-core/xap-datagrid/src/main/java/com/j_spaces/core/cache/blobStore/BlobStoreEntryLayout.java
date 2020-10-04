@@ -128,7 +128,7 @@ public class BlobStoreEntryLayout implements Externalizable {
         EntryTypeDesc entryTypeDesc = typeDesc.getTypeDesc().getEntryTypeDesc(EntryType.fromByte(_entryTypeCode));
 
         ITransactionalEntryData entryData = new FlatEntryData(_fieldsValues, _dynamicProperties,
-                entryTypeDesc, _versionID, _expirationTime, false /*createXtnEntryInfo*/);
+                entryTypeDesc, _versionID, _expirationTime, null /*createXtnEntryInfo*/);
 
 
         BlobStoreEntryHolder entry = new BlobStoreEntryHolder(typeDesc, eci.getUID(), _scn, _transient, entryData, _onlyIndexesPart);
@@ -151,7 +151,7 @@ public class BlobStoreEntryLayout implements Externalizable {
         EntryTypeDesc entryTypeDesc = typeDesc.getTypeDesc().getEntryTypeDesc(EntryType.fromByte(_entryTypeCode));
 
         ITransactionalEntryData entryData = new FlatEntryData(_fieldsValues, _dynamicProperties,
-                entryTypeDesc, _versionID, _expirationTime, false /*createXtnEntryInfo*/);
+                entryTypeDesc, _versionID, _expirationTime, null /*createXtnEntryInfo*/);
 
 
         BlobStoreEntryHolder entry = new BlobStoreEntryHolder(typeDesc, _m_Uid, _scn, _transient, entryData, _onlyIndexesPart);

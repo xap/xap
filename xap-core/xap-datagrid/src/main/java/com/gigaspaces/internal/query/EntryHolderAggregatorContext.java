@@ -23,6 +23,7 @@ import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregator;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregatorContext;
 import com.gigaspaces.server.ServerEntry;
+import com.j_spaces.core.cache.context.Context;
 
 import java.util.List;
 
@@ -46,8 +47,8 @@ public class EntryHolderAggregatorContext extends SpaceEntriesAggregatorContext 
         this.partitionId = partitionId;
     }
 
-    public void scan(IEntryData entryData, String uid, boolean isTransient) {
-        this.entryData = entryData;
+    public void scan(Context context, IEntryData entryData, String uid, boolean isTransient) {
+        this.entryData = context.getViewEntryData(entryData);
         this.uid = uid;
         this.isTransient = isTransient;
         aggregate();
@@ -65,7 +66,7 @@ public class EntryHolderAggregatorContext extends SpaceEntriesAggregatorContext 
 
     @Override
     public RawEntry getRawEntry() {
-        return EntryPacketFactory.createFullPacket(template, entryData, uid, isTransient);
+        return EntryPacketFactory.createFullPacket(null, template, entryData, uid, isTransient);
     }
 
 

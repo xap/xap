@@ -306,7 +306,7 @@ public abstract class AbstractEntryPacket extends AbstractExternalizable impleme
         // Write remaining fields according to flags:
         if (_operationID != null)
             IOUtils.writeObject(out, _operationID);
-        if (_serializeTypeDesc && _typeDesc != null)
+        if (isSerializeTypeDesc() && _typeDesc != null)
             IOUtils.writeObject(out, _typeDesc);
         if (_typeDescChecksum != 0)
             out.writeInt(_typeDescChecksum);
@@ -343,7 +343,7 @@ public abstract class AbstractEntryPacket extends AbstractExternalizable impleme
 
         if (_operationID != null)
             flags |= FLAG_OPERATION_ID;
-        if (_serializeTypeDesc && _typeDesc != null)
+        if (isSerializeTypeDesc() && _typeDesc != null)
             flags |= FLAG_TYPE_DESC;
         if (_entryType != null)
             flags |= FLAG_REQUEST_TYPE;

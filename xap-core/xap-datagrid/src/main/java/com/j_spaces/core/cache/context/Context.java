@@ -33,10 +33,7 @@ import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.space.operations.ChangeEntriesSpaceOperation;
 import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
-import com.gigaspaces.internal.server.storage.IEntryData;
-import com.gigaspaces.internal.server.storage.IEntryHolder;
-import com.gigaspaces.internal.server.storage.ITemplateHolder;
-import com.gigaspaces.internal.server.storage.ITransactionalEntryData;
+import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridOperationDetails;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.TemplatePacketFactory;
@@ -252,6 +249,8 @@ public class Context {
 
     private IndexMetricsContext indexMetricsContext;
     private boolean _backupOnly;
+
+    private ViewEntryData viewEntryData;
 
     public Context() {
     }
@@ -485,6 +484,7 @@ public class Context {
         _inMemoryRecovery = false;
         indexMetricsContext = null;
         _backupOnly=false;
+        viewEntryData = null;
     }
 
     public void setOnMatchUid(String uid)
@@ -1026,7 +1026,7 @@ public class Context {
         if (template.getAfterOpFilterCode() >= 0 && template.getFilterManager()._isFilter[template.getAfterOpFilterCode()]) {
             if (entryPacket != null) {
                 //protect against nullifying of properties by filters
-                if (entryPacket.hasFixedPropertiesArray() && entryPacket.getFieldValues() != null) {
+                if (entryPacket.hasFixedPropertiesArray() && !entryPacket.allNullFieldValues()) {
                     Object[] src = entryPacket.getFieldValues();
                     Object[] target = new Object[src.length];
                     System.arraycopy(src, 0, target, 0, src.length);
@@ -1051,7 +1051,7 @@ public class Context {
             } else {//batch op filter
                 if (template.isBatchOperation() && ex == null && template.getBatchOperationContext().hasAnyEntries() && !template.isInitiatedEvictionOperation() && template.getBatchOperationContext().getResults() != null) {
                     for (IEntryPacket curep : template.getBatchOperationContext().getResults()) {
-                        if (curep != null && curep.hasFixedPropertiesArray() && curep.getFieldValues() != null) {
+                        if (curep != null && curep.hasFixedPropertiesArray() && !curep.allNullFieldValues()) {
                             Object[] src = curep.getFieldValues();
                             Object[] target = new Object[src.length];
                             System.arraycopy(src, 0, target, 0, src.length);
@@ -1260,5 +1260,42 @@ public class Context {
 
     public boolean isBackupOnly(){
         return this._backupOnly;
+    }
+
+    public IEntryData getViewEntryData(IEntryData entryData) {
+        if(entryData instanceof BinaryEntryData){
+            if(viewEntryData == null){
+                viewEntryData = new ViewEntryData();
+            }
+
+            if(viewEntryData.isViewOf(entryData)){
+                return viewEntryData;
+            }
+
+            viewEntryData.view(entryData);
+            return viewEntryData;
+        } else {
+            return entryData;
+        }
+    }
+
+    public ViewEntryData getViewEntryData() {
+        return viewEntryData;
+    }
+
+    public IEntryData getCacheViewEntryDataIfNeeded(IEntryData entryData) {
+        if(entryData instanceof BinaryEntryData && viewEntryData != null && viewEntryData.isViewOf(entryData)){
+            return viewEntryData;
+        }
+        return entryData;
+    }
+
+    public void cacheViewEntryDataIfNeeded(IEntryData entryData, Object[] fieldsValues) {
+        if(entryData instanceof BinaryEntryData){
+            if(viewEntryData == null){
+                viewEntryData = new ViewEntryData();
+            }
+            viewEntryData.view(entryData, fieldsValues);
+        }
     }
 }

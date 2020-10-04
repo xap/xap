@@ -18,21 +18,19 @@ package com.gigaspaces.internal.server.storage;
 
 import com.gigaspaces.client.protective.ProtectiveMode;
 import com.gigaspaces.client.protective.ProtectiveModeException;
-import com.gigaspaces.internal.lease.LeaseUtils;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.query.ICustomQuery;
 import com.gigaspaces.internal.query.IQueryIndexScanner;
 import com.gigaspaces.internal.query.RegexCache;
-import com.gigaspaces.internal.query.valuegetter.SpaceEntryPathGetter;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.transport.ITransportPacket;
-import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.metadata.StorageType;
 import com.gigaspaces.server.ServerEntry;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.cache.CacheManager;
+import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.sadapter.datasource.DefaultSQLQueryBuilder;
@@ -125,21 +123,7 @@ public class TemplateEntryData implements IEntryData {
         return _dynamicProperties;
     }
 
-    @Override
-    public void setDynamicPropertyValue(String propertyName, Object value) {
-        if (!_entryTypeDesc.getTypeDesc().supportsDynamicProperties())
-            throw new UnsupportedOperationException(_entryTypeDesc.getTypeDesc().getTypeName() + " does not support dynamic properties");
-
-        _dynamicProperties.put(propertyName, value);
-    }
-
-    @Override
-    public void unsetDynamicPropertyValue(String propertyName) {
-        if (_dynamicProperties != null)
-            _dynamicProperties.remove(propertyName);
-    }
-
-    //why we need it 
+    //why we need it
     @Override
     public int getVersion() {
         return _versionID;
@@ -156,16 +140,6 @@ public class TemplateEntryData implements IEntryData {
 
     public void setExpirationTime(long expirationTime) {
         this._expirationTime = expirationTime;
-    }
-
-    @Override
-    public long getTimeToLive(boolean useDummyIfRelevant) {
-        return LeaseUtils.getTimeToLive(_expirationTime, useDummyIfRelevant);
-    }
-
-    @Override
-    public int getNumOfFixedProperties() {
-        return _fieldsValues.length;
     }
 
     @Override
@@ -210,20 +184,8 @@ public class TemplateEntryData implements IEntryData {
     }
 
     @Override
-    public Object getPathValue(String path) {
-        if (!path.contains("."))
-            return getPropertyValue(path);
-        return new SpaceEntryPathGetter(path).getValue(this);
-    }
-
-    @Override
     public EntryTypeDesc getEntryTypeDesc() {
         return _entryTypeDesc;
-    }
-
-    @Override
-    public SpaceTypeDescriptor getSpaceTypeDescriptor() {
-        return _entryTypeDesc.getTypeDesc();
     }
 
     @Override
@@ -251,15 +213,28 @@ public class TemplateEntryData implements IEntryData {
         return _rangeValuesInclusion == null ? true : _rangeValuesInclusion[index];
     }
 
-    public boolean match(CacheManager cacheManager, ServerEntry entry, int skipAlreadyMatchedFixedPropertyIndex, String skipAlreadyMatchedIndexPath, RegexCache regexCache) {
+    public boolean match(CacheManager cacheManager, ServerEntry entry, int skipAlreadyMatchedFixedPropertyIndex, String skipAlreadyMatchedIndexPath, RegexCache regexCache, Context cacheContext) {
+        if (!isNullTemplate()) {
+            entry = cacheContext.getViewEntryData((IEntryData) entry);
+        }
         boolean result = _extendedMatchCodes == null
                 ? matchBasic(entry, skipAlreadyMatchedFixedPropertyIndex)
                 : matchExtended(entry, skipAlreadyMatchedFixedPropertyIndex, regexCache);
 
         if (result && _customQuery != null)
             result = _customQuery.matches(cacheManager, entry, skipAlreadyMatchedIndexPath);
-
         return result;
+    }
+
+    private boolean isNullTemplate() {
+        if(_fieldsValues != null) {
+            for (Object fieldsValue : _fieldsValues) {
+                if (fieldsValue != null) {
+                    return false;
+                }
+            }
+        }
+        return _customQuery == null && _extendedMatchCodes == null;
     }
 
     private boolean matchBasic(ServerEntry entry, int skipIndex) {

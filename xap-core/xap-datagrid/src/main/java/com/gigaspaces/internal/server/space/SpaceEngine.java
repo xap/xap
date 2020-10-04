@@ -833,6 +833,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         WriteEntryResult writeResult = null;
         EntryAlreadyInSpaceException entryInSpaceEx = null;
         try {
+            context.cacheViewEntryDataIfNeeded(eHolder.getEntryData(), entryPacket.getFieldValues());
             writeResult = _coreProcessor.handleDirectWriteSA(context, eHolder, serverTypeDesc, fromReplication,
                     origin, reInsertedEntry, packetUid != null,
                     !fromWriteMultiple, modifiers);
@@ -4737,15 +4738,15 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         EntryHolderAggregatorContext aggregatorContext = template.getAggregatorContext();
         if (shadowEntryToUse != null) {
             if (aggregatorContext != null)
-                aggregatorContext.scan(shadowEntryToUse.getEntryData(), entry.getUID(), entry.isTransient());
+                aggregatorContext.scan(context, shadowEntryToUse.getEntryData(), entry.getUID(), entry.isTransient());
             else
-                entryPacket = EntryPacketFactory.createFullPacket(shadowEntryToUse, template, entry.getUID());
+                entryPacket = EntryPacketFactory.createFullPacket(context, shadowEntryToUse, template, entry.getUID());
         }else {
             IEntryData entryData = context.isNonBlockingReadOp() ? context.getLastRawMatchSnapshot() : entry.getEntryData();
             if (aggregatorContext != null)
-                aggregatorContext.scan(entryData, entry.getUID(), entry.isTransient());
+                aggregatorContext.scan(context, entryData, entry.getUID(), entry.isTransient());
             else
-                entryPacket = EntryPacketFactory.createFullPacket(entry, template, entryData);
+                entryPacket = EntryPacketFactory.createFullPacket(context, entry, template, entryData);
         }
 
         if (!template.isBatchOperation()) {
@@ -4807,7 +4808,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         //creation of entry packet of result is done prior to calling associateEntryWithXtn since
         //shadow entry is surfacing again replacing the field values if pending update under same xtn
-        IEntryPacket ep = EntryPacketFactory.createFullPacket(entry, template);
+        IEntryPacket ep = EntryPacketFactory.createFullPacket(context, entry, template, entry.getUID());
 
         if (template.getXidOriginatedTransaction() != null) {
             // the following associates the entry with the template Xtn,
@@ -5037,7 +5038,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             if (template.isChange())
                 ((ExtendedAnswerHolder) (template.getAnswerHolder())).setSingleChangeResults(context.getChangeResultsForCurrentEntry());
         }
-        IEntryPacket ep = EntryPacketFactory.createFullPacket(entry, template, edata);
+        IEntryPacket ep = EntryPacketFactory.createFullPacket(context, entry, template, edata);
         if (template.isUpdateOperation()) {
             if (context.getWriteResult() == null || !entry.getUID().equals(context.getWriteResult().getUid()))
                 context.setWriteResult(new WriteEntryResult(entry.getUID(), newVersionID, newEntry.getEntryData().getExpirationTime()));
@@ -5150,7 +5151,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
     private void performInitiatedEvictionTemplateOnEntryCoreSA(Context context, ITemplateHolder template,
                                                                IEntryHolder entry, IServerTypeDesc typeDesc)
             throws SAException, NoMatchException {
-        IEntryPacket ep = EntryPacketFactory.createFullPacket(entry, template);
+        IEntryPacket ep = EntryPacketFactory.createFullPacket(context, entry, template);
 
         boolean fromReplication = context.isFromReplication();
         boolean shouldReplicate = false;

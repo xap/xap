@@ -81,7 +81,7 @@ public abstract class AbstractProjectionTemplate implements Externalizable {
 
         PathsProjectionHandler pathsHandler = null;
         int[] fixedPropertiesIndexes = getFixedPropertiesIndexes();
-        if (entryPacket.getFieldValues() != null) {
+        if (!entryPacket.allNullFieldValues()) {
             final int numOfFixedProperties = entryPacket.getTypeDescriptor().getNumOfFixedProperties();
             final Object[] projectedValues = new Object[numOfFixedProperties];
             if (fixedPropertiesIndexes != null) {

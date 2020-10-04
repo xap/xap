@@ -18,15 +18,12 @@ package com.gigaspaces.internal.server.storage;
 
 import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.io.IOUtils;
-import com.gigaspaces.internal.lease.LeaseUtils;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.query.valuegetter.SpaceEntryPathGetter;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
 import com.gigaspaces.metadata.SpaceMetadataException;
-import com.gigaspaces.metadata.SpaceTypeDescriptor;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -89,7 +86,7 @@ public class ExternalizableServerEntry implements IEntryData, Externalizable, IC
     }
 
     @Override
-    public SpaceTypeDescriptor getSpaceTypeDescriptor() {
+    public ITypeDesc getSpaceTypeDescriptor() {
         return _typeDesc;
     }
 
@@ -97,26 +94,6 @@ public class ExternalizableServerEntry implements IEntryData, Externalizable, IC
     public Object getFixedPropertyValue(int position) {
         return _fixedProperties[position];
     }
-
-    @Override
-    public Object getPropertyValue(String name) {
-        int pos = _typeDesc.getFixedPropertyPosition(name);
-        if (pos != -1)
-            return getFixedPropertyValue(pos);
-
-        if (_typeDesc.supportsDynamicProperties())
-            return _dynamicProperties != null ? _dynamicProperties.get(name) : null;
-
-        throw new IllegalArgumentException("Unknown property name '" + name + "'");
-    }
-
-    @Override
-    public Object getPathValue(String path) {
-        if (!path.contains("."))
-            return getPropertyValue(path);
-        return new SpaceEntryPathGetter(path).getValue(this);
-    }
-
 
     @Override
     public int getVersion() {
@@ -131,11 +108,6 @@ public class ExternalizableServerEntry implements IEntryData, Externalizable, IC
     @Override
     public EntryDataType getEntryDataType() {
         return EntryDataType.FLAT;
-    }
-
-    @Override
-    public int getNumOfFixedProperties() {
-        return _fixedProperties.length;
     }
 
     @Override
@@ -166,28 +138,6 @@ public class ExternalizableServerEntry implements IEntryData, Externalizable, IC
     @Override
     public void setDynamicProperties(Map<String, Object> dynamicProperties) {
         _dynamicProperties = dynamicProperties;
-    }
-
-    @Override
-    public void setDynamicPropertyValue(String propertyName, Object value) {
-        if (!_entryTypeDesc.getTypeDesc().supportsDynamicProperties())
-            throw new UnsupportedOperationException(_entryTypeDesc.getTypeDesc().getTypeName() + " does not support dynamic properties");
-
-        if (_dynamicProperties == null)
-            _dynamicProperties = new DocumentProperties();
-
-        _dynamicProperties.put(propertyName, value);
-    }
-
-    @Override
-    public void unsetDynamicPropertyValue(String propertyName) {
-        if (_dynamicProperties != null)
-            _dynamicProperties.remove(propertyName);
-    }
-
-    @Override
-    public long getTimeToLive(boolean useDummyIfRelevant) {
-        return LeaseUtils.getTimeToLive(_expirationTime, useDummyIfRelevant);
     }
 
     @Override

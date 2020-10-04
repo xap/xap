@@ -19,7 +19,8 @@ package com.gigaspaces.internal.metadata;
 import com.gigaspaces.annotation.pojo.*;
 import com.gigaspaces.annotation.pojo.SpaceClass.IncludeProperties;
 import com.gigaspaces.annotation.pojo.SpaceProperty.IndexType;
-import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.DefaultClassBinaryStorageAdapter;
 import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.io.XmlUtils;
@@ -104,6 +105,7 @@ public class SpaceTypeInfo implements Externalizable {
     private Map<String, SpaceIndex> _indexes;
     private Map<String, SpacePropertyInfo> _properties;
     private SpacePropertyInfo[] _spaceProperties;
+    private Class<? extends ClassBinaryStorageAdapter> _spaceClassStorageAdapter;
 
     private SpacePropertyInfo _idProperty;
     private Boolean _idAutoGenerate;
@@ -864,6 +866,11 @@ public class SpaceTypeInfo implements Externalizable {
         // check for top level custom index definition
         addCustomIndex(_type.getAnnotation(CustomSpaceIndex.class));
 
+        SpaceClassBinaryStorageAdapter spaceClassStorageAdapter = _type.getAnnotation(SpaceClassBinaryStorageAdapter.class);
+        if(spaceClassStorageAdapter != null){
+            this._spaceClassStorageAdapter = spaceClassStorageAdapter.value();
+        }
+
         for (Entry<String, SpacePropertyInfo> entry : _properties.entrySet()) {
             SpacePropertyInfo property = entry.getValue();
             Method getter = property.getGetterMethod();
@@ -1372,6 +1379,8 @@ public class SpaceTypeInfo implements Externalizable {
         validatePropertyCombination(_persistProperty, _idProperty, "persist", "id");
         validatePropertyCombination(_persistProperty, _routingProperty, "persist", "routing");
 
+        validateStorageAdapterCombination();
+
         validateGetterSetter(_idProperty, "Id", _idAutoGenerate ? ConstructorPropertyValidation.REQUIERS_SETTER :
                 ConstructorPropertyValidation.REQUIERS_CONSTRUCTOR_PARAM);
         if (_routingProperty != _idProperty)
@@ -1414,6 +1423,19 @@ public class SpaceTypeInfo implements Externalizable {
                                              String property1Desc, String property2Desc) {
         if (property1 != null && property1 == property2)
             throw new SpaceMetadataValidationException(_type, property1, property1Desc + " and " + property2Desc + " cannot be used for the same property.");
+    }
+
+    private void validateStorageAdapterCombination() {
+        if (_spaceClassStorageAdapter != null){
+            for (Entry<String, SpacePropertyInfo> entry : _properties.entrySet()) {
+                if(entry.getValue().getStorageAdapterClass()!= null){
+                    throw new SpaceMetadataValidationException(_type, entry.getValue(), "class binary storage adapter and property storage adapter cannot be used together.");
+                }
+                if(entry.getValue().getStorageType() != null && !entry.getValue().getStorageType().equals(StorageType.DEFAULT) && !entry.getValue().getStorageType().equals(StorageType.OBJECT)){
+                    throw new SpaceMetadataValidationException(_type, entry.getValue(), "class binary storage adapter and property non DEFAULT storage type cannot be used together.");
+                }
+            }
+        }
     }
 
     private void validateGetterSetter(SpacePropertyInfo property, String propertyDesc, ConstructorPropertyValidation validation) {
@@ -1528,6 +1550,10 @@ public class SpaceTypeInfo implements Externalizable {
 
     public Map<String, SpaceIndex> getIndexes() {
         return _indexes;
+    }
+
+    public Class<? extends ClassBinaryStorageAdapter> getSpaceClassStorageAdapter() {
+        return _spaceClassStorageAdapter;
     }
 
     /////////////////////////////////////

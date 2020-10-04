@@ -1539,11 +1539,28 @@ public class CacheManager extends AbstractCacheManager
                 edata.createShallowClonedCopyWithSuppliedVersionAndExpiration(versionID, template.getChangeExpiration()) :
                 edata.createShallowClonedCopyWithSuppliedVersion(versionID);
 
+        if (udata instanceof BinaryEntryData) {
+            IEntryData cachedView = context.getCacheViewEntryDataIfNeeded(edata);
+            MutableViewEntryData mutableViewEntryData = new MutableViewEntryData();
+            mutableViewEntryData.view(udata, cachedView.getFixedPropertiesValues());
+            applyChangeMutators(context, template, mutableViewEntryData);
+            udata.setFixedPropertyValues(mutableViewEntryData.getFixedPropertiesValues());
+        } else {
+            applyChangeMutators(context, template, udata);
+        }
+
+        return EntryHolderFactory.createEntryHolder(currentEntry.getServerTypeDesc(),
+                udata,
+                currentEntry.getUID(),
+                currentEntry.isTransient());
+    }
+
+    private void applyChangeMutators(Context context, ITemplateHolder template, ITransactionalEntryData entryData) {
         List<Object> results = null;
         try {
             int i = 0;
             for (SpaceEntryMutator mutator : template.getMutators()) {
-                Object result = mutator.change(udata);
+                Object result = mutator.change(entryData);
                 if (Modifiers.contains(template.getOperationModifiers(), Modifiers.RETURN_DETAILED_CHANGE_RESULT)) {
                     if (result != null) {//set returned result list on a need-to basis
                         if (results == null) {
@@ -1563,11 +1580,6 @@ public class CacheManager extends AbstractCacheManager
             throw new ChangeInternalException(e);
         }
         context.setChangeResultsForCurrentEntry(results);  //set for this entry
-
-        return EntryHolderFactory.createEntryHolder(currentEntry.getServerTypeDesc(),
-                udata,
-                currentEntry.getUID(),
-                currentEntry.isTransient());
     }
 
     /**
@@ -3505,7 +3517,7 @@ public class CacheManager extends AbstractCacheManager
      */
     public void insertEntryReferences(Context context, IEntryCacheInfo pEntry, TypeData pType, boolean applySequenceNumber) {
         context.clearNumOfIndexesInserted();
-        IEntryData entryData = pEntry.getEntryHolder(this).getEntryData();
+        IEntryData entryData = context.getCacheViewEntryDataIfNeeded(pEntry.getEntryHolder(this).getEntryData());
         // add entry to type info
         if(pType.getFifoGroupingIndex()!=null){
             pEntry.setMainListBackRef(((ConcurrentSegmentedStoredList<IEntryCacheInfo>)pType.getEntries()).add(pEntry, pType.getFifoGroupingIndex().getIndexValue(entryData)));

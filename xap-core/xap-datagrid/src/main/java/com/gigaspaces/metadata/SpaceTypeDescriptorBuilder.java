@@ -19,6 +19,7 @@ package com.gigaspaces.metadata;
 
 import com.gigaspaces.annotation.pojo.FifoSupport;
 import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.metadata.DotNetStorageType;
 import com.gigaspaces.internal.metadata.EntryType;
@@ -87,6 +88,7 @@ public class SpaceTypeDescriptorBuilder {
     private Boolean _blobstoreEnabled;
     private String _sequenceNumberPropertyName;
     private boolean _sequenceNumberFromDocumentBuilder;
+    private Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapterClass;
 
     /**
      * Initialize a type descriptor builder using the specified type name.
@@ -193,6 +195,11 @@ public class SpaceTypeDescriptorBuilder {
      */
     public SpaceTypeDescriptorBuilder documentWrapperClass(Class<? extends SpaceDocument> documentWrapperClass) {
         _documentWrapperClass = assertNotNull(documentWrapperClass, "documentWrapperClass");
+        return this;
+    }
+
+    public SpaceTypeDescriptorBuilder classBinaryStorageAdapter(Class<? extends ClassBinaryStorageAdapter> classBinaryStorageAdapter) {
+        this.binaryStorageAdapterClass = assertNotNull(classBinaryStorageAdapter, "binaryStorageAdapterClass");
         return this;
     }
 
@@ -720,7 +727,7 @@ public class SpaceTypeDescriptorBuilder {
                 DotNetStorageType.NULL,
                 _blobstoreEnabled,
                 _sequenceNumberPropertyName,
-                _queryExtensionsInfo);
+                _queryExtensionsInfo, binaryStorageAdapterClass);
     }
 
     private void applyDefaults() {
