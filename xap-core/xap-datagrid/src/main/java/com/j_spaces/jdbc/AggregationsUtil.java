@@ -18,17 +18,7 @@ package com.j_spaces.jdbc;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.transport.IEntryPacket;
-import com.gigaspaces.query.aggregators.AggregationInternalUtils;
-import com.gigaspaces.query.aggregators.AggregationResult;
-import com.gigaspaces.query.aggregators.AggregationSet;
-import com.gigaspaces.query.aggregators.DistinctAggregator;
-import com.gigaspaces.query.aggregators.GroupByAggregator;
-import com.gigaspaces.query.aggregators.GroupByResult;
-import com.gigaspaces.query.aggregators.GroupByValue;
-import com.gigaspaces.query.aggregators.OrderBy;
-import com.gigaspaces.query.aggregators.OrderByAggregator;
-import com.gigaspaces.query.aggregators.SingleValueAggregator;
-import com.gigaspaces.query.aggregators.SpaceEntriesAggregator;
+import com.gigaspaces.query.aggregators.*;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.builder.QueryEntryPacket;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
@@ -121,6 +111,9 @@ public class AggregationsUtil {
             //non aggregated fields are not supported yet
             if (funcColumn.getFunctionName() == null)
                 aggregationSet = aggregationSet.add(new SingleValueAggregator().setPath(funcColumn.getName()));
+            else if (funcColumn instanceof FunctionCallColumn){
+                aggregationSet = aggregationSet.add(new SingleValueFunctionAggregator((FunctionCallColumn) funcColumn).setPath(funcColumn.getName()));
+            }
             else if (funcColumn.getFunctionName().equals(SqlConstants.MAX)) {
                 aggregationSet = aggregationSet.maxValue(funcColumn.getName());
             } else if (funcColumn.getFunctionName().equals(SqlConstants.MIN)) {

@@ -17,6 +17,7 @@
 package com.gigaspaces.url;
 
 import com.gigaspaces.internal.lookup.SpaceUrlUtils;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.core.client.SpaceURL;
 import com.j_spaces.core.client.SpaceURLParser;
@@ -485,6 +486,6 @@ public class SpaceUrlTests {
     }
 
     private static String buildDefaultGroups() {
-        return "groups=" + SystemInfo.singleton().lookup().defaultGroups();
+        return "groups=" + GsEnv.get("LOOKUP_GROUPS", SystemInfo.singleton().lookup().defaultGroups());
     }
 }
