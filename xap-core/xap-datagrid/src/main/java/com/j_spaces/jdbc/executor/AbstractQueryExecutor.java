@@ -20,15 +20,7 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.security.AccessDeniedException;
-import com.j_spaces.jdbc.AbstractDMLQuery;
-import com.j_spaces.jdbc.NumberUtil;
-import com.j_spaces.jdbc.OrderColumn;
-import com.j_spaces.jdbc.ResponsePacket;
-import com.j_spaces.jdbc.ResultEntry;
-import com.j_spaces.jdbc.SelectColumn;
-import com.j_spaces.jdbc.SelectQuery;
-import com.j_spaces.jdbc.SqlConstants;
-import com.j_spaces.jdbc.Stack;
+import com.j_spaces.jdbc.*;
 import com.j_spaces.jdbc.builder.QueryEntryPacket;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.parser.ExpNode;
@@ -250,7 +242,7 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
             vecFieldNames.add(funcColumn.toString());
 
             // Handle non-aggregated columns like group by
-            if (funcColumn.getFunctionName() == null) {
+            if (funcColumn.getFunctionName() == null || funcColumn instanceof FunctionCallColumn) {
                 IEntryPacket first = entries.iterator().next();
                 Object value = entries.getFieldValue(funcColumn, first);
 
