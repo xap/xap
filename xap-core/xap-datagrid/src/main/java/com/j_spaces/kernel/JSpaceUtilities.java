@@ -53,6 +53,8 @@ import net.jini.id.Uuid;
 import net.jini.lookup.entry.Name;
 import net.jini.space.InternalSpaceException;
 import org.jini.rio.boot.BootUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
@@ -68,9 +70,6 @@ import java.net.URLClassLoader;
 import java.rmi.RemoteException;
 import java.text.NumberFormat;
 import java.util.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.LookupManager.*;
 
@@ -1197,6 +1196,21 @@ public class JSpaceUtilities {
         }
         return isJmxRemoteAuthenticationRequired;
     }
+
+
+    public static boolean isJMXEnabled(JVMDetails jvmDetails) {
+        Boolean isJmxEnabled = false;
+
+        if (jvmDetails != null) {
+            Map<String, String> vmSystemProperties = jvmDetails.getSystemProperties();
+            String isJmxEnabledProp = vmSystemProperties.get(SystemProperties.JMX_ENABLED_PROP);
+            if( isJmxEnabledProp != null ) {
+                isJmxEnabled = Boolean.getBoolean( isJmxEnabledProp );
+            }
+        }
+        return isJmxEnabled;
+    }
+
 
     /**
      * Get the String value found in the JMXConnection entry, or null if the attribute set does not

@@ -43,6 +43,12 @@ public class CommonSystemProperties {
     public final static String JMX_ENABLED_PROP = "com.gs.jmx.enabled";
 
     /**
+     * System property that determines JNDI supporting
+     * @since 15.8.0
+     */
+    public final static String JNDI_ENABLED_PROP = "com.gs.jndi.enabled";
+
+    /**
      * Enable dynamic discovery of locators
      */
     public static final String ENABLE_DYNAMIC_LOCATORS = "com.gs.jini_lus.locators.dynamic.enabled";
@@ -83,4 +89,8 @@ public class CommonSystemProperties {
     public final static String SIGAR_ENABLED = "com.gs.sigar.enabled";
 
     public final static String OSHI_ENABLED = "com.gs.oshi.enabled";
+
+    public final static Boolean JMX_ENABLED_DEFAULT_BOOLEAN_VALUE = Boolean.TRUE;
+
+    public final static Boolean JNDI_ENABLED_DEFAULT_BOOLEAN_VALUE = Boolean.TRUE;
 }

@@ -16,15 +16,16 @@
 
 package com.j_spaces.jmx;
 
+import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.internal.jmx.JMXUtilities;
 import com.gigaspaces.internal.server.space.SpaceImpl;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.management.local_time.LocalTime;
 import com.gigaspaces.management.local_time.LocalTimeConstants;
 import com.gigaspaces.management.local_time.LocalTimeMBean;
 import com.gigaspaces.management.transport.TransportConstants;
 import com.gigaspaces.management.transport.TransportProtocolMonitor;
 import com.gigaspaces.management.transport.TransportProtocolMonitorMBean;
-import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.IJSpaceContainer;
@@ -33,33 +34,23 @@ import com.j_spaces.kernel.JSpaceUtilities;
 import com.j_spaces.kernel.ResourceLoader;
 import com.j_spaces.kernel.SystemProperties;
 import com.j_spaces.kernel.log.JProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.management.*;
+import javax.management.remote.JMXConnectorServer;
+import javax.management.remote.JMXConnectorServerFactory;
+import javax.management.remote.JMXServiceURL;
+import javax.naming.NameAlreadyBoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
-import javax.management.remote.JMXConnectorServer;
-import javax.management.remote.JMXConnectorServerFactory;
-import javax.management.remote.JMXServiceURL;
-import javax.naming.NameAlreadyBoundException;
-
 import static com.j_spaces.core.Constants.LookupManager.LOOKUP_JNDI_URL_DEFAULT;
 import static com.j_spaces.core.Constants.LookupManager.LOOKUP_JNDI_URL_PROP;
-import static com.j_spaces.core.Constants.Management.JMX_MBEAN_DESCRIPTORS_CONTAINER;
-import static com.j_spaces.core.Constants.Management.JMX_MBEAN_DESCRIPTORS_JAVASPACE;
-import static com.j_spaces.core.Constants.Management.JMX_MBEAN_DESCRIPTORS_JAVASPACE_EXT;
+import static com.j_spaces.core.Constants.Management.*;
 
 /*******************************************************************************
  * Copyright (c) 2010 GigaSpaces Technologies Ltd. All rights reserved
@@ -86,8 +77,8 @@ public class JMXProvider {
 
     private static MBeanServer m_MBeanServer;
     private static Map<String, JMXConnectorServer> _jmxConnectionsMap =
-            new HashMap<String, JMXConnectorServer>(3);
-    private static Hashtable<String, ObjectInstance> m_MBeansRepository = new Hashtable<String, ObjectInstance>();
+            new HashMap<>(3);
+    private static Hashtable<String, ObjectInstance> m_MBeansRepository = new Hashtable<>();
 
     //logger
     final private static Logger _logger =
@@ -133,7 +124,8 @@ public class JMXProvider {
                 }
             }
 
-            if (System.getProperty(SystemProperties.CREATE_JMX_CONNECTOR_PROP, "true").equals("true")) {
+            if (System.getProperty(SystemProperties.CREATE_JMX_CONNECTOR_PROP, "true").equals("true") &&
+                    GsEnv.propertyBoolean( CommonSystemProperties.JMX_ENABLED_PROP ).get( CommonSystemProperties.JMX_ENABLED_DEFAULT_BOOLEAN_VALUE )) {
 
                 String jmxServiceURL = "";
                 JMXConnectorServer jmxConn = _jmxConnectionsMap.get(containerName);

@@ -49,14 +49,6 @@ public class ClusterMemberInfo
                 groupName, null, false, spaceID, isMirror);
     }
 
-
-    public ClusterMemberInfo(String memberName, SpaceURL memberUrl,
-                             String clusterName, String groupName,
-                             Vector paramData, ServiceID spaceID) {
-        this(memberName, memberUrl, clusterName, groupName,
-                paramData, false, spaceID, false);
-    }
-
     public ClusterMemberInfo(String memberName, SpaceURL memberUrl,
                              String clusterName, String groupName, Vector paramData,
                              boolean isBackup, ServiceID spaceID, boolean isMirror) {
