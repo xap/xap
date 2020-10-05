@@ -29,6 +29,8 @@ import net.jini.config.Configuration;
 import net.jini.config.ConfigurationException;
 import org.jini.rio.boot.BootUtil;
 import org.jini.rio.boot.CommonClassLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.beans.Introspector;
 import java.io.*;
@@ -42,9 +44,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Provides bootstrapping support for the GigaSpaces Service Grid.
