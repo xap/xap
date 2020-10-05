@@ -19,7 +19,7 @@ package com.gigaspaces.internal.metadata;
 import com.gigaspaces.annotation.pojo.*;
 import com.gigaspaces.annotation.pojo.SpaceClass.IncludeProperties;
 import com.gigaspaces.annotation.pojo.SpaceProperty.IndexType;
-import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.io.XmlUtils;
@@ -104,6 +104,7 @@ public class SpaceTypeInfo implements Externalizable {
     private Map<String, SpaceIndex> _indexes;
     private Map<String, SpacePropertyInfo> _properties;
     private SpacePropertyInfo[] _spaceProperties;
+    private Class<? extends ClassBinaryStorageAdapter> _spaceClassStorageAdapter;
 
     private SpacePropertyInfo _idProperty;
     private Boolean _idAutoGenerate;
@@ -864,6 +865,11 @@ public class SpaceTypeInfo implements Externalizable {
         // check for top level custom index definition
         addCustomIndex(_type.getAnnotation(CustomSpaceIndex.class));
 
+        SpaceClassStorageAdapter spaceClassStorageAdapter = _type.getAnnotation(SpaceClassStorageAdapter.class);
+        if(spaceClassStorageAdapter != null){
+            this._spaceClassStorageAdapter = spaceClassStorageAdapter.value();
+        }
+
         for (Entry<String, SpacePropertyInfo> entry : _properties.entrySet()) {
             SpacePropertyInfo property = entry.getValue();
             Method getter = property.getGetterMethod();
@@ -1528,6 +1534,10 @@ public class SpaceTypeInfo implements Externalizable {
 
     public Map<String, SpaceIndex> getIndexes() {
         return _indexes;
+    }
+
+    public Class<? extends ClassBinaryStorageAdapter> getSpaceClassStorageAdapter() {
+        return _spaceClassStorageAdapter;
     }
 
     /////////////////////////////////////

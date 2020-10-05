@@ -16,8 +16,10 @@
 
 package com.gigaspaces.internal.server.storage;
 
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
+import com.gigaspaces.internal.metadata.TypeDesc;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.transport.IEntryPacket;
@@ -127,24 +129,20 @@ public class EntryHolderFactory {
         final int version = versionID > 0 ? versionID : entryPacket.getVersion();
         final long lease = (expiration > 0 || keepExpiration) ? expiration : LeaseManager.toAbsoluteTime(entryPacket.getTTL());
 
-        if (entryDataType == EntryDataType.FLAT)
-            if (Boolean.parseBoolean(System.getProperty("gs.serialized-fields", "false"))) {
+        if (entryDataType == EntryDataType.FLAT) {
+            ClassBinaryStorageAdapter adapter = ((TypeDesc) entryTypeDesc.getTypeDesc()).getClassStorageAdapter();
+            if (adapter != null) {
                 if (entryPacket.getDynamicProperties() == null || entryPacket.getDynamicProperties().isEmpty()) {
                     return new SerializedEntryData(entryPacket.getFieldValues(),
                             entryTypeDesc, version, lease, createXtnEntryInfo);
                 } else {
-                    throw new UnsupportedOperationException("gs.serialized-fields does not support dynamic properties");
-                }
-            } else if (Boolean.parseBoolean(System.getProperty("gs.kryo-fields", "false"))) {
-                if (entryPacket.getDynamicProperties() == null || entryPacket.getDynamicProperties().isEmpty()) {
-                    return new KryoEntryData(entryPacket.getFieldValues(), entryTypeDesc, version, lease, createXtnEntryInfo);
-                } else {
-                    throw new UnsupportedOperationException("gs.kryo-fields does not support dynamic properties");
+                    throw new UnsupportedOperationException("SpaceClassStorageAdapter annotation does not support dynamic properties");
                 }
             } else {
                 return new FlatEntryData(entryPacket.getFieldValues(), entryPacket.getDynamicProperties(),
                         entryTypeDesc, version, lease, createXtnEntryInfo);
             }
+        }
 
         return new UserTypeEntryData(entryPacket.toObject(entryType), entryTypeDesc, version, lease, createXtnEntryInfo);
     }

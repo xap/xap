@@ -41,6 +41,6 @@ public class IntegerClassSerializer implements IClassSerializer<Integer> {
 
     public void write(ObjectOutput out, Integer obj)
             throws IOException {
-        IOUtils.writeInt(out, obj);
+        out.writeInt(obj);
     }
 }

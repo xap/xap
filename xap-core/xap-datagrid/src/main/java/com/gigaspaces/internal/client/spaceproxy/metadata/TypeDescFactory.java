@@ -32,7 +32,6 @@ import com.gigaspaces.internal.metadata.TypeDesc;
 import com.gigaspaces.internal.metadata.converter.ConversionException;
 import com.gigaspaces.internal.reflection.IField;
 import com.gigaspaces.internal.reflection.ReflectionUtil;
-import com.gigaspaces.metadata.SpaceDocumentSupport;
 import com.gigaspaces.metadata.SpaceMetadataException;
 import com.gigaspaces.metadata.StorageType;
 import com.gigaspaces.metadata.index.SpaceIndex;
@@ -113,12 +112,16 @@ public class TypeDescFactory {
         final String sequenceNumberPropertyName = typeInfo.getSequenceNumberPropertyName();
         TypeQueryExtensions queryExtensionsInfo = new TypeQueryExtensionsImpl(typeInfo);
 
-        ITypeDesc typeDesc = new TypeDesc(typeInfo.getName(), codeBase, typeInfo.getSuperClasses(),
+        TypeDesc typeDesc = new TypeDesc(typeInfo.getName(), codeBase, typeInfo.getSuperClasses(),
                 properties, supportsDynamicProperties, indexes, idPropertyName, typeInfo.getIdAutoGenerate(),
                 defaultPropertyName, routingPropertyName, fifoGroupingName, fifoGroupingIndexes, typeInfo.isSystemClass(), fifoSupport,
                 typeInfo.isReplicate(), supportsOptimisticLocking, defaultStorageType,
                 EntryType.OBJECT_JAVA, type, ExternalEntry.class, SpaceDocument.class, null, DotNetStorageType.NULL,
                 blobstoreEnabled, sequenceNumberPropertyName, queryExtensionsInfo);
+
+        if(typeInfo.getSpaceClassStorageAdapter() != null){
+            typeDesc.initClassStorageAdapter(typeInfo.getSpaceClassStorageAdapter());
+        }
 
         if (typeDesc.isExternalizable() && shouldWarnExternalizable(typeInfo) && _deprecationLogger.isWarnEnabled())
             _deprecationLogger.warn("Current class [" + type.getName() + "] implements " + Externalizable.class + ", usage of Externalizable in order to serialize it to a space is deprecated, Use SpaceExclude, StorageType and nested object serialization where relevant instead."

@@ -17,6 +17,8 @@
 package com.gigaspaces.internal.metadata;
 
 import com.gigaspaces.annotation.pojo.FifoSupport;
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapterRegistry;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.io.CustomClassLoaderObjectInputStream;
 import com.gigaspaces.internal.io.IOUtils;
@@ -78,6 +80,7 @@ public class TypeDesc implements ITypeDesc {
     private ITypeIntrospector<?> _objectIntrospector;
     private Map<String, SpaceIndex> _indexes;
     private TypeQueryExtensions queryExtensionsInfo;
+    private ClassBinaryStorageAdapter classStorageAdapter;
 
     private int _sequenceNumberFixedPropertyPos;  //-1  if none
 
@@ -1127,6 +1130,14 @@ public class TypeDesc implements ITypeDesc {
         return _compoundIndexes != null && _compoundIndexes.size() > 0;
     }
 
+
+    public ClassBinaryStorageAdapter getClassStorageAdapter() {
+        return classStorageAdapter;
+    }
+
+    public void initClassStorageAdapter(Class<? extends ClassBinaryStorageAdapter> classStorageAdapterClass) {
+        this.classStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(classStorageAdapterClass);
+    }
 
     @Override
     public void writeExternal(ObjectOutput out)
