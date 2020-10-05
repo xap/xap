@@ -19,6 +19,7 @@ package com.gigaspaces.internal.metadata;
 import com.gigaspaces.annotation.pojo.FifoSupport;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapterRegistry;
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.SerializedAdapter;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.io.CustomClassLoaderObjectInputStream;
 import com.gigaspaces.internal.io.IOUtils;
@@ -80,7 +81,7 @@ public class TypeDesc implements ITypeDesc {
     private ITypeIntrospector<?> _objectIntrospector;
     private Map<String, SpaceIndex> _indexes;
     private TypeQueryExtensions queryExtensionsInfo;
-    private ClassBinaryStorageAdapter classStorageAdapter;
+    private ClassBinaryStorageAdapter classStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(SerializedAdapter.class);
 
     private int _sequenceNumberFixedPropertyPos;  //-1  if none
 
