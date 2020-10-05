@@ -13,12 +13,17 @@ public class Join implements Query, Cloneable {
     private String joinType;
     private Query query;
     private ExpNode onExpression;
+    private String col;
     private String alias;
 
-    public Join(String joinType, Query query, ExpNode onExpression, String alias) {
+    /*
+     * Exactly one of col, query have to be null
+     */
+    public Join(String joinType, Query query, ExpNode onExpression, String col, String alias) {
         this.joinType = joinType;
         this.query = query;
         this.onExpression = onExpression;
+        this.col = col;
         this.alias = alias;
     }
 

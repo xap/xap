@@ -36,7 +36,10 @@ public class SqlParserTest {
             ,/*barak*/ "select * from a as x INNER JOIN (SELECT * from b) as y ON foo = bar\n" +
                     "where t = f\n" +
                     "GROUP BY foo(a, b)"
-
+            , /*barak*/ "select first_name, last_name, order_date, order_amount\n" +
+                    "from customers c\n" +
+                    "full join orders o\n" +
+                    "on c.customer_id = o.customer_id"
 
             , "SELECT *\n" +
                     "FROM (SELECT REPLACE(x.TICKER, ' ELEC ', ' ') as TICKER,\n" +

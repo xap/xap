@@ -298,13 +298,21 @@ Join join():
    SelectQuery query = null;
    ExpNode exp = null;
    Token alias = null;
+   Token col = null;
 }
 {
     (type = <INNER> | type = <LEFT> | type = <RIGHT> | type = <FULL>) <JOIN>
-    <OPENPAREN> query = selectSql() <CLOSEPAREN>
+    (<OPENPAREN> query = selectSql() <CLOSEPAREN>
+     |
+    col = id())
     ([<AS>] alias = id())?
     <ON> exp = SqlExpression(query) /* maybe we should pass the parent here as well ? */
-    { return new Join(getString(type), query, exp, getString(alias)); }
+    { if(query != null){
+         return new Join(getString(type), query, exp, getString(alias), null);
+      }else{
+         return new Join(getString(type), null, exp, getString(col), getString(alias));
+      }
+     }
 }
 // handle SQLQuery syntax (no from clause)
 AbstractDMLQuery readMultipleQuery():

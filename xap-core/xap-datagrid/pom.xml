@@ -142,6 +142,12 @@
                             </includes>
                             <followSymlinks>false</followSymlinks>
                         </fileset>
+                        <fileset>
+                            <directory>${project.basedir}</directory>
+                            <includes>
+                                <include>*.hprof</include>
+                            </includes>
+                        </fileset>
                     </filesets>
                 </configuration>
             </plugin>
