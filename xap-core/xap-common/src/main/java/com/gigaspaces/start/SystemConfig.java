@@ -857,35 +857,37 @@ public class SystemConfig {
                     System.setProperty(CommonSystemProperties.REGISTRY_PORT, Integer.toString(registryPort));
                     if (logger.isDebugEnabled())
                         logger.debug("Created RMI Registry: " + registry.toString() + " using port " + registryPort);
-                    String defaultAddress = SystemInfo.singleton().network().getHostId();
-                    String hostAddress =
-                            (String) config.getEntry(COMPONENT,
-                                    "hostAddress",
-                                    String.class,
-                                    defaultAddress);
-                    String publicHostAddress= SystemInfo.singleton().network().getPublicHostId();
-                    //mbs = ManagementFactory.getPlatformMBeanServer();
-                    mbs = MBeanServerFactory.getMBeanServer();
-                    if (mbs != null) {
-                        final String jmxServiceURL = JMXUtilities.createJMXUrl(hostAddress, registryPort);
-                        final String jmxServicePublicURL = JMXUtilities.createJMXUrl(publicHostAddress, registryPort);
-                    /* Set the JMX property to true */
-                        System.setProperty(CommonSystemProperties.JMX_ENABLED_PROP, Boolean.TRUE.toString());
-                        System.setProperty(CommonSystemProperties.CREATE_JMX_CONNECTOR_PROP, Boolean.FALSE.toString());
+                    if(  GsEnv.propertyBoolean( CommonSystemProperties.JMX_ENABLED_PROP ).get( false ) ) {
+                        String defaultAddress = SystemInfo.singleton().network().getHostId();
+                        String hostAddress =
+                                (String) config.getEntry(COMPONENT,
+                                        "hostAddress",
+                                        String.class,
+                                        defaultAddress);
+                        String publicHostAddress = SystemInfo.singleton().network().getPublicHostId();
+                        //mbs = ManagementFactory.getPlatformMBeanServer();
+                        mbs = MBeanServerFactory.getMBeanServer();
+                        if (mbs != null) {
+                            final String jmxServiceURL = JMXUtilities.createJMXUrl(hostAddress, registryPort);
+                            final String jmxServicePublicURL = JMXUtilities.createJMXUrl(publicHostAddress, registryPort);
+                            /* Set the JMX property to true */
+                            System.setProperty(CommonSystemProperties.JMX_ENABLED_PROP, Boolean.TRUE.toString());
+                            System.setProperty(CommonSystemProperties.CREATE_JMX_CONNECTOR_PROP, Boolean.FALSE.toString());
 
-                        final long start = System.currentTimeMillis();
-                        JMXConnectorServer jmxConn = JMXConnectorServerFactory.newJMXConnectorServer(
-                                new JMXServiceURL(jmxServiceURL), (Map) System.getProperties(), mbs);
-                        jmxConn.start();
-                        System.setProperty(CommonSystemProperties.JMX_SERVICE_URL, jmxServiceURL);
-                        System.setProperty(CommonSystemProperties.JMX_PUBLIC_SERVICE_URL, jmxServicePublicURL);
-                        final long duration = System.currentTimeMillis() - start;
-                        if (logger.isInfoEnabled())
-                            logger.info("Exported JMX Platform MBeanServer with RMI Connector " +
-                                    "[duration=" + BootUtil.formatDuration(duration) +
-                                    ", url=" + jmxServiceURL + "]");
-                    } else {
-                        logger.info("Unable to acquire JMX Platform MBeanServer, running with Java version " + JavaUtils.getVersion());
+                            final long start = System.currentTimeMillis();
+                            JMXConnectorServer jmxConn = JMXConnectorServerFactory.newJMXConnectorServer(
+                                    new JMXServiceURL(jmxServiceURL), (Map) System.getProperties(), mbs);
+                            jmxConn.start();
+                            System.setProperty(CommonSystemProperties.JMX_SERVICE_URL, jmxServiceURL);
+                            System.setProperty(CommonSystemProperties.JMX_PUBLIC_SERVICE_URL, jmxServicePublicURL);
+                            final long duration = System.currentTimeMillis() - start;
+                            if (logger.isInfoEnabled())
+                                logger.info("Exported JMX Platform MBeanServer with RMI Connector " +
+                                        "[duration=" + BootUtil.formatDuration(duration) +
+                                        ", url=" + jmxServiceURL + "]");
+                        } else {
+                            logger.info("Unable to acquire JMX Platform MBeanServer, running with Java version " + JavaUtils.getVersion());
+                        }
                     }
                 }
             }
