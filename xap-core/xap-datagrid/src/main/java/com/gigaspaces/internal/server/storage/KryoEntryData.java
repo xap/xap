@@ -148,7 +148,7 @@ public class KryoEntryData extends AbstractEntryData {
 
     @Override
     public Map<String, Object> getDynamicProperties() {
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     @Override
@@ -181,9 +181,7 @@ public class KryoEntryData extends AbstractEntryData {
             Output out = new Output(bos);
             kryo.writeObject(out, fieldsValues);
             out.flush();
-            byte[] bytes = bos.toByteArray();
-            System.out.println("bytes.length = " + bytes.length);
-            return bytes;
+            return bos.toByteArray();
         } catch (IOException e) {
             throw new UncheckedIOException("com.gigaspaces.internal.server.storage.FlatEntryData.serializeFields failed", e);
         }
