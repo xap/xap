@@ -804,60 +804,60 @@ public class SystemConfig {
          */
         public Object create(Configuration config) throws Exception {
             MBeanServer mbs = null;
+            if(  GsEnv.propertyBoolean( CommonSystemProperties.JMX_ENABLED_PROP ).get( false ) ) {
+                int registryPort = (Integer) getConfigEntry(config, COMPONENT, "registryPort", int.class, CommonSystemProperties.REGISTRY_PORT, 10098);
+                int registryRetries = (Integer) getConfigEntry(config, COMPONENT, "registryRetries", Integer.class, CommonSystemProperties.REGISTRY_RETRIES, 20);
 
-            int registryPort = (Integer) getConfigEntry(config, COMPONENT, "registryPort", int.class, CommonSystemProperties.REGISTRY_PORT, 10098);
-            int registryRetries = (Integer) getConfigEntry(config, COMPONENT, "registryRetries", Integer.class, CommonSystemProperties.REGISTRY_RETRIES, 20);
+                ClassLoader cl = Thread.currentThread().getContextClassLoader();
+                Thread.currentThread().setContextClassLoader(CommonClassLoader.getInstance());
 
-            ClassLoader cl = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(CommonClassLoader.getInstance());
-
-            int jmxRemotePort = -1;
-            String jmxRemotePortStr = System.getProperty(CommonSystemProperties.JMX_REMOTE_PORT);
-            if (jmxRemotePortStr != null) {
-                try {
-                    jmxRemotePort = Integer.parseInt(jmxRemotePortStr);
-                } catch (Exception e) {
-                    logger.warn(e.toString(), e);
-                }
-            }
-            if (jmxRemotePort > 0) {
-                logger.info("System property [" + CommonSystemProperties.JMX_REMOTE_PORT + "] has value:" + jmxRemotePort);
-            }
-            Registry registry = null;
-            if (jmxRemotePort < 0) {
-
-                if (logger.isDebugEnabled())
-                    logger.debug("Starting RMI Registry initialization: initial port=" + registryPort + ", retries=" + registryRetries);
-                RemoteException registryCreationException = null;
-                for (int i = 0; i < registryRetries; i++) {
+                int jmxRemotePort = -1;
+                String jmxRemotePortStr = System.getProperty(CommonSystemProperties.JMX_REMOTE_PORT);
+                if (jmxRemotePortStr != null) {
                     try {
-                        registry = LocateRegistry.createRegistry(registryPort);
-                        break;
-                    } catch (RemoteException e) {
-                        registryCreationException = e;
-                        if (logger.isTraceEnabled())
-                            logger.trace("Failed to create RMI Registry using port [" + registryPort +
-                                    "], increment port and try again");
+                        jmxRemotePort = Integer.parseInt(jmxRemotePortStr);
+                    } catch (Exception e) {
+                        logger.warn(e.toString(), e);
                     }
-                    registryPort++;
                 }
+                if (jmxRemotePort > 0) {
+                    logger.info("System property [" + CommonSystemProperties.JMX_REMOTE_PORT + "] has value:" + jmxRemotePort);
+                }
+                Registry registry = null;
+                if (jmxRemotePort < 0) {
 
-                Thread.currentThread().setContextClassLoader(cl);
-
-                if (registry == null) {
-                    logger.error("Unable to create RMI Registry, tried port range ["
-                                    + (registryPort - (registryRetries - 1))
-                                    + "-"
-                                    + (registryPort - 1)
-                                    + "], you can change the port and range using '"
-                                    + CommonSystemProperties.REGISTRY_PORT + ", " + CommonSystemProperties.REGISTRY_RETRIES
-                                    + "'",
-                            registryCreationException);
-                } else {
-                    System.setProperty(CommonSystemProperties.REGISTRY_PORT, Integer.toString(registryPort));
                     if (logger.isDebugEnabled())
-                        logger.debug("Created RMI Registry: " + registry.toString() + " using port " + registryPort);
-                    if(  GsEnv.propertyBoolean( CommonSystemProperties.JMX_ENABLED_PROP ).get( false ) ) {
+                        logger.debug("Starting RMI Registry initialization: initial port=" + registryPort + ", retries=" + registryRetries);
+                    RemoteException registryCreationException = null;
+                    for (int i = 0; i < registryRetries; i++) {
+                        try {
+                            registry = LocateRegistry.createRegistry(registryPort);
+                            break;
+                        } catch (RemoteException e) {
+                            registryCreationException = e;
+                            if (logger.isTraceEnabled())
+                                logger.trace("Failed to create RMI Registry using port [" + registryPort +
+                                        "], increment port and try again");
+                        }
+                        registryPort++;
+                    }
+
+                    Thread.currentThread().setContextClassLoader(cl);
+
+                    if (registry == null) {
+                        logger.error("Unable to create RMI Registry, tried port range ["
+                                        + (registryPort - (registryRetries - 1))
+                                        + "-"
+                                        + (registryPort - 1)
+                                        + "], you can change the port and range using '"
+                                        + CommonSystemProperties.REGISTRY_PORT + ", " + CommonSystemProperties.REGISTRY_RETRIES
+                                        + "'",
+                                registryCreationException);
+                    } else {
+                        System.setProperty(CommonSystemProperties.REGISTRY_PORT, Integer.toString(registryPort));
+                        if (logger.isDebugEnabled())
+                            logger.debug("Created RMI Registry: " + registry.toString() + " using port " + registryPort);
+//                    if(  GsEnv.propertyBoolean( CommonSystemProperties.JMX_ENABLED_PROP ).get( false ) ) {
                         String defaultAddress = SystemInfo.singleton().network().getHostId();
                         String hostAddress =
                                 (String) config.getEntry(COMPONENT,
@@ -888,30 +888,31 @@ public class SystemConfig {
                         } else {
                             logger.info("Unable to acquire JMX Platform MBeanServer, running with Java version " + JavaUtils.getVersion());
                         }
+                        //}
                     }
                 }
-            }
-            //if com.sun.management.jmxremote.port system property was passed
-            //added by Evgeny , Fix for GS-12109
-            else {
-                String defaultAddress = SystemInfo.singleton().network().getHostId();
-                String hostAddress =
-                        (String) config.getEntry(COMPONENT,
-                                "hostAddress",
-                                String.class,
-                                defaultAddress);
-                mbs = MBeanServerFactory.getMBeanServer();
-                if (mbs != null) {
-                    String publicHostAddress= SystemInfo.singleton().network().getPublicHostId();
-                    final String jmxServiceURL = JMXUtilities.createJMXUrl(hostAddress, jmxRemotePort);
-                    final String jmxServicePublicURL = JMXUtilities.createJMXUrl(publicHostAddress, registryPort);
-                    /* Set the JMX property to true */
-                    System.setProperty(CommonSystemProperties.JMX_ENABLED_PROP, Boolean.TRUE.toString());
-                    System.setProperty(CommonSystemProperties.CREATE_JMX_CONNECTOR_PROP, Boolean.FALSE.toString());
-                    System.setProperty(CommonSystemProperties.JMX_SERVICE_URL, jmxServiceURL);
-                    System.setProperty(CommonSystemProperties.JMX_PUBLIC_SERVICE_URL, jmxServicePublicURL);
-                } else {
-                    logger.info("Unable to acquire JMX Platform MBeanServer, running with Java version " + JavaUtils.getVersion());
+                //if com.sun.management.jmxremote.port system property was passed
+                //added by Evgeny , Fix for GS-12109
+                else {
+                    String defaultAddress = SystemInfo.singleton().network().getHostId();
+                    String hostAddress =
+                            (String) config.getEntry(COMPONENT,
+                                    "hostAddress",
+                                    String.class,
+                                    defaultAddress);
+                    mbs = MBeanServerFactory.getMBeanServer();
+                    if (mbs != null) {
+                        String publicHostAddress = SystemInfo.singleton().network().getPublicHostId();
+                        final String jmxServiceURL = JMXUtilities.createJMXUrl(hostAddress, jmxRemotePort);
+                        final String jmxServicePublicURL = JMXUtilities.createJMXUrl(publicHostAddress, registryPort);
+                        /* Set the JMX property to true */
+                        System.setProperty(CommonSystemProperties.JMX_ENABLED_PROP, Boolean.TRUE.toString());
+                        System.setProperty(CommonSystemProperties.CREATE_JMX_CONNECTOR_PROP, Boolean.FALSE.toString());
+                        System.setProperty(CommonSystemProperties.JMX_SERVICE_URL, jmxServiceURL);
+                        System.setProperty(CommonSystemProperties.JMX_PUBLIC_SERVICE_URL, jmxServicePublicURL);
+                    } else {
+                        logger.info("Unable to acquire JMX Platform MBeanServer, running with Java version " + JavaUtils.getVersion());
+                    }
                 }
             }
             return (mbs);
