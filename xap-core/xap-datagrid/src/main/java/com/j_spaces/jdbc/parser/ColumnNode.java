@@ -48,12 +48,6 @@ public class ColumnNode extends ValueNode {
         _name = columnPath;
     }
 
-    public ColumnNode(String columnPath, String op, Integer value) {
-        this();
-        _name = columnPath;
-        //@todo barak
-    }
-
     public FunctionCallDescription getFunctionCallDescription() {
         return functionCallDescription;
     }

@@ -19,7 +19,9 @@ package com.j_spaces.jdbc.parser;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.j_spaces.jdbc.SQLUtil;
 
+import java.sql.Date;
 import java.sql.SQLException;
+import java.time.LocalDate;
 
 
 /**
@@ -35,6 +37,21 @@ public class LiteralNode extends ValueNode {
     public LiteralNode(Object value) {
         super();
         this.value = value;
+    }
+
+    public LiteralNode(String left, String op, Integer right) {
+        super();
+        if (left.trim().equalsIgnoreCase("CURRENT_DATE")) {
+            LocalDate localDate = LocalDate.now();
+            if (op != null) {
+                if (op.equals("+")) {
+                    localDate = localDate.plusDays(right);
+                } else if (op.equals("-")) {
+                    localDate = localDate.minusDays(right);
+                }
+            }
+            this.value = Date.valueOf(localDate);
+        }
     }
 
     public Object getValue() {

@@ -853,9 +853,9 @@ ColumnNode createColumnNode(AbstractDMLQuery query,String columnFunc):
         columnNode.setFunctionCallDescription(new com.j_spaces.jdbc.builder.range.FunctionCallDescription(function.image, columnIndex, args));
         return columnNode;
     }
- 	|(t = id() [(op = <PLUS> | op = <MINUS>) number = <INTEGER_LITERAL> ] {
+ 	|(t = id() {
     	 String id =  (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? t.image : t.image.toUpperCase();
-    	 columnNode = new ColumnNode(id, getString(op), getInteger(number));
+    	 columnNode = new ColumnNode(id);
     })
 
     {return columnNode;}
@@ -1357,45 +1357,49 @@ ExpNode conditionNode(AbstractDMLQuery query,ColumnNode columnNode1) :
                 | <LESSEQUAL>   { expNode = new LTENode(); 		}
                 | <GREATER>     { expNode = new GTNode();	 	}
                 | <GREATEREQUAL>{ expNode = new GTENode(); 		}
-                | <NOTEQUAL>    { expNode = new NotEqualNode(); } 
-                | <NOTEQUAL2>   { expNode = new NotEqualNode();	} 
+                | <NOTEQUAL>    { expNode = new NotEqualNode(); }
+                | <NOTEQUAL2>   { expNode = new NotEqualNode();	}
                 | <LIKE>        { expNode = new LikeNode();}
                 | <NOT> <LIKE>  { expNode = new NotLikeNode(); }
                 | <RLIKE>       { expNode = new RLikeNode();}
-            ) 
-            ( 
-            	t = <QUESTIONMARK> { query.setPrepared(true); valueNode = new PreparedNode(null,++conditionIndex); } 
+            )
+            (
+            	t = <QUESTIONMARK> { query.setPrepared(true); valueNode = new PreparedNode(null,++conditionIndex); }
                 | t = <STRING_LITERAL> { valueNode = new LiteralNode(new String(t.image.substring(1,t.image.length()-1))); } //clear the first and last "'"
                 | t = <TRUE>  {valueNode = new LiteralNode(Boolean.TRUE);}
                 | t = <FALSE> {valueNode = new LiteralNode(Boolean.FALSE);}
-                | LOOKAHEAD(2)[<MINUS> { negative = "-";}] t = <INTEGER_LITERAL> { valueNode = new LiteralNode(negative + t.image); } 
-                | LOOKAHEAD(2)[<MINUS> { negative = "-";}] t = <LONG_LITERAL> { valueNode = new LiteralNode(negative + t.image.substring(0,t.image.length()-1)); } 
+                | LOOKAHEAD(2)[<MINUS> { negative = "-";}] t = <INTEGER_LITERAL> { valueNode = new LiteralNode(negative + t.image); }
+                | LOOKAHEAD(2)[<MINUS> { negative = "-";}] t = <LONG_LITERAL> { valueNode = new LiteralNode(negative + t.image.substring(0,t.image.length()-1)); }
                 | LOOKAHEAD(2)[<MINUS> { negative = "-";}] t = <FLOATING_POINT_LITERAL> { valueNode = new LiteralNode(negative + t.image); }
                 | t = <DATE_LITERAL> {valueNode = new LiteralNode(t.image); }
-               	| <SYSDATE> [ (operator = <PLUS> | operator = <MINUS>) addup = <INTEGER_LITERAL>] { 
+               	| <SYSDATE> [ (operator = <PLUS> | operator = <MINUS>) addup = <INTEGER_LITERAL>] {
                		Calendar cal = Calendar.getInstance();
                		if (addup != null) {
                			if (operator.image.equals("+"))
                				cal.add(Calendar.DATE,Integer.parseInt(addup.image));
                			else if (operator.image.equals("-"))
-               				cal.add(Calendar.DATE,-(Integer.parseInt(addup.image)));	
+               				cal.add(Calendar.DATE,-(Integer.parseInt(addup.image)));
                		}
                		valueNode = new LiteralNode(new java.sql.Timestamp(cal.getTime().getTime()));
                	  }
                	// Inner query
                	| (<OPENPAREN> innerQuery = selectSql()
-               	{ valueNode = new InnerQueryNode((SelectQuery)innerQuery); query.setContainsSubQueries(true); }              
-               	  <CLOSEPAREN>) 				
+               	{ valueNode = new InnerQueryNode((SelectQuery)innerQuery); query.setContainsSubQueries(true); }
+               	  <CLOSEPAREN>)
+                | LOOKAHEAD(2) t = id() [ (operator = <PLUS> | operator = <MINUS>) addup = <INTEGER_LITERAL>] {
+                    String id =  (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? t.image : t.image.toUpperCase();
+                    valueNode = new LiteralNode(id, getString(operator), getInteger(addup));
+                  }
 				| columnNode2 = createColumnNode(query,null) {
-			
-			    } 
+
+			    }
     	   )
         )
         | LOOKAHEAD(2) (expNode = SqlInClause(query))
 		        {
 		          expNode.setLeftChild(columnNode1);
 		          return expNode;
-		        }           
+		        }
     )
     {
       expNode.setLeftChild(columnNode1);
