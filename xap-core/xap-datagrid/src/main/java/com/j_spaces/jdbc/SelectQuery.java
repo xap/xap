@@ -86,6 +86,7 @@ public class SelectQuery extends AbstractDMLQuery {
     //logger
     final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
     private boolean isSelectAll;
+    private List<Join> joins;
 
     public SelectQuery() {
         super();
@@ -101,7 +102,7 @@ public class SelectQuery extends AbstractDMLQuery {
     }
 
     public void setJoins(List<Join> joins) {
-        //@todo barak, handle query with joins
+        this.joins = joins;
     }
 
     /**
@@ -699,6 +700,8 @@ public class SelectQuery extends AbstractDMLQuery {
             return;
         }
 
+        applyJoinsIfNeeded();
+
         super.validateQuery(space);
 
         // if this query is used to create a notify template
@@ -722,6 +725,15 @@ public class SelectQuery extends AbstractDMLQuery {
         }
 
         validateCommonJavaTypeOnDocumentOrStringReturnProperties();
+    }
+
+    private void applyJoinsIfNeeded() {
+        if (joins != null) {
+            for (Join join : joins) {
+                addTableWithAlias(join.getTableName(), join.getAlias());
+                setExpTree(join.applyOnExpression(getExpTree()));
+            }
+        }
     }
 
     private void validateCommonJavaTypeOnDocumentOrStringReturnProperties() {
