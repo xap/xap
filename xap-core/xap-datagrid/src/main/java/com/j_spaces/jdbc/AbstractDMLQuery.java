@@ -185,6 +185,15 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
         return queryColumns;
     }
 
+    public SelectColumn getQueryColumnByAlias(String alias) {
+        for (SelectColumn sc : getQueryColumns()) {
+            if (sc.hasAlias() && sc.getAlias().equalsIgnoreCase(alias)) {
+                return sc;
+            }
+        }
+        return null;
+    }
+
 
     /**
      * Add a column to the list of columns.

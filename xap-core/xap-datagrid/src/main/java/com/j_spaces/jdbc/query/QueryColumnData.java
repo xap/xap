@@ -179,13 +179,9 @@ public class QueryColumnData {
         // Check if the specified column path is a column alias and if so assign
         // the original column name to columnPath
         if (query.isSelectQuery()) {
-            for (SelectColumn sc : query.getQueryColumns()) {
-                if (sc.hasAlias()) {
-                    if (sc.getAlias().compareToIgnoreCase(columnPath) == 0) {
-                        columnPath = sc.getName();
-                        break;
-                    }
-                }
+            SelectColumn sc = query.getQueryColumnByAlias(columnPath);
+            if (sc != null) {
+                columnPath = sc.getName();
             }
         }
 
