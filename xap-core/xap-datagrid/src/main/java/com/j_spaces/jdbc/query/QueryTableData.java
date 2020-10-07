@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- *
- */
 package com.j_spaces.jdbc.query;
 
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
@@ -33,7 +30,6 @@ import com.j_spaces.jdbc.parser.ExpNode;
 
 import net.jini.core.transaction.Transaction;
 
-
 /**
  * @author anna
  * @since 7.0
@@ -41,12 +37,10 @@ import net.jini.core.transaction.Transaction;
 @com.gigaspaces.api.InternalApi
 public class QueryTableData {
 
-    private String _tableName;
-    private String _tableAlias;
-
-    // the sequential index of the table
-    // in the "from" clause
-    private int _tableIndex;
+    private final String _tableName;
+    private final String _tableAlias;
+    // the sequential index of the table in the "from" clause
+    private final int _tableIndex;
 
     // the space type descriptor for this table/class
     private ITypeDesc _typeDesc;
@@ -62,6 +56,12 @@ public class QueryTableData {
     private boolean _isJoined;
     private boolean _hasAsterixSelectColumns;
 
+    public QueryTableData(String name, String alias, int index) {
+        _tableName = name;
+        _tableAlias = alias;
+        _tableIndex = index;
+    }
+
     public boolean hasAsterixSelectColumns() {
         return _hasAsterixSelectColumns;
     }
@@ -74,24 +74,12 @@ public class QueryTableData {
         return _tableName;
     }
 
-    public void setTableName(String tableName) {
-        _tableName = tableName;
-    }
-
     public String getTableAlias() {
         return _tableAlias;
     }
 
-    public void setTableAlias(String tableAlias) {
-        _tableAlias = tableAlias;
-    }
-
     public int getTableIndex() {
         return _tableIndex;
-    }
-
-    public void setTableIndex(int tableIndex) {
-        _tableIndex = tableIndex;
     }
 
     public ITypeDesc getTypeDesc() {
@@ -108,8 +96,6 @@ public class QueryTableData {
 
     public void setJoinCondition(ExpNode joinIndex) {
         _joinCondition = joinIndex;
-
-
     }
 
     @Override

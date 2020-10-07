@@ -297,31 +297,13 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
         return m_isUseTemplate;
     }
 
-    /**
-     * Add an alias-table mapping. if no alias exists, we'll use the table name
-     */
-    public void addTableWithAlias(String table, String alias) {
-
-
-        // create table data
-        QueryTableData tableData = new QueryTableData();
-        tableData.setTableName(table);
-        tableData.setTableAlias(alias);
-        tableData.setTableIndex(_tablesData.size());
-
-
+    public QueryTableData addTableWithAlias(String table, String alias) {
+        QueryTableData tableData = new QueryTableData(table, alias, _tablesData.size());
         _tablesData.add(tableData);
-
-        if (alias == null)
-            tables.put(table, tableData);
-        else {
-            // index the table data by alias and by the table name
-            // cause sometimes the search is by alias and sometimes by the actual name
+        if (alias != null)
             tables.put(alias, tableData);
-            tables.put(table, tableData);
-        }
-
-
+        tables.put(table, tableData);
+        return tableData;
     }
 
     /**
