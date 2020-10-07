@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-/**
- *
- */
 package com.j_spaces.jdbc.query;
 
 import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.SelectColumn;
 
@@ -73,16 +69,19 @@ public class QueryColumnData {
         }
     }
 
-    /**
-     * @param tableData
-     * @param columnPath
-     * @throws SQLException
-     */
-    public QueryColumnData(QueryTableData tableData, String columnPath) throws SQLException {
+    public QueryColumnData(QueryTableData tableData, String columnPath) {
         this(columnPath);
         _columnTableData = tableData;
-
-        initColumnData();
+        if (tableData != null && !UID_COLUMN.equals(_columnName) && !ASTERIX_COLUMN.equals(_columnName)) {
+            ITypeDesc currentInfo = tableData.getTypeDesc();
+            int pos = currentInfo.getFixedPropertyPositionIgnoreCase(_columnName);
+            if (pos == -1) {
+                if (!currentInfo.supportsDynamicProperties())
+                    throw new IllegalArgumentException("Unknown column name '" + _columnName + "'");
+            } else {
+                setColumnIndexInTable(pos);
+            }
+        }
     }
 
     public String getColumnName() {
@@ -116,48 +115,18 @@ public class QueryColumnData {
      */
     public boolean checkAndAssignTableData(QueryTableData tableData) throws SQLException {
         ITypeDesc currentInfo = tableData.getTypeDesc();
+        int pos = currentInfo.getFixedPropertyPositionIgnoreCase(getColumnName());
+        if (pos == -1)
+            return false;
 
-        for (int c = 0; c < currentInfo.getNumOfFixedProperties(); c++) {
-            String columnName = getColumnName();
-            PropertyInfo fixedProperty = currentInfo.getFixedProperty(c);
-            if (fixedProperty.getName().equalsIgnoreCase(columnName)) {
-                //found the column
-                // check for ambiguous column
-                QueryTableData columnTableData = getColumnTableData();
-                if (columnTableData != null && columnTableData != tableData)
-                    throw new SQLException("Ambiguous column name [" + columnName + "]");
+        //found the column, check for ambiguous column
+        QueryTableData columnTableData = getColumnTableData();
+        if (columnTableData != null && columnTableData != tableData)
+            throw new SQLException("Ambiguous column name [" + getColumnName() + "]");
 
-                setColumnTableData(tableData);
-                setColumnIndexInTable(c);
-
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Checks if  table data matches this column.
-     *
-     * @return true if matches
-     */
-    private void initColumnData() throws SQLException {
-        if (getColumnTableData() == null)
-            return;
-
-        if (getColumnName() != null && (getColumnName().equals(UID_COLUMN) || getColumnName().equals(ASTERIX_COLUMN)))
-            return;
-        ITypeDesc currentInfo = getColumnTableData().getTypeDesc();
-
-        for (int c = 0; c < currentInfo.getNumOfFixedProperties(); c++) {
-            if (currentInfo.getFixedProperty(c).getName().equalsIgnoreCase(getColumnName())) {
-                setColumnIndexInTable(c);
-                return;
-            }
-        }
-
-        if (!currentInfo.supportsDynamicProperties())
-            throw new IllegalArgumentException("Unknown column name '" + getColumnName() + "'");
+        setColumnTableData(tableData);
+        setColumnIndexInTable(pos);
+        return true;
     }
 
     public String getColumnPath() {
