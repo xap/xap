@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-/**
- *
- */
 package com.j_spaces.jdbc.query;
 
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.j_spaces.jdbc.AbstractDMLQuery;
+import com.j_spaces.jdbc.Query;
 import com.j_spaces.jdbc.SelectColumn;
+import com.j_spaces.jdbc.SelectQuery;
 
 import java.sql.SQLException;
-
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * @author anna
@@ -34,55 +35,22 @@ import java.sql.SQLException;
 @com.gigaspaces.api.InternalApi
 public class QueryColumnData {
 
-    /**
-     *
-     */
     protected static final String ASTERIX_COLUMN = "*";
-
-    /**
-     *
-     */
     protected static final String UID_COLUMN = "UID";
-
-    private String _columnName;
-    private QueryTableData _columnTableData;
-    private int _columnIndexInTable = -1; //the index of the column in its table
 
     // query column path - used for query navigation - Person.car.color='red'
     private final String _columnPath;
+    private final String _columnName;
+    private QueryTableData _columnTable;
+    private int _columnIndex; //the index of the column in its table
 
-
-    /**
-     * @param columnPath
-     */
-    public QueryColumnData(String columnPath) {
-        if (columnPath == null) {
-            _columnPath = null;
-
-        } else {
-            // Get column name by splitting the full path by '.' or "[*]" and
-            // keeping the first match, for example:
-            // 1. column => column
-            // 2. nested.column => column
-            // 3. collection[*].column => collection
-            // the "2" provided to the split method is used for optimization.
-            // The pattern will only process the first match and the remaining will
-            // be placed in the second position of the returned array.
-            _columnName = columnPath.split("\\.|\\[\\*\\]", 2)[0];
-            _columnPath = columnPath;
-        }
-    }
-
-    /**
-     * @param tableData
-     * @param columnPath
-     * @throws SQLException
-     */
-    public QueryColumnData(QueryTableData tableData, String columnPath) throws SQLException {
-        this(columnPath);
-        _columnTableData = tableData;
-
-        initColumnData();
+    public QueryColumnData(QueryTableData tableData, String columnPath) {
+        _columnPath = isUidColumn(columnPath) ? UID_COLUMN : columnPath;
+        _columnName = initColumnName(_columnPath);
+        _columnTable = tableData;
+        if (isAsterixColumn() && tableData != null)
+            tableData.setAsterixSelectColumns(true);
+        _columnIndex = tableData == null || isUidColumn() || isAsterixColumn() ? -1 : initColumnIndex(tableData, _columnName);
     }
 
     public String getColumnName() {
@@ -90,30 +58,195 @@ public class QueryColumnData {
     }
 
     public QueryTableData getColumnTableData() {
-        return _columnTableData;
+        return _columnTable;
     }
-
-    public void setColumnTableData(QueryTableData columnTableData) {
-        _columnTableData = columnTableData;
-
-    }
-
 
     public int getColumnIndexInTable() {
-        return _columnIndexInTable;
+        return _columnIndex;
     }
 
-    public void setColumnIndexInTable(int columnIndexInTable) {
-        this._columnIndexInTable = columnIndexInTable;
+    public String getColumnPath() {
+        return _columnPath;
     }
 
-    /**
-     * Checks if given table data matches this column. If so the table data is set.
-     *
-     * If another table data was already assigned - column ambiguity - exception is thrown.
-     *
-     * @return true if the table data was set
-     */
+    public boolean isNestedQueryColumn() {
+        if (_columnName == null)
+            return false;
+        return !_columnPath.equals(_columnName);
+    }
+
+    public static QueryColumnData newColumnData(String columnPathRaw, AbstractDMLQuery query)
+            throws SQLException {
+
+        List<QueryTableData> tables = query.getTablesData();
+        // Special case for asterisk (*) column:
+        if (isAsterixColumn(columnPathRaw)) {
+            for (QueryTableData table : tables)
+                table.setAsterixSelectColumns(true);
+            return new QueryColumnData(null, columnPathRaw);
+        }
+
+        // Check if the specified column path is a column alias and if so assign
+        // the original column name to columnPath
+        if (query.isSelectQuery()) {
+            SelectColumn sc = query.getQueryColumnByAlias(columnPathRaw);
+            if (sc != null) {
+                columnPathRaw = sc.getName();
+            }
+        }
+        final String columnPath = columnPathRaw;
+
+        // Check for a table prefix in column path, and build column data if exists:
+        QueryColumnData columnData = findUnique(tables, t -> tryInitWithPrefix(t, columnPath), (r1, r2) -> ambigFormatter(columnPath, r1, r2));
+        if (columnData != null)
+            return columnData;
+
+        // no table prefix - find the table that has such column
+        // special case - uid (reserved word, cannot be a table column)
+        if (isUidColumn(columnPath)) {
+            if (tables.size() > 1)
+                throw new SQLException("Ambiguous UID column - query contains multiple tables: [" + query.getTablesNames() + "]");
+            return new QueryColumnData(query.getTableData(), columnPath);
+        }
+
+        columnData = findUnique(tables, t -> tryInitWithoutPrefix(t, columnPath), (r1, r2) -> ambigFormatter(columnPath, r1, r2));
+        if (columnData != null)
+            return columnData;
+        columnData = new QueryColumnData(null, columnPath);
+        //we need to know where this column is
+        boolean assignedTable = false;
+        for (QueryTableData tableData : query.getTablesData()) {
+            if (columnData.checkAndAssignTableData(tableData))
+                assignedTable = true;
+        }
+        if(assignedTable)
+            return columnData;
+
+        // Special case: single table which supports dynamic properties
+        if (tables.size() == 1 && query.getTableData().getTypeDesc().supportsDynamicProperties()) {
+            return new QueryColumnData(query.getTableData(), columnPath);
+        }
+
+        throw new SQLException("Unknown column path [" + columnPath + "] .", "GSP", -122);
+    }
+
+    public boolean isAsterixColumn() {
+        return isAsterixColumn(_columnPath);
+    }
+
+    public boolean isUidColumn() {
+        return UID_COLUMN.equals(_columnPath);
+    }
+
+    private static boolean isAsterixColumn(String columnName) {
+        return ASTERIX_COLUMN.equals(columnName);
+    }
+
+    private static boolean isUidColumn(String columnName) {
+        return UID_COLUMN.equalsIgnoreCase(columnName);
+    }
+
+    private static String initColumnName(String columnPath) {
+        // Get column name by splitting the full path by '.' or "[*]" and
+        // keeping the first match, for example:
+        // 1. column => column
+        // 2. nested.column => column
+        // 3. collection[*].column => collection
+        // the "2" provided to the split method is used for optimization.
+        // The pattern will only process the first match and the remaining will
+        // be placed in the second position of the returned array.
+        return columnPath == null ? null : columnPath.split("\\.|\\[\\*\\]", 2)[0];
+    }
+
+    private static int initColumnIndex(QueryTableData tableData, String columnName) {
+        ITypeDesc typeDesc = tableData.getTypeDesc();
+        if (typeDesc != null) {
+            int colIndex = typeDesc.getFixedPropertyPositionIgnoreCase(columnName);
+            if (colIndex == -1 && !typeDesc.supportsDynamicProperties())
+                throw new IllegalArgumentException("Unknown column [" + columnName + "] in table [" + tableData.getTableName() + "]");
+            return colIndex;
+        }
+        Query subQuery = tableData.getSubQuery();
+        if (subQuery != null) {
+            if (subQuery instanceof SelectQuery) {
+                List<SelectColumn> subQueryColumns = ((SelectQuery) subQuery).getQueryColumns();
+                int colIndex = 0;
+                for (SelectColumn subQueryColumn : subQueryColumns) {
+                    if (subQueryColumn.hasAlias() ? subQueryColumn.getAlias().equals(columnName) : subQueryColumn.getName().equals(columnName)) {
+                        return colIndex;
+                    }
+                    if (subQueryColumn.isVisible()) {
+                        colIndex++;
+                    }
+                }
+                throw new IllegalArgumentException("Unknown column [" + columnName + "] in table [" + tableData.getTableName() + "]");
+            } else {
+                throw new IllegalStateException("Unsupported subquery class: " + subQuery.getClass());
+            }
+        }
+        throw new IllegalStateException("QueryTableData does not have type descriptor for table [" + tableData.getTableName() + "]");
+    }
+
+    private static <T, R> R findUnique(Iterable<T> iterable, Function<T, R> mapper, BiFunction<R, R, String> errorFormatter)
+            throws SQLException {
+        R result = null;
+        for (T item : iterable) {
+            R curr = mapper.apply(item);
+            if (curr != null) {
+                if (result == null) {
+                    result = curr;
+                } else {
+                    throw new SQLException(errorFormatter.apply(result, curr));
+                }
+            }
+        }
+        return result;
+    }
+
+    private static QueryColumnData tryInitWithPrefix(QueryTableData tableData, String columnPath) {
+        if (columnPath != null) {
+            String[] prefixes = new String[] {tableData.getTableName(), tableData.getTableAlias()};
+            for (String prefix : prefixes) {
+                if (prefix != null && columnPath.startsWith(prefix + "."))
+                    return new QueryColumnData(tableData, columnPath.substring(prefix.length() + 1));
+            }
+        }
+        return null;
+    }
+
+    private static QueryColumnData tryInitWithoutPrefix(QueryTableData tableData, String columnPath) {
+        ITypeDesc typeDesc = tableData.getTypeDesc();
+        if (typeDesc != null) {
+            return typeDesc.getFixedPropertyPositionIgnoreCase(columnPath) == -1 ? null : new QueryColumnData(tableData, columnPath);
+        }
+        Query subQuery = tableData.getSubQuery();
+        if (subQuery != null) {
+            SelectColumn col = getSubQueryColumnByName(subQuery, columnPath);
+            if (col == null || !col.isVisible()) return null;
+            String colName = col.hasAlias() ? col.getAlias() : col.toString();
+            return new QueryColumnData(tableData, col.isAggregatedFunction() ? colName : columnPath);
+        }
+        throw new IllegalStateException("QueryTableData does not have type descriptor for table [" + tableData.getTableName() + "]");
+    }
+
+    private static SelectColumn getSubQueryColumnByName(Query subQuery, String columnName) {
+        if (subQuery instanceof SelectQuery) {
+            List<SelectColumn> subQueryColumns = ((SelectQuery) subQuery).getQueryColumns();
+            for (SelectColumn subQueryColumn : subQueryColumns) {
+                if (subQueryColumn.hasAlias() ? subQueryColumn.getAlias().equals(columnName): subQueryColumn.getName().equals(columnName))
+                    return subQueryColumn;
+            }
+            return null;
+        }
+        throw new IllegalStateException("Unsupported subquery class: " + subQuery.getClass());
+    }
+
+    private static String ambigFormatter(String columnPath, QueryColumnData r1, QueryColumnData r2) {
+        return "Ambiguous column [" + columnPath + "]: exists in [" +
+                r1.getColumnTableData().getTableName() + "] and [" +
+                r2.getColumnTableData().getTableName();
+    }
+
     public boolean checkAndAssignTableData(QueryTableData tableData) throws SQLException {
         ITypeDesc currentInfo = tableData.getTypeDesc();
 
@@ -136,153 +269,11 @@ public class QueryColumnData {
         return false;
     }
 
-    /**
-     * Checks if  table data matches this column.
-     *
-     * @return true if matches
-     */
-    private void initColumnData() throws SQLException {
-        if (getColumnTableData() == null)
-            return;
-
-        if (getColumnName() != null && (getColumnName().equals(UID_COLUMN) || getColumnName().equals(ASTERIX_COLUMN)))
-            return;
-        ITypeDesc currentInfo = getColumnTableData().getTypeDesc();
-
-        for (int c = 0; c < currentInfo.getNumOfFixedProperties(); c++) {
-            if (currentInfo.getFixedProperty(c).getName().equalsIgnoreCase(getColumnName())) {
-                setColumnIndexInTable(c);
-                return;
-            }
-        }
-
-        if (!currentInfo.supportsDynamicProperties())
-            throw new IllegalArgumentException("Unknown column name '" + getColumnName() + "'");
+    private void setColumnTableData(QueryTableData columnTable) {
+        this._columnTable = columnTable;
     }
 
-    public String getColumnPath() {
-        return _columnPath;
+    private void setColumnIndexInTable(int columnIndex) {
+        this._columnIndex = columnIndex;
     }
-
-
-    public boolean isNestedQueryColumn() {
-        if (_columnName == null)
-            return false;
-        return !_columnPath.equals(_columnName);
-    }
-
-    /**
-     * Create column data according to the table name
-     */
-    public static QueryColumnData newColumnData(String columnPath, AbstractDMLQuery query)
-            throws SQLException {
-        // Check if the specified column path is a column alias and if so assign
-        // the original column name to columnPath
-        if (query.isSelectQuery()) {
-            for (SelectColumn sc : query.getQueryColumns()) {
-                if (sc.hasAlias()) {
-                    if (sc.getAlias().compareToIgnoreCase(columnPath) == 0) {
-                        columnPath = sc.getName();
-                        break;
-                    }
-                }
-            }
-        }
-
-        QueryColumnData columnData = null;
-        // split the column path to table name an column name
-        for (QueryTableData tableData : query.getTablesData()) {
-            String tableName = null;
-            if (startsWith(columnPath, tableData.getTableName()))
-                tableName = tableData.getTableName();
-            else if (startsWith(columnPath, tableData.getTableAlias()))
-                tableName = tableData.getTableAlias();
-
-
-            if (tableName != null) {
-                // check for ambiguity
-                if (columnData != null) {
-                    throw new SQLException("Ambiguous column path - ["
-                            + columnPath + "]");
-
-                }
-                columnData = QueryColumnData.newInstance(tableData, columnPath.substring(tableName.length() + 1));
-
-            }
-        }
-
-        // no table data - only columnPath - find the table that has such column
-        if (columnData == null) {
-            columnData = QueryColumnData.newInstance(columnPath);
-            //we need to know where this column is
-            boolean assignedTable = false;
-            for (QueryTableData tableData : query.getTablesData()) {
-                if (columnData.checkAndAssignTableData(tableData))
-                    assignedTable = true;
-            }
-
-            if (!assignedTable) {
-                if (query.getTablesData().size() == 1) {
-                    if (query.getTableData().getTypeDesc().supportsDynamicProperties()) {
-                        columnData.setColumnTableData(query.getTableData());
-                        return columnData;
-                    }
-                }
-                throw new SQLException("Unknown column path [" + columnPath + "] .",
-                        "GSP", -122);
-            }
-        }
-
-
-        return columnData;
-    }
-
-
-    /**
-     * @param columnPath
-     * @return
-     * @throws SQLException
-     */
-    private static QueryColumnData newInstance(String columnPath) throws SQLException {
-        return newInstance(null, columnPath);
-    }
-
-
-    public static QueryColumnData newInstance(QueryTableData tableData, String columnPath) throws SQLException {
-        if (columnPath.equalsIgnoreCase(UID_COLUMN)) {
-            return new UidColumnData(tableData);
-        } else if (columnPath.equals(ASTERIX_COLUMN)) {
-            return new AsterixColumnData(tableData);
-        } else {
-            return new QueryColumnData(tableData, columnPath);
-        }
-    }
-
-
-    /**
-     * Returns true if given columnPath startsWith given tableName
-     */
-    public static boolean startsWith(String columnPath, String tableName) {
-
-        if (tableName == null || columnPath == null)
-            return false;
-
-        return columnPath.startsWith(tableName + ".");
-
-
-    }
-
-    public void setColumnName(String columnName) {
-        _columnName = columnName;
-    }
-
-
-    public boolean isAsterixColumn() {
-        return false;
-    }
-
-    public boolean isUidColumn() {
-        return false;
-    }
-
 }

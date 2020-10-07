@@ -40,8 +40,7 @@ import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.driver.GPreparedStatement.PreparedValuesCollection;
 import com.j_spaces.jdbc.executor.JoinedQueryExecutor;
 import com.j_spaces.jdbc.executor.QueryExecutor;
-import com.j_spaces.jdbc.parser.ExpNode;
-import com.j_spaces.jdbc.parser.RowNumNode;
+import com.j_spaces.jdbc.parser.*;
 import com.j_spaces.jdbc.query.*;
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.lease.LeaseDeniedException;
@@ -96,8 +95,10 @@ public class SelectQuery extends AbstractDMLQuery {
     public void addTableWithAlias(Object table, String alias) {
         if (table instanceof String) {
             super.addTableWithAlias((String) table, alias);
-        } else {
-            //@todo barak, handle the case where table is select (Query)
+        } else if (table instanceof  SelectQuery){
+            SelectQuery query = (SelectQuery) table;
+            QueryTableData queryTableData = super.addTableWithAlias(alias, null);
+            queryTableData.setSubQuery(query);
         }
     }
 
@@ -171,7 +172,7 @@ public class SelectQuery extends AbstractDMLQuery {
                 createProjectionTemplate();
             /***************** Read the entries ****************/
 
-            if (getTableName().equals(SYSTABLES)) {
+            if (SYSTABLES.equals(getTableName())) {
                 return executeSysTablesQuery(space, packet);
             }
 
@@ -180,6 +181,8 @@ public class SelectQuery extends AbstractDMLQuery {
             // No where clause
 
             if (isJoined()) {
+                //boolean collJoin = false;//isCollocatedJoin();
+                //_executor = collJoin ? new CollocatedJoinedQueryExecutor(this) : new JoinedQueryExecutor(this);
                 _executor = new JoinedQueryExecutor(this);
 
                 entries = executeJoinedQuery(space, txn);
@@ -605,41 +608,41 @@ public class SelectQuery extends AbstractDMLQuery {
      */
     @Override
     public SelectQuery clone() {
-      SelectQuery query = new SelectQuery();
-      query.tables = this.tables;
-      query._tablesData = _tablesData;
-      query.rownum = (RowNumNode) (this.rownum == null ? null : rownum.clone());
-      query.orderColumns = this.orderColumns;
-      query.groupColumn = this.groupColumn;
-      query.isPrepared = this.isPrepared;
-      query.forUpdate = this.forUpdate;
-      query.isAggFunction = this.isAggFunction;
-      query.isDistinct = isDistinct;
-      query.setRouting(this.getRouting());
-      query.setProjectionTemplate(this.getProjectionTemplate());
-      query.setContainsSubQueries(this.containsSubQueries());
-      query.isSelectAll = this.isSelectAll;
+        SelectQuery query = new SelectQuery();
+        query.tables = this.tables;
+        query._tablesData = _tablesData;
+        query.rownum = (RowNumNode) (this.rownum == null ? null : rownum.clone());
+        query.orderColumns = this.orderColumns;
+        query.groupColumn = this.groupColumn;
+        query.isPrepared = this.isPrepared;
+        query.forUpdate = this.forUpdate;
+        query.isAggFunction = this.isAggFunction;
+        query.isDistinct = isDistinct;
+        query.setRouting(this.getRouting());
+        query.setProjectionTemplate(this.getProjectionTemplate());
+        query.setContainsSubQueries(this.containsSubQueries());
+        query.isSelectAll = this.isSelectAll;
 
 
-      int numOfColumns = 0;
+        int numOfColumns = 0;
         for (SelectColumn col : this.getQueryColumns()) {
             if (!col.isDynamic()) {
                 numOfColumns++;
             }
         }
 
-      query.queryColumns = new ArrayList(numOfColumns);
-      if(numOfColumns != 0) {
-          for (SelectColumn col : this.getQueryColumns()) {
-              if (!col.isDynamic()) {
-                  query.queryColumns.add(col);
-              }
-          }
-      }
+        query.queryColumns = new ArrayList(numOfColumns);
+        if(numOfColumns != 0) {
+            for (SelectColumn col : this.getQueryColumns()) {
+                if (!col.isDynamic()) {
+                    query.queryColumns.add(col);
+                }
+            }
+        }
 
-      if (this.getExpTree() != null)
-        query.setExpTree((ExpNode) this.getExpTree().clone()); //clone all the tree.
-      return query;
+        if (this.getExpTree() != null)
+            query.setExpTree((ExpNode) this.getExpTree().clone()); //clone all the tree.
+        return query;
     }
 
     /**
@@ -696,7 +699,7 @@ public class SelectQuery extends AbstractDMLQuery {
      */
     @Override
     public void validateQuery(ISpaceProxy space) throws SQLException {
-        if (getTableName().equals(SYSTABLES)) {
+        if (getTablesNames().contains(SYSTABLES)) {
             return;
         }
 
@@ -710,7 +713,6 @@ public class SelectQuery extends AbstractDMLQuery {
             validateNotifyQuery();
 
         validateAndPrepareSelectColumns();
-
         // set order column info
         if (isOrderBy()) {
             for (SelectColumn orderCol : orderColumns) {
@@ -727,10 +729,14 @@ public class SelectQuery extends AbstractDMLQuery {
         validateCommonJavaTypeOnDocumentOrStringReturnProperties();
     }
 
-    private void applyJoinsIfNeeded() {
+    private void applyJoinsIfNeeded() throws SQLException {
         if (joins != null) {
             for (Join join : joins) {
-                addTableWithAlias(join.getTableName(), join.getAlias());
+                QueryTableData table = addTableWithAlias(join.getTableName(), join.getAlias());
+                //table.setJoinType(join.getJoinType());
+                if (join.getSubQuery() != null) {
+                    table.setSubQuery(join.getSubQuery());
+                }
                 setExpTree(join.applyOnExpression(getExpTree()));
             }
         }
@@ -744,9 +750,9 @@ public class SelectQuery extends AbstractDMLQuery {
                         QueryColumnData columnData = column.getColumnData();
                         int propertyIndex = columnData.getColumnIndexInTable();
                         throw new UnsupportedOperationException(
-                            "ORDER BY can only be performed by specifying java common types while provided type is: "
-                            + columnData.getColumnTableData().getTypeDesc()
-                                .getPropertiesTypes()[propertyIndex]);
+                                "ORDER BY can only be performed by specifying java common types while provided type is: "
+                                        + columnData.getColumnTableData().getTypeDesc()
+                                        .getPropertiesTypes()[propertyIndex]);
                     }
                 }
             }
@@ -756,8 +762,8 @@ public class SelectQuery extends AbstractDMLQuery {
                         QueryColumnData columnData = column.getColumnData();
                         int propertyIndex = columnData.getColumnIndexInTable();
                         throw new UnsupportedOperationException(
-                            "GROUP BY can only be performed by specifying java common types while provided type is: "
-                            + columnData.getColumnTableData().getTypeDesc().getPropertiesTypes()[propertyIndex]);
+                                "GROUP BY can only be performed by specifying java common types while provided type is: "
+                                        + columnData.getColumnTableData().getTypeDesc().getPropertiesTypes()[propertyIndex]);
                     }
                 }
             }
@@ -793,9 +799,9 @@ public class SelectQuery extends AbstractDMLQuery {
         }
         else {
             PropertyInfo propertyInfo =
-                columnData.getColumnTableData().getTypeDesc().getProperties()[propertyIndex];
+                    columnData.getColumnTableData().getTypeDesc().getProperties()[propertyIndex];
             commonJavaType = propertyInfo.isCommonJavaType() ||
-                             ( propertyInfo.getType() != null && propertyInfo.getType().isEnum() );
+                    ( propertyInfo.getType() != null && propertyInfo.getType().isEnum() );
         }
 
         return commonJavaType;
@@ -870,6 +876,8 @@ public class SelectQuery extends AbstractDMLQuery {
      */
     private List<SelectColumn> getWildcardColumns(QueryTableData queryTableData) throws SQLException {
         ITypeDesc info = queryTableData.getTypeDesc();
+        if (info == null)
+            return Collections.emptyList();
         List<SelectColumn> toAdd = new ArrayList<SelectColumn>(info.getNumOfFixedProperties());
         for (int i = 0; i < info.getNumOfFixedProperties(); i++) {
             SelectColumn newColumn = new SelectColumn(queryTableData, info.getFixedProperty(i).getName());
@@ -886,28 +894,28 @@ public class SelectQuery extends AbstractDMLQuery {
     private void addAbsentColumns() throws SQLException {
         ITypeDesc info;
         if (isAddAbsentCol) {
-            QueryTableData tableData = tables.get(getTableName());
-            info = tableData.getTypeDesc();
+            QueryTableData tableData = getTableData();
+            if(tableData.getTypeDesc() != null) {
+                info = tableData.getTypeDesc();
+                for (int c = 0; c < info.getNumOfFixedProperties(); c++) {
+                    boolean found = false;
+                    Iterator<SelectColumn> iter = getQueryColumns().iterator();
+                    while (iter.hasNext()) {
+                        SelectColumn col = iter.next();
 
-            for (int c = 0; c < info.getNumOfFixedProperties(); c++) {
-                boolean found = false;
-                Iterator<SelectColumn> iter = getQueryColumns().iterator();
-                while (iter.hasNext()) {
-                    SelectColumn col = (SelectColumn) iter.next();
+                        if (col.getColumnData().getColumnName() != null && col.getColumnData().getColumnName().equals(info.getFixedProperty(c).getName())) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        SelectColumn newColumn = new SelectColumn(tableData, info.getFixedProperty(c).getName());
 
-                    if (col.getColumnData().getColumnName() != null && col.getColumnData().getColumnName().equals(info.getFixedProperty(c).getName())) {
-                        found = true;
-                        break;
+                        newColumn.setVisible(false);
+                        getQueryColumns().add(newColumn);
                     }
                 }
-                if (!found) {
-                    SelectColumn newColumn = new SelectColumn(tableData, info.getFixedProperty(c).getName());
-
-                    newColumn.setVisible(false);
-                    getQueryColumns().add(newColumn);
-                }
             }
-
         }
     }
 
@@ -1096,7 +1104,7 @@ public class SelectQuery extends AbstractDMLQuery {
         for (QueryTableData tableData : getTablesData()) {
 
             if (tableData.hasAsterixSelectColumns()
-                    && tableData.getTypeDesc().supportsDynamicProperties()) {
+                    && tableData.supportsDynamicProperties()) {
                 dynamicPropertiesTables
                         .put(tableData.getTableName(), tableData);
                 dynamicColumnsMap.put(tableData,

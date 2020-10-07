@@ -67,7 +67,7 @@ public class ResponsePacket implements Serializable, Iterable<IEntryPacket> {
         this.resultEntry = resultEntry;
     }
 
-    Collection<IEntryPacket> getResultSet() {
+    public Collection<IEntryPacket> getResultSet() {
         return this.resultSet;
     }
 

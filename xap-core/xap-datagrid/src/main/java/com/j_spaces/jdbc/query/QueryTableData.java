@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-/**
- *
- */
 package com.j_spaces.jdbc.query;
 
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
-import com.j_spaces.jdbc.AbstractDMLQuery;
-import com.j_spaces.jdbc.Stack;
+import com.j_spaces.jdbc.*;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.executor.EntriesCursor;
 import com.j_spaces.jdbc.executor.ScanCursor;
@@ -33,7 +29,6 @@ import com.j_spaces.jdbc.parser.ExpNode;
 
 import net.jini.core.transaction.Transaction;
 
-
 /**
  * @author anna
  * @since 7.0
@@ -41,12 +36,10 @@ import net.jini.core.transaction.Transaction;
 @com.gigaspaces.api.InternalApi
 public class QueryTableData {
 
-    private String _tableName;
-    private String _tableAlias;
-
-    // the sequential index of the table
-    // in the "from" clause
-    private int _tableIndex;
+    private final String _tableName;
+    private final String _tableAlias;
+    // the sequential index of the table in the "from" clause
+    private final int _tableIndex;
 
     // the space type descriptor for this table/class
     private ITypeDesc _typeDesc;
@@ -61,6 +54,13 @@ public class QueryTableData {
 
     private boolean _isJoined;
     private boolean _hasAsterixSelectColumns;
+    private Query subQuery;
+
+    public QueryTableData(String name, String alias, int index) {
+        _tableName = name;
+        _tableAlias = alias;
+        _tableIndex = index;
+    }
 
     public boolean hasAsterixSelectColumns() {
         return _hasAsterixSelectColumns;
@@ -74,24 +74,12 @@ public class QueryTableData {
         return _tableName;
     }
 
-    public void setTableName(String tableName) {
-        _tableName = tableName;
-    }
-
     public String getTableAlias() {
         return _tableAlias;
     }
 
-    public void setTableAlias(String tableAlias) {
-        _tableAlias = tableAlias;
-    }
-
     public int getTableIndex() {
         return _tableIndex;
-    }
-
-    public void setTableIndex(int tableIndex) {
-        _tableIndex = tableIndex;
     }
 
     public ITypeDesc getTypeDesc() {
@@ -108,8 +96,6 @@ public class QueryTableData {
 
     public void setJoinCondition(ExpNode joinIndex) {
         _joinCondition = joinIndex;
-
-
     }
 
     @Override
@@ -300,14 +286,28 @@ public class QueryTableData {
     public void init(ISpaceProxy space, Transaction txn, AbstractDMLQuery query)
             throws Exception {
 
-        IQueryResultSet<IEntryPacket> tableEntries = getTemplate(query.getQueryResultType()).readMultiple(
-                space, txn, Integer.MAX_VALUE, query.getReadModifier());
+        IQueryResultSet<IEntryPacket> tableEntries;
+        if (subQuery != null) {
+            tableEntries = executeSubQuery(space, txn);
+        } else {
+            QueryTemplatePacket template = getTemplate(query.getQueryResultType());
+            tableEntries = template.readMultiple(space, txn, Integer.MAX_VALUE, query.getReadModifier());
+        }
 
         if (_joinCondition != null)
             setEntriesCursor(_joinCondition.createIndex(this, tableEntries));
         else
             setEntriesCursor(new ScanCursor(tableEntries));
 
+    }
+
+    public IQueryResultSet<IEntryPacket> executeSubQuery(ISpaceProxy space, Transaction txn) throws Exception{
+        if (subQuery instanceof AbstractDMLQuery) {
+            // sub query results should be returned as entry packets and not converted.
+            ((AbstractDMLQuery) subQuery).setConvertResultToArray(false);
+        }
+        ResponsePacket rp = subQuery.executeOnSpace(space, txn);
+        return (IQueryResultSet<IEntryPacket>) rp.getResultSet();
     }
 
     /**
@@ -340,5 +340,17 @@ public class QueryTableData {
 
     public void clear() {
         setEntriesCursor(null);
+    }
+
+    public Query getSubQuery() {
+        return subQuery;
+    }
+
+    public void setSubQuery(Query subQuery) {
+        this.subQuery = subQuery;
+    }
+
+    public boolean supportsDynamicProperties() {
+        return _typeDesc != null && _typeDesc.supportsDynamicProperties();
     }
 }

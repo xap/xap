@@ -20,6 +20,7 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.security.AccessDeniedException;
+import com.j_spaces.core.ExternalEntryPacket;
 import com.j_spaces.jdbc.*;
 import com.j_spaces.jdbc.builder.QueryEntryPacket;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
