@@ -146,7 +146,8 @@ public class SQLUtil {
 
             throw new IllegalArgumentException("No table was found for column '" + columnData.getColumnName() + "'");
         }
-        if (entry.getTypeDescriptor().getIdentifierPropertyId() == columnData.getColumnIndexInTable())
+
+        if (entry.getTypeDescriptor() != null && entry.getTypeDescriptor().getIdentifierPropertyId() == columnData.getColumnIndexInTable())
             return entry.getID();
 
         return entry.getFieldValue(columnData.getColumnIndexInTable());
