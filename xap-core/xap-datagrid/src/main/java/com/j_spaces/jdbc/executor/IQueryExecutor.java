@@ -139,4 +139,8 @@ public interface IQueryExecutor {
      */
     public ResultEntry convertEntriesToResultArrays(IQueryResultSet<IEntryPacket> _entries);
 
+    default IQueryResultSet<IEntryPacket> flattenEntryPackets(IQueryResultSet<IEntryPacket> _entries){
+        throw new UnsupportedOperationException();
+    }
+
 }

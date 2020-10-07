@@ -20,6 +20,7 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.security.AccessDeniedException;
+import com.j_spaces.core.ExternalEntryPacket;
 import com.j_spaces.jdbc.*;
 import com.j_spaces.jdbc.builder.QueryEntryPacket;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
@@ -605,6 +606,50 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
                 columnLabels,
                 tableNames,
                 fieldValues);
+
+        return result;
+    }
+
+    @Override
+    public IQueryResultSet<IEntryPacket> flattenEntryPackets(IQueryResultSet<IEntryPacket> entries) {
+        // Column (field) names and labels (aliases)
+        LinkedList<String> columnNames = new LinkedList<String>();
+        LinkedList<String> columnLabelsList = new LinkedList<String>();
+        LinkedList<String> tableNamesList = new LinkedList<String>();
+
+        for (SelectColumn col : query.getQueryColumns()) {
+            // Only add for visible columns
+            if (col.isVisible()) {
+                columnNames.add(col.getName());
+                columnLabelsList.add(col.getAlias());
+                tableNamesList.add(col.getColumnTableData().getTableName());
+            }
+        }
+
+        String[] fieldNames = columnNames.toArray(new String[columnNames.size()]);
+//        String[] columnLabels = columnLabelsList.toArray(new String[columnLabelsList.size()]);
+//        String[] tableNames = tableNamesList.toArray(new String[tableNamesList.size()]);
+
+        Iterator<IEntryPacket> iter = entries.iterator();
+        IQueryResultSet<IEntryPacket> result = new ArrayListResult();
+
+        while (iter.hasNext()) {
+            IEntryPacket entry = iter.next();
+
+            int column = 0;
+            Object[] fields = new Object[fieldNames.length];
+            for (int i = 0; i < query.getQueryColumns().size(); i++) {
+                SelectColumn sc = query.getQueryColumns().get(i);
+
+                if (!sc.isVisible())
+                    continue;
+
+                fields[column++] = entries.getFieldValue(sc, entry);
+            }
+            IEntryPacket ep = new ExternalEntryPacket();
+            ep.setFieldsValues(fields);
+            result.add(ep);
+        }
 
         return result;
     }

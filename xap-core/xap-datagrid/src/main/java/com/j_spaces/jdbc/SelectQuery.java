@@ -38,10 +38,10 @@ import com.j_spaces.jdbc.batching.BatchResponsePacket;
 import com.j_spaces.jdbc.builder.QueryEntryPacket;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.driver.GPreparedStatement.PreparedValuesCollection;
+import com.j_spaces.jdbc.executor.CollocatedJoinedQueryExecutor;
 import com.j_spaces.jdbc.executor.JoinedQueryExecutor;
 import com.j_spaces.jdbc.executor.QueryExecutor;
-import com.j_spaces.jdbc.parser.ExpNode;
-import com.j_spaces.jdbc.parser.RowNumNode;
+import com.j_spaces.jdbc.parser.*;
 import com.j_spaces.jdbc.query.*;
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.lease.LeaseDeniedException;
@@ -54,6 +54,8 @@ import org.slf4j.LoggerFactory;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.*;
+
+import static com.j_spaces.jdbc.Join.JoinType.INNER;
 
 
 /**
@@ -87,6 +89,7 @@ public class SelectQuery extends AbstractDMLQuery {
     final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
     private boolean isSelectAll;
     private List<Join> joins;
+    private boolean flattenResults;
 
     public SelectQuery() {
         super();
@@ -96,8 +99,10 @@ public class SelectQuery extends AbstractDMLQuery {
     public void addTableWithAlias(Object table, String alias) {
         if (table instanceof String) {
             super.addTableWithAlias((String) table, alias);
-        } else {
-            //@todo barak, handle the case where table is select (Query)
+        } else if (table instanceof  SelectQuery){
+            SelectQuery query = (SelectQuery) table;
+            QueryTableData queryTableData = super.addTableWithAlias(alias, null);
+            queryTableData.setSubQuery(query);
         }
     }
 
@@ -171,7 +176,7 @@ public class SelectQuery extends AbstractDMLQuery {
                 createProjectionTemplate();
             /***************** Read the entries ****************/
 
-            if (getTableName().equals(SYSTABLES)) {
+            if (SYSTABLES.equals(getTableName())) {
                 return executeSysTablesQuery(space, packet);
             }
 
@@ -180,7 +185,8 @@ public class SelectQuery extends AbstractDMLQuery {
             // No where clause
 
             if (isJoined()) {
-                _executor = new JoinedQueryExecutor(this);
+                boolean collJoin = false;//isCollocatedJoin();
+                _executor = collJoin ? new CollocatedJoinedQueryExecutor(this) : new JoinedQueryExecutor(this);
 
                 entries = executeJoinedQuery(space, txn);
             } else if (expTree == null) {
@@ -290,6 +296,148 @@ public class SelectQuery extends AbstractDMLQuery {
         }
         return packet;
     }
+    private boolean isCollocatedJoin() {
+        List<String> refTableNames = Arrays.asList(System.getProperty("com.gs.sql.refTables").split(","));
+        List<QueryTableData> shardedTables = new ArrayList<>();
+        List<QueryTableData> refTables = new ArrayList<>();
+
+        List<QueryTableData> tablesInQuery = getJoinTables();
+        for (QueryTableData queryTableData : tablesInQuery) {
+            if (refTableNames.contains(queryTableData.getTableName())) {
+                refTables.add(queryTableData);
+            } else {
+                shardedTables.add(queryTableData);
+            }
+        }
+
+        if (shardedTables.size() > 1) {
+            return isJoinOnRouting(refTableNames);
+        }
+        return true;
+    }
+
+    private boolean isJoinOnRouting(List<String> refTableNames) {
+        if (joins == null) return true;
+
+        for (Join join : joins) {
+            if (join.getSubQuery() == null) {
+                if (!refTableNames.contains(join.getTableName())) { // if not ref table
+                    if (!isJoinOnRouting(join.getOnExpression(), (SelectQuery)join.getSubQuery())) return false; // if ON is not on routing key
+                }
+            } else if (join.getSubQuery() instanceof SelectQuery) {
+                SelectQuery q = (SelectQuery) join.getSubQuery();
+                if (!isJoinOnRouting(join.getOnExpression(), q)) return false;
+            } else {
+                throw new UnsupportedOperationException(); //TODO
+            }
+        }
+        return true;
+    }
+
+    private boolean isJoinOnRouting(ExpNode expNode, SelectQuery subQuery) {
+        if (expNode instanceof AndNode) {
+            return isJoinOnRouting(expNode.getRightChild(), subQuery) && isJoinOnRouting(expNode.getLeftChild(), subQuery);
+        } else if (expNode instanceof EqualNode) {
+            ExpNode left = expNode.getLeftChild();
+            ExpNode right = expNode.getRightChild();
+            if (left instanceof ColumnNode && right instanceof ColumnNode) {
+                ColumnNode leftNode = (ColumnNode) left;
+                ColumnNode rightNode = (ColumnNode) right;
+
+                String leftNodeJoinOn = leftNode.getColumnData().getColumnName();
+                ITypeDesc leftNodeTypeDesc = leftNode.getColumnData().getColumnTableData().getTypeDesc();
+
+                String rightNodeJoinOn = rightNode.getColumnData().getColumnName();
+                ITypeDesc rightNodeTypeDesc = rightNode.getColumnData().getColumnTableData().getTypeDesc();
+                if (rightNodeTypeDesc == null) {
+                    rightNodeTypeDesc = subQuery.getQueryColumns().stream().filter(qc -> qc.getName().equals(rightNodeJoinOn)).findFirst().get().getColumnTableData().getTypeDesc();
+                }
+
+
+                boolean isLeftNodeJoinOnRouting = leftNodeJoinOn.equals(leftNodeTypeDesc.getRoutingPropertyName());
+                boolean isRightNodeJoinOnRouting = rightNodeJoinOn.equals(rightNodeTypeDesc.getRoutingPropertyName());
+                return isLeftNodeJoinOnRouting && isRightNodeJoinOnRouting;
+            } else {
+                throw new UnsupportedOperationException("Unsupported left and right nodes type"); //TODO
+            }
+        } else {
+            throw new UnsupportedOperationException("Unsupported for non AndNode and EqualNode"); //TODO
+        }
+    }
+
+    private List<Join> getJoins() {
+        if (joins == null) return Collections.emptyList();
+
+        List<Join> allJoins = new ArrayList<>(joins);
+        for (Join join : joins) {
+            if (join.getSubQuery() != null && join.getSubQuery() instanceof SelectQuery) {
+                allJoins.addAll(((SelectQuery)join.getSubQuery()).getJoins());
+            }
+        }
+
+        return allJoins;
+    }
+
+    private List<QueryTableData> getJoinTables() {
+        List<QueryTableData> list = new ArrayList<>();
+
+        for (QueryTableData tablesDatum : _tablesData) {
+            if (tablesDatum.getSubQuery() == null) {
+                list.add(tablesDatum);
+            } else {
+                if (tablesDatum.getSubQuery() instanceof SelectQuery) {
+                    list.addAll(((SelectQuery)tablesDatum.getSubQuery()).getJoinTables());
+                } else {
+                    throw new UnsupportedOperationException();
+                }
+            }
+        }
+        return list;
+    }
+
+    private boolean isCollocatedJoinOld() {
+        List<String> refTableNames = Arrays.asList(System.getProperty("com.gs.sql.refTables").split(","));
+
+        List<QueryTableData> shardedTables = new ArrayList<>();
+        List<QueryTableData> refTables = new ArrayList<>();
+
+        _tablesData.forEach(queryTableData -> {
+            if (refTableNames.contains(queryTableData.getTableName())) {
+                refTables.add(queryTableData);
+            } else {
+                shardedTables.add(queryTableData);
+            }
+        });
+
+        if (shardedTables.size() > 1) {
+            for (Join join : joins) {
+                ColumnNode leftNode = (ColumnNode) join.getOnExpression().getLeftChild();
+                ColumnNode rightNode = (ColumnNode) join.getOnExpression().getRightChild();
+
+                String leftNodeJoinOn = leftNode.getColumnData().getColumnName();
+                String rightNodeJoinOn = rightNode.getColumnData().getColumnName();
+
+                boolean isLeftNodeJoinOnRouting = leftNodeJoinOn.equals(leftNode.getColumnData().getColumnTableData().getTypeDesc().getRoutingPropertyName());
+                if (!isLeftNodeJoinOnRouting) return false;
+
+                if (join.getSubQuery() == null) {
+                    if (!rightNodeJoinOn.equals(rightNode.getColumnData().getColumnTableData().getTypeDesc().getRoutingPropertyName())) {
+                        return false;
+                    }
+                } else {
+                    SelectQuery subQuery = (SelectQuery) join.getSubQuery();
+                    if (!rightNodeJoinOn.equals(subQuery.getTableData().getTypeDesc().getRoutingPropertyName())) {
+                        return false;
+                    }
+                    if (!subQuery.isCollocatedJoin()) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
 
 
     /**
@@ -330,7 +478,7 @@ public class SelectQuery extends AbstractDMLQuery {
             }
             packet.setResultEntry(result);
         } else {
-            packet.setResultSet(entries);
+            packet.setResultSet(flattenResults ? _executor.flattenEntryPackets(entries) : entries);
         }
     }
 
@@ -605,41 +753,41 @@ public class SelectQuery extends AbstractDMLQuery {
      */
     @Override
     public SelectQuery clone() {
-      SelectQuery query = new SelectQuery();
-      query.tables = this.tables;
-      query._tablesData = _tablesData;
-      query.rownum = (RowNumNode) (this.rownum == null ? null : rownum.clone());
-      query.orderColumns = this.orderColumns;
-      query.groupColumn = this.groupColumn;
-      query.isPrepared = this.isPrepared;
-      query.forUpdate = this.forUpdate;
-      query.isAggFunction = this.isAggFunction;
-      query.isDistinct = isDistinct;
-      query.setRouting(this.getRouting());
-      query.setProjectionTemplate(this.getProjectionTemplate());
-      query.setContainsSubQueries(this.containsSubQueries());
-      query.isSelectAll = this.isSelectAll;
+        SelectQuery query = new SelectQuery();
+        query.tables = this.tables;
+        query._tablesData = _tablesData;
+        query.rownum = (RowNumNode) (this.rownum == null ? null : rownum.clone());
+        query.orderColumns = this.orderColumns;
+        query.groupColumn = this.groupColumn;
+        query.isPrepared = this.isPrepared;
+        query.forUpdate = this.forUpdate;
+        query.isAggFunction = this.isAggFunction;
+        query.isDistinct = isDistinct;
+        query.setRouting(this.getRouting());
+        query.setProjectionTemplate(this.getProjectionTemplate());
+        query.setContainsSubQueries(this.containsSubQueries());
+        query.isSelectAll = this.isSelectAll;
 
 
-      int numOfColumns = 0;
+        int numOfColumns = 0;
         for (SelectColumn col : this.getQueryColumns()) {
             if (!col.isDynamic()) {
                 numOfColumns++;
             }
         }
 
-      query.queryColumns = new ArrayList(numOfColumns);
-      if(numOfColumns != 0) {
-          for (SelectColumn col : this.getQueryColumns()) {
-              if (!col.isDynamic()) {
-                  query.queryColumns.add(col);
-              }
-          }
-      }
+        query.queryColumns = new ArrayList(numOfColumns);
+        if(numOfColumns != 0) {
+            for (SelectColumn col : this.getQueryColumns()) {
+                if (!col.isDynamic()) {
+                    query.queryColumns.add(col);
+                }
+            }
+        }
 
-      if (this.getExpTree() != null)
-        query.setExpTree((ExpNode) this.getExpTree().clone()); //clone all the tree.
-      return query;
+        if (this.getExpTree() != null)
+            query.setExpTree((ExpNode) this.getExpTree().clone()); //clone all the tree.
+        return query;
     }
 
     /**
@@ -696,7 +844,7 @@ public class SelectQuery extends AbstractDMLQuery {
      */
     @Override
     public void validateQuery(ISpaceProxy space) throws SQLException {
-        if (getTableName().equals(SYSTABLES)) {
+        if (getTablesNames().contains(SYSTABLES)) {
             return;
         }
 
@@ -710,7 +858,6 @@ public class SelectQuery extends AbstractDMLQuery {
             validateNotifyQuery();
 
         validateAndPrepareSelectColumns();
-
         // set order column info
         if (isOrderBy()) {
             for (SelectColumn orderCol : orderColumns) {
@@ -727,10 +874,14 @@ public class SelectQuery extends AbstractDMLQuery {
         validateCommonJavaTypeOnDocumentOrStringReturnProperties();
     }
 
-    private void applyJoinsIfNeeded() {
+    private void applyJoinsIfNeeded() throws SQLException {
         if (joins != null) {
             for (Join join : joins) {
-                addTableWithAlias(join.getTableName(), join.getAlias());
+                QueryTableData table = addTableWithAlias(join.getTableName(), join.getAlias());
+                table.setJoinType(join.getJoinType());
+                if (join.getSubQuery() != null) {
+                    table.setSubQuery(join.getSubQuery());
+                }
                 setExpTree(join.applyOnExpression(getExpTree()));
             }
         }
@@ -744,9 +895,9 @@ public class SelectQuery extends AbstractDMLQuery {
                         QueryColumnData columnData = column.getColumnData();
                         int propertyIndex = columnData.getColumnIndexInTable();
                         throw new UnsupportedOperationException(
-                            "ORDER BY can only be performed by specifying java common types while provided type is: "
-                            + columnData.getColumnTableData().getTypeDesc()
-                                .getPropertiesTypes()[propertyIndex]);
+                                "ORDER BY can only be performed by specifying java common types while provided type is: "
+                                        + columnData.getColumnTableData().getTypeDesc()
+                                        .getPropertiesTypes()[propertyIndex]);
                     }
                 }
             }
@@ -756,8 +907,8 @@ public class SelectQuery extends AbstractDMLQuery {
                         QueryColumnData columnData = column.getColumnData();
                         int propertyIndex = columnData.getColumnIndexInTable();
                         throw new UnsupportedOperationException(
-                            "GROUP BY can only be performed by specifying java common types while provided type is: "
-                            + columnData.getColumnTableData().getTypeDesc().getPropertiesTypes()[propertyIndex]);
+                                "GROUP BY can only be performed by specifying java common types while provided type is: "
+                                        + columnData.getColumnTableData().getTypeDesc().getPropertiesTypes()[propertyIndex]);
                     }
                 }
             }
@@ -793,9 +944,9 @@ public class SelectQuery extends AbstractDMLQuery {
         }
         else {
             PropertyInfo propertyInfo =
-                columnData.getColumnTableData().getTypeDesc().getProperties()[propertyIndex];
+                    columnData.getColumnTableData().getTypeDesc().getProperties()[propertyIndex];
             commonJavaType = propertyInfo.isCommonJavaType() ||
-                             ( propertyInfo.getType() != null && propertyInfo.getType().isEnum() );
+                    ( propertyInfo.getType() != null && propertyInfo.getType().isEnum() );
         }
 
         return commonJavaType;
@@ -870,6 +1021,8 @@ public class SelectQuery extends AbstractDMLQuery {
      */
     private List<SelectColumn> getWildcardColumns(QueryTableData queryTableData) throws SQLException {
         ITypeDesc info = queryTableData.getTypeDesc();
+        if (info == null)
+            return Collections.emptyList();
         List<SelectColumn> toAdd = new ArrayList<SelectColumn>(info.getNumOfFixedProperties());
         for (int i = 0; i < info.getNumOfFixedProperties(); i++) {
             SelectColumn newColumn = new SelectColumn(queryTableData, info.getFixedProperty(i).getName());
@@ -886,28 +1039,33 @@ public class SelectQuery extends AbstractDMLQuery {
     private void addAbsentColumns() throws SQLException {
         ITypeDesc info;
         if (isAddAbsentCol) {
-            QueryTableData tableData = tables.get(getTableName());
-            info = tableData.getTypeDesc();
+            QueryTableData tableData = getTableData();
+            if(tableData.getTypeDesc() != null) {
+                info = tableData.getTypeDesc();
+                for (int c = 0; c < info.getNumOfFixedProperties(); c++) {
+                    boolean found = false;
+                    Iterator<SelectColumn> iter = getQueryColumns().iterator();
+                    while (iter.hasNext()) {
+                        SelectColumn col = (SelectColumn) iter.next();
 
-            for (int c = 0; c < info.getNumOfFixedProperties(); c++) {
-                boolean found = false;
-                Iterator<SelectColumn> iter = getQueryColumns().iterator();
-                while (iter.hasNext()) {
-                    SelectColumn col = (SelectColumn) iter.next();
+                        if (col.getColumnData().getColumnName() != null && col.getColumnData().getColumnName().equals(info.getFixedProperty(c).getName())) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        SelectColumn newColumn = new SelectColumn(tableData, info.getFixedProperty(c).getName());
 
-                    if (col.getColumnData().getColumnName() != null && col.getColumnData().getColumnName().equals(info.getFixedProperty(c).getName())) {
-                        found = true;
-                        break;
+                        newColumn.setVisible(false);
+                        getQueryColumns().add(newColumn);
                     }
                 }
-                if (!found) {
-                    SelectColumn newColumn = new SelectColumn(tableData, info.getFixedProperty(c).getName());
-
-                    newColumn.setVisible(false);
-                    getQueryColumns().add(newColumn);
-                }
             }
-
+            else if(tableData.getSubQuery() != null){
+                //TODO consider treating this
+            }
+            else
+                throw  new IllegalStateException("NO table name an d no sub query");
         }
     }
 
@@ -952,8 +1110,11 @@ public class SelectQuery extends AbstractDMLQuery {
         // no where clause and no join. read everything
         int size = getEntriesLimit();
 
-
-        QueryTemplatePacket template = new QueryTemplatePacket(getTableData(), _queryResultType);
+        QueryTableData tableData = getTableData();
+        if(tableData.getSubQuery() != null){
+            return tableData.executeSubQuery(space, txn, true);
+        }
+        QueryTemplatePacket template = new QueryTemplatePacket(tableData, _queryResultType);
 
         //  Handle notify queries
         if (isBuildOnly()) {
@@ -1148,5 +1309,13 @@ public class SelectQuery extends AbstractDMLQuery {
                 dynamicColumns.put(dynamicColumn.getName(), dynamicColumn);
             }
         }
+    }
+
+    public boolean isFlattenResults() {
+        return flattenResults;
+    }
+
+    public void setFlattenResults(boolean flattenResults) {
+        this.flattenResults = flattenResults;
     }
 }

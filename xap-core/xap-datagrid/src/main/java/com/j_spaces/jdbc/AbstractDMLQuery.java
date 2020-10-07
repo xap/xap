@@ -54,6 +54,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * @author Michael Mitrani, 2Train4, 2004
@@ -119,6 +120,12 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
      * Build  query internal structures - called after parsing
      */
     public void build() throws SQLException {
+        // Build subqueries recursivly, if any.
+        for (QueryTableData tableData : getTablesData()) {
+            Query subQuery = tableData.getSubQuery();
+            if (subQuery != null)
+                subQuery.build();
+        }
         buildTemplates();
     }
 
@@ -183,6 +190,15 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
      */
     public List<SelectColumn> getQueryColumns() {
         return queryColumns;
+    }
+
+    public SelectColumn getQueryColumnByAlias(String alias) {
+        for (SelectColumn sc : getQueryColumns()) {
+            if (sc.hasAlias() && sc.getAlias().equalsIgnoreCase(alias)) {
+                return sc;
+            }
+        }
+        return null;
     }
 
 
@@ -287,31 +303,16 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
         return m_isUseTemplate;
     }
 
-    /**
-     * Add an alias-table mapping. if no alias exists, we'll use the table name
-     */
-    public void addTableWithAlias(String table, String alias) {
-
-
-        // create table data
-        QueryTableData tableData = new QueryTableData();
-        tableData.setTableName(table);
-        tableData.setTableAlias(alias);
-        tableData.setTableIndex(_tablesData.size());
-
-
+    public QueryTableData addTableWithAlias(String table, String alias) {
+        QueryTableData tableData = new QueryTableData(table, alias, _tablesData.size());
         _tablesData.add(tableData);
-
-        if (alias == null)
-            tables.put(table, tableData);
-        else {
-            // index the table data by alias and by the table name
-            // cause sometimes the search is by alias and sometimes by the actual name
+        if (alias != null) {
             tables.put(alias, tableData);
+        }
+        if(table != null) {
             tables.put(table, tableData);
         }
-
-
+        return tableData;
     }
 
     /**
@@ -511,6 +512,10 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
         return _tablesData;
     }
 
+    public String getTablesNames() {
+        return _tablesData.stream().map(QueryTableData::getTableName).collect(Collectors.joining(","));
+    }
+
     public QueryTableData getTableData(String tableName) {
         if (tableName == null)
             return null;
@@ -527,11 +532,15 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
     @Override
     public void validateQuery(ISpaceProxy space) throws SQLException {
         for (QueryTableData tableData : _tablesData) {
-            ITypeDesc typeDesc = tableData.getTypeDesc();
-            if (typeDesc == null) {
-                String tableName = tableData.getTableName();
-                typeDesc = SQLUtil.checkTableExistence(tableName, space);
-                tableData.setTypeDesc(typeDesc);
+            if (tableData.getSubQuery() != null)
+                tableData.getSubQuery().validateQuery(space);
+            else {
+                ITypeDesc typeDesc = tableData.getTypeDesc();
+                if (typeDesc == null) {
+                    String tableName = tableData.getTableName();
+                    typeDesc = SQLUtil.checkTableExistence(tableName, space);
+                    tableData.setTypeDesc(typeDesc);
+                }
             }
         }
     }

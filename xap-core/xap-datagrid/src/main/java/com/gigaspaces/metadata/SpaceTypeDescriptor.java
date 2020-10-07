@@ -95,10 +95,23 @@ public interface SpaceTypeDescriptor {
      * Gets the position of a fixed property by the specified property name. If there's no fixed
      * property with that name, -1 is returned.
      *
-     * @param propertyName Name of property to locate.
+     * @param propertyName Name of property to locate, case-insensitive
      * @return Position of property.
      */
     int getFixedPropertyPosition(String propertyName);
+
+    default int getFixedPropertyPositionIgnoreCase(String name) {
+        int result = getFixedPropertyPosition(name);
+        if (result != -1)
+            return result;
+
+        int length = getNumOfFixedProperties();
+        for (int i = 0; i < length; i++) {
+            if (getFixedProperty(i).getName().equalsIgnoreCase(name))
+                return i;
+        }
+        return -1;
+    }
 
     /**
      * Returns true if this type supports dynamic properties, false otherwise.
