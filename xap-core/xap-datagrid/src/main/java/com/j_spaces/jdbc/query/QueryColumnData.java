@@ -40,6 +40,8 @@ public class QueryColumnData {
     private final String _columnPath;
 
     public QueryColumnData(QueryTableData tableData, String columnPath) {
+        if (UID_COLUMN.equalsIgnoreCase(columnPath))
+            columnPath = UID_COLUMN;
         _columnPath = columnPath;
         // Get column name by splitting the full path by '.' or "[*]" and
         // keeping the first match, for example:
@@ -51,7 +53,7 @@ public class QueryColumnData {
         // be placed in the second position of the returned array.
         _columnName = columnPath == null ? null : columnPath.split("\\.|\\[\\*\\]", 2)[0];
         setColumnTableData(tableData);
-        if (tableData != null && !UID_COLUMN.equals(_columnName) && !ASTERIX_COLUMN.equals(_columnName)) {
+        if (tableData != null && !isUidColumn() && !isAsterixColumn()) {
             ITypeDesc currentInfo = tableData.getTypeDesc();
             int pos = currentInfo.getFixedPropertyPositionIgnoreCase(_columnName);
             if (pos == -1) {
@@ -154,13 +156,13 @@ public class QueryColumnData {
                 if (columnData != null) {
                     throw new SQLException("Ambiguous column path - [" + columnPath + "]");
                 }
-                columnData = QueryColumnData.newInstance(tableData, columnPath.substring(tableName.length() + 1));
+                columnData = new QueryColumnData(tableData, columnPath.substring(tableName.length() + 1));
             }
         }
 
         // no table data - only columnPath - find the table that has such column
         if (columnData == null) {
-            columnData = QueryColumnData.newInstance(columnPath);
+            columnData = new QueryColumnData(null, columnPath);
             //we need to know where this column is
             boolean assignedTable = false;
             for (QueryTableData tableData : query.getTablesData()) {
@@ -180,16 +182,6 @@ public class QueryColumnData {
         }
 
         return columnData;
-    }
-
-    private static QueryColumnData newInstance(String columnPath) {
-        return newInstance(null, columnPath);
-    }
-
-    public static QueryColumnData newInstance(QueryTableData tableData, String columnPath) {
-        if (columnPath.equalsIgnoreCase(UID_COLUMN))
-            columnPath = UID_COLUMN;
-        return new QueryColumnData(tableData, columnPath);
     }
 
     private static String findPrefix(String s, String ... prefixes) {
