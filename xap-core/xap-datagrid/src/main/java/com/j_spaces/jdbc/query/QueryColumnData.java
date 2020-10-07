@@ -22,7 +22,6 @@ import com.j_spaces.jdbc.SelectColumn;
 
 import java.sql.SQLException;
 
-
 /**
  * @author anna
  * @since 7.0
@@ -30,47 +29,27 @@ import java.sql.SQLException;
 @com.gigaspaces.api.InternalApi
 public class QueryColumnData {
 
-    /**
-     *
-     */
     protected static final String ASTERIX_COLUMN = "*";
-
-    /**
-     *
-     */
     protected static final String UID_COLUMN = "UID";
 
-    private String _columnName;
+    private final String _columnName;
     private QueryTableData _columnTableData;
     private int _columnIndexInTable = -1; //the index of the column in its table
 
     // query column path - used for query navigation - Person.car.color='red'
     private final String _columnPath;
 
-
-    /**
-     * @param columnPath
-     */
-    public QueryColumnData(String columnPath) {
-        if (columnPath == null) {
-            _columnPath = null;
-
-        } else {
-            // Get column name by splitting the full path by '.' or "[*]" and
-            // keeping the first match, for example:
-            // 1. column => column
-            // 2. nested.column => column
-            // 3. collection[*].column => collection
-            // the "2" provided to the split method is used for optimization.
-            // The pattern will only process the first match and the remaining will
-            // be placed in the second position of the returned array.
-            _columnName = columnPath.split("\\.|\\[\\*\\]", 2)[0];
-            _columnPath = columnPath;
-        }
-    }
-
     public QueryColumnData(QueryTableData tableData, String columnPath) {
-        this(columnPath);
+        _columnPath = columnPath;
+        // Get column name by splitting the full path by '.' or "[*]" and
+        // keeping the first match, for example:
+        // 1. column => column
+        // 2. nested.column => column
+        // 3. collection[*].column => collection
+        // the "2" provided to the split method is used for optimization.
+        // The pattern will only process the first match and the remaining will
+        // be placed in the second position of the returned array.
+        _columnName = columnPath == null ? null : columnPath.split("\\.|\\[\\*\\]", 2)[0];
         _columnTableData = tableData;
         if (tableData != null && !UID_COLUMN.equals(_columnName) && !ASTERIX_COLUMN.equals(_columnName)) {
             ITypeDesc currentInfo = tableData.getTypeDesc();
@@ -96,7 +75,6 @@ public class QueryColumnData {
         _columnTableData = columnTableData;
 
     }
-
 
     public int getColumnIndexInTable() {
         return _columnIndexInTable;
@@ -133,7 +111,6 @@ public class QueryColumnData {
         return _columnPath;
     }
 
-
     public boolean isNestedQueryColumn() {
         if (_columnName == null)
             return false;
@@ -157,22 +134,13 @@ public class QueryColumnData {
         QueryColumnData columnData = null;
         // split the column path to table name an column name
         for (QueryTableData tableData : query.getTablesData()) {
-            String tableName = null;
-            if (startsWith(columnPath, tableData.getTableName()))
-                tableName = tableData.getTableName();
-            else if (startsWith(columnPath, tableData.getTableAlias()))
-                tableName = tableData.getTableAlias();
-
-
+            String tableName = findPrefix(columnPath, tableData.getTableName(), tableData.getTableAlias());
             if (tableName != null) {
                 // check for ambiguity
                 if (columnData != null) {
-                    throw new SQLException("Ambiguous column path - ["
-                            + columnPath + "]");
-
+                    throw new SQLException("Ambiguous column path - [" + columnPath + "]");
                 }
                 columnData = QueryColumnData.newInstance(tableData, columnPath.substring(tableName.length() + 1));
-
             }
         }
 
@@ -193,27 +161,18 @@ public class QueryColumnData {
                         return columnData;
                     }
                 }
-                throw new SQLException("Unknown column path [" + columnPath + "] .",
-                        "GSP", -122);
+                throw new SQLException("Unknown column path [" + columnPath + "] .", "GSP", -122);
             }
         }
-
 
         return columnData;
     }
 
-
-    /**
-     * @param columnPath
-     * @return
-     * @throws SQLException
-     */
-    private static QueryColumnData newInstance(String columnPath) throws SQLException {
+    private static QueryColumnData newInstance(String columnPath) {
         return newInstance(null, columnPath);
     }
 
-
-    public static QueryColumnData newInstance(QueryTableData tableData, String columnPath) throws SQLException {
+    public static QueryColumnData newInstance(QueryTableData tableData, String columnPath) {
         if (columnPath.equalsIgnoreCase(UID_COLUMN)) {
             return new UidColumnData(tableData);
         } else if (columnPath.equals(ASTERIX_COLUMN)) {
@@ -223,24 +182,15 @@ public class QueryColumnData {
         }
     }
 
-
-    /**
-     * Returns true if given columnPath startsWith given tableName
-     */
-    public static boolean startsWith(String columnPath, String tableName) {
-
-        if (tableName == null || columnPath == null)
-            return false;
-
-        return columnPath.startsWith(tableName + ".");
-
-
+    private static String findPrefix(String s, String ... prefixes) {
+        if (s == null)
+            return null;
+        for (String prefix : prefixes) {
+            if (prefix != null && s.startsWith(prefix + "."))
+                return prefix;
+        }
+        return null;
     }
-
-    public void setColumnName(String columnName) {
-        _columnName = columnName;
-    }
-
 
     public boolean isAsterixColumn() {
         return false;
@@ -249,5 +199,4 @@ public class QueryColumnData {
     public boolean isUidColumn() {
         return false;
     }
-
 }

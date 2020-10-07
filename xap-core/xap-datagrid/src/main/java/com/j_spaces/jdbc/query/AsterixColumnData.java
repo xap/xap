@@ -14,37 +14,17 @@
  * limitations under the License.
  */
 
-/**
- *
- */
 package com.j_spaces.jdbc.query;
-
-import java.sql.SQLException;
 
 /**
  * @author anna
  * @since 7.1
  */
 @com.gigaspaces.api.InternalApi
-public class AsterixColumnData
-        extends QueryColumnData {
-    /**
-     * @throws SQLException
-     */
-    public AsterixColumnData()
-            throws SQLException {
-        super(QueryColumnData.ASTERIX_COLUMN);
+public class AsterixColumnData extends QueryColumnData {
 
-    }
-
-    /**
-     * @param tableData
-     * @throws SQLException
-     */
-    public AsterixColumnData(QueryTableData tableData)
-            throws SQLException {
+    public AsterixColumnData(QueryTableData tableData) {
         super(tableData, QueryColumnData.ASTERIX_COLUMN);
-
         if (tableData != null)
             tableData.setAsterixSelectColumns(true);
     }
@@ -52,15 +32,12 @@ public class AsterixColumnData
     @Override
     public void setColumnTableData(QueryTableData columnTableData) {
         super.setColumnTableData(columnTableData);
-
         if (columnTableData != null)
             columnTableData.setAsterixSelectColumns(true);
-
     }
 
     @Override
-    public boolean checkAndAssignTableData(QueryTableData tableData)
-            throws SQLException {
+    public boolean checkAndAssignTableData(QueryTableData tableData) {
         // this is just an indicator of all columns - so no table data needs to be set
         QueryTableData columnTableData = getColumnTableData();
         if (columnTableData != null)
@@ -75,5 +52,4 @@ public class AsterixColumnData
     public boolean isAsterixColumn() {
         return true;
     }
-
 }

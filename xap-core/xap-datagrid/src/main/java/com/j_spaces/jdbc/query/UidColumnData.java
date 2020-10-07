@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- *
- */
 package com.j_spaces.jdbc.query;
 
 import java.sql.SQLException;
@@ -26,27 +23,11 @@ import java.sql.SQLException;
  * @since 7.1
  */
 @com.gigaspaces.api.InternalApi
-public class UidColumnData
-        extends QueryColumnData {
-    /**
-     * @throws SQLException
-     */
-    public UidColumnData()
-            throws SQLException {
-        super(QueryColumnData.UID_COLUMN);
+public class UidColumnData extends QueryColumnData {
 
-    }
-
-    /**
-     * @param tableData
-     * @throws SQLException
-     */
-    public UidColumnData(QueryTableData tableData)
-            throws SQLException {
+    public UidColumnData(QueryTableData tableData) {
         super(tableData, QueryColumnData.UID_COLUMN);
-
     }
-
 
     @Override
     public boolean checkAndAssignTableData(QueryTableData tableData)
@@ -64,5 +45,4 @@ public class UidColumnData
     public boolean isUidColumn() {
         return true;
     }
-
 }
