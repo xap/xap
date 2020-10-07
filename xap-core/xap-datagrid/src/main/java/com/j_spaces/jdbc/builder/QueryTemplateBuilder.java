@@ -28,17 +28,13 @@ import com.gigaspaces.metadata.StorageType;
 import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.SQLFunctions;
-import com.j_spaces.jdbc.Stack;
 import com.j_spaces.jdbc.builder.range.*;
 import com.j_spaces.jdbc.parser.*;
 import com.j_spaces.jdbc.query.QueryColumnData;
 import com.j_spaces.jdbc.query.QueryTableData;
 
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Builds an external entry from {@link ExpNode} The builder converts the expression tree to ranges.
@@ -566,49 +562,27 @@ public class QueryTemplateBuilder
      */
     public void traverseExpressionTree(ExpNode root) throws SQLException {
         if (root != null) {
-            Stack<ExpNode> stack = new Stack<ExpNode>();
-            Stack<ExpNode> stack2 = new Stack<ExpNode>();
-
-            stack.push(root);
-            while (!stack.isEmpty()) {
-
-                ExpNode curr = stack.pop();
-                stack2.push(curr);
-                if (curr.getLeftChild() != null)
-                    stack.push(curr.getLeftChild());
-                if (curr.getRightChild() != null)
-                    stack.push(curr.getRightChild());
-            }
-
-            while (!stack2.isEmpty()) {
-                ExpNode node = stack2.pop();
-
-                if(node.isContainsItemsRootNode()){
+            for (ExpNode node : root.reverse()) {
+                if (node.isContainsItemsRootNode()) {
                     ContainsItemsRootNode containsItemsRootNode = (ContainsItemsRootNode) node;
                     traverseSubItemNodes(containsItemsRootNode.getContainsSubtree(),containsItemsRootNode.createTypeDesc());
                 }
 
                 node.accept(this);
 
-                // check if the template should be converted to space format	       
+                // check if the template should be converted to space format
                 if (node.getTemplate() == null) {
                     // convert the children of complex nodes(join for example)
-                    if (node.getLeftChild() != null
-                            && node.getLeftChild().getTemplate() != null)
-                        node.getLeftChild()
-                                .getTemplate()
-                                .prepareForSpace(query.getTypeInfo());
-
-                    if (node.getRightChild() != null
-                            && node.getRightChild().getTemplate() != null)
-                        node.getRightChild()
-                                .getTemplate()
-                                .prepareForSpace(query.getTypeInfo());
-                } else if (stack2.isEmpty()) {
+                    node.forEachChild(c -> {
+                        if (c.getTemplate() != null)
+                            c.getTemplate().prepareForSpace(query.getTypeInfo());
+                    });
+                } else {
                     // if is root and has a template - convert it
-                    node.getTemplate().prepareForSpace(query.getTypeInfo());
+                    if (node == root) {
+                        node.getTemplate().prepareForSpace(query.getTypeInfo());
+                    }
                 }
-
             }
         }
 

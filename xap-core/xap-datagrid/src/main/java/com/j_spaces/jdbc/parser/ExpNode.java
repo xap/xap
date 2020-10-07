@@ -18,6 +18,7 @@ package com.j_spaces.jdbc.parser;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.j_spaces.jdbc.Stack;
 import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.executor.EntriesCursor;
@@ -29,7 +30,9 @@ import com.j_spaces.jdbc.query.QueryTableData;
 import net.jini.core.transaction.Transaction;
 
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 
 /**
  * This is the main expression node. it holds to children, left and right, and has a few abstract
@@ -86,6 +89,47 @@ public abstract class ExpNode
      */
     public ExpNode getRightChild() {
         return rightChild;
+    }
+
+    /**
+     * Applies the consumer on each non-null child.
+     */
+    public void forEachChild(Consumer<ExpNode> consumer) {
+        if (leftChild != null)
+            consumer.accept(leftChild);
+        if (rightChild != null)
+            consumer.accept(rightChild);
+    }
+
+    /**
+     * Applies the consumer on this node and its children recursively
+     */
+    public void traverse(Consumer<ExpNode> consumer) {
+        Stack<ExpNode> stack = new Stack<>();
+        stack.push(this);
+        while (!stack.isEmpty()) {
+            ExpNode curr = stack.pop();
+            consumer.accept(curr);
+            curr.forEachChild(stack::push);
+        }
+    }
+
+    /**
+     * Applies the consumer on this node and its children recursively in reverse (children before parent)
+     */
+    public void traverseReverse(Consumer<ExpNode> consumer) {
+        for (ExpNode node : reverse()) {
+            consumer.accept(node);
+        }
+    }
+
+    /**
+     * Generates a reverse tree/stack ensuring each node's children are popped before the node.
+     */
+    public Collection<ExpNode> reverse() {
+        Stack<ExpNode> result = new Stack<>();
+        traverse(result::push);
+        return result;
     }
 
     /**
