@@ -54,6 +54,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * @author Michael Mitrani, 2Train4, 2004
@@ -518,6 +519,10 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
 
     public List<QueryTableData> getTablesData() {
         return _tablesData;
+    }
+
+    public String getTablesNames() {
+        return _tablesData.stream().map(QueryTableData::getTableName).collect(Collectors.joining(","));
     }
 
     public QueryTableData getTableData(String tableName) {
