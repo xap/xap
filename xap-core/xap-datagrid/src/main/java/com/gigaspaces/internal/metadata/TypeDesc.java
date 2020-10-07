@@ -81,9 +81,7 @@ public class TypeDesc implements ITypeDesc {
     private ITypeIntrospector<?> _objectIntrospector;
     private Map<String, SpaceIndex> _indexes;
     private TypeQueryExtensions queryExtensionsInfo;
-    private ClassBinaryStorageAdapter classStorageAdapter = Boolean.parseBoolean(System.getProperty("com.gs.disable-serialization", "false")) ?
-            null : ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(SerializedAdapter.class);
-//    private ClassBinaryStorageAdapter classStorageAdapter;
+    private ClassBinaryStorageAdapter classStorageAdapter;
 
     private int _sequenceNumberFixedPropertyPos;  //-1  if none
 
