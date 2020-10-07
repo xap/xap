@@ -18,7 +18,9 @@ package com.j_spaces.jdbc.query;
 
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.j_spaces.jdbc.AbstractDMLQuery;
+import com.j_spaces.jdbc.Query;
 import com.j_spaces.jdbc.SelectColumn;
+import com.j_spaces.jdbc.SelectQuery;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -147,11 +149,21 @@ public class QueryColumnData {
     }
 
     private static int initColumnIndex(QueryTableData tableData, String columnName) {
-        ITypeDesc currentInfo = tableData.getTypeDesc();
-        int colIndex = currentInfo.getFixedPropertyPositionIgnoreCase(columnName);
-        if (colIndex == -1 && !currentInfo.supportsDynamicProperties())
-            throw new IllegalArgumentException("Unknown column [" + columnName + "] in table [" + tableData.getTableName() + "]");
-        return colIndex;
+        ITypeDesc typeDesc = tableData.getTypeDesc();
+        if (typeDesc != null) {
+            int colIndex = typeDesc.getFixedPropertyPositionIgnoreCase(columnName);
+            if (colIndex == -1 && !typeDesc.supportsDynamicProperties())
+                throw new IllegalArgumentException("Unknown column [" + columnName + "] in table [" + tableData.getTableName() + "]");
+            return colIndex;
+        }
+        Query subQuery = tableData.getSubQuery();
+        if (subQuery != null) {
+            SelectColumn col = getSubQueryColumnByName(subQuery, columnName);
+            if (col == null)
+                throw new IllegalArgumentException("Unknown column [" + columnName + "] in table [" + tableData.getTableName() + "]");
+            return col.getColumnIndexInTable();
+        }
+        throw new IllegalStateException("QueryTableData does not have type descriptor for table [" + tableData.getTableName() + "]");
     }
 
     private static <T, R> R findUnique(Iterable<T> iterable, Function<T, R> mapper, BiFunction<R, R, String> errorFormatter)
@@ -182,7 +194,28 @@ public class QueryColumnData {
     }
 
     private static QueryColumnData tryInitWithoutPrefix(QueryTableData tableData, String columnPath) {
-        return tableData.getTypeDesc().getFixedPropertyPositionIgnoreCase(columnPath) == -1 ? null : new QueryColumnData(tableData, columnPath);
+        ITypeDesc typeDesc = tableData.getTypeDesc();
+        if (typeDesc != null) {
+            return typeDesc.getFixedPropertyPositionIgnoreCase(columnPath) == -1 ? null : new QueryColumnData(tableData, columnPath);
+        }
+        Query subQuery = tableData.getSubQuery();
+        if (subQuery != null) {
+            SelectColumn col = getSubQueryColumnByName(subQuery, columnPath);
+            return col != null ? new QueryColumnData(tableData, columnPath) : null;
+        }
+        throw new IllegalStateException("QueryTableData does not have type descriptor for table [" + tableData.getTableName() + "]");
+    }
+
+    private static SelectColumn getSubQueryColumnByName(Query subQuery, String columnName) {
+        if (subQuery instanceof SelectQuery) {
+            List<SelectColumn> subQueryColumns = ((SelectQuery) subQuery).getQueryColumns();
+            for (SelectColumn subQueryColumn : subQueryColumns) {
+                if (subQueryColumn.getName().equals(columnName))
+                    return subQueryColumn;
+            }
+            return null;
+        }
+        throw new IllegalStateException("Unsupported subquery class: " + subQuery.getClass());
     }
 
     private static String ambigFormatter(String columnPath, QueryColumnData r1, QueryColumnData r2) {

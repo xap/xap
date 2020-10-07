@@ -700,7 +700,7 @@ public class SelectQuery extends AbstractDMLQuery {
             return;
         }
 
-        applyJoinsIfNeeded();
+        applyJoinsIfNeeded(space);
 
         super.validateQuery(space);
 
@@ -727,10 +727,14 @@ public class SelectQuery extends AbstractDMLQuery {
         validateCommonJavaTypeOnDocumentOrStringReturnProperties();
     }
 
-    private void applyJoinsIfNeeded() {
+    private void applyJoinsIfNeeded(ISpaceProxy space) throws SQLException {
         if (joins != null) {
             for (Join join : joins) {
-                addTableWithAlias(join.getTableName(), join.getAlias());
+                QueryTableData table = addTableWithAlias(join.getTableName(), join.getAlias());
+                if (join.getSubQuery() != null) {
+                    table.setSubQuery(join.getSubQuery());
+                    join.getSubQuery().validateQuery(space);
+                }
                 setExpTree(join.applyOnExpression(getExpTree()));
             }
         }

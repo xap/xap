@@ -523,6 +523,9 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
     @Override
     public void validateQuery(ISpaceProxy space) throws SQLException {
         for (QueryTableData tableData : _tablesData) {
+            // Skip validations for sub queries (already validated)
+            if (tableData.getSubQuery() != null)
+                continue;
             ITypeDesc typeDesc = tableData.getTypeDesc();
             if (typeDesc == null) {
                 String tableName = tableData.getTableName();

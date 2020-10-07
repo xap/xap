@@ -21,7 +21,7 @@ public class Join implements Query, Cloneable {
     }
 
     private final JoinType joinType;
-    private final Query query;
+    private final Query subQuery;
     private final ExpNode onExpression;
     private final String tableName;
     private final String alias;
@@ -29,9 +29,9 @@ public class Join implements Query, Cloneable {
     /*
      * Exactly one of col, query have to be null
      */
-    public Join(String joinType, Query query, ExpNode onExpression, String tableName, String alias) {
+    public Join(String joinType, Query subQuery, ExpNode onExpression, String tableName, String alias) {
         this.joinType = JoinType.parse(joinType);
-        this.query = query;
+        this.subQuery = subQuery;
         this.onExpression = onExpression;
         this.tableName = tableName;
         this.alias = alias;
@@ -51,6 +51,10 @@ public class Join implements Query, Cloneable {
 
     public ExpNode getOnExpression() {
         return onExpression;
+    }
+
+    public Query getSubQuery() {
+        return subQuery;
     }
 
     public ExpNode applyOnExpression(ExpNode expNode) {

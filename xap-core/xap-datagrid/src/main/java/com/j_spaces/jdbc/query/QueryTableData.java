@@ -21,6 +21,7 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.jdbc.AbstractDMLQuery;
+import com.j_spaces.jdbc.Query;
 import com.j_spaces.jdbc.Stack;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.executor.EntriesCursor;
@@ -55,6 +56,7 @@ public class QueryTableData {
 
     private boolean _isJoined;
     private boolean _hasAsterixSelectColumns;
+    private Query subQuery;
 
     public QueryTableData(String name, String alias, int index) {
         _tableName = name;
@@ -326,5 +328,13 @@ public class QueryTableData {
 
     public void clear() {
         setEntriesCursor(null);
+    }
+
+    public Query getSubQuery() {
+        return subQuery;
+    }
+
+    public void setSubQuery(Query subQuery) {
+        this.subQuery = subQuery;
     }
 }
