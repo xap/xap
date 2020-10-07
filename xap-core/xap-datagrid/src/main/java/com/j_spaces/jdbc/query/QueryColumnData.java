@@ -50,7 +50,7 @@ public class QueryColumnData {
         // The pattern will only process the first match and the remaining will
         // be placed in the second position of the returned array.
         _columnName = columnPath == null ? null : columnPath.split("\\.|\\[\\*\\]", 2)[0];
-        _columnTableData = tableData;
+        setColumnTableData(tableData);
         if (tableData != null && !UID_COLUMN.equals(_columnName) && !ASTERIX_COLUMN.equals(_columnName)) {
             ITypeDesc currentInfo = tableData.getTypeDesc();
             int pos = currentInfo.getFixedPropertyPositionIgnoreCase(_columnName);
@@ -58,7 +58,7 @@ public class QueryColumnData {
                 if (!currentInfo.supportsDynamicProperties())
                     throw new IllegalArgumentException("Unknown column name '" + _columnName + "'");
             } else {
-                setColumnIndexInTable(pos);
+                this._columnIndexInTable = pos;
             }
         }
     }
@@ -73,15 +73,12 @@ public class QueryColumnData {
 
     public void setColumnTableData(QueryTableData columnTableData) {
         _columnTableData = columnTableData;
-
+        if (isAsterixColumn() && columnTableData != null)
+            columnTableData.setAsterixSelectColumns(true);
     }
 
     public int getColumnIndexInTable() {
         return _columnIndexInTable;
-    }
-
-    public void setColumnIndexInTable(int columnIndexInTable) {
-        this._columnIndexInTable = columnIndexInTable;
     }
 
     /**
@@ -92,18 +89,35 @@ public class QueryColumnData {
      * @return true if the table data was set
      */
     public boolean checkAndAssignTableData(QueryTableData tableData) throws SQLException {
+        if (isUidColumn()) {
+            // every table has uid - so if it is already set - ambiguous expression
+            if (_columnTableData != null && !_columnTableData.getTableName().equals(tableData.getTableName()))
+                throw new SQLException("Ambiguous UID column: It is defined in [" + _columnTableData.getTableName() + "] and [" + tableData.getTableName() + "]");
+
+            setColumnTableData(tableData);
+            return true;
+        }
+
+        if (isAsterixColumn()) {
+            // this is just an indicator of all columns - so no table data needs to be set
+            if (_columnTableData != null)
+                return false;
+            if (tableData != null)
+                tableData.setAsterixSelectColumns(true);
+            return true;
+        }
+
         ITypeDesc currentInfo = tableData.getTypeDesc();
         int pos = currentInfo.getFixedPropertyPositionIgnoreCase(getColumnName());
         if (pos == -1)
             return false;
 
         //found the column, check for ambiguous column
-        QueryTableData columnTableData = getColumnTableData();
-        if (columnTableData != null && columnTableData != tableData)
+        if (_columnTableData != null && _columnTableData != tableData)
             throw new SQLException("Ambiguous column name [" + getColumnName() + "]");
 
         setColumnTableData(tableData);
-        setColumnIndexInTable(pos);
+        this._columnIndexInTable = pos;
         return true;
     }
 
@@ -173,13 +187,9 @@ public class QueryColumnData {
     }
 
     public static QueryColumnData newInstance(QueryTableData tableData, String columnPath) {
-        if (columnPath.equalsIgnoreCase(UID_COLUMN)) {
-            return new UidColumnData(tableData);
-        } else if (columnPath.equals(ASTERIX_COLUMN)) {
-            return new AsterixColumnData(tableData);
-        } else {
-            return new QueryColumnData(tableData, columnPath);
-        }
+        if (columnPath.equalsIgnoreCase(UID_COLUMN))
+            columnPath = UID_COLUMN;
+        return new QueryColumnData(tableData, columnPath);
     }
 
     private static String findPrefix(String s, String ... prefixes) {
@@ -193,10 +203,10 @@ public class QueryColumnData {
     }
 
     public boolean isAsterixColumn() {
-        return false;
+        return ASTERIX_COLUMN.equals(_columnPath);
     }
 
     public boolean isUidColumn() {
-        return false;
+        return UID_COLUMN.equals(_columnPath);
     }
 }
