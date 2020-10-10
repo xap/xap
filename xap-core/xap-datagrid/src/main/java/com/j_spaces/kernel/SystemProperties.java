@@ -476,7 +476,8 @@ public class SystemProperties extends CommonSystemProperties {
     /**
      * Default value of JMX supporting
      */
-    public final static String JMX_ENABLED_DEFAULT_VALUE = Boolean.FALSE.toString();
+
+    public final static String JMX_ENABLED_DEFAULT_VALUE = JMX_ENABLED_DEFAULT_BOOLEAN_VALUE.toString();
 
     /**
      * Replication secure restart property

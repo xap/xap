@@ -83,4 +83,6 @@ public class CommonSystemProperties {
     public final static String SIGAR_ENABLED = "com.gs.sigar.enabled";
 
     public final static String OSHI_ENABLED = "com.gs.oshi.enabled";
+
+    public final static Boolean JMX_ENABLED_DEFAULT_BOOLEAN_VALUE = Boolean.TRUE;
 }

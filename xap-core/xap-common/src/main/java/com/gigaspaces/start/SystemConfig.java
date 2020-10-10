@@ -804,7 +804,7 @@ public class SystemConfig {
          */
         public Object create(Configuration config) throws Exception {
             MBeanServer mbs = null;
-            if(  GsEnv.propertyBoolean( CommonSystemProperties.JMX_ENABLED_PROP ).get( false ) ) {
+            if(  GsEnv.propertyBoolean( CommonSystemProperties.JMX_ENABLED_PROP ).get( CommonSystemProperties.JMX_ENABLED_DEFAULT_BOOLEAN_VALUE ) ) {
                 int registryPort = (Integer) getConfigEntry(config, COMPONENT, "registryPort", int.class, CommonSystemProperties.REGISTRY_PORT, 10098);
                 int registryRetries = (Integer) getConfigEntry(config, COMPONENT, "registryRetries", Integer.class, CommonSystemProperties.REGISTRY_RETRIES, 20);
 
