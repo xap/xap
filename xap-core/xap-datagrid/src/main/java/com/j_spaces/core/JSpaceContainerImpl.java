@@ -351,7 +351,8 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
         GSLogConfigLoader.getLoader();
         /** starting RMIRegistry if required * */
         // _url might be null when using old JSpaceServerImpl
-        if (_url != null && GsEnv.propertyBoolean( CommonSystemProperties.JMX_ENABLED_PROP ).get( CommonSystemProperties.JMX_ENABLED_DEFAULT_BOOLEAN_VALUE ) ) {
+        if (_url != null &&
+                GsEnv.propertyBoolean( CommonSystemProperties.JNDI_ENABLED_PROP ).get( CommonSystemProperties.JNDI_ENABLED_DEFAULT_BOOLEAN_VALUE ) ) {
             String registeredRmiHostAndPort = loadRMIRegistry(_url.getHost());
 
             //update all desired objects with registered rmi host and port
