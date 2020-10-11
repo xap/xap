@@ -535,7 +535,7 @@ public class SystemBoot {
         }
 
         if (System.getProperty(CommonSystemProperties.JMX_ENABLED_PROP) == null) {
-            System.setProperty(CommonSystemProperties.JMX_ENABLED_PROP, String.valueOf(!services.contains(NO_JMX)));
+            System.setProperty(CommonSystemProperties.JMX_ENABLED_PROP, CommonSystemProperties.JMX_ENABLED_DEFAULT_BOOLEAN_VALUE.toString() );
         }
     }
 
