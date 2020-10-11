@@ -206,7 +206,7 @@ public class SystemProperties extends CommonSystemProperties {
     /**
      * read() call on Socket will block for only this amount of time (in milliseconds),
      * or indefinite (timeout=0) by default.
-     * @Since 15.5
+     * @since 15.5
      */
     public static final String LRMI_READ_BLOCK_TIMEOUT = "com.gs.transport_protocol.lrmi.read-block-timeout";
 
@@ -486,7 +486,7 @@ public class SystemProperties extends CommonSystemProperties {
     /**
      * System variable for look&feel class definition
      */
-    public final static String UI_ENABLED = "com.gs.newwebui.enabled";
+    public final static String UI_ENABLED = "com.gs.ops-ui.enabled";
 
     /**
      * System variable for enabling recording of all metrics tables to hsqldb
@@ -812,7 +812,7 @@ public class SystemProperties extends CommonSystemProperties {
     private static final Map<String, String> defaultValues = initDefaultValues();
 
     private static Map<String, String> initDefaultValues() {
-        Map<String, String> result = new HashMap<String, String>(30);
+        Map<String, String> result = new HashMap<>(30);
 
         //fill map with default values, keys are system variable names
         result.put(WATCHDOG_IDLE_CONNECTION_TIMEOUT, WATCHDOG_IDLE_CONNECTION_TIMEOUT_DEFAULT);
@@ -840,7 +840,7 @@ public class SystemProperties extends CommonSystemProperties {
         result.put(ENABLE_DYNAMIC_LOCATORS, Boolean.toString(ENABLE_DYNAMIC_LOCATORS_DEFAULT));
         result.put(DYNAMIC_LOCATORS_MAX_INIT_DELAY, Long.toString(DYNAMIC_LOCATORS_MAX_INIT_DELAY_DEFAULT));
         result.put(REQUIRED_CONSISTENCY_LEVEL, String.valueOf(REQUIRED_CONSISTENCY_LEVEL_DEFAULT));
-        result.put(BLOCKING_CLIENT_CONNECT, String.valueOf(BLOCKING_CLIENT_CONNECT_DEFAULT));
+        result.put(BLOCKING_CLIENT_CONNECT, BLOCKING_CLIENT_CONNECT_DEFAULT);
 
         return result;
     }
