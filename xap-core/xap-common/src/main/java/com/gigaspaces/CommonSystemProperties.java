@@ -90,7 +90,7 @@ public class CommonSystemProperties {
 
     public final static String OSHI_ENABLED = "com.gs.oshi.enabled";
 
-    public final static Boolean JMX_ENABLED_DEFAULT_BOOLEAN_VALUE = Boolean.FALSE;
+    public final static Boolean JMX_ENABLED_DEFAULT_BOOLEAN_VALUE = Boolean.TRUE;
 
     public final static Boolean JNDI_ENABLED_DEFAULT_BOOLEAN_VALUE = Boolean.TRUE;
 }
