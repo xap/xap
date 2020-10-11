@@ -80,7 +80,7 @@ public class TypeDesc implements ITypeDesc {
     private ITypeIntrospector<?> _objectIntrospector;
     private Map<String, SpaceIndex> _indexes;
     private TypeQueryExtensions queryExtensionsInfo;
-    private ClassBinaryStorageAdapter classStorageAdapter;
+    private ClassBinaryStorageAdapter classBinaryStorageAdapter;
 
     private int _sequenceNumberFixedPropertyPos;  //-1  if none
 
@@ -132,7 +132,7 @@ public class TypeDesc implements ITypeDesc {
                     StorageType storageType, EntryType entryType, Class<? extends Object> objectClass,
                     Class<? extends ExternalEntry> externalEntryClass, Class<? extends SpaceDocument> documentWrapperClass,
                     String dotnetDocumentWrapperType, byte dotnetStorageType, boolean blobstoreEnabled, String sequenceNumberPropertyName,
-                    TypeQueryExtensions queryExtensionsInfo) {
+                    TypeQueryExtensions queryExtensionsInfo, Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapter) {
         _typeName = typeName;
         _codeBase = codeBase;
         _superTypesNames = superTypesNames;
@@ -174,6 +174,8 @@ public class TypeDesc implements ITypeDesc {
         validateAndUpdateSequenceNumberInfo(sequenceNumberPropertyName);
         initializeV9_0_0();
         addFifoGroupingIndexesIfNeeded(_indexes, _fifoGroupingName, _fifoGroupingIndexes);
+        if(binaryStorageAdapter != null)
+            this.classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(binaryStorageAdapter);
     }
 
     public TypeDesc cloneWithoutObjectClass( TypeDesc typeDesc, EntryType entryType ) {
@@ -884,7 +886,7 @@ public class TypeDesc implements ITypeDesc {
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
             String storageAdapterClassName = IOUtils.readString(in);
             if (storageAdapterClassName != null)
-                initClassStorageAdapter(ClassLoaderHelper.loadClass(storageAdapterClassName));
+                classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(ClassLoaderHelper.loadClass(storageAdapterClassName));
         }
     }
 
@@ -1138,12 +1140,9 @@ public class TypeDesc implements ITypeDesc {
     }
 
 
-    public ClassBinaryStorageAdapter getClassStorageAdapter() {
-        return classStorageAdapter;
-    }
-
-    public void initClassStorageAdapter(Class<? extends ClassBinaryStorageAdapter> classStorageAdapterClass) {
-        this.classStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(classStorageAdapterClass);
+    @Override
+    public ClassBinaryStorageAdapter getClassBinaryStorageAdapter() {
+        return classBinaryStorageAdapter;
     }
 
     @Override
@@ -1222,7 +1221,7 @@ public class TypeDesc implements ITypeDesc {
         writeObjectsAsByteArray(out);
         // New in 15.8.0: Space class storage adapter
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
-            IOUtils.writeString(out, classStorageAdapter != null ? classStorageAdapter.getClass().getName() : null);
+            IOUtils.writeString(out, classBinaryStorageAdapter != null ? classBinaryStorageAdapter.getClass().getName() : null);
         }
     }
 

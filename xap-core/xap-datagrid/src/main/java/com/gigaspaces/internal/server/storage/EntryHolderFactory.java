@@ -130,7 +130,7 @@ public class EntryHolderFactory {
         final long lease = (expiration > 0 || keepExpiration) ? expiration : LeaseManager.toAbsoluteTime(entryPacket.getTTL());
 
         if (entryDataType == EntryDataType.FLAT) {
-            ClassBinaryStorageAdapter adapter = ((TypeDesc) entryTypeDesc.getTypeDesc()).getClassStorageAdapter();
+            ClassBinaryStorageAdapter adapter = (entryTypeDesc.getTypeDesc()).getClassBinaryStorageAdapter();
             if (adapter != null) {
                 if (entryPacket.getDynamicProperties() == null || entryPacket.getDynamicProperties().isEmpty()) {
                     return new BinaryEntryData(entryPacket.getFieldValues(),

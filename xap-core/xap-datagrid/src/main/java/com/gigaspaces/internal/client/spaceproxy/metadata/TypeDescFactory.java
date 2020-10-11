@@ -112,16 +112,12 @@ public class TypeDescFactory {
         final String sequenceNumberPropertyName = typeInfo.getSequenceNumberPropertyName();
         TypeQueryExtensions queryExtensionsInfo = new TypeQueryExtensionsImpl(typeInfo);
 
-        TypeDesc typeDesc = new TypeDesc(typeInfo.getName(), codeBase, typeInfo.getSuperClasses(),
+        ITypeDesc typeDesc = new TypeDesc(typeInfo.getName(), codeBase, typeInfo.getSuperClasses(),
                 properties, supportsDynamicProperties, indexes, idPropertyName, typeInfo.getIdAutoGenerate(),
                 defaultPropertyName, routingPropertyName, fifoGroupingName, fifoGroupingIndexes, typeInfo.isSystemClass(), fifoSupport,
                 typeInfo.isReplicate(), supportsOptimisticLocking, defaultStorageType,
                 EntryType.OBJECT_JAVA, type, ExternalEntry.class, SpaceDocument.class, null, DotNetStorageType.NULL,
-                blobstoreEnabled, sequenceNumberPropertyName, queryExtensionsInfo);
-
-        if(typeInfo.getSpaceClassStorageAdapter() != null){
-            typeDesc.initClassStorageAdapter(typeInfo.getSpaceClassStorageAdapter());
-        }
+                blobstoreEnabled, sequenceNumberPropertyName, queryExtensionsInfo, typeInfo.getSpaceClassStorageAdapter());
 
         if (typeDesc.isExternalizable() && shouldWarnExternalizable(typeInfo) && _deprecationLogger.isWarnEnabled())
             _deprecationLogger.warn("Current class [" + type.getName() + "] implements " + Externalizable.class + ", usage of Externalizable in order to serialize it to a space is deprecated, Use SpaceExclude, StorageType and nested object serialization where relevant instead."
@@ -190,7 +186,7 @@ public class TypeDescFactory {
                 indexes, idPropertyName, idAutoGenerate, defaultPropertyName, routingPropertyName, null, null, isSystemType,
                 fifoMode, replicable, isVersionedProxy(), _storageType,
                 EntryType.OBJECT_JAVA, realClass, ExternalEntry.class, SpaceDocument.class, null, DotNetStorageType.NULL,
-                PojoDefaults.BLOBSTORE_ENABLED, null /*sequence number*/, null);
+                PojoDefaults.BLOBSTORE_ENABLED, null /*sequence number*/, null, null);
     }
 
     public ITypeDesc createExternalEntryTypeDesc(ExternalEntry externalEntry, String codeBase) {
@@ -281,7 +277,7 @@ public class TypeDescFactory {
                 properties, supportsDynamicProperties, indexes, idPropertyName, idAutoGenerate, defaultPropertyName,
                 externalEntry.getRoutingFieldName(), null, null, isSystemType, fifoMode, externalEntry.isReplicatable(),
                 true, _storageType, EntryType.EXTERNAL_ENTRY, null, externalEntry.getClass(), SpaceDocument.class, null,
-                DotNetStorageType.NULL, PojoDefaults.BLOBSTORE_ENABLED, null, null);
+                DotNetStorageType.NULL, PojoDefaults.BLOBSTORE_ENABLED, null, null, null);
     }
 
     public static ITypeDesc createPbsTypeDesc(EntryType entryType, String className, String codeBase, String[] superClassesNames,
@@ -313,7 +309,7 @@ public class TypeDescFactory {
                 properties, supportsDynamicProperties, indexes, idPropertyName, idAutoGenerate, defaultPropertyName, routingPropertyName,
                 null, null, isSystemType, fifoMode, isReplicable, supportsOptimisticLocking, StorageType.OBJECT,
                 entryType, null, ExternalEntry.class, SpaceDocument.class, null, DotNetStorageType.NULL,
-                blobstoreEnabled, null, null);
+                blobstoreEnabled, null, null, null);
     }
 
     public static ITypeDesc createPbsExplicitTypeDesc(EntryType entryType, String className, String[] superClassesNames,
@@ -330,7 +326,7 @@ public class TypeDescFactory {
                 properties, supportsDynamicProperties, indexes, idPropertyName, idAutoGenerate, defaultPropertyName, routingPropertyName,
                 fifoGroupingPropertyPath, fifoGroupingIndexPaths, isSystemType, fifoMode, isReplicable, supportsOptimisticLocking, StorageType.OBJECT,
                 entryType, null, ExternalEntry.class, SpaceDocument.class, documentWrapperType,
-                dynamicPropertiesStorageType, blobstoreEnabled, null, null);
+                dynamicPropertiesStorageType, blobstoreEnabled, null, null, null);
     }
 
     private String getEntryIndices(Class<?> realClass, String[] fieldsNames, String[] fieldTypes, SpaceIndexType[] indexTypes) {

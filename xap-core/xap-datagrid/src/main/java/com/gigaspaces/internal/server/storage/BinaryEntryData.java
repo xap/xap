@@ -161,7 +161,7 @@ public class BinaryEntryData extends AbstractEntryData {
 
     private byte[] serializeFields(Object[] fieldsValues) {
         try {
-            return ((TypeDesc) this.getSpaceTypeDescriptor()).getClassStorageAdapter().toBinary(fieldsValues);
+            return (this.getSpaceTypeDescriptor()).getClassBinaryStorageAdapter().toBinary(fieldsValues);
         } catch (IOException e) {
             throw new UncheckedIOException("com.gigaspaces.internal.server.storage.FlatEntryData.serializeFields failed", e);
         }
@@ -169,7 +169,7 @@ public class BinaryEntryData extends AbstractEntryData {
 
     private Object[] deserializeFields(byte[] fieldsValues) {
         try {
-            return ((TypeDesc) this.getSpaceTypeDescriptor()).getClassStorageAdapter().fromBinary(fieldsValues);
+            return (this.getSpaceTypeDescriptor()).getClassBinaryStorageAdapter().fromBinary(fieldsValues);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (ClassNotFoundException e) {
@@ -179,7 +179,7 @@ public class BinaryEntryData extends AbstractEntryData {
 
     private void modifyField(int index, Object value) {
         try {
-            serializedFields = ((TypeDesc) this.getSpaceTypeDescriptor()).getClassStorageAdapter().modifyField(serializedFields, index, value);
+            serializedFields = (this.getSpaceTypeDescriptor()).getClassBinaryStorageAdapter().modifyField(serializedFields, index, value);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (ClassNotFoundException e) {

@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.server.metadata;
 
 import com.gigaspaces.annotation.pojo.FifoSupport;
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.EntryType;
@@ -372,6 +373,11 @@ public class InactiveTypeDesc implements ITypeDesc {
 
     public boolean anyCompoundIndex() {
         return false;
+    }
+
+    @Override
+    public ClassBinaryStorageAdapter getClassBinaryStorageAdapter() {
+        return null;
     }
 
     @Override

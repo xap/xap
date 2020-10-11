@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.metadata;
 
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.metadata.index.SpaceIndex;
@@ -97,6 +98,8 @@ public interface ITypeDesc extends SpaceTypeDescriptor, IDotnetTypeDescDetails, 
     List<SpaceIndex> getCompoundIndexes();
 
     boolean anyCompoundIndex();
+
+    ClassBinaryStorageAdapter getClassBinaryStorageAdapter();
 
     Serializable getVersionedSerializable();
 
