@@ -120,6 +120,12 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
      * Build  query internal structures - called after parsing
      */
     public void build() throws SQLException {
+        // Build subqueries recursivly, if any.
+        for (QueryTableData tableData : getTablesData()) {
+            Query subQuery = tableData.getSubQuery();
+            if (subQuery != null)
+                subQuery.build();
+        }
         buildTemplates();
     }
 

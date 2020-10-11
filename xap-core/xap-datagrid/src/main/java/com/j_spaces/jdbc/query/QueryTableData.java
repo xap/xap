@@ -20,9 +20,7 @@ import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
-import com.j_spaces.jdbc.AbstractDMLQuery;
-import com.j_spaces.jdbc.Query;
-import com.j_spaces.jdbc.Stack;
+import com.j_spaces.jdbc.*;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.executor.EntriesCursor;
 import com.j_spaces.jdbc.executor.ScanCursor;
@@ -288,8 +286,18 @@ public class QueryTableData {
     public void init(ISpaceProxy space, Transaction txn, AbstractDMLQuery query)
             throws Exception {
 
-        IQueryResultSet<IEntryPacket> tableEntries = getTemplate(query.getQueryResultType()).readMultiple(
-                space, txn, Integer.MAX_VALUE, query.getReadModifier());
+        IQueryResultSet<IEntryPacket> tableEntries;
+        if (subQuery != null) {
+            if (subQuery instanceof AbstractDMLQuery) {
+                // sub query results should be returned as entry packets and not converted.
+                ((AbstractDMLQuery)subQuery).setConvertResultToArray(false);
+            }
+            ResponsePacket rp = subQuery.executeOnSpace(space, txn);
+            tableEntries = (IQueryResultSet<IEntryPacket>) rp.getResultSet();
+        } else {
+            QueryTemplatePacket template = getTemplate(query.getQueryResultType());
+            tableEntries = template.readMultiple(space, txn, Integer.MAX_VALUE, query.getReadModifier());
+        }
 
         if (_joinCondition != null)
             setEntriesCursor(_joinCondition.createIndex(this, tableEntries));
