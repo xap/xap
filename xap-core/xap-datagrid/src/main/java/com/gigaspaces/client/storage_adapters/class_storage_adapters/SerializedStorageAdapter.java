@@ -4,7 +4,7 @@ import com.gigaspaces.internal.io.IOUtils;
 
 import java.io.*;
 
-public class SerializedAdapter extends ClassBinaryStorageAdapter {
+public class SerializedStorageAdapter extends ClassBinaryStorageAdapter {
 
     @Override
     public byte[] toBinary(Object[] fields) throws IOException {

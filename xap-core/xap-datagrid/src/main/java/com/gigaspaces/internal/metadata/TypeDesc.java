@@ -19,7 +19,6 @@ package com.gigaspaces.internal.metadata;
 import com.gigaspaces.annotation.pojo.FifoSupport;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapterRegistry;
-import com.gigaspaces.client.storage_adapters.class_storage_adapters.SerializedAdapter;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.io.CustomClassLoaderObjectInputStream;
 import com.gigaspaces.internal.io.IOUtils;
@@ -880,6 +879,13 @@ public class TypeDesc implements ITypeDesc {
         readObjectsFromByteArray(in);
 
         initializeV9_0_0();
+
+        // New in 15.8.0: Space class binary storage adapter
+        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
+            String storageAdapterClassName = IOUtils.readString(in);
+            if (storageAdapterClassName != null)
+                initClassStorageAdapter(ClassLoaderHelper.loadClass(storageAdapterClassName));
+        }
     }
 
     private void writeObjectsAsByteArray(ObjectOutput out) throws IOException {
@@ -1214,6 +1220,10 @@ public class TypeDesc implements ITypeDesc {
         }
 
         writeObjectsAsByteArray(out);
+        // New in 15.8.0: Space class storage adapter
+        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
+            IOUtils.writeString(out, classStorageAdapter != null ? classStorageAdapter.getClass().getName() : null);
+        }
     }
 
     private void writeExternalV10_1(ObjectOutput out, PlatformLogicalVersion version, boolean swap) throws IOException {

@@ -865,7 +865,7 @@ public class SpaceTypeInfo implements Externalizable {
         // check for top level custom index definition
         addCustomIndex(_type.getAnnotation(CustomSpaceIndex.class));
 
-        SpaceClassStorageAdapter spaceClassStorageAdapter = _type.getAnnotation(SpaceClassStorageAdapter.class);
+        SpaceClassBinaryStorageAdapter spaceClassStorageAdapter = _type.getAnnotation(SpaceClassBinaryStorageAdapter.class);
         if(spaceClassStorageAdapter != null){
             this._spaceClassStorageAdapter = spaceClassStorageAdapter.value();
         }

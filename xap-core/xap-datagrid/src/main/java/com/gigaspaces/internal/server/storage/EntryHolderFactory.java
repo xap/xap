@@ -133,7 +133,7 @@ public class EntryHolderFactory {
             ClassBinaryStorageAdapter adapter = ((TypeDesc) entryTypeDesc.getTypeDesc()).getClassStorageAdapter();
             if (adapter != null) {
                 if (entryPacket.getDynamicProperties() == null || entryPacket.getDynamicProperties().isEmpty()) {
-                    return new SerializedEntryData(entryPacket.getFieldValues(),
+                    return new BinaryEntryData(entryPacket.getFieldValues(),
                             entryTypeDesc, version, lease, createXtnEntryInfo);
                 } else {
                     throw new UnsupportedOperationException("SpaceClassStorageAdapter annotation does not support dynamic properties");

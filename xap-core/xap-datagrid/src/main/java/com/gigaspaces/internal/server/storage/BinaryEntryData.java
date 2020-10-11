@@ -29,50 +29,50 @@ import java.util.Map;
  * @since 15.8
  */
 @com.gigaspaces.api.InternalApi
-public class SerializedEntryData extends AbstractEntryData {
+public class BinaryEntryData extends AbstractEntryData {
     private byte[] serializedFields;
 
 
-    public SerializedEntryData(Object[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
+    public BinaryEntryData(Object[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
         super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon);
         this.serializedFields = serializeFields(fieldsValues);
     }
 
-    public SerializedEntryData(byte[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
+    public BinaryEntryData(byte[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
         super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon);
         this.serializedFields = fieldsValues;
     }
 
-    private SerializedEntryData(Object[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime,
-                                boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
+    private BinaryEntryData(Object[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime,
+                            boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
         super(entryTypeDesc, version, expirationTime, cloneXtnInfo, other, createEmptyTxnInfoIfNon);
         this.serializedFields = serializeFields(fieldsValues);
     }
 
-    private SerializedEntryData(byte[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime,
-                                boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
+    private BinaryEntryData(byte[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime,
+                            boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
         super(entryTypeDesc, version, expirationTime, cloneXtnInfo, other, createEmptyTxnInfoIfNon);
         this.serializedFields = fieldsValues;
     }
 
-    private SerializedEntryData(SerializedEntryData other, EntryXtnInfo xtnInfo) {
+    private BinaryEntryData(BinaryEntryData other, EntryXtnInfo xtnInfo) {
         super(other, xtnInfo);
         this.serializedFields = other.serializedFields;
     }
 
     @Override
     public ITransactionalEntryData createCopyWithoutTxnInfo() {
-        return new SerializedEntryData(this.serializedFields, this._entryTypeDesc, this._versionID, this._expirationTime, false);
+        return new BinaryEntryData(this.serializedFields, this._entryTypeDesc, this._versionID, this._expirationTime, false);
     }
 
     @Override
     public ITransactionalEntryData createCopyWithoutTxnInfo(long newExpirationTime) {
-        return new SerializedEntryData(this.serializedFields, this._entryTypeDesc, this._versionID, newExpirationTime, false);
+        return new BinaryEntryData(this.serializedFields, this._entryTypeDesc, this._versionID, newExpirationTime, false);
     }
 
     @Override
     public ITransactionalEntryData createCopyWithTxnInfo(int versionID, long newExpirationTime) {
-        return new SerializedEntryData(this.serializedFields, this._entryTypeDesc, versionID, newExpirationTime, true, this, false);
+        return new BinaryEntryData(this.serializedFields, this._entryTypeDesc, versionID, newExpirationTime, true, this, false);
     }
 
     @Override
@@ -85,23 +85,23 @@ public class SerializedEntryData extends AbstractEntryData {
         Object[] clonedfieldsValues = new Object[getNumOfFixedProperties()];
         System.arraycopy(getFixedPropertiesValues(), 0, clonedfieldsValues, 0, getNumOfFixedProperties());
 
-        return new SerializedEntryData(clonedfieldsValues, this._entryTypeDesc, versionID, expirationTime, true, this, false);
+        return new BinaryEntryData(clonedfieldsValues, this._entryTypeDesc, versionID, expirationTime, true, this, false);
 
     }
 
     @Override
     public ITransactionalEntryData createCopyWithTxnInfo(boolean createEmptyTxnInfoIfNon) {
-        return new SerializedEntryData(this.serializedFields, this._entryTypeDesc, this._versionID, this._expirationTime, true, this, createEmptyTxnInfoIfNon);
+        return new BinaryEntryData(this.serializedFields, this._entryTypeDesc, this._versionID, this._expirationTime, true, this, createEmptyTxnInfoIfNon);
     }
 
     @Override
     public ITransactionalEntryData createCopy(boolean cloneXtnInfo, IEntryData newEntryData, long newExpirationTime) {
-        return new SerializedEntryData(newEntryData.getFixedPropertiesValues(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime, cloneXtnInfo, this, false);
+        return new BinaryEntryData(newEntryData.getFixedPropertiesValues(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime, cloneXtnInfo, this, false);
     }
 
     @Override
     public ITransactionalEntryData createCopyWithSuppliedTxnInfo(EntryXtnInfo ex) {
-        return new SerializedEntryData(this, ex);
+        return new BinaryEntryData(this, ex);
     }
 
     @Override
