@@ -17,11 +17,11 @@
 package com.gigaspaces.internal.server.storage;
 
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
-import com.gigaspaces.internal.metadata.TypeDesc;
 import com.j_spaces.core.server.transaction.EntryXtnInfo;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /***
@@ -31,6 +31,7 @@ import java.util.Map;
 @com.gigaspaces.api.InternalApi
 public class BinaryEntryData extends AbstractEntryData {
     private byte[] serializedFields;
+    private Object[] loaded;
 
 
     public BinaryEntryData(Object[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
@@ -126,7 +127,7 @@ public class BinaryEntryData extends AbstractEntryData {
 
     @Override
     public Object[] getFixedPropertiesValues() {
-        return deserializeFields(serializedFields);
+        return loaded != null ? loaded : deserializeFields(serializedFields);
     }
 
     @Override
@@ -149,9 +150,16 @@ public class BinaryEntryData extends AbstractEntryData {
         if (values.length != getNumOfFixedProperties()) {
             throw new IllegalArgumentException("Cannot substitute fixed property values with array of different size!");
         }
-        for (int i = 0; i < values.length; i++) {
-            modifyField(i, values[i]);
+        Map<Integer, Object> map = new HashMap<>();
+        int i = 0;
+        for (Object value : values) {
+            if (value != null) {
+                map.put(i, value);
+            }
+            i++;
         }
+
+        modifyFields(map);
     }
 
     @Override
@@ -185,5 +193,24 @@ public class BinaryEntryData extends AbstractEntryData {
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private void modifyFields(Map<Integer, Object> map) {
+        try {
+            serializedFields = (this.getSpaceTypeDescriptor()).getClassBinaryStorageAdapter().modifyFields(serializedFields, map);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+
+    public void loadFixedPropertiesValues() {
+        this.loaded = deserializeFields(this.serializedFields);
+    }
+
+    public void unloadFixedPropertiesValues() {
+        this.loaded = null;
     }
 }

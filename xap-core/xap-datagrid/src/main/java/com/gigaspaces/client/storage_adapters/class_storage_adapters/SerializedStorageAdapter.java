@@ -3,6 +3,7 @@ package com.gigaspaces.client.storage_adapters.class_storage_adapters;
 import com.gigaspaces.internal.io.IOUtils;
 
 import java.io.*;
+import java.util.Map;
 
 public class SerializedStorageAdapter extends ClassBinaryStorageAdapter {
 
@@ -42,6 +43,15 @@ public class SerializedStorageAdapter extends ClassBinaryStorageAdapter {
     public byte[] modifyField(byte[] serializedFields, int index, Object newValue) throws IOException, ClassNotFoundException {
         Object[] fields = fromBinary(serializedFields);
         fields[index] = newValue;
+        return toBinary(fields);
+    }
+
+    @Override
+    public byte[] modifyFields(byte[] serializedFields, Map<Integer, Object> newValues) throws IOException, ClassNotFoundException {
+        Object[] fields = fromBinary(serializedFields);
+        for (Map.Entry<Integer, Object> entry : newValues.entrySet()) {
+            fields[entry.getKey()] = entry.getValue();
+        }
         return toBinary(fields);
     }
 }

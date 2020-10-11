@@ -252,14 +252,26 @@ public class TemplateEntryData implements IEntryData {
     }
 
     public boolean match(CacheManager cacheManager, ServerEntry entry, int skipAlreadyMatchedFixedPropertyIndex, String skipAlreadyMatchedIndexPath, RegexCache regexCache) {
-        boolean result = _extendedMatchCodes == null
-                ? matchBasic(entry, skipAlreadyMatchedFixedPropertyIndex)
-                : matchExtended(entry, skipAlreadyMatchedFixedPropertyIndex, regexCache);
+        if(entry instanceof BinaryEntryData){
+           ((BinaryEntryData) entry).loadFixedPropertiesValues();
+            boolean result = _extendedMatchCodes == null
+                    ? matchBasic(entry, skipAlreadyMatchedFixedPropertyIndex)
+                    : matchExtended(entry, skipAlreadyMatchedFixedPropertyIndex, regexCache);
 
-        if (result && _customQuery != null)
-            result = _customQuery.matches(cacheManager, entry, skipAlreadyMatchedIndexPath);
+            if (result && _customQuery != null)
+                result = _customQuery.matches(cacheManager, entry, skipAlreadyMatchedIndexPath);
+            ((BinaryEntryData) entry).unloadFixedPropertiesValues();
+            return result;
+        }else {
+            boolean result = _extendedMatchCodes == null
+                    ? matchBasic(entry, skipAlreadyMatchedFixedPropertyIndex)
+                    : matchExtended(entry, skipAlreadyMatchedFixedPropertyIndex, regexCache);
 
-        return result;
+            if (result && _customQuery != null)
+                result = _customQuery.matches(cacheManager, entry, skipAlreadyMatchedIndexPath);
+
+            return result;
+        }
     }
 
     private boolean matchBasic(ServerEntry entry, int skipIndex) {

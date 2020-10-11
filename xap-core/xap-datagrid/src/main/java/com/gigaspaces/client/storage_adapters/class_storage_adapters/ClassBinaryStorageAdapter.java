@@ -19,6 +19,7 @@ package com.gigaspaces.client.storage_adapters.class_storage_adapters;
 import com.gigaspaces.api.ExperimentalApi;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  *  Base class for serialize/deserialize of space EntryData fields Object array into a byte array
@@ -78,6 +79,16 @@ public abstract class ClassBinaryStorageAdapter {
      * @throws ClassNotFoundException
      */
     public abstract byte[] modifyField(byte[] serializedFields, int index, Object newValue) throws IOException, ClassNotFoundException;
+
+    /***
+     * Triggered when need to modify a on of the fields stored in a byte[]
+     * @param serializedFields current serialized fields
+     * @param newValues map from index of field to its new value
+     * @return new byte[] of serialized fields after modification
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    public abstract byte[] modifyFields(byte[] serializedFields, Map<Integer,Object> newValues) throws IOException, ClassNotFoundException;
 
     public String getName() {
         return this.getClass().getSimpleName();
