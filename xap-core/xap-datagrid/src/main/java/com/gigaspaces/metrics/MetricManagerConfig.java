@@ -51,8 +51,8 @@ public class MetricManagerConfig {
     public MetricManagerConfig() {
         this.separator = "_"; // TODO: Configurable
         this.patterns = new MetricPatternSet(separator);
-        this.reportersFactories = new HashMap<String, MetricReporterFactory>();
-        this.samplers = new HashMap<String, MetricSamplerConfig>();
+        this.reportersFactories = new HashMap<>();
+        this.samplers = new HashMap<>();
         this.samplers.put("off", new MetricSamplerConfig("off", 0l, null));
         this.samplers.put("default", new MetricSamplerConfig("default", MetricSamplerConfig.DEFAULT_SAMPLING_RATE, null));
     }
@@ -164,7 +164,7 @@ public class MetricManagerConfig {
     public void loadDefaults() {
         GsEnv.getPropertiesWithPrefix("com.gs.metric.").forEach(patterns::add);
         if (!reportersFactories.containsKey("ui")) {
-            if (Boolean.parseBoolean(System.getProperty(SystemProperties.UI_ENABLED, "true"))) {
+            if ( GsEnv.propertyBoolean( SystemProperties.UI_ENABLED ).get( true ) ) {
                 XapManagerClusterInfo managerClusterInfo = SystemInfo.singleton().getManagerClusterInfo();
                 if (managerClusterInfo.isEmpty()) {
                     logger.debug("Skipping default metrics ui reporter - manager not configured");
