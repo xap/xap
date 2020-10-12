@@ -111,11 +111,6 @@ public class ExternalizableServerEntry implements IEntryData, Externalizable, IC
     }
 
     @Override
-    public int getNumOfFixedProperties() {
-        return _fixedProperties.length;
-    }
-
-    @Override
     public void setFixedPropertyValue(int index, Object value) {
         _fixedProperties[index] = value;
     }
@@ -154,12 +149,6 @@ public class ExternalizableServerEntry implements IEntryData, Externalizable, IC
             _dynamicProperties = new DocumentProperties();
 
         _dynamicProperties.put(propertyName, value);
-    }
-
-    @Override
-    public void unsetDynamicPropertyValue(String propertyName) {
-        if (_dynamicProperties != null)
-            _dynamicProperties.remove(propertyName);
     }
 
     @Override

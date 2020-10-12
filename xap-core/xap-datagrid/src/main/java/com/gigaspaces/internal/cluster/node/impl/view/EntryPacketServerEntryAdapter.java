@@ -119,11 +119,6 @@ public class EntryPacketServerEntryAdapter implements IEntryData, ICustomTypeDes
     }
 
     @Override
-    public int getNumOfFixedProperties() {
-        return _entryPacket.getTypeDescriptor().getNumOfFixedProperties();
-    }
-
-    @Override
     public void setFixedPropertyValue(int index, Object value) {
         _entryPacket.setFieldValue(index, value);
     }
@@ -161,12 +156,4 @@ public class EntryPacketServerEntryAdapter implements IEntryData, ICustomTypeDes
         dynamicProperties.put(propertyName, value);
         _entryPacket.setDynamicProperties(dynamicProperties);
     }
-
-    @Override
-    public void unsetDynamicPropertyValue(String propertyName) {
-        Map<String, Object> dynamicProperties = _entryPacket.getDynamicProperties();
-        if (dynamicProperties != null)
-            dynamicProperties.remove(propertyName);
-    }
-
 }

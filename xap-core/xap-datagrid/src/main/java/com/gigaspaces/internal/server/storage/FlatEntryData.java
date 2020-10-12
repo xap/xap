@@ -58,11 +58,6 @@ public class FlatEntryData extends AbstractEntryData {
     }
 
     @Override
-    public int getNumOfFixedProperties() {
-        return _fieldsValues.length;
-    }
-
-    @Override
     public Object getFixedPropertyValue(int index) {
         return _fieldsValues[index];
     }
@@ -101,12 +96,6 @@ public class FlatEntryData extends AbstractEntryData {
         for (int i = 0; i < values.length; i++) {
             _fieldsValues[i] = values[i];
         }
-    }
-
-    @Override
-    public void unsetDynamicPropertyValue(String propertyName) {
-        if (_dynamicProperties != null)
-            _dynamicProperties.remove(propertyName);
     }
 
     @Override

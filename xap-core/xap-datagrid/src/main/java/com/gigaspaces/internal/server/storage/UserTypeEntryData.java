@@ -74,11 +74,6 @@ public class UserTypeEntryData extends AbstractEntryData {
     }
 
     @Override
-    public int getNumOfFixedProperties() {
-        return _entryTypeDesc.getTypeDesc().getNumOfFixedProperties();
-    }
-
-    @Override
     public Object getFixedPropertyValue(int propertyID) {
         int indexedPropertyID = _entryTypeDesc.getTypeDesc().getIndexedPropertyID(propertyID);
         return (indexedPropertyID == -1

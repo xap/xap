@@ -60,11 +60,6 @@ public class BinaryEntryData extends AbstractEntryData {
     }
 
     @Override
-    public int getNumOfFixedProperties() {
-        return this.getSpaceTypeDescriptor().getNumOfFixedProperties();
-    }
-
-    @Override
     public Object getFixedPropertyValue(int index) {
         return getFixedPropertiesValues()[index];
     }
@@ -100,11 +95,6 @@ public class BinaryEntryData extends AbstractEntryData {
             throw new IllegalArgumentException("Cannot substitute fixed property values with array of different size!");
         }
         serializedFields = serializeFields(values, getSpaceTypeDescriptor());
-    }
-
-    @Override
-    public void unsetDynamicPropertyValue(String propertyName) {
-        throw new UnsupportedOperationException();
     }
 
     private static byte[] serializeFields(Object[] fieldsValues, ITypeDesc typeDesc) {

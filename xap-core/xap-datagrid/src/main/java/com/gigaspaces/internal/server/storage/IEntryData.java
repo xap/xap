@@ -39,7 +39,9 @@ public interface IEntryData extends ServerEntry {
         return getEntryTypeDesc().getTypeDesc();
     }
 
-    int getNumOfFixedProperties();
+    default int getNumOfFixedProperties() {
+        return getSpaceTypeDescriptor().getNumOfFixedProperties();
+    }
 
     void setFixedPropertyValue(int index, Object value);
 
@@ -51,7 +53,11 @@ public interface IEntryData extends ServerEntry {
 
     void setDynamicPropertyValue(String propertyName, Object value);
 
-    void unsetDynamicPropertyValue(String propertyName);
+    default void unsetDynamicPropertyValue(String propertyName) {
+        Map<String, Object> dynamicProperties = getDynamicProperties();
+        if (dynamicProperties != null)
+            dynamicProperties.remove(propertyName);
+    }
 
     void setDynamicProperties(Map<String, Object> dynamicProperties);
 

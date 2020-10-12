@@ -131,13 +131,7 @@ public class TemplateEntryData implements IEntryData {
         _dynamicProperties.put(propertyName, value);
     }
 
-    @Override
-    public void unsetDynamicPropertyValue(String propertyName) {
-        if (_dynamicProperties != null)
-            _dynamicProperties.remove(propertyName);
-    }
-
-    //why we need it 
+    //why we need it
     @Override
     public int getVersion() {
         return _versionID;
@@ -154,11 +148,6 @@ public class TemplateEntryData implements IEntryData {
 
     public void setExpirationTime(long expirationTime) {
         this._expirationTime = expirationTime;
-    }
-
-    @Override
-    public int getNumOfFixedProperties() {
-        return _fieldsValues.length;
     }
 
     @Override
