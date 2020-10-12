@@ -57,8 +57,8 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
 
     // the entry that is currently undergoing the matching
     private JoinedEntry _currentEntry;
-    private final HashMap<ExpNode, Boolean> _currentEntryResults = new HashMap<ExpNode, Boolean>();
-    private final HashMap<ExpNode, Set<LiteralNode>> _inNodeValues = new HashMap<ExpNode, Set<LiteralNode>>();
+    private final HashMap<ExpNode, Boolean> _currentEntryResults = new HashMap<>();
+    private final HashMap<ExpNode, Set<LiteralNode>> _inNodeValues = new HashMap<>();
     // optimization of the tree traversal - built once an any additional traversal
     // doesn't require to use the stack
     private ExpNode[] _traversalOrder;
@@ -156,22 +156,20 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
         }
 
         boolean leftResult = getResults(exp.getLeftChild());
-
         // if left AND expression didn't return any result - return,
         // no need to execute the right expression
         if (!leftResult) {
-            setResults(exp, leftResult);
+            setResults(exp, false);
             return;
         }
 
         boolean rightResult = getResults(exp.getRightChild());
-
         if (!rightResult) {
-            setResults(exp, rightResult);
+            setResults(exp, false);
             return;
         }
 
-        setResults(exp, leftResult && rightResult);
+        setResults(exp, true);
     }
 
     private boolean executeIn(AbstractInNode exp, ISpaceProxy space, Transaction txn, int readModifier) throws SQLException {
@@ -255,7 +253,7 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
      * GROUP BY is used in the query.
      */
     private static class GroupByComparator implements Comparator<IEntryPacket> {
-        private List<SelectColumn> groupColumns;
+        private final List<SelectColumn> groupColumns;
 
         GroupByComparator(List<SelectColumn> groupCols) {
             groupColumns = groupCols;
@@ -281,13 +279,12 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
             JoinedEntry j1 = (JoinedEntry) e1;
             JoinedEntry j2 = (JoinedEntry) e2;
 
-            for (int i = 0; i < groupColumns.size(); i++) {
-                SelectColumn groupCol = groupColumns.get(i);
+            for (SelectColumn groupCol : groupColumns) {
                 e1 = j1.getEntry(groupCol.getColumnTableData().getTableIndex());
                 e2 = j2.getEntry(groupCol.getColumnTableData().getTableIndex());
 
-                Object obj1 = (Comparable) groupCol.getFieldValue(e1);
-                Object obj2 = (Comparable) groupCol.getFieldValue(e2);
+                Object obj1 = groupCol.getFieldValue(e1);
+                Object obj2 = groupCol.getFieldValue(e2);
 
                 if (obj1 == null && obj2 == null)
                     rc = 0;
@@ -329,8 +326,8 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
             return getResults(root);
         }
 
-        Stack<ExpNode> stack = new Stack<ExpNode>();
-        Stack<ExpNode> stack2 = new Stack<ExpNode>();
+        Stack<ExpNode> stack = new Stack<>();
+        Stack<ExpNode> stack2 = new Stack<>();
 
         stack.push(root);
         while (!stack.isEmpty()) {
@@ -372,9 +369,8 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
      * @since 7.1
      */
     private class JoinedIterator {
-        private JoinedEntry currentEntry;
         private QueryTableData _tableData;
-        private List<QueryTableData> _tablesData;
+        private final List<QueryTableData> _tablesData;
 
         public JoinedIterator(List<QueryTableData> tablesData, ISpaceProxy space, Transaction txn)
                 throws SQLException {
@@ -392,9 +388,7 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
                 throw new SQLException("Failed to read objects: " + e.getMessage(), "GSP", -111);
             }
 
-            for (int i = 0; i < _tablesData.size(); i++) {
-                QueryTableData tableData = _tablesData.get(i);
-
+            for (QueryTableData tableData : _tablesData) {
                 //check for sequence beginning
                 if (!tableData.isJoined()) {
                     _tableData = tableData;
@@ -409,13 +403,10 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
 
         public JoinedEntry get() {
             IEntryPacket[] entries = new IEntryPacket[_tablesData.size()];
-
             for (int i = 0; i < entries.length; i++) {
                 entries[i] = _tablesData.get(i).getCurrentEntry();
             }
-
-            currentEntry = new JoinedEntry(entries);
-            return currentEntry;
+            return new JoinedEntry(entries);
         }
 
         public void close() {
