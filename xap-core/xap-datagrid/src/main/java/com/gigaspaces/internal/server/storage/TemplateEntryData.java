@@ -33,6 +33,7 @@ import com.gigaspaces.metadata.StorageType;
 import com.gigaspaces.server.ServerEntry;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.cache.CacheManager;
+import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.sadapter.datasource.DefaultSQLQueryBuilder;
@@ -251,27 +252,19 @@ public class TemplateEntryData implements IEntryData {
         return _rangeValuesInclusion == null ? true : _rangeValuesInclusion[index];
     }
 
-    public boolean match(CacheManager cacheManager, ServerEntry entry, int skipAlreadyMatchedFixedPropertyIndex, String skipAlreadyMatchedIndexPath, RegexCache regexCache) {
-        if(entry instanceof BinaryEntryData){
-           ((BinaryEntryData) entry).loadFixedPropertiesValues();
-            boolean result = _extendedMatchCodes == null
-                    ? matchBasic(entry, skipAlreadyMatchedFixedPropertyIndex)
-                    : matchExtended(entry, skipAlreadyMatchedFixedPropertyIndex, regexCache);
-
-            if (result && _customQuery != null)
-                result = _customQuery.matches(cacheManager, entry, skipAlreadyMatchedIndexPath);
-            ((BinaryEntryData) entry).unloadFixedPropertiesValues();
-            return result;
-        }else {
-            boolean result = _extendedMatchCodes == null
-                    ? matchBasic(entry, skipAlreadyMatchedFixedPropertyIndex)
-                    : matchExtended(entry, skipAlreadyMatchedFixedPropertyIndex, regexCache);
-
-            if (result && _customQuery != null)
-                result = _customQuery.matches(cacheManager, entry, skipAlreadyMatchedIndexPath);
-
-            return result;
+    public boolean match(CacheManager cacheManager, ServerEntry entry, int skipAlreadyMatchedFixedPropertyIndex, String skipAlreadyMatchedIndexPath, RegexCache regexCache, Context cacheContext) {
+        if (entry instanceof BinaryEntryData) {
+            entry = cacheContext.wrap((ITransactionalEntryData) entry);
         }
+        boolean result = _extendedMatchCodes == null
+                ? matchBasic(entry, skipAlreadyMatchedFixedPropertyIndex)
+                : matchExtended(entry, skipAlreadyMatchedFixedPropertyIndex, regexCache);
+
+        if (result && _customQuery != null)
+            result = _customQuery.matches(cacheManager, entry, skipAlreadyMatchedIndexPath);
+
+        return result;
+
     }
 
     private boolean matchBasic(ServerEntry entry, int skipIndex) {

@@ -33,10 +33,7 @@ import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.space.operations.ChangeEntriesSpaceOperation;
 import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
-import com.gigaspaces.internal.server.storage.IEntryData;
-import com.gigaspaces.internal.server.storage.IEntryHolder;
-import com.gigaspaces.internal.server.storage.ITemplateHolder;
-import com.gigaspaces.internal.server.storage.ITransactionalEntryData;
+import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridOperationDetails;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.TemplatePacketFactory;
@@ -374,6 +371,12 @@ public class Context {
 
     public void setLastRawmatchTemplate(ITemplateHolder template) {
         _lastRawmatchTemplate = template;
+    }
+
+    public ITransactionalEntryData wrap(ITransactionalEntryData entryData){
+        return entryData instanceof FlatEntryData ? entryData :
+                new FlatEntryData(entryData.getFixedPropertiesValues(), entryData.getDynamicProperties(),
+                        entryData.getEntryTypeDesc(), entryData.getVersion(), entryData.getExpirationTime(), false);
     }
 
 

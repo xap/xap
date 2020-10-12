@@ -38,7 +38,6 @@ import com.j_spaces.core.cache.CacheManager;
 
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Niv
@@ -182,7 +181,7 @@ public class ViewReplicationChannelDataFilter extends ReliableAsyncChannelDataFi
                 if (_templates[i].match(_cacheManager,
                         entry,
                         -1, null,
-                        _regexCache)) {
+                        _regexCache, _cacheManager.getCacheContext())) {
                     if (_templatePackets[i].getProjectionTemplate() == null || operationType != ReplicationSingleOperationType.WRITE)
                         return ReplicationChannelEntryDataFilterResult.PASS;
 
@@ -210,13 +209,13 @@ public class ViewReplicationChannelDataFilter extends ReliableAsyncChannelDataFi
                 if (!matchPrevious && prevEntry != null && _templates[i].match(_cacheManager,
                         prevEntry,
                         -1, null,
-                        _regexCache)) {
+                        _regexCache, _cacheManager.getCacheContext())) {
                     matchPrevious = true;
                 }
                 if (!matchCurrent && _templates[i].match(_cacheManager,
                         entry,
                         -1, null,
-                        _regexCache)) {
+                        _regexCache, _cacheManager.getCacheContext())) {
                     templatePacket = _templatePackets[i];
                     matchCurrent = true;
                 }
