@@ -20,6 +20,7 @@ import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.j_spaces.core.server.transaction.EntryXtnInfo;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,55 +39,17 @@ public class FlatEntryData extends AbstractEntryData {
         this._dynamicProperties = dynamicProperties;
     }
 
-    private FlatEntryData(FlatEntryData other, EntryXtnInfo xtnInfo) {
-        super(other.getEntryTypeDesc(), other.getVersion(), other.getExpirationTime(), xtnInfo);
-        this._fieldsValues = other._fieldsValues;
-        this._dynamicProperties = other._dynamicProperties;
+    @Override
+    public ITransactionalEntryData createCopy(int newVersion, long newExpiration, EntryXtnInfo newEntryXtnInfo, boolean shallowCloneData) {
+        Object[] fieldValues = shallowCloneData ? Arrays.copyOf(_fieldsValues, _fieldsValues.length) : _fieldsValues;
+        Map<String, Object> dynamicProperties = shallowCloneData && _dynamicProperties != null ? new HashMap<>(_dynamicProperties) : _dynamicProperties;
+        return new FlatEntryData(fieldValues, dynamicProperties, this._entryTypeDesc, newVersion, newExpiration, newEntryXtnInfo);
     }
 
     @Override
-    public ITransactionalEntryData createCopyWithoutTxnInfo(long newExpirationTime) {
-        return new FlatEntryData(this._fieldsValues, this._dynamicProperties, this._entryTypeDesc, this._versionID, newExpirationTime, null);
-    }
-
-    @Override
-    public ITransactionalEntryData createCopyWithTxnInfo(int versionID, long newExpirationTime) {
-        return new FlatEntryData(this._fieldsValues, this._dynamicProperties, this._entryTypeDesc, versionID, newExpirationTime,
-                copyTxnInfo(true, this, false));
-    }
-
-    @Override
-    public ITransactionalEntryData createShallowClonedCopyWithSuppliedVersion(int versionID) {
-        return createShallowClonedCopyWithSuppliedVersionAndExpiration(versionID, _expirationTime);
-    }
-
-    @Override
-    public ITransactionalEntryData createShallowClonedCopyWithSuppliedVersionAndExpiration(int versionID, long expirationTime) {
-        Object[] clonedfieldsValues = new Object[_fieldsValues.length];
-        System.arraycopy(_fieldsValues, 0, clonedfieldsValues, 0, _fieldsValues.length);
-
-        Map<String, Object> clonedDynamicProperties = _dynamicProperties != null ? new HashMap<String, Object>(_dynamicProperties) : null;
-
-        return new FlatEntryData(clonedfieldsValues, clonedDynamicProperties, this._entryTypeDesc, versionID, expirationTime,
-                copyTxnInfo(true, this, false));
-
-    }
-
-    @Override
-    public ITransactionalEntryData createCopyWithTxnInfo(boolean createEmptyTxnInfoIfNon) {
-        return new FlatEntryData(this._fieldsValues, this._dynamicProperties, this._entryTypeDesc, this._versionID, this._expirationTime,
-                copyTxnInfo(true, this, createEmptyTxnInfoIfNon));
-    }
-
-    @Override
-    public ITransactionalEntryData createCopy(boolean cloneXtnInfo, IEntryData newEntryData, long newExpirationTime) {
+    public ITransactionalEntryData createCopy(IEntryData newEntryData, long newExpirationTime) {
         return new FlatEntryData(newEntryData.getFixedPropertiesValues(), newEntryData.getDynamicProperties(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime,
-                copyTxnInfo(cloneXtnInfo, this, false));
-    }
-
-    @Override
-    public ITransactionalEntryData createCopyWithSuppliedTxnInfo(EntryXtnInfo ex) {
-        return new FlatEntryData(this, ex);
+                copyTxnInfo(false, false));
     }
 
     @Override
@@ -150,5 +113,4 @@ public class FlatEntryData extends AbstractEntryData {
     public void setDynamicProperties(Map<String, Object> dynamicProperties) {
         _dynamicProperties = dynamicProperties;
     }
-
 }

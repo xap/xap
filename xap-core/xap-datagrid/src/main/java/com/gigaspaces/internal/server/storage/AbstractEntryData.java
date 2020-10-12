@@ -40,14 +40,6 @@ public abstract class AbstractEntryData implements ITransactionalEntryData {
         this._entryTxnInfo = entryTxnInfo;
     }
 
-    protected static EntryXtnInfo copyTxnInfo(boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
-        EntryXtnInfo otherEntryTxnInfo = other.getEntryXtnInfo();
-        if (otherEntryTxnInfo != null) {
-            return cloneXtnInfo ? new EntryXtnInfo(otherEntryTxnInfo) : otherEntryTxnInfo;
-        }
-        return createEmptyTxnInfoIfNon ? new EntryXtnInfo() : null;
-    }
-
     @Override
     public EntryTypeDesc getEntryTypeDesc() {
         return _entryTypeDesc;

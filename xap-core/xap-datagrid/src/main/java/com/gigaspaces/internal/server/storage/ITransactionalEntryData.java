@@ -47,23 +47,37 @@ import java.util.Map;
 public interface ITransactionalEntryData extends IEntryData, MutableServerEntry {
     EntryXtnInfo getEntryXtnInfo();
 
+    ITransactionalEntryData createCopy(int newVersion, long newExpiration, EntryXtnInfo newEntryXtnInfo, boolean shallowCloneData);
+
+    ITransactionalEntryData createCopy(IEntryData newEntryData, long newExpirationTime);
+
     default ITransactionalEntryData createCopyWithoutTxnInfo() {
-        return createCopyWithoutTxnInfo(getExpirationTime());
+        return createCopy(getVersion(), getExpirationTime(), null, false);
     }
 
-    ITransactionalEntryData createCopyWithoutTxnInfo(long newExpirationTime);
+    default ITransactionalEntryData createCopyWithoutTxnInfo(long newExpirationTime) {
+        return createCopy(getVersion(), newExpirationTime, null, false);
+    }
 
-    ITransactionalEntryData createCopyWithTxnInfo(boolean createEmptyTxnInfo);
+    default ITransactionalEntryData createCopyWithTxnInfo(boolean createEmptyTxnInfo) {
+        return createCopy(getVersion(), getExpirationTime(), copyTxnInfo(true, createEmptyTxnInfo), false);
+    }
 
-    ITransactionalEntryData createCopyWithTxnInfo(int newVersionID, long newExpirationTime);
+    default ITransactionalEntryData createCopyWithTxnInfo(int newVersion, long newExpirationTime) {
+        return createCopy(newVersion, newExpirationTime, copyTxnInfo(true, false), false);
+    }
 
-    ITransactionalEntryData createCopyWithSuppliedTxnInfo(EntryXtnInfo ex);
+    default ITransactionalEntryData createCopyWithSuppliedTxnInfo(EntryXtnInfo ex) {
+        return createCopy(getVersion(), getExpirationTime(), ex, false);
+    }
 
-    ITransactionalEntryData createCopy(boolean cloneXtnInfo, IEntryData newEntryData, long newExpirationTime);
+    default ITransactionalEntryData createShallowClonedCopyWithSuppliedVersion(int versionID) {
+        return createCopy(versionID, getExpirationTime(), copyTxnInfo(true, false), true);
+    }
 
-    ITransactionalEntryData createShallowClonedCopyWithSuppliedVersion(int versionID);
-
-    ITransactionalEntryData createShallowClonedCopyWithSuppliedVersionAndExpiration(int versionID, long expirationTime);
+    default ITransactionalEntryData createShallowClonedCopyWithSuppliedVersionAndExpiration(int versionID, long expirationTime) {
+        return createCopy(versionID, expirationTime, copyTxnInfo(true, false), true);
+    }
 
     @Override
     default void setPathValue(String path, Object value) {
@@ -276,6 +290,14 @@ public interface ITransactionalEntryData extends IEntryData, MutableServerEntry 
     default ServerTransaction getXidOriginatedTransaction() {
         XtnEntry originated = getXidOriginated();
         return originated == null ? null : originated.m_Transaction;
+    }
+
+    default EntryXtnInfo copyTxnInfo(boolean cloneXtnInfo, boolean createEmptyTxnInfoIfNon) {
+        EntryXtnInfo entryXtnInfo = getEntryXtnInfo();
+        if (entryXtnInfo != null) {
+            return cloneXtnInfo ? new EntryXtnInfo(entryXtnInfo) : entryXtnInfo;
+        }
+        return createEmptyTxnInfoIfNon ? new EntryXtnInfo() : null;
     }
 
     default Collection<ITemplateHolder> getWaitingFor() {

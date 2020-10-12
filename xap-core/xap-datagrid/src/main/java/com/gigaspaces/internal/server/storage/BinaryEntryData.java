@@ -42,49 +42,16 @@ public class BinaryEntryData extends AbstractEntryData {
         this.serializedFields = fieldsValues;
     }
 
-    private BinaryEntryData(BinaryEntryData other, EntryXtnInfo xtnInfo) {
-        super(other.getEntryTypeDesc(), other.getVersion(), other.getExpirationTime(), xtnInfo);
-        this.serializedFields = other.serializedFields;
+    @Override
+    public ITransactionalEntryData createCopy(int newVersion, long newExpiration, EntryXtnInfo newEntryXtnInfo, boolean shallowCloneData) {
+        byte[] data = shallowCloneData ? Arrays.copyOf(this.serializedFields, this.serializedFields.length) : serializedFields;
+        return new BinaryEntryData(data, this._entryTypeDesc, newVersion, newExpiration, newEntryXtnInfo);
     }
 
     @Override
-    public ITransactionalEntryData createCopyWithoutTxnInfo(long newExpirationTime) {
-        return new BinaryEntryData(this.serializedFields, this._entryTypeDesc, this._versionID, newExpirationTime, null);
-    }
-
-    @Override
-    public ITransactionalEntryData createCopyWithTxnInfo(int versionID, long newExpirationTime) {
-        return new BinaryEntryData(this.serializedFields, this._entryTypeDesc, versionID, newExpirationTime,
-                copyTxnInfo(true, this, false));
-    }
-
-    @Override
-    public ITransactionalEntryData createShallowClonedCopyWithSuppliedVersion(int versionID) {
-        return createShallowClonedCopyWithSuppliedVersionAndExpiration(versionID, _expirationTime);
-    }
-
-    @Override
-    public ITransactionalEntryData createShallowClonedCopyWithSuppliedVersionAndExpiration(int versionID, long expirationTime) {
-        byte[] clonedfieldsValues = Arrays.copyOf(this.serializedFields, this.serializedFields.length);
-        return new BinaryEntryData(clonedfieldsValues, this._entryTypeDesc, versionID, expirationTime,
-                copyTxnInfo(true, this, false));
-    }
-
-    @Override
-    public ITransactionalEntryData createCopyWithTxnInfo(boolean createEmptyTxnInfoIfNon) {
-        return new BinaryEntryData(this.serializedFields, this._entryTypeDesc, this._versionID, this._expirationTime,
-                copyTxnInfo(true, this, createEmptyTxnInfoIfNon));
-    }
-
-    @Override
-    public ITransactionalEntryData createCopy(boolean cloneXtnInfo, IEntryData newEntryData, long newExpirationTime) {
+    public ITransactionalEntryData createCopy(IEntryData newEntryData, long newExpirationTime) {
         return new BinaryEntryData(newEntryData.getFixedPropertiesValues(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime,
-                copyTxnInfo(cloneXtnInfo, this, false));
-    }
-
-    @Override
-    public ITransactionalEntryData createCopyWithSuppliedTxnInfo(EntryXtnInfo ex) {
-        return new BinaryEntryData(this, ex);
+                copyTxnInfo(false, false));
     }
 
     @Override
