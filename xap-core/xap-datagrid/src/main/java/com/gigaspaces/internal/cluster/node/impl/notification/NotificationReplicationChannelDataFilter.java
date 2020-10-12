@@ -294,7 +294,7 @@ public class NotificationReplicationChannelDataFilter extends ReliableAsyncChann
                         entryData.getEntryTypeDesc(),
                         entryData.getVersion(),
                         entryData.getExpirationTime(),
-                        false);
+                        null);
 
 
                 ReplicationEntryDataConversionMetadata metadata;

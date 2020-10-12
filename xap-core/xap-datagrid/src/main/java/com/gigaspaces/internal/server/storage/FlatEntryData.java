@@ -32,15 +32,8 @@ public class FlatEntryData extends AbstractEntryData {
     private final Object[] _fieldsValues;
     private Map<String, Object> _dynamicProperties;
 
-    public FlatEntryData(Object[] fieldsValues, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon ? new EntryXtnInfo() : null);
-        this._fieldsValues = fieldsValues;
-        this._dynamicProperties = dynamicProperties;
-    }
-
-    private FlatEntryData(Object[] fieldsValues, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime,
-                          boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, copyTxnInfo(other.getEntryXtnInfo(), cloneXtnInfo, createEmptyTxnInfoIfNon));
+    public FlatEntryData(Object[] fieldsValues, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
+        super(entryTypeDesc, version, expirationTime, entryXtnInfo);
         this._fieldsValues = fieldsValues;
         this._dynamicProperties = dynamicProperties;
     }
@@ -49,17 +42,17 @@ public class FlatEntryData extends AbstractEntryData {
         super(other.getEntryTypeDesc(), other.getVersion(), other.getExpirationTime(), xtnInfo);
         this._fieldsValues = other._fieldsValues;
         this._dynamicProperties = other._dynamicProperties;
-
     }
 
     @Override
     public ITransactionalEntryData createCopyWithoutTxnInfo(long newExpirationTime) {
-        return new FlatEntryData(this._fieldsValues, this._dynamicProperties, this._entryTypeDesc, this._versionID, newExpirationTime, false);
+        return new FlatEntryData(this._fieldsValues, this._dynamicProperties, this._entryTypeDesc, this._versionID, newExpirationTime, null);
     }
 
     @Override
     public ITransactionalEntryData createCopyWithTxnInfo(int versionID, long newExpirationTime) {
-        return new FlatEntryData(this._fieldsValues, this._dynamicProperties, this._entryTypeDesc, versionID, newExpirationTime, true, this, false);
+        return new FlatEntryData(this._fieldsValues, this._dynamicProperties, this._entryTypeDesc, versionID, newExpirationTime,
+                copyTxnInfo(true, this, false));
     }
 
     @Override
@@ -74,18 +67,21 @@ public class FlatEntryData extends AbstractEntryData {
 
         Map<String, Object> clonedDynamicProperties = _dynamicProperties != null ? new HashMap<String, Object>(_dynamicProperties) : null;
 
-        return new FlatEntryData(clonedfieldsValues, clonedDynamicProperties, this._entryTypeDesc, versionID, expirationTime, true, this, false);
+        return new FlatEntryData(clonedfieldsValues, clonedDynamicProperties, this._entryTypeDesc, versionID, expirationTime,
+                copyTxnInfo(true, this, false));
 
     }
 
     @Override
     public ITransactionalEntryData createCopyWithTxnInfo(boolean createEmptyTxnInfoIfNon) {
-        return new FlatEntryData(this._fieldsValues, this._dynamicProperties, this._entryTypeDesc, this._versionID, this._expirationTime, true, this, createEmptyTxnInfoIfNon);
+        return new FlatEntryData(this._fieldsValues, this._dynamicProperties, this._entryTypeDesc, this._versionID, this._expirationTime,
+                copyTxnInfo(true, this, createEmptyTxnInfoIfNon));
     }
 
     @Override
     public ITransactionalEntryData createCopy(boolean cloneXtnInfo, IEntryData newEntryData, long newExpirationTime) {
-        return new FlatEntryData(newEntryData.getFixedPropertiesValues(), newEntryData.getDynamicProperties(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime, cloneXtnInfo, this, false);
+        return new FlatEntryData(newEntryData.getFixedPropertiesValues(), newEntryData.getDynamicProperties(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime,
+                copyTxnInfo(cloneXtnInfo, this, false));
     }
 
     @Override

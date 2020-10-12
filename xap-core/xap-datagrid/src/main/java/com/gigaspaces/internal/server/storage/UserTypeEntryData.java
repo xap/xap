@@ -36,16 +36,9 @@ public class UserTypeEntryData extends AbstractEntryData {
     private final Object _data;
     private final Object[] _indexedPropertiesValues;
 
-    public UserTypeEntryData(Object data, EntryTypeDesc entryTypeDesc,
-                             int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon ? new EntryXtnInfo() : null);
-        this._data = data;
-        this._indexedPropertiesValues = initIndexedPropertiesValues();
-    }
-
-    private UserTypeEntryData(Object data, EntryTypeDesc entryTypeDesc,
-                              int version, long expirationTime, boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, copyTxnInfo(other.getEntryXtnInfo(), cloneXtnInfo, createEmptyTxnInfoIfNon));
+    public UserTypeEntryData(Object data, EntryTypeDesc entryTypeDesc, int version, long expirationTime,
+                              EntryXtnInfo entryXtnInfo) {
+        super(entryTypeDesc, version, expirationTime, entryXtnInfo);
         this._data = data;
         this._indexedPropertiesValues = initIndexedPropertiesValues();
     }
@@ -59,29 +52,32 @@ public class UserTypeEntryData extends AbstractEntryData {
     @Override
     public ITransactionalEntryData createCopyWithoutTxnInfo(long newExpirationTime) {
         return new UserTypeEntryData(this._data, this._entryTypeDesc,
-                this._versionID, newExpirationTime, false);
+                this._versionID, newExpirationTime, null);
     }
 
     @Override
     public ITransactionalEntryData createCopyWithTxnInfo(int newVersion, long newExpirationTime) {
-        return new UserTypeEntryData(this._data, this._entryTypeDesc,
-                newVersion, newExpirationTime, true, this, false);
+        return new UserTypeEntryData(this._data, this._entryTypeDesc, newVersion, newExpirationTime,
+                copyTxnInfo(true, this, false));
     }
 
     public ITransactionalEntryData createCopyWithTxnInfo(Object data, boolean createEmptyTxnInfoIfNon) {
-        return new UserTypeEntryData(data, this._entryTypeDesc, this._versionID, this._expirationTime, true, this, createEmptyTxnInfoIfNon);
+        return new UserTypeEntryData(data, this._entryTypeDesc, this._versionID, this._expirationTime,
+                copyTxnInfo(true, this, createEmptyTxnInfoIfNon));
     }
 
     @Override
     public ITransactionalEntryData createCopyWithTxnInfo(boolean createEmptyTxnInfoIfNon) {
-        return new UserTypeEntryData(this._data, this._entryTypeDesc, this._versionID, this._expirationTime, true, this, createEmptyTxnInfoIfNon);
+        return new UserTypeEntryData(this._data, this._entryTypeDesc, this._versionID, this._expirationTime,
+                copyTxnInfo(true, this, createEmptyTxnInfoIfNon));
     }
 
     @Override
     public ITransactionalEntryData createCopy(boolean cloneXtnInfo, IEntryData newEntryData, long newExpirationTime) {
         if (newEntryData instanceof UserTypeEntryData) {
             UserTypeEntryData other = (UserTypeEntryData) newEntryData;
-            return new UserTypeEntryData(other._data, other._entryTypeDesc, other._versionID, newExpirationTime, cloneXtnInfo, this, false);
+            return new UserTypeEntryData(other._data, other._entryTypeDesc, other._versionID, newExpirationTime,
+                    copyTxnInfo(cloneXtnInfo, this, false));
         } else
             throw new InternalSpaceException("Unable to create copy of IEntryData - unsupported type " + newEntryData.getClass().getName());
     }
@@ -102,7 +98,7 @@ public class UserTypeEntryData extends AbstractEntryData {
         IEntryPacket entryPacket = EntryPacketFactory.createFromObject(_data, _entryTypeDesc.getTypeDesc(), _entryTypeDesc.getEntryType(), true);
         Object clonedData = entryPacket.toObject(_entryTypeDesc.getEntryType());
         _entryTypeDesc.getIntrospector().setVersion(clonedData, versionID);
-        return new UserTypeEntryData(clonedData, _entryTypeDesc, versionID, expirationTime, false /*createEmptyTxnInfoIfNon*/);
+        return new UserTypeEntryData(clonedData, _entryTypeDesc, versionID, expirationTime, null);
     }
 
     @Override

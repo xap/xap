@@ -376,7 +376,7 @@ public class Context {
     public ITransactionalEntryData wrap(ITransactionalEntryData entryData){
         return entryData instanceof FlatEntryData ? entryData :
                 new FlatEntryData(entryData.getFixedPropertiesValues(), entryData.getDynamicProperties(),
-                        entryData.getEntryTypeDesc(), entryData.getVersion(), entryData.getExpirationTime(), false);
+                        entryData.getEntryTypeDesc(), entryData.getVersion(), entryData.getExpirationTime(), null);
     }
 
 

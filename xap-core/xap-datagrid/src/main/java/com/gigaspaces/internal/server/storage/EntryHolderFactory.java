@@ -29,6 +29,7 @@ import com.j_spaces.core.XtnEntry;
 import com.j_spaces.core.cache.EntryCacheInfoFactory;
 import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.blobStore.BlobStoreEntryHolder;
+import com.j_spaces.core.server.transaction.EntryXtnInfo;
 import com.j_spaces.kernel.IObjectInfo;
 import com.j_spaces.kernel.IStoredList;
 
@@ -128,22 +129,23 @@ public class EntryHolderFactory {
         final EntryTypeDesc entryTypeDesc = entryPacket.getTypeDescriptor().getEntryTypeDesc(entryType);
         final int version = versionID > 0 ? versionID : entryPacket.getVersion();
         final long lease = (expiration > 0 || keepExpiration) ? expiration : LeaseManager.toAbsoluteTime(entryPacket.getTTL());
+        final EntryXtnInfo entryXtnInfo = createXtnEntryInfo ? new EntryXtnInfo() : null;
 
         if (entryDataType == EntryDataType.FLAT) {
             ClassBinaryStorageAdapter adapter = (entryTypeDesc.getTypeDesc()).getClassBinaryStorageAdapter();
             if (adapter != null) {
                 if (entryPacket.getDynamicProperties() == null || entryPacket.getDynamicProperties().isEmpty()) {
                     return new BinaryEntryData(entryPacket.getFieldValues(),
-                            entryTypeDesc, version, lease, createXtnEntryInfo);
+                            entryTypeDesc, version, lease, entryXtnInfo);
                 } else {
                     throw new UnsupportedOperationException("SpaceClassStorageAdapter annotation does not support dynamic properties");
                 }
             } else {
                 return new FlatEntryData(entryPacket.getFieldValues(), entryPacket.getDynamicProperties(),
-                        entryTypeDesc, version, lease, createXtnEntryInfo);
+                        entryTypeDesc, version, lease, entryXtnInfo);
             }
         }
 
-        return new UserTypeEntryData(entryPacket.toObject(entryType), entryTypeDesc, version, lease, createXtnEntryInfo);
+        return new UserTypeEntryData(entryPacket.toObject(entryType), entryTypeDesc, version, lease, entryXtnInfo);
     }
 }

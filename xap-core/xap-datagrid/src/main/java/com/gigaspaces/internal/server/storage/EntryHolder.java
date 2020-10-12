@@ -79,7 +79,7 @@ public class EntryHolder extends AbstractSpaceItem implements IEntryHolder {
                 getEntryData().getEntryTypeDesc(),
                 1 /*versionID*/,
                 Long.MAX_VALUE, /* expirationTime */
-                false);
+                null);
         EntryHolder dummy = new EntryHolder(this.getServerTypeDesc(), this.getUID(), this.getSCN(),
                 this.isTransient(), ed);
         dummy.setDeleted(true);

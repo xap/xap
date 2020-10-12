@@ -17,10 +17,12 @@
 package com.gigaspaces.internal.server.storage;
 
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
+import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.j_spaces.core.server.transaction.EntryXtnInfo;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Arrays;
 import java.util.Map;
 
 /***
@@ -31,26 +33,12 @@ import java.util.Map;
 public class BinaryEntryData extends AbstractEntryData {
     private byte[] serializedFields;
 
-
-    public BinaryEntryData(Object[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon ? new EntryXtnInfo() : null);
-        this.serializedFields = serializeFields(fieldsValues);
+    public BinaryEntryData(Object[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
+        this(serializeFields(fieldsValues, entryTypeDesc.getTypeDesc()), entryTypeDesc, version, expirationTime, entryXtnInfo);
     }
 
-    public BinaryEntryData(byte[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon ? new EntryXtnInfo() : null);
-        this.serializedFields = fieldsValues;
-    }
-
-    private BinaryEntryData(Object[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime,
-                            boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, copyTxnInfo(other.getEntryXtnInfo(), cloneXtnInfo, createEmptyTxnInfoIfNon));
-        this.serializedFields = serializeFields(fieldsValues);
-    }
-
-    private BinaryEntryData(byte[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime,
-                            boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, copyTxnInfo(other.getEntryXtnInfo(), cloneXtnInfo, createEmptyTxnInfoIfNon));
+    public BinaryEntryData(byte[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
+        super(entryTypeDesc, version, expirationTime, entryXtnInfo);
         this.serializedFields = fieldsValues;
     }
 
@@ -61,12 +49,13 @@ public class BinaryEntryData extends AbstractEntryData {
 
     @Override
     public ITransactionalEntryData createCopyWithoutTxnInfo(long newExpirationTime) {
-        return new BinaryEntryData(this.serializedFields, this._entryTypeDesc, this._versionID, newExpirationTime, false);
+        return new BinaryEntryData(this.serializedFields, this._entryTypeDesc, this._versionID, newExpirationTime, null);
     }
 
     @Override
     public ITransactionalEntryData createCopyWithTxnInfo(int versionID, long newExpirationTime) {
-        return new BinaryEntryData(this.serializedFields, this._entryTypeDesc, versionID, newExpirationTime, true, this, false);
+        return new BinaryEntryData(this.serializedFields, this._entryTypeDesc, versionID, newExpirationTime,
+                copyTxnInfo(true, this, false));
     }
 
     @Override
@@ -76,21 +65,21 @@ public class BinaryEntryData extends AbstractEntryData {
 
     @Override
     public ITransactionalEntryData createShallowClonedCopyWithSuppliedVersionAndExpiration(int versionID, long expirationTime) {
-        Object[] clonedfieldsValues = new Object[getNumOfFixedProperties()];
-        System.arraycopy(getFixedPropertiesValues(), 0, clonedfieldsValues, 0, getNumOfFixedProperties());
-
-        return new BinaryEntryData(clonedfieldsValues, this._entryTypeDesc, versionID, expirationTime, true, this, false);
-
+        byte[] clonedfieldsValues = Arrays.copyOf(this.serializedFields, this.serializedFields.length);
+        return new BinaryEntryData(clonedfieldsValues, this._entryTypeDesc, versionID, expirationTime,
+                copyTxnInfo(true, this, false));
     }
 
     @Override
     public ITransactionalEntryData createCopyWithTxnInfo(boolean createEmptyTxnInfoIfNon) {
-        return new BinaryEntryData(this.serializedFields, this._entryTypeDesc, this._versionID, this._expirationTime, true, this, createEmptyTxnInfoIfNon);
+        return new BinaryEntryData(this.serializedFields, this._entryTypeDesc, this._versionID, this._expirationTime,
+                copyTxnInfo(true, this, createEmptyTxnInfoIfNon));
     }
 
     @Override
     public ITransactionalEntryData createCopy(boolean cloneXtnInfo, IEntryData newEntryData, long newExpirationTime) {
-        return new BinaryEntryData(newEntryData.getFixedPropertiesValues(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime, cloneXtnInfo, this, false);
+        return new BinaryEntryData(newEntryData.getFixedPropertiesValues(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime,
+                copyTxnInfo(cloneXtnInfo, this, false));
     }
 
     @Override
@@ -143,7 +132,7 @@ public class BinaryEntryData extends AbstractEntryData {
         if (values.length != getNumOfFixedProperties()) {
             throw new IllegalArgumentException("Cannot substitute fixed property values with array of different size!");
         }
-        serializedFields = serializeFields(values);
+        serializedFields = serializeFields(values, getSpaceTypeDescriptor());
     }
 
     @Override
@@ -151,9 +140,9 @@ public class BinaryEntryData extends AbstractEntryData {
         throw new UnsupportedOperationException();
     }
 
-    private byte[] serializeFields(Object[] fieldsValues) {
+    private static byte[] serializeFields(Object[] fieldsValues, ITypeDesc typeDesc) {
         try {
-            return (this.getSpaceTypeDescriptor()).getClassBinaryStorageAdapter().toBinary(fieldsValues);
+            return typeDesc.getClassBinaryStorageAdapter().toBinary(fieldsValues);
         } catch (IOException e) {
             throw new UncheckedIOException("com.gigaspaces.internal.server.storage.FlatEntryData.serializeFields failed", e);
         }
