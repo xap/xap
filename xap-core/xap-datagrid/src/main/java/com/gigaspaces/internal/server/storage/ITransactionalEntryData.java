@@ -47,7 +47,9 @@ import java.util.Map;
 public interface ITransactionalEntryData extends IEntryData, MutableServerEntry {
     EntryXtnInfo getEntryXtnInfo();
 
-    ITransactionalEntryData createCopyWithoutTxnInfo();
+    default ITransactionalEntryData createCopyWithoutTxnInfo() {
+        return createCopyWithoutTxnInfo(getExpirationTime());
+    }
 
     ITransactionalEntryData createCopyWithoutTxnInfo(long newExpirationTime);
 

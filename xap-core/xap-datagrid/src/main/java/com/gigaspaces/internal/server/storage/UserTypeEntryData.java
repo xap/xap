@@ -38,28 +38,22 @@ public class UserTypeEntryData extends AbstractEntryData {
 
     public UserTypeEntryData(Object data, EntryTypeDesc entryTypeDesc,
                              int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon);
+        super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon ? new EntryXtnInfo() : null);
         this._data = data;
         this._indexedPropertiesValues = initIndexedPropertiesValues();
     }
 
     private UserTypeEntryData(Object data, EntryTypeDesc entryTypeDesc,
                               int version, long expirationTime, boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, cloneXtnInfo, other, createEmptyTxnInfoIfNon);
+        super(entryTypeDesc, version, expirationTime, copyTxnInfo(other.getEntryXtnInfo(), cloneXtnInfo, createEmptyTxnInfoIfNon));
         this._data = data;
         this._indexedPropertiesValues = initIndexedPropertiesValues();
     }
 
     private UserTypeEntryData(UserTypeEntryData other, EntryXtnInfo xtnInfo) {
-        super(other, xtnInfo);
+        super(other.getEntryTypeDesc(), other.getVersion(), other.getExpirationTime(), xtnInfo);
         this._data = other._data;
         this._indexedPropertiesValues = other._indexedPropertiesValues;
-    }
-
-    @Override
-    public ITransactionalEntryData createCopyWithoutTxnInfo() {
-        return new UserTypeEntryData(this._data, this._entryTypeDesc,
-                this._versionID, this._expirationTime, false);
     }
 
     @Override

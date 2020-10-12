@@ -33,32 +33,18 @@ public abstract class AbstractEntryData implements ITransactionalEntryData {
     protected final long _expirationTime;
     private final EntryXtnInfo _entryTxnInfo;
 
-    protected AbstractEntryData(EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
+    protected AbstractEntryData(EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryTxnInfo) {
         this._entryTypeDesc = entryTypeDesc;
         this._versionID = version;
         this._expirationTime = expirationTime;
-        this._entryTxnInfo = createEmptyTxnInfoIfNon ? new EntryXtnInfo() : null;
+        this._entryTxnInfo = entryTxnInfo;
     }
 
-    protected AbstractEntryData(EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
-        this._entryTypeDesc = entryTypeDesc;
-        this._versionID = version;
-        this._expirationTime = expirationTime;
-        this._entryTxnInfo = copyTxnInfo(other.getEntryXtnInfo(), cloneXtnInfo, createEmptyTxnInfoIfNon);
-    }
-
-    private static EntryXtnInfo copyTxnInfo(EntryXtnInfo otherEntryTxnInfo, boolean cloneXtnInfo, boolean createEmptyTxnInfoIfNon) {
+    protected static EntryXtnInfo copyTxnInfo(EntryXtnInfo otherEntryTxnInfo, boolean cloneXtnInfo, boolean createEmptyTxnInfoIfNon) {
         if (otherEntryTxnInfo != null) {
             return cloneXtnInfo ? new EntryXtnInfo(otherEntryTxnInfo) : otherEntryTxnInfo;
         }
         return createEmptyTxnInfoIfNon ? new EntryXtnInfo() : null;
-    }
-
-    protected AbstractEntryData(ITransactionalEntryData other, EntryXtnInfo xtnInfo) {
-        this._entryTypeDesc = other.getEntryTypeDesc();
-        this._versionID = other.getVersion();
-        this._expirationTime = other.getExpirationTime();
-        this._entryTxnInfo = xtnInfo;
     }
 
     @Override

@@ -33,28 +33,23 @@ public class FlatEntryData extends AbstractEntryData {
     private Map<String, Object> _dynamicProperties;
 
     public FlatEntryData(Object[] fieldsValues, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon);
+        super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon ? new EntryXtnInfo() : null);
         this._fieldsValues = fieldsValues;
         this._dynamicProperties = dynamicProperties;
     }
 
     private FlatEntryData(Object[] fieldsValues, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime,
                           boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, cloneXtnInfo, other, createEmptyTxnInfoIfNon);
+        super(entryTypeDesc, version, expirationTime, copyTxnInfo(other.getEntryXtnInfo(), cloneXtnInfo, createEmptyTxnInfoIfNon));
         this._fieldsValues = fieldsValues;
         this._dynamicProperties = dynamicProperties;
     }
 
     private FlatEntryData(FlatEntryData other, EntryXtnInfo xtnInfo) {
-        super(other, xtnInfo);
+        super(other.getEntryTypeDesc(), other.getVersion(), other.getExpirationTime(), xtnInfo);
         this._fieldsValues = other._fieldsValues;
         this._dynamicProperties = other._dynamicProperties;
 
-    }
-
-    @Override
-    public ITransactionalEntryData createCopyWithoutTxnInfo() {
-        return new FlatEntryData(this._fieldsValues, this._dynamicProperties, this._entryTypeDesc, this._versionID, this._expirationTime, false);
     }
 
     @Override

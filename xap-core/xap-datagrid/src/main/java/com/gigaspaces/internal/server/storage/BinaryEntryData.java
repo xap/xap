@@ -33,35 +33,30 @@ public class BinaryEntryData extends AbstractEntryData {
 
 
     public BinaryEntryData(Object[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon);
+        super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon ? new EntryXtnInfo() : null);
         this.serializedFields = serializeFields(fieldsValues);
     }
 
     public BinaryEntryData(byte[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon);
+        super(entryTypeDesc, version, expirationTime, createEmptyTxnInfoIfNon ? new EntryXtnInfo() : null);
         this.serializedFields = fieldsValues;
     }
 
     private BinaryEntryData(Object[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime,
                             boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, cloneXtnInfo, other, createEmptyTxnInfoIfNon);
+        super(entryTypeDesc, version, expirationTime, copyTxnInfo(other.getEntryXtnInfo(), cloneXtnInfo, createEmptyTxnInfoIfNon));
         this.serializedFields = serializeFields(fieldsValues);
     }
 
     private BinaryEntryData(byte[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime,
                             boolean cloneXtnInfo, ITransactionalEntryData other, boolean createEmptyTxnInfoIfNon) {
-        super(entryTypeDesc, version, expirationTime, cloneXtnInfo, other, createEmptyTxnInfoIfNon);
+        super(entryTypeDesc, version, expirationTime, copyTxnInfo(other.getEntryXtnInfo(), cloneXtnInfo, createEmptyTxnInfoIfNon));
         this.serializedFields = fieldsValues;
     }
 
     private BinaryEntryData(BinaryEntryData other, EntryXtnInfo xtnInfo) {
-        super(other, xtnInfo);
+        super(other.getEntryTypeDesc(), other.getVersion(), other.getExpirationTime(), xtnInfo);
         this.serializedFields = other.serializedFields;
-    }
-
-    @Override
-    public ITransactionalEntryData createCopyWithoutTxnInfo() {
-        return new BinaryEntryData(this.serializedFields, this._entryTypeDesc, this._versionID, this._expirationTime, false);
     }
 
     @Override
