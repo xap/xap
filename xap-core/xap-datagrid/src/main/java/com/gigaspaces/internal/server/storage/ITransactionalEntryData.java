@@ -41,7 +41,7 @@ import java.util.Map;
  * Contains all the data (mutable) fields of the entry. when an entry is changed a new IEntryData is
  * created and attached to the IEntryHolder.
  *
- * @author Niv Ingberg
+ * @author Yechiel Fefer, Niv Ingberg
  * @since 7.0
  */
 public interface ITransactionalEntryData extends IEntryData, MutableServerEntry {

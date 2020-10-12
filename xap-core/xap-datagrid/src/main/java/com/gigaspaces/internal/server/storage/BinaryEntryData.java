@@ -30,7 +30,11 @@ import java.util.Map;
  * @since 15.8
  */
 @com.gigaspaces.api.InternalApi
-public class BinaryEntryData extends AbstractEntryData {
+public class BinaryEntryData implements ITransactionalEntryData {
+    private final EntryTypeDesc _entryTypeDesc;
+    private final int _versionID;
+    private final long _expirationTime;
+    private final EntryXtnInfo _entryTxnInfo;
     private byte[] serializedFields;
 
     public BinaryEntryData(Object[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
@@ -38,8 +42,31 @@ public class BinaryEntryData extends AbstractEntryData {
     }
 
     public BinaryEntryData(byte[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
-        super(entryTypeDesc, version, expirationTime, entryXtnInfo);
+        this._entryTypeDesc = entryTypeDesc;
+        this._versionID = version;
+        this._expirationTime = expirationTime;
+        this._entryTxnInfo = entryXtnInfo;
         this.serializedFields = fieldsValues;
+    }
+
+    @Override
+    public EntryTypeDesc getEntryTypeDesc() {
+        return _entryTypeDesc;
+    }
+
+    @Override
+    public int getVersion() {
+        return _versionID;
+    }
+
+    @Override
+    public long getExpirationTime() {
+        return _expirationTime;
+    }
+
+    @Override
+    public EntryXtnInfo getEntryXtnInfo() {
+        return _entryTxnInfo;
     }
 
     @Override
