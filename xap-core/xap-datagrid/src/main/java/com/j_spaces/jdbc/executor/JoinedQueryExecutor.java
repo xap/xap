@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- *
- */
 package com.j_spaces.jdbc.executor;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
@@ -48,8 +45,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-
-
 /**
  * Executes a join query. Create a cartesian product of all the tables , keep only the products that
  * satisfy the where condition
@@ -58,10 +53,7 @@ import java.util.Set;
  * @since 7.0
  */
 @com.gigaspaces.api.InternalApi
-public class JoinedQueryExecutor
-        extends AbstractQueryExecutor
-
-{
+public class JoinedQueryExecutor extends AbstractQueryExecutor {
 
     // the entry that is currently undergoing the matching
     private JoinedEntry _currentEntry;
@@ -71,62 +63,41 @@ public class JoinedQueryExecutor
     // doesn't require to use the stack
     private ExpNode[] _traversalOrder;
 
-    /**
-     * @param query
-     */
     public JoinedQueryExecutor(AbstractDMLQuery query) {
         super(query);
-
     }
 
-    public IQueryResultSet<IEntryPacket> execute(ISpaceProxy space,
-                                                 Transaction txn, int readModifier, int max)
+    public IQueryResultSet<IEntryPacket> execute(ISpaceProxy space, Transaction txn, int readModifier, int max)
             throws SQLException {
 
-
         JoinedQueryResult result = new JoinedQueryResult();
-
         JoinedIterator iter = new JoinedIterator(query.getTablesData(), space, txn);
 
-
         while (iter.next()) {
-
-
             _currentEntry = iter.get();
 
             // check if the joined entry satisfies the query condition.
             // run the whole query tree on the entry
-            boolean matches = matchesExpressionTree(query.getExpTree(),
-                    space,
-                    txn,
-                    readModifier,
-                    max);
+            boolean matches = matchesExpressionTree(query.getExpTree(), space, txn, readModifier, max);
 
             // if the entry matched the whole expression tree - add it to the result set
             // otherwise it is omitted 
             if (matches) {
                 result.add(_currentEntry);
-
             }
 
             // check if there are enough results 
             if (result.size() >= max)
                 break;
-
         }
 
         iter.close();
         return result;
-
-
     }
 
-
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.executor.IQueryExecutor#execute(com.j_spaces.jdbc.parser.ExpNode, com.j_spaces.core.IJSpace, net.jini.core.transaction.Transaction, int, int)
-     */
-    public void execute(ExpNode exp, ISpaceProxy space, Transaction txn,
-                        int readModifier, int max) throws SQLException {
+    @Override
+    public void execute(ExpNode exp, ISpaceProxy space, Transaction txn, int readModifier, int max)
+            throws SQLException {
         // handle join expression node
         if (exp.isJoined()) {
             executeJoin(exp);
@@ -136,15 +107,10 @@ public class JoinedQueryExecutor
         boolean isInRange = exp.getTemplate().matches(_currentEntry);
 
         setResults(exp, isInRange);
-
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.executor.IQueryExecutor#getResults(com.j_spaces.jdbc.parser.ExpNode)
-     */
     public boolean getResults(ExpNode node) {
         return _currentEntryResults.get(node);
-
     }
 
     public void setResults(ExpNode node, boolean result) {
@@ -153,11 +119,8 @@ public class JoinedQueryExecutor
 
     /**
      * Execute JOIN expression that is a join between two tables
-     *
-     * @return a join between two tables
      */
-    private void executeJoin(ExpNode exp) throws SQLException {
-
+    private void executeJoin(ExpNode exp) {
         ColumnNode left = (ColumnNode) exp.getLeftChild();
         ColumnNode right = (ColumnNode) exp.getRightChild();
 
@@ -170,13 +133,9 @@ public class JoinedQueryExecutor
         boolean isInRange = exp.isValidCompare(leftJoinValue, rightJoinValue);
 
         setResults(exp, isInRange);
-
     }
 
-
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.executor.IQueryExecutor#execute(com.j_spaces.jdbc.parser.AndNode, com.j_spaces.core.IJSpace, net.jini.core.transaction.Transaction, int, int)
-     */
+    @Override
     public void execute(AndNode exp, ISpaceProxy space, Transaction txn,
                         int readModifier, int max) throws SQLException {
         // if template is simple - just execute it
@@ -213,15 +172,9 @@ public class JoinedQueryExecutor
         }
 
         setResults(exp, leftResult && rightResult);
-
     }
 
-
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.executor.IQueryExecutor#execute(com.j_spaces.jdbc.parser.InNode, com.j_spaces.core.IJSpace, net.jini.core.transaction.Transaction, int, int)
-     */
     private boolean executeIn(AbstractInNode exp, ISpaceProxy space, Transaction txn, int readModifier) throws SQLException {
-
         QueryTemplatePacket template = exp.getTemplate();
         if (template == null) {
             // if template wasn't set during the building phase - inner query
@@ -230,21 +183,15 @@ public class JoinedQueryExecutor
             if (valueSet == null) {
                 // Execute inner query
                 execute((InnerQueryNode) exp.getRightChild(), space, txn, readModifier, Integer.MAX_VALUE);
-
                 // Validate inner query result
                 exp.validateInnerQueryResult();
-
                 valueSet = exp.getValuesList();
                 _inNodeValues.put(exp, valueSet);
             }
 
             ColumnNode left = (ColumnNode) exp.getLeftChild();
-
-
             int entryTableIndex = left.getColumnData().getColumnTableData().getTableIndex();
-
             Object joinValue = left.getFieldValue(_currentEntry.getEntry(entryTableIndex));
-
             boolean isInRange = false;
 
             for (LiteralNode value : valueSet) {
@@ -256,32 +203,29 @@ public class JoinedQueryExecutor
             return isInRange;
         } else {
             boolean isInRange = exp.getTemplate().matches(_currentEntry);
-
             setResults(exp, isInRange);
             return isInRange;
         }
-
     }
 
-    public void execute(InNode exp, ISpaceProxy space, Transaction txn,
-                        int readModifier, int max) throws SQLException {
-
+    @Override
+    public void execute(InNode exp, ISpaceProxy space, Transaction txn, int readModifier, int max)
+            throws SQLException {
         setResults(exp, executeIn(exp, space, txn, readModifier));
     }
 
-    public void execute(NotInNode exp, ISpaceProxy space, Transaction txn,
-                        int readModifier, int max) throws SQLException {
-
+    @Override
+    public void execute(NotInNode exp, ISpaceProxy space, Transaction txn, int readModifier, int max)
+            throws SQLException {
         setResults(exp, executeIn(exp, space, txn, readModifier));
     }
 
-    public void execute(OrNode exp, ISpaceProxy space, Transaction txn,
-                        int readModifier, int max) throws SQLException {
-
+    @Override
+    public void execute(OrNode exp, ISpaceProxy space, Transaction txn, int readModifier, int max)
+            throws SQLException {
         // if template is simple - just execute it
         if (exp.getTemplate() != null) {
             setResults(exp, exp.getTemplate().matches(_currentEntry));
-
             return;
         }
 
@@ -299,11 +243,8 @@ public class JoinedQueryExecutor
         boolean leftResult = getResults(exp.getLeftChild());
         boolean rightResult = getResults(exp.getRightChild());
 
-
         setResults(exp, leftResult || rightResult);
-
     }
-
 
     public Comparator<IEntryPacket> getGroupByComparator(List<SelectColumn> groupColumns) {
         return new GroupByComparator(groupColumns);
@@ -318,13 +259,12 @@ public class JoinedQueryExecutor
 
         GroupByComparator(List<SelectColumn> groupCols) {
             groupColumns = groupCols;
-
-
         }
 
         /**
          * Compare two arrays of values - only the group by columns are compared
          */
+        @Override
         public int compare(IEntryPacket e1, IEntryPacket e2) {
 
             if (e1 == null) {
@@ -376,9 +316,7 @@ public class JoinedQueryExecutor
 
         if (_traversalOrder != null) {
             for (int i = 0; i < _traversalOrder.length; i++) {
-
                 ExpNode node = _traversalOrder[i];
-
 
                 // special handling for the root 
                 // if the root is executed it can optimize the query by limiting the result set
@@ -387,17 +325,15 @@ public class JoinedQueryExecutor
                     node.accept(this, space, txn, readModifier, Integer.MAX_VALUE);
                 else
                     node.accept(this, space, txn, readModifier, max);
-
             }
             return getResults(root);
-
         }
+
         Stack<ExpNode> stack = new Stack<ExpNode>();
         Stack<ExpNode> stack2 = new Stack<ExpNode>();
 
         stack.push(root);
         while (!stack.isEmpty()) {
-
             ExpNode curr = stack.pop();
 
             if (!(curr instanceof ValueNode))
@@ -411,7 +347,6 @@ public class JoinedQueryExecutor
                     stack.push(curr.getRightChild());
             }
         }
-
 
         _traversalOrder = new ExpNode[stack2.size()];
         int index = 0;
@@ -427,12 +362,8 @@ public class JoinedQueryExecutor
                 node.accept(this, space, txn, readModifier, Integer.MAX_VALUE);
         }
 
-
         return getResults(root);
-
-
     }
-
 
     /**
      * An iterator over joined tables
@@ -445,7 +376,8 @@ public class JoinedQueryExecutor
         private QueryTableData _tableData;
         private List<QueryTableData> _tablesData;
 
-        public JoinedIterator(List<QueryTableData> tablesData, ISpaceProxy space, Transaction txn) throws SQLException {
+        public JoinedIterator(List<QueryTableData> tablesData, ISpaceProxy space, Transaction txn)
+                throws SQLException {
             _tablesData = tablesData;
 
             try {
@@ -457,15 +389,11 @@ public class JoinedQueryExecutor
                 if (_logger.isErrorEnabled()) {
                     _logger.error(e.getMessage(), e);
                 }
-                throw new SQLException("Failed to read objects: " + e.getMessage(),
-                        "GSP",
-                        -111);
+                throw new SQLException("Failed to read objects: " + e.getMessage(), "GSP", -111);
             }
-
 
             for (int i = 0; i < _tablesData.size(); i++) {
                 QueryTableData tableData = _tablesData.get(i);
-
 
                 //check for sequence beginning
                 if (!tableData.isJoined()) {
@@ -473,21 +401,12 @@ public class JoinedQueryExecutor
                     break;
                 }
             }
-
-
         }
 
-        /**
-         * @return advanced iterator of the joined product
-         */
         boolean next() {
             return _tableData.next();
-
         }
 
-        /**
-         * @return JoinedEntry
-         */
         public JoinedEntry get() {
             IEntryPacket[] entries = new IEntryPacket[_tablesData.size()];
 
@@ -504,8 +423,5 @@ public class JoinedQueryExecutor
                 t.clear();
             }
         }
-
     }
-
-
 }
