@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.server.storage;
 
 import com.gigaspaces.server.MutableServerEntry;
+import com.j_spaces.core.SpaceOperations;
 import com.j_spaces.core.XtnEntry;
 import com.j_spaces.core.server.transaction.EntryXtnInfo;
 
@@ -51,39 +52,100 @@ public interface ITransactionalEntryData extends IEntryData, MutableServerEntry 
 
     ITransactionalEntryData createShallowClonedCopyWithSuppliedVersionAndExpiration(int versionID, long expirationTime);
 
-    boolean anyReadLockXtn();
+    default boolean anyReadLockXtn() {
+        EntryXtnInfo entryXtnInfo = getEntryXtnInfo();
+        return entryXtnInfo == null ? false : entryXtnInfo.anyReadLockXtn();
+    }
 
-    List<XtnEntry> getReadLocksOwners();
+    default List<XtnEntry> getReadLocksOwners() {
+        EntryXtnInfo entryXtnInfo = getEntryXtnInfo();
+        return entryXtnInfo == null ? null : entryXtnInfo.getReadLocksOwners();
+    }
 
-    void addReadLockOwner(XtnEntry xtn);
+    default void addReadLockOwner(XtnEntry xtn) {
+        getEntryXtnInfo().addReadLockOwner(xtn);
+    }
 
-    void removeReadLockOwner(XtnEntry xtn);
+    default void removeReadLockOwner(XtnEntry xtn) {
+        EntryXtnInfo entryXtnInfo = getEntryXtnInfo();
+        if (entryXtnInfo != null)
+            entryXtnInfo.removeReadLockOwner(xtn);
+    }
 
-    void clearReadLockOwners();
+    default void clearReadLockOwners() {
+        EntryXtnInfo entryXtnInfo = getEntryXtnInfo();
+        if (entryXtnInfo != null)
+            entryXtnInfo.clearReadLockOwners();
+    }
 
-    XtnEntry getWriteLockOwner();
+    default XtnEntry getWriteLockOwner() {
+        EntryXtnInfo entryXtnInfo = getEntryXtnInfo();
+        return entryXtnInfo == null ? null : entryXtnInfo.getWriteLockOwner();
+    }
 
-    void setWriteLockOwner(XtnEntry writeLockOwner);
+    default void setWriteLockOwner(XtnEntry writeLockOwner) {
+        EntryXtnInfo entryXtnInfo = getEntryXtnInfo();
+        if (entryXtnInfo == null && writeLockOwner != null)
+            throw new RuntimeException("entryTxnInfo is null");
+        if (entryXtnInfo != null)
+            entryXtnInfo.setWriteLockOwner(writeLockOwner);
+    }
 
-    int getWriteLockOperation();
+    default int getWriteLockOperation() {
+        EntryXtnInfo entryXtnInfo = getEntryXtnInfo();
+        return entryXtnInfo == null ? SpaceOperations.NOOP : entryXtnInfo.getWriteLockOperation();
+    }
 
-    void setWriteLockOperation(int writeLockOperation);
+    default void setWriteLockOperation(int writeLockOperation) {
+        getEntryXtnInfo().setWriteLockOperation(writeLockOperation);
+    }
 
-    ServerTransaction getWriteLockTransaction();
+    default ServerTransaction getWriteLockTransaction() {
+        XtnEntry owner = getWriteLockOwner();
+        return owner == null ? null : owner.m_Transaction;
+    }
 
-    IEntryHolder getOtherUpdateUnderXtnEntry();
+    default IEntryHolder getOtherUpdateUnderXtnEntry() {
+        EntryXtnInfo entryXtnInfo = getEntryXtnInfo();
+        return entryXtnInfo == null ? null : entryXtnInfo.getOtherUpdateUnderXtnEntry();
+    }
 
-    void setOtherUpdateUnderXtnEntry(IEntryHolder entryHolder);
+    default void setOtherUpdateUnderXtnEntry(IEntryHolder eh) {
+        EntryXtnInfo entryXtnInfo = getEntryXtnInfo();
+        if (entryXtnInfo == null) {
+            if (eh == null)
+                return;
+            throw new RuntimeException("entryTxnInfo is null");
+        }
+        entryXtnInfo.setOtherUpdateUnderXtnEntry(eh);
+    }
 
-    XtnEntry getXidOriginated();
+    default XtnEntry getXidOriginated() {
+        EntryXtnInfo entryXtnInfo = getEntryXtnInfo();
+        return entryXtnInfo == null ? null : entryXtnInfo.getXidOriginated();
+    }
 
-    void setXidOriginated(XtnEntry xidOriginated);
+    default void setXidOriginated(XtnEntry xidOriginated) {
+        EntryXtnInfo entryXtnInfo = getEntryXtnInfo();
+        if (entryXtnInfo == null && xidOriginated != null)
+            throw new RuntimeException("entryTxnInfo is null");
+        if (entryXtnInfo != null)
+            entryXtnInfo.setXidOriginated(xidOriginated);
+    }
 
-    ServerTransaction getXidOriginatedTransaction();
+    default ServerTransaction getXidOriginatedTransaction() {
+        XtnEntry originated = getXidOriginated();
+        return originated == null ? null : originated.m_Transaction;
+    }
 
-    Collection<ITemplateHolder> getWaitingFor();
+    default Collection<ITemplateHolder> getWaitingFor() {
+        EntryXtnInfo entryXtnInfo = getEntryXtnInfo();
+        return entryXtnInfo == null ? null : entryXtnInfo.getWaitingFor();
+    }
 
-    void initWaitingFor();
+    default void initWaitingFor() {
+        getEntryXtnInfo().initWaitingFor();
+    }
 
     boolean isExpired();
 
