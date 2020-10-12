@@ -253,7 +253,7 @@ public class TemplateEntryData implements IEntryData {
     }
 
     public boolean match(CacheManager cacheManager, ServerEntry entry, int skipAlreadyMatchedFixedPropertyIndex, String skipAlreadyMatchedIndexPath, RegexCache regexCache, Context cacheContext) {
-        if (entry instanceof BinaryEntryData) {
+        if (entry instanceof BinaryEntryData && !allNullFields()) {
             entry = cacheContext.wrap((ITransactionalEntryData) entry);
         }
         boolean result = _extendedMatchCodes == null
@@ -265,6 +265,15 @@ public class TemplateEntryData implements IEntryData {
 
         return result;
 
+    }
+
+    private boolean allNullFields() {
+        for (Object fieldsValue : _fieldsValues) {
+            if(fieldsValue != null){
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean matchBasic(ServerEntry entry, int skipIndex) {
