@@ -16,15 +16,26 @@
 
 package com.gigaspaces.internal.server.storage;
 
+import com.gigaspaces.entry.VirtualEntry;
+import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.internal.metadata.SpacePropertyInfo;
+import com.gigaspaces.internal.metadata.SpaceTypeInfo;
+import com.gigaspaces.internal.metadata.SpaceTypeInfoRepository;
+import com.gigaspaces.internal.query.valuegetter.SpaceEntryPathGetter;
+import com.gigaspaces.internal.utils.ReflectionUtils;
+import com.gigaspaces.metadata.SpacePropertyDescriptor;
 import com.gigaspaces.server.MutableServerEntry;
+import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.SpaceOperations;
 import com.j_spaces.core.XtnEntry;
+import com.j_spaces.core.cache.DefaultValueCloner;
 import com.j_spaces.core.server.transaction.EntryXtnInfo;
 
 import net.jini.core.transaction.server.ServerTransaction;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Contains all the data (mutable) fields of the entry. when an entry is changed a new IEntryData is
@@ -51,6 +62,133 @@ public interface ITransactionalEntryData extends IEntryData, MutableServerEntry 
     ITransactionalEntryData createShallowClonedCopyWithSuppliedVersion(int versionID);
 
     ITransactionalEntryData createShallowClonedCopyWithSuppliedVersionAndExpiration(int versionID, long expirationTime);
+
+    @Override
+    default void setPathValue(String path, Object value) {
+        ITypeDesc typeDesc = getSpaceTypeDescriptor();
+        if (!path.contains(".")) {
+            if (typeDesc.getIdPropertyName().equals(path))
+                throwChangeIdException(value);
+
+            int pos = typeDesc.getFixedPropertyPosition(path);
+            if (pos >= 0) {
+                SpacePropertyDescriptor fixedProperty = typeDesc.getFixedProperty(pos);
+                if (value == null) {
+                    validateCanSetNull(path, pos, fixedProperty);
+                } else {
+                    boolean illegalAssignment = false;
+                    if (ReflectionUtils.isPrimitive(fixedProperty.getTypeName())) {
+                        illegalAssignment = !ReflectionUtils.isPrimitiveAssignable(fixedProperty.getTypeName(),
+                                value.getClass());
+                    } else {
+                        illegalAssignment = !fixedProperty.getType().isAssignableFrom(value.getClass());
+                    }
+
+                    if (illegalAssignment)
+                        throw new IllegalArgumentException("Cannot set value [" + value +
+                                "] of class [" + value.getClass() +
+                                "] to property '" + path +
+                                "' of class [" + fixedProperty.getType() + "]");
+                }
+
+                setFixedPropertyValue(pos, value);
+            } else if (typeDesc.supportsDynamicProperties())
+                setDynamicPropertyValue(path, value);
+
+            else throw new IllegalArgumentException("Unknown property name '" + path + "'");
+        } else {
+            String rootPropertyName = path.substring(0, path.indexOf("."));
+            if (typeDesc.getIdPropertyName().equals(rootPropertyName))
+                throwChangeIdException(value);
+
+            deepCloneProperty(rootPropertyName);
+            int propertyNameSeperatorIndex = path.lastIndexOf(".");
+            String pathToParent = path.substring(0, propertyNameSeperatorIndex);
+            String propertyName = path.substring(propertyNameSeperatorIndex + 1);
+            Object valueParent = new SpaceEntryPathGetter(pathToParent).getValue(this);
+            if (valueParent instanceof Map)
+                ((Map) valueParent).put(propertyName, value);
+            else if (valueParent instanceof VirtualEntry)
+                ((VirtualEntry) valueParent).setProperty(propertyName, value);
+            else {
+                Class<? extends Object> type = valueParent.getClass();
+                SpaceTypeInfo typeInfo = SpaceTypeInfoRepository.getTypeInfo(type);
+                SpacePropertyInfo propertyInfo = typeInfo.getProperty(propertyName);
+                if (propertyInfo == null)
+                    throw new IllegalArgumentException("Property '" + propertyName + "' is not a member of " + type.getName() + " in '" + path + "'");
+                propertyInfo.setValue(valueParent, value);
+            }
+        }
+    }
+
+    @Override
+    default void unsetPath(String path) {
+        if (!path.contains(".")) {
+            int pos = getSpaceTypeDescriptor().getFixedPropertyPosition(path);
+            if (pos >= 0) {
+                SpacePropertyDescriptor fixedProperty = getSpaceTypeDescriptor().getFixedProperty(pos);
+                validateCanSetNull(path, pos, fixedProperty);
+                setFixedPropertyValue(pos, null);
+            } else if (getSpaceTypeDescriptor().supportsDynamicProperties())
+                unsetDynamicPropertyValue(path);
+
+            else throw new IllegalArgumentException("Unknown property name '" + path + "'");
+        } else {
+            String rootPropertyName = path.substring(0, path.indexOf("."));
+            if (getSpaceTypeDescriptor().getIdPropertyName().equals(rootPropertyName)) {
+                throw new UnsupportedOperationException("Attempting to unset the id property named '"
+                        + getSpaceTypeDescriptor().getIdPropertyName()
+                        + "' of type '"
+                        + getSpaceTypeDescriptor().getTypeName()
+                        + "' which has a current value of [" + getPropertyValue(getSpaceTypeDescriptor().getIdPropertyName()) + "]. Changing the id property of an existing entry is not allowed.");
+            }
+            deepCloneProperty(rootPropertyName);
+            int propertyNameSeperatorIndex = path.lastIndexOf(".");
+            String pathToParent = path.substring(0, propertyNameSeperatorIndex);
+            String propertyName = path.substring(propertyNameSeperatorIndex + 1);
+            Object valueParent = new SpaceEntryPathGetter(pathToParent).getValue(this);
+            if (valueParent instanceof Map)
+                ((Map) valueParent).remove(propertyName);
+            else if (valueParent instanceof VirtualEntry)
+                ((VirtualEntry) valueParent).removeProperty(propertyName);
+            else {
+                Class<? extends Object> type = valueParent.getClass();
+                SpaceTypeInfo typeInfo = SpaceTypeInfoRepository.getTypeInfo(type);
+                SpacePropertyInfo propertyInfo = typeInfo.getProperty(propertyName);
+                if (propertyInfo == null)
+                    throw new IllegalArgumentException("Property '" + propertyName + "' is not a member of " + type.getName() + " in '" + path + "'");
+                propertyInfo.setValue(valueParent, null);
+            }
+        }
+    }
+
+    default void validateCanSetNull(String path, int pos, SpacePropertyDescriptor fixedProperty) {
+        if (ReflectionUtils.isPrimitive(fixedProperty.getTypeName())
+                && !getSpaceTypeDescriptor().getIntrospector(null)
+                .propertyHasNullValue(pos))
+            throw new IllegalArgumentException("Cannot set null to property '"
+                    + path
+                    + "' of class ["
+                    + fixedProperty.getType()
+                    + "] because it has no null value defined");
+    }
+
+    default void throwChangeIdException(Object value) {
+        Object currentId = getPropertyValue(getSpaceTypeDescriptor().getIdPropertyName());
+        throw new UnsupportedOperationException("Attempting to change the id property named '"
+                + getSpaceTypeDescriptor().getIdPropertyName()
+                + "' of type '"
+                + getSpaceTypeDescriptor().getTypeName()
+                + "' which has a current value of [" + currentId + "] with a new value ["
+                + value
+                + "]. Changing the id property of an existing entry is not allowed.");
+    }
+
+    default void deepCloneProperty(String rootPropertyName) {
+        Object propertyValue = getPropertyValue(rootPropertyName);
+        Object cloneValue = DefaultValueCloner.get().cloneValue(propertyValue, false /* isClonable */, null, "", getSpaceTypeDescriptor().getTypeName());
+        setPathValue(rootPropertyName, cloneValue);
+    }
 
     default boolean anyReadLockXtn() {
         EntryXtnInfo entryXtnInfo = getEntryXtnInfo();
@@ -147,7 +285,18 @@ public interface ITransactionalEntryData extends IEntryData, MutableServerEntry 
         getEntryXtnInfo().initWaitingFor();
     }
 
-    boolean isExpired();
+    default boolean isExpired() {
+        return isExpired(SystemTime.timeMillis());
+    }
 
-    boolean isExpired(long limit);
+    default boolean isExpired(long limit) {
+        long leaseToCompare = getExpirationTime();
+        if (getWriteLockOwner() != null && getOtherUpdateUnderXtnEntry() != null) {
+            //take the time from the original entry in case pending update under xtn
+            IEntryHolder original = getOtherUpdateUnderXtnEntry();
+            if (original != null)
+                leaseToCompare = Math.max(leaseToCompare, original.getEntryData().getExpirationTime());
+        }
+        return leaseToCompare < limit;
+    }
 }

@@ -18,17 +18,14 @@ package com.gigaspaces.internal.server.storage;
 
 import com.gigaspaces.client.protective.ProtectiveMode;
 import com.gigaspaces.client.protective.ProtectiveModeException;
-import com.gigaspaces.internal.lease.LeaseUtils;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.query.ICustomQuery;
 import com.gigaspaces.internal.query.IQueryIndexScanner;
 import com.gigaspaces.internal.query.RegexCache;
-import com.gigaspaces.internal.query.valuegetter.SpaceEntryPathGetter;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.transport.ITransportPacket;
-import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.metadata.StorageType;
 import com.gigaspaces.server.ServerEntry;
 import com.gigaspaces.time.SystemTime;
@@ -160,11 +157,6 @@ public class TemplateEntryData implements IEntryData {
     }
 
     @Override
-    public long getTimeToLive(boolean useDummyIfRelevant) {
-        return LeaseUtils.getTimeToLive(_expirationTime, useDummyIfRelevant);
-    }
-
-    @Override
     public int getNumOfFixedProperties() {
         return _fieldsValues.length;
     }
@@ -211,20 +203,8 @@ public class TemplateEntryData implements IEntryData {
     }
 
     @Override
-    public Object getPathValue(String path) {
-        if (!path.contains("."))
-            return getPropertyValue(path);
-        return new SpaceEntryPathGetter(path).getValue(this);
-    }
-
-    @Override
     public EntryTypeDesc getEntryTypeDesc() {
         return _entryTypeDesc;
-    }
-
-    @Override
-    public SpaceTypeDescriptor getSpaceTypeDescriptor() {
-        return _entryTypeDesc.getTypeDesc();
     }
 
     @Override

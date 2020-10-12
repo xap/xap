@@ -16,7 +16,9 @@
 
 package com.gigaspaces.internal.server.storage;
 
-import com.gigaspaces.internal.metadata.EntryTypeDesc;
+import com.gigaspaces.internal.lease.LeaseUtils;
+import com.gigaspaces.internal.metadata.*;
+import com.gigaspaces.internal.query.valuegetter.SpaceEntryPathGetter;
 import com.gigaspaces.server.ServerEntry;
 
 import java.util.Map;
@@ -31,6 +33,11 @@ public interface IEntryData extends ServerEntry {
     EntryDataType getEntryDataType();
 
     EntryTypeDesc getEntryTypeDesc();
+
+    @Override
+    default ITypeDesc getSpaceTypeDescriptor() {
+        return getEntryTypeDesc().getTypeDesc();
+    }
 
     int getNumOfFixedProperties();
 
@@ -48,6 +55,29 @@ public interface IEntryData extends ServerEntry {
 
     void setDynamicProperties(Map<String, Object> dynamicProperties);
 
-    long getTimeToLive(boolean useDummyIfRelevant);
+    default long getTimeToLive(boolean useDummyIfRelevant) {
+        return LeaseUtils.getTimeToLive(getExpirationTime(), useDummyIfRelevant);
+    }
 
+    @Override
+    default Object getPropertyValue(String name) {
+        ITypeDesc typeDesc = getSpaceTypeDescriptor();
+        int pos = typeDesc.getFixedPropertyPosition(name);
+        if (pos != -1)
+            return getFixedPropertyValue(pos);
+
+        if (typeDesc.supportsDynamicProperties()) {
+            Map<String, Object> dynamicProperties = getDynamicProperties();
+            return dynamicProperties != null ? dynamicProperties.get(name) : null;
+        }
+
+        throw new IllegalArgumentException("Unknown property name '" + name + "' in type " + getSpaceTypeDescriptor().getTypeName());
+    }
+
+    @Override
+    default Object getPathValue(String path) {
+        if (!path.contains("."))
+            return getPropertyValue(path);
+        return new SpaceEntryPathGetter(path).getValue(this);
+    }
 }
