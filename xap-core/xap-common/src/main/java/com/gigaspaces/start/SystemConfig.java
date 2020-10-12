@@ -857,7 +857,6 @@ public class SystemConfig {
                         System.setProperty(CommonSystemProperties.REGISTRY_PORT, Integer.toString(registryPort));
                         if (logger.isDebugEnabled())
                             logger.debug("Created RMI Registry: " + registry.toString() + " using port " + registryPort);
-//                    if(  GsEnv.propertyBoolean( CommonSystemProperties.JMX_ENABLED_PROP ).get( false ) ) {
                         String defaultAddress = SystemInfo.singleton().network().getHostId();
                         String hostAddress =
                                 (String) config.getEntry(COMPONENT,
@@ -888,7 +887,6 @@ public class SystemConfig {
                         } else {
                             logger.info("Unable to acquire JMX Platform MBeanServer, running with Java version " + JavaUtils.getVersion());
                         }
-                        //}
                     }
                 }
                 //if com.sun.management.jmxremote.port system property was passed
