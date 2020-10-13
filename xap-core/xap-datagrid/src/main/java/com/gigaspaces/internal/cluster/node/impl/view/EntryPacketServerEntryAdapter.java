@@ -147,13 +147,4 @@ public class EntryPacketServerEntryAdapter implements IEntryData, ICustomTypeDes
     public void setDynamicProperties(Map<String, Object> dynamicProperties) {
         _entryPacket.setDynamicProperties(dynamicProperties);
     }
-
-    @Override
-    public void setDynamicPropertyValue(String propertyName, Object value) {
-        Map<String, Object> dynamicProperties = _entryPacket.getDynamicProperties();
-        if (dynamicProperties == null)
-            dynamicProperties = new DocumentProperties();
-        dynamicProperties.put(propertyName, value);
-        _entryPacket.setDynamicProperties(dynamicProperties);
-    }
 }

@@ -123,14 +123,6 @@ public class TemplateEntryData implements IEntryData {
         return _dynamicProperties;
     }
 
-    @Override
-    public void setDynamicPropertyValue(String propertyName, Object value) {
-        if (!_entryTypeDesc.getTypeDesc().supportsDynamicProperties())
-            throw new UnsupportedOperationException(_entryTypeDesc.getTypeDesc().getTypeName() + " does not support dynamic properties");
-
-        _dynamicProperties.put(propertyName, value);
-    }
-
     //why we need it
     @Override
     public int getVersion() {

@@ -178,6 +178,14 @@ public interface ITransactionalEntryData extends IEntryData, MutableServerEntry 
         }
     }
 
+    void setDynamicPropertyValue(String propertyName, Object value);
+
+    default void unsetDynamicPropertyValue(String propertyName) {
+        Map<String, Object> dynamicProperties = getDynamicProperties();
+        if (dynamicProperties != null)
+            dynamicProperties.remove(propertyName);
+    }
+
     default void validateCanSetNull(String path, int pos, SpacePropertyDescriptor fixedProperty) {
         if (ReflectionUtils.isPrimitive(fixedProperty.getTypeName())
                 && !getSpaceTypeDescriptor().getIntrospector(null)

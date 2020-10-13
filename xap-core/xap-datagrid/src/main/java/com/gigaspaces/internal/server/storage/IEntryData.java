@@ -51,14 +51,6 @@ public interface IEntryData extends ServerEntry {
 
     Map<String, Object> getDynamicProperties();
 
-    void setDynamicPropertyValue(String propertyName, Object value);
-
-    default void unsetDynamicPropertyValue(String propertyName) {
-        Map<String, Object> dynamicProperties = getDynamicProperties();
-        if (dynamicProperties != null)
-            dynamicProperties.remove(propertyName);
-    }
-
     void setDynamicProperties(Map<String, Object> dynamicProperties);
 
     default long getTimeToLive(boolean useDummyIfRelevant) {
