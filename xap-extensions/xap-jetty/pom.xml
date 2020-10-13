@@ -295,7 +295,7 @@
         <jetty.schemas.version>3.1</jetty.schemas.version>
         <ecj.version>3.17.0</ecj.version>
         <asm.version>7.1</asm.version>
-        <junit.version>4.12</junit.version>
+        <junit.version>4.13.1</junit.version>
         <skipTests>true</skipTests>
     </properties>
 
