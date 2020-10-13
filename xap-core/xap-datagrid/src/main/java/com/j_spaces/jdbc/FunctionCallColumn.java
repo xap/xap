@@ -23,7 +23,7 @@ public class FunctionCallColumn<R extends Serializable, T extends Serializable> 
         this.params = params;
         this.params.remove(0); // removes first param which is always the column name
 
-        if (functionName.equals("REPLACE")) {
+        if (functionName.equalsIgnoreCase("REPLACE")) {
             f = (obj) -> (T) obj.toString().replace(params.get(0).toString(), params.get(1).toString());
         } else {
             throw new RuntimeException("Unknown function [" + functionName + "]");
