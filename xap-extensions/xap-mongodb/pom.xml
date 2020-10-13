@@ -4,7 +4,7 @@
 	<packaging>jar</packaging>
 
 	<properties>
-		<junitVersion>4.12</junitVersion>
+		<junitVersion>4.13.1</junitVersion>
 		<skipTests>false</skipTests>
 	</properties>
 
