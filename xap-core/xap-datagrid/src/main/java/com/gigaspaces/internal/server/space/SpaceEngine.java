@@ -833,6 +833,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         WriteEntryResult writeResult = null;
         EntryAlreadyInSpaceException entryInSpaceEx = null;
         try {
+            context.cacheViewEntryDataIfNeeded(eHolder.getEntryData(), entryPacket.getFieldValues());
             writeResult = _coreProcessor.handleDirectWriteSA(context, eHolder, serverTypeDesc, fromReplication,
                     origin, reInsertedEntry, packetUid != null,
                     !fromWriteMultiple, modifiers);

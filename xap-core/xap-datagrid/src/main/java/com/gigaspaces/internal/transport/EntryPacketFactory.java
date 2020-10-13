@@ -23,11 +23,7 @@ import com.gigaspaces.internal.metadata.ExternalEntryIntrospector;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.ITypeIntrospector;
 import com.gigaspaces.internal.metadata.PropertyInfo;
-import com.gigaspaces.internal.server.storage.EntryDataType;
-import com.gigaspaces.internal.server.storage.IEntryData;
-import com.gigaspaces.internal.server.storage.IEntryHolder;
-import com.gigaspaces.internal.server.storage.ITemplateHolder;
-import com.gigaspaces.internal.server.storage.UserTypeEntryData;
+import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.utils.ObjectUtils;
 import com.gigaspaces.metadata.SpaceMetadataException;
 import com.j_spaces.core.ExternalEntryPacket;
@@ -72,12 +68,19 @@ public class EntryPacketFactory {
         return new EntryPacket(typeDesc, entryType, fixedProperties, dynamicProperties, uid,
                 introspector.getVersion(entry),
                 introspector.getTimeToLive(entry),
-                introspector.isTransient(entry));
+                introspector.isTransient(entry), null);
     }
 
     public static IEntryPacket createFullPacket(IEntryData entryData, OperationID operationID, String uid, boolean isTransient, QueryResultTypeInternal queryResultType) {
         final long timeToLive = entryData.getTimeToLive(true);
-        IEntryPacket entryPacket = createInternal(null /*template*/, isTransient, entryData, entryData.getFixedPropertiesValues(), uid, timeToLive, queryResultType, false);
+        Object[] fixedPropertiesValues = null;
+        byte[] binaryFields = null;
+        if(entryData instanceof BinaryEntryData){
+            binaryFields = ((BinaryEntryData) entryData).getSerializedFields();
+        } else {
+            fixedPropertiesValues = entryData.getFixedPropertiesValues();
+        }
+        IEntryPacket entryPacket = createInternal(null /*template*/, isTransient, entryData, fixedPropertiesValues, uid, timeToLive, queryResultType, false, binaryFields);
         entryPacket.setOperationID(operationID);
         return entryPacket;
     }
@@ -85,8 +88,14 @@ public class EntryPacketFactory {
     public static IEntryPacket createFullPacketForReplication(IEntryHolder entryHolder, OperationID operationID) {
         final IEntryData entryData = entryHolder.getEntryData();
         final long timeToLive = entryData.getTimeToLive(true);
-
-        IEntryPacket entryPacket = create(null /*template*/, entryHolder.isTransient(), entryData, entryData.getFixedPropertiesValues(), entryHolder.getUID(), timeToLive, true);
+        Object[] fixedPropertiesValues = null;
+        byte[] binaryFields = null;
+        if(entryData instanceof BinaryEntryData){
+            binaryFields = ((BinaryEntryData) entryData).getSerializedFields();
+        } else {
+            fixedPropertiesValues = entryData.getFixedPropertiesValues();
+        }
+        IEntryPacket entryPacket = create(null /*template*/, entryHolder.isTransient(), entryData, fixedPropertiesValues, entryHolder.getUID(), timeToLive, true, binaryFields);
 
         entryPacket.setOperationID(operationID);
         return entryPacket;
@@ -98,7 +107,7 @@ public class EntryPacketFactory {
         final Object[] fixedProperties = getPartialUpdateFieldValues(entryData, partialUpdatedValuesIndicators);
 
         IEntryPacket entryPacket = create(null /*template*/, entryHolder.isTransient(), entryData, fixedProperties,
-                entryHolder.getUID(), timeToLive, true);
+                entryHolder.getUID(), timeToLive, true, null);
 
         entryPacket.setOperationID(operationID);
         return entryPacket;
@@ -106,12 +115,27 @@ public class EntryPacketFactory {
 
     public static IEntryPacket createFullPacketForReplication(IEntryHolder entryHolder, ITemplateHolder template, String uid, long timeToLive) {
         IEntryData entryData = entryHolder.getEntryData();
-        return create(template, entryHolder.isTransient(), entryData, entryData.getFixedPropertiesValues(), uid, timeToLive, true);
+        Object[] fixedPropertiesValues = null;
+        byte[] binaryFields = null;
+        if(entryData instanceof BinaryEntryData){
+            binaryFields = ((BinaryEntryData) entryData).getSerializedFields();
+        } else {
+            fixedPropertiesValues = entryData.getFixedPropertiesValues();
+        }
+        return create(template, entryHolder.isTransient(), entryData, fixedPropertiesValues, uid, timeToLive, true, binaryFields);
     }
 
     public static IEntryPacket createFullPacket(IEntryHolder entryHolder, ITemplateHolder template, String uid, long timeToLive,
                                                 IEntryData entryData, OperationID operationId) {
-        IEntryPacket packet = create(template, entryHolder.isTransient(), entryData, entryData.getFixedPropertiesValues(), uid, timeToLive, false);
+
+        Object[] fixedPropertiesValues = null;
+        byte[] binaryFields = null;
+        if(entryData instanceof BinaryEntryData){
+            binaryFields = ((BinaryEntryData) entryData).getSerializedFields();
+        } else {
+            fixedPropertiesValues = entryData.getFixedPropertiesValues();
+        }
+        IEntryPacket packet = create(template, entryHolder.isTransient(), entryData, fixedPropertiesValues, uid, timeToLive, false, binaryFields);
         packet.setOperationID(operationId);
         return packet;
     }
@@ -131,15 +155,20 @@ public class EntryPacketFactory {
     public static IEntryPacket createFullPacket(ITemplateHolder template, IEntryData entryData, String uid, boolean isTransient) {
         if (entryData.getEntryDataType() == EntryDataType.USER_TYPE)
             return new LocalCacheResponseEntryPacket((UserTypeEntryData) entryData, uid);
-
-        final Object[] fixedProperties = entryData.getFixedPropertiesValues();
+        Object[] fixedPropertiesValues = null;
+        byte[] binaryFields = null;
+        if(entryData instanceof BinaryEntryData){
+            binaryFields = ((BinaryEntryData) entryData).getSerializedFields();
+        } else {
+            fixedPropertiesValues = entryData.getFixedPropertiesValues();
+        }
         final long timeToLive = entryData.getTimeToLive(false);
-        return create(template, isTransient, entryData, fixedProperties, uid, timeToLive, false);
+        return create(template, isTransient, entryData, fixedPropertiesValues, uid, timeToLive, false, binaryFields);
     }
 
     private static IEntryPacket create(ITemplateHolder template, boolean isTransient, IEntryData entryData, Object[] fixedProperties,
-                                       String uid, long timeToLive, boolean forceNonExternalizable) {
-        return createInternal(template, isTransient, entryData, fixedProperties, uid, timeToLive, QueryResultTypeInternal.NOT_SET, forceNonExternalizable);
+                                       String uid, long timeToLive, boolean forceNonExternalizable, byte[] binaryFields) {
+        return createInternal(template, isTransient, entryData, fixedProperties, uid, timeToLive, QueryResultTypeInternal.NOT_SET, forceNonExternalizable, binaryFields);
     }
 
     public static IEntryPacket createRemovePacketForPersistency(IEntryHolder entryHolder, OperationID operationID) {
@@ -153,7 +182,7 @@ public class EntryPacketFactory {
     }
 
     private static IEntryPacket createInternal(ITemplateHolder template, boolean isTransient, IEntryData entryData, Object[] fixedProperties,
-                                               String uid, long timeToLive, QueryResultTypeInternal packetType, boolean forceNotExternalizable) {
+                                               String uid, long timeToLive, QueryResultTypeInternal packetType, boolean forceNotExternalizable, byte[] binaryFields) {
         final ITypeDesc typeDesc = entryData.getEntryTypeDesc().getTypeDesc();
         final EntryType entryType = entryData.getEntryTypeDesc().getEntryType();
 
@@ -172,7 +201,7 @@ public class EntryPacketFactory {
                     return new ExternalizableEntryPacket(typeDesc, entryType, fixedProperties, entryData.getDynamicProperties(),
                             uid, entryData.getVersion(), timeToLive, isTransient);
                 return new EntryPacket(typeDesc, entryType, fixedProperties, entryData.getDynamicProperties(),
-                        uid, entryData.getVersion(), timeToLive, isTransient);
+                        uid, entryData.getVersion(), timeToLive, isTransient, binaryFields);
             case EXTERNAL_ENTRY:
                 final String eeImplClassName = template != null ? template.getExternalEntryImplClassName() : null;
                 return new ExternalEntryPacket(typeDesc, entryType, fixedProperties,

@@ -18,6 +18,7 @@ package com.gigaspaces.internal.query;
 
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.gigaspaces.internal.server.storage.ViewEntryData;
 import com.gigaspaces.internal.transport.EntryPacketFactory;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregator;
@@ -35,7 +36,7 @@ public class EntryHolderAggregatorContext extends SpaceEntriesAggregatorContext 
 
     private final ITemplateHolder template;
     private final int partitionId;
-    private IEntryData entryData;
+    private final ViewEntryData entryDataView = new ViewEntryData();
     private String uid;
     private boolean isTransient;
 
@@ -47,7 +48,7 @@ public class EntryHolderAggregatorContext extends SpaceEntriesAggregatorContext 
     }
 
     public void scan(IEntryData entryData, String uid, boolean isTransient) {
-        this.entryData = entryData;
+        this.entryDataView.view(entryData);
         this.uid = uid;
         this.isTransient = isTransient;
         aggregate();
@@ -65,7 +66,7 @@ public class EntryHolderAggregatorContext extends SpaceEntriesAggregatorContext 
 
     @Override
     public RawEntry getRawEntry() {
-        return EntryPacketFactory.createFullPacket(template, entryData, uid, isTransient);
+        return EntryPacketFactory.createFullPacket(template, entryDataView, uid, isTransient);
     }
 
 
@@ -77,6 +78,6 @@ public class EntryHolderAggregatorContext extends SpaceEntriesAggregatorContext 
 
     @Override
     public ServerEntry getServerEntry() {
-        return entryData;
+        return entryDataView;
     }
 }

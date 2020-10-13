@@ -64,4 +64,7 @@ public interface IEntryPacket extends ITransportPacket, ISwapExternalizable, Raw
     //Temp until we remove externalizable entry packet completely
     boolean isExternalizableEntryPacket();
 
+    default void setBinaryFields(byte[] binaryFields){
+
+    }
 }

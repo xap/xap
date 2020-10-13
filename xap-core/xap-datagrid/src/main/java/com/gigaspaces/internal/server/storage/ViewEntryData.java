@@ -1,6 +1,8 @@
 package com.gigaspaces.internal.server.storage;
 
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -17,14 +19,23 @@ import java.util.Map;
  */
 public class ViewEntryData implements IEntryData {
 
+    private static Logger logger = LoggerFactory.getLogger(ViewEntryData.class);
     private IEntryData entry;
     private Object[] fixedProperties;
     private Map<String, Object> dynamicProperties;
 
-    public void view(IEntryData entry) {
-        this.entry = entry;
-        this.fixedProperties = entry.getFixedPropertiesValues();
-        this.dynamicProperties = entry.getDynamicProperties();
+    public void view(IEntryData entryData) {
+        this.entry = entryData;
+        this.fixedProperties = entryData.getFixedPropertiesValues();
+        this.dynamicProperties = entryData.getDynamicProperties();
+        logger.warn("viewing entry "+getPropertyValue("id"));
+    }
+
+    public void view(IEntryData entryData, Object[] fieldValues) {
+        this.entry = entryData;
+        this.fixedProperties = fieldValues;
+        this.dynamicProperties = entryData.getDynamicProperties();
+        logger.warn("viewing entry "+getPropertyValue("id"));
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.server.storage;
 
+import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.j_spaces.core.server.transaction.EntryXtnInfo;
@@ -36,6 +37,7 @@ public class BinaryEntryData implements ITransactionalEntryData {
     private final long _expirationTime;
     private final EntryXtnInfo _entryTxnInfo;
     private byte[] serializedFields;
+    private Map<String, Object> _dynamicProperties;
 
     public BinaryEntryData(Object[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
         this(serializeFields(fieldsValues, entryTypeDesc.getTypeDesc()), entryTypeDesc, version, expirationTime, entryXtnInfo);
@@ -47,6 +49,14 @@ public class BinaryEntryData implements ITransactionalEntryData {
         this._expirationTime = expirationTime;
         this._entryTxnInfo = entryXtnInfo;
         this.serializedFields = fieldsValues;
+    }
+
+    private static byte[] serializeFields(Object[] fieldsValues, ITypeDesc typeDesc) {
+        try {
+            return typeDesc.getClassBinaryStorageAdapter().toBinary(fieldsValues);
+        } catch (IOException e) {
+            throw new UncheckedIOException("com.gigaspaces.internal.server.storage.BinaryEntryData.serializeFields failed", e);
+        }
     }
 
     @Override
@@ -103,17 +113,23 @@ public class BinaryEntryData implements ITransactionalEntryData {
 
     @Override
     public Map<String, Object> getDynamicProperties() {
-        return null;
+        return _dynamicProperties;
     }
 
     @Override
     public void setDynamicProperties(Map<String, Object> dynamicProperties) {
-        throw new UnsupportedOperationException();
+        _dynamicProperties = dynamicProperties;
     }
 
     @Override
     public void setDynamicPropertyValue(String propertyName, Object value) {
-        throw new UnsupportedOperationException();
+        if (!_entryTypeDesc.getTypeDesc().supportsDynamicProperties())
+            throw new UnsupportedOperationException(_entryTypeDesc.getTypeDesc().getTypeName() + " does not support dynamic properties");
+
+        if (_dynamicProperties == null)
+            _dynamicProperties = new DocumentProperties();
+
+        _dynamicProperties.put(propertyName, value);
     }
 
     @Override
@@ -122,14 +138,6 @@ public class BinaryEntryData implements ITransactionalEntryData {
             throw new IllegalArgumentException("Cannot substitute fixed property values with array of different size!");
         }
         serializedFields = serializeFields(values, getSpaceTypeDescriptor());
-    }
-
-    private static byte[] serializeFields(Object[] fieldsValues, ITypeDesc typeDesc) {
-        try {
-            return typeDesc.getClassBinaryStorageAdapter().toBinary(fieldsValues);
-        } catch (IOException e) {
-            throw new UncheckedIOException("com.gigaspaces.internal.server.storage.FlatEntryData.serializeFields failed", e);
-        }
     }
 
     private Object[] deserializeFields(byte[] fieldsValues) {
@@ -160,5 +168,9 @@ public class BinaryEntryData implements ITransactionalEntryData {
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    public byte[] getSerializedFields() {
+        return serializedFields;
     }
 }

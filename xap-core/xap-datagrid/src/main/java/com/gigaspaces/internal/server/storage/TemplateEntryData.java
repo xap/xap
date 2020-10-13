@@ -214,8 +214,8 @@ public class TemplateEntryData implements IEntryData {
     }
 
     public boolean match(CacheManager cacheManager, ServerEntry entry, int skipAlreadyMatchedFixedPropertyIndex, String skipAlreadyMatchedIndexPath, RegexCache regexCache, Context cacheContext) {
-        if (entry instanceof BinaryEntryData && !allNullFields()) {
-            entry = cacheContext.wrap((ITransactionalEntryData) entry);
+        if (!isNullTemplate()) {
+            entry = cacheContext.getViewEntryData((IEntryData) entry);
         }
         boolean result = _extendedMatchCodes == null
                 ? matchBasic(entry, skipAlreadyMatchedFixedPropertyIndex)
@@ -223,18 +223,16 @@ public class TemplateEntryData implements IEntryData {
 
         if (result && _customQuery != null)
             result = _customQuery.matches(cacheManager, entry, skipAlreadyMatchedIndexPath);
-
         return result;
-
     }
 
-    private boolean allNullFields() {
+    private boolean isNullTemplate() {
         for (Object fieldsValue : _fieldsValues) {
             if(fieldsValue != null){
                 return false;
             }
         }
-        return true;
+        return _customQuery == null && _extendedMatchCodes == null;
     }
 
     private boolean matchBasic(ServerEntry entry, int skipIndex) {

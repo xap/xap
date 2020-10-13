@@ -250,6 +250,8 @@ public class Context {
     private IndexMetricsContext indexMetricsContext;
     private boolean _backupOnly;
 
+    private ViewEntryData viewEntryData;
+
     public Context() {
     }
 
@@ -373,12 +375,6 @@ public class Context {
         _lastRawmatchTemplate = template;
     }
 
-    public ITransactionalEntryData wrap(ITransactionalEntryData entryData){
-        return entryData instanceof FlatEntryData ? entryData :
-                new FlatEntryData(entryData.getFixedPropertiesValues(), entryData.getDynamicProperties(),
-                        entryData.getEntryTypeDesc(), entryData.getVersion(), entryData.getExpirationTime(), null);
-    }
-
 
     public void setRawmatchResult(ITransactionalEntryData entryData, MatchResult res, IEntryHolder entry, ITemplateHolder template) {
         _matchResult = res;
@@ -488,6 +484,7 @@ public class Context {
         _inMemoryRecovery = false;
         indexMetricsContext = null;
         _backupOnly=false;
+        viewEntryData = null;
     }
 
     public void setOnMatchUid(String uid)
@@ -1263,5 +1260,36 @@ public class Context {
 
     public boolean isBackupOnly(){
         return this._backupOnly;
+    }
+
+    public IEntryData getViewEntryData(IEntryData entryData) {
+        if(entryData instanceof BinaryEntryData){
+            if(viewEntryData == null){
+                viewEntryData = new ViewEntryData();
+            }
+            viewEntryData.view(entryData);
+            return viewEntryData;
+        } else {
+            return entryData;
+        }
+    }
+
+    public IEntryData getCachedViewEntryData(IEntryData entryData) {
+        if(entryData instanceof BinaryEntryData){
+            if(viewEntryData == null){
+                throw new IllegalStateException("cached viewEntryData in cache context is null");
+            }
+            return viewEntryData;
+        }
+        return entryData;
+    }
+
+    public void cacheViewEntryDataIfNeeded(IEntryData entryData, Object[] fieldsValues) {
+        if(entryData instanceof BinaryEntryData){
+            if(viewEntryData == null){
+                viewEntryData = new ViewEntryData();
+            }
+            viewEntryData.view(entryData, fieldsValues);
+        }
     }
 }

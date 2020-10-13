@@ -3505,7 +3505,7 @@ public class CacheManager extends AbstractCacheManager
      */
     public void insertEntryReferences(Context context, IEntryCacheInfo pEntry, TypeData pType, boolean applySequenceNumber) {
         context.clearNumOfIndexesInserted();
-        IEntryData entryData = pEntry.getEntryHolder(this).getEntryData();
+        IEntryData entryData = context.getCachedViewEntryData(pEntry.getEntryHolder(this).getEntryData());
         // add entry to type info
         if(pType.getFifoGroupingIndex()!=null){
             pEntry.setMainListBackRef(((ConcurrentSegmentedStoredList<IEntryCacheInfo>)pType.getEntries()).add(pEntry, pType.getFifoGroupingIndex().getIndexValue(entryData)));
