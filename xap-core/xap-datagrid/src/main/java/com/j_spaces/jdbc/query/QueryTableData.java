@@ -29,12 +29,16 @@ import com.j_spaces.jdbc.parser.ExpNode;
 
 import net.jini.core.transaction.Transaction;
 
+import java.io.IOException;
+import java.io.Serializable;
+
+
 /**
  * @author anna
  * @since 7.0
  */
 @com.gigaspaces.api.InternalApi
-public class QueryTableData {
+public class QueryTableData implements Serializable {
 
     private final String _tableName;
     private final String _tableAlias;
@@ -50,7 +54,7 @@ public class QueryTableData {
     private QueryTableData _joinTable;
 
     //use thread local because this object is cached and used by several threads
-    private ThreadLocal<EntriesCursor> _entriesCursor = new ThreadLocal<EntriesCursor>();
+    private transient ThreadLocal<EntriesCursor> _entriesCursor = new ThreadLocal<EntriesCursor>();
 
     private boolean _isJoined;
     private boolean _hasAsterixSelectColumns;
@@ -344,5 +348,11 @@ public class QueryTableData {
 
     public void setSubQuery(Query subQuery) {
         this.subQuery = subQuery;
+    }
+
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        _entriesCursor = new ThreadLocal<EntriesCursor>();
     }
 }

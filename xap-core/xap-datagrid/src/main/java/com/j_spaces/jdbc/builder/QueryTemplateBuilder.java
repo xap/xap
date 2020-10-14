@@ -33,6 +33,7 @@ import com.j_spaces.jdbc.parser.*;
 import com.j_spaces.jdbc.query.QueryColumnData;
 import com.j_spaces.jdbc.query.QueryTableData;
 
+import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -43,7 +44,7 @@ import java.util.*;
  * @author anna
  */
 @com.gigaspaces.api.InternalApi
-public class QueryTemplateBuilder
+public class QueryTemplateBuilder implements Serializable
 
 {
 

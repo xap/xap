@@ -40,6 +40,9 @@ public class SingleValueFunctionAggregator<T extends Serializable & Comparable> 
         this.functionName = functionName;
     }
 
+    public SingleValueFunctionAggregator() {
+    }
+
     @Override
     public String getDefaultAlias() {
         return functionName + "(" + getPath() + ")";

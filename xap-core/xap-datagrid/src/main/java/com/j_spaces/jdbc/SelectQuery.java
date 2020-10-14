@@ -38,10 +38,10 @@ import com.j_spaces.jdbc.batching.BatchResponsePacket;
 import com.j_spaces.jdbc.builder.QueryEntryPacket;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.driver.GPreparedStatement.PreparedValuesCollection;
+import com.j_spaces.jdbc.executor.CollocatedJoinedQueryExecutor;
 import com.j_spaces.jdbc.executor.JoinedQueryExecutor;
 import com.j_spaces.jdbc.executor.QueryExecutor;
-import com.j_spaces.jdbc.parser.ExpNode;
-import com.j_spaces.jdbc.parser.RowNumNode;
+import com.j_spaces.jdbc.parser.*;
 import com.j_spaces.jdbc.query.*;
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.lease.LeaseDeniedException;
@@ -180,7 +180,8 @@ public class SelectQuery extends AbstractDMLQuery {
             // No where clause
 
             if (isJoined()) {
-                _executor = new JoinedQueryExecutor(this);
+                boolean collJoin = false;//isCollocatedJoin();
+                _executor = collJoin ? new CollocatedJoinedQueryExecutor(this) : new JoinedQueryExecutor(this);
 
                 entries = executeJoinedQuery(space, txn);
             } else if (expTree == null) {
@@ -289,6 +290,149 @@ public class SelectQuery extends AbstractDMLQuery {
             throw new SQLException("Select failed; Cause: " + e, "GSP", -120, e);
         }
         return packet;
+    }
+    private boolean isCollocatedJoin() {
+        List<String> refTableNames = Arrays.asList(System.getProperty("com.gs.sql.refTables").split(","));
+        List<QueryTableData> shardedTables = new ArrayList<>();
+        List<QueryTableData> refTables = new ArrayList<>();
+
+        List<QueryTableData> tablesInQuery = getJoinTables();
+        for (QueryTableData queryTableData : tablesInQuery) {
+            if (refTableNames.contains(queryTableData.getTableName())) {
+                refTables.add(queryTableData);
+            } else {
+                shardedTables.add(queryTableData);
+            }
+        }
+
+        if (shardedTables.size() > 1) {
+            return isJoinOnRouting(refTableNames);
+        }
+        return true;
+    }
+
+    private boolean isJoinOnRouting(List<String> refTableNames) {
+        if (joins == null) return true;
+
+        for (Join join : joins) {
+            if (join.getSubQuery() == null) {
+                if (!refTableNames.contains(join.getTableName())) { // if not ref table
+                    if (!isJoinOnRouting(join.getOnExpression(), (SelectQuery)join.getSubQuery())) return false; // if ON is not on routing key
+                }
+            } else if (join.getSubQuery() instanceof SelectQuery) {
+                SelectQuery q = (SelectQuery) join.getSubQuery();
+                if (!isJoinOnRouting(join.getOnExpression(), q)) return false;
+//                q.getQueryColumns().stream().filter(a-> a.getName().equals("DDATE")).collect(Collectors.toList()).get(0).getColumnTableData().getTypeDesc().getRoutingPropertyName()
+            } else {
+                throw new UnsupportedOperationException(); //TODO
+            }
+        }
+        return true;
+    }
+
+    private boolean isJoinOnRouting(ExpNode expNode, SelectQuery subQuery) {
+        if (expNode instanceof AndNode) {
+            return isJoinOnRouting(expNode.getRightChild(), subQuery) && isJoinOnRouting(expNode.getLeftChild(), subQuery);
+        } else if (expNode instanceof EqualNode) {
+            ExpNode left = expNode.getLeftChild();
+            ExpNode right = expNode.getRightChild();
+            if (left instanceof ColumnNode && right instanceof ColumnNode) {
+                ColumnNode leftNode = (ColumnNode) left;
+                ColumnNode rightNode = (ColumnNode) right;
+
+                String leftNodeJoinOn = leftNode.getColumnData().getColumnName();
+                ITypeDesc leftNodeTypeDesc = leftNode.getColumnData().getColumnTableData().getTypeDesc();
+
+                String rightNodeJoinOn = rightNode.getColumnData().getColumnName();
+                ITypeDesc rightNodeTypeDesc = rightNode.getColumnData().getColumnTableData().getTypeDesc();
+                if (rightNodeTypeDesc == null) {
+                    rightNodeTypeDesc = subQuery.getQueryColumns().stream().filter(qc -> qc.getName().equals(rightNodeJoinOn)).findFirst().get().getColumnTableData().getTypeDesc();
+                }
+
+
+                boolean isLeftNodeJoinOnRouting = leftNodeJoinOn.equals(leftNodeTypeDesc.getRoutingPropertyName());
+                boolean isRightNodeJoinOnRouting = rightNodeJoinOn.equals(rightNodeTypeDesc.getRoutingPropertyName());
+                return isLeftNodeJoinOnRouting && isRightNodeJoinOnRouting;
+            } else {
+                throw new UnsupportedOperationException("Unsupported left and right nodes type"); //TODO
+            }
+        } else {
+            throw new UnsupportedOperationException("Unsupported for non AndNode and EqualNode"); //TODO
+        }
+    }
+
+    private List<Join> getJoins() {
+        if (joins == null) return Collections.emptyList();
+
+        List<Join> allJoins = new ArrayList<>(joins);
+        for (Join join : joins) {
+            if (join.getSubQuery() != null && join.getSubQuery() instanceof SelectQuery) {
+                allJoins.addAll(((SelectQuery)join.getSubQuery()).getJoins());
+            }
+        }
+
+        return allJoins;
+    }
+
+    private List<QueryTableData> getJoinTables() {
+        List<QueryTableData> list = new ArrayList<>();
+
+        for (QueryTableData tablesDatum : _tablesData) {
+            if (tablesDatum.getSubQuery() == null) {
+                list.add(tablesDatum);
+            } else {
+                if (tablesDatum.getSubQuery() instanceof SelectQuery) {
+                    list.addAll(((SelectQuery)tablesDatum.getSubQuery()).getJoinTables());
+                } else {
+                    throw new UnsupportedOperationException();
+                }
+            }
+        }
+        return list;
+    }
+
+    private boolean isCollocatedJoinOld() {
+        List<String> refTableNames = Arrays.asList(System.getProperty("com.gs.sql.refTables").split(","));
+
+        List<QueryTableData> shardedTables = new ArrayList<>();
+        List<QueryTableData> refTables = new ArrayList<>();
+
+        _tablesData.forEach(queryTableData -> {
+            if (refTableNames.contains(queryTableData.getTableName())) {
+                refTables.add(queryTableData);
+            } else {
+                shardedTables.add(queryTableData);
+            }
+        });
+
+        if (shardedTables.size() > 1) {
+            for (Join join : joins) {
+                ColumnNode leftNode = (ColumnNode) join.getOnExpression().getLeftChild();
+                ColumnNode rightNode = (ColumnNode) join.getOnExpression().getRightChild();
+
+                String leftNodeJoinOn = leftNode.getColumnData().getColumnName();
+                String rightNodeJoinOn = rightNode.getColumnData().getColumnName();
+
+                boolean isLeftNodeJoinOnRouting = leftNodeJoinOn.equals(leftNode.getColumnData().getColumnTableData().getTypeDesc().getRoutingPropertyName());
+                if (!isLeftNodeJoinOnRouting) return false;
+
+                if (join.getSubQuery() == null) {
+                    if (!rightNodeJoinOn.equals(rightNode.getColumnData().getColumnTableData().getTypeDesc().getRoutingPropertyName())) {
+                        return false;
+                    }
+                } else {
+                    SelectQuery subQuery = (SelectQuery) join.getSubQuery();
+                    if (!rightNodeJoinOn.equals(subQuery.getTableData().getTypeDesc().getRoutingPropertyName())) {
+                        return false;
+                    }
+                    if (!subQuery.isCollocatedJoin()) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
 

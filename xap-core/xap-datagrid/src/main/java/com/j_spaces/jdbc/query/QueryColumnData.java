@@ -22,6 +22,7 @@ import com.j_spaces.jdbc.Query;
 import com.j_spaces.jdbc.SelectColumn;
 import com.j_spaces.jdbc.SelectQuery;
 
+import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -32,7 +33,7 @@ import java.util.function.Function;
  * @since 7.0
  */
 @com.gigaspaces.api.InternalApi
-public class QueryColumnData {
+public class QueryColumnData implements Serializable {
 
     protected static final String ASTERIX_COLUMN = "*";
     protected static final String UID_COLUMN = "UID";
