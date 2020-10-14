@@ -430,4 +430,8 @@ public class EntryPacket extends AbstractEntryPacket {
         this.binaryFields = binaryFields;
     }
 
+    @Override
+    public boolean isNullFieldValues() {
+        return _fixedProperties == null && binaryFields == null;
+    }
 }
