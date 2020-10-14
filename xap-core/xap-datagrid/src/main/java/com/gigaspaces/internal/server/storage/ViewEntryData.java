@@ -28,14 +28,12 @@ public class ViewEntryData implements IEntryData {
         this.entry = entryData;
         this.fixedProperties = entryData.getFixedPropertiesValues();
         this.dynamicProperties = entryData.getDynamicProperties();
-        logger.warn("viewing entry "+getPropertyValue("id"));
     }
 
     public void view(IEntryData entryData, Object[] fieldValues) {
         this.entry = entryData;
         this.fixedProperties = fieldValues;
         this.dynamicProperties = entryData.getDynamicProperties();
-        logger.warn("viewing entry "+getPropertyValue("id"));
     }
 
     @Override
@@ -86,5 +84,9 @@ public class ViewEntryData implements IEntryData {
     @Override
     public void setDynamicProperties(Map<String, Object> dynamicProperties) {
         throw new IllegalStateException("Data cannot be modified on entry data view");
+    }
+
+    public boolean isViewOf(IEntryData entryData) {
+        return this.entry.equals(entryData);
     }
 }

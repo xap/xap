@@ -169,7 +169,8 @@ public class EntryPacket extends AbstractEntryPacket {
     }
 
     public Object[] getFieldValues() {
-        if (_fixedProperties == null) {
+        if (_fixedProperties == null && getTypeDescriptor() != null &&
+                getTypeDescriptor().getClassBinaryStorageAdapter() != null && binaryFields != null) {
             try {
                 _fixedProperties = getTypeDescriptor().getClassBinaryStorageAdapter().fromBinary(binaryFields);
             } catch (IOException | ClassNotFoundException e) {

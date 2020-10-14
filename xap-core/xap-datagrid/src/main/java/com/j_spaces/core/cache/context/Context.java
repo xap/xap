@@ -1274,11 +1274,8 @@ public class Context {
         }
     }
 
-    public IEntryData getCachedViewEntryData(IEntryData entryData) {
-        if(entryData instanceof BinaryEntryData){
-            if(viewEntryData == null){
-                throw new IllegalStateException("cached viewEntryData in cache context is null");
-            }
+    public IEntryData getCacheViewEntryDataIfNeeded(IEntryData entryData) {
+        if(entryData instanceof BinaryEntryData && viewEntryData != null && viewEntryData.isViewOf(entryData)){
             return viewEntryData;
         }
         return entryData;
