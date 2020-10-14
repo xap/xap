@@ -20,6 +20,7 @@ import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.jdbc.query.QueryColumnData;
 import com.j_spaces.jdbc.query.QueryTableData;
 
+import java.io.Serializable;
 import java.sql.SQLException;
 
 /**
@@ -28,7 +29,7 @@ import java.sql.SQLException;
  * @author Michael Mitrani, 2Train4, 2004
  */
 @com.gigaspaces.api.InternalApi
-public class SelectColumn {
+public class SelectColumn implements Serializable {
 
     private String name = null;
     private String alias = null;

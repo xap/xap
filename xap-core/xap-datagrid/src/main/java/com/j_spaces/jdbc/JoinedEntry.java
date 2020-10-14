@@ -16,10 +16,15 @@
 
 package com.j_spaces.jdbc;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.EntryPacket;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.j_spaces.jdbc.query.QueryTableData;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -108,6 +113,9 @@ public class JoinedEntry extends EntryPacket implements Serializable {
                 fieldValues.add(entry.getUID());
 
             } else {
+                if (entry.getTypeDescriptor() == null) {
+                    entry.setTypeDesc(columnTableData.getTypeDesc(), false);
+                }
                 fieldValues.add(column.getFieldValue(entry));
             }
 
@@ -127,4 +135,15 @@ public class JoinedEntry extends EntryPacket implements Serializable {
         return result;
     }
 
+    @Override
+    protected void readExternal(ObjectInput in, PlatformLogicalVersion version) throws IOException, ClassNotFoundException {
+        super.readExternal(in, version);
+        _entries = IOUtils.readEntryPacketArray(in);
+    }
+
+    @Override
+    protected void writeExternal(ObjectOutput out, PlatformLogicalVersion version) throws IOException {
+        super.writeExternal(out, version);
+        IOUtils.writeObjectArray(out, _entries);
+    }
 }
