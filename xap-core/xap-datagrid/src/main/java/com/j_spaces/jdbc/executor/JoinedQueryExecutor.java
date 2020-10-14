@@ -385,7 +385,7 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
                 if (_logger.isErrorEnabled()) {
                     _logger.error(e.getMessage(), e);
                 }
-                throw new SQLException("Failed to read objects: " + e.getMessage(), "GSP", -111);
+                throw new SQLException("Failed to read objects: " + e.getMessage(), "GSP", -111, e);
             }
 
             for (QueryTableData tableData : _tablesData) {

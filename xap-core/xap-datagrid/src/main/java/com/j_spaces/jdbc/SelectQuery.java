@@ -55,8 +55,6 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.*;
 
-import static com.j_spaces.jdbc.Join.JoinType.INNER;
-
 
 /**
  * This class handles the SELECT query logic.
@@ -90,6 +88,7 @@ public class SelectQuery extends AbstractDMLQuery {
     private boolean isSelectAll;
     private List<Join> joins;
     private boolean flattenResults;
+    private boolean allowedToUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.allowCollocatedJoin", "true"));
 
     public SelectQuery() {
         super();
@@ -99,7 +98,7 @@ public class SelectQuery extends AbstractDMLQuery {
     public void addTableWithAlias(Object table, String alias) {
         if (table instanceof String) {
             super.addTableWithAlias((String) table, alias);
-        } else if (table instanceof  SelectQuery){
+        } else if (table instanceof SelectQuery) {
             SelectQuery query = (SelectQuery) table;
             QueryTableData queryTableData = super.addTableWithAlias(alias, null);
             queryTableData.setSubQuery(query);
@@ -185,7 +184,15 @@ public class SelectQuery extends AbstractDMLQuery {
             // No where clause
 
             if (isJoined()) {
-                boolean collJoin = false;//isCollocatedJoin();
+                boolean collJoin = allowedToUseCollocatedJoin && isCollocatedJoin();
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Query will run as {}", (collJoin ? "collocated join" : "regular join"));
+                }
+                for (QueryTableData tablesDatum : getTablesData()) {
+                    if (tablesDatum.getSubQuery() != null && tablesDatum.getSubQuery() instanceof SelectQuery) {
+                        ((SelectQuery) tablesDatum.getSubQuery()).allowedToUseCollocatedJoin(collJoin);
+                    }
+                }
                 _executor = collJoin ? new CollocatedJoinedQueryExecutor(this) : new JoinedQueryExecutor(this);
 
                 entries = executeJoinedQuery(space, txn);
@@ -296,39 +303,71 @@ public class SelectQuery extends AbstractDMLQuery {
         }
         return packet;
     }
-    private boolean isCollocatedJoin() {
-        List<String> refTableNames = Arrays.asList(System.getProperty("com.gs.sql.refTables").split(","));
-        List<QueryTableData> shardedTables = new ArrayList<>();
-        List<QueryTableData> refTables = new ArrayList<>();
 
-        List<QueryTableData> tablesInQuery = getJoinTables();
-        for (QueryTableData queryTableData : tablesInQuery) {
-            if (refTableNames.contains(queryTableData.getTableName())) {
-                refTables.add(queryTableData);
+    private boolean isCollocatedJoin() {
+        List<String> refTableNames = Optional.ofNullable(System.getProperty("com.gs.jdbc.refTableNames", null)).map(x -> Arrays.asList(x.split(","))).orElse(Collections.emptyList());
+        if (joins == null || joins.size() == 0) return false;
+
+        if (isAllRefTable(refTableNames)) return true;
+
+        if (isMaxOneShardedTable(refTableNames)) return true;
+
+        return isJoinOnRouting(refTableNames);
+    }
+
+    private boolean isMaxOneShardedTable(List<String> refTables) {
+        List<QueryTableData> shardedTables = new ArrayList<>();
+
+        for (QueryTableData tablesDatum : getTablesData()) {
+            if (tablesDatum.getSubQuery() == null) {
+                if (!refTables.contains(tablesDatum.getTableName()))
+                    shardedTables.add(tablesDatum); //regular table not in refTables => add to list
+            } else if (tablesDatum.getSubQuery() instanceof SelectQuery) {
+                if (!((SelectQuery) tablesDatum.getSubQuery()).isAllRefTable(refTables))
+                    shardedTables.add(tablesDatum); // subQuery that not all is RefTable => add to list
             } else {
-                shardedTables.add(queryTableData);
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Could not check if has max of one sharded table as subQuery is not of type SelectQuery: " + tablesDatum.toString());
+                return false;
             }
         }
 
-        if (shardedTables.size() > 1) {
-            return isJoinOnRouting(refTableNames);
+        return shardedTables.size() <= 1;
+    }
+
+    private boolean isAllRefTable(List<String> refTables) {
+        for (QueryTableData tablesDatum : getTablesData()) {
+            if (tablesDatum.getSubQuery() == null) { //regular table with name
+                if (!refTables.contains(tablesDatum.getTableName())) return false; //table is not refTable
+            } else if (tablesDatum.getSubQuery() instanceof SelectQuery) {
+                if (!((SelectQuery) tablesDatum.getSubQuery()).isAllRefTable(refTables))
+                    return false; //recursively check subQuery
+            } else {
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Could not check for refTable as subQuery is not of type SelectQuery: " + tablesDatum.toString());
+                return false;
+            }
         }
         return true;
     }
 
     private boolean isJoinOnRouting(List<String> refTableNames) {
-        if (joins == null) return true;
+        if (joins == null) return isJoinOnRouting(this.expTree, this);
 
         for (Join join : joins) {
-            if (join.getSubQuery() == null) {
+            Query subQuery = join.getSubQuery();
+            if (subQuery == null) {
                 if (!refTableNames.contains(join.getTableName())) { // if not ref table
-                    if (!isJoinOnRouting(join.getOnExpression(), (SelectQuery)join.getSubQuery())) return false; // if ON is not on routing key
+                    if (!isJoinOnRouting(join.getOnExpression(), null/*(SelectQuery) join.getSubQuery()*/))
+                        return false; // if ON is not on routing key
                 }
-            } else if (join.getSubQuery() instanceof SelectQuery) {
-                SelectQuery q = (SelectQuery) join.getSubQuery();
-                if (!isJoinOnRouting(join.getOnExpression(), q)) return false;
+            } else if (subQuery instanceof SelectQuery) {
+                SelectQuery selectSubQuery = (SelectQuery) subQuery;
+                if (!isJoinOnRouting(join.getOnExpression(), selectSubQuery)) return false;
             } else {
-                throw new UnsupportedOperationException(); //TODO
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Unable to detect if join is on routing - unsupported subquery type: {}", subQuery.getClass().getName());
+                return false;
             }
         }
         return true;
@@ -346,99 +385,64 @@ public class SelectQuery extends AbstractDMLQuery {
 
                 String leftNodeJoinOn = leftNode.getColumnData().getColumnName();
                 ITypeDesc leftNodeTypeDesc = leftNode.getColumnData().getColumnTableData().getTypeDesc();
+                if (leftNodeTypeDesc == null) { // try to resolve it from subquery
+                    SelectQuery selectQuery = (SelectQuery) leftNode.getColumnData().getColumnTableData().getSubQuery();
+                    if (selectQuery == null) return false;
+
+                    Optional<SelectColumn> selectColumn = selectQuery.getQueryColumns().stream().filter(qc -> (qc.hasAlias() ? qc.getAlias() : qc.getName()).equals(leftNodeJoinOn)).findFirst();
+                    if (!selectColumn.isPresent()) {
+                        return false;
+                    }
+                    if (selectColumn.get().isAggregatedFunction()) {
+                        //TODO can be supported in some cases
+                        return false;
+                    }
+
+                    leftNodeTypeDesc = selectColumn.get().getColumnTableData().getTypeDesc();
+                    if (leftNodeTypeDesc == null) {
+                        if (_logger.isDebugEnabled())
+                            _logger.debug("Unable to detect typedescriptor for left node " + leftNodeJoinOn);
+                        return false;
+                    }
+                }
 
                 String rightNodeJoinOn = rightNode.getColumnData().getColumnName();
                 ITypeDesc rightNodeTypeDesc = rightNode.getColumnData().getColumnTableData().getTypeDesc();
-                if (rightNodeTypeDesc == null) {
-                    rightNodeTypeDesc = subQuery.getQueryColumns().stream().filter(qc -> qc.getName().equals(rightNodeJoinOn)).findFirst().get().getColumnTableData().getTypeDesc();
+                if (rightNodeTypeDesc == null) { // try to resolve it from subquery
+                    SelectQuery selectQuery = (SelectQuery) rightNode.getColumnData().getColumnTableData().getSubQuery();
+                    if (selectQuery == null) return false;
+
+                    Optional<SelectColumn> selectColumn = selectQuery.getQueryColumns().stream().filter(qc -> (qc.hasAlias() ? qc.getAlias() : qc.getName()).equals(rightNodeJoinOn)).findFirst();
+                    if (!selectColumn.isPresent()) {
+                        return false;
+                    }
+                    if (selectColumn.get().isAggregatedFunction()) {
+                        return true;
+                    }
+
+                    rightNodeTypeDesc = selectColumn.get().getColumnTableData().getTypeDesc();
                 }
 
+                if (rightNodeTypeDesc == null) {
+                    if (_logger.isDebugEnabled())
+                        _logger.debug("Unable to detect typedescriptor for right node " + rightNodeJoinOn);
+                    return false;
+                }
 
                 boolean isLeftNodeJoinOnRouting = leftNodeJoinOn.equals(leftNodeTypeDesc.getRoutingPropertyName());
                 boolean isRightNodeJoinOnRouting = rightNodeJoinOn.equals(rightNodeTypeDesc.getRoutingPropertyName());
                 return isLeftNodeJoinOnRouting && isRightNodeJoinOnRouting;
             } else {
-                throw new UnsupportedOperationException("Unsupported left and right nodes type"); //TODO
+                if (_logger.isDebugEnabled())
+                    _logger.debug("Unable to detect if join is on routing - Unsupported left and right nodes types [{}, {}]",left.getClass().getName(), right.getClass().getName());
+                return false;
             }
         } else {
-            throw new UnsupportedOperationException("Unsupported for non AndNode and EqualNode"); //TODO
+            if (_logger.isDebugEnabled())
+                _logger.debug("Unable to detect if join is on routing - Unsupported for non AndNode and EqualNode. Got: [{}]", expNode.getClass().getName());
+            return false;
         }
     }
-
-    private List<Join> getJoins() {
-        if (joins == null) return Collections.emptyList();
-
-        List<Join> allJoins = new ArrayList<>(joins);
-        for (Join join : joins) {
-            if (join.getSubQuery() != null && join.getSubQuery() instanceof SelectQuery) {
-                allJoins.addAll(((SelectQuery)join.getSubQuery()).getJoins());
-            }
-        }
-
-        return allJoins;
-    }
-
-    private List<QueryTableData> getJoinTables() {
-        List<QueryTableData> list = new ArrayList<>();
-
-        for (QueryTableData tablesDatum : _tablesData) {
-            if (tablesDatum.getSubQuery() == null) {
-                list.add(tablesDatum);
-            } else {
-                if (tablesDatum.getSubQuery() instanceof SelectQuery) {
-                    list.addAll(((SelectQuery)tablesDatum.getSubQuery()).getJoinTables());
-                } else {
-                    throw new UnsupportedOperationException();
-                }
-            }
-        }
-        return list;
-    }
-
-    private boolean isCollocatedJoinOld() {
-        List<String> refTableNames = Arrays.asList(System.getProperty("com.gs.sql.refTables").split(","));
-
-        List<QueryTableData> shardedTables = new ArrayList<>();
-        List<QueryTableData> refTables = new ArrayList<>();
-
-        _tablesData.forEach(queryTableData -> {
-            if (refTableNames.contains(queryTableData.getTableName())) {
-                refTables.add(queryTableData);
-            } else {
-                shardedTables.add(queryTableData);
-            }
-        });
-
-        if (shardedTables.size() > 1) {
-            for (Join join : joins) {
-                ColumnNode leftNode = (ColumnNode) join.getOnExpression().getLeftChild();
-                ColumnNode rightNode = (ColumnNode) join.getOnExpression().getRightChild();
-
-                String leftNodeJoinOn = leftNode.getColumnData().getColumnName();
-                String rightNodeJoinOn = rightNode.getColumnData().getColumnName();
-
-                boolean isLeftNodeJoinOnRouting = leftNodeJoinOn.equals(leftNode.getColumnData().getColumnTableData().getTypeDesc().getRoutingPropertyName());
-                if (!isLeftNodeJoinOnRouting) return false;
-
-                if (join.getSubQuery() == null) {
-                    if (!rightNodeJoinOn.equals(rightNode.getColumnData().getColumnTableData().getTypeDesc().getRoutingPropertyName())) {
-                        return false;
-                    }
-                } else {
-                    SelectQuery subQuery = (SelectQuery) join.getSubQuery();
-                    if (!rightNodeJoinOn.equals(subQuery.getTableData().getTypeDesc().getRoutingPropertyName())) {
-                        return false;
-                    }
-                    if (!subQuery.isCollocatedJoin()) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
-    }
-
 
     /**
      * @throws SQLException
@@ -484,7 +488,6 @@ public class SelectQuery extends AbstractDMLQuery {
 
     /**
      * @throws SQLException
-     *
      */
     private void orderBy(IQueryResultSet<IEntryPacket> entries) throws SQLException {
         _executor.orderBy(entries, orderColumns);
@@ -777,7 +780,7 @@ public class SelectQuery extends AbstractDMLQuery {
         }
 
         query.queryColumns = new ArrayList(numOfColumns);
-        if(numOfColumns != 0) {
+        if (numOfColumns != 0) {
             for (SelectColumn col : this.getQueryColumns()) {
                 if (!col.isDynamic()) {
                     query.queryColumns.add(col);
@@ -891,7 +894,7 @@ public class SelectQuery extends AbstractDMLQuery {
         if (Modifiers.contains(getReadModifier(), Modifiers.RETURN_STRING_PROPERTIES) || (Modifiers.contains(getReadModifier(), Modifiers.RETURN_DOCUMENT_PROPERTIES))) {
             if (isOrderBy()) {
                 for (SelectColumn column : orderColumns) {
-                    if (!isCommonJavaType( column )) {
+                    if (!isCommonJavaType(column)) {
                         QueryColumnData columnData = column.getColumnData();
                         int propertyIndex = columnData.getColumnIndexInTable();
                         throw new UnsupportedOperationException(
@@ -903,7 +906,7 @@ public class SelectQuery extends AbstractDMLQuery {
             }
             if (isGroupBy()) {
                 for (SelectColumn column : groupColumn) {
-                    if (!isCommonJavaType( column )) {
+                    if (!isCommonJavaType(column)) {
                         QueryColumnData columnData = column.getColumnData();
                         int propertyIndex = columnData.getColumnIndexInTable();
                         throw new UnsupportedOperationException(
@@ -916,7 +919,7 @@ public class SelectQuery extends AbstractDMLQuery {
     }
 
     //fix for GS-13451, GS-13537
-    private static boolean isCommonJavaType(SelectColumn column){
+    private static boolean isCommonJavaType(SelectColumn column) {
         QueryColumnData columnData = column.getColumnData();
         int propertyIndex = columnData.getColumnIndexInTable();
 
@@ -926,48 +929,45 @@ public class SelectQuery extends AbstractDMLQuery {
 
         //if path is not simple, i.e. has delimiters
         //for example possible value here can be: teamMemberKey.contractMonth
-        if( columnPath.contains( "." ) ) {
+        if (columnPath.contains(".")) {
             try {
                 Class<?> type = getFieldClassType(columnData);
                 commonJavaType = ReflectionUtils.isCommonJavaType(type) || type.isEnum();
-            }
-            catch( NoSuchFieldException e ){
-                if( _logger.isWarnEnabled()){
-                    _logger.warn("Field [" + columnPath + "] does not exist", e );
+            } catch (NoSuchFieldException e) {
+                if (_logger.isWarnEnabled()) {
+                    _logger.warn("Field [" + columnPath + "] does not exist", e);
+                }
+            } catch (Exception e) {
+                if (_logger.isErrorEnabled()) {
+                    _logger.error("Failed verifying common Java type for [" + columnPath + "]", e);
                 }
             }
-            catch( Exception e ){
-                if( _logger.isErrorEnabled()){
-                    _logger.error("Failed verifying common Java type for [" + columnPath + "]", e );
-                }
-            }
-        }
-        else {
+        } else {
             PropertyInfo propertyInfo =
                     columnData.getColumnTableData().getTypeDesc().getProperties()[propertyIndex];
             commonJavaType = propertyInfo.isCommonJavaType() ||
-                    ( propertyInfo.getType() != null && propertyInfo.getType().isEnum() );
+                    (propertyInfo.getType() != null && propertyInfo.getType().isEnum());
         }
 
         return commonJavaType;
     }
 
     //fix for GS-13451
-    private static Class<?> getFieldClassType( QueryColumnData columnData ) throws NoSuchFieldException{
+    private static Class<?> getFieldClassType(QueryColumnData columnData) throws NoSuchFieldException {
 
         //for example columnPath has value "teamMemberKey.contractMonth"
         String columnPath = columnData.getColumnPath();
         String[] paths = columnPath.split("\\.");
         Class<?> fieldClassType = null;
-        for( String path : paths ){
+        for (String path : paths) {
 
-            if( fieldClassType == null ) {
+            if (fieldClassType == null) {
                 fieldClassType = columnData.getColumnTableData().getTypeDesc().getObjectClass();
             }
             //for example: for first loop iteration at this point fieldClassType has value: class teammember.TeamMemberInfo
             //path has value "teamMemberKey"
 
-            fieldClassType = fieldClassType.getDeclaredField( path ).getType();
+            fieldClassType = fieldClassType.getDeclaredField(path).getType();
             //for example: for first loop iteration at this point fieldClassType has value: class class teammember.TeamMemberKey
         }
 
@@ -1034,13 +1034,12 @@ public class SelectQuery extends AbstractDMLQuery {
 
     /**
      * @throws SQLException
-     *
      */
     private void addAbsentColumns() throws SQLException {
         ITypeDesc info;
         if (isAddAbsentCol) {
             QueryTableData tableData = getTableData();
-            if(tableData.getTypeDesc() != null) {
+            if (tableData.getTypeDesc() != null) {
                 info = tableData.getTypeDesc();
                 for (int c = 0; c < info.getNumOfFixedProperties(); c++) {
                     boolean found = false;
@@ -1060,16 +1059,15 @@ public class SelectQuery extends AbstractDMLQuery {
                         getQueryColumns().add(newColumn);
                     }
                 }
-            }
-            else if(tableData.getSubQuery() != null){
+            } else if (tableData.getSubQuery() != null) {
                 //TODO consider treating this
-            }
-            else
-                throw  new IllegalStateException("NO table name an d no sub query");
+            } else
+                throw new IllegalStateException("NO table name an d no sub query");
         }
     }
 
     /**
+     *
      */
     private void validateNotifyQuery() throws SQLException {
         if (isJoined())
@@ -1111,7 +1109,7 @@ public class SelectQuery extends AbstractDMLQuery {
         int size = getEntriesLimit();
 
         QueryTableData tableData = getTableData();
-        if(tableData.getSubQuery() != null){
+        if (tableData.getSubQuery() != null) {
             return tableData.executeSubQuery(space, txn, true);
         }
         QueryTemplatePacket template = new QueryTemplatePacket(tableData, _queryResultType);
@@ -1257,7 +1255,7 @@ public class SelectQuery extends AbstractDMLQuery {
         for (QueryTableData tableData : getTablesData()) {
 
             if (tableData.hasAsterixSelectColumns()
-                    && tableData.getTypeDesc().supportsDynamicProperties()) {
+                    && tableData.supportsDynamicProperties()) {
                 dynamicPropertiesTables
                         .put(tableData.getTableName(), tableData);
                 dynamicColumnsMap.put(tableData,
@@ -1317,5 +1315,9 @@ public class SelectQuery extends AbstractDMLQuery {
 
     public void setFlattenResults(boolean flattenResults) {
         this.flattenResults = flattenResults;
+    }
+
+    private void allowedToUseCollocatedJoin(boolean allowedToUseCollocatedJoin) {
+        this.allowedToUseCollocatedJoin = allowedToUseCollocatedJoin;
     }
 }
