@@ -29,6 +29,7 @@ import com.j_spaces.jdbc.query.QueryTableData;
 
 import net.jini.core.transaction.Transaction;
 
+import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.TreeMap;
@@ -41,7 +42,7 @@ import java.util.function.Consumer;
  * @author Michael Mitrani, 2Train4
  */
 public abstract class ExpNode
-        implements Cloneable {
+        implements Cloneable, Serializable {
 
     protected ExpNode leftChild, rightChild;
 
