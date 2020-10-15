@@ -431,7 +431,7 @@ public class EntryPacket extends AbstractEntryPacket {
     }
 
     @Override
-    public boolean isNullFieldValues() {
+    public boolean allNullFieldValues() {
         return _fixedProperties == null && binaryFields == null;
     }
 }

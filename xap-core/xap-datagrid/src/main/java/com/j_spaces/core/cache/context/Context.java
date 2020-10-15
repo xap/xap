@@ -1026,7 +1026,7 @@ public class Context {
         if (template.getAfterOpFilterCode() >= 0 && template.getFilterManager()._isFilter[template.getAfterOpFilterCode()]) {
             if (entryPacket != null) {
                 //protect against nullifying of properties by filters
-                if (entryPacket.hasFixedPropertiesArray() && entryPacket.isNullFieldValues()) {
+                if (entryPacket.hasFixedPropertiesArray() && !entryPacket.allNullFieldValues()) {
                     Object[] src = entryPacket.getFieldValues();
                     Object[] target = new Object[src.length];
                     System.arraycopy(src, 0, target, 0, src.length);
@@ -1051,7 +1051,7 @@ public class Context {
             } else {//batch op filter
                 if (template.isBatchOperation() && ex == null && template.getBatchOperationContext().hasAnyEntries() && !template.isInitiatedEvictionOperation() && template.getBatchOperationContext().getResults() != null) {
                     for (IEntryPacket curep : template.getBatchOperationContext().getResults()) {
-                        if (curep != null && curep.hasFixedPropertiesArray() && curep.isNullFieldValues()) {
+                        if (curep != null && curep.hasFixedPropertiesArray() && !curep.allNullFieldValues()) {
                             Object[] src = curep.getFieldValues();
                             Object[] target = new Object[src.length];
                             System.arraycopy(src, 0, target, 0, src.length);
