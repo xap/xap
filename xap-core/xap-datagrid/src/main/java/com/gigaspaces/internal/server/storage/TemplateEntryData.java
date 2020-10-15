@@ -227,9 +227,11 @@ public class TemplateEntryData implements IEntryData {
     }
 
     private boolean isNullTemplate() {
-        for (Object fieldsValue : _fieldsValues) {
-            if(fieldsValue != null){
-                return false;
+        if(_fieldsValues != null) {
+            for (Object fieldsValue : _fieldsValues) {
+                if (fieldsValue != null) {
+                    return false;
+                }
             }
         }
         return _customQuery == null && _extendedMatchCodes == null;
