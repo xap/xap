@@ -69,7 +69,7 @@ public interface IEntryPacket extends ITransportPacket, ISwapExternalizable, Raw
     }
 
     default boolean isNullFieldValues() {
-        return getFieldValues() != null;
+        return getFieldValues() == null;
     }
 
 }

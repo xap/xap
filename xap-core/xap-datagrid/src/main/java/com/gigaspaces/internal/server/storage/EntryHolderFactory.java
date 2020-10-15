@@ -19,7 +19,6 @@ package com.gigaspaces.internal.server.storage;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
-import com.gigaspaces.internal.metadata.TypeDesc;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.transport.IEntryPacket;
@@ -134,12 +133,8 @@ public class EntryHolderFactory {
         if (entryDataType == EntryDataType.FLAT) {
             ClassBinaryStorageAdapter adapter = (entryTypeDesc.getTypeDesc()).getClassBinaryStorageAdapter();
             if (adapter != null) {
-                if (entryPacket.getDynamicProperties() == null || entryPacket.getDynamicProperties().isEmpty()) {
-                    return new BinaryEntryData(entryPacket.getFieldValues(),
-                            entryTypeDesc, version, lease, entryXtnInfo);
-                } else {
-                    throw new UnsupportedOperationException("SpaceClassStorageAdapter annotation does not support dynamic properties");
-                }
+                return new BinaryEntryData(entryPacket.getFieldValues(),entryPacket.getDynamicProperties(),
+                        entryTypeDesc, version, lease, entryXtnInfo);
             } else {
                 return new FlatEntryData(entryPacket.getFieldValues(), entryPacket.getDynamicProperties(),
                         entryTypeDesc, version, lease, entryXtnInfo);

@@ -21,7 +21,7 @@ public class ViewEntryData implements IEntryData {
 
     private static Logger logger = LoggerFactory.getLogger(ViewEntryData.class);
     private IEntryData entry;
-    private Object[] fixedProperties;
+    protected Object[] fixedProperties;
     private Map<String, Object> dynamicProperties;
 
     public void view(IEntryData entryData) {
@@ -69,6 +69,10 @@ public class ViewEntryData implements IEntryData {
     @Override
     public Map<String, Object> getDynamicProperties() {
         return dynamicProperties;
+    }
+
+    public IEntryData getEntry() {
+        return entry;
     }
 
     @Override

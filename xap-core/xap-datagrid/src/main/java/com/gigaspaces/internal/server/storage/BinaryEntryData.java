@@ -39,16 +39,17 @@ public class BinaryEntryData implements ITransactionalEntryData {
     private byte[] serializedFields;
     private Map<String, Object> _dynamicProperties;
 
-    public BinaryEntryData(Object[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
-        this(serializeFields(fieldsValues, entryTypeDesc.getTypeDesc()), entryTypeDesc, version, expirationTime, entryXtnInfo);
+    public BinaryEntryData(Object[] fieldsValues, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
+        this(serializeFields(fieldsValues, entryTypeDesc.getTypeDesc()), dynamicProperties, entryTypeDesc, version, expirationTime, entryXtnInfo);
     }
 
-    public BinaryEntryData(byte[] fieldsValues, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
+    public BinaryEntryData(byte[] fieldsValues, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
         this._entryTypeDesc = entryTypeDesc;
         this._versionID = version;
         this._expirationTime = expirationTime;
         this._entryTxnInfo = entryXtnInfo;
         this.serializedFields = fieldsValues;
+        this._dynamicProperties = dynamicProperties;
     }
 
     private static byte[] serializeFields(Object[] fieldsValues, ITypeDesc typeDesc) {
@@ -81,14 +82,19 @@ public class BinaryEntryData implements ITransactionalEntryData {
 
     @Override
     public ITransactionalEntryData createCopy(int newVersion, long newExpiration, EntryXtnInfo newEntryXtnInfo, boolean shallowCloneData) {
-        byte[] data = shallowCloneData ? Arrays.copyOf(this.serializedFields, this.serializedFields.length) : serializedFields;
-        return new BinaryEntryData(data, this._entryTypeDesc, newVersion, newExpiration, newEntryXtnInfo);
+        byte[] data = shallowCloneData ? serializedFields : this.serializedFields.clone() ;
+        return new BinaryEntryData(data,_dynamicProperties, this._entryTypeDesc, newVersion, newExpiration, newEntryXtnInfo);
     }
 
     @Override
     public ITransactionalEntryData createCopy(IEntryData newEntryData, long newExpirationTime) {
-        return new BinaryEntryData(newEntryData.getFixedPropertiesValues(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime,
-                copyTxnInfo(false, false));
+        if(newEntryData instanceof BinaryEntryData){
+            return new BinaryEntryData(((BinaryEntryData) newEntryData).getSerializedFields(),newEntryData.getDynamicProperties(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime,
+                    copyTxnInfo(false, false));
+        } else {
+            return new BinaryEntryData(newEntryData.getFixedPropertiesValues(),newEntryData.getDynamicProperties(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime,
+                    copyTxnInfo(false, false));
+        }
     }
 
     @Override
@@ -172,5 +178,9 @@ public class BinaryEntryData implements ITransactionalEntryData {
 
     public byte[] getSerializedFields() {
         return serializedFields;
+    }
+
+    public void setSerializedFields(byte[] serializedFields) {
+        this.serializedFields = serializedFields;
     }
 }
