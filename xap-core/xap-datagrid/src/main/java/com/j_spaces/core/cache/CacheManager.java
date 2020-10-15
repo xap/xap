@@ -1539,14 +1539,27 @@ public class CacheManager extends AbstractCacheManager
                 edata.createShallowClonedCopyWithSuppliedVersionAndExpiration(versionID, template.getChangeExpiration()) :
                 edata.createShallowClonedCopyWithSuppliedVersion(versionID);
 
-        MutableViewEntryData mutableViewEntryData = new MutableViewEntryData();
-        mutableViewEntryData.view(udata);
+        if (udata instanceof BinaryEntryData) {
+            MutableViewEntryData mutableViewEntryData = new MutableViewEntryData();
+            mutableViewEntryData.view(udata);
+            applyChangeMutators(context, template, mutableViewEntryData);
+            udata.setFixedPropertyValues(mutableViewEntryData.getFixedPropertiesValues());
+        } else {
+            applyChangeMutators(context, template, udata);
+        }
 
+        return EntryHolderFactory.createEntryHolder(currentEntry.getServerTypeDesc(),
+                udata,
+                currentEntry.getUID(),
+                currentEntry.isTransient());
+    }
+
+    private void applyChangeMutators(Context context, ITemplateHolder template, ITransactionalEntryData entryData) {
         List<Object> results = null;
         try {
             int i = 0;
             for (SpaceEntryMutator mutator : template.getMutators()) {
-                Object result = mutator.change(mutableViewEntryData);
+                Object result = mutator.change(entryData);
                 if (Modifiers.contains(template.getOperationModifiers(), Modifiers.RETURN_DETAILED_CHANGE_RESULT)) {
                     if (result != null) {//set returned result list on a need-to basis
                         if (results == null) {
@@ -1566,13 +1579,6 @@ public class CacheManager extends AbstractCacheManager
             throw new ChangeInternalException(e);
         }
         context.setChangeResultsForCurrentEntry(results);  //set for this entry
-
-        udata.setFixedPropertyValues(mutableViewEntryData.getFixedPropertiesValues());
-
-        return EntryHolderFactory.createEntryHolder(currentEntry.getServerTypeDesc(),
-                udata,
-                currentEntry.getUID(),
-                currentEntry.isTransient());
     }
 
     /**
