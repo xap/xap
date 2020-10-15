@@ -205,15 +205,18 @@ public class EntryPacketFactory {
             case EXTERNAL_ENTRY:
                 final String eeImplClassName = template != null ? template.getExternalEntryImplClassName() : null;
                 return new ExternalEntryPacket(typeDesc, entryType, fixedProperties,
-                        uid, entryData.getVersion(), timeToLive, isTransient, eeImplClassName);
+                        uid, entryData.getVersion(), timeToLive, isTransient, eeImplClassName, binaryFields);
 
             case OBJECT_DOTNET:
             case CPP:
             case PBS_OLD:
-                return new PbsEntryPacket(typeDesc, entryType, fixedProperties, entryData.getDynamicProperties(),
+                return new PbsEntryPacket(typeDesc, entryType,
+                        fixedProperties == null && binaryFields != null ? entryData.getFixedPropertiesValues() : fixedProperties,
+                        entryData.getDynamicProperties(),
                         uid, entryData.getVersion(), timeToLive, isTransient);
 
             case DOCUMENT_DOTNET:
+                fixedProperties = (fixedProperties == null && binaryFields != null) ? entryData.getFixedPropertiesValues() : fixedProperties;
                 Map<String, Object> dynamicProperties = entryData.getDynamicProperties();
                 if (entryType != EntryType.DOCUMENT_DOTNET && entryType != EntryType.OBJECT_DOTNET) {
                     fixedProperties = DocumentObjectConverterInternal.instance().convertNonPrimitiveFixedPropertiesToDocuments(fixedProperties, typeDesc);
