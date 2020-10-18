@@ -473,6 +473,8 @@ public class SystemProperties extends CommonSystemProperties {
     public final static String MAX_HEAPS_ON_MEMORY_SHORTAGE = "com.gs.memory.max-heaps-on-memory-shortage";
     public final static String HEAPS_ON_MEMORY_SHORTAGE_QUIET_PERIOD = "com.gs.memory.heaps-on-memory-shortage-quiet-period";
 
+    public final static String JMX_REMOTE_PORT_RANGE_START = "com.gs.jmxremote.port-range.start";
+
     /**
      * Default value of JMX supporting
      */
