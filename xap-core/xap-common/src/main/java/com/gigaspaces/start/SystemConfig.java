@@ -902,7 +902,7 @@ public class SystemConfig {
                     if (mbs != null) {
                         String publicHostAddress = SystemInfo.singleton().network().getPublicHostId();
                         final String jmxServiceURL = JMXUtilities.createJMXUrl(hostAddress, jmxRemotePort);
-                        final String jmxServicePublicURL = JMXUtilities.createJMXUrl(publicHostAddress, registryPort);
+                        final String jmxServicePublicURL = JMXUtilities.createJMXUrl(publicHostAddress, jmxRemotePort);
                         /* Set the JMX property to true */
                         System.setProperty(CommonSystemProperties.JMX_ENABLED_PROP, Boolean.TRUE.toString());
                         System.setProperty(CommonSystemProperties.CREATE_JMX_CONNECTOR_PROP, Boolean.FALSE.toString());
