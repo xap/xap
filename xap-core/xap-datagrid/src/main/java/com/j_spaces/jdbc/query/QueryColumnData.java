@@ -159,10 +159,21 @@ public class QueryColumnData implements Serializable {
         }
         Query subQuery = tableData.getSubQuery();
         if (subQuery != null) {
-            SelectColumn col = getSubQueryColumnByName(subQuery, columnName);
-            if (col == null)
+            if (subQuery instanceof SelectQuery) {
+                List<SelectColumn> subQueryColumns = ((SelectQuery) subQuery).getQueryColumns();
+                int colIndex = 0;
+                for (SelectColumn subQueryColumn : subQueryColumns) {
+                    if (subQueryColumn.hasAlias() ? subQueryColumn.getAlias().equals(columnName) : subQueryColumn.getName().equals(columnName)) {
+                        return colIndex;
+                    }
+                    if (subQueryColumn.isVisible()) {
+                        colIndex++;
+                    }
+                }
                 throw new IllegalArgumentException("Unknown column [" + columnName + "] in table [" + tableData.getTableName() + "]");
-            return col.getColumnIndexInTable();
+            } else {
+                throw new IllegalStateException("Unsupported subquery class: " + subQuery.getClass());
+            }
         }
         throw new IllegalStateException("QueryTableData does not have type descriptor for table [" + tableData.getTableName() + "]");
     }
@@ -202,7 +213,9 @@ public class QueryColumnData implements Serializable {
         Query subQuery = tableData.getSubQuery();
         if (subQuery != null) {
             SelectColumn col = getSubQueryColumnByName(subQuery, columnPath);
-            return col != null ? new QueryColumnData(tableData, columnPath) : null;
+            if (col == null || !col.isVisible()) return null;
+            String colName = col.hasAlias() ? col.getAlias() : col.toString();
+            return new QueryColumnData(tableData, col.isAggregatedFunction() ? colName : columnPath);
         }
         throw new IllegalStateException("QueryTableData does not have type descriptor for table [" + tableData.getTableName() + "]");
     }
@@ -211,7 +224,7 @@ public class QueryColumnData implements Serializable {
         if (subQuery instanceof SelectQuery) {
             List<SelectColumn> subQueryColumns = ((SelectQuery) subQuery).getQueryColumns();
             for (SelectColumn subQueryColumn : subQueryColumns) {
-                if (subQueryColumn.getName().equals(columnName))
+                if (subQueryColumn.hasAlias() ? subQueryColumn.getAlias().equals(columnName): subQueryColumn.getName().equals(columnName))
                     return subQueryColumn;
             }
             return null;
