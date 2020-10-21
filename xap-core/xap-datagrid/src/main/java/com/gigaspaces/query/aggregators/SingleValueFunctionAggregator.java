@@ -17,22 +17,26 @@
 
 package com.gigaspaces.query.aggregators;
 
+import com.gigaspaces.internal.io.IOUtils;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.function.Function;
 
 /**
- * @author Anna Pavtulov
- * @since 10.0
+ * @author Alon Shoham
+ * @since 15.8.0
  */
-
 public class SingleValueFunctionAggregator<T extends Serializable & Comparable> extends AbstractPathAggregator<T> {
 
     private static final long serialVersionUID = 1L;
 
-    private transient T result;
-    private transient boolean isSet;
-    private transient Function<T,T> function;
-    private transient String functionName;
+    private T result;
+    private boolean isSet;
+    private Function<T,T> function;
+    private String functionName;
 
     public SingleValueFunctionAggregator(Function<T, T> function, String functionName) {
         super();
@@ -62,5 +66,27 @@ public class SingleValueFunctionAggregator<T extends Serializable & Comparable> 
     @Override
     public T getIntermediateResult() {
         return result;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        IOUtils.writeObject(out, result);
+        IOUtils.writeObject(out, isSet);
+        IOUtils.writeObject(out, function);
+        IOUtils.writeString(out, functionName);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        result = IOUtils.readObject(in);
+        isSet = IOUtils.readObject(in);
+        function = IOUtils.readObject(in);
+        functionName = IOUtils.readString(in);
+    }
+
+    public Function<T, T> getFunction() {
+        return function;
     }
 }
