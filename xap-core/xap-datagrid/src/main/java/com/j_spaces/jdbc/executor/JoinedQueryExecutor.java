@@ -311,6 +311,11 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
         if (root == null)
             return true;
 
+        // If entry is not full (i.e. left/right outer join), consider it matched.
+        // TODO: check if this is still valid when join has more than 2 tables.
+        if (_currentEntry.isOuterJoin())
+            return true;
+
         if (_traversalOrder != null) {
             for (int i = 0; i < _traversalOrder.length; i++) {
                 ExpNode node = _traversalOrder[i];

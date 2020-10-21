@@ -20,11 +20,13 @@
 package com.j_spaces.jdbc.executor;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.j_spaces.jdbc.Join;
 import com.j_spaces.jdbc.parser.ColumnNode;
 import com.j_spaces.jdbc.parser.ExpNode;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 import com.j_spaces.jdbc.query.QueryTableData;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -38,8 +40,8 @@ import java.util.List;
  * @since 7.1
  */
 @com.gigaspaces.api.InternalApi
-public class HashedEntriesCursor
-        implements EntriesCursor {
+public class HashedEntriesCursor implements EntriesCursor {
+    private static final List<IEntryPacket> SINGLE_NULL = Collections.singletonList(null);
     private HashMap<Object, List<IEntryPacket>> hashMap = new HashMap<Object, List<IEntryPacket>>();
 
     private QueryTableData _joinTable;
@@ -48,6 +50,8 @@ public class HashedEntriesCursor
     private ColumnNode _joinCol;
 
     private IEntryPacket _currentEntry;
+
+    private boolean leftJoin;
 
     /**
      * @param table
@@ -60,7 +64,7 @@ public class HashedEntriesCursor
         ColumnNode rightChild = (ColumnNode) indexNode.getRightChild();
 
         init(leftChild, rightChild, entries);
-
+        leftJoin = table.getJoinType() == Join.JoinType.LEFT;
     }
 
     /**
@@ -113,8 +117,11 @@ public class HashedEntriesCursor
             IEntryPacket joinEntryPacket = _joinTable.getCurrentEntry();
             List<IEntryPacket> match = getMatch(_joinCol, joinEntryPacket);
 
-            if (match == null)
-                return false;
+            if (match == null) {
+                if (!leftJoin)
+                    return false;
+                match = SINGLE_NULL;
+            }
             _cursor = match.iterator();
         }
 

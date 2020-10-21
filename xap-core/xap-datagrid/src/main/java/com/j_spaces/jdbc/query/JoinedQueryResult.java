@@ -52,7 +52,7 @@ public class JoinedQueryResult extends ArrayListResult {
     public Object getFieldValue(SelectColumn column, IEntryPacket entryPacket) {
         JoinedEntry je = (JoinedEntry) entryPacket;
         IEntryPacket actualEntry = je.getEntry(column.getColumnTableData().getTableIndex());
-        return column.getFieldValue(actualEntry);
+        return actualEntry != null ? column.getFieldValue(actualEntry) : null;
     }
 
     /* (non-Javadoc)
