@@ -293,12 +293,7 @@ public class QueryTableData implements Serializable {
 
         IQueryResultSet<IEntryPacket> tableEntries;
         if (subQuery != null) {
-            if (subQuery instanceof AbstractDMLQuery) {
-                // sub query results should be returned as entry packets and not converted.
-                ((AbstractDMLQuery)subQuery).setConvertResultToArray(false);
-            }
-            ResponsePacket rp = subQuery.executeOnSpace(space, txn);
-            tableEntries = (IQueryResultSet<IEntryPacket>) rp.getResultSet();
+            tableEntries = executeSubQuery(space, txn, false);
         } else {
             QueryTemplatePacket template = getTemplate(query.getQueryResultType());
             tableEntries = template.readMultiple(space, txn, Integer.MAX_VALUE, query.getReadModifier());
@@ -309,6 +304,16 @@ public class QueryTableData implements Serializable {
         else
             setEntriesCursor(new ScanCursor(tableEntries));
 
+    }
+
+    public IQueryResultSet<IEntryPacket> executeSubQuery(ISpaceProxy space, Transaction txn, boolean flatten) throws Exception{
+        if (subQuery instanceof AbstractDMLQuery) {
+            // sub query results should be returned as entry packets and not converted.
+            ((AbstractDMLQuery)subQuery).setConvertResultToArray(false);
+        }
+        ((SelectQuery) subQuery).setFlattenResults(flatten);
+        ResponsePacket rp = subQuery.executeOnSpace(space, txn);
+        return (IQueryResultSet<IEntryPacket>) rp.getResultSet();
     }
 
     /**

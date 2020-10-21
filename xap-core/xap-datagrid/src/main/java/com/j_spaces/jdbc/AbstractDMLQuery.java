@@ -306,9 +306,12 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
     public QueryTableData addTableWithAlias(String table, String alias) {
         QueryTableData tableData = new QueryTableData(table, alias, _tablesData.size());
         _tablesData.add(tableData);
-        if (alias != null)
+        if (alias != null) {
             tables.put(alias, tableData);
-        tables.put(table, tableData);
+        }
+        if(table != null) {
+            tables.put(table, tableData);
+        }
         return tableData;
     }
 
@@ -529,14 +532,15 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
     @Override
     public void validateQuery(ISpaceProxy space) throws SQLException {
         for (QueryTableData tableData : _tablesData) {
-            // Skip validations for sub queries (already validated)
             if (tableData.getSubQuery() != null)
-                continue;
-            ITypeDesc typeDesc = tableData.getTypeDesc();
-            if (typeDesc == null) {
-                String tableName = tableData.getTableName();
-                typeDesc = SQLUtil.checkTableExistence(tableName, space);
-                tableData.setTypeDesc(typeDesc);
+                tableData.getSubQuery().validateQuery(space);
+            else {
+                ITypeDesc typeDesc = tableData.getTypeDesc();
+                if (typeDesc == null) {
+                    String tableName = tableData.getTableName();
+                    typeDesc = SQLUtil.checkTableExistence(tableName, space);
+                    tableData.setTypeDesc(typeDesc);
+                }
             }
         }
     }
