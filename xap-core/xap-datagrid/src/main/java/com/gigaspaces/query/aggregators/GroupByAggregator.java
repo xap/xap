@@ -225,4 +225,8 @@ public class GroupByAggregator extends SpaceEntriesAggregator<GroupByResult> imp
         this.groupByPaths = IOUtils.readStringArray(in);
         this.aggregators = IOUtils.readObject(in);
     }
+
+    public List<SpaceEntriesAggregator> getAggregators() {
+        return aggregators;
+    }
 }

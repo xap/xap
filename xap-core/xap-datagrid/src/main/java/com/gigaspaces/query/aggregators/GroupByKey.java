@@ -19,7 +19,9 @@ package com.gigaspaces.query.aggregators;
 
 import com.gigaspaces.query.CompoundResult;
 
+import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Niv Ingberg
@@ -47,7 +49,26 @@ public class GroupByKey extends CompoundResult {
     protected boolean initialize(String[] groupByPaths, SpaceEntriesAggregatorContext context) {
         hashCode = 0;
         for (int i = 0; i < groupByPaths.length; i++) {
-            values[i] = context.getPathValue(groupByPaths[i]);
+            String groupByPath = groupByPaths[i];
+
+            //Loop over the aggregators in select clause and find the relevant one by path.
+            Collection<SpaceEntriesAggregator> aggregators = context.getAggregators(); // in case of GroupBy there is one in this list.
+            for (SpaceEntriesAggregator aggregator : aggregators) {
+                if (aggregator instanceof GroupByAggregator) {
+                    Optional<SingleValueFunctionAggregator> agg = ((GroupByAggregator) aggregator).getAggregators()
+                            .stream()
+                            .filter(x -> x instanceof SingleValueFunctionAggregator)
+                            .map(a -> (SingleValueFunctionAggregator)a)
+                            .filter(a -> groupByPath.equals(a.getPath()))
+                            .findFirst();
+                    if(agg.isPresent())
+                        values[i] = agg.get().apply(context.getPathValue(groupByPath));
+                    else
+                        values[i] = context.getPathValue(groupByPath);
+                    break;
+                }
+            }
+
             if (values[i] == null)
                 return false;
         }

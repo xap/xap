@@ -87,4 +87,8 @@ public abstract class SpaceEntriesAggregatorContext {
         for (SpaceEntriesAggregator aggregator : aggregators)
             aggregator.aggregate(this);
     }
+
+    public Collection<SpaceEntriesAggregator> getAggregators() {
+        return aggregators;
+    }
 }
