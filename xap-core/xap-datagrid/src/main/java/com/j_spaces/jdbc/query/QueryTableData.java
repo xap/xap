@@ -52,6 +52,7 @@ public class QueryTableData implements Serializable {
     private ExpNode _tableCondition;
 
     private QueryTableData _joinTable;
+    private Join.JoinType _joinType;
 
     //use thread local because this object is cached and used by several threads
     private transient ThreadLocal<EntriesCursor> _entriesCursor = new ThreadLocal<EntriesCursor>();
@@ -359,5 +360,13 @@ public class QueryTableData implements Serializable {
             throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         _entriesCursor = new ThreadLocal<EntriesCursor>();
+    }
+
+    public Join.JoinType getJoinType() {
+        return _joinType;
+    }
+
+    public void setJoinType(Join.JoinType _joinType) {
+        this._joinType = _joinType;
     }
 }

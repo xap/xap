@@ -86,6 +86,14 @@ public class JoinedEntry extends EntryPacket implements Serializable {
         return _entries.length;
     }
 
+    public boolean isOuterJoin() {
+        for (IEntryPacket entry : _entries) {
+            if (entry == null)
+                return true;
+        }
+        return false;
+    }
+
     /**
      * Create columns projection from the joined entries
      */
