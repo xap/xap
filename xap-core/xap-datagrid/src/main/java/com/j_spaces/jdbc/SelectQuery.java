@@ -875,6 +875,7 @@ public class SelectQuery extends AbstractDMLQuery {
         if (joins != null) {
             for (Join join : joins) {
                 QueryTableData table = addTableWithAlias(join.getTableName(), join.getAlias());
+                table.setJoinType(join.getJoinType());
                 if (join.getSubQuery() != null) {
                     table.setSubQuery(join.getSubQuery());
                     join.getSubQuery().validateQuery(space);
