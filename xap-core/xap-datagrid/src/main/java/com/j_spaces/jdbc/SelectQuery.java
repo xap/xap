@@ -1245,7 +1245,7 @@ public class SelectQuery extends AbstractDMLQuery {
         for (QueryTableData tableData : getTablesData()) {
 
             if (tableData.hasAsterixSelectColumns()
-                    && tableData.getTypeDesc().supportsDynamicProperties()) {
+                    && tableData.supportsDynamicProperties()) {
                 dynamicPropertiesTables
                         .put(tableData.getTableName(), tableData);
                 dynamicColumnsMap.put(tableData,
