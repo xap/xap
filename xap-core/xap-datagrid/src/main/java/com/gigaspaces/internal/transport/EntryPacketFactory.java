@@ -197,9 +197,13 @@ public class EntryPacketFactory {
         switch (packetType) {
             case OBJECT_JAVA:
             case DOCUMENT_ENTRY:
-                if (!forceNotExternalizable && typeDesc.isExternalizable() && entryType.isConcrete() && !isReturnWeaklyTypeProperties)
+                if (!forceNotExternalizable && typeDesc.isExternalizable() && entryType.isConcrete() && !isReturnWeaklyTypeProperties) {
+                    if(binaryFields != null){
+                        fixedProperties = entryData.getFixedPropertiesValues();
+                    }
                     return new ExternalizableEntryPacket(typeDesc, entryType, fixedProperties, entryData.getDynamicProperties(),
                             uid, entryData.getVersion(), timeToLive, isTransient);
+                }
                 return new EntryPacket(typeDesc, entryType, fixedProperties, entryData.getDynamicProperties(),
                         uid, entryData.getVersion(), timeToLive, isTransient, binaryFields);
             case EXTERNAL_ENTRY:
@@ -210,6 +214,9 @@ public class EntryPacketFactory {
             case OBJECT_DOTNET:
             case CPP:
             case PBS_OLD:
+                if(binaryFields != null){
+                    fixedProperties = entryData.getFixedPropertiesValues();
+                }
                 return new PbsEntryPacket(typeDesc, entryType,
                         fixedProperties == null && binaryFields != null ? entryData.getFixedPropertiesValues() : fixedProperties,
                         entryData.getDynamicProperties(),
@@ -221,6 +228,9 @@ public class EntryPacketFactory {
                 if (entryType != EntryType.DOCUMENT_DOTNET && entryType != EntryType.OBJECT_DOTNET) {
                     fixedProperties = DocumentObjectConverterInternal.instance().convertNonPrimitiveFixedPropertiesToDocuments(fixedProperties, typeDesc);
                     dynamicProperties = DocumentObjectConverterInternal.instance().convertNonPrimitiveDynamicPropertiesToDocuments(dynamicProperties);
+                }
+                if(binaryFields != null){
+                    fixedProperties = entryData.getFixedPropertiesValues();
                 }
                 return new PbsEntryPacket(typeDesc, entryType, fixedProperties, dynamicProperties, uid,
                         entryData.getVersion(), timeToLive, isTransient);

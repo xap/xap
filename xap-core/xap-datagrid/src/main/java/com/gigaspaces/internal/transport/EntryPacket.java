@@ -238,6 +238,11 @@ public class EntryPacket extends AbstractEntryPacket {
         _customQuery = customQuery;
     }
 
+    @Override
+    public boolean isSerializeTypeDesc() {
+        return true;
+    }
+
     private static final short FLAG_CLASSNAME = 1 << 0;
     private static final short FLAG_UID = 1 << 1;
     private static final short FLAG_VERSION = 1 << 2;
