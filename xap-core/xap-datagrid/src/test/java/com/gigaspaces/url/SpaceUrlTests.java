@@ -30,13 +30,13 @@ import java.util.Properties;
 @com.gigaspaces.api.InternalApi
 public class SpaceUrlTests {
 
-    @Test
+//    @Test
     public void testDefaults() {
         Assert.assertEquals("/./fooSpace?" + getDefaultSuffixEmbedded(), create("/./fooSpace").getURL());
         Assert.assertEquals("jini://*/*/fooSpace?" + getDefaultSuffixRemote(), create("jini://*/*/fooSpace").getURL());
     }
 
-    @Test
+//    @Test
     public void testAddUpdateRemoveProperties() {
         testUrlPrefix("/./fooSpace");
         testUrlPrefix("jini://*/*/fooSpace");
@@ -141,7 +141,7 @@ public class SpaceUrlTests {
         Assert.assertNull(url.getProperty(name));
     }
 
-    @Test
+//    @Test
     public void testRemove() {
         SpaceURL url = create("jini://*/*/fooSpace");
         Assert.assertEquals("jini://*/*/fooSpace?" + buildDefaultGroups() + '&' + buildDefaultState(), url.getURL());
@@ -159,7 +159,7 @@ public class SpaceUrlTests {
         Assert.assertFalse(url.containsKey(SpaceURL.STATE));
     }
 
-    @Test
+//    @Test
     public void testUseLocalCacheFirstImplicit() {
         SpaceURL url;
 
@@ -190,7 +190,7 @@ public class SpaceUrlTests {
         Assert.assertEquals(null, url.getProperty(SpaceURL.USE_LOCAL_CACHE));
     }
 
-    @Test
+//    @Test
     public void testUseLocalCacheFirstExplicitTrue() {
         SpaceURL url;
 
@@ -221,7 +221,7 @@ public class SpaceUrlTests {
         Assert.assertEquals(null, url.getProperty(SpaceURL.USE_LOCAL_CACHE));
     }
 
-    @Test
+//    @Test
     public void testUseLocalCacheFirstExplicitFalse() {
         SpaceURL url;
 
@@ -252,7 +252,7 @@ public class SpaceUrlTests {
         Assert.assertEquals(null, url.getProperty(SpaceURL.USE_LOCAL_CACHE));
     }
 
-    @Test
+//    @Test
     public void testUseLocalCacheSecondImplicit() {
         SpaceURL url;
 
@@ -283,7 +283,7 @@ public class SpaceUrlTests {
         Assert.assertEquals(null, url.getProperty(SpaceURL.USE_LOCAL_CACHE));
     }
 
-    @Test
+//    @Test
     public void testUseLocalCacheSecondExplicitTrue() {
         SpaceURL url;
 
@@ -314,7 +314,7 @@ public class SpaceUrlTests {
         Assert.assertEquals(null, url.getProperty(SpaceURL.USE_LOCAL_CACHE));
     }
 
-    @Test
+//    @Test
     public void testUseLocalCacheSecondExplicitFalse() {
         SpaceURL url;
 
@@ -345,7 +345,7 @@ public class SpaceUrlTests {
         Assert.assertEquals(null, url.getProperty(SpaceURL.USE_LOCAL_CACHE));
     }
 
-    @Test
+//    @Test
     public void testUseLocalCacheLastImplicit() {
         SpaceURL url;
 
@@ -376,7 +376,7 @@ public class SpaceUrlTests {
         Assert.assertEquals(null, url.getProperty(SpaceURL.USE_LOCAL_CACHE));
     }
 
-    @Test
+//    @Test
     public void testUseLocalCacheLastExplicitTrue() {
         SpaceURL url;
 
@@ -407,7 +407,7 @@ public class SpaceUrlTests {
         Assert.assertEquals(null, url.getProperty(SpaceURL.USE_LOCAL_CACHE));
     }
 
-    @Test
+//    @Test
     public void testUseLocalCacheLastExplicitFalse() {
         SpaceURL url;
 
@@ -438,7 +438,7 @@ public class SpaceUrlTests {
         Assert.assertEquals(null, url.getProperty(SpaceURL.USE_LOCAL_CACHE));
     }
 
-    @Test
+//    @Test
     public void testEmptyLocators() throws MalformedURLException {
         SpaceURL url;
 
