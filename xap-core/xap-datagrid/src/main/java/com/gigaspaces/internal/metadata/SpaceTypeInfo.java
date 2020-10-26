@@ -105,7 +105,8 @@ public class SpaceTypeInfo implements Externalizable {
     private Map<String, SpaceIndex> _indexes;
     private Map<String, SpacePropertyInfo> _properties;
     private SpacePropertyInfo[] _spaceProperties;
-    private Class<? extends ClassBinaryStorageAdapter> _spaceClassStorageAdapter = Boolean.parseBoolean(System.getProperty("gs.binary.entry.data.disable")) ? null : DefaultClassBinaryStorageAdapter.class;;
+    private Class<? extends ClassBinaryStorageAdapter> _spaceClassStorageAdapter = Boolean.parseBoolean(System.getProperty("gs.binary.entry.data.disable")) ? null : DefaultClassBinaryStorageAdapter.class;
+//    private Class<? extends ClassBinaryStorageAdapter> _spaceClassStorageAdapter;
 
     private SpacePropertyInfo _idProperty;
     private Boolean _idAutoGenerate;
@@ -1431,7 +1432,7 @@ public class SpaceTypeInfo implements Externalizable {
                 if(entry.getValue().getStorageAdapterClass()!= null){
                     throw new SpaceMetadataValidationException(_type, entry.getValue(), "class binary storage adapter and property storage adapter cannot be used together.");
                 }
-                if(entry.getValue().getStorageType() != null && !entry.getValue().getStorageType().equals(StorageType.DEFAULT)){
+                if(entry.getValue().getStorageType() != null && !entry.getValue().getStorageType().equals(StorageType.DEFAULT) && !entry.getValue().getStorageType().equals(StorageType.OBJECT)){
                     throw new SpaceMetadataValidationException(_type, entry.getValue(), "class binary storage adapter and property non DEFAULT storage type cannot be used together.");
                 }
             }
