@@ -35,7 +35,7 @@ public class SqlParserTest {
             ,/*barak*/ "select * from (select * from a as x INNER JOIN (SELECT * from b) as y ON foo = bar)"
             ,/*barak*/ "select * from a as x INNER JOIN (SELECT * from b) as y ON foo = bar\n" +
                     "where t = f\n" +
-                    "GROUP BY foo(a, b)"
+                    "GROUP BY foo"
             , /*barak*/ "select first_name, last_name, order_date, order_amount\n" +
                     "from customers c\n" +
                     "full join orders o\n" +
