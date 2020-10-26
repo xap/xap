@@ -1186,7 +1186,7 @@ public class TypeData {
 
     /**
      * update the entry refs in  cache when there is an updating xtn, we keep the master entry and
-     * shadow entry as one object pointing at eatch other so we cant remove the original index
+     * shadow entry as one object pointing at each other so we cant remove the original index
      * references
      *
      * @param pEntry       TODO
@@ -1200,7 +1200,7 @@ public class TypeData {
             shadowEh.incrementNumOfUpdates();
             //there is an update but the entry is previously updated under this xtn
             IEntryData shadowEntryData = shadowEh.getEntryData();
-            boolean double_update = shadowEntryData.getFixedPropertiesValues() != oldEntryData.getFixedPropertiesValues();
+            boolean double_update = !isEqualProperties(shadowEntryData.getFixedPropertiesValues(), oldEntryData.getFixedPropertiesValues());
             if (hasIndexes()) {
                 int refpos = 1;
                 ArrayList<IObjectInfo<IEntryCacheInfo>> deletedBackRefs = pEntry.getBackRefs();
@@ -1258,6 +1258,28 @@ public class TypeData {
                 throw ex_thrown;
             }
         }
+    }
+
+    private boolean isEqualProperties(Object[] shadowProperties, Object[] oldProperties) {
+        if(shadowProperties == oldProperties){
+            return true;
+        }
+
+        if (shadowProperties.length != oldProperties.length) {
+            return false;
+        }
+
+        for (int i = 0; i < shadowProperties.length; i++) {
+            if (shadowProperties[i] == null) {
+                if (oldProperties[i] != null)
+                    return false;
+            } else {
+                if (!shadowProperties[i].equals(oldProperties[i]))
+                    return false;
+            }
+        }
+
+        return true;
     }
 
 

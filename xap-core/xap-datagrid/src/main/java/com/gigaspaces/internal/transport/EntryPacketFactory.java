@@ -153,8 +153,13 @@ public class EntryPacketFactory {
     }
 
     public static IEntryPacket createFullPacket(ITemplateHolder template, IEntryData entryData, String uid, boolean isTransient) {
-        if (entryData.getEntryDataType() == EntryDataType.USER_TYPE)
-            return new LocalCacheResponseEntryPacket((UserTypeEntryData) entryData, uid);
+        if (entryData.getEntryDataType() == EntryDataType.USER_TYPE) {
+            if(entryData instanceof ViewEntryData){
+                return new LocalCacheResponseEntryPacket((UserTypeEntryData) ((ViewEntryData) entryData).getEntry(), uid);
+            }else {
+                return new LocalCacheResponseEntryPacket((UserTypeEntryData) entryData, uid);
+            }
+        }
         Object[] fixedPropertiesValues = null;
         byte[] binaryFields = null;
         if(entryData instanceof BinaryEntryData){

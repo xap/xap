@@ -1379,6 +1379,8 @@ public class SpaceTypeInfo implements Externalizable {
         validatePropertyCombination(_persistProperty, _idProperty, "persist", "id");
         validatePropertyCombination(_persistProperty, _routingProperty, "persist", "routing");
 
+        validateStorageAdapterCombination();
+
         validateGetterSetter(_idProperty, "Id", _idAutoGenerate ? ConstructorPropertyValidation.REQUIERS_SETTER :
                 ConstructorPropertyValidation.REQUIERS_CONSTRUCTOR_PARAM);
         if (_routingProperty != _idProperty)
@@ -1421,6 +1423,19 @@ public class SpaceTypeInfo implements Externalizable {
                                              String property1Desc, String property2Desc) {
         if (property1 != null && property1 == property2)
             throw new SpaceMetadataValidationException(_type, property1, property1Desc + " and " + property2Desc + " cannot be used for the same property.");
+    }
+
+    private void validateStorageAdapterCombination() {
+        if (_spaceClassStorageAdapter != null){
+            for (Entry<String, SpacePropertyInfo> entry : _properties.entrySet()) {
+                if(entry.getValue().getStorageAdapterClass()!= null){
+                    throw new SpaceMetadataValidationException(_type, entry.getValue(), "class binary storage adapter and property storage adapter cannot be used together.");
+                }
+                if(entry.getValue().getStorageType() != null && !entry.getValue().getStorageType().equals(StorageType.DEFAULT)){
+                    throw new SpaceMetadataValidationException(_type, entry.getValue(), "class binary storage adapter and property non DEFAULT storage type cannot be used together.");
+                }
+            }
+        }
     }
 
     private void validateGetterSetter(SpacePropertyInfo property, String propertyDesc, ConstructorPropertyValidation validation) {

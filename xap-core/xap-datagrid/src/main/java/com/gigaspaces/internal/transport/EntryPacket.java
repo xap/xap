@@ -240,7 +240,7 @@ public class EntryPacket extends AbstractEntryPacket {
 
     @Override
     public boolean isSerializeTypeDesc() {
-        return true;
+        return binaryFields != null || super.isSerializeTypeDesc();
     }
 
     private static final short FLAG_CLASSNAME = 1 << 0;

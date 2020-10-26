@@ -174,8 +174,9 @@ public class TypeDesc implements ITypeDesc {
         validateAndUpdateSequenceNumberInfo(sequenceNumberPropertyName);
         initializeV9_0_0();
         addFifoGroupingIndexesIfNeeded(_indexes, _fifoGroupingName, _fifoGroupingIndexes);
-        if(binaryStorageAdapter != null)
+        if(binaryStorageAdapter != null) {
             this.classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(binaryStorageAdapter);
+        }
     }
 
     public TypeDesc cloneWithoutObjectClass( TypeDesc typeDesc, EntryType entryType ) {
