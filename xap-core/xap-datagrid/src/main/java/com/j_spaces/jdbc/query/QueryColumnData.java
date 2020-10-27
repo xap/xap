@@ -17,6 +17,7 @@
 package com.j_spaces.jdbc.query;
 
 import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.Query;
 import com.j_spaces.jdbc.SelectColumn;
@@ -41,8 +42,8 @@ public class QueryColumnData implements Serializable {
     // query column path - used for query navigation - Person.car.color='red'
     private final String _columnPath;
     private final String _columnName;
-    private final QueryTableData _columnTable;
-    private final int _columnIndex; //the index of the column in its table
+    private QueryTableData _columnTable;
+    private int _columnIndex; //the index of the column in its table
 
     public QueryColumnData(QueryTableData tableData, String columnPath) {
         _columnPath = isUidColumn(columnPath) ? UID_COLUMN : columnPath;
@@ -111,6 +112,15 @@ public class QueryColumnData implements Serializable {
 
         columnData = findUnique(tables, t -> tryInitWithoutPrefix(t, columnPath), (r1, r2) -> ambigFormatter(columnPath, r1, r2));
         if (columnData != null)
+            return columnData;
+        columnData = new QueryColumnData(null, columnPath);
+        //we need to know where this column is
+        boolean assignedTable = false;
+        for (QueryTableData tableData : query.getTablesData()) {
+            if (columnData.checkAndAssignTableData(tableData))
+                assignedTable = true;
+        }
+        if(assignedTable)
             return columnData;
 
         // Special case: single table which supports dynamic properties
@@ -236,5 +246,35 @@ public class QueryColumnData implements Serializable {
         return "Ambiguous column [" + columnPath + "]: exists in [" +
                 r1.getColumnTableData().getTableName() + "] and [" +
                 r2.getColumnTableData().getTableName();
+    }
+
+    public boolean checkAndAssignTableData(QueryTableData tableData) throws SQLException {
+        ITypeDesc currentInfo = tableData.getTypeDesc();
+
+        for (int c = 0; c < currentInfo.getNumOfFixedProperties(); c++) {
+            String columnName = getColumnName();
+            PropertyInfo fixedProperty = currentInfo.getFixedProperty(c);
+            if (fixedProperty.getName().equalsIgnoreCase(columnName)) {
+                //found the column
+                // check for ambiguous column
+                QueryTableData columnTableData = getColumnTableData();
+                if (columnTableData != null && columnTableData != tableData)
+                    throw new SQLException("Ambiguous column name [" + columnName + "]");
+
+                setColumnTableData(tableData);
+                setColumnIndexInTable(c);
+
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void setColumnTableData(QueryTableData columnTable) {
+        this._columnTable = columnTable;
+    }
+
+    public void setColumnIndexInTable(int columnIndex) {
+        this._columnIndex = columnIndex;
     }
 }
