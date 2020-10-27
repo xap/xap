@@ -215,7 +215,7 @@ public class JettyManagerRestLauncher implements Closeable {
     }
 
     private String getContextPath(File file) {
-        return file.getName().equals("ui.war")
+        return file.getName().equals("v2.war")
                 ? "/"
                 : "/" + file.getName().replace(".war", "");
     }
