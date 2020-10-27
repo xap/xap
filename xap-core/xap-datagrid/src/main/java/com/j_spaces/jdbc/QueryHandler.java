@@ -212,7 +212,6 @@ public class QueryHandler {
             // now should throw an SQLException back to the JDBC driver.
             SQLException sqlEx = new SQLException("Error in statement ["
                     + request + "]; Cause: " + t, "GSP", -201, t);
-            sqlEx.initCause(t);
             throw sqlEx;
         }
     }
