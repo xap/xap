@@ -21,91 +21,12 @@ import com.gigaspaces.internal.metadata.SpacePropertyInfo;
 import com.gigaspaces.internal.metadata.SpaceTypeInfo;
 import com.gigaspaces.internal.metadata.SpaceTypeInfoRepository;
 import com.gigaspaces.internal.query.valuegetter.SpaceEntryPathGetter;
-import com.gigaspaces.metadata.annotated.PojoAttributes;
-import com.gigaspaces.metadata.annotated.PojoAttributesInheritence1;
-import com.gigaspaces.metadata.annotated.PojoAttributesInheritence2;
-import com.gigaspaces.metadata.annotated.PojoCommonProperties;
-import com.gigaspaces.metadata.annotated.PojoCommonPropertiesInheritence;
-import com.gigaspaces.metadata.annotated.PojoCustomIndex;
-import com.gigaspaces.metadata.annotated.PojoCustomIndexes;
-import com.gigaspaces.metadata.annotated.PojoExplicit;
-import com.gigaspaces.metadata.annotated.PojoExplicitExDefault;
-import com.gigaspaces.metadata.annotated.PojoExplicitExExplicit;
-import com.gigaspaces.metadata.annotated.PojoExplicitExImplicit;
-import com.gigaspaces.metadata.annotated.PojoIdAutogenerateIndexExplicit;
-import com.gigaspaces.metadata.annotated.PojoIdAutogenerateIndexImplicit;
-import com.gigaspaces.metadata.annotated.PojoIdAutogenerateIndexImplicitInherit;
-import com.gigaspaces.metadata.annotated.PojoIdIndexExplicit;
-import com.gigaspaces.metadata.annotated.PojoIdIndexImplicit;
-import com.gigaspaces.metadata.annotated.PojoIllegalCustomIndexes;
-import com.gigaspaces.metadata.annotated.PojoIllegalDuplicateSpaceIndex;
-import com.gigaspaces.metadata.annotated.PojoIllegalDuplicateSpaceIndex2;
-import com.gigaspaces.metadata.annotated.PojoIllegalDuplicateSpaceIndex3;
-import com.gigaspaces.metadata.annotated.PojoImplicit;
-import com.gigaspaces.metadata.annotated.PojoImplicitExDefault;
-import com.gigaspaces.metadata.annotated.PojoImplicitExExplicit;
-import com.gigaspaces.metadata.annotated.PojoImplicitExImplicit;
-import com.gigaspaces.metadata.annotated.PojoIndexes;
-import com.gigaspaces.metadata.annotated.PojoIndexesInheritFalse;
-import com.gigaspaces.metadata.annotated.PojoIndexesInheritTrue;
-import com.gigaspaces.metadata.annotated.PojoInheritenceSort1;
-import com.gigaspaces.metadata.annotated.PojoInheritenceSort2;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidExcludePropertyFromSuper;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidExcludePropertyWithIndex;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidExcludeWithId;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidExcludeWithRouting;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidExcludeWithSpaceProperty;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidIdAutogenerateType;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidIdDuplicate;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidLeaseExpirationDuplicate;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidLeaseExpirationType;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidLeaseWithId;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidLeaseWithPersist;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidLeaseWithRouting;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidLeaseWithSpaceProperty;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidPersistDuplicate;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidPersistType;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidPersistWithId;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidPersistWithRouting;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidPersistWithSpaceProperty;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidRoutingDuplicate;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidSpaceIdWithoutSetter;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidSpaceLeaseExpirationWithoutSetter;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidSpacePersistWithoutSetter;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidSpacePropertyWithoutSetter;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidSpaceRoutingWithoutSetter;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidSpaceVersionWithoutSetter;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidVersionDuplicate;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidVersionType;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidVersionWithId;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidVersionWithLease;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidVersionWithPersist;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidVersionWithRouting;
-import com.gigaspaces.metadata.annotated.PojoInvalid.InvalidVersionWithSpaceProperty;
-import com.gigaspaces.metadata.annotated.PojoMultipleSpaceIndexes;
-import com.gigaspaces.metadata.annotated.PojoRoutingIndexExplicit;
-import com.gigaspaces.metadata.annotated.PojoRoutingIndexImplicit;
-import com.gigaspaces.metadata.annotated.PojoSpaceIndex;
-import com.gigaspaces.metadata.annotated.PojoSpacePropertyInherit;
-import com.gigaspaces.metadata.gsxml.PojoAnnotatedAndXmled;
-import com.gigaspaces.metadata.gsxml.PojoBasicStorageTypeXml;
-import com.gigaspaces.metadata.gsxml.PojoDuplicateSpaceIndexXml;
-import com.gigaspaces.metadata.gsxml.PojoIllegalSpaceClassStorageTypeXml;
-import com.gigaspaces.metadata.gsxml.PojoSpaceClassStorageTypeViaXmlBinaryType;
-import com.gigaspaces.metadata.gsxml.PojoSpaceClassStorageTypeViaXmlCompressedType;
-import com.gigaspaces.metadata.gsxml.PojoSpaceClassStorageTypeViaXmlDefaultType;
-import com.gigaspaces.metadata.gsxml.PojoSpaceClassStorageTypeViaXmlObjectType;
-import com.gigaspaces.metadata.gsxml.PojoSpaceIndexXml;
+import com.gigaspaces.metadata.annotated.*;
+import com.gigaspaces.metadata.annotated.PojoInvalid.*;
+import com.gigaspaces.metadata.gsxml.*;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.gigaspaces.metadata.index.SpaceIndexType;
-import com.gigaspaces.metadata.pojos.PojoNoProperties;
-import com.gigaspaces.metadata.pojos.PojoOneProperty;
-import com.gigaspaces.metadata.pojos.PojoPropertiesStorageType;
-import com.gigaspaces.metadata.pojos.PojoSettersOnly;
-import com.gigaspaces.metadata.pojos.PojoSpaceClassStorageType;
-import com.gigaspaces.metadata.pojos.PojoSpaceClassStorageTypeInherit;
-import com.gigaspaces.metadata.pojos.PojoSpaceClassStorageTypeInheritAndOverride;
-
+import com.gigaspaces.metadata.pojos.*;
 import junit.framework.TestCase;
 import org.junit.Assert;
 
@@ -116,11 +37,6 @@ import java.util.Map;
 public class SpaceTypeInfoTestCase extends TestCase {
 
 
-    @Override
-    protected void setUp() throws Exception {
-        System.setProperty("gs.binary.entry.data.disable","true");
-        super.setUp();
-    }
 
     public void testNull() {
         // Arrange:

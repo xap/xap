@@ -54,7 +54,7 @@ public class BinaryEntryData implements ITransactionalEntryData {
 
     private static byte[] serializeFields(Object[] fieldsValues, ITypeDesc typeDesc) {
         try {
-            return typeDesc.getClassBinaryStorageAdapter().toBinary(fieldsValues);
+            return typeDesc.getClassBinaryStorageAdapter().toBinary(typeDesc, fieldsValues);
         } catch (IOException e) {
             throw new UncheckedIOException("com.gigaspaces.internal.server.storage.BinaryEntryData.serializeFields failed", e);
         }
@@ -148,7 +148,7 @@ public class BinaryEntryData implements ITransactionalEntryData {
 
     private Object[] deserializeFields(byte[] fieldsValues) {
         try {
-            return (this.getSpaceTypeDescriptor()).getClassBinaryStorageAdapter().fromBinary(fieldsValues);
+            return (this.getSpaceTypeDescriptor()).getClassBinaryStorageAdapter().fromBinary(this.getSpaceTypeDescriptor(), fieldsValues);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (ClassNotFoundException e) {
@@ -158,7 +158,7 @@ public class BinaryEntryData implements ITransactionalEntryData {
 
     private void modifyField(int index, Object value) {
         try {
-            serializedFields = (this.getSpaceTypeDescriptor()).getClassBinaryStorageAdapter().modifyField(serializedFields, index, value);
+            serializedFields = (this.getSpaceTypeDescriptor()).getClassBinaryStorageAdapter().modifyField(this.getSpaceTypeDescriptor(), serializedFields, index, value);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (ClassNotFoundException e) {
@@ -168,7 +168,7 @@ public class BinaryEntryData implements ITransactionalEntryData {
 
     private void modifyFields(Map<Integer, Object> map) {
         try {
-            serializedFields = (this.getSpaceTypeDescriptor()).getClassBinaryStorageAdapter().modifyFields(serializedFields, map);
+            serializedFields = (this.getSpaceTypeDescriptor()).getClassBinaryStorageAdapter().modifyFields(this.getSpaceTypeDescriptor(), serializedFields, map);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (ClassNotFoundException e) {

@@ -17,6 +17,7 @@
 package com.gigaspaces.client.storage_adapters.class_storage_adapters;
 
 import com.gigaspaces.api.ExperimentalApi;
+import com.gigaspaces.metadata.SpaceTypeDescriptor;
 
 import java.io.IOException;
 import java.util.Map;
@@ -33,44 +34,48 @@ public abstract class ClassBinaryStorageAdapter {
 
     /***
      * Triggered when object fields need to be retrieved
+     * @param typeDescriptor
      * @param serializedFields current serialized fields
      * @return Deserialize fields array
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    public abstract Object[] fromBinary(byte[] serializedFields) throws IOException, ClassNotFoundException;
+    public abstract Object[] fromBinary(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields) throws IOException, ClassNotFoundException;
 
     /***
      * Triggered when object fields need to be be stored
+     * @param typeDescriptor
      * @param fields
      * @return Serialized fields array as byte[]
      * @throws IOException
      */
-    public abstract byte[] toBinary(Object[] fields) throws IOException;
-
+    public abstract byte[] toBinary(SpaceTypeDescriptor typeDescriptor, Object[] fields) throws IOException;
 
     /***
      * Triggered when need to access a specific field
+     * @param typeDescriptor
      * @param serializedFields current serialized fields
      * @param index
      * @return field value found at requested index in original fields object array
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    public abstract Object getFieldAtIndex(byte[] serializedFields, int index) throws IOException, ClassNotFoundException;
+    public abstract Object getFieldAtIndex(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields, int index) throws IOException, ClassNotFoundException;
 
     /***
      * Triggered when need to access a several specific fields
+     * @param typeDescriptor
      * @param serializedFields current serialized fields
      * @param indexes
      * @return fields values found at requested indexes in original fields object array
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    public abstract Object[] getFieldsAtIndexes(byte[] serializedFields, int... indexes) throws IOException, ClassNotFoundException;
+    public abstract Object[] getFieldsAtIndexes(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields, int... indexes) throws IOException, ClassNotFoundException;
 
     /***
      * Triggered when need to modify a on of the fields stored in a byte[]
+     * @param typeDescriptor
      * @param serializedFields current serialized fields
      * @param index
      * @param newValue
@@ -78,17 +83,20 @@ public abstract class ClassBinaryStorageAdapter {
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    public abstract byte[] modifyField(byte[] serializedFields, int index, Object newValue) throws IOException, ClassNotFoundException;
+    public abstract byte[] modifyField(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields, int index, Object newValue) throws IOException, ClassNotFoundException;
 
     /***
      * Triggered when need to modify a on of the fields stored in a byte[]
+     * @param typeDescriptor
      * @param serializedFields current serialized fields
      * @param newValues map from index of field to its new value
      * @return new byte[] of serialized fields after modification
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    public abstract byte[] modifyFields(byte[] serializedFields, Map<Integer,Object> newValues) throws IOException, ClassNotFoundException;
+    public abstract byte[] modifyFields(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields, Map<Integer,Object> newValues) throws IOException, ClassNotFoundException;
+
+    public abstract boolean isDirectFieldAccessOptimized();
 
     public String getName() {
         return this.getClass().getSimpleName();

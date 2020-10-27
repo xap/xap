@@ -172,7 +172,7 @@ public class EntryPacket extends AbstractEntryPacket {
         if (_fixedProperties == null && getTypeDescriptor() != null &&
                 getTypeDescriptor().getClassBinaryStorageAdapter() != null && binaryFields != null) {
             try {
-                _fixedProperties = getTypeDescriptor().getClassBinaryStorageAdapter().fromBinary(binaryFields);
+                _fixedProperties = getTypeDescriptor().getClassBinaryStorageAdapter().fromBinary(getTypeDescriptor(), binaryFields);
                 binaryFields = null;
             } catch (IOException | ClassNotFoundException e) {
                 throw new IllegalStateException("The field values array was not properly set", e);
