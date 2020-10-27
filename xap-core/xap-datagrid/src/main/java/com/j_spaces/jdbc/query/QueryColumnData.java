@@ -270,11 +270,11 @@ public class QueryColumnData implements Serializable {
         return false;
     }
 
-    public void setColumnTableData(QueryTableData columnTable) {
+    private void setColumnTableData(QueryTableData columnTable) {
         this._columnTable = columnTable;
     }
 
-    public void setColumnIndexInTable(int columnIndex) {
+    private void setColumnIndexInTable(int columnIndex) {
         this._columnIndex = columnIndex;
     }
 }
