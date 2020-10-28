@@ -17,6 +17,7 @@
 
 package com.gigaspaces.query.aggregators;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,7 @@ import java.util.List;
  * @since 10.0
  */
 
-public class AggregationSet {
+public class AggregationSet implements Serializable {
 
     private final List<SpaceEntriesAggregator> aggregators = new ArrayList<SpaceEntriesAggregator>();
 
