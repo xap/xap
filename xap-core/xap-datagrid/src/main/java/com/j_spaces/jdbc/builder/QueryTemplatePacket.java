@@ -851,6 +851,8 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
             IOUtils.writeObject(out, _projectionTemplate);
         if (version.greaterOrEquals(PlatformLogicalVersion.v11_0_0))
             out.writeBoolean(_allIndexValuesQuery);
+
+        IOUtils.writeObject(out, _table);
     }
 
     private void deserialize(ObjectInput in, PlatformLogicalVersion version) throws IOException, ClassNotFoundException {
@@ -862,6 +864,8 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
             _projectionTemplate = IOUtils.readObject(in);
         if (version.greaterOrEquals(PlatformLogicalVersion.v11_0_0))
             _allIndexValuesQuery = in.readBoolean();
+
+        _table = IOUtils.readObject(in);
     }
 
     private void uniteContainsItems(QueryTemplatePacket template) {
