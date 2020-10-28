@@ -62,7 +62,7 @@ public class SystemInfo {
         this.os = new XapOperatingSystem();
         this.network = XapNetworkInfo.getInstance();
         this.timeProvider = new XapTimeProvider();
-        this.managerClusterInfo = new XapManagerClusterInfo(network.getPublicHost());
+        this.managerClusterInfo = new XapManagerClusterInfo(network.getHost());
         this.kubernetesClusterInfo = KubernetesClusterInfo.getInstance();
         this.lookup = new XapLookup(managerClusterInfo);
     }
