@@ -21,6 +21,7 @@ import com.gigaspaces.query.CompoundResult;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -50,25 +51,23 @@ public class GroupByKey extends CompoundResult {
         hashCode = 0;
         for (int i = 0; i < groupByPaths.length; i++) {
             String groupByPath = groupByPaths[i];
-            Function f = Function.identity();
 
             //Loop over the aggregators in select clause and find the relevant one by path.
             Collection<SpaceEntriesAggregator> aggregators = context.getAggregators(); // in case of GroupBy there is one in this list.
             for (SpaceEntriesAggregator aggregator : aggregators) {
                 if (aggregator instanceof GroupByAggregator) {
-                    f = ((GroupByAggregator) aggregator).getAggregators()
+                    Optional<SingleValueFunctionAggregator> agg = ((GroupByAggregator) aggregator).getAggregators()
                             .stream()
                             .filter(x -> x instanceof SingleValueFunctionAggregator)
                             .map(a -> (SingleValueFunctionAggregator)a)
                             .filter(a -> groupByPath.equals(a.getPath()))
-                            .findFirst()
-                            .map(SingleValueFunctionAggregator::getFunction)
-                            .orElse(Function.identity());
+                            .findFirst();
+                    if(agg.isPresent())
+                        values[i] = agg.get().calculateValue(context.getPathValue(groupByPath));
                     break;
                 }
             }
 
-            values[i] = f.apply(context.getPathValue(groupByPath));
             if (values[i] == null)
                 return false;
         }
