@@ -245,11 +245,11 @@ public abstract class Range extends AbstractCustomQuery {
 
         if (range1.getFunctionCallDescription() != null) {
             range1FunctionName = range1.getFunctionCallDescription().getName();
-            isBuiltinFunctionRange1 = SQLFunctions.isDefined(range1FunctionName);
+            isBuiltinFunctionRange1 = SQLFunctions.isBuiltIn(range1FunctionName);
         }
         if (range2.getFunctionCallDescription() != null) {
             range2FunctionName = range2.getFunctionCallDescription().getName();
-            isBuiltinFunctionRange2 = SQLFunctions.isDefined(range2FunctionName);
+            isBuiltinFunctionRange2 = SQLFunctions.isBuiltIn(range2FunctionName);
         }
         return isBuiltinFunctionRange1 && isBuiltinFunctionRange2;
     }

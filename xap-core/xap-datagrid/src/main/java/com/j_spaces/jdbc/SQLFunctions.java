@@ -72,13 +72,21 @@ public class SQLFunctions {
         return func.apply(ctx);
     }
 
+    public static boolean isBuiltIn(String functionName) {
+        return builtInFunctions.keySet().contains(functionName.toUpperCase());
+    }
+
+    public static boolean isUserDefined(String functionName){
+        return userDefinedFunctions.keySet().contains(functionName.toUpperCase());
+    }
 
     public static boolean isDefined(String functionName) {
-        return builtInFunctions.keySet().contains(functionName.toUpperCase()) || userDefinedFunctions.keySet().contains(functionName.toUpperCase());
+        return isBuiltIn(functionName) || isUserDefined(functionName);
     }
 
     public static SqlFunction getFunction(String functionName){
-        return userDefinedFunctions.get(functionName.toUpperCase()) != null ? userDefinedFunctions.get(functionName.toUpperCase()) : builtInFunctions.get(functionName.toUpperCase());
+        functionName = functionName.toUpperCase();
+        return builtInFunctions.get(functionName) != null ? builtInFunctions.get(functionName) : userDefinedFunctions.get(functionName);
     }
 }
 
