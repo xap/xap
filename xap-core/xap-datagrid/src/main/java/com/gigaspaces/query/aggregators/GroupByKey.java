@@ -22,7 +22,6 @@ import com.gigaspaces.query.CompoundResult;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * @author Niv Ingberg
@@ -63,7 +62,9 @@ public class GroupByKey extends CompoundResult {
                             .filter(a -> groupByPath.equals(a.getPath()))
                             .findFirst();
                     if(agg.isPresent())
-                        values[i] = agg.get().calculateValue(context.getPathValue(groupByPath));
+                        values[i] = agg.get().apply(context.getPathValue(groupByPath));
+                    else
+                        values[i] = context.getPathValue(groupByPath);
                     break;
                 }
             }

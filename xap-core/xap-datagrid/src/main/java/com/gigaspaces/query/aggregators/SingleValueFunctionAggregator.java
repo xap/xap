@@ -59,7 +59,7 @@ public class SingleValueFunctionAggregator<T extends Serializable & Comparable> 
     @Override
     public void aggregate(SpaceEntriesAggregatorContext context) {
         if (!isSet) {
-            result = functionCallColumn.apply(getPathValue(context));
+            result = apply(getPathValue(context));
             isSet = true;
         }
     }
@@ -91,7 +91,7 @@ public class SingleValueFunctionAggregator<T extends Serializable & Comparable> 
     }
 
 
-    public Object calculateValue(Object value){
+    public Object apply(Object value){
         return functionCallColumn.apply(value);
     }
 }
