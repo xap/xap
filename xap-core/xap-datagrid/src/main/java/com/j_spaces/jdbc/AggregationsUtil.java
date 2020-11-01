@@ -112,7 +112,7 @@ public class AggregationsUtil {
             if (funcColumn.getFunctionName() == null)
                 aggregationSet = aggregationSet.add(new SingleValueAggregator().setPath(funcColumn.getName()));
             else if (funcColumn instanceof FunctionCallColumn){
-                aggregationSet = aggregationSet.add(new SingleValueFunctionAggregator(((FunctionCallColumn) funcColumn).getF(), funcColumn.getFunctionName()).setPath(funcColumn.getName()));
+                aggregationSet = aggregationSet.add(new SingleValueFunctionAggregator((FunctionCallColumn) funcColumn).setPath(funcColumn.getName()));
             }
             else if (funcColumn.getFunctionName().equals(SqlConstants.MAX)) {
                 aggregationSet = aggregationSet.maxValue(funcColumn.getName());

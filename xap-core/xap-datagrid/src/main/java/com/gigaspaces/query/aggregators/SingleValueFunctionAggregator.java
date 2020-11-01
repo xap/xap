@@ -18,11 +18,17 @@
 package com.gigaspaces.query.aggregators;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.query.sql.functions.SqlFunction;
+import com.gigaspaces.query.sql.functions.SqlFunctionExecutionContext;
+import com.j_spaces.jdbc.FunctionCallColumn;
+import com.j_spaces.jdbc.SQLFunctions;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -33,15 +39,13 @@ public class SingleValueFunctionAggregator<T extends Serializable & Comparable> 
 
     private static final long serialVersionUID = 1L;
 
-    private T result;
+    private Object result;
     private boolean isSet;
-    private Function<T,T> function;
-    private String functionName;
+    private FunctionCallColumn functionCallColumn;
 
-    public SingleValueFunctionAggregator(Function<T, T> function, String functionName) {
+    public SingleValueFunctionAggregator(FunctionCallColumn functionCallColumn) {
         super();
-        this.function = function;
-        this.functionName = functionName;
+        this.functionCallColumn = functionCallColumn;
     }
 
     public SingleValueFunctionAggregator() {
@@ -49,47 +53,45 @@ public class SingleValueFunctionAggregator<T extends Serializable & Comparable> 
 
     @Override
     public String getDefaultAlias() {
-        return functionName + "(" + getPath() + ")";
+        return functionCallColumn.getFunctionName() + "(" + getPath() + ")";
     }
 
     @Override
     public void aggregate(SpaceEntriesAggregatorContext context) {
-        T value = (T) getPathValue(context);
         if (!isSet) {
-            result = function.apply(value);
+            result = functionCallColumn.apply(getPathValue(context));
             isSet = true;
         }
     }
 
     @Override
     public void aggregateIntermediateResult(T partitionResult) {
-        result = function.apply(partitionResult);
+        result = functionCallColumn.apply(partitionResult);
     }
 
     @Override
     public T getIntermediateResult() {
-        return result;
+        return (T) result;
     }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         IOUtils.writeObject(out, result);
-        IOUtils.writeObject(out, isSet);
-        IOUtils.writeObject(out, function);
-        IOUtils.writeString(out, functionName);
+        out.writeBoolean(isSet);
+        IOUtils.writeObject(out, functionCallColumn);
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         result = IOUtils.readObject(in);
-        isSet = IOUtils.readObject(in);
-        function = IOUtils.readObject(in);
-        functionName = IOUtils.readString(in);
+        isSet = in.readBoolean();
+        functionCallColumn = IOUtils.readObject(in);
     }
 
-    public Function<T, T> getFunction() {
-        return function;
+
+    public Object calculateValue(Object value){
+        return functionCallColumn.apply(value);
     }
 }

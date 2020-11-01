@@ -118,7 +118,7 @@ public abstract class Range extends AbstractCustomQuery {
     private boolean matchRange(Range range, Object value, CacheManager cacheManager) {
 
         if (range.getFunctionCallDescription() != null && range.getFunction() == null) { // set function if it not exists
-            SqlFunction sqlFunction = cacheManager.getSqlFunctions().create(range.getFunctionCallDescription());
+            SqlFunction sqlFunction = SQLFunctions.getFunction(range.getFunctionCallDescription().getName());
             if (sqlFunction != null) {
                 range.setFunction(sqlFunction);
             } else {
@@ -222,8 +222,8 @@ public abstract class Range extends AbstractCustomQuery {
         this.functionCallDescription = functionCallDescription;
         if (functionCallDescription != null) {
             String functionName = functionCallDescription.getName();
-            if (SQLFunctions.isBuiltIn(functionName)) {
-                this.function = SQLFunctions.getBuildInFunction(functionName);
+            if (SQLFunctions.isDefined(functionName)) {
+                this.function = SQLFunctions.getFunction(functionName);
             }
         }
     }
@@ -245,11 +245,11 @@ public abstract class Range extends AbstractCustomQuery {
 
         if (range1.getFunctionCallDescription() != null) {
             range1FunctionName = range1.getFunctionCallDescription().getName();
-            isBuiltinFunctionRange1 = SQLFunctions.isBuiltIn(range1FunctionName);
+            isBuiltinFunctionRange1 = SQLFunctions.isDefined(range1FunctionName);
         }
         if (range2.getFunctionCallDescription() != null) {
             range2FunctionName = range2.getFunctionCallDescription().getName();
-            isBuiltinFunctionRange2 = SQLFunctions.isBuiltIn(range2FunctionName);
+            isBuiltinFunctionRange2 = SQLFunctions.isDefined(range2FunctionName);
         }
         return isBuiltinFunctionRange1 && isBuiltinFunctionRange2;
     }

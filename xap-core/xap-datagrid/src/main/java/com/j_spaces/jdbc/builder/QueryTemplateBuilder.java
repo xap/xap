@@ -357,9 +357,9 @@ public class QueryTemplateBuilder implements Serializable
 
         ITypeDesc typeDesc = tableData.getTypeDesc();
         Object value;
-        if (functionCallDescription != null && SQLFunctions.isBuiltIn(functionCallDescription.getName()) &&
-                SQLFunctions.getBuildInFunction(functionCallDescription.getName()).getClass().isAnnotationPresent(SqlFunctionReturnType.class)) {
-            value = ObjectConverter.convert(node.getValue(), SQLFunctions.getBuildInFunction(functionCallDescription.getName()).getClass().getAnnotation(SqlFunctionReturnType.class).type());
+        if (functionCallDescription != null && SQLFunctions.getFunction(functionCallDescription.getName()) != null &&
+                SQLFunctions.getFunction(functionCallDescription.getName()).getClass().isAnnotationPresent(SqlFunctionReturnType.class)) {
+            value = ObjectConverter.convert(node.getValue(), SQLFunctions.getFunction(functionCallDescription.getName()).getClass().getAnnotation(SqlFunctionReturnType.class).type());
         } else {
             value = node.getConvertedObject(typeDesc, queryColumnData.getColumnPath());
         }

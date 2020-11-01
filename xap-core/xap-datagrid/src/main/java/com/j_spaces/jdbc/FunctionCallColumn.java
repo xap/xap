@@ -2,17 +2,17 @@ package com.j_spaces.jdbc;
 
 
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.query.sql.functions.SqlFunction;
+import com.gigaspaces.query.sql.functions.SqlFunctionExecutionContext;
+
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.function.Function;
 
 @com.gigaspaces.api.InternalApi
 public class FunctionCallColumn<R extends Serializable, T extends Serializable> extends SelectColumn {
 
     private List params;
-
-    private Function<R, T> f;
 
     public FunctionCallColumn() {
     }
@@ -21,22 +21,30 @@ public class FunctionCallColumn<R extends Serializable, T extends Serializable> 
         super(params.get(0).toString());
         this.setFunctionName(functionName);
         this.params = params;
-        this.params.remove(0); // removes first param which is always the column name
-
-        if (functionName.equalsIgnoreCase("REPLACE")) {
-            f = (Function<R, T> & Serializable)(obj) -> (T) obj.toString().replace(params.get(0).toString(), params.get(1).toString());
-        } else {
-            throw new RuntimeException("Unknown function [" + functionName + "]");
-        }
     }
 
     @Override
     public Object getFieldValue(IEntryPacket entry) {
-        R fValue = (R) super.getFieldValue(entry);
-        return f.apply(fValue);
+        return apply(super.getFieldValue(entry));
+
     }
 
-    public Function<R, T> getF() {
-        return f;
+    public Object apply(Object value){
+        params.set(0, value);
+        SqlFunction sqlFunction = SQLFunctions.getFunction(getFunctionName());
+        if(sqlFunction != null){
+            return sqlFunction.apply(new SqlFunctionExecutionContext() {
+                @Override
+                public int getNumberOfArguments() {
+                    return params.size();
+                }
+
+                @Override
+                public Object getArgument(int index) {
+                    return params.get(index);
+                }
+            });
+        }
+        throw new RuntimeException("Unknown function [" + getFunctionName() + "]");
     }
 }

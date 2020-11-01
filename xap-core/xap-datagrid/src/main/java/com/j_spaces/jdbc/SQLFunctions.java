@@ -17,7 +17,6 @@
 package com.j_spaces.jdbc;
 
 import com.gigaspaces.query.sql.functions.*;
-import com.j_spaces.jdbc.builder.range.FunctionCallDescription;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +28,7 @@ import java.util.Map;
  */
 @com.gigaspaces.api.InternalApi
 public class SQLFunctions {
-    private final Map<String, SqlFunction> functions = new HashMap<String, SqlFunction>();
+    private static final Map<String, SqlFunction> userDefinedFunctions = new HashMap<String, SqlFunction>();
     private static final Map<String, SqlFunction> builtInFunctions = new HashMap<String, SqlFunction>();
 
     static {
@@ -47,33 +46,39 @@ public class SQLFunctions {
         builtInFunctions.put("TO_NUMBER", new ToNumberSqlFunction());
         builtInFunctions.put("TO_CHAR", new ToCharSqlFunction());
         builtInFunctions.put("CONTAINS_KEY", new ContainsKeySqlFunction());
+        builtInFunctions.put("REPLACE", new ReplaceSqlFunction());
     }
 
-    public SQLFunctions(Map<String, SqlFunction> userFunctions) {
-        if (userFunctions != null) {
-            functions.putAll(userFunctions);
-        }
+    private static SQLFunctions instance = new SQLFunctions();
+    private static boolean init = false;
+
+    private SQLFunctions(){
+
     }
 
+    public static SQLFunctions instance(){
+        return instance;
+    }
+
+    public void init(Map<String, SqlFunction> userFunctions) {
+        if(init)
+            throw new RuntimeException("SQLFunctions instance was already initiated!");
+        userFunctions.keySet().forEach(String::toUpperCase);
+        userDefinedFunctions.putAll(userFunctions);
+        init = true;
+    }
 
     public static Object apply(SqlFunction func, SqlFunctionExecutionContext ctx) throws RuntimeException {
         return func.apply(ctx);
     }
 
-    public SqlFunction create(FunctionCallDescription functionCallDescription) {
-        SqlFunction userFunction = functions.get(functionCallDescription.getName().toUpperCase());
-        if (userFunction != null) {
-            return userFunction;
-        }
-        return builtInFunctions.get(functionCallDescription.getName().toUpperCase());
+
+    public static boolean isDefined(String functionName) {
+        return builtInFunctions.keySet().contains(functionName.toUpperCase()) || userDefinedFunctions.keySet().contains(functionName.toUpperCase());
     }
 
-    public static boolean isBuiltIn(String functionName) {
-        return builtInFunctions.keySet().contains(functionName.toUpperCase());
-    }
-
-    public static SqlFunction getBuildInFunction(String functionName) {
-        return builtInFunctions.get(functionName);
+    public static SqlFunction getFunction(String functionName){
+        return userDefinedFunctions.get(functionName.toUpperCase()) != null ? userDefinedFunctions.get(functionName.toUpperCase()) : builtInFunctions.get(functionName.toUpperCase());
     }
 }
 
