@@ -260,7 +260,6 @@ public class EntryPacket extends AbstractEntryPacket {
     private static final short FLAG_CUSTOM_QUERY = 1 << 10;
     private static final short FLAG_DYNAMIC_PROPERTIES = 1 << 11;
     private static final short FLAG_BINARY_FIELDS= 1 << 12;
-    private static final short FLAG_CLASS_BINARY_STORAGE_ADAPTER= 1 << 13;
 
     private short buildFlags() {
         short flags = 0;

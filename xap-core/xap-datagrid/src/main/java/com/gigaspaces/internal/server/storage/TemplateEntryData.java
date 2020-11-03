@@ -213,7 +213,7 @@ public class TemplateEntryData implements IEntryData {
         return _rangeValuesInclusion == null ? true : _rangeValuesInclusion[index];
     }
 
-    public boolean match(CacheManager cacheManager, ServerEntry entry, int skipAlreadyMatchedFixedPropertyIndex, String skipAlreadyMatchedIndexPath, RegexCache regexCache, Context cacheContext) {
+    public boolean match(Context cacheContext, CacheManager cacheManager, ServerEntry entry, int skipAlreadyMatchedFixedPropertyIndex, String skipAlreadyMatchedIndexPath, RegexCache regexCache) {
         if (!isNullTemplate()) {
             entry = cacheContext.getViewEntryData((IEntryData) entry);
         }

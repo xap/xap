@@ -178,10 +178,10 @@ public class ViewReplicationChannelDataFilter extends ReliableAsyncChannelDataFi
 
         for (int i = 0; i < _templates.length; i++) {
             if (_templates[i].isAssignableFrom(typeDesc)) {
-                if (_templates[i].match(_cacheManager,
+                if (_templates[i].match(_cacheManager.getCacheContext(), _cacheManager,
                         entry,
                         -1, null,
-                        _regexCache, _cacheManager.getCacheContext())) {
+                        _regexCache)) {
                     if (_templatePackets[i].getProjectionTemplate() == null || operationType != ReplicationSingleOperationType.WRITE)
                         return ReplicationChannelEntryDataFilterResult.PASS;
 
@@ -206,16 +206,16 @@ public class ViewReplicationChannelDataFilter extends ReliableAsyncChannelDataFi
             if (matchPrevious && matchCurrent)
                 break;
             if (_templates[i].isAssignableFrom(typeDesc)) {
-                if (!matchPrevious && prevEntry != null && _templates[i].match(_cacheManager,
+                if (!matchPrevious && prevEntry != null && _templates[i].match(_cacheManager.getCacheContext(), _cacheManager,
                         prevEntry,
                         -1, null,
-                        _regexCache, _cacheManager.getCacheContext())) {
+                        _regexCache)) {
                     matchPrevious = true;
                 }
-                if (!matchCurrent && _templates[i].match(_cacheManager,
+                if (!matchCurrent && _templates[i].match(_cacheManager.getCacheContext(), _cacheManager,
                         entry,
                         -1, null,
-                        _regexCache, _cacheManager.getCacheContext())) {
+                        _regexCache)) {
                     templatePacket = _templatePackets[i];
                     matchCurrent = true;
                 }
