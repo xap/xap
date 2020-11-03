@@ -149,6 +149,7 @@ public class CacheManager extends AbstractCacheManager
     private final TypeDataFactory _typeDataFactory;
     private final CacheContextFactory _cacheContextFactory;
     private final IStorageAdapter _storageAdapter;
+    private final SQLFunctions sqlFunctions;
 
     private LeaseManager _leaseManager;
     private PersistentGC _persistentGC;
@@ -397,8 +398,7 @@ public class CacheManager extends AbstractCacheManager
                 && engine.getReplicationNode().getDirectPesistencySyncHandler().isEmbeddedListUsed();
 
         Object userFunctions = customProperties.get(Constants.SqlFunction.USER_SQL_FUNCTION);
-        if(userFunctions != null)
-            SQLFunctions.instance().init((Map<String, SqlFunction>) userFunctions);
+        sqlFunctions = new SQLFunctions((Map<String, SqlFunction>) userFunctions);
         queryExtensionManagers = initQueryExtensionManagers(customProperties);
     }
 
@@ -3855,6 +3855,10 @@ public class CacheManager extends AbstractCacheManager
             pEntry.setRemoved();
 
         return true;
+    }
+
+    public SQLFunctions getSqlFunctions() {
+        return sqlFunctions;
     }
 
     /**

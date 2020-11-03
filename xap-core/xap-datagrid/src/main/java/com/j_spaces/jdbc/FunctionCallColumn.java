@@ -27,7 +27,7 @@ public class FunctionCallColumn extends SelectColumn {
 
     public Object apply(Object value){
         params.set(0, value);
-        SqlFunction sqlFunction = SQLFunctions.getFunction(getFunctionName());
+        SqlFunction sqlFunction = SQLFunctions.getBuiltInFunction(getFunctionName());
         if(sqlFunction != null){
             return sqlFunction.apply(new SqlFunctionExecutionContext() {
                 @Override

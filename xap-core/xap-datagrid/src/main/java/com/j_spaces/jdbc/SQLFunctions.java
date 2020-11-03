@@ -28,8 +28,8 @@ import java.util.Map;
  */
 @com.gigaspaces.api.InternalApi
 public class SQLFunctions {
-    private static final Map<String, SqlFunction> userDefinedFunctions = new HashMap<String, SqlFunction>();
-    private static final Map<String, SqlFunction> builtInFunctions = new HashMap<String, SqlFunction>();
+    private final Map<String, SqlFunction> userDefinedFunctions = new HashMap<>();
+    private static final Map<String, SqlFunction> builtInFunctions = new HashMap<>();
 
     static {
         builtInFunctions.put("ABS", new AbsSqlFunction());
@@ -49,23 +49,10 @@ public class SQLFunctions {
         builtInFunctions.put("REPLACE", new ReplaceSqlFunction());
     }
 
-    private static SQLFunctions instance = new SQLFunctions();
-    private static boolean init = false;
-
-    private SQLFunctions(){
-
-    }
-
-    public static SQLFunctions instance(){
-        return instance;
-    }
-
-    public void init(Map<String, SqlFunction> userFunctions) {
-        if(init)
-            throw new RuntimeException("SQLFunctions instance was already initiated!");
-        userFunctions.keySet().forEach(String::toUpperCase);
-        userDefinedFunctions.putAll(userFunctions);
-        init = true;
+    public SQLFunctions(Map<String, SqlFunction> userFunctions){
+        if(userFunctions != null) {
+            userDefinedFunctions.putAll(userFunctions);
+        }
     }
 
     public static Object apply(SqlFunction func, SqlFunctionExecutionContext ctx) throws RuntimeException {
@@ -76,11 +63,11 @@ public class SQLFunctions {
         return builtInFunctions.keySet().contains(functionName.toUpperCase());
     }
 
-    public static boolean isUserDefined(String functionName){
-        return userDefinedFunctions.keySet().contains(functionName.toUpperCase());
+    public static SqlFunction getBuiltInFunction(String functionName){
+        return builtInFunctions.get(functionName.toUpperCase());
     }
 
-    public static SqlFunction getFunction(String functionName){
+    public SqlFunction getFunction(String functionName){
         functionName = functionName.toUpperCase();
         SqlFunction sqlFunction = builtInFunctions.get(functionName);
         return  sqlFunction != null ? sqlFunction : userDefinedFunctions.get(functionName);

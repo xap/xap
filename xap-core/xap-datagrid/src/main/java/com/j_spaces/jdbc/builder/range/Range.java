@@ -118,7 +118,7 @@ public abstract class Range extends AbstractCustomQuery {
     private boolean matchRange(Range range, Object value, CacheManager cacheManager) {
 
         if (range.getFunctionCallDescription() != null && range.getFunction() == null) { // set function if it not exists
-            SqlFunction sqlFunction = SQLFunctions.getFunction(range.getFunctionCallDescription().getName());
+            SqlFunction sqlFunction = cacheManager.getSqlFunctions().getFunction(range.getFunctionCallDescription().getName());
             if (sqlFunction != null) {
                 range.setFunction(sqlFunction);
             } else {
@@ -223,7 +223,7 @@ public abstract class Range extends AbstractCustomQuery {
         if (functionCallDescription != null) {
             String functionName = functionCallDescription.getName();
             if (SQLFunctions.isBuiltIn(functionName)) {
-                this.function = SQLFunctions.getFunction(functionName);
+                this.function = SQLFunctions.getBuiltInFunction(functionName);
             }
         }
     }
