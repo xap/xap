@@ -35,6 +35,7 @@ import com.gigaspaces.internal.server.space.operations.ChangeEntriesSpaceOperati
 import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridOperationDetails;
+import com.gigaspaces.internal.transport.EntryPacket;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.TemplatePacketFactory;
 import com.gigaspaces.lrmi.nio.IResponseContext;
@@ -1027,10 +1028,7 @@ public class Context {
             if (entryPacket != null) {
                 //protect against nullifying of properties by filters
                 if (entryPacket.hasFixedPropertiesArray() && !entryPacket.allNullFieldValues()) {
-                    Object[] src = entryPacket.getFieldValues();
-                    Object[] target = new Object[src.length];
-                    System.arraycopy(src, 0, target, 0, src.length);
-                    entryPacket.setFieldsValues(target);
+                    copyFieldsArray(entryPacket);
                 }
                 try {
                     if (template.isUpdateOperation()) {
@@ -1052,10 +1050,7 @@ public class Context {
                 if (template.isBatchOperation() && ex == null && template.getBatchOperationContext().hasAnyEntries() && !template.isInitiatedEvictionOperation() && template.getBatchOperationContext().getResults() != null) {
                     for (IEntryPacket curep : template.getBatchOperationContext().getResults()) {
                         if (curep != null && curep.hasFixedPropertiesArray() && !curep.allNullFieldValues()) {
-                            Object[] src = curep.getFieldValues();
-                            Object[] target = new Object[src.length];
-                            System.arraycopy(src, 0, target, 0, src.length);
-                            curep.setFieldsValues(target);
+                            copyFieldsArray(curep);
                         }
                         if (!template.isChange())
                             template.getFilterManager().invokeFilters(template.getAfterOpFilterCode(), template.getSpaceContext(), curep);
@@ -1211,6 +1206,21 @@ public class Context {
             }
 
         }//if (!skipAnswerTable)
+    }
+
+    private void copyFieldsArray(IEntryPacket entryPacket) {
+        if (entryPacket instanceof EntryPacket) {
+            EntryPacket packet = (EntryPacket) entryPacket;
+            if (packet.getBinaryFields() != null) {
+                return;
+            }
+        }
+
+        Object[] src = entryPacket.getFieldValues();
+        Object[] target = new Object[src.length];
+        System.arraycopy(src, 0, target, 0, src.length);
+        entryPacket.setFieldsValues(target);
+
     }
 
     public void setSyncHybridOperationDetails(SyncHybridOperationDetails[] syncHybridOperationsDetails) {

@@ -445,4 +445,8 @@ public class EntryPacket extends AbstractEntryPacket {
     public boolean allNullFieldValues() {
         return _fixedProperties == null && binaryFields == null;
     }
+
+    public byte[] getBinaryFields() {
+        return binaryFields;
+    }
 }
