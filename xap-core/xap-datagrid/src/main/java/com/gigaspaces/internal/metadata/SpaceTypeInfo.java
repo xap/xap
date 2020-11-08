@@ -105,7 +105,7 @@ public class SpaceTypeInfo implements Externalizable {
     private Map<String, SpaceIndex> _indexes;
     private Map<String, SpacePropertyInfo> _properties;
     private SpacePropertyInfo[] _spaceProperties;
-    private Class<? extends ClassBinaryStorageAdapter> _spaceClassStorageAdapter;
+    private Class<? extends ClassBinaryStorageAdapter> _spaceClassStorageAdapter = Boolean.parseBoolean(System.getProperty("com.gs.binary.enabled", "true")) ? DefaultClassBinaryStorageAdapter.class : null;
 
     private SpacePropertyInfo _idProperty;
     private Boolean _idAutoGenerate;
