@@ -1,5 +1,7 @@
 package com.gigaspaces.client.storage_adapters.class_storage_adapters;
 
+import com.gigaspaces.internal.io.GSByteArrayInputStream;
+import com.gigaspaces.internal.io.GSByteArrayOutputStream;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 
@@ -10,7 +12,7 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
 
     @Override
     public byte[] toBinary(SpaceTypeDescriptor typeDescriptor, Object[] fields) throws IOException {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutputStream out = new ObjectOutputStream(bos)) {
+        try (GSByteArrayOutputStream bos = new GSByteArrayOutputStream(); ObjectOutputStream out = new ObjectOutputStream(bos)) {
             IOUtils.writeObjectArrayCompressed(out, fields);
             out.flush();
             return bos.toByteArray();
@@ -19,7 +21,7 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
 
     @Override
     public Object[] fromBinary(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields) throws IOException, ClassNotFoundException {
-        try (ByteArrayInputStream bis = new ByteArrayInputStream(serializedFields); ObjectInput in = new ObjectInputStream(bis)) {
+        try (GSByteArrayInputStream bis = new GSByteArrayInputStream(serializedFields); ObjectInput in = new ObjectInputStream(bis)) {
             return IOUtils.readObjectArrayCompressed(in);
         }
     }
