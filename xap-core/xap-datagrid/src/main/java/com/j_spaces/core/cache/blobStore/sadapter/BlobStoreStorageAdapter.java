@@ -26,12 +26,7 @@ import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.logger.LogUtils;
 import com.gigaspaces.metadata.index.SpaceIndex;
-import com.gigaspaces.server.blobstore.BlobStoreBulkOperationRequest;
-import com.gigaspaces.server.blobstore.BlobStoreBulkOperationResult;
-import com.gigaspaces.server.blobstore.BlobStoreObjectType;
-import com.gigaspaces.server.blobstore.BlobStoreRemoveBulkOperationRequest;
-import com.gigaspaces.server.blobstore.BlobStoreReplaceBulkOperationRequest;
-import com.gigaspaces.server.blobstore.BlobStoreAddBulkOperationRequest;
+import com.gigaspaces.server.blobstore.*;
 import com.gigaspaces.sync.SpaceSynchronizationEndpoint;
 import com.j_spaces.core.SpaceOperations;
 import com.j_spaces.core.cache.TypeData;
@@ -46,18 +41,10 @@ import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.IStorageAdapter;
 import com.j_spaces.core.sadapter.SAException;
 import net.jini.core.transaction.server.ServerTransaction;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 
 /**
@@ -108,9 +95,14 @@ public class BlobStoreStorageAdapter implements IStorageAdapter, IBlobStoreStora
     @Override
     public ISAdapterIterator initialLoad(Context context, ITemplateHolder template)
             throws SAException {
-        // TODO Auto-generated method stub
-        if (_localBlobStoreRecoveryPerformed || !_persistentBlobStore) {//local blob store tried. now try recovery from mirror if exist
-            return _possibleRecoverySA != null ? _possibleRecoverySA.initialLoad(context, template) : null;
+        if (_localBlobStoreRecoveryPerformed || !_persistentBlobStore) {
+            if (_engine.getSpaceImpl().isBackup()) {
+                //if persistent="false" and Backup - recover only from Primary Space
+                return null;
+            } else {
+                //local blob store tried. now try recovery from mirror if exist
+                return _possibleRecoverySA != null ? _possibleRecoverySA.initialLoad(context, template) : null;
+            }
         }
 
         //first always try our local blob store
