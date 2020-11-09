@@ -133,14 +133,7 @@ import java.util.Set;
 
 @com.gigaspaces.api.InternalApi
 public class SpaceTypeDescriptorTestCase extends TestCase {
-
-    @Override
-    protected void setUp() throws Exception {
-        System.setProperty("com.gs.binary.enabled", "false");
-        super.setUp();
-    }
-
-
+    
     public void testNull() {
         // Arrange:
         final Class<?> type = null;
