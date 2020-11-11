@@ -94,4 +94,13 @@ public @interface SpaceClass {
      */
 
     boolean blobstoreEnabled() default PojoDefaults.BLOBSTORE_ENABLED;
+
+    /**
+     * When partitioned is true, entries will distributed across partitions
+     * when false entries will be replicated in each partition
+     *
+     * @return boolean true for partitioned.
+     */
+
+    boolean partitioned() default PojoDefaults.PARTITIONED;
 }

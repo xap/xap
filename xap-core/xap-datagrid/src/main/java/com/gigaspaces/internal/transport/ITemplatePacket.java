@@ -59,4 +59,10 @@ public interface ITemplatePacket extends ITransportPacket, IEntryPacket {
 
     boolean isAllIndexValuesSqlQuery();
 
+    default Object getTemplateRoutingValue() {
+        if(getTypeDescriptor() == null)
+            return getRoutingFieldValue();
+        return getTypeDescriptor().isPartitioned() ? getRoutingFieldValue() : 0;
+    }
+
 }

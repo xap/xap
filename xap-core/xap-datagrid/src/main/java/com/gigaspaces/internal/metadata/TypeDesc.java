@@ -81,6 +81,7 @@ public class TypeDesc implements ITypeDesc {
     private Map<String, SpaceIndex> _indexes;
     private TypeQueryExtensions queryExtensionsInfo;
     private ClassBinaryStorageAdapter classBinaryStorageAdapter;
+    private boolean _partitioned;
 
     private int _sequenceNumberFixedPropertyPos;  //-1  if none
 
@@ -132,7 +133,7 @@ public class TypeDesc implements ITypeDesc {
                     StorageType storageType, EntryType entryType, Class<? extends Object> objectClass,
                     Class<? extends ExternalEntry> externalEntryClass, Class<? extends SpaceDocument> documentWrapperClass,
                     String dotnetDocumentWrapperType, byte dotnetStorageType, boolean blobstoreEnabled, String sequenceNumberPropertyName,
-                    TypeQueryExtensions queryExtensionsInfo, Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapter) {
+                    TypeQueryExtensions queryExtensionsInfo, Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapter,boolean partitioned) {
         _typeName = typeName;
         _codeBase = codeBase;
         _superTypesNames = superTypesNames;
@@ -177,6 +178,8 @@ public class TypeDesc implements ITypeDesc {
         if(binaryStorageAdapter != null) {
             this.classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(binaryStorageAdapter);
         }
+
+        _partitioned = partitioned;
     }
 
     public TypeDesc cloneWithoutObjectClass( TypeDesc typeDesc, EntryType entryType ) {
@@ -499,6 +502,10 @@ public class TypeDesc implements ITypeDesc {
         return _blobstoreEnabled;
     }
 
+    @Override
+    public boolean isPartitioned() {
+        return _partitioned;
+    }
 
     public EntryType getObjectType() {
         return _objectType;
@@ -719,6 +726,7 @@ public class TypeDesc implements ITypeDesc {
         sb.append("systemType=").append(_systemType).append(", ");
         sb.append("replicatable=").append(_replicable).append(", ");
         sb.append("blobstoreEnabled=").append(_blobstoreEnabled).append(", ");
+        sb.append("partitioned=").append(_partitioned).append(", ");
         sb.append("storageType=").append(_storageType).append(", ");
         sb.append("fifoSupport=").append(_fifoSupport).append(", ");
         sb.append("idPropertyName=").append(_idPropertyName).append(", ");
@@ -888,7 +896,10 @@ public class TypeDesc implements ITypeDesc {
             String storageAdapterClassName = IOUtils.readString(in);
             if (storageAdapterClassName != null)
                 classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(ClassLoaderHelper.loadClass(storageAdapterClassName));
+            _partitioned = in.readBoolean();
         }
+        else
+            _partitioned = true; // TODO check if this works
     }
 
     private void writeObjectsAsByteArray(ObjectOutput out) throws IOException {
@@ -1223,6 +1234,7 @@ public class TypeDesc implements ITypeDesc {
         // New in 15.8.0: Space class storage adapter
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
             IOUtils.writeString(out, classBinaryStorageAdapter != null ? classBinaryStorageAdapter.getClass().getName() : null);
+            out.writeBoolean(_partitioned);
         }
     }
 

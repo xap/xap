@@ -976,16 +976,21 @@ public class CacheManager extends AbstractCacheManager
             entriesIterSA = _storageAdapter.initialLoad(context, th);
             if (entriesIterSA != null) {
                 IServerTypeDesc serverTypeDesc = null;
+                ITypeDesc typeDesc = null;
                 Set<String> typesIn = _persistentBlobStore ? new HashSet<String>() : null;
                 while (true) {
                     IEntryHolder eh = entriesIterSA.next();
-                    if (eh == null)
+                    if (eh == null) {
                         break;
+                    }
+                    if(typeDesc == null || !typeDesc.getTypeName().equals(eh.getClassName()))
+                        typeDesc = _typeManager.getTypeDesc(eh.getClassName());
+                    boolean isPartitionedTable = typeDesc != null && typeDesc.isPartitioned();
 
                     initialLoadInfo.incrementFoundInDatabase();
                     //Verify that entry read
                     //from the DB belongs to this partition
-                    if (_engine.isPartitionedSpace() && !eh.isBlobStoreEntry()) {
+                    if (_engine.isPartitionedSpace() && !eh.isBlobStoreEntry() && isPartitionedTable) {
                         if (serverTypeDesc == null || !serverTypeDesc.getTypeName().equals(eh.getClassName()))
                             serverTypeDesc = _typeManager.getServerTypeDesc(eh.getClassName());
 
@@ -2817,6 +2822,8 @@ public class CacheManager extends AbstractCacheManager
                 eh = iter.getCurrentEntryHolder();
             }
             if (eh.isDeleted())
+                continue;
+            if(_engine.skipReplicatedTable(context, template, eh.getServerTypeDesc()))
                 continue;
             XtnStatus writelockXtnsSatus = XtnStatus.UNUSED;
             if (!memoryOnly && context.getLastMatchResult() == MatchResult.NONE) {
@@ -5808,6 +5815,8 @@ public class CacheManager extends AbstractCacheManager
                     IEntryHolder entryHolder = entriesIter.next();
                     if (entryHolder == null)
                         break;
+                    if(_engine.skipReplicatedTable(context, template, entryHolder.getServerTypeDesc()))
+                        continue;
                     // Make sure we don't count the same object twice (persistent/transient)
                     if (loadPersistent && !entryHolder.isTransient())
                         continue;

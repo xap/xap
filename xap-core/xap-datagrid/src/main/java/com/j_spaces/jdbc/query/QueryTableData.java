@@ -372,4 +372,8 @@ public class QueryTableData implements Serializable {
     public void setJoinType(Join.JoinType _joinType) {
         this._joinType = _joinType;
     }
+
+    public boolean isReplicatedTable(){
+        return _typeDesc != null && !_typeDesc.isPartitioned();
+    }
 }
