@@ -2,7 +2,7 @@ package org.openspaces.persistency.kafka.internal;
 
 import com.gigaspaces.api.InternalApi;
 import com.gigaspaces.sync.serializable.EndpointData;
-import org.apache.commons.lang.SerializationUtils;
+import com.j_spaces.kernel.CommonsLangUtils;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.Serializer;
 
@@ -17,12 +17,12 @@ public class KafkaEndpointDataSerializer implements Serializer<EndpointData> {
 
     @Override
     public byte[] serialize(String topic, EndpointData data) {
-        return SerializationUtils.serialize(data);
+        return CommonsLangUtils.serialize(data);
     }
 
     @Override
     public byte[] serialize(String topic, Headers headers, EndpointData data) {
-        return SerializationUtils.serialize(data);
+        return CommonsLangUtils.serialize(data);
     }
 
     @Override

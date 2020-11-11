@@ -102,7 +102,7 @@ public class JSpaceUtilities {
 
     public final static String LINE_SEPARATOR = System.getProperty("line.separator");
 
-    private static Map<ServiceID, Boolean> jmxRemotePortDefiedMap = new HashMap<ServiceID, Boolean>();
+    private static Map<ServiceID, Boolean> jmxRemotePortDefiedMap = new HashMap<>();
 
     /**
      * Order all XML tags of DOM tree and writes XML DOM tree to OutputStream. For example DOM tree
@@ -788,7 +788,7 @@ public class JSpaceUtilities {
      * @return True if string is empty or null
      */
     public static boolean isEmpty(String s) {
-        return s == null || s.length() == 0;
+        return isEmpty(s,true);
     }
 
     public static boolean isEmpty(String s, boolean isWithTrim) {
@@ -1084,7 +1084,7 @@ public class JSpaceUtilities {
     public static Map<String, ClusterMemberInfo> getClusterMembersInfoMap(ClusterPolicy clusterPolicy) {
         Set<ClusterMemberInfo> clusterMemberInfoSet = getClusterMembersInfoSet(clusterPolicy);
         Map<String, ClusterMemberInfo> resultMap =
-                new HashMap<String, ClusterMemberInfo>(clusterMemberInfoSet.size());
+                new HashMap<>(clusterMemberInfoSet.size());
 
         Iterator<ClusterMemberInfo> iterator = clusterMemberInfoSet.iterator();
         while (iterator.hasNext()) {
@@ -1096,7 +1096,7 @@ public class JSpaceUtilities {
     }
 
     public static Set<ClusterMemberInfo> getClusterMembersInfoSet(ClusterPolicy clusterPolicy) {
-        Set<ClusterMemberInfo> clusterMembersSet = new HashSet<ClusterMemberInfo>();
+        Set<ClusterMemberInfo> clusterMembersSet = new HashSet<>();
         //get cluster policies
         FailOverPolicy failOverPolicy = clusterPolicy.m_FailOverPolicy;
         LoadBalancingPolicy loadBalancingPolicy = clusterPolicy.m_LoadBalancingPolicy;
@@ -1131,9 +1131,9 @@ public class JSpaceUtilities {
 
     private static Set<ClusterMemberInfo> transformToSet(List<SpaceURL> urlsList, List<String> memberNamesList) {
         if (urlsList == null)
-            return (new HashSet<ClusterMemberInfo>(1));
+            return (new HashSet<>(1));
 
-        Set<ClusterMemberInfo> set = new HashSet<ClusterMemberInfo>(urlsList.size());
+        Set<ClusterMemberInfo> set = new HashSet<>(urlsList.size());
         int listSize = urlsList.size();
         for (int i = 0; i < listSize; i++)// String memberName : memberNamesList )
         {
@@ -1468,7 +1468,7 @@ public class JSpaceUtilities {
     public static Set<String> getExportCodebasesSet(Object service) {
         URLClassLoader cl = (URLClassLoader) service.getClass().getClassLoader();
         URL[] urls = cl.getURLs();
-        Set<String> codebaseSet = new HashSet<String>(urls.length);
+        Set<String> codebaseSet = new HashSet<>(urls.length);
         for (URL url : urls) {
             String exportCodebase = retrieveCodebase(url);
 

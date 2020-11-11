@@ -158,6 +158,7 @@
             <outputDirectory>product/lib/optional/jpa</outputDirectory>
             <includes>
                 <include>commons-collections:commons-collections</include>
+                <include>commons-lang:commons-lang</include>
                 <include>org.apache.openjpa:openjpa</include>
                 <include>org.apache.geronimo.specs:geronimo-jpa_2.2_spec</include>
                 <include>org.apache.geronimo.specs:geronimo-jta_1.1_spec</include>

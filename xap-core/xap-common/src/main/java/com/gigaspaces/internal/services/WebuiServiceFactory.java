@@ -28,7 +28,6 @@ public class WebuiServiceFactory extends ServiceFactory {
                 .appendOptionalJars("interop")
                 .appendOptionalJars("memoryxtend/off-heap")
                 .appendOptionalJars("memoryxtend/rocksdb")
-                .appendPlatformJars("commons")
                 .appendPlatformJars("service-grid")
                 .appendPlatformJars("zookeeper");
     }

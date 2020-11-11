@@ -7,16 +7,6 @@
     </formats>
     <includeBaseDirectory>false</includeBaseDirectory>
     <dependencySets>
-
-        <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
-            <outputDirectory>product/lib/platform/commons</outputDirectory>
-            <includes>
-                <include>commons-lang:commons-lang</include>
-                <!--<include>commons-collections:commons-collections</include>-->
-            </includes>
-        </dependencySet>
-
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>product/lib/platform/javax</outputDirectory>

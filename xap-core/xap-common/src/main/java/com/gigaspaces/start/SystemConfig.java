@@ -89,7 +89,7 @@ public class SystemConfig {
                 new ZooKeeperServiceFactory(),
                 new WebuiServiceFactory()
         };
-        Map<String, ServiceFactory> result = new HashMap<String, ServiceFactory>();
+        Map<String, ServiceFactory> result = new HashMap<>();
         for (ServiceFactory serviceFactory : serviceFactories)
             result.put(serviceFactory.getServiceName(), serviceFactory);
         return result;
@@ -113,7 +113,7 @@ public class SystemConfig {
         } else {
             /* GS-9495: Trim extra whitespace at the end of the command line. In Win-2008, shows up as a comma. */
             if (",".equals(confArgs[confArgs.length - 1])) {
-                List<String> trimConfArgs = new ArrayList<String>(confArgs.length - 1);
+                List<String> trimConfArgs = new ArrayList<>(confArgs.length - 1);
                 for (int i = 0; i < confArgs.length - 1; ++i) {
                     trimConfArgs.add(confArgs[i]);
                 }
@@ -131,7 +131,7 @@ public class SystemConfig {
                 logger.warn("Creating ConfigurationParser", e);
             }
             String configFile = null;
-            ArrayList<String> configList = new ArrayList<String>();
+            ArrayList<String> configList = new ArrayList<>();
             if (confArgs[0].endsWith(".config"))
                 configFile = confArgs[0];
             for (int i = 0; i < confArgs.length; i++) {
@@ -161,7 +161,7 @@ public class SystemConfig {
             }
 
             //process the addPlatformJARs now since JINI configuration does not allow dups
-            addedPlatformJars = new ArrayList<URL>(configList.size());
+            addedPlatformJars = new ArrayList<>(configList.size());
             for (Iterator<String> iterator = configList.iterator(); iterator.hasNext(); ) {
                 String configArg = iterator.next();
                 if (configArg.indexOf("addPlatformJARs") != -1) {
@@ -312,7 +312,7 @@ public class SystemConfig {
         classpathBuilder.appendOptionalJars("spatial");
         classpathBuilder.appendOptionalJars("full-text-search");
         classpathBuilder.appendOptionalJars("jpa", FileUtils.Filters.nameStartsWith(XapModules.JPA_SPRING.getArtifactName()).negate());
-        classpathBuilder.appendPlatformJars("commons"); // Apache Commons libraries
+        //classpathBuilder.appendPlatformJars("commons"); // Apache Commons libraries !!!
         classpathBuilder.appendOptionalJars("groovy");
         classpathBuilder.appendOptionalJars("jruby");
         classpathBuilder.appendJars(Paths.get(System.getProperty("com.gs.pu.classloader.scala-lib-path", locations.libOptional("scala").resolve("lib").toString())));// Scala support
@@ -361,7 +361,7 @@ public class SystemConfig {
                 }
                 logger.debug("addPlatformJARs\n" + buffer.toString());
             }
-            ArrayList<URL> list = new ArrayList<URL>();
+            ArrayList<URL> list = new ArrayList<>();
             for (int i = 0; i < platformJARs.length; i++)
                 list.add(platformJARs[i]);
             for (int i = 0; i < addPlatformJARs.length; i++)
