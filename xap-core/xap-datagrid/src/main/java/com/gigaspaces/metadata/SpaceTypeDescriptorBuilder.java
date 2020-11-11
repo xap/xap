@@ -89,6 +89,7 @@ public class SpaceTypeDescriptorBuilder {
     private String _sequenceNumberPropertyName;
     private boolean _sequenceNumberFromDocumentBuilder;
     private Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapterClass;
+    private Boolean _broadcast;
 
     /**
      * Initialize a type descriptor builder using the specified type name.
@@ -119,6 +120,7 @@ public class SpaceTypeDescriptorBuilder {
         this._fifoGroupingIndexes = new HashSet<String>();
         this._storageType = StorageType.DEFAULT;
         this._blobstoreEnabled = PojoDefaults.BLOBSTORE_ENABLED;
+        this._broadcast = PojoDefaults.BROADCAST;
     }
 
     /*
@@ -185,6 +187,7 @@ public class SpaceTypeDescriptorBuilder {
         _idAutoGenerate = typeInfo.getIdAutoGenerate();
         _routingPropertyName = typeInfo.getRoutingProperty() != null ? typeInfo.getRoutingProperty().getName() : null;
         _blobstoreEnabled = typeInfo.isBlobstoreEnabled();
+        _broadcast = typeInfo.isBroadcast();
     }
 
     /**
@@ -230,6 +233,16 @@ public class SpaceTypeDescriptorBuilder {
      */
     public SpaceTypeDescriptorBuilder setBlobstoreEnabled(boolean blobstoreEnabled) {
         this._blobstoreEnabled = blobstoreEnabled;
+        return this;
+    }
+
+    /**
+     * Sets whether this type should be distributed across partitions.
+     *
+     * @param broadcast true if this type is broadcast, false otherwise.
+     */
+    public SpaceTypeDescriptorBuilder broadcast(boolean broadcast) {
+        this._broadcast = broadcast;
         return this;
     }
 
@@ -701,6 +714,9 @@ public class SpaceTypeDescriptorBuilder {
             validatePropertyExists(_routingPropertyName, fixedProperties);
         }
 
+        if(_broadcast)
+            validateBroadcast();
+
         return new TypeDesc(
                 _typeName,
                 codeBase,
@@ -727,7 +743,9 @@ public class SpaceTypeDescriptorBuilder {
                 DotNetStorageType.NULL,
                 _blobstoreEnabled,
                 _sequenceNumberPropertyName,
-                _queryExtensionsInfo, binaryStorageAdapterClass);
+                _queryExtensionsInfo,
+                binaryStorageAdapterClass,
+                _broadcast);
     }
 
     private void applyDefaults() {
@@ -750,11 +768,19 @@ public class SpaceTypeDescriptorBuilder {
             if (_replicable == null)
                 _replicable = PojoDefaults.REPLICATE;
         }
+
         if (_blobstoreEnabled == null) {
             if (_superTypeDescriptor != null)
                 this._blobstoreEnabled = _superTypeDescriptor.isBlobstoreEnabled();
             if (_blobstoreEnabled == null)
                 _blobstoreEnabled = PojoDefaults.BLOBSTORE_ENABLED;
+        }
+
+        if (_broadcast == null) {
+            if (_superTypeDescriptor != null)
+                this._broadcast = _superTypeDescriptor.isBroadcast();
+            if (_broadcast == null)
+                _broadcast = PojoDefaults.BROADCAST;
         }
 
         if (_supportsDynamicProperties == null) {
@@ -856,6 +882,15 @@ public class SpaceTypeDescriptorBuilder {
 
         throw new IllegalArgumentException("No such property - '" + propertyName + "'.");
     }
+
+    private void validateBroadcast() {
+        if(_routingPropertyName != null && !_routingPropertyName.equals(_idPropertyName))
+            throw new IllegalArgumentException("Routing property and broadcast table cannot be used together.");
+        if(_idAutoGenerate)
+            throw new IllegalArgumentException("Auto generated id and broadcast table cannot be used together.");
+    }
+
+
 
     private static String[] getSuperTypesNames(String typeName, SpaceTypeDescriptor superTypeDescriptor) {
         if (typeName.equals(ROOT_TYPE_NAME))

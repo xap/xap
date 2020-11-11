@@ -3143,6 +3143,13 @@
                             </xsd:documentation>
                         </xsd:annotation>
                     </xsd:attribute>
+                    <xsd:attribute name="broadcast" type="xsd:boolean" use="optional">
+                        <xsd:annotation>
+                            <xsd:documentation>
+                                Indicator whether this class will be distributed across partitions or broadcast.
+                            </xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:attribute>
 
                 </xsd:extension>
             </xsd:complexContent>

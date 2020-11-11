@@ -180,6 +180,7 @@ public interface SpaceTypeDescriptor {
 
     boolean isBlobstoreEnabled();
 
+    boolean isBroadcast();
 
     boolean hasSequenceNumber();
 

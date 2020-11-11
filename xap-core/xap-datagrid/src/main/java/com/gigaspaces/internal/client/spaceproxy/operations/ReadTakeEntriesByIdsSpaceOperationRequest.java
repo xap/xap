@@ -142,6 +142,8 @@ public class ReadTakeEntriesByIdsSpaceOperationRequest extends SpaceScatterGathe
 
     @Override
     public PartitionedClusterExecutionType getPartitionedClusterExecutionType() {
+        if(_template.isBroadcast())
+            return PartitionedClusterExecutionType.SINGLE;
         if (_template instanceof IdsQueryPacket) {
             final IdsQueryPacket queryPacket = (IdsQueryPacket) _template;
             return queryPacket.getRoutingFieldValue() != null ? PartitionedClusterExecutionType.SINGLE : PartitionedClusterExecutionType.BROADCAST_CONCURRENT;

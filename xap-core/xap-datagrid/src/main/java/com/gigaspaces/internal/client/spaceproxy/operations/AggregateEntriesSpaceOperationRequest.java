@@ -76,6 +76,7 @@ public class AggregateEntriesSpaceOperationRequest extends SpaceOperationRequest
         return SpaceOperationsCodes.AGGREGATE_ENTRIES;
     }
 
+
     @Override
     public AggregateEntriesSpaceOperationResult createRemoteOperationResult() {
         return new AggregateEntriesSpaceOperationResult();
@@ -93,7 +94,7 @@ public class AggregateEntriesSpaceOperationRequest extends SpaceOperationRequest
 
     @Override
     public PartitionedClusterExecutionType getPartitionedClusterExecutionType() {
-        if (queryPacket.getRoutingFieldValue() != null)
+        if (queryPacket.getRoutingFieldValue() != null || queryPacket.isBroadcast())
             return PartitionedClusterExecutionType.SINGLE;
 
         return PartitionedClusterExecutionType.BROADCAST_CONCURRENT;
@@ -101,7 +102,7 @@ public class AggregateEntriesSpaceOperationRequest extends SpaceOperationRequest
 
     @Override
     public Object getPartitionedClusterRoutingValue(PartitionedClusterRemoteOperationRouter router) {
-        return queryPacket.getRoutingFieldValue();
+        return queryPacket.getTemplateRoutingValue();
     }
 
     @Override

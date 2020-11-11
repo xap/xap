@@ -10,6 +10,7 @@
 	include-properties CDATA #IMPLIED
 	storage-type CDATA #IMPLIED
 	blobstore-enabled CDATA #IMPLIED
+	broadcast CDATA #IMPLIED
 >
 <!ELEMENT property (index*)>
 <!ATTLIST property

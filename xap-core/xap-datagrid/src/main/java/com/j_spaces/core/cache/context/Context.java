@@ -39,10 +39,7 @@ import com.gigaspaces.internal.transport.EntryPacket;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.TemplatePacketFactory;
 import com.gigaspaces.lrmi.nio.IResponseContext;
-import com.j_spaces.core.AnswerHolder;
-import com.j_spaces.core.AnswerPacket;
-import com.j_spaces.core.ExtendedAnswerHolder;
-import com.j_spaces.core.OperationID;
+import com.j_spaces.core.*;
 import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.InitialLoadInfo;
 import com.j_spaces.core.cache.TypeDataIndex;
@@ -252,6 +249,8 @@ public class Context {
     private boolean _backupOnly;
 
     private ViewEntryData viewEntryData;
+
+    private boolean _fromClustered;
 
     public Context() {
     }
@@ -486,6 +485,7 @@ public class Context {
         indexMetricsContext = null;
         _backupOnly=false;
         viewEntryData = null;
+        _fromClustered = false;
     }
 
     public void setOnMatchUid(String uid)
@@ -975,6 +975,14 @@ public class Context {
         return _originalBlobStoreVersion;
     }
 
+    public boolean isFromClustered() {
+        return _fromClustered;
+    }
+
+    public void setFromClustered(boolean fromClustered) {
+        this._fromClustered = fromClustered;
+    }
+
     /**
      * fills the template with the answer to be sent to the client. if template is in callbackmode
      * and main thread has returned then performs a callback to the client. <p/> this method MUST be
@@ -1306,6 +1314,14 @@ public class Context {
                 viewEntryData = new ViewEntryData();
             }
             viewEntryData.view(entryData, fieldsValues);
+        }
+    }
+
+    public void applyOperationContext(SpaceContext sc){
+        // If operation was executed from a gateway component, set the origin gateway name
+        if (sc != null) {
+            setFromGateway(sc.isFromGateway());
+            setFromClustered(sc.isClustered());
         }
     }
 }

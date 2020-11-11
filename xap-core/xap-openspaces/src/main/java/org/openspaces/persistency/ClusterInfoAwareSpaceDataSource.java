@@ -195,6 +195,9 @@ public abstract class ClusterInfoAwareSpaceDataSource extends SpaceDataSource im
     }
 
     protected String createInitialLoadQuery(SpaceTypeDescriptor typeDescriptor, String templateQuery) {
+        if(typeDescriptor.isBroadcast()){
+            return null;
+        }
         SpacePropertyDescriptor routingPropertyType = typeDescriptor.getFixedProperty(typeDescriptor.getRoutingPropertyName());
         if (routingPropertyType == null) {
             // can't move on without a routing property

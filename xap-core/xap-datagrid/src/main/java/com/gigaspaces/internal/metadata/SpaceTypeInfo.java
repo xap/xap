@@ -20,7 +20,6 @@ import com.gigaspaces.annotation.pojo.*;
 import com.gigaspaces.annotation.pojo.SpaceClass.IncludeProperties;
 import com.gigaspaces.annotation.pojo.SpaceProperty.IndexType;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
-import com.gigaspaces.client.storage_adapters.class_storage_adapters.DefaultClassBinaryStorageAdapter;
 import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.io.XmlUtils;
@@ -128,6 +127,8 @@ public class SpaceTypeInfo implements Externalizable {
 
     private String _sequenceNumberPropertyName;
 
+    private Boolean _broadcast;
+
     /**
      * Default constructor for externalizable.
      */
@@ -232,6 +233,10 @@ public class SpaceTypeInfo implements Externalizable {
 
     public boolean isBlobstoreEnabled() {
         return _blobstoreEnabled;
+    }
+
+    public boolean isBroadcast() {
+        return _broadcast;
     }
 
     public int getNumOfProperties() {
@@ -561,6 +566,9 @@ public class SpaceTypeInfo implements Externalizable {
 
         if (_idAutoGenerate == null)
             _idAutoGenerate = false;
+
+        if(_broadcast == null)
+            _broadcast = PojoDefaults.BROADCAST;
     }
 
     private SpacePropertyInfo updatePropertyBySuper(SpacePropertyInfo currProperty, SpacePropertyInfo superProperty) {
@@ -581,6 +589,7 @@ public class SpaceTypeInfo implements Externalizable {
         _persist = XmlUtils.getAttributeBoolean(classNode, "persist");
         _replicate = XmlUtils.getAttributeBoolean(classNode, "replicate");
         _blobstoreEnabled = XmlUtils.getAttributeBoolean(classNode, "blobstore-enabled");
+        _broadcast = XmlUtils.getAttributeBoolean(classNode, "broadcast");
         _fifoSupport = XmlUtils.getAttributeEnum(classNode, "fifo-support", FifoSupport.class);
         _inheritIndexes = XmlUtils.getAttributeBoolean(classNode, "inherit-indexes");
         _includeProperties = XmlUtils.getAttributeEnum(classNode, "include-properties", IncludeProperties.class);
@@ -850,6 +859,7 @@ public class SpaceTypeInfo implements Externalizable {
             _includeProperties = classAnnotation.includeProperties();
             _storageType = classAnnotation.storageType();
             _blobstoreEnabled = classAnnotation.blobstoreEnabled();
+            _broadcast = classAnnotation.broadcast();
         }
         SpaceSystemClass systemClassAnnotation = _type.getAnnotation(SpaceSystemClass.class);
         if (systemClassAnnotation != null) {
@@ -1380,6 +1390,8 @@ public class SpaceTypeInfo implements Externalizable {
         validatePropertyCombination(_persistProperty, _routingProperty, "persist", "routing");
 
         validateStorageAdapterCombination();
+        if(isBroadcast())
+            validateBroadcastTable();
 
         validateGetterSetter(_idProperty, "Id", _idAutoGenerate ? ConstructorPropertyValidation.REQUIERS_SETTER :
                 ConstructorPropertyValidation.REQUIERS_CONSTRUCTOR_PARAM);
@@ -1436,6 +1448,13 @@ public class SpaceTypeInfo implements Externalizable {
                 }
             }
         }
+    }
+
+    private void validateBroadcastTable() {
+        if(_routingProperty != null)
+            throw new SpaceMetadataValidationException(_type, "Routing property and broadcast table cannot be used together.");
+        if(_idAutoGenerate)
+            throw new SpaceMetadataValidationException(_type, "Auto generated id and broadcast table cannot be used together.");
     }
 
     private void validateGetterSetter(SpacePropertyInfo property, String propertyDesc, ConstructorPropertyValidation validation) {

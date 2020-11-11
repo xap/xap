@@ -979,22 +979,23 @@ public class CacheManager extends AbstractCacheManager
                 Set<String> typesIn = _persistentBlobStore ? new HashSet<String>() : null;
                 while (true) {
                     IEntryHolder eh = entriesIterSA.next();
-                    if (eh == null)
+                    if (eh == null) {
                         break;
-
+                    }
                     initialLoadInfo.incrementFoundInDatabase();
                     //Verify that entry read
                     //from the DB belongs to this partition
                     if (_engine.isPartitionedSpace() && !eh.isBlobStoreEntry()) {
                         if (serverTypeDesc == null || !serverTypeDesc.getTypeName().equals(eh.getClassName()))
                             serverTypeDesc = _typeManager.getServerTypeDesc(eh.getClassName());
-
-                        if (eh.getRoutingValue() == null) {
-                            initialLoadInfo.getInitialLoadErrors().add("Object without routing  -  [" + eh.getClassName() + ":" + eh.getUID() + "]");
-                            continue;
+                        if(!serverTypeDesc.getTypeDesc().isBroadcast()) {
+                            if (eh.getRoutingValue() == null) {
+                                initialLoadInfo.getInitialLoadErrors().add("Object without routing  -  [" + eh.getClassName() + ":" + eh.getUID() + "]");
+                                continue;
+                            }
+                            if (!_engine.isEntryFromPartition(eh))
+                                continue;
                         }
-                        if (!_engine.isEntryFromPartition(eh))
-                            continue;
                     }
                     if (_entries.containsKey(eh.getUID())) {
                         initialLoadInfo.getInitialLoadErrors().add("Object with duplicate uid -  [" + eh.getClassName() + ":" + eh.getUID() + "]");
@@ -2817,6 +2818,8 @@ public class CacheManager extends AbstractCacheManager
                 eh = iter.getCurrentEntryHolder();
             }
             if (eh.isDeleted())
+                continue;
+            if(_engine.skipBroadcastTable(context, template, eh.getServerTypeDesc()))
                 continue;
             XtnStatus writelockXtnsSatus = XtnStatus.UNUSED;
             if (!memoryOnly && context.getLastMatchResult() == MatchResult.NONE) {
@@ -5808,6 +5811,8 @@ public class CacheManager extends AbstractCacheManager
                     IEntryHolder entryHolder = entriesIter.next();
                     if (entryHolder == null)
                         break;
+                    if(_engine.skipBroadcastTable(context, template, entryHolder.getServerTypeDesc()))
+                        continue;
                     // Make sure we don't count the same object twice (persistent/transient)
                     if (loadPersistent && !entryHolder.isTransient())
                         continue;

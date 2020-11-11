@@ -94,4 +94,13 @@ public @interface SpaceClass {
      */
 
     boolean blobstoreEnabled() default PojoDefaults.BLOBSTORE_ENABLED;
+
+    /**
+     * When broadcast is false, entries will distributed across partitions
+     * when true entries will be replicated to each partition
+     *
+     * @return boolean true for broadcast.
+     */
+
+    boolean broadcast() default PojoDefaults.BROADCAST;
 }

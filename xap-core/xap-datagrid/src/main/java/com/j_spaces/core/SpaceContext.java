@@ -44,6 +44,8 @@ public class SpaceContext implements Externalizable {
     //token which is used to verify that the client has permissions to perform operations in quiesce mode
     private QuiesceToken quiesceToken;
 
+    private boolean clustered;
+
     /**
      * Empty constructor for Externalizable impl.
      */
@@ -54,13 +56,14 @@ public class SpaceContext implements Externalizable {
         this.securityContext = securityContext;
     }
 
-    public SpaceContext(boolean fromGateway, int chunksMapGeneration) {
+    public SpaceContext(boolean fromGateway, int chunksMapGeneration, boolean clustered) {
         this.fromGateway = fromGateway;
         this.chunksMapGeneration = chunksMapGeneration;
+        this.clustered = clustered;
     }
 
     public SpaceContext createCopy(SecurityContext newSecurityContext) {
-        SpaceContext newContext = new SpaceContext(fromGateway, chunksMapGeneration);
+        SpaceContext newContext = new SpaceContext(fromGateway, chunksMapGeneration, clustered);
         newContext.securityContext = newSecurityContext;
         return newContext;
     }
@@ -77,9 +80,12 @@ public class SpaceContext implements Externalizable {
         return fromGateway;
     }
 
+    public boolean isClustered(){ return clustered;}
+
     private static final short FLAG_SECURITY = 1 << 0;
     private static final short FLAG_FROM_GATEWAY = 1 << 1;
     private static final short FLAG_QUIESCE_TOKEN = 1 << 2;
+    private static final short FLAG_CLUSTERED = 1 << 3;
 
     public void writeExternal(ObjectOutput out) throws IOException {
         PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
@@ -140,13 +146,17 @@ public class SpaceContext implements Externalizable {
             flags |= FLAG_FROM_GATEWAY;
         if (quiesceToken != null)
             flags |= FLAG_QUIESCE_TOKEN;
+        if(clustered)
+            flags |= FLAG_CLUSTERED;
 
         return flags;
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
-        if (version.greaterOrEquals(PlatformLogicalVersion.v15_5_0))
+        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0))
+            readExternalV15_8_0(in);
+        else if (version.greaterOrEquals(PlatformLogicalVersion.v15_5_0))
             readExternalV15_5_0(in);
         else if (version.greaterOrEquals(PlatformLogicalVersion.v10_1_0))
             readExternalV10_1_0(in);
@@ -154,6 +164,21 @@ public class SpaceContext implements Externalizable {
             readExternalV9_7_0(in);
         else
             readExternalV8_0_3(in);
+    }
+
+    private void readExternalV15_8_0(ObjectInput in) throws IOException, ClassNotFoundException {
+        short flags = in.readShort();
+        this.fromGateway = (flags & FLAG_FROM_GATEWAY) != 0;
+        this.clustered = (flags & FLAG_CLUSTERED) != 0;
+
+        if ((flags & FLAG_SECURITY) != 0)
+            securityContext = IOUtils.readObject(in);
+
+        if ((flags & FLAG_QUIESCE_TOKEN) != 0)
+            quiesceToken = IOUtils.readObject(in);
+
+        this.chunksMapGeneration = in.readShort();
+
     }
 
     private void readExternalV15_5_0(ObjectInput in) throws IOException, ClassNotFoundException {

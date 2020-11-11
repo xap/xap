@@ -166,6 +166,11 @@ public class InactiveTypeDesc implements ITypeDesc {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public boolean isBroadcast() {
+       return false;
+    }
+
 
     public boolean supportsDynamicProperties() {
         throw new UnsupportedOperationException();

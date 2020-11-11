@@ -114,7 +114,7 @@ public class MongoSpaceDataSource extends SpaceDataSource {
     public DBObject getInitialQuery(SpaceTypeDescriptor typeDescriptor) {
         DBObject query = new BasicDBObject();
         PartitionRoutingInfo partitionRoutingInfo = getPartitionRoutingInfo();
-        if (partitionRoutingInfo == null || partitionRoutingInfo.getNumOfPartitions() == 1)
+        if (partitionRoutingInfo == null || partitionRoutingInfo.getNumOfPartitions() == 1 || typeDescriptor.isBroadcast())
             return query;
         String routingPropertyName = typeDescriptor.getRoutingPropertyName();
         if(routingPropertyName == null)

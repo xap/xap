@@ -55,8 +55,6 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.*;
 
-import static com.j_spaces.jdbc.Join.JoinType.INNER;
-
 
 /**
  * This class handles the SELECT query logic.
@@ -306,25 +304,24 @@ public class SelectQuery extends AbstractDMLQuery {
     }
 
     public boolean isCollocatedJoin() {
-        List<String> refTableNames = Optional.ofNullable(System.getProperty("com.gs.jdbc.refTableNames", null)).map(x -> Arrays.asList(x.split(","))).orElse(Collections.emptyList());
         if (joins == null || joins.size() == 0) return false;
 
-        if (isAllRefTable(refTableNames)) return true;
+        if (isAllReplicatedTable()) return true;
 
-        if (isMaxOneShardedTable(refTableNames)) return true;
+        if (isMaxOneShardedTable()) return true;
 
-        return isJoinOnRouting(refTableNames);
+        return isJoinOnRouting();
     }
 
-    private boolean isMaxOneShardedTable(List<String> refTables) {
+    private boolean isMaxOneShardedTable() {
         List<QueryTableData> shardedTables = new ArrayList<>();
 
         for (QueryTableData tablesDatum : getTablesData()) {
             if (tablesDatum.getSubQuery() == null) {
-                if (!refTables.contains(tablesDatum.getTableName()))
-                    shardedTables.add(tablesDatum); //regular table not in refTables => add to list
+                if (!tablesDatum.isBroadcastTable())
+                    shardedTables.add(tablesDatum); //regular table not in replicatedTables => add to list
             } else if (tablesDatum.getSubQuery() instanceof SelectQuery) {
-                if (!((SelectQuery) tablesDatum.getSubQuery()).isAllRefTable(refTables))
+                if (!((SelectQuery) tablesDatum.getSubQuery()).isAllReplicatedTable())
                     shardedTables.add(tablesDatum); // subQuery that not all is RefTable => add to list
             } else {
                 if (_logger.isDebugEnabled())
@@ -336,32 +333,28 @@ public class SelectQuery extends AbstractDMLQuery {
         return shardedTables.size() <= 1;
     }
 
-    private boolean isAllRefTable(List<String> refTables) {
+    private boolean isAllReplicatedTable() {
         for (QueryTableData tablesDatum : getTablesData()) {
             if (tablesDatum.getSubQuery() == null) { //regular table with name
-                if (!refTables.contains(tablesDatum.getTableName())) return false; //table is not refTable
+                if (!tablesDatum.isBroadcastTable()) return false; //table is not replicated table
             } else if (tablesDatum.getSubQuery() instanceof SelectQuery) {
-                if (!((SelectQuery) tablesDatum.getSubQuery()).isAllRefTable(refTables))
+                if (!((SelectQuery) tablesDatum.getSubQuery()).isAllReplicatedTable())
                     return false; //recursively check subQuery
             } else {
                 if (_logger.isDebugEnabled())
-                    _logger.debug("Could not check for refTable as subQuery is not of type SelectQuery: " + tablesDatum.toString());
+                    _logger.debug("Could not check for replicated table as subQuery is not of type SelectQuery: " + tablesDatum.toString());
                 return false;
             }
         }
         return true;
     }
 
-    private boolean isJoinOnRouting(List<String> refTableNames) {
+    private boolean isJoinOnRouting() {
         if (joins == null) return isJoinOnRouting(this.expTree);
-
         for (Join join : joins) {
             Query subQuery = join.getSubQuery();
             if (subQuery == null) {
-                if (!refTableNames.contains(join.getTableName())) { // if not ref table
-                    if (!isJoinOnRouting(join.getOnExpression()))
-                        return false; // if ON is not on routing key
-                }
+                return isJoinOnRouting(join.getOnExpression());
             } else if (subQuery instanceof SelectQuery) {
                 SelectQuery selectSubQuery = (SelectQuery) subQuery;
                 if (!selectSubQuery.isCollocatedJoin()) return false;

@@ -119,7 +119,7 @@ public class ReadTakeEntriesSpaceOperationRequest extends SpaceOperationRequest<
 
     @Override
     public PartitionedClusterExecutionType getPartitionedClusterExecutionType() {
-        if (_templatePacket.getRoutingFieldValue() != null)
+        if (_templatePacket.getRoutingFieldValue() != null || _templatePacket.isBroadcast())
             return PartitionedClusterExecutionType.SINGLE;
 
         if (_timeout != 0)
@@ -226,7 +226,7 @@ public class ReadTakeEntriesSpaceOperationRequest extends SpaceOperationRequest<
 
     @Override
     public Object getPartitionedClusterRoutingValue(PartitionedClusterRemoteOperationRouter router) {
-        return _templatePacket.getRoutingFieldValue();
+        return _templatePacket.getTemplateRoutingValue();
     }
 
     @Override

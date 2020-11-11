@@ -59,4 +59,12 @@ public interface ITemplatePacket extends ITransportPacket, IEntryPacket {
 
     boolean isAllIndexValuesSqlQuery();
 
+    default Object getTemplateRoutingValue() {
+        return isBroadcast() ? 0 : getRoutingFieldValue();
+    }
+
+    default boolean isBroadcast(){
+        return getTypeDescriptor() != null && getTypeDescriptor().isBroadcast();
+    }
+
 }
