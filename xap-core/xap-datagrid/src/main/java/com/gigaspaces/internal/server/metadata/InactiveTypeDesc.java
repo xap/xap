@@ -166,6 +166,11 @@ public class InactiveTypeDesc implements ITypeDesc {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public boolean isPartitioned() {
+       return true;
+    }
+
 
     public boolean supportsDynamicProperties() {
         throw new UnsupportedOperationException();

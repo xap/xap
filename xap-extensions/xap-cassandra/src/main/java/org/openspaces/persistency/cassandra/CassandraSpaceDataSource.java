@@ -270,7 +270,7 @@ public class CassandraSpaceDataSource extends ClusterInfoAwareSpaceDataSource {
             String typeName = metadata.getTypeName();
             SpaceTypeDescriptorContainer spaceTypeDescriptorContainer = metadata.getTypeDescriptorData();
             typeDescriptors.put(typeName, spaceTypeDescriptorContainer);
-            if (augmentInitialLoadEntries) {
+            if (augmentInitialLoadEntries && spaceTypeDescriptorContainer.getTypeDescriptor().isPartitioned()) {
                 initialLoadEntriesMap.put(typeName, spaceTypeDescriptorContainer.getTypeDescriptor());
             }
         }

@@ -35,4 +35,5 @@ public abstract class PojoDefaults {
     public static final IncludeProperties INCLUDE_PROPERTIES = IncludeProperties.IMPLICIT;
     public static final StorageType STORAGE_TYPE = StorageType.DEFAULT;
     public static final boolean BLOBSTORE_ENABLED = true;
+    public static final boolean PARTITIONED = true;
 }

@@ -89,6 +89,7 @@ public class SpaceTypeDescriptorBuilder {
     private String _sequenceNumberPropertyName;
     private boolean _sequenceNumberFromDocumentBuilder;
     private Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapterClass;
+    private Boolean _partitioned;
 
     /**
      * Initialize a type descriptor builder using the specified type name.
@@ -119,6 +120,7 @@ public class SpaceTypeDescriptorBuilder {
         this._fifoGroupingIndexes = new HashSet<String>();
         this._storageType = StorageType.DEFAULT;
         this._blobstoreEnabled = PojoDefaults.BLOBSTORE_ENABLED;
+        this._partitioned = PojoDefaults.PARTITIONED;
     }
 
     /*
@@ -185,6 +187,7 @@ public class SpaceTypeDescriptorBuilder {
         _idAutoGenerate = typeInfo.getIdAutoGenerate();
         _routingPropertyName = typeInfo.getRoutingProperty() != null ? typeInfo.getRoutingProperty().getName() : null;
         _blobstoreEnabled = typeInfo.isBlobstoreEnabled();
+        _partitioned = typeInfo.isPartitioned();
     }
 
     /**
@@ -230,6 +233,16 @@ public class SpaceTypeDescriptorBuilder {
      */
     public SpaceTypeDescriptorBuilder setBlobstoreEnabled(boolean blobstoreEnabled) {
         this._blobstoreEnabled = blobstoreEnabled;
+        return this;
+    }
+
+    /**
+     * Sets whether this type should be distributed across partitions.
+     *
+     * @param partitioned true if this type is partitioned, false otherwise.
+     */
+    public SpaceTypeDescriptorBuilder partitioned(boolean partitioned) {
+        this._partitioned = partitioned;
         return this;
     }
 
@@ -727,7 +740,9 @@ public class SpaceTypeDescriptorBuilder {
                 DotNetStorageType.NULL,
                 _blobstoreEnabled,
                 _sequenceNumberPropertyName,
-                _queryExtensionsInfo, binaryStorageAdapterClass);
+                _queryExtensionsInfo,
+                binaryStorageAdapterClass,
+                _partitioned);
     }
 
     private void applyDefaults() {
@@ -750,11 +765,19 @@ public class SpaceTypeDescriptorBuilder {
             if (_replicable == null)
                 _replicable = PojoDefaults.REPLICATE;
         }
+
         if (_blobstoreEnabled == null) {
             if (_superTypeDescriptor != null)
                 this._blobstoreEnabled = _superTypeDescriptor.isBlobstoreEnabled();
             if (_blobstoreEnabled == null)
                 _blobstoreEnabled = PojoDefaults.BLOBSTORE_ENABLED;
+        }
+
+        if (_partitioned == null) {
+            if (_superTypeDescriptor != null)
+                this._partitioned = _superTypeDescriptor.isPartitioned();
+            if (_partitioned == null)
+                _partitioned = PojoDefaults.PARTITIONED;
         }
 
         if (_supportsDynamicProperties == null) {

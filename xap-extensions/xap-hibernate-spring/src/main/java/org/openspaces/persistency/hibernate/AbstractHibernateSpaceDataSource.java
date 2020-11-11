@@ -253,6 +253,8 @@ public abstract class AbstractHibernateSpaceDataSource extends ManagedEntriesSpa
                 if ((managedTypes == null || managedTypes.contains(type)) && !initialLoadChunksRoutingQueries.containsKey(type)) {
                     // there's no query for this type yet
                     SpaceTypeDescriptor typeDesc = initialLoadEntriesTypeDescs.get(type);
+                    if(!typeDesc.isPartitioned())
+                        continue;
                     List<String> queries = queriesStream.map(query -> createInitialLoadQuery(typeDesc, query)).collect(Collectors.toList());
                     // add new initial load query for this type.
                     if (!queries.isEmpty()) {

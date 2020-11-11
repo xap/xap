@@ -63,10 +63,11 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
                 triggerSinglePartitionBatchTask(PartitionedClusterUtils.NO_PARTITION, 0);
                 return;
             }
-            if(_queryPacket.getRoutingFieldValue() != null){
+            if(_queryPacket.getTemplateRoutingValue() != null){
+                Object routingValue = _queryPacket.getTemplateRoutingValue();
                 if(_logger.isDebugEnabled())
-                    _logger.debug("Initializing space iterator batch task with routing " + _queryPacket.getRoutingFieldValue());
-                triggerSinglePartitionBatchTask(PartitionedClusterUtils.getPartitionId(_queryPacket.getRoutingFieldValue(), _clusterInfo), 0);
+                    _logger.debug("Initializing space iterator batch task with routing " + routingValue);
+                triggerSinglePartitionBatchTask(PartitionedClusterUtils.getPartitionId(routingValue, _clusterInfo), 0);
                 return;
             }
             if(_logger.isDebugEnabled())
@@ -150,7 +151,7 @@ public class SpaceIteratorBatchResultProvider implements Serializable {
     public int getInitialNumberOfActivePartitions() {
         if (_clusterInfo.getNumberOfPartitions() == 0)
             return 1;
-        if(_queryPacket.getRoutingFieldValue() != null)
+        if(_queryPacket.getTemplateRoutingValue() != null)
             return 1;
         return getNumberOfPartitions();
     }

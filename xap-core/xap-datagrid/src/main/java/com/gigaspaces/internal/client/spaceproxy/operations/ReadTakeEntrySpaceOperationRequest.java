@@ -124,7 +124,7 @@ public class ReadTakeEntrySpaceOperationRequest extends SpaceOperationRequest<Re
 
     @Override
     public PartitionedClusterExecutionType getPartitionedClusterExecutionType() {
-        if (_templatePacket.getRoutingFieldValue() != null)
+        if (_templatePacket.getRoutingFieldValue() != null || isReplicatedTableOperation())
             return PartitionedClusterExecutionType.SINGLE;
 
         if (_timeout != 0)
@@ -142,7 +142,7 @@ public class ReadTakeEntrySpaceOperationRequest extends SpaceOperationRequest<Re
 
     @Override
     public Object getPartitionedClusterRoutingValue(PartitionedClusterRemoteOperationRouter router) {
-        return _templatePacket.getRoutingFieldValue();
+        return _templatePacket.getTemplateRoutingValue();
     }
 
     public ITemplatePacket getTemplatePacket() {
@@ -245,6 +245,10 @@ public class ReadTakeEntrySpaceOperationRequest extends SpaceOperationRequest<Re
     public Object getAsyncFinalResult() throws Exception {
         IEntryPacket resultPacket = getFinalResult();
         return _typeManager.convertQueryResult(resultPacket, _templatePacket, _returnPacket);
+    }
+
+    public boolean isReplicatedTableOperation() {
+        return !isTake() && _templatePacket.getTypeDescriptor() != null && !_templatePacket.getTypeDescriptor().isPartitioned();
     }
 
     @Override

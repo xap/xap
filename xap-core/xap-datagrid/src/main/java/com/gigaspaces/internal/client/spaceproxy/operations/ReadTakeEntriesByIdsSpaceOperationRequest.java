@@ -142,6 +142,8 @@ public class ReadTakeEntriesByIdsSpaceOperationRequest extends SpaceScatterGathe
 
     @Override
     public PartitionedClusterExecutionType getPartitionedClusterExecutionType() {
+        if(isReplicatedTableOperation())
+            return PartitionedClusterExecutionType.SINGLE;
         if (_template instanceof IdsQueryPacket) {
             final IdsQueryPacket queryPacket = (IdsQueryPacket) _template;
             return queryPacket.getRoutingFieldValue() != null ? PartitionedClusterExecutionType.SINGLE : PartitionedClusterExecutionType.BROADCAST_CONCURRENT;
@@ -228,6 +230,10 @@ public class ReadTakeEntriesByIdsSpaceOperationRequest extends SpaceScatterGathe
     @Override
     public String getLRMIMethodTrackingId() {
         return isTake() ? "takeByIds" : "readByIds";
+    }
+
+    public boolean isReplicatedTableOperation() {
+        return !isTake() &&  _template.getTypeDescriptor() != null &&  !_template.getTypeDescriptor().isPartitioned();
     }
 
     @Override

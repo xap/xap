@@ -45,6 +45,8 @@ public class SpaceClusterInfo implements Externalizable {
 
     private static final Set<String> supportedSchemas = initSupportedSchemas();
 
+    private static final Random random = new Random();
+
     private static Set<String> initSupportedSchemas() {
         HashSet<String> result = new HashSet<String>();
         result.add(ClusterXML.CLUSTER_SCHEMA_NAME_SYNC_REPLICATED);
@@ -273,6 +275,10 @@ public class SpaceClusterInfo implements Externalizable {
         }
         // backups is null for "partitioned" schema - groups contains primary members only
         return clusterPolicy.m_LoadBalancingPolicy.loadBalanceGroupMembersNames.size();
+    }
+
+    public int getRandomPartition(){
+        return random.nextInt(getNumberOfPartitions());
     }
 
     private static SpaceClusterPartitionInfo[] generatePartitionsInfo(String spaceName, int numOfPartitions, int numOfBackups) {

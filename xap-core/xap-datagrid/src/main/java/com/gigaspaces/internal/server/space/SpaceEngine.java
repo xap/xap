@@ -775,7 +775,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         context.setFromReplication(fromReplication);
         context.setOrigin(origin);
         context.setOperationID(entryPacket.getOperationID());
-        setFromGatewayIfNeeded(sc, context);
+        alignContextWithSpaceContext(sc, context);
 
         // handle entry type (can not be null)
         IServerTypeDesc serverTypeDesc = _typeManager.loadServerTypeDesc(entryPacket);
@@ -791,7 +791,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         }
 
         if (!fromReplication) {
-            if (isPartitionedSpace() && ProtectiveMode.isWrongRoutingUsageProtectionEnabled()) {
+            if (isPartitionedSpace() && ProtectiveMode.isWrongRoutingUsageProtectionEnabled() && serverTypeDesc.getTypeDesc().isPartitioned()) {
                 if (entryPacket.getRoutingFieldValue() == null && serverTypeDesc.getTypeDesc().getRoutingPropertyName() != null && !serverTypeDesc.getTypeDesc().isAutoGenerateRouting())
                     throwNoRoutingProvidedWhenNeeded(serverTypeDesc, "writing");
                 else if (entryPacket.getRoutingFieldValue() != null)
@@ -1504,7 +1504,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             context.setMultipleOperation();
             context.setOperationIDs(opIDs);
 
-            setFromGatewayIfNeeded(sc, context);
+            alignContextWithSpaceContext(sc, context);
 
             /**
              * currently- call regular write for each entry since
@@ -1659,7 +1659,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 context.setSyncReplFromMultipleOperation(true);
 
             context.setMultipleOperation();
-            setFromGatewayIfNeeded(sc, context);
+            alignContextWithSpaceContext(sc, context);
             Object[] returnValues = new Object[entries.length];
             for (int i = 0; i < entries.length; ++i) {
                 context.setWriteResult(null);
@@ -1760,7 +1760,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 context.setSyncReplFromMultipleOperation(true);
 
             context.setMultipleOperation();
-            setFromGatewayIfNeeded(sc, context);
+            alignContextWithSpaceContext(sc, context);
             if (txn == null && _cacheManager.isBlobStoreCachePolicy() && timeout == JavaSpace.NO_WAIT && _cacheManager.useBlobStoreBulks()) {//can we exploit blob-store bulking ?
                 //SUPPORT FOR TIMEOUT WILL BE ADDED LATTER
                 if (!anyFifoClass || !_cacheManager.isDirectPersistencyEmbeddedtHandlerUsed())
@@ -1836,10 +1836,12 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
     }
 
 
-    protected void setFromGatewayIfNeeded(SpaceContext sc, Context context) {
+    private void alignContextWithSpaceContext(SpaceContext sc, Context context) {
         // If operation was executed from a gateway component, set the origin gateway name
-        if (sc != null)
+        if (sc != null) {
             context.setFromGateway(sc.isFromGateway());
+            context.setFromNonClustered(sc.isNonClustered());
+        }
     }
 
     public void updateObjectTypeReadCounts( IServerTypeDesc serverTypeDesc, ITemplatePacket template, int numOfEntriesMatched) {
@@ -1996,7 +1998,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             context = _cacheManager.getCacheContext();
             context.setMainThread(true);
             context.setOperationID(template.getOperationID());
-            setFromGatewayIfNeeded(sc, context);
+            alignContextWithSpaceContext(sc, context);
             if (take && txn == null && _cacheManager.isBlobStoreCachePolicy() && _cacheManager.useBlobStoreBulks()) {//can we exploit blob-store bulking ?
                 context.setBlobStoreBulkInfo(new BlobStoreBulkInfo(_cacheManager, true /*takeMultipleBulk*/));
             }
@@ -2087,6 +2089,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         try {
             context = _cacheManager.getCacheContext();
+            alignContextWithSpaceContext(sc, context);
             context.setOperationID(template.getOperationID());
             counter = _cacheManager.count(context, tHolder, txnEntry);
         } catch (SAException ex) {
@@ -2618,7 +2621,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             context.setMainThread(true);
             context.setOperationID(template.getOperationID());
             tHolder.setReRegisterLeaseOnUpdate(lease != UPDATE_NO_LEASE);
-            setFromGatewayIfNeeded(sc, context);
+            alignContextWithSpaceContext(sc, context);
             _coreProcessor.handleDirectChangeSA(context, tHolder, fromReplication, origin);
 
             answerSetByThisThread = context.isOpResultByThread();
@@ -2709,7 +2712,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             context.setMainThread(true);
             context.setOperationID(template.getOperationID());
             tHolder.setReRegisterLeaseOnUpdate(lease != UPDATE_NO_LEASE);
-            setFromGatewayIfNeeded(sc, context);
+            alignContextWithSpaceContext(sc, context);
             if (txn == null && _cacheManager.isBlobStoreCachePolicy() && _cacheManager.useBlobStoreBulks()) {//can we exploit blob-store bulking ?
                 context.setBlobStoreBulkInfo(new BlobStoreBulkInfo(_cacheManager, false /*takeMultipleBulk*/));
             }
@@ -2798,7 +2801,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
             context.setMultipleOperation();
 
-            setFromGatewayIfNeeded(sc, context);
+            alignContextWithSpaceContext(sc, context);
 
             if (txnEntry == null)
                 return updateMultipleLoop(context, entries, leases, null, sc, operationModifiers, newRouter);
@@ -2902,7 +2905,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
                 context.setMultipleOperation();
                 context.setMainThread(true);
-                setFromGatewayIfNeeded(sc, context);
+                alignContextWithSpaceContext(sc, context);
 
                 if (txnEntry == null) {
                     if (_cacheManager.isBlobStoreCachePolicy() && _cacheManager.useBlobStoreBulks() && timeout == JavaSpace.NO_WAIT) {//can we exploit blob-store bulking ?
@@ -3676,6 +3679,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         final IServerTypeDesc serverTypeDesc = _typeManager.getServerTypeDesc(template.getClassName());
         if (template.isChangeById() && !serverTypeDesc.getTypeName().equals(template.getServerTypeDesc().getTypeName()))
             return null;  //in-place-update by id no inheritance
+        if(skipReplicatedTable(context, template, serverTypeDesc))
+            return null;
         IScanListIterator<IEntryCacheInfo> toScan = template.isServerIterator() ? getOrCreateScanListIteratorFromServerIterator(context, typeDesc, template, serverTypeDesc) : _cacheManager.getMatchingMemoryEntriesForScanning(context, typeDesc, template, serverTypeDesc);
 
         if (toScan == null)
@@ -4115,6 +4120,9 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         final IServerTypeDesc serverTypeDesc = _typeManager.getServerTypeDesc(template.getClassName());
         if (template.isChangeById() && !serverTypeDesc.getTypeName().equals(template.getServerTypeDesc().getTypeName()))
             return;  //in-place-update by id no inheritance
+
+        if(skipReplicatedTable(context, template, entryTypeDesc))
+            return;
         IScanListIterator<IEntryCacheInfo> toScan = template.isServerIterator() ? getOrCreateScanListIteratorFromServerIterator(context, entryTypeDesc, template, serverTypeDesc) : _cacheManager.getMatchingMemoryEntriesForScanning(context, entryTypeDesc, template, serverTypeDesc);
         if (toScan == null)
             return;
@@ -4133,6 +4141,20 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                     template,
                     toScan,
                     makeWaitForInfo, entryTypeDesc);
+    }
+
+    public boolean skipReplicatedTable(Context context,
+                                       ITemplateHolder template,
+                                       IServerTypeDesc entryTypeDesc){
+        if(entryTypeDesc.getTypeDesc().isPartitioned())
+            return false;
+        if(!getClusterInfo().isPartitioned())
+            return false;
+        if(context.isFromNonClustered() && !template.isServerIterator())
+            return false;
+        if(getPartitionIdZeroBased() == 0)
+            return false;
+        return true;
     }
 
     private IScanListIterator<IEntryCacheInfo> getOrCreateScanListIteratorFromServerIterator(Context context, IServerTypeDesc entryTypeDesc, ITemplateHolder template, IServerTypeDesc serverTypeDesc) {

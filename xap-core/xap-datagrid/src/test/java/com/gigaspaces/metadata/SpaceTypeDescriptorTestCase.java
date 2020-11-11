@@ -1202,6 +1202,8 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         IllegalStorageTypeDocument();
     }
 
+    //TODO test illegal replicated table
+
     public void testExplicitRoutingIndex() {
         // Test implicit routing index:
         testExplicitRoutingIndex(SpaceIndexType.EQUAL, false);

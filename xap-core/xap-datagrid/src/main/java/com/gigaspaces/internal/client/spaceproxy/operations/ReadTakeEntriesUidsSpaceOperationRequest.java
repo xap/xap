@@ -101,13 +101,18 @@ public class ReadTakeEntriesUidsSpaceOperationRequest extends SpaceOperationRequ
 
     @Override
     public PartitionedClusterExecutionType getPartitionedClusterExecutionType() {
-        return _template.getRoutingFieldValue() != null ? PartitionedClusterExecutionType.SINGLE
-                : PartitionedClusterExecutionType.BROADCAST_CONCURRENT;
+        if( _template.getRoutingFieldValue() != null || isReplicatedTableOperation())
+            return PartitionedClusterExecutionType.SINGLE;
+        return PartitionedClusterExecutionType.BROADCAST_CONCURRENT;
     }
 
     @Override
     public Object getPartitionedClusterRoutingValue(PartitionedClusterRemoteOperationRouter router) {
-        return _template.getRoutingFieldValue();
+        return _template.getTemplateRoutingValue();
+    }
+
+    public boolean isReplicatedTableOperation() {
+        return _template.getTypeDescriptor() != null && !_template.getTypeDescriptor().isPartitioned();
     }
 
     @Override

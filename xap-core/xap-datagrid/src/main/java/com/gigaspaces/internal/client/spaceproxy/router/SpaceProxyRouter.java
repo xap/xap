@@ -66,6 +66,7 @@ public class SpaceProxyRouter {
     private final RemoteSpaceProxyLocator _proxyLocator;
     private final boolean isGateway;
     private final boolean isSecured;
+    private final boolean nonClustered;
     private final QuiesceTokenProviderImpl quiesceTokenProvider;
 
     public SpaceProxyRouter(SpaceProxyImpl spaceProxy) {
@@ -73,6 +74,7 @@ public class SpaceProxyRouter {
         this._clusterInfo = spaceProxy.getSpaceClusterInfo();
         this.isGateway = spaceProxy.isGatewayProxy();
         this.isSecured = spaceProxy.isSecured();
+        this.nonClustered = !spaceProxy.isClustered();
         this.quiesceTokenProvider = new QuiesceTokenProviderImpl();
         updateDefaultSpaceContext(null);
         Properties properties = loadConfig(spaceProxy.getProxySettings().getCustomProperties(), _clusterInfo);
@@ -285,8 +287,8 @@ public class SpaceProxyRouter {
     }
 
     private void updateDefaultSpaceContext(QuiesceToken token) {
-        this._defaultSpaceContext = isSecured || isGateway || token != null || _clusterInfo.isChunksRouting()
-                ? new SpaceContext(isGateway, getChunksMapGeneration()) : null;
+        this._defaultSpaceContext = isSecured || isGateway || token != null || _clusterInfo.isChunksRouting() || nonClustered
+                ? new SpaceContext(isGateway, getChunksMapGeneration(), nonClustered) : null;
         if (token != null) {
             _defaultSpaceContext.setQuiesceToken(token);
         }

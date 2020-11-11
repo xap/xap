@@ -253,6 +253,8 @@ public class Context {
 
     private ViewEntryData viewEntryData;
 
+    private boolean _fromNonClustered;
+
     public Context() {
     }
 
@@ -486,6 +488,7 @@ public class Context {
         indexMetricsContext = null;
         _backupOnly=false;
         viewEntryData = null;
+        _fromNonClustered = false;
     }
 
     public void setOnMatchUid(String uid)
@@ -973,6 +976,14 @@ public class Context {
 
     public short getOriginalBlobStoreVersion() {
         return _originalBlobStoreVersion;
+    }
+
+    public boolean isFromNonClustered() {
+        return _fromNonClustered;
+    }
+
+    public void setFromNonClustered(boolean fromNonClustered) {
+        this._fromNonClustered = fromNonClustered;
     }
 
     /**

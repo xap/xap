@@ -119,7 +119,7 @@ public class ReadTakeEntriesSpaceOperationRequest extends SpaceOperationRequest<
 
     @Override
     public PartitionedClusterExecutionType getPartitionedClusterExecutionType() {
-        if (_templatePacket.getRoutingFieldValue() != null)
+        if (_templatePacket.getRoutingFieldValue() != null || isReplicatedTableOperation())
             return PartitionedClusterExecutionType.SINGLE;
 
         if (_timeout != 0)
@@ -226,7 +226,7 @@ public class ReadTakeEntriesSpaceOperationRequest extends SpaceOperationRequest<
 
     @Override
     public Object getPartitionedClusterRoutingValue(PartitionedClusterRemoteOperationRouter router) {
-        return _templatePacket.getRoutingFieldValue();
+        return _templatePacket.getTemplateRoutingValue();
     }
 
     @Override
@@ -268,6 +268,10 @@ public class ReadTakeEntriesSpaceOperationRequest extends SpaceOperationRequest<
 
     public boolean isIfExist() {
         return _ifExist;
+    }
+
+    public boolean isReplicatedTableOperation() {
+        return !isTake() &&  _templatePacket.getTypeDescriptor() != null &&  !_templatePacket.getTypeDescriptor().isPartitioned();
     }
 
     @Override

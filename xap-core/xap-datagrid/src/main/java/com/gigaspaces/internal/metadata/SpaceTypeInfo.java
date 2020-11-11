@@ -128,6 +128,8 @@ public class SpaceTypeInfo implements Externalizable {
 
     private String _sequenceNumberPropertyName;
 
+    private Boolean _partitioned;
+
     /**
      * Default constructor for externalizable.
      */
@@ -232,6 +234,10 @@ public class SpaceTypeInfo implements Externalizable {
 
     public boolean isBlobstoreEnabled() {
         return _blobstoreEnabled;
+    }
+
+    public boolean isPartitioned() {
+        return _partitioned;
     }
 
     public int getNumOfProperties() {
@@ -561,6 +567,9 @@ public class SpaceTypeInfo implements Externalizable {
 
         if (_idAutoGenerate == null)
             _idAutoGenerate = false;
+
+        if(_partitioned == null)
+            _partitioned = PojoDefaults.PARTITIONED;
     }
 
     private SpacePropertyInfo updatePropertyBySuper(SpacePropertyInfo currProperty, SpacePropertyInfo superProperty) {
@@ -581,6 +590,7 @@ public class SpaceTypeInfo implements Externalizable {
         _persist = XmlUtils.getAttributeBoolean(classNode, "persist");
         _replicate = XmlUtils.getAttributeBoolean(classNode, "replicate");
         _blobstoreEnabled = XmlUtils.getAttributeBoolean(classNode, "blobstore-enabled");
+        _partitioned = XmlUtils.getAttributeBoolean(classNode, "partitioned");
         _fifoSupport = XmlUtils.getAttributeEnum(classNode, "fifo-support", FifoSupport.class);
         _inheritIndexes = XmlUtils.getAttributeBoolean(classNode, "inherit-indexes");
         _includeProperties = XmlUtils.getAttributeEnum(classNode, "include-properties", IncludeProperties.class);
@@ -850,6 +860,7 @@ public class SpaceTypeInfo implements Externalizable {
             _includeProperties = classAnnotation.includeProperties();
             _storageType = classAnnotation.storageType();
             _blobstoreEnabled = classAnnotation.blobstoreEnabled();
+            _partitioned = classAnnotation.partitioned();
         }
         SpaceSystemClass systemClassAnnotation = _type.getAnnotation(SpaceSystemClass.class);
         if (systemClassAnnotation != null) {
@@ -1381,6 +1392,8 @@ public class SpaceTypeInfo implements Externalizable {
 
         validateStorageAdapterCombination();
 
+        validateReplicatedTable();
+
         validateGetterSetter(_idProperty, "Id", _idAutoGenerate ? ConstructorPropertyValidation.REQUIERS_SETTER :
                 ConstructorPropertyValidation.REQUIERS_CONSTRUCTOR_PARAM);
         if (_routingProperty != _idProperty)
@@ -1435,6 +1448,15 @@ public class SpaceTypeInfo implements Externalizable {
                     throw new SpaceMetadataValidationException(_type, entry.getValue(), "class binary storage adapter and property non DEFAULT storage type cannot be used together.");
                 }
             }
+        }
+    }
+
+    private void validateReplicatedTable() {
+        if(!isPartitioned()) {
+            if(_routingProperty != null)
+            throw new SpaceMetadataValidationException(_type, "Routing property and replicated table cannot be used together.");
+            if(_idAutoGenerate)
+                throw new SpaceMetadataValidationException(_type, "Auto generate id property and replicated table cannot be used together.");
         }
     }
 
