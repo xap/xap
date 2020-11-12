@@ -14,7 +14,6 @@
     <packaging>jar</packaging>
     <properties>
         <kafka.version>2.5.0</kafka.version>
-        <commons.lang.version>2.6</commons.lang.version>
         <junit.version>4.11</junit.version>
     </properties>
     <dependencies>
@@ -26,12 +25,6 @@
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
             <version>${kafka.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>${commons.lang.version}</version>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
     <build>
