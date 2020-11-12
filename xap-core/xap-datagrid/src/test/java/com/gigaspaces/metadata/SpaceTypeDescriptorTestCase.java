@@ -133,7 +133,7 @@ import java.util.Set;
 
 @com.gigaspaces.api.InternalApi
 public class SpaceTypeDescriptorTestCase extends TestCase {
-    
+
     public void testNull() {
         // Arrange:
         final Class<?> type = null;
@@ -1060,11 +1060,11 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         Assert.assertEquals(StorageType.COMPRESSED, typeDesc.getFixedProperty("_compressedStorageTypeMap").getStorageType());
         Assert.assertEquals(StorageType.OBJECT, typeDesc.getFixedProperty("_defaultStorageTypeArrayList").getStorageType());
 
-        Assert.assertNull("spaceExcludeObject storageType should have been null", typeInfo.getProperty("spaceExcludeObject").getStorageType());
-        Assert.assertNull("dynamicPropertiesMap storageType should have been null", typeInfo.getProperty("dynamicPropertiesMap").getStorageType());
-        Assert.assertNull("persistent storageType should have been null", typeInfo.getProperty("persistent").getStorageType());
-        Assert.assertNull("version storageType should have been null", typeInfo.getProperty("version").getStorageType());
-        Assert.assertNull("leasExpiration storageType should have been null", typeInfo.getProperty("leasExpiration").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("spaceExcludeObject").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("dynamicPropertiesMap").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("persistent").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("version").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("leasExpiration").getStorageType());
 
         Assert.assertEquals(StorageType.OBJECT, typeDesc.getFixedProperty("basicIndexObject").getStorageType());
         Assert.assertEquals(StorageType.OBJECT, typeDesc.getFixedProperty("extendedIndexObject").getStorageType());
@@ -1110,11 +1110,11 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         Assert.assertEquals(StorageType.OBJECT, typeDesc.getFixedProperty("extendedIndexObject").getStorageType());
         Assert.assertEquals(StorageType.OBJECT, typeDesc.getFixedProperty("noneIndexObject").getStorageType());
 
-        Assert.assertNull("spaceExcludeObject storageType should have been null", typeInfo.getProperty("spaceExcludeObject").getStorageType());
-        Assert.assertNull("dynamicPropertiesMap storageType should have been null", typeInfo.getProperty("dynamicPropertiesMap").getStorageType());
-        Assert.assertNull("persistent storageType should have been null", typeInfo.getProperty("persistent").getStorageType());
-        Assert.assertNull("version storageType should have been null", typeInfo.getProperty("version").getStorageType());
-        Assert.assertNull("leasExpiration storageType should have been null", typeInfo.getProperty("leasExpiration").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("spaceExcludeObject").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("dynamicPropertiesMap").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("persistent").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("version").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("leasExpiration").getStorageType());
     }
 
     public void testStorageTypeInheritAndOverride() {
@@ -1140,11 +1140,11 @@ public class SpaceTypeDescriptorTestCase extends TestCase {
         Assert.assertEquals(StorageType.OBJECT, typeDesc.getFixedProperty("extendedIndexObject").getStorageType());
         Assert.assertEquals(StorageType.OBJECT, typeDesc.getFixedProperty("noneIndexObject").getStorageType()); //  override and declare (the same) StorageType.DEFAULT
 
-        Assert.assertNull("spaceExcludeObject storageType should have been null", typeInfo.getProperty("spaceExcludeObject").getStorageType());
-        Assert.assertNull("dynamicPropertiesMap storageType should have been null", typeInfo.getProperty("dynamicPropertiesMap").getStorageType());
-        Assert.assertNull("persistent storageType should have been null", typeInfo.getProperty("persistent").getStorageType());
-        Assert.assertNull("version storageType should have been null", typeInfo.getProperty("version").getStorageType());
-        Assert.assertNull("leasExpiration storageType should have been null", typeInfo.getProperty("leasExpiration").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("spaceExcludeObject").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("dynamicPropertiesMap").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("persistent").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("version").getStorageType());
+        Assert.assertEquals(StorageType.DEFAULT, typeInfo.getProperty("leasExpiration").getStorageType());
     }
 
     public void testPojoStorageTypeXml() {

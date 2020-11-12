@@ -106,4 +106,14 @@ public interface ITypeDesc extends SpaceTypeDescriptor, IDotnetTypeDescDetails, 
     String getPrimitivePropertiesWithoutNullValues();
 
     String getTypeUidPrefix();
+
+    PropertyInfo[] getSerializedProperties();
+
+    PropertyInfo[] getNonSerializedProperties();
+
+    boolean isSerializedProperty(int index);
+
+    int findHybridIndex(int index);
+
+    int[] getPositionsForScanning();
 }

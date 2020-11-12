@@ -19,16 +19,7 @@ package com.gigaspaces.internal.client.spaceproxy.metadata;
 import com.gigaspaces.annotation.pojo.FifoSupport;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
-import com.gigaspaces.internal.metadata.DotNetStorageType;
-import com.gigaspaces.internal.metadata.EntryType;
-import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.metadata.IndexTypeHelper;
-import com.gigaspaces.internal.metadata.PojoDefaults;
-import com.gigaspaces.internal.metadata.PropertyInfo;
-import com.gigaspaces.internal.metadata.SpacePropertyInfo;
-import com.gigaspaces.internal.metadata.SpaceTypeInfo;
-import com.gigaspaces.internal.metadata.SpaceTypeInfoRepository;
-import com.gigaspaces.internal.metadata.TypeDesc;
+import com.gigaspaces.internal.metadata.*;
 import com.gigaspaces.internal.metadata.converter.ConversionException;
 import com.gigaspaces.internal.reflection.IField;
 import com.gigaspaces.internal.reflection.ReflectionUtil;
@@ -83,13 +74,17 @@ public class TypeDescFactory {
 
     public ITypeDesc createPojoTypeDesc(Class<?> type, String codeBase, ITypeDesc superTypeDesc) {
         SpaceTypeInfo typeInfo = SpaceTypeInfoRepository.getTypeInfo(type);
-
+        if(typeInfo.getSpaceClassStorageAdapter() != null && typeInfo.isBlobstoreEnabled() && isBlobStoreCachePolicy()){
+            throw new SpaceMetadataException("Cannot set ClassBinaryStorageAdapter for types that are blob store enabled");
+        }
         // calculate the storage type for properties without storage type (or DEFAULT).
         StorageType defaultStorageType = typeInfo.getStorageType();
         if (defaultStorageType == StorageType.DEFAULT)
             defaultStorageType = _storageType;
 
         final PropertyInfo[] properties = new PropertyInfo[typeInfo.getNumOfSpaceProperties()];
+        boolean binaryClass = typeInfo.getSpaceClassStorageAdapter() != null;
+        Set<String> indexesNames = typeInfo.getIndexes().keySet();
         for (int i = 0; i < properties.length; i++) {
             final SpacePropertyInfo property = typeInfo.getProperty(i);
             properties[i] = PropertyInfo.builder(property.getName())
@@ -97,6 +92,7 @@ public class TypeDescFactory {
                     .documentSupport(property.getDocumentSupport())
                     .storageType(property.getStorageType())
                     .storageAdapter(property.getStorageAdapterClass())
+                    .defaultStorageType(defaultStorageType, binaryClass, indexesNames)
                     .build();
         }
         final Map<String, SpaceIndex> indexes = new HashMap<String, SpaceIndex>(typeInfo.getIndexes());
@@ -127,6 +123,11 @@ public class TypeDescFactory {
         return typeDesc;
     }
 
+    public boolean isBlobStoreCachePolicy() {
+        Object cachePolicy = _spaceProxy.getProxySettings().getCustomProperties().get("space-config.engine.cache_policy");
+        return cachePolicy != null && cachePolicy.equals("3");
+    }
+
     private static boolean shouldWarnExternalizable(SpaceTypeInfo typeInfo) {
         return true;
     }
@@ -148,8 +149,10 @@ public class TypeDescFactory {
         for (int i = 0; i < length; i++) {
             fieldsNames[i] = fields[i].getName();
             fieldsTypes[i] = fields[i].getType().getName();
-            properties[i] = PropertyInfo.builder(fields[i].getName()).type(fields[i].getType()).build();
-            properties[i].setDefaultStorageType(_storageType);
+            properties[i] = PropertyInfo.builder(fields[i].getName())
+                    .type(fields[i].getType())
+                    .defaultStorageType(_storageType)
+                    .build();
         }
         final String defaultPropertyName = getEntryIndices(realClass, fieldsNames, fieldsTypes, fieldsIndexes);
 
@@ -256,8 +259,7 @@ public class TypeDescFactory {
         final PropertyInfo[] properties = new PropertyInfo[fieldsNames.length];
         final Map<String, SpaceIndex> indexes = new HashMap<String, SpaceIndex>();
         for (int i = 0; i < properties.length; i++) {
-            properties[i] = PropertyInfo.builder(fieldsNames[i]).type(fieldsTypes[i]).build();
-            properties[i].setDefaultStorageType(_storageType);
+            properties[i] = PropertyInfo.builder(fieldsNames[i]).type(fieldsTypes[i]).defaultStorageType(_storageType).build();
             if (indices[i] != null && indices[i].isIndexed()) {
                 SpaceIndex index = new SpacePropertyIndex(fieldsNames[i], indices[i], false, i);
                 indexes.put(index.getName(), index);

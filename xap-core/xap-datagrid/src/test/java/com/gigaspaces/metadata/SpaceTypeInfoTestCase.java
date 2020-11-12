@@ -114,6 +114,7 @@ import java.util.Map;
 
 @com.gigaspaces.api.InternalApi
 public class SpaceTypeInfoTestCase extends TestCase {
+
     
     public void testNull() {
         // Arrange:

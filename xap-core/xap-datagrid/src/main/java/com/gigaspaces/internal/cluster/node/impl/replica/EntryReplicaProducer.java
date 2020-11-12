@@ -91,7 +91,6 @@ public class EntryReplicaProducer
 
         if (templatePacket == null) {
             templatePacket = new TemplatePacket();
-            templatePacket.setFieldsValues(new Object[0]);
         }
 
         try {

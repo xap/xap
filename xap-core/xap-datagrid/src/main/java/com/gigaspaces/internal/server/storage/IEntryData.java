@@ -78,4 +78,8 @@ public interface IEntryData extends ServerEntry {
             return getPropertyValue(path);
         return new SpaceEntryPathGetter(path).getValue(this);
     }
+
+    default boolean isHybrid(){
+        return false;
+    }
 }

@@ -18,11 +18,7 @@ package com.j_spaces.core.cache.context;
 
 import com.gigaspaces.client.EntryLockedException;
 import com.gigaspaces.client.mutators.SpaceEntryMutator;
-import com.gigaspaces.internal.client.spaceproxy.operations.ChangeEntriesSpaceOperationResult;
-import com.gigaspaces.internal.client.spaceproxy.operations.ReadTakeEntriesSpaceOperationResult;
-import com.gigaspaces.internal.client.spaceproxy.operations.ReadTakeEntrySpaceOperationResult;
-import com.gigaspaces.internal.client.spaceproxy.operations.WriteEntriesSpaceOperationResult;
-import com.gigaspaces.internal.client.spaceproxy.operations.WriteEntrySpaceOperationResult;
+import com.gigaspaces.internal.client.spaceproxy.operations.*;
 import com.gigaspaces.internal.cluster.node.IReplicationOutContext;
 import com.gigaspaces.internal.exceptions.BatchQueryException;
 import com.gigaspaces.internal.query.explainplan.ExplainPlanContext;
@@ -35,7 +31,6 @@ import com.gigaspaces.internal.server.space.operations.ChangeEntriesSpaceOperati
 import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridOperationDetails;
-import com.gigaspaces.internal.transport.EntryPacket;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.TemplatePacketFactory;
 import com.gigaspaces.lrmi.nio.IResponseContext;
@@ -50,15 +45,10 @@ import com.j_spaces.core.client.OperationTimeoutException;
 import com.j_spaces.core.fifo.FifoBackgroundRequest;
 import com.j_spaces.core.filters.FilterOperationCodes;
 import com.j_spaces.kernel.list.MultiIntersectedStoredList;
-
 import net.jini.core.lease.Lease;
 import net.jini.core.transaction.server.ServerTransaction;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @com.gigaspaces.api.InternalApi
 public class Context {
@@ -248,7 +238,7 @@ public class Context {
     private IndexMetricsContext indexMetricsContext;
     private boolean _backupOnly;
 
-    private ViewEntryData viewEntryData;
+    private ViewPropertiesEntryData viewEntryData;
 
     private boolean _fromClustered;
 
@@ -1217,18 +1207,7 @@ public class Context {
     }
 
     private void copyFieldsArray(IEntryPacket entryPacket) {
-        if (entryPacket instanceof EntryPacket) {
-            EntryPacket packet = (EntryPacket) entryPacket;
-            if (packet.getBinaryFields() != null) {
-                return;
-            }
-        }
-
-        Object[] src = entryPacket.getFieldValues();
-        Object[] target = new Object[src.length];
-        System.arraycopy(src, 0, target, 0, src.length);
-        entryPacket.setFieldsValues(target);
-
+        entryPacket.getPropertiesHolder().copyFieldsArray();
     }
 
     public void setSyncHybridOperationDetails(SyncHybridOperationDetails[] syncHybridOperationsDetails) {
@@ -1281,12 +1260,12 @@ public class Context {
     }
 
     public IEntryData getViewEntryData(IEntryData entryData) {
-        if(entryData instanceof BinaryEntryData){
-            if(viewEntryData == null){
-                viewEntryData = new ViewEntryData();
+        if (entryData.isHybrid()) {
+            if (viewEntryData == null) {
+                viewEntryData = new ViewPropertiesEntryData();
             }
 
-            if(viewEntryData.isViewOf(entryData)){
+            if (viewEntryData.isViewOf(entryData)) {
                 return viewEntryData;
             }
 
@@ -1297,23 +1276,24 @@ public class Context {
         }
     }
 
-    public ViewEntryData getViewEntryData() {
+    public ViewPropertiesEntryData getViewEntryData() {
         return viewEntryData;
     }
 
     public IEntryData getCacheViewEntryDataIfNeeded(IEntryData entryData) {
-        if(entryData instanceof BinaryEntryData && viewEntryData != null && viewEntryData.isViewOf(entryData)){
+        if ((entryData.isHybrid())
+                && viewEntryData != null && viewEntryData.isViewOf(entryData)) {
             return viewEntryData;
         }
         return entryData;
     }
 
-    public void cacheViewEntryDataIfNeeded(IEntryData entryData, Object[] fieldsValues) {
-        if(entryData instanceof BinaryEntryData){
-            if(viewEntryData == null){
-                viewEntryData = new ViewEntryData();
+    public void cacheViewEntryDataIfNeeded(IEntryData entryData, IEntryPacket packet) {
+        if (entryData.isHybrid()) {
+            if (viewEntryData == null) {
+                viewEntryData = new ViewPropertiesEntryData();
             }
-            viewEntryData.view(entryData, fieldsValues);
+            viewEntryData.view(entryData, (HybridPropertiesHolder) packet.getPropertiesHolder());
         }
     }
 

@@ -75,6 +75,8 @@ public class IOUtils {
 
     private static final Map<Class<?>, IClassSerializer<?>> _typeCache;
     private static final Map<Byte, IClassSerializer<?>> _codeCache;
+    private static final Map<String, IClassSerializer<?>> _primitiveTypeCache;
+
 
     private static final ObjectIntegerMap<Class<?>> _classToCode = CollectionsFactory.getInstance().createObjectIntegerMap();
     private static final IntegerObjectMap<Class<?>> _codeToClass = CollectionsFactory.getInstance().createIntegerObjectMap();
@@ -85,7 +87,7 @@ public class IOUtils {
     static {
         _typeCache = new HashMap<Class<?>, IClassSerializer<?>>();
         _codeCache = new HashMap<Byte, IClassSerializer<?>>();
-
+        _primitiveTypeCache = new HashMap<String, IClassSerializer<?>>();
         // Register default serializer (by code only):
         _codeCache.put(_defaultSerializer.getCode(), _defaultSerializer);
         // Register special handler for null:
@@ -102,6 +104,8 @@ public class IOUtils {
         // Register common java types:
         register(String.class, new StringClassSerializer());
         register(byte[].class, new ByteArrayClassSerializer());
+
+        initPrimitiveTypeMap(_primitiveTypeCache);
 
         //register(HashMap.class, new HashMapSerializer());
 
@@ -1090,6 +1094,30 @@ public class IOUtils {
         return l;
     }
 
+    public static IClassSerializer getIClassSerializer(Class type){
+        // Get serializer by type:
+        IClassSerializer serializer = _typeCache.get(type);
 
+        //in case type is primitive
+        if(serializer == null){
+            serializer = _primitiveTypeCache.get(type.getName());
+        }
 
+        // If type does not have serializer, or serializer is not supported in target version, use default serializer:
+        if (serializer == null) {
+            return _defaultSerializer;
+        }
+        return serializer;
+    }
+
+   private static void initPrimitiveTypeMap(Map<String, IClassSerializer<?>> map){
+        map.put("byte", new ByteClassSerializer());
+        map.put("short", new ShortClassSerializer());
+        map.put("int", new IntegerClassSerializer());
+        map.put("long", new LongClassSerializer());
+        map.put("float", new FloatClassSerializer());
+        map.put("double", new DoubleClassSerializer());
+        map.put("boolean", new BooleanClassSerializer());
+        map.put("char", new CharacterClassSerializer());
+    }
 }

@@ -52,7 +52,7 @@ public class SpacePropertyInfo implements SpacePropertyDescriptor, Comparable<Sp
 
     private int _level;
     private Primitive _nullValue;
-    private StorageType _storageType;
+    private StorageType _storageType = StorageType.DEFAULT;
     private Class<? extends PropertyStorageAdapter> _storageAdapterClass;
     private SpaceDocumentSupport _documentSupport;
 

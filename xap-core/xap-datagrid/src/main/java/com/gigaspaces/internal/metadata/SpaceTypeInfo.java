@@ -105,7 +105,6 @@ public class SpaceTypeInfo implements Externalizable {
     private Map<String, SpacePropertyInfo> _properties;
     private SpacePropertyInfo[] _spaceProperties;
     private Class<? extends ClassBinaryStorageAdapter> _spaceClassStorageAdapter;
-
     private SpacePropertyInfo _idProperty;
     private Boolean _idAutoGenerate;
     private SpacePropertyInfo _routingProperty;
@@ -119,7 +118,7 @@ public class SpaceTypeInfo implements Externalizable {
 
     private transient IProperties _propertiesAccessor;
 
-    private StorageType _storageType;
+    private StorageType _storageType = StorageType.DEFAULT;
 
     private Boolean _blobstoreEnabled;
 
@@ -155,7 +154,6 @@ public class SpaceTypeInfo implements Externalizable {
         }
 
         initIndexes(initContext);
-
         validate();
     }
 
@@ -552,17 +550,14 @@ public class SpaceTypeInfo implements Externalizable {
                 _fifoGroupingIndexes.add(superFifoGroupingIndex);
 
             StorageType superStorageType = _superTypeInfo.getStorageType();
-            if (_storageType == null || _storageType == StorageType.DEFAULT) {
+            if (_storageType == StorageType.DEFAULT) {
                 _storageType = superStorageType;
-            } else if (superStorageType != null && superStorageType != StorageType.DEFAULT)
+            } else if (superStorageType != StorageType.DEFAULT && superStorageType != _storageType)
                 throw new SpaceMetadataValidationException(_type, "Cannot declare a storage type [" + _storageType + "] if one has already been defined in the super class [" + superStorageType + "].");
 
             if (_idAutoGenerate == null)
                 _idAutoGenerate = _superTypeInfo._idAutoGenerate;
         }
-
-        if (_storageType == null)
-            _storageType = PojoDefaults.STORAGE_TYPE;
 
         if (_idAutoGenerate == null)
             _idAutoGenerate = false;
@@ -876,9 +871,11 @@ public class SpaceTypeInfo implements Externalizable {
         // check for top level custom index definition
         addCustomIndex(_type.getAnnotation(CustomSpaceIndex.class));
 
-        SpaceClassBinaryStorageAdapter spaceClassStorageAdapter = _type.getAnnotation(SpaceClassBinaryStorageAdapter.class);
-        if(spaceClassStorageAdapter != null){
-            this._spaceClassStorageAdapter = spaceClassStorageAdapter.value();
+        SpaceClassBinaryStorage spaceClassBinaryStorage = _type.getAnnotation(SpaceClassBinaryStorage.class);
+        if (spaceClassBinaryStorage != null){
+            this._spaceClassStorageAdapter = spaceClassBinaryStorage.adapter();
+            // TODO: validate ambiguity.
+            this._storageType = StorageType.BINARY;
         }
 
         for (Entry<String, SpacePropertyInfo> entry : _properties.entrySet()) {
@@ -902,8 +899,15 @@ public class SpaceTypeInfo implements Externalizable {
                 property.setDocumentSupport(SpaceDocumentSupport.DEFAULT);
             }
 
+            SpacePropertyStorage spacePropertyStorage = getter.getAnnotation(SpacePropertyStorage.class);
+            if (spacePropertyStorage != null){
+                property.setStorageType(spacePropertyStorage.value());
+            }
+
             SpaceStorageType storageTypeAnnotation = getter.getAnnotation(SpaceStorageType.class);
             if (storageTypeAnnotation != null) {
+                if (spacePropertyStorage != null)
+                    throw new SpaceMetadataException("SpaceStorageType cannot be used with SpacePropertyStorage");
                 property.setStorageType(storageTypeAnnotation.storageType());
                 initContext.explicitlyIncluded.add(property);
             }
@@ -1389,7 +1393,6 @@ public class SpaceTypeInfo implements Externalizable {
         validatePropertyCombination(_persistProperty, _idProperty, "persist", "id");
         validatePropertyCombination(_persistProperty, _routingProperty, "persist", "routing");
 
-        validateStorageAdapterCombination();
         if(isBroadcast())
             validateBroadcastTable();
 
@@ -1599,7 +1602,6 @@ public class SpaceTypeInfo implements Externalizable {
             throws IOException, ClassNotFoundException {
         readExternalV10_0(in, version);
         _sequenceNumberPropertyName = IOUtils.readString(in);
-        ;
     }
 
     private void readExternalV10_0(ObjectInput in, PlatformLogicalVersion version)

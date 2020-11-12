@@ -43,6 +43,7 @@ import net.jini.core.entry.Entry;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.IntStream;
 
 /**
  * @author Niv Ingberg
@@ -81,6 +82,7 @@ public class TypeDesc implements ITypeDesc {
     private Map<String, SpaceIndex> _indexes;
     private TypeQueryExtensions queryExtensionsInfo;
     private ClassBinaryStorageAdapter classBinaryStorageAdapter;
+    private int[] positionsForScanning;
     private boolean _broadcast;
 
     private int _sequenceNumberFixedPropertyPos;  //-1  if none
@@ -118,6 +120,9 @@ public class TypeDesc implements ITypeDesc {
 
     private transient List<SpaceIndex> _compoundIndexes;
     private transient String _primitivePropertiesWithoutNullValues;
+
+    private transient PropertyInfo[] _serializedProperties;
+    private transient PropertyInfo[] _nonSerializedProperties;
 
     /**
      * Default constructor for Externalizable.
@@ -170,16 +175,49 @@ public class TypeDesc implements ITypeDesc {
                 _dotnetDocumentWrapperTypeName = _documentWrapperClassName;
         }
 
-        validate();
-        updateDefaultStorageType();
-        validateAndUpdateSequenceNumberInfo(sequenceNumberPropertyName);
-        initializeV9_0_0();
-        addFifoGroupingIndexesIfNeeded(_indexes, _fifoGroupingName, _fifoGroupingIndexes);
+
         if(binaryStorageAdapter != null) {
             this.classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(binaryStorageAdapter);
         }
-
+        initHybridProperties();
+        validate();
+        validateAndUpdateSequenceNumberInfo(sequenceNumberPropertyName);
+        initializeV9_0_0();
+        addFifoGroupingIndexesIfNeeded(_indexes, _fifoGroupingName, _fifoGroupingIndexes);
         _broadcast = broadcast;
+    }
+
+    private void initHybridProperties() {
+        int serializedFieldsCount = (int) Arrays.stream(_fixedProperties).filter(propertyInfo -> propertyInfo.isBinarySpaceProperty(this)).count();
+        _nonSerializedProperties = new PropertyInfo[_fixedProperties.length - serializedFieldsCount];
+        _serializedProperties = new PropertyInfo[serializedFieldsCount];
+        int nonSerializedFieldsIndex = 0;
+        int serializedFieldsIndex = 0;
+        for (int i = 0; i < _fixedProperties.length; i++) {
+            if(_fixedProperties[i].getStorageType() != null && _fixedProperties[i].isBinarySpaceProperty(this)){
+                _serializedProperties[serializedFieldsIndex] = _fixedProperties[i];
+                _serializedProperties[serializedFieldsIndex].setHybridIndex(serializedFieldsIndex);
+                _serializedProperties[serializedFieldsIndex].setOriginalIndex(i);
+                serializedFieldsIndex++;
+            } else {
+                _nonSerializedProperties[nonSerializedFieldsIndex] = _fixedProperties[i];
+                _nonSerializedProperties[nonSerializedFieldsIndex].setHybridIndex(nonSerializedFieldsIndex);
+                _nonSerializedProperties[nonSerializedFieldsIndex].setOriginalIndex(i);
+                nonSerializedFieldsIndex++;
+            }
+        }
+
+        positionsForScanning = new int[_fixedProperties.length];
+        int positionsIndex = 0;
+        for (PropertyInfo nonSerializedProperty : _nonSerializedProperties) {
+            positionsForScanning[positionsIndex] = nonSerializedProperty.getOriginalIndex();
+            positionsIndex++;
+
+        }
+        for (PropertyInfo serializedProperty : _serializedProperties) {
+            positionsForScanning[positionsIndex] = serializedProperty.getOriginalIndex();
+            positionsIndex++;
+        }
     }
 
     public TypeDesc cloneWithoutObjectClass( TypeDesc typeDesc, EntryType entryType ) {
@@ -218,13 +256,6 @@ public class TypeDesc implements ITypeDesc {
         return newTypeDesc;
     }
 
-    private void updateDefaultStorageType() {
-        for (PropertyInfo property : _fixedProperties) {
-            if (property.getStorageType() == StorageType.DEFAULT)
-                property.setDefaultStorageType(_storageType);
-        }
-    }
-
     private void validate() {
         if (_fifoGroupingName != null && !StringUtils.hasText(_fifoGroupingName))
             throw new IllegalArgumentException("When fifo grouping property is set, it must not be an empty path");
@@ -244,10 +275,12 @@ public class TypeDesc implements ITypeDesc {
             for (String fifoGroupingIndexPath : _fifoGroupingIndexes)
                 if (isSameProperty(fifoGroupingIndexPath, propertyName))
                     assertSupportsMatching(property, "SpaceFifoGroupingIndex");
-            // validate primitives with storage type
-            if (ReflectionUtils.isSpacePrimitive(property.getType().getName()))
-                assertObjectStorageType(property, "Primitive property type " + property.getType().getName());
-            // validate indexes with storage type 
+            if (classBinaryStorageAdapter == null) {
+                // validate primitives with storage type
+                if (ReflectionUtils.isSpacePrimitive(property.getType().getName()))
+                    assertObjectStorageType(property, "Primitive property type " + property.getType().getName());
+            }
+            // validate indexes with storage type
             for (String indexName : _indexes.keySet()) {
                 SpaceIndexType indexType = _indexes.get(indexName).getIndexType();
                 if (indexType != null && indexType != SpaceIndexType.NONE && isSameProperty(indexName, propertyName)) {
@@ -261,7 +294,9 @@ public class TypeDesc implements ITypeDesc {
     }
 
     private void assertSupportsMatching(PropertyInfo property, String errMsg) {
-        assertObjectStorageType(property, errMsg);
+        if (classBinaryStorageAdapter == null) {
+            assertObjectStorageType(property, errMsg);
+        }
         if (!property.supportsEqualsMatching())
             throw new SpaceMetadataValidationException(_typeName, property, errMsg + " cannot be used with storage adapter which does not support matching: " + property.getStorageAdapterName());
     }
@@ -272,12 +307,8 @@ public class TypeDesc implements ITypeDesc {
     }
 
     private void assertObjectStorageType(PropertyInfo property, String errMsg) {
-        if (property.getStorageType() != StorageType.OBJECT) {
-            if (property.getStorageType() == StorageType.DEFAULT)
-                property.setDefaultStorageType(StorageType.OBJECT);
-            else
-                throw new SpaceMetadataValidationException(_typeName, property, errMsg + " cannot be used with storage type " + property.getStorageType());
-        }
+        if (property.getStorageType() != StorageType.OBJECT)
+            throw new SpaceMetadataValidationException(_typeName, property, errMsg + " cannot be used with storage type " + property.getStorageType());
     }
 
     private boolean isSameProperty(String indexName, String propertyName) {
@@ -658,15 +689,10 @@ public class TypeDesc implements ITypeDesc {
         return _sequenceNumberFixedPropertyPos >= 0;
     }
 
-    ;
-
     @Override
     public int getSequenceNumberFixedPropertyID() {
         return _sequenceNumberFixedPropertyPos;
     }
-
-    ;
-
 
     private static int calculateChecksum(PropertyInfo[] properties) {
         if (properties == null)
@@ -889,17 +915,20 @@ public class TypeDesc implements ITypeDesc {
 
         readObjectsFromByteArray(in);
 
-        initializeV9_0_0();
 
         // New in 15.8.0: Space class binary storage adapter
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
-            String storageAdapterClassName = IOUtils.readString(in);
-            if (storageAdapterClassName != null)
-                classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(ClassLoaderHelper.loadClass(storageAdapterClassName));
             _broadcast = in.readBoolean();
-        }
-        else
+            String storageAdapterClassName = IOUtils.readString(in);
+            if (storageAdapterClassName != null) {
+                classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(ClassLoaderHelper.loadClass(storageAdapterClassName));
+            }
+        } else {
             _broadcast = false;
+        }
+
+        initializeV9_0_0();
+        initHybridProperties();
     }
 
     private void writeObjectsAsByteArray(ObjectOutput out) throws IOException {
@@ -1233,8 +1262,12 @@ public class TypeDesc implements ITypeDesc {
         writeObjectsAsByteArray(out);
         // New in 15.8.0: Space class storage adapter
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
-            IOUtils.writeString(out, classBinaryStorageAdapter != null ? classBinaryStorageAdapter.getClass().getName() : null);
             out.writeBoolean(_broadcast);
+            if(classBinaryStorageAdapter != null){
+                IOUtils.writeString(out, classBinaryStorageAdapter.getClass().getName());
+            }else {
+                IOUtils.writeString(out, null);
+            }
         }
     }
 
@@ -1419,5 +1452,27 @@ public class TypeDesc implements ITypeDesc {
 
     public Class<? extends ExternalEntry> getExternalEntryWrapperClass() {
         return _externalEntryWrapperClass;
+    }
+
+    @Override
+    public boolean isSerializedProperty(int index) {
+        return _fixedProperties[index].isBinarySpaceProperty(this);
+    }
+
+    @Override
+    public int findHybridIndex(int index) {
+        return _fixedProperties[index].getHybridIndex();
+    }
+
+    public PropertyInfo[] getSerializedProperties() {
+        return _serializedProperties;
+    }
+
+    public PropertyInfo[] getNonSerializedProperties() {
+        return _nonSerializedProperties;
+    }
+
+    public int[] getPositionsForScanning() {
+        return positionsForScanning;
     }
 }
