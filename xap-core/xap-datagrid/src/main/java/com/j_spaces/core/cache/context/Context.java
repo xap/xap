@@ -18,11 +18,7 @@ package com.j_spaces.core.cache.context;
 
 import com.gigaspaces.client.EntryLockedException;
 import com.gigaspaces.client.mutators.SpaceEntryMutator;
-import com.gigaspaces.internal.client.spaceproxy.operations.ChangeEntriesSpaceOperationResult;
-import com.gigaspaces.internal.client.spaceproxy.operations.ReadTakeEntriesSpaceOperationResult;
-import com.gigaspaces.internal.client.spaceproxy.operations.ReadTakeEntrySpaceOperationResult;
-import com.gigaspaces.internal.client.spaceproxy.operations.WriteEntriesSpaceOperationResult;
-import com.gigaspaces.internal.client.spaceproxy.operations.WriteEntrySpaceOperationResult;
+import com.gigaspaces.internal.client.spaceproxy.operations.*;
 import com.gigaspaces.internal.cluster.node.IReplicationOutContext;
 import com.gigaspaces.internal.exceptions.BatchQueryException;
 import com.gigaspaces.internal.query.explainplan.ExplainPlanContext;
@@ -251,7 +247,7 @@ public class Context {
     private IndexMetricsContext indexMetricsContext;
     private boolean _backupOnly;
 
-    private ViewEntryData viewEntryData;
+    private AbstractViewEntryData viewEntryData;
 
     public Context() {
     }
@@ -1273,12 +1269,12 @@ public class Context {
     }
 
     public IEntryData getViewEntryData(IEntryData entryData) {
-        if(entryData instanceof BinaryEntryData){
-            if(viewEntryData == null){
-                viewEntryData = new ViewEntryData();
+        if (entryData instanceof BinaryEntryData || entryData instanceof HybridBinaryEntryData) {
+            if (viewEntryData == null) {
+                viewEntryData = entryData instanceof BinaryEntryData ? new ViewEntryData() : new HybridViewEntryData();
             }
 
-            if(viewEntryData.isViewOf(entryData)){
+            if (viewEntryData.isViewOf(entryData)) {
                 return viewEntryData;
             }
 
@@ -1289,21 +1285,22 @@ public class Context {
         }
     }
 
-    public ViewEntryData getViewEntryData() {
+    public AbstractViewEntryData getViewEntryData() {
         return viewEntryData;
     }
 
     public IEntryData getCacheViewEntryDataIfNeeded(IEntryData entryData) {
-        if(entryData instanceof BinaryEntryData && viewEntryData != null && viewEntryData.isViewOf(entryData)){
+        if ((entryData instanceof BinaryEntryData || entryData instanceof HybridBinaryEntryData)
+                && viewEntryData != null && viewEntryData.isViewOf(entryData)) {
             return viewEntryData;
         }
         return entryData;
     }
 
     public void cacheViewEntryDataIfNeeded(IEntryData entryData, Object[] fieldsValues) {
-        if(entryData instanceof BinaryEntryData){
-            if(viewEntryData == null){
-                viewEntryData = new ViewEntryData();
+        if (entryData instanceof BinaryEntryData || entryData instanceof HybridBinaryEntryData) {
+            if (viewEntryData == null) {
+                viewEntryData = entryData instanceof BinaryEntryData ? new ViewEntryData() : new HybridViewEntryData();
             }
             viewEntryData.view(entryData, fieldsValues);
         }

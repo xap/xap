@@ -26,6 +26,7 @@ import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.utils.ObjectUtils;
 import com.gigaspaces.metadata.SpaceMetadataException;
+import com.gigaspaces.utils.Pair;
 import com.j_spaces.core.ExternalEntryPacket;
 import com.j_spaces.core.LocalCacheResponseEntryPacket;
 import com.j_spaces.core.OperationID;
@@ -74,14 +75,8 @@ public class EntryPacketFactory {
 
     public static IEntryPacket createFullPacket(IEntryData entryData, OperationID operationID, String uid, boolean isTransient, QueryResultTypeInternal queryResultType) {
         final long timeToLive = entryData.getTimeToLive(true);
-        Object[] fixedPropertiesValues = null;
-        byte[] binaryFields = null;
-        if(entryData instanceof BinaryEntryData){
-            binaryFields = ((BinaryEntryData) entryData).getSerializedFields();
-        } else {
-            fixedPropertiesValues = entryData.getFixedPropertiesValues();
-        }
-        IEntryPacket entryPacket = createInternal(null /*template*/, isTransient, entryData, fixedPropertiesValues, uid, timeToLive, queryResultType, false, binaryFields);
+        Pair<Object[], HybridBinaryData> pair = getFixedPropertiesValues(null, entryData);
+        IEntryPacket entryPacket = createInternal(null /*template*/, isTransient, entryData, pair.getFirst(), uid, timeToLive, queryResultType, false, pair.getSecond());
         entryPacket.setOperationID(operationID);
         return entryPacket;
     }
@@ -89,14 +84,8 @@ public class EntryPacketFactory {
     public static IEntryPacket createFullPacketForReplication(IEntryHolder entryHolder, OperationID operationID) {
         final IEntryData entryData = entryHolder.getEntryData();
         final long timeToLive = entryData.getTimeToLive(true);
-        Object[] fixedPropertiesValues = null;
-        byte[] binaryFields = null;
-        if(entryData instanceof BinaryEntryData){
-            binaryFields = ((BinaryEntryData) entryData).getSerializedFields();
-        } else {
-            fixedPropertiesValues = entryData.getFixedPropertiesValues();
-        }
-        IEntryPacket entryPacket = create(null /*template*/, entryHolder.isTransient(), entryData, fixedPropertiesValues, entryHolder.getUID(), timeToLive, true, binaryFields);
+        Pair<Object[], HybridBinaryData> pair = getFixedPropertiesValues(null, entryData);
+        IEntryPacket entryPacket = create(null /*template*/, entryHolder.isTransient(), entryData, pair.getFirst(), entryHolder.getUID(), timeToLive, true, pair.getSecond());
 
         entryPacket.setOperationID(operationID);
         return entryPacket;
@@ -116,27 +105,15 @@ public class EntryPacketFactory {
 
     public static IEntryPacket createFullPacketForReplication(IEntryHolder entryHolder, ITemplateHolder template, String uid, long timeToLive) {
         IEntryData entryData = entryHolder.getEntryData();
-        Object[] fixedPropertiesValues = null;
-        byte[] binaryFields = null;
-        if(entryData instanceof BinaryEntryData){
-            binaryFields = ((BinaryEntryData) entryData).getSerializedFields();
-        } else {
-            fixedPropertiesValues = entryData.getFixedPropertiesValues();
-        }
-        return create(template, entryHolder.isTransient(), entryData, fixedPropertiesValues, uid, timeToLive, true, binaryFields);
+        Pair<Object[], HybridBinaryData> pair = getFixedPropertiesValues(null, entryData);
+        return create(template, entryHolder.isTransient(), entryData, pair.getFirst(), uid, timeToLive, true, pair.getSecond());
     }
 
     public static IEntryPacket createFullPacket(IEntryHolder entryHolder, ITemplateHolder template, String uid, long timeToLive,
                                                 IEntryData entryData, OperationID operationId) {
 
-        Object[] fixedPropertiesValues = null;
-        byte[] binaryFields = null;
-        if(entryData instanceof BinaryEntryData){
-            binaryFields = ((BinaryEntryData) entryData).getSerializedFields();
-        } else {
-            fixedPropertiesValues = entryData.getFixedPropertiesValues();
-        }
-        IEntryPacket packet = create(template, entryHolder.isTransient(), entryData, fixedPropertiesValues, uid, timeToLive, false, binaryFields);
+        Pair<Object[], HybridBinaryData> pair = getFixedPropertiesValues(null, entryData);
+        IEntryPacket packet = create(template, entryHolder.isTransient(), entryData, pair.getFirst(), uid, timeToLive, false, pair.getSecond());
         packet.setOperationID(operationId);
         return packet;
     }
@@ -155,28 +132,19 @@ public class EntryPacketFactory {
 
     public static IEntryPacket createFullPacket(Context context, ITemplateHolder template, IEntryData entryData, String uid, boolean isTransient) {
         if (entryData.getEntryDataType() == EntryDataType.USER_TYPE) {
-            if(entryData instanceof ViewEntryData){
-                return new LocalCacheResponseEntryPacket((UserTypeEntryData) ((ViewEntryData) entryData).getEntry(), uid);
+            if(entryData instanceof AbstractViewEntryData){
+                return new LocalCacheResponseEntryPacket((UserTypeEntryData) ((AbstractViewEntryData) entryData).getEntry(), uid);
             }else {
                 return new LocalCacheResponseEntryPacket((UserTypeEntryData) entryData, uid);
             }
         }
-        Object[] fixedPropertiesValues = null;
-        byte[] binaryFields = null;
-        if(entryData instanceof BinaryEntryData){
-            binaryFields = ((BinaryEntryData) entryData).getSerializedFields();
-            if(context != null && context.getViewEntryData() != null && context.getViewEntryData().isViewOf(entryData)){
-                fixedPropertiesValues = context.getViewEntryData().getFixedPropertiesValues();
-            }
-        } else {
-            fixedPropertiesValues = entryData.getFixedPropertiesValues();
-        }
+        Pair<Object[], HybridBinaryData> pair = getFixedPropertiesValues(context, entryData);
         final long timeToLive = entryData.getTimeToLive(false);
-        return create(template, isTransient, entryData, fixedPropertiesValues, uid, timeToLive, false, binaryFields);
+        return create(template, isTransient, entryData, pair.getFirst(), uid, timeToLive, false, pair.getSecond());
     }
 
     private static IEntryPacket create(ITemplateHolder template, boolean isTransient, IEntryData entryData, Object[] fixedProperties,
-                                       String uid, long timeToLive, boolean forceNonExternalizable, byte[] binaryFields) {
+                                       String uid, long timeToLive, boolean forceNonExternalizable, HybridBinaryData binaryFields) {
         return createInternal(template, isTransient, entryData, fixedProperties, uid, timeToLive, QueryResultTypeInternal.NOT_SET, forceNonExternalizable, binaryFields);
     }
 
@@ -191,7 +159,7 @@ public class EntryPacketFactory {
     }
 
     private static IEntryPacket createInternal(ITemplateHolder template, boolean isTransient, IEntryData entryData, Object[] fixedProperties,
-                                               String uid, long timeToLive, QueryResultTypeInternal packetType, boolean forceNotExternalizable, byte[] binaryFields) {
+                                               String uid, long timeToLive, QueryResultTypeInternal packetType, boolean forceNotExternalizable, HybridBinaryData binaryFields) {
         final ITypeDesc typeDesc = entryData.getEntryTypeDesc().getTypeDesc();
         final EntryType entryType = entryData.getEntryTypeDesc().getEntryType();
 
@@ -285,6 +253,27 @@ public class EntryPacketFactory {
             fieldValues = newValues;
         }
         return fieldValues;
+    }
+
+    public static Pair<Object[], HybridBinaryData> getFixedPropertiesValues(Context context, IEntryData entryData) {
+        Object[] fixedPropertiesValues = null;
+        HybridBinaryData binaryFields = null;
+        if(entryData instanceof BinaryEntryData) {
+            binaryFields = new HybridBinaryData(entryData.getEntryTypeDesc().getTypeDesc(), ((BinaryEntryData) entryData).getSerializedFields());
+            if(context != null && context.getViewEntryData() != null && context.getViewEntryData().isViewOf(entryData)){
+                fixedPropertiesValues = context.getViewEntryData().getFixedPropertiesValues();
+            }
+        }else if(entryData instanceof HybridBinaryEntryData){
+            if(context != null && context.getViewEntryData() != null && context.getViewEntryData().isViewOf(entryData)){
+                binaryFields = ((HybridViewEntryData) context.getViewEntryData()).getHybridBinaryData();
+            }else {
+                binaryFields = new HybridBinaryData(entryData.getEntryTypeDesc().getTypeDesc(),
+                        ((HybridBinaryEntryData) entryData).getNonSerializedFields(), ((HybridBinaryEntryData)entryData).getSerializedFields());
+            }
+        } else {
+            fixedPropertiesValues = entryData.getFixedPropertiesValues();
+        }
+        return new Pair<>(fixedPropertiesValues, binaryFields);
     }
 
 }

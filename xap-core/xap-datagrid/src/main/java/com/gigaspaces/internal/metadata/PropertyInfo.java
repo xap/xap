@@ -49,6 +49,8 @@ public class PropertyInfo implements SpacePropertyDescriptor{
     private StorageType _storageType;
     private PropertyStorageAdapter _storageAdapter;
     private final byte _dotnetStorageType;
+    private final boolean _binarySpaceProperty;
+    private int newIndex;
 
     private PropertyInfo(Builder builder) {
         this._name = builder.name;
@@ -62,6 +64,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         initStorageAdapter(builder.storageAdapterClass);
         initStorageType(builder.storageType);
         this._dotnetStorageType = builder.dotnetStorageType;
+        this._binarySpaceProperty = builder._binarySpaceProperty;
     }
 
     private void initStorageType(StorageType storageType) {
@@ -105,6 +108,11 @@ public class PropertyInfo implements SpacePropertyDescriptor{
     @Override
     public StorageType getStorageType() {
         return _storageType;
+    }
+
+    @Override
+    public boolean isBinarySpaceProperty() {
+        return _binarySpaceProperty;
     }
 
     public void setDefaultStorageType(StorageType defaultStorageType) {
@@ -211,6 +219,15 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         return builder.build();
     }
 
+    void setNewIndex(int newIndex) {
+        this.newIndex = newIndex;
+    }
+
+    int getNewIndex() {
+        return this.newIndex;
+    }
+
+
     public static class Builder {
         private final String name;
         private Class<?> type;
@@ -219,6 +236,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         private StorageType storageType = StorageType.DEFAULT;
         private byte dotnetStorageType = DotNetStorageType.NULL;
         private Class<? extends PropertyStorageAdapter> storageAdapterClass;
+        private boolean _binarySpaceProperty;
 
         public Builder(String name) {
             this.name = name;
@@ -257,6 +275,11 @@ public class PropertyInfo implements SpacePropertyDescriptor{
 
         public Builder dotNetStorageType(byte dotnetStorageType) {
             this.dotnetStorageType = dotnetStorageType;
+            return this;
+        }
+
+        public Builder setBinarySpaceProperty(boolean binarySpaceProperty) {
+            this._binarySpaceProperty = binarySpaceProperty;
             return this;
         }
     }

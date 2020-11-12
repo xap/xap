@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.server.storage;
 
+import com.gigaspaces.annotation.pojo.BinaryStorageAdapterType;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
@@ -133,8 +134,13 @@ public class EntryHolderFactory {
         if (entryDataType == EntryDataType.FLAT) {
             ClassBinaryStorageAdapter adapter = (entryTypeDesc.getTypeDesc()).getClassBinaryStorageAdapter();
             if (adapter != null) {
-                return new BinaryEntryData(entryPacket.getFieldValues(),entryPacket.getDynamicProperties(),
-                        entryTypeDesc, version, lease, entryXtnInfo);
+                if(entryTypeDesc.getTypeDesc().getBinaryStorageType().equals(BinaryStorageAdapterType.ALL)){
+                    return new BinaryEntryData(entryPacket.getFieldValues(),entryPacket.getDynamicProperties(),
+                            entryTypeDesc, version, lease, entryXtnInfo);
+                }else {
+                    return new HybridBinaryEntryData(entryPacket.getFieldValues(),entryPacket.getDynamicProperties(),
+                            entryTypeDesc, version, lease, entryXtnInfo);
+                }
             } else {
                 return new FlatEntryData(entryPacket.getFieldValues(), entryPacket.getDynamicProperties(),
                         entryTypeDesc, version, lease, entryXtnInfo);

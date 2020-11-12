@@ -31,53 +31,16 @@ import java.util.Map;
  * @since 15.8
  */
 @com.gigaspaces.api.InternalApi
-public class BinaryEntryData implements ITransactionalEntryData {
-    private final EntryTypeDesc _entryTypeDesc;
-    private final int _versionID;
-    private final long _expirationTime;
-    private final EntryXtnInfo _entryTxnInfo;
+public class BinaryEntryData extends AbstractBinaryEntryData {
     private byte[] serializedFields;
-    private Map<String, Object> _dynamicProperties;
 
     public BinaryEntryData(Object[] fieldsValues, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
         this(serializeFields(fieldsValues, entryTypeDesc.getTypeDesc()), dynamicProperties, entryTypeDesc, version, expirationTime, entryXtnInfo);
     }
 
     public BinaryEntryData(byte[] fieldsValues, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
-        this._entryTypeDesc = entryTypeDesc;
-        this._versionID = version;
-        this._expirationTime = expirationTime;
-        this._entryTxnInfo = entryXtnInfo;
+        super(entryTypeDesc, version, expirationTime, entryXtnInfo, dynamicProperties);
         this.serializedFields = fieldsValues;
-        this._dynamicProperties = dynamicProperties;
-    }
-
-    private static byte[] serializeFields(Object[] fieldsValues, ITypeDesc typeDesc) {
-        try {
-            return typeDesc.getClassBinaryStorageAdapter().toBinary(typeDesc, fieldsValues);
-        } catch (IOException e) {
-            throw new UncheckedIOException("com.gigaspaces.internal.server.storage.BinaryEntryData.serializeFields failed", e);
-        }
-    }
-
-    @Override
-    public EntryTypeDesc getEntryTypeDesc() {
-        return _entryTypeDesc;
-    }
-
-    @Override
-    public int getVersion() {
-        return _versionID;
-    }
-
-    @Override
-    public long getExpirationTime() {
-        return _expirationTime;
-    }
-
-    @Override
-    public EntryXtnInfo getEntryXtnInfo() {
-        return _entryTxnInfo;
     }
 
     @Override
@@ -98,11 +61,6 @@ public class BinaryEntryData implements ITransactionalEntryData {
     }
 
     @Override
-    public EntryDataType getEntryDataType() {
-        return EntryDataType.FLAT;
-    }
-
-    @Override
     public Object getFixedPropertyValue(int index) {
         return getFixedPropertiesValues()[index];
     }
@@ -118,32 +76,21 @@ public class BinaryEntryData implements ITransactionalEntryData {
     }
 
     @Override
-    public Map<String, Object> getDynamicProperties() {
-        return _dynamicProperties;
-    }
-
-    @Override
-    public void setDynamicProperties(Map<String, Object> dynamicProperties) {
-        _dynamicProperties = dynamicProperties;
-    }
-
-    @Override
-    public void setDynamicPropertyValue(String propertyName, Object value) {
-        if (!_entryTypeDesc.getTypeDesc().supportsDynamicProperties())
-            throw new UnsupportedOperationException(_entryTypeDesc.getTypeDesc().getTypeName() + " does not support dynamic properties");
-
-        if (_dynamicProperties == null)
-            _dynamicProperties = new DocumentProperties();
-
-        _dynamicProperties.put(propertyName, value);
-    }
-
-    @Override
     public void setFixedPropertyValues(Object[] values) {
         if (values.length != getNumOfFixedProperties()) {
             throw new IllegalArgumentException("Cannot substitute fixed property values with array of different size!");
         }
         serializedFields = serializeFields(values, getSpaceTypeDescriptor());
+    }
+
+    @Override
+    public byte[] getSerializedFields() {
+        return serializedFields;
+    }
+
+    @Override
+    public void setSerializedFields(byte[] serializedFields) {
+        this.serializedFields = serializedFields;
     }
 
     private Object[] deserializeFields(byte[] fieldsValues) {
@@ -176,11 +123,4 @@ public class BinaryEntryData implements ITransactionalEntryData {
         }
     }
 
-    public byte[] getSerializedFields() {
-        return serializedFields;
-    }
-
-    public void setSerializedFields(byte[] serializedFields) {
-        this.serializedFields = serializedFields;
-    }
 }

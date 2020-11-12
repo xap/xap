@@ -19,17 +19,15 @@
  */
 package com.gigaspaces.internal.transport;
 
-import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
-import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapterRegistry;
 import com.gigaspaces.internal.io.IOArrayException;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.query.ICustomQuery;
+import com.gigaspaces.internal.server.storage.HybridBinaryData;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.j_spaces.core.EntrySerializationException;
-import com.j_spaces.kernel.ClassLoaderHelper;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -71,9 +69,7 @@ public class EntryPacket extends AbstractEntryPacket {
     // Deprecated:
     private boolean _noWriteLease;
     private boolean _fifo;
-
-
-    private byte[] binaryFields;
+    private HybridBinaryData binaryFields;
 
     /**
      * Default constructor required by {@link java.io.Externalizable}.
@@ -88,7 +84,7 @@ public class EntryPacket extends AbstractEntryPacket {
 
 
     public EntryPacket(ITypeDesc typeDesc, EntryType entryType, Object[] fixedProperties, Map<String, Object> dynamicProperties,
-                       String uid, int version, long timeToLive, boolean isTransient, byte[] binaryFields) {
+                       String uid, int version, long timeToLive, boolean isTransient, HybridBinaryData binaryFields) {
         super(typeDesc, entryType);
         _typeName = typeDesc.getTypeName();
         _fixedProperties = fixedProperties;
@@ -106,8 +102,7 @@ public class EntryPacket extends AbstractEntryPacket {
       this(typeDesc,values,null);
     }
 
-
-    protected EntryPacket(ITypeDesc typeDesc, Object[] values, byte[] binaryFields) {
+    protected EntryPacket(ITypeDesc typeDesc, Object[] values, HybridBinaryData binaryFields) {
         super(typeDesc, typeDesc.getObjectType());
         this._typeName = typeDesc.getTypeName();
         this._fixedProperties = values;
@@ -174,12 +169,8 @@ public class EntryPacket extends AbstractEntryPacket {
     public Object[] getFieldValues() {
         if (_fixedProperties == null && getTypeDescriptor() != null &&
                 getTypeDescriptor().getClassBinaryStorageAdapter() != null && binaryFields != null) {
-            try {
-                _fixedProperties = getTypeDescriptor().getClassBinaryStorageAdapter().fromBinary(getTypeDescriptor(), binaryFields);
-                binaryFields = null;
-            } catch (IOException | ClassNotFoundException e) {
-                throw new IllegalStateException("The field values array was not properly set", e);
-            }
+            _fixedProperties = binaryFields.getFixedProperties(getTypeDescriptor());
+            binaryFields = null;
         }
 
         return _fixedProperties;
@@ -333,9 +324,9 @@ public class EntryPacket extends AbstractEntryPacket {
                 out.writeLong(_timeToLive);
             if (_multipleUIDs != null)
                 IOUtils.writeStringArray(out, _multipleUIDs);
-            if(binaryFields != null) {
-                IOUtils.writeByteArray(out, binaryFields);
-            }else if (_fixedProperties != null) {
+            if (binaryFields != null) {
+                IOUtils.writeObject(out, binaryFields);
+            } else if (_fixedProperties != null) {
                 try {
                     IOUtils.writeObjectArrayCompressed(out, _fixedProperties);
                 } catch (IOArrayException e) {
@@ -383,8 +374,8 @@ public class EntryPacket extends AbstractEntryPacket {
             if ((flags & FLAG_MULTIPLE_UIDS) != 0)
                 _multipleUIDs = IOUtils.readStringArray(in);
 
-            if((flags & FLAG_BINARY_FIELDS) != 0 ){
-                binaryFields = IOUtils.readByteArray(in);
+            if ((flags & FLAG_BINARY_FIELDS) != 0) {
+                binaryFields = IOUtils.readObject(in);
             }
             if ((flags & FLAG_FIELDS_VALUES) != 0) {
                 try {
@@ -437,16 +428,16 @@ public class EntryPacket extends AbstractEntryPacket {
     }
 
     @Override
-    public void setBinaryFields(byte[] binaryFields) {
-        this.binaryFields = binaryFields;
-    }
-
-    @Override
     public boolean allNullFieldValues() {
         return _fixedProperties == null && binaryFields == null;
     }
 
-    public byte[] getBinaryFields() {
+    public HybridBinaryData getBinaryFields() {
         return binaryFields;
+    }
+
+    @Override
+    public void setBinaryFields(HybridBinaryData binaryFields) {
+        this.binaryFields = binaryFields;
     }
 }

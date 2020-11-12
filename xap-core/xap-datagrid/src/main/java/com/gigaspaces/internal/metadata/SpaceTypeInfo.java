@@ -20,7 +20,6 @@ import com.gigaspaces.annotation.pojo.*;
 import com.gigaspaces.annotation.pojo.SpaceClass.IncludeProperties;
 import com.gigaspaces.annotation.pojo.SpaceProperty.IndexType;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
-import com.gigaspaces.client.storage_adapters.class_storage_adapters.DefaultClassBinaryStorageAdapter;
 import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.io.XmlUtils;
@@ -106,6 +105,7 @@ public class SpaceTypeInfo implements Externalizable {
     private Map<String, SpacePropertyInfo> _properties;
     private SpacePropertyInfo[] _spaceProperties;
     private Class<? extends ClassBinaryStorageAdapter> _spaceClassStorageAdapter;
+    private BinaryStorageAdapterType binaryStorageAdapterType;
 
     private SpacePropertyInfo _idProperty;
     private Boolean _idAutoGenerate;
@@ -868,7 +868,8 @@ public class SpaceTypeInfo implements Externalizable {
 
         SpaceClassBinaryStorageAdapter spaceClassStorageAdapter = _type.getAnnotation(SpaceClassBinaryStorageAdapter.class);
         if(spaceClassStorageAdapter != null){
-            this._spaceClassStorageAdapter = spaceClassStorageAdapter.value();
+            this._spaceClassStorageAdapter = spaceClassStorageAdapter.adapter();
+            this.binaryStorageAdapterType = spaceClassStorageAdapter.type();
         }
 
         for (Entry<String, SpacePropertyInfo> entry : _properties.entrySet()) {
@@ -890,6 +891,11 @@ public class SpaceTypeInfo implements Externalizable {
                     initContext.addIndex(property.getName(), indexType.toSpaceIndexType());
             } else {
                 property.setDocumentSupport(SpaceDocumentSupport.DEFAULT);
+            }
+
+            SpaceBinaryProperty spaceBinaryProperty = getter.getAnnotation(SpaceBinaryProperty.class);
+            if(spaceBinaryProperty != null){
+                property.setBinarySpaceProperty(true);
             }
 
             SpaceStorageType storageTypeAnnotation = getter.getAnnotation(SpaceStorageType.class);
@@ -1556,6 +1562,10 @@ public class SpaceTypeInfo implements Externalizable {
         return _spaceClassStorageAdapter;
     }
 
+    public BinaryStorageAdapterType getBinaryStorageAdapterType() {
+        return binaryStorageAdapterType;
+    }
+
     /////////////////////////////////////
     //		Serialization methods      //
     /////////////////////////////////////
@@ -1578,7 +1588,6 @@ public class SpaceTypeInfo implements Externalizable {
             throws IOException, ClassNotFoundException {
         readExternalV10_0(in, version);
         _sequenceNumberPropertyName = IOUtils.readString(in);
-        ;
     }
 
     private void readExternalV10_0(ObjectInput in, PlatformLogicalVersion version)

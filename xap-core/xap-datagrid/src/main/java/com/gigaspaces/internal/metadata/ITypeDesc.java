@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.metadata;
 
+import com.gigaspaces.annotation.pojo.BinaryStorageAdapterType;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
@@ -106,4 +107,14 @@ public interface ITypeDesc extends SpaceTypeDescriptor, IDotnetTypeDescDetails, 
     String getPrimitivePropertiesWithoutNullValues();
 
     String getTypeUidPrefix();
+
+    PropertyInfo[] getSerializedProperties();
+
+    PropertyInfo[] getNonSerializedProperties();
+
+    boolean isBinaryProperty(int index);
+
+    int findNewIndex(int index);
+
+    BinaryStorageAdapterType getBinaryStorageType();
 }

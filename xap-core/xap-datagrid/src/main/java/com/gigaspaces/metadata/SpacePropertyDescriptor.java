@@ -70,4 +70,6 @@ public interface SpacePropertyDescriptor {
 
     String getStorageAdapterName();
 
+    boolean isBinarySpaceProperty();
+
 }

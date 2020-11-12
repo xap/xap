@@ -246,6 +246,9 @@ public class TemplateEntryData implements IEntryData {
         if (quickReject(entry))
             return false;
 
+
+        //TODO - if Hybrid run on the non serialized fields first
+
         // compare every template field (besides the skipIndex, if skipIndex != -1)
         for (int i = 0; i < _fieldsValues.length; i++) {
             Object templateValue = getFixedPropertyValue(i);
@@ -265,6 +268,9 @@ public class TemplateEntryData implements IEntryData {
      * returns false, a full match will be performed by the engine.
      */
     private boolean quickReject(ServerEntry entry) {
+        //TODO - if Hybrid run on the non serialized fields first
+
+
         for (int i = 0; i < _fieldsValues.length; i++) {
             Object templateFieldValue = _fieldsValues[i];
             if (templateFieldValue == null)
@@ -282,6 +288,8 @@ public class TemplateEntryData implements IEntryData {
     }
 
     private boolean matchExtended(ServerEntry entry, int skipIndex, RegexCache regexCache) {
+
+        //TODO - if Hybrid run on the non serialized fields first
         int numOfFields = _fieldsValues.length;
 
         // compare every template field (besides the skipIndex, if skipIndex != -1)

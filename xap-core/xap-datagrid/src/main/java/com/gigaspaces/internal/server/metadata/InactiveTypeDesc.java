@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.server.metadata;
 
 import com.gigaspaces.annotation.pojo.FifoSupport;
+import com.gigaspaces.annotation.pojo.BinaryStorageAdapterType;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.io.IOUtils;
@@ -42,7 +43,7 @@ import java.util.Map;
 import java.util.Set;
 
 @com.gigaspaces.api.InternalApi
-public class InactiveTypeDesc implements ITypeDesc {
+ public class InactiveTypeDesc implements ITypeDesc {
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 
@@ -82,6 +83,31 @@ public class InactiveTypeDesc implements ITypeDesc {
     @Override
     public String getTypeUidPrefix() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public PropertyInfo[] getSerializedProperties() {
+        return new PropertyInfo[0];
+    }
+
+    @Override
+    public PropertyInfo[] getNonSerializedProperties() {
+        return new PropertyInfo[0];
+    }
+
+    @Override
+    public boolean isBinaryProperty(int index) {
+        return false;
+    }
+
+    @Override
+    public int findNewIndex(int index) {
+        return 0;
+    }
+
+    @Override
+    public BinaryStorageAdapterType getBinaryStorageType() {
+        return null;
     }
 
     @Override

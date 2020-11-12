@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.metadata;
 
 import com.gigaspaces.annotation.pojo.FifoSupport;
+import com.gigaspaces.annotation.pojo.BinaryStorageAdapterType;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapterRegistry;
 import com.gigaspaces.document.SpaceDocument;
@@ -81,6 +82,7 @@ public class TypeDesc implements ITypeDesc {
     private Map<String, SpaceIndex> _indexes;
     private TypeQueryExtensions queryExtensionsInfo;
     private ClassBinaryStorageAdapter classBinaryStorageAdapter;
+    private BinaryStorageAdapterType binaryStorageAdapterType;
 
     private int _sequenceNumberFixedPropertyPos;  //-1  if none
 
@@ -118,6 +120,9 @@ public class TypeDesc implements ITypeDesc {
     private transient List<SpaceIndex> _compoundIndexes;
     private transient String _primitivePropertiesWithoutNullValues;
 
+    private transient PropertyInfo[] _serializedProperties;
+    private transient PropertyInfo[] _nonSerializedProperties;
+
     /**
      * Default constructor for Externalizable.
      */
@@ -132,7 +137,7 @@ public class TypeDesc implements ITypeDesc {
                     StorageType storageType, EntryType entryType, Class<? extends Object> objectClass,
                     Class<? extends ExternalEntry> externalEntryClass, Class<? extends SpaceDocument> documentWrapperClass,
                     String dotnetDocumentWrapperType, byte dotnetStorageType, boolean blobstoreEnabled, String sequenceNumberPropertyName,
-                    TypeQueryExtensions queryExtensionsInfo, Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapter) {
+                    TypeQueryExtensions queryExtensionsInfo, Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapter, BinaryStorageAdapterType binaryStorageAdapterType) {
         _typeName = typeName;
         _codeBase = codeBase;
         _superTypesNames = superTypesNames;
@@ -176,7 +181,29 @@ public class TypeDesc implements ITypeDesc {
         addFifoGroupingIndexesIfNeeded(_indexes, _fifoGroupingName, _fifoGroupingIndexes);
         if(binaryStorageAdapter != null) {
             this.classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(binaryStorageAdapter);
+            this.binaryStorageAdapterType = binaryStorageAdapterType == null ? BinaryStorageAdapterType.ALL : binaryStorageAdapterType;
+            initFieldsArrays();
         }
+    }
+
+    private void initFieldsArrays() {
+        int serializedFieldsCount = (int) Arrays.stream(_fixedProperties).filter(PropertyInfo::isBinarySpaceProperty).count();
+        _nonSerializedProperties = new PropertyInfo[_fixedProperties.length - serializedFieldsCount];
+        _serializedProperties = new PropertyInfo[serializedFieldsCount];
+        int nonSerializedFieldsIndex = 0;
+        int serializedFieldsIndex = 0;
+        for (PropertyInfo property : _fixedProperties) {
+            if(property.getStorageType() != null && property.isBinarySpaceProperty()){
+                _serializedProperties[serializedFieldsIndex] = _fixedProperties[getFixedPropertyPosition(property.getName())];
+                _serializedProperties[serializedFieldsIndex].setNewIndex(serializedFieldsIndex);
+                serializedFieldsIndex++;
+            } else {
+                _nonSerializedProperties[nonSerializedFieldsIndex] = _fixedProperties[getFixedPropertyPosition(property.getName())];
+                _nonSerializedProperties[nonSerializedFieldsIndex].setNewIndex(nonSerializedFieldsIndex);
+                nonSerializedFieldsIndex++;
+            }
+        }
+
     }
 
     public TypeDesc cloneWithoutObjectClass( TypeDesc typeDesc, EntryType entryType ) {
@@ -651,15 +678,10 @@ public class TypeDesc implements ITypeDesc {
         return _sequenceNumberFixedPropertyPos >= 0;
     }
 
-    ;
-
     @Override
     public int getSequenceNumberFixedPropertyID() {
         return _sequenceNumberFixedPropertyPos;
     }
-
-    ;
-
 
     private static int calculateChecksum(PropertyInfo[] properties) {
         if (properties == null)
@@ -886,8 +908,10 @@ public class TypeDesc implements ITypeDesc {
         // New in 15.8.0: Space class binary storage adapter
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
             String storageAdapterClassName = IOUtils.readString(in);
-            if (storageAdapterClassName != null)
+            if (storageAdapterClassName != null) {
                 classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(ClassLoaderHelper.loadClass(storageAdapterClassName));
+                binaryStorageAdapterType = BinaryStorageAdapterType.fromCode(in.readByte());
+            }
         }
     }
 
@@ -1147,6 +1171,11 @@ public class TypeDesc implements ITypeDesc {
     }
 
     @Override
+    public BinaryStorageAdapterType getBinaryStorageType() {
+        return binaryStorageAdapterType;
+    }
+
+    @Override
     public void writeExternal(ObjectOutput out)
             throws IOException {
         writeExternal(out, LRMIInvocationContext.getEndpointLogicalVersion(), false);
@@ -1223,6 +1252,7 @@ public class TypeDesc implements ITypeDesc {
         // New in 15.8.0: Space class storage adapter
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
             IOUtils.writeString(out, classBinaryStorageAdapter != null ? classBinaryStorageAdapter.getClass().getName() : null);
+            out.writeByte(BinaryStorageAdapterType.toCode(binaryStorageAdapterType));
         }
     }
 
@@ -1407,5 +1437,23 @@ public class TypeDesc implements ITypeDesc {
 
     public Class<? extends ExternalEntry> getExternalEntryWrapperClass() {
         return _externalEntryWrapperClass;
+    }
+
+    @Override
+    public boolean isBinaryProperty(int index) {
+        return _fixedProperties[index].isBinarySpaceProperty();
+    }
+
+    @Override
+    public int findNewIndex(int index) {
+        return _fixedProperties[index].getNewIndex();
+    }
+
+    public PropertyInfo[] getSerializedProperties() {
+        return _serializedProperties;
+    }
+
+    public PropertyInfo[] getNonSerializedProperties() {
+        return _nonSerializedProperties;
     }
 }
