@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 @com.gigaspaces.api.InternalApi
-public class InactiveTypeDesc implements ITypeDesc {
+ public class InactiveTypeDesc implements ITypeDesc {
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 
@@ -82,6 +82,31 @@ public class InactiveTypeDesc implements ITypeDesc {
     @Override
     public String getTypeUidPrefix() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public PropertyInfo[] getSerializedProperties() {
+        return new PropertyInfo[0];
+    }
+
+    @Override
+    public PropertyInfo[] getNonSerializedProperties() {
+        return new PropertyInfo[0];
+    }
+
+    @Override
+    public boolean isSerializedProperty(int index) {
+        return false;
+    }
+
+    @Override
+    public int findHybridIndex(int index) {
+        return 0;
+    }
+
+    @Override
+    public int[] getPositionsForScanning() {
+        return new int[0];
     }
 
     @Override

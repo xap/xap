@@ -19,17 +19,15 @@
  */
 package com.gigaspaces.internal.transport;
 
-import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
-import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapterRegistry;
 import com.gigaspaces.internal.io.IOArrayException;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.query.ICustomQuery;
+import com.gigaspaces.internal.server.storage.HybridPayload;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.j_spaces.core.EntrySerializationException;
-import com.j_spaces.kernel.ClassLoaderHelper;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -50,10 +48,10 @@ import java.util.Map;
  */
 @com.gigaspaces.api.InternalApi
 public class EntryPacket extends AbstractEntryPacket {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     protected String _typeName;
-    private Object[] _fixedProperties;
+    private HybridPayload hybridPayload;
     private Map<String, Object> _dynamicProperties;
     private String _uid;
     private int _version;
@@ -72,26 +70,22 @@ public class EntryPacket extends AbstractEntryPacket {
     private boolean _noWriteLease;
     private boolean _fifo;
 
-
-    private byte[] binaryFields;
-
     /**
      * Default constructor required by {@link java.io.Externalizable}.
      */
     public EntryPacket() {
+        this.hybridPayload = new HybridPayload();
     }
 
     public EntryPacket(ITypeDesc typeDesc, EntryType entryType, Object[] fixedProperties, Map<String, Object> dynamicProperties,
                        String uid, int version, long timeToLive, boolean isTransient) {
-        this(typeDesc,entryType,fixedProperties,dynamicProperties,uid,version,timeToLive,isTransient,null);
+        this(typeDesc, entryType, dynamicProperties, uid, version, timeToLive, isTransient, new HybridPayload(typeDesc, fixedProperties));
     }
 
-
-    public EntryPacket(ITypeDesc typeDesc, EntryType entryType, Object[] fixedProperties, Map<String, Object> dynamicProperties,
-                       String uid, int version, long timeToLive, boolean isTransient, byte[] binaryFields) {
+    public EntryPacket(ITypeDesc typeDesc, EntryType entryType, Map<String, Object> dynamicProperties,
+                       String uid, int version, long timeToLive, boolean isTransient, HybridPayload hybridPayload) {
         super(typeDesc, entryType);
         _typeName = typeDesc.getTypeName();
-        _fixedProperties = fixedProperties;
         _dynamicProperties = dynamicProperties;
         _uid = uid;
         _version = version;
@@ -99,19 +93,18 @@ public class EntryPacket extends AbstractEntryPacket {
         _transient = isTransient;
         _noWriteLease = false;
         _fifo = false;
-        this.binaryFields = binaryFields;
+        this.hybridPayload = hybridPayload;
+
     }
 
     protected EntryPacket(ITypeDesc typeDesc, Object[] values) {
-      this(typeDesc,values,null);
+        this(typeDesc, new HybridPayload(typeDesc, values));
     }
 
-
-    protected EntryPacket(ITypeDesc typeDesc, Object[] values, byte[] binaryFields) {
+    protected EntryPacket(ITypeDesc typeDesc, HybridPayload hybridPayload) {
         super(typeDesc, typeDesc.getObjectType());
         this._typeName = typeDesc.getTypeName();
-        this._fixedProperties = values;
-        this.binaryFields = binaryFields;
+        this.hybridPayload = hybridPayload;
     }
 
     /**
@@ -123,11 +116,7 @@ public class EntryPacket extends AbstractEntryPacket {
     @Override
     public IEntryPacket clone() {
         IEntryPacket packet = super.clone();
-        if (_fixedProperties != null)
-            packet.setFieldsValues(_fixedProperties.clone());
-        if (binaryFields != null){
-            packet.setBinaryFields(binaryFields.clone());
-        }
+        packet.setHybridPayload(hybridPayload.clone());
         return packet;
     }
 
@@ -172,29 +161,20 @@ public class EntryPacket extends AbstractEntryPacket {
     }
 
     public Object[] getFieldValues() {
-        if (_fixedProperties == null && getTypeDescriptor() != null &&
-                getTypeDescriptor().getClassBinaryStorageAdapter() != null && binaryFields != null) {
-            try {
-                _fixedProperties = getTypeDescriptor().getClassBinaryStorageAdapter().fromBinary(getTypeDescriptor(), binaryFields);
-                binaryFields = null;
-            } catch (IOException | ClassNotFoundException e) {
-                throw new IllegalStateException("The field values array was not properly set", e);
-            }
-        }
-
-        return _fixedProperties;
+        return hybridPayload.getFixedProperties(getTypeDescriptor());
     }
 
     public void setFieldsValues(Object[] values) {
-        this._fixedProperties = values;
-        if(binaryFields != null){
-            binaryFields = null;
+        if(getTypeDescriptor() == null && getTypeName() == null){
+            hybridPayload.setFixedProperties(values);
+        } else {
+            hybridPayload.setFixedProperties(getTypeDescriptor(), values);
         }
     }
 
     public Object getFieldValue(int index) {
         try {
-            return getFieldValues()[index];
+            return this.hybridPayload.getFixedProperty(this.getTypeDescriptor(), index);
         } catch (Exception e) {
             throw new IllegalStateException("The field values array was not properly set", e);
         }
@@ -202,9 +182,10 @@ public class EntryPacket extends AbstractEntryPacket {
 
     public void setFieldValue(int index, Object value) {
         try {
-            getFieldValues()[index] = value;
-            if(binaryFields != null){
-                binaryFields = null;
+            if(getTypeDescriptor() == null && getTypeName() == null){
+                hybridPayload.setFixedProperty(index, value);
+            } else {
+                this.hybridPayload.setFixedProperty(_typeDesc, index, value);
             }
         } catch (Exception e) {
             throw new IllegalStateException("The field values array was not properly set", e);
@@ -259,7 +240,6 @@ public class EntryPacket extends AbstractEntryPacket {
     private static final short FLAG_RETURN_ONLY_UIDS = 1 << 9;
     private static final short FLAG_CUSTOM_QUERY = 1 << 10;
     private static final short FLAG_DYNAMIC_PROPERTIES = 1 << 11;
-    private static final short FLAG_BINARY_FIELDS= 1 << 12;
 
     private short buildFlags() {
         short flags = 0;
@@ -274,11 +254,8 @@ public class EntryPacket extends AbstractEntryPacket {
             flags |= FLAG_TIME_TO_LIVE;
         if (_multipleUIDs != null)
             flags |= FLAG_MULTIPLE_UIDS;
-        if (binaryFields != null) {
-            flags |= FLAG_BINARY_FIELDS;
-        } else if (_fixedProperties != null){
+        if (hybridPayload != null)
             flags |= FLAG_FIELDS_VALUES;
-        }
         if (_fifo)
             flags |= FLAG_FIFO;
         if (_transient)
@@ -333,13 +310,15 @@ public class EntryPacket extends AbstractEntryPacket {
                 out.writeLong(_timeToLive);
             if (_multipleUIDs != null)
                 IOUtils.writeStringArray(out, _multipleUIDs);
-            if(binaryFields != null) {
-                IOUtils.writeByteArray(out, binaryFields);
-            }else if (_fixedProperties != null) {
-                try {
-                    IOUtils.writeObjectArrayCompressed(out, _fixedProperties);
-                } catch (IOArrayException e) {
-                    throw createPropertySerializationException(e, true);
+            if (hybridPayload != null) {
+                if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
+                    IOUtils.writeObject(out, hybridPayload);
+                } else {
+                    try {
+                        IOUtils.writeObjectArrayCompressed(out, hybridPayload.getFixedProperties(_typeDesc));
+                    } catch (IOArrayException e) {
+                        throw createPropertySerializationException(e, true);
+                    }
                 }
             }
             if (_dynamicProperties != null)
@@ -383,14 +362,15 @@ public class EntryPacket extends AbstractEntryPacket {
             if ((flags & FLAG_MULTIPLE_UIDS) != 0)
                 _multipleUIDs = IOUtils.readStringArray(in);
 
-            if((flags & FLAG_BINARY_FIELDS) != 0 ){
-                binaryFields = IOUtils.readByteArray(in);
-            }
             if ((flags & FLAG_FIELDS_VALUES) != 0) {
-                try {
-                    _fixedProperties = IOUtils.readObjectArrayCompressed(in);
-                } catch (IOArrayException e) {
-                    throw createPropertySerializationException(e, false);
+                if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
+                    hybridPayload = IOUtils.readObject(in);
+                } else {
+                    try {
+                        hybridPayload = new HybridPayload(_typeDesc, IOUtils.readObjectArrayCompressed(in));
+                    } catch (IOArrayException e) {
+                        throw createPropertySerializationException(e, false);
+                    }
                 }
             }
             if ((flags & FLAG_DYNAMIC_PROPERTIES) != 0)
@@ -437,16 +417,17 @@ public class EntryPacket extends AbstractEntryPacket {
     }
 
     @Override
-    public void setBinaryFields(byte[] binaryFields) {
-        this.binaryFields = binaryFields;
+    public boolean allNullFieldValues() {
+        return hybridPayload.allNulls();
     }
 
     @Override
-    public boolean allNullFieldValues() {
-        return _fixedProperties == null && binaryFields == null;
+    public HybridPayload getHybridPayload() {
+        return hybridPayload;
     }
 
-    public byte[] getBinaryFields() {
-        return binaryFields;
+    @Override
+    public void setHybridPayload(HybridPayload hybridBinaryData) {
+        this.hybridPayload = hybridBinaryData;
     }
 }

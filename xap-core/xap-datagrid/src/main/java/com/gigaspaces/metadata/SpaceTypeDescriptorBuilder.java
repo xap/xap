@@ -18,19 +18,12 @@
 package com.gigaspaces.metadata;
 
 import com.gigaspaces.annotation.pojo.FifoSupport;
+import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.DefaultClassBinaryStorageAdapter;
 import com.gigaspaces.document.SpaceDocument;
-import com.gigaspaces.internal.metadata.DotNetStorageType;
-import com.gigaspaces.internal.metadata.EntryType;
-import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.metadata.PojoDefaults;
-import com.gigaspaces.internal.metadata.PropertyInfo;
-import com.gigaspaces.internal.metadata.SpaceCollectionIndex;
-import com.gigaspaces.internal.metadata.SpacePropertyInfo;
-import com.gigaspaces.internal.metadata.SpaceTypeInfo;
-import com.gigaspaces.internal.metadata.SpaceTypeInfoRepository;
-import com.gigaspaces.internal.metadata.TypeDesc;
+import com.gigaspaces.internal.metadata.*;
 import com.gigaspaces.internal.utils.ObjectUtils;
 import com.gigaspaces.metadata.index.ISpaceIndex;
 import com.gigaspaces.metadata.index.SpaceIndex;
@@ -68,7 +61,7 @@ public class SpaceTypeDescriptorBuilder {
 
     private final String _typeName;
     private final SpaceTypeDescriptor _superTypeDescriptor;
-    private final SortedMap<String, SpacePropertyDescriptor> _fixedProperties;
+    private final SortedMap<String, PropertyInfo.Builder> _fixedProperties;
     private final Map<String, SpaceIndex> _indexes;
     private TypeQueryExtensionsImpl _queryExtensionsInfo;
     private Class<? extends Object> _objectClass;
@@ -115,9 +108,9 @@ public class SpaceTypeDescriptorBuilder {
 
         this._typeName = typeName;
         this._superTypeDescriptor = superTypeDescriptor;
-        this._fixedProperties = new TreeMap<String, SpacePropertyDescriptor>();
-        this._indexes = new HashMap<String, SpaceIndex>();
-        this._fifoGroupingIndexes = new HashSet<String>();
+        this._fixedProperties = new TreeMap<>();
+        this._indexes = new HashMap<>();
+        this._fifoGroupingIndexes = new HashSet<>();
         this._storageType = StorageType.DEFAULT;
         this._blobstoreEnabled = PojoDefaults.BLOBSTORE_ENABLED;
         this._broadcast = PojoDefaults.BROADCAST;
@@ -201,8 +194,24 @@ public class SpaceTypeDescriptorBuilder {
         return this;
     }
 
-    public SpaceTypeDescriptorBuilder classBinaryStorageAdapter(Class<? extends ClassBinaryStorageAdapter> classBinaryStorageAdapter) {
-        this.binaryStorageAdapterClass = assertNotNull(classBinaryStorageAdapter, "binaryStorageAdapterClass");
+    /**
+     *
+     * @since 15.8
+     * @see com.gigaspaces.annotation.pojo.SpaceClassBinaryStorage
+     */
+    public SpaceTypeDescriptorBuilder binaryStorage() {
+        return binaryStorage(DefaultClassBinaryStorageAdapter.class);
+    }
+
+    /**
+     *
+     * @since 15.8
+     * @see com.gigaspaces.annotation.pojo.SpaceClassBinaryStorage
+     */
+    @ExperimentalApi
+    public SpaceTypeDescriptorBuilder binaryStorage(Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapterClass) {
+        this.binaryStorageAdapterClass = assertNotNull(binaryStorageAdapterClass, "binaryStorageAdapterClass");
+        storageType(StorageType.BINARY);
         return this;
     }
 
@@ -288,7 +297,7 @@ public class SpaceTypeDescriptorBuilder {
      * @param propertyType Type of property.
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType) {
-        return addFixedProperty(property(propertyName, propertyType), SpaceDocumentSupport.DEFAULT, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyType));
     }
 
     /**
@@ -299,7 +308,7 @@ public class SpaceTypeDescriptorBuilder {
      * @param documentSupport Document support of property.
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, SpaceDocumentSupport documentSupport) {
-        return addFixedProperty(property(propertyName, propertyType), documentSupport, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyType).documentSupport(documentSupport));
     }
 
     /**
@@ -311,7 +320,7 @@ public class SpaceTypeDescriptorBuilder {
      * @since 9.0.0
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, StorageType storageType) {
-        return addFixedProperty(property(propertyName, propertyType), SpaceDocumentSupport.DEFAULT, storageType);
+        return addFixedProperty(property(propertyName, propertyType).storageType(storageType));
     }
 
     /**
@@ -323,7 +332,7 @@ public class SpaceTypeDescriptorBuilder {
      * @since 15.2.0
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, Class<? extends PropertyStorageAdapter> propertyStorageAdapter) {
-        return addFixedProperty(property(propertyName, propertyType).storageAdapter(propertyStorageAdapter), SpaceDocumentSupport.DEFAULT, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyType).storageAdapter(propertyStorageAdapter));
     }
 
     /**
@@ -336,7 +345,7 @@ public class SpaceTypeDescriptorBuilder {
      * @since 9.0.0
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, SpaceDocumentSupport documentSupport, StorageType storageType) {
-        return addFixedProperty(property(propertyName, propertyType), documentSupport, storageType);
+        return addFixedProperty(property(propertyName, propertyType).documentSupport(documentSupport).storageType(storageType));
     }
 
     /**
@@ -349,7 +358,7 @@ public class SpaceTypeDescriptorBuilder {
      * @since 9.0.0
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, SpaceDocumentSupport documentSupport, Class<? extends PropertyStorageAdapter> propertyStorageAdapter) {
-        return addFixedProperty(property(propertyName, propertyType).storageAdapter(propertyStorageAdapter), documentSupport, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyType).documentSupport(documentSupport).storageAdapter(propertyStorageAdapter));
     }
 
     private static PropertyInfo.Builder property(String propertyName, Class<?> propertyType) {
@@ -364,23 +373,19 @@ public class SpaceTypeDescriptorBuilder {
      * @param propertyTypeName Name of type of property.
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName) {
-        return addFixedProperty(property(propertyName, propertyTypeName), SpaceDocumentSupport.DEFAULT, withTypeDefault(StorageType.DEFAULT));
+        return addFixedProperty(property(propertyName, propertyTypeName));
     }
 
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName, SpaceDocumentSupport documentSupport) {
-        return addFixedProperty(property(propertyName, propertyTypeName), documentSupport, withTypeDefault(StorageType.DEFAULT));
+        return addFixedProperty(property(propertyName, propertyTypeName).documentSupport(documentSupport));
     }
 
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName, SpaceDocumentSupport documentSupport, StorageType storageType) {
-        return addFixedProperty(property(propertyName, propertyTypeName), documentSupport, withTypeDefault(storageType));
+        return addFixedProperty(property(propertyName, propertyTypeName).documentSupport(documentSupport).storageType(storageType));
     }
 
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName, SpaceDocumentSupport documentSupport, Class<? extends PropertyStorageAdapter> propertyStorageAdapter) {
-        return addFixedProperty(property(propertyName, propertyTypeName).storageAdapter(propertyStorageAdapter), documentSupport, withTypeDefault(StorageType.DEFAULT));
-    }
-
-    private StorageType withTypeDefault(StorageType storageType) {
-        return storageType == StorageType.DEFAULT ? _storageType : storageType;
+        return addFixedProperty(property(propertyName, propertyTypeName).documentSupport(documentSupport).storageAdapter(propertyStorageAdapter));
     }
 
     private static PropertyInfo.Builder property(String propertyName, String propertyTypeName) {
@@ -397,19 +402,16 @@ public class SpaceTypeDescriptorBuilder {
     /**
      * Adds a property to the fixed properties set.
      */
-    private SpaceTypeDescriptorBuilder addFixedProperty(PropertyInfo.Builder builder, SpaceDocumentSupport documentSupport, StorageType storageType) {
-        builder.documentSupport(assertNotNull(documentSupport, "documentSupport"));
-        builder.storageType(assertNotNull(storageType, "storageType"));
-
-        SpacePropertyDescriptor property = builder.build();
+    private SpaceTypeDescriptorBuilder addFixedProperty(PropertyInfo.Builder builder) {
+        String name = builder.getName();
         // Validate property is not a duplicate:
-        if (_fixedProperties.containsKey(property.getName()))
-            throw new IllegalArgumentException("Cannot add fixed property '" + property.getName() + "' - a property with the same name is already defined.");
+        if (_fixedProperties.containsKey(name))
+            throw new IllegalArgumentException("Cannot add fixed property '" + name + "' - a property with the same name is already defined.");
         // Validate property does not exist in super type:
-        if (_superTypeDescriptor != null && _superTypeDescriptor.getFixedPropertyPosition(property.getName()) != -1)
-            throw new IllegalArgumentException("Cannot add fixed property '" + property.getName() + "' - a property with the same name is defined in the super type.");
+        if (_superTypeDescriptor != null && _superTypeDescriptor.getFixedPropertyPosition(name) != -1)
+            throw new IllegalArgumentException("Cannot add fixed property '" + name + "' - a property with the same name is defined in the super type.");
 
-        _fixedProperties.put(property.getName(), property);
+        _fixedProperties.put(name, builder);
         return this;
     }
 
@@ -702,8 +704,9 @@ public class SpaceTypeDescriptorBuilder {
     public SpaceTypeDescriptor create() {
         applyDefaults();
 
+        boolean binaryClassStorage = binaryStorageAdapterClass != null;
         final String[] superTypesNames = getSuperTypesNames(_typeName, _superTypeDescriptor);
-        final PropertyInfo[] fixedProperties = initFixedProperties(_fixedProperties, _superTypeDescriptor, _storageType);
+        final PropertyInfo[] fixedProperties = initFixedProperties(_fixedProperties, _superTypeDescriptor, _storageType, binaryClassStorage, _indexes.keySet());
         final Map<String, SpaceIndex> indexes = initIndexes(_indexes, fixedProperties, _idPropertyName, _superTypeDescriptor);
         final String codeBase = null;                            // TODO: What about pojo?
         final EntryType entryType = _objectClass == null ? EntryType.DOCUMENT_JAVA : EntryType.OBJECT_JAVA;
@@ -919,7 +922,9 @@ public class SpaceTypeDescriptorBuilder {
     }
 
 
-    private static PropertyInfo[] initFixedProperties(SortedMap<String, SpacePropertyDescriptor> properties, SpaceTypeDescriptor superTypeDesc, StorageType defaultStorageType) {
+    private static PropertyInfo[] initFixedProperties(SortedMap<String, PropertyInfo.Builder> properties,
+                                                      SpaceTypeDescriptor superTypeDesc, StorageType defaultStorageType,
+                                                      boolean binaryClassStorage, Set<String> indexesNames) {
         final int numOfSuperFixedProerties = superTypeDesc != null ? superTypeDesc.getNumOfFixedProperties() : 0;
         final int numOfFixedProerties = properties != null ? properties.size() : 0;
         final PropertyInfo[] mergedProperties = new PropertyInfo[numOfSuperFixedProerties + numOfFixedProerties];
@@ -932,9 +937,10 @@ public class SpaceTypeDescriptorBuilder {
 
         // Copy properties (if any) to the tail:
         if (properties != null)
-            for (Entry<String, SpacePropertyDescriptor> pair : properties.entrySet()) {
-                PropertyInfo property = (PropertyInfo) pair.getValue();
-                mergedProperties[pos++] = property;
+            for (Entry<String, PropertyInfo.Builder> pair : properties.entrySet()) {
+                PropertyInfo.Builder builder = pair.getValue();
+                builder.defaultStorageType(defaultStorageType, binaryClassStorage, indexesNames);
+                mergedProperties[pos++] = builder.build();
             }
 
         return mergedProperties;

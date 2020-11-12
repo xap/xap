@@ -18,34 +18,10 @@ package com.gigaspaces.internal.cluster.node.impl.packets.data;
 
 import com.gigaspaces.client.mutators.SpaceEntryMutator;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
-import com.gigaspaces.internal.cluster.node.impl.DataTypeAddIndexPacketData;
-import com.gigaspaces.internal.cluster.node.impl.DataTypeIntroducePacketData;
-import com.gigaspaces.internal.cluster.node.impl.ReplicationMultipleOperationType;
-import com.gigaspaces.internal.cluster.node.impl.ReplicationOutContext;
-import com.gigaspaces.internal.cluster.node.impl.ReplicationSingleOperationType;
+import com.gigaspaces.internal.cluster.node.impl.*;
 import com.gigaspaces.internal.cluster.node.impl.packets.data.errors.UnhandledErrorFix;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.AbstractReplicationPacketSingleEntryData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.AbstractTransactionReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.CancelLeaseReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.ChangeReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.EntryLeaseExpiredReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.EvictReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.ExtendEntryLeaseReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.ExtendNotifyTemplateLeaseReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.InsertNotifyTemplateReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.NotifyTemplateLeaseExpiredReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.PartialUpdateReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.RemoveByUIDReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.RemoveNotifyTemplateReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.RemoveReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.SingleReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.TransactionAbortReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.TransactionCommitReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.TransactionOnePhaseReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.TransactionPrepareReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.TransactionReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.UpdateReplicationPacketData;
-import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.WriteReplicationPacketData;
+import com.gigaspaces.internal.cluster.node.impl.packets.data.operations.*;
+import com.gigaspaces.internal.cluster.node.impl.view.EntryPacketServerEntryAdapter;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.storage.ICustomTypeDescLoader;
@@ -53,11 +29,7 @@ import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.NotifyTemplateHolder;
 import com.gigaspaces.internal.space.requests.AddTypeIndexesRequestInfo;
-import com.gigaspaces.internal.transport.EntryPacketFactory;
-import com.gigaspaces.internal.transport.IEntryPacket;
-import com.gigaspaces.internal.transport.ITemplatePacket;
-import com.gigaspaces.internal.transport.TemplatePacketFactory;
-import com.gigaspaces.internal.transport.TransportPacketType;
+import com.gigaspaces.internal.transport.*;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.server.ServerEntry;
 import com.gigaspaces.time.SystemTime;
@@ -65,7 +37,6 @@ import com.j_spaces.core.OperationID;
 import com.j_spaces.core.SpaceOperations;
 import com.j_spaces.core.cluster.IReplicationFilterEntry;
 import com.j_spaces.core.exception.internal.ReplicationInternalSpaceException;
-
 import net.jini.core.transaction.server.ServerTransaction;
 
 import java.util.ArrayList;
@@ -635,6 +606,14 @@ public class ReplicationPacketDataProducer
             IReplicationPacketEntryData entryData) {
         if (entryData instanceof UpdateReplicationPacketData) {
             UpdateReplicationPacketData updateData = (UpdateReplicationPacketData) entryData;
+            IEntryPacket entryPacket = updateData.getEntryPacket();
+            if (entryPacket.getTypeDescriptor() == null) {
+                entryPacket.setTypeDesc(_spaceEngine.getTypeManager().getTypeDesc(entryPacket.getTypeName()), false);
+            }
+            IEntryData previousEntryData = updateData.getPreviousEntryData();
+            if(previousEntryData instanceof EntryPacketServerEntryAdapter &&  previousEntryData.getSpaceTypeDescriptor() == null){
+                ((EntryPacketServerEntryAdapter) previousEntryData).loadTypeDescriptor(_spaceEngine.getTypeManager());
+            }
             updateData.serializeFullContent();
         }
 

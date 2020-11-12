@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  * Helper class for optimizing scanning entry data.
- *
+ * <p>
  * If the data (fixed properties) in an entry data is stored in a packed format, retrieving it more than once is inefficient.
  * This class provides a mutable view of an entry data - when a viewed entry is set it prefetches the data and caches it,
  * using it to server get requests (set requests are illegal). This helps reducing footprint on the actual entry data in
@@ -17,28 +17,42 @@ import java.util.Map;
  * @author Yechiel, Yael, Niv
  * @since 15.8
  */
-public class ViewEntryData implements IEntryData {
-
-    private static Logger logger = LoggerFactory.getLogger(ViewEntryData.class);
-    private IEntryData entry;
-    protected Object[] fixedProperties;
-    private Map<String, Object> dynamicProperties;
+public class ViewHybridEntryData implements IEntryData {
+    private static Logger logger = LoggerFactory.getLogger(ViewHybridEntryData.class);
+    protected IEntryData entry;
+    protected Map<String, Object> dynamicProperties;
+    HybridPayload hybridPayload;
 
     public void view(IEntryData entryData) {
         this.entry = entryData;
-        this.fixedProperties = entryData.getFixedPropertiesValues();
+        this.dynamicProperties = entryData.getDynamicProperties();
+        this.hybridPayload = new HybridPayload(getEntryTypeDesc().getTypeDesc(),
+                ((HybridEntryData) entryData).getNonSerializedProperties(),
+                ((HybridEntryData) entryData).getPackedSerializedProperties());
+    }
+
+    public void view(IEntryData entryData, HybridPayload hybridPayload) {
+        this.hybridPayload = hybridPayload;
         this.dynamicProperties = entryData.getDynamicProperties();
     }
 
-    public void view(IEntryData entryData, Object[] fieldValues) {
-        this.entry = entryData;
-        this.fixedProperties = fieldValues;
-        this.dynamicProperties = entryData.getDynamicProperties();
+    public HybridPayload getHybridPayload() {
+        return hybridPayload;
     }
 
     @Override
     public EntryDataType getEntryDataType() {
         return entry.getEntryDataType();
+    }
+
+    @Override
+    public Object[] getFixedPropertiesValues() {
+        return this.hybridPayload.getFixedProperties(getEntryTypeDesc().getTypeDesc());
+    }
+
+    @Override
+    public Object getFixedPropertyValue(int position) {
+        return this.hybridPayload.getFixedProperty(getEntryTypeDesc().getTypeDesc(), position);
     }
 
     @Override
@@ -56,14 +70,8 @@ public class ViewEntryData implements IEntryData {
         return entry.getExpirationTime();
     }
 
-    @Override
-    public Object[] getFixedPropertiesValues() {
-        return fixedProperties;
-    }
-
-    @Override
-    public Object getFixedPropertyValue(int position) {
-        return fixedProperties[position];
+    public boolean isViewOf(IEntryData entryData) {
+        return this.entry == entryData;
     }
 
     @Override
@@ -88,9 +96,5 @@ public class ViewEntryData implements IEntryData {
     @Override
     public void setDynamicProperties(Map<String, Object> dynamicProperties) {
         throw new IllegalStateException("Data cannot be modified on entry data view");
-    }
-
-    public boolean isViewOf(IEntryData entryData) {
-        return this.entry == entryData;
     }
 }

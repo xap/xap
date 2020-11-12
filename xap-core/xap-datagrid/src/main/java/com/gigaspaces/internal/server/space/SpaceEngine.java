@@ -274,7 +274,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
     static {
         EMPTY_ENTRYPACKET = new EntryPacket();
-        EMPTY_ENTRYPACKET.setFieldsValues(new Object[0]);
     }
 
     public SpaceEngine(SpaceImpl spaceImpl) throws CreateException, RemoteException {
@@ -833,7 +832,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         WriteEntryResult writeResult = null;
         EntryAlreadyInSpaceException entryInSpaceEx = null;
         try {
-            context.cacheViewEntryDataIfNeeded(eHolder.getEntryData(), entryPacket.getFieldValues());
+            context.cacheViewEntryDataIfNeeded(eHolder.getEntryData(), entryPacket);
             writeResult = _coreProcessor.handleDirectWriteSA(context, eHolder, serverTypeDesc, fromReplication,
                     origin, reInsertedEntry, packetUid != null,
                     !fromWriteMultiple, modifiers);

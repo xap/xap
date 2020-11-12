@@ -28,6 +28,7 @@ import com.gigaspaces.internal.cluster.node.impl.packets.data.ReplicationPacketD
 import com.gigaspaces.internal.cluster.node.impl.view.EntryPacketServerEntryAdapter;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
+import com.gigaspaces.internal.server.storage.HybridPayload;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
@@ -162,8 +163,13 @@ public class UpdateReplicationPacketData
     private void readExternalPost91(ObjectInput in) throws IOException, ClassNotFoundException {
         _overrideVersion = in.readBoolean();
         _flags = in.readShort();
-        if (in.readBoolean() /* serializeFullContent */)
-            deserializePreviousEntryData(in);
+        if (in.readBoolean() /* serializeFullContent */) {
+            if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
+                deserializePreviousEntryDataPost158(in);
+            } else {
+                deserializePreviousEntryData(in);
+            }
+        }
     }
 
     protected void deserializePreviousEntryData(ObjectInput in)
@@ -197,6 +203,47 @@ public class UpdateReplicationPacketData
 
         }
         return serializedPreviousFixedProperties;
+    }
+
+    private void deserializePreviousEntryDataPost158(ObjectInput in) throws IOException, ClassNotFoundException {
+        final boolean hasPreviousEntryDataBeenSerialzed = in.readBoolean();
+
+        if (!hasPreviousEntryDataBeenSerialzed)
+            return;
+
+        HybridPayload previousHybridPayload = deserializePreviousHybridPayload(in);
+
+        DynamicPropertiesDeserializationData data = deserializePreviousDynamicProperties(in);
+        Map<String, Object> previousDynamicProperties = data._serializedPreviousDynamicProperties;
+        boolean previousDynamicPropertiesExisted = data._previousDynamicPropertiesExisted;
+        createPreviousEntryDataPost158(previousHybridPayload, previousDynamicProperties, previousDynamicPropertiesExisted);
+    }
+
+    private HybridPayload deserializePreviousHybridPayload(ObjectInput in) throws IOException, ClassNotFoundException {
+        boolean isSerialized = in.readBoolean();
+        if(isSerialized){
+            return (HybridPayload) in.readObject();
+        }
+        return null;
+    }
+
+    private void createPreviousEntryDataPost158(HybridPayload previousHybridPayload, Map<String, Object> previousDynamicProperties, boolean previousDynamicPropertiesExisted) {
+        _previousEntryPacket = getEntryPacket().clone();
+        if (previousHybridPayload != null)
+            _previousEntryPacket.setHybridPayload(previousHybridPayload);
+
+        if (previousDynamicProperties != null)
+            _previousEntryPacket.setDynamicProperties(previousDynamicProperties);
+        else if (!previousDynamicPropertiesExisted)
+            _previousEntryPacket.setDynamicProperties(null);
+
+
+        if (_previousEntryPacket.hasPreviousVersion())
+            _previousEntryPacket.setVersion(_previousEntryPacket.getPreviousVersion());
+        else
+            _previousEntryPacket.setVersion(_previousEntryPacket.getVersion() - 1);
+
+        _previousEntryData = new EntryPacketServerEntryAdapter(_previousEntryPacket);
     }
 
     private DynamicPropertiesDeserializationData deserializePreviousDynamicProperties(ObjectInput in) throws IOException, ClassNotFoundException {
@@ -278,10 +325,6 @@ public class UpdateReplicationPacketData
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        if(_serializeFullContent){
-            getEntryPacket().getFieldValues();
-            getEntryPacket().setBinaryFields(null);
-        }
         super.writeExternal(out);
 
         if (LRMIInvocationContext.getEndpointLogicalVersion().lessThan(PlatformLogicalVersion.v9_1_0))
@@ -310,8 +353,13 @@ public class UpdateReplicationPacketData
         out.writeBoolean(_overrideVersion);
         out.writeShort(_flags);
         out.writeBoolean(_serializeFullContent);
-        if (_serializeFullContent)
-            serializePreviousEntryData(out);
+        if (_serializeFullContent) {
+            if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
+                serializePreviousEntryDataPost158(out);
+            } else {
+                serializePreviousEntryData(out);
+            }
+        }
     }
 
     protected void serializePreviousEntryData(ObjectOutput out) throws IOException {
@@ -363,6 +411,48 @@ public class UpdateReplicationPacketData
                     out.writeBoolean(false);
                 }
             }
+        }
+    }
+
+    private void serializePreviousEntryDataPost158(ObjectOutput out) throws IOException {
+        // flag to indicate whether the previousEntryData was written
+        if (_previousEntryData != null) {
+            out.writeBoolean(true);
+            serializedPreviousHybridPayload(out);
+            serializePreviousDynamicProperties(out);
+        } else {
+            out.writeBoolean(false);
+        }
+    }
+
+    private void serializedPreviousHybridPayload(ObjectOutput out) throws IOException {
+        Object[] serializedPrevious = null;
+
+        Object[] current = getEntryPacket().getFieldValues();
+        Object[] previous = _previousEntryData.getFixedPropertiesValues();
+
+        for (int i = 0; i < current.length; i++) {
+            if (current[i] != null) {
+                if (previous[i] == null) {
+                    serializedPrevious = instantiateArrayIfNeeded(serializedPrevious, current.length);
+                    serializedPrevious[i] = null;
+                } else if (!previous[i].equals(current[i])) {
+                    serializedPrevious = instantiateArrayIfNeeded(serializedPrevious, current.length);
+                    serializedPrevious[i] = previous[i];
+                }
+            } else if (previous[i] != null) {
+                serializedPrevious = instantiateArrayIfNeeded(serializedPrevious, current.length);
+                serializedPrevious[i] = previous[i];
+            }
+        }
+
+        // flag to indicate whether previous fixed values were serialized
+        final boolean serialize = serializedPrevious != null;
+        out.writeBoolean(serialize);
+
+        if (serialize) {
+            HybridPayload payload = new HybridPayload(_previousEntryData.getSpaceTypeDescriptor(), serializedPrevious);
+            out.writeObject(payload);
         }
     }
 
@@ -438,7 +528,7 @@ public class UpdateReplicationPacketData
             ClassNotFoundException {
         super.readFromSwap(in);
         _overrideVersion = in.readBoolean();
-        deserializePreviousEntryData(in);
+        deserializePreviousEntryDataPost158(in);
         _flags = in.readShort();
         _expirationTime = in.readLong();
         restoreCurrentEntryData();
@@ -450,13 +540,9 @@ public class UpdateReplicationPacketData
 
     @Override
     public void writeToSwap(ObjectOutput out) throws IOException {
-        if(_previousEntryData != null){
-            getEntryPacket().getFieldValues();
-            getEntryPacket().setBinaryFields(null);
-        }
         super.writeToSwap(out);
         out.writeBoolean(_overrideVersion);
-        serializePreviousEntryData(out);
+        serializePreviousEntryDataPost158(out);
         out.writeShort(_flags);
         out.writeLong(_expirationTime);
     }
@@ -500,4 +586,7 @@ public class UpdateReplicationPacketData
         return _expirationTime;
     }
 
+    public IEntryData getPreviousEntryData() {
+        return _previousEntryData;
+    }
 }
