@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.server.storage;
 
+import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
@@ -32,7 +33,12 @@ import java.util.Map;
  * @since 15.8
  */
 @com.gigaspaces.api.InternalApi
-public class HybridBinaryEntryData extends AbstractBinaryEntryData {
+public class HybridBinaryEntryData implements IBinaryEntryData {
+    protected final EntryTypeDesc _entryTypeDesc;
+    protected final int _versionID;
+    protected final long _expirationTime;
+    protected final EntryXtnInfo _entryTxnInfo;
+    protected Map<String, Object> _dynamicProperties;
     private byte[] serializedFields;
     private Object[] nonSerializedFields;
 
@@ -43,7 +49,11 @@ public class HybridBinaryEntryData extends AbstractBinaryEntryData {
 
     public HybridBinaryEntryData(Pair<Object[],byte[]> fields, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version,
                                  long expirationTime, EntryXtnInfo entryXtnInfo) {
-        super(entryTypeDesc, version, expirationTime, entryXtnInfo, dynamicProperties);
+        this._entryTypeDesc = entryTypeDesc;
+        this._versionID = version;
+        this._expirationTime = expirationTime;
+        this._entryTxnInfo = entryXtnInfo;
+        this._dynamicProperties = dynamicProperties;
         this.nonSerializedFields = fields.getFirst();
         this.serializedFields = fields.getSecond();
     }
@@ -64,6 +74,14 @@ public class HybridBinaryEntryData extends AbstractBinaryEntryData {
         }
         try {
             return new Pair<>(nonSerializedFields, typeDesc.getClassBinaryStorageAdapter().toBinary(typeDesc, serializedFields));
+        } catch (IOException e) {
+            throw new UncheckedIOException("com.gigaspaces.internal.server.storage.BinaryEntryData.serializeFields failed", e);
+        }
+    }
+
+    protected static byte[] serializeFields(Object[] fieldsValues, ITypeDesc typeDesc) {
+        try {
+            return typeDesc.getClassBinaryStorageAdapter().toBinary(typeDesc, fieldsValues);
         } catch (IOException e) {
             throw new UncheckedIOException("com.gigaspaces.internal.server.storage.BinaryEntryData.serializeFields failed", e);
         }
@@ -159,11 +177,60 @@ public class HybridBinaryEntryData extends AbstractBinaryEntryData {
         serializedFields = fields.getSecond();
     }
 
+    @Override
     public byte[] getSerializedFields() {
         return serializedFields;
     }
 
-    public void setSerializedFields(byte[] serializedFields) {
-        this.serializedFields = serializedFields;
+    @Override
+    public boolean isEqualProperties(IBinaryEntryData old){
+        return serializedFields == old.getSerializedFields() &&
+                nonSerializedFields == ((HybridBinaryEntryData) old).nonSerializedFields;
+    }
+
+    @Override
+    public EntryTypeDesc getEntryTypeDesc() {
+        return _entryTypeDesc;
+    }
+
+    @Override
+    public int getVersion() {
+        return _versionID;
+    }
+
+    @Override
+    public long getExpirationTime() {
+        return _expirationTime;
+    }
+
+    @Override
+    public EntryXtnInfo getEntryXtnInfo() {
+        return _entryTxnInfo;
+    }
+
+    @Override
+    public EntryDataType getEntryDataType() {
+        return EntryDataType.FLAT;
+    }
+
+    @Override
+    public Map<String, Object> getDynamicProperties() {
+        return _dynamicProperties;
+    }
+
+    @Override
+    public void setDynamicProperties(Map<String, Object> dynamicProperties) {
+        _dynamicProperties = dynamicProperties;
+    }
+
+    @Override
+    public void setDynamicPropertyValue(String propertyName, Object value) {
+        if (!_entryTypeDesc.getTypeDesc().supportsDynamicProperties())
+            throw new UnsupportedOperationException(_entryTypeDesc.getTypeDesc().getTypeName() + " does not support dynamic properties");
+
+        if (_dynamicProperties == null)
+            _dynamicProperties = new DocumentProperties();
+
+        _dynamicProperties.put(propertyName, value);
     }
 }
