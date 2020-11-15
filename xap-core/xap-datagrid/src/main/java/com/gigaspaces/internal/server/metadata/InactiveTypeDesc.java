@@ -101,7 +101,7 @@ import java.util.Set;
     }
 
     @Override
-    public int findNewIndex(int index) {
+    public int findHybridIndex(int index) {
         return 0;
     }
 

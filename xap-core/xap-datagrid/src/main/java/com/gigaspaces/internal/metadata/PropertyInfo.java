@@ -50,7 +50,8 @@ public class PropertyInfo implements SpacePropertyDescriptor{
     private PropertyStorageAdapter _storageAdapter;
     private final byte _dotnetStorageType;
     private final boolean _binarySpaceProperty;
-    private int newIndex;
+    private int originalIndex;
+    private int hybridIndex;
 
     private PropertyInfo(Builder builder) {
         this._name = builder.name;
@@ -196,6 +197,10 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_2_0)) {
             IOUtils.writeString(out, _storageAdapter != null ? _storageAdapter.getClass().getName() : null);
         }
+
+        if(version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)){
+            out.writeBoolean(_binarySpaceProperty);
+        }
     }
 
     static PropertyInfo deserialize(ObjectInput in, PlatformLogicalVersion version) throws IOException, ClassNotFoundException {
@@ -216,17 +221,28 @@ public class PropertyInfo implements SpacePropertyDescriptor{
             if (storageAdapterClassName != null)
                 builder.storageAdapter(ClassLoaderHelper.loadClass(storageAdapterClassName));
         }
+
+        if (version.greaterOrEquals(PlatformLogicalVersion.v15_2_0)) {
+            builder.setBinarySpaceProperty(in.readBoolean());
+        }
         return builder.build();
     }
 
-    void setNewIndex(int newIndex) {
-        this.newIndex = newIndex;
+    void setHybridIndex(int index) {
+        this.hybridIndex = index;
     }
 
-    int getNewIndex() {
-        return this.newIndex;
+    void setOriginalIndex(int index) {
+        this.originalIndex = index;
     }
 
+    public int getOriginalIndex() {
+        return originalIndex;
+    }
+
+    int getHybridIndex() {
+        return hybridIndex;
+    }
 
     public static class Builder {
         private final String name;

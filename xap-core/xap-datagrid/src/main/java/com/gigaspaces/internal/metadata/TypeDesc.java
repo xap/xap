@@ -182,24 +182,26 @@ public class TypeDesc implements ITypeDesc {
         if(binaryStorageAdapter != null) {
             this.classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(binaryStorageAdapter);
             this.binaryStorageAdapterType = binaryStorageAdapterType == null ? BinaryStorageAdapterType.ALL : binaryStorageAdapterType;
-            initFieldsArrays();
+            initHybridProperties();
         }
     }
 
-    private void initFieldsArrays() {
+    private void initHybridProperties() {
         int serializedFieldsCount = (int) Arrays.stream(_fixedProperties).filter(PropertyInfo::isBinarySpaceProperty).count();
         _nonSerializedProperties = new PropertyInfo[_fixedProperties.length - serializedFieldsCount];
         _serializedProperties = new PropertyInfo[serializedFieldsCount];
         int nonSerializedFieldsIndex = 0;
         int serializedFieldsIndex = 0;
-        for (PropertyInfo property : _fixedProperties) {
-            if(property.getStorageType() != null && property.isBinarySpaceProperty()){
-                _serializedProperties[serializedFieldsIndex] = _fixedProperties[getFixedPropertyPosition(property.getName())];
-                _serializedProperties[serializedFieldsIndex].setNewIndex(serializedFieldsIndex);
+        for (int i = 0; i < _fixedProperties.length; i++) {
+            if(_fixedProperties[i].getStorageType() != null && _fixedProperties[i].isBinarySpaceProperty()){
+                _serializedProperties[serializedFieldsIndex] = _fixedProperties[i];
+                _serializedProperties[serializedFieldsIndex].setHybridIndex(serializedFieldsIndex);
+                _serializedProperties[serializedFieldsIndex].setOriginalIndex(i);
                 serializedFieldsIndex++;
             } else {
-                _nonSerializedProperties[nonSerializedFieldsIndex] = _fixedProperties[getFixedPropertyPosition(property.getName())];
-                _nonSerializedProperties[nonSerializedFieldsIndex].setNewIndex(nonSerializedFieldsIndex);
+                _nonSerializedProperties[nonSerializedFieldsIndex] = _fixedProperties[i];
+                _nonSerializedProperties[nonSerializedFieldsIndex].setHybridIndex(nonSerializedFieldsIndex);
+                _nonSerializedProperties[nonSerializedFieldsIndex].setOriginalIndex(i);
                 nonSerializedFieldsIndex++;
             }
         }
@@ -911,6 +913,7 @@ public class TypeDesc implements ITypeDesc {
             if (storageAdapterClassName != null) {
                 classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(ClassLoaderHelper.loadClass(storageAdapterClassName));
                 binaryStorageAdapterType = BinaryStorageAdapterType.fromCode(in.readByte());
+                initHybridProperties();
             }
         }
     }
@@ -1251,8 +1254,12 @@ public class TypeDesc implements ITypeDesc {
         writeObjectsAsByteArray(out);
         // New in 15.8.0: Space class storage adapter
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
-            IOUtils.writeString(out, classBinaryStorageAdapter != null ? classBinaryStorageAdapter.getClass().getName() : null);
-            out.writeByte(BinaryStorageAdapterType.toCode(binaryStorageAdapterType));
+            if(classBinaryStorageAdapter != null){
+                IOUtils.writeString(out, classBinaryStorageAdapter.getClass().getName());
+                out.writeByte(BinaryStorageAdapterType.toCode(binaryStorageAdapterType));
+            }else {
+                IOUtils.writeString(out, null);
+            }
         }
     }
 
@@ -1445,8 +1452,8 @@ public class TypeDesc implements ITypeDesc {
     }
 
     @Override
-    public int findNewIndex(int index) {
-        return _fixedProperties[index].getNewIndex();
+    public int findHybridIndex(int index) {
+        return _fixedProperties[index].getHybridIndex();
     }
 
     public PropertyInfo[] getSerializedProperties() {

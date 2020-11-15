@@ -118,14 +118,14 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
                 isBinaryProperty(index)){
             try {
                 return _entryTypeDesc.getTypeDesc().getClassBinaryStorageAdapter()
-                        .getFieldAtIndex(_entryTypeDesc.getTypeDesc(), serializedFields, _entryTypeDesc.getTypeDesc().findNewIndex(index));
+                        .getFieldAtIndex(_entryTypeDesc.getTypeDesc(), serializedFields, _entryTypeDesc.getTypeDesc().findHybridIndex(index));
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e);
             }
         }else {
-            return nonSerializedFields[_entryTypeDesc.getTypeDesc().findNewIndex(index)];
+            return nonSerializedFields[_entryTypeDesc.getTypeDesc().findHybridIndex(index)];
         }
     }
 
@@ -134,14 +134,14 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
         if(_entryTypeDesc.getTypeDesc().isBinaryProperty(index)){
             try {
                 _entryTypeDesc.getTypeDesc().getClassBinaryStorageAdapter()
-                        .modifyField(_entryTypeDesc.getTypeDesc(), serializedFields, _entryTypeDesc.getTypeDesc().findNewIndex(index), value);
+                        .modifyField(_entryTypeDesc.getTypeDesc(), serializedFields, _entryTypeDesc.getTypeDesc().findHybridIndex(index), value);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e);
             }
         }else {
-            nonSerializedFields[_entryTypeDesc.getTypeDesc().findNewIndex(index)] = value;
+            nonSerializedFields[_entryTypeDesc.getTypeDesc().findHybridIndex(index)] = value;
         }
     }
 
@@ -153,9 +153,9 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
             int i = 0;
             for (PropertyInfo property : _entryTypeDesc.getTypeDesc().getProperties()) {
                 if(property.isBinarySpaceProperty()){
-                    fields[i] = deserializedFields[_entryTypeDesc.getTypeDesc().findNewIndex(i)];
+                    fields[i] = deserializedFields[_entryTypeDesc.getTypeDesc().findHybridIndex(i)];
                 } else {
-                    fields[i] = nonSerializedFields[_entryTypeDesc.getTypeDesc().findNewIndex(i)];
+                    fields[i] = nonSerializedFields[_entryTypeDesc.getTypeDesc().findHybridIndex(i)];
                 }
                 i++;
             }

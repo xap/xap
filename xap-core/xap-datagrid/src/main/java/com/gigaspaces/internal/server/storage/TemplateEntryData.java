@@ -246,11 +246,10 @@ public class TemplateEntryData implements IEntryData {
         if (quickReject(entry))
             return false;
 
-
-        //TODO - if Hybrid run on the non serialized fields first
-
         // compare every template field (besides the skipIndex, if skipIndex != -1)
-        for (int i = 0; i < _fieldsValues.length; i++) {
+        PropertiesIterator iterator = new PropertiesIterator(entry);
+        while (iterator.hasNextI()){
+            int i = iterator.getNextI();
             Object templateValue = getFixedPropertyValue(i);
             if (i == skipIndex || templateValue == null)
                 continue;
@@ -268,10 +267,9 @@ public class TemplateEntryData implements IEntryData {
      * returns false, a full match will be performed by the engine.
      */
     private boolean quickReject(ServerEntry entry) {
-        //TODO - if Hybrid run on the non serialized fields first
-
-
-        for (int i = 0; i < _fieldsValues.length; i++) {
+        PropertiesIterator iterator = new PropertiesIterator(entry);
+        while (iterator.hasNextI()){
+            int i = iterator.getNextI();
             Object templateFieldValue = _fieldsValues[i];
             if (templateFieldValue == null)
                 continue;
@@ -289,11 +287,9 @@ public class TemplateEntryData implements IEntryData {
 
     private boolean matchExtended(ServerEntry entry, int skipIndex, RegexCache regexCache) {
 
-        //TODO - if Hybrid run on the non serialized fields first
-        int numOfFields = _fieldsValues.length;
-
-        // compare every template field (besides the skipIndex, if skipIndex != -1)
-        for (int i = 0; i < numOfFields; i++) {
+        PropertiesIterator iterator = new PropertiesIterator(entry);
+        while (iterator.hasNextI()){
+            int i = iterator.getNextI();
             if (i == skipIndex)
                 continue;
 

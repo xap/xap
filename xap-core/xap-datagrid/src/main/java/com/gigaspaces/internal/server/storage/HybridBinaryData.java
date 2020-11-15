@@ -18,6 +18,7 @@ public class HybridBinaryData implements Externalizable {
 
     public HybridBinaryData(ITypeDesc typeDesc, Object[] nonSerializedProperties, byte[] serialized) {
         this.nonSerializedProperties = nonSerializedProperties;
+        this.serializedProperties = new Object[typeDesc.getSerializedProperties().length];
         this.serialized = serialized;
         this.isDeserialized = false;
     }
@@ -30,8 +31,9 @@ public class HybridBinaryData implements Externalizable {
     }
 
     public HybridBinaryData(ITypeDesc typeDesc, byte[] serializedFields) {
+        this.nonSerializedProperties = new Object[0];
+        this.serializedProperties = new Object[typeDesc.getSerializedProperties().length];
         this.serialized = serializedFields;
-        this.serializedProperties = new Object[typeDesc.getProperties().length];
         this.isDeserialized = false;
     }
 
@@ -47,9 +49,9 @@ public class HybridBinaryData implements Externalizable {
             int i = 0;
             for (PropertyInfo property : typeDesc.getProperties()) {
                 if (property.isBinarySpaceProperty()) {
-                    fields[i] = this.serializedProperties[typeDesc.findNewIndex(i)];
+                    fields[i] = this.serializedProperties[typeDesc.findHybridIndex(i)];
                 } else {
-                    fields[i] = this.nonSerializedProperties[typeDesc.findNewIndex(i)];
+                    fields[i] = this.nonSerializedProperties[typeDesc.findHybridIndex(i)];
                 }
                 i++;
             }
@@ -68,9 +70,9 @@ public class HybridBinaryData implements Externalizable {
                 if (!isDeserialized) {
                     unpackSerializedProperties(typeDesc);
                 }
-                return serializedProperties[typeDesc.findNewIndex(position)];
+                return serializedProperties[typeDesc.findHybridIndex(position)];
             } else {
-                return nonSerializedProperties[typeDesc.findNewIndex(position)];
+                return nonSerializedProperties[typeDesc.findHybridIndex(position)];
             }
         }
     }
