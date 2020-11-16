@@ -792,7 +792,7 @@ public class JSpaceUtilities {
     }
 
     public static boolean isEmpty(String s, boolean isWithTrim) {
-        if (s == null)
+        if (s == null || s.length() == 0)
             return true;
 
         if (isWithTrim)
