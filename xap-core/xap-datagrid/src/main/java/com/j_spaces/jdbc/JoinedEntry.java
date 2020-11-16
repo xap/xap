@@ -146,12 +146,14 @@ public class JoinedEntry extends EntryPacket implements Serializable {
     @Override
     protected void readExternal(ObjectInput in, PlatformLogicalVersion version) throws IOException, ClassNotFoundException {
         super.readExternal(in, version);
-        _entries = IOUtils.readEntryPacketArray(in);
+        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0))
+            _entries = IOUtils.readEntryPacketArray(in);
     }
 
     @Override
     protected void writeExternal(ObjectOutput out, PlatformLogicalVersion version) throws IOException {
         super.writeExternal(out, version);
-        IOUtils.writeObjectArray(out, _entries);
+        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0))
+            IOUtils.writeObjectArray(out, _entries);
     }
 }
