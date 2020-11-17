@@ -6,6 +6,7 @@ import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
 
 import java.io.*;
+import java.util.Arrays;
 
 public class HybridBinaryData implements Externalizable {
     private Object[] serializedProperties;
@@ -109,7 +110,9 @@ public class HybridBinaryData implements Externalizable {
 
 
     public HybridBinaryData clone(){
-        return new HybridBinaryData(serializedProperties.clone(), nonSerializedProperties.clone(), serialized.clone());
+        return new HybridBinaryData(Arrays.copyOf(serializedProperties, serializedProperties.length)
+                , Arrays.copyOf(nonSerializedProperties, nonSerializedProperties.length),
+                Arrays.copyOf(serialized,serialized.length));
     }
 
     @Override

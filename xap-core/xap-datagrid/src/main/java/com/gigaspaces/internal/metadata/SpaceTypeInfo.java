@@ -158,12 +158,19 @@ public class SpaceTypeInfo implements Externalizable {
         validate();
     }
 
-    //inherit binasry property annotation from super class
     private void initBinaryProperties(InitContext initContext) {
         if(this._superTypeInfo != null){
             for (Entry<String, SpacePropertyInfo> entry : _superTypeInfo._properties.entrySet()) {
                 if(_properties.containsKey(entry.getKey()) && entry.getValue().isBinarySpaceProperty()){
                     _properties.get(entry.getKey()).setBinarySpaceProperty(true);
+                }
+            }
+        }
+
+        if(this.getBinaryStorageAdapterType() != null && this.getBinaryStorageAdapterType().equals(BinaryStorageAdapterType.EXCLUDE_INDEXES)) {
+            for (SpacePropertyInfo spaceProperty : this._spaceProperties) {
+                if(!this._indexes.containsKey(spaceProperty.getName())){
+                    spaceProperty.setBinarySpaceProperty(true);
                 }
             }
         }

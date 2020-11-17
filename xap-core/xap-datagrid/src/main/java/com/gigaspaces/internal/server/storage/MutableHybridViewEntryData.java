@@ -2,6 +2,7 @@ package com.gigaspaces.internal.server.storage;
 
 import com.j_spaces.core.server.transaction.EntryXtnInfo;
 
+import java.util.Arrays;
 import java.util.Map;
 
 public class MutableHybridViewEntryData extends HybridViewEntryData implements ITransactionalEntryData {
@@ -17,11 +18,10 @@ public class MutableHybridViewEntryData extends HybridViewEntryData implements I
     public void view(ITransactionalEntryData entryData) {
         this.entry = entryData;
         this.dynamicProperties = entryData.getDynamicProperties();
-        this.hybridBinaryData = entryData instanceof HybridBinaryEntryData ?
-                new HybridBinaryData(getEntryTypeDesc().getTypeDesc(),
-                        ((HybridBinaryEntryData) entryData).getNonSerializedFields(),
-                        ((HybridBinaryEntryData) entryData).getSerializedFields())
-                : ((HybridViewEntryData) entryData).getHybridBinaryData().clone();
+        HybridBinaryEntryData hybridBinaryEntryData = (HybridBinaryEntryData) entryData;
+        this.hybridBinaryData = new HybridBinaryData(getEntryTypeDesc().getTypeDesc(),
+                Arrays.copyOf(hybridBinaryEntryData.getNonSerializedFields(), hybridBinaryEntryData.getNonSerializedFields().length),
+                Arrays.copyOf(hybridBinaryEntryData.getSerializedFields(), hybridBinaryEntryData.getSerializedFields().length));
     }
 
     @Override
