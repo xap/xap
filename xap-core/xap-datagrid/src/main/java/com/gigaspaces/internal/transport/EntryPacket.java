@@ -19,6 +19,7 @@
  */
 package com.gigaspaces.internal.transport;
 
+import com.gigaspaces.annotation.pojo.BinaryStorageAdapterType;
 import com.gigaspaces.internal.io.IOArrayException;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.EntryType;
@@ -95,7 +96,12 @@ public class EntryPacket extends AbstractEntryPacket {
         _transient = isTransient;
         _noWriteLease = false;
         _fifo = false;
-        this.binaryFields = binaryFields;
+        if(binaryFields != null && binaryFields.isDeserialized()){
+            _fixedProperties = binaryFields.getFixedProperties(typeDesc);
+            this.binaryFields = null;
+        }else {
+            this.binaryFields = binaryFields;
+        }
     }
 
     protected EntryPacket(ITypeDesc typeDesc, Object[] values) {
@@ -185,7 +191,18 @@ public class EntryPacket extends AbstractEntryPacket {
 
     public Object getFieldValue(int index) {
         try {
-            return getFieldValues()[index];
+            if (_fixedProperties == null && getTypeDescriptor() != null &&
+                    getTypeDescriptor().getClassBinaryStorageAdapter() != null &&
+                    !getTypeDescriptor().getBinaryStorageType().equals(BinaryStorageAdapterType.ALL)) {
+                Object fixedProperty = binaryFields.getFixedProperty(getTypeDescriptor(), index);
+                if (binaryFields.isDeserialized()) {
+                    _fixedProperties = binaryFields.getFixedProperties(getTypeDescriptor());
+                    binaryFields = null;
+                }
+                return fixedProperty;
+            } else {
+                return getFieldValues()[index];
+            }
         } catch (Exception e) {
             throw new IllegalStateException("The field values array was not properly set", e);
         }

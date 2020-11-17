@@ -1545,6 +1545,24 @@ public class CacheManager extends AbstractCacheManager
             mutableViewEntryData.view(udata, cachedView.getFixedPropertiesValues());
             applyChangeMutators(context, template, mutableViewEntryData);
             udata.setFixedPropertyValues(mutableViewEntryData.getFixedPropertiesValues());
+
+        } else if(udata instanceof HybridBinaryEntryData) {
+            IEntryData cachedView = context.getCacheViewEntryDataIfNeeded(edata);
+            MutableHybridViewEntryData mutableViewEntryData = new MutableHybridViewEntryData();
+            if (cachedView instanceof HybridViewEntryData) {
+                mutableViewEntryData.view(udata, (HybridViewEntryData) cachedView);
+            } else {
+                mutableViewEntryData.view(udata);
+            }
+            applyChangeMutators(context, template, mutableViewEntryData);
+
+            if (mutableViewEntryData.isDeserialized()){
+                udata.setFixedPropertyValues(mutableViewEntryData.getFixedPropertiesValues());
+            } else {
+                ((HybridBinaryEntryData) udata).setFixedPropertyValues(mutableViewEntryData.getHybridBinaryData().getNonSerializedProperties(),
+                        mutableViewEntryData.getHybridBinaryData().getSerialized());
+            }
+
         } else {
             applyChangeMutators(context, template, udata);
         }

@@ -15,7 +15,7 @@ import com.gigaspaces.internal.metadata.PropertyInfo;
  * @since 15.8
  */
 public class HybridViewEntryData extends AbstractViewEntryData {
-    private HybridBinaryData hybridBinaryData;
+    HybridBinaryData hybridBinaryData;
 
     public void view(IEntryData entryData) {
         this.entry = entryData;

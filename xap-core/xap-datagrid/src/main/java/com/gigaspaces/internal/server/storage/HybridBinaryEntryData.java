@@ -177,6 +177,12 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
         serializedFields = fields.getSecond();
     }
 
+
+    public void setFixedPropertyValues(Object[] nonSerializedFields, byte[] serializedFields) {
+        this.nonSerializedFields = nonSerializedFields;
+        this.serializedFields = serializedFields;
+    }
+
     @Override
     public byte[] getSerializedFields() {
         return serializedFields;
