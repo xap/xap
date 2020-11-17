@@ -117,4 +117,6 @@ public interface ITypeDesc extends SpaceTypeDescriptor, IDotnetTypeDescDetails, 
     int findHybridIndex(int index);
 
     BinaryStorageAdapterType getBinaryStorageType();
+
+    int[] getPositionsForScanning();
 }

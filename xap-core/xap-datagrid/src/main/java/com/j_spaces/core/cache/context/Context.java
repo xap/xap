@@ -49,15 +49,10 @@ import com.j_spaces.core.client.OperationTimeoutException;
 import com.j_spaces.core.fifo.FifoBackgroundRequest;
 import com.j_spaces.core.filters.FilterOperationCodes;
 import com.j_spaces.kernel.list.MultiIntersectedStoredList;
-
 import net.jini.core.lease.Lease;
 import net.jini.core.transaction.server.ServerTransaction;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @com.gigaspaces.api.InternalApi
 public class Context {
@@ -1269,7 +1264,7 @@ public class Context {
     }
 
     public IEntryData getViewEntryData(IEntryData entryData) {
-        if (entryData instanceof BinaryEntryData || entryData instanceof HybridBinaryEntryData) {
+        if (entryData instanceof IBinaryEntryData) {
             if (viewEntryData == null) {
                 viewEntryData = entryData instanceof BinaryEntryData ? new ViewEntryData() : new HybridViewEntryData();
             }
@@ -1290,7 +1285,7 @@ public class Context {
     }
 
     public IEntryData getCacheViewEntryDataIfNeeded(IEntryData entryData) {
-        if ((entryData instanceof BinaryEntryData || entryData instanceof HybridBinaryEntryData)
+        if ((entryData instanceof IBinaryEntryData)
                 && viewEntryData != null && viewEntryData.isViewOf(entryData)) {
             return viewEntryData;
         }
@@ -1298,7 +1293,7 @@ public class Context {
     }
 
     public void cacheViewEntryDataIfNeeded(IEntryData entryData, Object[] fieldsValues) {
-        if (entryData instanceof BinaryEntryData || entryData instanceof HybridBinaryEntryData) {
+        if (entryData instanceof IBinaryEntryData) {
             if (viewEntryData == null) {
                 viewEntryData = entryData instanceof BinaryEntryData ? new ViewEntryData() : new HybridViewEntryData();
             }

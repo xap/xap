@@ -373,6 +373,10 @@ public class SpaceTypeDescriptorBuilder {
         return addFixedProperty(property(propertyName, propertyTypeName).storageAdapter(propertyStorageAdapter), documentSupport, withTypeDefault(StorageType.DEFAULT));
     }
 
+    public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName, boolean isBinaryProperty) {
+        return addFixedProperty(property(propertyName, propertyTypeName).setBinarySpaceProperty(isBinaryProperty), SpaceDocumentSupport.DEFAULT, withTypeDefault(StorageType.DEFAULT));
+    }
+
     private StorageType withTypeDefault(StorageType storageType) {
         return storageType == StorageType.DEFAULT ? _storageType : storageType;
     }

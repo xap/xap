@@ -111,6 +111,11 @@ import java.util.Set;
     }
 
     @Override
+    public int[] getPositionsForScanning() {
+        return new int[0];
+    }
+
+    @Override
     public String getTypeSimpleName() {
         return StringUtils.getSuffix(_className, ".");
     }

@@ -217,9 +217,10 @@ public class TemplateEntryData implements IEntryData {
         if (!isNullTemplate()) {
             entry = cacheContext.getViewEntryData((IEntryData) entry);
         }
+        int[] positions = getEntryTypeDesc().getTypeDesc().getPositionsForScanning();
         boolean result = _extendedMatchCodes == null
-                ? matchBasic(entry, skipAlreadyMatchedFixedPropertyIndex)
-                : matchExtended(entry, skipAlreadyMatchedFixedPropertyIndex, regexCache);
+                ? matchBasic(entry, skipAlreadyMatchedFixedPropertyIndex, positions)
+                : matchExtended(entry, skipAlreadyMatchedFixedPropertyIndex, regexCache, positions);
 
         if (result && _customQuery != null)
             result = _customQuery.matches(cacheManager, entry, skipAlreadyMatchedIndexPath);
@@ -237,19 +238,17 @@ public class TemplateEntryData implements IEntryData {
         return _customQuery == null && _extendedMatchCodes == null;
     }
 
-    private boolean matchBasic(ServerEntry entry, int skipIndex) {
+    private boolean matchBasic(ServerEntry entry, int skipIndex, int[] templateIndexes) {
         // if the template has no fields, there is a match
         if (_fieldsValues == null || _fieldsValues.length == 0)
             return true;
 
         // first try quick-reject
-        if (quickReject(entry))
+        if (quickReject(entry, templateIndexes))
             return false;
 
         // compare every template field (besides the skipIndex, if skipIndex != -1)
-        PropertiesIterator iterator = new PropertiesIterator(entry);
-        while (iterator.hasNextI()){
-            int i = iterator.getNextI();
+        for(int i : templateIndexes){
             Object templateValue = getFixedPropertyValue(i);
             if (i == skipIndex || templateValue == null)
                 continue;
@@ -266,10 +265,8 @@ public class TemplateEntryData implements IEntryData {
      * Hashcode based quick-reject. If this method returns true, the match is rejected. If it
      * returns false, a full match will be performed by the engine.
      */
-    private boolean quickReject(ServerEntry entry) {
-        PropertiesIterator iterator = new PropertiesIterator(entry);
-        while (iterator.hasNextI()){
-            int i = iterator.getNextI();
+    private boolean quickReject(ServerEntry entry, int[] templateIndexes) {
+        for(int i : templateIndexes){
             Object templateFieldValue = _fieldsValues[i];
             if (templateFieldValue == null)
                 continue;
@@ -285,16 +282,18 @@ public class TemplateEntryData implements IEntryData {
         return false;
     }
 
-    private boolean matchExtended(ServerEntry entry, int skipIndex, RegexCache regexCache) {
-
-        PropertiesIterator iterator = new PropertiesIterator(entry);
-        while (iterator.hasNextI()){
-            int i = iterator.getNextI();
+    private boolean matchExtended(ServerEntry entry, int skipIndex, RegexCache regexCache, int[] templateIndexes) {
+        for(int i : templateIndexes){
             if (i == skipIndex)
                 continue;
 
-            Object entryValue = entry.getFixedPropertyValue(i);
             short matchCode = _extendedMatchCodes[i];
+
+            if(matchCode != TemplateMatchCodes.IS_NULL && matchCode != TemplateMatchCodes.NOT_NULL && _fieldsValues[i] == null){
+                continue;
+            }
+
+            Object entryValue = entry.getFixedPropertyValue(i);
             if (matchCode == TemplateMatchCodes.IS_NULL) {
                 if (entryValue == null)
                     continue;

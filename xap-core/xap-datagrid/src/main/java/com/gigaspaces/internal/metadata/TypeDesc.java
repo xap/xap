@@ -16,8 +16,8 @@
 
 package com.gigaspaces.internal.metadata;
 
-import com.gigaspaces.annotation.pojo.FifoSupport;
 import com.gigaspaces.annotation.pojo.BinaryStorageAdapterType;
+import com.gigaspaces.annotation.pojo.FifoSupport;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapterRegistry;
 import com.gigaspaces.document.SpaceDocument;
@@ -83,6 +83,7 @@ public class TypeDesc implements ITypeDesc {
     private TypeQueryExtensions queryExtensionsInfo;
     private ClassBinaryStorageAdapter classBinaryStorageAdapter;
     private BinaryStorageAdapterType binaryStorageAdapterType;
+    private int[] positionsForScanning;
 
     private int _sequenceNumberFixedPropertyPos;  //-1  if none
 
@@ -206,6 +207,17 @@ public class TypeDesc implements ITypeDesc {
             }
         }
 
+        positionsForScanning = new int[_fixedProperties.length];
+        int positionsIndex = 0;
+        for (PropertyInfo nonSerializedProperty : _nonSerializedProperties) {
+            positionsForScanning[positionsIndex] = nonSerializedProperty.getOriginalIndex();
+            positionsIndex++;
+
+        }
+        for (PropertyInfo serializedProperty : _serializedProperties) {
+            positionsForScanning[positionsIndex] = serializedProperty.getOriginalIndex();
+            positionsIndex++;
+        }
     }
 
     public TypeDesc cloneWithoutObjectClass( TypeDesc typeDesc, EntryType entryType ) {
@@ -273,7 +285,7 @@ public class TypeDesc implements ITypeDesc {
             // validate primitives with storage type
             if (ReflectionUtils.isSpacePrimitive(property.getType().getName()))
                 assertObjectStorageType(property, "Primitive property type " + property.getType().getName());
-            // validate indexes with storage type 
+            // validate indexes with storage type
             for (String indexName : _indexes.keySet()) {
                 SpaceIndexType indexType = _indexes.get(indexName).getIndexType();
                 if (indexType != null && indexType != SpaceIndexType.NONE && isSameProperty(indexName, propertyName)) {
@@ -1462,5 +1474,9 @@ public class TypeDesc implements ITypeDesc {
 
     public PropertyInfo[] getNonSerializedProperties() {
         return _nonSerializedProperties;
+    }
+
+    public int[] getPositionsForScanning() {
+        return positionsForScanning;
     }
 }
