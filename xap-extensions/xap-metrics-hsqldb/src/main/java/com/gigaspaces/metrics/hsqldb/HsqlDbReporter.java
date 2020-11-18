@@ -20,6 +20,7 @@ import com.gigaspaces.metrics.MetricRegistrySnapshot;
 import com.gigaspaces.metrics.MetricReporter;
 import com.gigaspaces.metrics.MetricTagsSnapshot;
 import com.j_spaces.kernel.SystemProperties;
+import org.hsqldb.error.ErrorCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +40,6 @@ public class HsqlDbReporter extends MetricReporter {
     private final String dbTypeString;
     private final Map<String,PreparedStatement> _preparedStatements = new HashMap<>();
     private final Set<PreparedStatement> _statementsForBatch = new LinkedHashSet<>();
-
-    private final static String EXCEPTION_MESSAGE_MISSING_OBJECT = "user lacks privilege or object not found: ";
 
     private final static Set<String> VM_TABLE_COLUMNS_WITH_POSSIBLE_NULL_VALUES =
                     new HashSet<>( Arrays.asList( TableColumnNames.PU_NAME_COLUMN_NAME.toUpperCase(),
@@ -103,8 +102,7 @@ public class HsqlDbReporter extends MetricReporter {
         String insertSQL = "";
         try {
             insertSQL = generateInsertQuery(tableName, snapshot.getTimestamp(), value, tags, values,columns);
-
-            PreparedStatement statement = getOrCreatePreparedStatement(insertSQL, con);
+            PreparedStatement statement = handleGetOrCreatePreparedStatement(value, tableName, con, insertSQL);
             for (int i=0 ; i < values.size() ; i++) {
                 String columnName = i >= columns.size() ? null : columns.get( i );
                 setParameter(statement, i + 1, values.get( i ), columnName );
@@ -114,42 +112,43 @@ public class HsqlDbReporter extends MetricReporter {
             _logger.trace("After adding insert to batch [{}]", insertSQL);
             _statementsForBatch.add( statement );
         } catch (SQLSyntaxErrorException e) {
-            String message = e.getMessage();
-            _logger.debug("Report to {} failed: {}", tableName, message);
-            if (message != null && message.contains(EXCEPTION_MESSAGE_MISSING_OBJECT + tableName)) {
-                createTable(con, tableName, value, tags);
-            } else if (message != null && message.contains(EXCEPTION_MESSAGE_MISSING_OBJECT)) {
-                String missingColumnName = message.replace( EXCEPTION_MESSAGE_MISSING_OBJECT, "" ).trim();
-                Map<String,Object> clonedTags = new HashMap<>( tags.getTags() );
-                if( VM_TABLE_COLUMNS_WITH_POSSIBLE_NULL_VALUES.contains( missingColumnName ) ){
-                    clonedTags.put( missingColumnName, null );
-                }
-                addMissingColumns(con, tableName, clonedTags);
-            } else {
-                _logger.warn("Failed to insert row [{}] using values [{}]" , insertSQL,
-                              Arrays.toString(values.toArray(new Object[0])), e);
-            }
+            _logger.warn("Failed to insert row [{}] using values [{}]" , insertSQL,
+                    Arrays.toString(values.toArray(new Object[0])), e);
         } catch (SQLTransientConnectionException | SQLNonTransientConnectionException e){
             _logger.warn("Failed to insert row [{}] using values [{}], resetting connection...", insertSQL,
-                    Arrays.toString(values.toArray(new Object[0])), e);
+                Arrays.toString(values.toArray(new Object[0])), e);
            handleConnectionError(con);
         } catch (SQLException e) {
             //internal hsqldb exception, in later versions becomes General error
             if( e.toString().contains( "NullPointerException" ) ) {
                 _logger.info("Failed to insert row [{}] using values [{}] due to SQLException", insertSQL,
-                           Arrays.toString(values.toArray(new Object[0])) );
+                   Arrays.toString(values.toArray(new Object[0])) );
+            } else {
+                _logger.warn("Failed to insert row [{}] using values [{}]", insertSQL,
+                   Arrays.toString(values.toArray(new Object[0])), e);
             }
-            else {
-                _logger
-                    .warn("Failed to insert row [{}] using values [{}]", insertSQL,
-                           Arrays.toString(values.toArray(new Object[0])), e);
+        } catch( Throwable t ){
+            _logger.warn("Failed to insert row [{}] using values [{}] to table [{}]", insertSQL,
+                Arrays.toString(values.toArray(new Object[0])), tableName, t);
+        }
+    }
+
+    private PreparedStatement handleGetOrCreatePreparedStatement(Object value, String tableName, Connection connection, String insertSQL) throws SQLException {
+        PreparedStatement statement;
+        try {
+            statement = getOrCreatePreparedStatement(insertSQL, connection);
+
+        } catch (SQLSyntaxErrorException e) {
+            _logger.debug("Report to {} failed: {}", tableName, e.getMessage());
+            if (e.getErrorCode() == -(ErrorCode.X_42501)) {
+                //indicates that we should create a table - since GS14322
+                createTable(connection, tableName, value);
+                statement = getOrCreatePreparedStatement(insertSQL, connection);
+            } else {
+                throw e;
             }
         }
-        catch( Throwable t ){
-            _logger
-                    .warn("Failed to insert row [{}] using values [{}] to table [{}]", insertSQL,
-                            Arrays.toString(values.toArray(new Object[0])), tableName, t);
-        }
+        return statement;
     }
 
     @Override
@@ -213,8 +212,8 @@ public class HsqlDbReporter extends MetricReporter {
             statement.setBoolean(index, (Boolean)value);
         }
         else if (value == null && columnName != null) {
-            TableColumnTypesEnum tableColumnType = TableColumnTypesEnum.valueOf(columnName.toUpperCase());
-            statement.setNull( index, tableColumnType.getSqlType() );
+            int sqlType = TableColumnTypesEnum.getSqlType(columnName);
+            statement.setNull( index, sqlType );
         }
         else{
             _logger.warn("Value [{}] of class [{}] with index [{}] was not set", value,
@@ -255,9 +254,17 @@ public class HsqlDbReporter extends MetricReporter {
         return dbTypeString;
     }
 
-    private void createTable(Connection con, String tableName, Object value, MetricTagsSnapshot tags) {
+    private String getDbType(JDBCType type) {
+        if (type == JDBCType.VARCHAR) {
+            return dbTypeString;
+        } else {
+            return type.getName();
+        }
+    }
+
+    private void createTable(Connection con, String tableName, Object value) {
         try (Statement statement = con.createStatement()) {
-            String sqlCreateTable = generateCreateTableQuery(tableName, value, tags);
+            String sqlCreateTable = generateCreateTableQuery(tableName, value);
             statement.executeUpdate(sqlCreateTable);
             _logger.debug("Table [{}] successfully created", tableName);
 
@@ -267,53 +274,6 @@ public class HsqlDbReporter extends MetricReporter {
         } catch (SQLException e) {
             _logger.warn("Failed to create table {}", tableName, e);
         }
-    }
-
-    private void addMissingColumns(Connection con, String tableName, Map<String, Object> tags) {
-        try {
-            Map<String, String> missingColumns = calcMissingColumns(con, tableName, tags);
-            missingColumns.forEach((columnName, columnType) -> {
-                String sql = "ALTER TABLE " + tableName + " ADD " + columnName + " " + columnType;
-                _logger.debug("Add column query: [{}]", sql);
-                try (Statement statement = con.createStatement()) {
-                    statement.executeUpdate(sql);
-                    _logger.debug("Added new column [{} {}] to table {}", columnName, columnType, tableName);
-                } catch (SQLSyntaxErrorException e) {
-                    //since sometimes at teh same times can be fet attempts to add the same column to the same table
-                    if (e.getMessage() == null || !e.getMessage().contains("object name already exists in statement")) {
-                        _logger.warn("Failed to execute add column query [{}]", sql, e);
-                    }
-                } catch (SQLException e) {
-                    _logger.warn("Failed to execute add column query: [{}]", sql, e);
-                }
-            });
-        } catch (SQLException e) {
-            _logger.warn("Failed to add missing columns to table {}", tableName, e);
-        }
-    }
-
-    private Map<String,String> calcMissingColumns(Connection con, String tableName, Map<String, Object> tags) throws SQLException {
-        Set<String> existingColumns = new HashSet<>();
-        try (ResultSet rs = con.getMetaData().getColumns(null, null, tableName, null)) {
-            while (rs.next()) {
-                existingColumns.add(rs.getString("COLUMN_NAME").toUpperCase());
-            }
-        }
-
-        PredefinedSystemMetrics predefinedSystemMetrics = PredefinedSystemMetrics.valueOf(tableName);
-        List<String> columnForInsert = predefinedSystemMetrics.getColumns();
-
-        Map<String,String> missingColumns = new LinkedHashMap<>(); //preserve insertion order
-        tags.forEach((name, value) -> {
-            if (!existingColumns.contains(name.toUpperCase())) {
-                if( columnForInsert == null || columnForInsert.contains( name ) ) {
-                    missingColumns.put(name, getDbType(value));
-                }
-            }
-        });
-
-        _logger.debug("Missing columns: {}", missingColumns);
-        return missingColumns;
     }
 
     private String generateInsertQuery(String tableName, long timestamp, Object value, MetricTagsSnapshot tags, List<Object> values, List<String> columnsList ) {
@@ -371,21 +331,16 @@ public class HsqlDbReporter extends MetricReporter {
         values.add( value );
     }
 
-    private String generateCreateTableQuery(String tableName, Object value, MetricTagsSnapshot tags) {
+    private String generateCreateTableQuery(String tableName, Object value) {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE CACHED TABLE ").append(tableName).append(" (");
-        sb.append("TIME TIMESTAMP,");
 
         PredefinedSystemMetrics predefinedSystemMetrics = PredefinedSystemMetrics.valueOf(tableName);
-        List<String> columnForInsert = predefinedSystemMetrics.getColumns();
+        List<String> columns = predefinedSystemMetrics.getColumns();
 
-        tags.getTags().forEach((columnName, columnValue) ->
-            {
-                if( columnForInsert == null || columnForInsert.contains( columnName ) ) {
-                    sb.append(columnName).append(' ').append(getDbType(columnValue)).append(',');
-                }
-            }
-        );
+        columns.forEach(columnName -> {
+            sb.append(columnName).append(' ').append(getDbType(TableColumnTypesEnum.getJDBCType(columnName))).append(',');
+        });
 
         sb.append("VALUE ").append(getDbType(value));
         sb.append(')');
