@@ -83,6 +83,12 @@ public class HsqlDbReporter extends MetricReporter {
             _logger.debug("Report skipped - key was filtered out [timestamp={}, key={}]", snapshot.getTimestamp(), key);
             return;
         }
+        Object spaceActiveTagValue = tags.getTags().get("space_active");
+        //Fix for GS-14336, don't continue if space_active is false since we don't want to record such metric record
+        //in hsqldb and don't want to display it in ui
+        if( spaceActiveTagValue != null && !( Boolean )spaceActiveTagValue ){
+            return;
+        }
 
         Connection con = connectionWrapper.getOrCreateConnection();
         if (con == null) {
