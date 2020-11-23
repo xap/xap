@@ -108,6 +108,7 @@ public interface Constants {
     public interface Space {
         String FULL_SPACE_STATE = SPACE_CONFIG_PREFIX + "space_state";
         String SPACE_CONFIG = "space-config";
+        Long DEFAULT_DEMOTE_MAX_SUSPEND_TIME_IN_MILLISECONDS = 15000L;
     }
 
     public interface ChunksRouting{
@@ -820,6 +821,12 @@ public interface Constants {
         String CLUSTER_CONFIG_URL_PROP = "cluster.config-url";
         String FULL_CLUSTER_CONFIG_URL_PROP = SPACE_CONFIG_PREFIX + CLUSTER_CONFIG_URL_PROP;
         String CLUSTER_CONFIG_URL_DEFAULT = "none";
+    }
+
+    public interface DeterministicDeployment {
+        // system property
+        String DETERMINISTIC_DEPLOYMENT_REBALANCED_STRATEGY = "com.gs.deterministic_deployment.rebalanced_strategy";
+        String DETERMINISTIC_DEPLOYMENT_DEMOTE_MAX_SUSPEND_TIME = "com.gs.deterministic_deployment.demote_max_suspend_time";
     }
 
     public interface WorkerManager {
