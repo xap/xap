@@ -45,8 +45,8 @@ import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
 import com.gigaspaces.internal.client.spaceproxy.executors.SystemTask;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectRequest;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectResult;
-import com.gigaspaces.internal.cluster.ClusterTopologyState;
 import com.gigaspaces.internal.cluster.ClusterTopology;
+import com.gigaspaces.internal.cluster.ClusterTopologyState;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersistencyBackupSyncIteratorHandler;
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.DirectPersistencySyncListBatch;
@@ -189,7 +189,6 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.LongAdder;
 
 import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ATTRIBUET_STORE_HANDLER_CLASS_NAME;
@@ -1759,7 +1758,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
      * @return list of all space component handlers
      */
     public LinkedList<ISpaceComponentsHandler> getSpaceComponentHandlers() {
-        LinkedList<ISpaceComponentsHandler> componentsHandlers = new LinkedList<ISpaceComponentsHandler>();
+        LinkedList<ISpaceComponentsHandler> componentsHandlers = new LinkedList<>();
         componentsHandlers.clear();
         componentsHandlers.addAll(_engine.getComponentsHandlers());
 
@@ -1796,7 +1795,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     }
 
     public SpaceHealthStatus getLocalSpaceHealthStatus() {
-        ArrayList<Throwable> errors = new ArrayList<Throwable>();
+        ArrayList<Throwable> errors = new ArrayList<>();
         return getSpaceHealthStatusHelper(errors);
     }
 
@@ -1906,7 +1905,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     @Override
     public SpaceHealthStatus getSpaceHealthStatus() throws RemoteException {
-        ArrayList<Throwable> errors = new ArrayList<Throwable>();
+        ArrayList<Throwable> errors = new ArrayList<>();
 
         try {
             ping();
@@ -2224,8 +2223,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             if (answerPacket != null && answerPacket.m_EntryPacket != null)
                 applyEntryPacketOutFilter(answerPacket.m_EntryPacket, modifiers, template.getProjectionTemplate());
 
-            if( !take ) {
-                updateObjectTypeReadCounts(answerHolder, template);
+            if( !take && answerHolder != null) {
+                _engine.updateObjectTypeReadCounts(answerHolder.getServerTypeDesc(), template, answerHolder._numOfEntriesMatched);
             }
 
             return answerHolder;
@@ -2322,8 +2321,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             ah = _engine.readMultiple(template, txn, timeout, isIfExist,
                  take, sc, returnOnlyUid, modifiers, operationContext, null /*aggregatorContext*/, null);
 
-            if( !take ) {
-                updateObjectTypeReadCounts(ah, template);
+            if( !take && ah != null) {
+                _engine.updateObjectTypeReadCounts(ah.getServerTypeDesc(), template, ah._numOfEntriesMatched);
             }
 
             if (ah == null)
@@ -2368,23 +2367,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             throw new RuntimeException(logException(e));
         } finally {
             endPacketOperation();
-        }
-    }
-
-    private void updateObjectTypeReadCounts(AnswerHolder answerHolder, ITemplatePacket template) {
-
-        if(!_engine.getMetricManager().getMetricFlagsState().isDataReadCountsMetricEnabled()){
-            return;
-        }
-
-        if( answerHolder == null ){
-            //answerHolder is null when read returns empty result
-            return;
-        }
-
-        String typeName = template.getTypeName();
-        if (typeName != null) {
-            answerHolder.getServerTypeDesc().getReadCounter().inc(answerHolder._numOfEntriesMatched);
         }
     }
 
@@ -2452,7 +2434,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 ILRMIProxy listener = (ILRMIProxy) info.getListener();
                 Map<String, LRMIMethodMetadata> methodsMetadata = null;
                 final boolean oneWay = false;
-                methodsMetadata = new HashMap<String, LRMIMethodMetadata>();
+                methodsMetadata = new HashMap<>();
                 methodsMetadata.put("notifyBatch(Lcom/gigaspaces/events/batching/BatchRemoteEvent;)V", new LRMIMethodMetadata(oneWay));
                 methodsMetadata.put("notify(Lnet/jini/core/event/RemoteEvent;)V", new LRMIMethodMetadata(oneWay));
                 listener.overrideMethodsMetadata(methodsMetadata);
@@ -2879,7 +2861,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     @Override
     public Map<Integer, StatisticsContext> getStatistics(Integer[] operationCodes) throws StatisticsNotAvailable {
         assertStatisticsAvailable();
-        Map<Integer, StatisticsContext> result = new HashMap<Integer, StatisticsContext>(operationCodes.length);
+        Map<Integer, StatisticsContext> result = new HashMap<>(operationCodes.length);
         for (Integer code : operationCodes)
             result.put(code, _statistics.getStatistics().get(code));
 
@@ -2933,7 +2915,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     @Override
     public Map<String,Object> getMetricSnapshots( Collection<String> prefixes ) throws RemoteException {
-        if (_engine == null) return new HashMap<String, Object>(0); //return empty map on un-deploy
+        if (_engine == null) return new HashMap<>(0); //return empty map on un-deploy
         Map<String, Object> metricsSnapshotByPrefix = _engine.getMetricsSnapshotByPrefix(prefixes);
         return metricsSnapshotByPrefix;
     }

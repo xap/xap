@@ -417,7 +417,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
     private InternalMetricRegistrator initSpaceMetricRegistrator() {
         // Create space tags:
         final String prefix = "metrics.";
-        final Map<String, String> tags = new HashMap<String, String>();
+        final Map<String, String> tags = new HashMap<>();
         for (Map.Entry<Object, Object> property : _spaceImpl.getCustomProperties().entrySet()) {
             String name = (String) property.getKey();
             if (name.startsWith(prefix))
@@ -426,7 +426,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         tags.put("space_name", _spaceImpl.getName());
         tags.put("space_instance_id", _spaceImpl.getInstanceId());
         // Create space dynamic tags:
-        Map<String, DynamicMetricTag> dynamicTags = new HashMap<String, DynamicMetricTag>();
+        Map<String, DynamicMetricTag> dynamicTags = new HashMap<>();
         dynamicTags.put("space_active", new DynamicMetricTag() {
             @Override
             public Object getValue() {
@@ -1073,7 +1073,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
     private Map<String, IEntryHolder> prefetchNonBlobStoreReadByIdsEntries(Object[] ids, ITemplatePacket[] templatePackets,
                                                                            IServerTypeDesc typeDesc) throws RemoteException {
-        Map<String, IEntryHolder> prefetchedEntries = new HashMap<String, IEntryHolder>();
+        Map<String, IEntryHolder> prefetchedEntries = new HashMap<>();
         Context context = null;
 
         try {
@@ -1084,7 +1084,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 IEntryCacheInfo entryCacheInfo = _cacheManager.getPEntryByUid(templatePackets[i].getUID());
                 if (entryCacheInfo == null) {
                     if (cacheMissEntries == null)
-                        cacheMissEntries = new HashMap<Object, ITemplatePacket>();
+                        cacheMissEntries = new HashMap<>();
                     cacheMissEntries.put(ids[i], templatePackets[i]);
                 } else if (!entryCacheInfo.isRecentDelete()) {
                     IEntryHolder pureCacheEntry = entryCacheInfo.getEntryHolder(_cacheManager);
@@ -1477,7 +1477,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                     result.setError(i, e);
                 else {
                     if (unknownTypePositions == null)
-                        unknownTypePositions = new LinkedList<Integer>();
+                        unknownTypePositions = new LinkedList<>();
                     unknownTypePositions.add(i);
                 }
             }
@@ -1571,7 +1571,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             else
                 updateMultipleResult = updateMultiple(entries, txn, leases, sc, modifiers, newRouter);
         } catch (UnknownTypeException e) {
-            List<Integer> positions = new ArrayList<Integer>();
+            List<Integer> positions = new ArrayList<>();
             for (int i = 0; i < entries.length; ++i)
                 positions.add(i);
             throw new UnknownTypesException(positions);
@@ -1617,7 +1617,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             else
                 ah = newUpdateMultiple(entries, txn, leases, sc, timeout, modifiers);
         } catch (UnknownTypeException e) {
-            List<Integer> positions = new ArrayList<Integer>();
+            List<Integer> positions = new ArrayList<>();
             for (int i = 0; i < entries.length; ++i)
                 positions.add(i);
             throw new UnknownTypesException(positions);
@@ -1842,6 +1842,22 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             context.setFromGateway(sc.isFromGateway());
     }
 
+    public void updateObjectTypeReadCounts( IServerTypeDesc serverTypeDesc, ITemplatePacket template, int numOfEntriesMatched) {
+
+        if(!this.getMetricManager().getMetricFlagsState().isDataReadCountsMetricEnabled()){
+            return;
+        }
+
+        if( serverTypeDesc == null ){
+            //serverTypeDesc is null when read returns empty result
+            return;
+        }
+
+        String typeName = template.getTypeName();
+        if (typeName != null) {
+            serverTypeDesc.getReadCounter().inc(numOfEntriesMatched);
+        }
+    }
 
     /**
      * call write for each EP in value, update value with the result
@@ -2080,6 +2096,11 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 txnEntry.decrementUsed();
             _cacheManager.freeCacheContext(context);
         }
+
+        if( counter > 0 ) {
+            updateObjectTypeReadCounts(typeDesc, template, 1);
+        }
+
         if (tHolder instanceof TemplateHolder && ((TemplateHolder) tHolder).getExplainPlan() != null) {
             return new Pair(counter, ((TemplateHolder) tHolder).getExplainPlan());
         }
@@ -2155,9 +2176,9 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             res = batchOperationContext.getNumResults();
         }
         if (ah != null) {
-            return new Pair<Integer, SingleExplainPlan>(res, ah.getExplainPlan());
+            return new Pair<>(res, ah.getExplainPlan());
         }
-        return new Pair<Integer, SingleExplainPlan>(res, null);
+        return new Pair<>(res, null);
     }
 
     /**
@@ -3311,7 +3332,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
      */
     public TransactionInfo[] getTransactionsInfo(int type, int status)
             throws RemoteException {
-        ArrayList<TransactionInfo> result = new ArrayList<TransactionInfo>();
+        ArrayList<TransactionInfo> result = new ArrayList<>();
         getTransactionsInfo(type, status, result);
         return result.toArray(new TransactionInfo[result.size()]);
     }
@@ -3392,7 +3413,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
      * @return List of UnderTxnLockedObject
      */
     public List<UnderTxnLockedObject> getLockedObjects(Transaction txn) throws RemoteException {
-        List<UnderTxnLockedObject> result = new ArrayList<UnderTxnLockedObject>();
+        List<UnderTxnLockedObject> result = new ArrayList<>();
         Context context = null;
         ISAdapterIterator iter = null;
         try {
@@ -6813,7 +6834,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
      * get the list of component handlers
      */
     public List<ISpaceComponentsHandler> getComponentsHandlers() {
-        LinkedList<ISpaceComponentsHandler> handlers = new LinkedList<ISpaceComponentsHandler>();
+        LinkedList<ISpaceComponentsHandler> handlers = new LinkedList<>();
 
         if (_filterManager != null)
             handlers.add(_filterManager);
@@ -6912,7 +6933,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
      * Returns a list of internal filters that should be used by the FilterManager
      */
     public List<FilterProvider> getInternalFilters() {
-        List<FilterProvider> filters = new LinkedList<FilterProvider>();
+        List<FilterProvider> filters = new LinkedList<>();
 
         if (supportsGuaranteedNotifications())
             filters.add(new NotifyAcknowledgeFilter(this));
@@ -7069,7 +7090,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
     }
 
     public List<Throwable> getUnhealthyReasons() {
-        List<Throwable> errors = new LinkedList<Throwable>();
+        List<Throwable> errors = new LinkedList<>();
         if (_spaceImpl.getSpaceMode() == SpaceMode.BACKUP && _replicationUnhealthyReason != null)
             errors.add(_replicationUnhealthyReason);
 
