@@ -122,11 +122,11 @@ public class JettyJeeProcessingUnitContainerProvider extends JeeProcessingUnitCo
      */
     public static final String JETTY_JMX_PROP = "jetty.jmx";
 
-    private static final ThreadLocal<ApplicationContext> currentApplicationContext = new ThreadLocal<ApplicationContext>();
+    private static final ThreadLocal<ApplicationContext> currentApplicationContext = new ThreadLocal<>();
 
-    private static final ThreadLocal<ClusterInfo> currentClusterInfo = new ThreadLocal<ClusterInfo>();
+    private static final ThreadLocal<ClusterInfo> currentClusterInfo = new ThreadLocal<>();
 
-    private static final ThreadLocal<BeanLevelProperties> currentBeanLevelProperties = new ThreadLocal<BeanLevelProperties>();
+    private static final ThreadLocal<BeanLevelProperties> currentBeanLevelProperties = new ThreadLocal<>();
 
     private final static String SERVLET_CONTEXT_PORTS_KEY = "servletcontext.ports";
 
@@ -186,7 +186,7 @@ public class JettyJeeProcessingUnitContainerProvider extends JeeProcessingUnitCo
         JettyHolder jettyHolder;
         //LinkedHashMap since we want to keep objects according to insertion order
         //GS-13602
-        Map<String,FreePortGenerator.PortHandle> portHandles = new LinkedHashMap<String, FreePortGenerator.PortHandle>();
+        Map<String,FreePortGenerator.PortHandle> portHandles = new LinkedHashMap<>();
         try {
             try {
                 ClassLoaderHelper.setContextClassLoader(getJeeClassLoader(), true);
@@ -235,7 +235,7 @@ public class JettyJeeProcessingUnitContainerProvider extends JeeProcessingUnitCo
             if( jettyHolder.isSingleInstance() ) {
                 servletContextPortsMap = ( Map<String,Integer> )Singletons.get( SERVLET_CONTEXT_PORTS_KEY );
                 if( servletContextPortsMap == null ) {
-                    servletContextPortsMap = new HashMap<String, Integer>(portHandles.size() + 1);
+                    servletContextPortsMap = new HashMap<>(portHandles.size() + 1);
                 }
             }
             Set<Map.Entry<String, FreePortGenerator.PortHandle>> entries = portHandles.entrySet();
@@ -426,37 +426,26 @@ public class JettyJeeProcessingUnitContainerProvider extends JeeProcessingUnitCo
                     success = true;
                     break;
                 } catch (BindException e) {
-                    for (FreePortGenerator.PortHandle portHandle : portHandles.values()) {
-                        portHandle.release();
-                    }
-                    portHandles.clear();
-                    try {
-                        jettyHolder.closeConnectors();
-                    } catch (Exception e1) {
-                        logger.debug(e1);
-                        // ignore
-                    }
-                    for (Connector connector : jettyHolder.getServer().getConnectors()) {
-                        if (connector instanceof ServerConnector) {
-                            int port = ((ServerConnector) connector).getPort();
-                            jettyHolder.updateConfidentialPort(port, port + 1);
-                            ((ServerConnector) connector).setPort(port + 1);
-                        }
-                    }
+                    handleFailedBinding(portHandles, jettyHolder);
                 } catch (Exception e) {
-                    for (FreePortGenerator.PortHandle portHandle : portHandles.values()) {
-                        portHandle.release();
+                    if( e.getCause() != null && e.getCause() instanceof BindException ){
+                        handleFailedBinding(portHandles, jettyHolder);
                     }
-                    portHandles.clear();
-                    try {
-                        jettyHolder.closeConnectors();
-                    } catch (Exception e1) {
-                        logger.debug(e1);
-                        // ignore
+                    else {
+                        for (FreePortGenerator.PortHandle portHandle : portHandles.values()) {
+                            portHandle.release();
+                        }
+                        portHandles.clear();
+                        try {
+                            jettyHolder.closeConnectors();
+                        } catch (Exception e1) {
+                            logger.debug(e1);
+                            // ignore
+                        }
+                        if (e instanceof CannotCreateContainerException)
+                            throw (CannotCreateContainerException) e;
+                        throw new CannotCreateContainerException("Failed to start jetty server", e);
                     }
-                    if (e instanceof CannotCreateContainerException)
-                        throw (CannotCreateContainerException) e;
-                    throw new CannotCreateContainerException("Failed to start jetty server", e);
                 }
             }
             if (!success) {
@@ -495,6 +484,26 @@ public class JettyJeeProcessingUnitContainerProvider extends JeeProcessingUnitCo
         }
 
         return jettyHolder;
+    }
+
+    private void handleFailedBinding(Map<String, FreePortGenerator.PortHandle> portHandles, JettyHolder jettyHolder) {
+        for (FreePortGenerator.PortHandle portHandle : portHandles.values()) {
+            portHandle.release();
+        }
+        portHandles.clear();
+        try {
+            jettyHolder.closeConnectors();
+        } catch (Exception e1) {
+            logger.debug(e1);
+            // ignore
+        }
+        for (Connector connector : jettyHolder.getServer().getConnectors()) {
+            if (connector instanceof ServerConnector) {
+                int port = ((ServerConnector) connector).getPort();
+                jettyHolder.updateConfidentialPort(port, port + 1);
+                ((ServerConnector) connector).setPort(port + 1);
+            }
+        }
     }
 
     private void initSessionManagementIfNeeded(Server server) {
@@ -545,7 +554,7 @@ public class JettyJeeProcessingUnitContainerProvider extends JeeProcessingUnitCo
         // by default, the web app context will delegate log4j and commons logging to the parent class loader
         // allow to disable that
         if (getBeanLevelProperties().getContextProperties().getProperty("com.gs.pu.jee.jetty.modifySystemClasses", "false").equalsIgnoreCase("true")) {
-            Set<String> systemClasses = new HashSet<String>(Arrays.asList(webAppContext.getSystemClasses()));
+            Set<String> systemClasses = new HashSet<>(Arrays.asList(webAppContext.getSystemClasses()));
             systemClasses.remove("org.apache.commons.logging.");
             systemClasses.remove("org.apache.log4j.");
             webAppContext.setSystemClasses(systemClasses.toArray(new String[systemClasses.size()]));
