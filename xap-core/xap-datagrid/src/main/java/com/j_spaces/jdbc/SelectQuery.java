@@ -90,6 +90,7 @@ public class SelectQuery extends AbstractDMLQuery {
     private boolean isSelectAll;
     private List<Join> joins;
     private boolean allowedToUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.allowCollocatedJoin", "true"));
+    private boolean flattenResults;
 
     public SelectQuery() {
         super();
@@ -208,7 +209,7 @@ public class SelectQuery extends AbstractDMLQuery {
                     _aggregationSet = AggregationsUtil.createAggregationSet(this, getRownumLimit());
                 }
 
-                entries = executeEmptyQuery(space, txn, entries);
+                entries = executeEmptyQuery(space, txn);
 
             } else {// select with expression
                 _executor = new QueryExecutor(this);
@@ -486,7 +487,7 @@ public class SelectQuery extends AbstractDMLQuery {
             }
             packet.setResultEntry(result);
         } else {
-            packet.setResultSet(entries);
+            packet.setResultSet(flattenResults ? _executor.flattenEntryPackets(entries) : entries);
         }
     }
 
@@ -1103,6 +1104,11 @@ public class SelectQuery extends AbstractDMLQuery {
                     }
                 }
             }
+            else if(tableData.getSubQuery() != null){
+                //TODO consider treating this
+            }
+            else
+                throw  new IllegalStateException("NO table name and no sub query");
         }
     }
 
@@ -1144,16 +1150,31 @@ public class SelectQuery extends AbstractDMLQuery {
     /**
      * Executes a select query without a where clause from one table
      */
-    private IQueryResultSet<IEntryPacket> executeEmptyQuery(ISpaceProxy space, Transaction txn, IQueryResultSet<IEntryPacket> entries) throws Exception {
+    private IQueryResultSet<IEntryPacket> executeEmptyQuery(ISpaceProxy space, Transaction txn) throws Exception {
         // no where clause and no join. read everything
         int size = getEntriesLimit();
 
+        QueryTableData tableData = getTableData();
+        if(tableData.getSubQuery() != null){
+            IQueryResultSet<IEntryPacket> subResult = tableData.executeSubQuery(space, txn, true);
+            if(isGroupBy()) {
+                if (isGroupBy()) {
+                    subResult = groupBy(subResult);
+                } else if (isAggFunction()) // Handle aggregation
+                {
+                    subResult = aggregate(subResult);
+                }
 
-        QueryTemplatePacket template = new QueryTemplatePacket(getTableData(), _queryResultType);
+            }
+            if(isOrderBy())
+                orderBy(subResult);
+            return subResult;
+        }
+        QueryTemplatePacket template = new QueryTemplatePacket(tableData, _queryResultType);
 
         //  Handle notify queries
         if (isBuildOnly()) {
-            entries = new ArrayListResult();
+            IQueryResultSet<IEntryPacket> entries = new ArrayListResult();
             entries.add(template);
 
             return entries;
@@ -1347,5 +1368,13 @@ public class SelectQuery extends AbstractDMLQuery {
     }
     private void allowedToUseCollocatedJoin(boolean allowedToUseCollocatedJoin) {
         this.allowedToUseCollocatedJoin = allowedToUseCollocatedJoin;
+    }
+
+    public boolean isFlattenResults() {
+        return flattenResults;
+    }
+
+    public void setFlattenResults(boolean flattenResults) {
+        this.flattenResults = flattenResults;
     }
 }
