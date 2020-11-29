@@ -133,7 +133,7 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
     public void setFixedPropertyValue(int index, Object value) {
         if(_entryTypeDesc.getTypeDesc().isBinaryProperty(index)){
             try {
-                _entryTypeDesc.getTypeDesc().getClassBinaryStorageAdapter()
+                this.serializedFields = _entryTypeDesc.getTypeDesc().getClassBinaryStorageAdapter()
                         .modifyField(_entryTypeDesc.getTypeDesc(), serializedFields, _entryTypeDesc.getTypeDesc().findHybridIndex(index), value);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
