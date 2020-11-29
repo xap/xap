@@ -353,13 +353,13 @@ public class SelectQuery extends AbstractDMLQuery {
     }
 
     private boolean isJoinOnRouting(List<String> refTableNames) {
-        if (joins == null) return isJoinOnRouting(this.expTree);
+        if (joins == null) return isJoinOnRouting(this.expTree, refTableNames);
 
         for (Join join : joins) {
             Query subQuery = join.getSubQuery();
             if (subQuery == null) {
                 if (!refTableNames.contains(join.getTableName())) { // if not ref table
-                    if (!isJoinOnRouting(join.getOnExpression()))
+                    if (!isJoinOnRouting(join.getOnExpression(), refTableNames))
                         return false; // if ON is not on routing key
                 }
             } else if (subQuery instanceof SelectQuery) {
@@ -374,9 +374,9 @@ public class SelectQuery extends AbstractDMLQuery {
         return true;
     }
 
-    private boolean isJoinOnRouting(ExpNode expNode) {
+    private boolean isJoinOnRouting(ExpNode expNode, List<String> refTableNames) {
         if (expNode instanceof AndNode) {
-            return isJoinOnRouting(expNode.getRightChild()) || isJoinOnRouting(expNode.getLeftChild());
+            return isJoinOnRouting(expNode.getRightChild(), refTableNames) || isJoinOnRouting(expNode.getLeftChild(), refTableNames);
         } else if (expNode instanceof EqualNode) {
             ExpNode left = expNode.getLeftChild();
             ExpNode right = expNode.getRightChild();
@@ -433,10 +433,12 @@ public class SelectQuery extends AbstractDMLQuery {
 
                 boolean isLeftNodeJoinOnRouting = leftNodeJoinOn.equals(leftNodeTypeDesc.getRoutingPropertyName());
                 boolean isRightNodeJoinOnRouting = rightNodeJoinOn.equals(rightNodeTypeDesc.getRoutingPropertyName());
-                return isLeftNodeJoinOnRouting && isRightNodeJoinOnRouting;
+                if (isLeftNodeJoinOnRouting && isRightNodeJoinOnRouting) return true;
+                if (refTableNames.contains(leftNodeTypeDesc.getTypeName()) || refTableNames.contains(rightNodeTypeDesc.getTypeName())) return true;
+                return false;
             } else {
                 if (_logger.isDebugEnabled())
-                    _logger.debug("Unable to detect if join is on routing - Unsupported left and right nodes types [{}, {}]",left.getClass().getName(), right.getClass().getName());
+                    _logger.debug("Unable to detect if join is on routing - Unsupported left and right nodes types [{}, {}]", left.getClass().getName(), right.getClass().getName());
                 return false;
             }
         } else {
@@ -795,6 +797,22 @@ public class SelectQuery extends AbstractDMLQuery {
         return query;
     }
 
+    @Override
+    public void buildTemplates() throws SQLException {
+
+        getTablesData().forEach(td -> {
+            try {
+                if (td.getExpTree() != null)
+                    getBuilder().traverseExpressionTree(td.getExpTree(), false);
+                if (td.getTableCondition() != null)
+                    getBuilder().traverseExpressionTree(td.getTableCondition(), false);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+        super.buildTemplates();
+    }
+
     /**
      * Add a column to the list of columns.
      *
@@ -881,15 +899,38 @@ public class SelectQuery extends AbstractDMLQuery {
 
     private void applyJoinsIfNeeded() throws SQLException {
         if (joins != null) {
+            getTableData().setTableCondition(getExpTree());
             for (Join join : joins) {
                 QueryTableData table = addTableWithAlias(join.getTableName(), join.getAlias());
                 table.setJoinType(join.getJoinType());
                 if (join.getSubQuery() != null) {
                     table.setSubQuery(join.getSubQuery());
                 }
-                setExpTree(join.applyOnExpression(getExpTree()));
+
+                AndNode tableCondition = extractTableCondition(join.getOnExpression());
+                if (tableCondition != null) {
+                    table.setTableCondition(tableCondition.getLeftChild());
+                    table.setExpTree(join.getOnExpression());
+                    setExpTree(join.applyOnExpression(getExpTree()));
+                }
             }
         }
+    }
+
+    private AndNode extractTableCondition(ExpNode onExpression) {
+        //left is table, right is join
+        if (onExpression instanceof AndNode) {
+            AndNode root = ((AndNode) onExpression);
+            if (root.getLeftChild() instanceof EqualNode && root.getLeftChild().getLeftChild() instanceof ColumnNode && root.getLeftChild().getRightChild() instanceof ColumnNode) {
+                return new AndNode(root.getRightChild(), root.getLeftChild());
+            }
+            if (root.getRightChild() instanceof EqualNode && root.getRightChild().getLeftChild() instanceof ColumnNode && root.getRightChild().getRightChild() instanceof ColumnNode) {
+                return new AndNode(root.getLeftChild(), root.getRightChild());
+            }
+        } else if (onExpression instanceof EqualNode && onExpression.getLeftChild() instanceof ColumnNode && onExpression.getRightChild() instanceof ColumnNode) {
+            return new AndNode(null, onExpression);
+        }
+        return null;
     }
 
     private void validateCommonJavaTypeOnDocumentOrStringReturnProperties() {

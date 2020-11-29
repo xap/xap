@@ -249,8 +249,13 @@ public class QueryColumnData implements Serializable {
     }
 
     public boolean checkAndAssignTableData(QueryTableData tableData) throws SQLException {
+        if (tableData.getSubQuery() != null) {
+            for (QueryTableData tablesDatum : ((SelectQuery) tableData.getSubQuery()).getTablesData()) {
+                if (checkAndAssignTableData(tablesDatum)) return true;
+            }
+            return false;
+        }
         ITypeDesc currentInfo = tableData.getTypeDesc();
-
         for (int c = 0; c < currentInfo.getNumOfFixedProperties(); c++) {
             String columnName = getColumnName();
             PropertyInfo fixedProperty = currentInfo.getFixedProperty(c);

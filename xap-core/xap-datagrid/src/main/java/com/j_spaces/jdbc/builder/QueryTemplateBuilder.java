@@ -451,9 +451,9 @@ public class QueryTemplateBuilder implements Serializable
             throws SQLException {
 
         // for now joined queries are handled differently - only leaves are built - to keep the tree structure
-        if (query.isJoined()) {
-            return;
-        }
+//        if (query.isJoined()) {
+//            return;
+//        }
         // Handle the case of one child - just delegate
         ExpNode left = node.getLeftChild();
         ExpNode right = node.getRightChild();
@@ -513,9 +513,9 @@ public class QueryTemplateBuilder implements Serializable
 
 
         // for now joined queries are handled differently - only leaves are built - to keep the tree structure
-        if (query.isJoined()) {
-            return;
-        }
+//        if (query.isJoined()) {
+//            return;
+//        }
 
 
         if (left == null) {
@@ -561,7 +561,7 @@ public class QueryTemplateBuilder implements Serializable
      * Traverse the binary expression tree non-recursively using a custom stack The tree has to be
      * traversed in postorder - the parent is traversed after its children.
      */
-    public void traverseExpressionTree(ExpNode root) throws SQLException {
+    public void traverseExpressionTree(ExpNode root, boolean buildJoinInfo) throws SQLException {
         if (root != null) {
             for (ExpNode node : root.reverse()) {
                 if (node.isContainsItemsRootNode()) {
@@ -587,7 +587,7 @@ public class QueryTemplateBuilder implements Serializable
             }
         }
 
-        if (query.isJoined()) {
+        if (buildJoinInfo && query.isJoined()) {
             buildJoinInfo();
         }
     }
@@ -613,7 +613,9 @@ public class QueryTemplateBuilder implements Serializable
         // for each table create a join condition
         for (QueryTableData tableData : query.getTablesData()) {
             // first all entries for each table in the query
-            tableData.createJoinIndex(query.getExpTree());
+            if (tableData.getExpTree() != null)
+                tableData.createJoinIndex(tableData.getExpTree());
+//            tableData.createJoinIndex(query.getExpTree());
         }
 
 
