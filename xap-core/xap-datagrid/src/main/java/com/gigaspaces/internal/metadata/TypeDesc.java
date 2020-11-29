@@ -929,6 +929,8 @@ public class TypeDesc implements ITypeDesc {
                 classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(ClassLoaderHelper.loadClass(storageAdapterClassName));
                 binaryStorageAdapterType = BinaryStorageAdapterType.fromCode(in.readByte());
                 initHybridProperties();
+            } else {
+                positionsForScanning = IntStream.range(0,_fixedProperties.length).toArray();
             }
         }
     }

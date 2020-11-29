@@ -105,8 +105,8 @@ public class SpaceTypeInfo implements Externalizable {
     private Map<String, SpaceIndex> _indexes;
     private Map<String, SpacePropertyInfo> _properties;
     private SpacePropertyInfo[] _spaceProperties;
-    private Class<? extends ClassBinaryStorageAdapter> _spaceClassStorageAdapter = Boolean.parseBoolean(System.getProperty("com.gs.disable.hybrid","true")) ? null : DefaultClassBinaryStorageAdapter.class;
-    private BinaryStorageAdapterType binaryStorageAdapterType = Boolean.parseBoolean(System.getProperty("com.gs.disable.hybrid","true")) ? null : BinaryStorageAdapterType.EXCLUDE_INDEXES;
+    private Class<? extends ClassBinaryStorageAdapter> _spaceClassStorageAdapter = Boolean.parseBoolean(System.getProperty("com.gs.disable.hybrid","false")) ? null : DefaultClassBinaryStorageAdapter.class;
+    private BinaryStorageAdapterType binaryStorageAdapterType = Boolean.parseBoolean(System.getProperty("com.gs.disable.hybrid","false")) ? null : BinaryStorageAdapterType.EXCLUDE_INDEXES;
 
     private SpacePropertyInfo _idProperty;
     private Boolean _idAutoGenerate;
