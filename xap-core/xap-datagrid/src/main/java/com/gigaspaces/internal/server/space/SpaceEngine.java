@@ -1842,7 +1842,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             context.setFromGateway(sc.isFromGateway());
     }
 
-    public void updateObjectTypeReadCounts( IServerTypeDesc serverTypeDesc, ITemplatePacket template, int numOfEntriesMatched) {
+    public void updateObjectTypeReadCounts( IServerTypeDesc serverTypeDesc, ITemplatePacket template) {
 
         if(!this.getMetricManager().getMetricFlagsState().isDataReadCountsMetricEnabled()){
             return;
@@ -1855,7 +1855,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         String typeName = template.getTypeName();
         if (typeName != null) {
-            serverTypeDesc.getReadCounter().inc(numOfEntriesMatched);
+            serverTypeDesc.getReadCounter().inc(1);
         }
     }
 
@@ -2098,7 +2098,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         }
 
         if( counter > 0 ) {
-            updateObjectTypeReadCounts(typeDesc, template, 1);
+            updateObjectTypeReadCounts(typeDesc, template);
         }
 
         if (tHolder instanceof TemplateHolder && ((TemplateHolder) tHolder).getExplainPlan() != null) {
