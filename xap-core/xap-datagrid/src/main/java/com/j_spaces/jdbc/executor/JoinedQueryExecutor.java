@@ -397,6 +397,7 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
                 //check for sequence beginning
                 if (!tableData.isJoined()) {
                     _tableData = tableData;
+                    System.out.println("Choose td: " + _tableData.getTableName());
                     break;
                 }
             }

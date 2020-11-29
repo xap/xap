@@ -363,7 +363,7 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
      * Convert the expression tree to space queries in form of IEntryPacket templates
      */
     public void buildTemplates() throws SQLException {
-        _builder.traverseExpressionTree(expTree);
+        _builder.traverseExpressionTree(expTree, true);
     }
 
     public QueryTemplatePacket getTemplatePacketIfExists() {

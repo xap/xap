@@ -73,4 +73,11 @@ public abstract class SingleValueRange extends Range {
 
         IOUtils.writeObject(out, value);
     }
+
+    @Override
+    public String toString() {
+        return "SingleValueRange{" +
+                "value=" + value +
+                '}';
+    }
 }

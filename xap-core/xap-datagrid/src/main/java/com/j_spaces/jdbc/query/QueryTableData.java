@@ -20,6 +20,7 @@ import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.logger.Constants;
 import com.j_spaces.jdbc.*;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.executor.EntriesCursor;
@@ -28,9 +29,13 @@ import com.j_spaces.jdbc.parser.ColumnNode;
 import com.j_spaces.jdbc.parser.ExpNode;
 
 import net.jini.core.transaction.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.LinkedList;
+import java.util.List;
 
 
 /**
@@ -39,6 +44,7 @@ import java.io.Serializable;
  */
 @com.gigaspaces.api.InternalApi
 public class QueryTableData implements Serializable {
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     private final String _tableName;
     private final String _tableAlias;
@@ -60,6 +66,7 @@ public class QueryTableData implements Serializable {
     private boolean _isJoined;
     private boolean _hasAsterixSelectColumns;
     private Query subQuery;
+    private ExpNode _expTree;
 
     public QueryTableData(String name, String alias, int index) {
         _tableName = name;
@@ -291,20 +298,30 @@ public class QueryTableData implements Serializable {
     public void init(ISpaceProxy space, Transaction txn, AbstractDMLQuery query)
             throws Exception {
 
+        List<String> output = new LinkedList<>();
         IQueryResultSet<IEntryPacket> tableEntries;
         if (subQuery != null) {
             tableEntries = executeSubQuery(space, txn);
         } else {
             QueryTemplatePacket template = getTemplate(query.getQueryResultType());
+            output.add("Table: "+this.getTableName()+", Template: " + template.getRanges());
             tableEntries = template.readMultiple(space, txn, Integer.MAX_VALUE, query.getReadModifier());
         }
-
-        if (_joinCondition != null)
+        output.add("\tJoin condition: " + _joinCondition+", joinTable: " + (_joinTable == null ? "NONE!" : _joinTable.getTableName()));
+        if (_joinCondition != null) {
+            output.add("\t Creating HashCursor");
             setEntriesCursor(_joinCondition.createIndex(this, tableEntries));
-        else
+        }else {
+            output.add("\t Creating ScanCursor");
             setEntriesCursor(new ScanCursor(tableEntries));
+        }
+        output.add("------");
+
+        _logger.info(String.join("\n", output));
+        System.out.println(String.join("\n", output));
 
     }
+
 
     public IQueryResultSet<IEntryPacket> executeSubQuery(ISpaceProxy space, Transaction txn) throws Exception{
         if (subQuery instanceof AbstractDMLQuery) {
@@ -372,4 +389,13 @@ public class QueryTableData implements Serializable {
     public void setJoinType(Join.JoinType _joinType) {
         this._joinType = _joinType;
     }
+
+    public ExpNode getExpTree() {
+        return _expTree;
+    }
+
+    public void setExpTree(ExpNode _expTree) {
+        this._expTree = _expTree;
+    }
+
 }
