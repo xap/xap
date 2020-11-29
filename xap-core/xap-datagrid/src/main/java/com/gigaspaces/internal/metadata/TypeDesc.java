@@ -44,6 +44,7 @@ import net.jini.core.entry.Entry;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.IntStream;
 
 /**
  * @author Niv Ingberg
@@ -184,6 +185,8 @@ public class TypeDesc implements ITypeDesc {
             this.classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(binaryStorageAdapter);
             this.binaryStorageAdapterType = binaryStorageAdapterType == null ? BinaryStorageAdapterType.ALL : binaryStorageAdapterType;
             initHybridProperties();
+        } else {
+            positionsForScanning = IntStream.range(0,_fixedProperties.length).toArray();
         }
     }
 
