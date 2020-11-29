@@ -24,11 +24,11 @@ public class HybridBinaryData implements Externalizable {
         this.isDeserialized = false;
     }
 
-    public HybridBinaryData(Object[] serializedProperties, Object[] nonSerializedProperties, byte[] serialized) {
+    public HybridBinaryData(Object[] serializedProperties, Object[] nonSerializedProperties, byte[] serialized, boolean isDeserialized) {
         this.serializedProperties = serializedProperties;
         this.nonSerializedProperties = nonSerializedProperties;
         this.serialized = serialized;
-        this.isDeserialized = true;
+        this.isDeserialized = isDeserialized;
     }
 
     public HybridBinaryData(ITypeDesc typeDesc, byte[] serializedFields) {
@@ -45,7 +45,7 @@ public class HybridBinaryData implements Externalizable {
 
         if (typeDesc.getBinaryStorageType().equals(BinaryStorageAdapterType.ALL)) {
             return serializedProperties;
-        }else {
+        } else {
             Object[] fields = new Object[typeDesc.getProperties().length];
             int i = 0;
             for (PropertyInfo property : typeDesc.getProperties()) {
@@ -66,8 +66,8 @@ public class HybridBinaryData implements Externalizable {
                 unpackSerializedProperties(typeDesc);
             }
             return serializedProperties;
-        }else {
-            if(typeDesc.isBinaryProperty(position)) {
+        } else {
+            if (typeDesc.isBinaryProperty(position)) {
                 if (!isDeserialized) {
                     unpackSerializedProperties(typeDesc);
                 }
@@ -85,7 +85,7 @@ public class HybridBinaryData implements Externalizable {
             }
             serializedProperties[position] = value;
         } else {
-            if(typeDesc.isBinaryProperty(position)){
+            if (typeDesc.isBinaryProperty(position)) {
                 if (!isDeserialized) {
                     unpackSerializedProperties(typeDesc);
                 }
@@ -108,11 +108,10 @@ public class HybridBinaryData implements Externalizable {
     }
 
 
-
-    public HybridBinaryData clone(){
+    public HybridBinaryData clone() {
         return new HybridBinaryData(Arrays.copyOf(serializedProperties, serializedProperties.length)
                 , Arrays.copyOf(nonSerializedProperties, nonSerializedProperties.length),
-                Arrays.copyOf(serialized,serialized.length));
+                Arrays.copyOf(serialized, serialized.length), this.isDeserialized);
     }
 
     @Override
@@ -144,5 +143,15 @@ public class HybridBinaryData implements Externalizable {
 
     public byte[] getSerialized() {
         return serialized;
+    }
+
+    @Override
+    public String toString() {
+        return "HybridBinaryData{" +
+                "serializedProperties=" + Arrays.toString(serializedProperties) +
+                ", nonSerializedProperties=" + Arrays.toString(nonSerializedProperties) +
+                ", serialized=" + Arrays.toString(serialized) +
+                ", isDeserialized=" + isDeserialized +
+                '}';
     }
 }

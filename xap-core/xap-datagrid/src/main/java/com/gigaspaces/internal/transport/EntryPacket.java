@@ -193,7 +193,7 @@ public class EntryPacket extends AbstractEntryPacket {
         try {
             if (_fixedProperties == null && getTypeDescriptor() != null &&
                     getTypeDescriptor().getClassBinaryStorageAdapter() != null &&
-                    !getTypeDescriptor().getBinaryStorageType().equals(BinaryStorageAdapterType.ALL)) {
+                    !getTypeDescriptor().getBinaryStorageType().equals(BinaryStorageAdapterType.ALL) && binaryFields != null) {
                 Object fixedProperty = binaryFields.getFixedProperty(getTypeDescriptor(), index);
                 if (binaryFields.isDeserialized()) {
                     _fixedProperties = binaryFields.getFixedProperties(getTypeDescriptor());
@@ -211,9 +211,6 @@ public class EntryPacket extends AbstractEntryPacket {
     public void setFieldValue(int index, Object value) {
         try {
             getFieldValues()[index] = value;
-            if(binaryFields != null){
-                binaryFields = null;
-            }
         } catch (Exception e) {
             throw new IllegalStateException("The field values array was not properly set", e);
         }

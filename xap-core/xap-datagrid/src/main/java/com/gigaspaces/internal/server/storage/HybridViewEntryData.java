@@ -42,7 +42,7 @@ public class HybridViewEntryData extends AbstractViewEntryData {
             }
         }
         this.hybridBinaryData = new HybridBinaryData(serializedProperties, nonSerializedProperties,
-                ((HybridBinaryEntryData) entryData).getSerializedFields());
+                ((HybridBinaryEntryData) entryData).getSerializedFields() ,true);
         this.dynamicProperties = entryData.getDynamicProperties();
     }
 
