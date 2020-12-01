@@ -618,7 +618,7 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
         for (SelectColumn col : query.getQueryColumns()) {
             // Only add for visible columns
             if (col.isVisible()) {
-                columnNames.add(col.getName());
+                columnNames.add(col.getAlias());
             }
         }
 
@@ -639,8 +639,8 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
 
                 fields[column] = entry.getFieldValue(column++);
             }
-            IEntryPacket ep = new QueryEntryPacket();
-            ep.setFieldsValues(fields);
+            IEntryPacket ep = new QueryEntryPacket(fieldNames, fields);
+//            ep.setFieldsValues(fields);
             result.add(ep);
         }
 

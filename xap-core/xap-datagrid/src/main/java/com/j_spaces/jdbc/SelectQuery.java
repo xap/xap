@@ -1156,7 +1156,19 @@ public class SelectQuery extends AbstractDMLQuery {
 
         QueryTableData tableData = getTableData();
         if(tableData.getSubQuery() != null){
-            return tableData.executeSubQuery(space, txn, true);
+            IQueryResultSet<IEntryPacket> subResult = tableData.executeSubQuery(space, txn, true);
+            if(isGroupBy()) {
+                if (isGroupBy()) {
+                    subResult = groupBy(subResult);
+                } else if (isAggFunction()) // Handle aggregation
+                {
+                    subResult = aggregate(subResult);
+                }
+
+            }
+            if(isOrderBy())
+                orderBy(subResult);
+            return subResult;
         }
         QueryTemplatePacket template = new QueryTemplatePacket(tableData, _queryResultType);
 
