@@ -301,7 +301,7 @@ public class QueryTableData implements Serializable {
         List<String> output = new LinkedList<>();
         IQueryResultSet<IEntryPacket> tableEntries;
         if (subQuery != null) {
-            tableEntries = executeSubQuery(space, txn);
+            tableEntries = executeSubQuery(space, txn, false);
         } else {
             QueryTemplatePacket template = getTemplate(query.getQueryResultType());
             output.add("Table: "+this.getTableName()+", Template: " + template.getRanges());
@@ -322,12 +322,13 @@ public class QueryTableData implements Serializable {
 
     }
 
-
-    public IQueryResultSet<IEntryPacket> executeSubQuery(ISpaceProxy space, Transaction txn) throws Exception{
+    public IQueryResultSet<IEntryPacket> executeSubQuery(ISpaceProxy space, Transaction txn, boolean flatten) throws Exception{
         if (subQuery instanceof AbstractDMLQuery) {
             // sub query results should be returned as entry packets and not converted.
             ((AbstractDMLQuery) subQuery).setConvertResultToArray(false);
         }
+        if (subQuery instanceof SelectQuery)
+            ((SelectQuery) subQuery).setFlattenResults(flatten);
         ResponsePacket rp = subQuery.executeOnSpace(space, txn);
         return (IQueryResultSet<IEntryPacket>) rp.getResultSet();
     }
