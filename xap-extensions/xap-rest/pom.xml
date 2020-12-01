@@ -29,7 +29,6 @@
     </dependencyManagement>
 
     <properties>
-        <spring-version>5.1.7.RELEASE</spring-version>
         <exclude.tests>nothing-to-exclude</exclude.tests>
         <jsondoc-version>1.1.1</jsondoc-version>
     </properties>
@@ -65,19 +64,19 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
-            <version>${spring-version}</version>
+            <version>${spring.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-beans</artifactId>
-            <version>${spring-version}</version>
+            <version>${spring.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-tx</artifactId>
-            <version>${spring-version}</version>
+            <version>${spring.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -223,17 +222,17 @@
                 <dependency>
                     <groupId>org.springframework</groupId>
                     <artifactId>spring-webmvc</artifactId>
-                    <version>${spring-version}</version>
+                    <version>${spring.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>org.springframework</groupId>
                     <artifactId>spring-beans</artifactId>
-                    <version>${spring-version}</version>
+                    <version>${spring.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>org.springframework</groupId>
                     <artifactId>spring-tx</artifactId>
-                    <version>${spring-version}</version>
+                    <version>${spring.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>com.fasterxml.jackson.core</groupId>
