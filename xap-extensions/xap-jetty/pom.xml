@@ -168,12 +168,12 @@
         <dependency>
             <groupId>org.mortbay.jasper</groupId>
             <artifactId>apache-el</artifactId>
-            <version>${mortbay.jasper.version}</version>
+            <version>${jetty.mortbay.jasper.version}</version>
         </dependency>
         <dependency>
             <groupId>org.mortbay.jasper</groupId>
             <artifactId>apache-jsp</artifactId>
-            <version>${mortbay.jasper.version}</version>
+            <version>${jetty.mortbay.jasper.version}</version>
         </dependency>
         <dependency>
             <groupId>javax.websocket</groupId>
@@ -290,7 +290,6 @@
 
     <artifactId>xap-jetty</artifactId>
     <properties>
-        <mortbay.jasper.version>8.5.40</mortbay.jasper.version>
         <taglibs.standard.version>1.2.5</taglibs.standard.version>
         <jetty.schemas.version>3.1</jetty.schemas.version>
         <ecj.version>3.17.0</ecj.version>
