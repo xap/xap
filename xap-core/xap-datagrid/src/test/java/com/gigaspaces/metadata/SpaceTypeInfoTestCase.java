@@ -114,12 +114,6 @@ import java.util.Map;
 
 @com.gigaspaces.api.InternalApi
 public class SpaceTypeInfoTestCase extends TestCase {
-
-    @Override
-    protected void setUp() throws Exception {
-        System.setProperty("com.gs.disable.hybrid","true");
-        super.setUp();
-    }
     
     public void testNull() {
         // Arrange:
