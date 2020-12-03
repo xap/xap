@@ -20,7 +20,6 @@ import com.gigaspaces.annotation.pojo.*;
 import com.gigaspaces.annotation.pojo.SpaceClass.IncludeProperties;
 import com.gigaspaces.annotation.pojo.SpaceProperty.IndexType;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
-import com.gigaspaces.client.storage_adapters.class_storage_adapters.DefaultClassBinaryStorageAdapter;
 import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.io.XmlUtils;
@@ -105,8 +104,8 @@ public class SpaceTypeInfo implements Externalizable {
     private Map<String, SpaceIndex> _indexes;
     private Map<String, SpacePropertyInfo> _properties;
     private SpacePropertyInfo[] _spaceProperties;
-    private Class<? extends ClassBinaryStorageAdapter> _spaceClassStorageAdapter = Boolean.parseBoolean(System.getProperty("com.gs.disable.hybrid","false")) ? null : DefaultClassBinaryStorageAdapter.class;
-    private BinaryStorageAdapterType binaryStorageAdapterType = Boolean.parseBoolean(System.getProperty("com.gs.disable.hybrid","false")) ? null : BinaryStorageAdapterType.EXCLUDE_INDEXES;
+    private Class<? extends ClassBinaryStorageAdapter> _spaceClassStorageAdapter;
+    private BinaryStorageAdapterType binaryStorageAdapterType;
 
     private SpacePropertyInfo _idProperty;
     private Boolean _idAutoGenerate;
