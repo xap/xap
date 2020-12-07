@@ -18,10 +18,7 @@ package com.j_spaces.jdbc.executor;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.transport.IEntryPacket;
-import com.j_spaces.jdbc.AbstractDMLQuery;
-import com.j_spaces.jdbc.JoinedEntry;
-import com.j_spaces.jdbc.SelectColumn;
-import com.j_spaces.jdbc.Stack;
+import com.j_spaces.jdbc.*;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.parser.AbstractInNode;
 import com.j_spaces.jdbc.parser.AndNode;
@@ -73,13 +70,24 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
         JoinedQueryResult result = new JoinedQueryResult();
         JoinedIterator iter = new JoinedIterator(query.getTablesData(), space, txn);
 
+        QueryTableData firstTableInMatch = iter.getFirstTable();
+        boolean skipMatching = SelectQuery.pushDownPredicatesToSpace && firstTableInMatch.getJoinCondition() == null;
+        boolean isOuterJoin = firstTableInMatch.getJoinType() == Join.JoinType.LEFT;
+        while (skipMatching && firstTableInMatch.getJoinTable() != null) {
+            firstTableInMatch = firstTableInMatch.getJoinTable();
+            skipMatching = firstTableInMatch.getJoinCondition() != null;
+            isOuterJoin = isOuterJoin || firstTableInMatch.getJoinType() == Join.JoinType.LEFT;
+        }
+
+
         while (iter.next()) {
             _currentEntry = iter.get();
 
             // check if the joined entry satisfies the query condition.
             // run the whole query tree on the entry
-            boolean matches = matchesExpressionTree(query.getExpTree(), space, txn, readModifier, max);
 
+
+            boolean matches = (skipMatching && isOuterJoin) || matchesExpressionTree(query.getExpTree(), space, txn, readModifier, max);
             // if the entry matched the whole expression tree - add it to the result set
             // otherwise it is omitted 
             if (matches) {
@@ -311,11 +319,6 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
         if (root == null)
             return true;
 
-        // If entry is not full (i.e. left/right outer join), consider it matched.
-        // TODO: check if this is still valid when join has more than 2 tables.
-        if (_currentEntry.isOuterJoin())
-            return true;
-
         if (_traversalOrder != null) {
             for (int i = 0; i < _traversalOrder.length; i++) {
                 ExpNode node = _traversalOrder[i];
@@ -441,6 +444,10 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
             for (QueryTableData t : _tablesData) {
                 t.clear();
             }
+        }
+
+        public QueryTableData getFirstTable() {
+            return _tableData;
         }
     }
 }
