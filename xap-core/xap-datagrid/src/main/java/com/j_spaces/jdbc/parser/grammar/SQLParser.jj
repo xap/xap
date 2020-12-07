@@ -289,12 +289,12 @@ void joins(SelectQuery query):
     List<Join> joins = new ArrayList<Join>();
 }
 {
-    join = join() { joins.add(join); }
-    (join = join() { joins.add(join); })*
+    join = join(query) { joins.add(join); }
+    (join = join(query) { joins.add(join); })*
     { query.setJoins(joins); }
 }
 
-Join join():
+Join join(SelectQuery parentQuery):
 {
    Token type = null;
    SelectQuery query = null;
@@ -308,7 +308,7 @@ Join join():
      |
     col = id())
     ([<AS>] alias = id())?
-    <ON> exp = SqlExpression(query) /* maybe we should pass the parent here as well ? */
+    <ON> exp = SqlExpression(query == null ? parentQuery : query) /* maybe we should pass the parent here as well ? */
     { if(query != null){
          return new Join(getString(type), query, exp, getString(alias), null);
       }else{
