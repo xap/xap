@@ -123,7 +123,7 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
         // Build subqueries recursivly, if any.
         for (QueryTableData tableData : getTablesData()) {
             Query subQuery = tableData.getSubQuery();
-            if (subQuery != null)
+            if (subQuery != null && !subQuery.containsSubQueries())
                 subQuery.build();
         }
         buildTemplates();
