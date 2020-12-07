@@ -47,6 +47,7 @@ public class SQLFunctions {
         builtInFunctions.put("TO_CHAR", new ToCharSqlFunction());
         builtInFunctions.put("CONTAINS_KEY", new ContainsKeySqlFunction());
         builtInFunctions.put("REPLACE", new ReplaceSqlFunction());
+        builtInFunctions.put("CAST", new CastSqlFunction());
     }
 
     public SQLFunctions(Map<String, SqlFunction> userFunctions){

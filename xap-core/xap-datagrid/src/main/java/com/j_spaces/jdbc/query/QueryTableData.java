@@ -20,6 +20,7 @@ import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.logger.Constants;
 import com.j_spaces.jdbc.*;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.executor.EntriesCursor;
@@ -28,9 +29,13 @@ import com.j_spaces.jdbc.parser.ColumnNode;
 import com.j_spaces.jdbc.parser.ExpNode;
 
 import net.jini.core.transaction.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.LinkedList;
+import java.util.List;
 
 
 /**
@@ -39,11 +44,12 @@ import java.io.Serializable;
  */
 @com.gigaspaces.api.InternalApi
 public class QueryTableData implements Serializable {
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     private final String _tableName;
     private final String _tableAlias;
     // the sequential index of the table in the "from" clause
-    private final int _tableIndex;
+    private int _tableIndex;
 
     // the space type descriptor for this table/class
     private ITypeDesc _typeDesc;
@@ -60,6 +66,7 @@ public class QueryTableData implements Serializable {
     private boolean _isJoined;
     private boolean _hasAsterixSelectColumns;
     private Query subQuery;
+    private ExpNode _expTree;
 
     public QueryTableData(String name, String alias, int index) {
         _tableName = name;
@@ -85,6 +92,11 @@ public class QueryTableData implements Serializable {
 
     public int getTableIndex() {
         return _tableIndex;
+    }
+
+    public QueryTableData setTableIndexUnsafe(int _tableIndex) {
+        this._tableIndex = _tableIndex;
+        return this;
     }
 
     public ITypeDesc getTypeDesc() {
@@ -241,7 +253,7 @@ public class QueryTableData implements Serializable {
         _isJoined = isJoined;
     }
 
-    public void join(ExpNode exp) {
+    public void joinRight(ExpNode exp) {
 
         QueryTableData rightTable = ((ColumnNode) exp.getRightChild()).getColumnData()
                 .getColumnTableData();
@@ -256,6 +268,38 @@ public class QueryTableData implements Serializable {
 
                 rightTable.setJoined(true);
 
+//            } else if (this.getJoinType() == Join.JoinType.LEFT) {
+//                setJoinCondition(exp);
+            }
+        }
+
+    }
+
+    public void joinLeft(ExpNode exp) {
+
+        QueryTableData leftTable = ((ColumnNode) exp.getLeftChild()).getColumnData()
+                .getColumnTableData();
+
+        // if this table is not joined yet and matches the join condition
+        // try to join it with the left table
+        if (getJoinTable() == null) {
+            if ((!leftTable.isJoined()) && !leftTable.references(this)) {
+                setJoinTable(leftTable);
+
+                ExpNode newExp = exp.newInstance();
+                newExp.setLeftChild(exp.getRightChild());
+                newExp.setRightChild(exp.getLeftChild());
+
+
+
+                leftTable.setJoinCondition(newExp);
+
+                leftTable.setJoined(true);
+
+            } else if (this.getJoinType() == Join.JoinType.LEFT) {// if already joined and is LEFT JOIN then just set the condition
+                if (exp.isJoined() && ((ColumnNode) leftTable.getJoinCondition().getRightChild()).getColumnPath().equals(((ColumnNode) exp.getLeftChild()).getColumnPath())) {
+                    setJoinCondition(exp);
+                }
             }
         }
 
@@ -291,26 +335,39 @@ public class QueryTableData implements Serializable {
     public void init(ISpaceProxy space, Transaction txn, AbstractDMLQuery query)
             throws Exception {
 
+        List<String> output = new LinkedList<>();
         IQueryResultSet<IEntryPacket> tableEntries;
         if (subQuery != null) {
-            tableEntries = executeSubQuery(space, txn);
+            output.add("Table: " + this.getTableName() + " (subquery)");
+            tableEntries = executeSubQuery(space, txn, false);
         } else {
             QueryTemplatePacket template = getTemplate(query.getQueryResultType());
+            output.add("Table: "+this.getTableName()+", Template: " + template.getRanges());
             tableEntries = template.readMultiple(space, txn, Integer.MAX_VALUE, query.getReadModifier());
         }
-
-        if (_joinCondition != null)
+        output.add("\tJoin condition: " + _joinCondition+", joinTable: " + (_joinTable == null ? "NONE!" : _joinTable.getTableName()));
+        if (_joinCondition != null) {
+            output.add("\t Creating HashCursor");
             setEntriesCursor(_joinCondition.createIndex(this, tableEntries));
-        else
+        }else {
+            output.add("\t Creating ScanCursor");
             setEntriesCursor(new ScanCursor(tableEntries));
+        }
+        output.add("------");
+
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(String.join("\n", output));
+        }
 
     }
 
-    public IQueryResultSet<IEntryPacket> executeSubQuery(ISpaceProxy space, Transaction txn) throws Exception{
+    public IQueryResultSet<IEntryPacket> executeSubQuery(ISpaceProxy space, Transaction txn, boolean flatten) throws Exception{
         if (subQuery instanceof AbstractDMLQuery) {
             // sub query results should be returned as entry packets and not converted.
             ((AbstractDMLQuery) subQuery).setConvertResultToArray(false);
         }
+        if (subQuery instanceof SelectQuery)
+            ((SelectQuery) subQuery).setFlattenResults(flatten);
         ResponsePacket rp = subQuery.executeOnSpace(space, txn);
         return (IQueryResultSet<IEntryPacket>) rp.getResultSet();
     }
@@ -375,5 +432,13 @@ public class QueryTableData implements Serializable {
 
     public boolean isBroadcastTable(){
         return _typeDesc != null && _typeDesc.isBroadcast();
+    }
+
+    public ExpNode getExpTree() {
+        return _expTree;
+    }
+
+    public void setExpTree(ExpNode _expTree) {
+        this._expTree = _expTree;
     }
 }

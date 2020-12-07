@@ -38,6 +38,7 @@ public class ColumnNode extends ValueNode {
     private QueryColumnData _columnData;
     private String _name;
     private FunctionCallDescription functionCallDescription;
+    private String tableName;
 
     public ColumnNode() {
         super();
@@ -46,6 +47,11 @@ public class ColumnNode extends ValueNode {
     public ColumnNode(String columnPath) {
         this();
         _name = columnPath;
+    }
+
+    public ColumnNode(String columnPath, String tableName) {
+        this(columnPath);
+        this.tableName = tableName;
     }
 
     public FunctionCallDescription getFunctionCallDescription() {
@@ -62,7 +68,7 @@ public class ColumnNode extends ValueNode {
      */
     public void createColumnData(AbstractDMLQuery query)
             throws SQLException {
-        _columnData = QueryColumnData.newColumnData(_name, query);
+        _columnData = QueryColumnData.newColumnData(tableName == null ? _name : tableName + "." + _name, query);
 
     }
 
@@ -119,5 +125,14 @@ public class ColumnNode extends ValueNode {
             }
         }
         super.prepareValues(values);
+    }
+
+    public ColumnNode setTableName(String tableName) {
+        this.tableName = tableName;
+        return this;
+    }
+
+    public String getTableName() {
+        return tableName;
     }
 }

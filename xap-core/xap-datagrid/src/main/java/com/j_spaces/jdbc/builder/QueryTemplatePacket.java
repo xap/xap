@@ -106,7 +106,7 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
 
     public QueryTemplatePacket(QueryTableData table, QueryResultTypeInternal queryResultType) {
         this._table = table;
-        super._typeName = table.getTableName();
+        super._typeName = table.getTypeDesc() == null ? table.getTableName() : table.getTypeDesc().getTypeName();
         this._queryResultType = queryResultType;
         init(table.getTypeDesc());
     }
@@ -851,8 +851,11 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
             IOUtils.writeObject(out, _projectionTemplate);
         if (version.greaterOrEquals(PlatformLogicalVersion.v11_0_0))
             out.writeBoolean(_allIndexValuesQuery);
-        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0))
+        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
             IOUtils.writeObject(out, _table);
+            IOUtils.writeObject(out, _ranges);
+            IOUtils.writeObject(out, _aggregationSet);
+        }
 
 
     }
@@ -866,8 +869,11 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
             _projectionTemplate = IOUtils.readObject(in);
         if (version.greaterOrEquals(PlatformLogicalVersion.v11_0_0))
             _allIndexValuesQuery = in.readBoolean();
-        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0))
+        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
             _table = IOUtils.readObject(in);
+            _ranges = IOUtils.readObject(in);
+            _aggregationSet = IOUtils.readObject(in);
+        }
     }
 
     private void uniteContainsItems(QueryTemplatePacket template) {

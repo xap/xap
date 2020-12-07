@@ -211,6 +211,33 @@ public class QueryColumnData implements Serializable {
                 if (prefix != null && columnPath.startsWith(prefix + "."))
                     return new QueryColumnData(tableData, columnPath.substring(prefix.length() + 1));
             }
+//            if(tableData.getSubQuery() != null && tableData.getSubQuery() instanceof  AbstractDMLQuery) {
+//                try {
+//                    return findUnique(((AbstractDMLQuery) tableData.getSubQuery()).getTablesData(), t -> tryInitWithPrefixSubQuery(tableData, t, columnPath), (r1, r2) -> ambigFormatter(columnPath, r1, r2));
+//                } catch (SQLException throwables) {
+//                    throwables.printStackTrace();
+//                    return null;
+//                }
+//            }
+        }
+        return null;
+    }
+
+    private static QueryColumnData tryInitWithPrefixSubQuery(QueryTableData parentTableData, QueryTableData tableData, String columnPath) {
+        if (columnPath != null) {
+            String[] prefixes = new String[] {tableData.getTableName(), tableData.getTableAlias()};
+            for (String prefix : prefixes) {
+                if (prefix != null && columnPath.startsWith(prefix + "."))
+                    return new QueryColumnData(parentTableData, columnPath.substring(prefix.length() + 1));
+            }
+            if(tableData.getSubQuery() != null && tableData.getSubQuery() instanceof  AbstractDMLQuery) {
+                try {
+                    return findUnique(((AbstractDMLQuery) tableData.getSubQuery()).getTablesData(), t -> tryInitWithPrefixSubQuery(tableData, t, columnPath), (r1, r2) -> ambigFormatter(columnPath, r1, r2));
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
+                    return null;
+                }
+            }
         }
         return null;
     }
@@ -249,8 +276,13 @@ public class QueryColumnData implements Serializable {
     }
 
     public boolean checkAndAssignTableData(QueryTableData tableData) throws SQLException {
+        if (tableData.getSubQuery() != null) {
+            for (QueryTableData tablesDatum : ((SelectQuery) tableData.getSubQuery()).getTablesData()) {
+                if (checkAndAssignTableData(tablesDatum)) return true;
+            }
+            return false;
+        }
         ITypeDesc currentInfo = tableData.getTypeDesc();
-
         for (int c = 0; c < currentInfo.getNumOfFixedProperties(); c++) {
             String columnName = getColumnName();
             PropertyInfo fixedProperty = currentInfo.getFixedProperty(c);
@@ -262,7 +294,7 @@ public class QueryColumnData implements Serializable {
                     throw new SQLException("Ambiguous column name [" + columnName + "]");
 
                 setColumnTableData(tableData);
-                setColumnIndexInTable(c);
+                setColumnIndexInTableUnsafe(c);
 
                 return true;
             }
@@ -274,7 +306,7 @@ public class QueryColumnData implements Serializable {
         this._columnTable = columnTable;
     }
 
-    private void setColumnIndexInTable(int columnIndex) {
+    public void setColumnIndexInTableUnsafe(int columnIndex) {
         this._columnIndex = columnIndex;
     }
 }

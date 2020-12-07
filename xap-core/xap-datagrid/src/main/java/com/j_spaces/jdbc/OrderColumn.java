@@ -16,6 +16,8 @@
 
 package com.j_spaces.jdbc;
 
+import com.gigaspaces.internal.transport.IEntryPacket;
+
 /**
  * Created by anna on 11/26/14.
  */
@@ -27,6 +29,20 @@ public class OrderColumn extends SelectColumn {
 
     public OrderColumn(String columnName, String columnAlias) {
         super(columnName, columnAlias);
+    }
+
+    @Override
+    public Object getFieldValue(IEntryPacket entry) {
+        if (getProjectedIndex() != -1) {
+            if (entry instanceof JoinedEntry) {
+                JoinedEntry joinedEntry = ((JoinedEntry) entry);
+                return joinedEntry.getEntry(this.getColumnTableData().getTableIndex()).getFieldValue(this.getProjectedIndex());
+            } else {
+                return entry.getFieldValue(getProjectedIndex());
+            }
+        } else {
+            return super.getFieldValue(entry);
+        }
     }
 
 

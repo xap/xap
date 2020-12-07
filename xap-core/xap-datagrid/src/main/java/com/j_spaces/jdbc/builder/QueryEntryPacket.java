@@ -224,9 +224,13 @@ public class QueryEntryPacket implements IEntryPacket {
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        _fieldNames = (String[]) in.readObject();
+        _fieldValues = (Object[]) in.readObject();
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeObject(_fieldNames);
+        out.writeObject(_fieldValues);
     }
 
     @Override

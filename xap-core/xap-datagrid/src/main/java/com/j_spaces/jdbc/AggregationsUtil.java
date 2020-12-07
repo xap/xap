@@ -122,7 +122,11 @@ public class AggregationsUtil {
                 //TBD fix semantics for path
                 aggregationSet = aggregationSet.count(funcColumn.getName());
             } else if (funcColumn.getFunctionName().equals(SqlConstants.SUM)) {
-                aggregationSet = aggregationSet.sum(funcColumn.getName());
+                if (funcColumn instanceof SumColumn) {
+                    aggregationSet.add(new CompositeSumAggregator(((SumColumn) funcColumn)));
+                } else {
+                    aggregationSet = aggregationSet.sum(funcColumn.getName());
+                }
             } else if (funcColumn.getFunctionName().equals(SqlConstants.AVG)) {
                 aggregationSet = aggregationSet.average(funcColumn.getName());
             }

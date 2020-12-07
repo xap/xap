@@ -43,6 +43,12 @@ public class MutableByte extends MutableNumber {
     }
 
     @Override
+    public void remove(Number x) {
+        if (x != null)
+            value -= x.byteValue();
+    }
+
+    @Override
     public Number calcDivision(long count) {
         return (double) value / count;
     }
