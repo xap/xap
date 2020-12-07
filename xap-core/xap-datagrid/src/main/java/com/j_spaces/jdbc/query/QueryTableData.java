@@ -248,7 +248,7 @@ public class QueryTableData implements Serializable {
         _isJoined = isJoined;
     }
 
-    public void join(ExpNode exp) {
+    public void joinRight(ExpNode exp) {
 
         QueryTableData rightTable = ((ColumnNode) exp.getRightChild()).getColumnData()
                 .getColumnTableData();
@@ -256,13 +256,36 @@ public class QueryTableData implements Serializable {
         // if this table is not joined yet and matches the join condition
         // try to join it with the right table
         if (getJoinTable() == null) {
-            if (!rightTable.isJoined() && !rightTable.references(this)) {
+            if ((!rightTable.isJoined()) && !rightTable.references(this)) {
                 setJoinTable(rightTable);
 
                 rightTable.setJoinCondition(exp);
 
                 rightTable.setJoined(true);
+            }
+        }
 
+    }
+
+    public void joinLeft(ExpNode exp) {
+
+        QueryTableData leftTable = ((ColumnNode) exp.getLeftChild()).getColumnData()
+                .getColumnTableData();
+
+        // if this table is not joined yet and matches the join condition
+        // try to join it with the left table
+        if (getJoinTable() == null) {
+            if ((!leftTable.isJoined()) && !leftTable.references(this)) {
+                setJoinTable(leftTable);
+
+                leftTable.setJoinCondition(exp);
+
+                leftTable.setJoined(true);
+
+            } else if (this.getJoinType() == Join.JoinType.LEFT) {// if already joined and is LEFT JOIN then just set the condition
+                if (exp.isJoined() && ((ColumnNode) leftTable.getJoinCondition().getRightChild()).getColumnPath().equals(((ColumnNode) exp.getLeftChild()).getColumnPath())) {
+                    setJoinCondition(exp);
+                }
             }
         }
 

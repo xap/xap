@@ -253,13 +253,19 @@ public abstract class ExpNode
 
         if (leftTable.equals(tableData)) {
             if (isJoined()) {
-                tableData.join(this);
+                tableData.joinRight(this);
             } else {
                 // create a filter condition
                 if (getTemplate() != null
                         && tableData.getTableCondition() == null) {
                     tableData.setTableCondition(this);
                 }
+            }
+        } else if (isJoined()) {
+            QueryTableData rightTable = ((ColumnNode) getRightChild()).getColumnData()
+                    .getColumnTableData();
+            if (rightTable.equals(tableData) && tableData.getJoinType() == Join.JoinType.LEFT) {
+                tableData.joinLeft(this);
             }
         }
         return false;
