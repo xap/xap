@@ -136,6 +136,10 @@ public class SQLUtil {
 
     public static Object getFieldValue(IEntryPacket entry,
                                        QueryColumnData columnData) {
+        if (entry == null && columnData.getColumnTableData().getJoinType() == Join.JoinType.LEFT) {
+            return null;
+        }
+
 
         if (columnData.isNestedQueryColumn())
             return SQLUtil.getFieldValue(entry, entry.getTypeDescriptor(), columnData.getColumnPath());

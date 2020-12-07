@@ -55,8 +55,6 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.*;
 
-import static com.j_spaces.jdbc.Join.JoinType.INNER;
-
 
 /**
  * This class handles the SELECT query logic.
@@ -898,20 +896,29 @@ public class SelectQuery extends AbstractDMLQuery {
         validateCommonJavaTypeOnDocumentOrStringReturnProperties();
     }
 
+    public static final boolean pushDownPredicatesToSpace = Boolean.getBoolean("pushDownToSpace");
+
     private void applyJoinsIfNeeded() throws SQLException {
         if (joins != null) {
-            getTableData().setTableCondition(getExpTree());
+            if (pushDownPredicatesToSpace) {
+                getTableData().setTableCondition(getExpTree());
+            }
             for (Join join : joins) {
                 QueryTableData table = addTableWithAlias(join.getTableName(), join.getAlias());
                 table.setJoinType(join.getJoinType());
                 if (join.getSubQuery() != null) {
                     table.setSubQuery(join.getSubQuery());
                 }
-
-                AndNode tableCondition = extractTableCondition(join.getOnExpression());
-                if (tableCondition != null) {
-                    table.setTableCondition(tableCondition.getLeftChild());
-                    table.setExpTree(join.getOnExpression());
+                if (pushDownPredicatesToSpace) {
+                    AndNode tableCondition = extractTableCondition(join.getOnExpression());
+                    if (tableCondition != null) {
+                        table.setTableCondition(tableCondition.getLeftChild());
+                        table.setExpTree(join.getOnExpression());
+                        setExpTree(join.applyOnExpression(getExpTree()));
+                    } else {
+                        throw new SQLException("Unsupported join condition when using 'pushDownToSpace' property");
+                    }
+                } else {
                     setExpTree(join.applyOnExpression(getExpTree()));
                 }
             }
@@ -933,7 +940,6 @@ public class SelectQuery extends AbstractDMLQuery {
         }
         return null;
     }
-
     private void validateCommonJavaTypeOnDocumentOrStringReturnProperties() {
         if (Modifiers.contains(getReadModifier(), Modifiers.RETURN_STRING_PROPERTIES) || (Modifiers.contains(getReadModifier(), Modifiers.RETURN_DOCUMENT_PROPERTIES))) {
             if (isOrderBy()) {
@@ -1157,15 +1163,13 @@ public class SelectQuery extends AbstractDMLQuery {
         QueryTableData tableData = getTableData();
         if(tableData.getSubQuery() != null){
             IQueryResultSet<IEntryPacket> subResult = tableData.executeSubQuery(space, txn, true);
-            if(isGroupBy()) {
-                if (isGroupBy()) {
-                    subResult = groupBy(subResult);
-                } else if (isAggFunction()) // Handle aggregation
-                {
-                    subResult = aggregate(subResult);
-                }
-
+            if (isGroupBy()) {
+                subResult = groupBy(subResult);
+            } else if (isAggFunction()) // Handle aggregation
+            {
+                subResult = aggregate(subResult);
             }
+
             if(isOrderBy())
                 orderBy(subResult);
             return subResult;
