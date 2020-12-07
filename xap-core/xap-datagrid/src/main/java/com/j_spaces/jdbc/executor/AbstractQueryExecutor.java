@@ -316,7 +316,7 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
 
             IQueryResultSet<IEntryPacket> group = iterator.next();
             //Handle aggregation
-            if (query.isConvertResultToArray())
+            if (query.isSelectQuery() || query.isConvertResultToArray())
                 groupByResult.add(aggregate(group));
             else
                 groupByResult.add(group.iterator().next());

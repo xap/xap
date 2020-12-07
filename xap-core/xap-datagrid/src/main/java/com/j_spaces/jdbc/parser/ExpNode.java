@@ -18,6 +18,7 @@ package com.j_spaces.jdbc.parser;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.j_spaces.jdbc.Join;
 import com.j_spaces.jdbc.Stack;
 import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;

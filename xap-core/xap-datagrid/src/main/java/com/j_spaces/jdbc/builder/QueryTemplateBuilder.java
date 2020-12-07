@@ -28,6 +28,7 @@ import com.gigaspaces.metadata.StorageType;
 import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.SQLFunctions;
+import com.j_spaces.jdbc.SelectQuery;
 import com.j_spaces.jdbc.builder.range.*;
 import com.j_spaces.jdbc.parser.*;
 import com.j_spaces.jdbc.query.QueryColumnData;
@@ -613,9 +614,12 @@ public class QueryTemplateBuilder implements Serializable
         // for each table create a join condition
         for (QueryTableData tableData : query.getTablesData()) {
             // first all entries for each table in the query
-            if (tableData.getExpTree() != null)
-                tableData.createJoinIndex(tableData.getExpTree());
-//            tableData.createJoinIndex(query.getExpTree());
+            if (query instanceof SelectQuery && SelectQuery.pushDownPredicatesToSpace) {
+                if (tableData.getExpTree() != null)
+                    tableData.createJoinIndex(tableData.getExpTree());
+            } else {
+                tableData.createJoinIndex(query.getExpTree());
+            }
         }
 
 
