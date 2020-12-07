@@ -72,15 +72,15 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
                 nonSerializedFieldsIndex++;
             }
         }
-        try {
-            return new Pair<>(nonSerializedFields, typeDesc.getClassBinaryStorageAdapter().toBinary(typeDesc, serializedFields));
-        } catch (IOException e) {
-            throw new UncheckedIOException("com.gigaspaces.internal.server.storage.BinaryEntryData.serializeFields failed", e);
-        }
+
+        return new Pair<>(nonSerializedFields,serializeFields(serializedFields, typeDesc));
     }
 
     protected static byte[] serializeFields(Object[] fieldsValues, ITypeDesc typeDesc) {
         try {
+            if(fieldsValues.length == 0){
+                return new byte[0];
+            }
             return typeDesc.getClassBinaryStorageAdapter().toBinary(typeDesc, fieldsValues);
         } catch (IOException e) {
             throw new UncheckedIOException("com.gigaspaces.internal.server.storage.BinaryEntryData.serializeFields failed", e);

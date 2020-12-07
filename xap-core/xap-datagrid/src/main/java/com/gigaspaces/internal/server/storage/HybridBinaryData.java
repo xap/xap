@@ -39,7 +39,7 @@ public class HybridBinaryData implements Externalizable {
     }
 
     public Object[] getFixedProperties(ITypeDesc typeDesc) {
-        if (!isDeserialized) {
+        if (!isDeserialized && this.serialized.length > 0) {
             unpackSerializedProperties(typeDesc);
         }
 

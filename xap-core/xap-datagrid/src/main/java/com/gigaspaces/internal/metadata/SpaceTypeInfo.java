@@ -74,6 +74,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -169,7 +170,10 @@ public class SpaceTypeInfo implements Externalizable {
 
         if(this.getBinaryStorageAdapterType() != null && this.getBinaryStorageAdapterType().equals(BinaryStorageAdapterType.EXCLUDE_INDEXES)) {
             for (SpacePropertyInfo spaceProperty : this._spaceProperties) {
-                if(!this._indexes.containsKey(spaceProperty.getName())){
+                Pattern pattern = Pattern.compile(".*\\+"+ spaceProperty.getName() + ".*|.*"+ spaceProperty.getName() +"\\+.*|"
+                        + spaceProperty.getName() +"\\..*|"+ spaceProperty.getName() +"\\[.*");
+                if(!this._indexes.containsKey(spaceProperty.getName()) &&
+                        this._indexes.keySet().stream().noneMatch(key -> pattern.matcher(key).matches())){
                     spaceProperty.setBinarySpaceProperty(true);
                 }
             }
