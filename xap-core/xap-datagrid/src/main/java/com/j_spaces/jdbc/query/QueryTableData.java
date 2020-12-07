@@ -262,6 +262,9 @@ public class QueryTableData implements Serializable {
                 rightTable.setJoinCondition(exp);
 
                 rightTable.setJoined(true);
+
+//            } else if (this.getJoinType() == Join.JoinType.LEFT) {
+//                setJoinCondition(exp);
             }
         }
 
@@ -341,7 +344,7 @@ public class QueryTableData implements Serializable {
         output.add("------");
 
         _logger.info(String.join("\n", output));
-        System.out.println(String.join("\n", output));
+//        System.out.println(String.join("\n", output));
 
     }
 
