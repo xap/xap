@@ -106,7 +106,7 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
 
     public QueryTemplatePacket(QueryTableData table, QueryResultTypeInternal queryResultType) {
         this._table = table;
-        super._typeName = table.getTableName();
+        super._typeName = table.getTypeDesc() == null ? table.getTableName() : table.getTypeDesc().getTypeName();
         this._queryResultType = queryResultType;
         init(table.getTypeDesc());
     }

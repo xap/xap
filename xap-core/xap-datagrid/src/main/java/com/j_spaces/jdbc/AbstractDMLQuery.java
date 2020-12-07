@@ -51,12 +51,7 @@ import java.io.ObjectOutput;
 import java.sql.BatchUpdateException;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -127,7 +122,7 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
         // Build subqueries recursivly, if any.
         for (QueryTableData tableData : getTablesData()) {
             Query subQuery = tableData.getSubQuery();
-            if (subQuery != null)
+            if (subQuery != null && !subQuery.containsSubQueries())
                 subQuery.build();
         }
         buildTemplates();
@@ -367,7 +362,7 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
      * Convert the expression tree to space queries in form of IEntryPacket templates
      */
     public void buildTemplates() throws SQLException {
-        _builder.traverseExpressionTree(expTree);
+        _builder.traverseExpressionTree(expTree, true);
     }
 
     public QueryTemplatePacket getTemplatePacketIfExists() {
@@ -762,5 +757,9 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
         _containsSubQueries = in.readBoolean();
         _projectionTemplate = IOUtils.readObject(in);
         //_explainPlan =IOUtils.readObject(in); not serializable
+    }
+
+    public IQueryExecutor getExecutor() {
+        return _executor;
     }
 }

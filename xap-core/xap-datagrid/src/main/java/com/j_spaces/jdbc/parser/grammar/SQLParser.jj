@@ -102,6 +102,8 @@ TOKEN [IGNORE_CASE]:  /* Keywords */
   | < END: "end" >
   | < FROM: "from" >
   | < GROUP: "group" >
+  | < HAVING: "having" >
+  | < LIMIT: "limit" >
   | < IN: "in" >
   | < IS: "is" >
   | < LIKE: "like" >
@@ -184,8 +186,9 @@ TOKEN [IGNORE_CASE]:  /* Keywords */
 
 TOKEN:  /* Identifiers */
 {
-    <IDENTIFIER: <LETTER> ( "." | "*" | "_" | "`" |<LETTER> | <DIGIT> )* >
-  | <ESC_IDENTIFIER: "`" <IDENTIFIER> "`" >
+    <IDENTIFIER: <LETTER> ( "." | "*" | "_" | "`" | <LETTER> | <DIGIT> )* >
+  | <ESC_IDENTIFIER: "`" <IDENTIFIER> "`" | <QUOTE> (<IDENTIFIER> | ":" | "$" | "(" | " " | ")")+ <QUOTE> >
+  | <IDENTIFIER_WITH_SPACES: <QUOTE> <LETTER> (" " <LETTER> | <LETTER>)* <QUOTE> >
   | < #LETTER: ["_","A"-"Z", "a"-"z"] >
   | < #DIGIT: ["0"-"9"] >
   | <RELATION: <LETTER> (<LETTER> | <DIGIT>)* ":" (<LETTER> | <DIGIT>)+ >
@@ -234,6 +237,7 @@ TOKEN:  /* Separators and operators */
   | < OPENBRAKET: "{" >
   | < CLOSEBRAKET: "}" >
   | < COLLECTION_CONTAINS: "[*]" >
+  | < QUOTE: "\"">
 
 }
 
@@ -266,15 +270,17 @@ SelectQuery selectSql():
 {
     ( <SELECT> {query = new SelectQuery();}
         [setQuantifier(query) ]
-		[<OPENPAREN>]
+//		[LOOKAHEAD(4) <OPENPAREN>]
         selectColumnList(query)
-        [<CLOSEPAREN>]
+//        [<CLOSEPAREN>]
          <FROM>
          selectTableList(query)
          [joins(query)]
          [<WHERE> exp = SqlExpression(query)]
          [groupBy(query)]
          [orderBy(query)]
+         [having(query)]
+         [limit(query)]
          [<FOR_UPDATE> { query.setForUpdate(true); }]
     )
     {
@@ -289,12 +295,12 @@ void joins(SelectQuery query):
     List<Join> joins = new ArrayList<Join>();
 }
 {
-    join = join() { joins.add(join); }
-    (join = join() { joins.add(join); })*
+    join = join(query) { joins.add(join); }
+    (join = join(query) { joins.add(join); })*
     { query.setJoins(joins); }
 }
 
-Join join():
+Join join(SelectQuery parentQuery):
 {
    Token type = null;
    SelectQuery query = null;
@@ -308,7 +314,7 @@ Join join():
      |
     col = id())
     ([<AS>] alias = id())?
-    <ON> exp = SqlExpression(query) /* maybe we should pass the parent here as well ? */
+    <ON> exp = SqlExpression(query == null ? parentQuery : query) /* maybe we should pass the parent here as well ? */
     { if(query != null){
          return new Join(getString(type), query, exp, getString(alias), null);
       }else{
@@ -637,16 +643,23 @@ void selectColumn(SelectQuery query):
   Token value = null;
   SelectColumn selectC = null;
   Token fname = null;
+  Token tableName = null;
+  Token alias = null;
   }
 {
-	 [LOOKAHEAD(2) id() "."]
+	 [LOOKAHEAD(2) tableName = id() "."]
      (
         LOOKAHEAD(2) (fname = id() selectC = getSelectColumnOrFunction(getString(fname), query)
      	|<ASTERISK>  { selectC = new SelectColumn("*");  }
      	| <UID> { selectC = new SelectColumn("UID");   }
  	    | value = <STRING_LITERAL> selectC = getSelectColumn(query) { selectC.setValue(value.image); }
+ 	    | value = <INTEGER_LITERAL> [<AS> alias = id()] {
+ 	        selectC = new ValueSelectColumn(getInteger(value));
+ 	        selectC.setAlias(getString(alias));
+ 	    }
  	    )
      	{  if ( selectC != null) {
+     	     selectC.setTableName(getString(tableName));
   	   	     query.addColumn(selectC);
   	   	  }
   	 	}
@@ -678,9 +691,17 @@ SelectColumn getSelectColumnOrFunction(String fname, AbstractDMLQuery query):
 FunctionCallColumn varArgFunctionCall(String fname):
 {
    List params = null;
+   Token token = null;
+   Class type = null;
 }
 {
-  <OPENPAREN> params = createFunctionParams() <CLOSEPAREN> { return new FunctionCallColumn(fname, params); }
+  LOOKAHEAD(3) <OPENPAREN> params = createFunctionParams() <CLOSEPAREN> { return new FunctionCallColumn(fname, params); }
+  | <OPENPAREN> [LOOKAHEAD(2) id() "."] token = id() <AS> type = sqlClass()  <CLOSEPAREN> {
+       params = new ArrayList();
+       params.add(getString(token));
+       params.add(type);
+  return new FunctionCallColumn(fname, params);
+  }
 }
 
 
@@ -694,7 +715,7 @@ SelectColumn getSelectColumn(AbstractDMLQuery query):
 
 }
 {
-    t = id()
+    (t = id()
     {
     	id = QueryProcessor.getDefaultConfig().isParserCaseSensitivity()? t.image : t.image.toUpperCase();
     }
@@ -714,6 +735,10 @@ SelectColumn getSelectColumn(AbstractDMLQuery query):
             return col;
         }
     }
+    | t = <INTEGER_LITERAL> {
+        return new SelectColumnRef(getInteger(t));
+    }
+    )
 }
 
 
@@ -770,9 +795,11 @@ void function(SelectQuery query):
 {Token token = null;
  SelectColumn selectC = null;
  String alias = null;
+ Token token2 = null;
  }
 {
-	(<SUM> { selectC = new SelectColumn(); selectC.setSum(true);selectC.setFunctionName(SqlConstants.SUM); query.setAggFunction(true); }
+(
+	((<SUM> { selectC = new SelectColumn(); selectC.setSum(true);selectC.setFunctionName(SqlConstants.SUM); query.setAggFunction(true); }
 	|<COUNT> { selectC = new SelectColumn(); selectC.setCount(true);selectC.setFunctionName(SqlConstants.COUNT); query.setAggFunction(true); }  
 	|<MAX> { selectC = new SelectColumn(); selectC.setFunctionName(SqlConstants.MAX); query.setAggFunction(true); }
 	|<MIN> { selectC = new SelectColumn(); selectC.setFunctionName(SqlConstants.MIN); query.setAggFunction(true);}
@@ -782,17 +809,57 @@ void function(SelectQuery query):
 	
 	<OPENPAREN>
 		(<ASTERISK> {selectC.setName("*"); query.addColumn(selectC);}
-		| (token = id()) { 
-			
+		| ([LOOKAHEAD(2) id() "."] token = id()) {
     	    String id = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? token.image : token.image.toUpperCase();
 
 			selectC.setName(id);
-			query.addColumn(selectC); })	
+			query.addColumn(selectC); }
+	    | selectC = createSums() {
+            query.addColumn(selectC);
+	    }
+
+			)
 	<CLOSEPAREN>
+	) | selectC = createSums() {
+    	    selectC = selectC;
+            query.addColumn(selectC);
+    	}
+)
 
 	// Optional Column-Alias
 	([< AS >] token = id() { selectC.setAlias(token.image); }	)?
 			
+}
+
+SumColumn createSums():
+{
+    Object param;
+    Token token1=null, token2=null, operator;
+    SumColumn sumCol;
+    SumColumn other;
+}
+{
+    ( LOOKAHEAD(4) <OPENPAREN> [LOOKAHEAD(2) id() "."] token1 = id() (operator = <PLUS> | operator = <MINUS>) [LOOKAHEAD(2) id() "."] token2 = id() <CLOSEPAREN> {
+        String id1 = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? token1.image : token1.image.toUpperCase();
+        String id2 = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? token2.image : token2.image.toUpperCase();
+        sumCol = new SumColumn(id1, id2, operator.image);
+         }
+    | LOOKAHEAD(4)<OPENPAREN> [LOOKAHEAD(2) id() "."] token1 = id() (operator = <PLUS> | operator = <MINUS>) other = createSums() <CLOSEPAREN> {
+        String id3 = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? token1.image : token1.image.toUpperCase();
+        sumCol = new SumColumn(id3, other, operator.image);
+    }
+    | LOOKAHEAD(4) <OPENPAREN> other = createSums() (operator = <PLUS> | operator = <MINUS>) ([LOOKAHEAD(2) id() "."] token1 = id() | token2 = <INTEGER_LITERAL>) <CLOSEPAREN> {
+        if (token2 != null) {
+            Integer num = getInteger(token2);
+            sumCol = new SumColumn(other, num, operator.image);
+        } else {
+            String id4 = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? token1.image : token1.image.toUpperCase();
+            sumCol = new SumColumn(other, id4, operator.image);
+        }
+
+    }
+    )
+     { return sumCol; }
 }
 /*
 
@@ -829,6 +896,7 @@ ColumnNode createColumnNode(AbstractDMLQuery query,String columnFunc):
  java.util.List params;
  Token number = null;
  Token op = null;
+ Token tableName = null;
  }
  {
     LOOKAHEAD(2) function = <IDENTIFIER> <OPENPAREN> params = createFunctionParams()  <CLOSEPAREN> {
@@ -855,9 +923,9 @@ ColumnNode createColumnNode(AbstractDMLQuery query,String columnFunc):
         columnNode.setFunctionCallDescription(new com.j_spaces.jdbc.builder.range.FunctionCallDescription(function.image, columnIndex, args));
         return columnNode;
     }
- 	|(t = id() {
+ 	|([LOOKAHEAD(2) tableName = id() "." ] t = id() {
     	 String id =  (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? t.image : t.image.toUpperCase();
-    	 columnNode = new ColumnNode(id);
+    	 columnNode = new ColumnNode(id, getString(tableName));
     })
 
     {return columnNode;}
@@ -903,7 +971,7 @@ void selectTableList(SelectQuery query):
   Token alias = null;
 }
 {
-    (table = classNameOrSelect()) [<AS>] [alias = id() ]
+    (table = classNameOrSelect()) [<AS>] [ (alias = id() | alias = idWithSpaces() ) ]
     {query.addTableWithAlias(table, ((alias == null) ? null : alias.image)); alias = null; }
     ("," (table = classNameOrSelect()) [<AS>] [ alias = id() ]
     {query.addTableWithAlias(table, ((alias == null) ? null : alias.image)); alias = null; })*
@@ -967,7 +1035,15 @@ ArrayList<LiteralNode> list = new ArrayList<LiteralNode>();}
     ) {negative="";} )*
     {insertQuery.setValues(list);}
 }
-
+void limit(SelectQuery query):
+{
+    Token limit;
+}
+{
+  <LIMIT>
+	limit = <INTEGER_LITERAL>
+  {	query.setLimit(getInteger(limit));}
+}
 void groupBy(SelectQuery query):
 {
  SelectColumn groupColumn = null;
@@ -1016,6 +1092,65 @@ void orderBy(SelectQuery query):
 	{query.setOrderColumns(list);}
 }
 
+ColumnNode createHavingColumnNode():
+{
+ String table = null;
+ String columnName = null;
+ ColumnNode columnNode = null;
+ Token t, function = null;
+ java.util.List params;
+ Token number = null;
+ Token op = null;
+ Token tableName = null;
+ }
+ {
+    function = <COUNT> <OPENPAREN> params = createFunctionParams()  <CLOSEPAREN> {
+        java.util.List args = new java.util.ArrayList();
+        int pos = 0;
+        int columnIndex = 0;
+        for(Object p : params){
+            if(p instanceof ColumnNode){
+               if(columnNode == null){
+                   args.add(null);
+                   columnNode = (ColumnNode)p;
+                   columnIndex = pos;
+               }else{
+                   throw new ParseException("More then one column in function call " + function.image + " call " + columnNode + " " + p);
+               }
+            } else if (p instanceof Integer) {
+                args.add(p);
+                columnNode = new ValueColumnNode(p);
+                columnIndex = pos;
+            }else{
+                args.add(p);
+            }
+            pos += 1;
+        }
+        if(columnNode == null){
+            throw new ParseException("Missing column in function call " + function.image);
+        }
+        columnNode.setFunctionCallDescription(new com.j_spaces.jdbc.builder.range.FunctionCallDescription(function.image, columnIndex, args));
+        return columnNode;
+    }
+}
+
+void having(SelectQuery query):
+{
+ ExpNode expNode;
+ ColumnNode columnNode1;
+}
+{
+	<HAVING> [LOOKAHEAD(2) <OPENPAREN>] columnNode1 = createHavingColumnNode()
+	(
+              	expNode = containsNode(query,columnNode1)
+              | expNode = isNullNode(query,columnNode1)
+        	  | expNode = betweenNode(query,columnNode1)
+              | expNode = conditionNode(query,columnNode1)
+              | expNode = relationNode(query, columnNode1)
+
+             ) [ LOOKAHEAD(2) <CLOSEPAREN> ] { query.setHavingNode(expNode); }
+}
+
 
 OrderColumn createOrderColumn(AbstractDMLQuery query):
 {
@@ -1025,7 +1160,7 @@ OrderColumn createOrderColumn(AbstractDMLQuery query):
   String alias = null;
 }
 {    
-    t = id() 
+    (t = id()
     {
     	id = QueryProcessor.getDefaultConfig().isParserCaseSensitivity()? t.image : t.image.toUpperCase();         
     }
@@ -1035,7 +1170,11 @@ OrderColumn createOrderColumn(AbstractDMLQuery query):
 	
     {
        	return new OrderColumn(id, alias);       	
-    } 
+    }
+    | t = <INTEGER_LITERAL> {
+        return new OrderColumnRef(getInteger(t));
+    }
+    )
 }
 ExpNode SqlExpression(AbstractDMLQuery query):
 {
@@ -1256,6 +1395,45 @@ String sqlType() :
 	}
 }
 
+Class sqlClass() :
+{ Token param, param2=null;}
+{
+	try {
+		(<VARCHAR> | <VARCHAR2>) [<OPENPAREN> <INTEGER_LITERAL> <CLOSEPAREN>]{ return String.class; }
+		| <CHAR> [<OPENPAREN> <INTEGER_LITERAL> <CLOSEPAREN>]{ return String.class; }
+		| <DATE> { return Date.class; }
+		| <DATETIME> { return Timestamp.class; }
+		| <NUMBER> <OPENPAREN> param = <INTEGER_LITERAL> ["," param2 = <INTEGER_LITERAL>] <CLOSEPAREN>
+			{ if (param2 != null && !param2.image.equals("0"))
+				return double.class;
+			  int p = Integer.parseInt(param.image);
+			  if (p < 10)
+			  	return int.class;
+			  else
+			  	return long.class;
+			}
+		| <TIME> { return Time.class; }
+		| <FLOAT> [<OPENPAREN> <INTEGER_LITERAL> <CLOSEPAREN>]{ return float.class; }
+		| <REAL> [<OPENPAREN> <INTEGER_LITERAL> <CLOSEPAREN>]{ return float.class; }
+		| <DOUBLE> { return double.class; }
+		| <BOOLEAN> { return boolean.class;}
+		| (<INTEGER> | <INT>) { return int.class; }
+		| <LONG> { return long.class; }
+		| <BLOB> { return Blob.class; }
+		| <CLOB> { return Clob.class; }
+	    | <TIMESTAMP> { return Timestamp.class; }
+	    | <DECIMAL> { return BigDecimal.class; }
+	    | <NUMERIC> { return BigDecimal.class; }
+	    | <LONGVARCHAR> { return String.class; }
+	    | <TINYINT> { return byte.class; }
+	    | <SMALLINT> { return short.class; }
+	    | <BIGINT> { return long.class; }
+		| <BIT> [<OPENPAREN> <INTEGER_LITERAL> <CLOSEPAREN>]{ return String.class; }
+	} catch (ParseException p) {
+		throw new ParseException("unknown sql data type");
+	}
+}
+
 Token id() :
 { Token id = null;
 }
@@ -1267,11 +1445,14 @@ Token id() :
      	id.image=idStr;
      	return id;
 	}
-
-  
-      
 }
+Token idWithSpaces() :
+{ Token id = null;
+}
+{
+ 	(id= <IDENTIFIER_WITH_SPACES> ) { return id; }
 
+}
 
 
 //handle one condition, and add it to the Query object

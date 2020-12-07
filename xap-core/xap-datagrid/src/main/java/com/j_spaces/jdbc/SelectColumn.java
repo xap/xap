@@ -48,6 +48,13 @@ public class SelectColumn implements Externalizable {
     private QueryColumnData _columnData;
     private boolean _isDynamic;
 
+    private String tableName;
+
+    public SelectColumn setTableName(String tableName) {
+        this.tableName = tableName;
+        return this;
+    }
+
     public SelectColumn() {
         _isDynamic = false;
     }
@@ -75,7 +82,7 @@ public class SelectColumn implements Externalizable {
     }
 
     public void createColumnData(AbstractDMLQuery query) throws SQLException {
-        _columnData = QueryColumnData.newColumnData(name, query);
+        _columnData = QueryColumnData.newColumnData(tableName == null ? name : tableName +"."+name, query);
         // Assign the column's name (including path for nested properties)
         name = _columnData.getColumnPath();
     }

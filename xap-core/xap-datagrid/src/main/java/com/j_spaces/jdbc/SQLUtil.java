@@ -28,6 +28,7 @@ import com.gigaspaces.metadata.SpacePropertyDescriptor;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.UnknownTypeException;
 import com.j_spaces.core.admin.IRemoteJSpaceAdmin;
+import com.j_spaces.core.admin.SpaceRuntimeInfo;
 import com.j_spaces.jdbc.driver.Blob;
 import com.j_spaces.jdbc.driver.Clob;
 import com.j_spaces.jdbc.query.QueryColumnData;
@@ -40,7 +41,7 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * SQLUtil defines utility methods for the SQL query classes
@@ -136,6 +137,10 @@ public class SQLUtil {
 
     public static Object getFieldValue(IEntryPacket entry,
                                        QueryColumnData columnData) {
+        if (entry == null && columnData.getColumnTableData().getJoinType() == Join.JoinType.LEFT) {
+            return null;
+        }
+
 
         if (columnData.isNestedQueryColumn())
             return SQLUtil.getFieldValue(entry, entry.getTypeDescriptor(), columnData.getColumnPath());
@@ -168,7 +173,11 @@ public class SQLUtil {
     public static ITypeDesc checkTableExistence(String tableName, IJSpace space)
             throws SQLException {
         try {
-            return ((ISpaceProxy) space).getDirectProxy().getTypeManager().getTypeDescByName(tableName);
+            ITypeDesc typeDesc = getTypeDesc(space, tableName);
+            if (typeDesc == null) {
+                throw new SQLException("Table [" + tableName + "] does not exist", "GSP", -105);
+            }
+            return typeDesc;
         } catch (SpaceMetadataException ex) {
             if (ex.getCause() instanceof UnknownTypeException)
                 throw new SQLException("Table [" + tableName + "] does not exist", "GSP", -105);
@@ -177,6 +186,46 @@ public class SQLUtil {
         }
     }
 
+
+    protected static List<String> findSpaceRegisteredTypes(IJSpace ijSpace) {
+        try {
+            IRemoteJSpaceAdmin admin = (IRemoteJSpaceAdmin) ijSpace.getAdmin();
+            SpaceRuntimeInfo runtimeInfo = admin.getRuntimeInfo();
+            return runtimeInfo.m_ClassNames;
+        } catch (Throwable e) {
+            throw new RuntimeException("Unable to find space registered types", e);
+        }
+    }
+
+    protected static ITypeDesc getTypeDesc(IJSpace space, String tableName) {
+        List<String> spaceTypes = findSpaceRegisteredTypes(space);
+        String shortTableName = trimPackage(tableName);
+        for (Map.Entry<String, List<String>> entry : mapByShortName(spaceTypes).entrySet()) {
+            for (String spaceTypeName : entry.getValue()) {
+                if ("java.lang.Object".equals(spaceTypeName)) {
+                    continue;
+                }
+                if (tableName.equals(spaceTypeName) || shortTableName.equals(entry.getKey())) {
+                    return space.getDirectProxy().getTypeManager().getTypeDescByName(spaceTypeName);
+                }
+            }
+        }
+
+         return null;
+    }
+    private static Map<String, List<String>> mapByShortName(List<String> spaceTypes) {
+        Map<String, List<String>> result = new HashMap<>();
+        for (String spaceType : spaceTypes) {
+            String shortName = trimPackage(spaceType);
+            if (!result.containsKey(shortName))
+                result.put(shortName, new ArrayList<String>());
+            result.get(shortName).add(spaceType);
+        }
+        return result;
+    }
+    public static String trimPackage(String className) {
+        return className.substring(className.lastIndexOf(".") + 1, className.length());
+    }
     /**
      * Converts an input stream to a byte array
      *

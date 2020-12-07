@@ -120,7 +120,7 @@ public class ProjectionTemplate extends AbstractProjectionTemplate {
         HashSet<String> existing = null;
 
         for (String projection : projections) {
-            int fixedPropertyPosition = typeDesc.getFixedPropertyPosition(projection);
+            int fixedPropertyPosition = typeDesc != null ? typeDesc.getFixedPropertyPosition(projection) : TypeDesc.NO_SUCH_PROPERTY;
             if (fixedPropertyPosition != TypeDesc.NO_SUCH_PROPERTY) {
                 if (fixedIndexes == null)
                     fixedIndexes = CollectionsFactory.getInstance().createIntegerSet(projections.length);

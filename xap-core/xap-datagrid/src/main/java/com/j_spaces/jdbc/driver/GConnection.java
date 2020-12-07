@@ -690,7 +690,7 @@ public class GConnection implements Connection {
     }
 
     public boolean isValid(int timeout) throws SQLException {
-        throw new UnsupportedOperationException();
+        return true;
     }
 
     public boolean isWrapperFor(Class<?> iface) throws SQLException {

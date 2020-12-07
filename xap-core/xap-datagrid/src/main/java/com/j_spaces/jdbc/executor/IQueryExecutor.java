@@ -111,6 +111,7 @@ public interface IQueryExecutor extends Externalizable {
      *
      * @return the results according to the group by clause
      */
+    public IQueryResultSet<IEntryPacket> groupByAndKeepOrder(IQueryResultSet<IEntryPacket> entries, List<SelectColumn> groupColumns, List<OrderColumn> orderColumns, int limit) throws SQLException;
     public IQueryResultSet<IEntryPacket> groupBy(IQueryResultSet<IEntryPacket> entries, List<SelectColumn> groupColumns) throws SQLException;
 
     /**
@@ -140,5 +141,9 @@ public interface IQueryExecutor extends Externalizable {
      * ordering.
      */
     public ResultEntry convertEntriesToResultArrays(IQueryResultSet<IEntryPacket> _entries);
+
+    default IQueryResultSet<IEntryPacket> flattenEntryPackets(IQueryResultSet<IEntryPacket> _entries){
+        throw new UnsupportedOperationException();
+    }
 
 }

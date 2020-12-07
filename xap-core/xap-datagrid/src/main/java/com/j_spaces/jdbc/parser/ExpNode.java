@@ -19,6 +19,7 @@ package com.j_spaces.jdbc.parser;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.j_spaces.jdbc.Join;
 import com.j_spaces.jdbc.Stack;
 import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
@@ -253,13 +254,19 @@ public abstract class ExpNode
 
         if (leftTable.equals(tableData)) {
             if (isJoined()) {
-                tableData.join(this);
+                tableData.joinRight(this);
             } else {
                 // create a filter condition
                 if (getTemplate() != null
                         && tableData.getTableCondition() == null) {
                     tableData.setTableCondition(this);
                 }
+            }
+        } else if (isJoined()) {
+            QueryTableData rightTable = ((ColumnNode) getRightChild()).getColumnData()
+                    .getColumnTableData();
+            if (rightTable.equals(tableData)) {
+                tableData.joinLeft(this);
             }
         }
         return false;

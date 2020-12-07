@@ -94,6 +94,32 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
     private boolean isSelectAll;
     private List<Join> joins;
     private boolean allowedToUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.allowCollocatedJoin", "true"));
+    private boolean flattenResults;
+
+    private static final boolean forceUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.forceCollocatedJoin", "true"));
+    public static final boolean pushDownPredicatesToSpace = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.pushDownToSpace", "true"));
+
+    private int limit;
+    protected ExpNode havingNode = null;
+
+    public SelectQuery setHavingNode(ExpNode havingNode) {
+        this.havingNode = havingNode;
+        return this;
+    }
+
+    public List<Join> getJoins() {
+        return joins;
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    public SelectQuery setLimit(int limit) {
+        this.limit = limit;
+        this.rownum = new RowNumNode(0, limit);
+        return this;
+    }
 
     public SelectQuery() {
         super();
@@ -158,6 +184,8 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
      * Execute the query
      */
     public ResponsePacket executeOnSpace(ISpaceProxy space, Transaction txn) throws SQLException {
+        //TODO iter.remove when max is defined
+
         IQueryResultSet<IEntryPacket> entries = null;
         ResponsePacket packet = new ResponsePacket();
         try {
@@ -176,7 +204,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
             // prepare - bind the query parameters            
             prepare(space, txn);
 
-            if (useAggregationApi(txn))
+//            if (useAggregationApi(txn))
                 createProjectionTemplate();
             /***************** Read the entries ****************/
 
@@ -189,10 +217,8 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
             // No where clause
 
             if (isJoined()) {
-                boolean collJoin = allowedToUseCollocatedJoin && isCollocatedJoin();
-                if (_logger.isDebugEnabled()) {
-                    _logger.debug("Query will run as {}", (collJoin ? "collocated join" : "regular join"));
-                }
+                boolean collJoin = forceUseCollocatedJoin || (allowedToUseCollocatedJoin && isCollocatedJoin());
+                _logger.info("Query will run as {}", (collJoin ? "collocated join" : "regular join"));
                 for (QueryTableData tablesDatum : getTablesData()) {
                     if (tablesDatum.getSubQuery() != null && tablesDatum.getSubQuery() instanceof SelectQuery) {
                         ((SelectQuery) tablesDatum.getSubQuery()).allowedToUseCollocatedJoin(collJoin);
@@ -212,7 +238,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
                     _aggregationSet = AggregationsUtil.createAggregationSet(this, getRownumLimit());
                 }
 
-                entries = executeEmptyQuery(space, txn, entries);
+                entries = executeEmptyQuery(space, txn);
 
             } else {// select with expression
                 _executor = new QueryExecutor(this);
@@ -292,7 +318,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
             }
 
             //Handle rownum
-            filterByRownum(entries);
+            entries = filterByRownumWithReturn(entries, limit);
 
 
             prepareResult(packet, entries);
@@ -310,24 +336,25 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
     }
 
     public boolean isCollocatedJoin() {
+        List<String> refTableNames = Optional.ofNullable(System.getProperty("com.gs.jdbc.refTableNames", null)).map(x -> Arrays.asList(x.split(","))).orElse(Collections.emptyList());
         if (joins == null || joins.size() == 0) return false;
 
-        if (isAllReplicatedTable()) return true;
+        if (isAllRefTable(refTableNames)) return true;
 
-        if (isMaxOneShardedTable()) return true;
+        if (isMaxOneShardedTable(refTableNames)) return true;
 
-        return isJoinOnRouting();
+        return isJoinOnRouting(refTableNames);
     }
 
-    private boolean isMaxOneShardedTable() {
+    private boolean isMaxOneShardedTable(List<String> refTables) {
         List<QueryTableData> shardedTables = new ArrayList<>();
 
         for (QueryTableData tablesDatum : getTablesData()) {
             if (tablesDatum.getSubQuery() == null) {
-                if (!tablesDatum.isBroadcastTable())
-                    shardedTables.add(tablesDatum); //regular table not in replicatedTables => add to list
+                if (!refTables.contains(tablesDatum.getTableName()))
+                    shardedTables.add(tablesDatum); //regular table not in refTables => add to list
             } else if (tablesDatum.getSubQuery() instanceof SelectQuery) {
-                if (!((SelectQuery) tablesDatum.getSubQuery()).isAllReplicatedTable())
+                if (!((SelectQuery) tablesDatum.getSubQuery()).isAllRefTable(refTables))
                     shardedTables.add(tablesDatum); // subQuery that not all is RefTable => add to list
             } else {
                 if (_logger.isDebugEnabled())
@@ -339,28 +366,32 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
         return shardedTables.size() <= 1;
     }
 
-    private boolean isAllReplicatedTable() {
+    private boolean isAllRefTable(List<String> refTables) {
         for (QueryTableData tablesDatum : getTablesData()) {
             if (tablesDatum.getSubQuery() == null) { //regular table with name
-                if (!tablesDatum.isBroadcastTable()) return false; //table is not replicated table
+                if (!refTables.contains(tablesDatum.getTableName())) return false; //table is not refTable
             } else if (tablesDatum.getSubQuery() instanceof SelectQuery) {
-                if (!((SelectQuery) tablesDatum.getSubQuery()).isAllReplicatedTable())
+                if (!((SelectQuery) tablesDatum.getSubQuery()).isAllRefTable(refTables))
                     return false; //recursively check subQuery
             } else {
                 if (_logger.isDebugEnabled())
-                    _logger.debug("Could not check for replicated table as subQuery is not of type SelectQuery: " + tablesDatum.toString());
+                    _logger.debug("Could not check for refTable as subQuery is not of type SelectQuery: " + tablesDatum.toString());
                 return false;
             }
         }
         return true;
     }
 
-    private boolean isJoinOnRouting() {
-        if (joins == null) return isJoinOnRouting(this.expTree);
+    private boolean isJoinOnRouting(List<String> refTableNames) {
+        if (joins == null) return isJoinOnRouting(this.expTree, refTableNames);
+
         for (Join join : joins) {
             Query subQuery = join.getSubQuery();
             if (subQuery == null) {
-                return isJoinOnRouting(join.getOnExpression());
+                if (!refTableNames.contains(join.getTableName())) { // if not ref table
+                    if (!isJoinOnRouting(join.getOnExpression(), refTableNames))
+                        return false; // if ON is not on routing key
+                }
             } else if (subQuery instanceof SelectQuery) {
                 SelectQuery selectSubQuery = (SelectQuery) subQuery;
                 if (!selectSubQuery.isCollocatedJoin()) return false;
@@ -373,9 +404,9 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
         return true;
     }
 
-    private boolean isJoinOnRouting(ExpNode expNode) {
+    private boolean isJoinOnRouting(ExpNode expNode, List<String> refTableNames) {
         if (expNode instanceof AndNode) {
-            return isJoinOnRouting(expNode.getRightChild()) || isJoinOnRouting(expNode.getLeftChild());
+            return isJoinOnRouting(expNode.getRightChild(), refTableNames) || isJoinOnRouting(expNode.getLeftChild(), refTableNames);
         } else if (expNode instanceof EqualNode) {
             ExpNode left = expNode.getLeftChild();
             ExpNode right = expNode.getRightChild();
@@ -432,10 +463,12 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
 
                 boolean isLeftNodeJoinOnRouting = leftNodeJoinOn.equals(leftNodeTypeDesc.getRoutingPropertyName());
                 boolean isRightNodeJoinOnRouting = rightNodeJoinOn.equals(rightNodeTypeDesc.getRoutingPropertyName());
-                return isLeftNodeJoinOnRouting && isRightNodeJoinOnRouting;
+                if (isLeftNodeJoinOnRouting && isRightNodeJoinOnRouting) return true;
+                if (refTableNames.contains(leftNodeTypeDesc.getTypeName()) || refTableNames.contains(rightNodeTypeDesc.getTypeName())) return true;
+                return false;
             } else {
                 if (_logger.isDebugEnabled())
-                    _logger.debug("Unable to detect if join is on routing - Unsupported left and right nodes types [{}, {}]",left.getClass().getName(), right.getClass().getName());
+                    _logger.debug("Unable to detect if join is on routing - Unsupported left and right nodes types [{}, {}]", left.getClass().getName(), right.getClass().getName());
                 return false;
             }
         } else {
@@ -483,7 +516,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
             }
             packet.setResultEntry(result);
         } else {
-            packet.setResultSet(entries);
+            packet.setResultSet(flattenResults ? _executor.flattenEntryPackets(entries) : entries);
         }
     }
 
@@ -609,6 +642,15 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
         return getQueryColumns().get(0).getAlias();
     }
 
+    private boolean allIsNull(IEntryPacket entry) {
+        for (Object fieldValue : entry.getFieldValues()) {
+            if (fieldValue != null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Build result object from aggregation
      */
@@ -616,14 +658,22 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
         int i = 0;
         String[] fieldNames = null;
         Object[][] fieldValues = null;
+        int resultRows = entries.size();
+        if (havingNode != null) {
+            for (IEntryPacket packet : entries) {
+                if (allIsNull(packet)) resultRows--;
+            }
+        }
+
         for (IEntryPacket packet : entries) {
             QueryEntryPacket entry = (QueryEntryPacket) packet;
 
             if (fieldNames == null) {
                 fieldNames = entry.getFieldNames();
-                fieldValues = new Object[entries.size()][fieldNames.length];
+                fieldValues = new Object[resultRows][fieldNames.length];
             }
 
+            if (havingNode != null && allIsNull(entry)) continue;
             fieldValues[i++] = entry.getFieldValues();
 
         }
@@ -772,7 +822,10 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
         query.setContainsSubQueries(this.containsSubQueries());
         query.isSelectAll = this.isSelectAll;
         query.joins = this.joins;
+        query.limit = this.limit;
         query.allowedToUseCollocatedJoin = this.allowedToUseCollocatedJoin;
+        query.flattenResults = this.flattenResults;
+        query.havingNode = this.havingNode;
 
         int numOfColumns = 0;
         for (SelectColumn col : this.getQueryColumns()) {
@@ -793,6 +846,39 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
         if (this.getExpTree() != null)
             query.setExpTree((ExpNode) this.getExpTree().clone()); //clone all the tree.
         return query;
+    }
+
+    @Override
+    public void buildTemplates() throws SQLException {
+
+        if (pushDownPredicatesToSpace) {
+            getTablesData().forEach(td -> {
+                try {
+//                    if (td.getSubQuery() != null && !td.getSubQuery().containsSubQueries()) {
+//                        ((SelectQuery) td.getSubQuery()).buildTemplates();
+//                    }
+                    if (td.getExpTree() != null)
+                        getBuilder().traverseExpressionTree(td.getExpTree(), false);
+                    if (td.getTableCondition() != null)
+                        getBuilder().traverseExpressionTree(td.getTableCondition(), false);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+        super.buildTemplates();
+    }
+
+    public IQueryResultSet<IEntryPacket> filterByRownumWithReturn(IQueryResultSet<IEntryPacket> entries, int limit) {
+        if (limit == 0) {
+            super.filterByRownum(entries);
+            return entries;
+        } else {
+            if (entries.size() <= limit) return entries;
+
+            LinkedList<IEntryPacket> linkedList = new LinkedList<>(entries);
+            return entries.newResultSet(linkedList.subList(0, limit));
+        }
     }
 
     /**
@@ -854,6 +940,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
         }
 
         applyJoinsIfNeeded();
+        pushDownSubQuery();
 
         super.validateQuery(space);
 
@@ -879,19 +966,79 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
         validateCommonJavaTypeOnDocumentOrStringReturnProperties();
     }
 
+    private void pushDownSubQuery() {
+        if (!pushDownPredicatesToSpace) return;
+
+        if (getTablesData().size() == 1 && getTablesData().get(0).getSubQuery() != null) {
+            SelectQuery subQuery = ((SelectQuery) getTablesData().get(0).getSubQuery());
+            ExpNode subQueryExpTree = subQuery.getExpTree();
+            ExpNode thisExpTree = this.getExpTree();
+            if(subQueryExpTree == null && thisExpTree != null) {
+                thisExpTree.traverse((x) -> {
+                    if (x instanceof ColumnNode) {
+                        ColumnNode cn = ((ColumnNode) x);
+                        String tableName = getTablesData().get(0).getTableName();
+                        if (cn.getName().startsWith(tableName+".")) {
+                            cn.setName(cn.getName().substring(tableName.length() + 1));
+                        }
+                        if (cn.getTableName().equals(tableName)) {
+                            cn.setTableName(null);
+                        }
+                    }
+                });
+                subQuery.setExpTree(thisExpTree);
+                setExpTree(null);
+            } else if (subQueryExpTree != null && thisExpTree != null) {
+                subQuery.setExpTree(new AndNode(thisExpTree, subQueryExpTree));
+                setExpTree(null);
+            }
+        }
+    }
+
+
     private void applyJoinsIfNeeded() throws SQLException {
+        _logger.info(">>applyJoinsIfNeeded pushDownPredicatesToSpace="+pushDownPredicatesToSpace);
         if (joins != null) {
+            if (pushDownPredicatesToSpace) {
+                getTableData().setTableCondition(getExpTree());
+            }
             for (Join join : joins) {
                 QueryTableData table = addTableWithAlias(join.getTableName(), join.getAlias());
                 table.setJoinType(join.getJoinType());
                 if (join.getSubQuery() != null) {
                     table.setSubQuery(join.getSubQuery());
                 }
-                setExpTree(join.applyOnExpression(getExpTree()));
+                if (pushDownPredicatesToSpace) {
+                    AndNode tableCondition = extractTableCondition(join.getOnExpression());
+                    if (tableCondition != null) {
+                        table.setTableCondition(tableCondition.getLeftChild());
+                        table.setExpTree(join.getOnExpression());
+                        setExpTree(join.applyOnExpression(getExpTree()));
+                    } else {
+                        throw new SQLException("Unsupported join condition when using 'pushDownToSpace' property");
+                    }
+                } else {
+                    setExpTree(join.applyOnExpression(getExpTree()));
+                }
             }
         }
     }
 
+    private AndNode extractTableCondition(ExpNode onExpression) {
+        //left is table, right is join
+        if (onExpression instanceof AndNode) {
+            AndNode root = ((AndNode) onExpression);
+            if (root.getLeftChild() instanceof EqualNode && root.getLeftChild().getLeftChild() instanceof ColumnNode && root.getLeftChild().getRightChild() instanceof ColumnNode) {
+                return new AndNode(root.getRightChild(), root.getLeftChild());
+            }
+            if (root.getRightChild() instanceof EqualNode && root.getRightChild().getLeftChild() instanceof ColumnNode && root.getRightChild().getRightChild() instanceof ColumnNode) {
+                return new AndNode(root.getLeftChild(), root.getRightChild());
+            }
+        } else if (onExpression instanceof EqualNode && onExpression.getLeftChild() instanceof ColumnNode && onExpression.getRightChild() instanceof ColumnNode) {
+            return new AndNode(null, onExpression);
+        }
+        return null;
+    }
     private void validateCommonJavaTypeOnDocumentOrStringReturnProperties() {
         if (Modifiers.contains(getReadModifier(), Modifiers.RETURN_STRING_PROPERTIES) || (Modifiers.contains(getReadModifier(), Modifiers.RETURN_DOCUMENT_PROPERTIES))) {
             if (isOrderBy()) {
@@ -984,6 +1131,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
         for (int i = 0; i < getQueryColumns().size(); i++) {
             SelectColumn sc = getQueryColumns().get(i);
 
+            if (sc instanceof ValueSelectColumn) continue;
             sc.createColumnData(this);
 
 
@@ -1015,6 +1163,29 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
 
         }
 
+        if (getGroupColumn() != null) {
+            for (int i = 0; i < getGroupColumn().size(); i++) {
+                SelectColumn sc = getGroupColumn().get(i);
+                if (!(sc instanceof SelectColumnRef)) continue;
+
+                getGroupColumn().set(i, getQueryColumns().get(((SelectColumnRef) sc).getRefIndex() - 1));
+            }
+        }
+
+        if (getOrderColumns() != null) {
+            for (int i = 0; i < getOrderColumns().size(); i++) {
+                SelectColumn sc = getOrderColumns().get(i);
+                if (!(sc instanceof OrderColumnRef)) continue;
+
+                SelectColumn matchSelectCol = getQueryColumns().get(((OrderColumnRef) sc).getRefIndex() - 1);
+
+                OrderColumn newOrderCol = new OrderColumn(matchSelectCol.hasAlias() ? matchSelectCol.getAlias() : matchSelectCol.getName(), null);
+                newOrderCol.setDesc(((OrderColumnRef) sc).isDesc());
+                newOrderCol.setNullsLast(((OrderColumnRef) sc).areNullsLast());
+                getOrderColumns().set(i, newOrderCol);
+            }
+        }
+
         addAbsentColumns();
     }
 
@@ -1022,6 +1193,10 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
      * Add all columns of given table
      */
     private List<SelectColumn> getWildcardColumns(QueryTableData queryTableData) throws SQLException {
+        if (queryTableData.getSubQuery() != null) {
+            return ((SelectQuery) queryTableData.getSubQuery()).getQueryColumns();
+        }
+
         ITypeDesc info = queryTableData.getTypeDesc();
         if (info == null)
             return Collections.emptyList();
@@ -1049,7 +1224,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
                     while (iter.hasNext()) {
                         SelectColumn col = iter.next();
 
-                        if (col.getColumnData().getColumnName() != null && col.getColumnData().getColumnName().equals(info.getFixedProperty(c).getName())) {
+                        if ((!(col instanceof SumColumn || col instanceof ValueSelectColumn)) && col.getColumnData().getColumnName() != null && col.getColumnData().getColumnName().equals(info.getFixedProperty(c).getName())) {
                             found = true;
                             break;
                         }
@@ -1062,6 +1237,11 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
                     }
                 }
             }
+            else if(tableData.getSubQuery() != null){
+                //TODO consider treating this
+            }
+            else
+                throw  new IllegalStateException("NO table name and no sub query");
         }
     }
 
@@ -1103,16 +1283,29 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
     /**
      * Executes a select query without a where clause from one table
      */
-    private IQueryResultSet<IEntryPacket> executeEmptyQuery(ISpaceProxy space, Transaction txn, IQueryResultSet<IEntryPacket> entries) throws Exception {
+    private IQueryResultSet<IEntryPacket> executeEmptyQuery(ISpaceProxy space, Transaction txn) throws Exception {
         // no where clause and no join. read everything
         int size = getEntriesLimit();
 
+        QueryTableData tableData = getTableData();
+        if(tableData.getSubQuery() != null){
+            IQueryResultSet<IEntryPacket> subResult = tableData.executeSubQuery(space, txn, true);
+            if (isGroupBy()) {
+                subResult = groupBy(subResult);
+            } else if (isAggFunction()) // Handle aggregation
+            {
+                subResult = aggregate(subResult);
+            }
 
-        QueryTemplatePacket template = new QueryTemplatePacket(getTableData(), _queryResultType);
+            if(isOrderBy())
+                orderBy(subResult);
+            return subResult;
+        }
+        QueryTemplatePacket template = new QueryTemplatePacket(tableData, _queryResultType);
 
         //  Handle notify queries
         if (isBuildOnly()) {
-            entries = new ArrayListResult();
+            IQueryResultSet<IEntryPacket> entries = new ArrayListResult();
             entries.add(template);
 
             return entries;
@@ -1175,7 +1368,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
         for (SelectColumn col : getQueryColumns()) {
 
             if (col.isVisible()) {
-                if (isProjected)
+                if (isProjected || col instanceof ValueSelectColumn || col instanceof SumColumn)
                     col.setProjectedIndex(projIndex++);
                 else
                     col.setProjectedIndex(col.getColumnIndexInTable());
@@ -1201,13 +1394,17 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
 
     private void createProjectionTemplate() {
 
-        if (_projectionTemplate != null || !isConvertResultToArray() || isSelectAll)
+        if (_projectionTemplate != null  || isSelectAll)
             return;
 
         ArrayList<String> projectedProperties = new ArrayList<String>(getQueryColumns().size());
         for (SelectColumn col : getQueryColumns()) {
             if (col.isVisible() && !col.isAllColumns()) {
-                projectedProperties.add(col.getName());
+                if (col instanceof SumColumn) {
+                    projectedProperties.addAll(((SumColumn) col).getColumnNames());
+                } else {
+                    projectedProperties.add(col.getName());
+                }
             }
         }
 
@@ -1306,6 +1503,14 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
     }
     private void allowedToUseCollocatedJoin(boolean allowedToUseCollocatedJoin) {
         this.allowedToUseCollocatedJoin = allowedToUseCollocatedJoin;
+    }
+
+    public boolean isFlattenResults() {
+        return flattenResults;
+    }
+
+    public void setFlattenResults(boolean flattenResults) {
+        this.flattenResults = flattenResults;
     }
 
     @Override

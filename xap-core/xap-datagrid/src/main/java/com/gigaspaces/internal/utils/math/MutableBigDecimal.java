@@ -48,6 +48,13 @@ public class MutableBigDecimal extends MutableNumber {
     }
 
     @Override
+    public void remove(Number x) {
+        if (x == null)
+            return;
+        value = value == null ? (BigDecimal) x : value.add(((BigDecimal) x).negate());
+    }
+
+    @Override
     public Number calcDivision(long count) {
         return value.divide(BigDecimal.valueOf(count));
     }

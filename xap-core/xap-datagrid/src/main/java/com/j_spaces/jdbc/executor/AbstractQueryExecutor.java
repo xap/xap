@@ -295,6 +295,70 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
      *
      * @return IQuery result set
      */
+    public IQueryResultSet<IEntryPacket> groupByAndKeepOrder(IQueryResultSet<IEntryPacket> entries, List<SelectColumn> groupColumns, List<OrderColumn> orderColumns, int limit) throws SQLException {
+        IQueryResultSet<IEntryPacket> currGroup = null;
+        IEntryPacket currRow = null, prevRow = null;
+        int rc;
+
+        Comparator comparator = getGroupByComparator(entries, groupColumns);
+        Collections.sort((List<IEntryPacket>) entries, comparator);
+
+        Iterator<IEntryPacket> iter = entries.iterator();
+        List<IQueryResultSet<IEntryPacket>> groupList = new ArrayList<IQueryResultSet<IEntryPacket>>();
+        for (int i = 0; i < entries.size(); i++) {
+            prevRow = currRow;
+            currRow = iter.next();
+            rc = comparator.compare(prevRow, currRow);
+
+            if (rc != 0) {
+                currGroup = entries.newResultSet();
+                groupList.add(currGroup);
+                currGroup.add(currRow);
+            } else {
+                currGroup.add(currRow);
+            }
+        }
+
+        groupList.sort((o1, o2) -> {
+            int rc1 = 0;
+            IEntryPacket oo1 = o1.iterator().next();
+            IEntryPacket oo2 = o2.iterator().next();
+
+            for (int i = 0; i < orderColumns.size(); i++) {
+                OrderColumn orderCol = orderColumns.get(i);
+
+                Comparable c1 = (Comparable) orderCol.getFieldValue(oo1);
+                Comparable c2 = (Comparable) orderCol.getFieldValue(oo2);
+
+                if (c1 == c2)
+                    continue;
+
+                if (c1 == null)
+                    return -1;
+
+                if (c2 == null)
+                    return 1;
+
+                rc1 = c1.compareTo(c2);
+                if (rc1 != 0)
+                    return orderCol.isDesc() ? -rc1 : rc1;
+
+            }
+
+            return rc1;
+        });
+
+        groupList = groupList.subList(0, Math.min(groupList.size(), limit));
+
+        IQueryResultSet<IEntryPacket> groupByResult = query.isConvertResultToArray() ? new ProjectedResultSet() : new ArrayListResult();
+        for (Iterator<IQueryResultSet<IEntryPacket>> iterator = groupList.iterator(); iterator.hasNext(); ) {
+            IQueryResultSet<IEntryPacket> group = iterator.next();
+            groupByResult.addAll(group);
+        }
+        return groupByResult;
+
+    }
+
     public IQueryResultSet<IEntryPacket> groupBy(IQueryResultSet<IEntryPacket> entries, List<SelectColumn> groupColumns) throws SQLException {
         IQueryResultSet<IEntryPacket> currGroup = null;
         IEntryPacket currRow = null, prevRow = null;
@@ -326,7 +390,7 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
 
             IQueryResultSet<IEntryPacket> group = iterator.next();
             //Handle aggregation
-            if (query.isConvertResultToArray())
+            if (query.isJoined() || query.isConvertResultToArray())
                 groupByResult.add(aggregate(group));
             else
                 groupByResult.add(group.iterator().next());
@@ -580,7 +644,7 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
             if (col.isVisible()) {
                 columnNames.add(col.getName());
                 columnLabelsList.add(col.getAlias());
-                tableNamesList.add(col.getColumnTableData().getTableName());
+                tableNamesList.add(col instanceof ValueSelectColumn ? "anonymous" : col.getColumnTableData().getTableName());
             }
         }
 
@@ -620,6 +684,43 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
         return result;
     }
 
+    @Override
+    public IQueryResultSet<IEntryPacket> flattenEntryPackets(IQueryResultSet<IEntryPacket> entries) {
+        // Column (field) names and labels (aliases)
+        LinkedList<String> columnNames = new LinkedList<String>();
+
+        for (SelectColumn col : query.getQueryColumns()) {
+            // Only add for visible columns
+            if (col.isVisible()) {
+                columnNames.add(col.getAlias());
+            }
+        }
+
+        String[] fieldNames = columnNames.toArray(new String[columnNames.size()]);
+
+        Iterator<IEntryPacket> iter = entries.iterator();
+        IQueryResultSet<IEntryPacket> result = new ArrayListResult();
+
+        while (iter.hasNext()) {
+            IEntryPacket entry = iter.next();
+            int column = 0;
+            Object[] fields = new Object[fieldNames.length];
+            for (int i = 0; i < query.getQueryColumns().size(); i++) {
+                SelectColumn sc = query.getQueryColumns().get(i);
+
+                if (!sc.isVisible())
+                    continue;
+
+                fields[column++] = entry.getFieldValue(sc.getProjectedIndex());
+            }
+            IEntryPacket ep = new QueryEntryPacket(fieldNames, fields);
+//            ep.setFieldsValues(fields);
+            result.add(ep);
+        }
+
+        return result;
+    }
+
     /**
      * Executes an inner query
      */
@@ -633,6 +734,7 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
         innerQuery.setRouting(query.getRouting());
         if (!innerQuery.isPrepared() && !innerQuery.containsSubQueries())
             innerQuery.build();
+         if (!space.isClustered()) throw new SQLException("Cannot run InnerQuery in collocated join");
         ResponsePacket innerResponse = innerQuery.executeOnSpace(space, txn);
 
         // Get the values from the inner query response

@@ -18,6 +18,7 @@ package com.j_spaces.jdbc.parser;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.core.client.TemplateMatchCodes;
+import com.j_spaces.jdbc.Join;
 import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
 import com.j_spaces.jdbc.executor.EntriesCursor;
 import com.j_spaces.jdbc.executor.HashedEntriesCursor;
@@ -47,10 +48,17 @@ public class EqualNode extends ExpNode {
     @Override
     public boolean isValidCompare(Object ob1, Object ob2) {
         // Comparison with null is not supported
-        if (ob1 == null || ob2 == null)
-            return false;
-        else
+        if (ob1 == null || ob2 == null) {
+            if (ob1 == null && leftChild instanceof ColumnNode && ((ColumnNode) leftChild).getColumnData().getColumnTableData().getJoinType() == Join.JoinType.RIGHT) {
+                return true;
+            } else if (ob2 == null && rightChild instanceof ColumnNode && ((ColumnNode) rightChild).getColumnData().getColumnTableData().getJoinType() == Join.JoinType.LEFT) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
             return ((Comparable) ob1).compareTo(ob2) == 0;
+        }
     }
 
     @Override
