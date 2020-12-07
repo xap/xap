@@ -43,6 +43,12 @@ public class MutableFloat extends MutableNumber {
     }
 
     @Override
+    public void remove(Number x) {
+        if (x != null)
+            value -= x.floatValue();
+    }
+
+    @Override
     public Number calcDivision(long count) {
         return value / count;
     }

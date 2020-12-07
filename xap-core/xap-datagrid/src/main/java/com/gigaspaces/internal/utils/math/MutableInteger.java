@@ -43,6 +43,21 @@ public class MutableInteger extends MutableNumber {
     }
 
     @Override
+    public void remove(Number x) {
+        if (x != null)
+            value -= x.intValue();
+    }
+
+    @Override
+    public Number cast(Class<?> newType) {
+        if (newType.equals(Integer.class) || newType.equals(int.class)) return value;
+        if (newType.equals(Float.class) || newType.equals(float.class)) return (float)value;
+        if (newType.equals(Double.class) || newType.equals(double.class)) return (double)value;
+
+        return super.cast(newType);
+    }
+
+    @Override
     public Number calcDivision(long count) {
         return (double) value / count;
     }
