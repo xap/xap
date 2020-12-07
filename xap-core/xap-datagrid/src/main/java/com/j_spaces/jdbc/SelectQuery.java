@@ -799,16 +799,21 @@ public class SelectQuery extends AbstractDMLQuery {
     @Override
     public void buildTemplates() throws SQLException {
 
-        getTablesData().forEach(td -> {
-            try {
-                if (td.getExpTree() != null)
-                    getBuilder().traverseExpressionTree(td.getExpTree(), false);
-                if (td.getTableCondition() != null)
-                    getBuilder().traverseExpressionTree(td.getTableCondition(), false);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        });
+        if (pushDownPredicatesToSpace) {
+            getTablesData().forEach(td -> {
+                try {
+                    if (td.getSubQuery() != null && !td.getSubQuery().containsSubQueries()) {
+                        ((SelectQuery) td.getSubQuery()).buildTemplates();
+                    }
+                    if (td.getExpTree() != null)
+                        getBuilder().traverseExpressionTree(td.getExpTree(), false);
+                    if (td.getTableCondition() != null)
+                        getBuilder().traverseExpressionTree(td.getTableCondition(), false);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
         super.buildTemplates();
     }
 
@@ -899,6 +904,7 @@ public class SelectQuery extends AbstractDMLQuery {
     public static final boolean pushDownPredicatesToSpace = Boolean.getBoolean("pushDownToSpace");
 
     private void applyJoinsIfNeeded() throws SQLException {
+        _logger.info(">>applyJoinsIfNeeded pushDownPredicatesToSpace="+pushDownPredicatesToSpace);
         if (joins != null) {
             if (pushDownPredicatesToSpace) {
                 getTableData().setTableCondition(getExpTree());

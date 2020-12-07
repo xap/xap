@@ -213,7 +213,26 @@ public class QueryColumnData implements Serializable {
             }
             if(tableData.getSubQuery() != null && tableData.getSubQuery() instanceof  AbstractDMLQuery) {
                 try {
-                    return findUnique(((AbstractDMLQuery) tableData.getSubQuery()).getTablesData(), t -> tryInitWithPrefix(t, columnPath), (r1, r2) -> ambigFormatter(columnPath, r1, r2));
+                    return findUnique(((AbstractDMLQuery) tableData.getSubQuery()).getTablesData(), t -> tryInitWithPrefixSubQuery(tableData, t, columnPath), (r1, r2) -> ambigFormatter(columnPath, r1, r2));
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static QueryColumnData tryInitWithPrefixSubQuery(QueryTableData parentTableData, QueryTableData tableData, String columnPath) {
+        if (columnPath != null) {
+            String[] prefixes = new String[] {tableData.getTableName(), tableData.getTableAlias()};
+            for (String prefix : prefixes) {
+                if (prefix != null && columnPath.startsWith(prefix + "."))
+                    return new QueryColumnData(parentTableData, columnPath.substring(prefix.length() + 1));
+            }
+            if(tableData.getSubQuery() != null && tableData.getSubQuery() instanceof  AbstractDMLQuery) {
+                try {
+                    return findUnique(((AbstractDMLQuery) tableData.getSubQuery()).getTablesData(), t -> tryInitWithPrefixSubQuery(tableData, t, columnPath), (r1, r2) -> ambigFormatter(columnPath, r1, r2));
                 } catch (SQLException throwables) {
                     throwables.printStackTrace();
                     return null;
