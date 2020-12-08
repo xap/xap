@@ -2800,7 +2800,7 @@ public class CacheManager extends AbstractCacheManager
             }
             if (iter.isBringCacheInfoOnly()) {//optimize off heap dont bring entries at all
                 IEntryCacheInfo pEntry = iter.getCurrentEntryCacheInfo();
-                if (pEntry.isDeleted())
+                if (pEntry.isDeleted() || _engine.skipBroadcastTable(context, template, pEntry.getServerTypeDesc()))
                     continue;
                 if (!pEntry.isBlobStoreEntry()) {
                     eh = pEntry.getEntryHolder(this);
