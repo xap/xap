@@ -89,6 +89,8 @@ public class SelectQuery extends AbstractDMLQuery {
     private List<Join> joins;
     private boolean allowedToUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.allowCollocatedJoin", "true"));
     private boolean flattenResults;
+    public static final boolean pushDownPredicatesToSpace = Boolean.getBoolean("pushDownToSpace");
+
 
     public SelectQuery() {
         super();
@@ -901,7 +903,6 @@ public class SelectQuery extends AbstractDMLQuery {
         validateCommonJavaTypeOnDocumentOrStringReturnProperties();
     }
 
-    public static final boolean pushDownPredicatesToSpace = Boolean.getBoolean("pushDownToSpace");
 
     private void applyJoinsIfNeeded() throws SQLException {
         _logger.info(">>applyJoinsIfNeeded pushDownPredicatesToSpace="+pushDownPredicatesToSpace);
