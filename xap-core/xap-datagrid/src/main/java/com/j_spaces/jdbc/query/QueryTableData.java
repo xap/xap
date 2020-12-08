@@ -256,7 +256,7 @@ public class QueryTableData implements Serializable {
         // if this table is not joined yet and matches the join condition
         // try to join it with the right table
         if (getJoinTable() == null) {
-            if ((!rightTable.isJoined()) && !rightTable.references(this)) {
+            if (!rightTable.isJoined() && !rightTable.references(this)) {
                 setJoinTable(rightTable);
 
                 rightTable.setJoinCondition(exp);
@@ -343,8 +343,9 @@ public class QueryTableData implements Serializable {
         }
         output.add("------");
 
-        _logger.info(String.join("\n", output));
-//        System.out.println(String.join("\n", output));
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(String.join("\n", output));
+        }
 
     }
 

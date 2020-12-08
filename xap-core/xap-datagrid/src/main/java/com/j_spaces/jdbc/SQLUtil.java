@@ -151,13 +151,9 @@ public class SQLUtil {
             throw new IllegalArgumentException("No table was found for column '" + columnData.getColumnName() + "'");
         }
 
-        try {
-            if (entry.getTypeDescriptor() != null && entry.getTypeDescriptor().getIdentifierPropertyId() == columnData.getColumnIndexInTable())
-                return entry.getID();
+        if (entry.getTypeDescriptor() != null && entry.getTypeDescriptor().getIdentifierPropertyId() == columnData.getColumnIndexInTable())
+            return entry.getID();
 
-        } catch (Exception e) {
-            throw e;
-        }
         return entry.getFieldValue(columnData.getColumnIndexInTable());
     }
 

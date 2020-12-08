@@ -89,6 +89,8 @@ public class SelectQuery extends AbstractDMLQuery {
     private List<Join> joins;
     private boolean allowedToUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.allowCollocatedJoin", "true"));
     private boolean flattenResults;
+    public static final boolean pushDownPredicatesToSpace = Boolean.getBoolean("pushDownToSpace");
+
 
     public SelectQuery() {
         super();
@@ -185,9 +187,7 @@ public class SelectQuery extends AbstractDMLQuery {
 
             if (isJoined()) {
                 boolean collJoin = allowedToUseCollocatedJoin && isCollocatedJoin();
-                if (_logger.isDebugEnabled()) {
-                    _logger.debug("Query will run as {}", (collJoin ? "collocated join" : "regular join"));
-                }
+                _logger.info("Query will run as {}", (collJoin ? "collocated join" : "regular join"));
                 for (QueryTableData tablesDatum : getTablesData()) {
                     if (tablesDatum.getSubQuery() != null && tablesDatum.getSubQuery() instanceof SelectQuery) {
                         ((SelectQuery) tablesDatum.getSubQuery()).allowedToUseCollocatedJoin(collJoin);
@@ -802,9 +802,9 @@ public class SelectQuery extends AbstractDMLQuery {
         if (pushDownPredicatesToSpace) {
             getTablesData().forEach(td -> {
                 try {
-                    if (td.getSubQuery() != null && !td.getSubQuery().containsSubQueries()) {
-                        ((SelectQuery) td.getSubQuery()).buildTemplates();
-                    }
+//                    if (td.getSubQuery() != null && !td.getSubQuery().containsSubQueries()) {
+//                        ((SelectQuery) td.getSubQuery()).buildTemplates();
+//                    }
                     if (td.getExpTree() != null)
                         getBuilder().traverseExpressionTree(td.getExpTree(), false);
                     if (td.getTableCondition() != null)
@@ -901,7 +901,6 @@ public class SelectQuery extends AbstractDMLQuery {
         validateCommonJavaTypeOnDocumentOrStringReturnProperties();
     }
 
-    public static final boolean pushDownPredicatesToSpace = Boolean.getBoolean("pushDownToSpace");
 
     private void applyJoinsIfNeeded() throws SQLException {
         _logger.info(">>applyJoinsIfNeeded pushDownPredicatesToSpace="+pushDownPredicatesToSpace);

@@ -78,7 +78,10 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
             skipMatching = firstTableInMatch.getJoinCondition() != null;
             isOuterJoin = isOuterJoin || firstTableInMatch.getJoinType() == Join.JoinType.LEFT;
         }
-        _logger.info(">> isOuterJoin = " + isOuterJoin+", skipMatching = "+ skipMatching+", pushDownPredicatesToSpace = " + SelectQuery.pushDownPredicatesToSpace);
+
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(">> isOuterJoin = " + isOuterJoin+", skipMatching = "+ skipMatching+", pushDownPredicatesToSpace = " + SelectQuery.pushDownPredicatesToSpace);
+        }
 
 
         while (iter.next()) {
@@ -401,32 +404,12 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
                 //check for sequence beginning
                 if (!tableData.isJoined()) {
                     _tableData = tableData;
-                    System.out.println("Choose td: " + _tableData.getTableName());
-//                    print(_tableData);
-//                    System.exit(0);
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Choose tabledata: " + _tableData.getTableName());
+                    }
                     break;
                 }
             }
-        }
-
-        private void print(QueryTableData queryTableData) {
-            if (queryTableData == null) return;
-            QueryTableData joinTable = queryTableData.getJoinTable();
-            System.out.println(queryTableData.getTableName() + " <--> "+(joinTable == null ? "NONE!!" : joinTable.getTableName())+" ON ("+queryTableData.getJoinCondition()+") - " + queryTableData.getEntriesCursor().getClass().getSimpleName());
-            System.out.flush();
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            if (queryTableData.getJoinCondition() == null) System.err.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-            System.err.flush();
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            print(queryTableData.getJoinTable());
         }
 
         boolean next() {
