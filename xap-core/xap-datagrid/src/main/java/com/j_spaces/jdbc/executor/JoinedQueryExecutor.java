@@ -78,6 +78,7 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
             skipMatching = firstTableInMatch.getJoinCondition() != null;
             isOuterJoin = isOuterJoin || firstTableInMatch.getJoinType() == Join.JoinType.LEFT;
         }
+        _logger.info(">> isOuterJoin = " + isOuterJoin+", skipMatching = "+ skipMatching+", pushDownPredicatesToSpace = " + SelectQuery.pushDownPredicatesToSpace);
 
 
         while (iter.next()) {
