@@ -49,7 +49,8 @@ public class HybridPayload implements Externalizable {
     //wrap an object array with HybridBinaryData
     public HybridPayload(ITypeDesc typeDesc, Object[] values) {
         splitProperties(typeDesc, values);
-        this.packedBinaryProperties = serializeFields(this.serializedProperties, typeDesc);
+        this.packedBinaryProperties = typeDesc.getClassBinaryStorageAdapter() != null ?
+                serializeFields(this.serializedProperties, typeDesc) : new byte[0];
         this.isDeserialized = true;
         this.dirty = false;
     }

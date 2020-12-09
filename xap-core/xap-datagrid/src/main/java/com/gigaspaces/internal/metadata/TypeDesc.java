@@ -184,14 +184,14 @@ public class TypeDesc implements ITypeDesc {
         if(binaryStorageAdapter != null) {
             this.classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(binaryStorageAdapter);
             this.binaryStorageAdapterType = binaryStorageAdapterType == null ? BinaryStorageAdapterType.EXCLUDE_INDEXES : binaryStorageAdapterType;
-            initHybridProperties();
-        } else {
-            positionsForScanning = IntStream.range(0,_fixedProperties.length).toArray();
         }
+        initHybridProperties();
     }
 
     private void initHybridProperties() {
-        int serializedFieldsCount = (int) Arrays.stream(_fixedProperties).filter(PropertyInfo::isBinarySpaceProperty).count();
+        int serializedFieldsCount = this.binaryStorageAdapterType != null ?
+                (int) Arrays.stream(_fixedProperties).filter(PropertyInfo::isBinarySpaceProperty).count() : 0;
+
         _nonSerializedProperties = new PropertyInfo[_fixedProperties.length - serializedFieldsCount];
         _serializedProperties = new PropertyInfo[serializedFieldsCount];
         int nonSerializedFieldsIndex = 0;
@@ -928,10 +928,8 @@ public class TypeDesc implements ITypeDesc {
             if (storageAdapterClassName != null) {
                 classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(ClassLoaderHelper.loadClass(storageAdapterClassName));
                 binaryStorageAdapterType = BinaryStorageAdapterType.fromCode(in.readByte());
-                initHybridProperties();
-            } else {
-                positionsForScanning = IntStream.range(0,_fixedProperties.length).toArray();
             }
+            initHybridProperties();
         }
     }
 
