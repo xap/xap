@@ -156,4 +156,25 @@ public class JoinedEntry extends EntryPacket implements Serializable {
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0))
             IOUtils.writeObjectArray(out, _entries);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("| ");
+
+
+//        sb.append(_entries[2].getPropertyValue("RATING_VAL")).append(" | ");
+//        sb.append(_entries[4].getPropertyValue("BUTSG_SEQ")).append(" | ");
+
+        sb.append(getFieldValue(0)).append(" | ");
+        sb.append(getFieldValue(1)).append(" | ");
+        sb.append(getFieldValue(2)).append(" | ");
+        sb.append(getFieldValue(3)).append(" | ");
+
+//        for (IEntryPacket entry : _entries) {
+//            sb.append((entry == null ? " NULL " : entry.toString())+" | ");
+//        }
+        sb.append("\n");
+        return sb.toString();
+    }
 }

@@ -187,9 +187,7 @@ public class SelectQuery extends AbstractDMLQuery {
 
             if (isJoined()) {
                 boolean collJoin = allowedToUseCollocatedJoin && isCollocatedJoin();
-                if (_logger.isDebugEnabled()) {
-                    _logger.debug("Query will run as {}", (collJoin ? "collocated join" : "regular join"));
-                }
+                _logger.info("Query will run as {}", (collJoin ? "collocated join" : "regular join"));
                 for (QueryTableData tablesDatum : getTablesData()) {
                     if (tablesDatum.getSubQuery() != null && tablesDatum.getSubQuery() instanceof SelectQuery) {
                         ((SelectQuery) tablesDatum.getSubQuery()).allowedToUseCollocatedJoin(collJoin);

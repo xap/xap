@@ -78,7 +78,10 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
             skipMatching = firstTableInMatch.getJoinCondition() != null;
             isOuterJoin = isOuterJoin || firstTableInMatch.getJoinType() == Join.JoinType.LEFT;
         }
-        _logger.info(">> isOuterJoin = " + isOuterJoin+", skipMatching = "+ skipMatching+", pushDownPredicatesToSpace = " + SelectQuery.pushDownPredicatesToSpace);
+
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(">> isOuterJoin = " + isOuterJoin+", skipMatching = "+ skipMatching+", pushDownPredicatesToSpace = " + SelectQuery.pushDownPredicatesToSpace);
+        }
 
 
         while (iter.next()) {
@@ -401,7 +404,9 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
                 //check for sequence beginning
                 if (!tableData.isJoined()) {
                     _tableData = tableData;
-                    System.out.println("Choose td: " + _tableData.getTableName());
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Choose tabledata: " + _tableData.getTableName());
+                    }
 //                    print(_tableData);
 //                    System.exit(0);
                     break;

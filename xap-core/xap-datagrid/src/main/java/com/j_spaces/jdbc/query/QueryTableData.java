@@ -343,8 +343,9 @@ public class QueryTableData implements Serializable {
         }
         output.add("------");
 
-        _logger.info(String.join("\n", output));
-//        System.out.println(String.join("\n", output));
+        if (_logger.isDebugEnabled()) {
+            _logger.debug(String.join("\n", output));
+        }
 
     }
 
