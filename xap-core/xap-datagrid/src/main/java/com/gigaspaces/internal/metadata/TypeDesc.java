@@ -183,7 +183,7 @@ public class TypeDesc implements ITypeDesc {
         addFifoGroupingIndexesIfNeeded(_indexes, _fifoGroupingName, _fifoGroupingIndexes);
         if(binaryStorageAdapter != null) {
             this.classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(binaryStorageAdapter);
-            this.binaryStorageAdapterType = binaryStorageAdapterType == null ? BinaryStorageAdapterType.ALL : binaryStorageAdapterType;
+            this.binaryStorageAdapterType = binaryStorageAdapterType == null ? BinaryStorageAdapterType.EXCLUDE_INDEXES : binaryStorageAdapterType;
             initHybridProperties();
         } else {
             positionsForScanning = IntStream.range(0,_fixedProperties.length).toArray();

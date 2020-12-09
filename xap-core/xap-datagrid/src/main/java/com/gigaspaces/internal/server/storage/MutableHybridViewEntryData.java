@@ -7,8 +7,6 @@ import java.util.Map;
 
 public class MutableHybridViewEntryData extends HybridViewEntryData implements ITransactionalEntryData {
 
-    private boolean deserialized;
-
     public void view(ITransactionalEntryData entryData, HybridViewEntryData viewEntryData) {
         this.entry = entryData;
         this.dynamicProperties = entryData.getDynamicProperties();
@@ -19,7 +17,7 @@ public class MutableHybridViewEntryData extends HybridViewEntryData implements I
         this.entry = entryData;
         this.dynamicProperties = entryData.getDynamicProperties();
         HybridBinaryEntryData hybridBinaryEntryData = (HybridBinaryEntryData) entryData;
-        this.hybridBinaryData = new HybridBinaryData(getEntryTypeDesc().getTypeDesc(),
+        this.hybridBinaryData = new HybridPayload(getEntryTypeDesc().getTypeDesc(),
                 Arrays.copyOf(hybridBinaryEntryData.getNonSerializedFields(), hybridBinaryEntryData.getNonSerializedFields().length),
                 Arrays.copyOf(hybridBinaryEntryData.getSerializedFields(), hybridBinaryEntryData.getSerializedFields().length));
     }
@@ -27,9 +25,6 @@ public class MutableHybridViewEntryData extends HybridViewEntryData implements I
     @Override
     public void setFixedPropertyValue(int index, Object value) {
         hybridBinaryData.setFixedProperty(entry.getEntryTypeDesc().getTypeDesc(), index, value);
-        if(entry.getEntryTypeDesc().getTypeDesc().getFixedProperty(index).isBinarySpaceProperty()){
-            this.deserialized = true;
-        }
     }
 
     @Override
@@ -63,6 +58,6 @@ public class MutableHybridViewEntryData extends HybridViewEntryData implements I
     }
 
     public boolean isDeserialized() {
-        return this.deserialized;
+        return hybridBinaryData.isDeserialized();
     }
 }

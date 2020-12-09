@@ -242,7 +242,7 @@ public class Context {
     private IndexMetricsContext indexMetricsContext;
     private boolean _backupOnly;
 
-    private AbstractViewEntryData viewEntryData;
+    private HybridViewEntryData viewEntryData;
 
     public Context() {
     }
@@ -1200,18 +1200,7 @@ public class Context {
     }
 
     private void copyFieldsArray(IEntryPacket entryPacket) {
-        if (entryPacket instanceof EntryPacket) {
-            EntryPacket packet = (EntryPacket) entryPacket;
-            if (packet.getBinaryFields() != null) {
-                return;
-            }
-        }
-
-        Object[] src = entryPacket.getFieldValues();
-        Object[] target = new Object[src.length];
-        System.arraycopy(src, 0, target, 0, src.length);
-        entryPacket.setFieldsValues(target);
-
+        entryPacket.getHybridPayload().copyFieldsArray();
     }
 
     public void setSyncHybridOperationDetails(SyncHybridOperationDetails[] syncHybridOperationsDetails) {
@@ -1266,7 +1255,7 @@ public class Context {
     public IEntryData getViewEntryData(IEntryData entryData) {
         if (entryData instanceof IBinaryEntryData) {
             if (viewEntryData == null) {
-                viewEntryData = entryData instanceof BinaryEntryData ? new ViewEntryData() : new HybridViewEntryData();
+                viewEntryData = new HybridViewEntryData();
             }
 
             if (viewEntryData.isViewOf(entryData)) {
@@ -1280,7 +1269,7 @@ public class Context {
         }
     }
 
-    public AbstractViewEntryData getViewEntryData() {
+    public HybridViewEntryData getViewEntryData() {
         return viewEntryData;
     }
 
@@ -1292,12 +1281,12 @@ public class Context {
         return entryData;
     }
 
-    public void cacheViewEntryDataIfNeeded(IEntryData entryData, Object[] fieldsValues) {
+    public void cacheViewEntryDataIfNeeded(IEntryData entryData, IEntryPacket packet) {
         if (entryData instanceof IBinaryEntryData) {
             if (viewEntryData == null) {
-                viewEntryData = entryData instanceof BinaryEntryData ? new ViewEntryData() : new HybridViewEntryData();
+                viewEntryData = new HybridViewEntryData();
             }
-            viewEntryData.view(entryData, fieldsValues);
+            viewEntryData.view(entryData, packet.getHybridPayload());
         }
     }
 }

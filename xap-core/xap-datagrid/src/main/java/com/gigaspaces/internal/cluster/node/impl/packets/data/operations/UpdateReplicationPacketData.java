@@ -279,8 +279,7 @@ public class UpdateReplicationPacketData
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         if(_serializeFullContent){
-            getEntryPacket().getFieldValues();
-            getEntryPacket().setBinaryFields(null);
+            getEntryPacket().getFieldValues(); // if has serialized fields this call will cause deserialization
         }
         super.writeExternal(out);
 
@@ -452,7 +451,6 @@ public class UpdateReplicationPacketData
     public void writeToSwap(ObjectOutput out) throws IOException {
         if(_previousEntryData != null){
             getEntryPacket().getFieldValues();
-            getEntryPacket().setBinaryFields(null);
         }
         super.writeToSwap(out);
         out.writeBoolean(_overrideVersion);

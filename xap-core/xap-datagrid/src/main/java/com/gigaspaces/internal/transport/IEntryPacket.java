@@ -19,7 +19,7 @@ package com.gigaspaces.internal.transport;
 import com.gigaspaces.internal.query.ICustomQuery;
 import com.gigaspaces.internal.query.RawEntry;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
-import com.gigaspaces.internal.server.storage.HybridBinaryData;
+import com.gigaspaces.internal.server.storage.HybridPayload;
 
 /**
  * this is the basic interface defining the proxy-space or space-space transport layer.
@@ -65,12 +65,15 @@ public interface IEntryPacket extends ITransportPacket, ISwapExternalizable, Raw
     //Temp until we remove externalizable entry packet completely
     boolean isExternalizableEntryPacket();
 
-    default void setBinaryFields(HybridBinaryData binaryFields) {
+    default void setHybridPayload(HybridPayload binaryFields) {
+        throw new UnsupportedOperationException("IEntryPacket.setHybridPayload only supported for EntryPacket.class");
+    }
 
+    default HybridPayload getHybridPayload() {
+        return new HybridPayload(getTypeDescriptor(), getFieldValues());
     }
 
     default boolean allNullFieldValues() {
         return getFieldValues() == null;
     }
-
 }

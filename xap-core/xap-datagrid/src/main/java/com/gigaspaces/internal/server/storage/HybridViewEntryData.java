@@ -1,7 +1,10 @@
 package com.gigaspaces.internal.server.storage;
 
-import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.metadata.PropertyInfo;
+import com.gigaspaces.internal.metadata.EntryTypeDesc;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * Helper class for optimizing scanning entry data.
@@ -14,40 +17,32 @@ import com.gigaspaces.internal.metadata.PropertyInfo;
  * @author Yechiel, Yael, Niv
  * @since 15.8
  */
-public class HybridViewEntryData extends AbstractViewEntryData {
-    HybridBinaryData hybridBinaryData;
+public class HybridViewEntryData implements IEntryData {
+    private static Logger logger = LoggerFactory.getLogger(HybridViewEntryData.class);
+    protected IEntryData entry;
+    protected Map<String, Object> dynamicProperties;
+    HybridPayload hybridBinaryData;
 
     public void view(IEntryData entryData) {
         this.entry = entryData;
         this.dynamicProperties = entryData.getDynamicProperties();
-        this.hybridBinaryData = new HybridBinaryData(getEntryTypeDesc().getTypeDesc(),
+        this.hybridBinaryData = new HybridPayload(getEntryTypeDesc().getTypeDesc(),
                 ((HybridBinaryEntryData) entryData).getNonSerializedFields(),
                 ((HybridBinaryEntryData) entryData).getSerializedFields());
     }
 
-    public void view(IEntryData entryData, Object[] fieldValues) {
-        this.entry = entryData;
-        ITypeDesc typeDesc = getEntryTypeDesc().getTypeDesc();
-        Object[] nonSerializedProperties = new Object[typeDesc.getNonSerializedProperties().length];
-        Object[] serializedProperties = new Object[typeDesc.getSerializedProperties().length];
-        int nonSerializedFieldsIndex = 0;
-        int serializedFieldsIndex = 0;
-        for (PropertyInfo property : typeDesc.getProperties()) {
-            if (property.getStorageType() != null && property.isBinarySpaceProperty()) {
-                serializedProperties[serializedFieldsIndex] = fieldValues[typeDesc.getFixedPropertyPosition(property.getName())];
-                serializedFieldsIndex++;
-            } else {
-                nonSerializedProperties[nonSerializedFieldsIndex] = fieldValues[typeDesc.getFixedPropertyPosition(property.getName())];
-                nonSerializedFieldsIndex++;
-            }
-        }
-        this.hybridBinaryData = new HybridBinaryData(serializedProperties, nonSerializedProperties,
-                ((HybridBinaryEntryData) entryData).getSerializedFields() ,true);
+    public void view(IEntryData entryData, HybridPayload hybridPayload) {
+        this.hybridBinaryData = hybridPayload;
         this.dynamicProperties = entryData.getDynamicProperties();
     }
 
-    public HybridBinaryData getHybridBinaryData() {
+    public HybridPayload getHybridBinaryData() {
         return hybridBinaryData;
+    }
+
+    @Override
+    public EntryDataType getEntryDataType() {
+        return entry.getEntryDataType();
     }
 
     @Override
@@ -58,5 +53,48 @@ public class HybridViewEntryData extends AbstractViewEntryData {
     @Override
     public Object getFixedPropertyValue(int position) {
         return this.hybridBinaryData.getFixedProperty(getEntryTypeDesc().getTypeDesc(), position);
+    }
+
+    @Override
+    public EntryTypeDesc getEntryTypeDesc() {
+        return entry.getEntryTypeDesc();
+    }
+
+    @Override
+    public int getVersion() {
+        return entry.getVersion();
+    }
+
+    @Override
+    public long getExpirationTime() {
+        return entry.getExpirationTime();
+    }
+
+    public boolean isViewOf(IEntryData entryData) {
+        return this.entry == entryData;
+    }
+
+    @Override
+    public Map<String, Object> getDynamicProperties() {
+        return dynamicProperties;
+    }
+
+    public IEntryData getEntry() {
+        return entry;
+    }
+
+    @Override
+    public void setFixedPropertyValue(int index, Object value) {
+        throw new IllegalStateException("Data cannot be modified on entry data view");
+    }
+
+    @Override
+    public void setFixedPropertyValues(Object[] values) {
+        throw new IllegalStateException("Data cannot be modified on entry data view");
+    }
+
+    @Override
+    public void setDynamicProperties(Map<String, Object> dynamicProperties) {
+        throw new IllegalStateException("Data cannot be modified on entry data view");
     }
 }
