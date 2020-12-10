@@ -274,7 +274,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
     static {
         EMPTY_ENTRYPACKET = new EntryPacket();
-        EMPTY_ENTRYPACKET.setFieldsValues(new Object[0]);
     }
 
     public SpaceEngine(SpaceImpl spaceImpl) throws CreateException, RemoteException {

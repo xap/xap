@@ -37,27 +37,19 @@ public class HybridPayload implements Externalizable {
         this.dirty = dirty;
     }
 
-    public HybridPayload(ITypeDesc typeDesc, byte[] serializedFields) {
-        this.nonSerializedProperties = new Object[0];
-        this.serializedProperties = new Object[typeDesc.getSerializedProperties().length];
-        this.packedBinaryProperties = serializedFields;
-        this.isDeserialized = false;
-        this.dirty = false;
-    }
-
 
     //wrap an object array with HybridBinaryData
     public HybridPayload(ITypeDesc typeDesc, Object[] values) {
         splitProperties(typeDesc, values);
         this.packedBinaryProperties = typeDesc.getClassBinaryStorageAdapter() != null ?
-                serializeFields(this.serializedProperties, typeDesc) : new byte[0];
+                serializeFields(typeDesc, this.serializedProperties) : new byte[0];
         this.isDeserialized = true;
         this.dirty = false;
     }
 
-    private static byte[] serializeFields(Object[] fieldsValues, ITypeDesc typeDesc) {
+    private static byte[] serializeFields(ITypeDesc typeDesc, Object[] fieldsValues) {
         try {
-            if (fieldsValues.length == 0) {
+            if (fieldsValues == null || fieldsValues.length == 0) {
                 return new byte[0];
             }
             return typeDesc.getClassBinaryStorageAdapter().toBinary(typeDesc, fieldsValues);
@@ -141,7 +133,7 @@ public class HybridPayload implements Externalizable {
         dirty = in.readBoolean();
         if (isDeserialized && dirty) {
             nonSerializedProperties = IOUtils.readObjectArrayCompressed(in);
-            serializedProperties = new Object[IOUtils.readInt(in)];
+            serializedProperties = IOUtils.readObjectArrayCompressed(in);
             this.packedBinaryProperties = null;
         } else {
             nonSerializedProperties = IOUtils.readObjectArrayCompressed(in);
@@ -209,20 +201,19 @@ public class HybridPayload implements Externalizable {
     }
 
     private void splitProperties(ITypeDesc typeDesc, Object[] values) {
-        if (values.length == 0) {
-            return;
-        }
         this.nonSerializedProperties = new Object[typeDesc.getNonSerializedProperties().length];
         this.serializedProperties = new Object[typeDesc.getSerializedProperties().length];
-        int nonSerializedFieldsIndex = 0;
-        int serializedFieldsIndex = 0;
-        for (PropertyInfo property : typeDesc.getProperties()) {
-            if (property.getStorageType() != null && property.isBinarySpaceProperty()) {
-                this.serializedProperties[serializedFieldsIndex] = values[typeDesc.getFixedPropertyPosition(property.getName())];
-                serializedFieldsIndex++;
-            } else {
-                this.nonSerializedProperties[nonSerializedFieldsIndex] = values[typeDesc.getFixedPropertyPosition(property.getName())];
-                nonSerializedFieldsIndex++;
+        if(values.length > 0) {
+            int nonSerializedFieldsIndex = 0;
+            int serializedFieldsIndex = 0;
+            for (PropertyInfo property : typeDesc.getProperties()) {
+                if (property.getStorageType() != null && property.isBinarySpaceProperty()) {
+                    this.serializedProperties[serializedFieldsIndex] = values[typeDesc.getFixedPropertyPosition(property.getName())];
+                    serializedFieldsIndex++;
+                } else {
+                    this.nonSerializedProperties[nonSerializedFieldsIndex] = values[typeDesc.getFixedPropertyPosition(property.getName())];
+                    nonSerializedFieldsIndex++;
+                }
             }
         }
     }

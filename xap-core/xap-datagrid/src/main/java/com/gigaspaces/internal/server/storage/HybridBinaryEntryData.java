@@ -24,6 +24,7 @@ import com.j_spaces.core.server.transaction.EntryXtnInfo;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 /***
@@ -61,8 +62,9 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
     public ITransactionalEntryData createCopy(int newVersion, long newExpiration, EntryXtnInfo newEntryXtnInfo, boolean shallowCloneData) {
         byte[] packeSerializedProperties = shallowCloneData ? Arrays.copyOf(this.serializedFields, this.serializedFields.length) : serializedFields;
         Object[] nonSerializeData = shallowCloneData ? Arrays.copyOf(this.nonSerializedFields, this.nonSerializedFields.length) : nonSerializedFields;
+        Map<String, Object> dynamicProperties = shallowCloneData && _dynamicProperties != null ? new HashMap<>(_dynamicProperties) : _dynamicProperties;
         return new HybridBinaryEntryData(new HybridPayload(getEntryTypeDesc().getTypeDesc()
-                , nonSerializeData, packeSerializedProperties), _dynamicProperties, this._entryTypeDesc, newVersion, newExpiration, newEntryXtnInfo);
+                , nonSerializeData, packeSerializedProperties), dynamicProperties, this._entryTypeDesc, newVersion, newExpiration, newEntryXtnInfo);
     }
 
     @Override

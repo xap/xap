@@ -244,7 +244,7 @@ public class EntryPacketFactory {
         HybridPayload hybridBinaryData;
         if(entryData instanceof IBinaryEntryData){
             if(context != null && context.getViewEntryData() != null && context.getViewEntryData().isViewOf(entryData)){
-                hybridBinaryData = ((HybridViewEntryData) context.getViewEntryData()).getHybridBinaryData();
+                hybridBinaryData = context.getViewEntryData().getHybridBinaryData();
             }else {
                 hybridBinaryData = new HybridPayload(entryData.getEntryTypeDesc().getTypeDesc(),
                         ((HybridBinaryEntryData) entryData).getNonSerializedFields(), ((HybridBinaryEntryData)entryData).getSerializedFields());
