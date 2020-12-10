@@ -105,12 +105,12 @@ public class HybridPayload implements Externalizable {
     }
 
     public HybridPayload clone() {
-        if (allNulls()) {
-            return new HybridPayload();
-        }
-        return new HybridPayload(Arrays.copyOf(serializedProperties, serializedProperties.length),
-                Arrays.copyOf(nonSerializedProperties, nonSerializedProperties.length),
-                Arrays.copyOf(packedBinaryProperties, packedBinaryProperties.length), this.isDeserialized, this.dirty);
+        Object[] serializedProps = this.serializedProperties == null ? null : Arrays.copyOf(this.serializedProperties, this.serializedProperties.length);
+        Object[] nonSerializedProps = this.nonSerializedProperties == null ? null : Arrays.copyOf(this.nonSerializedProperties, this.nonSerializedProperties.length);
+        byte[] packedBinaryProps = this.packedBinaryProperties == null ? null : Arrays.copyOf(this.packedBinaryProperties, this.packedBinaryProperties.length);
+        return new HybridPayload(serializedProps,
+                nonSerializedProps,
+                packedBinaryProps, this.isDeserialized, this.dirty);
     }
 
     @Override
