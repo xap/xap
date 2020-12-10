@@ -1090,6 +1090,14 @@ public class IOUtils {
         return l;
     }
 
+    public static IClassSerializer getIClassSerializer(Class type){ //todo - generic
 
-
+        // Get serializer by type:
+        IClassSerializer serializer = _typeCache.get(type);
+        // If type does not have serializer, or serializer is not supported in target version, use default serializer:
+        if (serializer == null) {
+            return _defaultSerializer;
+        }
+        return serializer;
+    }
 }

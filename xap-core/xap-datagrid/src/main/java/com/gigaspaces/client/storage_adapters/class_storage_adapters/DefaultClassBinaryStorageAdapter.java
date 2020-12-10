@@ -1,5 +1,7 @@
 package com.gigaspaces.client.storage_adapters.class_storage_adapters;
 
+import com.gigaspaces.internal.io.GSByteArrayInputStream;
+import com.gigaspaces.internal.io.GSByteArrayOutputStream;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 
@@ -10,17 +12,54 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
 
     @Override
     public byte[] toBinary(SpaceTypeDescriptor typeDescriptor, Object[] fields) throws IOException {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutputStream out = new ObjectOutputStream(bos)) {
-            IOUtils.writeObjectArrayCompressed(out, fields);
-            out.flush();
-            return bos.toByteArray();
+        try (GSByteArrayOutputStream bos = new GSByteArrayOutputStream(); GSObjectOutputStream out = new GSObjectOutputStream(bos)) {
+            int numOfFields = fields.length;
+            int modulo = numOfFields % 8 > 0 ? 1 : 0;
+            byte[] bitMapIsNonNullField =  new byte[numOfFields / 8 + modulo];
+
+            for (int i = 0; i < bitMapIsNonNullField.length; ++i){
+                IOUtils.getIClassSerializer(Byte.class).write(out, bitMapIsNonNullField[i]); //todo- warning
+            }
+
+            for (int i = 0; i < numOfFields; ++i) {
+                if (fields[i] != null) {
+                    int byteIndex = i / 8;
+                    int bitIndex = i % 8;
+                    bitMapIsNonNullField[byteIndex] |= (byte)1 << (7 - bitIndex);
+                    IOUtils.getIClassSerializer(typeDescriptor.getFixedProperty(i).getType()).write(out, fields[i]); //todo- warning?
+                }
+            }
+
+            byte[] serializedFields = bos.toByteArray();
+            System.arraycopy(bitMapIsNonNullField, 0, serializedFields, 1, bitMapIsNonNullField.length);
+            return serializedFields;
         }
     }
 
     @Override
     public Object[] fromBinary(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields) throws IOException, ClassNotFoundException {
-        try (ByteArrayInputStream bis = new ByteArrayInputStream(serializedFields); ObjectInput in = new ObjectInputStream(bis)) {
-            return IOUtils.readObjectArrayCompressed(in);
+        try (GSByteArrayInputStream bis = new GSByteArrayInputStream(serializedFields); GSObjectInputStream in = new GSObjectInputStream(bis)) {
+            int numOfFields = typeDescriptor.getNumOfFixedProperties();
+            int modulo = numOfFields % 8 > 0 ? 1 : 0;
+            byte[] bitMapIsNonNullField = new byte[numOfFields / 8 + modulo];
+
+            for(int i = 0; i < bitMapIsNonNullField.length; ++i){
+                bitMapIsNonNullField[i] = (byte)IOUtils.getIClassSerializer(Byte.class).read(in);
+            }
+
+            Object[] objects = new Object[numOfFields];
+            for (int i = 0; i < numOfFields; ++i){
+                int byteIndex = i / 8;
+                int bitIndex = i % 8;
+
+                byte mask = (byte) ((byte)1 << (7 - bitIndex));
+                byte result = (byte) (bitMapIsNonNullField[byteIndex] & mask);
+
+                if (result == mask){
+                    objects[i] = IOUtils.getIClassSerializer(typeDescriptor.getFixedProperty(i).getType()).read(in);
+                }
+            }
+           return objects;
         }
     }
 
