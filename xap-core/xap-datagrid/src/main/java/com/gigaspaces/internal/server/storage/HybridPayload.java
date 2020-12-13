@@ -67,6 +67,9 @@ public class HybridPayload implements Externalizable {
             unpackSerializedProperties(typeDesc);
         }
 
+        if(serializedProperties.length == 0){
+            return this.nonSerializedProperties;
+        }
 
         Object[] fields = new Object[typeDesc.getProperties().length];
         int i = 0;
