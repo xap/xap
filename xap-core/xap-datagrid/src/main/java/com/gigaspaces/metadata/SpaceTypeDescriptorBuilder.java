@@ -21,6 +21,7 @@ import com.gigaspaces.annotation.pojo.FifoSupport;
 import com.gigaspaces.annotation.pojo.BinaryStorageAdapterType;
 import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.DefaultClassBinaryStorageAdapter;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.metadata.DotNetStorageType;
 import com.gigaspaces.internal.metadata.EntryType;
@@ -89,8 +90,8 @@ public class SpaceTypeDescriptorBuilder {
     private Boolean _blobstoreEnabled;
     private String _sequenceNumberPropertyName;
     private boolean _sequenceNumberFromDocumentBuilder;
-    private Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapterClass;
-    private BinaryStorageAdapterType binaryStorageAdapterType;
+    private Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapterClass = Boolean.parseBoolean(System.getProperty("com.gs.disable.hybrid","false")) ? null : DefaultClassBinaryStorageAdapter.class;
+    private BinaryStorageAdapterType binaryStorageAdapterType = Boolean.parseBoolean(System.getProperty("com.gs.disable.hybrid","false")) ? null : BinaryStorageAdapterType.EXCLUDE_INDEXES;
 
     /**
      * Initialize a type descriptor builder using the specified type name.
