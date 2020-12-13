@@ -142,6 +142,7 @@ public class HybridPayload implements Externalizable {
             nonSerializedProperties = IOUtils.readObjectArrayCompressed(in);
             serializedProperties = new Object[IOUtils.readInt(in)];
             packedBinaryProperties = IOUtils.readByteArray(in);
+            isDeserialized = false;
         }
     }
 

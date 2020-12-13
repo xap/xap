@@ -48,7 +48,7 @@ import java.util.Map;
  */
 @com.gigaspaces.api.InternalApi
 public class EntryPacket extends AbstractEntryPacket {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     protected String _typeName;
     private HybridPayload hybridBinaryData;
