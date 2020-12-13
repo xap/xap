@@ -98,6 +98,7 @@ public interface Constants {
     final public static String LOGGER_OFFHEAP_MEMORYMANAGER = "com.gigaspaces.offheap.memory-manager";
     final public static String LOGGER_NOTIFY = "com.gigaspaces.core.notify";
     final public static String LOGGER_FIFO = "com.gigaspaces.core.fifo";
+    final public static String LOGGER_BROADCAST_TABLE = "com.gigaspaces.broadcast_table";
 
     final public static String LOGGER_REPLICATION = "com.gigaspaces.replication";
     final public static String LOGGER_MIRROR_REPLICATION = LOGGER_REPLICATION + ".mirror";

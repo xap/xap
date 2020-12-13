@@ -1451,6 +1451,8 @@ public class SpaceTypeInfo implements Externalizable {
     }
 
     private void validateBroadcastTable() {
+        if(_superTypeInfo._superTypeInfo != null && !_superTypeInfo._superTypeInfo.isBroadcast())
+            throw new SpaceMetadataValidationException(_type, "Broadcast table cannot extend non broadcast table.");
         if(_routingProperty != null)
             throw new SpaceMetadataValidationException(_type, "Routing property and broadcast table cannot be used together.");
         if(_idAutoGenerate)

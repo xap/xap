@@ -73,6 +73,7 @@ import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
+import com.gigaspaces.internal.server.space.broadcast_table.BroadcastTableHandler;
 import com.gigaspaces.internal.server.space.demote.DemoteHandler;
 import com.gigaspaces.internal.server.space.executors.SpaceActionExecutor;
 import com.gigaspaces.internal.server.space.iterator.ServerIteratorRequestInfo;
@@ -270,6 +271,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private ZookeeperTopologyHandler zookeeperTopologyHandler;
 
     private final Map<Class<? extends SystemTask>, SpaceActionExecutor> executorMap = XapExtensions.getInstance().getActionExecutors();
+    private final BroadcastTableHandler _broadcastTableHandler;
 
     public SpaceImpl(String spaceName, String containerName, JSpaceContainerImpl container, SpaceURL url,
                      JSpaceAttributes spaceConfig, Properties customProperties,
@@ -344,6 +346,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         // TODO RMI connections are not blocked
         if (_clusterPolicy != null && _clusterPolicy.isPersistentStartupEnabled())
             initSpaceStartupStateManager();
+
+        _broadcastTableHandler = new BroadcastTableHandler(getSpaceProxy().getDirectProxy());
     }
 
     private ZKCollocatedClientConfig createZKCollocatedClientConfig() {
@@ -2011,7 +2015,12 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             if (txn != null && !_engine.isLocalCache() && !fromReplication)
                 _engine.getTransactionHandler().checkTransactionDisconnection(entry.getOperationID(), (ServerTransaction) txn);
-
+            if(performBroadcastOperation(entry, sc)){
+                checkReplicationIsHealthy();
+                WriteEntryResult result = _engine.write(entry, txn, lease, modifiers, fromReplication, true/*origin*/, sc);
+                pushBroadcastEntry(entry, lease, false, Long.MAX_VALUE, modifiers);
+                return result;
+            }
             return _engine.write(entry, txn, lease, modifiers, fromReplication, true/*origin*/, sc);
         } catch (EntryAlreadyInSpaceException e) {
             throw e;
@@ -2052,6 +2061,12 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             if (txn != null && !_engine.isLocalCache() && entries.length >0)
                 _engine.getTransactionHandler().checkTransactionDisconnection(entries[0].getOperationID(), (ServerTransaction) txn);
+            if(performBroadcastOperation(entries[0], sc)) {
+                checkReplicationIsHealthy();
+                WriteEntriesResult writeEntriesResult = _engine.write(entries, txn, lease, leases, modifiers, sc, timeout, newRouter);
+                pushBroadcastEntries(entries, lease, leases, timeout, modifiers);
+                return writeEntriesResult;
+            }
             return _engine.write(entries, txn, lease, leases, modifiers, sc, timeout, newRouter);
         } catch (WriteMultipleException e) {
             throw e;
@@ -2095,12 +2110,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         return leases;
     }
 
-    private AnswerPacket update(IEntryPacket entry, Transaction txn, long lease, long timeout,
-                                IJSpaceProxyListener listener, SpaceContext sc, int modifiers)
-            throws TransactionException, UnusableEntryException, UnknownTypeException, RemoteException, InterruptedException {
-        return update(entry, txn, lease, timeout, sc, modifiers, false /*newRouter*/);
-    }
-
     public AnswerPacket update(IEntryPacket entry, Transaction txn, long lease, long timeout,
                                SpaceContext sc, int modifiers, boolean newRouter)
             throws TransactionException, UnusableEntryException, UnknownTypeException, RemoteException, InterruptedException {
@@ -2112,7 +2121,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             if (txn != null && !_engine.isLocalCache())
                 _engine.getTransactionHandler().checkTransactionDisconnection(entry.getOperationID(), (ServerTransaction) txn);
-
+            boolean broadcastOperation = performBroadcastOperation(entry, sc);
+            if(broadcastOperation)
+                checkReplicationIsHealthy();
             AnswerPacket result;
             if (UpdateModifiers.isUpdateOrWrite(modifiers)) {
                 UpdateOrWriteContext ctx = new UpdateOrWriteContext(entry, lease, timeout, txn, sc, modifiers, false, true, false);
@@ -2133,7 +2144,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 ExtendedAnswerHolder aHolder = _engine.update(entry, txn, lease, timeout, sc, false, true/*origin*/, newRouter, modifiers);
                 result = aHolder != null ? aHolder.m_AnswerPacket : null;
             }
-
+            if(broadcastOperation)
+                pushBroadcastEntry(entry, lease, true, timeout, modifiers);
             if (newRouter)
                 return result;
             return UpdateModifiers.isNoReturnValue(modifiers) ? null : result;
@@ -3905,4 +3917,27 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         spaceConfig.setBlobstoreRocksDBAllowDuplicateUIDs(isDuplicateUIDsAllowed);
     }
 
+    private void pushBroadcastEntry(IEntryPacket entryPacket, long lease, boolean isUpdate, long timeout, int modifiers) throws RemoteException {
+        _broadcastTableHandler.pushEntry(entryPacket, lease, isUpdate, timeout, modifiers);
+    }
+
+    private void pushBroadcastEntries(IEntryPacket[] entryPacket, long lease, long[] leases, long timeout, int modifiers) throws RemoteException {
+        _broadcastTableHandler.pushEntries(entryPacket, lease ,leases, timeout, modifiers);
+    }
+
+    private boolean performBroadcastOperation(IEntryPacket entryPacket, SpaceContext sc) {
+        ITypeDesc typeDesc = entryPacket.getTypeDescriptor() != null ? entryPacket.getTypeDescriptor() : _engine.getClassTypeInfo(entryPacket.getTypeName());
+        boolean broadcast = typeDesc != null && typeDesc.isBroadcast();
+        boolean isClustered = sc == null || sc.isClustered();
+        return broadcast && _engine.getNumberOfPartitions() > 1 && _engine.getPartitionIdZeroBased() == 0 && isClustered;
+    }
+
+    private void checkReplicationIsHealthy() {
+        List<ReplicationStatistics.OutgoingChannel> backupChannels = getEngine().getReplicationNode().getAdmin().getStatistics().getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE);
+        for (ReplicationStatistics.OutgoingChannel channel: backupChannels){
+            if(!channel.getChannelState().equals(ReplicationStatistics.ChannelState.ACTIVE)){
+                throw new RuntimeException("Broadcast table operation failure. Backup replication channel " + channel.getTargetMemberName() + " is not active, state is " + channel.getChannelState());
+            }
+        }
+    }
 }

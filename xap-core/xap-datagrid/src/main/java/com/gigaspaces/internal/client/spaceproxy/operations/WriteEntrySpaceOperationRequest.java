@@ -85,7 +85,7 @@ public class WriteEntrySpaceOperationRequest extends SpaceOperationRequest<Write
 
     @Override
     public Object getPartitionedClusterRoutingValue(PartitionedClusterRemoteOperationRouter router) {
-        Object routingValue = _entryPacket.getRoutingFieldValue();
+        Object routingValue =  _entryPacket.getTypeDescriptor().isBroadcast() ? 0 : _entryPacket.getRoutingFieldValue();
         if (routingValue != null)
             return routingValue;
         if (_entryPacket.getTypeDescriptor().isAutoGenerateRouting())
@@ -168,6 +168,7 @@ public class WriteEntrySpaceOperationRequest extends SpaceOperationRequest<Write
                 out.writeLong(_timeout);
             if (_modifiers != DEFAULT_MODIFIERS)
                 out.writeInt(_modifiers);
+
         }
     }
 

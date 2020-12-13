@@ -2384,7 +2384,9 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         if (_isLocalCache && updated_entry.getVersion() <= 0)
             throw new DetailedUnusableEntryException("Update operation requires object version greater than 0 when using local cache. Object=" + updated_entry.toString());
 
-        if (!fromReplication && isPartitionedSpace() && ProtectiveMode.isWrongRoutingUsageProtectionEnabled()) {
+        boolean isBroadcast = updated_entry.getTypeDescriptor().isBroadcast();
+
+        if (!fromReplication && isPartitionedSpace() && ProtectiveMode.isWrongRoutingUsageProtectionEnabled() && !isBroadcast) {
             if (updated_entry.getRoutingFieldValue() == null)
                 throwNoRoutingProvidedWhenNeeded(serverTypeDesc, "updating");
             else
@@ -4132,7 +4134,15 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                     toScan,
                     makeWaitForInfo, entryTypeDesc);
     }
-
+    /*
+    Determine if engine should skip any operation in context of broadcast tables
+    returns true only if the following conditions are met:
+    1. Entry is broadcast table
+    2. Cluster is partitioned
+    3. Partition is not leader (id !=0)
+    4. Operation is from clustered proxy (not task) and not server iterator
+    5. Operation is not of kind take
+     */
     public boolean skipBroadcastTable(Context context,
                                       ITemplateHolder template,
                                       IServerTypeDesc entryTypeDesc){
@@ -4140,10 +4150,14 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             return false;
         if(!getClusterInfo().isPartitioned())
             return false;
-        if(!context.isFromClustered() && !template.isServerIterator())
-            return false;
         if(getPartitionIdZeroBased() == 0)
             return false;
+        if(template != null){
+            if(!context.isFromClustered() && !template.isServerIterator())
+                return false;
+            if(template.isTakeOperation())
+                return false;
+        }
         return true;
     }
 

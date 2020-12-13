@@ -59,7 +59,7 @@ public class SpaceProxyImplWriteAction extends WriteProxyAction<SpaceProxyImpl> 
         spaceProxy.beforeSpaceAction(actionInfo);
         WriteEntriesSpaceOperationRequest request = new WriteEntriesSpaceOperationRequest(spaceProxy.getTypeManager(),
                 actionInfo.entries, actionInfo.entryPackets, actionInfo.txn,
-                actionInfo.lease, actionInfo.leases, actionInfo.timeout, actionInfo.modifiers);
+                actionInfo.lease, actionInfo.leases, actionInfo.timeout, actionInfo.modifiers, actionInfo.isBroadcast);
 
         if (Modifiers.contains(actionInfo.modifiers, Modifiers.ONE_WAY)) {
             spaceProxy.getProxyRouter().executeOneway(request);

@@ -62,6 +62,7 @@ public class WriteEntriesSpaceOperationRequest extends SpaceScatterGatherOperati
     private transient Object[] _entries;
     private transient LeaseContext<?>[] _resultLeases;
     private transient WriteMultipleException.IWriteResult[] _partialFailureResults;
+    private transient boolean _broadcast;
 
     /**
      * Required for Externalizable
@@ -70,7 +71,7 @@ public class WriteEntriesSpaceOperationRequest extends SpaceScatterGatherOperati
     }
 
     public WriteEntriesSpaceOperationRequest(ISpaceProxyTypeManager typeManager, Object[] entries, IEntryPacket[] entriesPackets,
-                                             Transaction txn, long lease, long[] leases, long timeout, int modifiers) {
+                                             Transaction txn, long lease, long[] leases, long timeout, int modifiers, boolean broadcast) {
         this._typeManager = typeManager;
         this._entries = entries;
         this._entriesPackets = entriesPackets;
@@ -79,6 +80,7 @@ public class WriteEntriesSpaceOperationRequest extends SpaceScatterGatherOperati
         this._leases = leases;
         this._modifiers = modifiers;
         this._timeout = timeout;
+        this._broadcast = broadcast;
     }
 
     @Override
@@ -112,11 +114,13 @@ public class WriteEntriesSpaceOperationRequest extends SpaceScatterGatherOperati
 
     @Override
     public PartitionedClusterExecutionType getPartitionedClusterExecutionType() {
-        return PartitionedClusterExecutionType.SCATTER_CONCURRENT;
+        return _broadcast ? PartitionedClusterExecutionType.SINGLE : PartitionedClusterExecutionType.SCATTER_CONCURRENT;
     }
 
     @Override
     public Object getPartitionedClusterRoutingValue(PartitionedClusterRemoteOperationRouter router) {
+        if(_broadcast)
+            return 0;
         throw new IllegalStateException();
     }
 
@@ -350,8 +354,6 @@ public class WriteEntriesSpaceOperationRequest extends SpaceScatterGatherOperati
             flags |= FLAG_MODIFIERS;
         if (_timeout != DEFAULT_TIMEOUT)
             flags |= FLAG_TIMEOUT;
-
-
         return flags;
     }
 

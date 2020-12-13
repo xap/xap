@@ -129,7 +129,7 @@ public class CountClearEntriesSpaceOperationRequest extends SpaceOperationReques
     }
 
     private boolean isReplicatedTableOperation() {
-        return !isClear() && _templatePacket.getTypeDescriptor() != null && _templatePacket.getTypeDescriptor().isBroadcast();
+        return !isClear() && _templatePacket.isBroadcast();
     }
 
     @Override

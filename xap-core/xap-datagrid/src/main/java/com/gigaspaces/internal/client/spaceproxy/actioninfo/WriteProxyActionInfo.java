@@ -66,6 +66,10 @@ public class WriteProxyActionInfo extends CommonProxyActionInfo {
             if (UpdateModifiers.isReturnPrevOnUpdate(modifiers))
                 throw new UnsupportedOperationException("Oneway write is not supported with return previous value on update.");
         }
+        if (entryPacket.getTypeDescriptor().isBroadcast()) {
+            if (txn != null || spaceProxy.getContextTransaction() != null)
+                throw new UnsupportedOperationException("Write of broadcast table entry is not supported when the write is being done under a transaction.");
+        }
     }
 
     public LeaseContext<?> convertWriteResult(IDirectSpaceProxy spaceProxy, LeaseContext<?> result) {

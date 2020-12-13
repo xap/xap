@@ -39,6 +39,7 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
     public final long lease;
     public final long[] leases;
     public final long timeout;
+    public boolean isBroadcast;
 
     @SuppressWarnings("deprecation")
     private final static boolean oneWaySystemProperty = Boolean.getBoolean(SystemProperties.ONE_WAY_WRITE);
@@ -88,14 +89,19 @@ public class WriteMultipleProxyActionInfo extends CommonProxyActionInfo {
             }
         }
         int counter = 0;
-
         for (int i = 0; i < entries.length; i++) {
             if (entries[i] == null)
                 throw new IllegalArgumentException("entry number " + i + " is null");
             ObjectType objectType = ObjectType.fromObject(entries[i]);
 
             IEntryPacket entryPacket = toEntryPacket(spaceProxy, entries[i], objectType);
-
+            if (i == 0) {
+                isBroadcast = entryPacket.getTypeDescriptor().isBroadcast();
+                if (isBroadcast && (txn != null || spaceProxy.getContextTransaction() != null))
+                    throw new UnsupportedOperationException("Write of broadcast table entries is not supported when the write is being done under a transaction.");
+            }
+            if(isBroadcast != entryPacket.getTypeDescriptor().isBroadcast())
+                throw new IllegalArgumentException("Cannot write broadcast table entries mixed with partitioned entries");
             if (entryPacket.getTypeName() == null)
                 throw new IllegalArgumentException("Cannot write null-class Entry- entry number " + i);
             if (UpdateModifiers.isPartialUpdate(this.modifiers) && entryPacket.getDynamicProperties() != null)
