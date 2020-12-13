@@ -283,7 +283,7 @@ public class SpaceTypeDescriptorBuilder {
      * @param propertyType Type of property.
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType) {
-        return addFixedProperty(property(propertyName, propertyType), SpaceDocumentSupport.DEFAULT, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyType));
     }
 
     /**
@@ -294,7 +294,7 @@ public class SpaceTypeDescriptorBuilder {
      * @param documentSupport Document support of property.
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, SpaceDocumentSupport documentSupport) {
-        return addFixedProperty(property(propertyName, propertyType), documentSupport, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyType).documentSupport(documentSupport));
     }
 
     /**
@@ -306,7 +306,7 @@ public class SpaceTypeDescriptorBuilder {
      * @since 9.0.0
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, StorageType storageType) {
-        return addFixedProperty(property(propertyName, propertyType), SpaceDocumentSupport.DEFAULT, storageType);
+        return addFixedProperty(property(propertyName, propertyType).storageType(storageType));
     }
 
     /**
@@ -318,7 +318,7 @@ public class SpaceTypeDescriptorBuilder {
      * @since 15.2.0
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, Class<? extends PropertyStorageAdapter> propertyStorageAdapter) {
-        return addFixedProperty(property(propertyName, propertyType).storageAdapter(propertyStorageAdapter), SpaceDocumentSupport.DEFAULT, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyType).storageAdapter(propertyStorageAdapter));
     }
 
     /**
@@ -331,7 +331,7 @@ public class SpaceTypeDescriptorBuilder {
      * @since 9.0.0
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, SpaceDocumentSupport documentSupport, StorageType storageType) {
-        return addFixedProperty(property(propertyName, propertyType), documentSupport, storageType);
+        return addFixedProperty(property(propertyName, propertyType).documentSupport(documentSupport).storageType(storageType));
     }
 
     /**
@@ -344,7 +344,7 @@ public class SpaceTypeDescriptorBuilder {
      * @since 9.0.0
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, Class<?> propertyType, SpaceDocumentSupport documentSupport, Class<? extends PropertyStorageAdapter> propertyStorageAdapter) {
-        return addFixedProperty(property(propertyName, propertyType).storageAdapter(propertyStorageAdapter), documentSupport, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyType).documentSupport(documentSupport).storageAdapter(propertyStorageAdapter));
     }
 
     private static PropertyInfo.Builder property(String propertyName, Class<?> propertyType) {
@@ -359,23 +359,23 @@ public class SpaceTypeDescriptorBuilder {
      * @param propertyTypeName Name of type of property.
      */
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName) {
-        return addFixedProperty(property(propertyName, propertyTypeName), SpaceDocumentSupport.DEFAULT, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyTypeName));
     }
 
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName, SpaceDocumentSupport documentSupport) {
-        return addFixedProperty(property(propertyName, propertyTypeName), documentSupport, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyTypeName).documentSupport(documentSupport));
     }
 
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName, SpaceDocumentSupport documentSupport, StorageType storageType) {
-        return addFixedProperty(property(propertyName, propertyTypeName), documentSupport, storageType);
+        return addFixedProperty(property(propertyName, propertyTypeName).documentSupport(documentSupport).storageType(storageType));
     }
 
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName, SpaceDocumentSupport documentSupport, Class<? extends PropertyStorageAdapter> propertyStorageAdapter) {
-        return addFixedProperty(property(propertyName, propertyTypeName).storageAdapter(propertyStorageAdapter), documentSupport, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyTypeName).documentSupport(documentSupport).storageAdapter(propertyStorageAdapter));
     }
 
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName, boolean isBinaryProperty) {
-        return addFixedProperty(property(propertyName, propertyTypeName).setBinarySpaceProperty(isBinaryProperty), SpaceDocumentSupport.DEFAULT, StorageType.DEFAULT);
+        return addFixedProperty(property(propertyName, propertyTypeName).setBinarySpaceProperty(isBinaryProperty));
     }
 
     private static PropertyInfo.Builder property(String propertyName, String propertyTypeName) {
@@ -392,10 +392,7 @@ public class SpaceTypeDescriptorBuilder {
     /**
      * Adds a property to the fixed properties set.
      */
-    private SpaceTypeDescriptorBuilder addFixedProperty(PropertyInfo.Builder builder, SpaceDocumentSupport documentSupport, StorageType storageType) {
-        builder.documentSupport(assertNotNull(documentSupport, "documentSupport"));
-        builder.storageType(assertNotNull(storageType, "storageType"));
-
+    private SpaceTypeDescriptorBuilder addFixedProperty(PropertyInfo.Builder builder) {
         String name = builder.getName();
         // Validate property is not a duplicate:
         if (_fixedProperties.containsKey(name))
