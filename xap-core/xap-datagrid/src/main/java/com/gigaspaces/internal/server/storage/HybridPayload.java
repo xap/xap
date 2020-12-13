@@ -47,7 +47,7 @@ public class HybridPayload implements Externalizable {
         this.dirty = false;
     }
 
-    private static byte[] serializeFields(ITypeDesc typeDesc, Object[] fieldsValues) {
+    static byte[] serializeFields(ITypeDesc typeDesc, Object[] fieldsValues) {
         try {
             if (fieldsValues == null || fieldsValues.length == 0) {
                 return new byte[0];
@@ -158,6 +158,10 @@ public class HybridPayload implements Externalizable {
         return packedBinaryProperties;
     }
 
+    public Object[] getSerializedProperties() {
+        return serializedProperties;
+    }
+
     @Override
     public String toString() {
         return "HybridBinaryData{" +
@@ -231,5 +235,9 @@ public class HybridPayload implements Externalizable {
 
     public void setFixedProperty(int position, Object value) {
         this.nonSerializedProperties[position] = value;
+    }
+
+    public boolean isDirty() {
+        return dirty;
     }
 }

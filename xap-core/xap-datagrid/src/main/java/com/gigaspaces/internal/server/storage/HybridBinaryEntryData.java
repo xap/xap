@@ -47,15 +47,19 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
         this(new HybridPayload(entryTypeDesc.getTypeDesc(), fixedProperties), dynamicProperties, entryTypeDesc, version, expirationTime, entryXtnInfo);
     }
 
-    public HybridBinaryEntryData(HybridPayload hybridBinaryEntryData, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version,
+    public HybridBinaryEntryData(HybridPayload hybridPayload, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version,
                                  long expirationTime, EntryXtnInfo entryXtnInfo) {
         this._entryTypeDesc = entryTypeDesc;
         this._versionID = version;
         this._expirationTime = expirationTime;
         this._entryTxnInfo = entryXtnInfo;
         this._dynamicProperties = dynamicProperties;
-        this.nonSerializedFields = hybridBinaryEntryData.getNonSerializedProperties();
-        this.serializedFields = hybridBinaryEntryData.getPackedBinaryProperties();
+        this.nonSerializedFields = hybridPayload.getNonSerializedProperties();
+        if(hybridPayload.isDirty()){
+            this.serializedFields = HybridPayload.serializeFields(entryTypeDesc.getTypeDesc(), hybridPayload.getSerializedProperties());
+        }else {
+            this.serializedFields = hybridPayload.getPackedBinaryProperties();
+        }
     }
 
 
