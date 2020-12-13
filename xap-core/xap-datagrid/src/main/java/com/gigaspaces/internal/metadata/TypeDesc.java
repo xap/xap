@@ -177,7 +177,6 @@ public class TypeDesc implements ITypeDesc {
         }
 
         validate();
-        updateDefaultStorageType();
         validateAndUpdateSequenceNumberInfo(sequenceNumberPropertyName);
         initializeV9_0_0();
         addFifoGroupingIndexesIfNeeded(_indexes, _fifoGroupingName, _fifoGroupingIndexes);
@@ -259,13 +258,6 @@ public class TypeDesc implements ITypeDesc {
         return newTypeDesc;
     }
 
-    private void updateDefaultStorageType() {
-        for (PropertyInfo property : _fixedProperties) {
-            if (property.getStorageType() == StorageType.DEFAULT)
-                property.setDefaultStorageType(_storageType);
-        }
-    }
-
     private void validate() {
         if (_fifoGroupingName != null && !StringUtils.hasText(_fifoGroupingName))
             throw new IllegalArgumentException("When fifo grouping property is set, it must not be an empty path");
@@ -313,12 +305,8 @@ public class TypeDesc implements ITypeDesc {
     }
 
     private void assertObjectStorageType(PropertyInfo property, String errMsg) {
-        if (property.getStorageType() != StorageType.OBJECT) {
-            if (property.getStorageType() == StorageType.DEFAULT)
-                property.setDefaultStorageType(StorageType.OBJECT);
-            else
-                throw new SpaceMetadataValidationException(_typeName, property, errMsg + " cannot be used with storage type " + property.getStorageType());
-        }
+        if (property.getStorageType() != StorageType.OBJECT)
+            throw new SpaceMetadataValidationException(_typeName, property, errMsg + " cannot be used with storage type " + property.getStorageType());
     }
 
     private boolean isSameProperty(String indexName, String propertyName) {

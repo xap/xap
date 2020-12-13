@@ -46,8 +46,8 @@ public class PropertyInfo implements SpacePropertyDescriptor{
     private final boolean _spacePrimitive;
     private final Class<?> _type;
     private final SpaceDocumentSupport _documentSupport;
-    private StorageType _storageType;
-    private PropertyStorageAdapter _storageAdapter;
+    private final StorageType _storageType;
+    private final PropertyStorageAdapter _storageAdapter;
     private final byte _dotnetStorageType;
     private final boolean _binarySpaceProperty;
     private int originalIndex;
@@ -62,23 +62,27 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         this._documentSupport = builder.documentSupport != SpaceDocumentSupport.DEFAULT
                 ? builder.documentSupport
                 : SpaceDocumentSupportHelper.getDefaultDocumentSupport(_type);
-        initStorageAdapter(builder.storageAdapterClass);
-        initStorageType(builder.storageType);
+        this._storageType = calcEffectiveStorageType(builder.storageType, builder.defaultStorageType, _spacePrimitive);
+        this._storageAdapter = initStorageAdapter(builder.storageAdapterClass, _storageType);
         this._dotnetStorageType = builder.dotnetStorageType;
         this._binarySpaceProperty = builder._binarySpaceProperty;
     }
 
-    private void initStorageType(StorageType storageType) {
-        this._storageType = storageType;
-        if (storageType.getStorageAdapterClass() != null && !_spacePrimitive) {
-            if (_storageAdapter != null && !_storageAdapter.getClass().equals(storageType.getStorageAdapterClass()))
-                throw new IllegalStateException("Ambiguous storage settings: storageAdapterClass=" + _storageAdapter.getClass() + ", storageType=" + storageType);
-            initStorageAdapter(storageType.getStorageAdapterClass());
-        }
+    private static StorageType calcEffectiveStorageType(StorageType storageType, StorageType classStorageType, boolean spacePrimitive) {
+        if (storageType != StorageType.DEFAULT)
+            return storageType;
+        if (spacePrimitive)
+            return StorageType.OBJECT;
+        return classStorageType != StorageType.DEFAULT ? classStorageType : StorageType.OBJECT;
     }
 
-    private void initStorageAdapter(Class<? extends PropertyStorageAdapter> storageAdapterClass) {
-        this._storageAdapter = storageAdapterClass == null ? null : PropertyStorageAdapterRegistry.getInstance().getOrCreate(storageAdapterClass);
+    private static PropertyStorageAdapter initStorageAdapter(Class<? extends PropertyStorageAdapter> storageAdapterClass, StorageType storageType) {
+        if (storageType.getStorageAdapterClass() != null) {
+            if (storageAdapterClass != null && !storageAdapterClass.equals(storageType.getStorageAdapterClass()))
+                throw new IllegalStateException("Ambiguous storage settings: storageAdapterClass=" + storageAdapterClass + ", storageType=" + storageType);
+            storageAdapterClass = storageType.getStorageAdapterClass();
+        }
+        return storageAdapterClass == null ? null : PropertyStorageAdapterRegistry.getInstance().getOrCreate(storageAdapterClass);
     }
 
     @Override
@@ -114,10 +118,6 @@ public class PropertyInfo implements SpacePropertyDescriptor{
     @Override
     public boolean isBinarySpaceProperty() {
         return _binarySpaceProperty;
-    }
-
-    public void setDefaultStorageType(StorageType defaultStorageType) {
-        initStorageType(_spacePrimitive ? StorageType.OBJECT : defaultStorageType);
     }
 
     @Override
@@ -250,6 +250,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         private String typeName;
         private SpaceDocumentSupport documentSupport = SpaceDocumentSupport.DEFAULT;
         private StorageType storageType = StorageType.DEFAULT;
+        private StorageType defaultStorageType = StorageType.DEFAULT;
         private byte dotnetStorageType = DotNetStorageType.NULL;
         private Class<? extends PropertyStorageAdapter> storageAdapterClass;
         private boolean _binarySpaceProperty;
@@ -284,6 +285,11 @@ public class PropertyInfo implements SpacePropertyDescriptor{
             return this;
         }
 
+        public Builder defaultStorageType(StorageType defaultStorageType) {
+            this.defaultStorageType = defaultStorageType;
+            return this;
+        }
+
         public Builder storageAdapter(Class<? extends PropertyStorageAdapter> storageAdapterClass) {
             this.storageAdapterClass = storageAdapterClass;
             return this;
@@ -297,6 +303,10 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         public Builder setBinarySpaceProperty(boolean binarySpaceProperty) {
             this._binarySpaceProperty = binarySpaceProperty;
             return this;
+        }
+
+        public String getName() {
+            return name;
         }
     }
 }
