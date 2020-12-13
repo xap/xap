@@ -171,12 +171,8 @@ public class SpaceTypeInfo implements Externalizable {
 
         if(this.getBinaryStorageAdapterType() != null && this.getBinaryStorageAdapterType().equals(BinaryStorageAdapterType.EXCLUDE_INDEXES)) {
             for (SpacePropertyInfo spaceProperty : this._spaceProperties) {
-                Pattern pattern = Pattern.compile(".*\\+"+ spaceProperty.getName() + ".*|.*"+ spaceProperty.getName() +"\\+.*|"
-                        + spaceProperty.getName() +"\\..*|"+ spaceProperty.getName() +"\\[.*");
-                if(!this._indexes.containsKey(spaceProperty.getName()) &&
-                        this._indexes.keySet().stream().noneMatch(key -> pattern.matcher(key).matches())){
+                if (!TypeDescriptorUtils.isIndexParticipant(spaceProperty.getName(), _indexes.keySet()))
                     spaceProperty.setBinarySpaceProperty(true);
-                }
             }
         }
     }

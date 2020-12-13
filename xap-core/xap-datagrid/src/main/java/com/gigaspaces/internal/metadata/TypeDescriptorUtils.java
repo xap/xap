@@ -22,6 +22,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * @author Niv Ingberg
@@ -111,5 +112,13 @@ public class TypeDescriptorUtils {
             }
             return root;
         }
+    }
+
+    public static boolean isIndexParticipant(String propertyName, Set<String> indexNames) {
+        if (indexNames.contains(propertyName))
+            return true;
+        Pattern pattern = Pattern.compile(".*\\+"+ propertyName + ".*|.*"+ propertyName +"\\+.*|"
+                + propertyName +"\\..*|"+ propertyName +"\\[.*");
+        return indexNames.stream().anyMatch(key -> pattern.matcher(key).matches());
     }
 }
