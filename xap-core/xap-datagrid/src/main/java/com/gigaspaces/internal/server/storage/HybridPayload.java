@@ -207,7 +207,7 @@ public class HybridPayload implements Externalizable {
     private void splitProperties(ITypeDesc typeDesc, Object[] values) {
         this.nonSerializedProperties = new Object[typeDesc.getNonSerializedProperties().length];
         this.serializedProperties = new Object[typeDesc.getSerializedProperties().length];
-        if(values.length > 0) {
+        if(values != null && values.length > 0) {
             int nonSerializedFieldsIndex = 0;
             int serializedFieldsIndex = 0;
             for (PropertyInfo property : typeDesc.getProperties()) {
