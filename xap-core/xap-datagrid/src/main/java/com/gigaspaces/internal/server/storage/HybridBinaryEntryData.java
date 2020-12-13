@@ -18,6 +18,7 @@ package com.gigaspaces.internal.server.storage;
 
 import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
+import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.j_spaces.core.server.transaction.EntryXtnInfo;
 
@@ -88,8 +89,7 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
 
     @Override
     public Object getFixedPropertyValue(int index) {
-        if (_entryTypeDesc.getTypeDesc().
-                isBinaryProperty(index)) {
+        if (_entryTypeDesc.getTypeDesc().isBinaryProperty(index)) {
             try {
                 return _entryTypeDesc.getTypeDesc().getClassBinaryStorageAdapter()
                         .getFieldAtIndex(_entryTypeDesc.getTypeDesc(), serializedFields, _entryTypeDesc.getTypeDesc().findHybridIndex(index));
@@ -121,24 +121,30 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
 
     @Override
     public Object[] getFixedPropertiesValues() {
-        Object[] fields = new Object[_entryTypeDesc.getTypeDesc().getProperties().length];
-        try {
-            Object[] deserializedFields = _entryTypeDesc.getTypeDesc().getClassBinaryStorageAdapter().fromBinary(_entryTypeDesc.getTypeDesc(), serializedFields);
-            int i = 0;
-            for (PropertyInfo property : _entryTypeDesc.getTypeDesc().getProperties()) {
-                if (property.isBinarySpaceProperty()) {
-                    fields[i] = deserializedFields[_entryTypeDesc.getTypeDesc().findHybridIndex(i)];
-                } else {
-                    fields[i] = nonSerializedFields[_entryTypeDesc.getTypeDesc().findHybridIndex(i)];
+        ITypeDesc typeDesc = _entryTypeDesc.getTypeDesc();
+
+        if(typeDesc.getSerializedProperties().length > 0) {
+            Object[] fields = new Object[typeDesc.getProperties().length];
+            try {
+                Object[] deserializedFields = typeDesc.getClassBinaryStorageAdapter().fromBinary(typeDesc, serializedFields);
+                int i = 0;
+                for (PropertyInfo property : typeDesc.getProperties()) {
+                    if (property.isBinarySpaceProperty()) {
+                        fields[i] = deserializedFields[typeDesc.findHybridIndex(i)];
+                    } else {
+                        fields[i] = nonSerializedFields[typeDesc.findHybridIndex(i)];
+                    }
+                    i++;
                 }
-                i++;
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            } catch (ClassNotFoundException e) {
+                throw new IllegalStateException(e);
             }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        } catch (ClassNotFoundException e) {
-            throw new IllegalStateException(e);
+            return fields;
+        } else {
+            return this.nonSerializedFields;
         }
-        return fields;
     }
 
     @Override

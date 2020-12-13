@@ -531,7 +531,7 @@ public class UpdateReplicationPacketData
             ClassNotFoundException {
         super.readFromSwap(in);
         _overrideVersion = in.readBoolean();
-        deserializePreviousEntryData(in);
+        deserializePreviousEntryDataPost158(in);
         _flags = in.readShort();
         _expirationTime = in.readLong();
         restoreCurrentEntryData();
@@ -543,12 +543,9 @@ public class UpdateReplicationPacketData
 
     @Override
     public void writeToSwap(ObjectOutput out) throws IOException {
-        if(_previousEntryData != null){
-            getEntryPacket().getFieldValues();
-        }
         super.writeToSwap(out);
         out.writeBoolean(_overrideVersion);
-        serializePreviousEntryData(out);
+        serializePreviousEntryDataPost158(out);
         out.writeShort(_flags);
         out.writeLong(_expirationTime);
     }
