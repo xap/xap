@@ -165,7 +165,11 @@ public class EntryPacket extends AbstractEntryPacket {
     }
 
     public void setFieldsValues(Object[] values) {
-        hybridBinaryData.setFixedProperties(getTypeDescriptor(), values);
+        if(getTypeDescriptor() == null && getTypeName() == null){
+            hybridBinaryData.setFixedProperties(values);
+        } else {
+            hybridBinaryData.setFixedProperties(getTypeDescriptor(), values);
+        }
     }
 
     public Object getFieldValue(int index) {
@@ -178,7 +182,11 @@ public class EntryPacket extends AbstractEntryPacket {
 
     public void setFieldValue(int index, Object value) {
         try {
-            this.hybridBinaryData.setFixedProperty(_typeDesc, index, value);
+            if(getTypeDescriptor() == null && getTypeName() == null){
+                hybridBinaryData.setFixedProperty(index, value);
+            } else {
+                this.hybridBinaryData.setFixedProperty(_typeDesc, index, value);
+            }
         } catch (Exception e) {
             throw new IllegalStateException("The field values array was not properly set", e);
         }

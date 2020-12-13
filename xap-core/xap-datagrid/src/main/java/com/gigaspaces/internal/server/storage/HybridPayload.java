@@ -221,4 +221,15 @@ public class HybridPayload implements Externalizable {
             }
         }
     }
+
+    public void setFixedProperties(Object[] values) {
+        this.nonSerializedProperties = values;
+        this.serializedProperties = new Object[0];
+        this.isDeserialized = true;
+        this.dirty = true;
+    }
+
+    public void setFixedProperty(int position, Object value) {
+        this.nonSerializedProperties[position] = value;
+    }
 }
