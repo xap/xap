@@ -1,5 +1,6 @@
 package com.gigaspaces.client.storage_adapters.class_storage_adapters;
 
+import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.io.GSByteArrayInputStream;
 import com.gigaspaces.internal.io.GSByteArrayOutputStream;
 import com.gigaspaces.internal.io.IOUtils;
@@ -11,6 +12,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 
+@ExperimentalApi
 public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter {
 
     @Override
