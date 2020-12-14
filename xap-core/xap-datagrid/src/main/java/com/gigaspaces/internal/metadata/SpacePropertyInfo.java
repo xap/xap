@@ -52,8 +52,7 @@ public class SpacePropertyInfo implements SpacePropertyDescriptor, Comparable<Sp
 
     private int _level;
     private Primitive _nullValue;
-    private StorageType _storageType;
-    private boolean _binarySpaceProperty;
+    private StorageType _storageType = StorageType.DEFAULT;
     private Class<? extends PropertyStorageAdapter> _storageAdapterClass;
     private SpaceDocumentSupport _documentSupport;
 
@@ -141,11 +140,6 @@ public class SpacePropertyInfo implements SpacePropertyDescriptor, Comparable<Sp
         return _storageAdapterClass == null ? "" : PropertyStorageAdapterRegistry.getInstance().getOrCreate(_storageAdapterClass).getName();
     }
 
-    @Override
-    public boolean isBinarySpaceProperty() {
-        return _binarySpaceProperty;
-    }
-
     public void setStorageType(StorageType storageType) {
         this._storageType = storageType;
     }
@@ -156,11 +150,6 @@ public class SpacePropertyInfo implements SpacePropertyDescriptor, Comparable<Sp
 
     public void setStorageAdapterClass(Class<? extends PropertyStorageAdapter> storageAdapterClass) {
         this._storageAdapterClass = storageAdapterClass;
-    }
-
-    public SpacePropertyInfo setBinarySpaceProperty(boolean binarySpaceProperty) {
-        this._binarySpaceProperty = binarySpaceProperty;
-        return this;
     }
 
     @Override

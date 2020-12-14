@@ -18,21 +18,11 @@
 package com.gigaspaces.metadata;
 
 import com.gigaspaces.annotation.pojo.FifoSupport;
-import com.gigaspaces.annotation.pojo.BinaryStorageAdapterType;
 import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.DefaultClassBinaryStorageAdapter;
 import com.gigaspaces.document.SpaceDocument;
-import com.gigaspaces.internal.metadata.DotNetStorageType;
-import com.gigaspaces.internal.metadata.EntryType;
-import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.metadata.PojoDefaults;
-import com.gigaspaces.internal.metadata.PropertyInfo;
-import com.gigaspaces.internal.metadata.SpaceCollectionIndex;
-import com.gigaspaces.internal.metadata.SpacePropertyInfo;
-import com.gigaspaces.internal.metadata.SpaceTypeInfo;
-import com.gigaspaces.internal.metadata.SpaceTypeInfoRepository;
-import com.gigaspaces.internal.metadata.TypeDesc;
+import com.gigaspaces.internal.metadata.*;
 import com.gigaspaces.internal.utils.ObjectUtils;
 import com.gigaspaces.metadata.index.ISpaceIndex;
 import com.gigaspaces.metadata.index.SpaceIndex;
@@ -91,7 +81,6 @@ public class SpaceTypeDescriptorBuilder {
     private String _sequenceNumberPropertyName;
     private boolean _sequenceNumberFromDocumentBuilder;
     private Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapterClass = Boolean.parseBoolean(System.getProperty("com.gs.disable.hybrid","false")) ? null : DefaultClassBinaryStorageAdapter.class;
-    private BinaryStorageAdapterType binaryStorageAdapterType = Boolean.parseBoolean(System.getProperty("com.gs.disable.hybrid","false")) ? null : BinaryStorageAdapterType.EXCLUDE_INDEXES;
 
     /**
      * Initialize a type descriptor builder using the specified type name.
@@ -203,11 +192,7 @@ public class SpaceTypeDescriptorBuilder {
 
     public SpaceTypeDescriptorBuilder classBinaryStorageAdapter(Class<? extends ClassBinaryStorageAdapter> classBinaryStorageAdapter) {
         this.binaryStorageAdapterClass = assertNotNull(classBinaryStorageAdapter, "binaryStorageAdapterClass");
-        return this;
-    }
-
-    public SpaceTypeDescriptorBuilder setBinaryStorageAdapterType(BinaryStorageAdapterType binaryStorageAdapterType) {
-        this.binaryStorageAdapterType = binaryStorageAdapterType;
+        storageType(StorageType.BINARY); // TODO: get from 'annotation'
         return this;
     }
 
@@ -372,10 +357,6 @@ public class SpaceTypeDescriptorBuilder {
 
     public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName, SpaceDocumentSupport documentSupport, Class<? extends PropertyStorageAdapter> propertyStorageAdapter) {
         return addFixedProperty(property(propertyName, propertyTypeName).documentSupport(documentSupport).storageAdapter(propertyStorageAdapter));
-    }
-
-    public SpaceTypeDescriptorBuilder addFixedProperty(String propertyName, String propertyTypeName, boolean isBinaryProperty) {
-        return addFixedProperty(property(propertyName, propertyTypeName).setBinarySpaceProperty(isBinaryProperty));
     }
 
     private static PropertyInfo.Builder property(String propertyName, String propertyTypeName) {
@@ -694,8 +675,9 @@ public class SpaceTypeDescriptorBuilder {
     public SpaceTypeDescriptor create() {
         applyDefaults();
 
+        boolean binaryClassStorage = binaryStorageAdapterClass != null;
         final String[] superTypesNames = getSuperTypesNames(_typeName, _superTypeDescriptor);
-        final PropertyInfo[] fixedProperties = initFixedProperties(_fixedProperties, _superTypeDescriptor, _storageType);
+        final PropertyInfo[] fixedProperties = initFixedProperties(_fixedProperties, _superTypeDescriptor, _storageType, binaryClassStorage, _indexes.keySet());
         final Map<String, SpaceIndex> indexes = initIndexes(_indexes, fixedProperties, _idPropertyName, _superTypeDescriptor);
         final String codeBase = null;                            // TODO: What about pojo?
         final EntryType entryType = _objectClass == null ? EntryType.DOCUMENT_JAVA : EntryType.OBJECT_JAVA;
@@ -732,7 +714,7 @@ public class SpaceTypeDescriptorBuilder {
                 DotNetStorageType.NULL,
                 _blobstoreEnabled,
                 _sequenceNumberPropertyName,
-                _queryExtensionsInfo, binaryStorageAdapterClass, binaryStorageAdapterType);
+                _queryExtensionsInfo, binaryStorageAdapterClass);
     }
 
     private void applyDefaults() {
@@ -889,7 +871,9 @@ public class SpaceTypeDescriptorBuilder {
     }
 
 
-    private static PropertyInfo[] initFixedProperties(SortedMap<String, PropertyInfo.Builder> properties, SpaceTypeDescriptor superTypeDesc, StorageType defaultStorageType) {
+    private static PropertyInfo[] initFixedProperties(SortedMap<String, PropertyInfo.Builder> properties,
+                                                      SpaceTypeDescriptor superTypeDesc, StorageType defaultStorageType,
+                                                      boolean binaryClassStorage, Set<String> indexesNames) {
         final int numOfSuperFixedProerties = superTypeDesc != null ? superTypeDesc.getNumOfFixedProperties() : 0;
         final int numOfFixedProerties = properties != null ? properties.size() : 0;
         final PropertyInfo[] mergedProperties = new PropertyInfo[numOfSuperFixedProerties + numOfFixedProerties];
@@ -904,7 +888,12 @@ public class SpaceTypeDescriptorBuilder {
         if (properties != null)
             for (Entry<String, PropertyInfo.Builder> pair : properties.entrySet()) {
                 PropertyInfo.Builder builder = pair.getValue();
-                builder.defaultStorageType(defaultStorageType);
+                if (binaryClassStorage) {
+                    if (!TypeDescriptorUtils.isIndexParticipant(pair.getKey(), indexesNames))
+                        builder.defaultStorageType(defaultStorageType, true);
+                } else {
+                    builder.defaultStorageType(defaultStorageType, false);
+                }
                 mergedProperties[pos++] = builder.build();
             }
 

@@ -17,7 +17,6 @@
 package com.gigaspaces.internal.server.metadata;
 
 import com.gigaspaces.annotation.pojo.FifoSupport;
-import com.gigaspaces.annotation.pojo.BinaryStorageAdapterType;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.io.IOUtils;
@@ -103,11 +102,6 @@ import java.util.Set;
     @Override
     public int findHybridIndex(int index) {
         return 0;
-    }
-
-    @Override
-    public BinaryStorageAdapterType getBinaryStorageType() {
-        return null;
     }
 
     @Override
