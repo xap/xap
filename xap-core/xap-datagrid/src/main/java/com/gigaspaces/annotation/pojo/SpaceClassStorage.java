@@ -11,6 +11,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target(ElementType.TYPE)
 @Retention(RUNTIME)
-public @interface SpaceClassBinaryStorageAdapter {
+public @interface SpaceClassStorage {
     Class<? extends ClassBinaryStorageAdapter> adapter() default DefaultClassBinaryStorageAdapter.class;
 }
