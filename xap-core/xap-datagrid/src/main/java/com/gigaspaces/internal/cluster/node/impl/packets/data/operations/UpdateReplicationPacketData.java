@@ -325,9 +325,6 @@ public class UpdateReplicationPacketData
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        if(_serializeFullContent){
-            getEntryPacket().getFieldValues(); // if has serialized fields this call will cause deserialization
-        }
         super.writeExternal(out);
 
         if (LRMIInvocationContext.getEndpointLogicalVersion().lessThan(PlatformLogicalVersion.v9_1_0))
@@ -589,4 +586,7 @@ public class UpdateReplicationPacketData
         return _expirationTime;
     }
 
+    public IEntryData getPreviousEntryData() {
+        return _previousEntryData;
+    }
 }
