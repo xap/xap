@@ -66,7 +66,7 @@ public class SingleValueFunctionAggregator<T extends Serializable & Comparable> 
 
     @Override
     public void aggregateIntermediateResult(T partitionResult) {
-        result = functionCallColumn.apply(partitionResult);
+        result = partitionResult;
     }
 
     @Override
