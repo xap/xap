@@ -104,7 +104,7 @@ public class BinaryEntryData implements ITransactionalEntryData {
 
     @Override
     public Object getFixedPropertyValue(int index) {
-        return getFixedPropertiesValues()[index];
+        return deserializeField(serializedFields, index);
     }
 
     @Override
@@ -149,6 +149,16 @@ public class BinaryEntryData implements ITransactionalEntryData {
     private Object[] deserializeFields(byte[] fieldsValues) {
         try {
             return (this.getSpaceTypeDescriptor()).getClassBinaryStorageAdapter().fromBinary(this.getSpaceTypeDescriptor(), fieldsValues);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private Object deserializeField(byte[] fieldsValues, int index ) {
+        try {
+            return (this.getSpaceTypeDescriptor()).getClassBinaryStorageAdapter().getFieldAtIndex(this.getSpaceTypeDescriptor(), fieldsValues, index);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (ClassNotFoundException e) {

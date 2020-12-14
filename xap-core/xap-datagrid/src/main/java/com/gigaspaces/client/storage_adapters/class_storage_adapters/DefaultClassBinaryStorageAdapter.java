@@ -10,28 +10,56 @@ import java.util.Map;
 
 public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter {
 
+  /*  public static void main(String[] args) {
+        byte[] arr = new byte[2];
+
+
+        for(int i = 0; i < 12; ++i){
+                int byteIndex = i / 8;
+                int bitIndex = i % 8;
+                if(i % 2 == 0){
+                    arr[byteIndex] |= (byte)1 << (7 - bitIndex); //sign bit as 1 (non-null field)
+
+                    System.out.println(arr[byteIndex]);
+                }
+        }
+
+
+        for (int i = 0; i < 12; ++i){
+            int byteIndex = i / 8;
+            int bitIndex = i % 8;
+
+            byte mask = (byte) ((byte)1 << (7 - bitIndex));
+            byte result= (byte) (arr[byteIndex] & mask);
+
+            if (result == mask){ //field is non-null
+                System.out.println(arr[byteIndex]);
+            }
+        }
+
+*/
     @Override
     public byte[] toBinary(SpaceTypeDescriptor typeDescriptor, Object[] fields) throws IOException {
         try (GSByteArrayOutputStream bos = new GSByteArrayOutputStream(); GSObjectOutputStream out = new GSObjectOutputStream(bos)) {
             int numOfFields = fields.length;
             int modulo = numOfFields % 8 > 0 ? 1 : 0;
-            byte[] bitMapIsNonNullField =  new byte[numOfFields / 8 + modulo];
+            byte[] NonNullFieldsBitMap =  new byte[numOfFields / 8 + modulo];
 
-            for (int i = 0; i < bitMapIsNonNullField.length; ++i){
-                IOUtils.getIClassSerializer(Byte.class).write(out, bitMapIsNonNullField[i]); //todo- warning
+            for (int i = 0; i < NonNullFieldsBitMap.length; ++i){
+                IOUtils.getIClassSerializer(Byte.class).write(out, NonNullFieldsBitMap[i]); //todo- warning
             }
 
             for (int i = 0; i < numOfFields; ++i) {
                 if (fields[i] != null) {
                     int byteIndex = i / 8;
                     int bitIndex = i % 8;
-                    bitMapIsNonNullField[byteIndex] |= (byte)1 << (7 - bitIndex);
-                    IOUtils.getIClassSerializer(typeDescriptor.getFixedProperty(i).getType()).write(out, fields[i]); //todo- warning?
+                    NonNullFieldsBitMap[byteIndex] |= (byte)1 << (7 - bitIndex); //sign bit as 1 (non-null field)
+                    IOUtils.getIClassSerializer(typeDescriptor.getFixedProperty(i).getType()).write(out, fields[i]);
                 }
             }
 
             byte[] serializedFields = bos.toByteArray();
-            System.arraycopy(bitMapIsNonNullField, 0, serializedFields, 1, bitMapIsNonNullField.length);
+            System.arraycopy(NonNullFieldsBitMap, 0, serializedFields, 1, NonNullFieldsBitMap.length);
             return serializedFields;
         }
     }
@@ -53,13 +81,13 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
                 int bitIndex = i % 8;
 
                 byte mask = (byte) ((byte)1 << (7 - bitIndex));
-                byte result = (byte) (bitMapIsNonNullField[byteIndex] & mask);
+                byte result= (byte) (bitMapIsNonNullField[byteIndex] & mask);
 
-                if (result == mask){
+                if (result == mask){ //field is non-null
                     objects[i] = IOUtils.getIClassSerializer(typeDescriptor.getFixedProperty(i).getType()).read(in);
                 }
             }
-           return objects;
+            return objects;
         }
     }
 
