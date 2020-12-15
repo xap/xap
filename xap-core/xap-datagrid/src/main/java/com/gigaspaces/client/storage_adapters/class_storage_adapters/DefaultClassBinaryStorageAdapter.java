@@ -10,34 +10,6 @@ import java.util.Map;
 
 public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter {
 
-  /*  public static void main(String[] args) {
-        byte[] arr = new byte[2];
-
-
-        for(int i = 0; i < 12; ++i){
-                int byteIndex = i / 8;
-                int bitIndex = i % 8;
-                if(i % 2 == 0){
-                    arr[byteIndex] |= (byte)1 << (7 - bitIndex); //sign bit as 1 (non-null field)
-
-                    System.out.println(arr[byteIndex]);
-                }
-        }
-
-
-        for (int i = 0; i < 12; ++i){
-            int byteIndex = i / 8;
-            int bitIndex = i % 8;
-
-            byte mask = (byte) ((byte)1 << (7 - bitIndex));
-            byte result= (byte) (arr[byteIndex] & mask);
-
-            if (result == mask){ //field is non-null
-                System.out.println(arr[byteIndex]);
-            }
-        }
-
-*/
     @Override
     public byte[] toBinary(SpaceTypeDescriptor typeDescriptor, Object[] fields) throws IOException {
         try (GSByteArrayOutputStream bos = new GSByteArrayOutputStream(); GSObjectOutputStream out = new GSObjectOutputStream(bos)) {
