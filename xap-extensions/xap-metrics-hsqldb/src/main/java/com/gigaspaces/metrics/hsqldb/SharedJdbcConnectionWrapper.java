@@ -72,7 +72,7 @@ public class SharedJdbcConnectionWrapper implements Closeable {
                         connection = DriverManager.getConnection(url, factory.getUsername(), factory.getPassword());
                         connectionLogger.success();
                         logger.info("Connected to [{}]", url);
-                    } catch (SQLException e) {
+                    } catch (Throwable e) {
                         connectionLogger.fail(e, () -> "[url=" + url + "]");
                     }
                 }
