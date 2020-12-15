@@ -120,7 +120,7 @@ public class SpaceTypeInfo implements Externalizable {
 
     private transient IProperties _propertiesAccessor;
 
-    private StorageType _storageType;
+    private StorageType _storageType = StorageType.DEFAULT;
 
     private Boolean _blobstoreEnabled;
 
@@ -557,17 +557,14 @@ public class SpaceTypeInfo implements Externalizable {
                 _fifoGroupingIndexes.add(superFifoGroupingIndex);
 
             StorageType superStorageType = _superTypeInfo.getStorageType();
-            if (_storageType == null || _storageType == StorageType.DEFAULT) {
+            if (_storageType == StorageType.DEFAULT) {
                 _storageType = superStorageType;
-            } else if (superStorageType != null && superStorageType != StorageType.DEFAULT)
+            } else if (superStorageType != StorageType.DEFAULT)
                 throw new SpaceMetadataValidationException(_type, "Cannot declare a storage type [" + _storageType + "] if one has already been defined in the super class [" + superStorageType + "].");
 
             if (_idAutoGenerate == null)
                 _idAutoGenerate = _superTypeInfo._idAutoGenerate;
         }
-
-        if (_storageType == null)
-            _storageType = PojoDefaults.STORAGE_TYPE;
 
         if (_idAutoGenerate == null)
             _idAutoGenerate = false;
