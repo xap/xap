@@ -155,7 +155,8 @@ public class ProjectionTemplate extends AbstractProjectionTemplate {
             }
             if (fixedPropertyPosition != TypeDesc.NO_SUCH_PROPERTY) {
                 PropertyInfo pi = typeDesc.getFixedProperty(fixedPropertyPosition);
-                if (pi.getStorageType() != StorageType.OBJECT && (!(pi.getStorageType() == StorageType.DEFAULT && typeDesc.getStorageType() == StorageType.OBJECT)))
+                if (typeDesc.getClassBinaryStorageAdapter() == null &&
+                        (pi.getStorageType() != StorageType.OBJECT && (!(pi.getStorageType() == StorageType.DEFAULT && typeDesc.getStorageType() == StorageType.OBJECT))))
                     throw new UnsupportedOperationException("Projection of paths is valid only with StorageType = OBJECT [" + projection + "]");
                 if (fixedPaths == null)
                     fixedPaths = new ArrayList<String>(projections.length);

@@ -13,11 +13,13 @@ public class HybridPayload implements Externalizable {
     private byte[] packedBinaryProperties;
     private boolean dirty;
     private boolean isDeserialized;
+    private static final Object[] EMPTY_OBJECTS_ARRAY = new Object[0];
+    private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
     public HybridPayload() {
-        this.serializedProperties = new Object[0];
-        this.nonSerializedProperties = new Object[0];
-        this.packedBinaryProperties = new byte[0];
+        this.serializedProperties = EMPTY_OBJECTS_ARRAY;
+        this.nonSerializedProperties = EMPTY_OBJECTS_ARRAY;
+        this.packedBinaryProperties = EMPTY_BYTE_ARRAY;
         this.isDeserialized = true;
     }
 
@@ -42,7 +44,7 @@ public class HybridPayload implements Externalizable {
     public HybridPayload(ITypeDesc typeDesc, Object[] values) {
         splitProperties(typeDesc, values);
         this.packedBinaryProperties = typeDesc.getClassBinaryStorageAdapter() != null ?
-                serializeFields(typeDesc, this.serializedProperties) : new byte[0];
+                serializeFields(typeDesc, this.serializedProperties) : EMPTY_BYTE_ARRAY;
         this.isDeserialized = true;
         this.dirty = false;
     }
@@ -50,7 +52,7 @@ public class HybridPayload implements Externalizable {
     static byte[] serializeFields(ITypeDesc typeDesc, Object[] fieldsValues) {
         try {
             if (fieldsValues == null || fieldsValues.length == 0) {
-                return new byte[0];
+                return EMPTY_BYTE_ARRAY;
             }
             return typeDesc.getClassBinaryStorageAdapter().toBinary(typeDesc, fieldsValues);
         } catch (IOException e) {
@@ -209,6 +211,12 @@ public class HybridPayload implements Externalizable {
     }
 
     private void splitProperties(ITypeDesc typeDesc, Object[] values) {
+        if(typeDesc.getSerializedProperties().length == 0){
+            this.nonSerializedProperties = values;
+            this.serializedProperties = EMPTY_OBJECTS_ARRAY;
+            return;
+        }
+
         this.nonSerializedProperties = new Object[typeDesc.getNonSerializedProperties().length];
         this.serializedProperties = new Object[typeDesc.getSerializedProperties().length];
         if(values != null && values.length > 0) {
@@ -228,7 +236,7 @@ public class HybridPayload implements Externalizable {
 
     public void setFixedProperties(Object[] values) {
         this.nonSerializedProperties = values;
-        this.serializedProperties = new Object[0];
+        this.serializedProperties = EMPTY_OBJECTS_ARRAY;
         this.isDeserialized = true;
         this.dirty = true;
     }

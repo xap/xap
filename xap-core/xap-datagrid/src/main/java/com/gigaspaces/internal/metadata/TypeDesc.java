@@ -907,7 +907,6 @@ public class TypeDesc implements ITypeDesc {
 
         readObjectsFromByteArray(in);
 
-        initializeV9_0_0();
 
         // New in 15.8.0: Space class binary storage adapter
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
@@ -915,8 +914,10 @@ public class TypeDesc implements ITypeDesc {
             if (storageAdapterClassName != null) {
                 classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(ClassLoaderHelper.loadClass(storageAdapterClassName));
             }
-            initHybridProperties();
         }
+
+        initializeV9_0_0();
+        initHybridProperties();
     }
 
     private void writeObjectsAsByteArray(ObjectOutput out) throws IOException {
@@ -1069,7 +1070,7 @@ public class TypeDesc implements ITypeDesc {
         _documentIntrospector = new VirtualEntryIntrospector(this, _documentWrapperClass);
         _autoGenerateRouting = _autoGenerateId && _idPropertyName.equals(_routingPropertyName);
 
-        this._isAllPropertiesObjectStorageType = initializeAllPropertiesObjectStorageType();
+        this._isAllPropertiesObjectStorageType = classBinaryStorageAdapter != null || initializeAllPropertiesObjectStorageType();
         this._entryTypeDescs = initEntryTypeDescs();
         buildCompoundIndexesList();
         this._primitivePropertiesWithoutNullValues = findPrimitivePropertiesWithoutNullValues();
