@@ -25,8 +25,6 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
                 IOUtils.getIClassSerializer(Short.class).write(out, positions[l]);
             }
 
-            print(bos.toByteArray(), bos.getCount());
-
             for (int i = 0; i < numOfFields; ++i) {
                 if (fields[i] == null) {
                     positions[i] = -1;
@@ -36,25 +34,17 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
                 }
             }
 
-            print(bos.toByteArray(), bos.getCount());
-
-            GSByteArrayOutputStream positionsStream = new GSByteArrayOutputStream();
-            GSObjectOutputStream positionOutput = new GSObjectOutputStream(positionsStream);
-
+            byte[] serializedFields = bos.toByteArray();
+            bos.reset();
             for (int j = 0; j < numOfFields; ++j) {
-                IOUtils.getIClassSerializer(Short.class).write(positionOutput, positions[j]);
+                IOUtils.getIClassSerializer(Short.class).write(out, positions[j]);
             }
 
-            byte[] positionsArr = positionsStream.toByteArray();
+            byte[] positionsMap = bos.toByteArray();
+            System.arraycopy(positionsMap, 0, serializedFields, 1, numOfFields * 2);
 
-            byte[] buffArr = bos.getBuffer();
 
-            for (int m = 0; m < positionsArr.length; ++m) { //todo- more efficient- reset?
-                buffArr[m] = positionsArr[m];
-            }
-
-            print(bos.toByteArray(), bos.getCount());
-            return bos.toByteArray();
+            return serializedFields;
         }
     }
 
@@ -68,7 +58,7 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
                 positions[i] = (short)IOUtils.getIClassSerializer(Short.class).read(in);
             }
 
-            print(bis.getBuffer(), bis.getPosition());
+
             Object[] obj = new Object[numOfFields];
             for (int i = 0; i < numOfFields; ++i){
                 if (positions[i] == -1){
@@ -77,8 +67,6 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
                     obj[i] = IOUtils.getIClassSerializer(typeDescriptor.getFixedProperty(i).getType()).read(in);
                 }
             }
-
-            print(bis.getBuffer(), bis.getPosition());
             return obj;
         }
     }
@@ -89,11 +77,9 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
         try (GSByteArrayInputStream bis = new GSByteArrayInputStream(serializedFields);GSObjectInputStream in = new GSObjectInputStream(bis)) {
            bis.skip(index * 2); //todo- skip bytes of in?
            short position = (short) IOUtils.getIClassSerializer(Short.class).read(in);
-           print(bis.getBuffer(), bis.getPosition());
            if (position == -1){
                return null;
            }
-           print(bis.getBuffer(), bis.getPosition());
 
            bis.setPosition(position);
            return IOUtils.getIClassSerializer(typeDescriptor.getFixedProperty(index).getType()).read(in);
@@ -129,9 +115,5 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
     @Override
     public boolean isDirectFieldAccessOptimized() {
         return true;
-    }
-
-    private void print(byte[] arr, int pos){
-        System.out.println("Pos is: " + pos + ".  Byte arr is: " + Arrays.toString(arr));
     }
 }
