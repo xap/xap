@@ -904,12 +904,7 @@ public class SpaceTypeDescriptorBuilder {
         if (properties != null)
             for (Entry<String, PropertyInfo.Builder> pair : properties.entrySet()) {
                 PropertyInfo.Builder builder = pair.getValue();
-                if (binaryClassStorage) {
-                    if (!TypeDescriptorUtils.isIndexParticipant(pair.getKey(), indexesNames))
-                        builder.defaultStorageType(defaultStorageType, true);
-                } else {
-                    builder.defaultStorageType(defaultStorageType, false);
-                }
+                builder.defaultStorageType(defaultStorageType, binaryClassStorage, indexesNames);
                 mergedProperties[pos++] = builder.build();
             }
 

@@ -154,18 +154,7 @@ public class SpaceTypeInfo implements Externalizable {
         }
 
         initIndexes(initContext);
-        initBinaryProperties(initContext);
         validate();
-    }
-
-    private void initBinaryProperties(InitContext initContext) {
-        if (this.getSpaceClassStorageAdapter() != null) {
-            for (SpacePropertyInfo spaceProperty : this._spaceProperties) {
-                if (spaceProperty.getStorageType() == StorageType.DEFAULT &&
-                        !TypeDescriptorUtils.isIndexParticipant(spaceProperty.getName(), _indexes.keySet()))
-                    spaceProperty.setStorageType(StorageType.BINARY); // TODO: get storage type from annotation
-            }
-        }
     }
 
     public String getName() {
@@ -559,7 +548,7 @@ public class SpaceTypeInfo implements Externalizable {
             StorageType superStorageType = _superTypeInfo.getStorageType();
             if (_storageType == StorageType.DEFAULT) {
                 _storageType = superStorageType;
-            } else if (superStorageType != StorageType.DEFAULT)
+            } else if (superStorageType != StorageType.DEFAULT && superStorageType != _storageType)
                 throw new SpaceMetadataValidationException(_type, "Cannot declare a storage type [" + _storageType + "] if one has already been defined in the super class [" + superStorageType + "].");
 
             if (_idAutoGenerate == null)
@@ -876,6 +865,8 @@ public class SpaceTypeInfo implements Externalizable {
         SpaceClassBinaryStorage spaceClassBinaryStorage = _type.getAnnotation(SpaceClassBinaryStorage.class);
         if (spaceClassBinaryStorage != null){
             this._spaceClassStorageAdapter = spaceClassBinaryStorage.adapter();
+            // TODO: validate ambiguity.
+            this._storageType = StorageType.BINARY;
         }
 
         for (Entry<String, SpacePropertyInfo> entry : _properties.entrySet()) {

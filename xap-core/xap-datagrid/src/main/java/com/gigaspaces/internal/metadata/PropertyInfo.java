@@ -30,6 +30,7 @@ import com.j_spaces.kernel.ClassLoaderHelper;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
 /**
  * Represents an entry property.
@@ -277,11 +278,23 @@ public class PropertyInfo implements SpacePropertyDescriptor{
             return this;
         }
 
-        public Builder defaultStorageType(StorageType defaultStorageType, boolean binaryStorageClass) {
+        public Builder defaultStorageType(StorageType defaultStorageType) {
             this.defaultStorageType = defaultStorageType;
-            this.binaryStorageClass = binaryStorageClass;
             return this;
         }
+
+        public Builder defaultStorageType(StorageType defaultStorageType, boolean binaryStorageClass, Set<String> indexesNames) {
+            if (binaryStorageClass) {
+                if (!TypeDescriptorUtils.isIndexParticipant(name, indexesNames)) {
+                    this.defaultStorageType = defaultStorageType;
+                    this.binaryStorageClass = true;
+                }
+            } else {
+                this.defaultStorageType = defaultStorageType;
+            }
+            return this;
+        }
+
 
         public Builder storageAdapter(Class<? extends PropertyStorageAdapter> storageAdapterClass) {
             this.storageAdapterClass = storageAdapterClass;

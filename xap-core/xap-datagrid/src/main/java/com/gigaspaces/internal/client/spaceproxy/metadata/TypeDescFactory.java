@@ -19,16 +19,7 @@ package com.gigaspaces.internal.client.spaceproxy.metadata;
 import com.gigaspaces.annotation.pojo.FifoSupport;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
-import com.gigaspaces.internal.metadata.DotNetStorageType;
-import com.gigaspaces.internal.metadata.EntryType;
-import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.metadata.IndexTypeHelper;
-import com.gigaspaces.internal.metadata.PojoDefaults;
-import com.gigaspaces.internal.metadata.PropertyInfo;
-import com.gigaspaces.internal.metadata.SpacePropertyInfo;
-import com.gigaspaces.internal.metadata.SpaceTypeInfo;
-import com.gigaspaces.internal.metadata.SpaceTypeInfoRepository;
-import com.gigaspaces.internal.metadata.TypeDesc;
+import com.gigaspaces.internal.metadata.*;
 import com.gigaspaces.internal.metadata.converter.ConversionException;
 import com.gigaspaces.internal.reflection.IField;
 import com.gigaspaces.internal.reflection.ReflectionUtil;
@@ -90,6 +81,8 @@ public class TypeDescFactory {
             defaultStorageType = _storageType;
 
         final PropertyInfo[] properties = new PropertyInfo[typeInfo.getNumOfSpaceProperties()];
+        boolean binaryClass = typeInfo.getSpaceClassStorageAdapter() != null;
+        Set<String> indexesNames = typeInfo.getIndexes().keySet();
         for (int i = 0; i < properties.length; i++) {
             final SpacePropertyInfo property = typeInfo.getProperty(i);
             properties[i] = PropertyInfo.builder(property.getName())
@@ -97,7 +90,7 @@ public class TypeDescFactory {
                     .documentSupport(property.getDocumentSupport())
                     .storageType(property.getStorageType())
                     .storageAdapter(property.getStorageAdapterClass())
-                    .defaultStorageType(defaultStorageType, typeInfo.getSpaceClassStorageAdapter() != null)
+                    .defaultStorageType(defaultStorageType, binaryClass, indexesNames)
                     .build();
         }
         final Map<String, SpaceIndex> indexes = new HashMap<String, SpaceIndex>(typeInfo.getIndexes());
@@ -150,7 +143,7 @@ public class TypeDescFactory {
             fieldsTypes[i] = fields[i].getType().getName();
             properties[i] = PropertyInfo.builder(fields[i].getName())
                     .type(fields[i].getType())
-                    .defaultStorageType(_storageType, false)
+                    .defaultStorageType(_storageType)
                     .build();
         }
         final String defaultPropertyName = getEntryIndices(realClass, fieldsNames, fieldsTypes, fieldsIndexes);
@@ -258,7 +251,7 @@ public class TypeDescFactory {
         final PropertyInfo[] properties = new PropertyInfo[fieldsNames.length];
         final Map<String, SpaceIndex> indexes = new HashMap<String, SpaceIndex>();
         for (int i = 0; i < properties.length; i++) {
-            properties[i] = PropertyInfo.builder(fieldsNames[i]).type(fieldsTypes[i]).defaultStorageType(_storageType, false).build();
+            properties[i] = PropertyInfo.builder(fieldsNames[i]).type(fieldsTypes[i]).defaultStorageType(_storageType).build();
             if (indices[i] != null && indices[i].isIndexed()) {
                 SpaceIndex index = new SpacePropertyIndex(fieldsNames[i], indices[i], false, i);
                 indexes.put(index.getName(), index);
