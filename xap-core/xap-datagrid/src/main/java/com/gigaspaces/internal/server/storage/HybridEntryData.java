@@ -93,7 +93,7 @@ public class HybridEntryData implements IBinaryEntryData {
 
     @Override
     public Object getFixedPropertyValue(int index) {
-        if (_entryTypeDesc.getTypeDesc().isBinaryProperty(index)) {
+        if (_entryTypeDesc.getTypeDesc().isSerializedProperty(index)) {
             try {
                 return _entryTypeDesc.getTypeDesc().getClassBinaryStorageAdapter()
                         .getFieldAtIndex(_entryTypeDesc.getTypeDesc(), serializedProperties, _entryTypeDesc.getTypeDesc().findHybridIndex(index));
@@ -109,7 +109,7 @@ public class HybridEntryData implements IBinaryEntryData {
 
     @Override
     public void setFixedPropertyValue(int index, Object value) {
-        if (_entryTypeDesc.getTypeDesc().isBinaryProperty(index)) {
+        if (_entryTypeDesc.getTypeDesc().isSerializedProperty(index)) {
             try {
                 this.serializedProperties = _entryTypeDesc.getTypeDesc().getClassBinaryStorageAdapter()
                         .modifyField(_entryTypeDesc.getTypeDesc(), serializedProperties, _entryTypeDesc.getTypeDesc().findHybridIndex(index), value);

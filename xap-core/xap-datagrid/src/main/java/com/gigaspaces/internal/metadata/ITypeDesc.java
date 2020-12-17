@@ -111,7 +111,7 @@ public interface ITypeDesc extends SpaceTypeDescriptor, IDotnetTypeDescDetails, 
 
     PropertyInfo[] getNonSerializedProperties();
 
-    boolean isBinaryProperty(int index);
+    boolean isSerializedProperty(int index);
 
     int findHybridIndex(int index);
 

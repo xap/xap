@@ -75,7 +75,7 @@ public class EntryPacketFactory {
     public static IEntryPacket createFullPacket(IEntryData entryData, OperationID operationID, String uid, boolean isTransient, QueryResultTypeInternal queryResultType) {
         final long timeToLive = entryData.getTimeToLive(true);
         IEntryPacket entryPacket = createInternal(null /*template*/, isTransient, entryData, uid, timeToLive, queryResultType,
-                false, getHybridBinaryData(null, entryData));
+                false, getHybridPayload(null, entryData));
         entryPacket.setOperationID(operationID);
         return entryPacket;
     }
@@ -84,7 +84,7 @@ public class EntryPacketFactory {
         final IEntryData entryData = entryHolder.getEntryData();
         final long timeToLive = entryData.getTimeToLive(true);
         IEntryPacket entryPacket = create(null /*template*/, entryHolder.isTransient(), entryData, entryHolder.getUID(), timeToLive,
-                true, getHybridBinaryData(null, entryData));
+                true, getHybridPayload(null, entryData));
 
         entryPacket.setOperationID(operationID);
         return entryPacket;
@@ -104,13 +104,13 @@ public class EntryPacketFactory {
 
     public static IEntryPacket createFullPacketForReplication(IEntryHolder entryHolder, ITemplateHolder template, String uid, long timeToLive) {
         IEntryData entryData = entryHolder.getEntryData();
-        return create(template, entryHolder.isTransient(), entryData, uid, timeToLive, true, getHybridBinaryData(null, entryData));
+        return create(template, entryHolder.isTransient(), entryData, uid, timeToLive, true, getHybridPayload(null, entryData));
     }
 
     public static IEntryPacket createFullPacket(IEntryHolder entryHolder, ITemplateHolder template, String uid, long timeToLive,
                                                 IEntryData entryData, OperationID operationId) {
 
-        IEntryPacket packet = create(template, entryHolder.isTransient(), entryData, uid, timeToLive, false, getHybridBinaryData(null, entryData));
+        IEntryPacket packet = create(template, entryHolder.isTransient(), entryData, uid, timeToLive, false, getHybridPayload(null, entryData));
         packet.setOperationID(operationId);
         return packet;
     }
@@ -136,12 +136,12 @@ public class EntryPacketFactory {
             }
         }
         final long timeToLive = entryData.getTimeToLive(false);
-        return create(template, isTransient, entryData, uid, timeToLive, false, getHybridBinaryData(context, entryData));
+        return create(template, isTransient, entryData, uid, timeToLive, false, getHybridPayload(context, entryData));
     }
 
     private static IEntryPacket create(ITemplateHolder template, boolean isTransient, IEntryData entryData,
-                                       String uid, long timeToLive, boolean forceNonExternalizable, HybridPayload binaryFields) {
-        return createInternal(template, isTransient, entryData, uid, timeToLive, QueryResultTypeInternal.NOT_SET, forceNonExternalizable, binaryFields);
+                                       String uid, long timeToLive, boolean forceNonExternalizable, HybridPayload hybridPayload) {
+        return createInternal(template, isTransient, entryData, uid, timeToLive, QueryResultTypeInternal.NOT_SET, forceNonExternalizable, hybridPayload);
     }
 
     public static IEntryPacket createRemovePacketForPersistency(IEntryHolder entryHolder, OperationID operationID) {
@@ -155,7 +155,7 @@ public class EntryPacketFactory {
     }
 
     private static IEntryPacket createInternal(ITemplateHolder template, boolean isTransient, IEntryData entryData,
-                                               String uid, long timeToLive, QueryResultTypeInternal packetType, boolean forceNotExternalizable, HybridPayload hybridBinaryData) {
+                                               String uid, long timeToLive, QueryResultTypeInternal packetType, boolean forceNotExternalizable, HybridPayload hybridPayload) {
         final ITypeDesc typeDesc = entryData.getEntryTypeDesc().getTypeDesc();
         final EntryType entryType = entryData.getEntryTypeDesc().getEntryType();
 
@@ -171,24 +171,24 @@ public class EntryPacketFactory {
             case OBJECT_JAVA:
             case DOCUMENT_ENTRY:
                 if (!forceNotExternalizable && typeDesc.isExternalizable() && entryType.isConcrete() && !isReturnWeaklyTypeProperties) {
-                    return new ExternalizableEntryPacket(typeDesc, entryType, hybridBinaryData.getFixedProperties(typeDesc), entryData.getDynamicProperties(),
+                    return new ExternalizableEntryPacket(typeDesc, entryType, hybridPayload.getFixedProperties(typeDesc), entryData.getDynamicProperties(),
                             uid, entryData.getVersion(), timeToLive, isTransient);
                 }
-                return new EntryPacket(typeDesc, entryType, entryData.getDynamicProperties(), uid, entryData.getVersion(), timeToLive, isTransient, hybridBinaryData);
+                return new EntryPacket(typeDesc, entryType, entryData.getDynamicProperties(), uid, entryData.getVersion(), timeToLive, isTransient, hybridPayload);
             case EXTERNAL_ENTRY:
                 final String eeImplClassName = template != null ? template.getExternalEntryImplClassName() : null;
-                return new ExternalEntryPacket(typeDesc, entryType, uid, entryData.getVersion(), timeToLive, isTransient, eeImplClassName, hybridBinaryData);
+                return new ExternalEntryPacket(typeDesc, entryType, uid, entryData.getVersion(), timeToLive, isTransient, eeImplClassName, hybridPayload);
 
             case OBJECT_DOTNET:
             case CPP:
             case PBS_OLD:
                 return new PbsEntryPacket(typeDesc, entryType,
-                       hybridBinaryData.getFixedProperties(typeDesc),
+                       hybridPayload.getFixedProperties(typeDesc),
                         entryData.getDynamicProperties(),
                         uid, entryData.getVersion(), timeToLive, isTransient);
 
             case DOCUMENT_DOTNET:
-                Object[] fixedProperties = hybridBinaryData.getFixedProperties(typeDesc);
+                Object[] fixedProperties = hybridPayload.getFixedProperties(typeDesc);
                 Map<String, Object> dynamicProperties = entryData.getDynamicProperties();
                 if (entryType != EntryType.DOCUMENT_DOTNET && entryType != EntryType.OBJECT_DOTNET) {
                     fixedProperties = DocumentObjectConverterInternal.instance().convertNonPrimitiveFixedPropertiesToDocuments(fixedProperties, typeDesc);
@@ -240,7 +240,7 @@ public class EntryPacketFactory {
         return fieldValues;
     }
 
-    private static HybridPayload getHybridBinaryData(Context context, IEntryData entryData) {
+    private static HybridPayload getHybridPayload(Context context, IEntryData entryData) {
         HybridPayload payload;
         if(entryData instanceof IBinaryEntryData){
             if(context != null && context.getViewEntryData() != null && context.getViewEntryData().isViewOf(entryData)){

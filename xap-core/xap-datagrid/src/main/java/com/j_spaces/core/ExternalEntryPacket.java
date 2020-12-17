@@ -57,8 +57,8 @@ public class ExternalEntryPacket extends EntryPacket {
     }
 
     public ExternalEntryPacket(ITypeDesc typeDesc, EntryType entryType,
-                               String uid, int version, long timeToLive, boolean isTransient, String implClassName, HybridPayload binaryFields) {
-        super(typeDesc, entryType, null, uid, version, timeToLive, isTransient, binaryFields);
+                               String uid, int version, long timeToLive, boolean isTransient, String implClassName, HybridPayload hybridPayload) {
+        super(typeDesc, entryType, null, uid, version, timeToLive, isTransient, hybridPayload);
         _implClassName = implClassName;
     }
 

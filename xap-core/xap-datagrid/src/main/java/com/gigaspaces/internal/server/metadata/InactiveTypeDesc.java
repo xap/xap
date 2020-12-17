@@ -95,7 +95,7 @@ import java.util.Set;
     }
 
     @Override
-    public boolean isBinaryProperty(int index) {
+    public boolean isSerializedProperty(int index) {
         return false;
     }
 

@@ -88,7 +88,7 @@ public class HybridPayload implements Externalizable {
     }
 
     public Object getFixedProperty(ITypeDesc typeDesc, int position) {
-        if (typeDesc.isBinaryProperty(position)) {
+        if (typeDesc.isSerializedProperty(position)) {
             if (!unpacked) {
                 unpackSerializedProperties(typeDesc);
             }
@@ -216,7 +216,7 @@ public class HybridPayload implements Externalizable {
     }
 
     public void setFixedProperty(ITypeDesc typeDesc, int position, Object value) {
-        if (typeDesc.isBinaryProperty(position)) {
+        if (typeDesc.isSerializedProperty(position)) {
             if (!unpacked) {
                 unpackSerializedProperties(typeDesc);
             }

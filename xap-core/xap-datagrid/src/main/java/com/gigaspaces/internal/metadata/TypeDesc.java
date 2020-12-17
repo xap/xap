@@ -1443,7 +1443,7 @@ public class TypeDesc implements ITypeDesc {
     }
 
     @Override
-    public boolean isBinaryProperty(int index) {
+    public boolean isSerializedProperty(int index) {
         return _fixedProperties[index].isBinarySpaceProperty();
     }
 
