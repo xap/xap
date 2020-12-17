@@ -81,7 +81,7 @@ public class SpaceTypeDescriptorBuilder {
     private Boolean _blobstoreEnabled;
     private String _sequenceNumberPropertyName;
     private boolean _sequenceNumberFromDocumentBuilder;
-    private Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapterClass = Boolean.parseBoolean(System.getProperty("com.gs.disable.hybrid","false")) ? null : DefaultClassBinaryStorageAdapter.class;
+    private Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapterClass;
 
     /**
      * Initialize a type descriptor builder using the specified type name.
