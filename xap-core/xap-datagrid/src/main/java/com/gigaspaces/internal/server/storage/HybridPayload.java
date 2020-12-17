@@ -139,7 +139,7 @@ public class HybridPayload implements Externalizable {
         if (isDeserialized && dirty) {
             nonSerializedProperties = IOUtils.readObjectArrayCompressed(in);
             serializedProperties = IOUtils.readObjectArrayCompressed(in);
-            this.packedBinaryProperties = null;
+            this.packedBinaryProperties = EMPTY_BYTE_ARRAY;
         } else {
             nonSerializedProperties = IOUtils.readObjectArrayCompressed(in);
             serializedProperties = new Object[IOUtils.readInt(in)];
@@ -212,7 +212,7 @@ public class HybridPayload implements Externalizable {
 
     private void splitProperties(ITypeDesc typeDesc, Object[] values) {
         if(typeDesc.getSerializedProperties().length == 0){
-            this.nonSerializedProperties = values;
+            this.nonSerializedProperties = values == null ? EMPTY_OBJECTS_ARRAY : values;
             this.serializedProperties = EMPTY_OBJECTS_ARRAY;
             return;
         }
