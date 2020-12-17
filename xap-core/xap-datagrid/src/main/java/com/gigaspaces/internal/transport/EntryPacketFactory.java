@@ -129,8 +129,8 @@ public class EntryPacketFactory {
 
     public static IEntryPacket createFullPacket(Context context, ITemplateHolder template, IEntryData entryData, String uid, boolean isTransient) {
         if (entryData.getEntryDataType() == EntryDataType.USER_TYPE) {
-            if(entryData instanceof HybridViewEntryData){
-                return new LocalCacheResponseEntryPacket((UserTypeEntryData) ((HybridViewEntryData) entryData).getEntry(), uid);
+            if(entryData instanceof ViewHybridEntryData){
+                return new LocalCacheResponseEntryPacket((UserTypeEntryData) ((ViewHybridEntryData) entryData).getEntry(), uid);
             }else {
                 return new LocalCacheResponseEntryPacket((UserTypeEntryData) entryData, uid);
             }
@@ -241,18 +241,18 @@ public class EntryPacketFactory {
     }
 
     private static HybridPayload getHybridBinaryData(Context context, IEntryData entryData) {
-        HybridPayload hybridBinaryData;
+        HybridPayload payload;
         if(entryData instanceof IBinaryEntryData){
             if(context != null && context.getViewEntryData() != null && context.getViewEntryData().isViewOf(entryData)){
-                hybridBinaryData = context.getViewEntryData().getHybridBinaryData();
+                payload = context.getViewEntryData().getHybridPayload();
             }else {
-                hybridBinaryData = new HybridPayload(entryData.getEntryTypeDesc().getTypeDesc(),
-                        ((HybridBinaryEntryData) entryData).getNonSerializedFields(), ((HybridBinaryEntryData)entryData).getSerializedFields());
+                payload = new HybridPayload(entryData.getEntryTypeDesc().getTypeDesc(),
+                        ((HybridEntryData) entryData).getNonSerializedProperties(), ((HybridEntryData)entryData).getPackedSerializedProperties());
             }
         } else {
-            hybridBinaryData = new HybridPayload(entryData.getEntryTypeDesc().getTypeDesc(), entryData.getFixedPropertiesValues());
+            payload = new HybridPayload(entryData.getEntryTypeDesc().getTypeDesc(), entryData.getFixedPropertiesValues());
         }
-        return hybridBinaryData;
+        return payload;
     }
 
 }

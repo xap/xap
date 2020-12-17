@@ -33,61 +33,61 @@ import java.util.Map;
  * @since 15.8
  */
 @com.gigaspaces.api.InternalApi
-public class HybridBinaryEntryData implements IBinaryEntryData {
+public class HybridEntryData implements IBinaryEntryData {
     protected final EntryTypeDesc _entryTypeDesc;
     protected final int _versionID;
     protected final long _expirationTime;
     protected final EntryXtnInfo _entryTxnInfo;
     protected Map<String, Object> _dynamicProperties;
-    private byte[] serializedFields;
-    private Object[] nonSerializedFields;
+    private byte[] serializedProperties;
+    private Object[] nonSerializedProperties;
 
 
-    public HybridBinaryEntryData(Object[] fixedProperties, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
+    public HybridEntryData(Object[] fixedProperties, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
         this(new HybridPayload(entryTypeDesc.getTypeDesc(), fixedProperties), dynamicProperties, entryTypeDesc, version, expirationTime, entryXtnInfo);
     }
 
-    public HybridBinaryEntryData(HybridPayload hybridPayload, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version,
-                                 long expirationTime, EntryXtnInfo entryXtnInfo) {
+    public HybridEntryData(HybridPayload hybridPayload, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version,
+                           long expirationTime, EntryXtnInfo entryXtnInfo) {
         this._entryTypeDesc = entryTypeDesc;
         this._versionID = version;
         this._expirationTime = expirationTime;
         this._entryTxnInfo = entryXtnInfo;
         this._dynamicProperties = dynamicProperties;
-        this.nonSerializedFields = hybridPayload.getNonSerializedProperties();
+        this.nonSerializedProperties = hybridPayload.getNonSerializedProperties();
         if(hybridPayload.isDirty()){
-            this.serializedFields = HybridPayload.serializeFields(entryTypeDesc.getTypeDesc(), hybridPayload.getSerializedProperties());
+            this.serializedProperties = HybridPayload.serializeFields(entryTypeDesc.getTypeDesc(), hybridPayload.getUnpackedSerializedProperties());
         }else {
-            this.serializedFields = hybridPayload.getPackedBinaryProperties();
+            this.serializedProperties = hybridPayload.getPackedSerializedProperties();
         }
     }
 
 
     @Override
     public ITransactionalEntryData createCopy(int newVersion, long newExpiration, EntryXtnInfo newEntryXtnInfo, boolean shallowCloneData) {
-        byte[] packeSerializedProperties = shallowCloneData ? Arrays.copyOf(this.serializedFields, this.serializedFields.length) : serializedFields;
-        Object[] nonSerializeData = shallowCloneData ? Arrays.copyOf(this.nonSerializedFields, this.nonSerializedFields.length) : nonSerializedFields;
+        byte[] packeSerializedProperties = shallowCloneData ? Arrays.copyOf(this.serializedProperties, this.serializedProperties.length) : serializedProperties;
+        Object[] nonSerializeData = shallowCloneData ? Arrays.copyOf(this.nonSerializedProperties, this.nonSerializedProperties.length) : nonSerializedProperties;
         Map<String, Object> dynamicProperties = shallowCloneData && _dynamicProperties != null ? new HashMap<>(_dynamicProperties) : _dynamicProperties;
-        return new HybridBinaryEntryData(new HybridPayload(getEntryTypeDesc().getTypeDesc()
+        return new HybridEntryData(new HybridPayload(getEntryTypeDesc().getTypeDesc()
                 , nonSerializeData, packeSerializedProperties), dynamicProperties, this._entryTypeDesc, newVersion, newExpiration, newEntryXtnInfo);
     }
 
     @Override
     public ITransactionalEntryData createCopy(IEntryData newEntryData, long newExpirationTime) {
-        if (newEntryData instanceof HybridBinaryEntryData) {
-            HybridBinaryEntryData data = (HybridBinaryEntryData) newEntryData;
-            return new HybridBinaryEntryData(new HybridPayload(newEntryData.getEntryTypeDesc().getTypeDesc(),
-                    data.getNonSerializedFields(), data.getSerializedFields()),
+        if (newEntryData instanceof HybridEntryData) {
+            HybridEntryData data = (HybridEntryData) newEntryData;
+            return new HybridEntryData(new HybridPayload(newEntryData.getEntryTypeDesc().getTypeDesc(),
+                    data.getNonSerializedProperties(), data.getPackedSerializedProperties()),
                     newEntryData.getDynamicProperties(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime,
                     copyTxnInfo(false, false));
         } else {
-            return new HybridBinaryEntryData(newEntryData.getFixedPropertiesValues(), newEntryData.getDynamicProperties(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime,
+            return new HybridEntryData(newEntryData.getFixedPropertiesValues(), newEntryData.getDynamicProperties(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime,
                     copyTxnInfo(false, false));
         }
     }
 
-    public Object[] getNonSerializedFields() {
-        return this.nonSerializedFields;
+    public Object[] getNonSerializedProperties() {
+        return this.nonSerializedProperties;
     }
 
 
@@ -96,14 +96,14 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
         if (_entryTypeDesc.getTypeDesc().isBinaryProperty(index)) {
             try {
                 return _entryTypeDesc.getTypeDesc().getClassBinaryStorageAdapter()
-                        .getFieldAtIndex(_entryTypeDesc.getTypeDesc(), serializedFields, _entryTypeDesc.getTypeDesc().findHybridIndex(index));
+                        .getFieldAtIndex(_entryTypeDesc.getTypeDesc(), serializedProperties, _entryTypeDesc.getTypeDesc().findHybridIndex(index));
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e);
             }
         } else {
-            return nonSerializedFields[_entryTypeDesc.getTypeDesc().findHybridIndex(index)];
+            return nonSerializedProperties[_entryTypeDesc.getTypeDesc().findHybridIndex(index)];
         }
     }
 
@@ -111,15 +111,15 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
     public void setFixedPropertyValue(int index, Object value) {
         if (_entryTypeDesc.getTypeDesc().isBinaryProperty(index)) {
             try {
-                this.serializedFields = _entryTypeDesc.getTypeDesc().getClassBinaryStorageAdapter()
-                        .modifyField(_entryTypeDesc.getTypeDesc(), serializedFields, _entryTypeDesc.getTypeDesc().findHybridIndex(index), value);
+                this.serializedProperties = _entryTypeDesc.getTypeDesc().getClassBinaryStorageAdapter()
+                        .modifyField(_entryTypeDesc.getTypeDesc(), serializedProperties, _entryTypeDesc.getTypeDesc().findHybridIndex(index), value);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e);
             }
         } else {
-            nonSerializedFields[_entryTypeDesc.getTypeDesc().findHybridIndex(index)] = value;
+            nonSerializedProperties[_entryTypeDesc.getTypeDesc().findHybridIndex(index)] = value;
         }
     }
 
@@ -130,13 +130,13 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
         if(typeDesc.getSerializedProperties().length > 0) {
             Object[] fields = new Object[typeDesc.getProperties().length];
             try {
-                Object[] deserializedFields = typeDesc.getClassBinaryStorageAdapter().fromBinary(typeDesc, serializedFields);
+                Object[] deserializedFields = typeDesc.getClassBinaryStorageAdapter().fromBinary(typeDesc, serializedProperties);
                 int i = 0;
                 for (PropertyInfo property : typeDesc.getProperties()) {
                     if (property.isBinarySpaceProperty()) {
                         fields[i] = deserializedFields[typeDesc.findHybridIndex(i)];
                     } else {
-                        fields[i] = nonSerializedFields[typeDesc.findHybridIndex(i)];
+                        fields[i] = nonSerializedProperties[typeDesc.findHybridIndex(i)];
                     }
                     i++;
                 }
@@ -147,7 +147,7 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
             }
             return fields;
         } else {
-            return this.nonSerializedFields;
+            return this.nonSerializedProperties;
         }
     }
 
@@ -157,25 +157,25 @@ public class HybridBinaryEntryData implements IBinaryEntryData {
             throw new IllegalArgumentException("Cannot substitute fixed property values with array of different size!");
         }
         HybridPayload payload = new HybridPayload(getEntryTypeDesc().getTypeDesc(), values);
-        nonSerializedFields = payload.getNonSerializedProperties();
-        serializedFields = payload.getPackedBinaryProperties();
+        nonSerializedProperties = payload.getNonSerializedProperties();
+        serializedProperties = payload.getPackedSerializedProperties();
     }
 
 
     public void setFixedPropertyValues(Object[] nonSerializedFields, byte[] serializedFields) {
-        this.nonSerializedFields = nonSerializedFields;
-        this.serializedFields = serializedFields;
+        this.nonSerializedProperties = nonSerializedFields;
+        this.serializedProperties = serializedFields;
     }
 
     @Override
-    public byte[] getSerializedFields() {
-        return serializedFields;
+    public byte[] getPackedSerializedProperties() {
+        return serializedProperties;
     }
 
     @Override
     public boolean isEqualProperties(IBinaryEntryData old) {
-        return serializedFields == old.getSerializedFields() &&
-                nonSerializedFields == ((HybridBinaryEntryData) old).nonSerializedFields;
+        return serializedProperties == old.getPackedSerializedProperties() &&
+                nonSerializedProperties == ((HybridEntryData) old).nonSerializedProperties;
     }
 
     @Override

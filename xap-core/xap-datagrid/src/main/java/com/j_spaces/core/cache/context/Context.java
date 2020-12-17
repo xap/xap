@@ -31,7 +31,6 @@ import com.gigaspaces.internal.server.space.operations.ChangeEntriesSpaceOperati
 import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridOperationDetails;
-import com.gigaspaces.internal.transport.EntryPacket;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.TemplatePacketFactory;
 import com.gigaspaces.lrmi.nio.IResponseContext;
@@ -242,7 +241,7 @@ public class Context {
     private IndexMetricsContext indexMetricsContext;
     private boolean _backupOnly;
 
-    private HybridViewEntryData viewEntryData;
+    private ViewHybridEntryData viewEntryData;
 
     public Context() {
     }
@@ -1255,7 +1254,7 @@ public class Context {
     public IEntryData getViewEntryData(IEntryData entryData) {
         if (entryData instanceof IBinaryEntryData) {
             if (viewEntryData == null) {
-                viewEntryData = new HybridViewEntryData();
+                viewEntryData = new ViewHybridEntryData();
             }
 
             if (viewEntryData.isViewOf(entryData)) {
@@ -1269,7 +1268,7 @@ public class Context {
         }
     }
 
-    public HybridViewEntryData getViewEntryData() {
+    public ViewHybridEntryData getViewEntryData() {
         return viewEntryData;
     }
 
@@ -1284,7 +1283,7 @@ public class Context {
     public void cacheViewEntryDataIfNeeded(IEntryData entryData, IEntryPacket packet) {
         if (entryData instanceof IBinaryEntryData) {
             if (viewEntryData == null) {
-                viewEntryData = new HybridViewEntryData();
+                viewEntryData = new ViewHybridEntryData();
             }
             viewEntryData.view(entryData, packet.getHybridPayload());
         }

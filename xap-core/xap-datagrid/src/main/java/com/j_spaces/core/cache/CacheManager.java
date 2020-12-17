@@ -1539,11 +1539,11 @@ public class CacheManager extends AbstractCacheManager
                 edata.createShallowClonedCopyWithSuppliedVersionAndExpiration(versionID, template.getChangeExpiration()) :
                 edata.createShallowClonedCopyWithSuppliedVersion(versionID);
 
-        if(udata instanceof HybridBinaryEntryData) {
+        if(udata instanceof HybridEntryData) {
             IEntryData cachedView = context.getCacheViewEntryDataIfNeeded(edata);
-            MutableHybridViewEntryData mutableViewEntryData = new MutableHybridViewEntryData();
-            if (cachedView instanceof HybridViewEntryData) {
-                mutableViewEntryData.view(udata, (HybridViewEntryData) cachedView);
+            MutableViewHybridEntryData mutableViewEntryData = new MutableViewHybridEntryData();
+            if (cachedView instanceof ViewHybridEntryData) {
+                mutableViewEntryData.view(udata, (ViewHybridEntryData) cachedView);
             } else {
                 mutableViewEntryData.view(udata);
             }
@@ -1552,8 +1552,8 @@ public class CacheManager extends AbstractCacheManager
             if (mutableViewEntryData.isDeserialized()){
                 udata.setFixedPropertyValues(mutableViewEntryData.getFixedPropertiesValues());
             } else {
-                ((HybridBinaryEntryData) udata).setFixedPropertyValues(mutableViewEntryData.getHybridBinaryData().getNonSerializedProperties(),
-                        mutableViewEntryData.getHybridBinaryData().getPackedBinaryProperties());
+                ((HybridEntryData) udata).setFixedPropertyValues(mutableViewEntryData.getHybridPayload().getNonSerializedProperties(),
+                        mutableViewEntryData.getHybridPayload().getPackedSerializedProperties());
             }
 
         } else {

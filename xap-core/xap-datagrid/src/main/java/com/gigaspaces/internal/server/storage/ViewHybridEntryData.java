@@ -17,27 +17,27 @@ import java.util.Map;
  * @author Yechiel, Yael, Niv
  * @since 15.8
  */
-public class HybridViewEntryData implements IEntryData {
-    private static Logger logger = LoggerFactory.getLogger(HybridViewEntryData.class);
+public class ViewHybridEntryData implements IEntryData {
+    private static Logger logger = LoggerFactory.getLogger(ViewHybridEntryData.class);
     protected IEntryData entry;
     protected Map<String, Object> dynamicProperties;
-    HybridPayload hybridBinaryData;
+    HybridPayload hybridPayload;
 
     public void view(IEntryData entryData) {
         this.entry = entryData;
         this.dynamicProperties = entryData.getDynamicProperties();
-        this.hybridBinaryData = new HybridPayload(getEntryTypeDesc().getTypeDesc(),
-                ((HybridBinaryEntryData) entryData).getNonSerializedFields(),
-                ((HybridBinaryEntryData) entryData).getSerializedFields());
+        this.hybridPayload = new HybridPayload(getEntryTypeDesc().getTypeDesc(),
+                ((HybridEntryData) entryData).getNonSerializedProperties(),
+                ((HybridEntryData) entryData).getPackedSerializedProperties());
     }
 
     public void view(IEntryData entryData, HybridPayload hybridPayload) {
-        this.hybridBinaryData = hybridPayload;
+        this.hybridPayload = hybridPayload;
         this.dynamicProperties = entryData.getDynamicProperties();
     }
 
-    public HybridPayload getHybridBinaryData() {
-        return hybridBinaryData;
+    public HybridPayload getHybridPayload() {
+        return hybridPayload;
     }
 
     @Override
@@ -47,12 +47,12 @@ public class HybridViewEntryData implements IEntryData {
 
     @Override
     public Object[] getFixedPropertiesValues() {
-        return this.hybridBinaryData.getFixedProperties(getEntryTypeDesc().getTypeDesc());
+        return this.hybridPayload.getFixedProperties(getEntryTypeDesc().getTypeDesc());
     }
 
     @Override
     public Object getFixedPropertyValue(int position) {
-        return this.hybridBinaryData.getFixedProperty(getEntryTypeDesc().getTypeDesc(), position);
+        return this.hybridPayload.getFixedProperty(getEntryTypeDesc().getTypeDesc(), position);
     }
 
     @Override
