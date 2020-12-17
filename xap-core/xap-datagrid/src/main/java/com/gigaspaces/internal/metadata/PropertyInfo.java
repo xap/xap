@@ -116,8 +116,8 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         return _storageType;
     }
 
-    public boolean isBinarySpaceProperty() {
-        return _storageType == StorageType.BINARY || _storageType == StorageType.COMPRESSED;
+    public boolean isBinarySpaceProperty(ITypeDesc typeDesc) {
+        return  typeDesc.getClassBinaryStorageAdapter() != null && _storageType == StorageType.BINARY || _storageType == StorageType.COMPRESSED;
     }
 
     @Override

@@ -133,7 +133,7 @@ public class HybridEntryData implements IBinaryEntryData {
                 Object[] deserializedFields = typeDesc.getClassBinaryStorageAdapter().fromBinary(typeDesc, serializedProperties);
                 int i = 0;
                 for (PropertyInfo property : typeDesc.getProperties()) {
-                    if (property.isBinarySpaceProperty()) {
+                    if (property.isBinarySpaceProperty(typeDesc)) {
                         fields[i] = deserializedFields[typeDesc.findHybridIndex(i)];
                     } else {
                         fields[i] = nonSerializedProperties[typeDesc.findHybridIndex(i)];

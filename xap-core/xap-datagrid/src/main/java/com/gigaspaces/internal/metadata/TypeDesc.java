@@ -185,13 +185,13 @@ public class TypeDesc implements ITypeDesc {
     }
 
     private void initHybridProperties() {
-        int serializedFieldsCount = (int) Arrays.stream(_fixedProperties).filter(PropertyInfo::isBinarySpaceProperty).count();
+        int serializedFieldsCount = (int) Arrays.stream(_fixedProperties).filter(propertyInfo -> propertyInfo.isBinarySpaceProperty(this)).count();
         _nonSerializedProperties = new PropertyInfo[_fixedProperties.length - serializedFieldsCount];
         _serializedProperties = new PropertyInfo[serializedFieldsCount];
         int nonSerializedFieldsIndex = 0;
         int serializedFieldsIndex = 0;
         for (int i = 0; i < _fixedProperties.length; i++) {
-            if(_fixedProperties[i].getStorageType() != null && _fixedProperties[i].isBinarySpaceProperty()){
+            if(_fixedProperties[i].getStorageType() != null && _fixedProperties[i].isBinarySpaceProperty(this)){
                 _serializedProperties[serializedFieldsIndex] = _fixedProperties[i];
                 _serializedProperties[serializedFieldsIndex].setHybridIndex(serializedFieldsIndex);
                 _serializedProperties[serializedFieldsIndex].setOriginalIndex(i);
@@ -1444,7 +1444,7 @@ public class TypeDesc implements ITypeDesc {
 
     @Override
     public boolean isSerializedProperty(int index) {
-        return _fixedProperties[index].isBinarySpaceProperty();
+        return _fixedProperties[index].isBinarySpaceProperty(this);
     }
 
     @Override

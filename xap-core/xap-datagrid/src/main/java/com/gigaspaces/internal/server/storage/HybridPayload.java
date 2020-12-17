@@ -76,7 +76,7 @@ public class HybridPayload implements Externalizable {
         Object[] fields = new Object[typeDesc.getProperties().length];
         int i = 0;
         for (PropertyInfo property : typeDesc.getProperties()) {
-            if (property.isBinarySpaceProperty()) {
+            if (property.isBinarySpaceProperty(typeDesc)) {
                 fields[i] = this.unpackedSerializedProperties[typeDesc.findHybridIndex(i)];
             } else {
                 fields[i] = this.nonSerializedProperties[typeDesc.findHybridIndex(i)];
@@ -240,7 +240,7 @@ public class HybridPayload implements Externalizable {
             int nonSerializedFieldsIndex = 0;
             int serializedFieldsIndex = 0;
             for (PropertyInfo property : typeDesc.getProperties()) {
-                if (property.getStorageType() != null && property.isBinarySpaceProperty()) {
+                if (property.getStorageType() != null && property.isBinarySpaceProperty(typeDesc)) {
                     this.unpackedSerializedProperties[serializedFieldsIndex] = values[typeDesc.getFixedPropertyPosition(property.getName())];
                     serializedFieldsIndex++;
                 } else {
