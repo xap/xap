@@ -117,7 +117,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
     }
 
     public boolean isBinarySpaceProperty(ITypeDesc typeDesc) {
-        return  typeDesc.getClassBinaryStorageAdapter() != null && _storageType == StorageType.BINARY || _storageType == StorageType.COMPRESSED;
+        return  typeDesc.getClassBinaryStorageAdapter() != null && (_storageType == StorageType.BINARY || _storageType == StorageType.COMPRESSED);
     }
 
     @Override
@@ -284,12 +284,10 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         }
 
         public Builder defaultStorageType(StorageType defaultStorageType, boolean binaryStorageClass, Set<String> indexesNames) {
-            if (binaryStorageClass) {
-                if (!TypeDescriptorUtils.isIndexParticipant(name, indexesNames)) {
-                    this.defaultStorageType = defaultStorageType;
+            if (!TypeDescriptorUtils.isIndexParticipant(name, indexesNames)) {
+                if (binaryStorageClass) {
                     this.binaryStorageClass = true;
                 }
-            } else {
                 this.defaultStorageType = defaultStorageType;
             }
             return this;

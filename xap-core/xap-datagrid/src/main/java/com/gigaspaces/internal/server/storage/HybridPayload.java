@@ -149,7 +149,7 @@ public class HybridPayload implements Externalizable {
             } else {
                 unpackedSerializedProperties = new Object[unpackedSize];
             }
-            int packedSize = in.read();
+            int packedSize = in.readInt();
             if(packedSize == 0){
                 packedSerializedProperties = EMPTY_BYTE_ARRAY;
             } else {
