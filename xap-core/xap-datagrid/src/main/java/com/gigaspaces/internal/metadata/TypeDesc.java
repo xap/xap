@@ -1070,7 +1070,7 @@ public class TypeDesc implements ITypeDesc {
         _documentIntrospector = new VirtualEntryIntrospector(this, _documentWrapperClass);
         _autoGenerateRouting = _autoGenerateId && _idPropertyName.equals(_routingPropertyName);
 
-        this._isAllPropertiesObjectStorageType = classBinaryStorageAdapter != null || initializeAllPropertiesObjectStorageType();
+        this._isAllPropertiesObjectStorageType = initializeAllPropertiesObjectStorageType();
         this._entryTypeDescs = initEntryTypeDescs();
         buildCompoundIndexesList();
         this._primitivePropertiesWithoutNullValues = findPrimitivePropertiesWithoutNullValues();
