@@ -918,11 +918,11 @@ public class TypeDesc implements ITypeDesc {
 
         // New in 15.8.0: Space class binary storage adapter
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
+            _broadcast = in.readBoolean();
             String storageAdapterClassName = IOUtils.readString(in);
             if (storageAdapterClassName != null) {
                 classBinaryStorageAdapter = ClassBinaryStorageAdapterRegistry.getInstance().getOrCreate(ClassLoaderHelper.loadClass(storageAdapterClassName));
             }
-            _broadcast = in.readBoolean();
         } else {
             _broadcast = false;
         }
@@ -1262,9 +1262,9 @@ public class TypeDesc implements ITypeDesc {
         writeObjectsAsByteArray(out);
         // New in 15.8.0: Space class storage adapter
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
+            out.writeBoolean(_broadcast);
             if(classBinaryStorageAdapter != null){
                 IOUtils.writeString(out, classBinaryStorageAdapter.getClass().getName());
-                out.writeBoolean(_broadcast);
             }else {
                 IOUtils.writeString(out, null);
             }
