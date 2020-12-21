@@ -218,8 +218,6 @@ public class TypeDesc implements ITypeDesc {
             positionsForScanning[positionsIndex] = serializedProperty.getOriginalIndex();
             positionsIndex++;
         }
-
-        _broadcast = broadcast;
     }
 
     public TypeDesc cloneWithoutObjectClass( TypeDesc typeDesc, EntryType entryType ) {
