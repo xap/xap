@@ -102,6 +102,7 @@ TOKEN [IGNORE_CASE]:  /* Keywords */
   | < END: "end" >
   | < FROM: "from" >
   | < GROUP: "group" >
+  | < LIMIT: "limit" >
   | < IN: "in" >
   | < IS: "is" >
   | < LIKE: "like" >
@@ -275,6 +276,7 @@ SelectQuery selectSql():
          [<WHERE> exp = SqlExpression(query)]
          [groupBy(query)]
          [orderBy(query)]
+         [limit(query)]
          [<FOR_UPDATE> { query.setForUpdate(true); }]
     )
     {
@@ -967,7 +969,15 @@ ArrayList<LiteralNode> list = new ArrayList<LiteralNode>();}
     ) {negative="";} )*
     {insertQuery.setValues(list);}
 }
-
+void limit(SelectQuery query):
+{
+    Token limit;
+}
+{
+  <LIMIT>
+	limit = <INTEGER_LITERAL>
+  {	query.setLimit(getInteger(limit));}
+}
 void groupBy(SelectQuery query):
 {
  SelectColumn groupColumn = null;

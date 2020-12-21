@@ -211,14 +211,14 @@ public class QueryColumnData implements Serializable {
                 if (prefix != null && columnPath.startsWith(prefix + "."))
                     return new QueryColumnData(tableData, columnPath.substring(prefix.length() + 1));
             }
-            if(tableData.getSubQuery() != null && tableData.getSubQuery() instanceof  AbstractDMLQuery) {
-                try {
-                    return findUnique(((AbstractDMLQuery) tableData.getSubQuery()).getTablesData(), t -> tryInitWithPrefixSubQuery(tableData, t, columnPath), (r1, r2) -> ambigFormatter(columnPath, r1, r2));
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
-                    return null;
-                }
-            }
+//            if(tableData.getSubQuery() != null && tableData.getSubQuery() instanceof  AbstractDMLQuery) {
+//                try {
+//                    return findUnique(((AbstractDMLQuery) tableData.getSubQuery()).getTablesData(), t -> tryInitWithPrefixSubQuery(tableData, t, columnPath), (r1, r2) -> ambigFormatter(columnPath, r1, r2));
+//                } catch (SQLException throwables) {
+//                    throwables.printStackTrace();
+//                    return null;
+//                }
+//            }
         }
         return null;
     }

@@ -89,8 +89,25 @@ public class SelectQuery extends AbstractDMLQuery {
     private List<Join> joins;
     private boolean allowedToUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.allowCollocatedJoin", "true"));
     private boolean flattenResults;
-    public static final boolean pushDownPredicatesToSpace = Boolean.getBoolean("pushDownToSpace");
 
+    private boolean forceUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.forceCollocatedJoin", "true"));
+    public static final boolean pushDownPredicatesToSpace = false;//Boolean.parseBoolean(System.getProperty("pushDownToSpace", "true"));
+
+    private int limit;
+
+    public List<Join> getJoins() {
+        return joins;
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    public SelectQuery setLimit(int limit) {
+        this.limit = limit;
+//        this.rownum = new RowNumNode(0, 10);
+        return this;
+    }
 
     public SelectQuery() {
         super();
@@ -155,6 +172,8 @@ public class SelectQuery extends AbstractDMLQuery {
      * Execute the query
      */
     public ResponsePacket executeOnSpace(ISpaceProxy space, Transaction txn) throws SQLException {
+        //TODO iter.remove when max is defined
+
         IQueryResultSet<IEntryPacket> entries = null;
         ResponsePacket packet = new ResponsePacket();
         try {
@@ -186,7 +205,7 @@ public class SelectQuery extends AbstractDMLQuery {
             // No where clause
 
             if (isJoined()) {
-                boolean collJoin = allowedToUseCollocatedJoin && isCollocatedJoin();
+                boolean collJoin = forceUseCollocatedJoin || (allowedToUseCollocatedJoin && isCollocatedJoin());
                 _logger.info("Query will run as {}", (collJoin ? "collocated join" : "regular join"));
                 for (QueryTableData tablesDatum : getTablesData()) {
                     if (tablesDatum.getSubQuery() != null && tablesDatum.getSubQuery() instanceof SelectQuery) {
@@ -287,7 +306,7 @@ public class SelectQuery extends AbstractDMLQuery {
             }
 
             //Handle rownum
-            filterByRownum(entries);
+            entries = filterByRownumWithReturn(entries, limit);
 
 
             prepareResult(packet, entries);
@@ -817,6 +836,23 @@ public class SelectQuery extends AbstractDMLQuery {
         super.buildTemplates();
     }
 
+    public IQueryResultSet<IEntryPacket> filterByRownumWithReturn(IQueryResultSet<IEntryPacket> entries, int limit) {
+        if (limit == 0) {
+            super.filterByRownum(entries);
+            return entries;
+        } else {
+
+            LinkedList<IEntryPacket> linkedList = new LinkedList<>(entries);
+            return entries.newResultSet(linkedList.subList(0, limit));
+//            Iterator<IEntryPacket> iter = entries.iterator();
+//            for (int i = 1; iter.hasNext(); i++) {
+//                iter.next();
+//                if (i > limit)
+//                    iter.remove();
+//            }
+        }
+    }
+
     /**
      * Add a column to the list of columns.
      *
@@ -1272,7 +1308,7 @@ public class SelectQuery extends AbstractDMLQuery {
 
     private void createProjectionTemplate() {
 
-        if (_projectionTemplate != null || !isConvertResultToArray() || isSelectAll)
+        if (_projectionTemplate != null  || isSelectAll)
             return;
 
         ArrayList<String> projectedProperties = new ArrayList<String>(getQueryColumns().size());
