@@ -98,7 +98,7 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
     private boolean _ifExists;
     private Object _routing;
     private boolean _dirtyState = false;
-    protected IQueryExecutor _executor;
+    public IQueryExecutor _executor;
     private int _minEntriesToWaitFor;
 
 

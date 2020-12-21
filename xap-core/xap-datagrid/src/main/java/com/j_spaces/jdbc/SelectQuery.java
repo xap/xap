@@ -91,7 +91,7 @@ public class SelectQuery extends AbstractDMLQuery {
     private boolean flattenResults;
 
     private boolean forceUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.forceCollocatedJoin", "true"));
-    public static final boolean pushDownPredicatesToSpace = false;//Boolean.parseBoolean(System.getProperty("pushDownToSpace", "true"));
+    public static final boolean pushDownPredicatesToSpace = true;//Boolean.parseBoolean(System.getProperty("pushDownToSpace", "true"));
 
     private int limit;
 
@@ -192,7 +192,7 @@ public class SelectQuery extends AbstractDMLQuery {
             // prepare - bind the query parameters            
             prepare(space, txn);
 
-            if (useAggregationApi(txn))
+//            if (useAggregationApi(txn))
                 createProjectionTemplate();
             /***************** Read the entries ****************/
 
@@ -838,8 +838,12 @@ public class SelectQuery extends AbstractDMLQuery {
 
     public IQueryResultSet<IEntryPacket> filterByRownumWithReturn(IQueryResultSet<IEntryPacket> entries, int limit) {
         if (limit == 0) {
-            super.filterByRownum(entries);
-            return entries;
+            if (getJoins() != null && getJoins().size() == 1 && getJoins().get(0).getSubQuery() != null && ((SelectQuery) getJoins().get(0).getSubQuery()).getLimit() != 0) {
+                return filterByRownumWithReturn(entries, ((SelectQuery) getJoins().get(0).getSubQuery()).getLimit());
+            } else {
+                super.filterByRownum(entries);
+                return entries;
+            }
         } else {
 
             LinkedList<IEntryPacket> linkedList = new LinkedList<>(entries);

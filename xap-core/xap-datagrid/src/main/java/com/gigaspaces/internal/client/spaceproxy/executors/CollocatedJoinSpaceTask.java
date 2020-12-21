@@ -5,6 +5,7 @@ import com.gigaspaces.internal.space.requests.CollocatedJoinSpaceRequestInfo;
 import com.gigaspaces.internal.space.requests.SpaceRequestInfo;
 import com.gigaspaces.internal.space.responses.CollocatedJoinSpaceResponseInfo;
 import com.j_spaces.jdbc.AbstractDMLQuery;
+import com.j_spaces.jdbc.SelectQuery;
 import com.j_spaces.jdbc.query.JoinedQueryResult;
 import net.jini.core.transaction.Transaction;
 
@@ -55,6 +56,12 @@ public class CollocatedJoinSpaceTask extends SystemDistributedTask<CollocatedJoi
                 throw new RuntimeException(asyncResult.getException());
             }
             res.addAll(asyncResult.getResult().getResult());
+        }
+
+        SelectQuery query = ((SelectQuery) _collocatedJoinSpaceRequestInfo.getQuery());
+        if (query.getJoins() != null && query.getJoins().size() == 1 && ((SelectQuery) query.getJoins().get(0).getSubQuery()).getLimit() != 0) {
+            SelectQuery subQuery = ((SelectQuery) query.getJoins().get(0).getSubQuery());
+            subQuery._executor.orderBy(res, subQuery.getOrderColumns());
         }
 
         return new CollocatedJoinSpaceResponseInfo(res);
