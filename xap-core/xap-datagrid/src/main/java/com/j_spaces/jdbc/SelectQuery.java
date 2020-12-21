@@ -105,7 +105,7 @@ public class SelectQuery extends AbstractDMLQuery {
 
     public SelectQuery setLimit(int limit) {
         this.limit = limit;
-//        this.rownum = new RowNumNode(0, 10);
+        this.rownum = new RowNumNode(0, limit);
         return this;
     }
 
@@ -845,6 +845,7 @@ public class SelectQuery extends AbstractDMLQuery {
                 return entries;
             }
         } else {
+            if (entries.size() <= limit) return entries;
 
             LinkedList<IEntryPacket> linkedList = new LinkedList<>(entries);
             return entries.newResultSet(linkedList.subList(0, limit));
