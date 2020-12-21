@@ -3,6 +3,7 @@ package com.gigaspaces.client.storage_adapters.class_storage_adapters;
 import com.gigaspaces.internal.io.GSByteArrayInputStream;
 import com.gigaspaces.internal.io.GSByteArrayOutputStream;
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.internal.metadata.TypeDesc;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 
 import java.io.*;
@@ -27,7 +28,7 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
                     int byteIndex = i / 8;
                     int bitIndex = i % 8;
                     NonNullFieldsBitMap[byteIndex] |= (byte)1 << (7 - bitIndex); //sign bit as 1 (non-null field)
-                    IOUtils.getIClassSerializer(typeDescriptor.getFixedProperty(i).getType()).write(out, fields[i]);
+                    IOUtils.getIClassSerializer(((TypeDesc)typeDescriptor).getSerializedProperties()[i].getType()).write(out, fields[i]);
                 }
             }
 
@@ -40,7 +41,7 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
     @Override
     public Object[] fromBinary(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields) throws IOException, ClassNotFoundException {
         try (GSByteArrayInputStream bis = new GSByteArrayInputStream(serializedFields); GSObjectInputStream in = new GSObjectInputStream(bis)) {
-            int numOfFields = typeDescriptor.getNumOfFixedProperties();
+            int numOfFields = ((TypeDesc)typeDescriptor).getSerializedProperties().length;
             int modulo = numOfFields % 8 > 0 ? 1 : 0;
             byte[] bitMapIsNonNullField = new byte[numOfFields / 8 + modulo];
 
@@ -57,7 +58,7 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
                 byte result= (byte) (bitMapIsNonNullField[byteIndex] & mask);
 
                 if (result == mask){ //field is non-null
-                    objects[i] = IOUtils.getIClassSerializer(typeDescriptor.getFixedProperty(i).getType()).read(in);
+                    objects[i] = IOUtils.getIClassSerializer(((TypeDesc)typeDescriptor).getSerializedProperties()[i].getType()).read(in);
                 }
             }
             return objects;
