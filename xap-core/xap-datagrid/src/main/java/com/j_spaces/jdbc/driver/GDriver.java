@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 public class GDriver implements Driver {
 
-    public static final int MAJOR_VERSION = 1;
+    public static final int MAJOR_VERSION = 4;
     public static final int MINOR_VERSION = 1;
     public static final String DRIVER_NAME = "GigaSpaces JDBC Driver";
     public static boolean registered = false;
