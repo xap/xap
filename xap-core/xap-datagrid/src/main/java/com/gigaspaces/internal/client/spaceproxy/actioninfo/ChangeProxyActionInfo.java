@@ -45,7 +45,7 @@ public class ChangeProxyActionInfo extends QueryProxyActionInfo {
         if (template == null)
             throw new IllegalArgumentException("change operation cannot accept null template.");
         if(queryPacket.isBroadcast())
-            throw new UnsupportedOperationException("change operation in broadcast table is not supported.");
+            throw new UnsupportedOperationException("change operation of broadcast table " + queryPacket.getTypeName() + " is not supported");
         this.timeout = timeout;
         if (timeout < 0)
             throw new IllegalArgumentException("timeout parameter must be greater than or equal to zero.");

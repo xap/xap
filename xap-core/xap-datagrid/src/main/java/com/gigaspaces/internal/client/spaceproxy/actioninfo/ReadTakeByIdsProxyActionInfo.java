@@ -58,6 +58,8 @@ public class ReadTakeByIdsProxyActionInfo extends CommonProxyActionInfo {
             this.routing = routing;
             this.routings = routings;
             this.queryPacket = initialize(spaceProxy, queryResultType, projections, projectionTemplate);
+            if(isTake && queryPacket.isBroadcast())
+                throw new IllegalArgumentException("Take by Ids of broadcast table " + queryPacket.getTypeName() + " is not supported");
         } catch (SpaceMetadataException e) {
             ReadTakeByIdResult[] results = new ReadTakeByIdResult[ids.length];
             for (int i = 0; i < results.length; i++)

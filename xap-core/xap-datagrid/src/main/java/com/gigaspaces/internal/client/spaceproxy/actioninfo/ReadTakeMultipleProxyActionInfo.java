@@ -71,6 +71,8 @@ public class ReadTakeMultipleProxyActionInfo extends QueryProxyActionInfo {
                     this.modifiers |= Modifiers.LOG_SCANNED_ENTRIES_COUNT;
             }
             setFifoIfNeeded(spaceProxy);
+            if(isTake && queryPacket.isBroadcast())
+                throw new IllegalArgumentException("Take multiple of broadcast table " + queryPacket.getTypeName() + " is not supported");
         } catch (SpaceMetadataException e) {
             if (isTake)
                 throw new TakeMultipleException(e);

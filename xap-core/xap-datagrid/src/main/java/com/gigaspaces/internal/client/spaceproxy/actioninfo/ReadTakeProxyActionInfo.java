@@ -60,6 +60,8 @@ public class ReadTakeProxyActionInfo extends QueryProxyActionInfo {
                 this.modifiers |= Modifiers.LOG_SCANNED_ENTRIES_COUNT;
         }
         setFifoIfNeeded(spaceProxy);
+        if(isTake && queryPacket.isBroadcast())
+            throw new IllegalArgumentException("Take of broadcast table " + queryPacket.getTypeName() + "  entry is not supported");
     }
 
     public ReadTakeProxyActionInfo(ISpaceProxy spaceProxy, String className, Object id, Object routing, int version,
@@ -96,8 +98,11 @@ public class ReadTakeProxyActionInfo extends QueryProxyActionInfo {
             projectionTemplate = ProjectionTemplate.create(projections, typeDesc);
         queryPacket = TemplatePacketFactory.createIdOrUidPacket(typeDesc, resultType, routing, id, version, projectionTemplate);
 
-        if (isTake)
+        if (isTake) {
             initOperationId(spaceProxy, queryPacket);
+            if(queryPacket.isBroadcast())
+                throw new IllegalArgumentException("Take by id of broadcast table " + queryPacket.getTypeName() + "  entry is not supported");
+        }
     }
 
     public ReadTakeProxyActionInfo(ISpaceProxy spaceProxy, String uid, Transaction txn, int modifiers,

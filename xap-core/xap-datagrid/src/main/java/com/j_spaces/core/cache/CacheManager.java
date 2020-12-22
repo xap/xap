@@ -2800,7 +2800,9 @@ public class CacheManager extends AbstractCacheManager
             }
             if (iter.isBringCacheInfoOnly()) {//optimize off heap dont bring entries at all
                 IEntryCacheInfo pEntry = iter.getCurrentEntryCacheInfo();
-                if (pEntry.isDeleted() || _engine.skipBroadcastTable(context, template, pEntry.getServerTypeDesc()))
+                if (pEntry.isDeleted())
+                    continue;
+                if (pEntry.getServerTypeDesc().getTypeDesc().isBroadcast() && _engine.skipBroadcastTable(context, template))
                     continue;
                 if (!pEntry.isBlobStoreEntry()) {
                     eh = pEntry.getEntryHolder(this);
@@ -2819,7 +2821,7 @@ public class CacheManager extends AbstractCacheManager
             }
             if (eh.isDeleted())
                 continue;
-            if(_engine.skipBroadcastTable(context, template, eh.getServerTypeDesc()))
+            if(eh.getServerTypeDesc().getTypeDesc().isBroadcast() && _engine.skipBroadcastTable(context, template))
                 continue;
             XtnStatus writelockXtnsSatus = XtnStatus.UNUSED;
             if (!memoryOnly && context.getLastMatchResult() == MatchResult.NONE) {
@@ -5811,7 +5813,7 @@ public class CacheManager extends AbstractCacheManager
                     IEntryHolder entryHolder = entriesIter.next();
                     if (entryHolder == null)
                         break;
-                    if(_engine.skipBroadcastTable(context, template, entryHolder.getServerTypeDesc()))
+                    if(entryHolder.getServerTypeDesc().getTypeDesc().isBroadcast() && _engine.skipBroadcastTable(context, template))
                         continue;
                     // Make sure we don't count the same object twice (persistent/transient)
                     if (loadPersistent && !entryHolder.isTransient())

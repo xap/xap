@@ -1222,4 +1222,9 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
     public SingleExplainPlan getExplainPlan() {
         return _singleExplainPlan;
     }
+
+    @Override
+    public boolean isClear() {
+        return _batchOerationContext != null && _batchOerationContext.isClear();
+    }
 }
