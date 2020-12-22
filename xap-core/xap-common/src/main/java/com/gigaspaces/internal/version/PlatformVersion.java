@@ -181,8 +181,6 @@ public class PlatformVersion {
         return instance.productHelpUrl;
     }
 
-    public static ProductType getProductTypeStatic() { return instance.getProductType(); }
-
     public static Properties getShas() {
         return instance.shas;
     }
