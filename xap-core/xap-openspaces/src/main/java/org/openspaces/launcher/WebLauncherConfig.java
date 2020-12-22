@@ -67,7 +67,7 @@ public class WebLauncherConfig {
     private final boolean sslEnabled;
 
     public WebLauncherConfig(Properties props) {
-        this.webuiHome = System.getProperty("com.gigaspaces.webui.path", SystemLocations.singleton().home("tools", "gs-webui").toString());
+        this.webuiHome = System.getProperty("com.gigaspaces.webui.path", SystemLocations.singleton().tools("gs-webui").toString());
         this.name = props.getProperty("name", System.getProperty("org.openspaces.launcher.name", "GS Web UI"));
         this.loggerName = props.getProperty("logger", System.getProperty("org.openspaces.launcher.logger", "org.openspaces.launcher"));
         this.port = Integer.parseInt( props.getProperty( PORT, GsEnv.property("org.openspaces.launcher.port", "WEBUI_PORT").get( String.valueOf( DEFAULT_PORT ) ) ) );

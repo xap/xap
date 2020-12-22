@@ -118,7 +118,7 @@ class GigaSpacesScalaReplLoop(in0: Option[BufferedReader],
     }
   }
 
-  protected def getBaseDirectory = s"${SystemLocations.singleton.home("tools", "scala", "conf")}"
+  protected def getBaseDirectory = s"${SystemLocations.singleton.tools("scala", "conf")}"
 
   private def isNewInitStyleUsed: Boolean = {
     val newInitStylePathProp = "org.os.scala.repl.newinitstyle"
@@ -126,7 +126,7 @@ class GigaSpacesScalaReplLoop(in0: Option[BufferedReader],
   }
 
   private def setInitScript() = {
-    val initCodePathDefault = s"${SystemLocations.singleton.home("tools", "scala", "conf", "new-init-code.scala")}"
+    val initCodePathDefault = s"${SystemLocations.singleton.tools("scala", "conf", "new-init-code.scala")}"
     val initCodePath = Properties.propOrElse(initCodePathProp, initCodePathDefault)
     val initFile = new File(initCodePath)
     if (initFile.isFile) {

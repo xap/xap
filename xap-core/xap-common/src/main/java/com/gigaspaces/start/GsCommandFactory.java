@@ -51,7 +51,7 @@ public class GsCommandFactory {
     protected JavaCommandBuilder cli() {
         command.mainClass("org.gigaspaces.cli.commands.XapMainCommand");
         // Class path:
-        command.classpathWithJars(locations().home("tools", "cli"));
+        command.classpathWithJars(locations().tools("cli"));
         command.classpathWithJars(locations().libPlatform("blueprints"));
         appendGsClasspath();
         // Options and system properties:
