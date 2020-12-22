@@ -269,8 +269,8 @@ SelectQuery selectSql():
 		[<OPENPAREN>]
         selectColumnList(query)
         [<CLOSEPAREN>]
-         <FROM>
-         selectTableList(query)
+         [<FROM>
+         selectTableList(query)]
          [joins(query)]
          [<WHERE> exp = SqlExpression(query)]
          [groupBy(query)]
@@ -637,6 +637,8 @@ void selectColumn(SelectQuery query):
   Token value = null;
   SelectColumn selectC = null;
   Token fname = null;
+  String alias = null;
+  Token t = null;
   }
 {
 	 [LOOKAHEAD(2) id() "."]
@@ -645,12 +647,13 @@ void selectColumn(SelectQuery query):
      	|<ASTERISK>  { selectC = new SelectColumn("*");  }
      	| <UID> { selectC = new SelectColumn("UID");   }
  	    | value = <STRING_LITERAL> selectC = getSelectColumn(query) { selectC.setValue(value.image); }
+ 	    | LOOKAHEAD(2) <INTEGER_LITERAL> ([< AS >] t = id() { alias = t.image; })? { selectC = new SelectColumn("1", alias); }
  	    )
      	{  if ( selectC != null) {
   	   	     query.addColumn(selectC);
   	   	  }
   	 	}
-       | LOOKAHEAD(2) function((SelectQuery)query))
+      | LOOKAHEAD(2) function((SelectQuery)query))
 }
 
 SelectColumn getSelectColumnOrFunction(String fname, AbstractDMLQuery query):
@@ -1133,8 +1136,8 @@ ExpNode containtsItemSimpleCondition(AbstractDMLQuery query) :
 	<ROWNUM> 
 	(
 	  {
-			throw new ParseException("ROWNUM not supported inside contains");			
-	  } 
+			throw new ParseException("ROWNUM not supported inside contains");
+	  }
 	)
 	| columnNode1 = createColumnNode(query,null) { }
 	(
