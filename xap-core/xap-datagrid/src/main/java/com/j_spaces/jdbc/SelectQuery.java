@@ -88,7 +88,6 @@ public class SelectQuery extends AbstractDMLQuery {
     private boolean isSelectAll;
     private List<Join> joins;
     private boolean allowedToUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.allowCollocatedJoin", "true"));
-    private boolean isSelectOne = false;
 
     public SelectQuery() {
         super();
@@ -141,14 +140,6 @@ public class SelectQuery extends AbstractDMLQuery {
         return this.isAggFunction;
     }
 
-    public boolean isSelectOne() {
-        return isSelectOne;
-    }
-
-    public void setSelectOne(boolean selectOne) {
-        isSelectOne = selectOne;
-    }
-
     private boolean isCount() {
         List<SelectColumn> aList = getQueryColumns();
         if (aList == null || aList.isEmpty())
@@ -163,8 +154,7 @@ public class SelectQuery extends AbstractDMLQuery {
     public ResponsePacket executeOnSpace(ISpaceProxy space, Transaction txn) throws SQLException {
         IQueryResultSet<IEntryPacket> entries = null;
         ResponsePacket packet = new ResponsePacket();
-        if (getQueryColumns().size() == 1 && getQueryColumns().get(0).getName().equals("1")
-                || ((getTableData().getSubQuery() instanceof  SelectQuery) && (((SelectQuery) getTableData().getSubQuery()) != null) && ((SelectQuery) getTableData().getSubQuery()).isSelectOne)) {
+        if (getQueryColumns().size() == 1 && getQueryColumns().get(0).getName().equals("1")) {
             final String[][] resultValues = new String[1][1];
             resultValues[0][0] = "1";
             final ResultEntry resultEntry = new ResultEntry(
